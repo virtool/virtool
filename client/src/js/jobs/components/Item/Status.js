@@ -31,7 +31,7 @@ export const JobStatus = ({ pad, state }) => {
     if (state === "complete") {
         return (
             <StyledJobStatus pad={pad}>
-                <Icon name="check fa-fw" bsStyle="success" />
+                <Icon name="check fa-fw" color="green" />
                 <span>{state}</span>
             </StyledJobStatus>
         );
@@ -40,7 +40,7 @@ export const JobStatus = ({ pad, state }) => {
     if (state === "error" || state === "cancelled") {
         return (
             <StyledJobStatus pad={pad}>
-                <Icon name="times fa-fw" bsStyle="danger" />
+                <Icon name="times fa-fw" color="red" />
                 <span>{state}</span>
             </StyledJobStatus>
         );

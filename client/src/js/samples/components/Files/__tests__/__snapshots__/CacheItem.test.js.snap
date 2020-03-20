@@ -92,7 +92,6 @@ exports[`<SampleCacheItem /> should render when [missing=true] 1`] = `
           faStyle="fas"
           fixedWidth={false}
           name="exclamation-circle"
-          pullRight={false}
         />
          Files Missing
       </Badge>

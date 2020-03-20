@@ -2,15 +2,21 @@ import { get } from "lodash-es";
 import numbro from "numbro";
 import React from "react";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, NotFound, Table, ViewHeader } from "../../base";
+import { Icon, LoadingPlaceholder, NotFound, Table, ViewHeader } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
-
 import { getSubtraction } from "../actions";
 import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";
 
 const calculateGC = nucleotides => numbro(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000");
+
+const SubtractionDetailHeader = styled(ViewHeader)`
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+`;
 
 export class SubtractionDetail extends React.Component {
     constructor(props) {
@@ -48,36 +54,24 @@ export class SubtractionDetail extends React.Component {
         let removeIcon;
 
         if (this.props.canModify) {
-            editIcon = (
-                <Icon name="pencil-alt" bsStyle="warning" onClick={() => this.setState({ showEdit: true })} pullRight />
-            );
+            editIcon = <Icon name="pencil-alt" color="orange" onClick={() => this.setState({ showEdit: true })} />;
 
             if (!detail.linked_samples.length) {
                 removeIcon = (
-                    <Icon
-                        name="trash"
-                        bsStyle="danger"
-                        onClick={this.props.onShowRemove}
-                        style={{ paddingLeft: "5px" }}
-                        pullRight
-                    />
+                    <Icon name="trash" color="red" onClick={this.props.onShowRemove} style={{ paddingLeft: "5px" }} />
                 );
             }
         }
 
         return (
             <div>
-                <ViewHeader title={`${detail.id} - Subtraction`}>
-                    <Flex alignItems="flex-end">
-                        <FlexItem grow={0} shrink={0}>
-                            <strong>{detail.id}</strong>
-                        </FlexItem>
-                        <FlexItem grow={1} shrink={0}>
-                            {removeIcon}
-                            {editIcon}
-                        </FlexItem>
-                    </Flex>
-                </ViewHeader>
+                <SubtractionDetailHeader title={`${detail.id} - Subtraction`}>
+                    <strong>{detail.id}</strong>
+                    <span>
+                        {removeIcon}
+                        {editIcon}
+                    </span>
+                </SubtractionDetailHeader>
 
                 <Table>
                     <tbody>

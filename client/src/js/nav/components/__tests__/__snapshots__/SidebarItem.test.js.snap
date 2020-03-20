@@ -10,7 +10,6 @@ exports[`<SidebarItem /> should render 1`] = `
     faStyle="fas"
     fixedWidth={false}
     name="fa-foo"
-    pullRight={false}
   />
   <SidebarItem__SideBarItemTitle>
     Foobar

@@ -57,30 +57,14 @@ class SampleDetail extends React.Component {
             if (includes(this.props.history.location.pathname, "general")) {
                 editIcon = (
                     <Link to={{ state: { editSample: true } }}>
-                        <small style={{ paddingLeft: "5px" }}>
-                            <Icon
-                                bsStyle="warning"
-                                className="hoverable"
-                                name="pencil-alt"
-                                tip="Edit Sample"
-                                tipPlacement="left"
-                            />
-                        </small>
+                        <Icon color="orange" name="pencil-alt" tip="Edit" hoverable />
                     </Link>
                 );
             }
 
             removeIcon = (
                 <Link to={{ state: { removeSample: true } }}>
-                    <small style={{ paddingLeft: "5px" }}>
-                        <Icon
-                            bsStyle="danger"
-                            className="hoverable"
-                            name="trash"
-                            tip="Remove Sample"
-                            tipPlacement="left"
-                        />
-                    </small>
+                    <Icon color="red" name="trash" tip="Remove" hoverable />
                 </Link>
             );
 

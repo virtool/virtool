@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<SourceTypeItem /> should render when [disabled=false] 1`] = `
-<Box__BoxGroupSection
+<SourceTypes__StyledItem
   disabled={false}
 >
   <span
@@ -9,19 +9,20 @@ exports[`<SourceTypeItem /> should render when [disabled=false] 1`] = `
   >
     genotype
   </span>
-  <Icon
-    bsStyle="danger"
-    faStyle="fas"
-    fixedWidth={false}
-    name="trash"
-    onClick={[Function]}
-    pullRight={true}
-  />
-</Box__BoxGroupSection>
+  <div>
+    <Icon
+      color="red"
+      faStyle="fas"
+      fixedWidth={false}
+      name="trash"
+      onClick={[Function]}
+    />
+  </div>
+</SourceTypes__StyledItem>
 `;
 
 exports[`<SourceTypeItem /> should render when [disabled=true] 1`] = `
-<Box__BoxGroupSection
+<SourceTypes__StyledItem
   disabled={true}
 >
   <span
@@ -29,7 +30,8 @@ exports[`<SourceTypeItem /> should render when [disabled=true] 1`] = `
   >
     genotype
   </span>
-</Box__BoxGroupSection>
+  <div />
+</SourceTypes__StyledItem>
 `;
 
 exports[`<SourceTypes /> should render when global 1`] = `

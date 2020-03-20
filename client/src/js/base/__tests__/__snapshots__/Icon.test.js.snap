@@ -1,22 +1,46 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Icon /> renders correctly 1`] = `
-<i
-  className="fas fa-i-test"
+exports[`<Icon /> should render 1`] = `
+<Icon__StyledIcon
+  className="fas fa-test"
   onClick={null}
-  style={Object {}}
 />
 `;
 
-exports[`<Icon /> when props.tip is supplied renders Tooltip with title 1`] = `
+exports[`<Icon /> should render placed tooltip when tipPlacement props defined 1`] = `
+<Tooltip
+  position="bottom"
+  tip="Tooltip"
+>
+  <Icon__StyledIcon
+    className="fas fa-test"
+    onClick={null}
+  />
+</Tooltip>
+`;
+
+exports[`<Icon /> should render tooltip when tip props is defined 1`] = `
 <Tooltip
   position="top"
   tip="Tooltip"
 >
-  <i
+  <Icon__StyledIcon
     className="fas fa-test"
     onClick={null}
-    style={Object {}}
   />
 </Tooltip>
+`;
+
+exports[`<Icon /> should render when [fixedWith=true] 1`] = `
+<Icon__StyledIcon
+  className="fas fa-test fixed-width"
+  onClick={null}
+/>
+`;
+
+exports[`<Icon /> should render when className prop provided 1`] = `
+<Icon__StyledIcon
+  className="heavy fas fa-test"
+  onClick={null}
+/>
 `;

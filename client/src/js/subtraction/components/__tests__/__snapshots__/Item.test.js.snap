@@ -77,10 +77,9 @@ exports[`<SubtractionItemIcon /> should render when [ready=false] 1`] = `
 
 exports[`<SubtractionItemIcon /> should render when [ready=true] 1`] = `
 <Icon
-  bsStyle="success"
+  color="green"
   faStyle="fas"
   fixedWidth={false}
   name="check"
-  pullRight={false}
 />
 `;

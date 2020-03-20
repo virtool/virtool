@@ -6,7 +6,6 @@ exports[`<NoneFound /> should render with [noun='files' 1`] = `
     faStyle="fas"
     fixedWidth={false}
     name="info-circle"
-    pullRight={false}
   />
    No 
   files
@@ -50,7 +49,6 @@ exports[`<NoneFoundBox /> should render with [noun='boxes' 1`] = `
     faStyle="fas"
     fixedWidth={false}
     name="info-circle"
-    pullRight={false}
   />
    No 
   boxes
@@ -64,7 +62,6 @@ exports[`<NoneFoundSection /> should render with [noun='sections' 1`] = `
     faStyle="fas"
     fixedWidth={false}
     name="info-circle"
-    pullRight={false}
   />
    No 
   sections
@@ -78,7 +75,6 @@ exports[`<NoneFoundSection /> should render with [noun='sections'] and children 
     faStyle="fas"
     fixedWidth={false}
     name="info-circle"
-    pullRight={false}
   />
    No 
   sections

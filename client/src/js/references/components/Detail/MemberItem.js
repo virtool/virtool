@@ -35,9 +35,9 @@ const MemberItem = ({ canModify, id, identicon, onEdit, onRemove }) => {
         icons = (
             <FlexItem grow={1} shrink={1}>
                 <Flex alignItems="center" className="pull-right">
-                    <Icon name="edit" bsStyle="warning" tip="Modify" onClick={handleEdit} />
+                    <Icon name="edit" color="orange" tip="Modify" onClick={handleEdit} />
                     <FlexItem pad>
-                        <Icon name="trash" bsStyle="danger" tip="Remove" onClick={handleRemove} />
+                        <Icon name="trash" color="red" tip="Remove" onClick={handleRemove} />
                     </FlexItem>
                 </Flex>
             </FlexItem>

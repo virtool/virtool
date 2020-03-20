@@ -55,11 +55,10 @@ exports[`<UserItem /> should render when administrator=true] 1`] = `
       shrink={1}
     >
       <Icon
-        bsStyle="primary"
+        color="blue"
         faStyle="fas"
         fixedWidth={false}
         name="user-shield"
-        pullRight={false}
       />
     </FlexItem>
   </Item__StyledUserItem>

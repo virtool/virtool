@@ -10,7 +10,6 @@ exports[`<ReleasesList /> should render with one release 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="arrow-alt-circle-up"
-        pullRight={false}
       />
        Update
        Available
@@ -44,7 +43,6 @@ exports[`<ReleasesList /> should render with two releases 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="arrow-alt-circle-up"
-        pullRight={false}
       />
        Update
       s

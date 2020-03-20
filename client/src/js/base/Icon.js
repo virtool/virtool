@@ -1,27 +1,41 @@
 import CX from "classnames";
-import React from "react";
+import React, { useCallback } from "react";
 import PropTypes from "prop-types";
+import { get } from "lodash-es";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
 import { Tooltip } from "./Tooltip";
-/**
- * A component for rendering a font icon. A tooltip can optionally be shown on hover.
- *
- */
-export const Icon = props => {
-    function handleClick(e) {
-        e.stopPropagation();
-        props.onClick(e);
+
+const getIconColor = ({ color, theme }) => get(theme, ["color", `${color}Dark`], "inherit");
+
+const StyledIcon = styled.i`
+    color: ${getIconColor};
+    ${props => (props.hoverable || props.onClick ? "cursor: pointer;" : "")};
+    opacity: ${props => (props.hoverable || props.onClick ? 0.7 : 1)};
+
+    :hover {
+        opacity: 1;
     }
+`;
+
+export const Icon = ({ hoverable, style, ...props }) => {
+    const handleClick = useCallback(e => {
+        props.onClick(e);
+    }, []);
 
     const className = CX(props.className, `${props.faStyle} fa-${props.name}`, {
-        [`text-${props.bsStyle}`]: props.bsStyle,
-        "pull-right": props.pullRight,
-        "fixed-width": props.fixedWidth,
-        "hoverable pointer": props.onClick
+        "fixed-width": props.fixedWidth
     });
 
-    const style = { ...(props.pad ? { marginLeft: "3px" } : {}), ...props.style };
-
-    const icon = <i className={className} style={style} onClick={props.onClick ? handleClick : null} />;
+    const icon = (
+        <StyledIcon
+            className={className}
+            hoverable={hoverable}
+            style={style}
+            onClick={props.onClick ? handleClick : null}
+            color={props.color}
+        />
+    );
 
     if (props.tip) {
         return (
@@ -35,21 +49,24 @@ export const Icon = props => {
 };
 
 Icon.propTypes = {
+    color: PropTypes.oneOf(["blue", "green", "grey", "red", "orange"]),
     name: PropTypes.string.isRequired,
-    tip: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+    tip: PropTypes.node,
     tipPlacement: PropTypes.oneOf(["top", "right", "bottom", "left"]),
     faStyle: PropTypes.string,
     onClick: PropTypes.func,
-    bsStyle: PropTypes.string,
     className: PropTypes.string,
-    pullRight: PropTypes.bool,
     fixedWidth: PropTypes.bool,
-    style: PropTypes.object,
-    pad: PropTypes.bool
+    style: PropTypes.object
 };
 
 Icon.defaultProps = {
     faStyle: "fas",
-    pullRight: false,
     fixedWidth: false
 };
+
+export const LinkIcon = ({ to, replace, ...props }) => (
+    <Link to={to} replace={replace} hoverable>
+        <Icon {...props} />
+    </Link>
+);

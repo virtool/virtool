@@ -24,8 +24,8 @@ const StyledViewHeader = styled.h2`
  * contains a ``<ViewHeader />`` component with the title 'OTUs', and optional children.
  *
  */
-export const ViewHeader = ({ title, totalCount, children }) => (
-    <StyledViewHeader>
+export const ViewHeader = ({ className, title, totalCount, children }) => (
+    <StyledViewHeader className={className}>
         <Helmet title={title} />
         {isUndefined(totalCount) ? null : (
             <Flex alignItems="flex-end">
@@ -39,9 +39,10 @@ export const ViewHeader = ({ title, totalCount, children }) => (
 );
 
 ViewHeader.propTypes = {
+    children: PropTypes.node,
+    className: PropTypes.string,
     title: PropTypes.string.isRequired,
-    totalCount: PropTypes.number,
-    children: PropTypes.node
+    totalCount: PropTypes.number
 };
 
 export const SubviewHeader = styled.div`

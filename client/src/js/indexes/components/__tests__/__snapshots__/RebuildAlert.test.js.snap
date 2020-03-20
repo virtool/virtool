@@ -8,7 +8,6 @@ exports[`<RebuildAlert /> should render 1`] = `
     faStyle="fas"
     fixedWidth={false}
     name="exclamation-circle"
-    pullRight={false}
   />
   At least one OTU must be added to the database before an index can be built.
 </Alert__WarningAlert>
@@ -22,7 +21,6 @@ exports[`<RebuildAlert /> should render when [showCountAlert!=0, showIndexAlert=
     faStyle="fas"
     fixedWidth={false}
     name="info-circle"
-    pullRight={false}
   />
   <span>
     <span>

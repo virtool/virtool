@@ -30,7 +30,6 @@ exports[`<Button /> renders optional icon 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="folder"
-      pullRight={false}
     />
   </div>
 </button>

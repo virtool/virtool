@@ -49,7 +49,6 @@ exports[`<Bar /> should render 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="comments"
-        pullRight={false}
       />
     </Bar__NavBarItem>
     <Bar__NavBarItem
@@ -61,7 +60,6 @@ exports[`<Bar /> should render 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="book"
-        pullRight={false}
       />
     </Bar__NavBarItem>
     <NavDropdown

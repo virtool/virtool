@@ -66,11 +66,11 @@ export const ReferenceDetailHeaderExportButton = ({ isClone, onSelect }) => {
 
 export const ReferenceDetailHeaderIcon = ({ canModify, isRemote, onEdit }) => {
     if (isRemote) {
-        return <Icon bsStyle="default" name="lock" />;
+        return <Icon color="grey" name="lock" />;
     }
 
     if (canModify) {
-        return <Icon bsStyle="warning" name="pencil-alt" tip="Edit" onClick={onEdit} />;
+        return <Icon color="orange" name="pencil-alt" tip="Edit" onClick={onEdit} />;
     }
 
     return null;

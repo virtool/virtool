@@ -28,7 +28,7 @@ export const OTUItem = ({ abbreviation, id, name, refId, verified }) => (
         <strong>{name}</strong>
         <OTUItemAbbreviation>{abbreviation}</OTUItemAbbreviation>
 
-        {verified ? null : <Icon name="tag" pullRight tip="This OTU is unverified" />}
+        {verified ? null : <Icon name="tag" tip="This OTU is unverified" />}
     </StyledOTUItem>
 );
 

@@ -23,7 +23,7 @@ export const Releases = ({ onShowInstall, releases }) => {
 
     return (
         <StyledReleases>
-            <Icon bsStyle="success" name="check" />
+            <Icon color="green" name="check" />
             <strong className="text-success"> Software is up-to-date</strong>
         </StyledReleases>
     );

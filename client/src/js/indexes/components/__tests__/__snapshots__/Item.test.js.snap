@@ -71,11 +71,10 @@ exports[`<IndexItemIcon /> should render checkmark when active 1`] = `
   className="pull-right"
 >
   <Icon
-    bsStyle="success"
+    color="green"
     faStyle="fas"
     fixedWidth={false}
     name="check"
-    pullRight={false}
   />
    
   <strong>

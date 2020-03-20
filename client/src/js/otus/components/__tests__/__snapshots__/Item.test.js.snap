@@ -15,7 +15,6 @@ exports[`<OTUItem /> should render when [verified=false] 1`] = `
     faStyle="fas"
     fixedWidth={false}
     name="tag"
-    pullRight={true}
     tip="This OTU is unverified"
   />
 </Item__StyledOTUItem>
