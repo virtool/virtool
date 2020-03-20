@@ -54,6 +54,7 @@ export const DropdownMenu = styled.div`
     position: absolute;
     right: ${props => props.right}px;
     top: ${props => props.top}px;
+    z-index: 100;
 `;
 
 export const Dropdown = styled.div`
