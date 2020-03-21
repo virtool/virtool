@@ -3,7 +3,8 @@
 exports[`<AnalysisHMMAlert /> should render 1`] = `""`;
 
 exports[`<AnalysisHMMAlert /> should render when [installed = false] 1`] = `
-<Alert__WarningAlert
+<Alert
+  color="orange"
   level={true}
 >
   <Icon
@@ -12,9 +13,9 @@ exports[`<AnalysisHMMAlert /> should render when [installed = false] 1`] = `
     name="info-circle"
   />
   <span>
-    <span>
+    <strong>
       HMM data is not installed. 
-    </span>
+    </strong>
     <Link
       to="/hmm"
     >
@@ -24,5 +25,5 @@ exports[`<AnalysisHMMAlert /> should render when [installed = false] 1`] = `
        to run NuV analyses.
     </span>
   </span>
-</Alert__WarningAlert>
+</Alert>
 `;

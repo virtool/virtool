@@ -12,6 +12,7 @@ describe("<SampleDetailGeneral />", () => {
             isolate: "Isolate Foo",
             lengthRange: "41 - 76",
             locale: "Bar",
+            name: "Foo",
             paired: false,
             subtractionId: "Arabidopsis thaliana",
             libraryType: ""
@@ -58,6 +59,7 @@ describe("mapStateToProps()", () => {
             host: "Malus domestica",
             isolate: "Isolate Foo",
             locale: "Bar",
+            name: "Foo",
             paired: false,
             gc: "31.2 %",
             count: "13.2 m",

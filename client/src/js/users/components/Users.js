@@ -2,7 +2,7 @@ import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Button, Icon, LoadingPlaceholder, SearchInput, Toolbar, WarningAlert } from "../../base";
+import { Alert, Button, Icon, LoadingPlaceholder, SearchInput, Toolbar } from "../../base";
 import { clearError } from "../../errors/actions";
 import { listGroups } from "../../groups/actions";
 import Groups from "../../groups/components/Groups";
@@ -41,13 +41,13 @@ export class ManageUsers extends React.Component {
     render() {
         if (this.state.error.length) {
             return (
-                <WarningAlert>
+                <Alert color="orange" level>
                     <Icon name="exclamation-circle" />
                     <span>
                         <strong>You do not have permission to manage users.</strong>
                         <span> Contact an administrator.</span>
                     </span>
-                </WarningAlert>
+                </Alert>
             );
         }
 

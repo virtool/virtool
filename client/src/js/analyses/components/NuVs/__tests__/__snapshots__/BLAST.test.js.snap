@@ -131,7 +131,8 @@ exports[`<NuVsBLAST /> should render 1`] = `
 `;
 
 exports[`<NuVsBLAST /> should render alert when no blast data available 1`] = `
-<Alert__InfoAlert
+<Alert
+  color="purple"
   level={true}
 >
   <Icon
@@ -149,7 +150,7 @@ exports[`<NuVsBLAST /> should render alert when no blast data available 1`] = `
   >
     BLAST at NCBI
   </BLAST__BLASTButton>
-</Alert__InfoAlert>
+</Alert>
 `;
 
 exports[`<NuVsBLAST /> should render with an in-progress BLAST 1`] = `

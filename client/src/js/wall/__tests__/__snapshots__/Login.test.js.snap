@@ -14,7 +14,7 @@ exports[`<Login /> should render 1`] = `
           Username
         </Input__InputLabel>
         <Input
-          autofocus={true}
+          autoFocus={true}
           name="username"
           onChange={[Function]}
           value=""
@@ -65,7 +65,7 @@ exports[`<Login /> should render checked remember checkbox 1`] = `
           Username
         </Input__InputLabel>
         <Input
-          autofocus={true}
+          autoFocus={true}
           name="username"
           onChange={[Function]}
           value=""
@@ -116,7 +116,7 @@ exports[`<Login /> should render checked remember checkbox 2`] = `
           Username
         </Input__InputLabel>
         <Input
-          autofocus={true}
+          autoFocus={true}
           name="username"
           onChange={[Function]}
           value=""
@@ -167,7 +167,7 @@ exports[`<Login /> should render filled username and password fields 1`] = `
           Username
         </Input__InputLabel>
         <Input
-          autofocus={true}
+          autoFocus={true}
           name="username"
           onChange={[Function]}
           value=""
@@ -218,7 +218,7 @@ exports[`<Login /> should render filled username and password fields 2`] = `
           Username
         </Input__InputLabel>
         <Input
-          autofocus={true}
+          autoFocus={true}
           name="username"
           onChange={[Function]}
           value="bob"
@@ -269,7 +269,7 @@ exports[`<Login /> should render filled username and password fields 3`] = `
           Username
         </Input__InputLabel>
         <Input
-          autofocus={true}
+          autoFocus={true}
           name="username"
           onChange={[Function]}
           value="bob"

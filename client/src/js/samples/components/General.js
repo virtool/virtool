@@ -2,6 +2,7 @@ import numbro from "numbro";
 import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
+import styled from "styled-components";
 import { BoxGroup, BoxGroupHeader, Table } from "../../base";
 import EditSample from "./Edit";
 import SampleFileSizeWarning from "./SampleFileSizeWarning.js";
@@ -12,6 +13,12 @@ const libraryTypes = {
     amplicon: "Amplicon"
 };
 
+const StyledSampleDetailGeneral = styled.div`
+    th {
+        width: 220px;
+    }
+`;
+
 export const SampleDetailGeneral = ({
     count,
     encoding,
@@ -20,28 +27,39 @@ export const SampleDetailGeneral = ({
     isolate,
     lengthRange,
     locale,
+    name,
     paired,
     subtractionId,
     libraryType
 }) => (
-    <div>
+    <StyledSampleDetailGeneral>
         <SampleFileSizeWarning />
-        <Table>
-            <tbody>
-                <tr>
-                    <th>Host</th>
-                    <td>{host}</td>
-                </tr>
-                <tr>
-                    <th>Isolate</th>
-                    <td>{isolate}</td>
-                </tr>
-                <tr>
-                    <th>Locale</th>
-                    <td>{locale}</td>
-                </tr>
-            </tbody>
-        </Table>
+        <BoxGroup>
+            <BoxGroupHeader>
+                <h2>General</h2>
+                <p>User-defined information about the sample.</p>
+            </BoxGroupHeader>
+            <Table>
+                <tbody>
+                    <tr>
+                        <th>Name</th>
+                        <td>{name}</td>
+                    </tr>
+                    <tr>
+                        <th>Host</th>
+                        <td>{host}</td>
+                    </tr>
+                    <tr>
+                        <th>Isolate</th>
+                        <td>{isolate}</td>
+                    </tr>
+                    <tr>
+                        <th>Locale</th>
+                        <td>{locale}</td>
+                    </tr>
+                </tbody>
+            </Table>
+        </BoxGroup>
 
         <BoxGroup>
             <BoxGroupHeader>
@@ -96,11 +114,11 @@ export const SampleDetailGeneral = ({
         </BoxGroup>
 
         <EditSample />
-    </div>
+    </StyledSampleDetailGeneral>
 );
 
 export const mapStateToProps = state => {
-    const { host, isolate, locale, paired, quality, library_type, subtraction } = state.samples.detail;
+    const { name, host, isolate, locale, paired, quality, library_type, subtraction } = state.samples.detail;
     const { count, encoding, gc, length } = quality;
 
     return {
@@ -108,10 +126,11 @@ export const mapStateToProps = state => {
         host,
         isolate,
         locale,
+        name,
         paired,
-        libraryType: libraryTypes[library_type],
-        gc: numbro(gc / 100).format("0.0 %"),
         count: numbro(count).format("0.0 a"),
+        gc: numbro(gc / 100).format("0.0 %"),
+        libraryType: libraryTypes[library_type],
         lengthRange: length.join(" - "),
         subtractionId: subtraction.id
     };

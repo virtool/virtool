@@ -1,7 +1,7 @@
-import React from "react";
 import { get } from "lodash-es";
+import React from "react";
 import { connect } from "react-redux";
-import { Button, Icon, WarningAlert } from "../../base";
+import { Alert, Button, Icon } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { installHMMs } from "../actions";
 
@@ -15,13 +15,13 @@ export const InstallOption = ({ canInstall, onInstall, releaseId }) => {
     }
 
     return (
-        <WarningAlert level>
+        <Alert color="orange" level>
             <Icon name="exclamation-circle" />
             <span>
                 <strong>You do not have permission to install HMMs.</strong>
                 <span> Contact an administrator.</span>
             </span>
-        </WarningAlert>
+        </Alert>
     );
 };
 

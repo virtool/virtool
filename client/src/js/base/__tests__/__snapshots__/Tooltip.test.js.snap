@@ -1,30 +1,30 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Tooltip /> renders correctly 1`] = `
+exports[`<Tooltip /> should render 1`] = `
 <Tooltip__StyledTooltip
   arrow={true}
+  position="left"
   size="big"
+  title="Tip"
 />
 `;
 
-exports[`<Tooltip /> should render when position tip is provided 1`] = `
+exports[`<Tooltip /> should render with children 1`] = `
 <Tooltip__StyledTooltip
   arrow={true}
-  position="bottom"
+  position="left"
   size="big"
-  title="foo"
+  title="Tip"
 >
-  <Component />
+  Hello world
 </Tooltip__StyledTooltip>
 `;
 
-exports[`<Tooltip /> should render when tip prop is provided 1`] = `
+exports[`<Tooltip /> should render without position prop 1`] = `
 <Tooltip__StyledTooltip
   arrow={true}
-  position="bar"
+  position="left"
   size="big"
-  title="foo"
->
-  <Component />
-</Tooltip__StyledTooltip>
+  title="Tip"
+/>
 `;

@@ -9,16 +9,18 @@ const StyledTooltip = styled(TippyTooltip)`
     display: inline-flex !important;
 `;
 
-export const Tooltip = ({ tip, position, children }) => {
-    return (
-        <StyledTooltip size="big" title={tip} arrow={true} position={position}>
-            {children}
-        </StyledTooltip>
-    );
-};
+export const Tooltip = ({ tip, position, children }) => (
+    <StyledTooltip size="big" title={tip} arrow={true} position={position}>
+        {children}
+    </StyledTooltip>
+);
 
 Tooltip.propTypes = {
     tip: PropTypes.string.isRequired,
-    position: PropTypes.string,
-    children: PropTypes.object.isRequired
+    position: PropTypes.oneOf(["top", "right", "bottom", "left"]),
+    children: PropTypes.node
+};
+
+Tooltip.defaultProps = {
+    position: "top"
 };

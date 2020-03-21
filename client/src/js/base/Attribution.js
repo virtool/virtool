@@ -1,3 +1,4 @@
+import { capitalize } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
 import { RelativeTime } from "./RelativeTime";
@@ -17,7 +18,7 @@ export const UnstyledAttribution = ({ className, time, user, identicon, verb = "
         <span className={className}>
             {identicon ? <Identicon size={12} hash={identicon} /> : null}
             <span>{user}</span>
-            <span>{verb}</span>
+            <span>{user ? verb : capitalize(verb)}</span>
             <RelativeTime time={time} />
         </span>
     );

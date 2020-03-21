@@ -2,11 +2,11 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import { Icon } from "../../base";
+import { Box, Icon } from "../../base";
 import Install from "./Install";
 import ReleasesList from "./List";
 
-const StyledReleases = styled.div`
+const StyledReleases = styled(Box)`
     flex: 1 0 auto;
     margin-right: 15px;
 `;

@@ -76,7 +76,7 @@ export class UnstyledInput extends React.Component {
 
 export const Input = styled(UnstyledInput)`
     background-color: ${props => props.theme.color.white};
-    border: 1px solid ${props => (props.error ? props.theme.color.red : props.theme.color.grey)};
+    border: 1px solid ${props => (props.error ? props.theme.color.red : props.theme.color.greyLight)};
     border-radius: ${props => props.theme.borderRadius.sm};
     box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
     display: block;

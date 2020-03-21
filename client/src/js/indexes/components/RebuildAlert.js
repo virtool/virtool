@@ -1,16 +1,16 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { Icon, WarningAlert } from "../../base";
+import { Alert, Icon } from "../../base";
 import { checkRefRight } from "../../utils/utils";
 
 export const RebuildAlert = ({ refId, showCountAlert, showIndexAlert }) => {
     if (showCountAlert === 0) {
         return (
-            <WarningAlert level>
+            <Alert color="orange" level>
                 <Icon name="exclamation-circle" />
-                At least one OTU must be added to the database before an index can be built.
-            </WarningAlert>
+                <strong>At least one OTU must be added to the database before an index can be built.</strong>
+            </Alert>
         );
     }
 
@@ -21,14 +21,14 @@ export const RebuildAlert = ({ refId, showCountAlert, showIndexAlert }) => {
         };
 
         return (
-            <WarningAlert level>
+            <Alert color="orange" level>
                 <Icon name="info-circle" />
                 <span>
                     <span>There are unbuilt changes. </span>
                     <Link to={to}>Rebuild the index</Link>
                     <span> to use the changes in future analyses.</span>
                 </span>
-            </WarningAlert>
+            </Alert>
         );
     }
 

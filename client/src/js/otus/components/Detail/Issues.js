@@ -1,15 +1,18 @@
+import { find, map } from "lodash-es";
+import PropTypes from "prop-types";
 import React from "react";
 import styled from "styled-components";
-import PropTypes from "prop-types";
-import { find, map } from "lodash-es";
-import { WarningAlert } from "../../../base";
+import { Alert } from "../../../base";
 import { formatIsolateName } from "../../../utils/utils";
 
-const StyledOTUIssues = styled(WarningAlert)`
-    display: block;
-
+const StyledOTUIssues = styled(Alert)`
     h5 {
         font-weight: bold;
+        margin: 0 0 15px;
+    }
+
+    ul {
+        margin: 0 0 10px;
     }
 `;
 
@@ -70,7 +73,7 @@ const OTUIssues = props => {
     }
 
     return (
-        <StyledOTUIssues>
+        <StyledOTUIssues color="orange" block>
             <h5>There are some issues that must be resolved before this OTU can be included in the next index build</h5>
             <ul>{errors}</ul>
         </StyledOTUIssues>

@@ -1,7 +1,22 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Alert /> should render 1`] = `
-<UnstyledAlert
-  className="Alert-whi9a-0 bksvTi"
+exports[`<Alert /> should render when [color="blue"] 1`] = `
+<_Alert
+  className="Alert-whi9a-1 bDVzQt"
+  color="blue"
+/>
+`;
+
+exports[`<Alert /> should render when [color="green"] 1`] = `
+<_Alert
+  className="Alert-whi9a-1 bDVzQt"
+  color="green"
+/>
+`;
+
+exports[`<Alert /> should render when [color="red"] 1`] = `
+<_Alert
+  className="Alert-whi9a-1 bDVzQt"
+  color="red"
 />
 `;

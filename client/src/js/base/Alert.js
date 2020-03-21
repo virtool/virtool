@@ -1,20 +1,21 @@
+import { get } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
+import { getColor } from "../app/theme";
 import { Icon } from "./Icon";
 
-export const UnstyledAlert = ({ children, className, color, icon }) => {
-    return (
-        <div className={className} color={color}>
-            {icon ? <Icon name={icon} /> : null}
-            {children}
-        </div>
-    );
-};
+export const getBackgroundColor = ({ color, theme }) =>
+    get(theme, ["color", `${color}Lightest`], theme.color.greyLightest);
 
-export const Alert = styled(UnstyledAlert)`
+export const getTextColor = ({ color, theme }) => get(theme, ["color", `${color}Dark`], theme.color.greyDark);
+
+const StyledAlert = styled.div`
     align-items: ${props => (props.level ? "center" : "normal")};
-    border: 1px solid grey;
+    background-color: ${getBackgroundColor};
+    border: 1px solid ${getColor};
+    border-radius: ${props => props.theme.borderRadius.lg};
     border-left-width: 4px;
+    color: ${getTextColor};
     display: ${props => (props.block ? "block" : "flex")};
     margin-bottom: 16px;
     padding: 15px;
@@ -25,24 +26,11 @@ export const Alert = styled(UnstyledAlert)`
     }
 `;
 
-export const DangerAlert = styled(Alert)`
-    background-color: #fff5f5;
-    border-color: #feb2b2;
-    color: #c53030;
-`;
+export const _Alert = ({ block, children, className, color, icon, level }) => (
+    <StyledAlert block={block} className={className} color={color} level={level}>
+        {icon ? <Icon name={icon} /> : null}
+        {children}
+    </StyledAlert>
+);
 
-export const InfoAlert = styled(Alert)`
-    background-color: #e9d8fd;
-    border-color: #b794f4;
-    color: #553c9a;
-`;
-
-export const WarningAlert = styled(Alert)`
-    border-color: #fbd38d;
-    background-color: #fffaf0;
-    color: #c05621;
-
-    a:last-child {
-        margin-left: auto;
-    }
-`;
+export const Alert = styled(_Alert)``;

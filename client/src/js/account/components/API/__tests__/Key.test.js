@@ -1,4 +1,5 @@
 import { REMOVE_API_KEY, UPDATE_API_KEY } from "../../../../app/actionTypes";
+import { Icon } from "../../../../base";
 import { APIKey, getInitialState, mapDispatchToProps, mapStateToProps } from "../Key";
 
 describe("getInitialState()", () => {
@@ -61,7 +62,7 @@ describe("<APIKey />", () => {
     it("should set [state.in=false] when close button clicked while expanded", () => {
         const wrapper = shallow(<APIKey {...props} />);
         wrapper.setState({ in: true });
-        wrapper.find(".close").simulate("click");
+        wrapper.find(Icon).simulate("click");
         expect(wrapper.state("in")).toBe(false);
     });
 

@@ -3,6 +3,7 @@ import "@reach/dialog/styles.css";
 import PropTypes from "prop-types";
 import React from "react";
 import styled, { keyframes } from "styled-components";
+import { Alert } from "./Alert";
 import { Box, BoxGroupSection } from "./Box";
 import { Icon } from "./Icon";
 
@@ -32,6 +33,23 @@ const modalContentClose = keyframes`
         opacity: 0;
     }
 `;
+
+export const ModalAlert = styled(Alert)`
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+    display: flex;
+    margin-bottom: 5px;
+
+    i {
+        line-height: 20px;
+    }
+
+    p {
+        margin-left: 5px;
+    }
+`;
+
 export const ModalDialogOverlay = styled(({ close, ...rest }) => <DialogOverlay {...rest} />)`
     animation: ${props => (props.close ? modalOverlayClose : modalOverlayOpen)} 0.3s;
     animation-fill-mode: forwards;

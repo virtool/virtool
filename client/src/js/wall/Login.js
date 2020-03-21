@@ -72,7 +72,7 @@ export class Login extends React.Component {
                     <form onSubmit={this.handleSubmit}>
                         <InputGroup>
                             <InputLabel>Username</InputLabel>
-                            <Input name="username" value={this.state.username} onChange={this.handleChange} autofocus />
+                            <Input name="username" value={this.state.username} onChange={this.handleChange} autoFocus />
                         </InputGroup>
                         <InputGroup>
                             <InputLabel>Password</InputLabel>

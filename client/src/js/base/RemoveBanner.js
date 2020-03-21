@@ -1,15 +1,15 @@
 import React from "react";
 import styled from "styled-components";
-import { DangerAlert } from "./Alert";
+import { Alert } from "./Alert";
 import { Button } from "./Button";
 
-const StyledRemoveBanner = styled(DangerAlert)`
+const StyledRemoveBanner = styled(Alert)`
     align-items: center;
     justify-content: space-between;
 `;
 
 export const RemoveBanner = ({ message, buttonText, onClick }) => (
-    <StyledRemoveBanner>
+    <StyledRemoveBanner color="red">
         <span>{message}</span>
         <Button bsStyle="danger" onClick={onClick}>
             {buttonText}
