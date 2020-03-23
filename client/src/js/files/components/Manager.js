@@ -1,7 +1,17 @@
 import { capitalize, forEach } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Alert, Icon, LoadingPlaceholder, NoneFoundBox, ScrollList, UploadBar, ViewHeader } from "../../base";
+import {
+    Alert,
+    Badge,
+    Icon,
+    LoadingPlaceholder,
+    NoneFoundBox,
+    ScrollList,
+    UploadBar,
+    ViewHeader,
+    ViewHeaderTitle
+} from "../../base";
 import { checkAdminOrPermission, createRandomString } from "../../utils/utils";
 import { findFiles, upload } from "../actions";
 import { filesSelector } from "../selectors";
@@ -55,7 +65,9 @@ class FileManager extends React.Component {
         return (
             <div>
                 <ViewHeader title={title}>
-                    {title} <Badge>{this.props.total_count}</Badge>
+                    <ViewHeaderTitle>
+                        {title} <Badge>{this.props.total_count}</Badge>
+                    </ViewHeaderTitle>
                 </ViewHeader>
 
                 {toolbar}

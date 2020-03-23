@@ -4,27 +4,15 @@ import { connect } from "react-redux";
 import styled from "styled-components";
 import { pushState } from "../../../app/actions";
 import {
-    Attribution,
     DropdownIcon,
     DropdownItem,
-    Flex,
-    FlexItem,
     Icon,
     ViewHeader,
     ViewHeaderAttribution,
-    ViewHeaderIcons
+    ViewHeaderIcons,
+    ViewHeaderTitle
 } from "../../../base";
 import { checkRefRight, followDownload } from "../../../utils/utils";
-
-const StyledHeaderIcons = styled.div`
-    align-items: center;
-    display: flex;
-
-    i.fas {
-        font-size: 20px;
-        margin-left: 5px;
-    }
-`;
 
 const ExportDropdownItem = styled.div`
     width: 220px;
@@ -108,16 +96,16 @@ export const ReferenceDetailHeader = ({
     }
 
     return (
-        <React.Fragment>
-            <ViewHeader title={name}>
+        <ViewHeader title={name}>
+            <ViewHeaderTitle>
                 {name}
                 <ViewHeaderIcons>
                     {headerIcon}
                     {exportButton}
                 </ViewHeaderIcons>
-            </ViewHeader>
+            </ViewHeaderTitle>
             <ViewHeaderAttribution time={createdAt} user={userId} />
-        </React.Fragment>
+        </ViewHeader>
     );
 };
 

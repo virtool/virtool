@@ -6,7 +6,11 @@ exports[`<SamplesSettings /> should render when [loading=false] 1`] = `
 >
   <ViewHeader
     title="Sample Settings"
-  />
+  >
+    <ViewHeader__ViewHeaderTitle>
+      Sample Settings
+    </ViewHeader__ViewHeaderTitle>
+  </ViewHeader>
   <Connect(UniqueNames) />
   <Connect(SampleRights) />
 </div>

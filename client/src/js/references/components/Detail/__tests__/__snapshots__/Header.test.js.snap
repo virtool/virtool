@@ -2,34 +2,11 @@
 
 exports[`<ReferenceDetailHeader/> should render 1`] = `
 <ViewHeader
-  title="baz - References"
+  title="baz"
 >
-  <Flex
-    alignContent="stretch"
-    alignItems="flex-end"
-    direction="row"
-    justifyContent="flex-start"
-    wrap="nowrap"
-  >
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={1}
-      shrink={1}
-    >
-      <Flex
-        alignContent="stretch"
-        alignItems="stretch"
-        direction="row"
-        justifyContent="flex-start"
-        wrap="nowrap"
-      >
-        <strong>
-          baz
-        </strong>
-      </Flex>
-    </FlexItem>
-    <Header__StyledHeaderIcons>
+  <ViewHeader__ViewHeaderTitle>
+    baz
+    <ViewHeader__ViewHeaderIcons>
       <ReferenceDetailHeaderIcon
         canModify={true}
         isRemote={true}
@@ -39,47 +16,24 @@ exports[`<ReferenceDetailHeader/> should render 1`] = `
         isClone={true}
         onSelect={[Function]}
       />
-    </Header__StyledHeaderIcons>
-  </Flex>
-  <Attribution
+    </ViewHeader__ViewHeaderIcons>
+  </ViewHeader__ViewHeaderTitle>
+  <ViewHeader__ViewHeaderAttribution
     time="foo"
     user={1}
   />
 </ViewHeader>
 `;
 
-exports[`<ReferenceDetailHeader/> should render when[showIcons=false] 1`] = `
+exports[`<ReferenceDetailHeader/> should render when [showIcons=false] 1`] = `
 <ViewHeader
-  title="baz - References"
+  title="baz"
 >
-  <Flex
-    alignContent="stretch"
-    alignItems="flex-end"
-    direction="row"
-    justifyContent="flex-start"
-    wrap="nowrap"
-  >
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={1}
-      shrink={1}
-    >
-      <Flex
-        alignContent="stretch"
-        alignItems="stretch"
-        direction="row"
-        justifyContent="flex-start"
-        wrap="nowrap"
-      >
-        <strong>
-          baz
-        </strong>
-      </Flex>
-    </FlexItem>
-    <Header__StyledHeaderIcons />
-  </Flex>
-  <Attribution
+  <ViewHeader__ViewHeaderTitle>
+    baz
+    <ViewHeader__ViewHeaderIcons />
+  </ViewHeader__ViewHeaderTitle>
+  <ViewHeader__ViewHeaderAttribution
     time="foo"
     user={1}
   />

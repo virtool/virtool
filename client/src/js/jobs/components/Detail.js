@@ -2,12 +2,27 @@ import { push } from "connected-react-router";
 import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, NotFound, RelativeTime, Table, ViewHeader } from "../../base";
+import styled from "styled-components";
+import {
+    Badge,
+    Icon,
+    LoadingPlaceholder,
+    NotFound,
+    Table,
+    ViewHeader,
+    ViewHeaderAttribution,
+    ViewHeaderIcons,
+    ViewHeaderTitle
+} from "../../base";
 import { getTaskDisplayName } from "../../utils/utils";
 import { getJob, removeJob } from "../actions";
 import JobError from "./Error";
 import JobSteps from "./Steps";
 import TaskArgs from "./TaskArgs";
+
+const JobDetailBadge = styled(Badge)`
+    text-transform: capitalize;
+`;
 
 class JobDetail extends React.Component {
     componentDidMount() {
@@ -31,38 +46,30 @@ class JobDetail extends React.Component {
 
         const latest = detail.status[detail.status.length - 1];
 
-        let progressStyle = "success";
+        let color = "green";
 
         if (latest.state === "running") {
-            progressStyle = "primary";
+            color = "blue";
         }
 
         if (latest.state === "error" || latest.state === "cancelled") {
-            progressStyle = "danger";
+            color = "red";
         }
 
         const taskName = getTaskDisplayName(detail.task);
 
         return (
             <div>
-                <ViewHeader title={`${taskName} - Jobs`}>
-                    <Flex alignItems="flex-end">
-                        <FlexItem grow={1}>
-                            <Flex alignItems="center">
-                                <strong>{taskName}</strong>
-                                <FlexItem grow={1} pad={7}>
-                                    <small className={`text-strong text-capitalize text-${progressStyle}`}>
-                                        {latest.state}
-                                    </small>
-                                </FlexItem>
-                            </Flex>
-                        </FlexItem>
-
-                        <Icon color="red" name="trash" style={{ fontSize: "18px" }} onClick={this.handleClick} />
-                    </Flex>
-                    <div className="text-muted" style={{ fontSize: "12px" }}>
-                        Started <RelativeTime time={detail.status[0].timestamp} /> by {detail.user.id}
-                    </div>
+                <ViewHeader title={taskName}>
+                    <ViewHeaderTitle>
+                        <span>
+                            {taskName} <JobDetailBadge color={color}>{latest.state}</JobDetailBadge>
+                        </span>
+                        <ViewHeaderIcons>
+                            <Icon color="red" name="trash" style={{ fontSize: "18px" }} onClick={this.handleClick} />
+                        </ViewHeaderIcons>
+                    </ViewHeaderTitle>
+                    <ViewHeaderAttribution time={detail.status[0].timestamp} userId={detail.user.id} />
                 </ViewHeader>
 
                 <Table>

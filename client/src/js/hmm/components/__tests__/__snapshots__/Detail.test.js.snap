@@ -3,11 +3,11 @@
 exports[`<HMMDetail /> should render 1`] = `
 <div>
   <ViewHeader
-    title="foo - HMMs"
+    title="foo"
   >
-    <strong>
+    <ViewHeader__ViewHeaderTitle>
       foo
-    </strong>
+    </ViewHeader__ViewHeaderTitle>
   </ViewHeader>
   <Table>
     <tbody>

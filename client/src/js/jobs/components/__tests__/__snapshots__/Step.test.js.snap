@@ -50,7 +50,7 @@ exports[`<JobStepIcon /> renders correct icon when state running 1`] = `
 
 exports[`<JobStepIcon /> renders correct icon when state waiting 1`] = `
 <Icon
-  color="blue"
+  color="purple"
   faStyle="fas"
   fixedWidth={true}
   name="pause"

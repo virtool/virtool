@@ -8,11 +8,11 @@ import {
     BreadcrumbItem,
     LoadingPlaceholder,
     NotFound,
-    RelativeTime,
     TabLink,
     Tabs,
     ViewHeader,
-    ViewHeaderAttribution
+    ViewHeaderAttribution,
+    ViewHeaderTitle
 } from "../../base";
 import { getIndex, getIndexHistory } from "../actions";
 import IndexChanges from "./Changes";
@@ -52,8 +52,10 @@ export class IndexDetail extends React.Component {
             <div>
                 <IndexDetailBreadCrumb refDetail={this.props.refDetail} version={version} />
 
-                <ViewHeader title={title}>Index {version}</ViewHeader>
-                <ViewHeaderAttribution time={created_at} user={user.id} />
+                <ViewHeader title={title}>
+                    <ViewHeaderTitle>Index {version}</ViewHeaderTitle>
+                    <ViewHeaderAttribution time={created_at} user={user.id} />
+                </ViewHeader>
 
                 <Tabs>
                     <TabLink to={`/refs/${refId}/indexes/${indexId}/general`}>General</TabLink>

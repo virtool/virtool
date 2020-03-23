@@ -3,11 +3,11 @@
 exports[`<HMMSettings /> should render 1`] = `
 <div>
   <ViewHeader
-    title="Settings - HMMs"
+    title="HMM Settings"
   >
-    <strong>
+    <ViewHeader__ViewHeaderTitle>
       HMM Settings
-    </strong>
+    </ViewHeader__ViewHeaderTitle>
   </ViewHeader>
   <Connect(HMMPurge) />
 </div>

@@ -1,7 +1,15 @@
-import { isEqual } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Alert, Icon, LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader } from "../../base";
+import {
+    Alert,
+    Badge,
+    Icon,
+    LoadingPlaceholder,
+    NoneFoundBox,
+    ScrollList,
+    ViewHeader,
+    ViewHeaderTitle
+} from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { findSubtractions } from "../actions";
 import CreateSubtraction from "./Create";
@@ -13,14 +21,6 @@ export class SubtractionList extends React.Component {
         if (!this.props.fetched) {
             this.props.onLoadNextPage(this.props.term, 1);
         }
-    }
-
-    shouldComponentUpdate(nextProps) {
-        return (
-            !isEqual(nextProps.documents, this.props.documents) ||
-            !isEqual(nextProps.isLoading, this.props.isLoading) ||
-            !isEqual(nextProps.total_count, this.props.total_count)
-        );
     }
 
     renderRow = index => <SubtractionItem key={index} index={index} />;
@@ -59,7 +59,11 @@ export class SubtractionList extends React.Component {
 
         return (
             <div>
-                <ViewHeader title="Subtraction" totalCount={this.props.total_count} />
+                <ViewHeader title="Subtraction">
+                    <ViewHeaderTitle>
+                        Subtraction <Badge>{this.props.total_count}</Badge>
+                    </ViewHeaderTitle>
+                </ViewHeader>
 
                 {alert}
 

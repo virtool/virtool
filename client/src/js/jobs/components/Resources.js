@@ -3,7 +3,7 @@ import styled from "styled-components";
 import Gauge from "react-svg-gauge";
 import { map, mean, get } from "lodash-es";
 import { connect } from "react-redux";
-import { Flex, FlexItem, LoadingPlaceholder, NotFound, SectionHeader } from "../../base";
+import { Flex, FlexItem, LoadingPlaceholder, NotFound, SectionHeader, ViewHeader, ViewHeaderTitle } from "../../base";
 import { getResources } from "../actions";
 
 const color = "#d44b40";
@@ -62,7 +62,9 @@ class JobsResources extends React.Component {
 
         return (
             <div>
-                <h3 style={{ marginBottom: "30px" }}>System Resources</h3>
+                <ViewHeader titl="Resources">
+                    <ViewHeaderTitle>System Resources</ViewHeaderTitle>
+                </ViewHeader>
 
                 <JobsResourcesHeader>CPU Utilization</JobsResourcesHeader>
 

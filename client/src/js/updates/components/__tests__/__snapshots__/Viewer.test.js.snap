@@ -6,9 +6,6 @@ exports[`<SoftwareUpdateViewer /> should render when releases available 1`] = `
 <div
   className="settings-container"
 >
-  <Viewer__SoftwareUpdateViewerHeader>
-    Software Updates
-  </Viewer__SoftwareUpdateViewerHeader>
   <Viewer__SoftwareUpdateViewerBody>
     <Connect(Releases) />
     <Connect(SoftwareChannels) />

@@ -50,7 +50,7 @@ export const JobStepDescription = ({ stage, state, task, timestamp }) => {
 
 export const JobStepIcon = ({ complete, state }) => {
     if (state === "waiting") {
-        return <Icon name="pause" color="blue" fixedWidth />;
+        return <Icon name="pause" color="purple" fixedWidth />;
     }
 
     if (complete) {

@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "react-bootstrap";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Box, LoadingPlaceholder, ScrollList, ViewHeader } from "../../base";
+import { Badge, Box, LoadingPlaceholder, ScrollList, ViewHeader, ViewHeaderTitle } from "../../base";
 import { checkAdminOrPermission, routerLocationHasState } from "../../utils/utils";
 import { findReferences, remoteReference } from "../actions";
 import { getHasOfficial, getTerm } from "../selectors";
@@ -45,7 +45,11 @@ class ReferenceList extends React.Component {
 
         return (
             <div>
-                <ViewHeader title="References" totalCount={this.props.total_count} />
+                <ViewHeader title="References">
+                    <ViewHeaderTitle>
+                        References <Badge>{this.props.total_count}</Badge>
+                    </ViewHeaderTitle>
+                </ViewHeader>
 
                 <ReferenceToolbar />
 
