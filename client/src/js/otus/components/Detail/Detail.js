@@ -3,7 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Redirect, Route, Switch } from "react-router-dom";
 import styled from "styled-components";
-import { Icon, LoadingPlaceholder, NotFound, TabLink, Tabs, ViewHeader } from "../../../base";
+import { Icon, LoadingPlaceholder, NotFound, TabLink, Tabs, ViewHeader, ViewHeaderTitle } from "../../../base";
 import { Breadcrumb, BreadcrumbItem } from "../../../base/Breadcrumb";
 import { checkRefRight } from "../../../utils/utils";
 import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
@@ -104,7 +104,9 @@ class OTUDetail extends React.Component {
 
         return (
             <div>
-                <ViewHeader title={`${name} - OTU`} />
+                <ViewHeader title={name}>
+                    <ViewHeaderTitle>{name}</ViewHeaderTitle>
+                </ViewHeader>
 
                 <Breadcrumb>
                     <BreadcrumbItem to="/refs/">References</BreadcrumbItem>

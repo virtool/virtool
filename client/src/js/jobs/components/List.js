@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader } from "../../base";
+import { Badge, LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader, ViewHeaderTitle } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { findJobs } from "../actions";
 import { getTerm } from "../selectors";
@@ -32,7 +32,11 @@ export class JobsList extends React.Component {
 
         return (
             <div>
-                <ViewHeader title="Jobs" totalCount={this.props.total_count} />
+                <ViewHeader title="Jobs">
+                    <ViewHeaderTitle>
+                        Jobs <Badge>{this.props.total_count}</Badge>
+                    </ViewHeaderTitle>
+                </ViewHeader>
 
                 <JobsToolbar />
 

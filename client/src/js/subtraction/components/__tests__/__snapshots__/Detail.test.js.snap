@@ -2,14 +2,14 @@
 
 exports[`<SubtractionDetail /> should not render icons when [canModify=false] 1`] = `
 <div>
-  <Detail__SubtractionDetailHeader
-    title="foo - Subtraction"
+  <ViewHeader
+    title="foo"
   >
-    <strong>
+    <ViewHeader__ViewHeaderTitle>
       foo
-    </strong>
-    <span />
-  </Detail__SubtractionDetailHeader>
+      <ViewHeader__ViewHeaderIcons />
+    </ViewHeader__ViewHeaderTitle>
+  </ViewHeader>
   <Table>
     <tbody>
       <tr>
@@ -64,22 +64,22 @@ exports[`<SubtractionDetail /> should not render icons when [canModify=false] 1`
 
 exports[`<SubtractionDetail /> should render 1`] = `
 <div>
-  <Detail__SubtractionDetailHeader
-    title="foo - Subtraction"
+  <ViewHeader
+    title="foo"
   >
-    <strong>
+    <ViewHeader__ViewHeaderTitle>
       foo
-    </strong>
-    <span>
-      <Icon
-        color="orange"
-        faStyle="fas"
-        fixedWidth={false}
-        name="pencil-alt"
-        onClick={[Function]}
-      />
-    </span>
-  </Detail__SubtractionDetailHeader>
+      <ViewHeader__ViewHeaderIcons>
+        <Icon
+          color="orange"
+          faStyle="fas"
+          fixedWidth={false}
+          name="pencil-alt"
+          onClick={[Function]}
+        />
+      </ViewHeader__ViewHeaderIcons>
+    </ViewHeader__ViewHeaderTitle>
+  </ViewHeader>
   <Table>
     <tbody>
       <tr>
@@ -144,34 +144,29 @@ exports[`<SubtractionDetail /> should render pending message when subtraction is
 
 exports[`<SubtractionDetail /> should render remove button when there are no linked samples 1`] = `
 <div>
-  <Detail__SubtractionDetailHeader
-    title="foo - Subtraction"
+  <ViewHeader
+    title="foo"
   >
-    <strong>
+    <ViewHeader__ViewHeaderTitle>
       foo
-    </strong>
-    <span>
-      <Icon
-        color="red"
-        faStyle="fas"
-        fixedWidth={false}
-        name="trash"
-        onClick={[MockFunction]}
-        style={
-          Object {
-            "paddingLeft": "5px",
-          }
-        }
-      />
-      <Icon
-        color="orange"
-        faStyle="fas"
-        fixedWidth={false}
-        name="pencil-alt"
-        onClick={[Function]}
-      />
-    </span>
-  </Detail__SubtractionDetailHeader>
+      <ViewHeader__ViewHeaderIcons>
+        <Icon
+          color="orange"
+          faStyle="fas"
+          fixedWidth={false}
+          name="pencil-alt"
+          onClick={[Function]}
+        />
+        <Icon
+          color="red"
+          faStyle="fas"
+          fixedWidth={false}
+          name="trash"
+          onClick={[MockFunction]}
+        />
+      </ViewHeader__ViewHeaderIcons>
+    </ViewHeader__ViewHeaderTitle>
+  </ViewHeader>
   <Table>
     <tbody>
       <tr>

@@ -2,7 +2,7 @@ import { forEach, includes, pull, slice } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import CreateAnalysis from "../../analyses/components/Create/Create";
-import { LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader } from "../../base";
+import { Badge, LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader, ViewHeaderTitle } from "../../base";
 import { findHmms } from "../../hmm/actions";
 import { listReadyIndexes } from "../../indexes/actions";
 import { findSamples } from "../actions";
@@ -85,7 +85,11 @@ export class SamplesList extends React.Component {
 
         return (
             <div>
-                <ViewHeader title="Samples" totalCount={this.props.total_count} />
+                <ViewHeader title="Samples">
+                    <ViewHeaderTitle>
+                        Samples <Badge>{this.props.total_count}</Badge>
+                    </ViewHeaderTitle>
+                </ViewHeader>
 
                 <SampleToolbar />
 

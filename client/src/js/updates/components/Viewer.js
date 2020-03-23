@@ -11,11 +11,6 @@ const SoftwareUpdateViewerBody = styled.div`
     align-items: flex-start;
 `;
 
-const SoftwareUpdateViewerHeader = styled.h3`
-    font-size: 14px;
-    font-weight: bold;
-`;
-
 export class SoftwareUpdateViewer extends React.Component {
     componentDidMount() {
         this.props.onGet();
@@ -28,7 +23,6 @@ export class SoftwareUpdateViewer extends React.Component {
 
         return (
             <div className="settings-container">
-                <SoftwareUpdateViewerHeader>Software Updates</SoftwareUpdateViewerHeader>
                 <SoftwareUpdateViewerBody>
                     <Releases />
                     <Channels />

@@ -16,26 +16,15 @@ exports[`<IndexDetail /> should render 1`] = `
     version={3}
   />
   <ViewHeader
-    title="Index 3 - Indexes - Virtool"
+    title="Index 3 - Foo"
   >
-    <strong>
+    <ViewHeader__ViewHeaderTitle>
       Index 
       3
-    </strong>
-    <div
-      className="text-muted"
-      style={
-        Object {
-          "fontSize": "12px",
-        }
-      }
-    >
-      Created 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
-      />
-       by 
-    </div>
+    </ViewHeader__ViewHeaderTitle>
+    <ViewHeader__ViewHeaderAttribution
+      time="2018-02-14T17:12:00.000000Z"
+    />
   </ViewHeader>
   <Tabs>
     <TabLink

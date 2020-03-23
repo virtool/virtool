@@ -8,10 +8,11 @@ import {
     BreadcrumbItem,
     LoadingPlaceholder,
     NotFound,
-    RelativeTime,
     TabLink,
     Tabs,
-    ViewHeader
+    ViewHeader,
+    ViewHeaderAttribution,
+    ViewHeaderTitle
 } from "../../base";
 import { getIndex, getIndexHistory } from "../actions";
 import IndexChanges from "./Changes";
@@ -45,15 +46,15 @@ export class IndexDetail extends React.Component {
         const { version, created_at, user } = this.props.detail;
         const refId = this.props.refDetail.id;
 
+        const title = `Index ${version} - ${this.props.refDetail.name}`;
+
         return (
             <div>
                 <IndexDetailBreadCrumb refDetail={this.props.refDetail} version={version} />
 
-                <ViewHeader title={`Index ${version} - Indexes - Virtool`}>
-                    <strong>Index {version}</strong>
-                    <div className="text-muted" style={{ fontSize: "12px" }}>
-                        Created <RelativeTime time={created_at} /> by {user.id}
-                    </div>
+                <ViewHeader title={title}>
+                    <ViewHeaderTitle>Index {version}</ViewHeaderTitle>
+                    <ViewHeaderAttribution time={created_at} user={user.id} />
                 </ViewHeader>
 
                 <Tabs>

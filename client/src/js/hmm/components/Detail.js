@@ -12,7 +12,8 @@ import {
     LoadingPlaceholder,
     NotFound,
     Table,
-    ViewHeader
+    ViewHeader,
+    ViewHeaderTitle
 } from "../../base";
 import { getHmm } from "../actions";
 import { ClusterMember } from "./ClusterMember";
@@ -93,10 +94,13 @@ export class HMMDetail extends React.Component {
                 {name}
             </Label>
         ));
+
+        const title = this.props.detail.names[0];
+
         return (
             <div>
-                <ViewHeader title={`${this.props.detail.names[0]} - HMMs`}>
-                    <strong>{this.props.detail.names[0]}</strong>
+                <ViewHeader title={title}>
+                    <ViewHeaderTitle>{title}</ViewHeaderTitle>
                 </ViewHeader>
 
                 <Table>

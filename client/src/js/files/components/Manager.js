@@ -1,7 +1,17 @@
 import { capitalize, forEach } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Alert, Icon, LoadingPlaceholder, NoneFoundBox, ScrollList, UploadBar, ViewHeader } from "../../base";
+import {
+    Alert,
+    Badge,
+    Icon,
+    LoadingPlaceholder,
+    NoneFoundBox,
+    ScrollList,
+    UploadBar,
+    ViewHeader,
+    ViewHeaderTitle
+} from "../../base";
 import { checkAdminOrPermission, createRandomString } from "../../utils/utils";
 import { findFiles, upload } from "../actions";
 import { filesSelector } from "../selectors";
@@ -28,8 +38,6 @@ class FileManager extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const titleType = this.props.fileType === "reads" ? "Read" : capitalize(this.props.fileType);
-
         let toolbar;
 
         if (this.props.canUpload) {
@@ -52,9 +60,15 @@ class FileManager extends React.Component {
             noneFound = <NoneFoundBox noun="files" />;
         }
 
+        const title = `${this.props.fileType === "reads" ? "Read" : capitalize(this.props.fileType)} Files`;
+
         return (
             <div>
-                <ViewHeader title={`${titleType} Files`} totalCount={this.props.total_count} />
+                <ViewHeader title={title}>
+                    <ViewHeaderTitle>
+                        {title} <Badge>{this.props.total_count}</Badge>
+                    </ViewHeaderTitle>
+                </ViewHeader>
 
                 {toolbar}
                 {noneFound}

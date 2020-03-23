@@ -4,8 +4,14 @@ exports[`<JobsList /> should render 1`] = `
 <div>
   <ViewHeader
     title="Jobs"
-    totalCount={5}
-  />
+  >
+    <ViewHeader__ViewHeaderTitle>
+      Jobs 
+      <Badge>
+        5
+      </Badge>
+    </ViewHeader__ViewHeaderTitle>
+  </ViewHeader>
   <Connect(JobsToolbar) />
   <ScrollList
     documents={
@@ -23,20 +29,24 @@ exports[`<JobsList /> should render 1`] = `
 </div>
 `;
 
-exports[`<JobsList /> should render when [this.props.documents === null] 1`] = `<LoadingPlaceholder />`;
-
-exports[`<JobsList /> should render when [this.props.documents.length === false] 1`] = `
+exports[`<JobsList /> should render when [this.props.documents.length=0] 1`] = `
 <div>
   <ViewHeader
     title="Jobs"
-    totalCount={5}
-  />
+  >
+    <ViewHeader__ViewHeaderTitle>
+      Jobs 
+      <Badge>
+        5
+      </Badge>
+    </ViewHeader__ViewHeaderTitle>
+  </ViewHeader>
   <Connect(JobsToolbar) />
   <NoneFoundBox
     noun="jobs"
   />
   <ScrollList
-    documents={Object {}}
+    documents={Array []}
     onLoadNextPage={[Function]}
     page={2}
     pageCount={3}
@@ -44,3 +54,5 @@ exports[`<JobsList /> should render when [this.props.documents.length === false]
   />
 </div>
 `;
+
+exports[`<JobsList /> should render when [this.props.documents=null] 1`] = `<LoadingPlaceholder />`;

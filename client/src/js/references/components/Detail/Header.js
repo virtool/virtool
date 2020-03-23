@@ -3,18 +3,16 @@ import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { pushState } from "../../../app/actions";
-import { Attribution, DropdownIcon, DropdownItem, Flex, FlexItem, Icon, ViewHeader } from "../../../base";
+import {
+    DropdownIcon,
+    DropdownItem,
+    Icon,
+    ViewHeader,
+    ViewHeaderAttribution,
+    ViewHeaderIcons,
+    ViewHeaderTitle
+} from "../../../base";
 import { checkRefRight, followDownload } from "../../../utils/utils";
-
-const StyledHeaderIcons = styled.div`
-    align-items: center;
-    display: flex;
-
-    i.fas {
-        font-size: 20px;
-        margin-left: 5px;
-    }
-`;
 
 const ExportDropdownItem = styled.div`
     width: 220px;
@@ -98,20 +96,15 @@ export const ReferenceDetailHeader = ({
     }
 
     return (
-        <ViewHeader title={`${name} - References`}>
-            <Flex alignItems="flex-end">
-                <FlexItem grow={1}>
-                    <Flex>
-                        <strong>{name}</strong>
-                    </Flex>
-                </FlexItem>
-
-                <StyledHeaderIcons>
+        <ViewHeader title={name}>
+            <ViewHeaderTitle>
+                {name}
+                <ViewHeaderIcons>
                     {headerIcon}
                     {exportButton}
-                </StyledHeaderIcons>
-            </Flex>
-            <Attribution time={createdAt} user={userId} />
+                </ViewHeaderIcons>
+            </ViewHeaderTitle>
+            <ViewHeaderAttribution time={createdAt} user={userId} />
         </ViewHeader>
     );
 };

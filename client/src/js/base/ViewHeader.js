@@ -1,39 +1,49 @@
-import { isUndefined } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import Helmet from "react-helmet";
 import styled from "styled-components";
-import { Attribution, Badge, Flex, FlexItem } from "./index";
+import { Attribution, Badge } from "./index";
 
-const StyledViewHeader = styled.h2`
-    font-size: 26px;
-    margin-bottom: 20px;
+export const ViewHeaderAttribution = styled(Attribution)`
+    color: ${props => props.theme.color.darkgrey};
+    font-size: ${props => props.theme.fontSize.md};
+    margin-top: 5px;
+`;
 
-    ${Attribution} {
-        color: ${props => props.theme.color.greyDark};
-        font-size: 14px;
-    }
+export const ViewHeaderIcons = styled.div`
+    align-items: center;
+    display: flex;
+    font-size: ${props => props.theme.fontSize.lg};
+    margin-left: auto;
 
-    i.fas {
-        font-size: 20px;
+    > *:not(:last-child) {
+        margin-right: 5px;
     }
 `;
 
-/**
- * A reusable header shown at the top of views that browse through paged items. For example, the OTU browser
- * contains a ``<ViewHeader />`` component with the title 'OTUs', and optional children.
- *
- */
-export const ViewHeader = ({ className, title, totalCount, children }) => (
+export const ViewHeaderTitle = styled.h2`
+    align-items: center;
+    display: flex;
+    font-size: ${props => props.theme.fontSize.xl};
+    font-weight: bold;
+    margin: 0;
+
+    ${Badge} {
+        border-radius: 10px;
+        font-size: ${props => props.theme.fontSize.md};
+        margin-left: 7px;
+        padding: 5px 7px;
+    }
+`;
+
+const StyledViewHeader = styled.div`
+    display: block;
+    margin: 10px 0 20px;
+`;
+
+export const ViewHeader = ({ className, title, children }) => (
     <StyledViewHeader className={className}>
         <Helmet title={title} />
-        {isUndefined(totalCount) ? null : (
-            <Flex alignItems="flex-end">
-                <FlexItem grow={0} shrink={0}>
-                    <strong>{title}</strong> <Badge>{totalCount}</Badge>
-                </FlexItem>
-            </Flex>
-        )}
         {children}
     </StyledViewHeader>
 );

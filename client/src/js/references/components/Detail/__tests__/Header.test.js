@@ -100,7 +100,7 @@ describe("<ReferenceDetailHeader/>", () => {
         const wrapper = shallow(<ReferenceDetailHeader {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
-    it("should render when[showIcons=false]", () => {
+    it("should render when [showIcons=false]", () => {
         props.showIcons = false;
         const wrapper = shallow(<ReferenceDetailHeader {...props} />);
         expect(wrapper).toMatchSnapshot();

@@ -2,21 +2,14 @@ import { get } from "lodash-es";
 import numbro from "numbro";
 import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import { Icon, LoadingPlaceholder, NotFound, Table, ViewHeader } from "../../base";
+import { Icon, LoadingPlaceholder, NotFound, Table, ViewHeader, ViewHeaderIcons, ViewHeaderTitle } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { getSubtraction } from "../actions";
 import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";
 
 const calculateGC = nucleotides => numbro(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000");
-
-const SubtractionDetailHeader = styled(ViewHeader)`
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
-`;
 
 export class SubtractionDetail extends React.Component {
     constructor(props) {
@@ -57,21 +50,21 @@ export class SubtractionDetail extends React.Component {
             editIcon = <Icon name="pencil-alt" color="orange" onClick={() => this.setState({ showEdit: true })} />;
 
             if (!detail.linked_samples.length) {
-                removeIcon = (
-                    <Icon name="trash" color="red" onClick={this.props.onShowRemove} style={{ paddingLeft: "5px" }} />
-                );
+                removeIcon = <Icon name="trash" color="red" onClick={this.props.onShowRemove} />;
             }
         }
 
         return (
             <div>
-                <SubtractionDetailHeader title={`${detail.id} - Subtraction`}>
-                    <strong>{detail.id}</strong>
-                    <span>
-                        {removeIcon}
-                        {editIcon}
-                    </span>
-                </SubtractionDetailHeader>
+                <ViewHeader title={detail.id}>
+                    <ViewHeaderTitle>
+                        {detail.id}
+                        <ViewHeaderIcons>
+                            {editIcon}
+                            {removeIcon}
+                        </ViewHeaderIcons>
+                    </ViewHeaderTitle>
+                </ViewHeader>
 
                 <Table>
                     <tbody>
