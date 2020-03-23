@@ -29,7 +29,7 @@ export const Settings = ({ loading }) => {
     return (
         <WideContainer>
             <ViewHeader title="Administration">
-                <strong>Administration</strong>
+                Administration
             </ViewHeader>
 
             <Tabs bsStyle="tabs">

@@ -12,9 +12,7 @@ export const Account = ({ userId, onGet }) => {
 
     return (
         <WideContainer>
-            <ViewHeader title="Account">
-                <strong>Account</strong>
-            </ViewHeader>
+            <ViewHeader title="Account">Account</ViewHeader>
 
             <Tabs>
                 <TabLink to="/account/profile">Profile</TabLink>

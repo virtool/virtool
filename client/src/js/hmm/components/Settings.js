@@ -4,10 +4,7 @@ import HMMPurge from "./Purge";
 
 const HMMSettings = () => (
     <div>
-        <ViewHeader title="Settings - HMMs">
-            <strong>HMM Settings</strong>
-        </ViewHeader>
-
+        <ViewHeader title="HMM Settings">HMM Settings</ViewHeader>
         <HMMPurge />
     </div>
 );

@@ -3,7 +3,17 @@ import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { pushState } from "../../../app/actions";
-import { Attribution, DropdownIcon, DropdownItem, Flex, FlexItem, Icon, ViewHeader } from "../../../base";
+import {
+    Attribution,
+    DropdownIcon,
+    DropdownItem,
+    Flex,
+    FlexItem,
+    Icon,
+    ViewHeader,
+    ViewHeaderAttribution,
+    ViewHeaderIcons
+} from "../../../base";
 import { checkRefRight, followDownload } from "../../../utils/utils";
 
 const StyledHeaderIcons = styled.div`
@@ -98,21 +108,16 @@ export const ReferenceDetailHeader = ({
     }
 
     return (
-        <ViewHeader title={`${name} - References`}>
-            <Flex alignItems="flex-end">
-                <FlexItem grow={1}>
-                    <Flex>
-                        <strong>{name}</strong>
-                    </Flex>
-                </FlexItem>
-
-                <StyledHeaderIcons>
+        <React.Fragment>
+            <ViewHeader title={name}>
+                {name}
+                <ViewHeaderIcons>
                     {headerIcon}
                     {exportButton}
-                </StyledHeaderIcons>
-            </Flex>
-            <Attribution time={createdAt} user={userId} />
-        </ViewHeader>
+                </ViewHeaderIcons>
+            </ViewHeader>
+            <ViewHeaderAttribution time={createdAt} user={userId} />
+        </React.Fragment>
     );
 };
 

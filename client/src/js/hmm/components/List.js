@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader } from "../../base";
+import { Badge, LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader } from "../../base";
 import { findHmms } from "../actions";
 import { getTerm } from "../selectors";
 import HMMInstaller from "./Installer";
@@ -47,8 +47,11 @@ class HMMList extends React.Component {
 
             return (
                 <div>
-                    <ViewHeader title="HMMs" totalCount={this.props.found_count} />
+                    <ViewHeader title="HMMs">
+                        HMMs <Badge>{this.props.found_count}</Badge>
+                    </ViewHeader>
                     <HMMToolbar />
+
                     {list}
                 </div>
             );

@@ -28,8 +28,6 @@ class FileManager extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const titleType = this.props.fileType === "reads" ? "Read" : capitalize(this.props.fileType);
-
         let toolbar;
 
         if (this.props.canUpload) {
@@ -52,9 +50,13 @@ class FileManager extends React.Component {
             noneFound = <NoneFoundBox noun="files" />;
         }
 
+        const title = `${this.props.fileType === "reads" ? "Read" : capitalize(this.props.fileType)} Files`;
+
         return (
             <div>
-                <ViewHeader title={`${titleType} Files`} totalCount={this.props.total_count} />
+                <ViewHeader title={title}>
+                    {title} <Badge>{this.props.total_count}</Badge>
+                </ViewHeader>
 
                 {toolbar}
                 {noneFound}
