@@ -1,17 +1,25 @@
 import React, { useCallback } from "react";
+import styled from "styled-components";
 import { connect } from "react-redux";
+import { Badge } from "../../../base";
 
 import { setActiveHitId } from "../../actions";
 import { getActiveHit, getMatches } from "../../selectors";
 import { AnalysisViewerItem } from "../Viewer/Item";
 
-export const AODPItem = ({ active, name, id, style, onSetActiveId }) => {
+const StyledAODPItem = styled(AnalysisViewerItem)`
+    display: flex;
+    justify-content: space-between;
+`;
+
+export const AODPItem = ({ active, hits, id, name, style, onSetActiveId }) => {
     const handleClick = useCallback(() => onSetActiveId(id), [id]);
 
     return (
-        <AnalysisViewerItem onClick={handleClick} style={style} selected={active}>
+        <StyledAODPItem onClick={handleClick} style={style} selected={active}>
             <strong>{name}</strong>
-        </AnalysisViewerItem>
+            <Badge>{hits}</Badge>
+        </StyledAODPItem>
     );
 };
 
@@ -20,8 +28,8 @@ const mapStateToProps = (state, ownProps) => {
     const matches = getMatches(state);
     const match = matches[ownProps.index];
 
-    const { id, name } = match;
-    return { id, name, active: activeId === id };
+    const { id, identities, name } = match;
+    return { id, name, hits: identities.length, active: activeId === id };
 };
 
 const mapDispatchToProps = dispatch => ({

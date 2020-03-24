@@ -10,6 +10,11 @@ export const Table = styled.table`
     margin-bottom: 15px;
     width: 100%;
 
+    caption {
+        caption-side: top;
+        padding: 0 0 10px;
+    }
+
     tbody {
         display: table-row-group;
         vertical-align: middle;

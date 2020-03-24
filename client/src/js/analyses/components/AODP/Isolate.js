@@ -1,39 +1,89 @@
+import { map, max, mean, min } from "lodash-es";
 import React from "react";
-import { map, min, max, mean } from "lodash-es";
-
 import styled from "styled-components";
-import { connect } from "react-redux";
-import { getActiveHit } from "../../selectors";
-import { BoxGroup, Table } from "../../../base";
+import { getBorder } from "../../../app/theme";
+import { BoxGroupSection, Label, Table } from "../../../base";
+import { formatIsolateName } from "../../../utils/utils";
 
-const StyledTable = styled(Table)`
-    text-align: center;
+const StyledAODPIsolate = styled(BoxGroupSection)`
+    h4 {
+        font-size: ${props => props.theme.fontSize.md};
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
 
-    th {
-        text-align: center;
+    ${Table} {
+        border-left: none;
+        border-top: none;
+        position: relative;
+        table-layout: fixed;
+        width: 100%;
+
+        thead > tr,
+        tbody > tr {
+            td,
+            th {
+                width: 16.6%;
+
+                &:nth-child(1) {
+                    width: 33.3%;
+                }
+            }
+
+            td:not(:first-child),
+            th:not(:first-child) {
+                text-align: center;
+            }
+        }
+
+        tbody td {
+            border-left: ${getBorder};
+        }
+
+        thead tr:not(:first-child) th {
+            border-left: ${getBorder};
+        }
+
+        thead > tr:first-child {
+            th {
+                padding: 3px 0;
+                width: auto;
+            }
+
+            th:last-child {
+                background-color: ${props => props.theme.color.greyLightest};
+                border-top: ${getBorder};
+                color: ${props => props.theme.color.greyDarkest};
+                font-size: ${props => props.theme.fontSize.sm};
+            }
+        }
     }
 `;
 
-const Round = num => {
-    return Math.round(num * 100) / 100;
-};
+export const AODPIsolate = props => {
+    const { sequences } = props;
 
-export const IsolateItem = isolate => {
-    const components = map(isolate.sequences, sequence => (
-        <tr key={sequence.id}>
-            <td>{sequence.accession}</td>
-            <td>{sequence.hit ? sequence.hit.length : 0} </td>
-
-            <td>{sequence.identities.length ? Round(min(sequence.identities)) : "-"}</td>
-            <td>{sequence.identities.length ? Round(mean(sequence.identities)) : "-"}</td>
-            <td>{sequence.identities.length ? Round(max(sequence.identities)) : "-"}</td>
+    const sequenceComponents = map(sequences, ({ accession, hit, id, identities }) => (
+        <tr key={id}>
+            <td>{accession}</td>
+            <td>{hit ? hit.length : 0} </td>
+            <td>{identities.length ? min(identities).toFixed(1) : "-"}</td>
+            <td>{identities.length ? mean(identities).toFixed(1) : "-"}</td>
+            <td>{identities.length ? max(identities).toFixed(1) : "-"}</td>
         </tr>
     ));
 
     return (
-        <BoxGroup style={{ marginTop: "10px" }}>
-            <StyledTable>
+        <StyledAODPIsolate>
+            <h4>
+                <Label>Isolate</Label> {formatIsolateName(props)}
+            </h4>
+            <Table>
                 <thead>
+                    <tr>
+                        <th colSpan={2} />
+                        <th colSpan={3}>Identity (%)</th>
+                    </tr>
                     <tr>
                         <th>Sequence</th>
                         <th>Hits</th>
@@ -42,17 +92,8 @@ export const IsolateItem = isolate => {
                         <th>Max</th>
                     </tr>
                 </thead>
-                <tbody>{components}</tbody>
-            </StyledTable>
-        </BoxGroup>
+                <tbody>{sequenceComponents}</tbody>
+            </Table>
+        </StyledAODPIsolate>
     );
 };
-
-const mapStateToProps = state => {
-    const hit = getActiveHit(state);
-    return {
-        result: hit
-    };
-};
-
-export default connect(mapStateToProps)(IsolateItem);

@@ -36,10 +36,10 @@ export const getFuse = createSelector([getAlgorithm, getResults], (algorithm, re
 
 export const getFilterOTUs = state => state.analyses.filterOTUs;
 export const getFilterSequences = state => state.analyses.filterSequences;
-export const getAodpFilter = state => state.analyses.aodpFilter;
+export const getFilterAODP = state => state.analyses.filterAODP;
 
 export const getFilterIds = createSelector(
-    [getAodpFilter, getAlgorithm, getResults, getFilterOTUs, getFilterSequences, getMaxReadLength, getReadCount],
+    [getFilterAODP, getAlgorithm, getResults, getFilterOTUs, getFilterSequences, getMaxReadLength, getReadCount],
     (aodpFilter, algorithm, results, filterOTUs, filterSequences, maxReadLength, readCount) => {
         if (algorithm === "nuvs") {
             const filteredResults = filterSequences ? reject(results, { e: undefined }) : results;
@@ -52,8 +52,6 @@ export const getFilterIds = createSelector(
             });
             return map(filteredResults, "id");
         }
-
-        // const filteredResults = filterOTUs ? reject(results, { : undefined }) : results;
 
         if (algorithm === "aodp" && aodpFilter) {
             const fil = filter(results, result => {
@@ -88,8 +86,6 @@ export const getSearchIds = state => state.analyses.searchIds;
 export const getSortKey = state => state.analyses.sortKey;
 
 export const getSortIds = createSelector([getAlgorithm, getResults, getSortKey], (algorithm, results, sortKey) => {
-    console.log(sortKey);
-
     switch (sortKey) {
         case "e":
             return map(sortBy(results, "e"), "id");

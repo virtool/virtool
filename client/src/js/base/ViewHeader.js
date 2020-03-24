@@ -60,13 +60,13 @@ export const SubviewHeader = styled.div`
 `;
 
 export const SubviewHeaderTitle = styled.div`
-    font-size: 16px;
+    font-size: ${props => props.theme.fontSize.lg};
     font-weight: bold;
     margin-bottom: 0;
 `;
 
 export const SubviewHeaderAttribution = styled.span`
-    color: #777777;
-    font-size: 12px;
+    color: ${props => props.theme.color.greyDarkest};
+    font-size: ${props => props.theme.fontSize.sm};
     font-weight: bold;
 `;
