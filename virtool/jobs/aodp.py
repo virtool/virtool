@@ -6,7 +6,9 @@ from collections import defaultdict
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
+
 import virtool.jobs.analysis
+import virtool.utils
 
 AODP_MAX_HOMOLOGY = 0
 AODP_OLIGO_SIZE = 8
@@ -44,9 +46,6 @@ class Job(virtool.jobs.analysis.Job):
         )
 
     def prepare_index(self):
-        import pprint
-        pprint.pprint(self.params)
-
         shutil.copy(
             self.params["index_path"],
             self.params["local_index_path"]
@@ -66,8 +65,23 @@ class Job(virtool.jobs.analysis.Job):
 
         self.run_subprocess(command)
 
+        joined_path = f"{output_prefix}.extendedFrags.fastq"
+        remainder_path = f"{output_prefix}.notCombined_1.fastq"
+        hist_path = f"{output_prefix}.hist"
+
+        self.results = {
+            "join_histogram": parse_flash_hist(hist_path),
+            "joined_pair_count": virtool.utils.file_length(joined_path) / 4,
+            "remainder_pair_count": virtool.utils.file_length(remainder_path) / 4
+        }
+
     def deduplicate_reads(self):
+        """
+        Remove duplicate reads. Store the counts for unique reads.
+
+        """
         counts = defaultdict(int)
+
         joined_path = os.path.join(self.params["analysis_path"], "flash.extendedFrags.fastq")
         output_path = os.path.join(self.params["analysis_path"], "unique.fa")
 
@@ -138,9 +152,7 @@ class Job(virtool.jobs.analysis.Job):
                     "count": self.intermediate["sequence_counts"][read_id]
                 })
 
-        self.results = {
-            "results": parsed
-        }
+        self.results["results"] = parsed
 
     def import_results(self):
         analysis_id = self.params["analysis_id"]
@@ -171,3 +183,13 @@ def parse_joined_fastq(path: str, counts: defaultdict):
             yield SeqRecord(record.seq, id=sequence_id)
 
         counts[sequence_id] += 1
+
+
+def parse_flash_hist(path):
+    hist = list()
+
+    with open(path, "r") as f:
+        for line in f:
+            hist.append([int(i) for i in line.rstrip().split()])
+
+    return hist
