@@ -8,8 +8,6 @@ import React, { useEffect, useRef } from "react";
 import { Flex } from "../../../base";
 
 const createChart = (element, data, width) => {
-    let svg = select(element).append("svg");
-
     const margin = {
         top: 10,
         left: 15,
@@ -18,12 +16,6 @@ const createChart = (element, data, width) => {
     };
 
     const yMax = max(data);
-
-    svg.append("text")
-        .text(yMax.toString())
-        .remove();
-
-    svg.remove();
 
     const length = data.length;
 
@@ -39,8 +31,12 @@ const createChart = (element, data, width) => {
         .range([height, 0])
         .domain([0, yMax]);
 
+    select(element)
+        .selectAll("*")
+        .remove();
+
     // Construct the SVG canvas.
-    svg = select(element)
+    const svg = select(element)
         .append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
