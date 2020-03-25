@@ -27,8 +27,8 @@ const MultiSummary = ({ samples, selected }) => {
     );
 };
 
-const getInitialState = ({ defaultSubtraction }) => ({
-    algorithm: "pathoscope_bowtie",
+const getInitialState = ({ defaultSubtraction, libraryType }) => ({
+    algorithm: libraryType === "amplicon" ? "aodp" : "pathoscope_bowtie",
     selected: [],
     subtraction: defaultSubtraction,
     error: ""

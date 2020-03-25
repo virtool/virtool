@@ -87,6 +87,11 @@ const draw = (element, data, length, meta, yMax, xMin, showYAxis) => {
 const StyledCoverageChart = styled.div`
     display: inline-block;
     margin-top: 5px;
+
+    path.depth-area {
+        fill: ${props => props.theme.color.blue};
+        stroke: ${props => props.theme.color.blue};
+    }
 `;
 
 export const CoverageChart = ({ data, definition, id, length, yMax, showYAxis }) => {

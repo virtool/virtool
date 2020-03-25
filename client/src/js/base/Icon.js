@@ -1,12 +1,13 @@
 import CX from "classnames";
 import React, { useCallback } from "react";
 import PropTypes from "prop-types";
-import { get } from "lodash-es";
+import { capitalize, get } from "lodash-es";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Tooltip } from "./Tooltip";
 
-const getIconColor = ({ color, theme }) => get(theme, ["color", `${color}Dark`], "inherit");
+const getIconColor = ({ color, theme, shade = "dark" }) =>
+    get(theme, ["color", `${color}${capitalize(shade)}`], "inherit");
 
 const StyledIcon = styled.i`
     color: ${getIconColor};
@@ -34,6 +35,7 @@ export const Icon = ({ hoverable, style, ...props }) => {
             style={style}
             onClick={props.onClick ? handleClick : null}
             color={props.color}
+            shade={props.shade}
         />
     );
 

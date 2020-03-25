@@ -159,6 +159,14 @@ def ensure_data_dir(data_path):
         os.makedirs(os.path.join(data_path, subdir), exist_ok=True)
 
 
+def file_length(path):
+    with open(path) as f:
+        for i, l in enumerate(f):
+            pass
+
+    return i + 1
+
+
 def file_stats(path: str) -> dict:
     """
     Return the size and last modification date for the file at `path`.

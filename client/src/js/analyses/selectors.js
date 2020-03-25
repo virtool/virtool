@@ -36,10 +36,10 @@ export const getFuse = createSelector([getAlgorithm, getResults], (algorithm, re
 
 export const getFilterOTUs = state => state.analyses.filterOTUs;
 export const getFilterSequences = state => state.analyses.filterSequences;
-export const getAodpFilter = state => state.analyses.aodpFilter;
+export const getFilterAODP = state => state.analyses.filterAODP;
 
 export const getFilterIds = createSelector(
-    [getAodpFilter, getAlgorithm, getResults, getFilterOTUs, getFilterSequences, getMaxReadLength, getReadCount],
+    [getFilterAODP, getAlgorithm, getResults, getFilterOTUs, getFilterSequences, getMaxReadLength, getReadCount],
     (aodpFilter, algorithm, results, filterOTUs, filterSequences, maxReadLength, readCount) => {
         if (algorithm === "nuvs") {
             const filteredResults = filterSequences ? reject(results, { e: undefined }) : results;
@@ -52,8 +52,6 @@ export const getFilterIds = createSelector(
             });
             return map(filteredResults, "id");
         }
-
-        // const filteredResults = filterOTUs ? reject(results, { : undefined }) : results;
 
         if (algorithm === "aodp" && aodpFilter) {
             const fil = filter(results, result => {
@@ -88,30 +86,31 @@ export const getSearchIds = state => state.analyses.searchIds;
 export const getSortKey = state => state.analyses.sortKey;
 
 export const getSortIds = createSelector([getAlgorithm, getResults, getSortKey], (algorithm, results, sortKey) => {
-    if (sortKey === "e") {
-        return map(sortBy(results, "e"), "id");
-    }
-    if (sortKey === "orfs") {
-        return map(sortBy(results, "annotatedOrfCount").reverse(), "id");
-    }
+    switch (sortKey) {
+        case "e":
+            return map(sortBy(results, "e"), "id");
 
-    if (sortKey === "length") {
-        return map(sortBy(results, "sequence.length").reverse(), "id");
-    }
+        case "orfs":
+            return map(sortBy(results, "annotatedOrfCount").reverse(), "id");
 
-    if (sortKey === "depth") {
-        return map(sortBy(results, "depth"), "id");
-    }
+        case "length":
+            return map(sortBy(results, "sequence.length").reverse(), "id");
 
-    if (sortKey === "coverage") {
-        return map(sortBy(results, "coverage").reverse(), "id");
-    }
+        case "depth":
+            return map(sortBy(results, "depth"), "id");
 
-    if (sortKey === "weight") {
-        return map(sortBy(results, "pi"), "id");
-    }
+        case "coverage":
+            return map(sortBy(results, "coverage").reverse(), "id");
 
-    return map(results, "id");
+        case "weight":
+            return map(sortBy(results, "pi"), "id");
+
+        case "identity":
+            return map(sortBy(results, "identity").reverse(), "id");
+
+        default:
+            return map(results, "id");
+    }
 });
 
 export const getMatches = createSelector(

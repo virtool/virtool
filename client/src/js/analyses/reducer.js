@@ -48,6 +48,19 @@ export const initialState = {
     filterAODP: 0.97
 };
 
+export const getInitialSortKey = action => {
+    switch (action.data.algorithm) {
+        case "nuvs":
+            return "length";
+
+        case "aodp":
+            return "identity";
+
+        default:
+            return "coverage";
+    }
+};
+
 export const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
     const detail = state.detail;
 
@@ -87,7 +100,7 @@ export const updateIdLists = (state, action) => {
         filterIds: null,
         searchIds: null,
         detail,
-        sortKey: action.data.algorithm === "nuvs" ? "length" : "coverage"
+        sortKey: getInitialSortKey(action)
     };
 };
 

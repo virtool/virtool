@@ -5,6 +5,7 @@
     "@sentry/browser": "^5.10.2",
     "classnames": "^2.2.6",
     "connected-react-router": "^6.6.1",
+    "d3-array": "^2.4.0",
     "d3-axis": "^1.0.12",
     "d3-dispatch": "^1.0.6",
     "d3-interpolate": "^1.4.0",

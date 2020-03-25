@@ -1,59 +1,76 @@
-import { map } from "lodash-es";
+import { filter, map, max, mean, min } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
 
 import { connect } from "react-redux";
-import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "../../../base";
-import { formatIsolateName } from "../../../utils/utils";
+import { Badge, BoxGroup, BoxGroupHeader, BoxGroupSection, Icon } from "../../../base";
 import { getActiveHit } from "../../selectors";
-import IsolateItem from "./IsolateItem";
+import { AODPIsolate } from "./Isolate";
 
-const StyledIsolateItem = styled(IsolateItem)`
-    margin-top: 17px;
+const AODPDetailIdentity = styled.div`
+    align-items: center;
+    display: flex;
+
+    > div:first-child {
+        color: ${props => props.theme.color.blue};
+        font-size: 36px;
+    }
+
+    > div:last-child {
+        display: flex;
+        flex-direction: column;
+        font-size: 12px;
+        font-weight: bold;
+        justify-content: center;
+        margin-left: 5px;
+
+        span:first-child {
+            color: ${props => props.theme.color.greenDark};
+        }
+
+        span:last-child {
+            color: ${props => props.theme.color.redDark};
+        }
+    }
 `;
 
-export const AODPDetail = ({ result }) => {
-    let isolateComponents;
-    let overallIdentities;
-    let resultHeader = <BoxGroupSection>No Hits</BoxGroupSection>;
+const AODPDetailOverview = ({ identities }) => {
+    return (
+        <BoxGroupSection>
+            <AODPDetailIdentity>
+                <div>{max(identities)}</div>
+                <div>
+                    <span>~ {mean(identities).toFixed(2)}</span>
+                    <span>
+                        <Icon name="arrow-down" /> {min(identities)}
+                    </span>
+                </div>
+            </AODPDetailIdentity>
+            <div>IDENTITY</div>
+        </BoxGroupSection>
+    );
+};
 
-    if (result) {
-        overallIdentities = result.identities.length;
+export const AODPDetail = ({ name, identities, isolates }) => {
+    const filteredIsolates = filter(isolates, isolate => isolate.identities.length);
 
-        const { isolates } = result;
-        isolateComponents = map(isolates, isolate => (
-            <BoxGroupSection key={isolate.id} isolate={isolate}>
-                <div>{formatIsolateName(isolate)}</div>
-                <strong> {isolate.identities.length} hits</strong>
-                <StyledIsolateItem {...isolate} />
-            </BoxGroupSection>
-        ));
-
-        resultHeader = (
-            <BoxGroupSection>
-                <div>Overall</div>
-                <strong>{overallIdentities} hits</strong>
-            </BoxGroupSection>
-        );
-    }
+    const isolateComponents = map(filteredIsolates, isolate => <AODPIsolate key={isolate.id} {...isolate} />);
 
     return (
         <BoxGroup>
             <BoxGroupHeader>
-                <h2>{result.name}</h2>
+                <h2>
+                    {name} <Badge>{identities.length} hits</Badge>
+                </h2>
             </BoxGroupHeader>
-            {resultHeader}
-
+            <AODPDetailOverview identities={identities} />
             {isolateComponents}
         </BoxGroup>
     );
 };
 
 const mapStateToProps = state => {
-    const hit = getActiveHit(state);
-    return {
-        result: hit
-    };
+    return getActiveHit(state);
 };
 
 export default connect(mapStateToProps)(AODPDetail);

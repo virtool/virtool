@@ -36,17 +36,15 @@ const NavBarItem = styled(NavLink)`
 `;
 
 const NavBar = styled.div`
-    z-index: 1000;
+    background-color: ${props => props.theme.color.primary};
+    color: white;
+    display: flex;
+    height: 45px;
+    justify-content: space-between;
     position: fixed;
     top: 0;
     width: 100%;
-    height: 45px;
-
-    display: flex;
-    justify-content: space-between;
-
-    background-color: teal;
-    color: white;
+    z-index: 1000;
 `;
 
 const NavBarLeft = styled.div`

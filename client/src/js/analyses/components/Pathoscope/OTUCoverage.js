@@ -1,4 +1,5 @@
 import { max } from "lodash-es";
+import styled from "styled-components";
 import { scaleLinear } from "d3-scale";
 import { select } from "d3-selection";
 import { area } from "d3-shape";
@@ -7,8 +8,6 @@ import React, { useEffect, useRef } from "react";
 import { Flex } from "../../../base";
 
 const createChart = (element, data, width) => {
-    let svg = select(element).append("svg");
-
     const margin = {
         top: 10,
         left: 15,
@@ -17,12 +16,6 @@ const createChart = (element, data, width) => {
     };
 
     const yMax = max(data);
-
-    svg.append("text")
-        .text(yMax.toString())
-        .remove();
-
-    svg.remove();
 
     const length = data.length;
 
@@ -38,8 +31,12 @@ const createChart = (element, data, width) => {
         .range([height, 0])
         .domain([0, yMax]);
 
+    select(element)
+        .selectAll("*")
+        .remove();
+
     // Construct the SVG canvas.
-    svg = select(element)
+    const svg = select(element)
         .append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
@@ -59,11 +56,18 @@ const createChart = (element, data, width) => {
     }
 };
 
+const StyledOTUCoverage = styled.div`
+    path.depth-area {
+        fill: ${props => props.theme.color.blue};
+        stroke: ${props => props.theme.color.blue};
+    }
+`;
+
 export const StaticOTUCoverage = ({ id, filled }) => {
     const el = useRef(null);
     useEffect(() => createChart(el.current, filled, el.current.scrollWidth), [id]);
 
-    return <div ref={el} />;
+    return <StyledOTUCoverage ref={el} />;
 };
 
 export default class OTUCoverage extends React.Component {
@@ -101,7 +105,10 @@ export default class OTUCoverage extends React.Component {
     render() {
         return (
             <Flex>
-                <div style={{ display: "flex", flex: "1 0 auto" }} ref={node => (this.chartNode = node)} />
+                <StyledOTUCoverage
+                    style={{ display: "flex", flex: "1 0 auto" }}
+                    ref={node => (this.chartNode = node)}
+                />
             </Flex>
         );
     }

@@ -62,9 +62,7 @@ class JobDetail extends React.Component {
             <div>
                 <ViewHeader title={taskName}>
                     <ViewHeaderTitle>
-                        <span>
-                            {taskName} <JobDetailBadge color={color}>{latest.state}</JobDetailBadge>
-                        </span>
+                        {taskName} <JobDetailBadge color={color}>{latest.state}</JobDetailBadge>
                         <ViewHeaderIcons>
                             <Icon color="red" name="trash" style={{ fontSize: "18px" }} onClick={this.handleClick} />
                         </ViewHeaderIcons>
