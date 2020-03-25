@@ -32,6 +32,7 @@ build_exe_options = {
         "idna",
         "motor",
         "packaging",
+        "ssl",
         "uvloop"
     ]
 }
