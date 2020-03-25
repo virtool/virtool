@@ -34,7 +34,8 @@ build_exe_options = {
         "motor",
         "packaging",
         "ssl",
-        "uvloop"
+        "uvloop",
+        "zipimport"
     ]
 }
 
