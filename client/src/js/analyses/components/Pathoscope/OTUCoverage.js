@@ -23,17 +23,11 @@ const createChart = (element, data, width) => {
 
     width -= 30;
 
-    const x = scaleLinear()
-        .range([0, width])
-        .domain([0, length]);
+    const x = scaleLinear().range([0, width]).domain([0, length]);
 
-    const y = scaleLinear()
-        .range([height, 0])
-        .domain([0, yMax]);
+    const y = scaleLinear().range([height, 0]).domain([0, yMax]);
 
-    select(element)
-        .selectAll("*")
-        .remove();
+    select(element).selectAll("*").remove();
 
     // Construct the SVG canvas.
     const svg = select(element)
@@ -49,10 +43,7 @@ const createChart = (element, data, width) => {
             .y0(d => y(d))
             .y1(height);
 
-        svg.append("path")
-            .datum(data)
-            .attr("class", "depth-area")
-            .attr("d", areaDrawer);
+        svg.append("path").datum(data).attr("class", "depth-area").attr("d", areaDrawer);
     }
 };
 

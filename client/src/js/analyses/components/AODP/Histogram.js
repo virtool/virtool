@@ -10,10 +10,7 @@ import styled from "styled-components";
 const draw = (element, data, width) => {
     const flattened = flatMap(data, ([x, y]) => fill(new Array(y), x));
 
-    let svg = select(element)
-        .selectAll("*")
-        .remove()
-        .append("svg");
+    let svg = select(element).selectAll("*").remove().append("svg");
 
     const margin = {
         top: 10,
@@ -27,14 +24,9 @@ const draw = (element, data, width) => {
     const height = 220 - margin.top - margin.bottom;
     const adjustedWidth = width - margin.left - margin.right;
 
-    const x = scaleLinear()
-        .domain(extent(flattened))
-        .nice()
-        .range([0, adjustedWidth]);
+    const x = scaleLinear().domain(extent(flattened)).nice().range([0, adjustedWidth]);
 
-    const bins = histogram()
-        .domain(x.domain())
-        .thresholds(x.ticks(80))(flattened);
+    const bins = histogram().domain(x.domain()).thresholds(x.ticks(80))(flattened);
 
     const y = scaleLinear()
         .domain([0, max(bins, d => d.length)])
@@ -69,9 +61,7 @@ const draw = (element, data, width) => {
         .attr("dy", "0.15em")
         .attr("transform", "rotate(-65)");
 
-    svg.append("g")
-        .attr("class", "y axis")
-        .call(axisLeft(y));
+    svg.append("g").attr("class", "y axis").call(axisLeft(y));
 };
 
 const StyledHistogram = styled.div`

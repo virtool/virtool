@@ -5,9 +5,9 @@ exports[`<SoftwareInstall /> should render 1`] = `
   headerText={
     <div>
       Software Update 
-      <ForwardRef(Label)>
+      <Label>
         test
-      </ForwardRef(Label)>
+      </Label>
     </div>
   }
   label="updatesInstall"

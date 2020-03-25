@@ -24,7 +24,7 @@ describe("<RelativeTime />", () => {
 
     it("componentDidMount() should update this.interval", () => {
         const wrapper = shallow(<RelativeTime {...props} />);
-        expect(wrapper.instance().interval).toBe(8);
+        expect(wrapper.instance().interval).toBe(9);
     });
 
     it("componentDidUpdate() should update timeString when [prevProps.time !== this.props.time] and [newTimeString !== this.state.timeString]", () => {

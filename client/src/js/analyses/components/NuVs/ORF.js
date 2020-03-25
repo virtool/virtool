@@ -20,9 +20,7 @@ const draw = (element, maxLength, pos, strand) => {
     const group = svg.append("g").attr("transform", "translate(15,0)");
 
     // Set-up a y-axis that will appear at the top of the chart.
-    const x = scaleLinear()
-        .range([0, width])
-        .domain([0, maxLength]);
+    const x = scaleLinear().range([0, width]).domain([0, maxLength]);
 
     const x0 = x(Math.abs(pos[strand === 1 ? 0 : 1]));
     const x1 = x(Math.abs(pos[strand === 1 ? 1 : 0]));
@@ -38,10 +36,7 @@ const draw = (element, maxLength, pos, strand) => {
         `L${x0},${yBase - 2}`
     ].join(" ");
 
-    group
-        .append("path")
-        .attr("d", d)
-        .attr("stroke-width", 1);
+    group.append("path").attr("d", d).attr("stroke-width", 1);
 };
 
 const NuVsORFHeader = styled.div`

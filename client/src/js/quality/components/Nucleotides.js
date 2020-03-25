@@ -17,13 +17,9 @@ const CreateNucleotidesChart = (element, data, baseWidth) => {
 
     const width = baseWidth - svg.margin.left - svg.margin.right;
 
-    const y = scaleLinear()
-        .range([svg.height, 0])
-        .domain([0, 100]);
+    const y = scaleLinear().range([svg.height, 0]).domain([0, 100]);
 
-    const x = scaleLinear()
-        .range([0, width])
-        .domain([0, data.length]);
+    const x = scaleLinear().range([0, width]).domain([0, data.length]);
 
     // Create a d3 line function for generating the four lines showing nucleotide frequency.
     const lineDrawer = line()

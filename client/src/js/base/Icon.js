@@ -51,7 +51,7 @@ export const Icon = ({ hoverable, style, ...props }) => {
 };
 
 Icon.propTypes = {
-    color: PropTypes.oneOf(["blue", "green", "grey", "red", "orange"]),
+    color: PropTypes.oneOf(["blue", "green", "grey", "red", "orange", "purple"]),
     name: PropTypes.string.isRequired,
     tip: PropTypes.node,
     tipPlacement: PropTypes.oneOf(["top", "right", "bottom", "left"]),

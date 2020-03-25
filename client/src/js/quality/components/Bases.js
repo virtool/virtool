@@ -67,9 +67,7 @@ const CreateBasesChart = (element, data, baseWidth) => {
         .range([svg.height, 0])
         .domain([getMinQuality(data) - 5, 48]);
 
-    const x = scaleLinear()
-        .range([0, width])
-        .domain([0, data.length]);
+    const x = scaleLinear().range([0, width]).domain([0, data.length]);
 
     const areaX = (d, i) => x(i);
 
@@ -97,10 +95,7 @@ const CreateBasesChart = (element, data, baseWidth) => {
         .style("stroke", "#428bca");
 
     // Append the median line to the chart. Color is red.
-    svg.append("path")
-        .attr("d", lineDrawer(data, "mean", x, y))
-        .attr("class", "graph-line")
-        .style("stroke", "#a94442");
+    svg.append("path").attr("d", lineDrawer(data, "mean", x, y)).attr("class", "graph-line").style("stroke", "#a94442");
 
     // Append the x-axis to the chart.
     svg.append("g")

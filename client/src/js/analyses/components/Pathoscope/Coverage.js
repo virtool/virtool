@@ -15,9 +15,7 @@ const draw = (element, data, length, meta, yMax, xMin, showYAxis) => {
         right: 10
     };
 
-    svg.append("text")
-        .text(yMax.toString())
-        .remove();
+    svg.append("text").text(yMax.toString()).remove();
 
     svg.remove();
 
@@ -31,13 +29,9 @@ const draw = (element, data, length, meta, yMax, xMin, showYAxis) => {
 
     width -= margin.left + margin.right;
 
-    const x = scaleLinear()
-        .range([0, width])
-        .domain([0, length]);
+    const x = scaleLinear().range([0, width]).domain([0, length]);
 
-    const y = scaleLinear()
-        .range([height, 0])
-        .domain([0, yMax]);
+    const y = scaleLinear().range([height, 0]).domain([0, yMax]);
 
     const xAxis = axisBottom(x);
 
@@ -55,10 +49,7 @@ const draw = (element, data, length, meta, yMax, xMin, showYAxis) => {
             .y0(d => y(d[1]))
             .y1(height);
 
-        svg.append("path")
-            .datum(data)
-            .attr("class", "depth-area")
-            .attr("d", areaDrawer);
+        svg.append("path").datum(data).attr("class", "depth-area").attr("d", areaDrawer);
     }
 
     // Set-up a y-axis that will appear at the top of the chart.
@@ -73,9 +64,7 @@ const draw = (element, data, length, meta, yMax, xMin, showYAxis) => {
         .attr("transform", "rotate(-65)");
 
     if (showYAxis) {
-        svg.append("g")
-            .attr("class", "y axis")
-            .call(axisLeft(y));
+        svg.append("g").attr("class", "y axis").call(axisLeft(y));
     }
 
     svg.append("text")

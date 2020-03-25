@@ -476,21 +476,20 @@ def subtract(analysis_path, host_scores):
 
     out_path = os.path.join(analysis_path, "subtracted.vta")
 
-    total_count = 0
+    subtracted_read_ids = set()
 
     with open(vta_path, "r") as vta_handle:
         with open(out_path, "w") as out_handle:
             for line in vta_handle:
-                total_count += 1
                 fields = line.rstrip().split(",")
                 read_id = fields[0]
                 if isolates_high_scores[read_id] > host_scores.get(read_id, 0):
                     out_handle.write(line)
                 else:
-                    subtracted_count += 1
+                    subtracted_read_ids.add(read_id)
 
     os.remove(vta_path)
 
     shutil.move(out_path, vta_path)
 
-    return subtracted_count
+    return len(subtracted_read_ids)

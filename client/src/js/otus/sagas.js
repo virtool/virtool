@@ -23,7 +23,7 @@ const getCurrentOTUsPath = state => `/refs/${state.references.detail.id}/otus`;
 
 export function* updateAndGetOTU(apiMethod, action, actionType) {
     yield setPending(
-        (function*(action) {
+        (function* (action) {
             try {
                 yield apiMethod(action);
                 const response = yield otusAPI.get(action);
