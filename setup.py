@@ -29,6 +29,7 @@ build_exe_options = {
         "asyncio",
         "bcrypt",
         "cffi",
+        "gzip",
         "idna",
         "motor",
         "packaging",
