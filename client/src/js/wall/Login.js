@@ -24,12 +24,12 @@ const LoginModal = styled(Box)`
     align-items: stretch;
     background-color: #fff;
     border: none;
-    border-radius: 4px;
-    box-shadow: rgba(0, 0, 0, 0.498039) 0 5px 15px 0;
+    border-radius: ${props => props.theme.borderRadius.sm};
+    box-shadow: ${props => props.theme.boxShadow.lg};
     display: flex;
+    flex-direction: column;
     margin-bottom: 260px;
     padding: 10px 15px;
-    flex-direction: column;
     width: 340px;
 `;
 
