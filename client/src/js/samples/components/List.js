@@ -8,7 +8,7 @@ import { listReadyIndexes } from "../../indexes/actions";
 import { findSamples } from "../actions";
 import { getTerm } from "../selectors";
 import CreateSample from "./Create/Create";
-import SampleItem from "./Item";
+import SampleItem from "./Item/Item";
 import SampleToolbar from "./Toolbar";
 
 export class SamplesList extends React.Component {

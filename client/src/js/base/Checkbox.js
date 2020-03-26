@@ -20,36 +20,32 @@ const CheckboxLabel = styled.span`
 `;
 
 export const StyledCheckbox = styled(CustomCheckboxContainer)`
+    align-items: center;
+    background-color: ${props => (props.checked ? "teal" : "white")};
+    border: ${props => (props.checked ? "none" : `2px solid ${props.theme.color.greyDark}`)};
+    border-radius: 50%;
     cursor: pointer;
     display: inline-flex;
     justify-content: center;
-    align-items: center;
-
-    width: 19px;
-    height: 19px;
-
-    border-radius: 50%;
-
-    border: ${props => (props.checked ? "none" : "1px solid black")};
+    height: 20px;
+    margin-right: 0;
     opacity: ${props => (props.checked ? 1 : 0.5)};
-    background-color: ${props => (props.checked ? "teal" : "white")};
+    width: 20px;
 `;
 
 const CheckboxInput = styled(CustomCheckboxInput)`
     display: none;
 `;
 
-export const Checkbox = props => {
+export const Checkbox = ({ checked, disabled, label, onClick }) => {
     return (
         <CheckboxContainer>
-            <StyledCheckbox checked={props.checked} onClick={props.disabled ? null : props.onClick}>
-                <CheckIcon checked={props.checked} name="check" />
-
+            <StyledCheckbox checked={checked} onClick={disabled ? null : onClick}>
+                <CheckIcon checked={checked} name="check" />
                 <CheckboxInput />
             </StyledCheckbox>
-            {props.label ? (
-                <CheckboxLabel onClick={props.disabled ? null : props.onClick}>{props.label}</CheckboxLabel>
-            ) : null}
+
+            {label ? <CheckboxLabel onClick={disabled ? null : onClick}>{label}</CheckboxLabel> : null}
         </CheckboxContainer>
     );
 };

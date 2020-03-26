@@ -3,7 +3,7 @@ import { includes, map, xor } from "lodash-es";
 import React from "react";
 import { Checkbox, Flex, FlexItem } from "../../base";
 import { findSamples } from "../actions";
-import { SampleEntryLabel } from "./Item";
+import { SampleItemLabel } from "./Item/Labels";
 
 const statuses = [true, "ip", false];
 
@@ -12,7 +12,7 @@ const AlgorithmStatus = ({ algorithm, checked, onClick, status }) => (
         <Flex alignItems="center" style={{ cursor: "pointer", padding: "3px" }}>
             <Checkbox checked={checked} />
             <FlexItem pad={5}>
-                <SampleEntryLabel icon="chart-area" label={algorithm} ready={status} />
+                <SampleItemLabel icon="chart-area" label={algorithm} ready={status} />
             </FlexItem>
         </Flex>
     </div>

@@ -30,7 +30,7 @@ describe("<MemberRight />", () => {
 
     it.each([true, false])("should have onToggle called on Checkbox click when [enabled=%p]", enabled => {
         props.enabled = enabled;
-        const wrapper = mount(<MemberRight {...props} />);
+        const wrapper = shallow(<MemberRight {...props} />);
         wrapper.find(MemberRightCheckbox).prop("onClick")();
         expect(props.onToggle).toHaveBeenCalledWith(props.right, !enabled);
     });
