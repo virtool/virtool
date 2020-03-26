@@ -132,6 +132,7 @@ export const LinkBox = styled(Link)`
     display: block;
     margin-bottom: 12px;
     padding: 10px 15px;
+    position: relative;
     text-decoration: none !important;
 
     &:hover {

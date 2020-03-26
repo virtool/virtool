@@ -85,46 +85,6 @@ i.hoverable:hover {
     font-size: 24px;
 }
 
-.sample-item-container {
-    position: relative;
-    &:hover .list-group-item {
-        background: #f5f5f5;
-    }
-}
-
-.sample-checkbox-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 40px;
-    width: 45px;
-    cursor: pointer;
-    opacity: 0;
-    z-index: 1000;
-}
-
-.sample-icon-overlay {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 40px;
-    width: 45px;
-    cursor: pointer;
-    background: none;
-    z-index: 1000;
-
-    & ~ i {
-        opacity: 0.7;
-    }
-
-    &.hover ~ i {
-        opacity: 1;
-    }
-}
-
 .text-strong {
     font-weight: bold;
 }
