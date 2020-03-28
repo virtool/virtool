@@ -66,7 +66,7 @@ class AddSegment extends React.Component {
                         <SegmentForm onChange={this.handleChange} newEntry={this.state.newEntry} />
                     </DialogBody>
                     <DialogFooter>
-                        <Button bsStyle="primary" type="submit">
+                        <Button color="blue" type="submit">
                             Save
                         </Button>
                     </DialogFooter>

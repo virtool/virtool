@@ -84,7 +84,7 @@ export class FirstUser extends React.Component {
                                 <PasswordInput value={password} onChange={this.handleChange} />
                             </InputGroup>
 
-                            <Button type="submit" icon="user-plus" bsStyle="primary">
+                            <Button type="submit" icon="user-plus" color="blue">
                                 Create User
                             </Button>
                         </form>

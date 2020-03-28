@@ -3,9 +3,23 @@ import styled from "styled-components";
 import PropTypes from "prop-types";
 import CX from "classnames";
 import { NavLink } from "react-router-dom";
+import { get } from "lodash-es";
 import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
-import { bsStyles } from "./utils";
+
+const getButtonBackgoundColor = ({ color, theme }) => get(theme, ["color", `${color}Dark`], "inherit");
+
+const StyledButton = styled.button`
+    background-color: ${getButtonBackgoundColor};
+    color: ${props => (props.color ? "white" : "#333")};
+    border: ${props => (props.color ? " " : "1px solid #CBD5E0")};
+    opacity: ${props => (props.disabled ? "" : 0.8)};
+
+    &:hover {
+        opacity: ${props => (props.disabled ? "" : 1)};
+        color: ${props => (props.color ? "white" : "inherit")};
+    }
+`;
 
 const StyledLinkButton = styled(NavLink)`
     align-items: center;
@@ -33,37 +47,33 @@ const StyledLinkButton = styled(NavLink)`
     }
 `;
 
-export const LinkButton = ({ children, className, to }) => (
-    <StyledLinkButton className={className} to={to} activeClassName="active">
+export const LinkButton = ({ children, className, replace, to }) => (
+    <StyledLinkButton className={className} to={to} replace={replace} activeClassName="active">
         {children}
     </StyledLinkButton>
 );
 
 export class Button extends React.Component {
     static propTypes = {
-        bsStyle: PropTypes.oneOf(bsStyles),
+        color: PropTypes.string,
         active: PropTypes.bool,
         className: PropTypes.string,
         disabled: PropTypes.bool,
-        block: PropTypes.bool,
-        pullRight: PropTypes.bool,
+
         onBlur: PropTypes.func,
         onClick: PropTypes.func,
-        style: PropTypes.object,
         icon: PropTypes.string,
-        iconStyle: PropTypes.oneOf(bsStyles),
-        pad: PropTypes.bool,
+
         children: PropTypes.node,
         type: PropTypes.oneOf(["button", "submit"]),
-        bsSize: PropTypes.oneOf(["xsmall", "small", "large"]),
+
         tip: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
         tipPlacement: PropTypes.oneOf(["top", "right", "bottom", "left"])
     };
 
     static defaultProps = {
-        bsStyle: "default",
-        pullRight: false,
-        tipPlacement: "top"
+        tipPlacement: "top",
+        disabled: false
     };
 
     blur = () => {
@@ -71,38 +81,32 @@ export class Button extends React.Component {
     };
 
     render() {
-        const className = CX("btn", `btn-${this.props.bsStyle}`, this.props.className, {
-            "btn-block": this.props.block,
-            "pull-right": this.props.pullRight,
+        const className = CX("btn", this.props.className, {
             active: this.props.active,
-            "btn-xs": this.props.bsSize === "xsmall",
-            "btn-sm": this.props.bsSize === "small",
-            "btn-lg": this.props.bsSize === "large",
-            "btn-with-icon": this.props.icon,
-            "btn-padded": this.props.pad
+            "btn-with-icon": this.props.icon
         });
 
         let icon;
 
         if (this.props.icon) {
-            icon = <Icon name={this.props.icon} className={`text-${this.props.iconStyle}`} />;
+            icon = <Icon name={this.props.icon} />;
         }
 
         const button = (
-            <button
+            <StyledButton
                 type={this.props.type}
                 ref={node => (this.buttonNode = node)}
                 onBlur={this.props.onBlur}
                 className={className}
                 onClick={this.props.onClick}
-                style={this.props.style}
                 disabled={this.props.disabled}
+                color={this.props.color}
             >
                 <div>
                     {icon}
                     {this.props.children ? <span>{this.props.children}</span> : null}
                 </div>
-            </button>
+            </StyledButton>
         );
 
         if (this.props.tip) {

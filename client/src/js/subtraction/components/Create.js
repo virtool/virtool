@@ -171,7 +171,7 @@ export class CreateSubtraction extends React.Component {
                     </DialogBody>
 
                     <DialogFooter className="modal-footer">
-                        <Button type="submit" bsStyle="primary" icon="play" pullRight>
+                        <Button type="submit" color="blue" icon="play">
                             Start
                         </Button>
                     </DialogFooter>

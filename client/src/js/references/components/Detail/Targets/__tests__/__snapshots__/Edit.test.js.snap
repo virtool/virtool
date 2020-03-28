@@ -22,9 +22,9 @@ exports[`<EditTarget /> should render 1`] = `
     </Modal__DialogBody>
     <Modal__DialogFooter>
       <Button
-        bsStyle="primary"
+        color="blue"
+        disabled={false}
         icon="save"
-        pullRight={false}
         tipPlacement="top"
         type="submit"
       >
@@ -57,9 +57,9 @@ exports[`<EditTarget /> should render error when submitted without name 1`] = `
     </Modal__DialogBody>
     <Modal__DialogFooter>
       <Button
-        bsStyle="primary"
+        color="blue"
+        disabled={false}
         icon="save"
-        pullRight={false}
         tipPlacement="top"
         type="submit"
       >
@@ -92,9 +92,9 @@ exports[`<EditTarget /> should update when TargetForm onChange() prop called 1`]
     </Modal__DialogBody>
     <Modal__DialogFooter>
       <Button
-        bsStyle="primary"
+        color="blue"
+        disabled={false}
         icon="save"
-        pullRight={false}
         tipPlacement="top"
         type="submit"
       >

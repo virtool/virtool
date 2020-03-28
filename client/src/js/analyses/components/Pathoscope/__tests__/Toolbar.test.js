@@ -4,6 +4,7 @@ import {
     TOGGLE_FILTER_ISOLATES,
     TOGGLE_FILTER_OTUS
 } from "../../../../app/actionTypes";
+import { Button } from "../../../../base";
 import { getFuse } from "../../../selectors";
 import {
     mapDispatchToProps,
@@ -79,22 +80,22 @@ describe("<Toolbar />", () => {
     it("should call onToggleSortDescending() when corresponding button clicked", () => {
         const wrapper = shallow(<PathoscopeToolbar {...props} />);
         expect(props.onToggleSortDescending).not.toHaveBeenCalled();
-        wrapper.find("Button").at(0).simulate("click");
+        wrapper.find(Button).at(0).simulate("click");
         expect(props.onToggleSortDescending).toHaveBeenCalled();
     });
 
     it("should call onToggleFilterIsolates() when filter isolates button clicked", () => {
         const wrapper = shallow(<PathoscopeToolbar {...props} />);
         expect(props.onToggleFilterIsolates).not.toHaveBeenCalled();
-        wrapper.find("Button").at(3).simulate("click");
-        expect(props.onToggleFilterIsolates).toHaveBeenCalled();
+        wrapper.find(Button).at(2).simulate("click");
+        expect(props.onToggleFilterOTUs).toHaveBeenCalled();
     });
 
     it("should call onToggleFilterOTUs() when filter selected", () => {
         const wrapper = shallow(<PathoscopeToolbar {...props} />);
         expect(props.onToggleFilterIsolates).not.toHaveBeenCalled();
-        wrapper.find("Button").at(2).simulate("click");
-        expect(props.onToggleFilterOTUs).toHaveBeenCalled();
+        wrapper.find(Button).at(3).simulate("click");
+        expect(props.onToggleFilterIsolates).toHaveBeenCalled();
     });
 
     it("should call onSetSortKey() when sort key selected", () => {
@@ -112,7 +113,7 @@ describe("<Toolbar />", () => {
     it("should call onToggleShowPathoscopeReads() when filter isolates button clicked", () => {
         const wrapper = shallow(<PathoscopeToolbar {...props} />);
         expect(props.onToggleShowPathoscopeReads).not.toHaveBeenCalled();
-        wrapper.find("Button").at(1).simulate("click");
+        wrapper.find(Button).at(1).simulate("click");
         expect(props.onToggleShowPathoscopeReads).toHaveBeenCalled();
     });
 });

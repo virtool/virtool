@@ -18,9 +18,8 @@ exports[`<JobsToolbar /> should render when [canRemove=true] 1`] = `
     value="foo"
   />
   <Button
-    bsStyle="default"
+    disabled={false}
     onClick={[Function]}
-    pullRight={false}
     tip="Clear Finished"
     tipPlacement="top"
   >

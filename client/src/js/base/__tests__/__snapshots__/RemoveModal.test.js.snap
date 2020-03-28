@@ -2,9 +2,9 @@
 
 exports[`<RemoveModal /> DialogBody renders a confirmation button 1`] = `
 <Button
-  bsStyle="danger"
+  color="red"
+  disabled={false}
   icon="check"
-  pullRight={false}
   tipPlacement="top"
 >
   Confirm
@@ -33,9 +33,9 @@ exports[`<RemoveModal /> renders a ModalDialog component when [show=true] 1`] = 
     }
   >
     <Button
-      bsStyle="danger"
+      color="red"
+      disabled={false}
       icon="check"
-      pullRight={false}
       tipPlacement="top"
     >
       Confirm
@@ -65,9 +65,9 @@ exports[`<RemoveModal /> renders correctly 1`] = `
     }
   >
     <Button
-      bsStyle="danger"
+      color="red"
+      disabled={false}
       icon="check"
-      pullRight={false}
       tipPlacement="top"
     >
       Confirm

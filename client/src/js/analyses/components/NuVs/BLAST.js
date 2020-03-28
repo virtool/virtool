@@ -86,7 +86,7 @@ export const NuVsBLAST = ({ analysisId, blast, sequenceIndex, onBlast }) => {
         <Alert color="purple" level>
             <Icon name="info-circle" />
             <span>This sequence has no BLAST information attached to it.</span>
-            <BLASTButton bsSize="small" icon="cloud" onClick={handleBlast}>
+            <BLASTButton icon="cloud" onClick={handleBlast}>
                 BLAST at NCBI
             </BLASTButton>
         </Alert>

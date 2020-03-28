@@ -144,7 +144,6 @@ exports[`<NuVsBLAST /> should render alert when no blast data available 1`] = `
     This sequence has no BLAST information attached to it.
   </span>
   <BLAST__BLASTButton
-    bsSize="small"
     icon="cloud"
     onClick={[Function]}
   >

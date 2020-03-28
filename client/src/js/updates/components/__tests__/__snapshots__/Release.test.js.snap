@@ -17,21 +17,14 @@ exports[`<Release /> should render 1`] = `
         foo
       </strong>
     </Release__ReleaseName>
-    <Button
-      active={false}
-      block={false}
-      bsClass="btn"
-      bsSize="xsmall"
-      bsStyle="default"
-      disabled={false}
+    <ExternalLink
       href="baz"
-      target="_blank"
     >
       <i
         className="fab fa-github"
       />
-       GitHub
-    </Button>
+       View on GitHub
+    </ExternalLink>
   </Release__ReleaseHeader>
 </Box__BoxGroupSection>
 `;

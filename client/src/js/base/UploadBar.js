@@ -25,7 +25,7 @@ export const UploadBar = ({ message, onDrop }) => {
                 </div>
             </FlexItem>
             <FlexItem pad>
-                <Button icon="upload" onClick={open}>
+                <Button color="blue" icon="upload" onClick={open}>
                     Upload
                 </Button>
             </FlexItem>

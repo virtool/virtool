@@ -1,8 +1,7 @@
 import PropTypes from "prop-types";
 import React from "react";
-import { Button } from "react-bootstrap";
 import styled from "styled-components";
-import { BoxGroupSection, Icon } from "../../base";
+import { BoxGroupSection, ExternalLink, Icon } from "../../base";
 import { ReleaseMarkdown } from "./Markdown";
 
 const ReleaseName = styled.span`
@@ -13,6 +12,7 @@ const ReleaseName = styled.span`
 const ReleaseHeader = styled.div`
     align-items: center;
     display: flex;
+    font-weight: bold;
 `;
 
 export default class Release extends React.Component {
@@ -51,9 +51,9 @@ export default class Release extends React.Component {
                     <ReleaseName onClick={this.handleClick}>
                         {caret} <strong>{this.props.name}</strong>
                     </ReleaseName>
-                    <Button bsSize="xsmall" target="_blank" href={this.props.html_url}>
-                        <i className="fab fa-github" /> GitHub
-                    </Button>
+                    <ExternalLink href={this.props.html_url}>
+                        <i className="fab fa-github" /> View on GitHub
+                    </ExternalLink>
                 </ReleaseHeader>
 
                 {markdown}

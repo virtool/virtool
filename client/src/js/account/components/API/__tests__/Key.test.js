@@ -1,5 +1,5 @@
 import { REMOVE_API_KEY, UPDATE_API_KEY } from "../../../../app/actionTypes";
-import { Icon } from "../../../../base";
+import { Button, Icon } from "../../../../base";
 import { APIKey, getInitialState, mapDispatchToProps, mapStateToProps } from "../Key";
 
 describe("getInitialState()", () => {
@@ -76,20 +76,14 @@ describe("<APIKey />", () => {
     it("should call props.onUpdate when update button clicked", () => {
         const wrapper = shallow(<APIKey {...props} />);
         wrapper.setState({ changed: true, in: true });
-        wrapper
-            .find("Button")
-            .find({ icon: "save" })
-            .simulate("click");
+        wrapper.find(Button).find({ icon: "save" }).simulate("click");
         expect(props.onUpdate).toHaveBeenCalledWith(props.apiKey.id, props.apiKey.permissions);
     });
 
     it("should call props.onRemove when remove button clicked", () => {
         const wrapper = shallow(<APIKey {...props} />);
         wrapper.setState({ in: true });
-        wrapper
-            .find("Button")
-            .find({ icon: "trash" })
-            .simulate("click");
+        wrapper.find(Button).find({ icon: "trash" }).simulate("click");
         expect(props.onRemove).toHaveBeenCalledWith(props.apiKey.id);
     });
 

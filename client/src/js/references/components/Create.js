@@ -80,7 +80,7 @@ export class CreateReference extends React.Component {
                     <DataTypeSelection onSelect={this.handleChangeDataType} dataType={this.state.dataType} />
                     <DialogFooter>
                         <ButtonToolbar>
-                            <Button type="submit" icon="save" bsStyle="primary">
+                            <Button type="submit" icon="save" color="blue">
                                 Save
                             </Button>
                         </ButtonToolbar>

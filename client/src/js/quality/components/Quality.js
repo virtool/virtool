@@ -1,18 +1,24 @@
 import React from "react";
+import styled from "styled-components";
 import { Button } from "../../base";
 import Chart from "./Chart";
 import Bases from "./Bases";
 import Nucleotides from "./Nucleotides";
 import Sequences from "./Sequences";
 
+const StyledTitle = styled.h5`
+    display: flex;
+    justify-content: space-between;
+`;
+
 export const Quality = ({ bases, composition, sequences }) => (
     <div className="printable-quality">
-        <h5>
+        <StyledTitle>
             <strong>Quality Distribution at Read Positions</strong>
-            <Button type="button" bsStyle="info" bsSize="xsmall" icon="print" onClick={() => window.print()} pullRight>
+            <Button type="button" color="purple" icon="print" onClick={() => window.print()}>
                 Print
             </Button>
-        </h5>
+        </StyledTitle>
         <Chart createChart={Bases} data={bases} />
 
         <h5>

@@ -71,7 +71,7 @@ class RebuildIndex extends React.Component {
                         <RebuildIndexError error={this.state.error} />
                     </DialogBody>
                     <DialogFooter>
-                        <Button type="submit" bsStyle="primary" icon="wrench">
+                        <Button type="submit" color="blue" icon="wrench">
                             Start
                         </Button>
                     </DialogFooter>

@@ -11,7 +11,7 @@ export const AnalysesToolbar = ({ canModify, onFind, onShowCreate, page, sampleI
         <Button
             icon="plus-square fa-fw"
             tip="New Analysis"
-            bsStyle="primary"
+            color="blue"
             onClick={() => onShowCreate(sampleId)}
             disabled={!canModify}
         />

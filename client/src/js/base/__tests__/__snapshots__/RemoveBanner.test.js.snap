@@ -8,9 +8,9 @@ exports[`<RemoveBanner /> renders correctly 1`] = `
     test
   </span>
   <Button
-    bsStyle="danger"
+    color="red"
+    disabled={false}
     onClick={[MockFunction]}
-    pullRight={false}
     tipPlacement="top"
   >
     Delete

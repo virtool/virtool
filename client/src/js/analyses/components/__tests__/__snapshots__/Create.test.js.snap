@@ -98,10 +98,9 @@ exports[`<CreateAnalysis /> should render 1`] = `
           shrink={1}
         >
           <Button
-            bsStyle="primary"
+            color="blue"
             disabled={false}
             icon="play"
-            pullRight={false}
             tipPlacement="top"
             type="submit"
           >
@@ -212,10 +211,9 @@ exports[`<CreateAnalysis /> should render with algorithm selected 1`] = `
           shrink={1}
         >
           <Button
-            bsStyle="primary"
+            color="blue"
             disabled={false}
             icon="play"
-            pullRight={false}
             tipPlacement="top"
             type="submit"
           >
@@ -326,10 +324,9 @@ exports[`<CreateAnalysis /> should render with error 1`] = `
           shrink={1}
         >
           <Button
-            bsStyle="primary"
+            color="blue"
             disabled={true}
             icon="play"
-            pullRight={false}
             tipPlacement="top"
             type="submit"
           >
@@ -454,10 +451,9 @@ exports[`<CreateAnalysis /> should render with index selected 1`] = `
           shrink={1}
         >
           <Button
-            bsStyle="primary"
+            color="blue"
             disabled={false}
             icon="play"
-            pullRight={false}
             tipPlacement="top"
             type="submit"
           >
@@ -582,10 +578,9 @@ exports[`<CreateAnalysis /> should render with summary 1`] = `
           shrink={1}
         >
           <Button
-            bsStyle="primary"
+            color="blue"
             disabled={false}
             icon="play"
-            pullRight={false}
             tipPlacement="top"
             type="submit"
           >

@@ -38,8 +38,8 @@ exports[`<Login /> should render 1`] = `
       <Login__LoginFooter>
         <span />
         <Button
-          bsStyle="primary"
-          pullRight={false}
+          color="blue"
+          disabled={false}
           tipPlacement="top"
           type="submit"
         >
@@ -89,8 +89,8 @@ exports[`<Login /> should render checked remember checkbox 1`] = `
       <Login__LoginFooter>
         <span />
         <Button
-          bsStyle="primary"
-          pullRight={false}
+          color="blue"
+          disabled={false}
           tipPlacement="top"
           type="submit"
         >
@@ -140,8 +140,8 @@ exports[`<Login /> should render checked remember checkbox 2`] = `
       <Login__LoginFooter>
         <span />
         <Button
-          bsStyle="primary"
-          pullRight={false}
+          color="blue"
+          disabled={false}
           tipPlacement="top"
           type="submit"
         >
@@ -191,8 +191,8 @@ exports[`<Login /> should render filled username and password fields 1`] = `
       <Login__LoginFooter>
         <span />
         <Button
-          bsStyle="primary"
-          pullRight={false}
+          color="blue"
+          disabled={false}
           tipPlacement="top"
           type="submit"
         >
@@ -242,8 +242,8 @@ exports[`<Login /> should render filled username and password fields 2`] = `
       <Login__LoginFooter>
         <span />
         <Button
-          bsStyle="primary"
-          pullRight={false}
+          color="blue"
+          disabled={false}
           tipPlacement="top"
           type="submit"
         >
@@ -293,8 +293,8 @@ exports[`<Login /> should render filled username and password fields 3`] = `
       <Login__LoginFooter>
         <span />
         <Button
-          bsStyle="primary"
-          pullRight={false}
+          color="blue"
+          disabled={false}
           tipPlacement="top"
           type="submit"
         >

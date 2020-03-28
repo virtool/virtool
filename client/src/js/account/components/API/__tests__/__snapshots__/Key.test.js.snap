@@ -80,20 +80,19 @@ exports[`<APIKey /> should render when expanded 1`] = `
     />
     <ButtonToolbar>
       <Button
-        bsStyle="danger"
+        color="red"
+        disabled={false}
         icon="trash"
         onClick={[Function]}
-        pullRight={false}
         tipPlacement="top"
       >
         Remove
       </Button>
       <Button
-        bsStyle="primary"
+        color="blue"
         disabled={true}
         icon="save"
         onClick={[Function]}
-        pullRight={false}
         tipPlacement="top"
       >
         Update

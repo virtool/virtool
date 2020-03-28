@@ -1,5 +1,5 @@
-import { Button, SearchInput } from "../../../base";
-import { OTUToolbar } from "../Toolbar";
+import { SearchInput } from "../../../base";
+import { OTUToolbar, FilterButton } from "../Toolbar";
 
 describe("<OTUToolbar />", () => {
     const props = {
@@ -32,7 +32,7 @@ describe("<OTUToolbar />", () => {
     it("should call onFind() when filter button is clicked", () => {
         const wrapper = shallow(<OTUToolbar {...props} />);
         wrapper
-            .find(Button)
+            .find(FilterButton)
             .at(0)
             .simulate("click");
         expect(props.onFind).toHaveBeenCalledWith(props.refId, props.term, !props.verified, 1);

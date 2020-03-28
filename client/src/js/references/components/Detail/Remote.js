@@ -29,7 +29,7 @@ const Release = ({ release, checking, updating, onCheckUpdates, onUpdate }) => {
     if (!updating && release.newer) {
         button = (
             <ReleaseButtonContainer>
-                <Button icon="download" bsStyle="primary" onClick={onUpdate} disabled={updating}>
+                <Button icon="download" color="blue" onClick={onUpdate} disabled={updating}>
                     Install
                 </Button>
             </ReleaseButtonContainer>

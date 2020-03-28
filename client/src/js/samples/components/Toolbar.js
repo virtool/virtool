@@ -28,7 +28,7 @@ const SampleSelectionToolbar = ({ onClear, onQuickAnalyze, selected }) => (
                 <Icon name="times-circle" onClick={onClear} />
                 <span> {selected.length} samples selected</span>
             </span>
-            <Button bsStyle="success" icon="chart-area" onClick={() => onQuickAnalyze(selected)}>
+            <Button color="green" icon="chart-area" onClick={() => onQuickAnalyze(selected)}>
                 Quick Analyze
             </Button>
         </SampleSelectionToolbarTop>

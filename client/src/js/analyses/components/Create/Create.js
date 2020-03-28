@@ -124,7 +124,7 @@ export class CreateAnalysis extends React.Component {
                                 />
                             </FlexItem>
                             <FlexItem>
-                                <Button type="submit" bsStyle="primary" icon="play" disabled={!!this.state.error}>
+                                <Button type="submit" color="blue" icon="play" disabled={!!this.state.error}>
                                     Start
                                 </Button>
                             </FlexItem>

@@ -1,8 +1,7 @@
 import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
-import { Alert, Button, Icon, LoadingPlaceholder, SearchInput, Toolbar } from "../../base";
+import { Alert, Icon, LinkButton, LoadingPlaceholder, SearchInput, Toolbar } from "../../base";
 import { clearError } from "../../errors/actions";
 import { listGroups } from "../../groups/actions";
 import Groups from "../../groups/components/Groups";
@@ -59,14 +58,8 @@ export class ManageUsers extends React.Component {
             <div>
                 <Toolbar>
                     <SearchInput name="search" value={this.state.term} onChange={this.props.onFind} />
-
-                    <LinkContainer to={{ state: { groups: true } }}>
-                        <Button icon="users" tip="Manage Groups" />
-                    </LinkContainer>
-
-                    <LinkContainer to={{ state: { createUser: true } }}>
-                        <Button bsStyle="primary" icon="user-plus" tip="Create User" />
-                    </LinkContainer>
+                    <LinkButton to={{ state: { groups: true } }} icon="users" tip="Manage Group" />
+                    <LinkButton to={{ state: { createUser: true } }} icon="user-plus" tip="Create User" color="blue" />
                 </Toolbar>
 
                 <UsersList />

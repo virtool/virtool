@@ -31,10 +31,10 @@ exports[`<RemoveSequence /> renders correctly 1`] = `
     }
   >
     <Button
-      bsStyle="danger"
+      color="red"
+      disabled={false}
       icon="check"
       onClick={[Function]}
-      pullRight={false}
       tipPlacement="top"
     >
       Confirm

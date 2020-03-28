@@ -25,9 +25,9 @@ exports[`<CreateReference /> should render 1`] = `
     <Modal__DialogFooter>
       <ButtonToolbar>
         <Button
-          bsStyle="primary"
+          color="blue"
+          disabled={false}
           icon="save"
-          pullRight={false}
           tipPlacement="top"
           type="submit"
         >

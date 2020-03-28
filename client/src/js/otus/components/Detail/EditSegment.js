@@ -83,7 +83,7 @@ class EditSegment extends React.Component {
                         <SegmentForm onChange={this.handleChange} newEntry={this.state.newEntry} />
                     </DialogBody>
                     <DialogFooter>
-                        <Button bsStyle="primary" icon="save" type="submit">
+                        <Button color="blue" icon="save" type="submit">
                             Save
                         </Button>
                     </DialogFooter>
