@@ -53,6 +53,11 @@ exports[`<Bar /> should render 1`] = `
     </Bar__NavBarItem>
     <Bar__NavBarItem
       rel="noopener noreferrer"
+      style={
+        Object {
+          "paddingLeft": 0,
+        }
+      }
       target="_blank"
       to="//virtool.ca/docs/manual"
     >

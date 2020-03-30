@@ -16,7 +16,7 @@ const NavBarItem = styled(NavLink)`
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0 15px 0 0;
+    padding: 0 15px;
 
     &:focus {
         text-decoration: none;
@@ -99,7 +99,12 @@ export class Bar extends React.Component {
                         <Icon name="comments" />
                     </NavBarItem>
 
-                    <NavBarItem target="_blank" to="//virtool.ca/docs/manual" rel="noopener noreferrer">
+                    <NavBarItem
+                        target="_blank"
+                        to="//virtool.ca/docs/manual"
+                        rel="noopener noreferrer"
+                        style={{ paddingLeft: 0 }}
+                    >
                         <Icon name="book" />
                     </NavBarItem>
 
