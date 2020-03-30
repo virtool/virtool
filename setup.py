@@ -1,40 +1,32 @@
-import importlib
 from cx_Freeze import setup, Executable
 
-backend_path = importlib.import_module("bcrypt").__path__[0]
-
-backend_path = backend_path.replace("bcrypt", ".libs_cffi_backend")
-
-# Dependencies are automatically detected, but it might need
-# fine tuning.
 build_exe_options = {
+    "bin_includes": [
+        "libssl.so",
+        "libz.so"
+    ],
+    "bin_path_includes": [
+         "/usr/lib/x86_64-linux-gnu"
+    ],
     "include_files": [
         ("client/dist", "client"),
         "LICENSE",
         "templates",
         "readme.md",
-        (backend_path, "lib/.libs_cffi_backend")
+        "/usr/lib/x86_64-linux-gnu/libssl.so",
+        "/usr/lib/x86_64-linux-gnu/libz.so"
     ],
     "includes": [
-        "cffi",
-        "numpy",
-        "numpy.core._methods",
-        "numpy.lib",
-        "numpy.lib.format",
-        "raven.processors"
+        "asyncio.base_events"
     ],
     "packages": [
-        "_cffi_backend",
-        "appdirs",
         "asyncio",
-        "bcrypt",
-        "cffi",
-        "gzip",
         "idna",
+        "gzip",
         "motor",
-        "packaging",
-        "ssl",
-        "uvloop"
+        "numpy",
+        "uvloop",
+        "ssl"
     ]
 }
 
@@ -50,8 +42,4 @@ classifiers=[
     "Programming Language :: Python :: 3.7"
 ]
 
-importlib.import_module("virtool")
-
-setup(name='virtool', executables=executables, options=options, classifiers=classifiers, python_requires=">=3.6")
-
-
+setup(name="virtool", executables=executables, options=options, classifiers=classifiers)
