@@ -53,6 +53,7 @@ export const extractNames = orfs => {
  * @param {Array} align - the coordinates
  * @param {Number} length - the length of the generated flat array
  * @returns {Array} - the flat array
+ *
  */
 export const fillAlign = ({ align, length }) => {
     const filled = Array(length);
@@ -118,28 +119,11 @@ export const formatAODPData = detail => {
     return { ...detail, results };
 };
 
-const getResultIdentities = isolates => {
-    const iden = flatMap(isolates, isolate => {
-        return isolate.identities;
-    });
+const getResultIdentities = isolates => flatMap(isolates, isolate => isolate.identities);
 
-    return iden;
-};
+const getIsolateIdentities = sequences => flatMap(sequences, sequence => sequence.identities);
 
-const getIsolateIdentities = sequences => {
-    const identities = flatMap(sequences, sequence => {
-        return sequence.identities;
-    });
-
-    return identities;
-};
-
-const getSequenceIdentities = sequence => {
-    const identities = flatMap(sequence.hit, hitItem => {
-        return hitItem.identity;
-    });
-    return identities;
-};
+const getSequenceIdentities = sequence => flatMap(sequence.hit, hitItem => hitItem.identity);
 
 export const formatNuVsData = detail => {
     const results = map(detail.results, result => ({
@@ -166,15 +150,11 @@ export const formatNuVsData = detail => {
     };
 };
 
-export const formatSequence = (sequence, readCount) => {
-    const filled = fillAlign(sequence);
-
-    return {
-        ...sequence,
-        reads: sequence.pi * readCount,
-        filled
-    };
-};
+export const formatSequence = (sequence, readCount) => ({
+    ...sequence,
+    filled: fillAlign(sequence),
+    reads: sequence.pi * readCount
+});
 
 export const formatPathoscopeData = detail => {
     if (detail.results.length === 0) {

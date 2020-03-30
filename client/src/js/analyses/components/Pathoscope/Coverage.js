@@ -1,23 +1,20 @@
 import React, { useEffect, useRef } from "react";
 import styled from "styled-components";
 import { axisBottom, axisLeft } from "d3-axis";
+import { format } from "d3-format";
 import { scaleLinear } from "d3-scale";
 import { select } from "d3-selection";
 import { area } from "d3-shape";
 
-const draw = (element, data, length, meta, yMax, xMin, showYAxis) => {
+const draw = (element, data, length, meta, yMax, xMin) => {
     let svg = select(element).append("svg");
 
     const margin = {
         top: 10,
-        left: 15 + (showYAxis ? 30 : 0),
+        left: 35,
         bottom: 50,
         right: 10
     };
-
-    svg.append("text").text(yMax.toString()).remove();
-
-    svg.remove();
 
     const height = 200 - margin.top - margin.bottom;
 
@@ -33,7 +30,7 @@ const draw = (element, data, length, meta, yMax, xMin, showYAxis) => {
 
     const y = scaleLinear().range([height, 0]).domain([0, yMax]);
 
-    const xAxis = axisBottom(x);
+    select(element).selectAll("*").remove();
 
     // Construct the SVG canvas.
     svg = select(element)
@@ -56,21 +53,21 @@ const draw = (element, data, length, meta, yMax, xMin, showYAxis) => {
     svg.append("g")
         .attr("class", "x axis")
         .attr("transform", `translate(0,${height})`)
-        .call(xAxis)
+        .call(axisBottom(x).ticks(10))
         .selectAll("text")
         .style("text-anchor", "end")
         .attr("dx", "-0.8em")
         .attr("dy", "0.15em")
         .attr("transform", "rotate(-65)");
 
-    if (showYAxis) {
-        svg.append("g").attr("class", "y axis").call(axisLeft(y));
-    }
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(axisLeft(y).ticks(4).tickFormat(format(".0s")));
 
     svg.append("text")
         .attr("class", "coverage-label small")
         .attr("transform", "translate(4,10)")
-        .text(`${meta.id} - ${meta.definition}`);
+        .text(`${meta.accession} - ${meta.definition}`);
 };
 
 const StyledCoverageChart = styled.div`
@@ -83,11 +80,20 @@ const StyledCoverageChart = styled.div`
     }
 `;
 
-export const CoverageChart = ({ data, definition, id, length, yMax, showYAxis }) => {
+export const CoverageChart = ({ accession, data, definition, id, length, yMax, showYAxis }) => {
     const chartEl = useRef(null);
 
     useEffect(
-        () => draw(chartEl.current, data, length, { id, definition }, yMax, chartEl.current.offsetWidth, showYAxis),
+        () =>
+            draw(
+                chartEl.current,
+                data,
+                length,
+                { accession, id, definition },
+                yMax,
+                chartEl.current.offsetWidth,
+                showYAxis
+            ),
         [id]
     );
 

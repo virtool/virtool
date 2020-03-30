@@ -12,6 +12,7 @@ import {
     TOGGLE_FILTER_ORFS,
     TOGGLE_FILTER_OTUS,
     TOGGLE_FILTER_SEQUENCES,
+    TOGGLE_SHOW_PATHOSCOPE_READS,
     WS_INSERT_ANALYSIS,
     WS_REMOVE_ANALYSIS,
     WS_UPDATE_ANALYSIS
@@ -40,6 +41,7 @@ describe("Analyses Reducer", () => {
             filterSequences: true,
             readyIndexes: null,
             searchIds: null,
+            showPathoscopeReads: false,
             sortDescending: true,
             sortIds: null,
             sortKey: "coverage",
@@ -129,72 +131,45 @@ describe("Analyses Reducer", () => {
     });
 
     it.each([true, false])("should handle TOGGLE_FILTER_ISOLATES when initially %p", initial => {
-        const state = {
-            filterIsolates: initial,
-            filterOTUs: false,
-            filterORFs: false,
-            filterSequences: false
-        };
+        const state = { filterIsolates: initial };
         const action = { type: TOGGLE_FILTER_ISOLATES };
         const result = reducer(state, action);
-        expect(result).toEqual({
-            filterIsolates: !initial,
-            filterOTUs: false,
-            filterORFs: false,
-            filterSequences: false
-        });
+        expect(result).toEqual({ filterIsolates: !initial });
     });
 
     it.each([true, false])("should handle TOGGLE_FILTER_ORFS when initially %p", initial => {
-        const state = {
-            filterIsolates: false,
-            filterOTUs: false,
-            filterORFs: initial,
-            filterSequences: false
-        };
+        const state = { filterORFs: initial };
         const action = { type: TOGGLE_FILTER_ORFS };
         const result = reducer(state, action);
-        expect(result).toEqual({
-            filterIsolates: false,
-            filterOTUs: false,
-            filterORFs: !initial,
-            filterSequences: false
-        });
+        expect(result).toEqual({ filterORFs: !initial });
     });
 
     it.each([true, false])("should handle TOGGLE_FILTER_SEQUENCES when initially %p", initial => {
-        const state = {
-            filterIsolates: false,
-            filterOTUs: false,
-            filterORFs: false,
-            filterSequences: initial
-        };
+        const state = { filterSequences: initial };
         const action = { type: TOGGLE_FILTER_SEQUENCES };
         const result = reducer(state, action);
-        expect(result).toEqual({
-            filterIsolates: false,
-            filterOTUs: false,
-            filterORFs: false,
-            filterSequences: !initial
-        });
+        expect(result).toEqual({ filterSequences: !initial });
+    });
+
+    it.each([true, false])("should handle TOGGLE_SHOW_PATHOSCOPE_READS", initial => {
+        const state = { showPathoscopeReads: initial };
+        const action = { type: TOGGLE_SHOW_PATHOSCOPE_READS };
+        const result = reducer(state, action);
+        expect(result).toEqual({ showPathoscopeReads: !initial });
     });
 
     it("should handle TOGGLE_ANALYSIS_SORT_DESCENDING", () => {
-        const state = {
-            sortDescending: false
-        };
+        const state = { sortDescending: false };
         const action = { type: TOGGLE_ANALYSIS_SORT_DESCENDING };
         const result = reducer(state, action);
-        expect(result).toEqual({
-            sortDescending: true
-        });
+        expect(result).toEqual({ sortDescending: true });
     });
 
     it("should handle SET_ANALYSIS_SORT_KEY", () => {
-        const state = {};
-        const action = { type: SET_ANALYSIS_SORT_KEY, sortKey: "foo" };
+        const state = { sortKey: "e-value" };
+        const action = { type: SET_ANALYSIS_SORT_KEY, sortKey: "coverage" };
         const result = reducer(state, action);
-        expect(result).toEqual({ sortKey: action.sortKey });
+        expect(result).toEqual({ sortKey: "coverage" });
     });
 
     it("should handle LIST_READY_INDEXES_SUCCEEDED", () => {

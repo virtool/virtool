@@ -1,24 +1,65 @@
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
-import PathoscopeDetail from "./Detail";
-import { PathoscopeList } from "./List";
+import { getBorder } from "../../../app/theme";
+import { Icon } from "../../../base";
+import PathoscopeList from "./List";
 import Mapping from "./Mapping";
 import PathoscopeToolbar from "./Toolbar";
 
-const PathoscopePanes = styled.div`
-    display: grid;
-    grid-gap: 10px;
-    grid-template-columns: 300px 1fr;
+const StyledPathoscopeViewerScroller = styled.div`
+    align-items: center;
+    border: ${getBorder};
+    border-radius: 15px;
+    bottom: 30px;
+    color: ${props => props.theme.color.greyDark};
+    cursor: pointer;
+    display: flex;
+    height: 40px;
+    justify-content: center;
+    left: 30px;
+    position: fixed;
+    width: 40px;
+    z-index: 900;
+
+    :hover {
+        background-color: ${props => props.theme.color.greyLightest};
+        color: ${props => props.theme.color.greyDarkest};
+    }
 `;
+
+const PathoscopeViewerScroller = () => {
+    const [show, setShow] = useState(false);
+
+    const handleClick = useCallback(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }, []);
+
+    const handleScroll = useCallback(() => {
+        setShow(window.scrollY > 0);
+    }, []);
+
+    useEffect(() => {
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    if (show) {
+        return (
+            <StyledPathoscopeViewerScroller onClick={handleClick}>
+                <Icon name="arrow-up" />
+            </StyledPathoscopeViewerScroller>
+        );
+    }
+
+    return null;
+};
 
 export const PathoscopeViewer = () => (
     <div>
         <Mapping />
         <PathoscopeToolbar />
-        <PathoscopePanes>
-            <PathoscopeList />
-            <PathoscopeDetail />
-        </PathoscopePanes>
+        <PathoscopeList />
+        <PathoscopeViewerScroller />
     </div>
 );
 

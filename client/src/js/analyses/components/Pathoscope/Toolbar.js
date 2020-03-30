@@ -7,7 +7,8 @@ import {
     setSearchIds,
     toggleAnalysisSortDescending,
     toggleFilterIsolates,
-    toggleFilterOTUs
+    toggleFilterOTUs,
+    toggleShowPathoscopeReads
 } from "../../actions";
 import { getFuse } from "../../selectors";
 
@@ -32,12 +33,14 @@ export const PathoscopeToolbar = ({
     filterIsolates,
     filterOTUs,
     fuse,
+    showPathoscopeReads,
     sortDescending,
     sortKey,
     onSearch,
     onSetSortKey,
     onToggleFilterIsolates,
     onToggleFilterOTUs,
+    onToggleShowPathoscopeReads,
     onToggleSortDescending
 }) => {
     const handleChange = useCallback(
@@ -46,6 +49,7 @@ export const PathoscopeToolbar = ({
         },
         [id]
     );
+
     return (
         <StyledPathoscopeToolbar>
             <SearchInput onChange={handleChange} onKeyDown={e => e.stopPropagation()} />
@@ -63,6 +67,15 @@ export const PathoscopeToolbar = ({
 
             <Button title="Sort Direction" onClick={onToggleSortDescending} tip="Sort List">
                 <Icon name={sortDescending ? "sort-amount-down" : "sort-amount-up"} />
+            </Button>
+
+            <Button
+                active={showPathoscopeReads}
+                icon="weight-hanging"
+                tip="Show read pseudo-counts instead of weight"
+                onClick={onToggleShowPathoscopeReads}
+            >
+                Show Reads
             </Button>
 
             <Button
@@ -96,13 +109,14 @@ export const PathoscopeToolbar = ({
 };
 
 export const mapStateToProps = state => {
-    const { filterIsolates, filterOTUs, sortDescending, sortKey } = state.analyses;
+    const { filterIsolates, filterOTUs, showPathoscopeReads, sortDescending, sortKey } = state.analyses;
     return {
         id: state.analyses.activeId,
         analysisId: state.analyses.detail.id,
         filterIsolates,
         filterOTUs,
         fuse: getFuse(state),
+        showPathoscopeReads,
         sortDescending,
         sortKey
     };
@@ -123,6 +137,10 @@ export const mapDispatchToProps = dispatch => ({
 
     onSetSortKey: key => {
         dispatch(setAnalysisSortKey(key));
+    },
+
+    onToggleShowPathoscopeReads: () => {
+        dispatch(toggleShowPathoscopeReads());
     },
 
     onToggleSortDescending: () => {
