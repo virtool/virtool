@@ -60,93 +60,12 @@ def legacy_settings():
     }
 
 
-def test_schema():
+def test_schema(snapshot):
     """
     Check that schema has not changed.
 
     """
-    assert virtool.config.SCHEMA == {
-        # HTTP Server
-        "host": {
-            "type": "string",
-            "default": "localhost"
-        },
-        "port": {
-            "type": "integer",
-            "coerce": int,
-            "default": 9950
-        },
-
-        # File paths
-        "data_path": {
-            "type": "string",
-            "default": "data"
-        },
-        "watch_path": {
-            "type": "string",
-            "default": "watch"
-        },
-
-        # Host resource limits
-        "proc": {
-            "type": "integer",
-            "coerce": int,
-            "default": 8
-        },
-        "mem": {
-            "type": "integer",
-            "coerce": int,
-            "default": 16
-        },
-        "lg_mem": {
-            "default": 16,
-            "coerce": int,
-            "type": "integer"
-        },
-        "lg_proc": {
-            "default": 8,
-            "coerce": int,
-            "type": "integer"
-        },
-        "sm_mem": {
-            "default": 4,
-            "coerce": int,
-            "type": "integer"
-        },
-        "sm_proc": {
-            "default": 2,
-            "coerce": int,
-            "type": "integer"
-        },
-
-        # MongoDB
-        "db_connection_string": {
-            "type": "string",
-            "default": ""
-        },
-        "db_name": {
-            "type": "string",
-            "default": ""
-        },
-
-        # Proxy
-        "proxy": {
-            "type": "string",
-            "default": ""
-        },
-
-        "force_setup": {
-            "type": "boolean",
-            "coerce": virtool.utils.to_bool,
-            "default": False
-        },
-
-        "force_version": {
-            "type": "string",
-            "default": ""
-        }
-
-    }
+    snapshot.assert_match(virtool.config.SCHEMA)
 
 
 def test_get_defaults(mocker):

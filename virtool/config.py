@@ -47,24 +47,24 @@ SCHEMA = {
     "proc": {
         "type": "integer",
         "coerce": int,
-        "default": 8
+        "default": 4
     },
     "mem": {
         "type": "integer",
         "coerce": int,
-        "default": 16
+        "default": 8
     },
 
     # Job Limits
     "lg_proc": {
         "type": "integer",
         "coerce": int,
-        "default": 8
+        "default": 4
     },
     "lg_mem": {
         "type": "integer",
         "coerce": int,
-        "default": 16
+        "default": 8
     },
     "sm_proc": {
         "type": "integer",
