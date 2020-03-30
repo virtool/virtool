@@ -36,7 +36,7 @@ exports[`<IndexItemChangeDescription /> should render valid description when cha
 <span>
   1
    change
-   made in
+   made in 
   3
    OTU
   s
@@ -48,7 +48,7 @@ exports[`<IndexItemChangeDescription /> should render valid description when cha
   13
    change
   s
-   made in
+   made in 
   3
    OTU
   s
@@ -60,7 +60,7 @@ exports[`<IndexItemChangeDescription /> should render valid description when mod
   13
    change
   s
-   made in
+   made in 
   1
    OTU
 </span>

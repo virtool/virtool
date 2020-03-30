@@ -23,8 +23,8 @@ export const IndexItemChangeDescription = ({ changeCount, modifiedCount }) => {
 
     return (
         <span>
-            {changeCount} change{changeCount === 1 ? "" : "s"} made in
-            {modifiedCount} OTU{modifiedCount === 1 ? "" : "s"}
+            {changeCount} change{changeCount === 1 ? "" : "s"} made in {modifiedCount} OTU
+            {modifiedCount === 1 ? "" : "s"}
         </span>
     );
 };
