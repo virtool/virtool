@@ -16,7 +16,7 @@ const NavBarItem = styled(NavLink)`
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0 15px;
+    padding: 0 15px 0 0;
 
     &:focus {
         text-decoration: none;
