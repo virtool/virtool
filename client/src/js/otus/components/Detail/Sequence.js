@@ -1,6 +1,5 @@
 import PropTypes from "prop-types";
 import React from "react";
-import { Collapse } from "react-bootstrap";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { Badge, BoxGroupSection, Icon, Label, Table } from "../../../base";
@@ -140,6 +139,39 @@ class Sequence extends React.Component {
             );
         }
 
+        let table;
+
+        if (this.state.in) {
+            table = (
+                <SequenceTable>
+                    <tbody>
+                        <tr>
+                            <th>Accession</th>
+                            <td>{accession}</td>
+                        </tr>
+                        <tr>
+                            <th>Definition</th>
+                            <td>{this.props.definition}</td>
+                        </tr>
+                        {segmentTargetRow}
+                        <tr>
+                            <th>Host</th>
+                            <td>{this.props.host}</td>
+                        </tr>
+
+                        <tr>
+                            <th>
+                                Sequence <Badge>{this.props.sequence.length}</Badge>
+                            </th>
+                            <SequenceCell>
+                                <textarea rows="5" value={this.props.sequence} readOnly />
+                            </SequenceCell>
+                        </tr>
+                    </tbody>
+                </SequenceTable>
+            );
+        }
+
         return (
             <BoxGroupSection onClick={this.state.in ? null : () => this.setState({ in: true })}>
                 <SequenceHeader>
@@ -147,36 +179,7 @@ class Sequence extends React.Component {
                     {title}
                     {buttons}
                 </SequenceHeader>
-                <Collapse in={this.state.in}>
-                    <div>
-                        <SequenceTable>
-                            <tbody>
-                                <tr>
-                                    <th>Accession</th>
-                                    <td>{accession}</td>
-                                </tr>
-                                <tr>
-                                    <th>Definition</th>
-                                    <td>{this.props.definition}</td>
-                                </tr>
-                                {segmentTargetRow}
-                                <tr>
-                                    <th>Host</th>
-                                    <td>{this.props.host}</td>
-                                </tr>
-
-                                <tr>
-                                    <th>
-                                        Sequence <Badge>{this.props.sequence.length}</Badge>
-                                    </th>
-                                    <SequenceCell>
-                                        <textarea rows="5" value={this.props.sequence} readOnly />
-                                    </SequenceCell>
-                                </tr>
-                            </tbody>
-                        </SequenceTable>
-                    </div>
-                </Collapse>
+                {table}
             </BoxGroupSection>
         );
     }
