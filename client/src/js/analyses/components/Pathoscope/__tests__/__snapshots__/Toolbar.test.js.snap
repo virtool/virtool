@@ -60,6 +60,17 @@ exports[`<Toolbar /> should render 1`] = `
     />
   </Button>
   <Button
+    active={false}
+    bsStyle="default"
+    icon="weight-hanging"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Show read pseudo-counts instead of weight"
+    tipPlacement="top"
+  >
+    Show Reads
+  </Button>
+  <Button
     active={true}
     bsStyle="default"
     icon="filter"
@@ -151,6 +162,17 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
       fixedWidth={false}
       name="sort-amount-down"
     />
+  </Button>
+  <Button
+    active={false}
+    bsStyle="default"
+    icon="weight-hanging"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Show read pseudo-counts instead of weight"
+    tipPlacement="top"
+  >
+    Show Reads
   </Button>
   <Button
     active={true}
@@ -248,6 +270,121 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
   <Button
     active={false}
     bsStyle="default"
+    icon="weight-hanging"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Show read pseudo-counts instead of weight"
+    tipPlacement="top"
+  >
+    Show Reads
+  </Button>
+  <Button
+    active={false}
+    bsStyle="default"
+    icon="filter"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Hide OTUs with low coverage support"
+    tipPlacement="top"
+  >
+    Filter OTUs
+  </Button>
+  <Button
+    active={true}
+    bsStyle="default"
+    icon="filter"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
+  >
+    Filter Isolates
+  </Button>
+  <DropdownButton
+    id="download-dropdown"
+    title={<PathoscopeDownloadDropdownTitle />}
+  >
+    <DropdownItem
+      href="/download/analyses/foo.csv"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-csv"
+      />
+       CSV
+    </DropdownItem>
+    <DropdownItem
+      href="/download/analyses/foo.xlsx"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-excel"
+      />
+       Excel
+    </DropdownItem>
+  </DropdownButton>
+</Toolbar__StyledPathoscopeToolbar>
+`;
+
+exports[`<Toolbar /> should render when [showPathoscopeReads=true] 1`] = `
+<Toolbar__StyledPathoscopeToolbar>
+  <SearchInput
+    onChange={[Function]}
+    onKeyDown={[Function]}
+  />
+  <Toolbar__PathoscopeToolbarSelect
+    onChange={[Function]}
+    value="coverage"
+  >
+    <option
+      className="text-primary"
+      value="coverage"
+    >
+      Sort: Coverage
+    </option>
+    <option
+      className="text-success"
+      value="pi"
+    >
+      Sort: Weight
+    </option>
+    <option
+      className="text-danger"
+      value="depth"
+    >
+      Sort: Depth
+    </option>
+  </Toolbar__PathoscopeToolbarSelect>
+  <Button
+    bsStyle="default"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Sort List"
+    tipPlacement="top"
+    title="Sort Direction"
+  >
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="sort-amount-down"
+    />
+  </Button>
+  <Button
+    active={true}
+    bsStyle="default"
+    icon="weight-hanging"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Show read pseudo-counts instead of weight"
+    tipPlacement="top"
+  >
+    Show Reads
+  </Button>
+  <Button
+    active={true}
+    bsStyle="default"
     icon="filter"
     onClick={[MockFunction]}
     pullRight={false}
@@ -337,6 +474,17 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
       fixedWidth={false}
       name="sort-amount-down"
     />
+  </Button>
+  <Button
+    active={false}
+    bsStyle="default"
+    icon="weight-hanging"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Show read pseudo-counts instead of weight"
+    tipPlacement="top"
+  >
+    Show Reads
   </Button>
   <Button
     active={true}
@@ -432,6 +580,17 @@ exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
     />
   </Button>
   <Button
+    active={false}
+    bsStyle="default"
+    icon="weight-hanging"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Show read pseudo-counts instead of weight"
+    tipPlacement="top"
+  >
+    Show Reads
+  </Button>
+  <Button
     active={true}
     bsStyle="default"
     icon="filter"
@@ -523,6 +682,17 @@ exports[`<Toolbar /> should render when [sortKey="weight"] 1`] = `
       fixedWidth={false}
       name="sort-amount-down"
     />
+  </Button>
+  <Button
+    active={false}
+    bsStyle="default"
+    icon="weight-hanging"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Show read pseudo-counts instead of weight"
+    tipPlacement="top"
+  >
+    Show Reads
   </Button>
   <Button
     active={true}

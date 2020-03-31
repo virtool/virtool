@@ -30,14 +30,15 @@ describe("<Toolbar />", () => {
             analysisId: "foo",
             filterIsolates: true,
             filterOTUs: true,
-            showReads: false,
+            showPathoscopeReads: false,
             sortDescending: true,
             sortKey: "coverage",
             onCollapse: jest.fn(),
             onToggleFilterOTUs: jest.fn(),
             onToggleFilterIsolates: jest.fn(),
             onSetSortKey: jest.fn(),
-            onToggleSortDescending: jest.fn()
+            onToggleSortDescending: jest.fn(),
+            onToggleShowPathoscopeReads: jest.fn()
         };
     });
 
@@ -69,34 +70,31 @@ describe("<Toolbar />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
+    it("should render when [showPathoscopeReads=true]", () => {
+        props.showPathoscopeReads = true;
+        const wrapper = shallow(<PathoscopeToolbar {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
     it("should call onToggleSortDescending() when corresponding button clicked", () => {
         const wrapper = shallow(<PathoscopeToolbar {...props} />);
         expect(props.onToggleSortDescending).not.toHaveBeenCalled();
-        wrapper
-            .find("Button")
-            .at(0)
-            .simulate("click");
+        wrapper.find("Button").at(0).simulate("click");
         expect(props.onToggleSortDescending).toHaveBeenCalled();
+    });
+
+    it("should call onToggleFilterIsolates() when filter isolates button clicked", () => {
+        const wrapper = shallow(<PathoscopeToolbar {...props} />);
+        expect(props.onToggleFilterIsolates).not.toHaveBeenCalled();
+        wrapper.find("Button").at(3).simulate("click");
+        expect(props.onToggleFilterIsolates).toHaveBeenCalled();
     });
 
     it("should call onToggleFilterOTUs() when filter selected", () => {
         const wrapper = shallow(<PathoscopeToolbar {...props} />);
         expect(props.onToggleFilterIsolates).not.toHaveBeenCalled();
-        wrapper
-            .find("Button")
-            .at(1)
-            .simulate("click");
+        wrapper.find("Button").at(2).simulate("click");
         expect(props.onToggleFilterOTUs).toHaveBeenCalled();
-    });
-
-    it("should call onFilterIsolates() when filter isolates button clicked", () => {
-        const wrapper = shallow(<PathoscopeToolbar {...props} />);
-        expect(props.onToggleFilterIsolates).not.toHaveBeenCalled();
-        wrapper
-            .find("Button")
-            .at(2)
-            .simulate("click");
-        expect(props.onToggleFilterIsolates).toHaveBeenCalled();
     });
 
     it("should call onSetSortKey() when sort key selected", () => {
@@ -109,6 +107,13 @@ describe("<Toolbar />", () => {
         expect(props.onSetSortKey).not.toHaveBeenCalled();
         wrapper.find(PathoscopeToolbarSelect).simulate("change", e);
         expect(props.onSetSortKey).toHaveBeenCalledWith("pi");
+    });
+
+    it("should call onToggleShowPathoscopeReads() when filter isolates button clicked", () => {
+        const wrapper = shallow(<PathoscopeToolbar {...props} />);
+        expect(props.onToggleShowPathoscopeReads).not.toHaveBeenCalled();
+        wrapper.find("Button").at(1).simulate("click");
+        expect(props.onToggleShowPathoscopeReads).toHaveBeenCalled();
     });
 });
 

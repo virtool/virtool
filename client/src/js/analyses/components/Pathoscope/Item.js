@@ -1,56 +1,145 @@
-import React, { useCallback } from "react";
+import React from "react";
+import Measure from "react-measure";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { SlashList } from "../../../base";
+import { getColor } from "../../../app/theme";
+import { SpacedBox } from "../../../base";
+import { toScientificNotation } from "../../../utils/utils";
 import { setActiveHitId } from "../../actions";
 import { getActiveHit, getMatches } from "../../selectors";
-import { AnalysisViewerItem } from "../Viewer/Item";
+import Detail from "./Detail";
 import { StaticOTUCoverage } from "./OTUCoverage";
 
-const PathoscopeItemTitle = styled.div`
-    display: block;
-    overflow: hidden;
-    font-weight: bold;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-`;
-
-const PathoscopeItemSubtitle = styled.small`
-    align-items: center;
+const PathoscopeItemHeader = styled.h3`
     display: flex;
-    justify-content: space-between;
+    font-size: ${props => props.theme.fontSize.md};
+    margin: 5px 0 10px;
 `;
 
-const StyledPathoscopeItem = styled(AnalysisViewerItem)`
-    height: 142px;
+const StyledPathoscopeItemValue = styled.div`
+    display: flex;
+    flex-direction: column;
+    padding-left: 10px;
+    width: 100px;
+
+    span {
+        color: ${getColor};
+        font-weight: bold;
+    }
+
+    small {
+        color: ${props => props.theme.color.greyDark};
+        font-size: ${props => props.theme.fontSize.sm};
+        font-weight: bold;
+        padding-top: 5px;
+    }
 `;
 
-export const PathoscopeItem = ({ active, hit, style, onSetActiveId }) => {
-    const { abbreviation, coverage, depth, id, filled, name, pi } = hit;
+const PathoscopeItemValue = ({ color, label, value }) => (
+    <StyledPathoscopeItemValue color={color}>
+        <span>{value}</span>
+        <small>{label}</small>
+    </StyledPathoscopeItemValue>
+);
 
-    const handleClick = useCallback(() => onSetActiveId(id), [id]);
+const PathoscopeItemValues = styled.div`
+    display: flex;
+    margin-left: auto;
+`;
 
-    return (
-        <StyledPathoscopeItem selected={active} style={style} onClick={handleClick}>
-            <PathoscopeItemTitle>{name}</PathoscopeItemTitle>
-            <PathoscopeItemSubtitle>
-                <span>{abbreviation || "No Abbreviation"}</span>
-                <SlashList>
-                    <li className="text-danger">{depth}</li>
-                    <li className="text-success">{pi.toFixed(3)}</li>
-                    <li className="text-primary">{coverage.toFixed(3)}</li>
-                </SlashList>
-            </PathoscopeItemSubtitle>
-            <StaticOTUCoverage id={id} filled={filled} />
-        </StyledPathoscopeItem>
-    );
-};
+const PathoscopeItemTitle = styled.div`
+    display: flex;
+    flex-direction: column;
+    font-weight: bold;
+
+    span:not(:first-child) {
+        color: ${props => props.theme.color.greyDark};
+        padding-top: 5px;
+    }
+`;
+
+const StyledPathoscopeItem = styled(SpacedBox)`
+    ${props => (props.active ? `box-shadow: inset 3px 0 0 ${props.theme.color.primary};` : "")}
+`;
+
+export class PathoscopeItem extends React.Component {
+    constructor(props) {
+        super(props);
+        this.ref = React.createRef();
+    }
+
+    handleSizing = () => {
+        if (this.props.active && this.ref.current) {
+            let y;
+
+            if (this.props.index === 0) {
+                // Scroll to the top of the page if the first item is becoming active.
+                y = 0;
+            } else {
+                const top = this.ref.current.getBoundingClientRect().top;
+                const offset = window.scrollY;
+                y = top + offset - 50;
+            }
+
+            window.scrollTo({ top: y, behavior: "smooth" });
+        }
+    };
+
+    handleClick = () => {
+        this.props.onSetActiveId(this.props.hit.id);
+    };
+
+    render() {
+        const { active, hit, mappedCount, showPathoscopeReads, style } = this.props;
+        const { abbreviation, coverage, depth, id, filled, name, pi } = hit;
+
+        const piValue = showPathoscopeReads ? Math.round(pi * mappedCount) : toScientificNotation(pi);
+
+        return (
+            <div ref={this.ref}>
+                <Measure offset onResize={this.handleSizing}>
+                    {({ measureRef }) => (
+                        <StyledPathoscopeItem
+                            ref={measureRef}
+                            active={active}
+                            style={style}
+                            onClick={active ? null : this.handleClick}
+                        >
+                            <PathoscopeItemHeader>
+                                <PathoscopeItemTitle>
+                                    <span>{name}</span>
+                                    <span>{abbreviation || "No Abbreviation"}</span>
+                                </PathoscopeItemTitle>
+                                <PathoscopeItemValues>
+                                    <PathoscopeItemValue
+                                        color="green"
+                                        label={showPathoscopeReads ? "READS" : "WEIGHT"}
+                                        value={piValue}
+                                    />
+                                    <PathoscopeItemValue color="red" label="DEPTH" value={depth} />
+                                    <PathoscopeItemValue color="blue" label="COVERAGE" value={coverage.toFixed(3)} />
+                                </PathoscopeItemValues>
+                            </PathoscopeItemHeader>
+                            <StaticOTUCoverage id={id} filled={filled} />
+                            {active ? <Detail /> : null}
+                        </StyledPathoscopeItem>
+                    )}
+                </Measure>
+            </div>
+        );
+    }
+}
 
 const mapStateToProps = (state, ownProps) => {
     const activeId = getActiveHit(state).id;
     const hit = getMatches(state)[ownProps.index];
 
-    return { hit, active: activeId === hit.id };
+    return {
+        hit,
+        active: activeId === hit.id,
+        mappedCount: state.analyses.detail.read_count,
+        showPathoscopeReads: state.analyses.showPathoscopeReads
+    };
 };
 
 const mapDispatchToProps = dispatch => ({

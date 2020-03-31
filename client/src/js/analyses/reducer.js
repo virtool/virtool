@@ -15,6 +15,7 @@ import {
     TOGGLE_FILTER_ORFS,
     TOGGLE_FILTER_OTUS,
     TOGGLE_FILTER_SEQUENCES,
+    TOGGLE_SHOW_PATHOSCOPE_READS,
     WS_INSERT_ANALYSIS,
     WS_REMOVE_ANALYSIS,
     WS_UPDATE_ANALYSIS
@@ -39,6 +40,7 @@ export const initialState = {
     // Pathoscope-specific
     filterOTUs: true,
     filterIsolates: true,
+    showPathoscopeReads: false,
 
     // NuVs specific,
     filterORFs: true,
@@ -136,6 +138,9 @@ export default function analysesReducer(state = initialState, action) {
         case TOGGLE_FILTER_SEQUENCES: {
             return { ...state, filterSequences: !state.filterSequences };
         }
+
+        case TOGGLE_SHOW_PATHOSCOPE_READS:
+            return { ...state, showPathoscopeReads: !state.showPathoscopeReads };
 
         case SET_ANALYSIS_SORT_KEY:
             return { ...state, sortKey: action.sortKey };

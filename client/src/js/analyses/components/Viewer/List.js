@@ -1,11 +1,12 @@
 import { findIndex } from "lodash-es";
-import React, { useCallback, useEffect, useRef } from "react";
+import React from "react";
 import { connect } from "react-redux";
 import { FixedSizeList } from "react-window";
 import styled from "styled-components";
+import { Key } from "../../../base/Key";
 import { setActiveHitId } from "../../actions";
 import { getActiveHit, getMatches, getResults } from "../../selectors";
-import { Key } from "../../../base/Key";
+import { useKeyNavigation } from "./hooks";
 
 const AnalysisViewerListHeader = styled.div`
     background-color: #f5f5f5;
@@ -43,38 +44,14 @@ export const AnalysisViewerList = ({
     width,
     onSetActiveId
 }) => {
-    const windowEl = useRef(null);
-
-    const handleKeyPress = useCallback(
-        e => {
-            if (e.target !== window.document.body) {
-                return;
-            }
-
-            if (e.key === "w" && previousIndex > -1) {
-                windowEl.current.scrollToItem(previousIndex);
-                onSetActiveId(previousId);
-            } else if (e.key === "s" && nextIndex > -1) {
-                windowEl.current.scrollToItem(nextIndex);
-                onSetActiveId(nextId);
-            }
-        },
-        [activeId, nextId, previousId]
-    );
-
-    useEffect(() => {
-        window.addEventListener("keydown", handleKeyPress, true);
-        return () => {
-            window.removeEventListener("keydown", handleKeyPress, true);
-        };
-    });
+    const ref = useKeyNavigation(activeId, nextId, nextIndex, previousId, previousIndex, true, onSetActiveId);
 
     return (
         <StyledAnalysisViewerList width={width}>
             <AnalysisViewerListHeader>
                 Showing {shown} of {total}
             </AnalysisViewerListHeader>
-            <AnalysisViewerListWindow ref={windowEl} height={500} width={width} itemCount={shown} itemSize={itemSize}>
+            <AnalysisViewerListWindow ref={ref} height={500} width={width} itemCount={shown} itemSize={itemSize}>
                 {children}
             </AnalysisViewerListWindow>
             <AnalysisViewerListFooter>
