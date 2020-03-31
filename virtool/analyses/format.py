@@ -117,7 +117,7 @@ async def format_aodp(app, document):
         for isolate in result["isolates"]:
             for sequence in isolate["sequences"]:
                 key = (otu_id, sequence["id"])
-                sequence["hit"] = hits.get(key)
+                sequence["hits"] = hits.get(key)
 
         results[otu_id] = result
 

@@ -63,10 +63,10 @@ const StyledAODPIsolate = styled(BoxGroupSection)`
 export const AODPIsolate = props => {
     const { sequences } = props;
 
-    const sequenceComponents = map(sequences, ({ accession, hit, id, identities }) => (
+    const sequenceComponents = map(sequences, ({ accession, hits, id, identities }) => (
         <tr key={id}>
             <td>{accession}</td>
-            <td>{hit ? hit.length : 0} </td>
+            <td>{hits ? hits.length : 0} </td>
             <td>{identities.length ? min(identities).toFixed(1) : "-"}</td>
             <td>{identities.length ? mean(identities).toFixed(1) : "-"}</td>
             <td>{identities.length ? max(identities).toFixed(1) : "-"}</td>

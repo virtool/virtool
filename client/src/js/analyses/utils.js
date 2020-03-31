@@ -102,11 +102,11 @@ export const formatAODPData = detail => {
             return {
                 ...isolate,
                 sequences,
-                identities: getIsolateIdentities(sequences)
+                identities: getIdentities(sequences)
             };
         });
 
-        const identities = getResultIdentities(isolates);
+        const identities = getIdentities(isolates);
 
         return {
             ...result,
@@ -119,12 +119,9 @@ export const formatAODPData = detail => {
     return { ...detail, results };
 };
 
-const getResultIdentities = isolates => flatMap(isolates, isolate => isolate.identities);
+const getIdentities = data => flatMap(data, item => item.identities);
 
-const getIsolateIdentities = sequences => flatMap(sequences, sequence => sequence.identities);
-
-const getSequenceIdentities = sequence => flatMap(sequence.hit, hitItem => hitItem.identity);
-
+const getSequenceIdentities = sequence => flatMap(sequence.hits, hit => hit.identity);
 export const formatNuVsData = detail => {
     const results = map(detail.results, result => ({
         ...result,
