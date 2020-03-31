@@ -15,7 +15,7 @@ const modalOverlayOpen = keyframes`
 
 const modalOverlayClose = keyframes`
     100% {
-      opacity: 0;
+        opacity: 0;
     }
 `;
 
@@ -50,8 +50,34 @@ export const ModalAlert = styled(Alert)`
     }
 `;
 
+export const ModalDialogContent = styled(({ close, size, ...rest }) => <DialogContent {...rest} />)`
+    animation: ${props => (props.close ? modalContentClose : modalContentOpen)} 0.3s;
+    animation-fill-mode: forwards;
+    background: white;
+    border-radius: ${props => props.theme.borderRadius.sm};
+    box-shadow: ${props => props.theme.boxShadow.lg};
+    margin: -70px auto;
+    padding: 0;
+    position: relative;
+    width: ${props => (props.size === "lg" ? "900px" : "600px")};
+
+    @media (max-width: 991px) {
+        width: 600px;
+    }
+`;
+
+export const DialogFooter = styled(({ modalStyle, ...rest }) => <Box {...rest} />)`
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    border-top: ${props => (props.modalStyle === "danger" ? "none" : "")}
+    justify-content: end;
+    text-align: right;
+    overflow-y: auto;
+`;
+
 export const ModalDialogOverlay = styled(({ close, ...rest }) => <DialogOverlay {...rest} />)`
-    animation: ${props => (props.close ? modalOverlayClose : modalOverlayOpen)} 0.3s;
+    animation: ${props => (props.close ? modalOverlayClose : modalOverlayOpen)} 0.2s;
     animation-fill-mode: forwards;
     background: hsla(0, 0%, 0%, 0.33);
     top: 0;
@@ -67,22 +93,9 @@ export const ModalDialogOverlay = styled(({ close, ...rest }) => <DialogOverlay 
     }
 `;
 
-export const ModalDialogContent = styled(({ close, size, ...rest }) => <DialogContent {...rest} />)`
-    animation: ${props => (props.close ? modalContentClose : modalContentOpen)} 0.3s;
-    animation-fill-mode: forwards;
-    background: white;
-    box-shadow: rgba(0, 0, 0, 0.5) 0 5px 15px;
-    margin: -70px auto;
-    padding: 0;
-    position: relative;
-    width: ${props => (props.size === "lg" ? "900px" : "600px")};
-
-    @media (max-width: 991px) {
-        width: 600px;
-    }
-`;
-
-const DialogHeader = styled(({ modalStyle, headerBorderBottom, capitalize, ...rest }) => <BoxGroupSection {...rest} />)`
+const ModalDialogHeader = styled(({ modalStyle, headerBorderBottom, capitalize, ...rest }) => (
+    <BoxGroupSection {...rest} />
+))`
     background-color: ${props => (props.modalStyle === "danger" ? "#d44b40" : "")};
     color: ${props => (props.modalStyle === "danger" ? "white" : "")};
     height: 55px;
@@ -95,16 +108,6 @@ const DialogHeader = styled(({ modalStyle, headerBorderBottom, capitalize, ...re
 
 export const DialogBody = styled.div`
     padding: 15px;
-`;
-
-export const DialogFooter = styled(({ modalStyle, ...rest }) => <Box {...rest} />)`
-    border-left: none;
-    border-right: none;
-    border-bottom: none;
-    border-top: ${props => (props.modalStyle === "danger" ? "none" : "")}
-    justify-content: end;
-    text-align: right;
-    overflow-y: auto;
 `;
 
 export class ModalDialog extends React.Component {
@@ -180,14 +183,14 @@ export class ModalDialog extends React.Component {
                         onAnimationEnd={this.onClosed}
                         onAnimationStart={this.onOpen}
                     >
-                        <DialogHeader
+                        <ModalDialogHeader
                             modalStyle={this.props.modalStyle}
                             headerBorderBottom={this.props.headerBorderBottom}
                             capitalize={this.props.capitalize}
                         >
                             {this.props.headerText}
                             {CloseButton}
-                        </DialogHeader>
+                        </ModalDialogHeader>
                         {this.props.children}
                     </ModalDialogContent>
                 </ModalDialogOverlay>
