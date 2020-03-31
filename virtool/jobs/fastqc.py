@@ -179,4 +179,6 @@ def handle_base_quality_nan(split):
         except ValueError:
             pass
 
-    raise ValueError("Could not parse base quality values")
+    joined = ",".join(split)
+
+    raise ValueError(f"Could not parse base quality values '{joined}'")
