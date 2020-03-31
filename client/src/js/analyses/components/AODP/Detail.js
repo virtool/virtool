@@ -51,7 +51,13 @@ const AODPDetailOverview = ({ identities }) => {
     );
 };
 
-export const AODPDetail = ({ name, identities, isolates }) => {
+export const AODPDetail = ({ hit }) => {
+    if (hit === null) {
+        return <BoxGroup>None found</BoxGroup>;
+    }
+
+    const { name, identities, isolates } = hit;
+
     const filteredIsolates = filter(isolates, isolate => isolate.identities.length);
 
     const isolateComponents = map(filteredIsolates, isolate => <AODPIsolate key={isolate.id} {...isolate} />);
@@ -69,8 +75,8 @@ export const AODPDetail = ({ name, identities, isolates }) => {
     );
 };
 
-const mapStateToProps = state => {
-    return getActiveHit(state);
-};
+const mapStateToProps = state => ({
+    hit: getActiveHit(state)
+});
 
 export default connect(mapStateToProps)(AODPDetail);
