@@ -12,9 +12,7 @@ build_exe_options = {
         ("client/dist", "client"),
         "LICENSE",
         "templates",
-        "readme.md",
-        "/usr/lib/x86_64-linux-gnu/libssl.so",
-        "/usr/lib/x86_64-linux-gnu/libz.so"
+        "readme.md"
     ],
     "includes": [
         "asyncio.base_events"
@@ -39,6 +37,7 @@ executables = [
 ]
 
 classifiers=[
+    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7"
 ]
 
