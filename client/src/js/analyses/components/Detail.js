@@ -12,7 +12,7 @@ import {
 } from "../../base/index";
 import { getTaskDisplayName } from "../../utils/utils";
 import { clearAnalysis, getAnalysis } from "../actions";
-import { AODPViewer } from "./AODP/Viewer";
+import AODPViewer from "./AODP/Viewer";
 import AnalysisCache from "./CacheLink";
 import NuVsViewer from "./NuVs/Viewer";
 import PathoscopeViewer from "./Pathoscope/Viewer";
