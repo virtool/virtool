@@ -3,10 +3,8 @@ import concurrent.futures
 import logging
 import os
 import signal
-import subprocess
 import sys
 
-import aiofiles
 import aiojobs.aiohttp
 import pymongo
 import pymongo.errors
@@ -16,6 +14,7 @@ from motor import motor_asyncio
 import virtool.app_routes
 import virtool.config
 import virtool.db.core
+import virtool.db.migrate
 import virtool.db.utils
 import virtool.dispatcher
 import virtool.errors
@@ -28,7 +27,6 @@ import virtool.http.proxy
 import virtool.http.query
 import virtool.jobs.manager
 import virtool.logs
-import virtool.db.migrate
 import virtool.references.db
 import virtool.resources
 import virtool.sentry
@@ -37,6 +35,7 @@ import virtool.settings.schema
 import virtool.setup.setup
 import virtool.software.db
 import virtool.utils
+import virtool.version
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +94,7 @@ async def init_version(app: web.Application):
     if force_version:
         version = force_version
     else:
-        version = await find_server_version(sys.path[0])
+        version = await virtool.version.determine_server_version(sys.path[0])
 
     logger.info(f"Virtool {version}")
 
@@ -550,27 +549,3 @@ async def run():
         task.cancel()
 
 
-async def find_server_version(install_path="."):
-    output = None
-
-    loop = asyncio.get_event_loop()
-
-    try:
-        output = await loop.run_in_executor(None, subprocess.check_output, ["git", "describe", "--tags"])
-        output = output.decode().rstrip()
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        pass
-
-    if output and "Not a git repository" not in output:
-        return output
-
-    try:
-        version_file_path = os.path.join(install_path, "VERSION")
-
-        async with aiofiles.open(version_file_path, "r") as version_file:
-            content = await version_file.read()
-            return content.rstrip()
-
-    except FileNotFoundError:
-        logger.critical("Could not determine software version.")
-        return "Unknown"
