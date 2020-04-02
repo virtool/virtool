@@ -164,21 +164,27 @@ def run_fastqc(run_subprocess, proc, read_paths, fastqc_path):
     run_subprocess(command)
 
 
-def handle_base_quality_nan(split):
+def handle_base_quality_nan(split_line: list) -> list:
     """
+    Parse a per-base quality line containing NaN values.
 
-    :param split:
-    :return:
+    :param split_line: the quality line split into a List
+    :return: replacement values
+
     """
-    values = split[1:]
+    values = split_line[1:]
 
-    for value in split[1:]:
+    for value in values:
         try:
             value = round(int(value.split(".")[0]), 2)
             return [value for _ in values]
         except ValueError:
             pass
 
-    joined = ",".join(split)
+    # Return all zeroes if none of the quality values are numbers.
+    if set(values) == {"NaN"}:
+        return [0] * 4
+
+    joined = ",".join(split_line)
 
     raise ValueError(f"Could not parse base quality values '{joined}'")
