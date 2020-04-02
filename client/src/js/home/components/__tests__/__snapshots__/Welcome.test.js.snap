@@ -1,0 +1,41 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Welcome /> should render 1`] = `
+<Welcome__StyledWelcome>
+  <Box>
+    <h3>
+      Virtool 
+      <small
+        className="text-muted"
+      >
+        v1.2.3
+      </small>
+    </h3>
+    <p>
+      Viral infection diagnostics using next-generation sequencing
+    </p>
+    <strong>
+      <ExternalLink
+        href="http://www.virtool.ca/"
+      >
+        Website
+      </ExternalLink>
+      <ExternalLink
+        href="https://github.com/virtool/virtool"
+      >
+        Github
+      </ExternalLink>
+    </strong>
+  </Box>
+  <Upgrade
+    mongoVersion="3.6.3"
+  />
+  <Support />
+</Welcome__StyledWelcome>
+`;
+
+exports[`<Welcome /> should render LoadingPlaceholder when version information is null 1`] = `<LoadingPlaceholder />`;
+
+exports[`<Welcome /> should render LoadingPlaceholder when version information is null 2`] = `<LoadingPlaceholder />`;
+
+exports[`<Welcome /> should render LoadingPlaceholder when version information is null 3`] = `<LoadingPlaceholder />`;

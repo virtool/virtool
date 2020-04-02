@@ -1,29 +1,50 @@
 import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Box, Container, Icon } from "../../base";
+import styled from "styled-components";
+import { Box, Container, ExternalLink, LoadingPlaceholder } from "../../base";
+import { Support } from "./Support";
+import { Upgrade } from "./Upgrade";
 
-export const Welcome = props => {
-    let version;
+const StyledWelcome = styled(Container)`
+    ${Box}:first-child {
+        p {
+            margin-bottom: 20px;
+        }
 
-    if (props.version) {
-        version = <small className="text-muted">{props.version}</small>;
+        a {
+            padding-right: 10px;
+        }
     }
+`;
+
+export const Welcome = ({ mongoVersion, version }) => {
+    if (!mongoVersion || !version) {
+        return <LoadingPlaceholder />;
+    }
+
     return (
-        <Container>
+        <StyledWelcome>
             <Box>
-                <h3>Virtool {version}</h3>
+                <h3>
+                    Virtool <small className="text-muted">{version}</small>
+                </h3>
                 <p>Viral infection diagnostics using next-generation sequencing</p>
 
-                <a className="btn btn-default" href="http://www.virtool.ca/" target="_blank" rel="noopener noreferrer">
-                    <Icon name="globe" /> Website
-                </a>
+                <strong>
+                    <ExternalLink href="http://www.virtool.ca/">Website</ExternalLink>
+                    <ExternalLink href="https://github.com/virtool/virtool">Github</ExternalLink>
+                </strong>
             </Box>
-        </Container>
+
+            <Upgrade mongoVersion={mongoVersion} />
+            <Support />
+        </StyledWelcome>
     );
 };
 
 export const mapStateToProps = state => ({
+    mongoVersion: get(state.updates, "mongo_version"),
     version: get(state.updates, "version")
 });
 
