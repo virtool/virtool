@@ -1,11 +1,12 @@
-import { Welcome, mapStateToProps } from "../components/Welcome";
+import { Welcome, mapStateToProps } from "../Welcome";
 
 describe("<Welcome />", () => {
     let props;
 
     beforeEach(() => {
         props = {
-            version: true
+            mongoVersion: "3.6.3",
+            version: "v1.2.3"
         };
     });
 
@@ -13,8 +14,14 @@ describe("<Welcome />", () => {
         const wrapper = shallow(<Welcome {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
-    it("should render when [version=false]", () => {
-        props.version = false;
+
+    it.each([
+        ["3.6.3", null],
+        [null, "v1.2.3"],
+        [null, null]
+    ])("should render LoadingPlaceholder when version information is null", (mongoVersion, version) => {
+        props.mongoVersion = mongoVersion;
+        props.version = version;
         const wrapper = shallow(<Welcome {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
