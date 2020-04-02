@@ -16,7 +16,7 @@ const LoginFooter = styled.div`
 
     & > span {
         color: ${props => props.theme.color.red};
-        font-size: ${props => props.theme.fontSize.xs};
+        font-size: ${props => props.theme.fontSize.sm};
     }
 `;
 
