@@ -93,10 +93,13 @@ async def migrate_status(db, server_version):
         }
     })
 
+    mongo_version = await virtool.db.utils.determine_mongo_version(db)
+
     try:
         await db.status.insert_one({
             "_id": "software",
             "installed": None,
+            "mongo_version": mongo_version,
             "process": None,
             "releases": list(),
             "updating": False,
@@ -105,6 +108,7 @@ async def migrate_status(db, server_version):
     except pymongo.errors.DuplicateKeyError:
         await db.status.update_one({"_id": "software"}, {
             "$set": {
+                "mongo_version": mongo_version,
                 "process": None,
                 "updating": False,
                 "version": server_version
