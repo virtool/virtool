@@ -33,3 +33,11 @@ def test_run_fastqc(paired, mocker):
         expected.append("/reads/reads_2.fq.gz")
 
     m_run_subprocess.assert_called_with(expected)
+
+
+@pytest.mark.parametrize("split_line,result", [
+    (["120-125", "NaN", "4.0", "8", "NaN"], [4, 4, 4, 4]),
+    (["120-125", "NaN", "NaN", "NaN", "NaN"], [0, 0, 0, 0])
+])
+def test_handle_base_quality_nan(split_line, result):
+    assert virtool.jobs.fastqc.handle_base_quality_nan(split_line) == result
