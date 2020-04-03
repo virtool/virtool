@@ -25,11 +25,11 @@ const aodpDescriptions = {
     prepare_reads: prepareReadsDescription,
     join_reads: {
         title: "Join Reads",
-        description: "Join paired end reads into single long reads"
+        description: "Join paired end reads into single long reads."
     },
     deduplicate_reads: {
         title: "Deduplicate Reads",
-        description: "Remove duplicate reads and quantify duplication"
+        description: "Remove duplicate reads and quantify duplication."
     },
     prepare_index: {
         title: "Prepare Index",
