@@ -23,6 +23,14 @@ const prepareQCDescription = {
 const aodpDescriptions = {
     make_analysis_dir: makeAnalysisDirDescription,
     prepare_reads: prepareReadsDescription,
+    join_reads: {
+        title: "Join Reads",
+        description: "Join paired end reads into single long reads."
+    },
+    deduplicate_reads: {
+        title: "Deduplicate Reads",
+        description: "Remove duplicate reads and quantify duplication."
+    },
     prepare_index: {
         title: "Prepare Index",
         description: "Prepare the reference index for searching."
