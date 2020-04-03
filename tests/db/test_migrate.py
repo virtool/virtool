@@ -78,7 +78,9 @@ async def test_migrate_groups(dbi):
 @pytest.mark.parametrize("has_software", [True, False])
 @pytest.mark.parametrize("has_software_update", [True, False])
 @pytest.mark.parametrize("has_version", [True, False])
-async def test_migrate_status(has_software, has_software_update, has_version, dbi):
+async def test_migrate_status(has_software, has_software_update, has_version, mocker, dbi):
+    mocker.patch("virtool.db.utils.determine_mongo_version", make_mocked_coro("3.6.17"))
+
     if has_software:
         await dbi.status.insert_one({
             "_id": "software",
@@ -95,6 +97,7 @@ async def test_migrate_status(has_software, has_software_update, has_version, db
 
     expected_software = {
         "_id": "software",
+        "mongo_version": "3.6.17",
         "process": None,
         "updating": False,
         "version": "v3.0.0"
