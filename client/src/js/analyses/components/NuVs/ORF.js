@@ -60,10 +60,10 @@ const NuVsORFLabel = ({ hmm }) => {
     return <span>Unannotated</span>;
 };
 
-const NuVsORF = ({ hits, index, maxSequenceLength, pos, strand }) => {
+const NuVsORF = ({ hits, index, maxSequenceLength, pos, strand, width }) => {
     const chartEl = useRef(null);
 
-    useEffect(() => draw(chartEl.current, maxSequenceLength, pos, strand), [index]);
+    useEffect(() => draw(chartEl.current, maxSequenceLength, pos, strand), [index, width]);
 
     const hmm = hits[0];
 
