@@ -135,19 +135,9 @@ async def format_pathoscope(app, document):
         document
     )
 
+    patched_otus = await gather_patched_otus(app, document["results"])
+
     formatted = dict()
-
-    otu_specifiers = {(hit["otu"]["id"], hit["otu"]["version"]) for hit in document["results"]}
-
-    patched_otus = await asyncio.gather(*[
-        virtool.history.db.patch_to_version(
-            app,
-            otu_id,
-            version
-        ) for otu_id, version in otu_specifiers
-    ])
-
-    patched_otus = {patched["_id"]: patched for _, patched, _ in patched_otus}
 
     for hit in document["results"]:
 
@@ -333,3 +323,16 @@ async def format_analysis(app, document: dict) -> dict:
     raise ValueError("Could not determine analysis algorithm")
 
 
+async def gather_patched_otus(app, results):
+    # Use set to only id-version combinations once.
+    otu_specifiers = {(hit["otu"]["id"], hit["otu"]["version"]) for hit in results}
+
+    patched_otus = await asyncio.gather(*[
+        virtool.history.db.patch_to_version(
+            app,
+            otu_id,
+            version
+        ) for otu_id, version in otu_specifiers
+    ])
+
+    return {patched["_id"]: patched for _, patched, _ in patched_otus}
