@@ -1,7 +1,6 @@
 import Fuse from "fuse.js";
-import { get, find, intersection, map, reject, sortBy, toNumber, toString, keyBy, min, filter } from "lodash-es";
+import { filter, find, get, intersection, keyBy, map, reject, sortBy, toNumber, toString } from "lodash-es";
 import { createSelector } from "reselect";
-import createCachedSelector from "re-reselect";
 import { getMaxReadLength, getSampleLibraryType } from "../samples/selectors";
 import { fuseSearchKeys } from "./utils";
 
@@ -50,16 +49,18 @@ export const getFilterIds = createSelector(
             const filteredResults = reject(results, hit => {
                 return hit.pi * readCount < (hit.length * 0.8) / maxReadLength;
             });
+
             return map(filteredResults, "id");
         }
 
         if (algorithm === "aodp" && aodpFilter) {
-            const fil = filter(results, result => {
-                if (min(result.identities) > aodpFilter * 100) {
+            const filteredResults = filter(results, result => {
+                if (result.identity > aodpFilter * 100) {
                     return result.id;
                 }
             });
-            return map(fil, fi => fi.id);
+
+            return map(filteredResults, fi => fi.id);
         }
 
         return map(results, "id");
@@ -141,9 +142,3 @@ export const getActiveHit = createSelector([getAlgorithm, getMatches, getActiveI
 
     return matches[0] || null;
 });
-
-const getItemId = (state, itemId) => itemId;
-
-export const getPathoscopeItem = createCachedSelector([getResults, getItemId], (results, id) => find(results, { id }))(
-    (state, itemId) => itemId
-);
