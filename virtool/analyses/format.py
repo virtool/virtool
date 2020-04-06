@@ -79,53 +79,24 @@ async def load_results(settings: dict, document: dict) -> dict:
 async def format_aodp(app, document):
     db = app["db"]
 
-    otu_cache = dict()
-    sequence_cache = dict()
+    patched_otus = await gather_patched_otus(app, document["results"])
 
     hits = defaultdict(list)
 
     for hit in document["results"]:
-        sequence_id = hit["sequence_id"]
+        hits[hit["sequence_id"]].append(hit)
 
-        try:
-            sequence = sequence_cache["sequence_id"]
-        except KeyError:
-            sequence = await db.sequences.find_one(sequence_id, ["otu_id", "isolate_id"])
-            sequence_cache[sequence_id] = sequence
+    for otu in patched_otus.values():
+        otu["id"] = otu.pop("_id")
 
-        otu_id = sequence["otu_id"]
-
-        if otu_id not in otu_cache:
-            otu = await virtool.otus.db.join_and_format(db, otu_id)
-            otu_cache[otu_id] = otu
-
-        hits[(otu_id, sequence_id)].append({
-            **hit,
-            "otu_id": otu_id,
-            "isolate_id": sequence["isolate_id"]
-        })
-
-    results = dict()
-
-    for otu_id, otu in otu_cache.items():
-        result = {
-            "id": otu_id,
-            "name": otu["name"],
-            "isolates": otu["isolates"]
-        }
-
-        for isolate in result["isolates"]:
+        for isolate in otu["isolates"]:
             for sequence in isolate["sequences"]:
-                key = (otu_id, sequence["id"])
-                sequence["hits"] = hits.get(key)
-
-        results[otu_id] = result
-
-    results = list(results.values())
+                sequence["hits"] = hits[sequence["_id"]]
+                sequence["id"] = sequence.pop("_id")
 
     return {
         **document,
-        "results": results
+        "results": list(patched_otus.values())
     }
 
 
@@ -135,19 +106,9 @@ async def format_pathoscope(app, document):
         document
     )
 
+    patched_otus = await gather_patched_otus(app, document["results"])
+
     formatted = dict()
-
-    otu_specifiers = {(hit["otu"]["id"], hit["otu"]["version"]) for hit in document["results"]}
-
-    patched_otus = await asyncio.gather(*[
-        virtool.history.db.patch_to_version(
-            app,
-            otu_id,
-            version
-        ) for otu_id, version in otu_specifiers
-    ])
-
-    patched_otus = {patched["_id"]: patched for _, patched, _ in patched_otus}
 
     for hit in document["results"]:
 
@@ -333,3 +294,16 @@ async def format_analysis(app, document: dict) -> dict:
     raise ValueError("Could not determine analysis algorithm")
 
 
+async def gather_patched_otus(app, results):
+    # Use set to only id-version combinations once.
+    otu_specifiers = {(hit["otu"]["id"], hit["otu"]["version"]) for hit in results}
+
+    patched_otus = await asyncio.gather(*[
+        virtool.history.db.patch_to_version(
+            app,
+            otu_id,
+            version
+        ) for otu_id, version in otu_specifiers
+    ])
+
+    return {patched["_id"]: patched for _, patched, _ in patched_otus}

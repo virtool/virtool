@@ -86,21 +86,13 @@ class Job(virtool.jobs.job.Job):
             )
         })
 
-        index_document = self.db.indexes.find_one(self.task_args["index_id"], ["manifest", "sequence_otu_map"])
+        index_info = get_index_info(
+            self.db,
+            self.settings,
+            self.task_args["index_id"]
+        )
 
-        sequence_otu_map = index_document.get("sequence_otu_map")
-
-        if sequence_otu_map is None:
-            sequence_otu_map = get_sequence_otu_map(
-                self.db,
-                self.settings,
-                index_document["manifest"]
-            )
-
-        self.params.update({
-            "manifest": index_document["manifest"],
-            "sequence_otu_map": sequence_otu_map
-        })
+        self.params.update(index_info)
 
         read_paths = [os.path.join(self.params["reads_path"], "reads_1.fq.gz")]
 
@@ -447,6 +439,24 @@ def compose_trimming_command(cache_path: str, parameters: dict, proc, read_paths
     command += read_paths
 
     return command
+
+
+def get_index_info(db, settings, index_id):
+    document = db.indexes.find_one(index_id, ["manifest", "sequence_otu_map"])
+
+    try:
+        sequence_otu_map = document["sequence_otu_map"]
+    except KeyError:
+        sequence_otu_map = get_sequence_otu_map(
+            db,
+            settings,
+            document["manifest"]
+        )
+
+    return {
+        "manifest": document["manifest"],
+        "sequence_otu_map": sequence_otu_map
+    }
 
 
 def set_analysis_results(db, analysis_id, analysis_path, results):
