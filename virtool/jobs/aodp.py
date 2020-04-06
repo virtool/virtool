@@ -141,15 +141,24 @@ class Job(virtool.jobs.analysis.Job):
 
                 read_id = split[0]
 
+                sequence_id = split[1]
+
+                otu_id = self.params["sequence_otu_map"][sequence_id]
+                otu_version = self.params["manifest"][otu_id]
+
                 parsed.append({
                     "id": read_id,
-                    "sequence_id": split[1],
+                    "sequence_id": sequence_id,
                     "identity": identity,
                     "matched_length": int(split[3]),
                     "read_length": int(split[4]),
                     "min_cluster": int(split[5]),
                     "max_cluster": int(split[6]),
-                    "count": self.intermediate["sequence_counts"][read_id]
+                    "count": self.intermediate["sequence_counts"][read_id],
+                    "otu": {
+                        "version": otu_version,
+                        "id": otu_id
+                    }
                 })
 
         self.results["results"] = parsed
