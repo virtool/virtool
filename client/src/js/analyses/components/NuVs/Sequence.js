@@ -18,10 +18,10 @@ const draw = (element, maxLength, sequenceLength) => {
         .domain([0, maxLength]);
 
     // Construct the SVG canvas.
-    const svg = select(element).append("svg").attr("width", width).attr("height", 26);
+    const svg = select(element).append("svg").attr("width", width).attr("height", 30);
 
-    // Create a mother group that will hold all chart elements.
-    const group = svg.append("g").attr("transform", "translate(15,0)");
+    // Create a group that will hold all chart elements.
+    const group = svg.append("g").attr("transform", "translate(15,3)");
 
     group.append("rect").attr("x", 0).attr("y", 18).attr("width", x(sequenceLength)).attr("height", 8);
 
