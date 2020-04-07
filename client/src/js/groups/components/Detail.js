@@ -89,7 +89,7 @@ export const GroupDetail = ({ group, pending, users, onRemove, onSetPermission }
                 <BoxGroupSection>{memberComponents}</BoxGroupSection>
             </BoxGroup>
 
-            <Button icon="trash" bsStyle="danger" onClick={handleRemove} block>
+            <Button icon="trash" color="red" onClick={handleRemove}>
                 Remove Group
             </Button>
         </div>

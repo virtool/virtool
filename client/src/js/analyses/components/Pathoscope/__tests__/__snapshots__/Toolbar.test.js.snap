@@ -46,9 +46,8 @@ exports[`<Toolbar /> should render 1`] = `
     </option>
   </Toolbar__PathoscopeToolbarSelect>
   <Button
-    bsStyle="default"
+    disabled={false}
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Sort List"
     tipPlacement="top"
     title="Sort Direction"
@@ -61,10 +60,9 @@ exports[`<Toolbar /> should render 1`] = `
   </Button>
   <Button
     active={false}
-    bsStyle="default"
+    disabled={false}
     icon="weight-hanging"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Show read pseudo-counts instead of weight"
     tipPlacement="top"
   >
@@ -72,10 +70,9 @@ exports[`<Toolbar /> should render 1`] = `
   </Button>
   <Button
     active={true}
-    bsStyle="default"
+    disabled={false}
     icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Hide OTUs with low coverage support"
     tipPlacement="top"
   >
@@ -83,10 +80,9 @@ exports[`<Toolbar /> should render 1`] = `
   </Button>
   <Button
     active={true}
-    bsStyle="default"
+    disabled={false}
     icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Hide isolates with low coverage support"
     tipPlacement="top"
   >
@@ -150,9 +146,8 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
     </option>
   </Toolbar__PathoscopeToolbarSelect>
   <Button
-    bsStyle="default"
+    disabled={false}
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Sort List"
     tipPlacement="top"
     title="Sort Direction"
@@ -165,10 +160,9 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
   </Button>
   <Button
     active={false}
-    bsStyle="default"
+    disabled={false}
     icon="weight-hanging"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Show read pseudo-counts instead of weight"
     tipPlacement="top"
   >
@@ -176,10 +170,9 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
   </Button>
   <Button
     active={true}
-    bsStyle="default"
+    disabled={false}
     icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Hide OTUs with low coverage support"
     tipPlacement="top"
   >
@@ -187,10 +180,9 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
   </Button>
   <Button
     active={false}
-    bsStyle="default"
+    disabled={false}
     icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Hide isolates with low coverage support"
     tipPlacement="top"
   >
@@ -254,9 +246,8 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
     </option>
   </Toolbar__PathoscopeToolbarSelect>
   <Button
-    bsStyle="default"
+    disabled={false}
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Sort List"
     tipPlacement="top"
     title="Sort Direction"
@@ -269,10 +260,9 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
   </Button>
   <Button
     active={false}
-    bsStyle="default"
+    disabled={false}
     icon="weight-hanging"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Show read pseudo-counts instead of weight"
     tipPlacement="top"
   >
@@ -280,10 +270,9 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
   </Button>
   <Button
     active={false}
-    bsStyle="default"
+    disabled={false}
     icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Hide OTUs with low coverage support"
     tipPlacement="top"
   >
@@ -291,10 +280,9 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
   </Button>
   <Button
     active={true}
-    bsStyle="default"
+    disabled={false}
     icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Hide isolates with low coverage support"
     tipPlacement="top"
   >
@@ -358,9 +346,8 @@ exports[`<Toolbar /> should render when [showPathoscopeReads=true] 1`] = `
     </option>
   </Toolbar__PathoscopeToolbarSelect>
   <Button
-    bsStyle="default"
+    disabled={false}
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Sort List"
     tipPlacement="top"
     title="Sort Direction"
@@ -373,10 +360,9 @@ exports[`<Toolbar /> should render when [showPathoscopeReads=true] 1`] = `
   </Button>
   <Button
     active={true}
-    bsStyle="default"
+    disabled={false}
     icon="weight-hanging"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Show read pseudo-counts instead of weight"
     tipPlacement="top"
   >
@@ -384,10 +370,9 @@ exports[`<Toolbar /> should render when [showPathoscopeReads=true] 1`] = `
   </Button>
   <Button
     active={true}
-    bsStyle="default"
+    disabled={false}
     icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Hide OTUs with low coverage support"
     tipPlacement="top"
   >
@@ -395,10 +380,9 @@ exports[`<Toolbar /> should render when [showPathoscopeReads=true] 1`] = `
   </Button>
   <Button
     active={true}
-    bsStyle="default"
+    disabled={false}
     icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Hide isolates with low coverage support"
     tipPlacement="top"
   >
@@ -462,9 +446,8 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
     </option>
   </Toolbar__PathoscopeToolbarSelect>
   <Button
-    bsStyle="default"
+    disabled={false}
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Sort List"
     tipPlacement="top"
     title="Sort Direction"
@@ -477,10 +460,9 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
   </Button>
   <Button
     active={false}
-    bsStyle="default"
+    disabled={false}
     icon="weight-hanging"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Show read pseudo-counts instead of weight"
     tipPlacement="top"
   >
@@ -488,10 +470,9 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
   </Button>
   <Button
     active={true}
-    bsStyle="default"
+    disabled={false}
     icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Hide OTUs with low coverage support"
     tipPlacement="top"
   >
@@ -499,10 +480,9 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
   </Button>
   <Button
     active={true}
-    bsStyle="default"
+    disabled={false}
     icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Hide isolates with low coverage support"
     tipPlacement="top"
   >
@@ -566,9 +546,8 @@ exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
     </option>
   </Toolbar__PathoscopeToolbarSelect>
   <Button
-    bsStyle="default"
+    disabled={false}
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Sort List"
     tipPlacement="top"
     title="Sort Direction"
@@ -581,10 +560,9 @@ exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
   </Button>
   <Button
     active={false}
-    bsStyle="default"
+    disabled={false}
     icon="weight-hanging"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Show read pseudo-counts instead of weight"
     tipPlacement="top"
   >
@@ -592,10 +570,9 @@ exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
   </Button>
   <Button
     active={true}
-    bsStyle="default"
+    disabled={false}
     icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Hide OTUs with low coverage support"
     tipPlacement="top"
   >
@@ -603,10 +580,9 @@ exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
   </Button>
   <Button
     active={true}
-    bsStyle="default"
+    disabled={false}
     icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Hide isolates with low coverage support"
     tipPlacement="top"
   >
@@ -670,9 +646,8 @@ exports[`<Toolbar /> should render when [sortKey="weight"] 1`] = `
     </option>
   </Toolbar__PathoscopeToolbarSelect>
   <Button
-    bsStyle="default"
+    disabled={false}
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Sort List"
     tipPlacement="top"
     title="Sort Direction"
@@ -685,10 +660,9 @@ exports[`<Toolbar /> should render when [sortKey="weight"] 1`] = `
   </Button>
   <Button
     active={false}
-    bsStyle="default"
+    disabled={false}
     icon="weight-hanging"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Show read pseudo-counts instead of weight"
     tipPlacement="top"
   >
@@ -696,10 +670,9 @@ exports[`<Toolbar /> should render when [sortKey="weight"] 1`] = `
   </Button>
   <Button
     active={true}
-    bsStyle="default"
+    disabled={false}
     icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Hide OTUs with low coverage support"
     tipPlacement="top"
   >
@@ -707,10 +680,9 @@ exports[`<Toolbar /> should render when [sortKey="weight"] 1`] = `
   </Button>
   <Button
     active={true}
-    bsStyle="default"
+    disabled={false}
     icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
     tip="Hide isolates with low coverage support"
     tipPlacement="top"
   >

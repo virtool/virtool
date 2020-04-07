@@ -2,29 +2,24 @@ import { Tooltip } from "../Tooltip";
 import { Button } from "../Button";
 import { Icon } from "../Icon";
 
-describe("<Button />", () => {
+describe("<Button2 />", () => {
     let props;
     let wrapper;
 
     it("renders correctly", () => {
-        wrapper = shallow(<Button />);
+        wrapper = shallow(<Button {...props} />);
 
-        expect(wrapper.find("button").hasClass("btn btn-default")).toBe(true);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("renders optional icon", () => {
-        props = {
-            icon: "folder",
-            iconStyle: "danger"
-        };
+        props = { icon: "folder", iconStyle: "danger" };
         wrapper = shallow(<Button {...props} />);
 
         const iconComponent = wrapper.find(Icon);
 
         expect(iconComponent.length).toEqual(1);
         expect(iconComponent.prop("name")).toEqual(props.icon);
-        expect(iconComponent.prop("className")).toEqual(`text-${props.iconStyle}`);
         expect(wrapper).toMatchSnapshot();
     });
 

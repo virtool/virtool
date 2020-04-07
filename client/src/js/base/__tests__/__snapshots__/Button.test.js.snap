@@ -1,37 +1,39 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Button /> renders correctly 1`] = `
-<button
-  className="btn btn-default"
+exports[`<Button2 /> renders correctly 1`] = `
+<Button__StyledButton
+  className="btn"
+  disabled={false}
 >
   <div />
-</button>
+</Button__StyledButton>
 `;
 
-exports[`<Button /> renders optional Tooltip when props.tip provided 1`] = `
+exports[`<Button2 /> renders optional Tooltip when props.tip provided 1`] = `
 <Tooltip
   position="top"
   tip="test_tip"
 >
-  <button
-    className="btn btn-default"
+  <Button__StyledButton
+    className="btn"
+    disabled={false}
   >
     <div />
-  </button>
+  </Button__StyledButton>
 </Tooltip>
 `;
 
-exports[`<Button /> renders optional icon 1`] = `
-<button
-  className="btn btn-default btn-with-icon"
+exports[`<Button2 /> renders optional icon 1`] = `
+<Button__StyledButton
+  className="btn btn-with-icon"
+  disabled={false}
 >
   <div>
     <Icon
-      className="text-danger"
       faStyle="fas"
       fixedWidth={false}
       name="folder"
     />
   </div>
-</button>
+</Button__StyledButton>
 `;

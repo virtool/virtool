@@ -7,11 +7,10 @@ exports[`<AnalysesToolbar /> should render with [canModify=false] 1`] = `
     value="baz"
   />
   <Button
-    bsStyle="primary"
+    color="blue"
     disabled={true}
     icon="plus-square fa-fw"
     onClick={[Function]}
-    pullRight={false}
     tip="New Analysis"
     tipPlacement="top"
   />
@@ -25,11 +24,10 @@ exports[`<AnalysesToolbar /> should render with default props 1`] = `
     value="baz"
   />
   <Button
-    bsStyle="primary"
+    color="blue"
     disabled={false}
     icon="plus-square fa-fw"
     onClick={[Function]}
-    pullRight={false}
     tip="New Analysis"
     tipPlacement="top"
   />

@@ -15,10 +15,10 @@ exports[`<ReleasesList /> should render with one release 1`] = `
        Available
     </strong>
     <Button
-      bsStyle="primary"
+      color="blue"
+      disabled={false}
       icon="download"
       onClick={[MockFunction]}
-      pullRight={false}
       tipPlacement="top"
     >
       Install
@@ -49,10 +49,10 @@ exports[`<ReleasesList /> should render with two releases 1`] = `
        Available
     </strong>
     <Button
-      bsStyle="primary"
+      color="blue"
+      disabled={false}
       icon="download"
       onClick={[MockFunction]}
-      pullRight={false}
       tipPlacement="top"
     >
       Install

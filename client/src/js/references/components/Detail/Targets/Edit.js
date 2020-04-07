@@ -81,7 +81,7 @@ export class EditTarget extends React.Component {
                     </DialogBody>
 
                     <DialogFooter>
-                        <Button type="submit" icon="save" bsStyle="primary">
+                        <Button type="submit" icon="save" color="blue">
                             Submit
                         </Button>
                     </DialogFooter>

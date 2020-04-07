@@ -136,7 +136,7 @@ export class NuVsExport extends React.Component {
                         <NuVsExportPreview mode={this.state.mode} />
                     </DialogBody>
                     <DialogFooter>
-                        <Button type="submit" bsStyle="primary" icon="download">
+                        <Button type="submit" color="blueDark" icon="download">
                             Download
                         </Button>
                     </DialogFooter>

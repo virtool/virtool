@@ -1,11 +1,10 @@
 import React from "react";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
 import styled from "styled-components";
-import { Icon, RelativeTime, SpacedBox, Loader } from "../../base";
+import { Icon, RelativeTime, Loader, LinkBox } from "../../base";
 import { getActiveIndexId } from "../selectors";
 
-const IndexItems = styled(SpacedBox)`
+const StyledIndexItem = styled(LinkBox)`
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
 `;
@@ -54,19 +53,14 @@ export const IndexItemIcon = ({ activeId, id, ready }) => {
 };
 
 export const IndexItem = ({ activeId, document, refId }) => (
-    <LinkContainer to={`/refs/${refId}/indexes/${document.id}`} className="spaced">
-        <IndexItems>
-            <strong>Version {document.version}</strong>
-            <span>
-                Created <RelativeTime time={document.created_at} />
-            </span>
-            <IndexItemChangeDescription
-                changeCount={document.change_count}
-                modifiedCount={document.modified_otu_count}
-            />
-            <IndexItemIcon activeId={activeId} id={document.id} ready={document.ready} />
-        </IndexItems>
-    </LinkContainer>
+    <StyledIndexItem to={`/refs/${refId}/indexes/${document.id}`} className="spaced">
+        <strong>Version {document.version}</strong>
+        <span>
+            Created <RelativeTime time={document.created_at} />
+        </span>
+        <IndexItemChangeDescription changeCount={document.change_count} modifiedCount={document.modified_otu_count} />
+        <IndexItemIcon activeId={activeId} id={document.id} ready={document.ready} />
+    </StyledIndexItem>
 );
 
 export const mapStateToProps = (state, props) => ({

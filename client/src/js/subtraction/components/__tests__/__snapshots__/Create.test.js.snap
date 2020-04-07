@@ -54,9 +54,9 @@ exports[`<CreateSubtraction /> should render 1`] = `
       className="modal-footer"
     >
       <Button
-        bsStyle="primary"
+        color="blue"
+        disabled={false}
         icon="play"
-        pullRight={true}
         tipPlacement="top"
         type="submit"
       >
@@ -121,9 +121,9 @@ exports[`<CreateSubtraction /> should render after "nickname" input changes 1`] 
       className="modal-footer"
     >
       <Button
-        bsStyle="primary"
+        color="blue"
+        disabled={false}
         icon="play"
-        pullRight={true}
         tipPlacement="top"
         type="submit"
       >
@@ -188,9 +188,9 @@ exports[`<CreateSubtraction /> should render after "subtractionId" input changes
       className="modal-footer"
     >
       <Button
-        bsStyle="primary"
+        color="blue"
+        disabled={false}
         icon="play"
-        pullRight={true}
         tipPlacement="top"
         type="submit"
       >
@@ -259,9 +259,9 @@ exports[`<CreateSubtraction /> should render error when submitted with no unique
       className="modal-footer"
     >
       <Button
-        bsStyle="primary"
+        color="blue"
+        disabled={false}
         icon="play"
-        pullRight={true}
         tipPlacement="top"
         type="submit"
       >
@@ -329,9 +329,9 @@ exports[`<CreateSubtraction /> should render when no files available 1`] = `
       className="modal-footer"
     >
       <Button
-        bsStyle="primary"
+        color="blue"
+        disabled={false}
         icon="play"
-        pullRight={true}
         tipPlacement="top"
         type="submit"
       >
@@ -398,9 +398,9 @@ exports[`<CreateSubtraction /> should render with request error 1`] = `
       className="modal-footer"
     >
       <Button
-        bsStyle="primary"
+        color="blue"
+        disabled={false}
         icon="play"
-        pullRight={true}
         tipPlacement="top"
         type="submit"
       >

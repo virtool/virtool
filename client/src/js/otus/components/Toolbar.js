@@ -1,9 +1,14 @@
 import React from "react";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
-import { Button, Icon, SearchInput, Toolbar } from "../../base";
+import styled from "styled-components";
+import { Button, Icon, LinkButton, SearchInput, Toolbar } from "../../base";
 import { checkRefRight } from "../../utils/utils";
 import { findOTUs } from "../actions";
+
+export const FilterButton = styled(Button)`
+    border: 1px solid #cbd5e0;
+    color: black;
+`;
 
 export class OTUToolbar extends React.Component {
     find = e => {
@@ -21,11 +26,7 @@ export class OTUToolbar extends React.Component {
 
         if (canModify) {
             createButton = (
-                <LinkContainer to={{ state: { createOTU: true } }} replace>
-                    <Button bsStyle="primary" tip="Create">
-                        <Icon name="plus-square" />
-                    </Button>
-                </LinkContainer>
+                <LinkButton to={{ state: { createOTU: true } }} color="blue" tip="Create" icon="plus-square" replace />
             );
         }
 
@@ -33,9 +34,14 @@ export class OTUToolbar extends React.Component {
             <Toolbar>
                 <SearchInput placeholder="Name or abbreviation" value={term} onChange={this.find} />
 
-                <Button id="verified-button" tip="Filter Unverified" onClick={this.filterVerified} active={verified}>
+                <FilterButton
+                    id="verified-button"
+                    tip="Filter Unverified"
+                    onClick={this.filterVerified}
+                    active={verified}
+                >
                     <Icon name="filter" />
-                </Button>
+                </FilterButton>
 
                 {createButton}
             </Toolbar>

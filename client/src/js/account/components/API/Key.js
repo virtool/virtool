@@ -70,11 +70,11 @@ export class APIKey extends React.Component {
                     />
 
                     <ButtonToolbar>
-                        <Button bsStyle="danger" icon="trash" onClick={() => this.props.onRemove(this.props.apiKey.id)}>
+                        <Button color="red" icon="trash" onClick={() => this.props.onRemove(this.props.apiKey.id)}>
                             Remove
                         </Button>
                         <Button
-                            bsStyle="primary"
+                            color="blue"
                             icon="save"
                             onClick={() => this.props.onUpdate(this.props.apiKey.id, this.state.permissions)}
                             disabled={!this.state.changed}

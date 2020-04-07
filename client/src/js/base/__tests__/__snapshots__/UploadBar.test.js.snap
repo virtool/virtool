@@ -52,10 +52,10 @@ exports[`<UploadBar /> should render 1`] = `
     shrink={1}
   >
     <Button
-      bsStyle="default"
+      color="blue"
+      disabled={false}
       icon="upload"
       onClick={[Function]}
-      pullRight={false}
       tipPlacement="top"
     >
       Upload
@@ -116,10 +116,10 @@ exports[`<UploadBar /> should render optional message 1`] = `
     shrink={1}
   >
     <Button
-      bsStyle="default"
+      color="blue"
+      disabled={false}
       icon="upload"
       onClick={[Function]}
-      pullRight={false}
       tipPlacement="top"
     >
       Upload

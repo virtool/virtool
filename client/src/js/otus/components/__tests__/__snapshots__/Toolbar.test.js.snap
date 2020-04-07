@@ -7,23 +7,23 @@ exports[`<OTUToolbar /> should render 1`] = `
     placeholder="Name or abbreviation"
     value="foo"
   />
-  <Button
+  <Toolbar__FilterButton
     active={false}
-    bsStyle="default"
     id="verified-button"
     onClick={[Function]}
-    pullRight={false}
     tip="Filter Unverified"
-    tipPlacement="top"
   >
     <Icon
       faStyle="fas"
       fixedWidth={false}
       name="filter"
     />
-  </Button>
-  <withRouter(LinkContainer)
+  </Toolbar__FilterButton>
+  <LinkButton
+    color="blue"
+    icon="plus-square"
     replace={true}
+    tip="Create"
     to={
       Object {
         "state": Object {
@@ -31,20 +31,7 @@ exports[`<OTUToolbar /> should render 1`] = `
         },
       }
     }
-  >
-    <Button
-      bsStyle="primary"
-      pullRight={false}
-      tip="Create"
-      tipPlacement="top"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="plus-square"
-      />
-    </Button>
-  </withRouter(LinkContainer)>
+  />
 </Toolbar>
 `;
 
@@ -55,23 +42,23 @@ exports[`<OTUToolbar /> should render when [verified=true] 1`] = `
     placeholder="Name or abbreviation"
     value="foo"
   />
-  <Button
+  <Toolbar__FilterButton
     active={true}
-    bsStyle="default"
     id="verified-button"
     onClick={[Function]}
-    pullRight={false}
     tip="Filter Unverified"
-    tipPlacement="top"
   >
     <Icon
       faStyle="fas"
       fixedWidth={false}
       name="filter"
     />
-  </Button>
-  <withRouter(LinkContainer)
+  </Toolbar__FilterButton>
+  <LinkButton
+    color="blue"
+    icon="plus-square"
     replace={true}
+    tip="Create"
     to={
       Object {
         "state": Object {
@@ -79,19 +66,6 @@ exports[`<OTUToolbar /> should render when [verified=true] 1`] = `
         },
       }
     }
-  >
-    <Button
-      bsStyle="primary"
-      pullRight={false}
-      tip="Create"
-      tipPlacement="top"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="plus-square"
-      />
-    </Button>
-  </withRouter(LinkContainer)>
+  />
 </Toolbar>
 `;

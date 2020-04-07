@@ -25,7 +25,7 @@ describe("<RemoveModal />", () => {
         wrapper = shallow(<RemoveModal {...props} />);
 
         wrapper
-            .find("Button")
+            .find(Button)
             .at(0)
             .simulate("click");
 

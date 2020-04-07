@@ -1,8 +1,7 @@
 import React from "react";
-import { Button } from "react-bootstrap";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Badge, Box, LoadingPlaceholder, ScrollList, ViewHeader, ViewHeaderTitle } from "../../base";
+import { Button, Badge, Box, LoadingPlaceholder, ScrollList, ViewHeader, ViewHeaderTitle } from "../../base";
 import { checkAdminOrPermission, routerLocationHasState } from "../../utils/utils";
 import { findReferences, remoteReference } from "../actions";
 import { getHasOfficial, getTerm } from "../selectors";
@@ -36,7 +35,7 @@ class ReferenceList extends React.Component {
             installOfficialComponent = (
                 <OfficialReferencePlaceholder key="remote">
                     <p>Official Remote Reference</p>
-                    <Button bsStyle="primary" onClick={this.props.onRemote}>
+                    <Button color="blue" onClick={this.props.onRemote}>
                         Install
                     </Button>
                 </OfficialReferencePlaceholder>

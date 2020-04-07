@@ -65,7 +65,7 @@ export class EditReferenceMember extends React.Component {
             >
                 <DialogBody>{rightComponents}</DialogBody>
                 <DialogFooter>
-                    <Button bsStyle="primary" onClick={this.handleSubmit}>
+                    <Button color="blue" onClick={this.handleSubmit}>
                         Add
                     </Button>
                 </DialogFooter>

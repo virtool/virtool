@@ -25,7 +25,7 @@ export const RemoveModal = ({ name, noun, show, onConfirm, onHide, message }) =>
                 )}
             </DialogBody>
             <DialogFooter style={{ border: "none" }}>
-                <Button bsStyle="danger" icon="check" onClick={onConfirm}>
+                <Button color="red" icon="check" onClick={onConfirm}>
                     Confirm
                 </Button>
             </DialogFooter>

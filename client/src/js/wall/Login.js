@@ -83,7 +83,7 @@ export class Login extends React.Component {
 
                         <LoginFooter>
                             <span>{this.props.error}</span>
-                            <Button type="submit" bsStyle="primary">
+                            <Button type="submit" color="blue">
                                 Login
                             </Button>
                         </LoginFooter>

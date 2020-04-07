@@ -34,9 +34,9 @@ exports[`<FirstUser /> should render 1`] = `
           />
         </InputGroup>
         <Button
-          bsStyle="primary"
+          color="blue"
+          disabled={false}
           icon="user-plus"
-          pullRight={false}
           tipPlacement="top"
           type="submit"
         >
@@ -82,9 +82,9 @@ exports[`<FirstUser /> should render when "password" changed 1`] = `
           />
         </InputGroup>
         <Button
-          bsStyle="primary"
+          color="blue"
+          disabled={false}
           icon="user-plus"
-          pullRight={false}
           tipPlacement="top"
           type="submit"
         >
@@ -130,9 +130,9 @@ exports[`<FirstUser /> should render when "username" changed 1`] = `
           />
         </InputGroup>
         <Button
-          bsStyle="primary"
+          color="blue"
+          disabled={false}
           icon="user-plus"
-          pullRight={false}
           tipPlacement="top"
           type="submit"
         >

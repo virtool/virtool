@@ -83,7 +83,7 @@ export const SoftwareInstall = ({ onHide, onInstall, process, releases, show, up
                 </DialogBody>
 
                 <DialogFooter>
-                    <Button bsStyle="primary" icon="download" onClick={onInstall}>
+                    <Button color="blue" icon="download" onClick={onInstall}>
                         Install
                     </Button>
                 </DialogFooter>

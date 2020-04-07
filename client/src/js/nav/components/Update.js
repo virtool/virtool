@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Icon } from "../../base";
 
@@ -16,14 +16,14 @@ const UpdateIcon = styled(Icon)`
 export const NotificationIcon = ({ visible }) => {
     if (visible) {
         return (
-            <LinkContainer to="/administration/updates">
+            <Link to="/administration/updates">
                 <UpdateIcon
                     className="icon-pulse"
                     name="arrow-alt-circle-up"
                     tip="Software Update"
                     tipPlacement="left"
                 />
-            </LinkContainer>
+            </Link>
         );
     }
 

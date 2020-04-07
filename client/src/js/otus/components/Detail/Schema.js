@@ -3,6 +3,7 @@ import React from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { connect } from "react-redux";
 
+import styled from "styled-components";
 import { Button, NoneFoundBox } from "../../../base";
 import { checkRefRight } from "../../../utils/utils";
 import { editOTU } from "../../actions";
@@ -10,6 +11,11 @@ import AddSegment from "./AddSegment";
 import EditSegment from "./EditSegment";
 import RemoveSegment from "./RemoveSegment";
 import Segment from "./Segment";
+
+const AddButton = styled(Button)`
+    margin-bottom: 10px;
+    width: 100%;
+`;
 
 const getInitialState = props => ({
     segArray: props.schema ? props.schema : [],
@@ -122,15 +128,9 @@ class Schema extends React.Component {
 
         if (this.props.canModify) {
             addButton = (
-                <Button
-                    bsStyle="primary"
-                    icon="plus-square"
-                    onClick={this.handleAddNew}
-                    style={{ marginBottom: "10px" }}
-                    block
-                >
+                <AddButton color="blue" icon="plus-square" onClick={this.handleAddNew}>
                     Add Segment
-                </Button>
+                </AddButton>
             );
         }
 

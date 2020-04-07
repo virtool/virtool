@@ -20,7 +20,7 @@ export const ReleasesList = ({ releases, onShowInstall }) => {
                     <Icon name="arrow-alt-circle-up" /> Update
                     {releases.length === 1 ? "" : "s"} Available
                 </strong>
-                <Button icon="download" bsStyle="primary" onClick={onShowInstall}>
+                <Button icon="download" color="blue" onClick={onShowInstall}>
                     Install
                 </Button>
             </ReleasesListHeader>

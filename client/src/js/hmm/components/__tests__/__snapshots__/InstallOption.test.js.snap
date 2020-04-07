@@ -23,10 +23,9 @@ exports[`<InstallOption /> should render when [canInstall=false] 1`] = `
 
 exports[`<InstallOption /> should render when [canInstall=true] 1`] = `
 <Button
-  bsStyle="default"
+  disabled={false}
   icon="download"
   onClick={[Function]}
-  pullRight={false}
   tipPlacement="top"
 >
   Install Official
