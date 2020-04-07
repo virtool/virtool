@@ -264,6 +264,11 @@ class DB:
             projection=virtool.caches.db.PROJECTION
         )
 
+        self.coverage = self.bind_collection(
+            "coverage",
+            silent=True
+        )
+
         self.files = self.bind_collection(
             "files",
             projection=virtool.files.db.PROJECTION
