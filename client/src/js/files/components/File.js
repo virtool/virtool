@@ -1,11 +1,12 @@
+import { find } from "lodash-es";
 import React, { useCallback } from "react";
-import { get } from "lodash-es";
 import { connect } from "react-redux";
 import styled from "styled-components";
+import { device, Icon, RelativeTime, SpacedBox } from "../../base";
+import { byteSize, checkAdminOrPermission } from "../../utils/utils";
 
 import { removeFile } from "../actions";
-import { byteSize, checkAdminOrPermission } from "../../utils/utils";
-import { Icon, RelativeTime, SpacedBox, device } from "../../base";
+import { getFilesById } from "../selectors";
 
 const StyledFile = styled(SpacedBox)`
     display: flex;
@@ -31,23 +32,21 @@ const Creation = styled.div`
     }
 `;
 
-export const File = ({ canRemove, entry, onRemove }) => {
-    const handleRemove = useCallback(() => onRemove(entry.id), [entry.id]);
-
-    const { name, size, uploaded_at, user } = entry;
+export const File = ({ canRemove, id, name, size, uploadedAt, user, onRemove }) => {
+    const handleRemove = useCallback(() => onRemove(id), [id]);
 
     let creation;
 
     if (user === null) {
         creation = (
             <React.Fragment>
-                Retrieved <RelativeTime time={uploaded_at} />
+                Retrieved <RelativeTime time={uploadedAt} />
             </React.Fragment>
         );
     } else {
         creation = (
             <React.Fragment>
-                Uploaded <RelativeTime time={uploaded_at} /> by {user.id}
+                Uploaded <RelativeTime time={uploadedAt} /> by {user.id}
             </React.Fragment>
         );
     }
@@ -73,10 +72,18 @@ export const File = ({ canRemove, entry, onRemove }) => {
     );
 };
 
-export const mapStateToProps = (state, ownProps) => ({
-    canRemove: checkAdminOrPermission(state, "remove_file"),
-    entry: get(state, `files.documents[${ownProps.index}]`, null)
-});
+export const mapStateToProps = (state, ownProps) => {
+    const { id, name, uploaded_at, size, user } = find(getFilesById(state), { id: ownProps.id });
+
+    return {
+        id,
+        name,
+        size,
+        user,
+        canRemove: checkAdminOrPermission(state, "remove_file"),
+        uploadedAt: uploaded_at
+    };
+};
 
 export const mapDispatchToProps = dispatch => ({
     onRemove: fileId => {

@@ -1,4 +1,4 @@
-import { filesSelector } from "../selectors";
+import { getFilteredFileIds } from "../selectors";
 
 describe("Test Files Selectors", () => {
     let state;
@@ -15,19 +15,19 @@ describe("Test Files Selectors", () => {
     });
 
     it("returns all document ids when appropriate", () => {
-        const result = filesSelector(state);
+        const result = getFilteredFileIds(state);
         expect(result).toEqual(["foo", "fud"]);
     });
 
     it("excludes ids unready documents", () => {
         state.files.documents[0].ready = false;
-        const result = filesSelector(state);
+        const result = getFilteredFileIds(state);
         expect(result).toEqual(["fud"]);
     });
 
     it("excludes ids reserved documents", () => {
         state.files.documents[1].reserved = true;
-        const result = filesSelector(state);
+        const result = getFilteredFileIds(state);
         expect(result).toEqual(["foo"]);
     });
 });

@@ -14,7 +14,7 @@ import {
 } from "../../base";
 import { checkAdminOrPermission, createRandomString } from "../../utils/utils";
 import { findFiles, upload } from "../actions";
-import { filesSelector } from "../selectors";
+import { getFilteredFileIds } from "../selectors";
 import File from "./File";
 
 class FileManager extends React.Component {
@@ -28,7 +28,10 @@ class FileManager extends React.Component {
         }
     };
 
-    renderRow = index => <File key={index} index={index} />;
+    renderRow = index => {
+        const id = this.props.documents[index];
+        return <File key={id} id={id} />;
+    };
 
     render() {
         if (
@@ -89,7 +92,7 @@ const mapStateToProps = state => {
     const { found_count, page, page_count, total_count } = state.files;
 
     return {
-        documents: filesSelector(state),
+        documents: getFilteredFileIds(state),
         found_count,
         page,
         page_count,
