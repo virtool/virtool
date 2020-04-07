@@ -73,7 +73,7 @@ export class EditReference extends React.Component {
                     </DialogBody>
 
                     <DialogFooter>
-                        <SaveButton pullRight />
+                        <SaveButton />
                     </DialogFooter>
                 </form>
             </ModalDialog>

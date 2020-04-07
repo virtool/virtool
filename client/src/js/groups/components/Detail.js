@@ -26,6 +26,11 @@ const PermissionsItem = styled(BoxGroupSection)`
     align-items: center;
 `;
 
+const StyledGroupDetail = styled.div`
+    display: flex;
+    flex-direction: column;
+`;
+
 export const GroupDetail = ({ group, pending, users, onRemove, onSetPermission }) => {
     let members;
 
@@ -75,7 +80,7 @@ export const GroupDetail = ({ group, pending, users, onRemove, onSetPermission }
     const handleRemove = useCallback(() => onRemove(group.id), [group.id]);
 
     return (
-        <div>
+        <StyledGroupDetail>
             <BoxGroup>
                 <PermissionsHeader>
                     <span>Permissions</span>
@@ -92,6 +97,6 @@ export const GroupDetail = ({ group, pending, users, onRemove, onSetPermission }
             <Button icon="trash" color="red" onClick={handleRemove}>
                 Remove Group
             </Button>
-        </div>
+        </StyledGroupDetail>
     );
 };
