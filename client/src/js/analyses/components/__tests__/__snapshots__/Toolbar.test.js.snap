@@ -13,6 +13,7 @@ exports[`<AnalysesToolbar /> should render with [canModify=false] 1`] = `
     onClick={[Function]}
     tip="New Analysis"
     tipPlacement="top"
+    type="button"
   />
 </Toolbar>
 `;
@@ -30,6 +31,7 @@ exports[`<AnalysesToolbar /> should render with default props 1`] = `
     onClick={[Function]}
     tip="New Analysis"
     tipPlacement="top"
+    type="button"
   />
 </Toolbar>
 `;

@@ -23,7 +23,7 @@ const OTUForm = ({ abbreviation, name, error, onChange, onSubmit }) => (
             </InputGroup>
         </OTUFormFields>
         <DialogFooter>
-            <SaveButton pullRight />
+            <SaveButton />
         </DialogFooter>
     </form>
 );

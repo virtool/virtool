@@ -4,7 +4,9 @@ describe("<CreateReference />", () => {
     const props = {
         onSubmit: jest.fn()
     };
+
     let state;
+
     const e = {
         preventDefault: jest.fn(),
         target: {
@@ -13,6 +15,7 @@ describe("<CreateReference />", () => {
             error: "error"
         }
     };
+
     beforeEach(() => {
         state = {
             name: "",

@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Icon, LinkButton, SearchInput, Toolbar } from "../../base";
+import { LinkButton, SearchInput, Toolbar } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { findSubtractions } from "../actions";
 
@@ -9,9 +9,7 @@ export const SubtractionToolbar = ({ term, onFind, canModify }) => {
 
     if (canModify) {
         createButton = (
-            <LinkButton to={{ state: { createSubtraction: true } }}>
-                <Icon name="plus-square" tip="Create" />
-            </LinkButton>
+            <LinkButton color="blue" to={{ state: { createSubtraction: true } }} icon="plus-square" tip="Create" />
         );
     }
 

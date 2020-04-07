@@ -20,6 +20,7 @@ exports[`<ReleasesList /> should render with one release 1`] = `
       icon="download"
       onClick={[MockFunction]}
       tipPlacement="top"
+      type="button"
     >
       Install
     </Button>
@@ -54,6 +55,7 @@ exports[`<ReleasesList /> should render with two releases 1`] = `
       icon="download"
       onClick={[MockFunction]}
       tipPlacement="top"
+      type="button"
     >
       Install
     </Button>

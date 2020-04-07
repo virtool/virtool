@@ -36,6 +36,7 @@ exports[`<RemoveSequence /> renders correctly 1`] = `
       icon="check"
       onClick={[Function]}
       tipPlacement="top"
+      type="button"
     >
       Confirm
     </Button>

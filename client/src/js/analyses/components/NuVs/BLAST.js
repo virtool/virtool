@@ -10,6 +10,7 @@ import { BLASTError } from "./BLASTError";
 import { BLASTInProgress } from "./BLASTInProgress";
 
 export const BLASTButton = styled(Button)`
+    font-weight: 600;
     margin-left: auto;
 `;
 
@@ -86,7 +87,7 @@ export const NuVsBLAST = ({ analysisId, blast, sequenceIndex, onBlast }) => {
         <Alert color="purple" level>
             <Icon name="info-circle" />
             <span>This sequence has no BLAST information attached to it.</span>
-            <BLASTButton icon="cloud" onClick={handleBlast}>
+            <BLASTButton color="purple" icon="cloud" onClick={handleBlast}>
                 BLAST at NCBI
             </BLASTButton>
         </Alert>

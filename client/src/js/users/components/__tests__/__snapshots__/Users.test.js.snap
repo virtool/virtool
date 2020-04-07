@@ -9,6 +9,7 @@ exports[`<ManageUsers /> should render 1`] = `
     <LinkButton
       icon="users"
       tip="Manage Group"
+      tipPlacement="top"
       to={
         Object {
           "state": Object {
@@ -21,6 +22,7 @@ exports[`<ManageUsers /> should render 1`] = `
       color="blue"
       icon="user-plus"
       tip="Create User"
+      tipPlacement="top"
       to={
         Object {
           "state": Object {

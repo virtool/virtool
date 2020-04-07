@@ -74,7 +74,7 @@ export class Email extends React.Component {
                             <InputError>{this.state.error}</InputError>
                         </InputContainer>
                     </InputGroup>
-                    <SaveButton pullRight />
+                    <SaveButton />
                 </EmailForm>
             </BoxGroup>
         );

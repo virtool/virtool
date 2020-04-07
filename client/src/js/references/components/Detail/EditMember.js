@@ -53,7 +53,7 @@ export class EditReferenceMember extends React.Component {
             <MemberRight key={right} right={right} enabled={this.props[right]} onToggle={this.handleChange} />
         ));
 
-        const header = "Modify Rights for ".concat(this.props.id);
+        const header = <strong>Modify Rights for {this.props.id}</strong>;
 
         return (
             <ModalDialog
@@ -65,8 +65,8 @@ export class EditReferenceMember extends React.Component {
             >
                 <DialogBody>{rightComponents}</DialogBody>
                 <DialogFooter>
-                    <Button color="blue" onClick={this.handleSubmit}>
-                        Add
+                    <Button color="blue" icon="save" onClick={this.handleSubmit}>
+                        Save
                     </Button>
                 </DialogFooter>
             </ModalDialog>

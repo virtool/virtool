@@ -23,9 +23,7 @@ exports[`<Email /> should call onUpdateEmail() when valid form submitted 1`] = `
         <Input__InputError />
       </Input__InputContainer>
     </InputGroup>
-    <SaveButton
-      pullRight={true}
-    />
+    <SaveButton />
   </Email__EmailForm>
 </Box__BoxGroup>
 `;
@@ -53,9 +51,7 @@ exports[`<Email /> should render 1`] = `
         <Input__InputError />
       </Input__InputContainer>
     </InputGroup>
-    <SaveButton
-      pullRight={true}
-    />
+    <SaveButton />
   </Email__EmailForm>
 </Box__BoxGroup>
 `;
@@ -83,9 +79,7 @@ exports[`<Email /> should render when submitted value is invalid error 1`] = `
         <Input__InputError />
       </Input__InputContainer>
     </InputGroup>
-    <SaveButton
-      pullRight={true}
-    />
+    <SaveButton />
   </Email__EmailForm>
 </Box__BoxGroup>
 `;
@@ -115,9 +109,7 @@ exports[`<Email /> should render when submitted value is invalid error 2`] = `
         </Input__InputError>
       </Input__InputContainer>
     </InputGroup>
-    <SaveButton
-      pullRight={true}
-    />
+    <SaveButton />
   </Email__EmailForm>
 </Box__BoxGroup>
 `;
@@ -145,9 +137,7 @@ exports[`<Email /> should render when when input changes 1`] = `
         <Input__InputError />
       </Input__InputContainer>
     </InputGroup>
-    <SaveButton
-      pullRight={true}
-    />
+    <SaveButton />
   </Email__EmailForm>
 </Box__BoxGroup>
 `;
@@ -175,9 +165,7 @@ exports[`<Email /> should render without initial email 1`] = `
         <Input__InputError />
       </Input__InputContainer>
     </InputGroup>
-    <SaveButton
-      pullRight={true}
-    />
+    <SaveButton />
   </Email__EmailForm>
 </Box__BoxGroup>
 `;

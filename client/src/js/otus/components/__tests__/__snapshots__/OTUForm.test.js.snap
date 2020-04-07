@@ -29,9 +29,7 @@ exports[`<OTUForm /> should render 1`] = `
     </InputGroup>
   </OTUForm__OTUFormFields>
   <Modal__DialogFooter>
-    <SaveButton
-      pullRight={true}
-    />
+    <SaveButton />
   </Modal__DialogFooter>
 </form>
 `;
@@ -67,9 +65,7 @@ exports[`<OTUForm /> should render with error 1`] = `
     </InputGroup>
   </OTUForm__OTUFormFields>
   <Modal__DialogFooter>
-    <SaveButton
-      pullRight={true}
-    />
+    <SaveButton />
   </Modal__DialogFooter>
 </form>
 `;
