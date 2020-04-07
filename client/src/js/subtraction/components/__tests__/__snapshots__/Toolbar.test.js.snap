@@ -18,6 +18,10 @@ exports[`<SubtractionToolbar /> should render create button when [canModify=true
     value="foo"
   />
   <LinkButton
+    color="blue"
+    icon="plus-square"
+    tip="Create"
+    tipPlacement="top"
     to={
       Object {
         "state": Object {
@@ -25,13 +29,6 @@ exports[`<SubtractionToolbar /> should render create button when [canModify=true
         },
       }
     }
-  >
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="plus-square"
-      tip="Create"
-    />
-  </LinkButton>
+  />
 </Toolbar>
 `;

@@ -18,7 +18,9 @@ exports[`<ReferenceToolbar /> should render creation button when [canCreate=true
     value=""
   />
   <LinkButton
+    color="blue"
     tip="Create"
+    tipPlacement="top"
     to={
       Object {
         "state": Object {
@@ -45,7 +47,9 @@ exports[`<ReferenceToolbar /> should render when [term='foo'] 1`] = `
     value="foo"
   />
   <LinkButton
+    color="blue"
     tip="Create"
+    tipPlacement="top"
     to={
       Object {
         "state": Object {

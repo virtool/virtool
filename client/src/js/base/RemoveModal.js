@@ -13,31 +13,28 @@ import { Button } from "./Button";
  * @param onConfirm {function} a function to call on confirmation
  * @param onHide {function} a function that hides the modal
  */
-export const RemoveModal = ({ name, noun, show, onConfirm, onHide, message }) => {
-    const headerText = "Remove ".concat(noun);
-    return (
-        <ModalDialog label="Remove" headerText={headerText} show={show} onHide={onHide} modalStyle="danger">
-            <DialogBody>
-                {message || (
-                    <span>
-                        Are you sure you want to remove <strong>{name}</strong>?
-                    </span>
-                )}
-            </DialogBody>
-            <DialogFooter style={{ border: "none" }}>
-                <Button color="red" icon="check" onClick={onConfirm}>
-                    Confirm
-                </Button>
-            </DialogFooter>
-        </ModalDialog>
-    );
-};
+export const RemoveModal = ({ message, name, noun, show, onConfirm, onHide }) => (
+    <ModalDialog label="Remove" headerText={`Remove ${noun}`} show={show} onHide={onHide} modalStyle="danger">
+        <DialogBody>
+            {message || (
+                <span>
+                    Are you sure you want to remove <strong>{name}</strong>?
+                </span>
+            )}
+        </DialogBody>
+        <DialogFooter style={{ border: "none" }}>
+            <Button color="red" icon="check" onClick={onConfirm}>
+                Confirm
+            </Button>
+        </DialogFooter>
+    </ModalDialog>
+);
 
 RemoveModal.propTypes = {
     noun: PropTypes.string,
     name: PropTypes.string,
-    show: PropTypes.bool,
-    onHide: PropTypes.func,
-    onConfirm: PropTypes.func,
+    show: PropTypes.bool.isRequired,
+    onHide: PropTypes.func.isRequired,
+    onConfirm: PropTypes.func.isRequired,
     message: PropTypes.node
 };

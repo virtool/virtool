@@ -160,7 +160,7 @@ Button.propTypes = {
     tipPlacement: PropTypes.oneOf(["top", "right", "bottom", "left"]),
     type: PropTypes.oneOf(["button", "submit"]),
     onBlur: PropTypes.func,
-    onClick: PropTypes.func.isRequired
+    onClick: PropTypes.func
 };
 
 Button.defaultProps = {

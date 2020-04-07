@@ -23,10 +23,12 @@ exports[`<InstallOption /> should render when [canInstall=false] 1`] = `
 
 exports[`<InstallOption /> should render when [canInstall=true] 1`] = `
 <Button
+  color="grey"
   disabled={false}
   icon="download"
   onClick={[Function]}
   tipPlacement="top"
+  type="button"
 >
   Install Official
 </Button>

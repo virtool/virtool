@@ -1,39 +1,68 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Button2 /> renders correctly 1`] = `
+exports[`<Button /> should render 1`] = `
 <Button__StyledButton
-  className="btn"
+  color="grey"
   disabled={false}
+  onClick={[MockFunction]}
+  type="button"
+/>
+`;
+
+exports[`<Button /> should render with children 1`] = `
+<Button__StyledButton
+  color="grey"
+  disabled={false}
+  onClick={[MockFunction]}
+  type="button"
 >
-  <div />
+  <span>
+    <span>
+      Test
+    </span>
+  </span>
 </Button__StyledButton>
 `;
 
-exports[`<Button2 /> renders optional Tooltip when props.tip provided 1`] = `
+exports[`<Button /> should render with icon 1`] = `
+<Button__StyledButton
+  color="grey"
+  disabled={false}
+  onClick={[MockFunction]}
+  type="button"
+>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="folder"
+  />
+</Button__StyledButton>
+`;
+
+exports[`<Button /> should render with tooltip 1`] = `
 <Tooltip
   position="top"
-  tip="test_tip"
+  tip="Tooltip"
 >
   <Button__StyledButton
-    className="btn"
+    color="grey"
     disabled={false}
-  >
-    <div />
-  </Button__StyledButton>
+    onClick={[MockFunction]}
+    type="button"
+  />
 </Tooltip>
 `;
 
-exports[`<Button2 /> renders optional icon 1`] = `
-<Button__StyledButton
-  className="btn btn-with-icon"
-  disabled={false}
+exports[`<Button /> should render with tooltip using tipPlacement prop 1`] = `
+<Tooltip
+  position="top"
+  tip="Tooltip"
 >
-  <div>
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="folder"
-    />
-  </div>
-</Button__StyledButton>
+  <Button__StyledButton
+    color="grey"
+    disabled={false}
+    onClick={[MockFunction]}
+    type="button"
+  />
+</Tooltip>
 `;

@@ -1,27 +1,19 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<RemoveModal /> DialogBody renders a confirmation button 1`] = `
-<Button
-  color="red"
-  disabled={false}
-  icon="check"
-  tipPlacement="top"
->
-  Confirm
-</Button>
-`;
-
-exports[`<RemoveModal /> renders a ModalDialog component when [show=true] 1`] = `
+exports[`<RemoveModal /> should render 1`] = `
 <ModalDialog
-  headerText="Remove undefined"
+  headerText="Remove bar"
   label="Remove"
   modalStyle="danger"
+  onHide={[MockFunction]}
   show={true}
 >
   <Modal__DialogBody>
     <span>
       Are you sure you want to remove 
-      <strong />
+      <strong>
+        Foo
+      </strong>
       ?
     </span>
   </Modal__DialogBody>
@@ -36,7 +28,9 @@ exports[`<RemoveModal /> renders a ModalDialog component when [show=true] 1`] = 
       color="red"
       disabled={false}
       icon="check"
+      onClick={[MockFunction]}
       tipPlacement="top"
+      type="button"
     >
       Confirm
     </Button>
@@ -44,16 +38,20 @@ exports[`<RemoveModal /> renders a ModalDialog component when [show=true] 1`] = 
 </ModalDialog>
 `;
 
-exports[`<RemoveModal /> renders correctly 1`] = `
+exports[`<RemoveModal /> should render when [show=false] 1`] = `
 <ModalDialog
-  headerText="Remove undefined"
+  headerText="Remove bar"
   label="Remove"
   modalStyle="danger"
+  onHide={[MockFunction]}
+  show={false}
 >
   <Modal__DialogBody>
     <span>
       Are you sure you want to remove 
-      <strong />
+      <strong>
+        Foo
+      </strong>
       ?
     </span>
   </Modal__DialogBody>
@@ -68,7 +66,41 @@ exports[`<RemoveModal /> renders correctly 1`] = `
       color="red"
       disabled={false}
       icon="check"
+      onClick={[MockFunction]}
       tipPlacement="top"
+      type="button"
+    >
+      Confirm
+    </Button>
+  </Modal__DialogFooter>
+</ModalDialog>
+`;
+
+exports[`<RemoveModal /> should render with message 1`] = `
+<ModalDialog
+  headerText="Remove bar"
+  label="Remove"
+  modalStyle="danger"
+  onHide={[MockFunction]}
+  show={true}
+>
+  <Modal__DialogBody>
+    Are you sure about this?
+  </Modal__DialogBody>
+  <Modal__DialogFooter
+    style={
+      Object {
+        "border": "none",
+      }
+    }
+  >
+    <Button
+      color="red"
+      disabled={false}
+      icon="check"
+      onClick={[MockFunction]}
+      tipPlacement="top"
+      type="button"
     >
       Confirm
     </Button>
