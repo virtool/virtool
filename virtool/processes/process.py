@@ -1,5 +1,9 @@
-import virtool.processes.db
+import logging
+
 import virtool.db.utils
+import virtool.processes.db
+
+logger = logging.getLogger("process")
 
 
 class Process:
@@ -76,6 +80,9 @@ class Process:
         )
 
         await self.cleanup()
+
+        for error in errors:
+            logger.info(f"Process {id} encountered error '{error}'")
 
 
 class ProgressTracker:
