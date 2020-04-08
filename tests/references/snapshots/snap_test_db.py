@@ -241,3 +241,69 @@ snapshots['TestEdit.test_reference_name[uvloop] 2'] = [
         }
     }
 ]
+
+snapshots['TestEdit.test_control[uvloop--True] 1'] = {
+    '_id': 'foo',
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'internal_control': None,
+    'name': 'Tester',
+    'users': [
+        {
+            'id': 'bob'
+        }
+    ]
+}
+
+snapshots['TestEdit.test_control[uvloop--True] 2'] = {
+    'contributors': [
+    ],
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'id': 'foo',
+    'internal_control': {
+        'id': 'baz'
+    },
+    'latest_build': None,
+    'name': 'Tester',
+    'otu_count': 0,
+    'unbuilt_change_count': 0,
+    'users': [
+        {
+            'id': 'bob',
+            'identicon': 'abc123'
+        }
+    ]
+}
+
+snapshots['TestEdit.test_control[uvloop--False] 1'] = {
+    '_id': 'foo',
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'internal_control': None,
+    'name': 'Tester',
+    'users': [
+        {
+            'id': 'bob'
+        }
+    ]
+}
+
+snapshots['TestEdit.test_control[uvloop--False] 2'] = {
+    'contributors': [
+    ],
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'id': 'foo',
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Tester',
+    'otu_count': 0,
+    'unbuilt_change_count': 0,
+    'users': [
+        {
+            'id': 'bob',
+            'identicon': 'abc123'
+        }
+    ]
+}

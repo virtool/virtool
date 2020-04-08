@@ -16,6 +16,7 @@ import openpyxl.styles
 import virtool.analyses.db
 import virtool.analyses.utils
 import virtool.db.core
+import virtool.db.utils
 import virtool.history.db
 import virtool.otus.db
 import virtool.otus.utils
@@ -45,6 +46,44 @@ def calculate_median_depths(document: dict) -> dict:
         depths[hit["id"]] = statistics.median(hit["align"])
 
     return depths
+
+
+async def create_pathoscope_coverage_cache(db, document):
+    cache = defaultdict(lambda: defaultdict(dict))
+
+    for hit in document["results"]:
+        for isolate in hit["isolates"]:
+            for sequence in isolate["sequences"]:
+                otu_id = hit["id"]
+                isolate_id = isolate["id"]
+                sequence_id = sequence["id"]
+
+                if sequence.get("align"):
+                    cache[otu_id][isolate_id][sequence_id] = virtool.analyses.utils.transform_coverage_to_coordinates(sequence["align"])
+
+    await db.coverage.insert_one({
+        "analysis": {
+            "id": document["_id"]
+        },
+        "cache": cache
+    })
+
+
+async def ensure_pathoscope_coverage_cache(db, document):
+    cache = await db.coverage.find_one({"analysis.id": document["_id"]})
+
+    if cache is None:
+        cache = await create_pathoscope_coverage_cache(db, document)
+
+    for hit in document["results"]:
+        for isolate in hit["isolates"]:
+            for sequence in isolate["sequences"]:
+                otu_id = hit["id"]
+                isolate_id = isolate["id"]
+                sequence_id = sequence["id"]
+
+                if sequence.get("align"):
+                    sequence["align"] = cache["cache"][otu_id][isolate_id][sequence_id]
 
 
 async def load_results(settings: dict, document: dict) -> dict:
@@ -77,8 +116,6 @@ async def load_results(settings: dict, document: dict) -> dict:
 
 
 async def format_aodp(app, document):
-    db = app["db"]
-
     patched_otus = await gather_patched_otus(app, document["results"])
 
     hits = defaultdict(list)
@@ -164,11 +201,9 @@ async def format_pathoscope(app, document):
                     })
 
                 sequence["id"] = sequence.pop("_id")
-
-                if "align" in sequence:
-                    sequence["align"] = virtool.analyses.utils.transform_coverage_to_coordinates(sequence["align"])
-
                 del sequence["sequence"]
+
+    await ensure_pathoscope_coverage_cache(app["db"], document)
 
     return document
 
