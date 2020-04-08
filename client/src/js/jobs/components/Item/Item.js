@@ -37,10 +37,10 @@ export const JobItem = ({ id, task, state, progress, created_at, user, canCancel
 
     const progressValue = progress * 100;
 
-    let progressColor = "blue";
+    let progressColor = "green";
 
     if (state === "running") {
-        progressColor = "green";
+        progressColor = "blue";
     }
 
     if (state === "error" || state === "cancelled") {
