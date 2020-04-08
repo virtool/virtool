@@ -10,13 +10,11 @@ describe("<File />", () => {
     beforeEach(() => {
         props = {
             canRemove: true,
-            entry: {
-                id: "foo",
-                name: "foo.fa",
-                size: 10,
-                uploaded_at: "2018-02-14T17:12:00.000000Z",
-                user: { id: "bill" }
-            },
+            id: "foo",
+            name: "foo.fa",
+            size: 10,
+            uploadedAt: "2018-02-14T17:12:00.000000Z",
+            user: { id: "bill" },
             onRemove: jest.fn()
         };
     });
@@ -27,7 +25,7 @@ describe("<File />", () => {
     });
 
     it("should render when [user=null]", () => {
-        props.entry.user = null;
+        props.user = null;
         const wrapper = shallow(<File {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
@@ -50,32 +48,47 @@ describe("mapStateToProps()", () => {
     let state;
 
     beforeEach(() => {
-        ownProps = { index: 0 };
+        ownProps = { id: "foo" };
         state = {
             files: {
-                documents: [{ id: "foo" }, { id: "bar" }]
+                documents: [
+                    {
+                        id: "foo",
+                        name: "Foo",
+                        user: { id: "bob" },
+                        ready: true,
+                        reserved: false,
+                        size: 1024,
+                        uploaded_at: "time_1"
+                    },
+                    {
+                        id: "bar",
+                        name: "Bar",
+                        user: { id: "bill" },
+                        ready: true,
+                        reserved: false,
+                        size: 2048,
+                        uploaded_at: "time_2"
+                    }
+                ]
             }
         };
     });
 
     it.each([true, false])("should return expected props when [canRemove=%p]", canRemove => {
         checkAdminOrPermission.mockReturnValue(canRemove);
+
         const props = mapStateToProps(state, ownProps);
+
         expect(props).toEqual({
             canRemove,
-            entry: { id: "foo" }
+            id: "foo",
+            name: "Foo",
+            size: 1024,
+            uploadedAt: "time_1",
+            user: { id: "bob" }
         });
         expect(checkAdminOrPermission).toHaveBeenCalledWith(state, "remove_file");
-    });
-
-    it("should return null [props.entry] when index does not exist", () => {
-        checkAdminOrPermission.mockReturnValue(true);
-        ownProps.index = 3;
-        const props = mapStateToProps(state, ownProps);
-        expect(props).toEqual({
-            canRemove: true,
-            entry: null
-        });
     });
 });
 

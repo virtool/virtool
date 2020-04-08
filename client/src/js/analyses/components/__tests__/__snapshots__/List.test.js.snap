@@ -6,7 +6,7 @@ exports[`<AnalysesList /> renders 1`] = `
   <Connect(AnalysesToolbar) />
   <Connect(AnalysisItem)
     id="bar"
-    key="0"
+    key="bar"
   />
   <Connect(CreateAnalysis)
     hasHmm={true}
