@@ -1,6 +1,7 @@
 import aiohttp.web
 
 import virtool.analyses.utils
+import virtool.http.utils
 import virtool.users.checks
 import virtool.account.db
 import virtool.users.sessions
@@ -330,8 +331,8 @@ async def login(req):
 
     resp = json_response({"reset": False}, status=201)
 
-    resp.set_cookie("session_id", session["_id"], httponly=True)
-    resp.set_cookie("session_token", token, httponly=True)
+    virtool.http.utils.set_session_id_cookie(resp, session["_id"])
+    virtool.http.utils.set_session_token_cookie(resp, token)
 
     return resp
 
@@ -353,7 +354,7 @@ async def logout(req):
 
     resp = aiohttp.web.Response(status=200)
 
-    resp.set_cookie("session_id", session["_id"])
+    virtool.http.utils.set_session_id_cookie(resp, session["_id"])
     resp.del_cookie("session_token")
 
     return resp
@@ -416,8 +417,8 @@ async def reset(req):
         "reset": False
     }, status=200)
 
-    resp.set_cookie("session_id", new_session["_id"], httponly=True)
-    resp.set_cookie("session_token", token, httponly=True)
+    virtool.http.utils.set_session_id_cookie(resp, new_session["_id"])
+    virtool.http.utils.set_session_token_cookie(resp, token)
 
     # Authenticate and return a redirect response to the `return_to` path. This is identical to the process used for
     # successful login requests.

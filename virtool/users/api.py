@@ -1,3 +1,4 @@
+import virtool.http.utils
 import virtool.users.checks
 import virtool.hmm.db
 import virtool.users.sessions
@@ -177,8 +178,8 @@ async def create_first(req):
         status=201
     )
 
-    resp.set_cookie("session_id", session["_id"])
-    resp.set_cookie("session_token", token)
+    virtool.http.utils.set_session_id_cookie(resp, session["_id"])
+    virtool.http.utils.set_session_token_cookie(resp, token)
 
     return resp
 
