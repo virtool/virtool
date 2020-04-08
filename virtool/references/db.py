@@ -139,18 +139,18 @@ class ImportReferenceProcess(virtool.processes.process.Process):
         try:
             self.import_data = await self.run_in_thread(virtool.references.utils.load_reference_file, path)
         except json.decoder.JSONDecodeError as err:
-            return self.error([{
+            return await self.error([{
                 "id": "json_error",
                 "message": str(err).split("JSONDecodeError: ")[1]
             }])
         except OSError as err:
             if "Not a gzipped file" in str(err):
-                return self.error([{
+                return await self.error([{
                     "id": "not_gzipped",
                     "message": "Not a gzipped file"
                 }])
             else:
-                return self.error([{
+                return await self.error([{
                     "id": "unhandled",
                     "message": str(err)
                 }])
