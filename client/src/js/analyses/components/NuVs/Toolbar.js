@@ -1,49 +1,14 @@
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Button, DropdownButton, DropdownItem, Icon, LinkButton, SearchInput, Toolbar } from "../../../base";
+import { Button, LinkButton, SearchInput, Toolbar } from "../../../base";
 import { setAnalysisSortKey, setSearchIds, toggleFilterORFs, toggleFilterSequences } from "../../actions";
 import { getFuse, getResults } from "../../selectors";
+import { AnalysisViewerSort } from "../Viewer/Sort";
 
 const StyledNuVsToolbar = styled(Toolbar)`
     margin-bottom: 10px;
 `;
-
-const sortTitles = {
-    coverage: "Coverage",
-    depth: "Depth",
-    e: "E-Value",
-    length: "Length",
-    orfs: "ORFs",
-    weight: "Weight"
-};
-
-const StyledSortDropdownButtonTitle = styled.div`
-    align-items: center;
-    display: flex;
-    width: 106px;
-
-    i {
-        margin-left: auto;
-    }
-`;
-
-const SortDropdownButtonTitle = ({ sortKey }) => (
-    <StyledSortDropdownButtonTitle>
-        <span>
-            <Icon name="sort" /> Sort: {sortTitles[sortKey]}
-        </span>
-        <Icon name="caret-down" />
-    </StyledSortDropdownButtonTitle>
-);
-
-const SortDropdownButton = ({ sortKey, onSelect }) => (
-    <DropdownButton id="nuvs-sort-dropdown" title={<SortDropdownButtonTitle sortKey={sortKey} />}>
-        <DropdownItem onClick={() => onSelect("length")}>Length</DropdownItem>
-        <DropdownItem onClick={() => onSelect("e")}>E-Value</DropdownItem>
-        <DropdownItem onClick={() => onSelect("orfs")}>ORFs</DropdownItem>
-    </DropdownButton>
-);
 
 const NuVsToolbar = ({
     filterORFs,
@@ -66,7 +31,7 @@ const NuVsToolbar = ({
     return (
         <StyledNuVsToolbar>
             <SearchInput onChange={handleChange} onKeyDown={e => e.stopPropagation()} placeholder="Name or family" />
-            <SortDropdownButton sortKey={sortKey} onSelect={onSelect} />
+            <AnalysisViewerSort algorithm="nuvs" sortKey={sortKey} onSelect={onSelect} />
             <Button
                 icon="filter"
                 onClick={onFilterSequences}

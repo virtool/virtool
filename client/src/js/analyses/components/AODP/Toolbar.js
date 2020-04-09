@@ -2,27 +2,14 @@ import { toNumber } from "lodash-es";
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { DropdownButton, DropdownItem, Icon, Input, SearchInput } from "../../../base";
+import { Input, SearchInput, Toolbar } from "../../../base";
 import { setAnalysisSortKey, setAODPFilter, setSearchIds } from "../../actions";
 import { getFuse } from "../../selectors";
+import { AnalysisViewerSort } from "../Viewer/Sort";
 
-const sortTitles = {
-    identity: "Identity"
-};
-
-const StyledAODPToolBar = styled.div`
-    display: grid;
-    grid-template-columns: 3fr 1fr 1fr;
-    grid-gap: 5px;
-`;
-
-const StyledSortDropdownButtonTitle = styled.div`
-    align-items: center;
-    display: flex;
-    width: 106px;
-
-    i {
-        margin-left: auto;
+const StyledAODPToolbar = styled(Toolbar)`
+    input[type="number"] {
+        max-width: 130px;
     }
 `;
 
@@ -38,27 +25,10 @@ export const AODPToolBar = ({ filterAODP, fuse, id, sortKey, onSearch, onSelect,
         onSetFilter(toNumber(e.target.value));
     };
 
-    const title = (
-        <StyledSortDropdownButtonTitle>
-            <span>
-                <Icon name="sort" /> Sort: {sortTitles[sortKey]}
-            </span>
-            <Icon name="caret-down" />
-        </StyledSortDropdownButtonTitle>
-    );
-
-    const dropDown = (
-        <DropdownButton id="aodp-sort-dropdown" title={title}>
-            <DropdownItem onClick={() => onSelect("length")}>Length</DropdownItem>
-            <DropdownItem onClick={() => onSelect("e")}>E-Value</DropdownItem>
-            <DropdownItem onClick={() => onSelect("orfs")}>ORFs</DropdownItem>
-        </DropdownButton>
-    );
-
     return (
-        <StyledAODPToolBar>
+        <StyledAODPToolbar>
             <SearchInput onChange={handleChangeSearch} onKeyDown={e => e.stopPropagation()} placeholder="Name" />
-            {dropDown}
+            <AnalysisViewerSort algorithm="aodp" sortKey={sortKey} onSelect={onSelect} />
             <Input
                 type="number"
                 placeholder="Minimum Identity"
@@ -68,7 +38,7 @@ export const AODPToolBar = ({ filterAODP, fuse, id, sortKey, onSearch, onSelect,
                 value={filterAODP.toFixed(2)}
                 onChange={e => handleChangeFilter(e)}
             />
-        </StyledAODPToolBar>
+        </StyledAODPToolbar>
     );
 };
 

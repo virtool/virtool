@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Button, DropdownButton, DropdownItem, Icon, SearchInput, Select, Toolbar } from "../../../base";
+import { Button, DropdownButton, DropdownItem, Icon, SearchInput, Toolbar } from "../../../base";
 import {
     setAnalysisSortKey,
     setSearchIds,
@@ -11,6 +11,7 @@ import {
     toggleShowPathoscopeReads
 } from "../../actions";
 import { getFuse } from "../../selectors";
+import { AnalysisViewerSort } from "../Viewer/Sort";
 
 export const PathoscopeDownloadDropdownTitle = () => (
     <span>
@@ -21,10 +22,6 @@ export const PathoscopeDownloadDropdownTitle = () => (
 const StyledPathoscopeToolbar = styled(Toolbar)`
     display: flex;
     margin-bottom: 10px !important;
-`;
-
-export const PathoscopeToolbarSelect = styled(Select)`
-    width: 110px;
 `;
 
 export const PathoscopeToolbar = ({
@@ -53,22 +50,10 @@ export const PathoscopeToolbar = ({
     return (
         <StyledPathoscopeToolbar>
             <SearchInput onChange={handleChange} onKeyDown={e => e.stopPropagation()} />
-            <PathoscopeToolbarSelect value={sortKey} onChange={e => onSetSortKey(e.target.value)}>
-                <option className="text-primary" value="coverage">
-                    Sort: Coverage
-                </option>
-                <option className="text-success" value="pi">
-                    Sort: Weight
-                </option>
-                <option className="text-danger" value="depth">
-                    Sort: Depth
-                </option>
-            </PathoscopeToolbarSelect>
-
+            <AnalysisViewerSort algorithm="pathoscope" sortKey={sortKey} onSelect={onSetSortKey} />
             <Button title="Sort Direction" onClick={onToggleSortDescending} tip="Sort List">
                 <Icon name={sortDescending ? "sort-amount-down" : "sort-amount-up"} />
             </Button>
-
             <Button
                 active={showPathoscopeReads}
                 icon="weight-hanging"
@@ -77,7 +62,6 @@ export const PathoscopeToolbar = ({
             >
                 Show Reads
             </Button>
-
             <Button
                 active={filterOTUs}
                 icon="filter"
@@ -86,7 +70,6 @@ export const PathoscopeToolbar = ({
             >
                 Filter OTUs
             </Button>
-
             <Button
                 active={filterIsolates}
                 icon="filter"
@@ -95,7 +78,6 @@ export const PathoscopeToolbar = ({
             >
                 Filter Isolates
             </Button>
-
             <DropdownButton id="download-dropdown" title={<PathoscopeDownloadDropdownTitle />}>
                 <DropdownItem href={`/download/analyses/${analysisId}.csv`}>
                     <Icon name="file-csv" /> CSV
