@@ -16,7 +16,7 @@ steps:
       - pytest -x --db-connection-string mongodb://mongo:27017 --cov --cov-report xml
 
   - name: coverage
-    image: python:3.6-alpine
+    image: python:3.8-alpine
     environment:
       CODACY_PROJECT_TOKEN:
         from_secret: CODACY_PROJECT_TOKEN
@@ -66,14 +66,14 @@ name: build
 
 steps:
   - name: client
-    image: node:12-stretch
+    image: node:12-buster
     commands:
       - cd client
       - npm i
       - npx webpack --config webpack.production.config.babel.js
 
   - name: server
-    image: python:3.6-jessie
+    image: python:3.8-buster
     commands:
       - pip install -r requirements.txt
       - mkdir gh_build
@@ -81,7 +81,7 @@ steps:
       - python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
       - python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); print(flags&os.O_NONBLOCK);'
       - python setup.py build
-      - cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
+      - cp -rv build/exe.linux-x86_64-3.8/* gh_build/virtool
       - 'if [ "$DRONE_TAG" ]; then echo $DRONE_TAG > gh_build/virtool/VERSION; else echo "v0.0.0" > gh_build/virtool/VERSION; fi'
       - cd gh_build
       - tar -czf virtool.tar.gz virtool
