@@ -57,7 +57,7 @@ const lineDrawer = (data, key, x, y) => {
     return generator(data);
 };
 
-const CreateBasesChart = (element, data, baseWidth) => {
+export const drawBasesChart = (element, data, baseWidth) => {
     const svg = createSVG(element, baseWidth);
 
     const width = baseWidth - svg.margin.left - svg.margin.right;
@@ -125,5 +125,3 @@ const CreateBasesChart = (element, data, baseWidth) => {
 
     appendLegend(svg, width, series);
 };
-
-export default CreateBasesChart;

@@ -1,12 +1,13 @@
-import React, { useEffect, useRef } from "react";
+import React, { useContext, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { axisBottom, axisLeft } from "d3-axis";
 import { format } from "d3-format";
 import { scaleLinear } from "d3-scale";
 import { select } from "d3-selection";
 import { area } from "d3-shape";
+import { PathoscopeDetailContext } from "./Detail";
 
-const draw = (element, data, length, meta, yMax, xMin) => {
+const draw = (element, data, length, meta, yMax, xMin, onRendered) => {
     let svg = select(element).append("svg");
 
     const margin = {
@@ -68,6 +69,8 @@ const draw = (element, data, length, meta, yMax, xMin) => {
         .attr("class", "coverage-label small")
         .attr("transform", "translate(4,10)")
         .text(`${meta.accession} - ${meta.definition}`);
+
+    onRendered();
 };
 
 const StyledCoverageChart = styled.div`
@@ -80,22 +83,22 @@ const StyledCoverageChart = styled.div`
     }
 `;
 
-export const CoverageChart = ({ accession, data, definition, id, length, yMax, showYAxis }) => {
+export const CoverageChart = ({ accession, data, definition, id, length, yMax }) => {
     const chartEl = useRef(null);
 
-    useEffect(
-        () =>
-            draw(
-                chartEl.current,
-                data,
-                length,
-                { accession, id, definition },
-                yMax,
-                chartEl.current.offsetWidth,
-                showYAxis
-            ),
-        [id]
-    );
+    const { onRendered } = useContext(PathoscopeDetailContext);
+
+    useEffect(() => {
+        draw(
+            chartEl.current,
+            data,
+            length,
+            { accession, id, definition },
+            yMax,
+            chartEl.current.offsetWidth,
+            onRendered
+        );
+    }, [id, onRendered]);
 
     return <StyledCoverageChart ref={chartEl} />;
 };
