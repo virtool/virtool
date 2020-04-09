@@ -6,6 +6,7 @@ PROJECTION = [
     "file",
     "ready",
     "job",
+    "name",
     "nickname",
     "user"
 ]

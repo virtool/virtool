@@ -1,6 +1,5 @@
 import pymongo
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 
 import virtool.db.migrate
 
@@ -44,7 +43,6 @@ async def test_migrate_files(dbi):
 
 
 async def test_migrate_groups(dbi):
-
     await dbi.groups.insert_many([
         {
             "_id": "foobar",
@@ -116,13 +114,3 @@ async def test_migrate_status(has_software, has_software_update, has_version, db
         },
         expected_software
     ]
-
-
-async def test_migrate_subtraction(mocker):
-    m_delete_unready = mocker.patch("virtool.db.migrate.delete_unready", new=make_mocked_coro())
-
-    m_db = mocker.Mock()
-
-    await virtool.db.migrate.migrate_subtraction(m_db)
-
-    assert m_delete_unready.call_args[0][0] == m_db.subtraction
