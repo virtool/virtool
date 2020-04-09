@@ -29,6 +29,8 @@ export const appendLegend = (svg, width, series) => {
 };
 
 export const createSVG = (element, width) => {
+    select(element).selectAll("*").remove();
+
     const svg = select(element)
         .append("svg")
         .attr("width", width + margin.left + margin.right)

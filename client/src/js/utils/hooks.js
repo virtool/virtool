@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const getSize = ref => ({
-    height: ref.current ? ref.current.scrollHeight : 0,
-    width: ref.current ? ref.current.scrollWidth : 0
+    height: ref.current ? ref.current.offsetHeight : 0,
+    width: ref.current ? ref.current.offsetWidth : 0
 });
 
 export const useElementSize = () => {
@@ -10,9 +10,9 @@ export const useElementSize = () => {
 
     const [size, setSize] = useState(getSize(ref));
 
-    const handleResize = useCallback(() => {
+    const handleResize = () => {
         setSize(getSize(ref));
-    }, [ref]);
+    };
 
     useEffect(() => {
         handleResize();

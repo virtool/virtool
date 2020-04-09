@@ -3,9 +3,9 @@ import { axisBottom, axisLeft } from "d3-axis";
 import { scaleLinear } from "d3-scale";
 import { select } from "d3-selection";
 import { fill, flatMap } from "lodash-es";
-import React, { useEffect, useRef, useState } from "react";
-import Measure from "react-measure";
+import React, { useEffect } from "react";
 import styled from "styled-components";
+import { useElementSize } from "../../../utils/hooks";
 
 const draw = (element, data, width) => {
     const flattened = flatMap(data, ([x, y]) => fill(new Array(y), x));
@@ -73,18 +73,9 @@ const StyledHistogram = styled.div`
 `;
 
 export const Histogram = ({ data }) => {
-    const chartRef = useRef(null);
-    const [width, setWidth] = useState(-1);
+    const [ref, size] = useElementSize();
 
-    useEffect(() => draw(chartRef.current, data, width), [width]);
+    useEffect(() => draw(ref.current, data, size.width), [size.width]);
 
-    return (
-        <Measure offset onResize={contentRect => setWidth(contentRect.offset.width)}>
-            {({ measureRef }) => (
-                <StyledHistogram ref={measureRef}>
-                    <div ref={chartRef} />
-                </StyledHistogram>
-            )}
-        </Measure>
-    );
+    return <StyledHistogram ref={ref} />;
 };

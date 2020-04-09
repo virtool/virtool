@@ -5,7 +5,7 @@ import { max } from "lodash-es";
 import { createSVG } from "../../samples/chartUtils";
 import { toScientificNotation } from "../../utils/utils";
 
-const CreateSequencesChart = (element, data, baseWidth) => {
+export const drawSequencesChart = (element, data, baseWidth) => {
     const svg = createSVG(element, baseWidth);
 
     const width = baseWidth - svg.margin.right - svg.margin.left;
@@ -56,5 +56,3 @@ const CreateSequencesChart = (element, data, baseWidth) => {
         .style("text-anchor", "end")
         .text("Read Count");
 };
-
-export default CreateSequencesChart;
