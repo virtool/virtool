@@ -100,8 +100,8 @@ export class CloneReference extends React.Component {
 
     render() {
         return (
-            <Container>
-                <form onSubmit={this.handleSubmit}>
+            <form onSubmit={this.handleSubmit}>
+                <Container>
                     <Alert>
                         <strong>Clone an existing reference.</strong>
                     </Alert>
@@ -121,11 +121,11 @@ export class CloneReference extends React.Component {
                         organism={this.state.organism}
                         onChange={this.handleChange}
                     />
-                    <DialogFooter>
-                        <SaveButton disabled={!this.props.refDocuments.length} altText="Clone" />
-                    </DialogFooter>
-                </form>
-            </Container>
+                </Container>
+                <DialogFooter>
+                    <SaveButton disabled={!this.props.refDocuments.length} altText="Clone" />
+                </DialogFooter>
+            </form>
         );
     }
 }
