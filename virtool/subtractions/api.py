@@ -148,10 +148,14 @@ async def create(req):
 
 
 @routes.patch("/api/subtractions/{subtraction_id}", permission="modify_subtraction", schema={
-    "nickname": {
+    "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
-        "required": True
+        "empty": False,
+    },
+    "nickname": {
+        "type": "string",
+        "coerce": virtool.validators.strip
     }
 })
 async def edit(req):
@@ -164,10 +168,20 @@ async def edit(req):
 
     subtraction_id = req.match_info["subtraction_id"]
 
+    update = dict()
+
+    try:
+        update["name"] = data["name"]
+    except KeyError:
+        pass
+
+    try:
+        update["nickname"] = data["nickname"]
+    except KeyError:
+        pass
+
     document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
-        "$set": {
-            "nickname": data["nickname"]
-        }
+        "$set": update
     })
 
     if document is None:
