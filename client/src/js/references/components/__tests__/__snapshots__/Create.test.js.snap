@@ -1,10 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<CreateReference /> should render 1`] = `
-<Create__Container>
-  <form
-    onSubmit={[Function]}
-  >
+<form
+  onSubmit={[Function]}
+>
+  <Create__Container>
     <Alert>
       <strong>
         Create an empty reference.
@@ -22,19 +22,19 @@ exports[`<CreateReference /> should render 1`] = `
       dataType="genome"
       onSelect={[Function]}
     />
-    <Modal__DialogFooter>
-      <ButtonToolbar>
-        <Button
-          color="blue"
-          disabled={false}
-          icon="save"
-          tipPlacement="top"
-          type="submit"
-        >
-          Save
-        </Button>
-      </ButtonToolbar>
-    </Modal__DialogFooter>
-  </form>
-</Create__Container>
+  </Create__Container>
+  <Modal__DialogFooter>
+    <ButtonToolbar>
+      <Button
+        color="blue"
+        disabled={false}
+        icon="save"
+        tipPlacement="top"
+        type="submit"
+      >
+        Save
+      </Button>
+    </ButtonToolbar>
+  </Modal__DialogFooter>
+</form>
 `;

@@ -62,8 +62,8 @@ export class CreateReference extends React.Component {
 
     render() {
         return (
-            <Container>
-                <form onSubmit={this.handleSubmit}>
+            <form onSubmit={this.handleSubmit}>
+                <Container>
                     <Alert>
                         <strong>Create an empty reference.</strong>
                     </Alert>
@@ -78,15 +78,15 @@ export class CreateReference extends React.Component {
                         onChange={this.handleChange}
                     />
                     <DataTypeSelection onSelect={this.handleChangeDataType} dataType={this.state.dataType} />
-                    <DialogFooter>
-                        <ButtonToolbar>
-                            <Button type="submit" icon="save" color="blue">
-                                Save
-                            </Button>
-                        </ButtonToolbar>
-                    </DialogFooter>
-                </form>
-            </Container>
+                </Container>
+                <DialogFooter>
+                    <ButtonToolbar>
+                        <Button type="submit" icon="save" color="blue">
+                            Save
+                        </Button>
+                    </ButtonToolbar>
+                </DialogFooter>
+            </form>
         );
     }
 }
