@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Badge, BoxGroupSection, Icon, Label, Table } from "../../../base";
+import { Badge, BoxGroupSection, Icon, Label, Table, CloseButton } from "../../../base";
 import { followDownload } from "../../../utils/utils";
 import { TargetInfo } from "./Target";
 
@@ -110,9 +110,7 @@ class Sequence extends React.Component {
                         <Icon name="trash" color="red" tip="Remove Sequence" onClick={this.handleShowRemoveSequence} />
                     ) : null}
                     <Icon name="download" tip="Download FASTA" onClick={this.handleDownload} />
-                    <button type="button" className="close" onClick={this.handleCloseClick}>
-                        <span>×</span>
-                    </button>
+                    <CloseButton onClick={this.handleCloseClick} />
                 </SequenceHeaderButtons>
             );
         }

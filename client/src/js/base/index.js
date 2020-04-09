@@ -45,5 +45,6 @@ export * from "./Toolbar";
 export * from "./Tooltip";
 export * from "./UploadBar";
 export * from "./ViewHeader";
+export * from "./CloseButton";
 
 export { bsStyles, Checkbox, Flex, FlexItem, ScrollList };
