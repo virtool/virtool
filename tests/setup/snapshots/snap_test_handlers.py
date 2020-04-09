@@ -3058,3 +3058,128 @@ snapshots['test_get_paths[uvloop--True-False-watch] 1'] = '''<!DOCTYPE html>
 
 </html>
 '''
+
+snapshots['test_get_paths[uvloop--False-False-data] 1'] = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/main..css">
+
+    <style nonce="foo1bar2baz3">
+        .setup-header {
+            margin-bottom: 20px;
+        }
+        .setup-footer {
+            margin-top: 25px;
+        }
+    </style>
+
+    <title>Setup - Virtool</title>
+</head>
+
+<body>
+<div class="container-noside">
+    <div class="row">
+        <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
+            <div class="list-group">
+                <div class="list-group-item spaced clearfix">
+                    <h4 class="setup-header text-capitalize">
+                        data Location
+                    </h4>
+
+                    <p class="text-muted setup-subheader">
+                            Virtool will store application data (<em>eg</em>. sample files) at this location.
+                    </p>
+
+                    <form method="POST" action="/setup/data">
+                        <div class="form-group">
+                            <label for="path">Path</label>
+                            <input type="text" class="form-control" name="path" id="path" placeholder="data" value=\'\'>
+                        </div>
+
+
+
+
+
+                        <div class="setup-footer">
+                            <button type="submit" class="btn btn-primary pull-right">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>
+'''
+
+snapshots['test_get_paths[uvloop--False-False-watch] 1'] = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/main..css">
+
+    <style nonce="foo1bar2baz3">
+        .setup-header {
+            margin-bottom: 20px;
+        }
+        .setup-footer {
+            margin-top: 25px;
+        }
+    </style>
+
+    <title>Setup - Virtool</title>
+</head>
+
+<body>
+<div class="container-noside">
+    <div class="row">
+        <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
+            <div class="list-group">
+                <div class="list-group-item spaced clearfix">
+                    <h4 class="setup-header text-capitalize">
+                        watch Location
+                    </h4>
+
+                    <p class="text-muted setup-subheader">
+                            Virtool automatically retrieve read files from this location and make them available for
+                            sample creation in the application.
+                    </p>
+
+                    <form method="POST" action="/setup/watch">
+                        <div class="form-group">
+                            <label for="path">Path</label>
+                            <input type="text" class="form-control" name="path" id="path" placeholder="watch" value=\'\'>
+                        </div>
+
+
+
+
+
+                        <div class="setup-footer">
+                            <button type="submit" class="btn btn-primary pull-right">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>
+'''
