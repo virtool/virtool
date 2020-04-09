@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { Button, DropdownButton, DropdownItem, Icon, LinkButton, SearchInput, Toolbar } from "../../../base";
 import { setAnalysisSortKey, setSearchIds, toggleFilterORFs, toggleFilterSequences } from "../../actions";
 import { getFuse, getResults } from "../../selectors";
+import { AnalysisViewerSort } from "../Viewer/Sort";
 
 const StyledNuVsToolbar = styled(Toolbar)`
     margin-bottom: 10px;
@@ -37,7 +38,7 @@ const SortDropdownButtonTitle = ({ sortKey }) => (
     </StyledSortDropdownButtonTitle>
 );
 
-const SortDropdownButton = ({ sortKey, onSelect }) => (
+export const SortDropdownButton2 = ({ sortKey, onSelect }) => (
     <DropdownButton id="nuvs-sort-dropdown" title={<SortDropdownButtonTitle sortKey={sortKey} />}>
         <DropdownItem onClick={() => onSelect("length")}>Length</DropdownItem>
         <DropdownItem onClick={() => onSelect("e")}>E-Value</DropdownItem>
@@ -66,7 +67,12 @@ const NuVsToolbar = ({
     return (
         <StyledNuVsToolbar>
             <SearchInput onChange={handleChange} onKeyDown={e => e.stopPropagation()} placeholder="Name or family" />
-            <SortDropdownButton sortKey={sortKey} onSelect={onSelect} />
+            <AnalysisViewerSort
+                title={<SortDropdownButtonTitle sortKey={sortKey} />}
+                id="nuvs-sort-dropdown"
+                sortKey={sortKey}
+                onSelect={onSelect}
+            />
             <Button
                 icon="filter"
                 onClick={onFilterSequences}

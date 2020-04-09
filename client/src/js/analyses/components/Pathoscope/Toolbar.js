@@ -11,10 +11,24 @@ import {
     toggleShowPathoscopeReads
 } from "../../actions";
 import { getFuse } from "../../selectors";
+import { PathoscopeViewerSort } from "../Viewer/Sort";
+
+const sortTitles = {
+    coverage: "Coverage",
+    depth: "Depth",
+    pi: "Weight"
+};
 
 export const PathoscopeDownloadDropdownTitle = () => (
     <span>
         <Icon name="file-download" /> Export <Icon name="caret-down" />
+    </span>
+);
+
+const DropDownTitle = ({ sortKey }) => (
+    <span>
+        <Icon name="sort" />
+        Sort: {sortTitles[sortKey]}
     </span>
 );
 
@@ -50,20 +64,19 @@ export const PathoscopeToolbar = ({
         [id]
     );
 
+    const dropdown = (
+        <PathoscopeViewerSort
+            title={<DropDownTitle sortKey={sortKey} />}
+            sortKey={sortKey}
+            onSelect={onSetSortKey}
+        ></PathoscopeViewerSort>
+    );
+
     return (
         <StyledPathoscopeToolbar>
             <SearchInput onChange={handleChange} onKeyDown={e => e.stopPropagation()} />
-            <PathoscopeToolbarSelect value={sortKey} onChange={e => onSetSortKey(e.target.value)}>
-                <option className="text-primary" value="coverage">
-                    Sort: Coverage
-                </option>
-                <option className="text-success" value="pi">
-                    Sort: Weight
-                </option>
-                <option className="text-danger" value="depth">
-                    Sort: Depth
-                </option>
-            </PathoscopeToolbarSelect>
+
+            {dropdown}
 
             <Button title="Sort Direction" onClick={onToggleSortDescending} tip="Sort List">
                 <Icon name={sortDescending ? "sort-amount-down" : "sort-amount-up"} />

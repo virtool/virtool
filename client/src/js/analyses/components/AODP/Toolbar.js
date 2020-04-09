@@ -5,6 +5,7 @@ import styled from "styled-components";
 import { DropdownButton, DropdownItem, Icon, Input, SearchInput } from "../../../base";
 import { setAnalysisSortKey, setAODPFilter, setSearchIds } from "../../actions";
 import { getFuse } from "../../selectors";
+import { AnalysisViewerSort } from "../Viewer/Sort";
 
 const sortTitles = {
     identity: "Identity"
@@ -48,11 +49,7 @@ export const AODPToolBar = ({ filterAODP, fuse, id, sortKey, onSearch, onSelect,
     );
 
     const dropDown = (
-        <DropdownButton id="aodp-sort-dropdown" title={title}>
-            <DropdownItem onClick={() => onSelect("length")}>Length</DropdownItem>
-            <DropdownItem onClick={() => onSelect("e")}>E-Value</DropdownItem>
-            <DropdownItem onClick={() => onSelect("orfs")}>ORFs</DropdownItem>
-        </DropdownButton>
+        <AnalysisViewerSort id="aodp-sort-dropdown" title={title} onSelect={onSelect}></AnalysisViewerSort>
     );
 
     return (
