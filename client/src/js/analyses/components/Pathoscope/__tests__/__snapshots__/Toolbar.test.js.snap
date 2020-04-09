@@ -22,7 +22,7 @@ exports[`<Toolbar /> should render 1`] = `
     onChange={[Function]}
     onKeyDown={[Function]}
   />
-  <PathoscopeViewerSort
+  <AnalysisViewerSort
     onSelect={[MockFunction]}
     sortKey="coverage"
     title={
@@ -30,6 +30,7 @@ exports[`<Toolbar /> should render 1`] = `
         sortKey="coverage"
       />
     }
+    type="pathoscope"
   />
   <Button
     color="grey"
@@ -116,7 +117,7 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
     onChange={[Function]}
     onKeyDown={[Function]}
   />
-  <PathoscopeViewerSort
+  <AnalysisViewerSort
     onSelect={[MockFunction]}
     sortKey="coverage"
     title={
@@ -124,6 +125,7 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
         sortKey="coverage"
       />
     }
+    type="pathoscope"
   />
   <Button
     color="grey"
@@ -210,7 +212,7 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
     onChange={[Function]}
     onKeyDown={[Function]}
   />
-  <PathoscopeViewerSort
+  <AnalysisViewerSort
     onSelect={[MockFunction]}
     sortKey="coverage"
     title={
@@ -218,6 +220,7 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
         sortKey="coverage"
       />
     }
+    type="pathoscope"
   />
   <Button
     color="grey"
@@ -304,7 +307,7 @@ exports[`<Toolbar /> should render when [showPathoscopeReads=true] 1`] = `
     onChange={[Function]}
     onKeyDown={[Function]}
   />
-  <PathoscopeViewerSort
+  <AnalysisViewerSort
     onSelect={[MockFunction]}
     sortKey="coverage"
     title={
@@ -312,6 +315,7 @@ exports[`<Toolbar /> should render when [showPathoscopeReads=true] 1`] = `
         sortKey="coverage"
       />
     }
+    type="pathoscope"
   />
   <Button
     color="grey"
@@ -398,7 +402,7 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
     onChange={[Function]}
     onKeyDown={[Function]}
   />
-  <PathoscopeViewerSort
+  <AnalysisViewerSort
     onSelect={[MockFunction]}
     sortKey="coverage"
     title={
@@ -406,6 +410,7 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
         sortKey="coverage"
       />
     }
+    type="pathoscope"
   />
   <Button
     color="grey"
@@ -492,7 +497,7 @@ exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
     onChange={[Function]}
     onKeyDown={[Function]}
   />
-  <PathoscopeViewerSort
+  <AnalysisViewerSort
     onSelect={[MockFunction]}
     sortKey="depth"
     title={
@@ -500,6 +505,7 @@ exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
         sortKey="depth"
       />
     }
+    type="pathoscope"
   />
   <Button
     color="grey"
@@ -586,7 +592,7 @@ exports[`<Toolbar /> should render when [sortKey="weight"] 1`] = `
     onChange={[Function]}
     onKeyDown={[Function]}
   />
-  <PathoscopeViewerSort
+  <AnalysisViewerSort
     onSelect={[MockFunction]}
     sortKey="weight"
     title={
@@ -594,6 +600,7 @@ exports[`<Toolbar /> should render when [sortKey="weight"] 1`] = `
         sortKey="weight"
       />
     }
+    type="pathoscope"
   />
   <Button
     color="grey"

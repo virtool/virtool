@@ -7,7 +7,7 @@ import {
 import { Button } from "../../../../base";
 import { getFuse } from "../../../selectors";
 import { mapDispatchToProps, mapStateToProps, PathoscopeDownloadDropdownTitle, PathoscopeToolbar } from "../Toolbar";
-import { PathoscopeViewerSort } from "../../Viewer/Sort";
+import { AnalysisViewerSort } from "../../Viewer/Sort";
 
 jest.mock("../../../selectors");
 
@@ -101,7 +101,7 @@ describe("<Toolbar />", () => {
             }
         };
         expect(props.onSetSortKey).not.toHaveBeenCalled();
-        wrapper.find(PathoscopeViewerSort).simulate("select");
+        wrapper.find(AnalysisViewerSort).simulate("select");
         expect(props.onSetSortKey).toHaveBeenCalled();
     });
 

@@ -2,7 +2,7 @@ import { toNumber } from "lodash-es";
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { DropdownButton, DropdownItem, Icon, Input, SearchInput } from "../../../base";
+import { Icon, Input, SearchInput } from "../../../base";
 import { setAnalysisSortKey, setAODPFilter, setSearchIds } from "../../actions";
 import { getFuse } from "../../selectors";
 import { AnalysisViewerSort } from "../Viewer/Sort";

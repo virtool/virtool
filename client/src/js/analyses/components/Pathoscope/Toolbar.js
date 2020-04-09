@@ -11,7 +11,7 @@ import {
     toggleShowPathoscopeReads
 } from "../../actions";
 import { getFuse } from "../../selectors";
-import { PathoscopeViewerSort } from "../Viewer/Sort";
+import { AnalysisViewerSort } from "../Viewer/Sort";
 
 const sortTitles = {
     coverage: "Coverage",
@@ -65,11 +65,12 @@ export const PathoscopeToolbar = ({
     );
 
     const dropdown = (
-        <PathoscopeViewerSort
+        <AnalysisViewerSort
+            type="pathoscope"
             title={<DropDownTitle sortKey={sortKey} />}
             sortKey={sortKey}
             onSelect={onSetSortKey}
-        ></PathoscopeViewerSort>
+        ></AnalysisViewerSort>
     );
 
     return (
