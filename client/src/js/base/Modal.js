@@ -5,7 +5,7 @@ import React from "react";
 import styled, { keyframes } from "styled-components";
 import { Alert } from "./Alert";
 import { Box, BoxGroupSection } from "./Box";
-import { Icon } from "./Icon";
+import { CloseButton } from "./CloseButton";
 
 const modalOverlayOpen = keyframes`
     0% {
@@ -154,17 +154,6 @@ export class ModalDialog extends React.Component {
     };
 
     render() {
-        const CloseButton = (
-            <Icon
-                name="times"
-                onClick={() => {
-                    this.props.onHide();
-                    this.onClose();
-                }}
-                style={{ color: "grey" }}
-            />
-        );
-
         return (
             <div>
                 <ModalDialogOverlay
@@ -189,7 +178,7 @@ export class ModalDialog extends React.Component {
                             capitalize={this.props.capitalize}
                         >
                             {this.props.headerText}
-                            {CloseButton}
+                            <CloseButton onClick={this.props.onHide} />
                         </ModalDialogHeader>
                         {this.props.children}
                     </ModalDialogContent>
