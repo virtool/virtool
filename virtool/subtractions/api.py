@@ -1,5 +1,6 @@
 import shutil
 
+import virtool.api.utils
 import virtool.jobs.db
 import virtool.subtractions.db
 import virtool.db.utils
@@ -8,7 +9,7 @@ import virtool.samples.utils
 import virtool.subtractions.utils
 import virtool.utils
 import virtool.validators
-from virtool.api import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, paginate
+from virtool.api.response import bad_request, conflict, json_response, no_content, not_found
 
 routes = virtool.http.routes.Routes()
 

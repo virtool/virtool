@@ -2,9 +2,9 @@ import asyncio
 import pymongo
 from typing import Union
 
+import virtool.api.utils
 import virtool.history.db
 import virtool.utils
-from virtool.api import paginate
 
 PROJECTION = [
     "_id",
@@ -56,7 +56,7 @@ async def find(db, req_query, ref_id=None):
             "reference.id": ref_id
         }
 
-    data = await paginate(
+    data = await virtool.api.utils.paginate(
         db.indexes,
         {},
         req_query,

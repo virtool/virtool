@@ -5,7 +5,7 @@ import virtool.history.utils
 import virtool.http.routes
 import virtool.otus.utils
 import virtool.utils
-from virtool.api import conflict, insufficient_rights, json_response, no_content, not_found
+from virtool.api.response import conflict, insufficient_rights, json_response, no_content, not_found
 
 routes = virtool.http.routes.Routes()
 

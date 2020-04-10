@@ -1,5 +1,5 @@
 import virtool.http.routes
-from virtool.api import json_response
+from virtool.api.response import json_response
 
 routes = virtool.http.routes.Routes()
 

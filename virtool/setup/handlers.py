@@ -13,7 +13,7 @@ import virtool.setup.db
 import virtool.setup.paths
 import virtool.setup.proxy
 import virtool.utils
-from virtool.api import json_response
+from virtool.api.response import json_response
 
 logger = logging.getLogger(__name__)
 

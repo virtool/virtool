@@ -3,6 +3,7 @@ from cerberus import Validator
 
 import virtool.analyses.utils
 import virtool.analyses.db
+import virtool.api.utils
 import virtool.files.db
 import virtool.jobs.db
 import virtool.samples.db
@@ -12,8 +13,8 @@ import virtool.http.routes
 import virtool.samples.utils
 import virtool.utils
 import virtool.validators
-from virtool.api import bad_request, compose_regex_query, insufficient_rights, invalid_query, \
-    json_response, no_content, not_found, paginate
+from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
+    json_response, no_content, not_found
 
 QUERY_SCHEMA = {
     "find": {
@@ -81,7 +82,7 @@ async def find(req):
     term = query.get("find")
 
     if term:
-        db_query = compose_regex_query(term, ["name", "user.id"])
+        db_query = virtool.api.utils.compose_regex_query(term, ["name", "user.id"])
 
     if algorithm_query:
         if db_query:
@@ -94,7 +95,7 @@ async def find(req):
         else:
             db_query = algorithm_query
 
-    data = await paginate(
+    data = await virtool.api.utils.paginate(
         db.samples,
         db_query,
         req.query,
@@ -452,13 +453,13 @@ async def find_analyses(req):
     db_query = dict()
 
     if term:
-        db_query.update(compose_regex_query(term, ["reference.name", "user.id"]))
+        db_query.update(virtool.api.utils.compose_regex_query(term, ["reference.name", "user.id"]))
 
     base_query = {
         "sample.id": sample_id
     }
 
-    data = await paginate(
+    data = await virtool.api.utils.paginate(
         db.analyses,
         db_query,
         req.query,

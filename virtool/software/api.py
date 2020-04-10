@@ -9,7 +9,7 @@ import virtool.processes.db
 import virtool.software.db
 import virtool.software.utils
 import virtool.utils
-from virtool.api import bad_gateway, json_response, not_found
+from virtool.api.response import bad_gateway, json_response, not_found
 
 routes = virtool.http.routes.Routes()
 

@@ -68,7 +68,3 @@ async def populate_settings(db):
         "_id": "settings",
         **defaults
     })
-
-
-
-

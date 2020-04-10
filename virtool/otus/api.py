@@ -14,7 +14,7 @@ import virtool.references.db
 import virtool.references.utils
 import virtool.utils
 import virtool.validators
-from virtool.api import bad_request, insufficient_rights, json_response, no_content, not_found
+from virtool.api.response import bad_request, insufficient_rights, json_response, no_content, not_found
 
 SCHEMA_VALIDATOR = {
     "type": "list",

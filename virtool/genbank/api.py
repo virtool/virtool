@@ -7,7 +7,7 @@ import aiohttp
 import virtool.genbank.http
 import virtool.http.proxy
 import virtool.http.routes
-from virtool.api import bad_gateway, json_response, not_found
+from virtool.api.response import bad_gateway, json_response, not_found
 
 routes = virtool.http.routes.Routes()
 

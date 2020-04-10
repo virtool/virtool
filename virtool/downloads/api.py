@@ -9,6 +9,8 @@ import json
 from aiohttp import web
 
 import virtool.analyses.format
+import virtool.api.json
+import virtool.api.response
 import virtool.bio
 import virtool.analyses.db
 import virtool.db.utils
@@ -21,7 +23,6 @@ import virtool.http.routes
 import virtool.otus.utils
 import virtool.utils
 import virtool.samples.utils
-from virtool.api import CustomEncoder, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -65,7 +66,7 @@ async def download_sample_reads(req):
     files = await virtool.db.utils.get_one_field(db.samples, "files", sample_id)
 
     if not files:
-        return not_found()
+        return virtool.api.response.not_found()
 
     suffix = req.match_info["suffix"]
     sample_path = virtool.samples.utils.join_sample_path(req.app["settings"], sample_id)
@@ -76,7 +77,7 @@ async def download_sample_reads(req):
         path = virtool.samples.utils.join_read_path(sample_path, suffix)
 
     if not os.path.isfile(path):
-        return not_found()
+        return virtool.api.response.not_found()
 
     file_stats = virtool.utils.file_stats(path)
 
@@ -103,10 +104,10 @@ async def download_isolate(req):
         filename, fasta = await virtool.downloads.db.generate_isolate_fasta(db, otu_id, isolate_id)
     except virtool.errors.DatabaseError as err:
         if "OTU does not exist" in str(err):
-            return not_found("OTU not found")
+            return virtool.api.response.not_found("OTU not found")
 
         if "Isolate does not exist" in str(err):
-            return not_found("Isolate not found")
+            return virtool.api.response.not_found("Isolate not found")
 
         raise
 
@@ -129,10 +130,10 @@ async def download_otu(req):
         filename, fasta = await virtool.downloads.db.generate_otu_fasta(db, otu_id)
     except virtool.errors.DatabaseError as err:
         if "Sequence does not exist" in str(err):
-            return not_found("Sequence not found")
+            return virtool.api.response.not_found("Sequence not found")
 
         if "OTU does not exist" in str(err):
-            return not_found("OTU not found")
+            return virtool.api.response.not_found("OTU not found")
 
         raise
 
@@ -158,7 +159,7 @@ async def download_reference(req):
     document = await db.references.find_one(ref_id, ["data_type", "organism", "targets"])
 
     if document is None:
-        return not_found()
+        return virtool.api.response.not_found()
 
     scope = req.query.get("scope", "built")
 
@@ -183,7 +184,7 @@ async def download_reference(req):
         pass
 
     # Convert the list of OTUs to a JSON-formatted string.
-    json_string = json.dumps(data, cls=CustomEncoder)
+    json_string = json.dumps(data, cls=virtool.api.json.CustomEncoder)
 
     # Compress the JSON string with gzip.
     body = await req.app["run_in_process"](gzip.compress, bytes(json_string, "utf-8"))
@@ -209,13 +210,13 @@ async def download_sequence(req):
         filename, fasta = await virtool.downloads.db.generate_sequence_fasta(db, sequence_id)
     except virtool.errors.DatabaseError as err:
         if "Sequence does not exist" in str(err):
-            return not_found("Sequence not found")
+            return virtool.api.response.not_found("Sequence not found")
 
         if "Isolate does not exist" in str(err):
-            return not_found("Isolate not found")
+            return virtool.api.response.not_found("Isolate not found")
 
         if "OTU does not exist" in str(err):
-            return not_found("OTU not found")
+            return virtool.api.response.not_found("OTU not found")
 
         raise
 

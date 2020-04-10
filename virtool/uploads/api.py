@@ -8,7 +8,7 @@ import virtool.samples.db
 import virtool.db.utils
 import virtool.http.routes
 import virtool.utils
-from virtool.api import invalid_query, json_response, not_found
+from virtool.api.response import invalid_query, json_response, not_found
 
 CHUNK_SIZE = 131072
 

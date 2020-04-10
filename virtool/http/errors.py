@@ -5,7 +5,7 @@ from aiohttp import web
 from mako.template import Template
 
 import virtool.utils
-from virtool.api import not_found
+from virtool.api.response import not_found
 
 
 @web.middleware

@@ -1,3 +1,4 @@
+import virtool.api.utils
 import virtool.http.utils
 import virtool.users.checks
 import virtool.hmm.db
@@ -11,8 +12,7 @@ import virtool.http.routes
 import virtool.users.utils
 import virtool.utils
 import virtool.validators
-from virtool.api import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, \
-    paginate
+from virtool.api.response import bad_request, conflict, json_response, no_content, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -30,9 +30,9 @@ async def find(req):
     db_query = dict()
 
     if term:
-        db_query.update(compose_regex_query(term, ["_id"]))
+        db_query.update(virtool.api.utils.compose_regex_query(term, ["_id"]))
 
-    data = await paginate(
+    data = await virtool.api.utils.paginate(
         db.users,
         db_query,
         req.query,
