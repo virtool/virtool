@@ -4,9 +4,9 @@ import React from "react";
 import { InputGroup, InputLabel, Select } from "../../../base";
 
 export const SubtractionSelector = ({ subtractions, value, onChange }) => {
-    const optionComponents = map(subtractions, subtractionId => (
-        <option key={subtractionId} value={subtractionId}>
-            {subtractionId}
+    const optionComponents = map(subtractions, subtraction => (
+        <option key={subtraction.id} value={subtraction.id}>
+            {subtraction.name}
         </option>
     ));
 
@@ -21,7 +21,7 @@ export const SubtractionSelector = ({ subtractions, value, onChange }) => {
 };
 
 SubtractionSelector.propTypes = {
-    subtractions: PropTypes.arrayOf(PropTypes.string),
+    subtractions: PropTypes.arrayOf(PropTypes.object),
     value: PropTypes.string,
     onChange: PropTypes.func
 };

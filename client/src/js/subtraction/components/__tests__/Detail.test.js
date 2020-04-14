@@ -8,6 +8,7 @@ describe("<SubtractionDetail />", () => {
             match: { params: { subtractionId: "test" } },
             detail: {
                 id: "foo",
+                name: "Foo",
                 ready: true,
                 linked_samples: [
                     { id: "bar", name: "Bar" },

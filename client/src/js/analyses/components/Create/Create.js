@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
 import { Button, Flex, FlexItem, ModalDialog, DialogBody, DialogFooter } from "../../../base";
 import { getDefaultSubtraction, getSampleLibraryType, getSelectedDocuments } from "../../../samples/selectors";
-import { listSubtractionIds } from "../../../subtraction/actions";
+import { shortlistSubtractions } from "../../../subtraction/actions";
 import { analyze } from "../../actions";
 import { getCompatibleReadyIndexes } from "../../selectors";
 import { AlgorithmSelect } from "./AlgorithmSelect";
@@ -41,11 +41,11 @@ export class CreateAnalysis extends React.Component {
     }
 
     componentDidMount() {
-        this.props.onListSubtractionIds();
+        this.props.onShortlistSubtractions();
     }
 
     handleEnter = () => {
-        this.props.onListSubtractionIds();
+        this.props.onShortlistSubtractions();
         this.setState(getInitialState(this.props));
     };
 
@@ -103,7 +103,7 @@ export class CreateAnalysis extends React.Component {
                             hasHmm={this.props.hasHmm}
                         />
                         <SubtractionSelector
-                            subtractions={this.props.subtractionIds}
+                            subtractions={this.props.subtractions}
                             value={subtraction}
                             onChange={this.handleSelectSubtraction}
                         />
@@ -142,7 +142,7 @@ const mapStateToProps = state => ({
     hasHmm: !!state.hmms.total_count,
     indexes: getCompatibleReadyIndexes(state),
     libraryType: getSampleLibraryType(state),
-    subtractionIds: state.subtraction.ids,
+    subtractions: state.subtraction.shortlist,
     userId: state.account.id
 });
 
@@ -157,8 +157,8 @@ const mapDispatchToProps = dispatch => ({
     onHide: () => {
         dispatch(pushState({}));
     },
-    onListSubtractionIds: () => {
-        dispatch(listSubtractionIds());
+    onShortlistSubtractions: () => {
+        dispatch(shortlistSubtractions());
     }
 });
 

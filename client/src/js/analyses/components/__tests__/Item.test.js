@@ -23,7 +23,8 @@ describe("<AnalysisItem />", () => {
             },
             sampleId: "bar",
             subtraction: {
-                id: "Prunus persica"
+                id: "baz",
+                name: "Prunus persica"
             },
             user: {
                 id: "bob"

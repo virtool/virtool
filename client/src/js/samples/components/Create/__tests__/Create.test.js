@@ -11,7 +11,16 @@ describe("<CreateSample>", () => {
         props = {
             show: true,
             error: "",
-            subtractions: ["sub_foo", "sub_bar"],
+            subtractions: [
+                {
+                    id: "sub_foo",
+                    name: "Sub Foo"
+                },
+                {
+                    id: "sub_bar",
+                    name: "Sub Bar"
+                }
+            ],
             readyReads: [],
             forceGroupChoice: false,
             onCreate: jest.fn()
@@ -22,7 +31,7 @@ describe("<CreateSample>", () => {
             host: "Host",
             isolate: "Isolate",
             locale: "Timbuktu",
-            subtraction: "sub_bar",
+            subtractionId: "sub_bar",
             group: "technician",
             errorName: "",
             errorSubtraction: "",
@@ -71,17 +80,14 @@ describe("<CreateSample>", () => {
             locale: "",
             name: "",
             selected: [],
-            subtraction: ""
+            subtractionId: ""
         });
     });
 
     it("handleChange() should update state [name] and [error] when InputError is changed and [name=name]", () => {
         const wrapper = shallow(<CreateSample {...props} />);
         wrapper.setState(state);
-        wrapper
-            .find(Input)
-            .at(0)
-            .simulate("change", e);
+        wrapper.find(Input).at(0).simulate("change", e);
         expect(wrapper.state()).toEqual({ ...state, name: "foo" });
     });
 
@@ -91,10 +97,7 @@ describe("<CreateSample>", () => {
 
         const wrapper = shallow(<CreateSample {...props} />);
         wrapper.setState(state);
-        wrapper
-            .find(Input)
-            .at(0)
-            .simulate("change", e);
+        wrapper.find(Input).at(0).simulate("change", e);
 
         expect(wrapper.state()).toEqual({ ...state, isolate: "Foo Isolate" });
     });
@@ -103,33 +106,24 @@ describe("<CreateSample>", () => {
         const libraryType = "srna";
         const wrapper = shallow(<CreateSample {...props} />);
         wrapper.setState(state);
-        wrapper
-            .find("LibraryTypeSelection")
-            .at(0)
-            .simulate("select", libraryType);
+        wrapper.find("LibraryTypeSelection").at(0).simulate("select", libraryType);
         expect(wrapper.state()).toEqual({ ...state, libraryType });
     });
 
-    it("handleSubmit() should update errorName when form is submitted and [this.state.name='']", () => {
+    it("should display error when form submitted with no name", () => {
         const wrapper = shallow(<CreateSample {...props} />);
         wrapper.setState({ ...state, name: "" });
         wrapper.find("form").simulate("submit", e);
         expect(wrapper.state()).toEqual({ ...state, name: "", errorName: "Required Field" });
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("handleSubmit() should update errorSubtraction when form is submitted and [this.props.subtractions=[]]", () => {
+    it("should display error when form submitted with no subtractions available", () => {
         props.subtractions = [];
         const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.setState({
-            ...state,
-            selected: ["foo"]
-        });
+        wrapper.setState({ ...state, selected: ["foo"] });
         wrapper.find("form").simulate("submit", e);
-        expect(wrapper.state()).toEqual({
-            ...state,
-            errorSubtraction: "At least one subtraction must be added to Virtool before samples can be analyzed.",
-            selected: ["foo"]
-        });
+        expect(wrapper).toMatchSnapshot();
     });
 
     it("handleSubmit() should update errorFile when form is submitted and [this.props.selected=[]]", () => {
@@ -174,7 +168,17 @@ describe("<CreateSample>", () => {
 
 describe("mapStateToProps()", () => {
     it("should return props", () => {
-        const subtractions = ["sub_foo", "sub_bar"];
+        const subtractions = [
+            {
+                id: "foo_subtraction",
+                name: "Foo Subtraction"
+            },
+            {
+                id: "bar_subtraction",
+                name: "Bar Subtraction"
+            }
+        ];
+
         const state = {
             router: { location: { stae: "foo" } },
             settings: {
@@ -194,12 +198,20 @@ describe("mapStateToProps()", () => {
                 ]
             },
             subtraction: {
-                ids: subtractions
+                shortlist: [
+                    {
+                        id: "foo_subtraction",
+                        name: "Foo Subtraction"
+                    },
+                    {
+                        id: "bar_subtraction",
+                        name: "Bar Subtraction"
+                    }
+                ]
             }
         };
         const props = mapStateToProps(state);
         expect(props).toEqual({
-            defaultSubtraction: "sub_foo",
             error: "",
             forceGroupChoice: true,
             groups: "foo",

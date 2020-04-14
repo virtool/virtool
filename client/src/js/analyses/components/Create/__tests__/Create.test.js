@@ -1,4 +1,4 @@
-import { CreateAnalysis } from "../Create/Create";
+import { CreateAnalysis } from "../Create";
 
 describe("<CreateAnalysis />", () => {
     let props;
@@ -27,10 +27,11 @@ describe("<CreateAnalysis />", () => {
                     }
                 }
             ],
+            libraryType: "normal",
             userId: "bob",
             onAnalyze: jest.fn(),
             onHide: jest.fn(),
-            onListSubtractionIds: jest.fn()
+            onShortlistSubtractions: jest.fn()
         };
     });
 
@@ -64,8 +65,8 @@ describe("<CreateAnalysis />", () => {
     });
 
     it("should call onListSubtractionIds on mount", () => {
-        expect(props.onListSubtractionIds).not.toHaveBeenCalled();
+        expect(props.onShortlistSubtractions).not.toHaveBeenCalled();
         shallow(<CreateAnalysis {...props} />);
-        expect(props.onListSubtractionIds).toHaveBeenCalled();
+        expect(props.onShortlistSubtractions).toHaveBeenCalled();
     });
 });

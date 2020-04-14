@@ -56,9 +56,9 @@ export class SubtractionDetail extends React.Component {
 
         return (
             <div>
-                <ViewHeader title={detail.id}>
+                <ViewHeader title={detail.name}>
                     <ViewHeaderTitle>
-                        {detail.id}
+                        {detail.name}
                         <ViewHeaderIcons>
                             {editIcon}
                             {removeIcon}
@@ -74,7 +74,7 @@ export class SubtractionDetail extends React.Component {
                         </tr>
                         <tr>
                             <th>File</th>
-                            <td>{detail.file.id}</td>
+                            <td>{detail.file.name || detail.file.id}</td>
                         </tr>
                         <tr>
                             <th>Sequence Count</th>
@@ -92,7 +92,7 @@ export class SubtractionDetail extends React.Component {
                 </Table>
 
                 <EditSubtraction show={this.state.showEdit} onHide={this.handleHide} />
-                <RemoveSubtraction id={detail.id} />
+                <RemoveSubtraction />
             </div>
         );
     }

@@ -70,7 +70,7 @@ export const AnalysisItem = props => {
                     </li>
                 </SlashList>
                 <Icon name="not-equal" />
-                <Link to={`/subtraction/${subtraction.id}`}>{subtraction.id}</Link>
+                <Link to={`/subtraction/${subtraction.id}`}>{subtraction.name}</Link>
             </AnalysisItemContent>
         </StyledAnalysisItem>
     );

@@ -1,4 +1,4 @@
-import { SelectedSamplesLabel } from "../Create/SelectedSamplesLabel";
+import { SelectedSamplesLabel } from "../SelectedSamplesLabel";
 
 describe("<SelectedSamplesLabel />", () => {
     let props;

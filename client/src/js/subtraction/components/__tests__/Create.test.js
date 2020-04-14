@@ -52,7 +52,7 @@ describe("<CreateSubtraction />", () => {
     });
 
     it.each([
-        ["subtractionId", "Foo"],
+        ["name", "Foo"],
         ["nickname", "Bar"]
     ])("should render after %p input changes", (name, value) => {
         const wrapper = shallow(<CreateSubtraction {...props} />);

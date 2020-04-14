@@ -1,19 +1,35 @@
 import React from "react";
 import { connect } from "react-redux";
 import { DialogBody, DialogFooter, Input, InputGroup, InputLabel, ModalDialog, SaveButton } from "../../base";
-import { updateSubtraction } from "../actions";
+import { editSubtraction } from "../actions";
 
 export class EditSubtraction extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            error: "",
+            name: props.name,
             nickname: props.nickname
         };
     }
 
+    handleChange = e => {
+        const { name, value } = e.target;
+        this.setState({
+            [name]: value
+        });
+    };
+
     handleSubmit = e => {
         e.preventDefault();
-        this.props.onUpdate(this.props.id, this.state.nickname);
+
+        if (this.state.name === "") {
+            return setState({
+                error: "A name must be provided"
+            });
+        }
+
+        this.props.onUpdate(this.props.id, this.state.name, this.state.nickname);
         this.props.onHide();
     };
 
@@ -28,11 +44,12 @@ export class EditSubtraction extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <DialogBody>
                         <InputGroup>
+                            <InputLabel>Name</InputLabel>
+                            <Input name="name" value={this.state.name} onChange={this.handleChange} />
+                        </InputGroup>
+                        <InputGroup>
                             <InputLabel>Nickname</InputLabel>
-                            <Input
-                                value={this.state.nickname}
-                                onChange={e => this.setState({ nickname: e.target.value })}
-                            />
+                            <Input name="nickname" value={this.state.nickname} onChange={this.handleChange} />
                         </InputGroup>
                     </DialogBody>
 
@@ -46,13 +63,13 @@ export class EditSubtraction extends React.Component {
 }
 
 export const mapStateToProps = state => {
-    const { id, nickname } = state.subtraction.detail;
-    return { id, nickname };
+    const { id, name, nickname } = state.subtraction.detail;
+    return { id, name, nickname };
 };
 
 export const mapDispatchToProps = dispatch => ({
-    onUpdate: (id, nickname) => {
-        dispatch(updateSubtraction(id, nickname));
+    onUpdate: (id, name, nickname) => {
+        dispatch(editSubtraction(id, name, nickname));
     }
 });
 

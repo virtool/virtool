@@ -4,7 +4,7 @@ import {
     WS_REMOVE_SUBTRACTION,
     FIND_SUBTRACTIONS,
     GET_SUBTRACTION,
-    UPDATE_SUBTRACTION
+    EDIT_SUBTRACTION
 } from "../../app/actionTypes";
 import reducer, { initialState } from "../reducer";
 
@@ -144,7 +144,7 @@ describe("Subtraction Reducer", () => {
 
     it("should handle UPDATE_SUBTRACTION_SUCCEEDED", () => {
         const action = {
-            type: UPDATE_SUBTRACTION.SUCCEEDED,
+            type: EDIT_SUBTRACTION.SUCCEEDED,
             data: { foo: "bar" }
         };
         const result = reducer({}, action);

@@ -1,5 +1,3 @@
 import { get } from "lodash-es";
 
-export const getSubtractionIds = state => get(state, "subtraction.ids");
-
-export const getFirstSubtractionId = state => get(state, ["subtraction", "ids", 0]);
+export const getSubtractionShortlist = state => get(state, "subtraction.shortlist");

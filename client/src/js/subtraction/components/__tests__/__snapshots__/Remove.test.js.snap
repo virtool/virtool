@@ -3,7 +3,7 @@
 exports[`<RemoveSubtraction /> should render when [show=false] 1`] = `
 <RemoveModal
   id="foo"
-  name="foo"
+  name="Foo"
   noun="Subtraction"
   onConfirm={[Function]}
   onHide={[MockFunction]}
@@ -14,7 +14,7 @@ exports[`<RemoveSubtraction /> should render when [show=false] 1`] = `
 exports[`<RemoveSubtraction /> should render when [show=true] 1`] = `
 <RemoveModal
   id="foo"
-  name="foo"
+  name="Foo"
   noun="Subtraction"
   onConfirm={[Function]}
   onHide={[MockFunction]}
