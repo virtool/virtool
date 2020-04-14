@@ -1,6 +1,8 @@
 import virtool.http.routes
 from virtool.api.response import json_response
 
+API_URL_ROOT = "https://www.virtool.ca/docs/developer/api"
+
 routes = virtool.http.routes.Routes()
 
 
@@ -14,63 +16,63 @@ async def get(req):
         "endpoints": {
             "account": {
                 "url": "/api/account",
-                "doc": "https://www.virtool.ca/docs/api/account.html"
+                "doc": f"{API_URL_ROOT}_account.html"
             },
             "analyses": {
-                "url": "/api/account",
-                "doc": "https://www.virtool.ca/docs/api/analyses.html"
+                "url": "/api/analyses",
+                "doc": f"{API_URL_ROOT}_analyses.html"
             },
             "genbank": {
-                "url": "/api/jobs",
-                "doc": "https://www.virtool.ca/docs/api/genbank.html"
+                "url": "/api/genbank",
+                "doc": f"{API_URL_ROOT}_genbank.html"
             },
             "groups": {
-                "url": "/api/jobs",
-                "doc": "https://www.virtool.ca/docs/api/groups.html"
-            },
-            "hmm": {
-                "url": "/api/jobs",
-                "doc": "https://www.virtool.ca/docs/api/hmm.html"
+                "url": "/api/groups",
+                "doc": f"{API_URL_ROOT}_groups.html"
             },
             "history": {
-                "url": "/api/jobs",
-                "doc": "https://www.virtool.ca/docs/api/history.html"
+                "url": "/api/history",
+                "doc": f"{API_URL_ROOT}_history.html"
+            },
+            "hmm": {
+                "url": "/api/hmm",
+                "doc": f"{API_URL_ROOT}_hmm.html"
             },
             "indexes": {
-                "url": "/api/jobs",
-                "doc": "https://www.virtool.ca/docs/api/indexes.html"
+                "url": "/api/indexes",
+                "doc": f"{API_URL_ROOT}_indexes.html"
             },
             "jobs": {
                 "url": "/api/jobs",
-                "doc": "https://www.virtool.ca/docs/api/jobs.html"
+                "doc": f"{API_URL_ROOT}_jobs.html"
             },
             "otus": {
                 "url": "/api/otus",
-                "doc": "https://www.virtool.ca/docs/api/otus.html"
+                "doc": f"{API_URL_ROOT}_otus.html"
             },
             "processes": {
-                "url": "/api/otus",
-                "doc": "https://www.virtool.ca/docs/api/processes.html"
+                "url": "/api/processes",
+                "doc": f"{API_URL_ROOT}_processes.html"
             },
             "references": {
                 "url": "/api/references",
-                "doc": "https://www.virtool.ca/docs/api/references.html"
+                "doc": f"{API_URL_ROOT}_references.html"
             },
             "samples": {
                 "url": "/api/samples",
-                "doc": "https://www.virtool.ca/docs/api/samples.html"
+                "doc": f"{API_URL_ROOT}_samples.html"
             },
             "settings": {
-                "url": "/api/samples",
-                "doc": "https://www.virtool.ca/docs/api/settings.html"
+                "url": "/api/settings",
+                "doc": f"{API_URL_ROOT}_settings.html"
             },
             "subtraction": {
-                "url": "/api/samples",
-                "doc": "https://www.virtool.ca/docs/api/subtraction.html"
+                "url": "/api/subtraction",
+                "doc": f"{API_URL_ROOT}_subtraction.html"
             },
             "users": {
-                "url": "/api/samples",
-                "doc": "https://www.virtool.ca/docs/api/users.html"
+                "url": "/api/users",
+                "doc": f"{API_URL_ROOT}_users.html"
             }
         },
         "version": req.app["version"]
