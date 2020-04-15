@@ -5,8 +5,11 @@ exports[`<ViewHeader /> should render renders children 1`] = `
   <HelmetWrapper
     defer={true}
     encodeSpecialCharacters={true}
-    title="test-child"
-  />
+  >
+    <title>
+      test-child
+    </title>
+  </HelmetWrapper>
   <div>
     Hello world
   </div>
@@ -18,8 +21,11 @@ exports[`<ViewHeader /> should render with count 1`] = `
   <HelmetWrapper
     defer={true}
     encodeSpecialCharacters={true}
-    title="Foo"
-  />
+  >
+    <title>
+      Foo
+    </title>
+  </HelmetWrapper>
 </ViewHeader__StyledViewHeader>
 `;
 
@@ -28,7 +34,10 @@ exports[`<ViewHeader /> should render with title 1`] = `
   <HelmetWrapper
     defer={true}
     encodeSpecialCharacters={true}
-    title="Foo"
-  />
+  >
+    <title>
+      Foo
+    </title>
+  </HelmetWrapper>
 </ViewHeader__StyledViewHeader>
 `;
