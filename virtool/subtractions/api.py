@@ -18,24 +18,35 @@ routes = virtool.http.routes.Routes()
 async def find(req):
     db = req.app["db"]
 
-    ids = req.query.get("ids", False)
+    ready = virtool.api.utils.get_query_bool(req, "ready")
+    short = virtool.api.utils.get_query_bool(req, "short")
 
-    if ids:
-        return json_response(await db.subtraction.distinct("_id", {"ready": True}))
-
-    term = req.query.get("find")
+    projection = ["name"] if short else virtool.subtractions.db.PROJECTION
 
     db_query = dict()
 
-    if term:
-        db_query.update(compose_regex_query(term, ["_id"]))
+    term = req.query.get("find")
 
-    data = await paginate(
+    if term:
+        db_query = virtool.api.utils.compose_regex_query(term, ["name", "nickname"])
+
+    if short:
+        documents = list()
+
+        async for document in db.subtraction.find(db_query, ["name"]):
+            documents.append(virtool.utils.base_processor(document))
+
+        return json_response(documents)
+
+    if ready:
+        db_query["ready"] = True
+
+    data = await virtool.api.utils.paginate(
         db.subtraction,
         db_query,
         req.query,
         sort="_id",
-        projection=virtool.subtractions.db.PROJECTION
+        projection=projection
     )
 
     data.update({
@@ -66,7 +77,7 @@ async def get(req):
 
 
 @routes.post("/api/subtractions", permission="modify_subtraction", schema={
-    "subtraction_id": {
+    "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
         "empty": False,
@@ -89,12 +100,7 @@ async def create(req):
     """
     db = req.app["db"]
     data = req["data"]
-
-    subtraction_id = data["subtraction_id"]
-
-    if await db.subtraction.count_documents({"_id": subtraction_id}):
-        return bad_request("Subtraction name already exists")
-
+    
     file_id = data["file_id"]
 
     file = await db.files.find_one(file_id, ["name"])
@@ -103,11 +109,13 @@ async def create(req):
         return bad_request("File does not exist")
 
     job_id = await virtool.db.utils.get_new_id(db.jobs)
+    subtraction_id = await virtool.db.utils.get_new_id(db.subtraction)
 
     user_id = req["client"].user_id
 
     document = {
-        "_id": data["subtraction_id"],
+        "_id": subtraction_id,
+        "name": data["name"],
         "nickname": data["nickname"],
         "ready": False,
         "is_host": True,
@@ -142,7 +150,7 @@ async def create(req):
     await req.app["jobs"].enqueue(job_id)
 
     headers = {
-        "Location": f"/api/account/keys/{subtraction_id}"
+        "Location": f"/api/subtraction/{subtraction_id}"
     }
 
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)

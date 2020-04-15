@@ -1,3 +1,4 @@
+import asyncio.tasks
 from copy import deepcopy
 from cerberus import Validator
 
@@ -11,6 +12,7 @@ import virtool.db.utils
 import virtool.errors
 import virtool.http.routes
 import virtool.samples.utils
+import virtool.subtractions.db
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
@@ -143,6 +145,8 @@ async def get(req):
                 "download_url": file["download_url"].replace("reads_", f"{snake_case}_"),
                 "replace_url": f"/upload/samples/{sample_id}/files/{index + 1}"
             })
+
+    await virtool.subtractions.db.attach_subtraction(db, document)
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -467,6 +471,8 @@ async def find_analyses(req):
         projection=virtool.analyses.db.PROJECTION,
         sort=[("created_at", -1)]
     )
+
+    await asyncio.tasks.gather(*[virtool.subtractions.db.attach_subtraction(db, d) for d in data["documents"]])
 
     return json_response(data)
 
