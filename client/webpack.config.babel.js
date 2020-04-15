@@ -79,13 +79,7 @@ module.exports = {
       inject: "body",
     }),
 
-    new CleanWebpackPlugin({
-      dry: false,
-      verbose: false,
-      cleanStaleWebpackAssets: true,
-      protectWebpackAssets: true,
-      dangerouslyAllowCleanPatternsOutsideProject: false,
-    }),
+    new CleanWebpackPlugin(),
   ],
 
   watch: true,
