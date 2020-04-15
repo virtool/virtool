@@ -18,44 +18,37 @@ module.exports = {
           {
             loader: "eslint-loader",
             options: {
-              configFile: path.resolve(__dirname, "./.eslintrc")
-            }
-          }
-        ]
+              configFile: path.resolve(__dirname, "./.eslintrc"),
+            },
+          },
+        ],
       },
 
       {
         test: /\.css$/,
         use: [
           {
-            loader: MiniCssExtractPlugin.loader
+            loader: MiniCssExtractPlugin.loader,
           },
-          "css-loader"
-        ]
+          "css-loader",
+        ],
       },
 
       {
         test: /\.less$/,
         use: [
           {
-            loader: MiniCssExtractPlugin.loader
+            loader: MiniCssExtractPlugin.loader,
           },
           "css-loader",
-          "less-loader"
-        ]
+          "less-loader",
+        ],
       },
-
-      {
-        test: /\.(woff|woff2)$/,
-        use: {
-          loader: "url-loader?limit=100000"
-        }
-      }
-    ]
+    ],
   },
 
   node: {
-    fs: "empty"
+    fs: "empty",
   },
 
   mode: "production",
@@ -63,29 +56,29 @@ module.exports = {
   optimization: {
     minimizer: [
       new TerserWebpackPlugin({
-        sourceMap: true
-      })
+        sourceMap: true,
+      }),
     ],
     splitChunks: {
-      chunks: "all"
-    }
+      chunks: "all",
+    },
   },
 
   output: {
     path: path.resolve(__dirname, "./dist"),
     filename: "app.[hash:8].js",
     sourceMapFilename: "[name].js.map",
-    publicPath: "/static/"
+    publicPath: "/static/",
   },
 
   plugins: [
     new webpack.DefinePlugin({
-      "process.env.NODE_ENV": JSON.stringify("production")
+      "process.env.NODE_ENV": JSON.stringify("production"),
     }),
 
     new MiniCssExtractPlugin({
       filename: "[name].[hash].css",
-      chunkFilename: "[id].[hash].css"
+      chunkFilename: "[id].[hash].css",
     }),
 
     new HTMLPlugin({
@@ -93,7 +86,7 @@ module.exports = {
       title: "Virtool",
       favicon: "./src/images/favicon.ico",
       template: "./src/index.html",
-      inject: "body"
+      inject: "body",
     }),
 
     new CleanWebpackPlugin({
@@ -101,7 +94,7 @@ module.exports = {
       verbose: false,
       cleanStaleWebpackAssets: true,
       protectWebpackAssets: true,
-      dangerouslyAllowCleanPatternsOutsideProject: false
-    })
-  ]
+      dangerouslyAllowCleanPatternsOutsideProject: false,
+    }),
+  ],
 };

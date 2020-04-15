@@ -43,7 +43,10 @@ export const Main = ({ ready, onLoad }) => {
     if (ready) {
         return (
             <div>
-                <Helmet titleTemplate="%s - Virtool" defaultTitle="Virtool" />
+                <Helmet>
+                    <title>Virtool</title>
+                    <meta charSet="utf-8" />
+                </Helmet>
 
                 <NavBar />
 

@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import React from "react";
-import Helmet from "react-helmet";
+import { Helmet } from "react-helmet";
 import styled from "styled-components";
 import { Attribution, Badge } from "./index";
 
@@ -43,7 +43,9 @@ const StyledViewHeader = styled.div`
 
 export const ViewHeader = ({ className, title, children }) => (
     <StyledViewHeader className={className}>
-        <Helmet title={title} />
+        <Helmet>
+            <title>{title}</title>
+        </Helmet>
         {children}
     </StyledViewHeader>
 );
