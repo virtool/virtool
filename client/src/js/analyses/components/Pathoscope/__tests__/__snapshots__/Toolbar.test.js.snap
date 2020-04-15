@@ -22,29 +22,11 @@ exports[`<Toolbar /> should render 1`] = `
     onChange={[Function]}
     onKeyDown={[Function]}
   />
-  <Toolbar__PathoscopeToolbarSelect
-    onChange={[Function]}
-    value="coverage"
-  >
-    <option
-      className="text-primary"
-      value="coverage"
-    >
-      Sort: Coverage
-    </option>
-    <option
-      className="text-success"
-      value="pi"
-    >
-      Sort: Weight
-    </option>
-    <option
-      className="text-danger"
-      value="depth"
-    >
-      Sort: Depth
-    </option>
-  </Toolbar__PathoscopeToolbarSelect>
+  <AnalysisViewerSort
+    algorithm="pathoscope"
+    onSelect={[MockFunction]}
+    sortKey="coverage"
+  />
   <Button
     color="grey"
     disabled={false}
@@ -130,29 +112,11 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
     onChange={[Function]}
     onKeyDown={[Function]}
   />
-  <Toolbar__PathoscopeToolbarSelect
-    onChange={[Function]}
-    value="coverage"
-  >
-    <option
-      className="text-primary"
-      value="coverage"
-    >
-      Sort: Coverage
-    </option>
-    <option
-      className="text-success"
-      value="pi"
-    >
-      Sort: Weight
-    </option>
-    <option
-      className="text-danger"
-      value="depth"
-    >
-      Sort: Depth
-    </option>
-  </Toolbar__PathoscopeToolbarSelect>
+  <AnalysisViewerSort
+    algorithm="pathoscope"
+    onSelect={[MockFunction]}
+    sortKey="coverage"
+  />
   <Button
     color="grey"
     disabled={false}
@@ -238,29 +202,11 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
     onChange={[Function]}
     onKeyDown={[Function]}
   />
-  <Toolbar__PathoscopeToolbarSelect
-    onChange={[Function]}
-    value="coverage"
-  >
-    <option
-      className="text-primary"
-      value="coverage"
-    >
-      Sort: Coverage
-    </option>
-    <option
-      className="text-success"
-      value="pi"
-    >
-      Sort: Weight
-    </option>
-    <option
-      className="text-danger"
-      value="depth"
-    >
-      Sort: Depth
-    </option>
-  </Toolbar__PathoscopeToolbarSelect>
+  <AnalysisViewerSort
+    algorithm="pathoscope"
+    onSelect={[MockFunction]}
+    sortKey="coverage"
+  />
   <Button
     color="grey"
     disabled={false}
@@ -346,29 +292,11 @@ exports[`<Toolbar /> should render when [showPathoscopeReads=true] 1`] = `
     onChange={[Function]}
     onKeyDown={[Function]}
   />
-  <Toolbar__PathoscopeToolbarSelect
-    onChange={[Function]}
-    value="coverage"
-  >
-    <option
-      className="text-primary"
-      value="coverage"
-    >
-      Sort: Coverage
-    </option>
-    <option
-      className="text-success"
-      value="pi"
-    >
-      Sort: Weight
-    </option>
-    <option
-      className="text-danger"
-      value="depth"
-    >
-      Sort: Depth
-    </option>
-  </Toolbar__PathoscopeToolbarSelect>
+  <AnalysisViewerSort
+    algorithm="pathoscope"
+    onSelect={[MockFunction]}
+    sortKey="coverage"
+  />
   <Button
     color="grey"
     disabled={false}
@@ -454,29 +382,11 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
     onChange={[Function]}
     onKeyDown={[Function]}
   />
-  <Toolbar__PathoscopeToolbarSelect
-    onChange={[Function]}
-    value="coverage"
-  >
-    <option
-      className="text-primary"
-      value="coverage"
-    >
-      Sort: Coverage
-    </option>
-    <option
-      className="text-success"
-      value="pi"
-    >
-      Sort: Weight
-    </option>
-    <option
-      className="text-danger"
-      value="depth"
-    >
-      Sort: Depth
-    </option>
-  </Toolbar__PathoscopeToolbarSelect>
+  <AnalysisViewerSort
+    algorithm="pathoscope"
+    onSelect={[MockFunction]}
+    sortKey="coverage"
+  />
   <Button
     color="grey"
     disabled={false}
@@ -562,29 +472,11 @@ exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
     onChange={[Function]}
     onKeyDown={[Function]}
   />
-  <Toolbar__PathoscopeToolbarSelect
-    onChange={[Function]}
-    value="depth"
-  >
-    <option
-      className="text-primary"
-      value="coverage"
-    >
-      Sort: Coverage
-    </option>
-    <option
-      className="text-success"
-      value="pi"
-    >
-      Sort: Weight
-    </option>
-    <option
-      className="text-danger"
-      value="depth"
-    >
-      Sort: Depth
-    </option>
-  </Toolbar__PathoscopeToolbarSelect>
+  <AnalysisViewerSort
+    algorithm="pathoscope"
+    onSelect={[MockFunction]}
+    sortKey="depth"
+  />
   <Button
     color="grey"
     disabled={false}
@@ -670,29 +562,11 @@ exports[`<Toolbar /> should render when [sortKey="weight"] 1`] = `
     onChange={[Function]}
     onKeyDown={[Function]}
   />
-  <Toolbar__PathoscopeToolbarSelect
-    onChange={[Function]}
-    value="weight"
-  >
-    <option
-      className="text-primary"
-      value="coverage"
-    >
-      Sort: Coverage
-    </option>
-    <option
-      className="text-success"
-      value="pi"
-    >
-      Sort: Weight
-    </option>
-    <option
-      className="text-danger"
-      value="depth"
-    >
-      Sort: Depth
-    </option>
-  </Toolbar__PathoscopeToolbarSelect>
+  <AnalysisViewerSort
+    algorithm="pathoscope"
+    onSelect={[MockFunction]}
+    sortKey="weight"
+  />
   <Button
     color="grey"
     disabled={false}

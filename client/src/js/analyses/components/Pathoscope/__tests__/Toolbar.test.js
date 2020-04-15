@@ -6,13 +6,8 @@ import {
 } from "../../../../app/actionTypes";
 import { Button } from "../../../../base";
 import { getFuse } from "../../../selectors";
-import {
-    mapDispatchToProps,
-    mapStateToProps,
-    PathoscopeDownloadDropdownTitle,
-    PathoscopeToolbar,
-    PathoscopeToolbarSelect
-} from "../Toolbar";
+import { mapDispatchToProps, mapStateToProps, PathoscopeDownloadDropdownTitle, PathoscopeToolbar } from "../Toolbar";
+import { AnalysisViewerSort } from "../../Viewer/Sort";
 
 jest.mock("../../../selectors");
 
@@ -106,8 +101,8 @@ describe("<Toolbar />", () => {
             }
         };
         expect(props.onSetSortKey).not.toHaveBeenCalled();
-        wrapper.find(PathoscopeToolbarSelect).simulate("change", e);
-        expect(props.onSetSortKey).toHaveBeenCalledWith("pi");
+        wrapper.find(AnalysisViewerSort).simulate("select");
+        expect(props.onSetSortKey).toHaveBeenCalled();
     });
 
     it("should call onToggleShowPathoscopeReads() when filter isolates button clicked", () => {
