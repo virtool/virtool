@@ -16,58 +16,51 @@ module.exports = {
           {
             loader: "eslint-loader",
             options: {
-              configFile: path.resolve(__dirname, "./.eslintrc")
-            }
-          }
-        ]
+              configFile: path.resolve(__dirname, "./.eslintrc"),
+            },
+          },
+        ],
       },
 
       {
         test: /\.css$/,
         use: [
           {
-            loader: MiniCssExtractPlugin.loader
+            loader: MiniCssExtractPlugin.loader,
           },
-          "css-loader"
-        ]
+          "css-loader",
+        ],
       },
 
       {
         test: /\.less$/,
         use: [
           {
-            loader: MiniCssExtractPlugin.loader
+            loader: MiniCssExtractPlugin.loader,
           },
           "css-loader",
-          "less-loader"
-        ]
+          "less-loader",
+        ],
       },
-
-      {
-        test: /\.(woff|woff2)$/,
-        use: {
-          loader: "url-loader?limit=100000"
-        }
-      }
-    ]
+    ],
   },
 
   devtool: "source-map",
 
   node: {
-    fs: "empty"
+    fs: "empty",
   },
 
   optimization: {
     splitChunks: {
-      chunks: "all"
-    }
+      chunks: "all",
+    },
   },
 
   output: {
     path: path.resolve(__dirname, "./dist"),
     filename: "app.[hash:8].js",
-    publicPath: "/static/"
+    publicPath: "/static/",
   },
 
   mode: "development",
@@ -75,7 +68,7 @@ module.exports = {
   plugins: [
     new MiniCssExtractPlugin({
       filename: "[name].[hash].css",
-      chunkFilename: "[id].[hash].css"
+      chunkFilename: "[id].[hash].css",
     }),
 
     new HTMLPlugin({
@@ -83,7 +76,7 @@ module.exports = {
       title: "Virtool",
       favicon: "./src/images/favicon.ico",
       template: "./src/index.html",
-      inject: "body"
+      inject: "body",
     }),
 
     new CleanWebpackPlugin({
@@ -91,9 +84,9 @@ module.exports = {
       verbose: false,
       cleanStaleWebpackAssets: true,
       protectWebpackAssets: true,
-      dangerouslyAllowCleanPatternsOutsideProject: false
-    })
+      dangerouslyAllowCleanPatternsOutsideProject: false,
+    }),
   ],
 
-  watch: true
+  watch: true,
 };
