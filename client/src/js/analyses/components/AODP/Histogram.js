@@ -6,6 +6,7 @@ import { fill, flatMap } from "lodash-es";
 import React, { useEffect } from "react";
 import styled from "styled-components";
 import { useElementSize } from "../../../utils/hooks";
+import { format } from "d3-format";
 
 const draw = (element, data, width) => {
     const flattened = flatMap(data, ([x, y]) => fill(new Array(y), x));
@@ -61,7 +62,9 @@ const draw = (element, data, width) => {
         .attr("dy", "0.15em")
         .attr("transform", "rotate(-65)");
 
-    svg.append("g").attr("class", "y axis").call(axisLeft(y));
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(axisLeft(y).ticks(4).tickFormat(format(".0s")));
 };
 
 const StyledHistogram = styled.div`
