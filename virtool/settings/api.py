@@ -3,7 +3,7 @@ import virtool.http.routes
 import virtool.resources
 import virtool.settings.schema
 import virtool.utils
-from virtool.api import json_response
+from virtool.api.response import json_response
 
 routes = virtool.http.routes.Routes()
 

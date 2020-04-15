@@ -4,6 +4,7 @@ import os
 import aiohttp
 import aiojobs.aiohttp
 
+import virtool.api.utils
 import virtool.history.db
 import virtool.indexes.db
 import virtool.otus.db
@@ -18,8 +19,7 @@ import virtool.otus.utils
 import virtool.references.utils
 import virtool.utils
 import virtool.validators
-from virtool.api import bad_gateway, bad_request, compose_regex_query, insufficient_rights, json_response, \
-    no_content, not_found, paginate
+from virtool.api.response import bad_gateway, bad_request, insufficient_rights, json_response, no_content, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -48,7 +48,7 @@ async def find(req):
     db_query = dict()
 
     if term:
-        db_query = compose_regex_query(term, ["name", "data_type"])
+        db_query = virtool.api.utils.compose_regex_query(term, ["name", "data_type"])
 
     base_query = virtool.references.db.compose_base_find_query(
         req["client"].user_id,
@@ -56,7 +56,7 @@ async def find(req):
         req["client"].groups
     )
 
-    data = await paginate(
+    data = await virtool.api.utils.paginate(
         db.references,
         db_query,
         req.query,

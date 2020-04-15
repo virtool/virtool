@@ -18,8 +18,8 @@ import {
     Select
 } from "../../../base";
 import { clearError } from "../../../errors/actions";
-import { listSubtractionIds } from "../../../subtraction/actions";
-import { getFirstSubtractionId, getSubtractionIds } from "../../../subtraction/selectors";
+import { shortlistSubtractions } from "../../../subtraction/actions";
+import { getSubtractionShortlist } from "../../../subtraction/selectors";
 import { getTargetChange, routerLocationHasState } from "../../../utils/utils";
 import { createSample, findReadFiles } from "../../actions";
 import { LibraryTypeSelection } from "./LibraryTypeSelection";
@@ -43,7 +43,7 @@ const getInitialState = props => ({
     host: "",
     isolate: "",
     locale: "",
-    subtraction: "",
+    subtractionId: "",
     group: props.forceGroupChoice ? "none" : "",
     errorName: "",
     errorSubtraction: "",
@@ -79,7 +79,7 @@ export class CreateSample extends React.Component {
     handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
 
-        if (name === "name" || name === "subtraction") {
+        if (name === "name" || name === "subtractionId") {
             this.setState({
                 [name]: value,
                 [error]: ""
@@ -120,14 +120,14 @@ export class CreateSample extends React.Component {
         }
 
         if (!hasError) {
-            const { name, isolate, host, locale, libraryType, subtraction } = this.state;
+            const { name, isolate, host, locale, libraryType, subtractionId } = this.state;
             this.props.onCreate(
                 name,
                 isolate,
                 host,
                 locale,
                 libraryType,
-                subtraction || this.props.defaultSubtraction,
+                subtractionId || get(this.props.subtractions, [0, "id"]),
                 this.state.selected
             );
         }
@@ -162,9 +162,9 @@ export class CreateSample extends React.Component {
             );
         }
 
-        const subtractionComponents = map(this.props.subtractions, subtractionId => (
-            <option key={subtractionId} value={subtractionId}>
-                {subtractionId}
+        const subtractionComponents = map(this.props.subtractions, subtraction => (
+            <option key={subtraction.id} value={subtraction.id}>
+                {subtraction.name}
             </option>
         ));
 
@@ -179,6 +179,8 @@ export class CreateSample extends React.Component {
         const pairedness = this.state.selected.length === 2 ? "Paired" : "Unpaired";
 
         const { errorName, errorSubtraction, errorFile } = this.state;
+
+        const subtractionId = this.state.subtractionId || get(this.props.subtractions, [0, "id"]);
 
         return (
             <ModalDialog
@@ -221,11 +223,7 @@ export class CreateSample extends React.Component {
                             </InputGroup>
                             <InputGroup>
                                 <InputLabel>Default Subtraction</InputLabel>
-                                <Select
-                                    name="subtraction"
-                                    value={this.state.subtraction || this.props.defaultSubtraction}
-                                    onChange={this.handleChange}
-                                >
+                                <Select name="subtractionId" value={subtractionId} onChange={this.handleChange}>
                                     {subtractionComponents}
                                 </Select>
                                 <InputError>{errorSubtraction}</InputError>
@@ -267,23 +265,22 @@ export class CreateSample extends React.Component {
 }
 
 export const mapStateToProps = state => ({
-    defaultSubtraction: getFirstSubtractionId(state),
     error: get(state, "errors.CREATE_SAMPLE_ERROR.message", ""),
     forceGroupChoice: state.settings.sample_group === "force_choice",
     groups: state.account.groups,
     readyReads: filter(state.samples.readFiles, { reserved: false }),
     show: routerLocationHasState(state, "createSample"),
-    subtractions: getSubtractionIds(state)
+    subtractions: getSubtractionShortlist(state)
 });
 
 export const mapDispatchToProps = dispatch => ({
     onLoadSubtractionsAndFiles: () => {
-        dispatch(listSubtractionIds());
+        dispatch(shortlistSubtractions());
         dispatch(findReadFiles());
     },
 
-    onCreate: (name, isolate, host, locale, libraryType, subtraction, files) => {
-        dispatch(createSample(name, isolate, host, locale, libraryType, subtraction, files));
+    onCreate: (name, isolate, host, locale, libraryType, subtractionId, files) => {
+        dispatch(createSample(name, isolate, host, locale, libraryType, subtractionId, files));
     },
 
     onHide: () => {

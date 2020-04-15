@@ -1,5 +1,241 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`<CreateSample> should display error when form submitted with no name 1`] = `
+<ModalDialog
+  headerText="Create Sample"
+  label="sample"
+  onExited={[Function]}
+  onHide={[Function]}
+  show={true}
+  size="lg"
+>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__DialogBody>
+      <Create__CreateSampleFields>
+        <InputGroup>
+          <Input__InputLabel>
+            Sample Name
+          </Input__InputLabel>
+          <Input__InputContainer
+            align="right"
+          >
+            <Input
+              autocomplete={false}
+              error="Required Field"
+              name="name"
+              onChange={[Function]}
+              value=""
+            />
+            <Input__InputIcon
+              disabled={false}
+              name="magic"
+              onClick={[Function]}
+            />
+          </Input__InputContainer>
+          <Input__InputError>
+            Required Field
+          </Input__InputError>
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Locale
+          </Input__InputLabel>
+          <Input
+            name="locale"
+            onChange={[Function]}
+            value="Timbuktu"
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Isolate
+          </Input__InputLabel>
+          <Input
+            name="isolate"
+            onChange={[Function]}
+            value="Isolate"
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Default Subtraction
+          </Input__InputLabel>
+          <Select
+            name="subtractionId"
+            onChange={[Function]}
+            value="sub_bar"
+          >
+            <option
+              key="sub_foo"
+              value="sub_foo"
+            >
+              Sub Foo
+            </option>
+            <option
+              key="sub_bar"
+              value="sub_bar"
+            >
+              Sub Bar
+            </option>
+          </Select>
+          <Input__InputError />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Host
+          </Input__InputLabel>
+          <Input
+            name="host"
+            onChange={[Function]}
+            value="Host"
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Pairedness
+          </Input__InputLabel>
+          <Input
+            readOnly={true}
+            value="Paired"
+          />
+        </InputGroup>
+      </Create__CreateSampleFields>
+      <LibraryTypeSelection
+        libraryType="normal"
+        onSelect={[Function]}
+      />
+      <ReadSelector
+        error=""
+        files={Array []}
+        onSelect={[Function]}
+        selected={
+          Array [
+            "abc123-Foo.fq.gz",
+            "789xyz-Bar.fq.gz",
+          ]
+        }
+      />
+    </Modal__DialogBody>
+    <Modal__DialogFooter>
+      <SaveButton />
+    </Modal__DialogFooter>
+  </form>
+</ModalDialog>
+`;
+
+exports[`<CreateSample> should display error when form submitted with no subtractions available 1`] = `
+<ModalDialog
+  headerText="Create Sample"
+  label="sample"
+  onExited={[Function]}
+  onHide={[Function]}
+  show={true}
+  size="lg"
+>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__DialogBody>
+      <Create__CreateSampleFields>
+        <InputGroup>
+          <Input__InputLabel>
+            Sample Name
+          </Input__InputLabel>
+          <Input__InputContainer
+            align="right"
+          >
+            <Input
+              autocomplete={false}
+              error=""
+              name="name"
+              onChange={[Function]}
+              value="Sample 1"
+            />
+            <Input__InputIcon
+              disabled={false}
+              name="magic"
+              onClick={[Function]}
+            />
+          </Input__InputContainer>
+          <Input__InputError />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Locale
+          </Input__InputLabel>
+          <Input
+            name="locale"
+            onChange={[Function]}
+            value="Timbuktu"
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Isolate
+          </Input__InputLabel>
+          <Input
+            name="isolate"
+            onChange={[Function]}
+            value="Isolate"
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Default Subtraction
+          </Input__InputLabel>
+          <Select
+            name="subtractionId"
+            onChange={[Function]}
+            value="sub_bar"
+          />
+          <Input__InputError>
+            At least one subtraction must be added to Virtool before samples can be analyzed.
+          </Input__InputError>
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Host
+          </Input__InputLabel>
+          <Input
+            name="host"
+            onChange={[Function]}
+            value="Host"
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Pairedness
+          </Input__InputLabel>
+          <Input
+            readOnly={true}
+            value="Unpaired"
+          />
+        </InputGroup>
+      </Create__CreateSampleFields>
+      <LibraryTypeSelection
+        libraryType="normal"
+        onSelect={[Function]}
+      />
+      <ReadSelector
+        error=""
+        files={Array []}
+        onSelect={[Function]}
+        selected={
+          Array [
+            "foo",
+          ]
+        }
+      />
+    </Modal__DialogBody>
+    <Modal__DialogFooter>
+      <SaveButton />
+    </Modal__DialogFooter>
+  </form>
+</ModalDialog>
+`;
+
 exports[`<CreateSample> should render 1`] = `
 <ModalDialog
   headerText="Create Sample"
@@ -61,20 +297,21 @@ exports[`<CreateSample> should render 1`] = `
             Default Subtraction
           </Input__InputLabel>
           <Select
-            name="subtraction"
+            name="subtractionId"
             onChange={[Function]}
+            value="sub_foo"
           >
             <option
               key="sub_foo"
               value="sub_foo"
             >
-              sub_foo
+              Sub Foo
             </option>
             <option
               key="sub_bar"
               value="sub_bar"
             >
-              sub_bar
+              Sub Bar
             </option>
           </Select>
           <Input__InputError />

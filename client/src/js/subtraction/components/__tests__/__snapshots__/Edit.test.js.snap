@@ -13,9 +13,106 @@ exports[`<EditSubtraction /> should render 1`] = `
     <Modal__DialogBody>
       <InputGroup>
         <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value="Prunus persica"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
           Nickname
         </Input__InputLabel>
         <Input
+          name="nickname"
+          onChange={[Function]}
+          value="Peach"
+        />
+      </InputGroup>
+    </Modal__DialogBody>
+    <Modal__DialogFooter
+      className="modal-footer"
+    >
+      <SaveButton
+        pullRight={true}
+      />
+    </Modal__DialogFooter>
+  </form>
+</ModalDialog>
+`;
+
+exports[`<EditSubtraction /> should render after name is changed 1`] = `
+<ModalDialog
+  headerText="Edit Subtraction"
+  label="SubtractionEdit"
+  onHide={[MockFunction]}
+  show={true}
+>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__DialogBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value="Prunus persica"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          name="nickname"
+          onChange={[Function]}
+          value="Peach"
+        />
+      </InputGroup>
+    </Modal__DialogBody>
+    <Modal__DialogFooter
+      className="modal-footer"
+    >
+      <SaveButton
+        pullRight={true}
+      />
+    </Modal__DialogFooter>
+  </form>
+</ModalDialog>
+`;
+
+exports[`<EditSubtraction /> should render after name is changed 2`] = `
+<ModalDialog
+  headerText="Edit Subtraction"
+  label="SubtractionEdit"
+  onHide={[MockFunction]}
+  show={true}
+>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__DialogBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value="Foo"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          name="nickname"
           onChange={[Function]}
           value="Peach"
         />
@@ -45,9 +142,20 @@ exports[`<EditSubtraction /> should render after nickname is changed 1`] = `
     <Modal__DialogBody>
       <InputGroup>
         <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value="Prunus persica"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
           Nickname
         </Input__InputLabel>
         <Input
+          name="nickname"
           onChange={[Function]}
           value="Peach"
         />
@@ -77,9 +185,20 @@ exports[`<EditSubtraction /> should render after nickname is changed 2`] = `
     <Modal__DialogBody>
       <InputGroup>
         <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value="Prunus persica"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
           Nickname
         </Input__InputLabel>
         <Input
+          name="nickname"
           onChange={[Function]}
           value="Foo"
         />
@@ -109,9 +228,20 @@ exports[`<EditSubtraction /> should render when [show=false] 1`] = `
     <Modal__DialogBody>
       <InputGroup>
         <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value="Prunus persica"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
           Nickname
         </Input__InputLabel>
         <Input
+          name="nickname"
           onChange={[Function]}
           value="Peach"
         />

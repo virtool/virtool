@@ -4,7 +4,7 @@ from aiohttp.test_utils import make_mocked_coro
 
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("error", [None, "400", "403", "404"])
-async def test_get(ready, error, mocker, spawn_client, resp_is):
+async def test_get(ready, error, mocker, snapshot, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
     document = {
@@ -16,9 +16,14 @@ async def test_get(ready, error, mocker, spawn_client, resp_is):
             "id": "baz"
         },
         "subtraction": {
-            "id": "Plum"
+            "id": "plum"
         }
     }
+
+    await client.db.subtraction.insert_one({
+        "_id": "plum",
+        "name": "Plum"
+    })
 
     if error != "400":
         await client.db.samples.insert_one({
@@ -69,10 +74,10 @@ async def test_get(ready, error, mocker, spawn_client, resp_is):
             "formatted": True
         }
 
-        m_format_analysis.assert_called_with(
-            client.app,
-            document
-        )
+        args = m_format_analysis.call_args[0]
+
+        assert args[0] == client.app
+        snapshot.assert_match(args[1], "format_analysis")
 
     else:
         assert resp.status == 200
@@ -86,7 +91,8 @@ async def test_get(ready, error, mocker, spawn_client, resp_is):
                 "id": "baz"
             },
             "subtraction": {
-                "id": "Plum"
+                "id": "plum",
+                "name": "Plum"
             }
         }
 

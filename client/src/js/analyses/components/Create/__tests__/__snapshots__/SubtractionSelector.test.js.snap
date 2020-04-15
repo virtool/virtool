@@ -14,13 +14,13 @@ exports[`<SubtractionSelector /> should render 1`] = `
       key="foo"
       value="foo"
     >
-      foo
+      Foo
     </option>
     <option
       key="bar"
       value="bar"
     >
-      bar
+      Bar
     </option>
   </Select>
 </InputGroup>

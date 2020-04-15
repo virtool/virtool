@@ -2,18 +2,18 @@ import Request from "superagent";
 
 export const find = ({ term, page }) => Request.get("/api/subtractions").query({ find: term, page });
 
-export const listIds = () => Request.get("/api/subtractions?ids=true");
+export const shortlist = () => Request.get("/api/subtractions?short=true");
 
 export const get = ({ subtractionId }) => Request.get(`/api/subtractions/${subtractionId}`);
 
-export const create = ({ subtractionId, fileId, nickname }) =>
+export const create = ({ fileId, name, nickname }) =>
     Request.post("/api/subtractions").send({
-        subtraction_id: subtractionId,
         file_id: fileId,
+        name,
         nickname
     });
 
-export const update = ({ subtractionId, nickname }) =>
-    Request.patch(`/api/subtractions/${subtractionId}`).send({ nickname });
+export const edit = ({ subtractionId, name, nickname }) =>
+    Request.patch(`/api/subtractions/${subtractionId}`).send({ name, nickname });
 
 export const remove = ({ subtractionId }) => Request.delete(`/api/subtractions/${subtractionId}`);

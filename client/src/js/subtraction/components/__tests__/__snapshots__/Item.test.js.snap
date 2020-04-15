@@ -2,11 +2,11 @@
 
 exports[`<SubtractionItem /> should render when [ready=false] 1`] = `
 <Box__LinkBox
-  key="Foo Bar"
-  to="/subtraction/Foo Bar"
+  key="foo"
+  to="/subtraction/foo"
 >
   <strong>
-    Foo Bar
+    Foo
   </strong>
   <Flex
     alignContent="stretch"
@@ -36,11 +36,11 @@ exports[`<SubtractionItem /> should render when [ready=false] 1`] = `
 
 exports[`<SubtractionItem /> should render when [ready=true] 1`] = `
 <Box__LinkBox
-  key="Foo Bar"
-  to="/subtraction/Foo Bar"
+  key="foo"
+  to="/subtraction/foo"
 >
   <strong>
-    Foo Bar
+    Foo
   </strong>
   <Flex
     alignContent="stretch"

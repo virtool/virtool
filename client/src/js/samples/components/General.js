@@ -29,7 +29,7 @@ export const SampleDetailGeneral = ({
     locale,
     name,
     paired,
-    subtractionId,
+    subtraction,
     libraryType
 }) => (
     <StyledSampleDetailGeneral>
@@ -106,7 +106,7 @@ export const SampleDetailGeneral = ({
                     <tr>
                         <th>Subtraction</th>
                         <td>
-                            <Link to={`/subtraction/${subtractionId}`}>{subtractionId}</Link>
+                            <Link to={`/subtraction/${subtraction.id}`}>{subtraction.name}</Link>
                         </td>
                     </tr>
                 </tbody>
@@ -132,7 +132,7 @@ export const mapStateToProps = state => {
         gc: numbro(gc / 100).format("0.0 %"),
         libraryType: libraryTypes[library_type],
         lengthRange: length.join(" - "),
-        subtractionId: subtraction.id
+        subtraction
     };
 };
 

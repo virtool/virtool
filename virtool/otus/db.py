@@ -6,7 +6,7 @@ import virtool.errors
 import virtool.history.utils
 import virtool.otus.utils
 import virtool.utils
-from virtool.api import compose_regex_query, paginate
+from virtool.api.utils import compose_regex_query, paginate
 
 PROJECTION = [
     "_id",

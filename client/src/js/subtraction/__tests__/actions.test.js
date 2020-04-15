@@ -3,7 +3,7 @@ import {
     WS_UPDATE_SUBTRACTION,
     WS_REMOVE_SUBTRACTION,
     GET_SUBTRACTION,
-    UPDATE_SUBTRACTION,
+    EDIT_SUBTRACTION,
     CREATE_SUBTRACTION,
     REMOVE_SUBTRACTION,
     FIND_SUBTRACTIONS
@@ -14,7 +14,7 @@ import {
     wsRemoveSubtraction,
     getSubtraction,
     createSubtraction,
-    updateSubtraction,
+    editSubtraction,
     removeSubtraction,
     findSubtractions
 } from "../actions";
@@ -85,23 +85,26 @@ describe("Subtraction Action Creators:", () => {
     });
 
     it("createSubtraction", () => {
-        const fileId = "fasta";
+        const fileId = "foo.fa";
+        const name = "Foo";
         const nickname = "nickname";
-        const result = createSubtraction(subtractionId, fileId, nickname);
+        const result = createSubtraction(fileId, name, nickname);
         expect(result).toEqual({
             type: CREATE_SUBTRACTION.REQUESTED,
-            subtractionId,
             fileId,
+            name,
             nickname
         });
     });
 
-    it("updateSubtraction", () => {
-        const nickname = "nickname";
-        const result = updateSubtraction(subtractionId, nickname);
+    it("editSubtraction", () => {
+        const name = "foo";
+        const nickname = "bar";
+        const result = editSubtraction(subtractionId, name, nickname);
         expect(result).toEqual({
-            type: UPDATE_SUBTRACTION.REQUESTED,
+            type: EDIT_SUBTRACTION.REQUESTED,
             subtractionId,
+            name,
             nickname
         });
     });

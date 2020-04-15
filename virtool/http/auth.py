@@ -14,7 +14,7 @@ import virtool.db.utils
 import virtool.errors
 import virtool.users.utils
 import virtool.utils
-from virtool.api import bad_request
+from virtool.api.response import bad_request
 
 AUTHORIZATION_PROJECTION = [
     "user",

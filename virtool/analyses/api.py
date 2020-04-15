@@ -13,8 +13,9 @@ import virtool.samples.db
 import virtool.errors
 import virtool.http.routes
 import virtool.samples.utils
+import virtool.subtractions.db
 import virtool.utils
-from virtool.api import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
+from virtool.api.response import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -43,6 +44,8 @@ async def get(req):
 
     if not read:
         return insufficient_rights()
+
+    await virtool.subtractions.db.attach_subtraction(db, document)
 
     if document["ready"]:
         document = await virtool.analyses.format.format_analysis(req.app, document)

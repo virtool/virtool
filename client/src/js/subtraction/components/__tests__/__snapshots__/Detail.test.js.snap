@@ -3,10 +3,10 @@
 exports[`<SubtractionDetail /> should not render icons when [canModify=false] 1`] = `
 <div>
   <ViewHeader
-    title="foo"
+    title="Foo"
   >
     <ViewHeader__ViewHeaderTitle>
-      foo
+      Foo
       <ViewHeader__ViewHeaderIcons />
     </ViewHeader__ViewHeaderTitle>
   </ViewHeader>
@@ -56,19 +56,17 @@ exports[`<SubtractionDetail /> should not render icons when [canModify=false] 1`
     onHide={[Function]}
     show={false}
   />
-  <Connect(RemoveSubtraction)
-    id="foo"
-  />
+  <Connect(RemoveSubtraction) />
 </div>
 `;
 
 exports[`<SubtractionDetail /> should render 1`] = `
 <div>
   <ViewHeader
-    title="foo"
+    title="Foo"
   >
     <ViewHeader__ViewHeaderTitle>
-      foo
+      Foo
       <ViewHeader__ViewHeaderIcons>
         <Icon
           color="orange"
@@ -126,9 +124,7 @@ exports[`<SubtractionDetail /> should render 1`] = `
     onHide={[Function]}
     show={false}
   />
-  <Connect(RemoveSubtraction)
-    id="foo"
-  />
+  <Connect(RemoveSubtraction) />
 </div>
 `;
 
@@ -145,10 +141,10 @@ exports[`<SubtractionDetail /> should render pending message when subtraction is
 exports[`<SubtractionDetail /> should render remove button when there are no linked samples 1`] = `
 <div>
   <ViewHeader
-    title="foo"
+    title="Foo"
   >
     <ViewHeader__ViewHeaderTitle>
-      foo
+      Foo
       <ViewHeader__ViewHeaderIcons>
         <Icon
           color="orange"
@@ -213,8 +209,6 @@ exports[`<SubtractionDetail /> should render remove button when there are no lin
     onHide={[Function]}
     show={false}
   />
-  <Connect(RemoveSubtraction)
-    id="foo"
-  />
+  <Connect(RemoveSubtraction) />
 </div>
 `;

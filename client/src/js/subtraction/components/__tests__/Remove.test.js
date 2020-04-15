@@ -11,6 +11,7 @@ describe("<RemoveSubtraction />", () => {
         props = {
             show: true,
             id: "foo",
+            name: "Foo",
             onHide: jest.fn(),
             onConfirm: jest.fn()
         };
@@ -38,9 +39,14 @@ describe("<RemoveSubtraction />", () => {
 describe("mapStateToProps()", () => {
     it.each([true, false])("should return props when routerLocationHasState() returns %p", show => {
         routerLocationHasState.mockReturnValue(show);
-        const props = mapStateToProps({});
+        const state = {
+            subtraction: { detail: { id: "foo", name: "Foo" } }
+        };
+        const props = mapStateToProps(state);
         expect(props).toEqual({
-            show
+            show,
+            id: "foo",
+            name: "Foo"
         });
     });
 });

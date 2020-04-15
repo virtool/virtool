@@ -1,8 +1,10 @@
+import asyncio.tasks
 from copy import deepcopy
 from cerberus import Validator
 
 import virtool.analyses.utils
 import virtool.analyses.db
+import virtool.api.utils
 import virtool.files.db
 import virtool.jobs.db
 import virtool.samples.db
@@ -10,10 +12,11 @@ import virtool.db.utils
 import virtool.errors
 import virtool.http.routes
 import virtool.samples.utils
+import virtool.subtractions.db
 import virtool.utils
 import virtool.validators
-from virtool.api import bad_request, compose_regex_query, insufficient_rights, invalid_query, \
-    json_response, no_content, not_found, paginate
+from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
+    json_response, no_content, not_found
 
 QUERY_SCHEMA = {
     "find": {
@@ -81,7 +84,7 @@ async def find(req):
     term = query.get("find")
 
     if term:
-        db_query = compose_regex_query(term, ["name", "user.id"])
+        db_query = virtool.api.utils.compose_regex_query(term, ["name", "user.id"])
 
     if algorithm_query:
         if db_query:
@@ -94,7 +97,7 @@ async def find(req):
         else:
             db_query = algorithm_query
 
-    data = await paginate(
+    data = await virtool.api.utils.paginate(
         db.samples,
         db_query,
         req.query,
@@ -142,6 +145,8 @@ async def get(req):
                 "download_url": file["download_url"].replace("reads_", f"{snake_case}_"),
                 "replace_url": f"/upload/samples/{sample_id}/files/{index + 1}"
             })
+
+    await virtool.subtractions.db.attach_subtraction(db, document)
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -452,13 +457,13 @@ async def find_analyses(req):
     db_query = dict()
 
     if term:
-        db_query.update(compose_regex_query(term, ["reference.name", "user.id"]))
+        db_query.update(virtool.api.utils.compose_regex_query(term, ["reference.name", "user.id"]))
 
     base_query = {
         "sample.id": sample_id
     }
 
-    data = await paginate(
+    data = await virtool.api.utils.paginate(
         db.analyses,
         db_query,
         req.query,
@@ -466,6 +471,8 @@ async def find_analyses(req):
         projection=virtool.analyses.db.PROJECTION,
         sort=[("created_at", -1)]
     )
+
+    await asyncio.tasks.gather(*[virtool.subtractions.db.attach_subtraction(db, d) for d in data["documents"]])
 
     return json_response(data)
 

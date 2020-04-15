@@ -4,10 +4,11 @@ Provides request handlers for managing and viewing files.
 """
 import pymongo
 
+import virtool.api.utils
 import virtool.files.db
 import virtool.http.routes
 import virtool.utils
-from virtool.api import json_response, not_found, paginate
+from virtool.api.response import json_response, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -33,7 +34,7 @@ async def find(req):
     if file_type:
         base_query["type"] = file_type
 
-    data = await paginate(
+    data = await virtool.api.utils.paginate(
         db.files,
         db_query,
         req.query,

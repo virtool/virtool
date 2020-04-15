@@ -1,4 +1,4 @@
-import { IndexSelectorList } from "../Create/IndexSelectorList.js";
+import { IndexSelectorList } from "../IndexSelectorList.js";
 
 describe("<IndexSelectorList />", () => {
     let props;

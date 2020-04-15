@@ -236,14 +236,16 @@ async def init_check_db(app):
     await db.indexes.create_index([("version", 1), ("reference.id", 1)], unique=True)
     await db.keys.create_index("id", unique=True)
     await db.keys.create_index("user.id")
-    await db.samples.create_index([("created_at", pymongo.DESCENDING)])
-    await db.sequences.create_index("otu_id")
-    await db.otus.create_index("name")
     await db.otus.create_index([
         ("_id", pymongo.ASCENDING),
         ("isolate.id", pymongo.ASCENDING)
     ])
+    await db.otus.create_index("name")
+    await db.otus.create_index("nickname")
     await db.otus.create_index("abbreviation")
+    await db.samples.create_index([("created_at", pymongo.DESCENDING)])
+    await db.sequences.create_index("otu_id")
+    await db.sequences.create_index("name")
 
 
 async def init_client_path(app):

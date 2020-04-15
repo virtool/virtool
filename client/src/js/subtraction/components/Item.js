@@ -10,9 +10,9 @@ export const SubtractionItemIcon = ({ ready }) => {
     return <Loader size="14px" color="#3c8786" />;
 };
 
-export const SubtractionItem = ({ id, ready }) => (
+export const SubtractionItem = ({ id, name, ready }) => (
     <LinkBox key={id} to={`/subtraction/${id}`}>
-        <strong>{id}</strong>
+        <strong>{name}</strong>
         <Flex alignItems="center" className="pull-right">
             <SubtractionItemIcon ready={ready} />
             <FlexItem pad>
@@ -23,9 +23,10 @@ export const SubtractionItem = ({ id, ready }) => (
 );
 
 export const mapStateToProps = (state, props) => {
-    const { id, ready } = state.subtraction.documents[props.index];
+    const { id, name, ready } = state.subtraction.documents[props.index];
     return {
         id,
+        name,
         ready
     };
 };

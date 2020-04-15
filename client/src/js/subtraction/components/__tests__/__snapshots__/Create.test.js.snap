@@ -15,13 +15,78 @@ exports[`<CreateSubtraction /> should render 1`] = `
     <Modal__DialogBody>
       <InputGroup>
         <Input__InputLabel>
-          Unique Name
+          Name
         </Input__InputLabel>
         <Input
-          error=""
-          name="subtractionId"
+          name="name"
           onChange={[Function]}
           value=""
+        />
+        <Input__InputError />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          name="nickname"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
+      <h5>
+        <strong>
+          Files
+        </strong>
+      </h5>
+      <Create__SubtractionFileList>
+        <SubtractionFileItem
+          active={false}
+          id="test"
+          key="test"
+          onClick={[Function]}
+        />
+      </Create__SubtractionFileList>
+      <Input__InputError />
+    </Modal__DialogBody>
+    <Modal__DialogFooter
+      className="modal-footer"
+    >
+      <Button
+        color="blue"
+        disabled={false}
+        icon="play"
+        tipPlacement="top"
+        type="submit"
+      >
+        Start
+      </Button>
+    </Modal__DialogFooter>
+  </form>
+</ModalDialog>
+`;
+
+exports[`<CreateSubtraction /> should render after "name" input changes 1`] = `
+<ModalDialog
+  headerText="Create Subtraction"
+  label="SubtractionCreate"
+  onEnter={[Function]}
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__DialogBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value="Foo"
         />
         <Input__InputError />
       </InputGroup>
@@ -82,11 +147,10 @@ exports[`<CreateSubtraction /> should render after "nickname" input changes 1`] 
     <Modal__DialogBody>
       <InputGroup>
         <Input__InputLabel>
-          Unique Name
+          Name
         </Input__InputLabel>
         <Input
-          error=""
-          name="subtractionId"
+          name="name"
           onChange={[Function]}
           value=""
         />
@@ -100,73 +164,6 @@ exports[`<CreateSubtraction /> should render after "nickname" input changes 1`] 
           name="nickname"
           onChange={[Function]}
           value="Bar"
-        />
-      </InputGroup>
-      <h5>
-        <strong>
-          Files
-        </strong>
-      </h5>
-      <Create__SubtractionFileList>
-        <SubtractionFileItem
-          active={false}
-          id="test"
-          key="test"
-          onClick={[Function]}
-        />
-      </Create__SubtractionFileList>
-      <Input__InputError />
-    </Modal__DialogBody>
-    <Modal__DialogFooter
-      className="modal-footer"
-    >
-      <Button
-        color="blue"
-        disabled={false}
-        icon="play"
-        tipPlacement="top"
-        type="submit"
-      >
-        Start
-      </Button>
-    </Modal__DialogFooter>
-  </form>
-</ModalDialog>
-`;
-
-exports[`<CreateSubtraction /> should render after "subtractionId" input changes 1`] = `
-<ModalDialog
-  headerText="Create Subtraction"
-  label="SubtractionCreate"
-  onEnter={[Function]}
-  onExited={[Function]}
-  onHide={[MockFunction]}
-  show={true}
->
-  <form
-    onSubmit={[Function]}
-  >
-    <Modal__DialogBody>
-      <InputGroup>
-        <Input__InputLabel>
-          Unique Name
-        </Input__InputLabel>
-        <Input
-          error=""
-          name="subtractionId"
-          onChange={[Function]}
-          value="Foo"
-        />
-        <Input__InputError />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Nickname
-        </Input__InputLabel>
-        <Input
-          name="nickname"
-          onChange={[Function]}
-          value=""
         />
       </InputGroup>
       <h5>
@@ -216,16 +213,15 @@ exports[`<CreateSubtraction /> should render error when submitted with no unique
     <Modal__DialogBody>
       <InputGroup>
         <Input__InputLabel>
-          Unique Name
+          Name
         </Input__InputLabel>
         <Input
-          error="Required Field"
-          name="subtractionId"
+          name="name"
           onChange={[Function]}
           value=""
         />
         <Input__InputError>
-          Required Field
+          A name is required
         </Input__InputError>
       </InputGroup>
       <InputGroup>
@@ -287,11 +283,10 @@ exports[`<CreateSubtraction /> should render when no files available 1`] = `
     <Modal__DialogBody>
       <InputGroup>
         <Input__InputLabel>
-          Unique Name
+          Name
         </Input__InputLabel>
         <Input
-          error=""
-          name="subtractionId"
+          name="name"
           onChange={[Function]}
           value=""
         />
@@ -357,17 +352,14 @@ exports[`<CreateSubtraction /> should render with request error 1`] = `
     <Modal__DialogBody>
       <InputGroup>
         <Input__InputLabel>
-          Unique Name
+          Name
         </Input__InputLabel>
         <Input
-          error=""
-          name="subtractionId"
+          name="name"
           onChange={[Function]}
           value=""
         />
-        <Input__InputError>
-          Subtraction ID already exists
-        </Input__InputError>
+        <Input__InputError />
       </InputGroup>
       <InputGroup>
         <Input__InputLabel>

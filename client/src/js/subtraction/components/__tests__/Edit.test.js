@@ -13,7 +13,8 @@ describe("<EditSubtraction />", () => {
         };
 
         props = {
-            id: "Prunus persica",
+            id: "foo",
+            name: "Prunus persica",
             nickname: "Peach",
             show: true,
             onHide: jest.fn(),
@@ -32,17 +33,26 @@ describe("<EditSubtraction />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
+    it("should render after name is changed", () => {
+        const wrapper = shallow(<EditSubtraction {...props} />);
+        expect(wrapper).toMatchSnapshot();
+        e.target.name = "name";
+        wrapper.find(Input).at(0).simulate("change", e);
+        expect(wrapper).toMatchSnapshot();
+    });
+
     it("should render after nickname is changed", () => {
         const wrapper = shallow(<EditSubtraction {...props} />);
         expect(wrapper).toMatchSnapshot();
-        wrapper.find(Input).simulate("change", e);
+        e.target.name = "nickname";
+        wrapper.find(Input).at(1).simulate("change", e);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("should call onUpdate() when form is submitted", () => {
         const wrapper = shallow(<EditSubtraction {...props} />);
         wrapper.find("form").simulate("submit", e);
-        expect(props.onUpdate).toHaveBeenCalledWith("Prunus persica", "Peach");
+        expect(props.onUpdate).toHaveBeenCalledWith("foo", "Prunus persica", "Peach");
         expect(props.onHide).toHaveBeenCalled();
     });
 
@@ -57,10 +67,11 @@ describe("mapDispatchToProps()", () => {
     it("should return updateSubtraction in props", () => {
         const dispatch = jest.fn();
         const props = mapDispatchToProps(dispatch);
-        props.onUpdate("foo", "bar");
+        props.onUpdate("foo", "Foo", "Bar");
         expect(dispatch).toHaveBeenCalledWith({
             subtractionId: "foo",
-            nickname: "bar",
+            name: "Foo",
+            nickname: "Bar",
             type: "UPDATE_SUBTRACTION_REQUESTED"
         });
     });

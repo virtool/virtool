@@ -28,6 +28,7 @@ exports[`<CreateAnalysis /> should render 1`] = `
         }
       />
       <AlgorithmSelect
+        libraryType="normal"
         onChange={[Function]}
         value="pathoscope_bowtie"
       />
@@ -141,6 +142,7 @@ exports[`<CreateAnalysis /> should render with algorithm selected 1`] = `
         }
       />
       <AlgorithmSelect
+        libraryType="normal"
         onChange={[Function]}
         value="nuvs"
       />
@@ -254,6 +256,7 @@ exports[`<CreateAnalysis /> should render with error 1`] = `
         }
       />
       <AlgorithmSelect
+        libraryType="normal"
         onChange={[Function]}
         value="pathoscope_bowtie"
       />
@@ -367,6 +370,7 @@ exports[`<CreateAnalysis /> should render with index selected 1`] = `
         }
       />
       <AlgorithmSelect
+        libraryType="normal"
         onChange={[Function]}
         value="pathoscope_bowtie"
       />
@@ -494,6 +498,7 @@ exports[`<CreateAnalysis /> should render with summary 1`] = `
         }
       />
       <AlgorithmSelect
+        libraryType="normal"
         onChange={[Function]}
         value="nuvs"
       />

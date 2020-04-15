@@ -49,7 +49,7 @@ def calculate_median_depths(document: dict) -> dict:
 
 
 async def create_pathoscope_coverage_cache(db, document):
-    cache = defaultdict(lambda: defaultdict(dict))
+    cache = defaultdict(lambda: defaultdict(lambda: dict()))
 
     for hit in document["results"]:
         for isolate in hit["isolates"]:
@@ -61,12 +61,16 @@ async def create_pathoscope_coverage_cache(db, document):
                 if sequence.get("align"):
                     cache[otu_id][isolate_id][sequence_id] = virtool.analyses.utils.transform_coverage_to_coordinates(sequence["align"])
 
-    await db.coverage.insert_one({
+    document = {
         "analysis": {
             "id": document["_id"]
         },
         "cache": cache
-    })
+    }
+
+    await db.coverage.insert_one(document)
+
+    return document
 
 
 async def ensure_pathoscope_coverage_cache(db, document):

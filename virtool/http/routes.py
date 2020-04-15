@@ -4,7 +4,7 @@ import aiohttp.web
 from cerberus import Validator
 
 import virtool.users.utils
-from virtool.api import invalid_input, json_response
+from virtool.api.response import invalid_input, json_response
 
 
 class Routes(aiohttp.web.RouteTableDef):

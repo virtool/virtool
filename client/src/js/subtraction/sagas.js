@@ -3,13 +3,13 @@ import { put, takeLatest, throttle } from "redux-saga/effects";
 import { pushState } from "../app/actions";
 import {
     CREATE_SUBTRACTION,
+    EDIT_SUBTRACTION,
     FIND_SUBTRACTIONS,
     GET_SUBTRACTION,
-    LIST_SUBTRACTION_IDS,
-    REMOVE_SUBTRACTION,
-    UPDATE_SUBTRACTION
+    SHORTLIST_SUBTRACTIONS,
+    REMOVE_SUBTRACTION
 } from "../app/actionTypes";
-import { apiCall, pushFindTerm, setPending } from "../utils/sagas";
+import { apiCall, pushFindTerm } from "../utils/sagas";
 import * as subtractionAPI from "./api";
 
 export function* findSubtractions(action) {
@@ -22,32 +22,29 @@ export function* getSubtraction(action) {
 }
 
 export function* createSubtraction(action) {
-    const extraFunc = {
-        closeModal: put(pushState({ createSubtraction: false }))
-    };
-    yield setPending(apiCall(subtractionAPI.create, action, CREATE_SUBTRACTION, {}, extraFunc));
+    yield apiCall(subtractionAPI.create, action, CREATE_SUBTRACTION, {});
+    yield put(pushState({ createSubtraction: false }));
 }
 
-export function* listSubtractionIds(action) {
-    yield apiCall(subtractionAPI.listIds, action, LIST_SUBTRACTION_IDS);
+export function* shortlistSubtractions(action) {
+    yield apiCall(subtractionAPI.shortlist, action, SHORTLIST_SUBTRACTIONS);
 }
 
-export function* updateSubtraction(action) {
-    yield setPending(apiCall(subtractionAPI.update, action, UPDATE_SUBTRACTION));
+export function* editSubtraction(action) {
+    yield apiCall(subtractionAPI.edit, action, EDIT_SUBTRACTION);
+    yield put(pushState({ editSubtraction: false }));
 }
 
 export function* removeSubtraction(action) {
-    const extraFunc = {
-        goBack: put(push("/subtraction"))
-    };
-    yield apiCall(subtractionAPI.remove, action, REMOVE_SUBTRACTION, {}, extraFunc);
+    yield apiCall(subtractionAPI.remove, action, REMOVE_SUBTRACTION);
+    yield put(push("/subtraction"));
 }
 
 export function* watchSubtraction() {
     yield throttle(500, CREATE_SUBTRACTION.REQUESTED, createSubtraction);
     yield takeLatest(FIND_SUBTRACTIONS.REQUESTED, findSubtractions);
     yield takeLatest(GET_SUBTRACTION.REQUESTED, getSubtraction);
-    yield takeLatest(LIST_SUBTRACTION_IDS.REQUESTED, listSubtractionIds);
-    yield takeLatest(UPDATE_SUBTRACTION.REQUESTED, updateSubtraction);
+    yield takeLatest(SHORTLIST_SUBTRACTIONS.REQUESTED, shortlistSubtractions);
+    yield takeLatest(EDIT_SUBTRACTION.REQUESTED, editSubtraction);
     yield throttle(300, REMOVE_SUBTRACTION.REQUESTED, removeSubtraction);
 }

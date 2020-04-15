@@ -9,7 +9,7 @@ import virtool.errors
 import virtool.history.utils
 import virtool.otus.utils
 import virtool.utils
-from virtool.api import paginate
+from virtool.api.utils import paginate
 
 MOST_RECENT_PROJECTION = [
     "_id",

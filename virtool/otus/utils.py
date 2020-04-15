@@ -1,12 +1,9 @@
-import logging
 from copy import deepcopy
 from typing import List, Union
 
 import virtool.errors
 import virtool.history.utils
 import virtool.utils
-
-logger = logging.getLogger(__name__)
 
 
 def evaluate_changes(data, document):

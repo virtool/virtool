@@ -1,4 +1,4 @@
-import { IndexSelectorItem } from "../Create/IndexSelectorItem.js";
+import { IndexSelectorItem } from "../IndexSelectorItem.js";
 
 describe("<IndexSelectorItem />", () => {
     let props;

@@ -126,7 +126,7 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
           </th>
           <td>
             <Link
-              to="/subtraction/Arabidopsis thaliana"
+              to="/subtraction/baz"
             >
               Arabidopsis thaliana
             </Link>
@@ -265,7 +265,7 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
           </th>
           <td>
             <Link
-              to="/subtraction/Arabidopsis thaliana"
+              to="/subtraction/baz"
             >
               Arabidopsis thaliana
             </Link>

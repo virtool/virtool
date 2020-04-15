@@ -1,5 +1,6 @@
 import asyncio
 
+import virtool.api.utils
 import virtool.history.db
 import virtool.indexes.db
 import virtool.jobs.db
@@ -9,8 +10,8 @@ import virtool.history.utils
 import virtool.http.routes
 import virtool.jobs.build_index
 import virtool.utils
-from virtool.api import bad_request, compose_regex_query, conflict, insufficient_rights, json_response, \
-    not_found, paginate
+from virtool.api.response import bad_request, conflict, insufficient_rights, json_response, \
+    not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -217,9 +218,9 @@ async def find_history(req):
     }
 
     if term:
-        db_query.update(compose_regex_query(term, ["otu.name", "user.id"]))
+        db_query.update(virtool.api.utils.compose_regex_query(term, ["otu.name", "user.id"]))
 
-    data = await paginate(
+    data = await virtool.api.utils.paginate(
         db.history,
         db_query,
         req.query,

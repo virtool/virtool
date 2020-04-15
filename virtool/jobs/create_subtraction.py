@@ -29,12 +29,10 @@ class Job(virtool.jobs.job.Job):
     def check_db(self):
         self.params = dict(self.task_args)
 
-        name = self.params["subtraction_id"].lower().replace(" ", "_")
-
         subtraction_path = os.path.join(
             self.settings["data_path"],
             "subtractions",
-            name
+            self.params["subtraction_id"]
         )
 
         self.params.update({
@@ -50,7 +48,7 @@ class Job(virtool.jobs.job.Job):
             # The path to the copied and retained FASTA file to be used for index generation.
             "fasta_path": os.path.join(
                 subtraction_path,
-                f"{name}.fa"
+                "subtraction.fa"
             ),
 
             # The root name the Bowtie2 index will be written to.

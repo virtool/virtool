@@ -4,6 +4,7 @@ from typing import Union
 
 import virtool.analyses.db
 import virtool.api
+import virtool.api.json
 import virtool.files.db
 import virtool.groups.db
 import virtool.history.db
@@ -59,7 +60,7 @@ class Connection:
         self.permissions = session.permissions
 
     async def send(self, message):
-        await self._ws.send_json(message, dumps=virtool.api.dumps)
+        await self._ws.send_json(message, dumps=virtool.api.json.dumps)
 
     async def close(self):
         await self._ws.close()
@@ -76,6 +77,7 @@ async def default_writer(connection: Connection, message: dict):
     :param message: the message
     """
     return await connection.send(message)
+
 
 class Dispatcher:
 
