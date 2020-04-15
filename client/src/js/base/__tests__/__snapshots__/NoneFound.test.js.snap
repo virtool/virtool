@@ -39,6 +39,7 @@ exports[`<NoneFoundBox /> should render with [noun='boxes' 1`] = `
       "displayName": "Box",
       "foldedComponentIds": Array [],
       "render": [Function],
+      "shouldForwardProp": undefined,
       "styledComponentId": "Box-x49ol5-0",
       "target": "div",
       "toString": [Function],
