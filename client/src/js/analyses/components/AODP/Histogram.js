@@ -1,5 +1,6 @@
 import { extent, histogram, max } from "d3-array";
 import { axisBottom, axisLeft } from "d3-axis";
+import { format } from "d3-format";
 import { scaleLinear } from "d3-scale";
 import { select } from "d3-selection";
 import { fill, flatMap } from "lodash-es";
@@ -61,7 +62,9 @@ const draw = (element, data, width) => {
         .attr("dy", "0.15em")
         .attr("transform", "rotate(-65)");
 
-    svg.append("g").attr("class", "y axis").call(axisLeft(y));
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(axisLeft(y).ticks(4).tickFormat(format(".0s")));
 };
 
 const StyledHistogram = styled.div`
