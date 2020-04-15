@@ -7,7 +7,6 @@ exports[`<SubtractionDetail /> should not render icons when [canModify=false] 1`
   >
     <ViewHeader__ViewHeaderTitle>
       Foo
-      <ViewHeader__ViewHeaderIcons />
     </ViewHeader__ViewHeaderTitle>
   </ViewHeader>
   <Table>
@@ -25,7 +24,7 @@ exports[`<SubtractionDetail /> should not render icons when [canModify=false] 1`
           File
         </th>
         <td>
-          foo-file
+          Foo.fa.gz
         </td>
       </tr>
       <tr>
@@ -75,6 +74,13 @@ exports[`<SubtractionDetail /> should render 1`] = `
           name="pencil-alt"
           onClick={[Function]}
         />
+        <Icon
+          color="red"
+          faStyle="fas"
+          fixedWidth={false}
+          name="trash"
+          onClick={[MockFunction]}
+        />
       </ViewHeader__ViewHeaderIcons>
     </ViewHeader__ViewHeaderTitle>
   </ViewHeader>
@@ -93,7 +99,82 @@ exports[`<SubtractionDetail /> should render 1`] = `
           File
         </th>
         <td>
-          foo-file
+          Foo.fa.gz
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Sequence Count
+        </th>
+        <td />
+      </tr>
+      <tr>
+        <th>
+          GC Estimate
+        </th>
+        <td>
+          0.400
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Linked Samples
+        </th>
+        <td>
+          2
+        </td>
+      </tr>
+    </tbody>
+  </Table>
+  <Connect(EditSubtraction)
+    onHide={[Function]}
+    show={false}
+  />
+  <Connect(RemoveSubtraction) />
+</div>
+`;
+
+exports[`<SubtractionDetail /> should render file id when name not defined 1`] = `
+<div>
+  <ViewHeader
+    title="Foo"
+  >
+    <ViewHeader__ViewHeaderTitle>
+      Foo
+      <ViewHeader__ViewHeaderIcons>
+        <Icon
+          color="orange"
+          faStyle="fas"
+          fixedWidth={false}
+          name="pencil-alt"
+          onClick={[Function]}
+        />
+        <Icon
+          color="red"
+          faStyle="fas"
+          fixedWidth={false}
+          name="trash"
+          onClick={[MockFunction]}
+        />
+      </ViewHeader__ViewHeaderIcons>
+    </ViewHeader__ViewHeaderTitle>
+  </ViewHeader>
+  <Table>
+    <tbody>
+      <tr>
+        <th>
+          Nickname
+        </th>
+        <td>
+          foo-nickname
+        </td>
+      </tr>
+      <tr>
+        <th>
+          File
+        </th>
+        <td>
+          123-Foo.fa.gz
         </td>
       </tr>
       <tr>
@@ -136,79 +217,4 @@ exports[`<SubtractionDetail /> should render pending message when subtraction is
 <LoadingPlaceholder
   message="Subtraction is still being imported"
 />
-`;
-
-exports[`<SubtractionDetail /> should render remove button when there are no linked samples 1`] = `
-<div>
-  <ViewHeader
-    title="Foo"
-  >
-    <ViewHeader__ViewHeaderTitle>
-      Foo
-      <ViewHeader__ViewHeaderIcons>
-        <Icon
-          color="orange"
-          faStyle="fas"
-          fixedWidth={false}
-          name="pencil-alt"
-          onClick={[Function]}
-        />
-        <Icon
-          color="red"
-          faStyle="fas"
-          fixedWidth={false}
-          name="trash"
-          onClick={[MockFunction]}
-        />
-      </ViewHeader__ViewHeaderIcons>
-    </ViewHeader__ViewHeaderTitle>
-  </ViewHeader>
-  <Table>
-    <tbody>
-      <tr>
-        <th>
-          Nickname
-        </th>
-        <td>
-          foo-nickname
-        </td>
-      </tr>
-      <tr>
-        <th>
-          File
-        </th>
-        <td>
-          foo-file
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Sequence Count
-        </th>
-        <td />
-      </tr>
-      <tr>
-        <th>
-          GC Estimate
-        </th>
-        <td>
-          0.400
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Linked Samples
-        </th>
-        <td>
-          0
-        </td>
-      </tr>
-    </tbody>
-  </Table>
-  <Connect(EditSubtraction)
-    onHide={[Function]}
-    show={false}
-  />
-  <Connect(RemoveSubtraction) />
-</div>
 `;

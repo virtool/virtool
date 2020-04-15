@@ -43,26 +43,21 @@ export class SubtractionDetail extends React.Component {
             return <LoadingPlaceholder message="Subtraction is still being imported" />;
         }
 
-        let editIcon;
-        let removeIcon;
-
-        if (this.props.canModify) {
-            editIcon = <Icon name="pencil-alt" color="orange" onClick={() => this.setState({ showEdit: true })} />;
-
-            if (!detail.linked_samples.length) {
-                removeIcon = <Icon name="trash" color="red" onClick={this.props.onShowRemove} />;
-            }
-        }
-
         return (
             <div>
                 <ViewHeader title={detail.name}>
                     <ViewHeaderTitle>
                         {detail.name}
-                        <ViewHeaderIcons>
-                            {editIcon}
-                            {removeIcon}
-                        </ViewHeaderIcons>
+                        {this.props.canModify && (
+                            <ViewHeaderIcons>
+                                <Icon
+                                    name="pencil-alt"
+                                    color="orange"
+                                    onClick={() => this.setState({ showEdit: true })}
+                                />
+                                <Icon name="trash" color="red" onClick={this.props.onShowRemove} />
+                            </ViewHeaderIcons>
+                        )}
                     </ViewHeaderTitle>
                 </ViewHeader>
 

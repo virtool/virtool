@@ -14,7 +14,7 @@ describe("<SubtractionDetail />", () => {
                     { id: "bar", name: "Bar" },
                     { id: "baz", name: "Baz" }
                 ],
-                file: { id: "foo-file" },
+                file: { id: "123-Foo.fa.gz", name: "Foo.fa.gz" },
                 gc: { a: 0.2, t: 0.2, g: 0.2, c: 0.2, n: 0.2 },
                 nickname: "foo-nickname"
             },
@@ -49,14 +49,14 @@ describe("<SubtractionDetail />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render remove button when there are no linked samples", () => {
-        props.detail.linked_samples = [];
+    it("should not render icons when [canModify=false]", () => {
+        props.canModify = false;
         const wrapper = shallow(<SubtractionDetail {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should not render icons when [canModify=false]", () => {
-        props.canModify = false;
+    it("should render file id when name not defined", () => {
+        delete props.detail.file.name;
         const wrapper = shallow(<SubtractionDetail {...props} />);
         expect(wrapper).toMatchSnapshot();
     });

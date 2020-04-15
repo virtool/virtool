@@ -13,6 +13,10 @@ from virtool.api.response import bad_request, conflict, json_response, no_conten
 
 routes = virtool.http.routes.Routes()
 
+BASE_QUERY = {
+    "deleted": False
+}
+
 
 @routes.get("/api/subtractions")
 async def find(req):
@@ -33,7 +37,7 @@ async def find(req):
     if short:
         documents = list()
 
-        async for document in db.subtraction.find(db_query, ["name"]):
+        async for document in db.subtraction.find({**db_query, **BASE_QUERY}, ["name"]):
             documents.append(virtool.utils.base_processor(document))
 
         return json_response(documents)
@@ -45,6 +49,7 @@ async def find(req):
         db.subtraction,
         db_query,
         req.query,
+        base_query=BASE_QUERY,
         sort="_id",
         projection=projection
     )
@@ -208,12 +213,13 @@ async def remove(req):
 
     subtraction_id = req.match_info["subtraction_id"]
 
-    if await db.samples.count_documents({"subtraction.id": subtraction_id}):
-        return conflict("Has linked samples")
+    update_result = await db.subtraction.update_one({"_id": subtraction_id}, {
+        "$set": {
+            "deleted": True
+        }
+    })
 
-    delete_result = await db.subtraction.delete_one({"_id": subtraction_id})
-
-    if delete_result.deleted_count == 0:
+    if update_result.matched_count == 0:
         return not_found()
 
     index_path = virtool.subtractions.utils.calculate_index_path(settings, subtraction_id)
