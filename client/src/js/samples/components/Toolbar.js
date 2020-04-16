@@ -5,7 +5,7 @@ import { pushState } from "../../app/actions";
 import { Box, Button, Icon, LinkButton, SearchInput, Toolbar } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { clearSampleSelection, findSamples } from "../actions";
-import AlgorithmFilter from "./AlgorithmFilter";
+import WorkflowFilter from "./WorkflowFilter";
 
 const StyledSampleSelectionToolbar = styled(Box)`
     height: 185px;
@@ -58,7 +58,7 @@ export const SampleSearchToolbar = ({ canCreate, onFind, term, pathoscope, nuvs 
             </Toolbar>
 
             <Box>
-                <AlgorithmFilter />
+                <WorkflowFilter />
             </Box>
         </div>
     );

@@ -43,11 +43,11 @@ export const AnalysisDetail = props => {
 
     let content;
 
-    if (detail.algorithm === "pathoscope_bowtie") {
+    if (detail.workflow === "pathoscope_bowtie") {
         content = <PathoscopeViewer />;
-    } else if (detail.algorithm === "nuvs") {
+    } else if (detail.workflow === "nuvs") {
         content = <NuVsViewer />;
-    } else if (detail.algorithm === "aodp") {
+    } else if (detail.workflow === "aodp") {
         content = <AODPViewer />;
     } else {
         return <div>Unusable analysis detail content</div>;
@@ -57,7 +57,7 @@ export const AnalysisDetail = props => {
         <div>
             <SubviewHeader>
                 <SubviewHeaderTitle>
-                    {getTaskDisplayName(detail.algorithm)} for {sampleName}
+                    {getTaskDisplayName(detail.workflow)} for {sampleName}
                     <AnalysisCache />
                 </SubviewHeaderTitle>
                 <SubviewHeaderAttribution>

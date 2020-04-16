@@ -7,22 +7,22 @@ import { SampleItemLabel } from "./Item/Labels";
 
 const statuses = [true, "ip", false];
 
-const AlgorithmStatus = ({ algorithm, checked, onClick, status }) => (
-    <div onClick={() => onClick(algorithm, status)}>
+const WorkflowStatus = ({ checked, status, workflow, onClick }) => (
+    <div onClick={() => onClick(workflow, status)}>
         <Flex alignItems="center" style={{ cursor: "pointer", padding: "3px" }}>
             <Checkbox checked={checked} />
             <FlexItem pad={5}>
-                <SampleItemLabel icon="chart-area" label={algorithm} ready={status} />
+                <SampleItemLabel icon="chart-area" label={workflow} ready={status} />
             </FlexItem>
         </Flex>
     </div>
 );
 
-class AlgorithmFilter extends React.Component {
-    handleClick = (algorithm, status) => {
+class WorkflowFilter extends React.Component {
+    handleClick = (workflow, status) => {
         const { term, pathoscope, nuvs, onFind } = this.props;
 
-        if (algorithm === "Pathoscope") {
+        if (workflow === "Pathoscope") {
             onFind(term, xor(pathoscope, [status]), nuvs);
         } else {
             onFind(term, pathoscope, xor(nuvs, [status]));
@@ -33,9 +33,9 @@ class AlgorithmFilter extends React.Component {
         const { pathoscope, nuvs } = this.props;
 
         const nuvsComponents = map(statuses, status => (
-            <AlgorithmStatus
+            <WorkflowStatus
                 key={status}
-                algorithm="NuVs"
+                workflow="NuVs"
                 checked={includes(nuvs, status)}
                 onClick={this.handleClick}
                 status={status}
@@ -43,9 +43,9 @@ class AlgorithmFilter extends React.Component {
         ));
 
         const pathoscopeComponents = map(statuses, status => (
-            <AlgorithmStatus
+            <WorkflowStatus
                 key={status}
-                algorithm="Pathoscope"
+                workflow="Pathoscope"
                 checked={includes(pathoscope, status)}
                 onClick={this.handleClick}
                 status={status}
@@ -76,4 +76,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(AlgorithmFilter);
+export default connect(mapStateToProps, mapDispatchToProps)(WorkflowFilter);

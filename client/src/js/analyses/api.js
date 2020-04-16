@@ -5,9 +5,9 @@ export const find = ({ sampleId, term, page = 1 }) =>
 
 export const get = ({ analysisId }) => Request.get(`/api/analyses/${analysisId}`);
 
-export const analyze = ({ sampleId, refId, subtractionId, algorithm }) =>
+export const analyze = ({ sampleId, refId, subtractionId, workflow }) =>
     Request.post(`/api/samples/${sampleId}/analyses`).send({
-        algorithm,
+        workflow,
         ref_id: refId,
         subtraction_id: subtractionId
     });

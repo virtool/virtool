@@ -76,15 +76,15 @@ export const fillAlign = ({ align, length }) => {
 };
 
 export const formatData = detail => {
-    if (detail.algorithm === "pathoscope_bowtie") {
+    if (detail.workflow === "pathoscope_bowtie") {
         return formatPathoscopeData(detail);
     }
 
-    if (detail.algorithm === "nuvs") {
+    if (detail.workflow === "nuvs") {
         return formatNuVsData(detail);
     }
 
-    if (detail.algorithm === "aodp") {
+    if (detail.workflow === "aodp") {
         return formatAODPData(detail);
     }
 };
@@ -134,15 +134,15 @@ export const formatNuVsData = detail => {
 
     const longestSequence = maxBy(results, result => result.sequence.length);
 
-    const { algorithm, created_at, id, ready, user } = detail;
+    const { created_at, id, ready, user, workflow } = detail;
 
     return {
-        algorithm,
         created_at,
         id,
         ready,
         results,
         user,
+        workflow,
         maxSequenceLength: longestSequence.sequence.length
     };
 };
@@ -158,7 +158,7 @@ export const formatPathoscopeData = detail => {
         return detail;
     }
 
-    const { algorithm, created_at, results, id, index, read_count, ready, reference, subtraction, user } = detail;
+    const { created_at, results, id, index, read_count, ready, reference, subtraction, user, workflow } = detail;
 
     const formatted = map(results, otu => {
         const isolateNames = [];
@@ -211,7 +211,6 @@ export const formatPathoscopeData = detail => {
     });
 
     return {
-        algorithm,
         created_at,
         id,
         index,
@@ -221,7 +220,8 @@ export const formatPathoscopeData = detail => {
         ready,
         subtraction,
         subtractedCount: detail.subtracted_count,
-        user
+        user,
+        workflow
     };
 };
 

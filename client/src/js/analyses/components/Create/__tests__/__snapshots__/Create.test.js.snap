@@ -27,7 +27,7 @@ exports[`<CreateAnalysis /> should render 1`] = `
           ]
         }
       />
-      <AlgorithmSelect
+      <WorkflowSelect
         libraryType="normal"
         onChange={[Function]}
         value="pathoscope_bowtie"
@@ -76,7 +76,6 @@ exports[`<CreateAnalysis /> should render 1`] = `
           shrink={1}
         >
           <MultiSummary
-            algorithm="pathoscope_bowtie"
             samples={
               Array [
                 Object {
@@ -90,120 +89,7 @@ exports[`<CreateAnalysis /> should render 1`] = `
               ]
             }
             selected={Array []}
-          />
-        </FlexItem>
-        <FlexItem
-          alignSelf={null}
-          basis="auto"
-          grow={0}
-          shrink={1}
-        >
-          <Button
-            color="blue"
-            disabled={false}
-            icon="play"
-            tipPlacement="top"
-            type="submit"
-          >
-            Start
-          </Button>
-        </FlexItem>
-      </Flex>
-    </Modal__DialogFooter>
-  </form>
-</ModalDialog>
-`;
-
-exports[`<CreateAnalysis /> should render with algorithm selected 1`] = `
-<ModalDialog
-  headerText="Analyze"
-  label="create"
-  onEnter={[Function]}
-  onHide={[MockFunction]}
-  show={true}
-  size="lg"
->
-  <form
-    onSubmit={[Function]}
-  >
-    <Modal__DialogBody>
-      <SelectedSamples
-        samples={
-          Array [
-            Object {
-              "id": "foo",
-              "name": "foo",
-            },
-            Object {
-              "id": "bar",
-              "name": "Bar",
-            },
-          ]
-        }
-      />
-      <AlgorithmSelect
-        libraryType="normal"
-        onChange={[Function]}
-        value="nuvs"
-      />
-      <SubtractionSelector
-        onChange={[Function]}
-      />
-      <IndexSelector
-        error=""
-        indexes={
-          Array [
-            Object {
-              "id": "ref1",
-              "reference": Object {
-                "id": "fer1",
-                "name": "Ref1",
-              },
-              "version": 3,
-            },
-            Object {
-              "id": "ref2",
-              "reference": Object {
-                "id": "fer2",
-                "name": "Ref2",
-              },
-              "version": 1,
-            },
-          ]
-        }
-        onSelect={[Function]}
-        selected={Array []}
-      />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
-      <Flex
-        alignContent="stretch"
-        alignItems="center"
-        direction="row"
-        justifyContent="flex-start"
-        wrap="nowrap"
-      >
-        <FlexItem
-          alignSelf={null}
-          basis="auto"
-          grow={1}
-          shrink={1}
-        >
-          <MultiSummary
-            algorithm="nuvs"
-            samples={
-              Array [
-                Object {
-                  "id": "foo",
-                  "name": "foo",
-                },
-                Object {
-                  "id": "bar",
-                  "name": "Bar",
-                },
-              ]
-            }
-            selected={Array []}
+            workflow="pathoscope_bowtie"
           />
         </FlexItem>
         <FlexItem
@@ -255,7 +141,7 @@ exports[`<CreateAnalysis /> should render with error 1`] = `
           ]
         }
       />
-      <AlgorithmSelect
+      <WorkflowSelect
         libraryType="normal"
         onChange={[Function]}
         value="pathoscope_bowtie"
@@ -304,7 +190,6 @@ exports[`<CreateAnalysis /> should render with error 1`] = `
           shrink={1}
         >
           <MultiSummary
-            algorithm="pathoscope_bowtie"
             samples={
               Array [
                 Object {
@@ -318,6 +203,7 @@ exports[`<CreateAnalysis /> should render with error 1`] = `
               ]
             }
             selected={Array []}
+            workflow="pathoscope_bowtie"
           />
         </FlexItem>
         <FlexItem
@@ -369,7 +255,7 @@ exports[`<CreateAnalysis /> should render with index selected 1`] = `
           ]
         }
       />
-      <AlgorithmSelect
+      <WorkflowSelect
         libraryType="normal"
         onChange={[Function]}
         value="pathoscope_bowtie"
@@ -425,7 +311,6 @@ exports[`<CreateAnalysis /> should render with index selected 1`] = `
           shrink={1}
         >
           <MultiSummary
-            algorithm="pathoscope_bowtie"
             samples={
               Array [
                 Object {
@@ -446,6 +331,7 @@ exports[`<CreateAnalysis /> should render with index selected 1`] = `
                 },
               ]
             }
+            workflow="pathoscope_bowtie"
           />
         </FlexItem>
         <FlexItem
@@ -497,7 +383,7 @@ exports[`<CreateAnalysis /> should render with summary 1`] = `
           ]
         }
       />
-      <AlgorithmSelect
+      <WorkflowSelect
         libraryType="normal"
         onChange={[Function]}
         value="nuvs"
@@ -553,7 +439,6 @@ exports[`<CreateAnalysis /> should render with summary 1`] = `
           shrink={1}
         >
           <MultiSummary
-            algorithm="nuvs"
             samples={
               Array [
                 Object {
@@ -574,6 +459,121 @@ exports[`<CreateAnalysis /> should render with summary 1`] = `
                 },
               ]
             }
+            workflow="nuvs"
+          />
+        </FlexItem>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          shrink={1}
+        >
+          <Button
+            color="blue"
+            disabled={false}
+            icon="play"
+            tipPlacement="top"
+            type="submit"
+          >
+            Start
+          </Button>
+        </FlexItem>
+      </Flex>
+    </Modal__DialogFooter>
+  </form>
+</ModalDialog>
+`;
+
+exports[`<CreateAnalysis /> should render with workflow selected 1`] = `
+<ModalDialog
+  headerText="Analyze"
+  label="create"
+  onEnter={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+  size="lg"
+>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__DialogBody>
+      <SelectedSamples
+        samples={
+          Array [
+            Object {
+              "id": "foo",
+              "name": "foo",
+            },
+            Object {
+              "id": "bar",
+              "name": "Bar",
+            },
+          ]
+        }
+      />
+      <WorkflowSelect
+        libraryType="normal"
+        onChange={[Function]}
+        value="nuvs"
+      />
+      <SubtractionSelector
+        onChange={[Function]}
+      />
+      <IndexSelector
+        error=""
+        indexes={
+          Array [
+            Object {
+              "id": "ref1",
+              "reference": Object {
+                "id": "fer1",
+                "name": "Ref1",
+              },
+              "version": 3,
+            },
+            Object {
+              "id": "ref2",
+              "reference": Object {
+                "id": "fer2",
+                "name": "Ref2",
+              },
+              "version": 1,
+            },
+          ]
+        }
+        onSelect={[Function]}
+        selected={Array []}
+      />
+    </Modal__DialogBody>
+    <Modal__DialogFooter>
+      <Flex
+        alignContent="stretch"
+        alignItems="center"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={1}
+          shrink={1}
+        >
+          <MultiSummary
+            samples={
+              Array [
+                Object {
+                  "id": "foo",
+                  "name": "foo",
+                },
+                Object {
+                  "id": "bar",
+                  "name": "Bar",
+                },
+              ]
+            }
+            selected={Array []}
+            workflow="nuvs"
           />
         </FlexItem>
         <FlexItem

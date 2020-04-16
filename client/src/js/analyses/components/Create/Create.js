@@ -7,7 +7,7 @@ import { getDefaultSubtraction, getSampleLibraryType, getSelectedDocuments } fro
 import { shortlistSubtractions } from "../../../subtraction/actions";
 import { analyze } from "../../actions";
 import { getCompatibleReadyIndexes } from "../../selectors";
-import { AlgorithmSelect } from "./AlgorithmSelect";
+import { WorkflowSelect } from "./WorkflowSelect";
 import { IndexSelector } from "./IndexSelector";
 import { SelectedSamples } from "./SelectedSamples";
 import { SubtractionSelector } from "./SubtractionSelector";
@@ -28,7 +28,7 @@ const MultiSummary = ({ samples, selected }) => {
 };
 
 const getInitialState = ({ defaultSubtraction, libraryType }) => ({
-    algorithm: libraryType === "amplicon" ? "aodp" : "pathoscope_bowtie",
+    workflow: libraryType === "amplicon" ? "aodp" : "pathoscope_bowtie",
     selected: [],
     subtraction: defaultSubtraction,
     error: ""
@@ -49,8 +49,8 @@ export class CreateAnalysis extends React.Component {
         this.setState(getInitialState(this.props));
     };
 
-    handleSelectAlgorithm = e => {
-        this.setState({ algorithm: e.target.value });
+    handleSelectWorkflow = e => {
+        this.setState({ workflow: e.target.value });
     };
 
     handleSelectIndex = index => {
@@ -71,16 +71,16 @@ export class CreateAnalysis extends React.Component {
         this.props.onAnalyze(
             this.props.documents,
             this.state.selected,
-            this.state.algorithm,
             this.state.subtraction,
-            this.props.userId
+            this.props.userId,
+            this.state.workflow
         );
 
         this.props.onHide();
     };
 
     render() {
-        const { selected, subtraction, algorithm } = this.state;
+        const { selected, subtraction, workflow } = this.state;
 
         const show = !!(this.props.documents && this.props.documents.length);
 
@@ -96,10 +96,10 @@ export class CreateAnalysis extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <DialogBody>
                         <SelectedSamples samples={this.props.documents} />
-                        <AlgorithmSelect
+                        <WorkflowSelect
                             libraryType={this.props.libraryType}
-                            value={algorithm}
-                            onChange={this.handleSelectAlgorithm}
+                            value={workflow}
+                            onChange={this.handleSelectWorkflow}
                             hasHmm={this.props.hasHmm}
                         />
                         <SubtractionSelector
@@ -118,7 +118,7 @@ export class CreateAnalysis extends React.Component {
                         <Flex alignItems="center">
                             <FlexItem grow={1}>
                                 <MultiSummary
-                                    algorithm={algorithm}
+                                    workflow={workflow}
                                     samples={this.props.documents}
                                     selected={this.state.selected}
                                 />
@@ -147,10 +147,10 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-    onAnalyze: (samples, references, algorithm, subtractionId, userId) => {
+    onAnalyze: (samples, references, subtractionId, userId, workflow) => {
         forEach(samples, ({ id }) => {
             forEach(references, ({ refId }) => {
-                dispatch(analyze(id, refId, algorithm, subtractionId, userId));
+                dispatch(analyze(id, refId, subtractionId, userId, workflow));
             });
         });
     },

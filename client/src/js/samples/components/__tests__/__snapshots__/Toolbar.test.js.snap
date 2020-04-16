@@ -10,7 +10,7 @@ exports[`<SampleSearchToolbar /> should render when [canCreate=false] 1`] = `
     />
   </Toolbar>
   <Box>
-    <Connect(AlgorithmFilter) />
+    <Connect(WorkflowFilter) />
   </Box>
 </div>
 `;
@@ -43,7 +43,7 @@ exports[`<SampleSearchToolbar /> should render when [canCreate=true] 1`] = `
     </LinkButton>
   </Toolbar>
   <Box>
-    <Connect(AlgorithmFilter) />
+    <Connect(WorkflowFilter) />
   </Box>
 </div>
 `;

@@ -1,8 +1,8 @@
 import React from "react";
 import { Select } from "../../../../base";
-import { AlgorithmSelect } from "../AlgorithmSelect";
+import { WorkflowSelect } from "../WorkflowSelect";
 
-describe("<AlgorithmSelect />", () => {
+describe("<WorkflowSelect />", () => {
     let props;
 
     beforeEach(() => {
@@ -16,18 +16,18 @@ describe("<AlgorithmSelect />", () => {
 
     it.each(["amplicon", "normal", "srna"])("should render when [libraryType=%p]", libraryType => {
         props.libraryType = libraryType;
-        const wrapper = shallow(<AlgorithmSelect {...props} />);
+        const wrapper = shallow(<WorkflowSelect {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("should have nuvs disabled when [hasHmm=false]", () => {
         props.hasHmm = false;
-        const wrapper = shallow(<AlgorithmSelect {...props} />);
+        const wrapper = shallow(<WorkflowSelect {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("should call onChange prop when input changes", () => {
-        const wrapper = shallow(<AlgorithmSelect {...props} />);
+        const wrapper = shallow(<WorkflowSelect {...props} />);
         const e = {
             target: {
                 value: "foo"

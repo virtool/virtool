@@ -46,7 +46,7 @@ describe("Account Action Creators:", () => {
 
     it("updateAccountSettings: returns action with settings update", () => {
         const update = {
-            quick_analyze_algorithm: "pathoscope_bowtie"
+            quick_analyze_workflow: "pathoscope_bowtie"
         };
         const result = updateAccountSettings(update);
         const expected = {

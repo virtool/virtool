@@ -4,7 +4,7 @@ import React from "react";
 import { InputGroup, InputLabel, Select } from "../../../base";
 import { getTaskDisplayName } from "../../../utils/utils";
 
-export const getCompatibleAlgorithms = libraryType => {
+export const getCompatibleWorkflows = libraryType => {
     if (libraryType === "amplicon") {
         return ["aodp"];
     }
@@ -13,28 +13,28 @@ export const getCompatibleAlgorithms = libraryType => {
 };
 
 /**
- * An input-based component for selecting an algorithm (eg. pathoscope_bowtie), by its display name
+ * An input-based component for selecting an worklfow (eg. pathoscope_bowtie), by its display name
  * (eg. Pathoscope Bowtie).
  *
  */
-export const AlgorithmSelect = ({ hasHmm, libraryType, value, onChange }) => {
-    const optionComponents = map(getCompatibleAlgorithms(libraryType), algorithm => (
-        <option key={algorithm} value={algorithm} disabled={algorithm === "nuvs" && !hasHmm}>
-            {getTaskDisplayName(algorithm)}
+export const WorkflowSelect = ({ hasHmm, libraryType, value, onChange }) => {
+    const optionComponents = map(getCompatibleWorkflows(libraryType), workflow => (
+        <option key={workflow} value={workflow} disabled={workflow === "nuvs" && !hasHmm}>
+            {getTaskDisplayName(workflow)}
         </option>
     ));
 
     return (
         <InputGroup>
-            <InputLabel>Algorithm</InputLabel>
-            <Select name="algorithm" value={value} onChange={onChange}>
+            <InputLabel>Workflow</InputLabel>
+            <Select name="workflow" value={value} onChange={onChange}>
                 {optionComponents}
             </Select>
         </InputGroup>
     );
 };
 
-AlgorithmSelect.propTypes = {
+WorkflowSelect.propTypes = {
     libraryType: PropTypes.string.isRequired,
     value: PropTypes.oneOf(["pathoscope_bowtie", "nuvs", "aodp"]),
     onChange: PropTypes.func,

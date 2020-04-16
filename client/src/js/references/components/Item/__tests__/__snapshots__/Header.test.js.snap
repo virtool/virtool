@@ -29,6 +29,11 @@ exports[`<ReferenceItemHeader /> should render 1`] = `
   </h2>
   <p>
     <span>
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="barcode"
+      />
       <strong
         className="text-capitalize"
       >
