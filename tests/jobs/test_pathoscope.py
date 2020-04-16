@@ -70,7 +70,7 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
 
     dbs.analyses.insert_one({
         "_id": "baz",
-        "algorithm": "pathoscope_bowtie",
+        "workflow": "pathoscope_bowtie",
         "ready": False,
         "sample": {
             "id": "foobar"

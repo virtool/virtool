@@ -9,7 +9,6 @@ snapshots = Snapshot()
 
 snapshots['test_get[uvloop-None-True] format_analysis'] = {
     '_id': 'foobar',
-    'algorithm': 'pathoscope_bowtie',
     'ready': True,
     'results': {
     },
@@ -19,5 +18,6 @@ snapshots['test_get[uvloop-None-True] format_analysis'] = {
     'subtraction': {
         'id': 'plum',
         'name': 'Plum'
-    }
+    },
+    'workflow': 'pathoscope_bowtie'
 }

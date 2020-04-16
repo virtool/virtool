@@ -23,7 +23,7 @@ async def test_get(error, spawn_client, test_job, resp_is):
             "sample_id": "1e01a382",
             "username": "igboyes",
             "index_id": "465428b0",
-            "algorithm": "nuvs"
+            "workflow": "nuvs"
         },
         "user": {
             "id": "igboyes"

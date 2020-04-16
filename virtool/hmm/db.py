@@ -66,7 +66,7 @@ async def get_hmms_referenced_in_files(db, settings: dict) -> set:
     """
     paths = list()
 
-    async for document in db.analyses.find({"algorithm": "nuvs", "results": "file"}, ["_id", "sample"]):
+    async for document in db.analyses.find({"workflow": "nuvs", "results": "file"}, ["_id", "sample"]):
         path = virtool.analyses.utils.join_analysis_json_path(
             settings["data_path"],
             document["_id"],
@@ -99,7 +99,7 @@ async def get_hmms_referenced_in_db(db) -> set:
     """
     cursor = db.analyses.aggregate([
         {"$match": {
-            "algorithm": "nuvs"
+            "workflow": "nuvs"
         }},
         {"$project": {
             "results.orfs.hits.hit": True

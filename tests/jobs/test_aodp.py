@@ -23,7 +23,7 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
 
     dbs.analyses.insert_one({
         "_id": "foo_analysis",
-        "algorithm": "aodp",
+        "workflow": "aodp",
         "ready": False,
         "sample": {
             "id": "foobar"

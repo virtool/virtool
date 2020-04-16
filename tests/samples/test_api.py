@@ -396,7 +396,7 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
     await client.db.analyses.insert_many([
         {
             "_id": "test_1",
-            "algorithm": "pathoscope_bowtie",
+            "workflow": "pathoscope_bowtie",
             "created_at": static_time.datetime,
             "ready": True,
             "job": {
@@ -420,7 +420,7 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
         },
         {
             "_id": "test_2",
-            "algorithm": "pathoscope_bowtie",
+            "workflow": "pathoscope_bowtie",
             "created_at": static_time.datetime,
             "ready": True,
             "job": {
@@ -444,7 +444,7 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
         },
         {
             "_id": "test_3",
-            "algorithm": "pathoscope_bowtie",
+            "workflow": "pathoscope_bowtie",
             "created_at": static_time.datetime,
             "ready": True,
             "job": {
@@ -496,7 +496,7 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
         "job": {
             "id": "baz"
         },
-        "algorithm": "pathoscope_bowtie",
+        "workflow": "pathoscope_bowtie",
         "reference": {
             "id": "foo"
         },
@@ -537,7 +537,7 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
     m_new = mocker.patch("virtool.analyses.db.new", new=make_mocked_coro(test_analysis))
 
     resp = await client.post("/api/samples/test/analyses", data={
-        "algorithm": "pathoscope_bowtie",
+        "workflow": "pathoscope_bowtie",
         "ref_id": "foo",
         "subtraction_id": "bar"
     })

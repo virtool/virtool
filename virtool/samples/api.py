@@ -50,7 +50,7 @@ async def find(req):
     """
     db = req.app["db"]
 
-    algorithm_query = virtool.samples.db.compose_analysis_query(req.query)
+    workflow_query = virtool.samples.db.compose_analysis_query(req.query)
 
     v = Validator(QUERY_SCHEMA, allow_unknown=True)
 
@@ -86,16 +86,16 @@ async def find(req):
     if term:
         db_query = virtool.api.utils.compose_regex_query(term, ["name", "user.id"])
 
-    if algorithm_query:
+    if workflow_query:
         if db_query:
             db_query = {
                 "$and": [
                     db_query,
-                    algorithm_query
+                    workflow_query
                 ]
             }
         else:
-            db_query = algorithm_query
+            db_query = workflow_query
 
     data = await virtool.api.utils.paginate(
         db.samples,
@@ -478,18 +478,18 @@ async def find_analyses(req):
 
 
 @routes.post("/api/samples/{sample_id}/analyses", schema={
-    "algorithm": {
-        "type": "string",
-        "required": True,
-        "allowed": virtool.analyses.utils.ALGORITHM_NAMES
-    },
     "ref_id": {
         "type": "string",
         "required": True
     },
     "subtraction_id": {
         "type": "string"
-    }
+    },
+    "workflow": {
+        "type": "string",
+        "required": True,
+        "allowed": virtool.analyses.utils.WORKFLOW_NAMES
+    },
 })
 async def analyze(req):
     """
@@ -530,12 +530,12 @@ async def analyze(req):
         ref_id,
         subtraction_id,
         req["client"].user_id,
-        data["algorithm"]
+        data["workflow"]
     )
 
     document = virtool.utils.base_processor(document)
 
-    sample = await virtool.samples.db.recalculate_algorithm_tags(db, sample_id)
+    sample = await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
 
     await req.app["dispatcher"].dispatch("samples", "update", virtool.utils.base_processor(sample))
 

@@ -318,19 +318,19 @@ async def format_analysis(app, document: dict) -> dict:
     :return: a formatted document
 
     """
-    algorithm = document.get("algorithm")
+    workflow = document.get("workflow")
 
-    if algorithm:
-        if algorithm == "nuvs":
+    if workflow:
+        if workflow == "nuvs":
             return await format_nuvs(app, document)
 
-        if "pathoscope" in algorithm:
+        if "pathoscope" in workflow:
             return await format_pathoscope(app, document)
 
-        if algorithm == "aodp":
+        if workflow == "aodp":
             return await format_aodp(app, document)
 
-    raise ValueError("Could not determine analysis algorithm")
+    raise ValueError("Could not determine analysis workflow")
 
 
 async def gather_patched_otus(app, results):

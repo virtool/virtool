@@ -10,6 +10,7 @@ import virtool.otus.utils
 import virtool.references.migrate
 import virtool.samples.migrate
 import virtool.subtractions.migrate
+import virtool.users.migrate
 import virtool.users.utils
 import virtool.utils
 
@@ -24,7 +25,7 @@ async def migrate(app):
     db = app["db"]
 
     logger.info(" • analyses")
-    await virtool.analyses.migrate.migrate_analyses(db, app["settings"])
+    await virtool.analyses.migrate.migrate_analyses(app)
     await virtool.caches.migrate.migrate_caches(app)
     await migrate_files(db)
     await migrate_groups(db)
@@ -34,6 +35,7 @@ async def migrate(app):
     await virtool.samples.migrate.migrate_samples(app)
     await virtool.references.migrate.migrate_references(app)
     await virtool.subtractions.migrate.migrate_subtractions(app)
+    await virtool.users.migrate.migrate_users(app)
 
 
 async def migrate_files(db):

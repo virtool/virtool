@@ -164,7 +164,7 @@ class Job(virtool.jobs.job.Job):
 
         sample_id = self.params["sample_id"]
 
-        virtool.db.sync.recalculate_algorithm_tags(self.db, sample_id)
+        virtool.db.sync.recalculate_workflow_tags(self.db, sample_id)
 
         self.dispatch("samples", "update", [sample_id])
 

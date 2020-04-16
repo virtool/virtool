@@ -94,11 +94,11 @@ class TestBLAST:
         assert await dbi.analyses.find_one() == document
 
 
-@pytest.mark.parametrize("algorithm", [None, "foobar", "nuvs", "pathoscope"])
-async def test_format_analysis(algorithm, mocker):
+@pytest.mark.parametrize("workflow", [None, "foobar", "nuvs", "pathoscope"])
+async def test_format_analysis(workflow, mocker):
     """
-    Test that the correct formatting function is called based on the algorithm field. Test that an exception is raised
-    if the algorithm field cannot be processed.
+    Test that the correct formatting function is called based on the workflow field. Test that an exception is raised
+    if the workflow field cannot be processed.
 
     """
     m_format_nuvs = make_mocked_coro({
@@ -116,8 +116,8 @@ async def test_format_analysis(algorithm, mocker):
 
     document = dict()
 
-    if algorithm:
-        document["algorithm"] = algorithm
+    if workflow:
+        document["workflow"] = workflow
 
     app = {
         "db": "db",
@@ -126,24 +126,24 @@ async def test_format_analysis(algorithm, mocker):
 
     coroutine = virtool.analyses.format.format_analysis(app, document)
 
-    if algorithm is None or algorithm == "foobar":
+    if workflow is None or workflow == "foobar":
         with pytest.raises(ValueError) as excinfo:
             await coroutine
 
-        assert "Could not determine analysis algorithm" in str(excinfo.value)
+        assert "Could not determine analysis workflow" in str(excinfo.value)
 
         return
 
     assert await coroutine == {
-        "is_nuvs": algorithm == "nuvs",
-        "is_pathoscope": algorithm == "pathoscope"
+        "is_nuvs": workflow == "nuvs",
+        "is_pathoscope": workflow == "pathoscope"
     }
 
-    if algorithm == "nuvs":
+    if workflow == "nuvs":
         m_format_nuvs.assert_called_with(app, document)
         assert not m_format_pathoscope.called
 
-    elif algorithm == "pathoscope":
+    elif workflow == "pathoscope":
         m_format_pathoscope.assert_called_with(app, document)
         assert not m_format_nuvs.called
 

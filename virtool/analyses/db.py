@@ -14,7 +14,7 @@ import virtool.utils
 
 PROJECTION = [
     "_id",
-    "algorithm",
+    "workflow",
     "created_at",
     "index",
     "job",
@@ -92,7 +92,7 @@ class BLAST:
         return data, document
 
 
-async def new(app, sample_id, ref_id, subtraction_id, user_id, algorithm):
+async def new(app, sample_id, ref_id, subtraction_id, user_id, workflow):
     """
     Creates a new analysis. Ensures that a valid subtraction host was the submitted. Configures read and write
     permissions on the sample document and assigns it a creator username based on the requesting connection.
@@ -117,7 +117,7 @@ async def new(app, sample_id, ref_id, subtraction_id, user_id, algorithm):
         "job": {
             "id": job_id
         },
-        "algorithm": algorithm,
+        "workflow": workflow,
         "sample": {
             "id": sample_id
         },
@@ -151,14 +151,14 @@ async def new(app, sample_id, ref_id, subtraction_id, user_id, algorithm):
     job = await virtool.jobs.db.create(
         db,
         settings,
-        document["algorithm"],
+        document["workflow"],
         task_args,
         user_id
     )
 
     await app["jobs"].enqueue(job["_id"])
 
-    await virtool.samples.db.recalculate_algorithm_tags(db, sample_id)
+    await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
 
     return document
 

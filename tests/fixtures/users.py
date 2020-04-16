@@ -22,7 +22,7 @@ def bob(no_permissions, static_time):
             "skip_quick_analyze_dialog": True,
             "show_ids": True,
             "show_versions": True,
-            "quick_analyze_algorithm": "pathoscope_bowtie"
+            "quick_analyze_workflow": "pathoscope_bowtie"
         }
     }
 
@@ -47,7 +47,7 @@ def create_user(static_time):
                 "skip_quick_analyze_dialog": True,
                 "show_ids": True,
                 "show_versions": True,
-                "quick_analyze_algorithm": "pathoscope_bowtie"
+                "quick_analyze_workflow": "pathoscope_bowtie"
             },
             "force_reset": False,
             "password": "$2b$12$0aC1WPkTG.up/KQb3KcQVOMkMbThtjMMrFfG5tiILY2cUMVcnEW0.".encode()

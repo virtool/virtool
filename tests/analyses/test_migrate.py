@@ -100,6 +100,11 @@ async def test_migrate_analyses(mocker, dbi):
         "foo": "bar"
     }
 
+    app = {
+        "db": dbi,
+        "settings": settings
+    }
+
     m_rename_results_field = mocker.patch(
         "virtool.analyses.migrate.rename_results_field",
         make_mocked_coro()
@@ -115,13 +120,19 @@ async def test_migrate_analyses(mocker, dbi):
         make_mocked_coro()
     )
 
+    m_rename_algorithm_field = mocker.patch(
+        "virtool.analyses.migrate.rename_algorithm_field",
+        make_mocked_coro()
+    )
+
     m_delete_unready = mocker.patch(
         "virtool.db.migrate.delete_unready",
         make_mocked_coro()
     )
 
-    await virtool.analyses.migrate.migrate_analyses(dbi, settings)
+    await virtool.analyses.migrate.migrate_analyses(app)
 
+    m_rename_algorithm_field.assert_called_with(dbi)
     m_rename_results_field.assert_called_with(dbi)
     m_convert_pathoscope_files.assert_called_with(dbi, settings)
     m_rename_analysis_json_files.assert_called_with(settings)
@@ -171,10 +182,10 @@ async def test_convert_pathoscope_file(tmpdir, dbi):
 
 
 @pytest.mark.parametrize("exclusion", [
-    {"algorithm": "nuvs"},
+    {"workflow": "nuvs"},
     {"results": []},
     {"read_count": 23}
-], ids=["algorithm", "non-file", "read_count"])
+], ids=["workflow", "non-file", "read_count"])
 async def test_convert_pathoscope_files(exclusion, mocker, dbi):
     """
     Test that `convert_pathoscope_file` is called for all matching analysis document.
@@ -187,9 +198,9 @@ async def test_convert_pathoscope_files(exclusion, mocker, dbi):
     m_convert_pathoscope_file = mocker.patch("virtool.analyses.migrate.convert_pathoscope_file", make_mocked_coro())
 
     documents = [
-        {"_id": "foo", "sample": {"id": "hello"}, "algorithm": "pathoscope_bowtie", "results": "file"},
-        {"_id": "bar", "sample": {"id": "hello"}, "algorithm": "pathoscope_bowtie", "results": "file"},
-        {"_id": "baz", "sample": {"id": "world"}, "algorithm": "pathoscope_bowtie", "results": "file"}
+        {"_id": "foo", "sample": {"id": "hello"}, "workflow": "pathoscope_bowtie", "results": "file"},
+        {"_id": "bar", "sample": {"id": "hello"}, "workflow": "pathoscope_bowtie", "results": "file"},
+        {"_id": "baz", "sample": {"id": "world"}, "workflow": "pathoscope_bowtie", "results": "file"}
     ]
 
     documents[1].update(exclusion)
@@ -264,21 +275,46 @@ async def test_rename_results_field(dbi):
     Test that only the `diagnosis` field is renamed to `results`.
 
     Don't bother testing effects on `nuvs` documents. They already use the results field name and will be ignored by the
-    `{"algorithm": "pathoscope_bowtie"}` query.
+    `{"workflow": "pathoscope_bowtie"}` query.
 
     """
     await dbi.analyses.insert_many([
-        {"_id": "foo", "algorithm": "pathoscope_bowtie", "hello": "world", "diagnosis": "foobar"},
-        {"_id": "bar", "algorithm": "pathoscope_bowtie", "hello": "world", "results": "foobar"},
-        {"_id": "baz", "algorithm": "pathoscope_bowtie", "hello": "world", "diagnosis": "file"},
-        {"_id": "cod", "algorithm": "pathoscope_bowtie", "hello": "world", "results": "file"}
+        {"_id": "foo", "workflow": "pathoscope_bowtie", "hello": "world", "diagnosis": "foobar"},
+        {"_id": "bar", "workflow": "pathoscope_bowtie", "hello": "world", "results": "foobar"},
+        {"_id": "baz", "workflow": "pathoscope_bowtie", "hello": "world", "diagnosis": "file"},
+        {"_id": "cod", "workflow": "pathoscope_bowtie", "hello": "world", "results": "file"}
     ])
 
     await virtool.analyses.migrate.rename_results_field(dbi)
 
     assert await dbi.analyses.find({}).sort("_id").to_list(None) == [
-        {"_id": "bar", "algorithm": "pathoscope_bowtie", "hello": "world", "results": "foobar"},
-        {"_id": "baz", "algorithm": "pathoscope_bowtie", "hello": "world", "results": "file"},
-        {"_id": "cod", "algorithm": "pathoscope_bowtie", "hello": "world", "results": "file"},
-        {"_id": "foo", "algorithm": "pathoscope_bowtie", "hello": "world", "results": "foobar"}
+        {"_id": "bar", "workflow": "pathoscope_bowtie", "hello": "world", "results": "foobar"},
+        {"_id": "baz", "workflow": "pathoscope_bowtie", "hello": "world", "results": "file"},
+        {"_id": "cod", "workflow": "pathoscope_bowtie", "hello": "world", "results": "file"},
+        {"_id": "foo", "workflow": "pathoscope_bowtie", "hello": "world", "results": "foobar"}
+    ]
+
+
+async def test_rename_algorithm_field(dbi):
+    """
+    Test that only the `diagnosis` field is renamed to `results`.
+
+    Don't bother testing effects on `nuvs` documents. They already use the results field name and will be ignored by the
+    `{"workflow": "pathoscope_bowtie"}` query.
+
+    """
+    await dbi.analyses.insert_many([
+        {"_id": "foo", "algorithm": "pathoscope_bowtie", "hello": "world"},
+        {"_id": "bar", "workflow": "pathoscope_bowtie", "hello": "world"},
+        {"_id": "baz", "algorithm": "pathoscope_bowtie", "hello": "world"},
+        {"_id": "cod", "workflow": "pathoscope_bowtie", "hello": "world"}
+    ])
+
+    await virtool.analyses.migrate.rename_algorithm_field(dbi)
+
+    assert await dbi.analyses.find({}).sort("_id").to_list(None) == [
+        {"_id": "bar", "workflow": "pathoscope_bowtie", "hello": "world"},
+        {"_id": "baz", "workflow": "pathoscope_bowtie", "hello": "world"},
+        {"_id": "cod", "workflow": "pathoscope_bowtie", "hello": "world"},
+        {"_id": "foo", "workflow": "pathoscope_bowtie", "hello": "world"}
     ]
