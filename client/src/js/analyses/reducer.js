@@ -51,7 +51,7 @@ export const initialState = {
 };
 
 export const getInitialSortKey = action => {
-    switch (action.data.algorithm) {
+    switch (action.data.workflow) {
         case "nuvs":
             return "length";
 

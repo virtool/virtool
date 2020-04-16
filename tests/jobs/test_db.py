@@ -18,7 +18,7 @@ async def test_processor(dbi, static_time, test_job):
         "id": "4c530449",
         "created_at": static_time.datetime,
         "args": {
-            "algorithm": "nuvs",
+            "workflow": "nuvs",
             "analysis_id": "e410429b",
             "index_id": "465428b0",
             "name": None,

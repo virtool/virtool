@@ -190,21 +190,17 @@ def read_diff_file(data_path: str, otu_id: str, otu_version: Union[int, str]) ->
         return json.load(f, object_hook=virtool.history.utils.json_object_hook)
 
 
-def recalculate_algorithm_tags(db, sample_id):
+def recalculate_workflow_tags(db, sample_id: str):
     """
-    Recalculate and apply algorithm tags (eg. "ip", True) for a given sample. Finds the associated analyses and calls
-    :func:`calculate_algorithm_tags`, then applies the update to the sample document.
+    Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param sample_id: the id of the sample to recalculate tags for
-    :type sample_id: str
 
     """
-    analyses = db.analyses.find({"sample.id": sample_id}, ["ready", "algorithm"])
+    analyses = db.analyses.find({"sample.id": sample_id}, ["ready", "workflow"])
 
-    update = virtool.samples.utils.calculate_algorithm_tags(analyses)
+    update = virtool.samples.utils.calculate_workflow_tags(analyses)
 
     db.samples.update_one({"_id": sample_id}, {
         "$set": update

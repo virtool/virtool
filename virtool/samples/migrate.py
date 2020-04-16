@@ -31,7 +31,7 @@ async def migrate_samples(app):
     await add_library_type(motor_client)
 
     for sample_id in await motor_client.samples.distinct("_id"):
-        await virtool.samples.db.recalculate_algorithm_tags(motor_client, sample_id)
+        await virtool.samples.db.recalculate_workflow_tags(motor_client, sample_id)
 
 
 async def add_library_type(db):

@@ -20,7 +20,7 @@ describe("getResults()", () => {
 });
 
 describe("getFilterIds()", () => {
-    const algorithm = "nuvs";
+    const workflow = "nuvs";
 
     let results;
 
@@ -45,12 +45,12 @@ describe("getFilterIds()", () => {
     });
 
     it("should return filterIds when filtered", () => {
-        const result = getFilterIds.resultFunc(algorithm, results, true, true);
+        const result = getFilterIds.resultFunc(workflow, results, true, true);
         expect(result).toEqual([]);
     });
 
     it("should return filterIds when unfiltered", () => {
-        const result = getFilterIds.resultFunc(algorithm, results, true, false);
+        const result = getFilterIds.resultFunc(workflow, results, true, false);
         expect(result).toEqual([]);
     });
 });
@@ -110,7 +110,7 @@ describe("getSortIds()", () => {
 });
 
 describe("getMatches()", () => {
-    const algorithm = "nuvs";
+    const workflow = "nuvs";
 
     let filterIds;
     let searchIds;
@@ -151,7 +151,7 @@ describe("getMatches()", () => {
     });
 
     it("should return ids when restricted by filter", () => {
-        expect(getMatches.resultFunc(algorithm, results, filterIds, searchIds, sortIds)).toEqual([
+        expect(getMatches.resultFunc(workflow, results, filterIds, searchIds, sortIds)).toEqual([
             results[2],
             results[0]
         ]);
@@ -160,7 +160,7 @@ describe("getMatches()", () => {
     it("should return ids when restricted by search", () => {
         searchIds = ["0", "3"];
         filterIds = [0, 3, 2];
-        expect(getMatches.resultFunc(algorithm, results, filterIds, searchIds, sortIds)).toEqual([
+        expect(getMatches.resultFunc(workflow, results, filterIds, searchIds, sortIds)).toEqual([
             results[3],
             results[0]
         ]);
@@ -169,7 +169,7 @@ describe("getMatches()", () => {
     it("should return ids when search is null", () => {
         searchIds = null;
         filterIds = [0, 3, 2];
-        expect(getMatches.resultFunc(algorithm, results, filterIds, searchIds, sortIds)).toEqual([
+        expect(getMatches.resultFunc(workflow, results, filterIds, searchIds, sortIds)).toEqual([
             results[2],
             results[3],
             results[0]
@@ -180,7 +180,7 @@ describe("getMatches()", () => {
         searchIds = null;
         filterIds = [0, 1, 2, 3];
         sortIds = [3, 1, 2, 0];
-        expect(getMatches.resultFunc(algorithm, results, filterIds, searchIds, sortIds)).toEqual([
+        expect(getMatches.resultFunc(workflow, results, filterIds, searchIds, sortIds)).toEqual([
             results[3],
             results[1],
             results[2],

@@ -1,8 +1,8 @@
-export const setAlgorithmParameters = (url, algorithm, conditions) => {
+export const setWorkflowFindParameters = (url, workflow, conditions) => {
     if (conditions.length === 0 || conditions.length === 3) {
-        url.searchParams.delete(algorithm);
+        url.searchParams.delete(workflow);
     } else {
-        url.searchParams.set(algorithm, conditions);
+        url.searchParams.set(workflow, conditions);
     }
 };
 
@@ -17,8 +17,8 @@ export const createFindURL = (term, pathoscope, nuvs) => {
         }
     }
 
-    setAlgorithmParameters(url, "pathoscope", pathoscope);
-    setAlgorithmParameters(url, "nuvs", nuvs);
+    setWorkflowFindParameters(url, "pathoscope", pathoscope);
+    setWorkflowFindParameters(url, "nuvs", nuvs);
 
     return url;
 };

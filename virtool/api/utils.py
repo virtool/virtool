@@ -6,6 +6,14 @@ import virtool.users.utils
 import virtool.utils
 
 
+def compose_exists_query(field):
+    return {
+        field: {
+            "$exists": True
+        }
+    }
+
+
 def compose_regex_query(term, fields):
     if not isinstance(fields, (list, tuple)):
         raise TypeError("Type of 'fields' must be one of 'list' or 'tuple'")

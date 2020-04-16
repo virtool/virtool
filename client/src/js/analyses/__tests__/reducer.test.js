@@ -20,9 +20,9 @@ import {
 import reducer, { setNuvsBLAST } from "../reducer";
 import { formatData } from "../utils";
 
-formatData.mockImplementation(({ algorithm, ready }) => ({
-    algorithm,
+formatData.mockImplementation(({ ready, workflow }) => ({
     ready,
+    workflow,
     foo: "bar"
 }));
 
@@ -211,7 +211,7 @@ describe("Analyses Reducer", () => {
     });
 
     it.each([true, false])("should handle GET_ANALYSIS_SUCCEEDED for nuvs when [action.ready=%p]", ready => {
-        const algorithm = "nuvs";
+        const workflow = "nuvs";
         const state = {
             activeId: null,
             data: null,
@@ -222,7 +222,7 @@ describe("Analyses Reducer", () => {
         const action = {
             type: "GET_ANALYSIS_SUCCEEDED",
             data: {
-                algorithm,
+                workflow,
                 ready,
                 results: []
             }
@@ -232,7 +232,7 @@ describe("Analyses Reducer", () => {
             activeId: null,
             data: null,
             detail: {
-                algorithm,
+                workflow,
                 ready,
                 foo: "bar"
             },
@@ -243,12 +243,12 @@ describe("Analyses Reducer", () => {
     });
 
     it.each([true, false])("should handle GET_ANALYSIS_SUCCEEDED for pathoscope when [action.ready=%p]", ready => {
-        const algorithm = "pathoscope_bowtie";
+        const workflow = "pathoscope_bowtie";
         const state = {};
         const action = {
             type: "GET_ANALYSIS_SUCCEEDED",
             data: {
-                algorithm,
+                workflow,
                 ready,
                 results: []
             }
@@ -257,7 +257,7 @@ describe("Analyses Reducer", () => {
         expect(result).toEqual({
             activeId: null,
             detail: {
-                algorithm,
+                workflow,
                 ready,
                 foo: "bar"
             },
@@ -278,7 +278,7 @@ describe("Analyses Reducer", () => {
         const state = {
             detail: {
                 id: "testid",
-                algorithm: "nuvs",
+                workflow: "nuvs",
                 results: [{ index: 3 }, { index: 5 }]
             }
         };
@@ -301,7 +301,7 @@ describe("Analyses Reducer", () => {
         const state = {
             detail: {
                 id: "testid",
-                algorithm: "nuvs",
+                workflow: "nuvs",
                 results: [{ index: 3 }, { index: 5 }]
             }
         };
@@ -326,7 +326,7 @@ describe("Analyses Reducer", () => {
             const state = {
                 detail: {
                     id: "foo",
-                    algorithm: "nuvs",
+                    workflow: "nuvs",
                     results: [{ index: 3 }, { index: 5 }]
                 }
             };
@@ -347,7 +347,7 @@ describe("Analyses Reducer", () => {
             const state = {
                 detail: {
                     id: "foo",
-                    algorithm: "nuvs",
+                    workflow: "nuvs",
                     results: [{ index: 3 }, { index: 5 }]
                 }
             };

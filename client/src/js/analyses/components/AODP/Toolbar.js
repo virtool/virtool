@@ -28,7 +28,7 @@ export const AODPToolBar = ({ filterAODP, fuse, id, sortKey, onSearch, onSelect,
     return (
         <StyledAODPToolbar>
             <SearchInput onChange={handleChangeSearch} onKeyDown={e => e.stopPropagation()} placeholder="Name" />
-            <AnalysisViewerSort algorithm="aodp" sortKey={sortKey} onSelect={onSelect} />
+            <AnalysisViewerSort workflow="aodp" sortKey={sortKey} onSelect={onSelect} />
             <Input
                 type="number"
                 placeholder="Minimum Identity"

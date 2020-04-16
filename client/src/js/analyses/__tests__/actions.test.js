@@ -113,19 +113,19 @@ it("analyze() should return action to analyze sample", () => {
     global.Date = jest.fn(() => testDate);
 
     const sampleId = "foo";
-    const algorithm = "algorithm";
+    const workflow = "workflow";
     const refId = "123abc";
     const userId = "bob";
     const subtractionId = "bar";
-    const result = analyze(sampleId, refId, algorithm, subtractionId, userId);
+    const result = analyze(sampleId, refId, subtractionId, userId, workflow);
 
     expect(result).toEqual({
         type: ANALYZE.REQUESTED,
-        algorithm,
         userId,
         refId,
         sampleId,
-        subtractionId
+        subtractionId,
+        workflow
     });
 
     global.Date = originalDate;

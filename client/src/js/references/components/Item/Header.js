@@ -25,6 +25,10 @@ const StyledReferenceItemHeader = styled.div`
 
     p {
         font-size: 14px;
+
+        i {
+            margin-right: 4px;
+        }
     }
 `;
 
@@ -38,6 +42,7 @@ export const ReferenceItemHeader = ({ createdAt, dataType, id, name, organism, o
         </h2>
         <p>
             <span>
+                <Icon name={dataType === "genome" ? "dna" : "barcode"} />
                 <strong className="text-capitalize">
                     {organism || "unknown"} {dataType || "genome"}s
                 </strong>

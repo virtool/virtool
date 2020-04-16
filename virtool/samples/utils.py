@@ -24,26 +24,23 @@ TRIM_PARAMETERS = {
 }
 
 
-def calculate_algorithm_tags(analyses):
+def calculate_workflow_tags(analyses: list) -> dict:
     """
-    Calculate the algorithm tags (eg. "ip", True) that should be applied to a sample document based on a list of its
+    Calculate the workflow tags (eg. "ip", True) that should be applied to a sample document based on a list of its
     associated analyses.
 
     :param analyses: the analyses to calculate tags for
-    :type analyses: list
-
-    :return: algorithm tags to apply to the sample document
-    :rtype: dict
+    :return: workflow tags to apply to the sample document
 
     """
     pathoscope = False
     nuvs = False
 
     for analysis in analyses:
-        if pathoscope is not True and analysis["algorithm"] in PATHOSCOPE_TASK_NAMES:
+        if pathoscope is not True and analysis["workflow"] in PATHOSCOPE_TASK_NAMES:
             pathoscope = analysis["ready"] or "ip" or pathoscope
 
-        if nuvs is not True and analysis["algorithm"] == "nuvs":
+        if nuvs is not True and analysis["workflow"] == "nuvs":
             nuvs = analysis["ready"] or "ip" or nuvs
 
         if pathoscope is True and nuvs is True:

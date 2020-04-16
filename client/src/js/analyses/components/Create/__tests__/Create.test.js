@@ -46,15 +46,15 @@ describe("<CreateAnalysis />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render with algorithm selected", () => {
+    it("should render with workflow selected", () => {
         const wrapper = shallow(<CreateAnalysis {...props} />);
-        wrapper.setState({ algorithm: "nuvs" });
+        wrapper.setState({ workflow: "nuvs" });
         expect(wrapper).toMatchSnapshot();
     });
 
     it("should render with summary", () => {
         const wrapper = shallow(<CreateAnalysis {...props} />);
-        wrapper.setState({ algorithm: "nuvs", selected: [{ id: "ref1", refId: "fer1" }] });
+        wrapper.setState({ workflow: "nuvs", selected: [{ id: "ref1", refId: "fer1" }] });
         expect(wrapper).toMatchSnapshot();
     });
 

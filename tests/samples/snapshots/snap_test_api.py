@@ -426,7 +426,7 @@ snapshots['test_get[uvloop-False-None] 1'] = {
 snapshots['test_find_analyses[uvloop-None-None] 1'] = {
     'documents': [
         {
-            'algorithm': 'pathoscope_bowtie',
+            'workflow': 'pathoscope_bowtie',
             'created_at': '2015-10-06T20:00:00Z',
             'id': 'test_1',
             'index': {
@@ -449,7 +449,7 @@ snapshots['test_find_analyses[uvloop-None-None] 1'] = {
             }
         },
         {
-            'algorithm': 'pathoscope_bowtie',
+            'workflow': 'pathoscope_bowtie',
             'created_at': '2015-10-06T20:00:00Z',
             'id': 'test_2',
             'index': {
@@ -472,7 +472,7 @@ snapshots['test_find_analyses[uvloop-None-None] 1'] = {
             }
         },
         {
-            'algorithm': 'pathoscope_bowtie',
+            'workflow': 'pathoscope_bowtie',
             'created_at': '2015-10-06T20:00:00Z',
             'id': 'test_3',
             'index': {
@@ -505,7 +505,7 @@ snapshots['test_find_analyses[uvloop-None-None] 1'] = {
 snapshots['test_find_analyses[uvloop-bob-None] 1'] = {
     'documents': [
         {
-            'algorithm': 'pathoscope_bowtie',
+            'workflow': 'pathoscope_bowtie',
             'created_at': '2015-10-06T20:00:00Z',
             'id': 'test_1',
             'index': {
@@ -538,7 +538,7 @@ snapshots['test_find_analyses[uvloop-bob-None] 1'] = {
 snapshots['test_find_analyses[uvloop-Baz-None] 1'] = {
     'documents': [
         {
-            'algorithm': 'pathoscope_bowtie',
+            'workflow': 'pathoscope_bowtie',
             'created_at': '2015-10-06T20:00:00Z',
             'id': 'test_1',
             'index': {
@@ -561,7 +561,7 @@ snapshots['test_find_analyses[uvloop-Baz-None] 1'] = {
             }
         },
         {
-            'algorithm': 'pathoscope_bowtie',
+            'workflow': 'pathoscope_bowtie',
             'created_at': '2015-10-06T20:00:00Z',
             'id': 'test_2',
             'index': {

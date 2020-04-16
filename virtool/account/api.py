@@ -112,9 +112,9 @@ async def get_settings(req):
         "type": "boolean",
         "required": False
     },
-    "quick_analyze_algorithm": {
+    "quick_analyze_workflow": {
         "type": "string",
-        "allowed": virtool.analyses.utils.ALGORITHM_NAMES,
+        "allowed": virtool.analyses.utils.WORKFLOW_NAMES,
         "required": False
     }
 })

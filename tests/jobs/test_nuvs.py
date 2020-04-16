@@ -332,7 +332,7 @@ def test_vfam(mock_job, dbs):
 
 def test_import_results(mock_job, dbs):
     """
-    Test that the stage method saves the result list to the analysis database document and updated the algorithm tags on
+    Test that the stage method saves the result list to the analysis database document and updated the workflow tags on
     the associated sample document.
 
     """
@@ -345,7 +345,7 @@ def test_import_results(mock_job, dbs):
     dbs.analyses.insert_one({
         "_id": "baz",
         "ready": False,
-        "algorithm": "nuvs",
+        "workflow": "nuvs",
         "sample": {
             "id": "foobar"
         }
@@ -404,7 +404,7 @@ def test_import_results(mock_job, dbs):
     assert dbs.analyses.find_one() == {
         "_id": "baz",
         "ready": True,
-        "algorithm": "nuvs",
+        "workflow": "nuvs",
         "sample": {
             "id": "foobar"
         },

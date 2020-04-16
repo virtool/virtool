@@ -23,9 +23,9 @@ exports[`<Toolbar /> should render 1`] = `
     onKeyDown={[Function]}
   />
   <AnalysisViewerSort
-    algorithm="pathoscope"
     onSelect={[MockFunction]}
     sortKey="coverage"
+    workflow="pathoscope"
   />
   <Button
     color="grey"
@@ -113,9 +113,9 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
     onKeyDown={[Function]}
   />
   <AnalysisViewerSort
-    algorithm="pathoscope"
     onSelect={[MockFunction]}
     sortKey="coverage"
+    workflow="pathoscope"
   />
   <Button
     color="grey"
@@ -203,9 +203,9 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
     onKeyDown={[Function]}
   />
   <AnalysisViewerSort
-    algorithm="pathoscope"
     onSelect={[MockFunction]}
     sortKey="coverage"
+    workflow="pathoscope"
   />
   <Button
     color="grey"
@@ -293,9 +293,9 @@ exports[`<Toolbar /> should render when [showPathoscopeReads=true] 1`] = `
     onKeyDown={[Function]}
   />
   <AnalysisViewerSort
-    algorithm="pathoscope"
     onSelect={[MockFunction]}
     sortKey="coverage"
+    workflow="pathoscope"
   />
   <Button
     color="grey"
@@ -383,9 +383,9 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
     onKeyDown={[Function]}
   />
   <AnalysisViewerSort
-    algorithm="pathoscope"
     onSelect={[MockFunction]}
     sortKey="coverage"
+    workflow="pathoscope"
   />
   <Button
     color="grey"
@@ -473,9 +473,9 @@ exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
     onKeyDown={[Function]}
   />
   <AnalysisViewerSort
-    algorithm="pathoscope"
     onSelect={[MockFunction]}
     sortKey="depth"
+    workflow="pathoscope"
   />
   <Button
     color="grey"
@@ -563,9 +563,9 @@ exports[`<Toolbar /> should render when [sortKey="weight"] 1`] = `
     onKeyDown={[Function]}
   />
   <AnalysisViewerSort
-    algorithm="pathoscope"
     onSelect={[MockFunction]}
     sortKey="weight"
+    workflow="pathoscope"
   />
   <Button
     color="grey"

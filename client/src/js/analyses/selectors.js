@@ -8,7 +8,7 @@ const getReadCount = state => state.analyses.detail.read_count;
 
 export const getActiveId = state => state.analyses.activeId;
 
-export const getAlgorithm = state => state.analyses.detail.algorithm;
+export const getWorkflow = state => state.analyses.detail.workflow;
 
 export const getAnalysisDetailId = state => get(state, "analyses.detail.id", null);
 
@@ -17,12 +17,12 @@ export const getResults = state => state.analyses.detail.results;
 export const getMaxSequenceLength = state => state.analyses.detail.maxSequenceLength;
 
 /**
- * Return a Fuse object for searching through results given an algorithm type. Algorithm type will determine which keys
- * the search runs over.
+ * Return a Fuse object for searching through results given an workflow name. The workflow will determine which keys the
+ * search runs over.
  *
  */
-export const getFuse = createSelector([getAlgorithm, getResults], (algorithm, results) => {
-    const keys = fuseSearchKeys[algorithm];
+export const getFuse = createSelector([getWorkflow, getResults], (workflow, results) => {
+    const keys = fuseSearchKeys[workflow];
 
     return new Fuse(results, {
         keys,
@@ -38,14 +38,14 @@ export const getFilterSequences = state => state.analyses.filterSequences;
 export const getFilterAODP = state => state.analyses.filterAODP;
 
 export const getFilterIds = createSelector(
-    [getFilterAODP, getAlgorithm, getResults, getFilterOTUs, getFilterSequences, getMaxReadLength, getReadCount],
-    (aodpFilter, algorithm, results, filterOTUs, filterSequences, maxReadLength, readCount) => {
-        if (algorithm === "nuvs") {
+    [getFilterAODP, getWorkflow, getResults, getFilterOTUs, getFilterSequences, getMaxReadLength, getReadCount],
+    (aodpFilter, workflow, results, filterOTUs, filterSequences, maxReadLength, readCount) => {
+        if (workflow === "nuvs") {
             const filteredResults = filterSequences ? reject(results, { e: undefined }) : results;
             return map(filteredResults, "id");
         }
 
-        if (algorithm === "pathoscope_bowtie" && filterOTUs) {
+        if (workflow === "pathoscope_bowtie" && filterOTUs) {
             const filteredResults = reject(results, hit => {
                 return hit.pi * readCount < (hit.length * 0.8) / maxReadLength;
             });
@@ -53,7 +53,7 @@ export const getFilterIds = createSelector(
             return map(filteredResults, "id");
         }
 
-        if (algorithm === "aodp" && aodpFilter) {
+        if (workflow === "aodp" && aodpFilter) {
             const filteredResults = filter(results, result => {
                 if (result.identity > aodpFilter * 100) {
                     return result.id;
@@ -86,7 +86,7 @@ export const getSearchIds = state => state.analyses.searchIds;
 
 export const getSortKey = state => state.analyses.sortKey;
 
-export const getSortIds = createSelector([getAlgorithm, getResults, getSortKey], (algorithm, results, sortKey) => {
+export const getSortIds = createSelector([getWorkflow, getResults, getSortKey], (workflow, results, sortKey) => {
     switch (sortKey) {
         case "e":
             return map(sortBy(results, "e"), "id");
@@ -115,12 +115,12 @@ export const getSortIds = createSelector([getAlgorithm, getResults, getSortKey],
 });
 
 export const getMatches = createSelector(
-    [getAlgorithm, getResults, getFilterIds, getSearchIds, getSortIds],
-    (algorithm, results, filterIds, searchIds, sortIds) => {
+    [getWorkflow, getResults, getFilterIds, getSearchIds, getSortIds],
+    (workflow, results, filterIds, searchIds, sortIds) => {
         let matchIds;
 
         if (searchIds) {
-            matchIds = intersection(sortIds, filterIds, map(searchIds, algorithm === "nuvs" ? toNumber : toString));
+            matchIds = intersection(sortIds, filterIds, map(searchIds, workflow === "nuvs" ? toNumber : toString));
         } else {
             matchIds = intersection(sortIds, filterIds);
         }
@@ -131,7 +131,7 @@ export const getMatches = createSelector(
     }
 );
 
-export const getActiveHit = createSelector([getAlgorithm, getMatches, getActiveId], (algorithm, matches, activeId) => {
+export const getActiveHit = createSelector([getWorkflow, getMatches, getActiveId], (workflow, matches, activeId) => {
     if (activeId !== null) {
         const hit = find(matches, { id: activeId });
 

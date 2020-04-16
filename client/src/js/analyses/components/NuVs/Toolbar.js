@@ -31,7 +31,7 @@ const NuVsToolbar = ({
     return (
         <StyledNuVsToolbar>
             <SearchInput onChange={handleChange} onKeyDown={e => e.stopPropagation()} placeholder="Name or family" />
-            <AnalysisViewerSort algorithm="nuvs" sortKey={sortKey} onSelect={onSelect} />
+            <AnalysisViewerSort workflow="nuvs" sortKey={sortKey} onSelect={onSelect} />
             <Button
                 icon="filter"
                 onClick={onFilterSequences}
