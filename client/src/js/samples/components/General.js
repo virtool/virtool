@@ -106,7 +106,11 @@ export const SampleDetailGeneral = ({
                     <tr>
                         <th>Subtraction</th>
                         <td>
-                            <Link to={`/subtraction/${subtraction.id}`}>{subtraction.name}</Link>
+                            {subtraction ? (
+                                <Link to={`/subtraction/${subtraction.id}`}>{subtraction.name}</Link>
+                            ) : (
+                                "None"
+                            )}
                         </td>
                     </tr>
                 </tbody>

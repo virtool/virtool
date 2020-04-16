@@ -1,3 +1,4 @@
+import asyncio
 import shutil
 
 import virtool.api.utils
@@ -9,7 +10,7 @@ import virtool.samples.utils
 import virtool.subtractions.utils
 import virtool.utils
 import virtool.validators
-from virtool.api.response import bad_request, conflict, json_response, no_content, not_found
+from virtool.api.response import bad_request, json_response, no_content, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -213,17 +214,9 @@ async def remove(req):
 
     subtraction_id = req.match_info["subtraction_id"]
 
-    update_result = await db.subtraction.update_one({"_id": subtraction_id}, {
-        "$set": {
-            "deleted": True
-        }
-    })
+    updated_count = await asyncio.shield(virtool.subtractions.db.delete(req.app, subtraction_id))
 
-    if update_result.matched_count == 0:
+    if updated_count == 0:
         return not_found()
-
-    index_path = virtool.subtractions.utils.calculate_index_path(settings, subtraction_id)
-
-    await req.app["run_in_thread"](shutil.rmtree, index_path, True)
 
     return no_content()
