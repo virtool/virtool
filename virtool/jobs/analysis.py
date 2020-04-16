@@ -81,7 +81,7 @@ class Job(virtool.jobs.job.Job):
             "subtraction_path": os.path.join(
                 self.settings["data_path"],
                 "subtractions",
-                analysis["subtraction"]["id"].lower().replace(" ", "_"),
+                analysis["subtraction"]["id"],
                 "reference"
             )
         })
