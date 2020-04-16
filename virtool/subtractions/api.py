@@ -1,3 +1,4 @@
+import asyncio
 import shutil
 
 import virtool.api.utils
@@ -9,9 +10,13 @@ import virtool.samples.utils
 import virtool.subtractions.utils
 import virtool.utils
 import virtool.validators
-from virtool.api.response import bad_request, conflict, json_response, no_content, not_found
+from virtool.api.response import bad_request, json_response, no_content, not_found
 
 routes = virtool.http.routes.Routes()
+
+BASE_QUERY = {
+    "deleted": False
+}
 
 
 @routes.get("/api/subtractions")
@@ -33,7 +38,7 @@ async def find(req):
     if short:
         documents = list()
 
-        async for document in db.subtraction.find(db_query, ["name"]):
+        async for document in db.subtraction.find({**db_query, **BASE_QUERY}, ["name"]):
             documents.append(virtool.utils.base_processor(document))
 
         return json_response(documents)
@@ -45,6 +50,7 @@ async def find(req):
         db.subtraction,
         db_query,
         req.query,
+        base_query=BASE_QUERY,
         sort="_id",
         projection=projection
     )
@@ -208,16 +214,9 @@ async def remove(req):
 
     subtraction_id = req.match_info["subtraction_id"]
 
-    if await db.samples.count_documents({"subtraction.id": subtraction_id}):
-        return conflict("Has linked samples")
+    updated_count = await asyncio.shield(virtool.subtractions.db.delete(req.app, subtraction_id))
 
-    delete_result = await db.subtraction.delete_one({"_id": subtraction_id})
-
-    if delete_result.deleted_count == 0:
+    if updated_count == 0:
         return not_found()
-
-    index_path = virtool.subtractions.utils.calculate_index_path(settings, subtraction_id)
-
-    await req.app["run_in_thread"](shutil.rmtree, index_path, True)
 
     return no_content()
