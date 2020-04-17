@@ -98,13 +98,13 @@ export const getSortIds = createSelector([getWorkflow, getResults, getSortKey], 
             return map(sortBy(results, "sequence.length").reverse(), "id");
 
         case "depth":
-            return map(sortBy(results, "depth"), "id");
+            return map(sortBy(results, "depth").reverse(), "id");
 
         case "coverage":
             return map(sortBy(results, "coverage").reverse(), "id");
 
         case "weight":
-            return map(sortBy(results, "pi"), "id");
+            return map(sortBy(results, "pi").reverse(), "id");
 
         case "identity":
             return map(sortBy(results, "identity").reverse(), "id");
