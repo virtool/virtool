@@ -11,13 +11,12 @@ describe("<InstallOption />", () => {
         };
     });
 
-    it("should render when [canInstall=true]", () => {
+    it("should render button when [canInstall=true]", () => {
         const wrapper = shallow(<InstallOption {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
-    it("should render when [canInstall=false]", () => {
+    it("should render permission alert when [canInstall=false]", () => {
         props.canInstall = false;
-
         const wrapper = shallow(<InstallOption {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
