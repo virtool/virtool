@@ -3,12 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Box, Container, Icon } from "../../base";
 
-export const Welcome = props => {
-    let version;
-
-    if (props.version) {
-        version = <small className="text-muted">{props.version}</small>;
-    }
+export const Welcome = ({ version }) => {
     return (
         <Container>
             <Box>

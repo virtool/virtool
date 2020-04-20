@@ -5,11 +5,7 @@ exports[`<Welcome /> should render 1`] = `
   <Box>
     <h3>
       Virtool 
-      <small
-        className="text-muted"
-      >
-        <Component />
-      </small>
+      <Component />
     </h3>
     <p>
       Viral infection diagnostics using next-generation sequencing
