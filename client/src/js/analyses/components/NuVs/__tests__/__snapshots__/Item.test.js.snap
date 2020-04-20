@@ -14,18 +14,10 @@ exports[`<NuVsItem /> should render when active 1`] = `
       13
     </Badge>
   </Item__NuVsItemHeader>
-  <Item__NuVsItemNumbers>
-    <Item__NuVsORFCount>
-      2
-       ORFs
-    </Item__NuVsORFCount>
-     /
-     
-    <Item__NuVsEValue>
-      E = 
-      0.0012
-    </Item__NuVsEValue>
-  </Item__NuVsItemNumbers>
+  <NuVsValues
+    e="0.0012"
+    orfCount={2}
+  />
 </Item__StyledNuVsItem>
 `;
 
@@ -43,18 +35,10 @@ exports[`<NuVsItem /> should render when not active 1`] = `
       13
     </Badge>
   </Item__NuVsItemHeader>
-  <Item__NuVsItemNumbers>
-    <Item__NuVsORFCount>
-      2
-       ORFs
-    </Item__NuVsORFCount>
-     /
-     
-    <Item__NuVsEValue>
-      E = 
-      0.0012
-    </Item__NuVsEValue>
-  </Item__NuVsItemNumbers>
+  <NuVsValues
+    e="0.0012"
+    orfCount={2}
+  />
 </Item__StyledNuVsItem>
 `;
 
@@ -72,17 +56,9 @@ exports[`<NuVsItem /> should render when not active 2`] = `
       13
     </Badge>
   </Item__NuVsItemHeader>
-  <Item__NuVsItemNumbers>
-    <Item__NuVsORFCount>
-      2
-       ORFs
-    </Item__NuVsORFCount>
-     /
-     
-    <Item__NuVsEValue>
-      E = 
-      0.0012
-    </Item__NuVsEValue>
-  </Item__NuVsItemNumbers>
+  <NuVsValues
+    e="0.0012"
+    orfCount={2}
+  />
 </Item__StyledNuVsItem>
 `;

@@ -1,5 +1,5 @@
 import React from "react";
-import { Badge } from "../../../base/Badge";
+import { Badge } from "../../../base";
 
 export const SelectedSamplesLabel = ({ count }) => {
     let tail;
@@ -12,5 +12,5 @@ export const SelectedSamplesLabel = ({ count }) => {
         );
     }
 
-    return <label className="control-label">Sample{tail}</label>;
+    return <label>Sample{tail}</label>;
 };

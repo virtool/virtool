@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import styled from "styled-components";
 import { select } from "d3-selection";
 import { scaleLinear } from "d3-scale";
+import { NuVsORFLabel } from "./ORFLabel";
 
 const HEIGHT = 8;
 
@@ -49,16 +50,18 @@ const NuVsORFHeader = styled.div`
     }
 `;
 
-const NuVsORFLabel = ({ hmm }) => {
-    if (hmm) {
-        return (
-            <a target="_blank" href={`/hmm/${hmm.hit}`} className="text-capitalize" rel="noopener noreferrer">
-                {hmm.names[0]}
-            </a>
-        );
+const NuVsORFValues = styled.span`
+font-size:
+    font-weight: bold;
+
+    span:first-child {
+        color: ${props => props.theme.color.blue};
     }
-    return <span>Unannotated</span>;
-};
+
+    span:last-child {
+        color: ${props => props.theme.color.red};
+    }
+`;
 
 const NuVsORF = ({ hits, index, maxSequenceLength, pos, strand, width }) => {
     const chartEl = useRef(null);
@@ -71,8 +74,10 @@ const NuVsORF = ({ hits, index, maxSequenceLength, pos, strand, width }) => {
         <div>
             <NuVsORFHeader>
                 <NuVsORFLabel hmm={hmm} />
-                <small className="text-primary text-strong">{pos[1] - pos[0]}</small>
-                <small className="text-danger text-strong">{hmm ? hmm.full_e : null}</small>
+                <NuVsORFValues>
+                    <span>{pos[1] - pos[0]}</span>
+                    <span>{hmm ? hmm.full_e : null}</span>
+                </NuVsORFValues>
             </NuVsORFHeader>
 
             <div ref={chartEl} />

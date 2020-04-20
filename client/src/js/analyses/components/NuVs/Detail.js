@@ -8,6 +8,7 @@ import { useElementSize } from "../../../utils/hooks";
 import NuVsBLAST from "./BLAST";
 import NuVsORF from "./ORF";
 import NuVsSequence from "./Sequence";
+import { NuVsValues } from "./Values";
 
 const StyledNuVsFamilies = styled.div`
     border: 1px solid #ddd;
@@ -101,7 +102,7 @@ export const NuVsDetail = ({ filterORFs, hit, maxSequenceLength }) => {
                     Sequence {index}
                     <Badge>{sequence.length} bp</Badge>
                 </h3>
-                <span className="text-success">{orfs.length} ORFs</span> / <span className="text-danger">E = {e}</span>
+                <NuVsValues e={e} orfCount={orfs.length} />
                 <NuVsFamilies families={families} />
             </NuVsDetailTitle>
             <NuVsLayout>

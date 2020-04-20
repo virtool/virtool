@@ -1,17 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<SelectedSamplesLabel /> should render 1`] = `
-<label
-  className="control-label"
->
+<label>
   Sample
 </label>
 `;
 
 exports[`<SelectedSamplesLabel /> should return when [count>1] 1`] = `
-<label
-  className="control-label"
->
+<label>
   Sample
   s 
   <Badge>
