@@ -125,3 +125,9 @@ async def ids_exist(collection, id_list):
 
     """
     return await collection.count_documents({"_id": {"$in": id_list}}) == len(id_list)
+
+
+async def determine_mongo_version(db):
+
+    server_info = await db.motor_client.client.server_info()
+    return server_info["version"]

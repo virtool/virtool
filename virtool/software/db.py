@@ -67,6 +67,7 @@ async def fetch_and_update_releases(app, ignore_errors=False):
     await db.status.update_one({"_id": "software"}, {
         "$set": {
             "errors": [],
+            "mongo_version": await virtool.db.utils.determine_mongo_version(db),
             "releases": releases
         }
     })
