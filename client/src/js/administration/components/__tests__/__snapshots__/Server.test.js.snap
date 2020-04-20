@@ -1,16 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<ServerSettings /> should render 1`] = `
-<div>
-  <div
-    className="settings-container"
-  >
+<Fragment>
+  <Container__NarrowContainer>
     <Connect(SentryOptions) />
-  </div>
-  <div
-    className="settings-container"
-  >
+  </Container__NarrowContainer>
+  <Container__NarrowContainer>
     <Connect(API) />
-  </div>
-</div>
+  </Container__NarrowContainer>
+</Fragment>
 `;

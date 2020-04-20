@@ -31,9 +31,7 @@ export const SampleRights = props => {
                 <p>Set the method used to assign groups to new samples and the default rights.</p>
             </BoxGroupHeader>
             <BoxGroupSection>
-                <label className="control-label" style={{ width: "100%" }}>
-                    <span>Sample Group</span>
-                </label>
+                <label>Sample Group</label>
                 <SampleGroupSelection>
                     <SelectBox
                         onClick={() => props.onChangeSampleGroup("none")}
