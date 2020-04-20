@@ -7,6 +7,10 @@ export const Container = styled.div`
     padding-right: 35px;
 `;
 
+export const NarrowContainer = styled.div`
+    max-width: 1150px;
+`;
+
 export const WideContainer = styled.div`
     position: absolute;
     left: 30px;

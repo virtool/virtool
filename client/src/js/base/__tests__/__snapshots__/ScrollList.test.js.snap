@@ -38,29 +38,28 @@ exports[`<ScrollList /> should return LoadingPlaceholder when [documents=null] a
     <LoadingPlaceholder
       margin="20px"
     >
-      <div
-        className="text-center"
-        style={
-          Object {
-            "marginTop": "20px",
-          }
-        }
+      <LoadingPlaceholder__StyledLoadingPlaceholder
+        margin="20px"
       >
-        <Loader>
-          <Loader__StyledLoader
-            color="#3c8786"
-            size="22px"
-          >
-            <div
-              className="Loader__StyledLoader-sc-338y7h-0 cRPClh"
-              color="#3c8786"
+        <div
+          className="LoadingPlaceholder__StyledLoadingPlaceholder-sc-1yo1zdt-0 ieNfPS"
+        >
+          <Loader>
+            <Loader__StyledLoader
+              color="greyDark"
               size="22px"
             >
-              <div />
-            </div>
-          </Loader__StyledLoader>
-        </Loader>
-      </div>
+              <div
+                className="Loader__StyledLoader-sc-338y7h-0 gqdnXn"
+                color="greyDark"
+                size="22px"
+              >
+                <div />
+              </div>
+            </Loader__StyledLoader>
+          </Loader>
+        </div>
+      </LoadingPlaceholder__StyledLoadingPlaceholder>
     </LoadingPlaceholder>
   </div>
 </ScrollList>
