@@ -1,4 +1,3 @@
-import CX from "classnames";
 import { mapValues } from "lodash-es";
 import React from "react";
 import { CopyToClipboard } from "react-copy-to-clipboard";
@@ -26,14 +25,25 @@ import { clearAPIKey, createAPIKey } from "../../actions";
 import CreateAPIKeyInfo from "./CreateInfo";
 import APIPermissions from "./Permissions";
 
-const StyledDialogBody = styled(DialogBody)`
+const CreateAPIKeyCopied = styled.p`
+    color: ${props => props.theme.color.blue};
+    visibility: ${props => (props.show ? "visible" : "hidden")};
+`;
+
+const CreateAPIKeyInput = styled(Input)`
+    text-align: center;
+`;
+
+const StyledCreateAPIKey = styled(DialogBody)`
     display: flex;
     flex-direction: column;
     justify-content: center;
     margin-left: 90px;
     margin-right: 90px;
+    text-align: center;
 
     strong {
+        color: ${props => props.theme.color.greenDark};
         margin-bottom: 5px;
     }
 `;
@@ -102,21 +112,14 @@ export class CreateAPIKey extends React.Component {
 
         if (this.state.show) {
             content = (
-                <StyledDialogBody className="text-center">
-                    <strong className="text-success">Here is your key.</strong>
-
+                <StyledCreateAPIKey>
+                    <strong>Here is your key.</strong>
                     <small>Make note of it now. For security purposes, it will not be shown again.</small>
 
                     <StyledFlex alignItems="stretch" alignContent="stretch">
                         <FlexItem grow={1}>
                             <InputContainer align="right">
-                                <Input
-                                    style={{ marginBottom: 0 }}
-                                    formGroupStyle={{ marginBottom: 0 }}
-                                    className="text-center"
-                                    value={this.props.newKey}
-                                    readOnly
-                                />
+                                <CreateAPIKeyInput value={this.props.newKey} readOnly />
                                 <CopyToClipboard text={this.props.newKey} onCopy={this.handleCopy}>
                                     <InputIcon name="copy" />
                                 </CopyToClipboard>
@@ -124,10 +127,10 @@ export class CreateAPIKey extends React.Component {
                         </FlexItem>
                     </StyledFlex>
 
-                    <small className={CX("text-primary", { invisible: !this.state.copied })}>
+                    <CreateAPIKeyCopied show={this.state.copied}>
                         <Icon name="check" /> Copied
-                    </small>
-                </StyledDialogBody>
+                    </CreateAPIKeyCopied>
+                </StyledCreateAPIKey>
             );
         } else {
             content = (

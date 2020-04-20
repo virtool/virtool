@@ -8,12 +8,8 @@ exports[`<CreateAPIKey /> should render when [props.newKey] and [state.copied] s
   onHide={[MockFunction]}
   show={true}
 >
-  <Create__StyledDialogBody
-    className="text-center"
-  >
-    <strong
-      className="text-success"
-    >
+  <Create__StyledCreateAPIKey>
+    <strong>
       Here is your key.
     </strong>
     <small>
@@ -32,19 +28,8 @@ exports[`<CreateAPIKey /> should render when [props.newKey] and [state.copied] s
         <Input__InputContainer
           align="right"
         >
-          <Input
-            className="text-center"
-            formGroupStyle={
-              Object {
-                "marginBottom": 0,
-              }
-            }
+          <Create__CreateAPIKeyInput
             readOnly={true}
-            style={
-              Object {
-                "marginBottom": 0,
-              }
-            }
             value="123abc"
           />
           <CopyToClipboard
@@ -58,8 +43,8 @@ exports[`<CreateAPIKey /> should render when [props.newKey] and [state.copied] s
         </Input__InputContainer>
       </FlexItem>
     </Create__StyledFlex>
-    <small
-      className="text-primary"
+    <Create__CreateAPIKeyCopied
+      show={true}
     >
       <Icon
         faStyle="fas"
@@ -67,8 +52,8 @@ exports[`<CreateAPIKey /> should render when [props.newKey] and [state.copied] s
         name="check"
       />
        Copied
-    </small>
-  </Create__StyledDialogBody>
+    </Create__CreateAPIKeyCopied>
+  </Create__StyledCreateAPIKey>
 </ModalDialog>
 `;
 
@@ -124,12 +109,8 @@ exports[`<CreateAPIKey /> should render when [state.newKey] set 1`] = `
   onHide={[MockFunction]}
   show={true}
 >
-  <Create__StyledDialogBody
-    className="text-center"
-  >
-    <strong
-      className="text-success"
-    >
+  <Create__StyledCreateAPIKey>
+    <strong>
       Here is your key.
     </strong>
     <small>
@@ -148,19 +129,8 @@ exports[`<CreateAPIKey /> should render when [state.newKey] set 1`] = `
         <Input__InputContainer
           align="right"
         >
-          <Input
-            className="text-center"
-            formGroupStyle={
-              Object {
-                "marginBottom": 0,
-              }
-            }
+          <Create__CreateAPIKeyInput
             readOnly={true}
-            style={
-              Object {
-                "marginBottom": 0,
-              }
-            }
             value="123abc"
           />
           <CopyToClipboard
@@ -174,8 +144,8 @@ exports[`<CreateAPIKey /> should render when [state.newKey] set 1`] = `
         </Input__InputContainer>
       </FlexItem>
     </Create__StyledFlex>
-    <small
-      className="text-primary invisible"
+    <Create__CreateAPIKeyCopied
+      show={false}
     >
       <Icon
         faStyle="fas"
@@ -183,7 +153,7 @@ exports[`<CreateAPIKey /> should render when [state.newKey] set 1`] = `
         name="check"
       />
        Copied
-    </small>
-  </Create__StyledDialogBody>
+    </Create__CreateAPIKeyCopied>
+  </Create__StyledCreateAPIKey>
 </ModalDialog>
 `;
