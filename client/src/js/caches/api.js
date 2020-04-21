@@ -1,9 +1,4 @@
-/**
- * Functions for communication with API endpoints related to sample caches.
- *
- * @module files/api
- */
-import Request from "superagent";
+import { Request } from "../app/request";
 
 /**
  * Get the cache record identified get ``cacheId``..

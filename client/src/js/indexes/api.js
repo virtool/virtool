@@ -1,4 +1,4 @@
-import Request from "superagent";
+import { Request } from "../app/request";
 
 export const find = ({ refId, term, page }) => Request.get(`/api/refs/${refId}/indexes`).query({ find: term, page });
 

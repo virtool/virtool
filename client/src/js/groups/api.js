@@ -1,4 +1,4 @@
-import Request from "superagent";
+import { Request } from "../app/request";
 
 export const list = () => Request.get("/api/groups");
 
