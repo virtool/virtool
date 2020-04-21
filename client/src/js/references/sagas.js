@@ -62,10 +62,9 @@ export function* cloneReference(action) {
 }
 
 export function* remoteReference() {
-    yield setPending(
-        apiCall(referenceAPI.remoteReference, { remote_from: "virtool/ref-plant-viruses" }, REMOTE_REFERENCE)
-    );
+    yield apiCall(referenceAPI.remoteReference, { remote_from: "virtool/ref-plant-viruses" }, REMOTE_REFERENCE);
     yield put(push({ pathname: "/refs" }));
+    yield put({ type: FIND_REFERENCES.REQUESTED });
 }
 
 export function* addRefUser(action) {
