@@ -1,21 +1,13 @@
 import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
-import { Button, Badge, Box, LoadingPlaceholder, ScrollList, ViewHeader, ViewHeaderTitle } from "../../base";
-import { checkAdminOrPermission, routerLocationHasState } from "../../utils/utils";
+import { Badge, LoadingPlaceholder, ScrollList, ViewHeader, ViewHeaderTitle } from "../../base";
+import { routerLocationHasState } from "../../utils/utils";
 import { findReferences, remoteReference } from "../actions";
-import { getHasOfficial, getTerm } from "../selectors";
+import { getTerm } from "../selectors";
 import AddReference from "./Add";
 import ReferenceItem from "./Item/Item";
+import ReferenceOfficial from "./Official";
 import ReferenceToolbar from "./Toolbar";
-
-const OfficialReferencePlaceholder = styled(Box)`
-    align-items: center;
-    display: flex;
-    flex-direction: column;
-    height: 180px;
-    justify-content: center;
-`;
 
 class ReferenceList extends React.Component {
     componentDidMount() {
@@ -29,19 +21,6 @@ class ReferenceList extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        let installOfficialComponent;
-
-        if (!this.props.hasOfficial && this.props.canCreate) {
-            installOfficialComponent = (
-                <OfficialReferencePlaceholder key="remote">
-                    <p>Official Remote Reference</p>
-                    <Button color="blue" onClick={this.props.onRemote}>
-                        Install
-                    </Button>
-                </OfficialReferencePlaceholder>
-            );
-        }
-
         return (
             <div>
                 <ViewHeader title="References">
@@ -51,6 +30,7 @@ class ReferenceList extends React.Component {
                 </ViewHeader>
 
                 <ReferenceToolbar />
+                <ReferenceOfficial />
 
                 <ScrollList
                     documents={this.props.documents}
@@ -59,8 +39,6 @@ class ReferenceList extends React.Component {
                     pageCount={this.props.pageCount}
                     renderRow={this.renderRow}
                 />
-
-                {installOfficialComponent}
 
                 <AddReference />
             </div>
@@ -71,9 +49,7 @@ class ReferenceList extends React.Component {
 const mapStateToProps = state => ({
     ...state.references,
     term: getTerm(state),
-    hasOfficial: getHasOfficial(state),
-    showModal: routerLocationHasState(state, "newReference"),
-    canCreate: checkAdminOrPermission(state, "create_ref")
+    showModal: routerLocationHasState(state, "newReference")
 });
 
 const mapDispatchToProps = dispatch => ({
