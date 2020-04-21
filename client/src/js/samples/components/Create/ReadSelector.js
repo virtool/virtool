@@ -3,9 +3,7 @@ import PropTypes from "prop-types";
 import React from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-
-import { Box, BoxGroup, BoxGroupSection, Button, Icon, InputError, SearchInput } from "../../../base";
-import { Toolbar } from "../../../base/Toolbar";
+import { Box, BoxGroup, Button, InputError, NoneFoundSection, SearchInput, Toolbar } from "../../../base";
 
 import ReadItem from "./ReadItem";
 
@@ -107,9 +105,9 @@ export default class ReadSelector extends React.PureComponent {
 
         if (!fileComponents.length) {
             fileComponents = (
-                <BoxGroupSection className="text-center">
-                    <Icon name="info-circle" /> No read files found. <Link to="samples/files">Upload some</Link>.
-                </BoxGroupSection>
+                <NoneFoundSection noun="files">
+                    <Link to="samples/files">Upload some</Link>
+                </NoneFoundSection>
             );
         }
 

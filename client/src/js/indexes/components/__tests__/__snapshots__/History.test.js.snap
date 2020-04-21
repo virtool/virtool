@@ -1,9 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<RebuildHistory /> should render <LoadingPlaceholder /> when unbuilt is null 1`] = `
-<Box__BoxGroup
-  className="panel-default"
->
+<Box__BoxGroup>
   <Box__BoxGroupHeader>
     Changes
   </Box__BoxGroupHeader>
@@ -13,45 +11,8 @@ exports[`<RebuildHistory /> should render <LoadingPlaceholder /> when unbuilt is
 </Box__BoxGroup>
 `;
 
-exports[`<RebuildHistory /> should render with error 1`] = `
-<Box__BoxGroup
-  className="panel-danger"
->
-  <Box__BoxGroupHeader>
-    Changes
-  </Box__BoxGroupHeader>
-  <History__RebuildHistoryContent>
-    <RebuildHistoryItem
-      description="test-description"
-      key="123abc"
-      otuName="test-otu"
-    />
-    <RebuildHistoryEllipsis
-      unbuilt={
-        Object {
-          "documents": Array [
-            Object {
-              "description": "test-description",
-              "id": "123abc",
-              "otu": Object {
-                "name": "test-otu",
-              },
-            },
-          ],
-          "page_count": 2,
-          "per_page": 5,
-          "total_count": 10,
-        }
-      }
-    />
-  </History__RebuildHistoryContent>
-</Box__BoxGroup>
-`;
-
-exports[`<RebuildHistory /> should render without error 1`] = `
-<Box__BoxGroup
-  className="panel-default"
->
+exports[`<RebuildHistory /> should render 1`] = `
+<Box__BoxGroup>
   <Box__BoxGroupHeader>
     Changes
   </Box__BoxGroupHeader>

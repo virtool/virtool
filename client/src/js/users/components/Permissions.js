@@ -5,31 +5,33 @@ import React from "react";
 import styled from "styled-components";
 import { PermissionItem } from "./Permission";
 
-const StyledPermissions = styled.div`
-    display: flex;
+const UserPermissionsHeader = styled.div`
     align-items: center;
-    justify-content: space-between;
-`;
-export class UserPermissions extends React.Component {
-    render() {
-        const permissionComponents = transform(
-            this.props.permissions,
-            (acc, value, permission) =>
-                acc.push(<PermissionItem key={permission} permission={permission} value={value} />),
-            []
-        );
+    display: flex;
 
-        return (
-            <div>
-                <StyledPermissions>
-                    <label>Permissions</label>
-                    <small className="text-muted">Change group membership to modify permissions</small>
-                </StyledPermissions>
-                {permissionComponents}
-            </div>
-        );
+    small {
+        color: ${props => props.theme.color.greyDarkest};
+        font-size: ${props => props.theme.fontSize.sm};
+        margin-left: auto;
     }
-}
+`;
+export const UserPermissions = ({ permissions }) => {
+    const permissionComponents = transform(
+        permissions,
+        (acc, value, permission) => acc.push(<PermissionItem key={permission} permission={permission} value={value} />),
+        []
+    );
+
+    return (
+        <div>
+            <UserPermissionsHeader>
+                <label>Permissions</label>
+                <small>Change group membership to modify permissions</small>
+            </UserPermissionsHeader>
+            {permissionComponents}
+        </div>
+    );
+};
 
 UserPermissions.propTypes = {
     permissions: PropTypes.object

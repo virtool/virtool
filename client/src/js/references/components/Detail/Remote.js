@@ -2,6 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import {
+    AffixedProgressBar,
     BoxGroup,
     BoxGroupHeader,
     BoxGroupSection,
@@ -10,7 +11,6 @@ import {
     FlexItem,
     Icon,
     Loader,
-    ProgressBar,
     RelativeTime
 } from "../../../base";
 import { checkRefRight } from "../../../utils/utils";
@@ -21,6 +21,32 @@ const ReleaseButtonContainer = styled.div`
     margin: 0;
     padding-top: 15px;
 `;
+
+const ReleaseHeader = styled.div`
+    align-items: center;
+    display: flex;
+
+    > i,
+    > strong {
+        color: ${props => props.theme.color[props.newer ? "blue" : "greenDark"]};
+    }
+
+    > strong {
+        margin-left: 5px;
+    }
+`;
+
+const ReleaseLastChecked = styled.span`
+    align-items: center;
+    display: flex;
+    margin-left: auto;
+
+    span {
+        padding-right: 3px;
+    }
+`;
+
+const StyledRelease = styled(BoxGroupSection)``;
 
 const Release = ({ release, checking, updating, onCheckUpdates, onUpdate }) => {
     let button;
@@ -49,63 +75,47 @@ const Release = ({ release, checking, updating, onCheckUpdates, onUpdate }) => {
 
     if (release.retrieved_at) {
         lastChecked = (
-            <FlexItem className="text-muted">
+            <span>
                 Last checked <RelativeTime time={release.retrieved_at} />
-            </FlexItem>
+            </span>
         );
     }
 
     return (
-        <BoxGroupSection>
-            <Flex alignItems="center">
-                <FlexItem className={release.newer ? "text-primary" : "text-success"}>
-                    <Icon name={release.newer ? "arrow-alt-circle-up" : "check"} />
-                </FlexItem>
-                <FlexItem className={release.newer ? "text-primary" : "text-success"} pad={5}>
-                    <strong>{release.newer ? "Update Available" : "Up-to-date"}</strong>
-                </FlexItem>
+        <StyledRelease newer={release.newer}>
+            <ReleaseHeader>
+                <Icon name={release.newer ? "arrow-alt-circle-up" : "check"} />
+                <strong>{release.newer ? "Update Available" : "Up-to-date"}</strong>
 
                 {updateStats}
 
-                <FlexItem grow={1}>
-                    <Flex alignItems="center" className="pull-right">
-                        {lastChecked}
-
-                        <FlexItem pad={5}>
-                            {checking ? (
-                                <Loader size="14px" />
-                            ) : (
-                                <Icon
-                                    name="sync"
-                                    tip="Check for Updates"
-                                    tipPlacement="left"
-                                    onClick={onCheckUpdates}
-                                />
-                            )}
-                        </FlexItem>
-                    </Flex>
-                </FlexItem>
-            </Flex>
+                <ReleaseLastChecked>
+                    {lastChecked}
+                    {checking ? <Loader size="14px" /> : <Icon name="sync" onClick={onCheckUpdates} />}
+                </ReleaseLastChecked>
+            </ReleaseHeader>
 
             {button}
-        </BoxGroupSection>
+        </StyledRelease>
     );
 };
 
+const StyledUpgrade = styled(BoxGroupSection)`
+    align-items: center;
+    color: ${props => props.theme.color.blue};
+    display: flex;
+
+    strong {
+        margin-left: 3px;
+    }
+`;
+
 const Upgrade = ({ progress }) => (
-    <BoxGroupSection>
-        <Flex alignItems="center" className="text-primary">
-            <Icon name="arrow-alt-circle-up" />
-
-            <FlexItem pad>
-                <strong>Updating</strong>
-            </FlexItem>
-        </Flex>
-
-        <div style={{ paddingTop: "2rem" }}>
-            <ProgressBar color="green" now={progress * 100} />
-        </div>
-    </BoxGroupSection>
+    <StyledUpgrade>
+        <AffixedProgressBar color="green" now={progress * 100} />
+        <Icon name="arrow-alt-circle-up" />
+        <strong>Updating</strong>
+    </StyledUpgrade>
 );
 
 const Remote = ({ detail, onCheckUpdates, onUpdate, checking, progress }) => {

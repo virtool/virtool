@@ -153,7 +153,7 @@ export class CreateSubtraction extends React.Component {
                         <InputError>{this.state.errorFile}</InputError>
                     </DialogBody>
 
-                    <DialogFooter className="modal-footer">
+                    <DialogFooter>
                         <Button type="submit" color="blue" icon="play">
                             Start
                         </Button>

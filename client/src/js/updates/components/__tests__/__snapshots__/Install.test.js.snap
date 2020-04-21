@@ -14,7 +14,7 @@ exports[`<SoftwareInstall /> should render 1`] = `
   onHide={[MockFunction]}
   show={true}
 >
-  <Process
+  <InstallProcess
     0="one"
     1="two"
     2="three"

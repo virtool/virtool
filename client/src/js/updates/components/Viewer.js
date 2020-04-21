@@ -1,12 +1,12 @@
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { LoadingPlaceholder } from "../../base";
+import { LoadingPlaceholder, NarrowContainer } from "../../base";
 import { getSoftwareUpdates } from "../actions";
 import Channels from "./Channels";
 import Releases from "./Releases";
 
-const SoftwareUpdateViewerBody = styled.div`
+const StyledSoftwareUpdateViewer = styled(NarrowContainer)`
     display: flex;
     align-items: flex-start;
 `;
@@ -17,24 +17,21 @@ export class SoftwareUpdateViewer extends React.Component {
     }
 
     render() {
-        if (this.props.releases === null) {
+        if (this.props.loading) {
             return <LoadingPlaceholder />;
         }
 
         return (
-            <div className="settings-container">
-                <SoftwareUpdateViewerBody>
-                    <Releases />
-                    <Channels />
-                </SoftwareUpdateViewerBody>
-            </div>
+            <StyledSoftwareUpdateViewer>
+                <Releases />
+                <Channels />
+            </StyledSoftwareUpdateViewer>
         );
     }
 }
 
 export const mapStateToProps = state => ({
-    channel: state.settings.data.software_channel,
-    releases: state.updates.releases
+    loading: state.updates.releases === null
 });
 
 export const mapDispatchToProps = dispatch => ({

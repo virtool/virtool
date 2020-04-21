@@ -14,8 +14,6 @@ export const IndexItemChangeDescription = ({ changeCount, modifiedCount }) => {
         return null;
     }
 
-    // Text to show if no changes occurred since the last index build. Technically, should never be shown
-    // because the rebuild button is not shown if no changes have been made.
     if (changeCount === 0) {
         return "No changes";
     }
@@ -28,16 +26,17 @@ export const IndexItemChangeDescription = ({ changeCount, modifiedCount }) => {
     );
 };
 
+const StyledIndexItemIcon = styled.div`
+    text-align: right;
+`;
+
 export const IndexItemIcon = ({ activeId, id, ready }) => {
-    // Decide what icon/text should be shown at the right end of the index document. If the index is building a
-    // spinner with "Building" is shown, if the index is the active index a green check is shown. Otherwise, no
-    // content is shown at the right.
     if (ready) {
         if (id === activeId) {
             return (
-                <span className="pull-right">
+                <StyledIndexItemIcon>
                     <Icon name="check" color="green" /> <strong>Active</strong>
-                </span>
+                </StyledIndexItemIcon>
             );
         }
 
@@ -45,15 +44,15 @@ export const IndexItemIcon = ({ activeId, id, ready }) => {
     }
 
     return (
-        <div className="pull-right">
+        <StyledIndexItemIcon>
             <Loader size="14px" color="#3c8786" />
             <strong> Building</strong>
-        </div>
+        </StyledIndexItemIcon>
     );
 };
 
 export const IndexItem = ({ activeId, document, refId }) => (
-    <StyledIndexItem to={`/refs/${refId}/indexes/${document.id}`} className="spaced">
+    <StyledIndexItem to={`/refs/${refId}/indexes/${document.id}`}>
         <strong>Version {document.version}</strong>
         <span>
             Created <RelativeTime time={document.created_at} />

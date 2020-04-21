@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { Icon, Loader } from "../../../base";
 
-const SampleEntryLabelIcon = styled.span`
+const SampleItemLabelIcon = styled.span`
     margin-right: 3px;
     width: 12px;
 `;
@@ -22,14 +22,14 @@ const StyledSampleItemLabel = styled.div`
 
 export const SampleItemLabel = ({ label, ready }) => (
     <StyledSampleItemLabel ready={ready}>
-        <SampleEntryLabelIcon>
+        <SampleItemLabelIcon>
             {ready === "ip" ? (
                 <Loader size="10px" color="white" verticalAlign="middle" />
             ) : (
                 <Icon name="chart-area" style={{ lineHeight: "inherit" }} fixedWidth />
             )}
-        </SampleEntryLabelIcon>
-        <span className="sample-label-text">{label}</span>
+        </SampleItemLabelIcon>
+        <span>{label}</span>
     </StyledSampleItemLabel>
 );
 

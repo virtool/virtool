@@ -34,14 +34,12 @@ exports[`<ReferenceItemHeader /> should render 1`] = `
         fixedWidth={false}
         name="barcode"
       />
-      <strong
-        className="text-capitalize"
-      >
+      <Header__ReferenceItemDataDescriptor>
         unknown
          
         genome
         s
-      </strong>
+      </Header__ReferenceItemDataDescriptor>
       <span>
          organized into 
          OTUs

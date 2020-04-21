@@ -67,7 +67,7 @@ class JobDetail extends React.Component {
                             <Icon color="red" name="trash" style={{ fontSize: "18px" }} onClick={this.handleClick} />
                         </ViewHeaderIcons>
                     </ViewHeaderTitle>
-                    <ViewHeaderAttribution time={detail.status[0].timestamp} userId={detail.user.id} />
+                    <ViewHeaderAttribution time={detail.status[0].timestamp} user={detail.user.id} />
                 </ViewHeader>
 
                 <Table>

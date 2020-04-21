@@ -1,11 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<ReleasesList /> should render with one release 1`] = `
-<Box__BoxGroup>
+<Fragment>
   <List__ReleasesListHeader>
-    <strong
-      className="text-warning"
-    >
+    <strong>
       <Icon
         faStyle="fas"
         fixedWidth={false}
@@ -31,15 +29,13 @@ exports[`<ReleasesList /> should render with one release 1`] = `
     key="foo"
     name="foo"
   />
-</Box__BoxGroup>
+</Fragment>
 `;
 
 exports[`<ReleasesList /> should render with two releases 1`] = `
-<Box__BoxGroup>
+<Fragment>
   <List__ReleasesListHeader>
-    <strong
-      className="text-warning"
-    >
+    <strong>
       <Icon
         faStyle="fas"
         fixedWidth={false}
@@ -72,5 +68,5 @@ exports[`<ReleasesList /> should render with two releases 1`] = `
     key="bar"
     name="bar"
   />
-</Box__BoxGroup>
+</Fragment>
 `;

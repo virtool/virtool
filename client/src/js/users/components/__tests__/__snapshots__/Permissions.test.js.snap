@@ -2,15 +2,13 @@
 
 exports[`<UserPermissions /> should render 1`] = `
 <div>
-  <Permissions__StyledPermissions>
+  <Permissions__UserPermissionsHeader>
     <label>
       Permissions
     </label>
-    <small
-      className="text-muted"
-    >
+    <small>
       Change group membership to modify permissions
     </small>
-  </Permissions__StyledPermissions>
+  </Permissions__UserPermissionsHeader>
 </div>
 `;

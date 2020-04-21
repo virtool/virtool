@@ -1,71 +1,43 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<SubtractionItem /> should render when [ready=false] 1`] = `
-<Box__LinkBox
+<Item__StyledSubtractionItem
   key="foo"
   to="/subtraction/foo"
 >
   <strong>
     Foo
   </strong>
-  <Flex
-    alignContent="stretch"
-    alignItems="center"
-    className="pull-right"
-    direction="row"
-    justifyContent="flex-start"
-    wrap="nowrap"
-  >
+  <span>
     <SubtractionItemIcon
       ready={false}
     />
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      pad={true}
-      shrink={1}
-    >
-      <strong>
-        Importing
-      </strong>
-    </FlexItem>
-  </Flex>
-</Box__LinkBox>
+     
+    <span>
+      Importing
+    </span>
+  </span>
+</Item__StyledSubtractionItem>
 `;
 
 exports[`<SubtractionItem /> should render when [ready=true] 1`] = `
-<Box__LinkBox
+<Item__StyledSubtractionItem
   key="foo"
   to="/subtraction/foo"
 >
   <strong>
     Foo
   </strong>
-  <Flex
-    alignContent="stretch"
-    alignItems="center"
-    className="pull-right"
-    direction="row"
-    justifyContent="flex-start"
-    wrap="nowrap"
-  >
+  <span>
     <SubtractionItemIcon
       ready={true}
     />
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      pad={true}
-      shrink={1}
-    >
-      <strong>
-        Ready
-      </strong>
-    </FlexItem>
-  </Flex>
-</Box__LinkBox>
+     
+    <span>
+      Ready
+    </span>
+  </span>
+</Item__StyledSubtractionItem>
 `;
 
 exports[`<SubtractionItemIcon /> should render when [ready=false] 1`] = `

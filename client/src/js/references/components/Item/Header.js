@@ -4,6 +4,10 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Attribution, Icon } from "../../../base";
 
+const ReferenceItemDataDescriptor = styled.strong`
+    text-transform: capitalize;
+`;
+
 const ReferenceItemHeaderLink = styled(Link)`
     font-weight: bold;
 `;
@@ -16,6 +20,10 @@ const StyledReferenceItemHeader = styled.div`
         align-items: center;
         display: flex;
         justify-content: space-between;
+    }
+
+    p > strong {
+        text-transform: capitalize;
     }
 
     h2 {
@@ -43,9 +51,9 @@ export const ReferenceItemHeader = ({ createdAt, dataType, id, name, organism, o
         <p>
             <span>
                 <Icon name={dataType === "genome" ? "dna" : "barcode"} />
-                <strong className="text-capitalize">
+                <ReferenceItemDataDescriptor>
                     {organism || "unknown"} {dataType || "genome"}s
-                </strong>
+                </ReferenceItemDataDescriptor>
                 <span> organized into {otuCount} OTUs</span>
             </span>
             <Attribution time={createdAt} user={userId} />

@@ -3,7 +3,8 @@ import numbro from "numbro";
 import React from "react";
 import { useDropzone } from "react-dropzone";
 import { connect } from "react-redux";
-
+import styled from "styled-components";
+import { getColor } from "../../../app/theme";
 import { AffixedProgressBar, BoxGroupSection, Flex, FlexItem, Icon } from "../../../base";
 import { byteSize, createRandomString } from "../../../utils/utils";
 import { uploadSampleFile } from "../../actions";
@@ -12,38 +13,41 @@ export const getFileIconName = name => (includes(name, ".gz") ? "file-archive" :
 
 export const SampleRawItemProgress = ({ upload = 0 }) => <AffixedProgressBar color="blue" now={upload.progress} />;
 
+const StyledSampleRawItemStatus = styled.div`
+    color: ${getColor};
+    font-size: ${props => props.theme.fontSize.sm};
+`;
+
 export const SampleRawItemStatus = ({ job, raw, replacement, upload }) => {
     if (upload) {
         return (
-            <div className="text-primary">
-                <small>UPLOADING ({numbro(upload.progress).format({ mantissa: 0 })}%)</small>
-            </div>
+            <StyledSampleRawItemStatus color="blue">
+                UPLOADING ({numbro(upload.progress).format({ mantissa: 0 })}%)
+            </StyledSampleRawItemStatus>
         );
     }
 
     if (replacement) {
         return (
-            <div className="text-success">
-                <small>
-                    <Icon name="check" /> REPLACEMENT UPLOADED
-                </small>
-            </div>
+            <StyledSampleRawItemStatus color="green">
+                <Icon name="check" /> REPLACEMENT UPLOADED
+            </StyledSampleRawItemStatus>
         );
     }
 
     if (job) {
         return (
-            <div className="text-primary">
-                <small>REPLACING ({numbro(job.progress).format({ mantissa: 0 })}%)</small>
-            </div>
+            <StyledSampleRawItemStatus color="blue">
+                REPLACING ({numbro(job.progress).format({ mantissa: 0 })}%)
+            </StyledSampleRawItemStatus>
         );
     }
 
     if (!raw) {
         return (
-            <div className="text-warning">
+            <StyledSampleRawItemStatus color="red">
                 <small>TRIMMED</small>
-            </div>
+            </StyledSampleRawItemStatus>
         );
     }
 
@@ -77,7 +81,7 @@ const SampleRawItem = props => {
                     </Flex>
                 </FlexItem>
                 <FlexItem>
-                    <div className="text-right">
+                    <div>
                         <div>
                             <strong>{byteSize(size)}</strong>
                         </div>

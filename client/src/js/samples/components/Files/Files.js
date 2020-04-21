@@ -15,12 +15,12 @@ const SampleDetailFiles = ({ onGetJob, jobId }) => {
     }, [jobId]);
 
     return (
-        <div>
+        <React.Fragment>
             <SampleFileSizeWarning />
             <SampleFilesMessage />
             <SampleFilesRaw />
             <SampleFilesCache />
-        </div>
+        </React.Fragment>
     );
 };
 

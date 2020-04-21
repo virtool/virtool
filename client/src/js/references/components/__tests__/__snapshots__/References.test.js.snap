@@ -1,20 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<ReferenceSettings /> should render 1`] = `
-<div
-  className="settings-container"
->
-  <h3
-    className="view-header"
+<Container__NarrowContainer>
+  <ViewHeader
+    title="Reference Settings"
   >
-    <strong>
+    <ViewHeader__ViewHeaderTitle>
       Settings
-    </strong>
-  </h3>
+    </ViewHeader__ViewHeaderTitle>
+  </ViewHeader>
   <Connect(SourceTypes)
     global={true}
   />
-</div>
+</Container__NarrowContainer>
 `;
 
 exports[`<References /> should render when [loading=false] 1`] = `

@@ -17,9 +17,10 @@ import {
 } from "../../base";
 import { editReference } from "../actions";
 
-const StyledItem = styled(BoxGroupSection)`
-    display: fle;
+const StyledSourceTypeItem = styled(BoxGroupSection)`
+    display: flex;
     justify-content: space-between;
+    text-transform: capitalize;
 `;
 
 const SourceTypesTitle = styled.h2`
@@ -44,10 +45,10 @@ const localDescription = `
 `;
 
 export const SourceTypeItem = ({ onRemove, sourceType, disabled }) => (
-    <StyledItem disabled={disabled}>
-        <span className="text-capitalize">{sourceType}</span>
-        <div>{disabled ? null : <Icon name="trash" color="red" onClick={() => onRemove(sourceType)} />}</div>
-    </StyledItem>
+    <StyledSourceTypeItem disabled={disabled}>
+        <span>{sourceType}</span>
+        {disabled ? null : <Icon name="trash" color="red" onClick={() => onRemove(sourceType)} />}
+    </StyledSourceTypeItem>
 );
 
 const SourceTypesCheckbox = styled(Checkbox)`

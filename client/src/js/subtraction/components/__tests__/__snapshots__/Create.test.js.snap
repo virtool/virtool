@@ -49,9 +49,7 @@ exports[`<CreateSubtraction /> should render 1`] = `
       </Create__SubtractionFileList>
       <Input__InputError />
     </Modal__DialogBody>
-    <Modal__DialogFooter
-      className="modal-footer"
-    >
+    <Modal__DialogFooter>
       <Button
         color="blue"
         disabled={false}
@@ -115,9 +113,7 @@ exports[`<CreateSubtraction /> should render after "name" input changes 1`] = `
       </Create__SubtractionFileList>
       <Input__InputError />
     </Modal__DialogBody>
-    <Modal__DialogFooter
-      className="modal-footer"
-    >
+    <Modal__DialogFooter>
       <Button
         color="blue"
         disabled={false}
@@ -181,9 +177,7 @@ exports[`<CreateSubtraction /> should render after "nickname" input changes 1`] 
       </Create__SubtractionFileList>
       <Input__InputError />
     </Modal__DialogBody>
-    <Modal__DialogFooter
-      className="modal-footer"
-    >
+    <Modal__DialogFooter>
       <Button
         color="blue"
         disabled={false}
@@ -251,9 +245,7 @@ exports[`<CreateSubtraction /> should render error when submitted with no unique
         Please select a file
       </Input__InputError>
     </Modal__DialogBody>
-    <Modal__DialogFooter
-      className="modal-footer"
-    >
+    <Modal__DialogFooter>
       <Button
         color="blue"
         disabled={false}
@@ -320,9 +312,7 @@ exports[`<CreateSubtraction /> should render when no files available 1`] = `
       </Create__SubtractionFileList>
       <Input__InputError />
     </Modal__DialogBody>
-    <Modal__DialogFooter
-      className="modal-footer"
-    >
+    <Modal__DialogFooter>
       <Button
         color="blue"
         disabled={false}
@@ -386,9 +376,7 @@ exports[`<CreateSubtraction /> should render with request error 1`] = `
       </Create__SubtractionFileList>
       <Input__InputError />
     </Modal__DialogBody>
-    <Modal__DialogFooter
-      className="modal-footer"
-    >
+    <Modal__DialogFooter>
       <Button
         color="blue"
         disabled={false}

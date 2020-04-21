@@ -34,6 +34,18 @@ const JobStepTimestamp = ({ timestamp }) => (
 const StyledJobStepDescription = styled.div`
     display: flex;
     flex-direction: column;
+
+    > h4 {
+        font-size: ${props => props.theme.fontSize.lg};
+        font-weight: bold;
+        margin: 2px 0 6px;
+    }
+
+    > p {
+        color: ${props => props.theme.color.greyDarkest};
+        font-size: ${props => props.theme.fontSize.md};
+        margin: 0 0 3px;
+    }
 `;
 
 export const JobStepDescription = ({ stage, state, task, timestamp }) => {
@@ -41,8 +53,8 @@ export const JobStepDescription = ({ stage, state, task, timestamp }) => {
 
     return (
         <StyledJobStepDescription>
-            <strong>{title}</strong>
-            <small className="text-muted">{description}</small>
+            <h4>{title}</h4>
+            <p>{description}</p>
             <JobStepTimestamp timestamp={timestamp} />
         </StyledJobStepDescription>
     );
