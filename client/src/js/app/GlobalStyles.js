@@ -9,11 +9,14 @@ export const tabFocus = css`
 `;
 
 export const GlobalStyles = createGlobalStyle`
-    body {
+    html {
         font-family: "Roboto", sans-serif;
         font-size: ${props => props.theme.fontSize.md};
-        height: calc(100vh - 40px);
         line-height: 1.428571429;
+    }
+    
+    body {
+        height: calc(100vh - 40px);        
         overflow-y: scroll;
         padding-top: 65px;
     }

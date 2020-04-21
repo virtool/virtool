@@ -10,7 +10,7 @@ const StyledTooltip = styled(TippyTooltip)`
 `;
 
 export const Tooltip = ({ tip, position, children }) => (
-    <StyledTooltip size="big" title={tip} arrow={true} position={position}>
+    <StyledTooltip size="regular" title={tip} arrow={true} position={position}>
         {children}
     </StyledTooltip>
 );
