@@ -1,18 +1,25 @@
-import CX from "classnames";
 import React, { useCallback } from "react";
 import PropTypes from "prop-types";
 import { capitalize, get } from "lodash-es";
 import { Link } from "react-router-dom";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { Tooltip } from "./Tooltip";
 
 const getIconColor = ({ color, theme, shade = "dark" }) =>
     get(theme, ["color", `${color}${capitalize(shade)}`], "inherit");
 
+const fixedWidth = css`
+    width: 8px;
+    text-align: center;
+    display: inline-block;
+`;
+
 const StyledIcon = styled.i`
     color: ${getIconColor};
     ${props => (props.hoverable || props.onClick ? "cursor: pointer;" : "")};
     opacity: ${props => (props.hoverable || props.onClick ? 0.7 : 1)};
+
+    ${props => (props.fixedWidth ? fixedWidth : "")};
 
     :hover {
         opacity: 1;
@@ -24,13 +31,12 @@ export const Icon = ({ hoverable, style, ...props }) => {
         props.onClick(e);
     }, []);
 
-    const className = CX(props.className, `${props.faStyle} fa-${props.name}`, {
-        "fixed-width": props.fixedWidth
-    });
+    const className = `${props.className ? props.className + " " : ""} ${props.faStyle} fa-${props.name}`;
 
     const icon = (
         <StyledIcon
             className={className}
+            fixedWidth={props.fixedWidth}
             hoverable={hoverable}
             style={style}
             onClick={props.onClick ? handleClick : null}

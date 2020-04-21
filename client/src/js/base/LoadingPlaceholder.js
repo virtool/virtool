@@ -1,6 +1,12 @@
 import PropTypes from "prop-types";
 import React from "react";
+import styled from "styled-components";
 import { Loader } from "./Loader";
+
+const StyledLoadingPlaceholder = styled.div`
+    margin-top: ${props => props.margin || "220px"};
+    text-align: center;
+`;
 
 /**
  * A component that renders a centered spinner. Used as a placeholder when the rendering of a component depends on an
@@ -10,17 +16,15 @@ import { Loader } from "./Loader";
  * @param color {string} the hex color of the spinner
  * @param margin {number} the margin to set above the spinner
  * @param message {message} an optional message to show above the spinner
- * @param size {number} the size of the spinner
  */
-export const LoadingPlaceholder = ({ margin = "220px", message = null, style }) => (
-    <div className="text-center" style={{ marginTop: margin, ...style }}>
+export const LoadingPlaceholder = ({ margin, message }) => (
+    <StyledLoadingPlaceholder margin={margin}>
         {message ? <p>{message}</p> : null}
         <Loader />
-    </div>
+    </StyledLoadingPlaceholder>
 );
 
 LoadingPlaceholder.propTypes = {
     margin: PropTypes.string,
-    message: PropTypes.string,
-    style: PropTypes.object
+    message: PropTypes.string
 };

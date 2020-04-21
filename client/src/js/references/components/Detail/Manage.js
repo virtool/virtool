@@ -1,15 +1,22 @@
 import React from "react";
 import { connect } from "react-redux";
+import styled from "styled-components";
 
 import { BoxGroup, BoxGroupHeader, Table } from "../../../base";
 import { Contributors } from "../../../indexes/components/Contributors";
 import { checkUpdates, updateRemoteReference } from "../../actions";
+import { Clone } from "./Clone";
 import ReferenceDetailHeader from "./Header";
+import { LatestBuild } from "./LatestBuild";
 import RemoteReference from "./Remote";
 import ReferenceDetailTabs from "./Tabs";
 import Targets from "./Targets/Targets";
-import { Clone } from "./Clone";
-import { LatestBuild } from "./LatestBuild";
+
+const ReferenceManageTable = styled(Table)`
+    tr:not(:first-of-type) td {
+        text-transform: capitalize;
+    }
+`;
 
 export const ReferenceManage = props => {
     let remote;
@@ -27,8 +34,7 @@ export const ReferenceManage = props => {
         <div>
             <ReferenceDetailHeader />
             <ReferenceDetailTabs />
-
-            <Table>
+            <ReferenceManageTable>
                 <tbody>
                     <tr>
                         <th>Description</th>
@@ -36,14 +42,14 @@ export const ReferenceManage = props => {
                     </tr>
                     <tr>
                         <th>Organism</th>
-                        <td className="text-capitalize">{props.organism}</td>
+                        <td>{props.organism}</td>
                     </tr>
                     <tr>
-                        <th>DataType</th>
-                        <td className="text-capitalize">{props.data_type}</td>
+                        <th>Data Type</th>
+                        <td>{props.data_type}</td>
                     </tr>
                 </tbody>
-            </Table>
+            </ReferenceManageTable>
 
             {remote}
             {clone}

@@ -104,7 +104,7 @@ export const Change = ({ id, createdAt, description, methodName, otu, user, onRe
 
             <Description>
                 {getMethodIcon(methodName)}
-                <span className="test-1">{description || "No Description"}</span>
+                <span>{description || "No Description"}</span>
             </Description>
 
             <Attribution time={createdAt} user={user.id} verb="" />

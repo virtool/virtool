@@ -37,7 +37,7 @@ export const RebuildHistoryItem = ({ description, otuName }) => (
     </HistoryItem>
 );
 
-export default function RebuildHistory({ unbuilt, error }) {
+export default function RebuildHistory({ unbuilt }) {
     let content;
 
     if (unbuilt === null) {
@@ -55,10 +55,8 @@ export default function RebuildHistory({ unbuilt, error }) {
         );
     }
 
-    const panelStyle = error ? "panel-danger" : "panel-default";
-
     return (
-        <BoxGroup className={panelStyle}>
+        <BoxGroup>
             <BoxGroupHeader>Changes</BoxGroupHeader>
             {content}
         </BoxGroup>

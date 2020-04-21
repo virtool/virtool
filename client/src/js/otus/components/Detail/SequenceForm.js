@@ -11,6 +11,7 @@ import {
     InputIcon,
     InputLabel,
     Loader,
+    ModalBodyOverlay,
     SaveButton
 } from "../../../base";
 import { getTargetChange } from "../../../utils/utils";
@@ -115,11 +116,11 @@ export class SequenceForm extends React.Component {
 
         if (this.state.pending) {
             overlay = (
-                <div className="modal-body-overlay">
+                <ModalBodyOverlay>
                     <span>
                         <Loader color="#fff" />
                     </span>
-                </div>
+                </ModalBodyOverlay>
             );
         }
 

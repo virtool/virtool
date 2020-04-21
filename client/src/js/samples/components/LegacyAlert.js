@@ -3,7 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { Alert, Box, BoxTitle, ProgressBar } from "../../base";
+import { Alert, Box, BoxTitle, ExternalLink, ProgressBar } from "../../base";
 import { getHasRawFilesOnly, getSampleUpdateJobId } from "../selectors";
 
 const SampleFilesJobStatus = styled.span`
@@ -48,8 +48,10 @@ export const SampleFilesJobMessage = ({ job }) => {
 
 export const SampleFilesLegacyAlert = () => (
     <Alert color="orange" block>
-        <p className="text-strong">
-            Virtool now retains raw data for newly created samples instead of trimming during sample creation.
+        <p>
+            <strong>
+                Virtool now retains raw data for newly created samples instead of trimming during sample creation.
+            </strong>
         </p>
         <p>
             Because this is an older sample, only trimmed data is available. You can upload the original sample files by
@@ -61,9 +63,7 @@ export const SampleFilesLegacyAlert = () => (
         </p>
         <p>QC charts are based on trimmed data for older samples and raw data for post-3.4.0 samples.</p>
         <p>
-            <a target="_blank" rel="noopener noreferrer" href="https://www.virtool.ca/docs">
-                More information
-            </a>
+            <ExternalLink href="https://www.virtool.ca/docs">More information</ExternalLink>
         </p>
     </Alert>
 );

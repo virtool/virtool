@@ -2,7 +2,6 @@
 
 exports[`<IndexItem /> should render 1`] = `
 <Item__StyledIndexItem
-  className="spaced"
   to="/refs/foo/indexes/bar"
 >
   <strong>
@@ -65,9 +64,7 @@ exports[`<IndexItemChangeDescription /> should render valid description when mod
 `;
 
 exports[`<IndexItemIcon /> should render checkmark when active 1`] = `
-<span
-  className="pull-right"
->
+<Item__StyledIndexItemIcon>
   <Icon
     color="green"
     faStyle="fas"
@@ -78,15 +75,13 @@ exports[`<IndexItemIcon /> should render checkmark when active 1`] = `
   <strong>
     Active
   </strong>
-</span>
+</Item__StyledIndexItemIcon>
 `;
 
 exports[`<IndexItemIcon /> should render nothing when ready, but not active 1`] = `""`;
 
 exports[`<IndexItemIcon /> should render spinner when not ready 1`] = `
-<div
-  className="pull-right"
->
+<Item__StyledIndexItemIcon>
   <Loader
     color="#3c8786"
     size="14px"
@@ -94,5 +89,5 @@ exports[`<IndexItemIcon /> should render spinner when not ready 1`] = `
   <strong>
      Building
   </strong>
-</div>
+</Item__StyledIndexItemIcon>
 `;

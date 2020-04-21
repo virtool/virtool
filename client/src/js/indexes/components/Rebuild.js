@@ -2,39 +2,17 @@ import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { Button, ModalDialog, DialogBody, DialogFooter } from "../../base";
+import { Button, DialogBody, DialogFooter, ModalDialog } from "../../base";
 import { clearError } from "../../errors/actions";
 import { routerLocationHasState } from "../../utils/utils";
 import { createIndex, getUnbuilt } from "../actions";
 import RebuildHistory from "./History";
-
-export const RebuildIndexError = ({ error }) => {
-    if (error) {
-        return (
-            <div className="input-form-error">
-                <span className="input-error-message">{error}</span>
-                <br />
-                {error === "There are unverified OTUs" ? (
-                    <span className="input-error-message">Fix the unverified OTUs before rebuilding the index</span>
-                ) : null}
-            </div>
-        );
-    }
-
-    return null;
-};
+import { RebuildIndexError } from "./RebuildError";
 
 class RebuildIndex extends React.Component {
     constructor(props) {
         super(props);
         this.state = { error: "" };
-    }
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-        if (!prevState.error && nextProps.error) {
-            return { error: nextProps.error };
-        }
-        return null;
     }
 
     componentDidMount() {
@@ -51,24 +29,26 @@ class RebuildIndex extends React.Component {
         }
     };
 
-    save = e => {
+    handleSubmit = e => {
         e.preventDefault();
         this.props.onRebuild(this.props.refId);
     };
 
     render() {
+        const error = this.state.error || this.props.error;
+
         return (
             <ModalDialog
-                label="Reubuild"
+                label="Rebuild"
                 headerText="Rebuild Index"
                 size="lg"
                 show={this.props.show}
                 onHide={this.handleHide}
             >
-                <form onSubmit={this.save}>
+                <form onSubmit={this.handleSubmit}>
                     <DialogBody>
+                        <RebuildIndexError error={error} />
                         <RebuildHistory unbuilt={this.props.unbuilt} error={this.state.error} />
-                        <RebuildIndexError error={this.state.error} />
                     </DialogBody>
                     <DialogFooter>
                         <Button type="submit" color="blue" icon="wrench">

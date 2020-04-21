@@ -1,35 +1,27 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<InstallOption /> should render when [canInstall=false] 1`] = `
-<Alert
-  color="orange"
-  level={true}
->
-  <Icon
-    faStyle="fas"
-    fixedWidth={false}
-    name="exclamation-circle"
-  />
-  <span>
-    <strong>
-      You do not have permission to install HMMs.
-    </strong>
-    <span>
-       Contact an administrator.
-    </span>
-  </span>
-</Alert>
-`;
-
-exports[`<InstallOption /> should render when [canInstall=true] 1`] = `
+exports[`<InstallOption /> should render button when [canInstall=true] 1`] = `
 <Button
-  color="grey"
+  color="blue"
   disabled={false}
   icon="download"
   onClick={[Function]}
   tipPlacement="top"
   type="button"
 >
-  Install Official
+  Install
 </Button>
+`;
+
+exports[`<InstallOption /> should render permission alert when [canInstall=false] 1`] = `
+<InstallOption__InstallOptionAlert
+  color="orange"
+>
+  <strong>
+    You do not have permission to install HMMs.
+  </strong>
+  <span>
+     Contact an administrator.
+  </span>
+</InstallOption__InstallOptionAlert>
 `;

@@ -1,14 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<SoftwareUpdateViewer /> should render placeholder when [releases=null] 1`] = `<LoadingPlaceholder />`;
-
-exports[`<SoftwareUpdateViewer /> should render when releases available 1`] = `
-<div
-  className="settings-container"
->
-  <Viewer__SoftwareUpdateViewerBody>
-    <Connect(Releases) />
-    <Connect(SoftwareChannels) />
-  </Viewer__SoftwareUpdateViewerBody>
-</div>
+exports[`<SoftwareUpdateViewer /> should render 1`] = `
+<Viewer__StyledSoftwareUpdateViewer>
+  <Connect(Releases) />
+  <Connect(SoftwareChannels) />
+</Viewer__StyledSoftwareUpdateViewer>
 `;
+
+exports[`<SoftwareUpdateViewer /> should render LoadingPlaceholder when loading 1`] = `<LoadingPlaceholder />`;

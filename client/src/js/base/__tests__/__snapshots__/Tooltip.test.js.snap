@@ -4,7 +4,7 @@ exports[`<Tooltip /> should render 1`] = `
 <Tooltip__StyledTooltip
   arrow={true}
   position="left"
-  size="big"
+  size="regular"
   title="Tip"
 />
 `;
@@ -13,7 +13,7 @@ exports[`<Tooltip /> should render with children 1`] = `
 <Tooltip__StyledTooltip
   arrow={true}
   position="left"
-  size="big"
+  size="regular"
   title="Tip"
 >
   Hello world
@@ -24,7 +24,7 @@ exports[`<Tooltip /> should render without position prop 1`] = `
 <Tooltip__StyledTooltip
   arrow={true}
   position="left"
-  size="big"
+  size="regular"
   title="Tip"
 />
 `;

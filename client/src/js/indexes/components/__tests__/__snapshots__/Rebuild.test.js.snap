@@ -1,34 +1,31 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`RebuildIndexError should render extra text when error is 'There are unverified OTUs' 1`] = `
-<div
-  className="input-form-error"
+<Alert
+  color="red"
 >
-  <span
-    className="input-error-message"
-  >
-    There are unverified OTUs
+  <span>
+    <strong>
+      There are unverified OTUs
+      .
+    </strong>
+    <span>
+       Fix the unverified OTUs before rebuilding the index.
+    </span>
   </span>
-  <br />
-  <span
-    className="input-error-message"
-  >
-    Fix the unverified OTUs before rebuilding the index
-  </span>
-</div>
+</Alert>
 `;
 
 exports[`RebuildIndexError should render nothing when error is falsey 1`] = `""`;
 
 exports[`RebuildIndexError should render plain error 1`] = `
-<div
-  className="input-form-error"
+<Alert
+  color="red"
 >
-  <span
-    className="input-error-message"
-  >
-    Index is foobar
+  <span>
+    <strong>
+      Index is foobar
+    </strong>
   </span>
-  <br />
-</div>
+</Alert>
 `;

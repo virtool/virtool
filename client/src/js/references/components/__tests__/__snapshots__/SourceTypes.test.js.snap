@@ -1,37 +1,30 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<SourceTypeItem /> should render when [disabled=false] 1`] = `
-<SourceTypes__StyledItem
+<SourceTypes__StyledSourceTypeItem
   disabled={false}
 >
-  <span
-    className="text-capitalize"
-  >
+  <span>
     genotype
   </span>
-  <div>
-    <Icon
-      color="red"
-      faStyle="fas"
-      fixedWidth={false}
-      name="trash"
-      onClick={[Function]}
-    />
-  </div>
-</SourceTypes__StyledItem>
+  <Icon
+    color="red"
+    faStyle="fas"
+    fixedWidth={false}
+    name="trash"
+    onClick={[Function]}
+  />
+</SourceTypes__StyledSourceTypeItem>
 `;
 
 exports[`<SourceTypeItem /> should render when [disabled=true] 1`] = `
-<SourceTypes__StyledItem
+<SourceTypes__StyledSourceTypeItem
   disabled={true}
 >
-  <span
-    className="text-capitalize"
-  >
+  <span>
     genotype
   </span>
-  <div />
-</SourceTypes__StyledItem>
+</SourceTypes__StyledSourceTypeItem>
 `;
 
 exports[`<SourceTypes /> should render when global 1`] = `

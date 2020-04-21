@@ -1,16 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<IndexSelector /> should render 1`] = `
-<div
-  style={
-    Object {
-      "marginBottom": "16px",
-    }
-  }
->
-  <label
-    className="control-label"
-  >
+<Fragment>
+  <label>
     References
   </label>
   <IndexSelectorList
@@ -41,5 +33,5 @@ exports[`<IndexSelector /> should render 1`] = `
       ]
     }
   />
-</div>
+</Fragment>
 `;

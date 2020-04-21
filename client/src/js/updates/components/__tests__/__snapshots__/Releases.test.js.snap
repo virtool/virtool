@@ -2,35 +2,36 @@
 
 exports[`<Releases /> should render when there are no releases (up-to-date) 1`] = `
 <Releases__StyledReleases>
-  <Icon
-    color="green"
-    faStyle="fas"
-    fixedWidth={false}
-    name="check"
-  />
-  <strong
-    className="text-success"
-  >
-     Software is up-to-date
-  </strong>
+  <Box__BoxGroupSection>
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="check"
+    />
+    <strong>
+       Software is up-to-date
+    </strong>
+  </Box__BoxGroupSection>
 </Releases__StyledReleases>
 `;
 
 exports[`<Releases /> should render when there are releases 1`] = `
-<Releases__StyledReleases>
-  <ReleasesList
-    onShowInstall={[MockFunction]}
-    releases={
-      Array [
-        Object {
-          "name": "foo",
-        },
-        Object {
-          "name": "b",
-        },
-      ]
-    }
-  />
+<Fragment>
+  <Releases__StyledReleases>
+    <ReleasesList
+      onShowInstall={[MockFunction]}
+      releases={
+        Array [
+          Object {
+            "name": "foo",
+          },
+          Object {
+            "name": "b",
+          },
+        ]
+      }
+    />
+  </Releases__StyledReleases>
   <Connect(SoftwareInstall) />
-</Releases__StyledReleases>
+</Fragment>
 `;

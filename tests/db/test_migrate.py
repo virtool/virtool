@@ -1,3 +1,4 @@
+import aiohttp.test_utils
 import pymongo
 import pytest
 
@@ -76,7 +77,7 @@ async def test_migrate_groups(dbi):
 @pytest.mark.parametrize("has_software", [True, False])
 @pytest.mark.parametrize("has_software_update", [True, False])
 @pytest.mark.parametrize("has_version", [True, False])
-async def test_migrate_status(has_software, has_software_update, has_version, dbi):
+async def test_migrate_status(has_software, has_software_update, has_version, mocker, snapshot, dbi):
     if has_software:
         await dbi.status.insert_one({
             "_id": "software",
@@ -89,28 +90,10 @@ async def test_migrate_status(has_software, has_software_update, has_version, db
     if has_version:
         await dbi.status.insert_one({"_id": "version"})
 
+    mocker.patch("virtool.db.utils.determine_mongo_version", aiohttp.test_utils.make_mocked_coro("3.6.3"))
+
     await virtool.db.migrate.migrate_status(dbi, "v3.0.0")
 
-    expected_software = {
-        "_id": "software",
-        "process": None,
-        "updating": False,
-        "version": "v3.0.0"
-    }
+    status = await dbi.status.find({}, sort=[("_id", pymongo.ASCENDING)]).to_list(None)
 
-    if not has_software:
-        expected_software.update({
-            "installed": None,
-            "releases": list()
-        })
-
-    assert await dbi.status.find({}, sort=[("_id", pymongo.ASCENDING)]).to_list(None) == [
-        {
-            "_id": "hmm",
-            "installed": None,
-            "process": None,
-            "release": None,
-            "updates": list()
-        },
-        expected_software
-    ]
+    snapshot.assert_match(status)

@@ -1,7 +1,17 @@
 import { filter, includes, map, transform } from "lodash-es";
 import React, { useCallback } from "react";
 import styled from "styled-components";
-import { Box, BoxGroup, BoxGroupHeader, BoxGroupSection, Button, Icon, Label, Loader, Checkbox } from "../../base";
+import {
+    Box,
+    BoxGroup,
+    BoxGroupHeader,
+    BoxGroupSection,
+    Button,
+    Checkbox,
+    Icon,
+    Loader,
+    NoneFoundSection
+} from "../../base";
 
 const EmptyGroupDetail = styled(Box)`
     align-items: center;
@@ -50,16 +60,12 @@ export const GroupDetail = ({ group, pending, users, onRemove, onSetPermission }
 
     if (members && members.length) {
         memberComponents = map(members, member => (
-            <Label key={member.id} spaced>
+            <BoxGroupSection key={member.id} spaced>
                 {member.id}
-            </Label>
+            </BoxGroupSection>
         ));
     } else {
-        memberComponents = (
-            <div className="text-center">
-                <Icon name="info-circle" /> No members found.
-            </div>
-        );
+        memberComponents = <NoneFoundSection noun="members" />;
     }
 
     const permissionComponents = transform(
@@ -91,7 +97,7 @@ export const GroupDetail = ({ group, pending, users, onRemove, onSetPermission }
 
             <BoxGroup>
                 <BoxGroupHeader>Members</BoxGroupHeader>
-                <BoxGroupSection>{memberComponents}</BoxGroupSection>
+                {memberComponents}
             </BoxGroup>
 
             <Button icon="trash" color="red" onClick={handleRemove}>

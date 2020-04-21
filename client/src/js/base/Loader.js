@@ -1,5 +1,6 @@
 import React from "react";
 import styled, { keyframes } from "styled-components";
+import { getColor } from "../app/theme";
 
 const rotate = keyframes`
     0% {
@@ -15,7 +16,7 @@ const rotate = keyframes`
 
 const StyledLoader = styled.div`
     animation: ${rotate} 0.75s 0s infinite linear;
-    border: 2px solid ${props => props.color};
+    border: 2px solid ${getColor};
     border-bottom-color: transparent !important;
     border-radius: 100%;
     background: transparent;
@@ -25,7 +26,7 @@ const StyledLoader = styled.div`
     width: ${props => props.size};
 `;
 
-export const Loader = ({ className, color = "#3c8786", size = "22px", style }) => (
+export const Loader = ({ className, color = "greyDark", size = "22px", style }) => (
     <StyledLoader className={className} color={color} size={size} style={style}>
         <div />
     </StyledLoader>

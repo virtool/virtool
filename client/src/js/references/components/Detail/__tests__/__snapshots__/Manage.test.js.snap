@@ -4,7 +4,7 @@ exports[`<ReferenceManage /> should render when [props.cloned_from={ Bar: 'Bee' 
 <div>
   <Connect(ReferenceDetailHeader) />
   <Connect(ReferenceDetailTabs) />
-  <Table>
+  <Manage__ReferenceManageTable>
     <tbody>
       <tr>
         <th>
@@ -18,24 +18,20 @@ exports[`<ReferenceManage /> should render when [props.cloned_from={ Bar: 'Bee' 
         <th>
           Organism
         </th>
-        <td
-          className="text-capitalize"
-        >
+        <td>
           Bar
         </td>
       </tr>
       <tr>
         <th>
-          DataType
+          Data Type
         </th>
-        <td
-          className="text-capitalize"
-        >
+        <td>
           Boo
         </td>
       </tr>
     </tbody>
-  </Table>
+  </Manage__ReferenceManageTable>
   <Connect(Remote) />
   <Clone
     source={
@@ -70,7 +66,7 @@ exports[`<ReferenceManage /> should render when [props.remotes_from=null] 1`] = 
 <div>
   <Connect(ReferenceDetailHeader) />
   <Connect(ReferenceDetailTabs) />
-  <Table>
+  <Manage__ReferenceManageTable>
     <tbody>
       <tr>
         <th>
@@ -84,24 +80,20 @@ exports[`<ReferenceManage /> should render when [props.remotes_from=null] 1`] = 
         <th>
           Organism
         </th>
-        <td
-          className="text-capitalize"
-        >
+        <td>
           Bar
         </td>
       </tr>
       <tr>
         <th>
-          DataType
+          Data Type
         </th>
-        <td
-          className="text-capitalize"
-        >
+        <td>
           Boo
         </td>
       </tr>
     </tbody>
-  </Table>
+  </Manage__ReferenceManageTable>
   <Clone
     source={
       Object {

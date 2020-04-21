@@ -1,7 +1,7 @@
 import { map } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
-import { BoxGroup, BoxGroupSection, Button, Icon } from "../../base";
+import { BoxGroupSection, Button, Icon } from "../../base";
 import Release from "./Release";
 
 const ReleasesListHeader = styled(BoxGroupSection)`
@@ -14,9 +14,9 @@ export const ReleasesList = ({ releases, onShowInstall }) => {
     const releaseComponents = map(releases, release => <Release key={release.name} {...release} />);
 
     return (
-        <BoxGroup>
+        <React.Fragment>
             <ReleasesListHeader>
-                <strong className="text-warning">
+                <strong>
                     <Icon name="arrow-alt-circle-up" /> Update
                     {releases.length === 1 ? "" : "s"} Available
                 </strong>
@@ -25,7 +25,7 @@ export const ReleasesList = ({ releases, onShowInstall }) => {
                 </Button>
             </ReleasesListHeader>
             {releaseComponents}
-        </BoxGroup>
+        </React.Fragment>
     );
 };
 

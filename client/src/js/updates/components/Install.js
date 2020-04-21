@@ -1,11 +1,11 @@
 import { forEach, reduce, replace, split, trimEnd } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import Request from "superagent";
 import { pushState } from "../../app/actions";
-import { Button, Label, Loader, DialogBody, ModalDialog, DialogFooter, ProgressBar } from "../../base";
+import { AffixedProgressBar, Button, DialogBody, DialogFooter, Label, Loader, ModalDialog } from "../../base";
 import { byteSize, routerLocationHasState } from "../../utils/utils";
-
 import { installSoftwareUpdates } from "../actions";
 import { ReleaseMarkdown } from "./Markdown";
 
@@ -37,17 +37,32 @@ export const mergeBody = releases => {
     return reduce(result, (body, list, header) => `${body}\n\n#### ${header}\n${list.join("")}`, "");
 };
 
-export const Process = ({ count, progress, size, step, updating }) => {
+const StyledInstallProcess = styled(DialogBody)`
+    padding: 50px 15px;
+    position: relative;
+    text-align: center;
+
+    p {
+        font-weight: bold;
+    }
+
+    small {
+        font-size: ${props => props.theme.fontSize.sm};
+        text-transform: capitalize;
+    }
+`;
+
+export const InstallProcess = ({ count, progress, size, step, updating }) => {
     if (updating && progress === 1 && !window.reloadInterval) {
         window.setTimeout(() => {
             window.reloadInterval = window.setInterval(attemptReload, 1000);
         }, 3000);
 
         return (
-            <DialogBody className="text-center" style={{ padding: "50px 15px" }}>
+            <StyledInstallProcess>
                 <p>Restarting server</p>
-                <Loader color="#3c8786" />
-            </DialogBody>
+                <Loader color="blue" />
+            </StyledInstallProcess>
         );
     }
 
@@ -58,15 +73,14 @@ export const Process = ({ count, progress, size, step, updating }) => {
     }
 
     return (
-        <DialogBody>
-            <ProgressBar color="green" now={progress * 100} />
-            <p className="text-center">
-                <small>
-                    <span className="text-capitalize">{step}</span>
-                    {ratio}
-                </small>
-            </p>
-        </DialogBody>
+        <StyledInstallProcess>
+            <AffixedProgressBar color="blue" now={progress * 100} />
+            <p>Installing Update</p>
+            <small>
+                <span>{step}</span>
+                {ratio}
+            </small>
+        </StyledInstallProcess>
     );
 };
 
@@ -90,7 +104,7 @@ export const SoftwareInstall = ({ onHide, onInstall, process, releases, show, up
             </div>
         );
     } else {
-        content = <Process {...process} size={releases[0].size} updating={updating} />;
+        content = <InstallProcess {...process} size={releases[0].size} updating={updating} />;
     }
 
     const header = (

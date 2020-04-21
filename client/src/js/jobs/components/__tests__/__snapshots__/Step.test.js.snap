@@ -2,14 +2,12 @@
 
 exports[`<JobStepDescription /> renders and calls getStepDescription 1`] = `
 <Step__StyledJobStepDescription>
-  <strong>
+  <h4>
     Foo
-  </strong>
-  <small
-    className="text-muted"
-  >
+  </h4>
+  <p>
     Bar
-  </small>
+  </p>
   <JobStepTimestamp />
 </Step__StyledJobStepDescription>
 `;

@@ -21,10 +21,9 @@ export const ViewHeaderIcons = styled.div`
     }
 `;
 
-export const ViewHeaderTitle = styled.h2`
+export const ViewHeaderTitle = styled.h1`
     align-items: center;
     display: flex;
-    font-size: ${props => props.theme.fontSize.xl};
     font-weight: bold;
     margin: 0;
 

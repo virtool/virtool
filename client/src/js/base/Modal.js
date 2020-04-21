@@ -110,6 +110,26 @@ export const DialogBody = styled.div`
     padding: 15px;
 `;
 
+export const ModalBodyOverlay = styled.div`
+    text-align: center;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 100%;
+    z-index: 10000;
+    background-color: #777777;
+    opacity: 0.7;
+
+    span {
+        flex: auto;
+        color: white;
+        font-size: 24px;
+    }
+`;
+
 export class ModalDialog extends React.Component {
     constructor(props) {
         super(props);

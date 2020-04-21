@@ -53,7 +53,7 @@ export class EditSubtraction extends React.Component {
                         </InputGroup>
                     </DialogBody>
 
-                    <DialogFooter className="modal-footer">
+                    <DialogFooter>
                         <SaveButton pullRight />
                     </DialogFooter>
                 </form>

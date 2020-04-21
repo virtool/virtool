@@ -1,4 +1,4 @@
-import { RebuildIndexError } from "../Rebuild";
+import { RebuildIndexError } from "../RebuildError";
 
 describe("RebuildIndexError", () => {
     let props;

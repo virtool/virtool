@@ -32,9 +32,7 @@ exports[`<EditSubtraction /> should render 1`] = `
         />
       </InputGroup>
     </Modal__DialogBody>
-    <Modal__DialogFooter
-      className="modal-footer"
-    >
+    <Modal__DialogFooter>
       <SaveButton
         pullRight={true}
       />
@@ -75,9 +73,7 @@ exports[`<EditSubtraction /> should render after name is changed 1`] = `
         />
       </InputGroup>
     </Modal__DialogBody>
-    <Modal__DialogFooter
-      className="modal-footer"
-    >
+    <Modal__DialogFooter>
       <SaveButton
         pullRight={true}
       />
@@ -118,9 +114,7 @@ exports[`<EditSubtraction /> should render after name is changed 2`] = `
         />
       </InputGroup>
     </Modal__DialogBody>
-    <Modal__DialogFooter
-      className="modal-footer"
-    >
+    <Modal__DialogFooter>
       <SaveButton
         pullRight={true}
       />
@@ -161,9 +155,7 @@ exports[`<EditSubtraction /> should render after nickname is changed 1`] = `
         />
       </InputGroup>
     </Modal__DialogBody>
-    <Modal__DialogFooter
-      className="modal-footer"
-    >
+    <Modal__DialogFooter>
       <SaveButton
         pullRight={true}
       />
@@ -204,9 +196,7 @@ exports[`<EditSubtraction /> should render after nickname is changed 2`] = `
         />
       </InputGroup>
     </Modal__DialogBody>
-    <Modal__DialogFooter
-      className="modal-footer"
-    >
+    <Modal__DialogFooter>
       <SaveButton
         pullRight={true}
       />
@@ -247,9 +237,7 @@ exports[`<EditSubtraction /> should render when [show=false] 1`] = `
         />
       </InputGroup>
     </Modal__DialogBody>
-    <Modal__DialogFooter
-      className="modal-footer"
-    >
+    <Modal__DialogFooter>
       <SaveButton
         pullRight={true}
       />

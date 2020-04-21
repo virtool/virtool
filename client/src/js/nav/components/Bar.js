@@ -73,7 +73,7 @@ export class Bar extends React.Component {
 
     render() {
         return (
-            <NavBar className="vt-header">
+            <NavBar>
                 <NavBarLeft>
                     <BarLogo />
 

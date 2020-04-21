@@ -11,17 +11,8 @@ exports[`<SampleRights /> should render 1`] = `
     </p>
   </Box__BoxGroupHeader>
   <Box__BoxGroupSection>
-    <label
-      className="control-label"
-      style={
-        Object {
-          "width": "100%",
-        }
-      }
-    >
-      <span>
-        Sample Group
-      </span>
+    <label>
+      Sample Group
     </label>
     <SampleRights__SampleGroupSelection>
       <SelectBox

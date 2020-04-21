@@ -1,9 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Bar /> should render 1`] = `
-<Bar__NavBar
-  className="vt-header"
->
+<Bar__NavBar>
   <Bar__NavBarLeft>
     <Bar__BarLogo />
     <Bar__NavBarItem

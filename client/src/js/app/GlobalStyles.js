@@ -9,30 +9,69 @@ export const tabFocus = css`
 `;
 
 export const GlobalStyles = createGlobalStyle`
-    body {
+    html {
         font-family: "Roboto", sans-serif;
-        height: calc(100vh - 40px);
+        font-size: ${props => props.theme.fontSize.md};
+        line-height: 1.428571429;
+    }
+    
+    body {
+        height: calc(100vh - 40px);        
         overflow-y: scroll;
         padding-top: 65px;
     }
+    
+    h1 {
+        font-size: ${props => props.theme.fontSize.xl};
+    }
+    
+    h5 {
+        font-size: ${props => props.theme.fontSize.md};
+        font-weight: bold;
+        margin: 5px 0 10px;
+    }
 
     a {
-      color: ${props => props.theme.color.blueDark};
-      text-decoration: none;
+        color: ${props => props.theme.color.blueDark};
+        text-decoration: none;
     
-      &:hover,
-      &:focus {
-        color: ${props => props.theme.color.blueDarkest};
-      }
+        &:hover,
+        &:focus {
+            color: ${props => props.theme.color.blueDarkest};
+        }
+      
+        &:focus {
+            ${tabFocus}
+        }
+    }  
     
-      &:focus {
-        ${tabFocus}
-      }
-  }  
+    p {
+        margin: 0 0 10px;
+    }
   
-  label {
-  display: inline-block;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
+    label {
+        display: inline-block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    
+    // Reset the box-sizing
+    * {
+        box-sizing: border-box;
+    }
+    
+    *:before,
+    *:after {
+        box-sizing: border-box;
+    }
+    
+    // Reset fonts for relevant elements
+    input,
+    button,
+    select,
+    textarea {
+        font-family: inherit;
+        font-size: inherit;
+        line-height: inherit;
+    }
 `;
