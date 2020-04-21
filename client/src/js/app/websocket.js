@@ -11,7 +11,6 @@ import { wsInsertSample, wsUpdateSample, wsRemoveSample } from "../samples/actio
 import { wsUpdateStatus } from "../status/actions";
 import { wsInsertSubtraction, wsUpdateSubtraction, wsRemoveSubtraction } from "../subtraction/actions";
 import { wsInsertUser, wsUpdateUser, wsRemoveUser } from "../users/actions";
-import { WS_CLOSED } from "./actionTypes";
 
 const actionCreatorWrapper = actionCreator => {
     return (state, message) => actionCreator(message.data);
@@ -103,19 +102,29 @@ export default function WSConnection({ getState, dispatch }) {
         }
     };
 
+    this.interval = 500;
+
     this.establishConnection = () => {
         const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 
-        this.connection = new window.WebSocket(`${protocol}://${window.location.host}/ws`);
+        this.connection = new window.WebSocket(`${protocol}://localhost:9950/ws`);
+
+        this.connection.onopen = () => {
+            this.interval = 500;
+        };
 
         this.connection.onmessage = e => {
             this.handle(JSON.parse(e.data));
         };
 
         this.connection.onclose = () => {
-            this.dispatch({
-                type: WS_CLOSED
-            });
+            if (this.interval > 15000) {
+                this.interval += 500;
+            }
+
+            setTimeout(() => {
+                this.establishConnection();
+            }, this.interval);
         };
     };
 }
