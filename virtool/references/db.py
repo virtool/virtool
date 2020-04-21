@@ -837,6 +837,16 @@ async def get_latest_build(db, ref_id: str) -> Union[dict, None]:
     return virtool.utils.base_processor(latest_build)
 
 
+async def get_official_installed(db) -> bool:
+    """
+    Return a boolean indicating whether the official plant virus reference is installed.
+
+    :param db:
+    :return: official reference install status
+    """
+    return await db.references.count_documents({"remotes_from.slug": "virtool/ref-plant-viruses"}) > 0
+
+
 async def get_manifest(db, ref_id: str) -> dict:
     """
     Generate a dict of otu document version numbers keyed by the document id. This is used to make sure only changes

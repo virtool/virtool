@@ -66,6 +66,7 @@ async def find(req):
     )
 
     data["documents"] = [await virtool.references.db.processor(db, d) for d in data["documents"]]
+    data["official_installed"] = await virtool.references.db.get_official_installed(db)
 
     return json_response(data)
 
