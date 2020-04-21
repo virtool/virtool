@@ -11,7 +11,7 @@ import virtool.jobs.manager
 
 
 @pytest.fixture
-async def app():
+async def app(loop):
     version = "v1.2.3"
 
     app = {
@@ -61,6 +61,5 @@ async def test_init_http_client_headers(mocker, app):
     headers = {
         "User-Agent": "virtool/v1.2.3"
     }
-
 
     m.assert_called_with(headers=headers)
