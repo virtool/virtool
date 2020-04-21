@@ -15,20 +15,34 @@ export const GlobalStyles = createGlobalStyle`
         overflow-y: scroll;
         padding-top: 65px;
     }
+    
+    h1 {
+        font-size: ${props => props.theme.fontSize.xl};
+    }
+    
+    h5 {
+        font-size: ${props => props.theme.fontSize.md};
+        font-weight: bold;
+        margin: 5px 0 10px;
+    }
 
     a {
-      color: ${props => props.theme.color.blueDark};
-      text-decoration: none;
+        color: ${props => props.theme.color.blueDark};
+        text-decoration: none;
     
-      &:hover,
-      &:focus {
-        color: ${props => props.theme.color.blueDarkest};
-      }
+        &:hover,
+        &:focus {
+            color: ${props => props.theme.color.blueDarkest};
+        }
+      
+        &:focus {
+            ${tabFocus}
+        }
+    }  
     
-      &:focus {
-        ${tabFocus}
-      }
-  }  
+    p {
+        margin: 0 0 10px;
+    }
   
   label {
   display: inline-block;

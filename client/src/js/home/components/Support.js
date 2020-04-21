@@ -10,9 +10,6 @@ const SupportHeader = styled(BoxGroupHeader)`
 
 const SupportBody = styled(BoxGroupSection)`
     h5 {
-        font-size: 14px;
-        font-weight: bold;
-
         :not(:first-child) {
             margin-top: 20px;
         }

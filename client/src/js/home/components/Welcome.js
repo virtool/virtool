@@ -7,8 +7,11 @@ import { Support } from "./Support";
 
 const StyledWelcome = styled(Container)`
     ${Box}:first-child {
+        h1 {
+            margin: 10px 0;
+        }
         p {
-            margin-bottom: 20px;
+            margin: 0 0 15px;
         }
 
         a {
@@ -25,7 +28,7 @@ export const Welcome = ({ mongoVersion, version }) => {
     return (
         <StyledWelcome>
             <Box>
-                <h3>Virtool {version}</h3>
+                <h1>Virtool {version}</h1>
                 <p>Viral infection diagnostics using next-generation sequencing</p>
 
                 <strong>
