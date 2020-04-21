@@ -11,7 +11,9 @@ export const tabFocus = css`
 export const GlobalStyles = createGlobalStyle`
     body {
         font-family: "Roboto", sans-serif;
+        font-size: ${props => props.theme.fontSize.md};
         height: calc(100vh - 40px);
+        line-height: 1.428571429;
         overflow-y: scroll;
         padding-top: 65px;
     }
@@ -44,9 +46,29 @@ export const GlobalStyles = createGlobalStyle`
         margin: 0 0 10px;
     }
   
-  label {
-  display: inline-block;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
+    label {
+        display: inline-block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    
+    // Reset the box-sizing
+    * {
+        box-sizing: border-box;
+    }
+    
+    *:before,
+    *:after {
+        box-sizing: border-box;
+    }
+    
+    // Reset fonts for relevant elements
+    input,
+    button,
+    select,
+    textarea {
+        font-family: inherit;
+        font-size: inherit;
+        line-height: inherit;
+    }
 `;

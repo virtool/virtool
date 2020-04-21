@@ -3,10 +3,10 @@
 exports[`<Welcome /> should render 1`] = `
 <Welcome__StyledWelcome>
   <Box>
-    <h3>
+    <h1>
       Virtool 
       v1.2.3
-    </h3>
+    </h1>
     <p>
       Viral infection diagnostics using next-generation sequencing
     </p>

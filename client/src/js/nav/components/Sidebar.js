@@ -5,15 +5,15 @@ import { Route, Switch } from "react-router-dom";
 import SidebarItem from "./SidebarItem";
 
 const StyledSidebar = styled.nav`
-    position: fixed;
+    align-items: center;
     top: 45px;
     left: 0;
     bottom: 0;
-    padding: 45px 0 0 15px;
-    min-width: 8.6rem;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    width: 78px;
+    padding: 45px 0 0 15px;
+    position: fixed;
 `;
 
 export const Sidebar = ({ administrator }) => (

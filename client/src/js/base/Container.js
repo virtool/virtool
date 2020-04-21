@@ -3,8 +3,7 @@ import styled from "styled-components";
 export const Container = styled.div`
     width: 100vw;
     max-width: 100%;
-    padding-left: 11rem;
-    padding-right: 35px;
+    padding: 0 35px 0 98px;
 `;
 
 export const NarrowContainer = styled.div`
