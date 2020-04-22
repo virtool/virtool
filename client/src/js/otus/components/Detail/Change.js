@@ -7,66 +7,66 @@ import { Attribution, BoxGroupSection, Icon, Label } from "../../../base";
 const methodIconProps = {
     add_isolate: {
         name: "flask",
-        color: "primary"
+        color: "blue"
     },
     create: {
         name: "plus-square",
-        color: "primary"
+        color: "blue"
     },
     create_sequence: {
         name: "dna",
-        color: "primary"
+        color: "blue"
     },
     edit: {
         name: "pencil-alt",
-        color: "orangeDarkest"
+        color: "orange"
     },
     edit_isolate: {
         name: "flask",
-        color: "orangeDarkest"
+        color: "orange"
     },
     edit_sequence: {
         name: "dna",
-        color: "orangeDarkest"
+        color: "orange"
     },
     clone: {
         name: "clone",
-        color: "primary"
+        color: "blue"
     },
     import: {
         name: "file-import",
-        color: "primary"
+        color: "blue"
     },
     remote: {
         name: "link",
-        color: "primary"
+        color: "blue"
     },
     remove: {
         name: "trash",
-        color: "redDark"
+        color: "red"
     },
     remove_isolate: {
         name: "flask",
-        color: "redDark"
+        color: "red"
     },
     remove_sequence: {
         name: "dna",
-        color: "redDark"
+        color: "red"
     },
     set_as_default: {
         name: "star",
-        color: "orangeDarkest"
+        color: "orange"
     },
     update: {
         name: "arrow-alt-circle-up",
-        color: "orangeDarkest"
+        color: "orange"
     }
 };
 
 const getMethodIcon = methodName => {
     const props = get(methodIconProps, methodName, {
         name: "exclamation-triangle",
-        color: "redDark"
+        color: "red"
     });
 
     return <Icon {...props} />;
@@ -91,7 +91,7 @@ const Description = styled.div`
     }
 `;
 
-export const Change = ({ id, createdAt, description, methodName, otu, user, onRevert }) => {
+export const Change = ({ id, createdAt, description, methodName, otu, unbuilt, user, onRevert }) => {
     const handleRevert = useCallback(() => {
         onRevert(otu.id, otu.version, id);
     }, [otu.id, otu.version, id]);
@@ -109,7 +109,7 @@ export const Change = ({ id, createdAt, description, methodName, otu, user, onRe
 
             <Attribution time={createdAt} user={user.id} verb="" />
 
-            <Icon name="history" tip="Revert" onClick={handleRevert} />
+            {unbuilt && <Icon name="history" tip="Revert" onClick={handleRevert} />}
         </StyledChange>
     );
 };
