@@ -11,16 +11,28 @@ class CustomEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def dumps(obj):
+def dumps(obj: object) -> str:
     """
-    A wrapper for :func:`json.dumps` that applies pretty formatting to the output. Used as ``dumps`` argument for
+    A wrapper for :func:`json.dumps` is able to encode datetime objects in input. Used as ``dumps`` argument for
     :func:`.json_response`.
 
     :param obj: a JSON-serializable object
-    :type obj: object
-
     :return: a JSON string
-    :rtype: str
-
     """
-    return json.dumps(obj, indent=4, sort_keys=False, cls=CustomEncoder)
+    return json.dumps(obj, cls=CustomEncoder)
+
+
+def pretty_dumps(obj: object) -> str:
+    """
+    A wrapper for :func:`json.dumps` that applies pretty formatting to the output. Sorts keys and adds indentation.
+    Used as ``dumps`` argument for :func:`.json_response`.
+
+    :param obj: a JSON-serializable object
+    :return: a JSON string
+    """
+    return json.dumps(
+        obj,
+        cls=CustomEncoder,
+        indent=4,
+        sort_keys=True
+    )

@@ -1,4 +1,4 @@
-import Request from "superagent";
+import { Request } from "../app/request";
 
 export const find = ({ sampleId, term, page = 1 }) =>
     Request.get(`/api/samples/${sampleId}/analyses`).query({ find: term, page });

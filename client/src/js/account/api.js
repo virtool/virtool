@@ -4,7 +4,7 @@
  * @module account/api
  */
 
-import Request from "superagent";
+import { Request } from "../app/request";
 
 /**
  * Gets the complete data for the current account.

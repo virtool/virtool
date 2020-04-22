@@ -20,6 +20,7 @@ import virtool.dispatcher
 import virtool.errors
 import virtool.files.manager
 import virtool.hmm.db
+import virtool.http.accept
 import virtool.http.auth
 import virtool.http.csp
 import virtool.http.errors
@@ -407,6 +408,7 @@ def create_app(config):
 
     """
     middlewares = [
+        virtool.http.accept.middleware,
         virtool.http.csp.middleware,
         virtool.http.errors.middleware,
         virtool.http.proxy.middleware,

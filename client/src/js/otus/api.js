@@ -1,4 +1,4 @@
-import Request from "superagent";
+import { Request } from "../app/request";
 
 export const find = ({ refId, term, verified, page }) =>
     Request.get(`/api/refs/${refId}/otus`).query({ find: term, page, verified: verified ? false : undefined });

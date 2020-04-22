@@ -3,7 +3,7 @@
  *
  * @module files/api
  */
-import Request from "superagent";
+import { Request } from "../app/request";
 
 export const find = ({ fileType, page, perPage }) =>
     Request.get("/api/files").query({
