@@ -1,51 +1,43 @@
 from aiohttp import web
+from typing import Optional
 
-from virtool.api.json import dumps
 
-
-def json_response(data, status=200, headers=None):
+def json_response(data: dict, status: int = 200, headers: Optional[bool] = None) -> web.Response:
     """
-    A wrapper for ``aiohttp.web.json_response`` that uses :func:``.dumps`` to pretty format the JSON response.
+    Return a response object whose attached JSON dict will be formatted by middleware depending on the request's
+    `Accept` header.
 
     :param data: the data to send in the response as JSON
-    :type data: object
-
     :param status: the HTTP status code for the response
-    :type status: int
-
     :param headers: HTTP response headers
-    :type headers: dict
-
     :return: the response
-    :rtype: :class:`aiohttp.web.Response`
 
     """
     headers = headers or {}
 
-    return web.json_response(data, status=status, headers=headers, dumps=dumps)
+    resp = web.Response(status=status, headers=headers)
+    resp["json_data"] = data
+
+    return resp
 
 
-def no_content():
+def no_content() -> web.Response:
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``204`` status and no body.
 
     :return: the response
-    :rtype: :class:`aiohttp.Response`
 
     """
     return web.Response(status=204)
 
 
-def bad_gateway(message="Bad gateway"):
+def bad_gateway(message: str = "Bad gateway") -> web.Response:
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``502`` status and the JSON body
     ``{"message": "Bad gateway"}``.
 
     :param message: text to send instead of 'Bad gateway'
-    :type message: str
-
     :return: the response
-    :rtype: :class:`aiohttp.Response`
 
     """
     return json_response({
@@ -54,16 +46,13 @@ def bad_gateway(message="Bad gateway"):
     }, status=502)
 
 
-def bad_request(message="Bad request"):
+def bad_request(message: str = "Bad request") -> web.Response:
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``400`` status the JSON body
     ``{"message": "Bad request"}``.
 
     :param message: text to send instead of 'Bad request'
-    :type message: str
-
     :return: the response
-    :rtype: :class:`aiohttp.Response`
 
     """
     return json_response({
@@ -72,16 +61,13 @@ def bad_request(message="Bad request"):
     }, status=400)
 
 
-def insufficient_rights(message="Insufficient rights"):
+def insufficient_rights(message: str = "Insufficient rights") -> web.Response:
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``401`` status and the JSON body
     ``{"message": "Bad request"}``.
 
     :param message: text to send instead of 'Bad request'
-    :type message: str
-
     :return: the response
-    :rtype: :class:`aiohttp.Response`
 
     """
     return json_response({
@@ -90,16 +76,13 @@ def insufficient_rights(message="Insufficient rights"):
     }, status=403)
 
 
-def not_found(message="Not found"):
+def not_found(message: str = "Not found") -> web.Response:
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``404`` status the JSON body
     ``{"message": "Not found"}``.
 
     :param message: text to send instead of 'Not found'
-    :type message: str
-
     :return: the response
-    :rtype: :class:`aiohttp.Response`
 
     """
     return json_response({
@@ -108,16 +91,13 @@ def not_found(message="Not found"):
     }, status=404)
 
 
-def conflict(message="Conflict"):
+def conflict(message: str = "Conflict") -> web.Response:
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``409`` status the JSON body
     ``{"message": "Conflict"}``.
 
     :param message: text to send instead of 'Not found'
-    :type message: str
-
     :return: the response
-    :rtype: :class:`aiohttp.Response`
 
     """
     return json_response({
@@ -126,16 +106,13 @@ def conflict(message="Conflict"):
     }, status=409)
 
 
-def invalid_input(errors):
+def invalid_input(errors: dict) -> web.Response:
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON body
     ``{"message": "Invalid input", "errors": <errors>}``.
 
     :param errors: error output from a :class:`cerberus.Validator` that led to the error response
-    :type errors: dict
-
     :return: the response
-    :rtype: :class:`aiohttp.Response`
 
     """
     return json_response({
@@ -145,16 +122,13 @@ def invalid_input(errors):
     }, status=422)
 
 
-def invalid_query(errors):
+def invalid_query(errors: dict) -> web.Response:
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON body
     ``{"message": "Invalid query", "errors": <errors>}``.
 
     :param errors: error output from a :class:`cerberus.Validator` that led to the error response
-    :type errors: dict
-
     :return: the response
-    :rtype: :class:`aiohttp.Response`
 
     """
     return json_response({
