@@ -2,7 +2,7 @@ import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { Button, DialogBody, DialogFooter, ModalDialog } from "../../base";
+import { Button, ModalBody, ModalFooter, Modal, ModalHeader } from "../../base";
 import { clearError } from "../../errors/actions";
 import { routerLocationHasState } from "../../utils/utils";
 import { createIndex, getUnbuilt } from "../actions";
@@ -19,11 +19,8 @@ class RebuildIndex extends React.Component {
         this.props.onGetUnbuilt(this.props.refId);
     }
 
-    handleHide = () => {
+    handleModalExited = () => {
         this.setState({ error: "" });
-
-        this.props.onHide();
-
         if (this.props.error) {
             this.props.onClearError();
         }
@@ -38,25 +35,26 @@ class RebuildIndex extends React.Component {
         const error = this.state.error || this.props.error;
 
         return (
-            <ModalDialog
-                label="Rebuild"
-                headerText="Rebuild Index"
-                size="lg"
+            <Modal
+                label="Rebuild Index"
                 show={this.props.show}
-                onHide={this.handleHide}
+                size="lg"
+                onHide={this.props.onHide}
+                onExited={this.handleModalExited}
             >
+                <ModalHeader>Rebuild Index</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <DialogBody>
+                    <ModalBody>
                         <RebuildIndexError error={error} />
                         <RebuildHistory unbuilt={this.props.unbuilt} error={this.state.error} />
-                    </DialogBody>
-                    <DialogFooter>
+                    </ModalBody>
+                    <ModalFooter>
                         <Button type="submit" color="blue" icon="wrench">
                             Start
                         </Button>
-                    </DialogFooter>
+                    </ModalFooter>
                 </form>
-            </ModalDialog>
+            </Modal>
         );
     }
 }

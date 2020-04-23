@@ -1,16 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<EditSubtraction /> should render 1`] = `
-<ModalDialog
-  headerText="Edit Subtraction"
-  label="SubtractionEdit"
+<Modal
+  label="Edit Subtraction"
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Edit Subtraction
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Name
@@ -31,27 +33,27 @@ exports[`<EditSubtraction /> should render 1`] = `
           value="Peach"
         />
       </InputGroup>
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
-      <SaveButton
-        pullRight={true}
-      />
-    </Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<EditSubtraction /> should render after name is changed 1`] = `
-<ModalDialog
-  headerText="Edit Subtraction"
-  label="SubtractionEdit"
+<Modal
+  label="Edit Subtraction"
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Edit Subtraction
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Name
@@ -72,27 +74,27 @@ exports[`<EditSubtraction /> should render after name is changed 1`] = `
           value="Peach"
         />
       </InputGroup>
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
-      <SaveButton
-        pullRight={true}
-      />
-    </Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<EditSubtraction /> should render after name is changed 2`] = `
-<ModalDialog
-  headerText="Edit Subtraction"
-  label="SubtractionEdit"
+<Modal
+  label="Edit Subtraction"
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Edit Subtraction
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Name
@@ -113,27 +115,27 @@ exports[`<EditSubtraction /> should render after name is changed 2`] = `
           value="Peach"
         />
       </InputGroup>
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
-      <SaveButton
-        pullRight={true}
-      />
-    </Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<EditSubtraction /> should render after nickname is changed 1`] = `
-<ModalDialog
-  headerText="Edit Subtraction"
-  label="SubtractionEdit"
+<Modal
+  label="Edit Subtraction"
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Edit Subtraction
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Name
@@ -154,27 +156,27 @@ exports[`<EditSubtraction /> should render after nickname is changed 1`] = `
           value="Peach"
         />
       </InputGroup>
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
-      <SaveButton
-        pullRight={true}
-      />
-    </Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<EditSubtraction /> should render after nickname is changed 2`] = `
-<ModalDialog
-  headerText="Edit Subtraction"
-  label="SubtractionEdit"
+<Modal
+  label="Edit Subtraction"
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Edit Subtraction
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Name
@@ -195,27 +197,27 @@ exports[`<EditSubtraction /> should render after nickname is changed 2`] = `
           value="Foo"
         />
       </InputGroup>
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
-      <SaveButton
-        pullRight={true}
-      />
-    </Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<EditSubtraction /> should render when [show=false] 1`] = `
-<ModalDialog
-  headerText="Edit Subtraction"
-  label="SubtractionEdit"
+<Modal
+  label="Edit Subtraction"
   onHide={[MockFunction]}
   show={false}
 >
+  <ModalHeader>
+    Edit Subtraction
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Name
@@ -236,12 +238,10 @@ exports[`<EditSubtraction /> should render when [show=false] 1`] = `
           value="Peach"
         />
       </InputGroup>
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
-      <SaveButton
-        pullRight={true}
-      />
-    </Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;

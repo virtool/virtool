@@ -1,27 +1,23 @@
 import { get, pick } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-
-import styled from "styled-components";
 import { pushState } from "../../app/actions";
 import {
     Checkbox,
-    DialogFooter,
     Input,
     InputError,
     InputGroup,
     InputLabel,
-    ModalDialog,
+    Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader,
     PasswordInput,
     SaveButton
 } from "../../base";
 import { clearError } from "../../errors/actions";
 import { getTargetChange, routerLocationHasState } from "../../utils/utils";
 import { createUser } from "../actions";
-
-const CreateUserContainer = styled.div`
-    margin: 15px;
-`;
 
 const getInitialState = () => ({
     userId: "",
@@ -50,14 +46,14 @@ export class CreateUser extends React.PureComponent {
         this.setState({ [name]: value, [error]: "" });
 
         if (this.props.error) {
-            this.props.onClearError("CREATE_USER_ERROR");
+            this.props.onClearError();
         }
     };
 
     handleModalExited = () => {
         this.setState(getInitialState());
         if (this.props.error) {
-            this.props.onClearError("CREATE_USER_ERROR");
+            this.props.onClearError();
         }
     };
 
@@ -71,6 +67,7 @@ export class CreateUser extends React.PureComponent {
         e.preventDefault();
 
         let hasError = false;
+
         if (!this.state.userId) {
             hasError = true;
             this.setState({ errorUserId: "Please specify a username" });
@@ -90,15 +87,15 @@ export class CreateUser extends React.PureComponent {
 
     render() {
         return (
-            <ModalDialog
-                headerText="Create User"
-                label="userCreate"
+            <Modal
+                label="Create User"
                 show={this.props.show}
                 onHide={this.props.onHide}
                 onExited={this.handleModalExited}
             >
+                <ModalHeader>Create User</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <CreateUserContainer>
+                    <ModalBody>
                         <InputGroup>
                             <InputLabel>Username</InputLabel>
                             <Input name="userId" value={this.state.userId} onChange={this.handleChange} />
@@ -115,13 +112,13 @@ export class CreateUser extends React.PureComponent {
                             checked={this.state.forceReset}
                             onClick={this.handleToggleForceReset}
                         />
-                    </CreateUserContainer>
+                    </ModalBody>
 
-                    <DialogFooter>
-                        <SaveButton pullRight />
-                    </DialogFooter>
+                    <ModalFooter>
+                        <SaveButton />
+                    </ModalFooter>
                 </form>
-            </ModalDialog>
+            </Modal>
         );
     }
 }
@@ -142,8 +139,8 @@ export const mapDispatchToProps = dispatch => ({
         dispatch(pushState({ createUser: false }));
     },
 
-    onClearError: error => {
-        dispatch(clearError(error));
+    onClearError: () => {
+        dispatch(clearError("CREATE_USER_ERROR"));
     }
 });
 

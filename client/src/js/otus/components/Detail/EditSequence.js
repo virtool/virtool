@@ -1,7 +1,7 @@
 import { find } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { ModalDialog } from "../../../base";
+import { Modal, ModalHeader } from "../../../base";
 import { clearError } from "../../../errors/actions";
 import { editSequence, hideOTUModal } from "../../actions";
 import { getSequences } from "../../selectors";
@@ -26,7 +26,8 @@ class EditSequence extends React.Component {
         const { accession, dataType, definition, host, id, sequence } = this.props;
 
         return (
-            <ModalDialog headerText="Edit Sequence" show={!!id} onHide={this.props.onHide} label="EditSequence">
+            <Modal label="Edit Sequence" show={!!id} onHide={this.props.onHide}>
+                <ModalHeader>Edit Sequence</ModalHeader>
                 <SequenceForm
                     key={`edit_${id}`}
                     accession={accession}
@@ -36,7 +37,7 @@ class EditSequence extends React.Component {
                     dataType={dataType}
                     onSubmit={this.handleSubmit}
                 />
-            </ModalDialog>
+            </Modal>
         );
     }
 }

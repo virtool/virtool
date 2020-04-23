@@ -1,4 +1,4 @@
-import { ModalDialog } from "../Modal";
+import { Modal } from "../Modal";
 import { RemoveModal } from "../RemoveModal";
 import { Button } from "../Button";
 
@@ -34,7 +34,7 @@ describe("<RemoveModal />", () => {
 
     it("should call the onHide() prop when ModalDialogclose.onHide() is called", () => {
         const wrapper = shallow(<RemoveModal {...props} />);
-        wrapper.find(ModalDialog).prop("onHide")();
+        wrapper.find(Modal).prop("onHide")();
         expect(props.onHide).toHaveBeenCalled();
     });
 

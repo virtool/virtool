@@ -26,7 +26,7 @@ export const InputGroup = ({ children, className, error }) => (
 );
 
 export const InputLabel = styled.label`
-    font-weight: bold;
+    font-weight: 500;
 `;
 
 export class UnstyledInput extends React.Component {

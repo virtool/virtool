@@ -2,7 +2,7 @@ import { find, map, toNumber } from "lodash-es";
 import React from "react";
 
 import { connect } from "react-redux";
-import { Button, DialogBody, DialogFooter, ModalDialog } from "../../../../base";
+import { Button, ModalBody, ModalFooter, Modal, ModalHeader } from "../../../../base";
 import { editReference } from "../../../actions";
 import { TargetForm } from "./Form";
 
@@ -60,16 +60,10 @@ export class EditTarget extends React.Component {
 
     render() {
         return (
-            <ModalDialog
-                headerText="Edit target"
-                show={this.props.show}
-                onHide={this.props.onHide}
-                onEnter={this.handleEnter}
-                onExited={this.handleExited}
-                label="EditReference"
-            >
+            <Modal show={this.props.show} onEnter={this.handleEnter} onHide={this.props.onHide} label="Edit Target">
+                <ModalHeader>Edit Target</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <DialogBody>
+                    <ModalBody>
                         <TargetForm
                             onChange={this.handleChange}
                             name={this.state.name}
@@ -78,15 +72,15 @@ export class EditTarget extends React.Component {
                             required={this.state.required}
                             errorName={this.errorName}
                         />
-                    </DialogBody>
+                    </ModalBody>
 
-                    <DialogFooter>
+                    <ModalFooter>
                         <Button type="submit" icon="save" color="blue">
                             Submit
                         </Button>
-                    </DialogFooter>
+                    </ModalFooter>
                 </form>
-            </ModalDialog>
+            </Modal>
         );
     }
 }

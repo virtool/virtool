@@ -3,14 +3,15 @@ import React from "react";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
 import {
-    DialogBody,
-    DialogFooter,
+    ModalBody,
+    ModalFooter,
     Input,
     InputError,
     InputGroup,
     InputLabel,
-    ModalDialog,
-    SaveButton
+    Modal,
+    SaveButton,
+    ModalHeader
 } from "../../base";
 import { clearError } from "../../errors/actions";
 
@@ -46,11 +47,10 @@ class EditSample extends React.Component {
         this.setState(getInitialState(this.props));
     };
 
-    handleModalHide = () => {
+    handleModalExited = () => {
         if (this.props.error) {
             this.props.onClearError();
         }
-        this.props.onHide();
     };
 
     handleSubmit = e => {
@@ -69,15 +69,16 @@ class EditSample extends React.Component {
         const error = this.state.error || this.props.error || "";
 
         return (
-            <ModalDialog
-                label="EditSample"
-                headerText="Edit Sample"
+            <Modal
+                label="Edit Sample"
                 show={this.props.show}
                 onEnter={this.handleModalEnter}
-                onHide={this.handleModalHide}
+                onExited={this.handleModalExited}
+                onHide={this.props.onHide}
             >
+                <ModalHeader>Edit Sample</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <DialogBody>
+                    <ModalBody>
                         <InputGroup>
                             <InputLabel>Name</InputLabel>
                             <Input name="name" value={this.state.name} onChange={this.handleChange} />
@@ -95,12 +96,12 @@ class EditSample extends React.Component {
                             <InputLabel>Locale</InputLabel>
                             <Input name="locale" value={this.state.locale} onChange={this.handleChange} />
                         </InputGroup>
-                    </DialogBody>
-                    <DialogFooter>
+                    </ModalBody>
+                    <ModalFooter>
                         <SaveButton />
-                    </DialogFooter>
+                    </ModalFooter>
                 </form>
-            </ModalDialog>
+            </Modal>
         );
     }
 }

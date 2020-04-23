@@ -8,14 +8,15 @@ describe("<CreateUser />", () => {
 
     beforeEach(() => {
         props = {
-            error: "foo",
+            error: "",
+            show: true,
             onClearError: jest.fn(),
             onCreate: jest.fn()
         };
 
         state = {
             errorPassword: "",
-            errorUserId: "foo",
+            errorUserId: "",
             forceReset: false,
             password: "",
             userId: ""
@@ -27,14 +28,22 @@ describe("<CreateUser />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
+    it("should render with error", () => {
+        const wrapper = shallow(<CreateUser {...props} />);
+        wrapper.setState({
+            errorPassword: "Password too short"
+        });
+        expect(wrapper).toMatchSnapshot();
+    });
+
     it("should render when name has changed", () => {
         const e = {
             target: { name: "userId", value: "bob" }
         };
-        const wrapper = shallow(<CreateUser {...props} />);
+        const wrapper = shallow(<CreateUser {...props} error="Error" />);
         expect(wrapper).toMatchSnapshot();
         wrapper.find(Input).simulate("change", e);
-        expect(props.onClearError).toHaveBeenCalledWith("CREATE_USER_ERROR");
+        expect(props.onClearError).toHaveBeenCalled();
         expect(wrapper).toMatchSnapshot();
     });
 
@@ -42,20 +51,18 @@ describe("<CreateUser />", () => {
         const e = {
             target: { name: "password", value: "password" }
         };
-        const wrapper = shallow(<CreateUser {...props} />);
+        const wrapper = shallow(<CreateUser {...props} error="Error" />);
         expect(wrapper).toMatchSnapshot();
         wrapper.find(PasswordInput).simulate("change", e);
-        expect(props.onClearError).toHaveBeenCalledWith("CREATE_USER_ERROR");
+        expect(props.onClearError).toHaveBeenCalled();
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call handleModalExited() when modal is closed", () => {
+    it("should call onClearError() when handleModalExited() is called", () => {
+        props.error = "Error";
         const wrapper = shallow(<CreateUser {...props} />);
-        wrapper
-            .find("ModalDialog")
-            .at(0)
-            .simulate("exited");
-        expect(props.onClearError).toHaveBeenCalledWith("CREATE_USER_ERROR");
+        wrapper.instance().handleModalExited();
+        expect(props.onClearError).toHaveBeenCalledWith();
     });
 
     it("should call handleToggleForceReset when Checkbox is clicked", () => {
@@ -146,10 +153,9 @@ describe("mapDispatchToProps", () => {
     });
 
     it("should return onClearError() in props", () => {
-        const error = true;
-        result.onClearError(error);
+        result.onClearError();
         expect(dispatch).toHaveBeenCalledWith({
-            error: true,
+            error: "CREATE_USER_ERROR",
             type: "CLEAR_ERROR"
         });
     });

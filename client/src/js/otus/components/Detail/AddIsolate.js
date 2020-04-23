@@ -11,7 +11,7 @@
 
 import React from "react";
 import { connect } from "react-redux";
-import { ModalDialog } from "../../../base";
+import { Modal, ModalHeader } from "../../../base";
 import { addIsolate, hideOTUModal } from "../../actions";
 import IsolateForm from "./IsolateForm";
 
@@ -40,19 +40,19 @@ class AddIsolate extends React.Component {
         this.props.onSave(this.props.otuId, sourceType, sourceName);
     };
 
-    handleExit = () => {
+    handleModalExited = () => {
         this.setState(getInitialState(this.props));
     };
 
     render() {
         return (
-            <ModalDialog
-                label="AddIsolate"
-                headerText="Add Isolate"
+            <Modal
+                label="Add Isolate"
                 show={this.props.show}
                 onHide={this.props.onHide}
-                onExited={this.handleExit}
+                onExited={this.handleModalExited}
             >
+                <ModalHeader>Add Isolate</ModalHeader>
                 <IsolateForm
                     ref={node => (this.formNode = node)}
                     sourceType={this.state.sourceType}
@@ -62,7 +62,7 @@ class AddIsolate extends React.Component {
                     onChange={this.handleChange}
                     onSubmit={this.handleSubmit}
                 />
-            </ModalDialog>
+            </Modal>
         );
     }
 }

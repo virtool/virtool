@@ -4,14 +4,14 @@ import styled from "styled-components";
 import { getColor } from "../app/theme";
 import { Icon } from "./Icon";
 
-export const getBackgroundColor = ({ color, theme }) =>
+export const getAlertBackgroundColor = ({ color, theme }) =>
     get(theme, ["color", `${color}Lightest`], theme.color.greyLightest);
 
 export const getTextColor = ({ color, theme }) => get(theme, ["color", `${color}Dark`], theme.color.greyDark);
 
 const StyledAlert = styled.div`
     align-items: ${props => (props.level ? "center" : "normal")};
-    background-color: ${getBackgroundColor};
+    background-color: ${getAlertBackgroundColor};
     border: 1px solid ${getColor};
     border-radius: ${props => props.theme.borderRadius.lg};
     border-left-width: 4px;

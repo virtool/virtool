@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { find, map } from "lodash-es";
-import { Button, ModalDialog, DialogBody, DialogFooter } from "../../../base";
+import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from "../../../base";
 import { editReferenceGroup, editReferenceUser } from "../../actions";
 import { MemberRight } from "./MemberRight";
 
@@ -53,23 +53,18 @@ export class EditReferenceMember extends React.Component {
             <MemberRight key={right} right={right} enabled={this.props[right]} onToggle={this.handleChange} />
         ));
 
-        const header = <strong>Modify Rights for {this.props.id}</strong>;
+        const title = `Modify Rights for ${this.props.id}`;
 
         return (
-            <ModalDialog
-                headerText={header}
-                show={!!this.props.show}
-                onHide={this.props.onHide}
-                onExited={this.handleExited}
-                label="EditReferenceMember"
-            >
-                <DialogBody>{rightComponents}</DialogBody>
-                <DialogFooter>
+            <Modal label={title} show={!!this.props.show} onHide={this.props.onHide} onExited={this.handleExited}>
+                <ModalHeader>{title}</ModalHeader>
+                <ModalBody>{rightComponents}</ModalBody>
+                <ModalFooter>
                     <Button color="blue" icon="save" onClick={this.handleSubmit}>
                         Save
                     </Button>
-                </DialogFooter>
-            </ModalDialog>
+                </ModalFooter>
+            </Modal>
         );
     }
 }

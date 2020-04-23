@@ -1,11 +1,11 @@
+import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { get } from "lodash-es";
-import OTUForm from "../OTUForm";
-import { ModalDialog } from "../../../base";
-import { editOTU, hideOTUModal } from "../../actions";
+import { Modal, ModalHeader } from "../../../base";
 import { clearError } from "../../../errors/actions";
 import { getTargetChange } from "../../../utils/utils";
+import { editOTU, hideOTUModal } from "../../actions";
+import { OTUForm } from "../Form";
 
 const getInitialState = ({ name = "", abbreviation = "" }) => ({
     name,
@@ -28,7 +28,7 @@ class EditOTU extends React.Component {
         });
 
         if (this.props.error) {
-            this.props.onClearError("EDIT_OTU_ERROR");
+            this.props.onClearError();
         }
     };
 
@@ -36,10 +36,9 @@ class EditOTU extends React.Component {
         this.setState(getInitialState(this.props));
     };
 
-    handleHide = () => {
-        this.props.onHide(this.props);
+    handleModalExited = () => {
         if (this.props.error) {
-            this.props.onClearError("EDIT_OTU_ERROR");
+            this.props.onClearError();
         }
     };
 
@@ -61,13 +60,14 @@ class EditOTU extends React.Component {
         const error = this.state.error || this.props.error || "";
 
         return (
-            <ModalDialog
-                headerText="Edit OTU"
-                label="EditOTU"
+            <Modal
+                label="Edit OTU"
                 show={this.props.show}
                 onEnter={this.handleModalEnter}
-                onHide={this.handleHide}
+                onExited={this.handleModalExited}
+                onHide={this.props.onHide}
             >
+                <ModalHeader>Edit OTU</ModalHeader>
                 <OTUForm
                     name={this.state.name}
                     abbreviation={this.state.abbreviation}
@@ -75,7 +75,7 @@ class EditOTU extends React.Component {
                     onSubmit={this.handleSubmit}
                     onChange={this.handleChange}
                 />
-            </ModalDialog>
+            </Modal>
         );
     }
 }
@@ -94,8 +94,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(editOTU(otuId, name, abbreviation));
     },
 
-    onClearError: error => {
-        dispatch(clearError(error));
+    onClearError: () => {
+        dispatch(clearError("EDIT_OTU_ERROR"));
     }
 });
 

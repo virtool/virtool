@@ -9,7 +9,7 @@ import React from "react";
 
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
-import { Button, ButtonGroup, DialogBody, ModalDialog, DialogFooter } from "../../../base/";
+import { Button, ButtonGroup, ModalBody, Modal, ModalFooter, ModalHeader } from "../../../base/";
 import { followDynamicDownload, routerLocationHasState } from "../../../utils/utils";
 import { getResults } from "../../selectors";
 import NuVsExportPreview from "./ExportPreview";
@@ -107,15 +107,15 @@ export class NuVsExport extends React.Component {
 
     render() {
         return (
-            <ModalDialog
-                headerText="Export NuVs Data"
+            <Modal
+                label="Export Analysis"
                 show={this.props.show}
                 onHide={this.props.onHide}
                 onExited={this.handleModalExited}
-                label="NuVsExport"
             >
+                <ModalHeader>Export Analysis</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <DialogBody>
+                    <ModalBody>
                         <ButtonGroup>
                             <Button
                                 type="button"
@@ -134,14 +134,14 @@ export class NuVsExport extends React.Component {
                         </ButtonGroup>
 
                         <NuVsExportPreview mode={this.state.mode} />
-                    </DialogBody>
-                    <DialogFooter>
+                    </ModalBody>
+                    <ModalFooter>
                         <Button type="submit" color="blueDark" icon="download">
                             Download
                         </Button>
-                    </DialogFooter>
+                    </ModalFooter>
                 </form>
-            </ModalDialog>
+            </Modal>
         );
     }
 }

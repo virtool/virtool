@@ -1,19 +1,19 @@
 import { push } from "connected-react-router";
 import { find, get, includes, map, sortBy } from "lodash-es";
 import React from "react";
-
 import { connect } from "react-redux";
 import styled from "styled-components";
 import {
     BoxGroup,
-    DialogBody,
     Input,
     InputContainer,
     InputError,
     InputGroup,
     InputIcon,
     LoadingPlaceholder,
-    ModalDialog
+    Modal,
+    ModalBody,
+    ModalHeader
 } from "../../base";
 import { clearError } from "../../errors/actions";
 import { routerLocationHasState } from "../../utils/utils";
@@ -22,7 +22,7 @@ import { createGroup, removeGroup, setGroupPermission } from "../actions";
 import { GroupDetail } from "./Detail";
 import Group from "./Group";
 
-const GroupsModalBody = styled(DialogBody)`
+const GroupsModalBody = styled(ModalBody)`
     display: grid;
     grid-template-columns: 2fr 3fr;
     grid-column-gap: 15px;
@@ -48,7 +48,7 @@ class Groups extends React.Component {
         });
 
         if (this.props.error) {
-            this.props.onClearError("CREATE_GROUP_ERROR");
+            this.props.onClearError();
         }
     };
 
@@ -61,7 +61,7 @@ class Groups extends React.Component {
         });
 
         if (this.props.error) {
-            this.props.onClearError("CREATE_GROUP_ERROR");
+            this.props.onClearError();
         }
     };
 
@@ -108,14 +108,14 @@ class Groups extends React.Component {
         }
 
         return (
-            <ModalDialog
-                label="group"
-                size="lg"
+            <Modal
+                label="Manage Groups"
                 show={this.props.show}
+                size="lg"
                 onHide={this.props.onHide}
                 onExited={this.handleModalExited}
-                headerText="Groups"
             >
+                <ModalHeader>Manage Groups</ModalHeader>
                 <GroupsModalBody>
                     <div>
                         <form onSubmit={this.handleSubmit}>
@@ -141,21 +141,19 @@ class Groups extends React.Component {
                         onSetPermission={this.props.onSetPermission}
                     />
                 </GroupsModalBody>
-            </ModalDialog>
+            </Modal>
         );
     }
 }
 
-const mapStateToProps = state => {
-    return {
-        show: routerLocationHasState(state, "groups"),
-        users: state.users.documents,
-        groups: state.groups.documents,
-        pending: state.groups.pending,
-        activeId: state.groups.activeId,
-        error: get(state, "errors.CREATE_GROUP_ERROR.message", "")
-    };
-};
+const mapStateToProps = state => ({
+    show: routerLocationHasState(state, "groups"),
+    users: state.users.documents,
+    groups: state.groups.documents,
+    pending: state.groups.pending,
+    activeId: state.groups.activeId,
+    error: get(state, "errors.CREATE_GROUP_ERROR.message", "")
+});
 
 const mapDispatchToProps = dispatch => ({
     onCreate: groupId => {
@@ -174,8 +172,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(setGroupPermission(groupId, permission, value));
     },
 
-    onClearError: error => {
-        dispatch(clearError(error));
+    onClearError: () => {
+        dispatch(clearError("CREATE_GROUP_ERROR"));
     }
 });
 

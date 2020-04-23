@@ -4,7 +4,7 @@ exports[`<CreateReference /> should render 1`] = `
 <form
   onSubmit={[Function]}
 >
-  <Create__Container>
+  <Modal__ModalBody>
     <Alert>
       <strong>
         Create an empty reference.
@@ -22,19 +22,17 @@ exports[`<CreateReference /> should render 1`] = `
       dataType="genome"
       onSelect={[Function]}
     />
-  </Create__Container>
-  <Modal__DialogFooter>
-    <ButtonToolbar>
-      <Button
-        color="blue"
-        disabled={false}
-        icon="save"
-        tipPlacement="top"
-        type="submit"
-      >
-        Save
-      </Button>
-    </ButtonToolbar>
-  </Modal__DialogFooter>
+  </Modal__ModalBody>
+  <Modal__ModalFooter>
+    <Button
+      color="blue"
+      disabled={false}
+      icon="save"
+      tipPlacement="top"
+      type="submit"
+    >
+      Save
+    </Button>
+  </Modal__ModalFooter>
 </form>
 `;

@@ -2,7 +2,7 @@ import { forEach, xorBy } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
-import { Button, Flex, FlexItem, ModalDialog, DialogBody, DialogFooter } from "../../../base";
+import { Button, Flex, FlexItem, Modal, ModalBody, ModalFooter, ModalHeader } from "../../../base";
 import { getDefaultSubtraction, getSampleLibraryType, getSelectedDocuments } from "../../../samples/selectors";
 import { shortlistSubtractions } from "../../../subtraction/actions";
 import { analyze } from "../../actions";
@@ -85,16 +85,10 @@ export class CreateAnalysis extends React.Component {
         const show = !!(this.props.documents && this.props.documents.length);
 
         return (
-            <ModalDialog
-                headerText="Analyze"
-                label="create"
-                size="lg"
-                show={show}
-                onHide={this.props.onHide}
-                onEnter={this.handleEnter}
-            >
+            <Modal label="Analyze" show={show} size="lg" onHide={this.props.onHide} onEnter={this.handleEnter}>
+                <ModalHeader>Analyze</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <DialogBody>
+                    <ModalBody>
                         <SelectedSamples samples={this.props.documents} />
                         <WorkflowSelect
                             libraryType={this.props.libraryType}
@@ -113,8 +107,8 @@ export class CreateAnalysis extends React.Component {
                             selected={selected}
                             error={this.state.error}
                         />
-                    </DialogBody>
-                    <DialogFooter>
+                    </ModalBody>
+                    <ModalFooter>
                         <Flex alignItems="center">
                             <FlexItem grow={1}>
                                 <MultiSummary
@@ -129,9 +123,9 @@ export class CreateAnalysis extends React.Component {
                                 </Button>
                             </FlexItem>
                         </Flex>
-                    </DialogFooter>
+                    </ModalFooter>
                 </form>
-            </ModalDialog>
+            </Modal>
         );
     }
 }

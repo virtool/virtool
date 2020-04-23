@@ -1,18 +1,19 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<CreateSample> should display error when form submitted with no name 1`] = `
-<ModalDialog
-  headerText="Create Sample"
-  label="sample"
+<Modal
+  label="Create Sample"
   onExited={[Function]}
-  onHide={[Function]}
   show={true}
   size="lg"
 >
+  <ModalHeader>
+    Create Sample
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <Create__CreateSampleFields>
         <InputGroup>
           <Input__InputLabel>
@@ -117,27 +118,28 @@ exports[`<CreateSample> should display error when form submitted with no name 1`
           ]
         }
       />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <SaveButton />
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateSample> should display error when form submitted with no subtractions available 1`] = `
-<ModalDialog
-  headerText="Create Sample"
-  label="sample"
+<Modal
+  label="Create Sample"
   onExited={[Function]}
-  onHide={[Function]}
   show={true}
   size="lg"
 >
+  <ModalHeader>
+    Create Sample
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <Create__CreateSampleFields>
         <InputGroup>
           <Input__InputLabel>
@@ -228,27 +230,28 @@ exports[`<CreateSample> should display error when form submitted with no subtrac
           ]
         }
       />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <SaveButton />
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateSample> should render 1`] = `
-<ModalDialog
-  headerText="Create Sample"
-  label="sample"
+<Modal
+  label="Create Sample"
   onExited={[Function]}
-  onHide={[Function]}
   show={true}
   size="lg"
 >
+  <ModalHeader>
+    Create Sample
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <Create__CreateSampleFields>
         <InputGroup>
           <Input__InputLabel>
@@ -346,38 +349,44 @@ exports[`<CreateSample> should render 1`] = `
         onSelect={[Function]}
         selected={Array []}
       />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <SaveButton />
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateSample> should render LoadingPlaceholder when [this.props.readyReads=null] 1`] = `
-<ModalDialog
-  label="sample"
+<Modal
+  label="Create Sample"
   show={true}
   size="lg"
 >
-  <Modal__DialogBody>
+  <ModalHeader>
+    Create Sample
+  </ModalHeader>
+  <Modal__ModalBody>
     <LoadingPlaceholder
       margin="36px"
     />
-  </Modal__DialogBody>
-</ModalDialog>
+  </Modal__ModalBody>
+</Modal>
 `;
 
 exports[`<CreateSample> should render LoadingPlaceholder when [this.props.subtractions=null] 1`] = `
-<ModalDialog
-  label="sample"
+<Modal
+  label="Create Sample"
   show={true}
   size="lg"
 >
-  <Modal__DialogBody>
+  <ModalHeader>
+    Create Sample
+  </ModalHeader>
+  <Modal__ModalBody>
     <LoadingPlaceholder
       margin="36px"
     />
-  </Modal__DialogBody>
-</ModalDialog>
+  </Modal__ModalBody>
+</Modal>
 `;

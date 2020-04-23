@@ -3,16 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import {
-    AffixedProgressBar,
-    Alert,
-    Box,
-    DialogBody,
-    DialogFooter,
-    InputError,
-    SaveButton,
-    UploadBar
-} from "../../base";
+import { AffixedProgressBar, Alert, Box, ModalBody, ModalFooter, InputError, SaveButton, UploadBar } from "../../base";
 import { clearError } from "../../errors/actions";
 import { upload } from "../../files/actions";
 import { createRandomString, getTargetChange } from "../../utils/utils";
@@ -32,7 +23,7 @@ const getInitialState = () => ({
     mode: "import"
 });
 
-const ImportReferenceDialogBody = styled(DialogBody)`
+const ImportReferenceDialogBody = styled(ModalBody)`
     ${InputError} {
         margin: -10px 0 10px;
     }
@@ -148,9 +139,9 @@ class ImportReference extends React.Component {
                     />
                 </ImportReferenceDialogBody>
 
-                <DialogFooter>
+                <ModalFooter>
                     <SaveButton disabled={progress !== 100 && progress !== 0} altText="Import" />
-                </DialogFooter>
+                </ModalFooter>
             </form>
         );
     }

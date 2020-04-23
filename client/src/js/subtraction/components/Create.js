@@ -9,14 +9,15 @@ import {
     BoxGroup,
     BoxGroupSection,
     Button,
-    DialogBody,
-    DialogFooter,
+    ModalBody,
+    ModalFooter,
     Input,
     InputError,
     InputGroup,
     InputLabel,
-    ModalDialog,
-    NoneFoundSection
+    Modal,
+    NoneFoundSection,
+    ModalHeader
 } from "../../base";
 
 import { findFiles } from "../../files/actions";
@@ -125,16 +126,16 @@ export class CreateSubtraction extends React.Component {
         }
 
         return (
-            <ModalDialog
-                label="SubtractionCreate"
-                headerText="Create Subtraction"
+            <Modal
+                label="Create Subtraction"
                 show={this.props.show}
                 onHide={this.props.onHide}
                 onEnter={this.handleModalEnter}
                 onExited={this.handleModalExited}
             >
+                <ModalHeader>Create Subtraction</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <DialogBody>
+                    <ModalBody>
                         <InputGroup>
                             <InputLabel>Name</InputLabel>
                             <Input name="name" value={this.state.name} onChange={this.handleChange} />
@@ -146,20 +147,18 @@ export class CreateSubtraction extends React.Component {
                             <Input name="nickname" value={this.state.nickname} onChange={this.handleChange} />
                         </InputGroup>
 
-                        <h5>
-                            <strong>Files</strong>
-                        </h5>
+                        <label>Files</label>
                         <SubtractionFileList>{fileComponents}</SubtractionFileList>
                         <InputError>{this.state.errorFile}</InputError>
-                    </DialogBody>
+                    </ModalBody>
 
-                    <DialogFooter>
+                    <ModalFooter>
                         <Button type="submit" color="blue" icon="play">
                             Start
                         </Button>
-                    </DialogFooter>
+                    </ModalFooter>
                 </form>
-            </ModalDialog>
+            </Modal>
         );
     }
 }

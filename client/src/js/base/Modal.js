@@ -1,10 +1,12 @@
-import { DialogContent, DialogOverlay } from "@reach/dialog";
+import { DialogContent as ReachDialogContent, DialogOverlay as ReachDialogOverlay } from "@reach/dialog";
 import "@reach/dialog/styles.css";
+import { get } from "lodash-es";
 import PropTypes from "prop-types";
-import React from "react";
+import React, { useContext } from "react";
 import styled, { keyframes } from "styled-components";
+import { colors } from "../app/theme";
 import { Alert } from "./Alert";
-import { Box, BoxGroupSection } from "./Box";
+import { BoxGroupSection } from "./Box";
 import { CloseButton } from "./CloseButton";
 
 const modalOverlayOpen = keyframes`
@@ -34,6 +36,9 @@ const modalContentClose = keyframes`
     }
 `;
 
+export const getModalBackgroundColor = ({ color, theme }) => get(theme.color, color, theme.color.white);
+export const getModalForegroundColor = ({ color, theme }) => (color ? theme.color.white : theme.color.black);
+
 export const ModalAlert = styled(Alert)`
     border-left: none;
     border-right: none;
@@ -50,11 +55,10 @@ export const ModalAlert = styled(Alert)`
     }
 `;
 
-export const ModalDialogContent = styled(({ close, size, ...rest }) => <DialogContent {...rest} />)`
+export const ModalContent = styled(({ close, size, ...rest }) => <ReachDialogContent {...rest} />)`
     animation: ${props => (props.close ? modalContentClose : modalContentOpen)} 0.3s;
     animation-fill-mode: forwards;
     background: white;
-    border-radius: ${props => props.theme.borderRadius.sm};
     box-shadow: ${props => props.theme.boxShadow.lg};
     margin: -70px auto;
     padding: 0;
@@ -66,7 +70,7 @@ export const ModalDialogContent = styled(({ close, size, ...rest }) => <DialogCo
     }
 `;
 
-export const DialogFooter = styled(({ modalStyle, ...rest }) => <Box {...rest} />)`
+export const ModalFooter = styled(({ modalStyle, ...rest }) => <BoxGroupSection {...rest} />)`
     border-left: none;
     border-right: none;
     border-bottom: none;
@@ -76,7 +80,7 @@ export const DialogFooter = styled(({ modalStyle, ...rest }) => <Box {...rest} /
     overflow-y: auto;
 `;
 
-export const ModalDialogOverlay = styled(({ close, ...rest }) => <DialogOverlay {...rest} />)`
+export const ModalOverlay = styled(({ close, ...rest }) => <ReachDialogOverlay {...rest} />)`
     animation: ${props => (props.close ? modalOverlayClose : modalOverlayOpen)} 0.2s;
     animation-fill-mode: forwards;
     background: hsla(0, 0%, 0%, 0.33);
@@ -93,44 +97,53 @@ export const ModalDialogOverlay = styled(({ close, ...rest }) => <DialogOverlay 
     }
 `;
 
-const ModalDialogHeader = styled(({ modalStyle, headerBorderBottom, capitalize, ...rest }) => (
-    <BoxGroupSection {...rest} />
-))`
-    background-color: ${props => (props.modalStyle === "danger" ? "#d44b40" : "")};
-    color: ${props => (props.modalStyle === "danger" ? "white" : "")};
-    height: 55px;
-    display: flex;
+const StyledModalHeader = styled(BoxGroupSection)`
     align-items: center;
+    background-color: ${getModalBackgroundColor};
+    color: ${getModalForegroundColor};
+    display: flex;
+    font-size: ${props => props.theme.fontSize.lg};
+    font-weight: 500;
+    height: 55px;
     justify-content: space-between;
-    border-bottom: ${props => props.headerBorderBottom} !important;
     text-transform: ${props => props.capitalize};
 `;
 
-export const DialogBody = styled.div`
-    padding: 15px;
-`;
+export const ModalHeader = ({ children, className }) => {
+    const { color, onHide } = useContext(ModalContext);
+
+    return (
+        <StyledModalHeader className={className} color={color}>
+            {children}
+            <CloseButton onClick={onHide} />
+        </StyledModalHeader>
+    );
+};
+
+export const ModalBody = styled(BoxGroupSection)``;
+
+export const ModalContext = React.createContext({});
 
 export const ModalBodyOverlay = styled.div`
-    text-align: center;
-    position: absolute;
-    display: flex;
     align-items: center;
+    background-color: rgba(203, 213, 224, 0.7);
+    display: flex;
+    position: absolute;
     top: 0;
     right: 0;
-    height: 100%;
-    width: 100%;
+    left: 0;
+    bottom: 0;
+    text-align: center;
     z-index: 10000;
-    background-color: #777777;
-    opacity: 0.7;
 
     span {
         flex: auto;
-        color: white;
-        font-size: 24px;
+        font-size: ${props => props.theme.fontSize.xl};
+        z-index: 10001;
     }
 `;
 
-export class ModalDialog extends React.Component {
+export class Modal extends React.Component {
     constructor(props) {
         super(props);
 
@@ -174,9 +187,14 @@ export class ModalDialog extends React.Component {
     };
 
     render() {
+        const contextValue = {
+            color: this.props.color,
+            onHide: this.props.onHide
+        };
+
         return (
-            <div>
-                <ModalDialogOverlay
+            <ModalContext.Provider value={contextValue}>
+                <ModalOverlay
                     isOpen={this.state.open}
                     close={this.state.close}
                     onAnimationEnd={this.onClosed}
@@ -185,39 +203,28 @@ export class ModalDialog extends React.Component {
                         this.onClose();
                     }}
                 >
-                    <ModalDialogContent
+                    <ModalContent
                         size={this.props.size}
                         aria-labelledby={this.props.label}
                         close={this.state.close}
                         onAnimationEnd={this.onClosed}
                         onAnimationStart={this.onOpen}
                     >
-                        <ModalDialogHeader
-                            modalStyle={this.props.modalStyle}
-                            headerBorderBottom={this.props.headerBorderBottom}
-                            capitalize={this.props.capitalize}
-                        >
-                            {this.props.headerText}
-                            <CloseButton onClick={this.props.onHide} />
-                        </ModalDialogHeader>
                         {this.props.children}
-                    </ModalDialogContent>
-                </ModalDialogOverlay>
-            </div>
+                    </ModalContent>
+                </ModalOverlay>
+            </ModalContext.Provider>
         );
     }
 }
 
-ModalDialog.propTypes = {
-    capitalize: PropTypes.string,
+Modal.propTypes = {
     children: PropTypes.node,
-    headerBorderBottom: PropTypes.string,
-    headerText: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
-    modalStyle: PropTypes.string,
-    size: PropTypes.string,
+    color: PropTypes.oneOf(colors),
+    size: PropTypes.oneOf(["sm", "lg"]),
     label: PropTypes.string.isRequired,
-    onHide: PropTypes.func,
+    onHide: PropTypes.func.isRequired,
     onExited: PropTypes.func,
     onEnter: PropTypes.func,
-    show: PropTypes.bool
+    show: PropTypes.bool.isRequired
 };

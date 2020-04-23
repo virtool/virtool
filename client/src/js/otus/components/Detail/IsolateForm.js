@@ -2,7 +2,7 @@ import { toLower } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import styled from "styled-components";
-import { DialogBody, DialogFooter, Input, InputGroup, InputLabel, SaveButton } from "../../../base";
+import { ModalBody, ModalFooter, Input, InputGroup, InputLabel, SaveButton } from "../../../base";
 
 import { formatIsolateName } from "../../../utils/utils";
 import { SourceType } from "./SourceType";
@@ -40,7 +40,7 @@ export class IsolateForm extends React.Component {
     render() {
         return (
             <form onSubmit={this.props.onSubmit}>
-                <DialogBody>
+                <ModalBody>
                     <IsolateFormFields>
                         <SourceType
                             restrictSourceTypes={this.props.restrictSourceTypes}
@@ -63,10 +63,10 @@ export class IsolateForm extends React.Component {
                         <InputLabel>Isolate Name</InputLabel>
                         <Input value={formatIsolateName(this.props)} readOnly />
                     </InputGroup>
-                </DialogBody>
-                <DialogFooter>
+                </ModalBody>
+                <ModalFooter>
                     <SaveButton />
-                </DialogFooter>
+                </ModalFooter>
             </form>
         );
     }

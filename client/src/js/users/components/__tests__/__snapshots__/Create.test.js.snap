@@ -1,15 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<CreateUser /> should render 1`] = `
-<ModalDialog
-  headerText="Create User"
-  label="userCreate"
+<Modal
+  label="Create User"
   onExited={[Function]}
+  show={true}
 >
+  <ModalHeader>
+    Create User
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Create__CreateUserContainer>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Username
@@ -19,9 +22,7 @@ exports[`<CreateUser /> should render 1`] = `
           onChange={[Function]}
           value=""
         />
-        <Input__InputError>
-          foo
-        </Input__InputError>
+        <Input__InputError />
       </InputGroup>
       <InputGroup>
         <Input__InputLabel>
@@ -39,26 +40,27 @@ exports[`<CreateUser /> should render 1`] = `
         label="Force user to reset password on login"
         onClick={[Function]}
       />
-    </Create__CreateUserContainer>
-    <Modal__DialogFooter>
-      <SaveButton
-        pullRight={true}
-      />
-    </Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateUser /> should render when name has changed 1`] = `
-<ModalDialog
-  headerText="Create User"
-  label="userCreate"
+<Modal
+  label="Create User"
   onExited={[Function]}
+  show={true}
 >
+  <ModalHeader>
+    Create User
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Create__CreateUserContainer>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Username
@@ -69,7 +71,7 @@ exports[`<CreateUser /> should render when name has changed 1`] = `
           value=""
         />
         <Input__InputError>
-          foo
+          Error
         </Input__InputError>
       </InputGroup>
       <InputGroup>
@@ -88,26 +90,27 @@ exports[`<CreateUser /> should render when name has changed 1`] = `
         label="Force user to reset password on login"
         onClick={[Function]}
       />
-    </Create__CreateUserContainer>
-    <Modal__DialogFooter>
-      <SaveButton
-        pullRight={true}
-      />
-    </Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateUser /> should render when name has changed 2`] = `
-<ModalDialog
-  headerText="Create User"
-  label="userCreate"
+<Modal
+  label="Create User"
   onExited={[Function]}
+  show={true}
 >
+  <ModalHeader>
+    Create User
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Create__CreateUserContainer>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Username
@@ -118,7 +121,7 @@ exports[`<CreateUser /> should render when name has changed 2`] = `
           value="bob"
         />
         <Input__InputError>
-          foo
+          Error
         </Input__InputError>
       </InputGroup>
       <InputGroup>
@@ -137,26 +140,27 @@ exports[`<CreateUser /> should render when name has changed 2`] = `
         label="Force user to reset password on login"
         onClick={[Function]}
       />
-    </Create__CreateUserContainer>
-    <Modal__DialogFooter>
-      <SaveButton
-        pullRight={true}
-      />
-    </Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateUser /> should render when password has changed 1`] = `
-<ModalDialog
-  headerText="Create User"
-  label="userCreate"
+<Modal
+  label="Create User"
   onExited={[Function]}
+  show={true}
 >
+  <ModalHeader>
+    Create User
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Create__CreateUserContainer>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Username
@@ -167,7 +171,7 @@ exports[`<CreateUser /> should render when password has changed 1`] = `
           value=""
         />
         <Input__InputError>
-          foo
+          Error
         </Input__InputError>
       </InputGroup>
       <InputGroup>
@@ -186,26 +190,27 @@ exports[`<CreateUser /> should render when password has changed 1`] = `
         label="Force user to reset password on login"
         onClick={[Function]}
       />
-    </Create__CreateUserContainer>
-    <Modal__DialogFooter>
-      <SaveButton
-        pullRight={true}
-      />
-    </Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateUser /> should render when password has changed 2`] = `
-<ModalDialog
-  headerText="Create User"
-  label="userCreate"
+<Modal
+  label="Create User"
   onExited={[Function]}
+  show={true}
 >
+  <ModalHeader>
+    Create User
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Create__CreateUserContainer>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Username
@@ -216,7 +221,7 @@ exports[`<CreateUser /> should render when password has changed 2`] = `
           value=""
         />
         <Input__InputError>
-          foo
+          Error
         </Input__InputError>
       </InputGroup>
       <InputGroup>
@@ -235,12 +240,60 @@ exports[`<CreateUser /> should render when password has changed 2`] = `
         label="Force user to reset password on login"
         onClick={[Function]}
       />
-    </Create__CreateUserContainer>
-    <Modal__DialogFooter>
-      <SaveButton
-        pullRight={true}
-      />
-    </Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
+`;
+
+exports[`<CreateUser /> should render with error 1`] = `
+<Modal
+  label="Create User"
+  onExited={[Function]}
+  show={true}
+>
+  <ModalHeader>
+    Create User
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Username
+        </Input__InputLabel>
+        <Input
+          name="userId"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Password
+        </Input__InputLabel>
+        <PasswordInput
+          name="password"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError>
+          Password too short
+        </Input__InputError>
+      </InputGroup>
+      <Checkbox
+        checked={false}
+        label="Force user to reset password on login"
+        onClick={[Function]}
+      />
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
+  </form>
+</Modal>
 `;

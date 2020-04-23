@@ -48,6 +48,7 @@ const StyledButton = styled.button`
     color: ${getButtonForegroundColor};
     cursor: pointer;
     display: inline-flex;
+    font-weight: 500;
     justify-content: center;
     margin-bottom: 0;
     min-width: 42px;

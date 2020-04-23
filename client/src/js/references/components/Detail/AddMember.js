@@ -5,14 +5,15 @@ import styled from "styled-components";
 import {
     BoxGroup,
     BoxGroupSection,
-    DialogBody,
+    ModalBody,
     Identicon,
     Input,
     InputContainer,
     InputGroup,
     InputIcon,
-    ModalDialog,
-    NoneFoundSection
+    Modal,
+    NoneFoundSection,
+    ModalHeader
 } from "../../../base";
 import { listGroups } from "../../../groups/actions";
 import { findUsers } from "../../../users/actions";
@@ -37,6 +38,7 @@ const getInitialState = () => ({
 
 const StyledAddMemberItem = styled(BoxGroupSection)`
     display: flex;
+
     img {
         margin-right: 8px;
     }
@@ -48,6 +50,10 @@ const AddMemberItem = ({ id, identicon, onClick }) => (
         {id}
     </StyledAddMemberItem>
 );
+
+const AddReferenceMemberHeader = styled(ModalHeader)`
+    text-transform: capitalize;
+`;
 
 const AddReferenceMemberList = styled(BoxGroup)`
     max-height: 320px;
@@ -70,7 +76,6 @@ export class AddReferenceMember extends React.Component {
 
     handleExited = () => {
         this.props.onChange("");
-        this.props.onHide();
         this.setState(getInitialState());
     };
 
@@ -79,31 +84,35 @@ export class AddReferenceMember extends React.Component {
 
         if (this.props.documents.length) {
             addMemberComponents = map(this.props.documents, document => (
-                <AddMemberItem key={document.id} {...document} onClick={() => this.handleAdd(document.id)} />
+                <AddMemberItem
+                    key={document.id}
+                    id={document.id}
+                    identicon={document.identicon}
+                    onClick={() => this.handleAdd(document.id)}
+                />
             ));
         } else {
             addMemberComponents = <NoneFoundSection noun={`other ${this.props.noun}s`} />;
         }
 
-        const header = "Add ".concat(this.props.noun);
+        const title = `Add ${this.props.noun}`;
 
         return (
-            <ModalDialog
-                label="AddMember"
-                headerText={header}
+            <Modal
+                label={title}
                 show={this.props.show}
                 onHide={this.props.onHide}
                 onEnter={this.handleEnter}
                 onExited={this.handleExited}
-                capitalize="capitalize"
             >
-                <DialogBody>
-                    {this.props.noun === "user" ? (
+                <AddReferenceMemberHeader>{title}</AddReferenceMemberHeader>
+                <ModalBody>
+                    {this.props.noun === "user" && (
                         <AddUserSearch term={this.props.term} onChange={this.props.onChange} />
-                    ) : null}
+                    )}
                     <AddReferenceMemberList>{addMemberComponents}</AddReferenceMemberList>
-                </DialogBody>
-            </ModalDialog>
+                </ModalBody>
+            </Modal>
         );
     }
 }
