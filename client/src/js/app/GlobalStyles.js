@@ -9,6 +9,11 @@ export const tabFocus = css`
 `;
 
 export const GlobalStyles = createGlobalStyle`
+    * {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
     html {
         font-family: "Roboto", sans-serif;
         font-size: ${props => props.theme.fontSize.md};
@@ -52,7 +57,7 @@ export const GlobalStyles = createGlobalStyle`
     label {
         display: inline-block;
         margin-bottom: 5px;
-        font-weight: bold;
+        font-weight: 500;
     }
     
     // Reset the box-sizing
