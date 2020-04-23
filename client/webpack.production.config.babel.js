@@ -33,17 +33,6 @@ module.exports = {
           "css-loader",
         ],
       },
-
-      {
-        test: /\.less$/,
-        use: [
-          {
-            loader: MiniCssExtractPlugin.loader,
-          },
-          "css-loader",
-          "less-loader",
-        ],
-      },
     ],
   },
 
@@ -89,12 +78,6 @@ module.exports = {
       inject: "body",
     }),
 
-    new CleanWebpackPlugin({
-      dry: false,
-      verbose: false,
-      cleanStaleWebpackAssets: true,
-      protectWebpackAssets: true,
-      dangerouslyAllowCleanPatternsOutsideProject: false,
-    }),
+    new CleanWebpackPlugin(),
   ],
 };

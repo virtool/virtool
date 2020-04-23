@@ -1,5 +1,5 @@
 const path = require("path");
-const HTMLPlugin = require("html-webpack-plugin");
+const HTMLWebpackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
@@ -31,17 +31,6 @@ module.exports = {
           "css-loader",
         ],
       },
-
-      {
-        test: /\.less$/,
-        use: [
-          {
-            loader: MiniCssExtractPlugin.loader,
-          },
-          "css-loader",
-          "less-loader",
-        ],
-      },
     ],
   },
 
@@ -66,20 +55,20 @@ module.exports = {
   mode: "development",
 
   plugins: [
+    new CleanWebpackPlugin(),
+
     new MiniCssExtractPlugin({
       filename: "[name].[hash].css",
       chunkFilename: "[id].[hash].css",
     }),
 
-    new HTMLPlugin({
+    new HTMLWebpackPlugin({
       filename: "index.html",
       title: "Virtool",
-      favicon: "./src/images/favicon.ico",
-      template: "./src/index.html",
+      favicon: path.resolve(__dirname, "./src/images/favicon.ico"),
+      template: path.resolve(__dirname, "./src/index.html"),
       inject: "body",
     }),
-
-    new CleanWebpackPlugin(),
   ],
 
   watch: true,
