@@ -3,6 +3,7 @@ import { transform } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import styled from "styled-components";
+import { BoxGroup } from "../../base";
 import { PermissionItem } from "./Permission";
 
 const UserPermissionsHeader = styled.div`
@@ -28,7 +29,7 @@ export const UserPermissions = ({ permissions }) => {
                 <label>Permissions</label>
                 <small>Change group membership to modify permissions</small>
             </UserPermissionsHeader>
-            {permissionComponents}
+            <BoxGroup>{permissionComponents}</BoxGroup>
         </div>
     );
 };

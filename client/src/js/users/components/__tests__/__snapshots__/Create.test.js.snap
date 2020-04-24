@@ -4,6 +4,7 @@ exports[`<CreateUser /> should render 1`] = `
 <Modal
   label="Create User"
   onExited={[Function]}
+  onHide={[MockFunction]}
   show={true}
 >
   <ModalHeader>
@@ -52,6 +53,7 @@ exports[`<CreateUser /> should render when name has changed 1`] = `
 <Modal
   label="Create User"
   onExited={[Function]}
+  onHide={[MockFunction]}
   show={true}
 >
   <ModalHeader>
@@ -102,6 +104,7 @@ exports[`<CreateUser /> should render when name has changed 2`] = `
 <Modal
   label="Create User"
   onExited={[Function]}
+  onHide={[MockFunction]}
   show={true}
 >
   <ModalHeader>
@@ -152,6 +155,7 @@ exports[`<CreateUser /> should render when password has changed 1`] = `
 <Modal
   label="Create User"
   onExited={[Function]}
+  onHide={[MockFunction]}
   show={true}
 >
   <ModalHeader>
@@ -202,6 +206,7 @@ exports[`<CreateUser /> should render when password has changed 2`] = `
 <Modal
   label="Create User"
   onExited={[Function]}
+  onHide={[MockFunction]}
   show={true}
 >
   <ModalHeader>
@@ -252,6 +257,7 @@ exports[`<CreateUser /> should render with error 1`] = `
 <Modal
   label="Create User"
   onExited={[Function]}
+  onHide={[MockFunction]}
   show={true}
 >
   <ModalHeader>

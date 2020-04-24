@@ -10,5 +10,6 @@ exports[`<UserPermissions /> should render 1`] = `
       Change group membership to modify permissions
     </small>
   </Permissions__UserPermissionsHeader>
+  <Box__BoxGroup />
 </div>
 `;
