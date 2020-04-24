@@ -11,8 +11,8 @@ const StyledAnalysisMappingReferenceTitle = styled.div`
     align-items: center;
     display: flex;
 
-    ${Label} {
-        margin-left: 5px;
+    a {
+        margin-right: 5px;
     }
 `;
 
@@ -33,7 +33,16 @@ const StyledAnalysisMapping = styled(Box)`
     h3 {
         align-items: flex-end;
         display: flex;
+        font-size: ${props => props.theme.fontSize.xl};
+        font-weight: normal;
+        margin: 15px 0 10px;
         justify-content: space-between;
+
+        small {
+            color: ${props => props.theme.color.greyDark};
+            font-size: ${props => props.theme.fontSize.lg};
+            font-weight: 600;
+        }
     }
 `;
 
@@ -49,7 +58,7 @@ export const AnalysisMapping = ({ index, reference, subtraction, toReference, to
             <h3>
                 {numbro(sumPercent).format({ output: "percent", mantissa: 2 })} mapped
                 <small>
-                    {toThousand(totalMapped)} / {toThousand(total)}
+                    {toThousand(totalMapped)} of {toThousand(total)} reads
                 </small>
             </h3>
 

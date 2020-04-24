@@ -54,7 +54,9 @@ exports[`<App /> renders correctly 1`] = `
         "lg": "16px",
         "md": "14px",
         "sm": "12px",
+        "xl": "22px",
         "xs": "10px",
+        "xxl": "28px",
       },
       "gap": Object {
         "column": "15px",
