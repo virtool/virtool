@@ -16,13 +16,13 @@ import {
 import { Breadcrumb, BreadcrumbItem } from "../../../base/Breadcrumb";
 import { checkRefRight } from "../../../utils/utils";
 import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
-import AddIsolate from "./AddIsolate";
 import IsolateEditor from "./Editor";
-import EditOTU from "./EditOTU";
+import EditOTU from "./Edit";
 import General from "./General";
-import History from "./History";
-import RemoveOTU from "./RemoveOTU";
-import Schema from "./Schema";
+import History from "./History/History";
+import AddIsolate from "./Isolates/Add";
+import RemoveOTU from "./Remove";
+import Schema from "./Schema/Schema";
 
 const OTUSection = () => (
     <div>

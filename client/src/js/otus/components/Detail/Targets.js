@@ -1,15 +1,15 @@
+import { find, get, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { get, map, find } from "lodash-es";
-import { BoxGroupSection } from "../../../base";
+import { BoxGroup } from "../../../base";
 import { checkRefRight, formatIsolateName } from "../../../utils/utils";
 import { showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
 import { getActiveIsolate, getSequences } from "../../selectors";
+import AddSequence from "./Sequences/Add";
+import EditSequence from "./Sequences/Edit";
+import RemoveSequence from "./Sequences/Remove";
+import Sequence from "./Sequences/Sequence";
 import { Target } from "./Target";
-import AddSequence from "./AddSequence";
-import Sequence from "./Sequence";
-import EditSequence from "./EditSequence";
-import RemoveSequence from "./RemoveSequence";
 
 export const IsolateTargets = props => {
     const required = props.target === true ? "REQUIRED" : "NOT REQUIRED";
@@ -55,17 +55,14 @@ export const IsolateTargets = props => {
     const addSequence = <AddSequence {...targetDetail} required={required} />;
 
     return (
-        <div>
-            <BoxGroupSection>
-                <strong>Targets</strong>
-            </BoxGroupSection>
+        <React.Fragment>
+            <label>Targets</label>
+            <BoxGroup>{targetComponents}</BoxGroup>
 
-            {targetComponents}
             <EditSequence otuId={props.otuId} isolateId={props.activeIsolateId} error={props.error} />
-
             <RemoveSequence otuId={props.otuId} isolateId={props.activeIsolateId} isolateName={props.isolateName} />
             {addSequence}
-        </div>
+        </React.Fragment>
     );
 };
 

@@ -1,14 +1,8 @@
 import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
 import { Button, Icon, LinkButton, SearchInput, Toolbar } from "../../base";
 import { checkRefRight } from "../../utils/utils";
 import { findOTUs } from "../actions";
-
-export const FilterButton = styled(Button)`
-    border: 1px solid #cbd5e0;
-    color: black;
-`;
 
 export class OTUToolbar extends React.Component {
     find = e => {
@@ -34,14 +28,9 @@ export class OTUToolbar extends React.Component {
             <Toolbar>
                 <SearchInput placeholder="Name or abbreviation" value={term} onChange={this.find} />
 
-                <FilterButton
-                    id="verified-button"
-                    tip="Filter Unverified"
-                    onClick={this.filterVerified}
-                    active={verified}
-                >
+                <Button id="verified-button" tip="Filter Unverified" onClick={this.filterVerified} active={verified}>
                     <Icon name="filter" />
-                </FilterButton>
+                </Button>
 
                 {createButton}
             </Toolbar>

@@ -1,0 +1,66 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SequenceForm /> should render 1`] = `
+<form
+  onSubmit={[Function]}
+>
+  <Modal__ModalBody>
+    <InputGroup>
+      <Input__InputLabel>
+        Accession (ID)
+      </Input__InputLabel>
+      <Input__InputContainer
+        align="right"
+      >
+        <Input
+          autoFocus={true}
+          name="accession"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputIcon
+          name="magic"
+          onClick={[Function]}
+        />
+      </Input__InputContainer>
+      <Input__InputError />
+    </InputGroup>
+    <Connect(SequenceSegment)
+      onChange={[Function]}
+      value="test-segment"
+    />
+    <InputGroup>
+      <Input__InputLabel>
+        Host
+      </Input__InputLabel>
+      <Input
+        name="host"
+        onChange={[Function]}
+        value="test-host"
+      />
+    </InputGroup>
+    <InputGroup>
+      <Input__InputLabel>
+        Definition
+      </Input__InputLabel>
+      <Input__InputContainer>
+        <Input
+          name="definition"
+          onChange={[Function]}
+          value="test-definition"
+        />
+        <Input__InputError />
+      </Input__InputContainer>
+    </InputGroup>
+    <SequenceField
+      error=""
+      name="sequence"
+      onChange={[Function]}
+      sequence="test-sequence"
+    />
+  </Modal__ModalBody>
+  <Modal__ModalFooter>
+    <SaveButton />
+  </Modal__ModalFooter>
+</form>
+`;

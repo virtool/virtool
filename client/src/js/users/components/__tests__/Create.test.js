@@ -11,7 +11,8 @@ describe("<CreateUser />", () => {
             error: "",
             show: true,
             onClearError: jest.fn(),
-            onCreate: jest.fn()
+            onCreate: jest.fn(),
+            onHide: jest.fn()
         };
 
         state = {
