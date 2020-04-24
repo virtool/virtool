@@ -138,7 +138,7 @@ export const ModalBodyOverlay = styled.div`
 
     span {
         flex: auto;
-        font-size: ${props => props.theme.fontSize.xl};
+        font-size: ${props => props.theme.fontSize.xxl};
         z-index: 10001;
     }
 `;

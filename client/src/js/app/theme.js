@@ -53,7 +53,9 @@ export const theme = {
         xs: "10px",
         sm: "12px",
         md: "14px",
-        lg: "16px"
+        lg: "16px",
+        xl: "22px",
+        xxl: "28px"
     },
     gap: {
         column: "15px"

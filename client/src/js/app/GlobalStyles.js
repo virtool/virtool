@@ -26,7 +26,7 @@ export const GlobalStyles = createGlobalStyle`
     }
     
     h1 {
-        font-size: ${props => props.theme.fontSize.xl};
+        font-size: ${props => props.theme.fontSize.xxl};
     }
     
     h5 {
