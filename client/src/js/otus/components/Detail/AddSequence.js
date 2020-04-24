@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Box, DialogBody, ModalDialog } from "../../../base";
+import { Box, ModalBody, Modal, ModalHeader } from "../../../base";
 import { clearError } from "../../../errors/actions";
 import { getError } from "../../../errors/selectors";
 import { addSequence, hideOTUModal } from "../../actions";
@@ -24,24 +24,19 @@ class AddSequence extends React.Component {
 
     render() {
         const targetComponent = this.props.targets ? (
-            <DialogBody>
+            <ModalBody>
                 <Box>
                     <TargetInfo {...this.props} />
                 </Box>
-            </DialogBody>
+            </ModalBody>
         ) : null;
 
         return (
-            <ModalDialog
-                headerText="Add Sequence"
-                label="AddSequence"
-                show={this.props.show}
-                onHide={this.props.onHide}
-                onExited={this.handleModalExited}
-            >
+            <Modal label="Add Sequence" show={this.props.show} onHide={this.props.onHide}>
+                <ModalHeader>Add Sequence</ModalHeader>
                 {targetComponent}
                 <SequenceForm dataType={this.props.dataType} error={this.props.error} onSubmit={this.handleSubmit} />
-            </ModalDialog>
+            </Modal>
         );
     }
 }

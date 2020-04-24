@@ -1,5 +1,7 @@
 import { get } from "lodash-es";
 
+export const colors = ["blue", "green", "grey", "orange", "purple", "red"];
+
 export const theme = {
     borderRadius: {
         sm: "2px",

@@ -1,8 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
-import { SaveButton, ModalDialog, DialogFooter, DialogBody } from "../../../base";
-import { clearError } from "../../../errors/actions";
+import { Modal, ModalBody, ModalFooter, ModalHeader, SaveButton } from "../../../base";
 import { getTargetChange, routerLocationHasState } from "../../../utils/utils";
 import { editReference } from "../../actions";
 import { ReferenceForm } from "../Form";
@@ -53,15 +52,10 @@ export class EditReference extends React.Component {
 
     render() {
         return (
-            <ModalDialog
-                label="Edit"
-                headerText="Edit Reference"
-                show={this.props.show}
-                onHide={this.props.onHide}
-                onEnter={this.handleModalEnter}
-            >
+            <Modal label="Edit" show={this.props.show} onHide={this.props.onHide} onEnter={this.handleModalEnter}>
+                <ModalHeader>Edit Reference</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <DialogBody>
+                    <ModalBody>
                         <ReferenceForm
                             description={this.state.description}
                             organism={this.state.organism}
@@ -70,13 +64,13 @@ export class EditReference extends React.Component {
                             errorName={this.state.errorSelect}
                             onChange={this.handleChange}
                         />
-                    </DialogBody>
+                    </ModalBody>
 
-                    <DialogFooter>
+                    <ModalFooter>
                         <SaveButton />
-                    </DialogFooter>
+                    </ModalFooter>
                 </form>
-            </ModalDialog>
+            </Modal>
         );
     }
 }
@@ -93,10 +87,6 @@ const mapDispatchToProps = dispatch => ({
 
     onHide: () => {
         dispatch(pushState({ editReference: false }));
-    },
-
-    onClearError: error => {
-        dispatch(clearError(error));
     }
 });
 

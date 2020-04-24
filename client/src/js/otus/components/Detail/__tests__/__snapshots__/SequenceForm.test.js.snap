@@ -4,7 +4,7 @@ exports[`<SequenceForm /> should render 1`] = `
 <form
   onSubmit={[Function]}
 >
-  <Modal__DialogBody>
+  <Modal__ModalBody>
     <InputGroup>
       <Input__InputLabel>
         Accession (ID)
@@ -58,9 +58,9 @@ exports[`<SequenceForm /> should render 1`] = `
       onChange={[Function]}
       sequence="test-sequence"
     />
-  </Modal__DialogBody>
-  <Modal__DialogFooter>
+  </Modal__ModalBody>
+  <Modal__ModalFooter>
     <SaveButton />
-  </Modal__DialogFooter>
+  </Modal__ModalFooter>
 </form>
 `;

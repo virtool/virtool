@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { findIndex, find } from "lodash-es";
-import { Button, ModalDialog, DialogBody, DialogFooter } from "../../../base";
+import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from "../../../base";
 import SegmentForm from "./SegmentForm";
 
 const getInitialState = props => ({
@@ -18,13 +18,8 @@ const getInitialState = props => ({
 class EditSegment extends React.Component {
     constructor(props) {
         super(props);
-
         this.state = getInitialState(this.props);
     }
-
-    updateState = () => {
-        this.setState(getInitialState(this.props));
-    };
 
     handleChange = entry => {
         this.setState({
@@ -34,6 +29,10 @@ class EditSegment extends React.Component {
                 required: entry.required
             }
         });
+    };
+
+    handleModalEnter = () => {
+        this.setState(getInitialState(this.props));
     };
 
     handleSubmit = e => {
@@ -64,31 +63,26 @@ class EditSegment extends React.Component {
         }
     };
 
-    handleExited = () => {
-        this.setState({ showError: false, nameTaken: false });
-    };
-
     render() {
         return (
-            <ModalDialog
-                label="EditSegment"
-                headerText="Edit Segment"
+            <Modal
+                label="Edit Segment"
                 show={this.props.show}
-                onExited={this.handleExited}
                 onHide={this.props.onHide}
-                onEnter={this.updateState}
+                onEnter={this.handleModalEnter}
             >
+                <ModalHeader>Edit Segment</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <DialogBody>
+                    <ModalBody>
                         <SegmentForm onChange={this.handleChange} newEntry={this.state.newEntry} />
-                    </DialogBody>
-                    <DialogFooter>
+                    </ModalBody>
+                    <ModalFooter>
                         <Button color="blue" icon="save" type="submit">
                             Save
                         </Button>
-                    </DialogFooter>
+                    </ModalFooter>
                 </form>
-            </ModalDialog>
+            </Modal>
         );
     }
 }

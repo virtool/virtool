@@ -1,12 +1,18 @@
-import React from "react";
 import PropTypes from "prop-types";
-import { DialogBody, ModalDialog, DialogFooter } from "./Modal";
+import React from "react";
+import styled from "styled-components";
 import { Button } from "./Button";
+import { Modal, ModalBody, ModalFooter, ModalHeader } from "./Modal";
+
+const RemoveModalBody = styled(ModalBody)`
+    padding: 15px 15px 25px;
+`;
 
 /**
  * A modal that requests confirmation from the user for deleting a document or other sensitive information.
  *
  * @func
+ * @param message {string} a message to override the default one displayed in the modal body
  * @param name {string} the display name for the item to be removed (eg. Baminivirus)
  * @param noun {string} the type of document being removed (eg. otu)
  * @param show {boolean} toggle visibility of the modal
@@ -14,20 +20,21 @@ import { Button } from "./Button";
  * @param onHide {function} a function that hides the modal
  */
 export const RemoveModal = ({ message, name, noun, show, onConfirm, onHide }) => (
-    <ModalDialog label="Remove" headerText={`Remove ${noun}`} show={show} onHide={onHide} modalStyle="danger">
-        <DialogBody>
+    <Modal color="red" label="Remove" show={show} onHide={onHide}>
+        <ModalHeader>{`Remove ${noun}`}</ModalHeader>
+        <RemoveModalBody>
             {message || (
                 <span>
                     Are you sure you want to remove <strong>{name}</strong>?
                 </span>
             )}
-        </DialogBody>
-        <DialogFooter style={{ border: "none" }}>
+        </RemoveModalBody>
+        <ModalFooter>
             <Button color="red" icon="check" onClick={onConfirm}>
                 Confirm
             </Button>
-        </DialogFooter>
-    </ModalDialog>
+        </ModalFooter>
+    </Modal>
 );
 
 RemoveModal.propTypes = {

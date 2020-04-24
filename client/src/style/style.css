@@ -19,9 +19,7 @@
     margin-top: 30px;
 }
 
-.setup-finish {
-    small {
-        display: block;
-        font-family: monospace;
-    }
+.setup-finish small {
+    display: block;
+    font-family: monospace;
 }

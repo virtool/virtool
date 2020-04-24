@@ -4,8 +4,8 @@ import { connect } from "react-redux";
 import styled from "styled-components";
 import { pushState } from "../../../app/actions";
 import {
-    DialogBody,
-    DialogFooter,
+    ModalBody,
+    ModalFooter,
     Input,
     InputContainer,
     InputError,
@@ -13,9 +13,10 @@ import {
     InputIcon,
     InputLabel,
     LoadingPlaceholder,
-    ModalDialog,
+    Modal,
     SaveButton,
-    Select
+    Select,
+    ModalHeader
 } from "../../../base";
 import { clearError } from "../../../errors/actions";
 import { shortlistSubtractions } from "../../../subtraction/actions";
@@ -65,14 +66,11 @@ export class CreateSample extends React.Component {
         return null;
     }
 
-    handleHide = () => {
-        this.props.onHide();
-    };
-
     handleModalExited = () => {
         this.setState(getInitialState(this.props));
+
         if (this.props.error.length) {
-            this.props.onClearError("CREATE_SAMPLE_ERROR");
+            this.props.onClearError();
         }
     };
 
@@ -148,17 +146,18 @@ export class CreateSample extends React.Component {
     render() {
         if (this.props.subtractions === null || this.props.readyReads === null) {
             return (
-                <ModalDialog
-                    label="sample"
-                    size="lg"
+                <Modal
+                    label="Create Sample"
                     show={this.props.show}
+                    size="lg"
                     onHide={this.props.onHide}
                     onEnter={this.props.onLoadSubtractionsAndFiles}
                 >
-                    <DialogBody>
+                    <ModalHeader>Create Sample</ModalHeader>
+                    <ModalBody>
                         <LoadingPlaceholder margin="36px" />
-                    </DialogBody>
-                </ModalDialog>
+                    </ModalBody>
+                </Modal>
             );
         }
 
@@ -183,17 +182,17 @@ export class CreateSample extends React.Component {
         const subtractionId = this.state.subtractionId || get(this.props.subtractions, [0, "id"]);
 
         return (
-            <ModalDialog
-                headerText="Create Sample"
-                label="sample"
-                size="lg"
+            <Modal
+                label="Create Sample"
                 show={this.props.show}
-                onHide={this.handleHide}
+                size="lg"
                 onEnter={this.props.onLoadSubtractionsAndFiles}
                 onExited={this.handleModalExited}
+                onHide={this.props.onHide}
             >
+                <ModalHeader>Create Sample</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <DialogBody>
+                    <ModalBody>
                         <CreateSampleFields>
                             <InputGroup>
                                 <InputLabel>Sample Name</InputLabel>
@@ -253,13 +252,13 @@ export class CreateSample extends React.Component {
                             onSelect={this.handleSelect}
                             error={errorFile}
                         />
-                    </DialogBody>
+                    </ModalBody>
 
-                    <DialogFooter>
+                    <ModalFooter>
                         <SaveButton />
-                    </DialogFooter>
+                    </ModalFooter>
                 </form>
-            </ModalDialog>
+            </Modal>
         );
     }
 }
@@ -287,8 +286,8 @@ export const mapDispatchToProps = dispatch => ({
         dispatch(pushState({ create: false }));
     },
 
-    onClearError: error => {
-        dispatch(clearError(error));
+    onClearError: () => {
+        dispatch(clearError("CREATE_SAMPLE_ERROR"));
     }
 });
 

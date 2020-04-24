@@ -1,19 +1,12 @@
 import { find } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
-import { Alert, SaveButton, DialogFooter } from "../../base";
+import { Alert, ModalBody, ModalFooter, SaveButton } from "../../base";
 import { clearError } from "../../errors/actions";
 import { getTargetChange } from "../../utils/utils";
 import { cloneReference } from "../actions";
 import { ReferenceForm } from "./Form";
 import { ReferenceSelect } from "./ReferenceSelect";
-
-const Container = styled.div`
-    display: flex;
-    flex-direction: column;
-    margin: 15px;
-`;
 
 const getInitialState = (refId, refArray) => {
     const originalRef = find(refArray, { id: refId });
@@ -101,7 +94,7 @@ export class CloneReference extends React.Component {
     render() {
         return (
             <form onSubmit={this.handleSubmit}>
-                <Container>
+                <ModalBody>
                     <Alert>
                         <strong>Clone an existing reference.</strong>
                     </Alert>
@@ -121,10 +114,10 @@ export class CloneReference extends React.Component {
                         organism={this.state.organism}
                         onChange={this.handleChange}
                     />
-                </Container>
-                <DialogFooter>
+                </ModalBody>
+                <ModalFooter>
                     <SaveButton disabled={!this.props.refDocuments.length} altText="Clone" />
-                </DialogFooter>
+                </ModalFooter>
             </form>
         );
     }

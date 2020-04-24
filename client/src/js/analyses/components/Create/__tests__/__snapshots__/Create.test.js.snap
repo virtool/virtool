@@ -1,18 +1,20 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<CreateAnalysis /> should render 1`] = `
-<ModalDialog
-  headerText="Analyze"
-  label="create"
+<Modal
+  label="Analyze"
   onEnter={[Function]}
   onHide={[MockFunction]}
   show={true}
   size="lg"
 >
+  <ModalHeader>
+    Analyze
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <SelectedSamples
         samples={
           Array [
@@ -60,8 +62,8 @@ exports[`<CreateAnalysis /> should render 1`] = `
         onSelect={[Function]}
         selected={Array []}
       />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Flex
         alignContent="stretch"
         alignItems="center"
@@ -109,24 +111,26 @@ exports[`<CreateAnalysis /> should render 1`] = `
           </Button>
         </FlexItem>
       </Flex>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateAnalysis /> should render with error 1`] = `
-<ModalDialog
-  headerText="Analyze"
-  label="create"
+<Modal
+  label="Analyze"
   onEnter={[Function]}
   onHide={[MockFunction]}
   show={true}
   size="lg"
 >
+  <ModalHeader>
+    Analyze
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <SelectedSamples
         samples={
           Array [
@@ -174,8 +178,8 @@ exports[`<CreateAnalysis /> should render with error 1`] = `
         onSelect={[Function]}
         selected={Array []}
       />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Flex
         alignContent="stretch"
         alignItems="center"
@@ -223,24 +227,26 @@ exports[`<CreateAnalysis /> should render with error 1`] = `
           </Button>
         </FlexItem>
       </Flex>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateAnalysis /> should render with index selected 1`] = `
-<ModalDialog
-  headerText="Analyze"
-  label="create"
+<Modal
+  label="Analyze"
   onEnter={[Function]}
   onHide={[MockFunction]}
   show={true}
   size="lg"
 >
+  <ModalHeader>
+    Analyze
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <SelectedSamples
         samples={
           Array [
@@ -295,8 +301,8 @@ exports[`<CreateAnalysis /> should render with index selected 1`] = `
           ]
         }
       />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Flex
         alignContent="stretch"
         alignItems="center"
@@ -351,24 +357,26 @@ exports[`<CreateAnalysis /> should render with index selected 1`] = `
           </Button>
         </FlexItem>
       </Flex>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateAnalysis /> should render with summary 1`] = `
-<ModalDialog
-  headerText="Analyze"
-  label="create"
+<Modal
+  label="Analyze"
   onEnter={[Function]}
   onHide={[MockFunction]}
   show={true}
   size="lg"
 >
+  <ModalHeader>
+    Analyze
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <SelectedSamples
         samples={
           Array [
@@ -423,8 +431,8 @@ exports[`<CreateAnalysis /> should render with summary 1`] = `
           ]
         }
       />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Flex
         alignContent="stretch"
         alignItems="center"
@@ -479,24 +487,26 @@ exports[`<CreateAnalysis /> should render with summary 1`] = `
           </Button>
         </FlexItem>
       </Flex>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateAnalysis /> should render with workflow selected 1`] = `
-<ModalDialog
-  headerText="Analyze"
-  label="create"
+<Modal
+  label="Analyze"
   onEnter={[Function]}
   onHide={[MockFunction]}
   show={true}
   size="lg"
 >
+  <ModalHeader>
+    Analyze
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <SelectedSamples
         samples={
           Array [
@@ -544,8 +554,8 @@ exports[`<CreateAnalysis /> should render with workflow selected 1`] = `
         onSelect={[Function]}
         selected={Array []}
       />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Flex
         alignContent="stretch"
         alignItems="center"
@@ -593,7 +603,7 @@ exports[`<CreateAnalysis /> should render with workflow selected 1`] = `
           </Button>
         </FlexItem>
       </Flex>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;

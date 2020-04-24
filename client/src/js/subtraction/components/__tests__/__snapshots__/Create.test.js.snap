@@ -1,18 +1,20 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<CreateSubtraction /> should render 1`] = `
-<ModalDialog
-  headerText="Create Subtraction"
-  label="SubtractionCreate"
+<Modal
+  label="Create Subtraction"
   onEnter={[Function]}
   onExited={[Function]}
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Create Subtraction
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Name
@@ -34,11 +36,9 @@ exports[`<CreateSubtraction /> should render 1`] = `
           value=""
         />
       </InputGroup>
-      <h5>
-        <strong>
-          Files
-        </strong>
-      </h5>
+      <label>
+        Files
+      </label>
       <Create__SubtractionFileList>
         <SubtractionFileItem
           active={false}
@@ -48,8 +48,8 @@ exports[`<CreateSubtraction /> should render 1`] = `
         />
       </Create__SubtractionFileList>
       <Input__InputError />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Button
         color="blue"
         disabled={false}
@@ -59,24 +59,26 @@ exports[`<CreateSubtraction /> should render 1`] = `
       >
         Start
       </Button>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateSubtraction /> should render after "name" input changes 1`] = `
-<ModalDialog
-  headerText="Create Subtraction"
-  label="SubtractionCreate"
+<Modal
+  label="Create Subtraction"
   onEnter={[Function]}
   onExited={[Function]}
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Create Subtraction
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Name
@@ -98,11 +100,9 @@ exports[`<CreateSubtraction /> should render after "name" input changes 1`] = `
           value=""
         />
       </InputGroup>
-      <h5>
-        <strong>
-          Files
-        </strong>
-      </h5>
+      <label>
+        Files
+      </label>
       <Create__SubtractionFileList>
         <SubtractionFileItem
           active={false}
@@ -112,8 +112,8 @@ exports[`<CreateSubtraction /> should render after "name" input changes 1`] = `
         />
       </Create__SubtractionFileList>
       <Input__InputError />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Button
         color="blue"
         disabled={false}
@@ -123,24 +123,26 @@ exports[`<CreateSubtraction /> should render after "name" input changes 1`] = `
       >
         Start
       </Button>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateSubtraction /> should render after "nickname" input changes 1`] = `
-<ModalDialog
-  headerText="Create Subtraction"
-  label="SubtractionCreate"
+<Modal
+  label="Create Subtraction"
   onEnter={[Function]}
   onExited={[Function]}
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Create Subtraction
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Name
@@ -162,11 +164,9 @@ exports[`<CreateSubtraction /> should render after "nickname" input changes 1`] 
           value="Bar"
         />
       </InputGroup>
-      <h5>
-        <strong>
-          Files
-        </strong>
-      </h5>
+      <label>
+        Files
+      </label>
       <Create__SubtractionFileList>
         <SubtractionFileItem
           active={false}
@@ -176,8 +176,8 @@ exports[`<CreateSubtraction /> should render after "nickname" input changes 1`] 
         />
       </Create__SubtractionFileList>
       <Input__InputError />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Button
         color="blue"
         disabled={false}
@@ -187,24 +187,26 @@ exports[`<CreateSubtraction /> should render after "nickname" input changes 1`] 
       >
         Start
       </Button>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateSubtraction /> should render error when submitted with no unique name or file entered 1`] = `
-<ModalDialog
-  headerText="Create Subtraction"
-  label="SubtractionCreate"
+<Modal
+  label="Create Subtraction"
   onEnter={[Function]}
   onExited={[Function]}
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Create Subtraction
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Name
@@ -228,11 +230,9 @@ exports[`<CreateSubtraction /> should render error when submitted with no unique
           value=""
         />
       </InputGroup>
-      <h5>
-        <strong>
-          Files
-        </strong>
-      </h5>
+      <label>
+        Files
+      </label>
       <Create__SubtractionFileList>
         <SubtractionFileItem
           active={false}
@@ -244,8 +244,8 @@ exports[`<CreateSubtraction /> should render error when submitted with no unique
       <Input__InputError>
         Please select a file
       </Input__InputError>
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Button
         color="blue"
         disabled={false}
@@ -255,24 +255,26 @@ exports[`<CreateSubtraction /> should render error when submitted with no unique
       >
         Start
       </Button>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateSubtraction /> should render when no files available 1`] = `
-<ModalDialog
-  headerText="Create Subtraction"
-  label="SubtractionCreate"
+<Modal
+  label="Create Subtraction"
   onEnter={[Function]}
   onExited={[Function]}
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Create Subtraction
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Name
@@ -294,11 +296,9 @@ exports[`<CreateSubtraction /> should render when no files available 1`] = `
           value=""
         />
       </InputGroup>
-      <h5>
-        <strong>
-          Files
-        </strong>
-      </h5>
+      <label>
+        Files
+      </label>
       <Create__SubtractionFileList>
         <NoneFoundSection
           noun="files"
@@ -311,8 +311,8 @@ exports[`<CreateSubtraction /> should render when no files available 1`] = `
         </NoneFoundSection>
       </Create__SubtractionFileList>
       <Input__InputError />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Button
         color="blue"
         disabled={false}
@@ -322,24 +322,26 @@ exports[`<CreateSubtraction /> should render when no files available 1`] = `
       >
         Start
       </Button>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateSubtraction /> should render with request error 1`] = `
-<ModalDialog
-  headerText="Create Subtraction"
-  label="SubtractionCreate"
+<Modal
+  label="Create Subtraction"
   onEnter={[Function]}
   onExited={[Function]}
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Create Subtraction
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Name
@@ -361,11 +363,9 @@ exports[`<CreateSubtraction /> should render with request error 1`] = `
           value=""
         />
       </InputGroup>
-      <h5>
-        <strong>
-          Files
-        </strong>
-      </h5>
+      <label>
+        Files
+      </label>
       <Create__SubtractionFileList>
         <SubtractionFileItem
           active={false}
@@ -375,8 +375,8 @@ exports[`<CreateSubtraction /> should render with request error 1`] = `
         />
       </Create__SubtractionFileList>
       <Input__InputError />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Button
         color="blue"
         disabled={false}
@@ -386,9 +386,9 @@ exports[`<CreateSubtraction /> should render with request error 1`] = `
       >
         Start
       </Button>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<SubtractionFileItem /> should render when [active=false] 1`] = `

@@ -1,17 +1,19 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<EditTarget /> should render 1`] = `
-<ModalDialog
-  headerText="Edit target"
-  label="EditReference"
+<Modal
+  label="Edit Target"
   onEnter={[Function]}
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Edit Target
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <TargetForm
         description="Bar description"
         length={490}
@@ -19,8 +21,8 @@ exports[`<EditTarget /> should render 1`] = `
         onChange={[Function]}
         required={true}
       />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Button
         color="blue"
         disabled={false}
@@ -30,23 +32,25 @@ exports[`<EditTarget /> should render 1`] = `
       >
         Submit
       </Button>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<EditTarget /> should render error when submitted without name 1`] = `
-<ModalDialog
-  headerText="Edit target"
-  label="EditReference"
+<Modal
+  label="Edit Target"
   onEnter={[Function]}
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Edit Target
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <TargetForm
         description="This is a test"
         length={310}
@@ -54,8 +58,8 @@ exports[`<EditTarget /> should render error when submitted without name 1`] = `
         onChange={[Function]}
         required={false}
       />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Button
         color="blue"
         disabled={false}
@@ -65,23 +69,25 @@ exports[`<EditTarget /> should render error when submitted without name 1`] = `
       >
         Submit
       </Button>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<EditTarget /> should update when TargetForm onChange() prop called 1`] = `
-<ModalDialog
-  headerText="Edit target"
-  label="EditReference"
+<Modal
+  label="Edit Target"
   onEnter={[Function]}
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Edit Target
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <TargetForm
         description="Bar description"
         length={490}
@@ -89,8 +95,8 @@ exports[`<EditTarget /> should update when TargetForm onChange() prop called 1`]
         onChange={[Function]}
         required={true}
       />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Button
         color="blue"
         disabled={false}
@@ -100,7 +106,7 @@ exports[`<EditTarget /> should update when TargetForm onChange() prop called 1`]
       >
         Submit
       </Button>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;

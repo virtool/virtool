@@ -6,8 +6,8 @@ import styled from "styled-components";
 import { pushState } from "../../../app/actions";
 
 import {
-    DialogBody,
-    DialogFooter,
+    ModalBody,
+    ModalFooter,
     Flex,
     FlexItem,
     Icon,
@@ -17,8 +17,9 @@ import {
     InputGroup,
     InputIcon,
     InputLabel,
-    ModalDialog,
-    SaveButton
+    Modal,
+    SaveButton,
+    ModalHeader
 } from "../../../base";
 import { routerLocationHasState } from "../../../utils/utils";
 import { clearAPIKey, createAPIKey } from "../../actions";
@@ -34,7 +35,7 @@ const CreateAPIKeyInput = styled(Input)`
     text-align: center;
 `;
 
-const StyledCreateAPIKey = styled(DialogBody)`
+const StyledCreateAPIKey = styled(ModalBody)`
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -135,9 +136,11 @@ export class CreateAPIKey extends React.Component {
         } else {
             content = (
                 <React.Fragment>
+                    <ModalHeader>Create API Key</ModalHeader>
                     <CreateAPIKeyInfo />
+
                     <form onSubmit={this.handleSubmit}>
-                        <DialogBody>
+                        <ModalBody>
                             <InputGroup>
                                 <InputLabel>Name</InputLabel>
                                 <Input label="Name" value={this.state.name} onChange={this.handleChange} />
@@ -150,26 +153,25 @@ export class CreateAPIKey extends React.Component {
                                 keyPermissions={this.state.permissions}
                                 onChange={this.handlePermissionChange}
                             />
-                        </DialogBody>
+                        </ModalBody>
 
-                        <DialogFooter>
+                        <ModalFooter>
                             <SaveButton />
-                        </DialogFooter>
+                        </ModalFooter>
                     </form>
                 </React.Fragment>
             );
         }
 
         return (
-            <ModalDialog
-                headerText="Create API Key"
+            <Modal
+                label="Create API Key"
                 show={this.props.show}
                 onHide={this.props.onHide}
                 onExited={this.handleModalExited}
-                label="CreateAPI"
             >
                 {content}
-            </ModalDialog>
+            </Modal>
         );
     }
 }

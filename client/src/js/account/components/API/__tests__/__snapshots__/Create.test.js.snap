@@ -1,9 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<CreateAPIKey /> should render when [props.newKey] and [state.copied] set 1`] = `
-<ModalDialog
-  headerText="Create API Key"
-  label="CreateAPI"
+<Modal
+  label="Create API Key"
   onExited={[Function]}
   onHide={[MockFunction]}
   show={true}
@@ -54,22 +53,24 @@ exports[`<CreateAPIKey /> should render when [props.newKey] and [state.copied] s
        Copied
     </Create__CreateAPIKeyCopied>
   </Create__StyledCreateAPIKey>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateAPIKey /> should render when [state.newKey] is empty 1`] = `
-<ModalDialog
-  headerText="Create API Key"
-  label="CreateAPI"
+<Modal
+  label="Create API Key"
   onExited={[Function]}
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Create API Key
+  </ModalHeader>
   <Connect(CreateAPIKeyInfo) />
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>
           Name
@@ -93,18 +94,17 @@ exports[`<CreateAPIKey /> should render when [state.newKey] is empty 1`] = `
         }
         onChange={[Function]}
       />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <SaveButton />
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<CreateAPIKey /> should render when [state.newKey] set 1`] = `
-<ModalDialog
-  headerText="Create API Key"
-  label="CreateAPI"
+<Modal
+  label="Create API Key"
   onExited={[Function]}
   onHide={[MockFunction]}
   show={true}
@@ -155,5 +155,5 @@ exports[`<CreateAPIKey /> should render when [state.newKey] set 1`] = `
        Copied
     </Create__CreateAPIKeyCopied>
   </Create__StyledCreateAPIKey>
-</ModalDialog>
+</Modal>
 `;

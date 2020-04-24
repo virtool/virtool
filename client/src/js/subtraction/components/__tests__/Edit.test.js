@@ -1,4 +1,4 @@
-import { Input, ModalDialog } from "../../../base";
+import { Input, Modal } from "../../../base";
 import { EditSubtraction, mapDispatchToProps } from "../Edit";
 describe("<EditSubtraction />", () => {
     let e;
@@ -58,7 +58,7 @@ describe("<EditSubtraction />", () => {
 
     it("should call onHide() when closed", () => {
         const wrapper = shallow(<EditSubtraction {...props} />);
-        wrapper.find(ModalDialog).prop("onHide")();
+        wrapper.find(Modal).prop("onHide")();
         expect(props.onHide).toHaveBeenCalledWith();
     });
 });

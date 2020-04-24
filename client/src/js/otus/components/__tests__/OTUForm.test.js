@@ -1,5 +1,5 @@
 import { Input } from "../../../base";
-import OTUForm from "../OTUForm";
+import { OTUForm } from "../Form";
 
 describe("<OTUForm />", () => {
     let props;

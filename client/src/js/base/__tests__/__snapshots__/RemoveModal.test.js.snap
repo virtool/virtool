@@ -1,14 +1,16 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<RemoveModal /> should render 1`] = `
-<ModalDialog
-  headerText="Remove bar"
+<Modal
+  color="red"
   label="Remove"
-  modalStyle="danger"
   onHide={[MockFunction]}
   show={true}
 >
-  <Modal__DialogBody>
+  <ModalHeader>
+    Remove bar
+  </ModalHeader>
+  <RemoveModal__RemoveModalBody>
     <span>
       Are you sure you want to remove 
       <strong>
@@ -16,14 +18,8 @@ exports[`<RemoveModal /> should render 1`] = `
       </strong>
       ?
     </span>
-  </Modal__DialogBody>
-  <Modal__DialogFooter
-    style={
-      Object {
-        "border": "none",
-      }
-    }
-  >
+  </RemoveModal__RemoveModalBody>
+  <Modal__ModalFooter>
     <Button
       color="red"
       disabled={false}
@@ -34,19 +30,21 @@ exports[`<RemoveModal /> should render 1`] = `
     >
       Confirm
     </Button>
-  </Modal__DialogFooter>
-</ModalDialog>
+  </Modal__ModalFooter>
+</Modal>
 `;
 
 exports[`<RemoveModal /> should render when [show=false] 1`] = `
-<ModalDialog
-  headerText="Remove bar"
+<Modal
+  color="red"
   label="Remove"
-  modalStyle="danger"
   onHide={[MockFunction]}
   show={false}
 >
-  <Modal__DialogBody>
+  <ModalHeader>
+    Remove bar
+  </ModalHeader>
+  <RemoveModal__RemoveModalBody>
     <span>
       Are you sure you want to remove 
       <strong>
@@ -54,14 +52,8 @@ exports[`<RemoveModal /> should render when [show=false] 1`] = `
       </strong>
       ?
     </span>
-  </Modal__DialogBody>
-  <Modal__DialogFooter
-    style={
-      Object {
-        "border": "none",
-      }
-    }
-  >
+  </RemoveModal__RemoveModalBody>
+  <Modal__ModalFooter>
     <Button
       color="red"
       disabled={false}
@@ -72,28 +64,24 @@ exports[`<RemoveModal /> should render when [show=false] 1`] = `
     >
       Confirm
     </Button>
-  </Modal__DialogFooter>
-</ModalDialog>
+  </Modal__ModalFooter>
+</Modal>
 `;
 
 exports[`<RemoveModal /> should render with message 1`] = `
-<ModalDialog
-  headerText="Remove bar"
+<Modal
+  color="red"
   label="Remove"
-  modalStyle="danger"
   onHide={[MockFunction]}
   show={true}
 >
-  <Modal__DialogBody>
+  <ModalHeader>
+    Remove bar
+  </ModalHeader>
+  <RemoveModal__RemoveModalBody>
     Are you sure about this?
-  </Modal__DialogBody>
-  <Modal__DialogFooter
-    style={
-      Object {
-        "border": "none",
-      }
-    }
-  >
+  </RemoveModal__RemoveModalBody>
+  <Modal__ModalFooter>
     <Button
       color="red"
       disabled={false}
@@ -104,6 +92,6 @@ exports[`<RemoveModal /> should render with message 1`] = `
     >
       Confirm
     </Button>
-  </Modal__DialogFooter>
-</ModalDialog>
+  </Modal__ModalFooter>
+</Modal>
 `;

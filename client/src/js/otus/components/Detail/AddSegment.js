@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { find } from "lodash-es";
-import { Button, ModalDialog, DialogBody, DialogFooter } from "../../../base";
+import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from "../../../base";
 import SegmentForm from "./SegmentForm";
 
 const getInitialState = () => ({
@@ -48,30 +48,30 @@ class AddSegment extends React.Component {
         }
     };
 
-    handleExited = () => {
+    handleModalExited = () => {
         this.setState(getInitialState());
     };
 
     render() {
         return (
-            <ModalDialog
-                headerText="Add Segment"
-                label="AddSegment"
+            <Modal
+                label="Add Segment"
                 show={this.props.show}
-                onExited={this.handleExited}
+                onExited={this.handleModalExited}
                 onHide={this.props.onHide}
             >
+                <ModalHeader>Add Segment</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <DialogBody>
+                    <ModalBody>
                         <SegmentForm onChange={this.handleChange} newEntry={this.state.newEntry} />
-                    </DialogBody>
-                    <DialogFooter>
+                    </ModalBody>
+                    <ModalFooter>
                         <Button color="blue" type="submit">
                             Save
                         </Button>
-                    </DialogFooter>
+                    </ModalFooter>
                 </form>
-            </ModalDialog>
+            </Modal>
         );
     }
 }

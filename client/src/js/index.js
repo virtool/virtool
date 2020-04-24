@@ -7,7 +7,7 @@ import App from "./app/App";
 import { createAppStore } from "./app/reducer";
 import "normalize.css";
 
-export * from "../style/style.less";
+export * from "../style/style.css";
 
 if (!window.virtool.dev) {
     Sentry.init({

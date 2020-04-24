@@ -4,7 +4,7 @@ exports[`<IsolateForm /> should render 1`] = `
 <form
   onSubmit={[MockFunction]}
 >
-  <Modal__DialogBody>
+  <Modal__ModalBody>
     <IsolateForm__IsolateFormFields>
       <SourceType
         allowedSourceTypes={
@@ -37,9 +37,9 @@ exports[`<IsolateForm /> should render 1`] = `
         value="Isolate A"
       />
     </InputGroup>
-  </Modal__DialogBody>
-  <Modal__DialogFooter>
+  </Modal__ModalBody>
+  <Modal__ModalFooter>
     <SaveButton />
-  </Modal__DialogFooter>
+  </Modal__ModalFooter>
 </form>
 `;

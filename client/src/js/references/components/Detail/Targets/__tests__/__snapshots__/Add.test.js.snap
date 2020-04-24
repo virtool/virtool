@@ -1,17 +1,19 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<AddTarget /> should render 1`] = `
-<ModalDialog
-  headerText="Add target"
-  label="AddTarget"
+<Modal
+  label="Add Target"
   onExited={[Function]}
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Add target
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <TargetForm
         description=""
         errorName=""
@@ -21,8 +23,8 @@ exports[`<AddTarget /> should render 1`] = `
         onClick={[Function]}
         required={false}
       />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Button
         color="blue"
         disabled={false}
@@ -32,23 +34,25 @@ exports[`<AddTarget /> should render 1`] = `
       >
         Submit
       </Button>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<AddTarget /> should render error when submitted without name 1`] = `
-<ModalDialog
-  headerText="Add target"
-  label="AddTarget"
+<Modal
+  label="Add Target"
   onExited={[Function]}
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Add target
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <TargetForm
         description=""
         errorName="Required Field"
@@ -58,8 +62,8 @@ exports[`<AddTarget /> should render error when submitted without name 1`] = `
         onClick={[Function]}
         required={false}
       />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Button
         color="blue"
         disabled={false}
@@ -69,23 +73,25 @@ exports[`<AddTarget /> should render error when submitted without name 1`] = `
       >
         Submit
       </Button>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;
 
 exports[`<AddTarget /> should render required when form onClick() prop is called 1`] = `
-<ModalDialog
-  headerText="Add target"
-  label="AddTarget"
+<Modal
+  label="Add Target"
   onExited={[Function]}
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Add target
+  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody>
+    <Modal__ModalBody>
       <TargetForm
         description=""
         errorName=""
@@ -95,8 +101,8 @@ exports[`<AddTarget /> should render required when form onClick() prop is called
         onClick={[Function]}
         required={true}
       />
-    </Modal__DialogBody>
-    <Modal__DialogFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Button
         color="blue"
         disabled={false}
@@ -106,7 +112,7 @@ exports[`<AddTarget /> should render required when form onClick() prop is called
       >
         Submit
       </Button>
-    </Modal__DialogFooter>
+    </Modal__ModalFooter>
   </form>
-</ModalDialog>
+</Modal>
 `;

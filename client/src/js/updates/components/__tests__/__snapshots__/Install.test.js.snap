@@ -1,19 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<SoftwareInstall /> should render 1`] = `
-<ModalDialog
-  headerText={
-    <div>
-      Software Update 
-      <Label>
-        test
-      </Label>
-    </div>
-  }
-  label="updatesInstall"
+<Modal
+  label="Software Update"
   onHide={[MockFunction]}
   show={true}
 >
+  <ModalHeader>
+    Software Update 
+    <Label>
+      test
+    </Label>
+  </ModalHeader>
   <InstallProcess
     0="one"
     1="two"
@@ -21,5 +19,5 @@ exports[`<SoftwareInstall /> should render 1`] = `
     size={1024}
     updating={false}
   />
-</ModalDialog>
+</Modal>
 `;

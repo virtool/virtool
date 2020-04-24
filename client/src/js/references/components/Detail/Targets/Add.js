@@ -1,7 +1,7 @@
 import { toNumber } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Button, ModalDialog, DialogBody, DialogFooter } from "../../../../base";
+import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from "../../../../base";
 import { editReference } from "../../../actions";
 import { TargetForm } from "./Form";
 
@@ -53,23 +53,21 @@ export class AddTarget extends React.Component {
     };
 
     handleExited = () => {
-        this.props.onHide();
         this.setState(getInitialState());
     };
 
     render() {
         return (
-            <ModalDialog
-                submit={this.state.submit}
-                label="AddTarget"
-                headerText="Add target"
+            <Modal
+                label="Add Target"
                 show={this.props.show}
-                onHide={this.props.onHide}
                 onEnter={this.handleEnter}
                 onExited={this.handleExited}
+                onHide={this.props.onHide}
             >
+                <ModalHeader>Add target</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <DialogBody>
+                    <ModalBody>
                         <TargetForm
                             onChange={this.handleChange}
                             name={this.state.name}
@@ -79,14 +77,14 @@ export class AddTarget extends React.Component {
                             errorName={this.state.errorName}
                             onClick={this.handleClick}
                         />
-                    </DialogBody>
-                    <DialogFooter>
+                    </ModalBody>
+                    <ModalFooter>
                         <Button type="submit" icon="save" color="blue">
                             Submit
                         </Button>
-                    </DialogFooter>
+                    </ModalFooter>
                 </form>
-            </ModalDialog>
+            </Modal>
         );
     }
 }

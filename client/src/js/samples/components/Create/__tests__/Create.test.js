@@ -1,6 +1,6 @@
 import React from "react";
 import { Input, InputIcon } from "../../../../base";
-import { CreateSample, mapStateToProps, mapDispatchToProps } from "../Create";
+import { CreateSample, mapDispatchToProps, mapStateToProps } from "../Create";
 
 describe("<CreateSample>", () => {
     let props;
@@ -68,7 +68,7 @@ describe("<CreateSample>", () => {
     it("should update state when Modal exits", () => {
         const wrapper = shallow(<CreateSample {...props} />);
         wrapper.setState(state);
-        wrapper.find("ModalDialog").prop("onExited")();
+        wrapper.instance().handleModalExited();
         expect(wrapper.state()).toEqual({
             errorFile: "",
             errorName: "",
@@ -230,17 +230,13 @@ describe("mapDispatchToProps()", () => {
     const dispatch = jest.fn();
     const props = mapDispatchToProps(dispatch);
 
-    it("onLoadSubtractionsAndFiles() should return listSubtractionIds in props", () => {
+    it("should return onLoadSubtractionsAndFiles() in props", () => {
         props.onLoadSubtractionsAndFiles();
+        expect(dispatch).toHaveBeenCalledWith({ type: "FIND_READ_FILES_REQUESTED" });
         expect(dispatch).toHaveBeenCalledWith({ type: "LIST_SUBTRACTION_IDS_REQUESTED" });
     });
 
-    it("onLoadSubtractionsAndFiles() should return findReadFiles in props", () => {
-        props.onLoadSubtractionsAndFiles();
-        expect(dispatch).toHaveBeenCalledWith({ type: "FIND_READ_FILES_REQUESTED" });
-    });
-
-    it("onCreate() should return createSample in props", () => {
+    it("should return createSample() in props", () => {
         props.onCreate("name", "isolate", "host", "locale", "libraryType", "subtraction", "files");
         expect(dispatch).toHaveBeenCalledWith({
             name: "name",
@@ -254,13 +250,13 @@ describe("mapDispatchToProps()", () => {
         });
     });
 
-    it("onHide() should return pushState in props", () => {
+    it("should return onHide() in props", () => {
         props.onHide();
         expect(dispatch).toHaveBeenCalledWith({ state: { create: false }, type: "PUSH_STATE" });
     });
 
-    it("onClearError() should return clearError in props", () => {
-        props.onClearError("foo");
-        expect(dispatch).toHaveBeenCalledWith({ error: "foo", type: "CLEAR_ERROR" });
+    it("should return onClearError() in props", () => {
+        props.onClearError();
+        expect(dispatch).toHaveBeenCalledWith({ error: "CREATE_SAMPLE_ERROR", type: "CLEAR_ERROR" });
     });
 });

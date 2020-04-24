@@ -1,14 +1,16 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<RemoveSequence /> renders correctly 1`] = `
-<ModalDialog
-  headerText="Remove Sequence"
+<Modal
+  color="red"
   label="Remove"
-  modalStyle="danger"
   onHide={[MockFunction]}
   show={true}
 >
-  <Modal__DialogBody>
+  <ModalHeader>
+    Remove Sequence
+  </ModalHeader>
+  <RemoveModal__RemoveModalBody>
     <span>
       Are you sure you want to remove the sequence
       <strong>
@@ -22,14 +24,8 @@ exports[`<RemoveSequence /> renders correctly 1`] = `
       </strong>
       ?
     </span>
-  </Modal__DialogBody>
-  <Modal__DialogFooter
-    style={
-      Object {
-        "border": "none",
-      }
-    }
-  >
+  </RemoveModal__RemoveModalBody>
+  <Modal__ModalFooter>
     <Button
       color="red"
       disabled={false}
@@ -40,6 +36,6 @@ exports[`<RemoveSequence /> renders correctly 1`] = `
     >
       Confirm
     </Button>
-  </Modal__DialogFooter>
-</ModalDialog>
+  </Modal__ModalFooter>
+</Modal>
 `;

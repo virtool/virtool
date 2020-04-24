@@ -1,19 +1,11 @@
 import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
-import { createReference } from "../actions";
+import { Alert, Button, ModalBody, ModalFooter } from "../../base";
 import { clearError } from "../../errors/actions";
-
-import { Alert, Button, ButtonToolbar, DialogFooter } from "../../base";
 import { getTargetChange } from "../../utils/utils";
+import { createReference } from "../actions";
 import { DataTypeSelection } from "./DataTypeSelection";
 import { ReferenceForm } from "./Form";
-
-const Container = styled.div`
-    display: flex;
-    flex-direction: column;
-    margin: 15px;
-`;
 
 const getInitialState = () => ({
     name: "",
@@ -63,7 +55,7 @@ export class CreateReference extends React.Component {
     render() {
         return (
             <form onSubmit={this.handleSubmit}>
-                <Container>
+                <ModalBody>
                     <Alert>
                         <strong>Create an empty reference.</strong>
                     </Alert>
@@ -78,14 +70,12 @@ export class CreateReference extends React.Component {
                         onChange={this.handleChange}
                     />
                     <DataTypeSelection onSelect={this.handleChangeDataType} dataType={this.state.dataType} />
-                </Container>
-                <DialogFooter>
-                    <ButtonToolbar>
-                        <Button type="submit" icon="save" color="blue">
-                            Save
-                        </Button>
-                    </ButtonToolbar>
-                </DialogFooter>
+                </ModalBody>
+                <ModalFooter>
+                    <Button type="submit" icon="save" color="blue">
+                        Save
+                    </Button>
+                </ModalFooter>
             </form>
         );
     }

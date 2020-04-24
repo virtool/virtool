@@ -4,7 +4,7 @@ exports[`<OTUForm /> should render 1`] = `
 <form
   onSubmit={[MockFunction]}
 >
-  <OTUForm__OTUFormFields>
+  <Form__OTUFormBody>
     <InputGroup>
       <Input__InputLabel>
         Name
@@ -27,10 +27,10 @@ exports[`<OTUForm /> should render 1`] = `
         value="T"
       />
     </InputGroup>
-  </OTUForm__OTUFormFields>
-  <Modal__DialogFooter>
+  </Form__OTUFormBody>
+  <Modal__ModalFooter>
     <SaveButton />
-  </Modal__DialogFooter>
+  </Modal__ModalFooter>
 </form>
 `;
 
@@ -38,7 +38,7 @@ exports[`<OTUForm /> should render with error 1`] = `
 <form
   onSubmit={[MockFunction]}
 >
-  <OTUForm__OTUFormFields>
+  <Form__OTUFormBody>
     <InputGroup>
       <Input__InputLabel>
         Name
@@ -63,9 +63,9 @@ exports[`<OTUForm /> should render with error 1`] = `
         value="T"
       />
     </InputGroup>
-  </OTUForm__OTUFormFields>
-  <Modal__DialogFooter>
+  </Form__OTUFormBody>
+  <Modal__ModalFooter>
     <SaveButton />
-  </Modal__DialogFooter>
+  </Modal__ModalFooter>
 </form>
 `;

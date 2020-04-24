@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { DialogBody, DialogFooter, Input, InputGroup, InputLabel, ModalDialog, SaveButton } from "../../base";
+import { ModalBody, ModalFooter, Input, InputGroup, InputLabel, Modal, SaveButton, ModalHeader } from "../../base";
 import { editSubtraction } from "../actions";
 
 export class EditSubtraction extends React.Component {
@@ -35,14 +35,10 @@ export class EditSubtraction extends React.Component {
 
     render() {
         return (
-            <ModalDialog
-                label="SubtractionEdit"
-                headerText="Edit Subtraction"
-                show={this.props.show}
-                onHide={this.props.onHide}
-            >
+            <Modal label="Edit Subtraction" show={this.props.show} onHide={this.props.onHide}>
+                <ModalHeader>Edit Subtraction</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <DialogBody>
+                    <ModalBody>
                         <InputGroup>
                             <InputLabel>Name</InputLabel>
                             <Input name="name" value={this.state.name} onChange={this.handleChange} />
@@ -51,13 +47,13 @@ export class EditSubtraction extends React.Component {
                             <InputLabel>Nickname</InputLabel>
                             <Input name="nickname" value={this.state.nickname} onChange={this.handleChange} />
                         </InputGroup>
-                    </DialogBody>
+                    </ModalBody>
 
-                    <DialogFooter>
-                        <SaveButton pullRight />
-                    </DialogFooter>
+                    <ModalFooter>
+                        <SaveButton />
+                    </ModalFooter>
                 </form>
-            </ModalDialog>
+            </Modal>
         );
     }
 }

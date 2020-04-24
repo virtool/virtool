@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import styled from "styled-components";
 import Request from "superagent";
 import { pushState } from "../../app/actions";
-import { AffixedProgressBar, Button, DialogBody, DialogFooter, Label, Loader, ModalDialog } from "../../base";
+import { AffixedProgressBar, Button, ModalBody, ModalFooter, Label, Loader, Modal, ModalHeader } from "../../base";
 import { byteSize, routerLocationHasState } from "../../utils/utils";
 import { installSoftwareUpdates } from "../actions";
 import { ReleaseMarkdown } from "./Markdown";
@@ -37,7 +37,7 @@ export const mergeBody = releases => {
     return reduce(result, (body, list, header) => `${body}\n\n#### ${header}\n${list.join("")}`, "");
 };
 
-const StyledInstallProcess = styled(DialogBody)`
+const StyledInstallProcess = styled(ModalBody)`
     padding: 50px 15px;
     position: relative;
     text-align: center;
@@ -91,32 +91,29 @@ export const SoftwareInstall = ({ onHide, onInstall, process, releases, show, up
 
     if (process === null) {
         content = (
-            <div>
-                <DialogBody>
+            <React.Fragment>
+                <ModalBody>
                     <ReleaseMarkdown body={mergedBody} noMargin />
-                </DialogBody>
+                </ModalBody>
 
-                <DialogFooter>
+                <ModalFooter>
                     <Button color="blue" icon="download" onClick={onInstall}>
                         Install
                     </Button>
-                </DialogFooter>
-            </div>
+                </ModalFooter>
+            </React.Fragment>
         );
     } else {
         content = <InstallProcess {...process} size={releases[0].size} updating={updating} />;
     }
 
-    const header = (
-        <div>
-            Software Update <Label>{releases[0].name}</Label>
-        </div>
-    );
-
     return (
-        <ModalDialog headerText={header} label="updatesInstall" show={show} onHide={onHide}>
+        <Modal label="Software Update" show={show} onHide={onHide}>
+            <ModalHeader>
+                Software Update <Label>{releases[0].name}</Label>
+            </ModalHeader>
             {content}
-        </ModalDialog>
+        </Modal>
     );
 };
 

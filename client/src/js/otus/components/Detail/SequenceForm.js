@@ -2,8 +2,8 @@ import { some } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import {
-    DialogBody,
-    DialogFooter,
+    ModalBody,
+    ModalFooter,
     Input,
     InputContainer,
     InputError,
@@ -132,7 +132,7 @@ export class SequenceForm extends React.Component {
 
         return (
             <form onSubmit={this.handleSubmit}>
-                <DialogBody>
+                <ModalBody>
                     {overlay}
 
                     <InputGroup>
@@ -170,10 +170,10 @@ export class SequenceForm extends React.Component {
                         onChange={this.handleChange}
                         error={this.state.errorSequence}
                     />
-                </DialogBody>
-                <DialogFooter>
+                </ModalBody>
+                <ModalFooter>
                     <SaveButton />
-                </DialogFooter>
+                </ModalFooter>
             </form>
         );
     }
