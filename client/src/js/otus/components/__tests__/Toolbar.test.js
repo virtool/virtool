@@ -31,10 +31,7 @@ describe("<OTUToolbar />", () => {
 
     it("should call onFind() when filter button is clicked", () => {
         const wrapper = shallow(<OTUToolbar {...props} />);
-        wrapper
-            .find(FilterButton)
-            .at(0)
-            .simulate("click");
+        wrapper.find("#verified-button").simulate("click");
         expect(props.onFind).toHaveBeenCalledWith(props.refId, props.term, !props.verified, 1);
     });
 });

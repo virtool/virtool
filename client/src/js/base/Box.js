@@ -44,13 +44,12 @@ export const BoxGroup = styled(Box)`
 `;
 
 export const BoxGroupSection = styled.div`
+    background-color: ${props => (props.active ? props.theme.color.blue : "none")};
     border-radius: 0;
+    color: ${props => (props.active ? props.theme.color.white : "inherit")};
     cursor: ${props => (props.onClick ? "pointer" : "auto")};
     padding: 10px 15px;
     position: relative;
-
-    ${props => (props.active ? "background-color: #07689d;" : "")}
-    ${props => (props.active ? "color: #ffffff;" : "")}
 
     &[disabled] {
         background-color: #edf2f7;
@@ -65,12 +64,6 @@ export const BoxGroupSection = styled.div`
     &:not(:last-child) {
         border-bottom: ${getBorder};
     }
-`;
-
-export const DangerBoxGroupSection = styled(BoxGroupSection)`
-    background-color: #f0c1bd;
-    color: #af3227;
-    position: relative;
 `;
 
 export const BoxGroupHeader = styled(BoxGroupSection)`

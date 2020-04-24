@@ -7,18 +7,22 @@ exports[`<OTUToolbar /> should render 1`] = `
     placeholder="Name or abbreviation"
     value="foo"
   />
-  <Toolbar__FilterButton
+  <Button
     active={false}
+    color="grey"
+    disabled={false}
     id="verified-button"
     onClick={[Function]}
     tip="Filter Unverified"
+    tipPlacement="top"
+    type="button"
   >
     <Icon
       faStyle="fas"
       fixedWidth={false}
       name="filter"
     />
-  </Toolbar__FilterButton>
+  </Button>
   <LinkButton
     color="blue"
     icon="plus-square"
@@ -43,18 +47,22 @@ exports[`<OTUToolbar /> should render when [verified=true] 1`] = `
     placeholder="Name or abbreviation"
     value="foo"
   />
-  <Toolbar__FilterButton
+  <Button
     active={true}
+    color="grey"
+    disabled={false}
     id="verified-button"
     onClick={[Function]}
     tip="Filter Unverified"
+    tipPlacement="top"
+    type="button"
   >
     <Icon
       faStyle="fas"
       fixedWidth={false}
       name="filter"
     />
-  </Toolbar__FilterButton>
+  </Button>
   <LinkButton
     color="blue"
     icon="plus-square"
