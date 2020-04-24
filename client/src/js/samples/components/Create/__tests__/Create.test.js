@@ -23,7 +23,8 @@ describe("<CreateSample>", () => {
             ],
             readyReads: [],
             forceGroupChoice: false,
-            onCreate: jest.fn()
+            onCreate: jest.fn(),
+            onHide: jest.fn()
         };
         state = {
             name: "Sample 1",

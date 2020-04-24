@@ -4,6 +4,7 @@ exports[`<CreateSample> should display error when form submitted with no name 1`
 <Modal
   label="Create Sample"
   onExited={[Function]}
+  onHide={[MockFunction]}
   show={true}
   size="lg"
 >
@@ -130,6 +131,7 @@ exports[`<CreateSample> should display error when form submitted with no subtrac
 <Modal
   label="Create Sample"
   onExited={[Function]}
+  onHide={[MockFunction]}
   show={true}
   size="lg"
 >
@@ -242,6 +244,7 @@ exports[`<CreateSample> should render 1`] = `
 <Modal
   label="Create Sample"
   onExited={[Function]}
+  onHide={[MockFunction]}
   show={true}
   size="lg"
 >
@@ -360,6 +363,7 @@ exports[`<CreateSample> should render 1`] = `
 exports[`<CreateSample> should render LoadingPlaceholder when [this.props.readyReads=null] 1`] = `
 <Modal
   label="Create Sample"
+  onHide={[MockFunction]}
   show={true}
   size="lg"
 >
@@ -377,6 +381,7 @@ exports[`<CreateSample> should render LoadingPlaceholder when [this.props.readyR
 exports[`<CreateSample> should render LoadingPlaceholder when [this.props.subtractions=null] 1`] = `
 <Modal
   label="Create Sample"
+  onHide={[MockFunction]}
   show={true}
   size="lg"
 >
