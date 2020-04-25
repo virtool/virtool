@@ -24,6 +24,7 @@ build_exe_options = {
         "motor",
         "numpy",
         "uvloop",
+        "sentry_sdk",
         "ssl"
     ]
 }
