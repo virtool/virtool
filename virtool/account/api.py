@@ -1,6 +1,7 @@
 import aiohttp.web
 
 import virtool.analyses.utils
+import virtool.http.utils
 import virtool.users.checks
 import virtool.account.db
 import virtool.users.sessions
@@ -11,7 +12,7 @@ import virtool.http.routes
 import virtool.users.utils
 import virtool.utils
 import virtool.validators
-from virtool.api import bad_request, json_response, no_content, not_found
+from virtool.api.response import bad_request, json_response, no_content, not_found
 
 #: A MongoDB projection to use when returning API key documents to clients. The key should never be sent to client after
 #: its creation.
@@ -38,7 +39,7 @@ async def get(req):
     "email": {
         "type": "string",
         "coerce": virtool.validators.strip,
-        "regex": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+        "regex": r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
     },
     "old_password": {
         "type": "string"
@@ -72,11 +73,7 @@ async def edit(req):
         if not await virtool.users.db.validate_credentials(db, user_id, old_password or ""):
             return bad_request("Invalid credentials")
 
-        update = virtool.account.db.compose_password_update(
-            user_id,
-            data["old_password"],
-            password
-        )
+        update = virtool.account.db.compose_password_update(password)
 
     if "email" in data:
         update["email"] = data["email"]
@@ -115,9 +112,9 @@ async def get_settings(req):
         "type": "boolean",
         "required": False
     },
-    "quick_analyze_algorithm": {
+    "quick_analyze_workflow": {
         "type": "string",
-        "allowed": virtool.analyses.utils.ALGORITHM_NAMES,
+        "allowed": virtool.analyses.utils.WORKFLOW_NAMES,
         "required": False
     }
 })
@@ -225,7 +222,7 @@ async def update_api_key(req):
 
     key_id = req.match_info.get("key_id")
 
-    if not await db.keys.count({"id": key_id}):
+    if not await db.keys.count_documents({"id": key_id}):
         return not_found()
 
     user_id = req["client"].user_id
@@ -334,8 +331,8 @@ async def login(req):
 
     resp = json_response({"reset": False}, status=201)
 
-    resp.set_cookie("session_id", session["_id"], httponly=True)
-    resp.set_cookie("session_token", token, httponly=True)
+    virtool.http.utils.set_session_id_cookie(resp, session["_id"])
+    virtool.http.utils.set_session_token_cookie(resp, token)
 
     return resp
 
@@ -357,7 +354,7 @@ async def logout(req):
 
     resp = aiohttp.web.Response(status=200)
 
-    resp.set_cookie("session_id", session["_id"])
+    virtool.http.utils.set_session_id_cookie(resp, session["_id"])
     resp.del_cookie("session_token")
 
     return resp
@@ -420,8 +417,8 @@ async def reset(req):
         "reset": False
     }, status=200)
 
-    resp.set_cookie("session_id", new_session["_id"], httponly=True)
-    resp.set_cookie("session_token", token, httponly=True)
+    virtool.http.utils.set_session_id_cookie(resp, new_session["_id"])
+    virtool.http.utils.set_session_token_cookie(resp, token)
 
     # Authenticate and return a redirect response to the `return_to` path. This is identical to the process used for
     # successful login requests.

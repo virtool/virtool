@@ -9,7 +9,6 @@ describe("<AnalysisItem />", () => {
 
     beforeEach(() => {
         props = {
-            algorithm: "nuvs",
             canModify: true,
             created_at: "2018-02-14T17:12:00.000000Z",
             id: "baz",
@@ -23,11 +22,13 @@ describe("<AnalysisItem />", () => {
             },
             sampleId: "bar",
             subtraction: {
-                id: "Prunus persica"
+                id: "baz",
+                name: "Prunus persica"
             },
             user: {
                 id: "bob"
             },
+            workflow: "nuvs",
             onRemove: jest.fn()
         };
     });

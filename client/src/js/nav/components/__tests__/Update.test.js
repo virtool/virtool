@@ -35,27 +35,27 @@ describe("mapStateToProps", () => {
         };
     });
 
-    afterEach(() => {
-        expect(props).toEqual(expected);
-    });
-
     it("should have [props.active=true] when conditions satisfied", () => {
         expected.visible = true;
         props = mapStateToProps(state);
+        expect(props).toEqual(expected);
     });
 
     it("should have [props.active=false] when not administrator", () => {
         state.account.administrator = false;
         props = mapStateToProps(state);
+        expect(props).toEqual(expected);
     });
 
     it("should have [props.active=false] when releases not loaded", () => {
         state.updates.releases = null;
         props = mapStateToProps(state);
+        expect(props).toEqual(expected);
     });
 
     it("should have [props.active=false] when releases empty", () => {
         state.updates.releases = [];
         props = mapStateToProps(state);
+        expect(props).toEqual(expected);
     });
 });

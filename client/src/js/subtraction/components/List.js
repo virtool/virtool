@@ -1,7 +1,15 @@
-import { isEqual } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Icon, LoadingPlaceholder, NoneFound, ScrollList, ViewHeader, WarningAlert } from "../../base";
+import {
+    Alert,
+    Badge,
+    Icon,
+    LoadingPlaceholder,
+    NoneFoundBox,
+    ScrollList,
+    ViewHeader,
+    ViewHeaderTitle
+} from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { findSubtractions } from "../actions";
 import CreateSubtraction from "./Create";
@@ -13,14 +21,6 @@ export class SubtractionList extends React.Component {
         if (!this.props.fetched) {
             this.props.onLoadNextPage(this.props.term, 1);
         }
-    }
-
-    shouldComponentUpdate(nextProps) {
-        return (
-            !isEqual(nextProps.documents, this.props.documents) ||
-            !isEqual(nextProps.isLoading, this.props.isLoading) ||
-            !isEqual(nextProps.total_count, this.props.total_count)
-        );
     }
 
     renderRow = index => <SubtractionItem key={index} index={index} />;
@@ -43,27 +43,27 @@ export class SubtractionList extends React.Component {
                 />
             );
         } else {
-            subtractionComponents = (
-                <div className="list-group">
-                    <NoneFound noun="subtractions" noListGroup />
-                </div>
-            );
+            subtractionComponents = <NoneFoundBox noun="subtractions" />;
         }
 
         let alert;
 
         if (!this.props.ready_host_count && !this.props.total_count) {
             alert = (
-                <WarningAlert level>
+                <Alert color="orange" level>
                     <Icon name="exclamation-circle" />
                     <strong>A host genome must be added before samples can be created and analyzed.</strong>
-                </WarningAlert>
+                </Alert>
             );
         }
 
         return (
             <div>
-                <ViewHeader title="Subtraction" totalCount={this.props.total_count} />
+                <ViewHeader title="Subtraction">
+                    <ViewHeaderTitle>
+                        Subtraction <Badge>{this.props.total_count}</Badge>
+                    </ViewHeaderTitle>
+                </ViewHeader>
 
                 {alert}
 

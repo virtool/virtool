@@ -21,13 +21,13 @@ exports[`<AnalysisDetail /> should render 1`] = `
 </div>
 `;
 
-exports[`<AnalysisDetail /> should render error when detail.algorithm is invalid] 1`] = `
+exports[`<AnalysisDetail /> should render error when workflow is invalid] 1`] = `
 <div>
   Unusable analysis detail content
 </div>
 `;
 
-exports[`<AnalysisDetail /> should render expected view when [detail.algorithm='nuvs'] 1`] = `
+exports[`<AnalysisDetail /> should render expected view when workflow is NuVs] 1`] = `
 <div>
   <ViewHeader__SubviewHeader>
     <ViewHeader__SubviewHeaderTitle>
@@ -53,15 +53,10 @@ exports[`<AnalysisDetail /> should render loading when [detail=null] 1`] = `<Loa
 exports[`<AnalysisDetail /> should render message when error is not null 1`] = `<NotFound />`;
 
 exports[`<AnalysisDetail /> should render pending when [detail.ready=false] 1`] = `
-<Panel>
-  <PanelBody
-    bsClass="panel"
-    collapsible={false}
-  >
-    <LoadingPlaceholder
-      margin="1.2rem"
-      message="Analysis in progress"
-    />
-  </PanelBody>
-</Panel>
+<Box>
+  <LoadingPlaceholder
+    margin="1.2rem"
+    message="Analysis in progress"
+  />
+</Box>
 `;

@@ -1,20 +1,31 @@
 import { PathoscopeIsolate, PathoscopeIsolateWeight } from "../Isolate";
 
 describe("<PathoscopeIsolate />", () => {
-    it("should render", () => {
-        const props = {
+    let props;
+
+    beforeEach(() => {
+        props = {
             depth: 13,
             maxDepth: 22,
             name: "Isolate A",
+            pi: 0.712,
             sequences: [
                 { filled: [1, 2, 3, 4, 5], length: 5, id: "foo", definition: "Foo Hit" },
                 { filled: [1, 2, 3, 4, 5, 4, 2, 3], length: 8, id: "bar", definition: "Bar Hit" }
             ],
             reads: 102,
-            showReads: false,
-            onScroll: jest.fn()
+            showPathoscopeReads: false
         };
-        const wrapper = mount(<PathoscopeIsolate {...props} />);
+    });
+
+    it("should render", () => {
+        const wrapper = shallow(<PathoscopeIsolate {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render read count", () => {
+        props.showPathoscopeReads = true;
+        const wrapper = shallow(<PathoscopeIsolate {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 });
@@ -38,7 +49,7 @@ describe("<PathoscopeIsolateWeight />", () => {
     });
 
     it("should render reads", () => {
-        props.showReads = true;
+        props.showPathoscopeReads = true;
         const wrapper = shallow(<PathoscopeIsolateWeight {...props} />);
         expect(wrapper).toMatchSnapshot();
     });

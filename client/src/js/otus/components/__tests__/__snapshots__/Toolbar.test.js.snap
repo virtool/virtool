@@ -1,54 +1,34 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<OTUToolbar /> renders correctly 1`] = `
-<div
-  className="toolbar"
->
-  <div
-    className="form-group"
-  >
-    <div
-      className="input-group"
-    >
-      <span
-        className="input-group-addon"
-        id="find-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </span>
-      <input
-        aria-describedby="find-addon"
-        className="form-control"
-        onChange={[Function]}
-        placeholder="Name or abbreviation"
-        type="text"
-        value="foo"
-      />
-    </div>
-  </div>
+exports[`<OTUToolbar /> should render 1`] = `
+<Toolbar>
+  <SearchInput
+    onChange={[Function]}
+    placeholder="Name or abbreviation"
+    value="foo"
+  />
   <Button
     active={false}
-    bsStyle="default"
+    color="grey"
+    disabled={false}
     id="verified-button"
     onClick={[Function]}
-    pullRight={false}
     tip="Filter Unverified"
     tipPlacement="top"
+    type="button"
   >
     <Icon
       faStyle="fas"
       fixedWidth={false}
       name="filter"
-      pullRight={false}
     />
   </Button>
-  <withRouter(LinkContainer)
+  <LinkButton
+    color="blue"
+    icon="plus-square"
     replace={true}
+    tip="Create"
+    tipPlacement="top"
     to={
       Object {
         "state": Object {
@@ -56,20 +36,46 @@ exports[`<OTUToolbar /> renders correctly 1`] = `
         },
       }
     }
+  />
+</Toolbar>
+`;
+
+exports[`<OTUToolbar /> should render when [verified=true] 1`] = `
+<Toolbar>
+  <SearchInput
+    onChange={[Function]}
+    placeholder="Name or abbreviation"
+    value="foo"
+  />
+  <Button
+    active={true}
+    color="grey"
+    disabled={false}
+    id="verified-button"
+    onClick={[Function]}
+    tip="Filter Unverified"
+    tipPlacement="top"
+    type="button"
   >
-    <Button
-      bsStyle="primary"
-      pullRight={false}
-      tip="Create"
-      tipPlacement="top"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="plus-square"
-        pullRight={false}
-      />
-    </Button>
-  </withRouter(LinkContainer)>
-</div>
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="filter"
+    />
+  </Button>
+  <LinkButton
+    color="blue"
+    icon="plus-square"
+    replace={true}
+    tip="Create"
+    tipPlacement="top"
+    to={
+      Object {
+        "state": Object {
+          "createOTU": true,
+        },
+      }
+    }
+  />
+</Toolbar>
 `;

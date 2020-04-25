@@ -1,129 +1,91 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<UploadBar /> should render 1`] = `
-<Flex
-  alignContent="stretch"
-  alignItems="stretch"
-  direction="row"
-  justifyContent="flex-start"
-  wrap="nowrap"
+<UploadBar__StyledUploadBar
+  active={false}
 >
-  <FlexItem
-    alignSelf={null}
-    basis="auto"
-    grow={1}
-    shrink={1}
+  <div
+    onBlur={[Function]}
+    onClick={[Function]}
+    onDragEnter={[Function]}
+    onDragLeave={[Function]}
+    onDragOver={[Function]}
+    onDrop={[Function]}
+    onFocus={[Function]}
+    onKeyDown={[Function]}
+    tabIndex={0}
   >
-    <div
-      className="dropzone"
-      onBlur={[Function]}
+    <input
+      autoComplete="off"
+      multiple={true}
+      onChange={[Function]}
       onClick={[Function]}
-      onDragEnter={[Function]}
-      onDragLeave={[Function]}
-      onDragOver={[Function]}
-      onDrop={[Function]}
-      onFocus={[Function]}
-      onKeyDown={[Function]}
-      tabIndex={0}
-    >
-      <input
-        autoComplete="off"
-        multiple={true}
-        onChange={[Function]}
-        onClick={[Function]}
-        style={
-          Object {
-            "display": "none",
-          }
+      style={
+        Object {
+          "display": "none",
         }
-        tabIndex={-1}
-        type="file"
-      />
-      <span>
-        Drag file here to upload
-      </span>
-    </div>
-  </FlexItem>
-  <FlexItem
-    alignSelf={null}
-    basis="auto"
-    grow={0}
-    pad={true}
-    shrink={1}
+      }
+      tabIndex={-1}
+      type="file"
+    />
+    <span>
+      Drag file here to upload
+    </span>
+  </div>
+  <Button
+    color="blue"
+    disabled={false}
+    icon="upload"
+    onClick={[Function]}
+    tipPlacement="top"
+    type="button"
   >
-    <Button
-      bsStyle="default"
-      icon="upload"
-      onClick={[Function]}
-      pullRight={false}
-      tipPlacement="top"
-    >
-      Upload
-    </Button>
-  </FlexItem>
-</Flex>
+    Upload
+  </Button>
+</UploadBar__StyledUploadBar>
 `;
 
 exports[`<UploadBar /> should render optional message 1`] = `
-<Flex
-  alignContent="stretch"
-  alignItems="stretch"
-  direction="row"
-  justifyContent="flex-start"
-  wrap="nowrap"
+<UploadBar__StyledUploadBar
+  active={false}
 >
-  <FlexItem
-    alignSelf={null}
-    basis="auto"
-    grow={1}
-    shrink={1}
+  <div
+    onBlur={[Function]}
+    onClick={[Function]}
+    onDragEnter={[Function]}
+    onDragLeave={[Function]}
+    onDragOver={[Function]}
+    onDrop={[Function]}
+    onFocus={[Function]}
+    onKeyDown={[Function]}
+    tabIndex={0}
   >
-    <div
-      className="dropzone"
-      onBlur={[Function]}
+    <input
+      autoComplete="off"
+      multiple={true}
+      onChange={[Function]}
       onClick={[Function]}
-      onDragEnter={[Function]}
-      onDragLeave={[Function]}
-      onDragOver={[Function]}
-      onDrop={[Function]}
-      onFocus={[Function]}
-      onKeyDown={[Function]}
-      tabIndex={0}
-    >
-      <input
-        autoComplete="off"
-        multiple={true}
-        onChange={[Function]}
-        onClick={[Function]}
-        style={
-          Object {
-            "display": "none",
-          }
+      style={
+        Object {
+          "display": "none",
         }
-        tabIndex={-1}
-        type="file"
-      />
-      <span>
-        Foobar
-      </span>
-    </div>
-  </FlexItem>
-  <FlexItem
-    alignSelf={null}
-    basis="auto"
-    grow={0}
-    pad={true}
-    shrink={1}
+      }
+      tabIndex={-1}
+      type="file"
+    />
+    <span>
+      Foobar
+    </span>
+  </div>
+  <Button
+    color="blue"
+    disabled={false}
+    icon="upload"
+    onClick={[Function]}
+    tipPlacement="top"
+    type="button"
   >
-    <Button
-      bsStyle="default"
-      icon="upload"
-      onClick={[Function]}
-      pullRight={false}
-      tipPlacement="top"
-    >
-      Upload
-    </Button>
-  </FlexItem>
-</Flex>
+    Upload
+  </Button>
+</UploadBar__StyledUploadBar>
 `;

@@ -1,52 +1,71 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<OTUForm /> renders correctly 1`] = `
+exports[`<OTUForm /> should render 1`] = `
 <form
   onSubmit={[MockFunction]}
 >
-  <ModalBody
-    bsClass="modal-body"
-    componentClass="div"
-  >
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={8}
-      >
-        <InputError
-          error=""
-          label="Name"
-          name="name"
-          onChange={[MockFunction]}
-          value="test"
-        />
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={4}
-      >
-        <InputError
-          error=""
-          label="Abbreviation"
-          name="abbreviation"
-          onChange={[MockFunction]}
-          value="T"
-        />
-      </Col>
-    </Row>
-  </ModalBody>
-  <ModalFooter
-    bsClass="modal-footer"
-    componentClass="div"
-  >
-    <SaveButton
-      pullRight={true}
-    />
-  </ModalFooter>
+  <Form__OTUFormBody>
+    <InputGroup>
+      <Input__InputLabel>
+        Name
+      </Input__InputLabel>
+      <Input
+        error=""
+        name="name"
+        onChange={[MockFunction]}
+        value="test"
+      />
+      <Input__InputError />
+    </InputGroup>
+    <InputGroup>
+      <Input__InputLabel>
+        Abbreviation
+      </Input__InputLabel>
+      <Input
+        name="abbreviation"
+        onChange={[MockFunction]}
+        value="T"
+      />
+    </InputGroup>
+  </Form__OTUFormBody>
+  <Modal__ModalFooter>
+    <SaveButton />
+  </Modal__ModalFooter>
+</form>
+`;
+
+exports[`<OTUForm /> should render with error 1`] = `
+<form
+  onSubmit={[MockFunction]}
+>
+  <Form__OTUFormBody>
+    <InputGroup>
+      <Input__InputLabel>
+        Name
+      </Input__InputLabel>
+      <Input
+        error="Name is used already"
+        name="name"
+        onChange={[MockFunction]}
+        value="test"
+      />
+      <Input__InputError>
+        Name is used already
+      </Input__InputError>
+    </InputGroup>
+    <InputGroup>
+      <Input__InputLabel>
+        Abbreviation
+      </Input__InputLabel>
+      <Input
+        name="abbreviation"
+        onChange={[MockFunction]}
+        value="T"
+      />
+    </InputGroup>
+  </Form__OTUFormBody>
+  <Modal__ModalFooter>
+    <SaveButton />
+  </Modal__ModalFooter>
 </form>
 `;

@@ -1,14 +1,14 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<HMMPurge /> should not render purge button when [canPurge=false] 1`] = `
-<Alert__WarningAlert
+<Alert
+  color="orange"
   level={true}
 >
   <Icon
     faStyle="fas"
     fixedWidth={false}
     name="exclamation-circle"
-    pullRight={false}
   />
   <span>
     <strong>
@@ -18,7 +18,7 @@ exports[`<HMMPurge /> should not render purge button when [canPurge=false] 1`] =
        Contact an administrator.
     </span>
   </span>
-</Alert__WarningAlert>
+</Alert>
 `;
 
 exports[`<HMMPurge /> should render purge button when [canPurge=true] 1`] = `

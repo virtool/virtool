@@ -1,78 +1,55 @@
 import React from "react";
-
 import { connect } from "react-redux";
-import { Link } from "react-router-dom";
-import { BoxGroup, BoxGroupHeader, BoxGroupSection, NoneFoundSection, RelativeTime, Table } from "../../../base";
+import styled from "styled-components";
+
+import { BoxGroup, BoxGroupHeader, Table } from "../../../base";
 import { Contributors } from "../../../indexes/components/Contributors";
 import { checkUpdates, updateRemoteReference } from "../../actions";
+import { Clone } from "./Clone";
 import ReferenceDetailHeader from "./Header";
+import { LatestBuild } from "./LatestBuild";
 import RemoteReference from "./Remote";
 import ReferenceDetailTabs from "./Tabs";
+import Targets from "./Targets/Targets";
 
-const Clone = ({ source }) => (
-    <BoxGroup>
-        <BoxGroupHeader>
-            <h2>Clone Reference</h2>
-        </BoxGroupHeader>
-
-        <BoxGroupSection>
-            <strong>Source Reference</strong>
-            <span>
-                {" / "}
-                <a href={`/refs/${source.id}`}>{source.name}</a>
-            </span>
-        </BoxGroupSection>
-    </BoxGroup>
-);
-
-const LatestBuild = ({ id, latestBuild }) => {
-    if (latestBuild) {
-        return (
-            <BoxGroupSection>
-                <strong>
-                    <Link to={`/refs/${id}/indexes/${latestBuild.id}`}>Index {latestBuild.version}</Link>
-                </strong>
-                <span>
-                    &nbsp;/ Created <RelativeTime time={latestBuild.created_at} /> by {latestBuild.user.id}
-                </span>
-            </BoxGroupSection>
-        );
+const ReferenceManageTable = styled(Table)`
+    tr:not(:first-of-type) td {
+        text-transform: capitalize;
     }
+`;
 
-    return <NoneFoundSection noun="index builds" />;
-};
-
-const ReferenceManage = ({ detail }) => {
-    const { id, cloned_from, contributors, description, latest_build, organism, remotes_from } = detail;
-
+export const ReferenceManage = props => {
     let remote;
     let clone;
 
-    if (remotes_from) {
+    if (props.remotes_from) {
         remote = <RemoteReference />;
     }
 
-    if (cloned_from) {
-        clone = <Clone source={cloned_from} />;
+    if (props.cloned_from) {
+        clone = <Clone source={props.cloned_from} />;
     }
 
     return (
         <div>
             <ReferenceDetailHeader />
             <ReferenceDetailTabs />
-
-            <Table>
+            <ReferenceManageTable>
                 <tbody>
                     <tr>
                         <th>Description</th>
-                        <td>{description}</td>
+                        <td>{props.description}</td>
                     </tr>
                     <tr>
                         <th>Organism</th>
-                        <td className="text-capitalize">{organism}</td>
+                        <td>{props.organism}</td>
+                    </tr>
+                    <tr>
+                        <th>Data Type</th>
+                        <td>{props.data_type}</td>
                     </tr>
                 </tbody>
-            </Table>
+            </ReferenceManageTable>
 
             {remote}
             {clone}
@@ -81,19 +58,27 @@ const ReferenceManage = ({ detail }) => {
                 <BoxGroupHeader>
                     <h2>Latest Index Build</h2>
                 </BoxGroupHeader>
-                <LatestBuild refId={id} latestBuild={latest_build} />
+                <LatestBuild id={props.id} latestBuild={props.latest_build} />
             </BoxGroup>
 
-            <Contributors contributors={contributors} />
+            <Contributors contributors={props.contributors} />
+            <Targets />
         </div>
     );
 };
 
-const mapStateToProps = state => ({
-    detail: state.references.detail
+export const mapStateToProps = state => ({
+    id: state.references.detail.id,
+    cloned_from: state.references.detail.cloned_from,
+    contributors: state.references.detail.contributors,
+    description: state.references.detail.description,
+    latest_build: state.references.detail.latest_build,
+    organism: state.references.detail.organism,
+    remotes_from: state.references.detail.remotes_from,
+    data_type: state.references.detail.data_type
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onCheckUpdates: refId => {
         dispatch(checkUpdates(refId));
     },

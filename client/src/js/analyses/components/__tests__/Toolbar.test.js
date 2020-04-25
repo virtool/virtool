@@ -1,8 +1,9 @@
 jest.mock("../../../samples/selectors");
 
 import { FIND_ANALYSES, PUSH_STATE } from "../../../app/actionTypes";
-import { AnalysesToolbar, mapStateToProps, mapDispatchToProps } from "../Toolbar";
+import { Button, SearchInput } from "../../../base";
 import { getCanModify } from "../../../samples/selectors";
+import { AnalysesToolbar, mapDispatchToProps, mapStateToProps } from "../Toolbar";
 
 describe("<AnalysesToolbar />", () => {
     let props;
@@ -36,13 +37,13 @@ describe("<AnalysesToolbar />", () => {
                 value: "hello"
             }
         };
-        wrapper.find("FormControl").simulate("change", event);
+        wrapper.find(SearchInput).simulate("change", event);
         expect(props.onFind).toHaveBeenCalledWith(props.sampleId, "hello", props.page);
     });
 
     it("should call onShowCreate", () => {
         const wrapper = shallow(<AnalysesToolbar {...props} />);
-        wrapper.find("Button").simulate("click");
+        wrapper.find(Button).simulate("click");
         expect(props.onShowCreate).toHaveBeenCalledWith(props.sampleId);
     });
 });

@@ -4,8 +4,14 @@ exports[`<SubtractionList /> renders correctly 1`] = `
 <div>
   <ViewHeader
     title="Subtraction"
-    totalCount={1}
-  />
+  >
+    <ViewHeader__ViewHeaderTitle>
+      Subtraction 
+      <Badge>
+        1
+      </Badge>
+    </ViewHeader__ViewHeaderTitle>
+  </ViewHeader>
   <Connect(SubtractionToolbar) />
   <ScrollList
     documents={

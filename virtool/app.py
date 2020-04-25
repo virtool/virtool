@@ -3,10 +3,8 @@ import concurrent.futures
 import logging
 import os
 import signal
-import subprocess
 import sys
 
-import aiofiles
 import aiojobs.aiohttp
 import pymongo
 import pymongo.errors
@@ -16,11 +14,13 @@ from motor import motor_asyncio
 import virtool.app_routes
 import virtool.config
 import virtool.db.core
+import virtool.db.migrate
 import virtool.db.utils
 import virtool.dispatcher
 import virtool.errors
 import virtool.files.manager
 import virtool.hmm.db
+import virtool.http.accept
 import virtool.http.auth
 import virtool.http.csp
 import virtool.http.errors
@@ -28,7 +28,6 @@ import virtool.http.proxy
 import virtool.http.query
 import virtool.jobs.manager
 import virtool.logs
-import virtool.db.migrate
 import virtool.references.db
 import virtool.resources
 import virtool.sentry
@@ -37,6 +36,7 @@ import virtool.settings.schema
 import virtool.setup.setup
 import virtool.software.db
 import virtool.utils
+import virtool.version
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ async def init_version(app: web.Application):
     if force_version:
         version = force_version
     else:
-        version = await find_server_version(sys.path[0])
+        version = await virtool.version.determine_server_version(sys.path[0])
 
     logger.info(f"Virtool {version}")
 
@@ -161,7 +161,7 @@ async def init_settings(app):
 async def init_sentry(app):
     if not app["settings"]["no_sentry"] and app["settings"].get("enable_sentry", True) and not app["settings"]["dev"]:
         logger.info("Configuring Sentry")
-        app["sentry"] = virtool.sentry.setup(app["version"])
+        virtool.sentry.setup(app["version"])
 
     else:
         logger.info("Skipped configuring Sentry")
@@ -203,6 +203,8 @@ async def init_db(app):
             logger.critical("Could not connect to MongoDB server")
             sys.exit(1)
 
+        await virtool.db.utils.check_mongo_version(db_client, logger)
+
         app["db"] = virtool.db.core.DB(
             db_client[settings["db_name"]],
             app["dispatcher"].dispatch
@@ -235,14 +237,16 @@ async def init_check_db(app):
     await db.indexes.create_index([("version", 1), ("reference.id", 1)], unique=True)
     await db.keys.create_index("id", unique=True)
     await db.keys.create_index("user.id")
-    await db.samples.create_index([("created_at", pymongo.DESCENDING)])
-    await db.sequences.create_index("otu_id")
-    await db.otus.create_index("name")
     await db.otus.create_index([
         ("_id", pymongo.ASCENDING),
         ("isolate.id", pymongo.ASCENDING)
     ])
+    await db.otus.create_index("name")
+    await db.otus.create_index("nickname")
     await db.otus.create_index("abbreviation")
+    await db.samples.create_index([("created_at", pymongo.DESCENDING)])
+    await db.sequences.create_index("otu_id")
+    await db.sequences.create_index("name")
 
 
 async def init_client_path(app):
@@ -404,6 +408,7 @@ def create_app(config):
 
     """
     middlewares = [
+        virtool.http.accept.middleware,
         virtool.http.csp.middleware,
         virtool.http.errors.middleware,
         virtool.http.proxy.middleware,
@@ -548,27 +553,3 @@ async def run():
         task.cancel()
 
 
-async def find_server_version(install_path="."):
-    output = None
-
-    loop = asyncio.get_event_loop()
-
-    try:
-        output = await loop.run_in_executor(None, subprocess.check_output, ["git", "describe", "--tags"])
-        output = output.decode().rstrip()
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        pass
-
-    if output and "Not a git repository" not in output:
-        return output
-
-    try:
-        version_file_path = os.path.join(install_path, "VERSION")
-
-        async with aiofiles.open(version_file_path, "r") as version_file:
-            content = await version_file.read()
-            return content.rstrip()
-
-    except FileNotFoundError:
-        logger.critical("Could not determine software version.")
-        return "Unknown"

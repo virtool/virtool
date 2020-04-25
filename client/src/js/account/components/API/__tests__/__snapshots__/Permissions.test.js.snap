@@ -2,7 +2,7 @@
 
 exports[`<Permissions /> should render correctly 1`] = `
 <Box__BoxGroup>
-  <Box__BoxGroupSection
+  <Permissions__APIPermissionName
     disabled={false}
     key="test_create"
     onClick={[Function]}
@@ -12,11 +12,9 @@ exports[`<Permissions /> should render correctly 1`] = `
     </code>
     <Checkbox
       checked={true}
-      partial={false}
-      pullRight={true}
     />
-  </Box__BoxGroupSection>
-  <Box__BoxGroupSection
+  </Permissions__APIPermissionName>
+  <Permissions__APIPermissionName
     disabled={false}
     key="test_edit"
     onClick={[Function]}
@@ -26,11 +24,9 @@ exports[`<Permissions /> should render correctly 1`] = `
     </code>
     <Checkbox
       checked={false}
-      partial={false}
-      pullRight={true}
     />
-  </Box__BoxGroupSection>
-  <Box__BoxGroupSection
+  </Permissions__APIPermissionName>
+  <Permissions__APIPermissionName
     disabled={true}
     key="test_remove"
     onClick={null}
@@ -40,11 +36,9 @@ exports[`<Permissions /> should render correctly 1`] = `
     </code>
     <Checkbox
       checked={true}
-      partial={false}
-      pullRight={true}
     />
-  </Box__BoxGroupSection>
-  <Box__BoxGroupSection
+  </Permissions__APIPermissionName>
+  <Permissions__APIPermissionName
     disabled={true}
     key="test_view"
     onClick={null}
@@ -54,16 +48,14 @@ exports[`<Permissions /> should render correctly 1`] = `
     </code>
     <Checkbox
       checked={false}
-      partial={false}
-      pullRight={true}
     />
-  </Box__BoxGroupSection>
+  </Permissions__APIPermissionName>
 </Box__BoxGroup>
 `;
 
 exports[`<Permissions /> should render no permission disabled when [props.administrator=true] 1`] = `
 <Box__BoxGroup>
-  <Box__BoxGroupSection
+  <Permissions__APIPermissionName
     disabled={false}
     key="test_create"
     onClick={[Function]}
@@ -73,11 +65,9 @@ exports[`<Permissions /> should render no permission disabled when [props.admini
     </code>
     <Checkbox
       checked={true}
-      partial={false}
-      pullRight={true}
     />
-  </Box__BoxGroupSection>
-  <Box__BoxGroupSection
+  </Permissions__APIPermissionName>
+  <Permissions__APIPermissionName
     disabled={false}
     key="test_edit"
     onClick={[Function]}
@@ -87,11 +77,9 @@ exports[`<Permissions /> should render no permission disabled when [props.admini
     </code>
     <Checkbox
       checked={false}
-      partial={false}
-      pullRight={true}
     />
-  </Box__BoxGroupSection>
-  <Box__BoxGroupSection
+  </Permissions__APIPermissionName>
+  <Permissions__APIPermissionName
     disabled={false}
     key="test_remove"
     onClick={[Function]}
@@ -101,11 +89,9 @@ exports[`<Permissions /> should render no permission disabled when [props.admini
     </code>
     <Checkbox
       checked={true}
-      partial={false}
-      pullRight={true}
     />
-  </Box__BoxGroupSection>
-  <Box__BoxGroupSection
+  </Permissions__APIPermissionName>
+  <Permissions__APIPermissionName
     disabled={false}
     key="test_view"
     onClick={[Function]}
@@ -115,9 +101,7 @@ exports[`<Permissions /> should render no permission disabled when [props.admini
     </code>
     <Checkbox
       checked={false}
-      partial={false}
-      pullRight={true}
     />
-  </Box__BoxGroupSection>
+  </Permissions__APIPermissionName>
 </Box__BoxGroup>
 `;

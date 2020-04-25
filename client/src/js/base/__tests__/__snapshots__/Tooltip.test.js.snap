@@ -1,18 +1,30 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Tooltip /> renders correctly 1`] = `
-<div
-  className="tooltip"
-  style={
-    Object {
-      "left": "NaNpx",
-      "top": "NaNpx",
-      "zIndex": 10000,
-    }
-  }
+exports[`<Tooltip /> should render 1`] = `
+<Tooltip__StyledTooltip
+  arrow={true}
+  position="left"
+  size="regular"
+  title="Tip"
+/>
+`;
+
+exports[`<Tooltip /> should render with children 1`] = `
+<Tooltip__StyledTooltip
+  arrow={true}
+  position="left"
+  size="regular"
+  title="Tip"
 >
-  <div
-    className="tooltip-body"
-  />
-</div>
+  Hello world
+</Tooltip__StyledTooltip>
+`;
+
+exports[`<Tooltip /> should render without position prop 1`] = `
+<Tooltip__StyledTooltip
+  arrow={true}
+  position="left"
+  size="regular"
+  title="Tip"
+/>
 `;

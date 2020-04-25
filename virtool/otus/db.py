@@ -1,3 +1,4 @@
+import pymongo.results
 from typing import Union
 import virtool.history.db
 import virtool.db.utils
@@ -5,7 +6,7 @@ import virtool.errors
 import virtool.history.utils
 import virtool.otus.utils
 import virtool.utils
-from virtool.api import compose_regex_query, paginate
+from virtool.api.utils import compose_regex_query, paginate
 
 PROJECTION = [
     "_id",
@@ -27,28 +28,26 @@ SEQUENCE_PROJECTION = [
 ]
 
 
-async def check_name_and_abbreviation(db, ref_id: str, name: Union[None, str] = None, abbreviation: Union[None, str] = None):
+async def check_name_and_abbreviation(
+        db,
+        ref_id: str,
+        name: Union[None, str] = None,
+        abbreviation: Union[None, str] = None
+):
     """
     Check is a otu name and abbreviation are already in use in the reference identified by `ref_id`. Returns a message
     if the ``name`` or ``abbreviation`` are already in use. Returns ``False`` if they are not in use.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param ref_id: the id of the reference to check in
-    :type ref_id: str
-
     :param name: a otu name
-    :type name: str
-
     :param abbreviation: a otu abbreviation
-    :type abbreviation: str
 
     """
     name_count = 0
 
     if name:
-        name_count = await db.otus.count({
+        name_count = await db.otus.count_documents({
             "lower_name": name.lower(),
             "reference.id": ref_id
         })
@@ -56,7 +55,7 @@ async def check_name_and_abbreviation(db, ref_id: str, name: Union[None, str] = 
     abbr_count = 0
 
     if abbreviation:
-        abbr_count = await db.otus.count({
+        abbr_count = await db.otus.count_documents({
             "abbreviation": abbreviation,
             "reference.id": ref_id
         })
@@ -76,7 +75,20 @@ async def check_name_and_abbreviation(db, ref_id: str, name: Union[None, str] = 
     return False
 
 
-async def create(db, ref_id, name, abbreviation, user_id):
+async def create(app, ref_id, name, abbreviation, user_id):
+    """
+    Create a new OTU.
+
+    :param app: the application object
+    :param ref_id: the ID of the parent reference
+    :param name: a name for the new OTU
+    :param abbreviation: an abbreviation for the new OTU
+    :param user_id: the ID of the requesting user
+    :return: the joined OTU document
+
+    """
+    db = app["db"]
+
     otu_id = await virtool.db.utils.get_new_id(db.otus)
 
     # Start building a otu document.
@@ -101,7 +113,7 @@ async def create(db, ref_id, name, abbreviation, user_id):
     description = virtool.history.utils.compose_create_description(document)
 
     change = await virtool.history.db.add(
-        db,
+        app,
         "create",
         None,
         document,
@@ -112,7 +124,28 @@ async def create(db, ref_id, name, abbreviation, user_id):
     return virtool.otus.utils.format_otu(document, most_recent_change=change)
 
 
-async def edit(db, otu_id, name, abbreviation, schema, user_id):
+async def edit(
+        app,
+        otu_id: Union[str, None],
+        name: Union[str, None],
+        abbreviation: Union[str, None],
+        schema: Union[str, list],
+        user_id: str
+):
+    """
+    Edit an existing OTU identified by `otu_id`. Modifiable fields are `name`, `abbreviation`, and `schema`.
+
+    :param app: the application object
+    :param otu_id: the ID of the OTU to edit
+    :param name: a new name
+    :param abbreviation: a new abbreviation
+    :param schema: a new schema
+    :param user_id: the requesting user Id
+    :return: the updated and joined OTU document
+
+    """
+    db = app["db"]
+
     # Update the ``modified`` and ``verified`` fields in the otu document now, because we are definitely going to
     # modify the otu.
     update = {
@@ -151,7 +184,7 @@ async def edit(db, otu_id, name, abbreviation, schema, user_id):
     description = virtool.history.utils.compose_edit_description(name, abbreviation, old["abbreviation"], schema)
 
     await virtool.history.db.add(
-        db,
+        app,
         "edit",
         old,
         new,
@@ -233,7 +266,11 @@ async def join(db, query, document=None):
     return virtool.otus.utils.merge_otu(document, [d async for d in cursor])
 
 
-async def join_and_format(db, otu_id: str, joined: Union[dict, None] = None, issues: Union[dict, None, bool] = False) -> Union[dict, None]:
+async def join_and_format(
+        db, otu_id: str,
+        joined: Union[dict, None] = None,
+        issues: Union[dict, None, bool] = False
+) -> Union[dict, None]:
     """
     Join the otu identified by the passed ``otu_id`` or use the ``joined`` otu document if available. Then,
     format the joined otu into a format that can be directly returned to API clients.
@@ -258,7 +295,26 @@ async def join_and_format(db, otu_id: str, joined: Union[dict, None] = None, iss
     return virtool.otus.utils.format_otu(joined, issues, most_recent_change)
 
 
-async def remove(db, otu_id, user_id, document=None, silent=False):
+async def remove(
+        app,
+        otu_id: str,
+        user_id: str,
+        document: Union[dict, None] = None,
+        silent: bool = False
+) -> Union[None, bool]:
+    """
+    Remove and OTU given its `otu_id`. Create a history document to record the change.
+
+    :param app: the application object
+    :param otu_id: the ID of the OTU
+    :param user_id: the ID of the requesting user
+    :param document:
+    :param silent: prevents dispatch of the change
+    :return: `True` if the removal was successful
+
+    """
+    db = app["db"]
+
     # Join the otu.
     joined = await join(db, otu_id, document=document)
 
@@ -282,7 +338,7 @@ async def remove(db, otu_id, user_id, document=None, silent=False):
 
     # Add a removal history item.
     await virtool.history.db.add(
-        db,
+        app,
         "remove",
         joined,
         None,
@@ -309,22 +365,15 @@ async def verify(db, otu_id, joined=None):
     return virtool.otus.utils.verify(joined)
 
 
-async def update_last_indexed_version(db, id_list, version):
+async def update_last_indexed_version(db, id_list: list, version: int) -> pymongo.results.UpdateResult:
     """
     Called from a index rebuild job. Updates the last indexed version and _version fields
     of all otu involved in the rebuild when the build completes.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param id_list: a list the ``otu_id`` of each otu to update
-    :type id_list: list
-
     :param version: the value to set for the otu ``version`` and ``last_indexed_version`` fields
-    :type: int
-
     :return: the Pymongo update result
-    :rtype: :class:`~pymongo.results.UpdateResult`
 
     """
     result = await db.otus.update_many({"_id": {"$in": id_list}}, {

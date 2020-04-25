@@ -1,30 +1,58 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<ReferenceSettings /> should render 1`] = `
-<div
-  className="settings-container"
->
-  <h3
-    className="view-header"
+<Container__NarrowContainer>
+  <ViewHeader
+    title="Reference Settings"
   >
-    <strong>
+    <ViewHeader__ViewHeaderTitle>
       Settings
-    </strong>
-  </h3>
+    </ViewHeader__ViewHeaderTitle>
+  </ViewHeader>
   <Connect(SourceTypes)
     global={true}
   />
-</div>
+</Container__NarrowContainer>
 `;
 
 exports[`<References /> should render when [loading=false] 1`] = `
-<References
-  loading={false}
-/>
+<Container>
+  <Switch>
+    <Route
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(ReferenceList)",
+          "type": [Function],
+        }
+      }
+      exact={true}
+      path="/refs"
+    />
+    <Redirect
+      from="/refs/settings/*"
+      to="/refs/settings"
+    />
+    <Route
+      component={[Function]}
+      path="/refs/settings"
+    />
+    <Route
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(ReferenceDetail)",
+          "type": [Function],
+        }
+      }
+      path="/refs/:refId"
+    />
+  </Switch>
+</Container>
 `;
 
-exports[`<References /> should render when [loading=true] 1`] = `
-<References
-  loading={true}
-/>
-`;
+exports[`<References /> should render when [loading=true] 1`] = `<LoadingPlaceholder />`;

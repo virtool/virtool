@@ -1,63 +1,93 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<NoneFound /> renders an info Icon component 1`] = `
-<ListGroup
-  bsClass="list-group"
->
-  <ListGroupItem
-    bsClass="list-group-item"
-    className="text-center"
-    listItem={false}
-  >
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="info-circle"
-      pullRight={false}
-    />
-     No 
-    test
-     found
-  </ListGroupItem>
-</ListGroup>
+exports[`<NoneFound /> should render with [noun='files' 1`] = `
+<NoneFound__StyledNoneFound>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="info-circle"
+  />
+   No 
+  files
+   found
+</NoneFound__StyledNoneFound>
 `;
 
-exports[`<NoneFound /> when supplied [noListGroup=false] prop renders correctly 1`] = `
-<ListGroup
-  bsClass="list-group"
->
-  <ListGroupItem
-    bsClass="list-group-item"
-    className="text-center"
-    listItem={false}
-  >
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="info-circle"
-      pullRight={false}
-    />
-     No 
-    test
-     found
-  </ListGroupItem>
-</ListGroup>
-`;
-
-exports[`<NoneFound /> when supplied [noListGroup=true] prop renders correctly 1`] = `
-<ListGroupItem
-  bsClass="list-group-item"
-  className="text-center"
-  listItem={false}
+exports[`<NoneFoundBox /> should render with [noun='boxes' 1`] = `
+<NoneFound__StyledNoneFoundBox
+  as={
+    Object {
+      "$$typeof": Symbol(react.forward_ref),
+      "attrs": Array [],
+      "componentStyle": ComponentStyle {
+        "baseHash": -1953322717,
+        "componentId": "Box-x49ol5-0",
+        "isStatic": false,
+        "rules": Array [
+          "border:",
+          [Function],
+          ";border-radius:",
+          [Function],
+          ";box-sizing:border-box;cursor:",
+          [Function],
+          ";margin-bottom:15px;padding:10px 15px;position:relative;&:hover{",
+          [Function],
+          "}",
+        ],
+        "staticRulesId": "",
+      },
+      "displayName": "Box",
+      "foldedComponentIds": Array [],
+      "render": [Function],
+      "shouldForwardProp": undefined,
+      "styledComponentId": "Box-x49ol5-0",
+      "target": "div",
+      "toString": [Function],
+      "warnTooManyClasses": [Function],
+      "withComponent": [Function],
+    }
+  }
 >
   <Icon
     faStyle="fas"
     fixedWidth={false}
     name="info-circle"
-    pullRight={false}
   />
    No 
-  test
+  boxes
    found
-</ListGroupItem>
+</NoneFound__StyledNoneFoundBox>
+`;
+
+exports[`<NoneFoundSection /> should render with [noun='sections' 1`] = `
+<NoneFound__StyledNoneFoundSection>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="info-circle"
+  />
+   No 
+  sections
+   found
+</NoneFound__StyledNoneFoundSection>
+`;
+
+exports[`<NoneFoundSection /> should render with [noun='sections'] and children 1`] = `
+<NoneFound__StyledNoneFoundSection>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="info-circle"
+  />
+   No 
+  sections
+   found
+  <span>
+    . 
+    <span>
+      foo
+    </span>
+    .
+  </span>
+</NoneFound__StyledNoneFoundSection>
 `;

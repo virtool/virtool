@@ -6,22 +6,9 @@ import styled from "styled-components";
 import { Badge, Box } from "../../../base";
 import { setActiveHitId } from "../../actions";
 import { getActiveHit, getMatches } from "../../selectors";
+import { NuVsValues } from "./Values";
 
 const calculateAnnotatedOrfCount = orfs => filter(orfs, orf => orf.hits.length).length;
-
-const NuVsORFCount = styled.span`
-    color: ${props => props.theme.color.green};
-`;
-
-const NuVsEValue = styled.span`
-    color: ${props => props.theme.color.red};
-`;
-
-const NuVsItemNumbers = styled.div`
-    font-size: ${props => props.theme.fontSize.xs};
-    font-weight: bold;
-    padding-top: 3px;
-`;
 
 const NuVsItemHeader = styled.div`
     align-items: center;
@@ -32,6 +19,7 @@ const NuVsItemHeader = styled.div`
 const StyledNuVsItem = styled(Box)`
     border-bottom: none;
     border-left: none;
+    border-radius: 0;
     margin: 0;
     ${props => (props.selected ? `box-shadow: inset 3px 0 0 ${props.theme.color.primary};` : "")}
 `;
@@ -45,10 +33,7 @@ export const NuVsItem = ({ active, e, orfs, sequence, sequenceIndex, style, onSe
                 <strong>Sequence {sequenceIndex}</strong>
                 <Badge>{sequence.length}</Badge>
             </NuVsItemHeader>
-            <NuVsItemNumbers>
-                <NuVsORFCount>{calculateAnnotatedOrfCount(orfs)} ORFs</NuVsORFCount> /{" "}
-                <NuVsEValue>E = {numbro(e).format()}</NuVsEValue>
-            </NuVsItemNumbers>
+            <NuVsValues e={numbro(e).format()} orfCount={calculateAnnotatedOrfCount(orfs)} />
         </StyledNuVsItem>
     );
 };
@@ -60,8 +45,8 @@ const mapStateToProps = (state, ownProps) => {
 };
 
 const mapDispatchToProps = dispatch => ({
-    onSetActiveId: index => {
-        dispatch(setActiveHitId(index));
+    onSetActiveId: id => {
+        dispatch(setActiveHitId(id));
     }
 });
 

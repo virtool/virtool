@@ -1,10 +1,20 @@
 import { capitalize, forEach } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Icon, LoadingPlaceholder, NoneFound, ScrollList, UploadBar, ViewHeader, WarningAlert } from "../../base";
+import {
+    Alert,
+    Badge,
+    Icon,
+    LoadingPlaceholder,
+    NoneFoundBox,
+    ScrollList,
+    UploadBar,
+    ViewHeader,
+    ViewHeaderTitle
+} from "../../base";
 import { checkAdminOrPermission, createRandomString } from "../../utils/utils";
 import { findFiles, upload } from "../actions";
-import { filesSelector } from "../selectors";
+import { getFilteredFileIds } from "../selectors";
 import File from "./File";
 
 class FileManager extends React.Component {
@@ -18,7 +28,10 @@ class FileManager extends React.Component {
         }
     };
 
-    renderRow = index => <File key={index} index={index} />;
+    renderRow = index => {
+        const id = this.props.documents[index];
+        return <File key={id} id={id} />;
+    };
 
     render() {
         if (
@@ -28,31 +41,40 @@ class FileManager extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const titleType = this.props.fileType === "reads" ? "Read" : capitalize(this.props.fileType);
-
         let toolbar;
 
         if (this.props.canUpload) {
             toolbar = <UploadBar onDrop={this.handleDrop} />;
         } else {
             toolbar = (
-                <WarningAlert level>
+                <Alert color="orange" level>
                     <Icon name="exclamation-circle" />
                     <span>
                         <strong>You do not have permission to upload files.</strong>
                         <span> Contact an administrator.</span>
                     </span>
-                </WarningAlert>
+                </Alert>
             );
         }
 
+        let noneFound;
+
+        if (!this.props.documents.length) {
+            noneFound = <NoneFoundBox noun="files" />;
+        }
+
+        const title = `${this.props.fileType === "reads" ? "Read" : capitalize(this.props.fileType)} Files`;
+
         return (
             <div>
-                <ViewHeader title={`${titleType} Files`} totalCount={this.props.total_count} />
+                <ViewHeader title={title}>
+                    <ViewHeaderTitle>
+                        {title} <Badge>{this.props.total_count}</Badge>
+                    </ViewHeaderTitle>
+                </ViewHeader>
 
                 {toolbar}
-
-                {this.props.documents.length ? null : <NoneFound noun="files" />}
+                {noneFound}
 
                 <ScrollList
                     documents={this.props.documents}
@@ -70,7 +92,7 @@ const mapStateToProps = state => {
     const { found_count, page, page_count, total_count } = state.files;
 
     return {
-        documents: filesSelector(state),
+        documents: getFilteredFileIds(state),
         found_count,
         page,
         page_count,

@@ -1,33 +1,37 @@
 import { endsWith } from "lodash-es";
 import React, { useCallback } from "react";
-import styled from "styled-components";
-import { Dropdown, MenuItem } from "react-bootstrap";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { pushState } from "../../../app/actions";
-import { Flex, FlexItem, Icon, RelativeTime, ViewHeader } from "../../../base";
+import {
+    DropdownIcon,
+    DropdownItem,
+    Icon,
+    ViewHeader,
+    ViewHeaderAttribution,
+    ViewHeaderIcons,
+    ViewHeaderTitle
+} from "../../../base";
 import { checkRefRight, followDownload } from "../../../utils/utils";
 
-class CustomToggle extends React.Component {
-    render() {
-        return (
-            <Icon
-                name="download"
-                tip="Options"
-                onClick={this.props.onClick}
-                style={{ fontSize: "65%", paddingLeft: "5px" }}
-            />
-        );
+const ExportDropdownItem = styled.div`
+    width: 220px;
+
+    &:first-of-type {
+        margin-top: 5px;
     }
-}
 
-const ExportDropdown = styled(Dropdown)`
-    display: inline;
-    line-height: 0.5;
+    h5 {
+        font-size: 14px !important;
+        font-weight: bold;
+        margin: 0 0 5px;
+    }
 
-    .dropdown-menu {
-        right: 0;
-        left: auto;
-        min-width: auto;
+    p {
+        color: ${props => props.theme.color.greyDark};
+        font-size: 12px;
+        line-height: 16px;
+        margin: 0;
     }
 `;
 
@@ -36,43 +40,35 @@ export const ReferenceDetailHeaderExportButton = ({ isClone, onSelect }) => {
 
     if (isClone) {
         remoteMenuItem = (
-            <MenuItem eventKey="remote" onSelect={onSelect}>
-                <div>Remote</div>
-                <small>Export the reference using the OTU IDs from the source reference for this clone.</small>
-            </MenuItem>
+            <DropdownItem onClick={() => onSelect("remote")}>
+                <ExportDropdownItem>
+                    <h5>Source</h5>
+                    <p>Export the reference using the OTU IDs from the source reference for this clone.</p>
+                </ExportDropdownItem>
+            </DropdownItem>
         );
     }
 
     return (
-        <ExportDropdown id="dropdown-export-reference">
-            <CustomToggle bsRole="toggle" />
-            <Dropdown.Menu>
-                <MenuItem eventKey="built" onSelect={onSelect}>
-                    <div>Normal</div>
-                    <small>Export the reference with the local OTU IDs.</small>
-                </MenuItem>
-                {remoteMenuItem}
-            </Dropdown.Menu>
-        </ExportDropdown>
+        <DropdownIcon name="download" tip="Export">
+            <DropdownItem onClick={() => onSelect("normal")}>
+                <ExportDropdownItem>
+                    <h5>Normal</h5>
+                    <p>Export the reference with the local OTU IDs.</p>
+                </ExportDropdownItem>
+            </DropdownItem>
+            {remoteMenuItem}
+        </DropdownIcon>
     );
 };
 
 export const ReferenceDetailHeaderIcon = ({ canModify, isRemote, onEdit }) => {
     if (isRemote) {
-        return <Icon bsStyle="default" name="lock" style={{ fontSize: "65%" }} pullRight />;
+        return <Icon color="grey" name="lock" />;
     }
 
     if (canModify) {
-        return (
-            <Icon
-                bsStyle="warning"
-                name="pencil-alt"
-                tip="Edit"
-                onClick={onEdit}
-                pullRight
-                style={{ fontSize: "65%" }}
-            />
-        );
+        return <Icon color="orange" name="pencil-alt" tip="Edit" onClick={onEdit} />;
     }
 
     return null;
@@ -100,19 +96,15 @@ export const ReferenceDetailHeader = ({
     }
 
     return (
-        <ViewHeader title={`${name} - References`}>
-            <Flex alignItems="flex-end">
-                <FlexItem grow={1}>
-                    <Flex>
-                        <strong>{name}</strong>
-                    </Flex>
-                </FlexItem>
-                {headerIcon}
-                {exportButton}
-            </Flex>
-            <div className="text-muted" style={{ fontSize: "12px" }}>
-                Created <RelativeTime time={createdAt} /> by {userId}
-            </div>
+        <ViewHeader title={name}>
+            <ViewHeaderTitle>
+                {name}
+                <ViewHeaderIcons>
+                    {headerIcon}
+                    {exportButton}
+                </ViewHeaderIcons>
+            </ViewHeaderTitle>
+            <ViewHeaderAttribution time={createdAt} user={userId} />
         </ViewHeader>
     );
 };

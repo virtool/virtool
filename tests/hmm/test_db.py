@@ -27,7 +27,7 @@ async def test_get_hmms_referenced_in_files(mocker, tmpdir, dbi):
 
     await dbi.analyses.insert_one({
         "_id": "bar",
-        "algorithm": "nuvs",
+        "workflow": "nuvs",
         "sample": {
             "id": "foo"
         },
@@ -51,7 +51,7 @@ async def test_get_hmms_referenced_in_db(dbi):
     await dbi.analyses.insert_many([
         {
             "_id": "foo",
-            "algorithm": "nuvs",
+            "workflow": "nuvs",
             "results": [
                 {
                     "orfs": [
@@ -82,7 +82,7 @@ async def test_get_hmms_referenced_in_db(dbi):
         },
         {
             "_id": "bar",
-            "algorithm": "nuvs",
+            "workflow": "nuvs",
             "results": [
                 {
                     "orfs": [

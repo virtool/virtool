@@ -3,7 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 
-import { BoxGroup, LoadingPlaceholder, NoneFound } from "../../base";
+import { BoxGroup, LoadingPlaceholder, NoneFoundSection } from "../../base";
 import { editUser } from "../actions";
 import { UserGroup } from "./Group";
 
@@ -21,13 +21,13 @@ export class UserGroups extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        if (!this.props.documents) {
-            return <NoneFound noun="groups" />;
-        }
-
-        const groupComponents = map(this.props.documents, ({ id }) => (
+        let groupComponents = map(this.props.documents, ({ id }) => (
             <UserGroup key={id} id={id} toggled={includes(this.props.memberGroups, id)} onClick={this.handleEdit} />
         ));
+
+        if (!groupComponents) {
+            groupComponents = <NoneFoundSection key="noneFound" noun="groups" />;
+        }
 
         return (
             <div>

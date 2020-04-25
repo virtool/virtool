@@ -1,11 +1,12 @@
 import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
 import { NavLink } from "react-router-dom";
+import styled from "styled-components";
 import { logout } from "../../account/actions";
-import { DropDown, DropDownItem, AutoProgressBar, Icon, VTLogo } from "../../base";
-import { isHomeActive } from "../utils";
+import { DropdownItem, Icon, VTLogo } from "../../base";
 import { getSoftwareUpdates } from "../../updates/actions";
+import { isHomeActive } from "../utils";
+import { NavDropdown } from "./Dropdown";
 import Update from "./Update";
 
 const NavBarItem = styled(NavLink)`
@@ -35,17 +36,15 @@ const NavBarItem = styled(NavLink)`
 `;
 
 const NavBar = styled.div`
-    z-index: 1000;
+    background-color: ${props => props.theme.color.primary};
+    color: white;
+    display: flex;
+    height: 45px;
+    justify-content: space-between;
     position: fixed;
     top: 0;
     width: 100%;
-    height: 45px;
-
-    display: flex;
-    justify-content: space-between;
-
-    background-color: teal;
-    color: white;
+    z-index: 1000;
 `;
 
 const NavBarLeft = styled.div`
@@ -73,14 +72,8 @@ export class Bar extends React.Component {
     }
 
     render() {
-        const dropdownTitle = (
-            <span>
-                <Icon name="user" /> {this.props.id} <Icon name="caret-down" />
-            </span>
-        );
-
         return (
-            <NavBar className="vt-header">
+            <NavBar>
                 <NavBarLeft>
                     <BarLogo />
 
@@ -106,30 +99,30 @@ export class Bar extends React.Component {
                         <Icon name="comments" />
                     </NavBarItem>
 
-                    <NavBarItem target="_blank" to="//virtool.ca/docs/manual" rel="noopener noreferrer">
+                    <NavBarItem
+                        target="_blank"
+                        to="//virtool.ca/docs/manual"
+                        rel="noopener noreferrer"
+                        style={{ paddingLeft: 0 }}
+                    >
                         <Icon name="book" />
                     </NavBarItem>
 
-                    <DropDown menuName={dropdownTitle}>
-                        <DropDownItem to="/account">Account</DropDownItem>
+                    <NavDropdown userId={this.props.id}>
+                        <DropdownItem to="/account">Account</DropdownItem>
 
-                        {this.props.administrator ? (
-                            <DropDownItem to="/administration">Administration </DropDownItem>
-                        ) : null}
+                        {this.props.administrator && <DropdownItem to="/administration">Administration </DropdownItem>}
 
-                        <DropDownItem
+                        <DropdownItem
                             to="//gitreports.com/issue/virtool/virtool"
                             target="_blank"
                             rel="noopener noreferrer"
                         >
                             Report Issue
-                        </DropDownItem>
-                        <DropDownItem to="#" onClick={this.props.logout}>
-                            Logout
-                        </DropDownItem>
-                    </DropDown>
+                        </DropdownItem>
 
-                    <AutoProgressBar step={50} interval={80} active={this.props.pending} affixed />
+                        <DropdownItem onClick={this.props.logout}>Logout</DropdownItem>
+                    </NavDropdown>
                 </NavBarRight>
             </NavBar>
         );

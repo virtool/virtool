@@ -1,16 +1,15 @@
 import React from "react";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
-import { Icon, Button } from "../../base";
+import { Button, Icon, LinkButton, SearchInput, Toolbar } from "../../base";
 import { checkRefRight } from "../../utils/utils";
 import { findOTUs } from "../actions";
 
 export class OTUToolbar extends React.Component {
-    handleFind = e => {
+    find = e => {
         this.props.onFind(this.props.refId, e.target.value, this.props.verified, 1);
     };
 
-    handleVerified = () => {
+    filterVerified = () => {
         this.props.onFind(this.props.refId, this.props.term, !this.props.verified, 1);
     };
 
@@ -21,38 +20,20 @@ export class OTUToolbar extends React.Component {
 
         if (canModify) {
             createButton = (
-                <LinkContainer to={{ state: { createOTU: true } }} replace>
-                    <Button bsStyle="primary" tip="Create">
-                        <Icon name="plus-square" />
-                    </Button>
-                </LinkContainer>
+                <LinkButton to={{ state: { createOTU: true } }} color="blue" tip="Create" icon="plus-square" replace />
             );
         }
 
         return (
-            <div className="toolbar">
-                <div className="form-group">
-                    <div className="input-group">
-                        <span id="find-addon" className="input-group-addon">
-                            <Icon name="search" />
-                        </span>
-                        <input
-                            aria-describedby="find-addon"
-                            className="form-control"
-                            type="text"
-                            placeholder="Name or abbreviation"
-                            value={term}
-                            onChange={this.handleFind}
-                        />
-                    </div>
-                </div>
+            <Toolbar>
+                <SearchInput placeholder="Name or abbreviation" value={term} onChange={this.find} />
 
-                <Button id="verified-button" tip="Filter Unverified" onClick={this.handleVerified} active={verified}>
+                <Button id="verified-button" tip="Filter Unverified" onClick={this.filterVerified} active={verified}>
                     <Icon name="filter" />
                 </Button>
 
                 {createButton}
-            </div>
+            </Toolbar>
         );
     }
 }

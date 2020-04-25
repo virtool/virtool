@@ -12,6 +12,7 @@ LIBRARY_TYPE_QUERY = {
     }
 }
 
+
 PAIRED_QUERY = {
    "paired": {
        "$exists": False
@@ -30,7 +31,7 @@ async def migrate_samples(app):
     await add_library_type(motor_client)
 
     for sample_id in await motor_client.samples.distinct("_id"):
-        await virtool.samples.db.recalculate_algorithm_tags(motor_client, sample_id)
+        await virtool.samples.db.recalculate_workflow_tags(motor_client, sample_id)
 
 
 async def add_library_type(db):
@@ -40,13 +41,16 @@ async def add_library_type(db):
     If the `srna` field is not defined `library_type` is set to normal.
 
     """
-    if await db.samples.count(LIBRARY_TYPE_QUERY):
+    if await db.samples.count_documents(LIBRARY_TYPE_QUERY):
         updates = list()
 
         async for document in db.samples.find(LIBRARY_TYPE_QUERY, ["_id", "srna"]):
             update = pymongo.UpdateOne({"_id": document["_id"]}, {
                 "$set": {
                     "library_type": "srna" if document.get("srna") else "normal"
+                },
+                "$unset": {
+                    "srna": ""
                 }
             })
 

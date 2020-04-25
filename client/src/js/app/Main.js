@@ -1,17 +1,16 @@
-import React, { lazy, Suspense, useEffect } from "react";
 import { keys } from "lodash-es";
+import React, { lazy, Suspense, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { connect } from "react-redux";
-import { Switch, Route, Redirect } from "react-router-dom";
+import { Redirect, Route, Switch } from "react-router-dom";
+import styled from "styled-components";
 import { getAccount } from "../account/actions";
-
+import { getSettings } from "../administration/actions";
+import { Container, LoadingPlaceholder } from "../base";
+import UploadOverlay from "../files/components/UploadOverlay";
 import NavBar from "../nav/components/Bar";
 import Sidebar from "../nav/components/Sidebar";
-
-import UploadOverlay from "../files/components/UploadOverlay";
-import { getSettings } from "../administration/actions";
 import { listProcesses } from "../processes/actions";
-import { Container, LoadingPlaceholder } from "../base";
 import WSConnection from "./websocket";
 
 const Administration = lazy(() => import("../administration/components/Settings"));
@@ -29,6 +28,10 @@ const Fallback = () => (
     </Container>
 );
 
+const MainContainer = styled.div`
+    margin-top: 80px;
+`;
+
 const setupWebSocket = () => {
     if (!window.ws) {
         window.ws = new WSConnection(window.store);
@@ -43,23 +46,28 @@ export const Main = ({ ready, onLoad }) => {
     if (ready) {
         return (
             <div>
-                <Helmet titleTemplate="%s - Virtool" defaultTitle="Virtool" />
+                <Helmet>
+                    <title>Virtool</title>
+                    <meta charSet="utf-8" />
+                </Helmet>
 
                 <NavBar />
 
-                <Suspense fallback={<Fallback />}>
-                    <Switch>
-                        <Redirect from="/" to="/home" exact />
-                        <Route path="/home" component={Welcome} />
-                        <Route path="/jobs" component={Jobs} />
-                        <Route path="/samples" component={Samples} />
-                        <Route path="/refs" component={References} />
-                        <Route path="/hmm" component={HMM} />
-                        <Route path="/subtraction" component={Subtraction} />
-                        <Route path="/administration" component={Administration} />
-                        <Route path="/account" component={Account} />
-                    </Switch>
-                </Suspense>
+                <MainContainer>
+                    <Suspense fallback={<Fallback />}>
+                        <Switch>
+                            <Redirect from="/" to="/home" exact />
+                            <Route path="/home" component={Welcome} />
+                            <Route path="/jobs" component={Jobs} />
+                            <Route path="/samples" component={Samples} />
+                            <Route path="/refs" component={References} />
+                            <Route path="/hmm" component={HMM} />
+                            <Route path="/subtraction" component={Subtraction} />
+                            <Route path="/administration" component={Administration} />
+                            <Route path="/account" component={Account} />
+                        </Switch>
+                    </Suspense>
+                </MainContainer>
 
                 <Sidebar />
 

@@ -85,15 +85,16 @@ exports[`<SampleCacheItem /> should render when [missing=true] 1`] = `
   </Flex>
   <CacheItem__CacheItemRight>
     <div>
-      <Badge__RedBadge>
+      <Badge
+        color="red"
+      >
         <Icon
           faStyle="fas"
           fixedWidth={false}
           name="exclamation-circle"
-          pullRight={false}
         />
          Files Missing
-      </Badge__RedBadge>
+      </Badge>
     </div>
     <div>
       136.6MB

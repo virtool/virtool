@@ -23,21 +23,23 @@ exports[`<ReferenceItemHeader /> should render 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="clone"
-        pullRight={false}
         tip="Clone"
       />
     </Link>
   </h2>
   <p>
     <span>
-      <strong
-        className="text-capitalize"
-      >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="barcode"
+      />
+      <Header__ReferenceItemDataDescriptor>
         unknown
          
         genome
         s
-      </strong>
+      </Header__ReferenceItemDataDescriptor>
       <span>
          organized into 
          OTUs

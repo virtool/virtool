@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
+import { LoadingPlaceholder, NoneFoundBox, ScrollList } from "../../base";
 import RebuildAlert from "../../indexes/components/RebuildAlert";
 import ReferenceDetailHeader from "../../references/components/Detail/Header";
 import ReferenceDetailTabs from "../../references/components/Detail/Tabs";
@@ -23,10 +23,10 @@ export class OTUsList extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        let noOTUs;
+        let noneFound;
 
         if (!this.props.documents.length) {
-            noOTUs = <NoneFound noun="otus" />;
+            noneFound = <NoneFoundBox noun="OTUs" />;
         }
 
         return (
@@ -38,7 +38,7 @@ export class OTUsList extends React.Component {
                 <OTUToolbar />
                 <CreateOTU {...this.props} />
 
-                {noOTUs}
+                {noneFound}
 
                 <ScrollList
                     documents={this.props.documents}

@@ -1,1651 +1,647 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[` 1`] = `
+exports[`<PathoscopeDownloadDropdownTitle /> should render 1`] = `
 <span>
   <Icon
     faStyle="fas"
     fixedWidth={false}
     name="file-download"
-    pullRight={false}
   />
-   Export
+   Export 
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="caret-down"
+  />
 </span>
 `;
 
 exports[`<Toolbar /> should render 1`] = `
 <Toolbar__StyledPathoscopeToolbar>
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[MockFunction]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-down"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value="coverage"
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
-  <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
+  <SearchInput
+    onChange={[Function]}
+    onKeyDown={[Function]}
   />
+  <AnalysisViewerSort
+    onSelect={[MockFunction]}
+    sortKey="coverage"
+    workflow="pathoscope"
+  />
+  <Button
+    color="grey"
+    disabled={false}
+    onClick={[MockFunction]}
+    tip="Sort List"
+    tipPlacement="top"
+    title="Sort Direction"
+    type="button"
+  >
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="sort-amount-down"
+    />
+  </Button>
+  <Button
+    active={false}
+    color="grey"
+    disabled={false}
+    icon="weight-hanging"
+    onClick={[MockFunction]}
+    tip="Show read pseudo-counts instead of weight"
+    tipPlacement="top"
+    type="button"
+  >
+    Show Reads
+  </Button>
   <Button
     active={true}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
+    color="grey"
+    disabled={false}
+    icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
-    tip="Weight Format"
+    tip="Hide OTUs with low coverage support"
     tipPlacement="top"
-    title="Weight Format"
-  />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="pathoscope-filter-dropdown"
-    onSelect={[MockFunction]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
+    type="button"
   >
-    <Button
-      active={true}
-      bsStyle="default"
-      onClick={[MockFunction]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={true}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={true}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
+    Filter OTUs
+  </Button>
+  <Button
+    active={true}
+    color="grey"
+    disabled={false}
+    icon="filter"
+    onClick={[MockFunction]}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
+    type="button"
+  >
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
         faStyle="fas"
         fixedWidth={false}
         name="file-csv"
-        pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
         faStyle="fas"
         fixedWidth={false}
         name="file-excel"
-        pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
 
 exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
 <Toolbar__StyledPathoscopeToolbar>
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[MockFunction]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-down"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value="coverage"
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
-  <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
+  <SearchInput
+    onChange={[Function]}
+    onKeyDown={[Function]}
   />
+  <AnalysisViewerSort
+    onSelect={[MockFunction]}
+    sortKey="coverage"
+    workflow="pathoscope"
+  />
+  <Button
+    color="grey"
+    disabled={false}
+    onClick={[MockFunction]}
+    tip="Sort List"
+    tipPlacement="top"
+    title="Sort Direction"
+    type="button"
+  >
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="sort-amount-down"
+    />
+  </Button>
+  <Button
+    active={false}
+    color="grey"
+    disabled={false}
+    icon="weight-hanging"
+    onClick={[MockFunction]}
+    tip="Show read pseudo-counts instead of weight"
+    tipPlacement="top"
+    type="button"
+  >
+    Show Reads
+  </Button>
   <Button
     active={true}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
+    color="grey"
+    disabled={false}
+    icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
-    tip="Weight Format"
+    tip="Hide OTUs with low coverage support"
     tipPlacement="top"
-    title="Weight Format"
-  />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="pathoscope-filter-dropdown"
-    onSelect={[MockFunction]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
+    type="button"
   >
-    <Button
-      active={true}
-      bsStyle="default"
-      onClick={[MockFunction]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={true}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
+    Filter OTUs
+  </Button>
+  <Button
+    active={false}
+    color="grey"
+    disabled={false}
+    icon="filter"
+    onClick={[MockFunction]}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
+    type="button"
+  >
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
         faStyle="fas"
         fixedWidth={false}
         name="file-csv"
-        pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
         faStyle="fas"
         fixedWidth={false}
         name="file-excel"
-        pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
 
 exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
 <Toolbar__StyledPathoscopeToolbar>
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[MockFunction]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-down"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value="coverage"
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
-  <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
+  <SearchInput
+    onChange={[Function]}
+    onKeyDown={[Function]}
   />
+  <AnalysisViewerSort
+    onSelect={[MockFunction]}
+    sortKey="coverage"
+    workflow="pathoscope"
+  />
+  <Button
+    color="grey"
+    disabled={false}
+    onClick={[MockFunction]}
+    tip="Sort List"
+    tipPlacement="top"
+    title="Sort Direction"
+    type="button"
+  >
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="sort-amount-down"
+    />
+  </Button>
+  <Button
+    active={false}
+    color="grey"
+    disabled={false}
+    icon="weight-hanging"
+    onClick={[MockFunction]}
+    tip="Show read pseudo-counts instead of weight"
+    tipPlacement="top"
+    type="button"
+  >
+    Show Reads
+  </Button>
+  <Button
+    active={false}
+    color="grey"
+    disabled={false}
+    icon="filter"
+    onClick={[MockFunction]}
+    tip="Hide OTUs with low coverage support"
+    tipPlacement="top"
+    type="button"
+  >
+    Filter OTUs
+  </Button>
   <Button
     active={true}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
+    color="grey"
+    disabled={false}
+    icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
-    tip="Weight Format"
+    tip="Hide isolates with low coverage support"
     tipPlacement="top"
-    title="Weight Format"
-  />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="pathoscope-filter-dropdown"
-    onSelect={[MockFunction]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
+    type="button"
   >
-    <Button
-      active={true}
-      bsStyle="default"
-      onClick={[MockFunction]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={true}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
         faStyle="fas"
         fixedWidth={false}
         name="file-csv"
-        pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
         faStyle="fas"
         fixedWidth={false}
         name="file-excel"
-        pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
 
-exports[`<Toolbar /> should render when [filterOTUs=false] and [filterIsolates=false] 1`] = `
+exports[`<Toolbar /> should render when [showPathoscopeReads=true] 1`] = `
 <Toolbar__StyledPathoscopeToolbar>
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[MockFunction]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-down"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value="coverage"
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
-  <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
+  <SearchInput
+    onChange={[Function]}
+    onKeyDown={[Function]}
   />
+  <AnalysisViewerSort
+    onSelect={[MockFunction]}
+    sortKey="coverage"
+    workflow="pathoscope"
+  />
+  <Button
+    color="grey"
+    disabled={false}
+    onClick={[MockFunction]}
+    tip="Sort List"
+    tipPlacement="top"
+    title="Sort Direction"
+    type="button"
+  >
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="sort-amount-down"
+    />
+  </Button>
   <Button
     active={true}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
+    color="grey"
+    disabled={false}
+    icon="weight-hanging"
     onClick={[MockFunction]}
-    pullRight={false}
-    tip="Weight Format"
+    tip="Show read pseudo-counts instead of weight"
     tipPlacement="top"
-    title="Weight Format"
-  />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="pathoscope-filter-dropdown"
-    onSelect={[MockFunction]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
+    type="button"
   >
-    <Button
-      active={false}
-      bsStyle="default"
-      onClick={[MockFunction]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
+    Show Reads
+  </Button>
+  <Button
+    active={true}
+    color="grey"
+    disabled={false}
+    icon="filter"
+    onClick={[MockFunction]}
+    tip="Hide OTUs with low coverage support"
+    tipPlacement="top"
+    type="button"
+  >
+    Filter OTUs
+  </Button>
+  <Button
+    active={true}
+    color="grey"
+    disabled={false}
+    icon="filter"
+    onClick={[MockFunction]}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
+    type="button"
+  >
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
         faStyle="fas"
         fixedWidth={false}
         name="file-csv"
-        pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
         faStyle="fas"
         fixedWidth={false}
         name="file-excel"
-        pullRight={false}
       />
        Excel
-    </MenuItem>
-  </DropdownButton>
-</Toolbar__StyledPathoscopeToolbar>
-`;
-
-exports[`<Toolbar /> should render when [showReads=true] 1`] = `
-<Toolbar__StyledPathoscopeToolbar>
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[MockFunction]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-down"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value="coverage"
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
-  <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
-  />
-  <Button
-    active={true}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Weight Format"
-    tipPlacement="top"
-    title="Weight Format"
-  />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="pathoscope-filter-dropdown"
-    onSelect={[MockFunction]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
-  >
-    <Button
-      active={true}
-      bsStyle="default"
-      onClick={[MockFunction]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={true}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
-  <DropdownButton
-    id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
-    title={<PathoscopeDownloadDropdownTitle />}
-  >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
-      href="/download/analyses/foo.csv"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="file-csv"
-        pullRight={false}
-      />
-       CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
-      href="/download/analyses/foo.xlsx"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="file-excel"
-        pullRight={false}
-      />
-       Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
 
 exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
 <Toolbar__StyledPathoscopeToolbar>
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[MockFunction]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-down"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value="coverage"
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
-  <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
+  <SearchInput
+    onChange={[Function]}
+    onKeyDown={[Function]}
   />
+  <AnalysisViewerSort
+    onSelect={[MockFunction]}
+    sortKey="coverage"
+    workflow="pathoscope"
+  />
+  <Button
+    color="grey"
+    disabled={false}
+    onClick={[MockFunction]}
+    tip="Sort List"
+    tipPlacement="top"
+    title="Sort Direction"
+    type="button"
+  >
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="sort-amount-down"
+    />
+  </Button>
+  <Button
+    active={false}
+    color="grey"
+    disabled={false}
+    icon="weight-hanging"
+    onClick={[MockFunction]}
+    tip="Show read pseudo-counts instead of weight"
+    tipPlacement="top"
+    type="button"
+  >
+    Show Reads
+  </Button>
   <Button
     active={true}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
+    color="grey"
+    disabled={false}
+    icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
-    tip="Weight Format"
+    tip="Hide OTUs with low coverage support"
     tipPlacement="top"
-    title="Weight Format"
-  />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="pathoscope-filter-dropdown"
-    onSelect={[MockFunction]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
+    type="button"
   >
-    <Button
-      active={true}
-      bsStyle="default"
-      onClick={[MockFunction]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={true}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
+    Filter OTUs
+  </Button>
+  <Button
+    active={true}
+    color="grey"
+    disabled={false}
+    icon="filter"
+    onClick={[MockFunction]}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
+    type="button"
+  >
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
         faStyle="fas"
         fixedWidth={false}
         name="file-csv"
-        pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
         faStyle="fas"
         fixedWidth={false}
         name="file-excel"
-        pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
 
-exports[`<Toolbar /> should render when [sortKey='weight'] 1`] = `
+exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
 <Toolbar__StyledPathoscopeToolbar>
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[MockFunction]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-down"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value="weight"
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
-  <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
+  <SearchInput
+    onChange={[Function]}
+    onKeyDown={[Function]}
   />
+  <AnalysisViewerSort
+    onSelect={[MockFunction]}
+    sortKey="depth"
+    workflow="pathoscope"
+  />
+  <Button
+    color="grey"
+    disabled={false}
+    onClick={[MockFunction]}
+    tip="Sort List"
+    tipPlacement="top"
+    title="Sort Direction"
+    type="button"
+  >
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="sort-amount-down"
+    />
+  </Button>
+  <Button
+    active={false}
+    color="grey"
+    disabled={false}
+    icon="weight-hanging"
+    onClick={[MockFunction]}
+    tip="Show read pseudo-counts instead of weight"
+    tipPlacement="top"
+    type="button"
+  >
+    Show Reads
+  </Button>
   <Button
     active={true}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
+    color="grey"
+    disabled={false}
+    icon="filter"
     onClick={[MockFunction]}
-    pullRight={false}
-    tip="Weight Format"
+    tip="Hide OTUs with low coverage support"
     tipPlacement="top"
-    title="Weight Format"
-  />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="pathoscope-filter-dropdown"
-    onSelect={[MockFunction]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
+    type="button"
   >
-    <Button
-      active={true}
-      bsStyle="default"
-      onClick={[MockFunction]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={true}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={true}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
+    Filter OTUs
+  </Button>
+  <Button
+    active={true}
+    color="grey"
+    disabled={false}
+    icon="filter"
+    onClick={[MockFunction]}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
+    type="button"
+  >
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
         faStyle="fas"
         fixedWidth={false}
         name="file-csv"
-        pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
         faStyle="fas"
         fixedWidth={false}
         name="file-excel"
-        pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
+  </DropdownButton>
+</Toolbar__StyledPathoscopeToolbar>
+`;
+
+exports[`<Toolbar /> should render when [sortKey="weight"] 1`] = `
+<Toolbar__StyledPathoscopeToolbar>
+  <SearchInput
+    onChange={[Function]}
+    onKeyDown={[Function]}
+  />
+  <AnalysisViewerSort
+    onSelect={[MockFunction]}
+    sortKey="weight"
+    workflow="pathoscope"
+  />
+  <Button
+    color="grey"
+    disabled={false}
+    onClick={[MockFunction]}
+    tip="Sort List"
+    tipPlacement="top"
+    title="Sort Direction"
+    type="button"
+  >
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="sort-amount-down"
+    />
+  </Button>
+  <Button
+    active={false}
+    color="grey"
+    disabled={false}
+    icon="weight-hanging"
+    onClick={[MockFunction]}
+    tip="Show read pseudo-counts instead of weight"
+    tipPlacement="top"
+    type="button"
+  >
+    Show Reads
+  </Button>
+  <Button
+    active={true}
+    color="grey"
+    disabled={false}
+    icon="filter"
+    onClick={[MockFunction]}
+    tip="Hide OTUs with low coverage support"
+    tipPlacement="top"
+    type="button"
+  >
+    Filter OTUs
+  </Button>
+  <Button
+    active={true}
+    color="grey"
+    disabled={false}
+    icon="filter"
+    onClick={[MockFunction]}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
+    type="button"
+  >
+    Filter Isolates
+  </Button>
+  <DropdownButton
+    id="download-dropdown"
+    title={<PathoscopeDownloadDropdownTitle />}
+  >
+    <DropdownItem
+      href="/download/analyses/foo.csv"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-csv"
+      />
+       CSV
+    </DropdownItem>
+    <DropdownItem
+      href="/download/analyses/foo.xlsx"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-excel"
+      />
+       Excel
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;

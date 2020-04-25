@@ -1,8 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
-import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
-import { Button, Icon } from "../../base";
+import { LinkButton, SearchInput, Toolbar } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { findSubtractions } from "../actions";
 
@@ -11,34 +9,24 @@ export const SubtractionToolbar = ({ term, onFind, canModify }) => {
 
     if (canModify) {
         createButton = (
-            <LinkContainer to={{ state: { createSubtraction: true } }}>
-                <Button bsStyle="primary" icon="plus-square fa-fw" tip="Create" />
-            </LinkContainer>
+            <LinkButton color="blue" to={{ state: { createSubtraction: true } }} icon="plus-square" tip="Create" />
         );
     }
 
     return (
-        <div key="toolbar" className="toolbar">
-            <FormGroup>
-                <InputGroup>
-                    <InputGroup.Addon>
-                        <Icon name="search" />
-                    </InputGroup.Addon>
-                    <FormControl type="text" value={term} onChange={onFind} placeholder="Name" />
-                </InputGroup>
-            </FormGroup>
-
+        <Toolbar>
+            <SearchInput value={term} onChange={onFind} placeholder="Name" />
             {createButton}
-        </div>
+        </Toolbar>
     );
 };
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     term: state.subtraction.term || "",
     canModify: checkAdminOrPermission(state, "modify_subtraction")
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onFind: e => {
         dispatch(findSubtractions(e.target.value || null, 1));
     }

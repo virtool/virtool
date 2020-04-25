@@ -1,29 +1,13 @@
 import { get } from "lodash-es";
 import React from "react";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { Button } from "../../base";
+import { Button, ModalBody, ModalFooter, Modal, ModalHeader } from "../../base";
 import { clearError } from "../../errors/actions";
 import { routerLocationHasState } from "../../utils/utils";
 import { createIndex, getUnbuilt } from "../actions";
 import RebuildHistory from "./History";
-
-export const RebuildIndexError = ({ error }) => {
-    if (error) {
-        return (
-            <div className="input-form-error">
-                <span className="input-error-message">{error}</span>
-                <br />
-                {error === "There are unverified OTUs" ? (
-                    <span className="input-error-message">Fix the unverified OTUs before rebuilding the index</span>
-                ) : null}
-            </div>
-        );
-    }
-
-    return null;
-};
+import { RebuildIndexError } from "./RebuildError";
 
 class RebuildIndex extends React.Component {
     constructor(props) {
@@ -31,48 +15,44 @@ class RebuildIndex extends React.Component {
         this.state = { error: "" };
     }
 
-    static getDerivedStateFromProps(nextProps, prevState) {
-        if (!prevState.error && nextProps.error) {
-            return { error: nextProps.error };
-        }
-        return null;
-    }
-
     componentDidMount() {
         this.props.onGetUnbuilt(this.props.refId);
     }
 
-    handleHide = () => {
+    handleModalExited = () => {
         this.setState({ error: "" });
-
-        this.props.onHide();
-
         if (this.props.error) {
             this.props.onClearError();
         }
     };
 
-    save = e => {
+    handleSubmit = e => {
         e.preventDefault();
         this.props.onRebuild(this.props.refId);
     };
 
     render() {
+        const error = this.state.error || this.props.error;
+
         return (
-            <Modal bsSize="large" show={this.props.show} onHide={this.handleHide}>
-                <Modal.Header onHide={this.handleHide} closeButton>
-                    Rebuild Index
-                </Modal.Header>
-                <form onSubmit={this.save}>
-                    <Modal.Body>
+            <Modal
+                label="Rebuild Index"
+                show={this.props.show}
+                size="lg"
+                onHide={this.props.onHide}
+                onExited={this.handleModalExited}
+            >
+                <ModalHeader>Rebuild Index</ModalHeader>
+                <form onSubmit={this.handleSubmit}>
+                    <ModalBody>
+                        <RebuildIndexError error={error} />
                         <RebuildHistory unbuilt={this.props.unbuilt} error={this.state.error} />
-                        <RebuildIndexError error={this.state.error} />
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button type="submit" bsStyle="primary" icon="wrench">
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button type="submit" color="blue" icon="wrench">
                             Start
                         </Button>
-                    </Modal.Footer>
+                    </ModalFooter>
                 </form>
             </Modal>
         );

@@ -22,7 +22,7 @@ const ReferenceItemBody = styled.div`
 `;
 
 const StyledReferenceItem = styled(SpacedBox)`
-    padding: 0;
+    padding: 0 0 10px;
     margin-bottom: 15px;
 `;
 

@@ -18,9 +18,7 @@ REF_LENGTHS_PATH = os.path.join(PATHOSCOPE_PATH, "ref_lengths.json")
 SAM_PATH = os.path.join(PATHOSCOPE_PATH, "test_al.sam")
 SCORES = os.path.join(PATHOSCOPE_PATH, "scores")
 TO_SUBTRACTION_PATH = os.path.join(PATHOSCOPE_PATH, "to_subtraction.json")
-TSV_PATH = os.path.join(PATHOSCOPE_PATH, "report.tsv")
 UNU_PATH = os.path.join(PATHOSCOPE_PATH, "unu")
-UPDATED_VTA_PATH = os.path.join(PATHOSCOPE_PATH, "updated.vta")
 VTA_PATH = os.path.join(PATHOSCOPE_PATH, "test.vta")
 
 INDEX_PATH = os.path.join(TEST_FILES_PATH, "index")
@@ -72,7 +70,7 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
 
     dbs.analyses.insert_one({
         "_id": "baz",
-        "algorithm": "pathoscope_bowtie",
+        "workflow": "pathoscope_bowtie",
         "ready": False,
         "sample": {
             "id": "foobar"
@@ -105,6 +103,19 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
         "sequence_otu_map": sequence_otu_map
     })
 
+    dbs.samples.insert_one({
+        "_id": "foobar",
+        "paired": False,
+        "library_type": "normal",
+        "subtraction": {
+            "id": "Arabidopsis thaliana"
+        },
+        "quality": {
+            "count": 1337,
+            "length": [78, 101]
+        }
+    })
+
     queue = mocker.Mock()
 
     job = virtool.jobs.pathoscope.Job(
@@ -126,14 +137,9 @@ def test_check_db(tmpdir, paired, dbs, mock_job):
     Check that the method assigns various job attributes based on information from the database.
 
     """
-    dbs.samples.insert_one({
-        "_id": "foobar",
-        "paired": paired,
-        "subtraction": {
-            "id": "Arabidopsis thaliana"
-        },
-        "quality": {
-            "count": 1337
+    dbs.samples.update_one({"_id": "foobar"}, {
+        "$set": {
+            "paired": paired
         }
     })
 
@@ -156,23 +162,12 @@ def test_check_db(tmpdir, paired, dbs, mock_job):
     assert mock_job.params["subtraction_path"] == os.path.join(
         str(tmpdir),
         "subtractions",
-        "prunus_persica",
+        "Prunus persica",
         "reference"
     )
 
 
 def test_make_analysis_dir(dbs, mock_job):
-    dbs.samples.insert_one({
-        "_id": "foobar",
-        "paired": False,
-        "subtraction": {
-            "id": "Arabidopsis thaliana"
-        },
-        "quality": {
-            "count": 1337
-        }
-    })
-
     mock_job.check_db()
 
     assert not os.path.isdir(mock_job.params["analysis_path"])
@@ -183,17 +178,6 @@ def test_make_analysis_dir(dbs, mock_job):
 
 
 def test_map_otus(tmpdir, dbs, mock_job):
-    dbs.samples.insert_one({
-        "_id": "foobar",
-        "paired": False,
-        "subtraction": {
-            "id": "Arabidopsis thaliana"
-        },
-        "quality": {
-            "count": 1337
-        }
-    })
-
     mock_job.check_db()
 
     os.makedirs(mock_job.params["analysis_path"])
@@ -225,18 +209,7 @@ def test_map_otus(tmpdir, dbs, mock_job):
     ])
 
 
-def test_map_isolates(tmpdir, dbs, mock_job):
-    dbs.samples.insert_one({
-        "_id": "foobar",
-        "paired": False,
-        "subtraction": {
-            "id": "Arabidopsis thaliana"
-        },
-        "quality": {
-            "count": 1337
-        }
-    })
-
+def test_map_isolates(snapshot, tmpdir, dbs, mock_job):
     mock_job.check_db()
 
     os.makedirs(mock_job.params["analysis_path"])
@@ -261,26 +234,11 @@ def test_map_isolates(tmpdir, dbs, mock_job):
     vta_path = os.path.join(mock_job.params["analysis_path"], "to_isolates.vta")
 
     with open(vta_path, "r") as f:
-        observed = sorted([line.rstrip() for line in f])
-
-    with open(ISOLATES_VTA_PATH, "r") as f:
-        expected = sorted([line.rstrip() for line in f])
-
-    assert observed == expected
+        data = sorted([line.rstrip() for line in f])
+        snapshot.assert_match(data)
 
 
-def test_map_subtraction(dbs, mock_job):
-    dbs.samples.insert_one({
-        "_id": "foobar",
-        "paired": False,
-        "subtraction": {
-            "id": "Arabidopsis thaliana"
-        },
-        "quality": {
-            "count": 1337
-        }
-    })
-
+def test_map_subtraction(snapshot, dbs, mock_job):
     mock_job.check_db()
 
     mock_job.proc = 2
@@ -292,22 +250,10 @@ def test_map_subtraction(dbs, mock_job):
 
     mock_job.map_subtraction()
 
-    with open(TO_SUBTRACTION_PATH, "r") as handle:
-        assert sorted(mock_job.intermediate["to_subtraction"]) == sorted(json.load(handle))
+    snapshot.assert_match(mock_job.intermediate)
 
 
 def test_subtract_mapping(dbs, mock_job):
-    dbs.samples.insert_one({
-        "_id": "foobar",
-        "paired": False,
-        "subtraction": {
-            "id": "Arabidopsis thaliana"
-        },
-        "quality": {
-            "count": 1337
-        }
-    })
-
     mock_job.check_db()
 
     os.makedirs(mock_job.params["analysis_path"])
@@ -322,18 +268,7 @@ def test_subtract_mapping(dbs, mock_job):
     assert mock_job.results["subtracted_count"] == 4
 
 
-def test_pathoscope(dbs, mock_job):
-    dbs.samples.insert_one({
-        "_id": "foobar",
-        "paired": False,
-        "subtraction": {
-            "id": "Arabidopsis thaliana"
-        },
-        "quality": {
-            "count": 1337
-        }
-    })
-
+def test_pathoscope(snapshot, dbs, mock_job):
     mock_job.check_db()
 
     os.makedirs(mock_job.params["analysis_path"])
@@ -376,42 +311,18 @@ def test_pathoscope(dbs, mock_job):
 
     mock_job.pathoscope()
 
-    # Check that a new VTA is written.
-    with open(UPDATED_VTA_PATH, "r") as f:
-        updated_vta = sorted([line.rstrip() for line in f])
-
     with open(os.path.join(mock_job.params["analysis_path"], "reassigned.vta"), "r") as f:
-        assert updated_vta == sorted([line.rstrip() for line in f])
-
-    # Check that the correct report.tsv file is written.
-    with open(TSV_PATH, "r") as f:
-        updated_tsv = sorted([line.rstrip() for line in f])
+        data = sorted([line.rstrip() for line in f])
+        snapshot.assert_match(data)
 
     with open(os.path.join(mock_job.params["analysis_path"], "report.tsv"), "r") as f:
-        assert updated_tsv == sorted([line.rstrip() for line in f])
+        data = sorted([line.rstrip() for line in f])
+        snapshot.assert_match(data)
 
-    with open(RESULTS_PATH, "r") as handle:
-        expected = sorted(json.load(handle), key=lambda h: h["id"])
-        results = mock_job.results
-
-        assert results["read_count"] == 20276
-        assert results["ready"] is True
-
-        assert expected == sorted(results["results"], key=lambda h: h["id"])
+    snapshot.assert_match(mock_job.results)
 
 
-def test_import_results(dbs, mock_job):
-    dbs.samples.insert_one({
-        "_id": "foobar",
-        "paired": False,
-        "subtraction": {
-            "id": "Arabidopsis thaliana"
-        },
-        "quality": {
-            "count": 1337
-        }
-    })
-
+def test_import_results(snapshot, dbs, mock_job):
     mock_job.check_db()
 
     mock_job.results = {
@@ -422,29 +333,5 @@ def test_import_results(dbs, mock_job):
 
     mock_job.import_results()
 
-    assert dbs.analyses.find_one() == {
-        "_id": "baz",
-        "ready": True,
-        "algorithm": "pathoscope_bowtie",
-        "results": "results will be here",
-        "read_count": 1337,
-        "sample": {
-            "id": "foobar"
-        },
-        "subtraction": {
-            "id": "Prunus persica"
-        }
-    }
-
-    assert dbs.samples.find_one() == {
-        "_id": "foobar",
-        "nuvs": False,
-        "pathoscope": True,
-        "subtraction": {
-            "id": "Arabidopsis thaliana"
-        },
-        "quality": {
-            "count": 1337
-        },
-        "paired": False
-    }
+    snapshot.assert_match(dbs.analyses.find_one())
+    snapshot.assert_match(dbs.samples.find_one())

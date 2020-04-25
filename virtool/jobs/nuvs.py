@@ -38,7 +38,6 @@ class Job(virtool.jobs.analysis.Job):
         self._stage_list = [
             self.make_analysis_dir,
             self.prepare_reads,
-            self.prepare_qc,
             self.eliminate_otus,
             self.eliminate_subtraction,
             self.reunite_pairs,
@@ -134,7 +133,7 @@ class Job(virtool.jobs.analysis.Job):
 
         k = "21,33,55,75"
 
-        if self.params["srna"]:
+        if self.params["library_type"] == "srna":
             k = "17,21,23"
 
         command += [
@@ -301,7 +300,7 @@ class Job(virtool.jobs.analysis.Job):
             self.results
         )
 
-        virtool.db.sync.recalculate_algorithm_tags(self.db, sample_id)
+        virtool.db.sync.recalculate_workflow_tags(self.db, sample_id)
 
         self.dispatch("analyses", "update", [analysis_id])
         self.dispatch("samples", "update", [sample_id])

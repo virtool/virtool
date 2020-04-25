@@ -25,8 +25,15 @@ async def test_check_name_and_abbreviation(name, abbreviation, return_value, dbi
 
 @pytest.mark.parametrize("abbreviation", ["", "TMV"])
 async def test_create(abbreviation, mocker, snapshot, dbi, test_random_alphanumeric, static_time):
+    app = {
+        "db": dbi,
+        "settings": {
+            "data_path": "/foo"
+        }
+    }
+
     await virtool.otus.db.create(
-        dbi,
+        app,
         "foo",
         "Bar",
         abbreviation,
@@ -39,10 +46,17 @@ async def test_create(abbreviation, mocker, snapshot, dbi, test_random_alphanume
 
 @pytest.mark.parametrize("abbreviation", [None, "", "TMV"])
 async def test_edit(abbreviation, snapshot, dbi, test_otu, static_time, test_random_alphanumeric):
+    app = {
+        "db": dbi,
+        "settings": {
+            "data_path": "/foo"
+        }
+    }
+
     await dbi.otus.insert_one(test_otu)
 
     await virtool.otus.db.edit(
-        dbi,
+        app,
         "6116cba1",
         "Foo Virus",
         abbreviation,

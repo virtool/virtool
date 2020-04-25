@@ -1,4 +1,4 @@
-import { SampleDetailGeneral, mapStateToProps } from "../General";
+import { mapStateToProps, SampleDetailGeneral } from "../General";
 
 describe("<SampleDetailGeneral />", () => {
     let props;
@@ -12,16 +12,14 @@ describe("<SampleDetailGeneral />", () => {
             isolate: "Isolate Foo",
             lengthRange: "41 - 76",
             locale: "Bar",
+            name: "Foo",
             paired: false,
-            subtractionId: "Arabidopsis thaliana",
-            srna: false
+            subtraction: {
+                id: "baz",
+                name: "Arabidopsis thaliana"
+            },
+            libraryType: ""
         };
-    });
-
-    it.each([true, false])("should render with [srna=%p]", srna => {
-        props.srna = srna;
-        const wrapper = shallow(<SampleDetailGeneral {...props} />);
-        expect(wrapper).toMatchSnapshot();
     });
 
     it.each([true, false])("should render with [paired=%p]", paired => {
@@ -50,8 +48,8 @@ describe("mapStateToProps()", () => {
                         encoding: "Foo 1.2",
                         length: [50, 100]
                     },
-                    srna: false,
-                    subtraction: { id: "baz" }
+                    library_type: "normal",
+                    subtraction: { id: "baz", name: "Arabidopsis thaliana" }
                 }
             }
         };
@@ -64,12 +62,23 @@ describe("mapStateToProps()", () => {
             host: "Malus domestica",
             isolate: "Isolate Foo",
             locale: "Bar",
+            name: "Foo",
             paired: false,
-            srna: false,
             gc: "31.2 %",
             count: "13.2 m",
             lengthRange: "50 - 100",
-            subtractionId: "baz"
+            subtraction: { id: "baz", name: "Arabidopsis thaliana" },
+            libraryType: "Normal"
         });
+    });
+
+    it.each([
+        ["normal", "Normal"],
+        ["srna", "sRNA"],
+        ["amplicon", "Amplicon"]
+    ])("state.library_type(%s) should equal props.libraryType(%s)", (a, b) => {
+        state.samples.detail.library_type = a;
+        const result = mapStateToProps(state).libraryType;
+        expect(result).toEqual(b);
     });
 });

@@ -1,7 +1,6 @@
 import React from "react";
+import { Button } from "../../../base";
 import ReleasesList from "../List.js";
-import Release from "../Release.js";
-import { Releases } from "../Releases.js";
 
 describe("<ReleasesList />", () => {
     let props;
@@ -49,7 +48,7 @@ describe("<ReleasesList />", () => {
         const wrapper = shallow(<ReleasesList {...props} />);
 
         expect(props.onShowInstall).not.toHaveBeenCalled();
-        wrapper.find("Button").simulate("click");
+        wrapper.find(Button).simulate("click");
         expect(props.onShowInstall).toHaveBeenCalled();
     });
 });

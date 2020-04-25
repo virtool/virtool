@@ -4,21 +4,26 @@ from aiohttp.test_utils import make_mocked_coro
 
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("error", [None, "400", "403", "404"])
-async def test_get(ready, error, mocker, spawn_client, resp_is):
+async def test_get(ready, error, mocker, snapshot, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
     document = {
         "_id": "foobar",
         "ready": ready,
-        "algorithm": "pathoscope_bowtie",
+        "workflow": "pathoscope_bowtie",
         "results": {},
         "sample": {
             "id": "baz"
         },
         "subtraction": {
-            "id": "Plum"
+            "id": "plum"
         }
     }
+
+    await client.db.subtraction.insert_one({
+        "_id": "plum",
+        "name": "Plum"
+    })
 
     if error != "400":
         await client.db.samples.insert_one({
@@ -69,10 +74,10 @@ async def test_get(ready, error, mocker, spawn_client, resp_is):
             "formatted": True
         }
 
-        m_format_analysis.assert_called_with(
-            client.app,
-            document
-        )
+        args = m_format_analysis.call_args[0]
+
+        assert args[0] == client.app
+        snapshot.assert_match(args[1], "format_analysis")
 
     else:
         assert resp.status == 200
@@ -80,13 +85,14 @@ async def test_get(ready, error, mocker, spawn_client, resp_is):
         assert await resp.json() == {
             "id": "foobar",
             "ready": False,
-            "algorithm": "pathoscope_bowtie",
+            "workflow": "pathoscope_bowtie",
             "results": {},
             "sample": {
                 "id": "baz"
             },
             "subtraction": {
-                "id": "Plum"
+                "id": "plum",
+                "name": "Plum"
             }
         }
 
@@ -153,7 +159,7 @@ async def test_remove(mocker, error, spawn_client, resp_is):
     assert m_remove.called_with("data/samples/baz/analyses/foobar", True)
 
 
-@pytest.mark.parametrize("error", [None, "400", "403", "404_analysis", "404_sequence", "409_algorithm", "409_ready"])
+@pytest.mark.parametrize("error", [None, "400", "403", "404_analysis", "404_sequence", "409_workflow", "409_ready"])
 async def test_blast(error, mocker, spawn_client, resp_is, static_time):
     """
     Test that the handler starts a BLAST for given NuVs sequence. Also check that it handles all error conditions
@@ -165,7 +171,7 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
     if error != "404_analysis":
         analysis_document = {
             "_id": "foobar",
-            "algorithm": "nuvs",
+            "workflow": "nuvs",
             "ready": True,
             "results": [
                 {"index": 3, "sequence": "ATAGAGATTAGAT"},
@@ -180,8 +186,8 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
         if error == "404_sequence":
             analysis_document["results"].pop(1)
 
-        elif error == "409_algorithm":
-            analysis_document["algorithm"] = "pathoscope_bowtie"
+        elif error == "409_workflow":
+            analysis_document["workflow"] = "pathoscope_bowtie"
 
         elif error == "409_ready":
             analysis_document["ready"] = False
@@ -227,7 +233,8 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
         assert await resp_is.not_found(resp, "Sequence not found")
         return
 
-    if error == "409_algorithm":
+    if error == "409_workflow":
+        print(await resp.json())
         assert await resp_is.conflict(resp, "Not a NuVs analysis")
         return
 

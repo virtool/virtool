@@ -1,13 +1,30 @@
+import React from "react";
+import { ThemeProvider } from "styled-components";
 import { FIND_USERS } from "../../../app/actionTypes";
 import { ScrollList } from "../../../base";
 import { UsersList, mapStateToProps, mapDispatchToProps } from "../List";
+
+const ThemeProviderWrapper = ({ children }) => {
+    const theme = {
+        color: {
+            greyLight: "#dddddd"
+        }
+    };
+
+    return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
+};
+
+const mountWithTheme = tree =>
+    mount(tree, {
+        wrappingComponent: ThemeProviderWrapper
+    });
 
 describe("<UsersList />", () => {
     let props;
 
     beforeEach(() => {
         props = {
-            documents: [],
+            documents: [{ id: "fred" }],
             term: "foo",
             onLoadNextPage: jest.fn(),
             page: 2,
@@ -20,13 +37,20 @@ describe("<UsersList />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
+    it("should render when [documents=null]", () => {
+        props.documents = null;
+        const wrapper = shallow(<UsersList {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
     it("should call onLoadNextPage() on mount", () => {
-        const wrapper = mount(<UsersList {...props} />);
-        wrapper.find(ScrollList).prop("onLoadNextPage")(1);
+        props.documents = null;
+        mountWithTheme(<UsersList {...props} />);
+        expect(props.onLoadNextPage).toHaveBeenCalledWith("foo", 1);
     });
 
     it("should call onLoadNextPage() when paged", () => {
-        const wrapper = mount(<UsersList {...props} />);
+        const wrapper = shallow(<UsersList {...props} />);
         wrapper.find(ScrollList).prop("onLoadNextPage")(8);
         expect(props.onLoadNextPage).toHaveBeenCalledWith("foo", 8);
     });

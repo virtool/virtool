@@ -102,7 +102,7 @@ async def check_name(db, settings, name, sample_id=None):
                 "$ne": sample_id
             }
 
-        if await db.samples.count(query):
+        if await db.samples.count_documents(query):
             return "Sample name is already in use"
 
     return None
@@ -119,8 +119,8 @@ async def check_rights(db, sample_id, client, write=True):
     return has_read and (write is False or has_write)
 
 
-def compose_algorithm_conditions(algorithm, url_query):
-    values = url_query.getall(algorithm, None)
+def compose_workflow_conditions(workflow, url_query):
+    values = url_query.getall(workflow, None)
 
     if values is None:
         return None
@@ -142,11 +142,11 @@ def compose_algorithm_conditions(algorithm, url_query):
     if conditions:
         if len(conditions) == 1:
             return {
-                algorithm: conditions[0]
+                workflow: conditions[0]
             }
 
         return {
-            algorithm: {
+            workflow: {
                 "$in": conditions
             }
         }
@@ -155,8 +155,8 @@ def compose_algorithm_conditions(algorithm, url_query):
 
 
 def compose_analysis_query(url_query):
-    pathoscope = compose_algorithm_conditions("pathoscope", url_query)
-    nuvs = compose_algorithm_conditions("nuvs", url_query)
+    pathoscope = compose_workflow_conditions("pathoscope", url_query)
+    nuvs = compose_workflow_conditions("nuvs", url_query)
 
     if pathoscope and nuvs:
         return {
@@ -205,7 +205,7 @@ async def periodically_prune_old_files(app: aiohttp.web.Application):
         sample_id = sample["_id"]
 
         # Count running analyses that are still using the old non-cache trimmed files.
-        count = await db.analyses.count({
+        count = await db.analyses.count_documents({
             "sample.id": sample_id,
             "ready": False,
             "cache": {
@@ -235,21 +235,18 @@ async def periodically_prune_old_files(app: aiohttp.web.Application):
             })
 
 
-async def recalculate_algorithm_tags(db, sample_id):
+async def recalculate_workflow_tags(db, sample_id: str) -> dict:
     """
-    Recalculate and apply algorithm tags (eg. "ip", True) for a given sample. Finds the associated analyses and calls
-    :func:`calculate_algorithm_tags`, then applies the update to the sample document.
+    Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param sample_id: the id of the sample to recalculate tags for
-    :type sample_id: str
+    :return: the updated sample document
 
     """
-    analyses = await asyncio.shield(db.analyses.find({"sample.id": sample_id}, ["ready", "algorithm"]).to_list(None))
+    analyses = await asyncio.shield(db.analyses.find({"sample.id": sample_id}, ["ready", "workflow"]).to_list(None))
 
-    update = virtool.samples.utils.calculate_algorithm_tags(analyses)
+    update = virtool.samples.utils.calculate_workflow_tags(analyses)
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": update
@@ -272,7 +269,7 @@ async def refresh_replacements(db, sample_id: str) -> list:
     for file in files:
         replacement = file.get("replacement")
 
-        if replacement and not await db.files.count({"_id": replacement["id"]}):
+        if replacement and not await db.files.count_documents({"_id": replacement["id"]}):
             file["replacement"] = None
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
@@ -330,7 +327,7 @@ async def remove_samples(db, settings: dict, id_list: list) -> pymongo.results.D
 
 async def validate_force_choice_group(db, data):
     try:
-        if not await db.groups.count({"_id": data["group"]}):
+        if not await db.groups.count_documents({"_id": data["group"]}):
             return "Group does not exist"
 
     except KeyError:

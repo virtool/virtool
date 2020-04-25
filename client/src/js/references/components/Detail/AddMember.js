@@ -1,16 +1,32 @@
-import React from "react";
-import styled from "styled-components";
 import { filter, includes, map } from "lodash-es";
-import { Modal } from "react-bootstrap";
+import React from "react";
 import { connect } from "react-redux";
-import { Identicon, ListGroupItem, NoneFound, Input } from "../../../base";
+import styled from "styled-components";
+import {
+    BoxGroup,
+    BoxGroupSection,
+    ModalBody,
+    Identicon,
+    Input,
+    InputContainer,
+    InputGroup,
+    InputIcon,
+    Modal,
+    NoneFoundSection,
+    ModalHeader
+} from "../../../base";
 import { listGroups } from "../../../groups/actions";
 import { findUsers } from "../../../users/actions";
 import { addReferenceGroup, addReferenceUser } from "../../actions";
 
-const AddUserSearch = ({ term, onChange }) => {
-    return <Input type="text" value={term} onChange={onChange} />;
-};
+const AddUserSearch = ({ term, onChange }) => (
+    <InputGroup>
+        <InputContainer align="left">
+            <InputIcon name="search" />
+            <Input value={term} onChange={e => onChange(e.target.value)} />
+        </InputContainer>
+    </InputGroup>
+);
 
 const getInitialState = () => ({
     id: "",
@@ -20,7 +36,7 @@ const getInitialState = () => ({
     remove: false
 });
 
-const StyledAddMemberItem = styled(ListGroupItem)`
+const StyledAddMemberItem = styled(BoxGroupSection)`
     display: flex;
 
     img {
@@ -34,6 +50,15 @@ const AddMemberItem = ({ id, identicon, onClick }) => (
         {id}
     </StyledAddMemberItem>
 );
+
+const AddReferenceMemberHeader = styled(ModalHeader)`
+    text-transform: capitalize;
+`;
+
+const AddReferenceMemberList = styled(BoxGroup)`
+    max-height: 320px;
+    overflow-y: auto;
+`;
 
 export class AddReferenceMember extends React.Component {
     constructor(props) {
@@ -51,7 +76,6 @@ export class AddReferenceMember extends React.Component {
 
     handleExited = () => {
         this.props.onChange("");
-        this.props.onHide();
         this.setState(getInitialState());
     };
 
@@ -60,28 +84,34 @@ export class AddReferenceMember extends React.Component {
 
         if (this.props.documents.length) {
             addMemberComponents = map(this.props.documents, document => (
-                <AddMemberItem key={document.id} {...document} onClick={() => this.handleAdd(document.id)} />
+                <AddMemberItem
+                    key={document.id}
+                    id={document.id}
+                    identicon={document.identicon}
+                    onClick={() => this.handleAdd(document.id)}
+                />
             ));
         } else {
-            addMemberComponents = <NoneFound noun={`other ${this.props.noun}s`} noListGroup />;
+            addMemberComponents = <NoneFoundSection noun={`other ${this.props.noun}s`} />;
         }
+
+        const title = `Add ${this.props.noun}`;
 
         return (
             <Modal
+                label={title}
                 show={this.props.show}
                 onHide={this.props.onHide}
                 onEnter={this.handleEnter}
                 onExited={this.handleExited}
             >
-                <Modal.Header closeButton>
-                    <span className="text-capitalize">Add {this.props.noun}</span>
-                </Modal.Header>
-                <Modal.Body>
-                    {this.props.noun === "user" ? (
-                        <AddUserSearch term={this.props.term} onChange={e => this.props.onChange(e.target.value)} />
-                    ) : null}
-                    {addMemberComponents}
-                </Modal.Body>
+                <AddReferenceMemberHeader>{title}</AddReferenceMemberHeader>
+                <ModalBody>
+                    {this.props.noun === "user" && (
+                        <AddUserSearch term={this.props.term} onChange={this.props.onChange} />
+                    )}
+                    <AddReferenceMemberList>{addMemberComponents}</AddReferenceMemberList>
+                </ModalBody>
             </Modal>
         );
     }
@@ -107,6 +137,7 @@ const mapDispatchToProps = (dispatch, ownProps) => ({
         const actionCreator = ownProps.noun === "user" ? addReferenceUser : addReferenceGroup;
         dispatch(actionCreator(refId, id));
     },
+
     onList: () => {
         if (ownProps.noun === "user") {
             dispatch(findUsers("", 1));

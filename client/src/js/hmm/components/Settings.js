@@ -1,13 +1,12 @@
 import React from "react";
-import { ViewHeader } from "../../base";
+import { ViewHeader, ViewHeaderTitle } from "../../base";
 import HMMPurge from "./Purge";
 
 const HMMSettings = () => (
     <div>
-        <ViewHeader title="Settings - HMMs">
-            <strong>HMM Settings</strong>
+        <ViewHeader title="HMM Settings">
+            <ViewHeaderTitle>HMM Settings</ViewHeaderTitle>
         </ViewHeader>
-
         <HMMPurge />
     </div>
 );

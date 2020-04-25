@@ -1,14 +1,36 @@
+import { Input, PasswordInput } from "../../base";
 import { FirstUser, mapDispatchToProps } from "../FirstUser";
 
 describe("<FirstUser />", () => {
     let props;
 
+    beforeEach(() => {
+        props = {
+            onSubmit: jest.fn()
+        };
+    });
+
     it("should render", () => {
         const wrapper = shallow(<FirstUser {...props} />);
         wrapper.setState({
-            username: "foo",
-            password: "bar"
+            username: "bob",
+            password: "password"
         });
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it.each(["username", "password"])("should render when %p changed", name => {
+        const e = {
+            target: {
+                name,
+                value: name === "username" ? "bob" : "password"
+            }
+        };
+
+        const wrapper = shallow(<FirstUser {...props} />);
+
+        wrapper.find(name === "username" ? Input : PasswordInput).simulate("change", e);
+
         expect(wrapper).toMatchSnapshot();
     });
 
@@ -27,39 +49,6 @@ describe("<FirstUser />", () => {
         wrapper.find("form").simulate("submit", e);
         expect(e.preventDefault).toHaveBeenCalled();
         expect(props.onSubmit).toHaveBeenCalledWith("fee", "baz");
-    });
-
-    it.each([
-        [
-            0,
-            {
-                username: "bar",
-                password: ""
-            }
-        ],
-        [
-            1,
-            {
-                username: "",
-                password: "foo"
-            }
-        ]
-    ])(".match(%o, %o)", (index, expected) => {
-        const e = {
-            target: {
-                name: index === 0 ? "username" : "password",
-                value: index === 0 ? "bar" : "foo"
-            }
-        };
-
-        const wrapper = shallow(<FirstUser {...props} />);
-
-        wrapper
-            .find("Input")
-            .at(index)
-            .prop("onChange")(e);
-
-        expect(wrapper.state()).toEqual(expected);
     });
 });
 

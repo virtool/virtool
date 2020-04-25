@@ -61,7 +61,7 @@ def user_document():
         "primary_group": "",
         "groups": [],
         "settings": {
-            "quick_analyze_algorithm": "pathoscope_bowtie",
+            "quick_analyze_workflow": "pathoscope_bowtie",
             "show_ids": True,
             "show_versions": True,
             "skip_quick_analyze_dialog": True

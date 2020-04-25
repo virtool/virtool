@@ -1,13 +1,23 @@
 import { isEqual, reduce } from "lodash-es";
-import { format } from "date-fns";
 import React from "react";
-import styled from "styled-components";
-import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-
-import { Button, ButtonToolbar, RelativeTime, SpacedBox } from "../../../base/index";
+import styled from "styled-components";
+import { Attribution, Button, ButtonToolbar, Icon, SpacedBox } from "../../../base/index";
 import { removeAPIKey, updateAPIKey } from "../../actions";
 import APIPermissions from "./Permissions";
+
+const APIKeyClose = styled.div`
+    text-align: right;
+`;
+
+const APIKeyPermissions = styled.div`
+    text-align: right;
+`;
+
+const APIKeyHeader = styled.div`
+    display: grid;
+    grid-template-columns: 3fr 2fr 1fr 1fr;
+`;
 
 export const getInitialState = ({ apiKey }) => ({
     in: false,
@@ -53,71 +63,43 @@ export class APIKey extends React.Component {
         if (this.state.in) {
             lower = (
                 <div>
-                    <Row>
-                        <Col xs={12}>
-                            <KeyAPIPermissions
-                                userPermissions={this.props.permissions}
-                                keyPermissions={this.state.permissions}
-                                onChange={this.onPermissionChange}
-                            />
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col xs={12}>
-                            <ButtonToolbar>
-                                <Button
-                                    bsStyle="danger"
-                                    icon="trash"
-                                    onClick={() => this.props.onRemove(this.props.apiKey.id)}
-                                >
-                                    Remove
-                                </Button>
-                                <Button
-                                    bsStyle="primary"
-                                    icon="save"
-                                    onClick={() => this.props.onUpdate(this.props.apiKey.id, this.state.permissions)}
-                                    disabled={!this.state.changed}
-                                >
-                                    Update
-                                </Button>
-                            </ButtonToolbar>
-                        </Col>
-                    </Row>
+                    <KeyAPIPermissions
+                        userPermissions={this.props.permissions}
+                        keyPermissions={this.state.permissions}
+                        onChange={this.onPermissionChange}
+                    />
+
+                    <ButtonToolbar>
+                        <Button color="red" icon="trash" onClick={() => this.props.onRemove(this.props.apiKey.id)}>
+                            Remove
+                        </Button>
+                        <Button
+                            color="blue"
+                            icon="save"
+                            onClick={() => this.props.onUpdate(this.props.apiKey.id, this.state.permissions)}
+                            disabled={!this.state.changed}
+                        >
+                            Update
+                        </Button>
+                    </ButtonToolbar>
                 </div>
             );
 
-            closeButton = (
-                <button type="button" className="close" onClick={this.toggleIn}>
-                    <span>×</span>
-                </button>
-            );
+            closeButton = <Icon name="times" onClick={this.toggleIn} />;
         }
 
         const permissionCount = reduce(this.props.apiKey.permissions, (result, value) => result + (value ? 1 : 0), 0);
 
         return (
             <SpacedBox key={this.props.apiKey.id} onClick={this.state.in ? null : this.toggleIn}>
-                <Row>
-                    <Col xs={4}>
-                        <strong>{this.props.apiKey.name}</strong>
-                    </Col>
-
-                    <Col xs={4}>
-                        <span>{permissionCount} perm</span>
-                        <span className="hidden-xs hidden-sm">ission</span>
-                        {permissionCount === 1 ? null : "s"}
-                    </Col>
-
-                    <Col xsHidden smHidden md={3}>
-                        Created <RelativeTime time={this.props.apiKey.created_at} />
-                    </Col>
-                    <Col mdHidden lgHidden xs={3}>
-                        {format(new Date(this.props.apiKey.created_at), "yy-mm-dd")}
-                    </Col>
-
-                    <Col xs={1}>{closeButton}</Col>
-                </Row>
-
+                <APIKeyHeader>
+                    <strong>{this.props.apiKey.name}</strong>
+                    <Attribution time={this.props.apiKey.created_at} />
+                    <APIKeyPermissions>
+                        {permissionCount} permission{permissionCount === 1 ? null : "s"}
+                    </APIKeyPermissions>
+                    <APIKeyClose>{closeButton}</APIKeyClose>
+                </APIKeyHeader>
                 {lower}
             </SpacedBox>
         );

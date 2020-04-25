@@ -99,17 +99,17 @@ describe("Sample Action Creators:", () => {
         const isolate = "isolate";
         const host = "host";
         const locale = "locale";
-        const srna = false;
+        const libraryType = false;
         const subtraction = "subtraction";
         const files = {};
-        const result = createSample(name, isolate, host, locale, srna, subtraction, files);
+        const result = createSample(name, isolate, host, locale, libraryType, subtraction, files);
         expect(result).toEqual({
             type: CREATE_SAMPLE.REQUESTED,
             name,
             isolate,
             host,
             locale,
-            srna,
+            libraryType,
             subtraction,
             files
         });

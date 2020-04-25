@@ -11,118 +11,105 @@ exports[`<SampleRights /> should render 1`] = `
     </p>
   </Box__BoxGroupHeader>
   <Box__BoxGroupSection>
-    <label
-      className="control-label"
-      style={
-        Object {
-          "width": "100%",
-        }
-      }
-    >
-      <span>
-        Sample Group
-      </span>
-      <Help
-        pullRight={true}
+    <label>
+      Sample Group
+    </label>
+    <SampleRights__SampleGroupSelection>
+      <SelectBox
+        active=""
+        onClick={[Function]}
       >
+        <strong>
+          None
+        </strong>
         <p>
-          <strong>
-            None
-          </strong>
-          : samples are assigned no group and only
+          Samples are assigned no group and only
           <em>
              all users'
           </em>
            rights apply
         </p>
+      </SelectBox>
+      <SelectBox
+        active={true}
+        onClick={[Function]}
+      >
+        <strong>
+          Force choice
+        </strong>
         <p>
-          <strong>
-            User's primary group
-          </strong>
-          : samples are automatically assigned the creating
-           
-          user's primary group
+          Samples are automatically assigned the creating user's primary group
         </p>
+      </SelectBox>
+      <SelectBox
+        active=""
+        onClick={[Function]}
+      >
+        <strong>
+          User's primary group
+        </strong>
         <p>
-          <strong>
-            Choose
-          </strong>
-          : samples are assigned by the user in the creation form
+          Samples are assigned by the user in the creation form
         </p>
-      </Help>
-    </label>
-    <InputError
-      onChange={[Function]}
-      type="select"
-      value="force_choice"
-    >
-      <option
-        value="none"
-      >
-        None
-      </option>
-      <option
-        value="force_choice"
-      >
-        Force choice
-      </option>
-      <option
-        value="users_primary_group"
-      >
-        User's primary group
-      </option>
-    </InputError>
-    <InputError
-      label="Group Rights"
-      onChange={[Function]}
-      type="select"
-      value="rw"
-    >
-      <option
-        key="0"
-        value=""
-      >
-        None
-      </option>
-      <option
-        key="1"
-        value="r"
-      >
-        Read
-      </option>
-      <option
-        key="2"
+      </SelectBox>
+    </SampleRights__SampleGroupSelection>
+    <InputGroup>
+      <Input__InputLabel>
+        Group Rights
+      </Input__InputLabel>
+      <Select
+        onChange={[Function]}
         value="rw"
       >
-        Read & write
-      </option>
-    </InputError>
-    <InputError
-      label="All Users' Rights"
-      name="all"
-      onChange={[Function]}
-      type="select"
-      value="rw"
-    >
-      <option
-        key="0"
-        value=""
-      >
-        None
-      </option>
-      <option
-        key="1"
-        value="r"
-      >
-        Read
-      </option>
-      <option
-        key="2"
+        <option
+          key="0"
+          value=""
+        >
+          None
+        </option>
+        <option
+          key="1"
+          value="r"
+        >
+          Read
+        </option>
+        <option
+          key="2"
+          value="rw"
+        >
+          Read & write
+        </option>
+      </Select>
+    </InputGroup>
+    <InputGroup>
+      <Input__InputLabel>
+        All Users' Rights
+      </Input__InputLabel>
+      <Select
+        name="all"
+        onChange={[Function]}
         value="rw"
       >
-        Read & write
-      </option>
-    </InputError>
+        <option
+          key="0"
+          value=""
+        >
+          None
+        </option>
+        <option
+          key="1"
+          value="r"
+        >
+          Read
+        </option>
+        <option
+          key="2"
+          value="rw"
+        >
+          Read & write
+        </option>
+      </Select>
+    </InputGroup>
   </Box__BoxGroupSection>
 </Box__BoxGroup>
 `;

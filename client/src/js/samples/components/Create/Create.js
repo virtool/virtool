@@ -1,17 +1,42 @@
-import { filter, get, map, replace, split } from "lodash-es";
+import { filter, get, map } from "lodash-es";
 import React from "react";
-import { Col, ControlLabel, InputGroup, Modal, Row } from "react-bootstrap";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { pushState } from "../../../app/actions";
-import { Button, Icon, InputError, LoadingPlaceholder, SaveButton } from "../../../base";
+import {
+    ModalBody,
+    ModalFooter,
+    Input,
+    InputContainer,
+    InputError,
+    InputGroup,
+    InputIcon,
+    InputLabel,
+    LoadingPlaceholder,
+    Modal,
+    SaveButton,
+    Select,
+    ModalHeader
+} from "../../../base";
 import { clearError } from "../../../errors/actions";
-import { listSubtractionIds } from "../../../subtraction/actions";
-import { getFirstSubtractionId, getSubtractionIds } from "../../../subtraction/selectors";
+import { shortlistSubtractions } from "../../../subtraction/actions";
+import { getSubtractionShortlist } from "../../../subtraction/selectors";
 import { getTargetChange, routerLocationHasState } from "../../../utils/utils";
-
 import { createSample, findReadFiles } from "../../actions";
+import { LibraryTypeSelection } from "./LibraryTypeSelection";
 import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
+
+const CreateSampleFields = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    grid-column-gap: 15px;
+`;
+
+const extensionRegex = /^[a-z0-9]+-(.*)\.f[aq](st)?[aq]?(\.gz)?$/;
+
+const getFileNameFromId = id => id.match(extensionRegex)[1];
 
 const getInitialState = props => ({
     selected: [],
@@ -19,15 +44,15 @@ const getInitialState = props => ({
     host: "",
     isolate: "",
     locale: "",
-    srna: false,
-    subtraction: "",
+    subtractionId: "",
     group: props.forceGroupChoice ? "none" : "",
     errorName: "",
     errorSubtraction: "",
-    errorFile: ""
+    errorFile: "",
+    libraryType: "normal"
 });
 
-class CreateSample extends React.Component {
+export class CreateSample extends React.Component {
     constructor(props) {
         super(props);
         this.state = getInitialState(props);
@@ -41,21 +66,18 @@ class CreateSample extends React.Component {
         return null;
     }
 
-    handleHide = () => {
-        this.props.onHide();
-    };
-
     handleModalExited = () => {
         this.setState(getInitialState(this.props));
+
         if (this.props.error.length) {
-            this.props.onClearError("CREATE_SAMPLE_ERROR");
+            this.props.onClearError();
         }
     };
 
     handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
 
-        if (name === "name" || name === "subtraction") {
+        if (name === "name" || name === "subtractionId") {
             this.setState({
                 [name]: value,
                 [error]: ""
@@ -65,6 +87,10 @@ class CreateSample extends React.Component {
                 [name]: value
             });
         }
+    };
+
+    handleLibrarySelect = libraryType => {
+        this.setState({ libraryType });
     };
 
     handleSubmit = e => {
@@ -92,23 +118,25 @@ class CreateSample extends React.Component {
         }
 
         if (!hasError) {
-            const { name, isolate, host, locale, srna, subtraction } = this.state;
+            const { name, isolate, host, locale, libraryType, subtractionId } = this.state;
             this.props.onCreate(
                 name,
                 isolate,
                 host,
                 locale,
-                srna,
-                subtraction || this.props.defaultSubtraction,
+                libraryType,
+                subtractionId || get(this.props.subtractions, [0, "id"]),
                 this.state.selected
             );
         }
     };
 
     autofill = () => {
-        this.setState({
-            name: split(replace(this.state.selected[0], /[0-9a-z]{8}-/, ""), /_S\d+/)[0]
-        });
+        if (this.state.selected.length) {
+            this.setState({
+                name: getFileNameFromId(this.state.selected[0])
+            });
+        }
     };
 
     handleSelect = selected => {
@@ -119,21 +147,23 @@ class CreateSample extends React.Component {
         if (this.props.subtractions === null || this.props.readyReads === null) {
             return (
                 <Modal
-                    bsSize="large"
+                    label="Create Sample"
                     show={this.props.show}
+                    size="lg"
                     onHide={this.props.onHide}
                     onEnter={this.props.onLoadSubtractionsAndFiles}
                 >
-                    <Modal.Body>
+                    <ModalHeader>Create Sample</ModalHeader>
+                    <ModalBody>
                         <LoadingPlaceholder margin="36px" />
-                    </Modal.Body>
+                    </ModalBody>
                 </Modal>
             );
         }
 
-        const subtractionComponents = map(this.props.subtractions, subtractionId => (
-            <option key={subtractionId} value={subtractionId}>
-                {subtractionId}
+        const subtractionComponents = map(this.props.subtractions, subtraction => (
+            <option key={subtraction.id} value={subtraction.id}>
+                {subtraction.name}
             </option>
         ));
 
@@ -145,110 +175,76 @@ class CreateSample extends React.Component {
             />
         ) : null;
 
-        const libraryType = this.state.selected.length === 2 ? "Paired" : "Unpaired";
+        const pairedness = this.state.selected.length === 2 ? "Paired" : "Unpaired";
 
         const { errorName, errorSubtraction, errorFile } = this.state;
 
+        const subtractionId = this.state.subtractionId || get(this.props.subtractions, [0, "id"]);
+
         return (
             <Modal
-                bsSize="large"
+                label="Create Sample"
                 show={this.props.show}
-                onHide={this.handleHide}
+                size="lg"
                 onEnter={this.props.onLoadSubtractionsAndFiles}
                 onExited={this.handleModalExited}
+                onHide={this.props.onHide}
             >
-                <Modal.Header onHide={this.handleHide} closeButton>
-                    Create Sample
-                </Modal.Header>
-
+                <ModalHeader>Create Sample</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
-                        <Row>
-                            <Col xs={12}>
-                                <ControlLabel>Sample Name</ControlLabel>
-                                <InputGroup>
-                                    <InputError
+                    <ModalBody>
+                        <CreateSampleFields>
+                            <InputGroup>
+                                <InputLabel>Sample Name</InputLabel>
+                                <InputContainer align="right">
+                                    <Input
+                                        error={errorName}
                                         name="name"
                                         value={this.state.name}
                                         onChange={this.handleChange}
                                         autocomplete={false}
-                                        error={errorName}
                                     />
-                                    <InputGroup.Button style={{ verticalAlign: "top", zIndex: "0" }}>
-                                        <Button
-                                            type="button"
-                                            onClick={this.autofill}
-                                            disabled={!this.state.selected.length}
-                                        >
-                                            <Icon name="magic" />
-                                        </Button>
-                                    </InputGroup.Button>
-                                </InputGroup>
-                            </Col>
-                        </Row>
-
-                        <Row>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    name="isolate"
-                                    label="Isolate"
-                                    value={this.state.isolate}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    name="locale"
-                                    label="Locale"
-                                    value={this.state.locale}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                        </Row>
-
-                        <Row>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    name="host"
-                                    label="Host"
-                                    value={this.state.host}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-
-                            <Col md={6}>
-                                <InputError
-                                    name="subtraction"
-                                    type="select"
-                                    label="Default Subtraction"
-                                    value={this.state.subtraction || this.props.defaultSubtraction}
-                                    onChange={this.handleChange}
-                                    error={errorSubtraction}
-                                >
+                                    <InputIcon
+                                        name="magic"
+                                        onClick={this.autofill}
+                                        disabled={!this.state.selected.length}
+                                    />
+                                </InputContainer>
+                                <InputError>{errorName}</InputError>
+                            </InputGroup>
+                            <InputGroup>
+                                <InputLabel>Locale</InputLabel>
+                                <Input name="locale" value={this.state.locale} onChange={this.handleChange} />
+                            </InputGroup>
+                            <InputGroup>
+                                <InputLabel>Isolate</InputLabel>
+                                <Input name="isolate" value={this.state.isolate} onChange={this.handleChange} />
+                            </InputGroup>
+                            <InputGroup>
+                                <InputLabel>Default Subtraction</InputLabel>
+                                <Select name="subtractionId" value={subtractionId} onChange={this.handleChange}>
                                     {subtractionComponents}
-                                </InputError>
-                            </Col>
-                        </Row>
+                                </Select>
+                                <InputError>{errorSubtraction}</InputError>
+                            </InputGroup>
 
-                        <Row>
-                            <Col xs={12} sm={6}>
-                                <InputError
-                                    name="srna"
-                                    type="select"
-                                    label="Read Size"
-                                    value={this.state.srna}
-                                    onChange={this.handleChange}
-                                >
-                                    <option value={false}>Normal</option>
-                                    <option value={true}>sRNA</option>
-                                </InputError>
-                            </Col>
+                            <InputGroup>
+                                <InputLabel>Host</InputLabel>
+                                <Input name="host" value={this.state.host} onChange={this.handleChange} />
+                            </InputGroup>
 
-                            {userGroup}
-                            <Col xs={12} sm={6}>
-                                <InputError type="text" label="Library Type" value={libraryType} readOnly={true} />
-                            </Col>
-                        </Row>
+                            <InputGroup>
+                                <InputLabel>Pairedness</InputLabel>
+                                <Input value={pairedness} readOnly={true} />
+                            </InputGroup>
+                        </CreateSampleFields>
+
+                        <LibraryTypeSelection
+                            onSelect={this.handleLibrarySelect}
+                            libraryType={this.state.libraryType}
+                        />
+
+                        {userGroup}
 
                         <ReadSelector
                             files={this.props.readyReads}
@@ -256,43 +252,42 @@ class CreateSample extends React.Component {
                             onSelect={this.handleSelect}
                             error={errorFile}
                         />
-                    </Modal.Body>
+                    </ModalBody>
 
-                    <Modal.Footer>
+                    <ModalFooter>
                         <SaveButton />
-                    </Modal.Footer>
+                    </ModalFooter>
                 </form>
             </Modal>
         );
     }
 }
 
-const mapStateToProps = state => ({
-    defaultSubtraction: getFirstSubtractionId(state),
+export const mapStateToProps = state => ({
     error: get(state, "errors.CREATE_SAMPLE_ERROR.message", ""),
     forceGroupChoice: state.settings.sample_group === "force_choice",
     groups: state.account.groups,
     readyReads: filter(state.samples.readFiles, { reserved: false }),
     show: routerLocationHasState(state, "createSample"),
-    subtractions: getSubtractionIds(state)
+    subtractions: getSubtractionShortlist(state)
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onLoadSubtractionsAndFiles: () => {
-        dispatch(listSubtractionIds());
+        dispatch(shortlistSubtractions());
         dispatch(findReadFiles());
     },
 
-    onCreate: (name, isolate, host, locale, srna, subtraction, files) => {
-        dispatch(createSample(name, isolate, host, locale, srna, subtraction, files));
+    onCreate: (name, isolate, host, locale, libraryType, subtractionId, files) => {
+        dispatch(createSample(name, isolate, host, locale, libraryType, subtractionId, files));
     },
 
     onHide: () => {
         dispatch(pushState({ create: false }));
     },
 
-    onClearError: error => {
-        dispatch(clearError(error));
+    onClearError: () => {
+        dispatch(clearError("CREATE_SAMPLE_ERROR"));
     }
 });
 

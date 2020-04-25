@@ -1,4 +1,4 @@
-import { every, filter, get, some, includes } from "lodash-es";
+import { every, filter, get, includes, some } from "lodash-es";
 import { createSelector } from "reselect";
 import { getTermSelectorFactory } from "../utils/selectors";
 
@@ -33,7 +33,9 @@ export const getCanModifyRights = createSelector(
 );
 
 export const getDefaultSubtraction = state =>
-    get(state, "samples.detail.subtraction.id", get(state, ["subtraction", "ids", 0]));
+    get(state, "samples.detail.subtraction.id", get(state, ["subtraction", "shortlist", 0, "id"]));
+
+export const getMaxReadLength = state => state.samples.detail.quality.length[1];
 
 export const getSampleFiles = state => state.samples.detail.files;
 
@@ -46,13 +48,15 @@ export const getIsReadyToReplace = createSelector(
     (files, jobId) => every(files, "replacement.id") && !jobId
 );
 
-const getStateTerm = state => state.samples.term;
+export const getStateTerm = state => state.samples.term;
 
 export const getTerm = getTermSelectorFactory(getStateTerm);
 
 export const getSampleDetail = state => state.samples.detail;
 
 export const getSampleDetailId = state => get(state, "samples.detail.id");
+
+export const getSampleLibraryType = state => get(state, "samples.detail.library_type");
 
 export const getSampleDocuments = state => state.samples.documents;
 

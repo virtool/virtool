@@ -36,7 +36,6 @@ class Job(virtool.jobs.analysis.Job):
         self._stage_list = [
             self.make_analysis_dir,
             self.prepare_reads,
-            self.prepare_qc,
             self.map_default_isolates,
             self.generate_isolate_fasta,
             self.build_isolate_index,
@@ -113,7 +112,12 @@ class Job(virtool.jobs.analysis.Job):
             # Iterate through each otu id referenced by the hit sequence ids.
             for otu_id in otu_ids:
                 otu_version = self.params["manifest"][otu_id]
-                _, patched, _ = virtool.db.sync.patch_otu_to_version(self.db, otu_id, otu_version)
+                _, patched, _ = virtool.db.sync.patch_otu_to_version(
+                    self.db,
+                    self.settings,
+                    otu_id,
+                    otu_version
+                )
                 for isolate in patched["isolates"]:
                     for sequence in isolate["sequences"]:
                         handle.write(f">{sequence['_id']}\n{sequence['sequence']}\n")
@@ -348,7 +352,7 @@ class Job(virtool.jobs.analysis.Job):
             results
         )
 
-        virtool.db.sync.recalculate_algorithm_tags(self.db, sample_id)
+        virtool.db.sync.recalculate_workflow_tags(self.db, sample_id)
 
         self.dispatch("analyses", "update", [analysis_id])
         self.dispatch("samples", "update", [sample_id])

@@ -64,7 +64,7 @@ async def create_session_id(db: virtool.db.core.DB) -> str:
     """
     session_id = secrets.token_hex(32)
 
-    if await db.sessions.count({"_id": session_id}):
+    if await db.sessions.count_documents({"_id": session_id}):
         return await create_session_id(db)
 
     return session_id

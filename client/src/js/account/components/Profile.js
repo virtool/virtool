@@ -1,11 +1,11 @@
-import React from "react";
-import styled from "styled-components";
 import { map } from "lodash-es";
+import React from "react";
 import { connect } from "react-redux";
+import styled from "styled-components";
 
-import { Flex, FlexItem, Identicon, Icon, Label } from "../../base";
-import ChangePassword from "./Password";
+import { Flex, FlexItem, Icon, Identicon, Label } from "../../base";
 import Email from "./Email";
+import ChangePassword from "./Password";
 
 const AccountProfileLabel = styled(Label)`
     margin-right: 3px;
@@ -34,7 +34,7 @@ export const AccountProfile = ({ id, groups, identicon, administrator }) => {
                 <FlexItem pad={10}>
                     <h5>
                         <strong>
-                            {id} {administrator ? <Icon name="user-shield" bsStyle="primary" /> : null}
+                            {id} {administrator ? <Icon name="user-shield" color="blue" /> : null}
                         </strong>
                     </h5>
                     <div>

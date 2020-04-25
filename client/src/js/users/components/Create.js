@@ -1,37 +1,30 @@
 import { get, pick } from "lodash-es";
 import React from "react";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
-
-import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import { Checkbox, device, InputError, SaveButton } from "../../base";
+import {
+    Checkbox,
+    Input,
+    InputError,
+    InputGroup,
+    InputLabel,
+    Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader,
+    PasswordInput,
+    SaveButton
+} from "../../base";
 import { clearError } from "../../errors/actions";
 import { getTargetChange, routerLocationHasState } from "../../utils/utils";
 import { createUser } from "../actions";
 
-const CreateUserContainer = styled.div`
-    margin: 15px;
-`;
-
-const CreateUserPasswords = styled.div`
-    display: grid;
-    grid-gap: 15px;
-    grid-template-columns: 1fr;
-
-    @media (min-width: ${device.desktop}) {
-        grid-template-columns: 1fr 1fr;
-    }
-`;
-
 const getInitialState = () => ({
     userId: "",
     password: "",
-    confirm: "",
     forceReset: false,
     errorUserId: "",
-    errorPassword: "",
-    errorConfirm: ""
+    errorPassword: ""
 });
 
 export class CreateUser extends React.PureComponent {
@@ -53,14 +46,14 @@ export class CreateUser extends React.PureComponent {
         this.setState({ [name]: value, [error]: "" });
 
         if (this.props.error) {
-            this.props.onClearError("CREATE_USER_ERROR");
+            this.props.onClearError();
         }
     };
 
     handleModalExited = () => {
         this.setState(getInitialState());
         if (this.props.error) {
-            this.props.onClearError("CREATE_USER_ERROR");
+            this.props.onClearError();
         }
     };
 
@@ -74,6 +67,7 @@ export class CreateUser extends React.PureComponent {
         e.preventDefault();
 
         let hasError = false;
+
         if (!this.state.userId) {
             hasError = true;
             this.setState({ errorUserId: "Please specify a username" });
@@ -86,11 +80,6 @@ export class CreateUser extends React.PureComponent {
             });
         }
 
-        if (this.state.confirm !== this.state.password) {
-            hasError = true;
-            this.setState({ errorConfirm: "Passwords do not match" });
-        }
-
         if (!hasError) {
             this.props.onCreate(pick(this.state, ["userId", "password", "confirm", "forceReset"]));
         }
@@ -98,49 +87,36 @@ export class CreateUser extends React.PureComponent {
 
     render() {
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Create User
-                </Modal.Header>
+            <Modal
+                label="Create User"
+                show={this.props.show}
+                onHide={this.props.onHide}
+                onExited={this.handleModalExited}
+            >
+                <ModalHeader>Create User</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <CreateUserContainer>
-                        <InputError
-                            label="Username"
-                            name="userId"
-                            value={this.state.userId}
-                            onChange={this.handleChange}
-                            error={this.state.errorUserId}
-                        />
-
-                        <CreateUserPasswords>
-                            <InputError
-                                type="password"
-                                label="Password"
-                                name="password"
-                                value={this.state.password}
-                                onChange={this.handleChange}
-                                error={this.state.errorPassword}
-                            />
-                            <InputError
-                                type="password"
-                                label="Confirm"
-                                name="confirm"
-                                value={this.state.confirm}
-                                onChange={this.handleChange}
-                                error={this.state.errorConfirm}
-                            />
-                        </CreateUserPasswords>
+                    <ModalBody>
+                        <InputGroup>
+                            <InputLabel>Username</InputLabel>
+                            <Input name="userId" value={this.state.userId} onChange={this.handleChange} />
+                            <InputError>{this.state.errorUserId}</InputError>
+                        </InputGroup>
+                        <InputGroup>
+                            <InputLabel>Password</InputLabel>
+                            <PasswordInput name="password" value={this.state.password} onChange={this.handleChange} />
+                            <InputError>{this.state.errorPassword}</InputError>
+                        </InputGroup>
 
                         <Checkbox
                             label="Force user to reset password on login"
                             checked={this.state.forceReset}
                             onClick={this.handleToggleForceReset}
                         />
-                    </CreateUserContainer>
+                    </ModalBody>
 
-                    <Modal.Footer>
-                        <SaveButton pullRight />
-                    </Modal.Footer>
+                    <ModalFooter>
+                        <SaveButton />
+                    </ModalFooter>
                 </form>
             </Modal>
         );
@@ -163,8 +139,8 @@ export const mapDispatchToProps = dispatch => ({
         dispatch(pushState({ createUser: false }));
     },
 
-    onClearError: error => {
-        dispatch(clearError(error));
+    onClearError: () => {
+        dispatch(clearError("CREATE_USER_ERROR"));
     }
 });
 

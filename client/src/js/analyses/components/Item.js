@@ -37,7 +37,6 @@ const AnalysisItemContent = styled.div`
 
 export const AnalysisItem = props => {
     const {
-        algorithm,
         canModify,
         created_at,
         id,
@@ -47,6 +46,7 @@ export const AnalysisItem = props => {
         sampleId,
         subtraction,
         user,
+        workflow,
         onRemove
     } = props;
 
@@ -54,7 +54,7 @@ export const AnalysisItem = props => {
         <StyledAnalysisItem>
             <LinkBoxTop>
                 <Link to={`/samples/${sampleId}/analyses/${id}`}>
-                    <strong>{getTaskDisplayName(algorithm)}</strong>
+                    <strong>{getTaskDisplayName(workflow)}</strong>
                 </Link>
                 <AnalysisItemRightIcon canModify={canModify} onRemove={onRemove} ready={ready} />
             </LinkBoxTop>
@@ -70,7 +70,7 @@ export const AnalysisItem = props => {
                     </li>
                 </SlashList>
                 <Icon name="not-equal" />
-                <Link to={`/subtraction/${subtraction.id}`}>{subtraction.id}</Link>
+                <Link to={`/subtraction/${subtraction.id}`}>{subtraction.name}</Link>
             </AnalysisItemContent>
         </StyledAnalysisItem>
     );

@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Icon, WarningAlert, RemoveBanner } from "../../base";
+import { Alert, Icon, RemoveBanner } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { purgeHMMs } from "../actions";
 
@@ -16,13 +16,13 @@ export const HMMPurge = ({ canPurge, onPurge }) => {
     }
 
     return (
-        <WarningAlert level>
+        <Alert color="orange" level>
             <Icon name="exclamation-circle" />
             <span>
                 <strong>You do not have permission to modify HMMs.</strong>
                 <span> Contact an administrator.</span>
             </span>
-        </WarningAlert>
+        </Alert>
     );
 };
 

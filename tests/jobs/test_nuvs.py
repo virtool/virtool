@@ -81,7 +81,6 @@ def test_make_analysis_dir(exists, mock_job):
 
 
 def test_map_otus(mock_job):
-
     os.mkdir(mock_job.params["analysis_path"])
 
     mock_job.eliminate_otus()
@@ -161,7 +160,7 @@ def test_assemble(is_paired, mock_job):
     os.mkdir(mock_job.params["analysis_path"])
 
     mock_job.params["paired"] = is_paired
-    mock_job.params["srna"] = False
+    mock_job.params["library_type"] = "normal"
 
     mock_job.proc = 2
     mock_job.mem = 10
@@ -333,7 +332,7 @@ def test_vfam(mock_job, dbs):
 
 def test_import_results(mock_job, dbs):
     """
-    Test that the stage method saves the result list to the analysis database document and updated the algorithm tags on
+    Test that the stage method saves the result list to the analysis database document and updated the workflow tags on
     the associated sample document.
 
     """
@@ -346,7 +345,7 @@ def test_import_results(mock_job, dbs):
     dbs.analyses.insert_one({
         "_id": "baz",
         "ready": False,
-        "algorithm": "nuvs",
+        "workflow": "nuvs",
         "sample": {
             "id": "foobar"
         }
@@ -405,7 +404,7 @@ def test_import_results(mock_job, dbs):
     assert dbs.analyses.find_one() == {
         "_id": "baz",
         "ready": True,
-        "algorithm": "nuvs",
+        "workflow": "nuvs",
         "sample": {
             "id": "foobar"
         },

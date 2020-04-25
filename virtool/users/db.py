@@ -180,7 +180,7 @@ async def create(db, user_id, password, force_reset=True):
             "skip_quick_analyze_dialog": True,
             "show_ids": True,
             "show_versions": True,
-            "quick_analyze_algorithm": "pathoscope_bowtie"
+            "quick_analyze_workflow": "pathoscope_bowtie"
         },
         "identicon": virtool.users.utils.calculate_identicon(user_id),
         "permissions": virtool.users.utils.generate_base_permissions(),
@@ -241,7 +241,7 @@ async def edit(db, user_id, administrator=None, force_reset=None, groups=None, p
 
 
 async def is_member_of_group(db, user_id, group_id):
-    return bool(await db.users.count({"_id": user_id, "groups": group_id}))
+    return bool(await db.users.count_documents({"_id": user_id, "groups": group_id}))
 
 
 async def validate_credentials(db, user_id, password):

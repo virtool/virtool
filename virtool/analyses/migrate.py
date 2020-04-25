@@ -7,23 +7,27 @@ import re
 import aiofiles
 
 import virtool.analyses.utils
+import virtool.api.utils
 import virtool.db.core
 import virtool.db.migrate
 
 RE_JSON_FILENAME = re.compile("(pathoscope.json|nuvs.json)$")
 
 
-async def migrate_analyses(db: virtool.db.core.DB, settings: dict):
+async def migrate_analyses(app):
     """
     Delete unready analyses. Rename the `diagnosis` field in Pathoscope documents to `results`.
 
-    This maintains consistency with NuVs documents and simplifies code reuse for processing analysis documents of
-    different algorithm types.
+    This maintains consistency with NuVs documents and simplifies code reuse for processing analysis documents with
+     different workflows.
 
-    :param db: the application database
-    :param settings: the application settings
+    :param app: the application object
 
     """
+    db = app["db"]
+    settings = app["settings"]
+
+    await rename_algorithm_field(db)
     await rename_results_field(db)
     await convert_pathoscope_files(db, settings)
     await rename_analysis_json_files(settings)
@@ -39,7 +43,7 @@ async def add_subtractions_to_analyses(db):
     :return:
     """
     # Return early if all analyses have subtraction fields.
-    if await db.analyses.count({"subtraction": {"$exists": False}}) == 0:
+    if await db.analyses.count_documents({"subtraction": {"$exists": False}}) == 0:
         return
 
     pipeline = [
@@ -100,11 +104,10 @@ async def convert_pathoscope_files(db, settings):
 
     :param db:
     :param settings:
-    :return:
 
     """
     query = {
-        "algorithm": "pathoscope_bowtie",
+        "workflow": "pathoscope_bowtie",
         "results": "file",
         "read_count": {
             "$exists": False
@@ -118,6 +121,16 @@ async def convert_pathoscope_files(db, settings):
             document["sample"]["id"],
             settings["data_path"]
         )
+
+
+async def rename_algorithm_field(db):
+    query = virtool.api.utils.compose_exists_query("algorithm")
+
+    await db.analyses.update_many(query, {
+        "$rename": {
+            "algorithm": "workflow"
+        }
+    })
 
 
 async def rename_analysis_json_files(settings: dict):
@@ -142,7 +155,7 @@ async def rename_analysis_json_files(settings: dict):
 
 
 async def rename_results_field(db):
-    await db.analyses.update_many({"algorithm": "pathoscope_bowtie"}, {
+    await db.analyses.update_many({"workflow": "pathoscope_bowtie"}, {
         "$rename": {
             "diagnosis": "results"
         }

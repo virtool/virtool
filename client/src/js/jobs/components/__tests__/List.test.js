@@ -30,14 +30,14 @@ describe("<JobsList />", () => {
         expect(props.onLoadNextPage).toHaveBeenCalledWith("foo", 1);
     });
 
-    it("should render when [this.props.documents === null]", () => {
+    it("should render when [this.props.documents=null]", () => {
         props.documents = null;
         const wrapper = shallow(<JobsList {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render when [this.props.documents.length === false]", () => {
-        props.documents = {};
+    it("should render when [this.props.documents.length=0]", () => {
+        props.documents = [];
         const wrapper = shallow(<JobsList {...props} />);
         expect(wrapper).toMatchSnapshot();
     });

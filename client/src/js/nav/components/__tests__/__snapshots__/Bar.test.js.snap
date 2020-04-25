@@ -1,9 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Bar /> should render 1`] = `
-<Bar__NavBar
-  className="vt-header"
->
+<Bar__NavBar>
   <Bar__NavBarLeft>
     <Bar__BarLogo />
     <Bar__NavBarItem
@@ -49,11 +47,15 @@ exports[`<Bar /> should render 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="comments"
-        pullRight={false}
       />
     </Bar__NavBarItem>
     <Bar__NavBarItem
       rel="noopener noreferrer"
+      style={
+        Object {
+          "paddingLeft": 0,
+        }
+      }
       target="_blank"
       to="//virtool.ca/docs/manual"
     >
@@ -61,60 +63,34 @@ exports[`<Bar /> should render 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="book"
-        pullRight={false}
       />
     </Bar__NavBarItem>
-    <DropDown
-      menuName={
-        <span>
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="user"
-            pullRight={false}
-          />
-           
-          foo
-           
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="caret-down"
-            pullRight={false}
-          />
-        </span>
-      }
+    <NavDropdown
+      userId="foo"
     >
-      <DropDown__DropDownItem
+      <DropdownItem
         to="/account"
       >
         Account
-      </DropDown__DropDownItem>
-      <DropDown__DropDownItem
+      </DropdownItem>
+      <DropdownItem
         to="/administration"
       >
         Administration 
-      </DropDown__DropDownItem>
-      <DropDown__DropDownItem
+      </DropdownItem>
+      <DropdownItem
         rel="noopener noreferrer"
         target="_blank"
         to="//gitreports.com/issue/virtool/virtool"
       >
         Report Issue
-      </DropDown__DropDownItem>
-      <DropDown__DropDownItem
+      </DropdownItem>
+      <DropdownItem
         onClick={[MockFunction]}
-        to="#"
       >
         Logout
-      </DropDown__DropDownItem>
-    </DropDown>
-    <AutoProgressBar
-      active={false}
-      affixed={true}
-      interval={80}
-      step={50}
-    />
+      </DropdownItem>
+    </NavDropdown>
   </Bar__NavBarRight>
 </Bar__NavBar>
 `;

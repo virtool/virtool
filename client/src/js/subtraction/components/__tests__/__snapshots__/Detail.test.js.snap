@@ -1,46 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<SubtractionDetail /> renders correctly 1`] = `
+exports[`<SubtractionDetail /> should not render icons when [canModify=false] 1`] = `
 <div>
   <ViewHeader
-    title="123abc - Subtraction"
+    title="Foo"
   >
-    <Flex
-      alignContent="stretch"
-      alignItems="flex-end"
-      direction="row"
-      justifyContent="flex-start"
-      wrap="nowrap"
-    >
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={0}
-        shrink={0}
-      >
-        <strong>
-          123abc
-        </strong>
-      </FlexItem>
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={1}
-        shrink={0}
-      >
-        <small />
-        <small>
-          <Icon
-            bsStyle="warning"
-            faStyle="fas"
-            fixedWidth={false}
-            name="pencil-alt"
-            onClick={[Function]}
-            pullRight={true}
-          />
-        </small>
-      </FlexItem>
-    </Flex>
+    <ViewHeader__ViewHeaderTitle>
+      Foo
+    </ViewHeader__ViewHeaderTitle>
   </ViewHeader>
   <Table>
     <tbody>
@@ -49,7 +16,7 @@ exports[`<SubtractionDetail /> renders correctly 1`] = `
           Nickname
         </th>
         <td>
-          test-nickname
+          foo-nickname
         </td>
       </tr>
       <tr>
@@ -57,7 +24,7 @@ exports[`<SubtractionDetail /> renders correctly 1`] = `
           File
         </th>
         <td>
-          test-file
+          Foo.fa.gz
         </td>
       </tr>
       <tr>
@@ -79,40 +46,175 @@ exports[`<SubtractionDetail /> renders correctly 1`] = `
           Linked Samples
         </th>
         <td>
-          1
+          2
         </td>
       </tr>
     </tbody>
   </Table>
   <Connect(EditSubtraction)
-    entry={
-      Object {
-        "file": Object {
-          "id": "test-file",
-        },
-        "gc": Object {
-          "a": 0.2,
-          "c": 0.2,
-          "g": 0.2,
-          "n": 0.2,
-          "t": 0.2,
-        },
-        "id": "123abc",
-        "linked_samples": Array [
-          Object {
-            "id": "456def",
-            "name": "test-sample",
-          },
-        ],
-        "nickname": "test-nickname",
-        "ready": true,
-      }
-    }
-    exited={[Function]}
+    onHide={[Function]}
     show={false}
   />
-  <Connect(RemoveSubtraction)
-    id="123abc"
-  />
+  <Connect(RemoveSubtraction) />
 </div>
+`;
+
+exports[`<SubtractionDetail /> should render 1`] = `
+<div>
+  <ViewHeader
+    title="Foo"
+  >
+    <ViewHeader__ViewHeaderTitle>
+      Foo
+      <ViewHeader__ViewHeaderIcons>
+        <Icon
+          color="orange"
+          faStyle="fas"
+          fixedWidth={false}
+          name="pencil-alt"
+          onClick={[Function]}
+        />
+        <Icon
+          color="red"
+          faStyle="fas"
+          fixedWidth={false}
+          name="trash"
+          onClick={[MockFunction]}
+        />
+      </ViewHeader__ViewHeaderIcons>
+    </ViewHeader__ViewHeaderTitle>
+  </ViewHeader>
+  <Table>
+    <tbody>
+      <tr>
+        <th>
+          Nickname
+        </th>
+        <td>
+          foo-nickname
+        </td>
+      </tr>
+      <tr>
+        <th>
+          File
+        </th>
+        <td>
+          Foo.fa.gz
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Sequence Count
+        </th>
+        <td />
+      </tr>
+      <tr>
+        <th>
+          GC Estimate
+        </th>
+        <td>
+          0.400
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Linked Samples
+        </th>
+        <td>
+          2
+        </td>
+      </tr>
+    </tbody>
+  </Table>
+  <Connect(EditSubtraction)
+    onHide={[Function]}
+    show={false}
+  />
+  <Connect(RemoveSubtraction) />
+</div>
+`;
+
+exports[`<SubtractionDetail /> should render file id when name not defined 1`] = `
+<div>
+  <ViewHeader
+    title="Foo"
+  >
+    <ViewHeader__ViewHeaderTitle>
+      Foo
+      <ViewHeader__ViewHeaderIcons>
+        <Icon
+          color="orange"
+          faStyle="fas"
+          fixedWidth={false}
+          name="pencil-alt"
+          onClick={[Function]}
+        />
+        <Icon
+          color="red"
+          faStyle="fas"
+          fixedWidth={false}
+          name="trash"
+          onClick={[MockFunction]}
+        />
+      </ViewHeader__ViewHeaderIcons>
+    </ViewHeader__ViewHeaderTitle>
+  </ViewHeader>
+  <Table>
+    <tbody>
+      <tr>
+        <th>
+          Nickname
+        </th>
+        <td>
+          foo-nickname
+        </td>
+      </tr>
+      <tr>
+        <th>
+          File
+        </th>
+        <td>
+          123-Foo.fa.gz
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Sequence Count
+        </th>
+        <td />
+      </tr>
+      <tr>
+        <th>
+          GC Estimate
+        </th>
+        <td>
+          0.400
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Linked Samples
+        </th>
+        <td>
+          2
+        </td>
+      </tr>
+    </tbody>
+  </Table>
+  <Connect(EditSubtraction)
+    onHide={[Function]}
+    show={false}
+  />
+  <Connect(RemoveSubtraction) />
+</div>
+`;
+
+exports[`<SubtractionDetail /> should render loading when [detail=null] 1`] = `<LoadingPlaceholder />`;
+
+exports[`<SubtractionDetail /> should render not found on request error 1`] = `<NotFound />`;
+
+exports[`<SubtractionDetail /> should render pending message when subtraction is not ready 1`] = `
+<LoadingPlaceholder
+  message="Subtraction is still being imported"
+/>
 `;

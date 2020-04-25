@@ -1,194 +1,93 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<HMMInstaller /> should render when [this.props.process = undefined] and [this.props.installed = false] 1`] = `
-<Box>
-  <Installer__IconTextButton>
-    <Installer__Icon>
-      <i
-        className="fas fa-info-circle text-primary"
-      />
-    </Installer__Icon>
-    <Installer__TextButton>
-      <p
-        style={
-          Object {
-            "fontSize": "22px",
-            "margin": "0 0 3px",
-          }
-        }
+<Installer__StyledHMMInstaller>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="info-circle"
+  />
+  <div>
+    <h3>
+      No HMM data available.
+    </h3>
+    <p>
+      You can download and install the official HMM data automatically from our
+      <ExternalLink
+        href="https://github.com/virtool/virtool-hmm"
       >
-        No HMM data available.
-      </p>
-      <p
-        className="text-muted"
-      >
-        You can download and install the offical HMM data automatically from our
-        <a
-          href="https://github.com/virtool/virtool-hmm"
-        >
-           GitHub repository
-        </a>
-        .
-      </p>
-      <Installer__Button>
-        <Alert__WarningAlert
-          level={true}
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="exclamation-circle"
-            pullRight={false}
-          />
-          <span>
-            <strong>
-              You do not have permission to install HMMs.
-            </strong>
-            <span>
-               Contact an administrator.
-            </span>
-          </span>
-        </Alert__WarningAlert>
-      </Installer__Button>
-    </Installer__TextButton>
-  </Installer__IconTextButton>
-</Box>
+         GitHub repository
+      </ExternalLink>
+      .
+    </p>
+    <Connect(InstallOption) />
+  </div>
+</Installer__StyledHMMInstaller>
 `;
 
 exports[`<HMMInstaller /> should render when [this.props.process = undefined] and [this.props.installed = true] 1`] = `
-<Box>
-  <Installer__IconTextButton>
-    <Installer__Icon>
-      <i
-        className="fas fa-info-circle text-primary"
-      />
-    </Installer__Icon>
-    <Installer__TextButton>
-      <p
-        style={
-          Object {
-            "fontSize": "22px",
-            "margin": "0 0 3px",
-          }
-        }
+<Installer__StyledHMMInstaller>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="info-circle"
+  />
+  <div>
+    <h3>
+      No HMM data available.
+    </h3>
+    <p>
+      You can download and install the official HMM data automatically from our
+      <ExternalLink
+        href="https://github.com/virtool/virtool-hmm"
       >
-        No HMM data available.
-      </p>
-      <p
-        className="text-muted"
-      >
-        You can download and install the offical HMM data automatically from our
-        <a
-          href="https://github.com/virtool/virtool-hmm"
-        >
-           GitHub repository
-        </a>
-        .
-      </p>
-      <Installer__Button>
-        <Alert__WarningAlert
-          level={true}
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="exclamation-circle"
-            pullRight={false}
-          />
-          <span>
-            <strong>
-              You do not have permission to install HMMs.
-            </strong>
-            <span>
-               Contact an administrator.
-            </span>
-          </span>
-        </Alert__WarningAlert>
-      </Installer__Button>
-    </Installer__TextButton>
-  </Installer__IconTextButton>
-</Box>
+         GitHub repository
+      </ExternalLink>
+      .
+    </p>
+    <Connect(InstallOption) />
+  </div>
+</Installer__StyledHMMInstaller>
 `;
 
 exports[`<HMMInstaller /> should render when [this.props.process exsists] and [this.props.installed=false] 1`] = `
-<Box>
-  <Installer__LoadingBar>
-    <Installer__LoadingText>
+<Installer__HMMInstalling>
+  <ProgressBar__AffixedProgressBar
+    color="blue"
+    now={NaN}
+  />
+  <div>
+    <h3>
       Installing
-    </Installer__LoadingText>
-    <ProgressBar
-      active={false}
-      bsClass="progress-bar"
-      bsStyle="warning"
-      isChild={false}
-      max={100}
-      min={0}
-      now={NaN}
-      srOnly={false}
-      striped={false}
-    />
-    <Installer__LoadingText>
-      <small
-        className="text-muted text-capitalize"
-      >
-        bar
-      </small>
-    </Installer__LoadingText>
-  </Installer__LoadingBar>
-</Box>
+    </h3>
+    <p>
+      bar
+    </p>
+  </div>
+</Installer__HMMInstalling>
 `;
 
 exports[`<HMMInstaller /> should render when [this.props.process exsists] and [this.props.installed=true] 1`] = `
-<Box>
-  <Installer__IconTextButton>
-    <Installer__Icon>
-      <i
-        className="fas fa-info-circle text-primary"
-      />
-    </Installer__Icon>
-    <Installer__TextButton>
-      <p
-        style={
-          Object {
-            "fontSize": "22px",
-            "margin": "0 0 3px",
-          }
-        }
+<Installer__StyledHMMInstaller>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="info-circle"
+  />
+  <div>
+    <h3>
+      No HMM data available.
+    </h3>
+    <p>
+      You can download and install the official HMM data automatically from our
+      <ExternalLink
+        href="https://github.com/virtool/virtool-hmm"
       >
-        No HMM data available.
-      </p>
-      <p
-        className="text-muted"
-      >
-        You can download and install the offical HMM data automatically from our
-        <a
-          href="https://github.com/virtool/virtool-hmm"
-        >
-           GitHub repository
-        </a>
-        .
-      </p>
-      <Installer__Button>
-        <Alert__WarningAlert
-          level={true}
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="exclamation-circle"
-            pullRight={false}
-          />
-          <span>
-            <strong>
-              You do not have permission to install HMMs.
-            </strong>
-            <span>
-               Contact an administrator.
-            </span>
-          </span>
-        </Alert__WarningAlert>
-      </Installer__Button>
-    </Installer__TextButton>
-  </Installer__IconTextButton>
-</Box>
+         GitHub repository
+      </ExternalLink>
+      .
+    </p>
+    <Connect(InstallOption) />
+  </div>
+</Installer__StyledHMMInstaller>
 `;

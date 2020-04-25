@@ -82,13 +82,13 @@ export const getSample = sampleId => ({
  * @param files {object} file ids of one or two files
  * @returns {object}
  */
-export const createSample = (name, isolate, host, locale, srna, subtraction, files) => ({
+export const createSample = (name, isolate, host, locale, libraryType, subtraction, files) => ({
     type: CREATE_SAMPLE.REQUESTED,
     name,
     isolate,
     host,
     locale,
-    srna,
+    libraryType,
     subtraction,
     files
 });

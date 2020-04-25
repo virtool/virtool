@@ -1,0 +1,26 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SampleUserGroup should render 1`] = `
+<InputGroup>
+  <Input__InputLabel>
+    User Group
+  </Input__InputLabel>
+  <Select
+    onChange={[MockFunction]}
+    value="bar"
+  >
+    <option
+      key="none"
+      value="none"
+    >
+      None
+    </option>
+    <UserGroup__SampleUserGroupItem
+      key="foo"
+      value="foo"
+    >
+      foo
+    </UserGroup__SampleUserGroupItem>
+  </Select>
+</InputGroup>
+`;

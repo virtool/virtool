@@ -1,15 +1,13 @@
-import React from "react";
 import { get, map, sortBy } from "lodash-es";
+import React from "react";
 import { connect } from "react-redux";
-import { routerLocationHasState } from "../../utils/utils";
-
-import { findAnalyses } from "../actions";
+import { NoneFoundBox } from "../../base/index";
 import { getCanModify } from "../../samples/selectors";
-import { NoneFound } from "../../base/index";
+import { routerLocationHasState } from "../../utils/utils";
 import CreateAnalysis from "./Create/Create";
+import AnalysisHMMAlert from "./HMMAlert";
 import AnalysisItem from "./Item";
 import AnalysesToolbar from "./Toolbar";
-import AnalysisHMMAlert from "./HMMAlert";
 
 export class AnalysesList extends React.Component {
     constructor(props) {
@@ -19,27 +17,24 @@ export class AnalysesList extends React.Component {
         };
     }
 
-    handleFind = e => {
-        this.props.onFind(this.props.sampleId, e.target.value);
-    };
-
     render() {
         // The content that will be shown below the "New Analysis" form.
         let listContent;
 
         if (this.props.analyses.length) {
             // The components that detail individual analyses.
-            listContent = map(sortBy(this.props.analyses, "created_at").reverse(), (document, index) => (
-                <AnalysisItem key={index} {...document} />
+            listContent = map(sortBy(this.props.analyses, "created_at").reverse(), document => (
+                <AnalysisItem key={document.id} {...document} />
             ));
         } else {
-            listContent = <NoneFound noun="analyses" noListGroup />;
+            listContent = <NoneFoundBox noun="analyses" />;
         }
 
         return (
             <div>
                 <AnalysisHMMAlert />
                 <AnalysesToolbar />
+
                 {listContent}
 
                 <CreateAnalysis
@@ -67,10 +62,4 @@ const mapStateToProps = state => ({
     canModify: getCanModify(state)
 });
 
-const mapDispatchToProps = dispatch => ({
-    onFind: (sampleId, term, page) => {
-        dispatch(findAnalyses(sampleId, term, page));
-    }
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(AnalysesList);
+export default connect(mapStateToProps)(AnalysesList);

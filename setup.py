@@ -14,16 +14,15 @@ build_exe_options = {
         "templates",
         "readme.md"
     ],
+    "includes": [
+        "asyncio.base_events"
+    ],
     "packages": [
-        "appdirs",
         "asyncio",
-        "bcrypt",
-        "cffi",
         "idna",
         "gzip",
         "motor",
         "numpy",
-        "packaging",
         "uvloop",
         "ssl"
     ]

@@ -1,22 +1,17 @@
 import React, { useCallback } from "react";
 import styled from "styled-components";
-import { Checkbox, ListGroupItem, BoxGroupSection } from "../../../base";
+import { Checkbox, BoxGroupSection, Label } from "../../../base";
 
-const Label = styled(BoxGroupSection)`
-    margin-left: 3px;
-`;
-const StyledIndexSelectorItem = styled(ListGroupItem)`
+const StyledIndexSelectorItem = styled(BoxGroupSection)`
     align-items: center;
     display: flex;
-    justify-content: space-between;
-
-    span {
-        align-items: center;
-        display: flex;
-    }
 
     strong {
         margin-left: 8px;
+    }
+
+    > span:last-child {
+        margin-left: auto;
     }
 `;
 
@@ -25,10 +20,8 @@ export const IndexSelectorItem = ({ id, reference, isSelected, version, onSelect
 
     return (
         <StyledIndexSelectorItem onClick={handleClick}>
-            <span>
-                <Checkbox checked={isSelected} />
-                <strong>{reference.name}</strong>
-            </span>
+            <Checkbox checked={isSelected} />
+            <strong>{reference.name}</strong>
             <span>
                 Index Version <Label>{version}</Label>
             </span>

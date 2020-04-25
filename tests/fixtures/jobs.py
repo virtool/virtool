@@ -16,7 +16,7 @@ def test_job(static_time):
             "username": "igboyes",
             "sample_id": "1e01a382",
             "analysis_id": "e410429b",
-            "algorithm": "nuvs",
+            "workflow": "nuvs",
             "index_id": "465428b0"
         },
         "status": [

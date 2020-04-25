@@ -1,11 +1,11 @@
 import React from "react";
 import { connect } from "react-redux";
-import { LoadingPlaceholder, ScrollList, NoneFound, ViewHeader } from "../../base";
-import { findJobs } from "../actions";
+import { Badge, LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader, ViewHeaderTitle } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
+import { findJobs } from "../actions";
 import { getTerm } from "../selectors";
-import JobsToolbar from "./Toolbar";
 import Job from "./Item/Item";
+import JobsToolbar from "./Toolbar";
 
 export class JobsList extends React.Component {
     componentDidMount() {
@@ -24,19 +24,23 @@ export class JobsList extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        let noJobs;
+        let noneFound;
 
         if (!this.props.documents.length) {
-            noJobs = <NoneFound noun="jobs" noListGroup />;
+            noneFound = <NoneFoundBox noun="jobs" />;
         }
 
         return (
             <div>
-                <ViewHeader title="Jobs" totalCount={this.props.total_count} />
+                <ViewHeader title="Jobs">
+                    <ViewHeaderTitle>
+                        Jobs <Badge>{this.props.total_count}</Badge>
+                    </ViewHeaderTitle>
+                </ViewHeader>
 
                 <JobsToolbar />
 
-                {noJobs}
+                {noneFound}
 
                 <ScrollList
                     documents={this.props.documents}

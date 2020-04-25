@@ -2,7 +2,16 @@ import { capitalize, includes, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 
-import { BoxGroup, BoxGroupHeader, BoxGroupSection, Input, LoadingPlaceholder, Panel } from "../../base";
+import {
+    Box,
+    BoxGroup,
+    BoxGroupHeader,
+    BoxGroupSection,
+    InputGroup,
+    InputLabel,
+    LoadingPlaceholder,
+    Select
+} from "../../base";
 import { listGroups } from "../../groups/actions";
 import { updateSampleRights } from "../actions";
 import { getCanModifyRights } from "../selectors";
@@ -29,17 +38,13 @@ export class SampleRights extends React.Component {
         }
 
         if (!this.props.canModifyRights) {
-            return (
-                <Panel>
-                    <Panel.Body>Not allowed</Panel.Body>
-                </Panel>
-            );
+            return <Box>Not allowed</Box>;
         }
 
         const groupRights = this.getValueGroupRights();
         const allRights = this.getValueAllRights();
 
-        const nameOptionComponents = map(this.props.groups, group => (
+        const groupOptionComponents = map(this.props.groups, group => (
             <option key={group.id} value={group.id}>
                 {capitalize(group.id)}
             </option>
@@ -52,34 +57,40 @@ export class SampleRights extends React.Component {
                     <p>Control who can read and write this sample and which user group owns the sample.</p>
                 </BoxGroupHeader>
                 <BoxGroupSection>
-                    <Input type="select" label="Group" value={this.props.group} onChange={this.handleChangeGroup}>
-                        <option value="none">None</option>
-                        {nameOptionComponents}
-                    </Input>
+                    <InputGroup>
+                        <InputLabel>Group</InputLabel>
+                        <Select value={this.props.group} onChange={this.handleChangeGroup}>
+                            <option value="none">None</option>
+                            {groupOptionComponents}
+                        </Select>
+                    </InputGroup>
 
-                    <Input
-                        type="select"
-                        name="groupRights"
-                        label="Group Rights"
-                        value={groupRights}
-                        onChange={e => this.handleChangeRights(e, "group")}
-                    >
-                        <option value="">None</option>
-                        <option value="r">Read</option>
-                        <option value="rw">Read & write</option>
-                    </Input>
+                    <InputGroup>
+                        <InputLabel>Group Rights</InputLabel>
+                        <Select
+                            name="groupRights"
+                            value={groupRights}
+                            onChange={e => this.handleChangeRights(e, "group")}
+                        >
+                            <option value="">None</option>
+                            <option value="r">Read</option>
+                            <option value="rw">Read & write</option>
+                        </Select>
+                    </InputGroup>
 
-                    <Input
-                        type="select"
-                        name="allUsers"
-                        label="All Users' Rights"
-                        value={allRights}
-                        onChange={e => this.handleChangeRights(e, "all")}
-                    >
-                        <option value="">None</option>
-                        <option value="r">Read</option>
-                        <option value="rw">Read & write</option>
-                    </Input>
+                    <InputGroup>
+                        <InputLabel>All Users' Rights</InputLabel>
+                        <Select
+                            name="allUsers"
+                            label="All Users' Rights"
+                            value={allRights}
+                            onChange={e => this.handleChangeRights(e, "all")}
+                        >
+                            <option value="">None</option>
+                            <option value="r">Read</option>
+                            <option value="rw">Read & write</option>
+                        </Select>
+                    </InputGroup>
                 </BoxGroupSection>
             </BoxGroup>
         );

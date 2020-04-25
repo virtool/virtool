@@ -26,7 +26,7 @@ describe("<Remove />", () => {
     });
 
     it("calls onConfirm() with id when confirmed", () => {
-        const wrapper = mount(<RemoveSample {...props} />);
+        const wrapper = shallow(<RemoveSample {...props} />);
         wrapper
             .find(RemoveModal)
             .props()
@@ -35,7 +35,7 @@ describe("<Remove />", () => {
     });
 
     it("calls onHide() when RemoveModal.onHide() is called", () => {
-        const wrapper = mount(<RemoveSample {...props} />);
+        const wrapper = shallow(<RemoveSample {...props} />);
         wrapper
             .find(RemoveModal)
             .props()

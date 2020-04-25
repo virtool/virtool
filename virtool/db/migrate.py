@@ -7,7 +7,10 @@ import virtool.caches.migrate
 import virtool.db.utils
 import virtool.jobs.db
 import virtool.otus.utils
+import virtool.references.migrate
 import virtool.samples.migrate
+import virtool.subtractions.migrate
+import virtool.users.migrate
 import virtool.users.utils
 import virtool.utils
 
@@ -22,15 +25,17 @@ async def migrate(app):
     db = app["db"]
 
     logger.info(" • analyses")
-    await virtool.analyses.migrate.migrate_analyses(db, app["settings"])
+    await virtool.analyses.migrate.migrate_analyses(app)
     await virtool.caches.migrate.migrate_caches(app)
     await migrate_files(db)
     await migrate_groups(db)
     await migrate_jobs(db)
     await migrate_sessions(db)
     await migrate_status(db, app["version"])
-    await migrate_subtraction(db)
     await virtool.samples.migrate.migrate_samples(app)
+    await virtool.references.migrate.migrate_references(app)
+    await virtool.subtractions.migrate.migrate_subtractions(app)
+    await virtool.users.migrate.migrate_users(app)
 
 
 async def migrate_files(db):
@@ -74,7 +79,6 @@ async def migrate_groups(db):
 async def migrate_jobs(db):
     logger.info(" • jobs")
     await virtool.jobs.db.delete_zombies(db)
-
 
 
 async def migrate_sessions(db):
@@ -124,14 +128,9 @@ async def migrate_status(db, server_version):
             "release": None
         })
     except pymongo.errors.DuplicateKeyError:
-        if await db.hmm.count():
+        if await db.hmm.count_documents({}):
             await db.status.update_one({"_id": "hmm", "installed": {"$exists": False}}, {
                 "$set": {
                     "installed": None
                 }
             })
-
-
-async def migrate_subtraction(db):
-    logger.info(" • subtraction")
-    await delete_unready(db.subtraction)

@@ -1,0 +1,35 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<IndexSelectorItem /> should render 1`] = `
+<IndexSelectorItem__StyledIndexSelectorItem
+  onClick={[Function]}
+>
+  <Checkbox
+    checked={true}
+  />
+  <strong>
+    bar
+  </strong>
+  <span>
+    Index Version 
+    <Label />
+  </span>
+</IndexSelectorItem__StyledIndexSelectorItem>
+`;
+
+exports[`<IndexSelectorItem /> should render when [isSelected = false] 1`] = `
+<IndexSelectorItem__StyledIndexSelectorItem
+  onClick={[Function]}
+>
+  <Checkbox
+    checked={false}
+  />
+  <strong>
+    bar
+  </strong>
+  <span>
+    Index Version 
+    <Label />
+  </span>
+</IndexSelectorItem__StyledIndexSelectorItem>
+`;

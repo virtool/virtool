@@ -1,9 +1,7 @@
 import { get } from "lodash-es";
 import React from "react";
-import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
-import { Button, Icon, LoadingPlaceholder, WarningAlert } from "../../base";
+import { Alert, Icon, LinkButton, LoadingPlaceholder, SearchInput, Toolbar } from "../../base";
 import { clearError } from "../../errors/actions";
 import { listGroups } from "../../groups/actions";
 import Groups from "../../groups/components/Groups";
@@ -42,13 +40,13 @@ export class ManageUsers extends React.Component {
     render() {
         if (this.state.error.length) {
             return (
-                <WarningAlert>
+                <Alert color="orange" level>
                     <Icon name="exclamation-circle" />
                     <span>
                         <strong>You do not have permission to manage users.</strong>
                         <span> Contact an administrator.</span>
                     </span>
-                </WarningAlert>
+                </Alert>
             );
         }
 
@@ -58,24 +56,11 @@ export class ManageUsers extends React.Component {
 
         return (
             <div>
-                <div className="toolbar">
-                    <FormGroup>
-                        <InputGroup>
-                            <InputGroup.Addon>
-                                <Icon name="search" />
-                            </InputGroup.Addon>
-                            <FormControl type="text" value={this.state.term} onChange={this.props.onFind} />
-                        </InputGroup>
-                    </FormGroup>
-
-                    <LinkContainer to={{ state: { groups: true } }}>
-                        <Button icon="users" tip="Manage Groups" />
-                    </LinkContainer>
-
-                    <LinkContainer to={{ state: { createUser: true } }}>
-                        <Button bsStyle="primary" icon="user-plus" tip="Create User" />
-                    </LinkContainer>
-                </div>
+                <Toolbar>
+                    <SearchInput name="search" value={this.state.term} onChange={this.props.onFind} />
+                    <LinkButton to={{ state: { groups: true } }} icon="users" tip="Manage Group" />
+                    <LinkButton to={{ state: { createUser: true } }} icon="user-plus" tip="Create User" color="blue" />
+                </Toolbar>
 
                 <UsersList />
 

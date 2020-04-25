@@ -8,11 +8,11 @@ describe("<AnalysisDetail />", () => {
             detail: {
                 id: "foo",
                 created_at: "2019-05-28T19:04:25.201000Z",
-                algorithm: "pathoscope_bowtie",
                 ready: true,
                 user: {
                     id: "bob"
-                }
+                },
+                workflow: "pathoscope_bowtie"
             },
             error: null,
             quality: {
@@ -56,14 +56,14 @@ describe("<AnalysisDetail />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render expected view when [detail.algorithm='nuvs']", () => {
-        props.detail.algorithm = "nuvs";
+    it("should render expected view when workflow is NuVs]", () => {
+        props.detail.workflow = "nuvs";
         const wrapper = shallow(<AnalysisDetail {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render error when detail.algorithm is invalid]", () => {
-        props.detail.algorithm = "baz";
+    it("should render error when workflow is invalid]", () => {
+        props.detail.workflow = "baz";
         const wrapper = shallow(<AnalysisDetail {...props} />);
         expect(wrapper).toMatchSnapshot();
     });

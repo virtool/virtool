@@ -5,61 +5,19 @@ exports[`<APIKey /> should render when [state.changed=true] 1`] = `
   key="123abc"
   onClick={[Function]}
 >
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={4}
-    >
-      <strong>
-        tester
-      </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={4}
-    >
-      <span>
-        1
-         perm
-      </span>
-      <span
-        className="hidden-xs hidden-sm"
-      >
-        ission
-      </span>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={3}
-      smHidden={true}
-      xsHidden={true}
-    >
-      Created 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
-      />
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      lgHidden={true}
-      mdHidden={true}
-      xs={3}
-    >
-      18-12-14
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={1}
+  <Key__APIKeyHeader>
+    <strong>
+      tester
+    </strong>
+    <Attribution
+      time="2018-02-14T17:12:00.000000Z"
     />
-  </Row>
+    <Key__APIKeyPermissions>
+      1
+       permission
+    </Key__APIKeyPermissions>
+    <Key__APIKeyClose />
+  </Key__APIKeyHeader>
 </Box__SpacedBox>
 `;
 
@@ -68,61 +26,19 @@ exports[`<APIKey /> should render when collapsed 1`] = `
   key="123abc"
   onClick={[Function]}
 >
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={4}
-    >
-      <strong>
-        tester
-      </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={4}
-    >
-      <span>
-        1
-         perm
-      </span>
-      <span
-        className="hidden-xs hidden-sm"
-      >
-        ission
-      </span>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={3}
-      smHidden={true}
-      xsHidden={true}
-    >
-      Created 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
-      />
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      lgHidden={true}
-      mdHidden={true}
-      xs={3}
-    >
-      18-12-14
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={1}
+  <Key__APIKeyHeader>
+    <strong>
+      tester
+    </strong>
+    <Attribution
+      time="2018-02-14T17:12:00.000000Z"
     />
-  </Row>
+    <Key__APIKeyPermissions>
+      1
+       permission
+    </Key__APIKeyPermissions>
+    <Key__APIKeyClose />
+  </Key__APIKeyHeader>
 </Box__SpacedBox>
 `;
 
@@ -131,125 +47,59 @@ exports[`<APIKey /> should render when expanded 1`] = `
   key="123abc"
   onClick={null}
 >
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={4}
-    >
-      <strong>
-        tester
-      </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={4}
-    >
-      <span>
-        1
-         perm
-      </span>
-      <span
-        className="hidden-xs hidden-sm"
-      >
-        ission
-      </span>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={3}
-      smHidden={true}
-      xsHidden={true}
-    >
-      Created 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
-      />
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      lgHidden={true}
-      mdHidden={true}
-      xs={3}
-    >
-      18-12-14
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={1}
-    >
-      <button
-        className="close"
+  <Key__APIKeyHeader>
+    <strong>
+      tester
+    </strong>
+    <Attribution
+      time="2018-02-14T17:12:00.000000Z"
+    />
+    <Key__APIKeyPermissions>
+      1
+       permission
+    </Key__APIKeyPermissions>
+    <Key__APIKeyClose>
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="times"
         onClick={[Function]}
+      />
+    </Key__APIKeyClose>
+  </Key__APIKeyHeader>
+  <div>
+    <Key__KeyAPIPermissions
+      keyPermissions={
+        Object {
+          "bar": true,
+          "baz": false,
+          "foo": false,
+        }
+      }
+      onChange={[Function]}
+    />
+    <ButtonToolbar>
+      <Button
+        color="red"
+        disabled={false}
+        icon="trash"
+        onClick={[Function]}
+        tipPlacement="top"
         type="button"
       >
-        <span>
-          ×
-        </span>
-      </button>
-    </Col>
-  </Row>
-  <div>
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={12}
+        Remove
+      </Button>
+      <Button
+        color="blue"
+        disabled={true}
+        icon="save"
+        onClick={[Function]}
+        tipPlacement="top"
+        type="button"
       >
-        <Key__KeyAPIPermissions
-          keyPermissions={
-            Object {
-              "bar": true,
-              "baz": false,
-              "foo": false,
-            }
-          }
-          onChange={[Function]}
-        />
-      </Col>
-    </Row>
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={12}
-      >
-        <ButtonToolbar>
-          <Button
-            bsStyle="danger"
-            icon="trash"
-            onClick={[Function]}
-            pullRight={false}
-            tipPlacement="top"
-          >
-            Remove
-          </Button>
-          <Button
-            bsStyle="primary"
-            disabled={true}
-            icon="save"
-            onClick={[Function]}
-            pullRight={false}
-            tipPlacement="top"
-          >
-            Update
-          </Button>
-        </ButtonToolbar>
-      </Col>
-    </Row>
+        Update
+      </Button>
+    </ButtonToolbar>
   </div>
 </Box__SpacedBox>
 `;

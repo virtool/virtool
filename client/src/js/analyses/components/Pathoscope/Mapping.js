@@ -1,59 +1,31 @@
 import numbro from "numbro";
 import React from "react";
 import { connect } from "react-redux";
-import { ProgressBar } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { Box, Flex, FlexItem, Icon, Label } from "../../../base";
-import { getColor } from "../../../base/utils";
+import { Box, Label } from "../../../base";
 import { toThousand } from "../../../utils/utils";
+import { Bars } from "../Viewer/Bars";
 
-const StyledAnalysisMappingReference = styled.div`
+const StyledAnalysisMappingReferenceTitle = styled.div`
     align-items: center;
     display: flex;
-    flex: 0 0 auto;
-    margin-left: 10px;
 
-    ${Label} {
-        margin-left: 5px;
+    a {
+        margin-right: 5px;
     }
 `;
 
-export const AnalysisMappingReference = ({ index, reference }) => (
-    <StyledAnalysisMappingReference>
+export const AnalysisMappingReferenceTitle = ({ index, reference }) => (
+    <StyledAnalysisMappingReferenceTitle>
         <Link to={`/refs/${reference.id}`}>{reference.name}</Link>
         <Label>{index.version}</Label>
-    </StyledAnalysisMappingReference>
+    </StyledAnalysisMappingReferenceTitle>
 );
 
-const StyledAnalysisMappingSubtraction = styled(Link)`
-    flex: 0 0 auto;
-    margin-left: 10px;
-`;
-
-export const AnalysisMappingSubtraction = ({ subtraction }) => (
-    <StyledAnalysisMappingSubtraction to={`/subtractions/${subtraction.id}`}>
-        {subtraction.id}
-    </StyledAnalysisMappingSubtraction>
+export const AnalysisMappingSubtractionTitle = ({ subtraction }) => (
+    <Link to={`/subtractions/${subtraction.id}`}>{subtraction.name}</Link>
 );
-
-const AnalysisMappingLegendIcon = styled(Icon)`
-    color: ${props => getColor(props.color)};
-    margin-right: 3px;
-`;
-
-const AnalysisMappingLegendLabel = styled.div`
-    align-items: center;
-    display: flex;
-    margin-bottom: 5px;
-    justify-content: space-between;
-    width: 500px;
-`;
-
-const AnalysisMappingLegendCount = styled.div`
-    padding-left: 50px;
-    text-align: right;
-`;
 
 const StyledAnalysisMapping = styled(Box)`
     margin-bottom: 30px;
@@ -61,54 +33,42 @@ const StyledAnalysisMapping = styled(Box)`
     h3 {
         align-items: flex-end;
         display: flex;
+        font-size: ${props => props.theme.fontSize.xl};
+        font-weight: normal;
+        margin: 15px 0 10px;
         justify-content: space-between;
+
+        small {
+            color: ${props => props.theme.color.greyDark};
+            font-size: ${props => props.theme.fontSize.lg};
+            font-weight: 600;
+        }
     }
 `;
 
-const AnalysisMappingLegendIconReference = styled.div`
-    display: flex;
-    align-items: center;
-`;
-
 export const AnalysisMapping = ({ index, reference, subtraction, toReference, total, toSubtraction = 0 }) => {
-    const referencePercent = toReference / total;
-    const subtractionPercent = toSubtraction / total;
     const totalMapped = toReference + toSubtraction;
     const sumPercent = totalMapped / total;
+
+    const referenceTitle = <AnalysisMappingReferenceTitle index={index} reference={reference} />;
+    const subtractionTitle = <AnalysisMappingSubtractionTitle subtraction={subtraction} />;
 
     return (
         <StyledAnalysisMapping>
             <h3>
                 {numbro(sumPercent).format({ output: "percent", mantissa: 2 })} mapped
                 <small>
-                    {toThousand(totalMapped)} / {toThousand(total)}
+                    {toThousand(totalMapped)} of {toThousand(total)} reads
                 </small>
             </h3>
 
-            <ProgressBar>
-                <ProgressBar now={referencePercent * 100} />
-                <ProgressBar bsStyle="warning" now={subtractionPercent * 100} />
-            </ProgressBar>
-
-            <Flex>
-                <FlexItem>
-                    <AnalysisMappingLegendLabel>
-                        <AnalysisMappingLegendIconReference>
-                            <AnalysisMappingLegendIcon name="circle" color="blue" />
-                            <AnalysisMappingReference reference={reference} index={index} />
-                        </AnalysisMappingLegendIconReference>
-                        <AnalysisMappingLegendCount>{toThousand(toReference)}</AnalysisMappingLegendCount>
-                    </AnalysisMappingLegendLabel>
-
-                    <AnalysisMappingLegendLabel>
-                        <AnalysisMappingLegendIconReference>
-                            <AnalysisMappingLegendIcon name="circle" color="yellow" />
-                            <AnalysisMappingSubtraction subtraction={subtraction} />
-                        </AnalysisMappingLegendIconReference>
-                        <AnalysisMappingLegendCount>{toThousand(toSubtraction)}</AnalysisMappingLegendCount>
-                    </AnalysisMappingLegendLabel>
-                </FlexItem>
-            </Flex>
+            <Bars
+                empty={total - totalMapped}
+                items={[
+                    { color: "blue", count: toReference, title: referenceTitle },
+                    { color: "orange", count: toSubtraction, title: subtractionTitle }
+                ]}
+            />
         </StyledAnalysisMapping>
     );
 };

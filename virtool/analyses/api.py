@@ -13,8 +13,9 @@ import virtool.samples.db
 import virtool.errors
 import virtool.http.routes
 import virtool.samples.utils
+import virtool.subtractions.db
 import virtool.utils
-from virtool.api import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
+from virtool.api.response import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -43,6 +44,8 @@ async def get(req):
 
     if not read:
         return insufficient_rights()
+
+    await virtool.subtractions.db.attach_subtraction(db, document)
 
     if document["ready"]:
         document = await virtool.analyses.format.format_analysis(req.app, document)
@@ -86,7 +89,7 @@ async def remove(req):
 
     await req.app["run_in_thread"](virtool.utils.rm, path, True)
 
-    await virtool.samples.db.recalculate_algorithm_tags(db, sample_id)
+    await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
 
     return no_content()
 
@@ -104,12 +107,12 @@ async def blast(req):
     analysis_id = req.match_info["analysis_id"]
     sequence_index = int(req.match_info["sequence_index"])
 
-    document = await db.analyses.find_one({"_id": analysis_id}, ["ready", "algorithm", "results", "sample"])
+    document = await db.analyses.find_one({"_id": analysis_id}, ["ready", "workflow", "results", "sample"])
 
     if not document:
         return not_found("Analysis not found")
 
-    if document["algorithm"] != "nuvs":
+    if document["workflow"] != "nuvs":
         return conflict("Not a NuVs analysis")
 
     if not document["ready"]:

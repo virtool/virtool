@@ -1,7 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<OTUIssues /> renders correctly with issues 1`] = `
-<Issues__StyledOTUIssues>
+<Issues__StyledOTUIssues
+  block={true}
+  color="orange"
+>
   <h5>
     There are some issues that must be resolved before this OTU can be included in the next index build
   </h5>
@@ -57,7 +60,10 @@ exports[`<OTUIssues /> renders correctly with issues 1`] = `
 `;
 
 exports[`<OTUIssues /> renders correctly without issues 1`] = `
-<Issues__StyledOTUIssues>
+<Issues__StyledOTUIssues
+  block={true}
+  color="orange"
+>
   <h5>
     There are some issues that must be resolved before this OTU can be included in the next index build
   </h5>

@@ -1,19 +1,13 @@
 import { map } from "lodash-es";
-import styled from "styled-components";
 import React from "react";
-import { ListGroup } from "react-bootstrap";
-import { Button, Icon } from "../../base";
-import Install from "./Install";
+import styled from "styled-components";
+import { BoxGroupSection, Button, Icon } from "../../base";
 import Release from "./Release";
 
-const ReleasesListHeader = styled.div`
+const ReleasesListHeader = styled(BoxGroupSection)`
     align-items: center;
     display: flex;
     justify-content: space-between;
-`;
-
-const ReleasesListGroup = styled(ListGroup)`
-    margin: 20px 0 !important;
 `;
 
 export const ReleasesList = ({ releases, onShowInstall }) => {
@@ -22,18 +16,15 @@ export const ReleasesList = ({ releases, onShowInstall }) => {
     return (
         <React.Fragment>
             <ReleasesListHeader>
-                <strong className="text-warning">
+                <strong>
                     <Icon name="arrow-alt-circle-up" /> Update
                     {releases.length === 1 ? "" : "s"} Available
                 </strong>
-                <Button icon="download" bsStyle="primary" onClick={onShowInstall}>
+                <Button icon="download" color="blue" onClick={onShowInstall}>
                     Install
                 </Button>
             </ReleasesListHeader>
-
-            <ReleasesListGroup>{releaseComponents}</ReleasesListGroup>
-
-            <Install />
+            {releaseComponents}
         </React.Fragment>
     );
 };

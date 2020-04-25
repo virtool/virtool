@@ -31,7 +31,7 @@ steps:
 services:
   - name: mongo
     image: mongo:3.6
-    command: [ --smallfiles, --nojournal ]
+    command: [--smallfiles, --nojournal]
     ports:
       - 27017
 
@@ -41,14 +41,14 @@ name: client
 
 steps:
   - name: test
-    image: node:10-alpine
+    image: node:12-alpine
     commands:
       - cd client
       - npm i
       - npx jest --coverage
 
   - name: coverage
-    image: node:10-alpine
+    image: node:12-alpine
     environment:
       CODACY_PROJECT_TOKEN:
         from_secret: CODACY_PROJECT_TOKEN
@@ -66,7 +66,7 @@ name: build
 
 steps:
   - name: client
-    image: node:10-jessie
+    image: node:12-stretch
     commands:
       - cd client
       - npm i
@@ -75,7 +75,7 @@ steps:
   - name: server
     image: python:3.6-jessie
     commands:
-      - pip install -qr requirements.txt
+      - pip install -r requirements.txt
       - mkdir gh_build
       - mkdir gh_build/virtool
       - python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'

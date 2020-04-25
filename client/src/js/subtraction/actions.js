@@ -3,11 +3,11 @@ import {
     WS_UPDATE_SUBTRACTION,
     WS_REMOVE_SUBTRACTION,
     GET_SUBTRACTION,
-    UPDATE_SUBTRACTION,
+    EDIT_SUBTRACTION,
     CREATE_SUBTRACTION,
     REMOVE_SUBTRACTION,
     FIND_SUBTRACTIONS,
-    LIST_SUBTRACTION_IDS
+    SHORTLIST_SUBTRACTIONS
 } from "../app/actionTypes";
 
 import { simpleActionCreator } from "../utils/utils";
@@ -33,7 +33,7 @@ export const findSubtractions = (term, page) => ({
     page
 });
 
-export const listSubtractionIds = simpleActionCreator(LIST_SUBTRACTION_IDS.REQUESTED);
+export const shortlistSubtractions = simpleActionCreator(SHORTLIST_SUBTRACTIONS.REQUESTED);
 
 /**
  * Returns action that can trigger an API call to retrieve a subtraction.
@@ -51,15 +51,15 @@ export const getSubtraction = subtractionId => ({
  * Returns action that can trigger an API call to create a new subtraction.
  *
  * @func
- * @param subtractionId {string} unique subtraction id
  * @param fileId {string} the unique id of the host FASTA file
+ * @param name {string} display name for the subtraction
  * @param nickname {string} common or nickname for the subtraction host
  * @returns {object}
  */
-export const createSubtraction = (subtractionId, fileId, nickname) => ({
+export const createSubtraction = (fileId, name, nickname) => ({
     type: CREATE_SUBTRACTION.REQUESTED,
-    subtractionId,
     fileId,
+    name,
     nickname
 });
 
@@ -68,12 +68,14 @@ export const createSubtraction = (subtractionId, fileId, nickname) => ({
  *
  * @func
  * @param subtractionId {string} unique subtraction id
+ * @param name {string} a new name for the host
  * @param nickname {string} common or nickname for the subtraction host
  * @returns {object}
  */
-export const updateSubtraction = (subtractionId, nickname) => ({
-    type: UPDATE_SUBTRACTION.REQUESTED,
+export const editSubtraction = (subtractionId, name, nickname) => ({
+    type: EDIT_SUBTRACTION.REQUESTED,
     subtractionId,
+    name,
     nickname
 });
 

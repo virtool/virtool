@@ -19,7 +19,7 @@ describe("<Welcome />", () => {
         ["3.6.3", null],
         [null, "v1.2.3"],
         [null, null]
-    ])("should render LoadingPlaceholder when version information is null", (mongoVersion, version) => {
+    ])("should render LoadingPlaceholder when version information is (%p, %p)", (mongoVersion, version) => {
         props.mongoVersion = mongoVersion;
         props.version = version;
         const wrapper = shallow(<Welcome {...props} />);
@@ -28,7 +28,7 @@ describe("<Welcome />", () => {
 });
 
 describe("mapStateToProps", () => {
-    it("should return", () => {
+    it("should return props", () => {
         const state = {
             updates: {
                 version: "foo"

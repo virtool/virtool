@@ -1,7 +1,10 @@
+import asyncio
 import pymongo
+from typing import Union
 
+import virtool.api.utils
 import virtool.history.db
-from virtool.api import paginate
+import virtool.utils
 
 PROJECTION = [
     "_id",
@@ -18,6 +21,33 @@ PROJECTION = [
 ]
 
 
+async def processor(db, document):
+    """
+    A processor for index documents. Adds computed data about the index.
+
+    :param db: the application database client
+    :param document: the document to be processed
+    :return: the processed document
+
+    """
+    document = virtool.utils.base_processor(document)
+
+    query = {
+        "index.id": document["id"]
+    }
+
+    change_count, otu_ids = await asyncio.gather(
+        db.history.count_documents(query),
+        db.history.distinct("otu.id", query)
+    )
+
+    return {
+        **document,
+        "change_count": change_count,
+        "modified_otu_count": len(otu_ids)
+    }
+
+
 async def find(db, req_query, ref_id=None):
     base_query = None
 
@@ -26,7 +56,7 @@ async def find(db, req_query, ref_id=None):
             "reference.id": ref_id
         }
 
-    data = await paginate(
+    data = await virtool.api.utils.paginate(
         db.indexes,
         {},
         req_query,
@@ -36,8 +66,7 @@ async def find(db, req_query, ref_id=None):
         sort="version"
     )
 
-    for document in data["documents"]:
-        document.update(await get_modification_stats(db, document["id"]))
+    data["documents"] = [await processor(db, d) for d in data["documents"]]
 
     data.update(await get_unbuilt_stats(db, ref_id))
 
@@ -87,29 +116,6 @@ async def get_current_id_and_version(db, ref_id):
     return document["_id"], document["version"]
 
 
-async def get_index(db, index_id_or_version, projection=None):
-    """
-    Get an index document by its ``id`` or ``version``.
-
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param index_id_or_version: the id of the index
-    :type index_id_or_version: Union[str, int]
-
-    :param projection: a Mongo projection to apply to the result
-    :type projection: Union[None, dict, list]
-
-    :return: an index document
-    :rtype: Union[None, dict]
-
-    """
-    try:
-        return await db.indexes.find_one({"version": int(index_id_or_version)}, projection=projection)
-    except ValueError:
-        return await db.indexes.find_one(index_id_or_version, projection=projection)
-
-
 async def get_otus(db, index_id):
     """
     Return a list of otus and number of changes for a specific index.
@@ -148,45 +154,16 @@ async def get_otus(db, index_id):
     return [{"id": v["_id"], "name": v["name"], "change_count": v["count"]} async for v in cursor]
 
 
-async def get_modification_stats(db, index_id):
-    """
-    Get the number of modified otus and the number of changes made for a specific index.
-
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param index_id: the id of the index to return counts for
-    :type index_id: str
-
-    :return: the modified otu count and change count
-    :rtype: Tuple[int, int]
-
-    """
-    query = {
-        "index.id": index_id
-    }
-
-    return {
-        "change_count": await db.history.count(query),
-        "modified_otu_count": len(await db.history.distinct("otu.id", query))
-    }
-
-
-async def get_next_version(db, ref_id):
+async def get_next_version(db, ref_id: str) -> int:
     """
     Get the version number that should be used for the next index build.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param ref_id: the id of the reference to get the next version for
-    :type ref_id: str
-
     :return: the next version number
-    :rtype: int
 
     """
-    return await db.indexes.find({"reference.id": ref_id, "ready": True}).count()
+    return await db.indexes.count_documents({"reference.id": ref_id, "ready": True})
 
 
 async def tag_unbuilt_changes(db, ref_id, index_id, index_version):
@@ -217,7 +194,7 @@ async def tag_unbuilt_changes(db, ref_id, index_id, index_version):
     })
 
 
-async def get_unbuilt_stats(db, ref_id=None):
+async def get_unbuilt_stats(db, ref_id: Union[str, None] = None) -> dict:
     """
     Get the number of unbuilt changes and number of OTUs affected by those changes. Used to populate the metadata for a
     index find request.
@@ -225,13 +202,8 @@ async def get_unbuilt_stats(db, ref_id=None):
     Can search against a specific reference or all references.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param ref_id: the ref id to search unbuilt changes for
-    :type ref_id: str
-
     :return: the change count and modified OTU count
-    :rtype: dict
 
     """
     ref_query = dict()
@@ -245,7 +217,7 @@ async def get_unbuilt_stats(db, ref_id=None):
     }
 
     return {
-        "total_otu_count": await db.otus.count(ref_query),
-        "change_count": await db.history.count(history_query),
+        "total_otu_count": await db.otus.count_documents(ref_query),
+        "change_count": await db.history.count_documents(history_query),
         "modified_otu_count": len(await db.history.distinct("otu.id", history_query))
     }

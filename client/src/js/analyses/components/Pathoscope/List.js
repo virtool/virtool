@@ -1,62 +1,58 @@
-import { filter, forIn, map, sortBy, split } from "lodash-es";
+import { findIndex, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Icon, Panel } from "../../../base/index";
-import { getResults } from "../../selectors";
+import { setActiveHitId } from "../../actions";
+import { getActiveHit, getMatches, getResults } from "../../selectors";
+import { useKeyNavigation } from "../Viewer/hooks";
 import PathoscopeItem from "./Item";
 
-export class PathoscopeList extends React.Component {
-    constructor(props) {
-        super(props);
-        this.itemRefs = {};
-    }
+export const PathoscopeList = ({ activeId, nextId, nextIndex, previousId, previousIndex, matches, onSetActiveId }) => {
+    const ref = useKeyNavigation(activeId, nextId, nextIndex, previousId, previousIndex, false, onSetActiveId);
+    const itemComponents = map(matches, (match, index) => <PathoscopeItem key={match.id} index={index} {...match} />);
+    return <div ref={ref}>{itemComponents}</div>;
+};
 
-    setScroll = (otuId, scrollLeft) => {
-        forIn(this.itemRefs, (ref, key) => {
-            if (split(key, "-")[0] === otuId) {
-                ref.scrollTo(scrollLeft);
-            }
-        });
-    };
+export const mapStateToProps = state => {
+    const matches = getMatches(state);
+    const active = getActiveHit(state);
 
-    render() {
-        if (this.props.results.length) {
-            let data = filter(this.props.results, otu =>
-                this.props.filterOTUs ? otu.reads >= (otu.length * 0.8) / this.props.maxReadLength : true
-            );
+    let activeId;
+    let nextId;
+    let nextIndex;
+    let previousId;
+    let previousIndex;
 
-            data = sortBy(data, this.props.sortKey);
+    if (active) {
+        const activeId = active.id;
+        const windowIndex = findIndex(matches, { id: activeId });
 
-            if (this.props.sortDescending) {
-                data.reverse();
-            }
-
-            const itemComponents = map(data, item => <PathoscopeItem key={item.id} id={item.id} />);
-
-            return <div>{itemComponents}</div>;
+        if (windowIndex > 0) {
+            previousIndex = windowIndex - 1;
+            previousId = matches[previousIndex].id;
         }
 
-        // Show a message if no hits matched the filters.
-        return (
-            <Panel className="text-center">
-                <Panel.Body>
-                    <Icon name="info-circle" /> No hits found.
-                </Panel.Body>
-            </Panel>
-        );
+        if (windowIndex < matches.length - 1) {
+            nextIndex = windowIndex + 1;
+            nextId = matches[nextIndex].id;
+        }
     }
-}
-
-const mapStateToProps = state => {
-    const { filterOTUs, sortDescending, sortKey } = state.analyses;
 
     return {
-        results: getResults(state),
-        filterOTUs,
-        maxReadLength: state.samples.detail.quality.length[1],
-        sortDescending,
-        sortKey
+        shown: matches.length,
+        total: getResults(state).length,
+        activeId,
+        matches,
+        nextId,
+        nextIndex,
+        previousId,
+        previousIndex
     };
 };
 
-export default connect(mapStateToProps)(PathoscopeList);
+export const mapDispatchToProps = dispatch => ({
+    onSetActiveId: index => {
+        dispatch(setActiveHitId(index));
+    }
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(PathoscopeList);

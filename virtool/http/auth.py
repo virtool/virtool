@@ -7,13 +7,14 @@ import mako.template
 from aiohttp import web
 
 import virtool.app_routes
+import virtool.http.utils
 import virtool.users.sessions
 import virtool.users.db
 import virtool.db.utils
 import virtool.errors
 import virtool.users.utils
 import virtool.utils
-from virtool.api import bad_request
+from virtool.api.response import bad_request
 
 AUTHORIZATION_PROJECTION = [
     "user",
@@ -166,7 +167,7 @@ async def middleware(req, handler):
     if req.path != "/api/account/reset":
         await virtool.users.sessions.clear_reset_code(db, session["_id"])
 
-    resp.set_cookie("session_id", req["client"].session_id, httponly=True)
+    virtool.http.utils.set_session_id_cookie(resp, req["client"].session_id)
 
     if req.path == "/api/":
         resp.del_cookie("session_token")
@@ -182,7 +183,7 @@ async def index_handler(req: web.Request) -> web.Response:
     :return: the response
 
     """
-    requires_first_user = not await req.app["db"].users.count()
+    requires_first_user = not await req.app["db"].users.count_documents({})
 
     requires_login = not req["client"].user_id
 

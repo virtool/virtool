@@ -1,25 +1,26 @@
+import { endsWith } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
-import { Icon, WarningAlert } from "../../base";
+import { Link } from "react-router-dom";
+import { Alert, Icon } from "../../base";
 import { getFilesUndersized } from "../selectors";
 
-export const StyledSampleFileSizeWarning = styled(WarningAlert)`
-    align-items: center;
-    display: flex;
-
-    strong {
-        margin-left: 3px;
-    }
-`;
-
-export const SampleFileSizeWarning = ({ show }) => {
+export const SampleFileSizeWarning = ({ sampleId, show, showLink }) => {
     if (show) {
+        let link = "Check the file sizes";
+
+        if (showLink) {
+            link = <Link to={`/samples/${sampleId}/files`}>{link}</Link>;
+        }
+
         return (
-            <StyledSampleFileSizeWarning>
+            <Alert color="orange" level>
                 <Icon name="exclamation-triangle" />
-                <strong>The read files in this sample are smaller than expected</strong>
-            </StyledSampleFileSizeWarning>
+                <span>
+                    <strong>The read files in this sample are smaller than expected. </strong>
+                    <span>{link} and ensure they are correct.</span>
+                </span>
+            </Alert>
         );
     }
 
@@ -27,7 +28,9 @@ export const SampleFileSizeWarning = ({ show }) => {
 };
 
 export const mapStateToProps = state => ({
-    show: getFilesUndersized(state)
+    sampleId: state.samples.detail.id,
+    show: getFilesUndersized(state),
+    showLink: !endsWith(state.router.location.pathname, "/files")
 });
 
 export default connect(mapStateToProps)(SampleFileSizeWarning);

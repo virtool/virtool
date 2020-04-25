@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import {
     LoadingPlaceholder,
     NotFound,
-    Panel,
+    Box,
     RelativeTime,
     SubviewHeader,
     SubviewHeaderAttribution,
@@ -12,6 +12,7 @@ import {
 } from "../../base/index";
 import { getTaskDisplayName } from "../../utils/utils";
 import { clearAnalysis, getAnalysis } from "../actions";
+import AODPViewer from "./AODP/Viewer";
 import AnalysisCache from "./CacheLink";
 import NuVsViewer from "./NuVs/Viewer";
 import PathoscopeViewer from "./Pathoscope/Viewer";
@@ -34,20 +35,20 @@ export const AnalysisDetail = props => {
 
     if (!detail.ready) {
         return (
-            <Panel>
-                <Panel.Body>
-                    <LoadingPlaceholder message="Analysis in progress" margin="1.2rem" />
-                </Panel.Body>
-            </Panel>
+            <Box>
+                <LoadingPlaceholder message="Analysis in progress" margin="1.2rem" />
+            </Box>
         );
     }
 
     let content;
 
-    if (detail.algorithm === "pathoscope_bowtie") {
+    if (detail.workflow === "pathoscope_bowtie") {
         content = <PathoscopeViewer />;
-    } else if (detail.algorithm === "nuvs") {
+    } else if (detail.workflow === "nuvs") {
         content = <NuVsViewer />;
+    } else if (detail.workflow === "aodp") {
+        content = <AODPViewer />;
     } else {
         return <div>Unusable analysis detail content</div>;
     }
@@ -56,7 +57,7 @@ export const AnalysisDetail = props => {
         <div>
             <SubviewHeader>
                 <SubviewHeaderTitle>
-                    {getTaskDisplayName(detail.algorithm)} for {sampleName}
+                    {getTaskDisplayName(detail.workflow)} for {sampleName}
                     <AnalysisCache />
                 </SubviewHeaderTitle>
                 <SubviewHeaderAttribution>
@@ -69,12 +70,16 @@ export const AnalysisDetail = props => {
     );
 };
 
-export const mapStateToProps = state => ({
-    detail: state.analyses.detail,
-    error: get(state, "errors.GET_ANALYSIS_ERROR", null),
-    quality: state.samples.detail.quality,
-    sampleName: state.samples.detail.name
-});
+export const mapStateToProps = state => {
+    // console.log(state.analyses);
+    // console.log(state.analyses.detail);
+    return {
+        detail: state.analyses.detail,
+        error: get(state, "errors.GET_ANALYSIS_ERROR", null),
+        quality: state.samples.detail.quality,
+        sampleName: state.samples.detail.name
+    };
+};
 
 export const mapDispatchToProps = dispatch => ({
     getAnalysis: analysisId => {

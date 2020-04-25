@@ -5,7 +5,7 @@ import virtool.samples.db
 import virtool.samples.utils
 
 
-class TestCalculateAlgorithmTags:
+class TestCalculateWorkflowTags:
 
     @pytest.mark.parametrize("path_ready,path_tag", [
         ([False, False], "ip"),
@@ -27,7 +27,7 @@ class TestCalculateAlgorithmTags:
     ])
     def test(self, path_ready, alg1, alg2, path_tag, nuvs_ready, nuvs_tag):
         """
-        Test the calculate_algorithm_tags returns the correct update dict for every combination of pathoscope and nuvs
+        Test that the function returns the correct update dict for every combination of pathoscope and nuvs
         ready states.
 
         """
@@ -40,26 +40,26 @@ class TestCalculateAlgorithmTags:
             {
                 "_id": index,
                 "ready": path_ready_1,
-                "algorithm": "pathoscope_{}".format(alg1)
+                "workflow": "pathoscope_{}".format(alg1)
             },
             {
                 "_id": index,
                 "ready": path_ready_2,
-                "algorithm": "pathoscope_{}".format(alg2)
+                "workflow": "pathoscope_{}".format(alg2)
             },
             {
                 "_id": index,
                 "ready": nuvs_ready_1,
-                "algorithm": "nuvs"
+                "workflow": "nuvs"
             },
             {
                 "_id": index,
                 "ready": nuvs_ready_2,
-                "algorithm": "nuvs"
+                "workflow": "nuvs"
             }
         ]
 
-        tags = virtool.samples.utils.calculate_algorithm_tags(documents)
+        tags = virtool.samples.utils.calculate_workflow_tags(documents)
 
         assert tags == {
             "pathoscope": path_tag,
@@ -67,7 +67,7 @@ class TestCalculateAlgorithmTags:
         }
 
 
-class TestRecalculateAlgorithmTags:
+class TestRecalculateWorkflowTags:
 
     async def test(self, mocker, dbi):
         await dbi.samples.insert_one({
@@ -79,7 +79,7 @@ class TestRecalculateAlgorithmTags:
         analysis_documents = [
             {
                 "_id": "test_1",
-                "algorithm": "pathoscope_bowtie",
+                "workflow": "pathoscope_bowtie",
                 "ready": "ip",
                 "sample": {
                     "id": "test"
@@ -87,7 +87,7 @@ class TestRecalculateAlgorithmTags:
             },
             {
                 "_id": "test_2",
-                "algorithm": "pathoscope_bowtie",
+                "workflow": "pathoscope_bowtie",
                 "ready": True,
                 "sample": {
                     "id": "test"
@@ -95,7 +95,7 @@ class TestRecalculateAlgorithmTags:
             },
             {
                 "_id": "test_3",
-                "algorithm": "nuvs",
+                "workflow": "nuvs",
                 "ready": True,
                 "sample": {
                     "id": "test"
@@ -109,17 +109,17 @@ class TestRecalculateAlgorithmTags:
                 "sample": {
                     "id": "foobar"
                 },
-                "algorithm": "pathoscope_bowtie",
+                "workflow": "pathoscope_bowtie",
                 "ready": True
             }
         ])
 
-        m = mocker.patch("virtool.samples.utils.calculate_algorithm_tags", return_value={
+        m = mocker.patch("virtool.samples.utils.calculate_workflow_tags", return_value={
             "pathoscope": True,
             "nuvs": "ip"
         })
 
-        await virtool.samples.db.recalculate_algorithm_tags(dbi, "test")
+        await virtool.samples.db.recalculate_workflow_tags(dbi, "test")
 
         for document in analysis_documents:
             del document["sample"]
@@ -275,4 +275,4 @@ class TestRemoveSamples:
 
         assert os.listdir(str(samples_dir)) == []
 
-        assert not await dbi.samples.count()
+        assert not await dbi.samples.count_documents({})

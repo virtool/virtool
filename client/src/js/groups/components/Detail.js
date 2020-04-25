@@ -1,7 +1,17 @@
 import { filter, includes, map, transform } from "lodash-es";
 import React, { useCallback } from "react";
 import styled from "styled-components";
-import { Box, BoxGroup, BoxGroupHeader, BoxGroupSection, Button, Icon, Label, Loader } from "../../base";
+import {
+    Box,
+    BoxGroup,
+    BoxGroupHeader,
+    BoxGroupSection,
+    Button,
+    Checkbox,
+    Icon,
+    Loader,
+    NoneFoundSection
+} from "../../base";
 
 const EmptyGroupDetail = styled(Box)`
     align-items: center;
@@ -18,6 +28,17 @@ const PermissionsHeader = styled(BoxGroupHeader)`
     flex-direction: row;
     font-weight: bold;
     justify-content: space-between;
+`;
+
+const PermissionsItem = styled(BoxGroupSection)`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+`;
+
+const StyledGroupDetail = styled.div`
+    display: flex;
+    flex-direction: column;
 `;
 
 export const GroupDetail = ({ group, pending, users, onRemove, onSetPermission }) => {
@@ -39,25 +60,22 @@ export const GroupDetail = ({ group, pending, users, onRemove, onSetPermission }
 
     if (members && members.length) {
         memberComponents = map(members, member => (
-            <Label key={member.id} spaced>
+            <BoxGroupSection key={member.id} spaced>
                 {member.id}
-            </Label>
+            </BoxGroupSection>
         ));
     } else {
-        memberComponents = (
-            <div className="text-center">
-                <Icon name="info-circle" /> No members found.
-            </div>
-        );
+        memberComponents = <NoneFoundSection noun="members" />;
     }
 
     const permissionComponents = transform(
         group.permissions,
         (result, value, key) => {
             result.push(
-                <BoxGroupSection key={key} onClick={() => onSetPermission(group.id, key, !value)}>
-                    <code>{key}</code> <Icon faStyle="far" name={value ? "check-square" : "square"} pullRight />
-                </BoxGroupSection>
+                <PermissionsItem key={key} onClick={() => onSetPermission(group.id, key, !value)}>
+                    <code>{key}</code>
+                    <Checkbox checked={value} />
+                </PermissionsItem>
             );
 
             return result;
@@ -68,7 +86,7 @@ export const GroupDetail = ({ group, pending, users, onRemove, onSetPermission }
     const handleRemove = useCallback(() => onRemove(group.id), [group.id]);
 
     return (
-        <div>
+        <StyledGroupDetail>
             <BoxGroup>
                 <PermissionsHeader>
                     <span>Permissions</span>
@@ -79,12 +97,12 @@ export const GroupDetail = ({ group, pending, users, onRemove, onSetPermission }
 
             <BoxGroup>
                 <BoxGroupHeader>Members</BoxGroupHeader>
-                <BoxGroupSection>{memberComponents}</BoxGroupSection>
+                {memberComponents}
             </BoxGroup>
 
-            <Button icon="trash" bsStyle="danger" onClick={handleRemove} block>
+            <Button icon="trash" color="red" onClick={handleRemove}>
                 Remove Group
             </Button>
-        </div>
+        </StyledGroupDetail>
     );
 };

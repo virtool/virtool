@@ -40,6 +40,77 @@ async def test_get_next_version(empty, has_ref, test_indexes, dbi):
     assert await virtool.indexes.db.get_next_version(dbi, "hxn167" if has_ref else "foobar") == expected
 
 
+async def test_processor(mocker, dbi):
+    await dbi.history.insert_many([
+        {
+            "_id": "foo.0",
+            "index": {
+                "id": "baz"
+            },
+            "otu": {
+                "id": "foo"
+            }
+        },
+        {
+            "_id": "foo.1",
+            "index": {
+                "id": "baz"
+            },
+            "otu": {
+                "id": "foo"
+            }
+        },
+        {
+            "_id": "bar.0",
+            "index": {
+                "id": "baz"
+            },
+            "otu": {
+                "id": "bar"
+            }
+        },
+        {
+            "_id": "bar.1",
+            "index": {
+                "id": "baz"
+            },
+            "otu": {
+                "id": "bar"
+            }
+        },
+        {
+            "_id": "bar.2",
+            "index": {
+                "id": "baz"
+            },
+            "otu": {
+                "id": "bar"
+            }
+        },
+        {
+            "_id": "far.0",
+            "index": {
+                "id": "boo"
+            },
+            "otu": {
+                "id": "foo"
+            }
+        }
+    ])
+
+    document = {
+        "_id": "baz"
+    }
+
+    result = await virtool.indexes.db.processor(dbi, document)
+
+    assert result == {
+        "id": "baz",
+        "change_count": 5,
+        "modified_otu_count": 2
+    }
+
+
 async def test_tag_unbuilt_changes(dbi, create_mock_history):
     await create_mock_history(False)
 
@@ -52,11 +123,11 @@ async def test_tag_unbuilt_changes(dbi, create_mock_history):
             }
         })
 
-    assert await dbi.history.count({"index.id": "unbuilt"}) == 8
-    assert await dbi.history.count({"reference.id": "foobar", "index.id": "unbuilt"}) == 4
-    assert await dbi.history.count({"reference.id": "hxn167", "index.id": "unbuilt"}) == 4
+    assert await dbi.history.count_documents({"index.id": "unbuilt"}) == 8
+    assert await dbi.history.count_documents({"reference.id": "foobar", "index.id": "unbuilt"}) == 4
+    assert await dbi.history.count_documents({"reference.id": "hxn167", "index.id": "unbuilt"}) == 4
 
     await virtool.indexes.db.tag_unbuilt_changes(dbi, "hxn167", "foo", 5)
 
-    assert await dbi.history.count({"reference.id": "foobar", "index.id": "unbuilt"}) == 4
-    assert await dbi.history.count({"reference.id": "hxn167", "index.id": "foo", "index.version": 5}) == 4
+    assert await dbi.history.count_documents({"reference.id": "foobar", "index.id": "unbuilt"}) == 4
+    assert await dbi.history.count_documents({"reference.id": "hxn167", "index.id": "foo", "index.version": 5}) == 4

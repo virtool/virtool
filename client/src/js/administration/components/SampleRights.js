@@ -1,8 +1,15 @@
-import React from "react";
 import { includes, map } from "lodash-es";
+import React from "react";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { updateSetting, updateSettings } from "../actions";
-import { BoxGroup, BoxGroupHeader, BoxGroupSection, Help, InputError } from "../../base";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection, InputGroup, InputLabel, Select, SelectBox } from "../../base";
+
+const SampleGroupSelection = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-gap: 13px;
+`;
 
 const rights = [
     { label: "None", value: "" },
@@ -24,51 +31,48 @@ export const SampleRights = props => {
                 <p>Set the method used to assign groups to new samples and the default rights.</p>
             </BoxGroupHeader>
             <BoxGroupSection>
-                <label className="control-label" style={{ width: "100%" }}>
-                    <span>Sample Group</span>
-                    <Help pullRight>
+                <label>Sample Group</label>
+                <SampleGroupSelection>
+                    <SelectBox
+                        onClick={() => props.onChangeSampleGroup("none")}
+                        active={props.sampleGroup === "none" ? true : ""}
+                    >
+                        <strong>None</strong>
                         <p>
-                            <strong>None</strong>: samples are assigned no group and only
+                            Samples are assigned no group and only
                             <em> all users'</em> rights apply
                         </p>
-                        <p>
-                            <strong>User's primary group</strong>: samples are automatically assigned the creating{" "}
-                            user's primary group
-                        </p>
-                        <p>
-                            <strong>Choose</strong>: samples are assigned by the user in the creation form
-                        </p>
-                    </Help>
-                </label>
+                    </SelectBox>
 
-                <InputError
-                    type="select"
-                    value={props.sampleGroup}
-                    onChange={e => props.onChangeSampleGroup(e.target.value)}
-                >
-                    <option value="none">None</option>
-                    <option value="force_choice">Force choice</option>
-                    <option value="users_primary_group">User's primary group</option>
-                </InputError>
+                    <SelectBox
+                        onClick={() => props.onChangeSampleGroup("force_choice")}
+                        active={props.sampleGroup === "force_choice" ? true : ""}
+                    >
+                        <strong>Force choice</strong>
+                        <p>Samples are automatically assigned the creating user's primary group</p>
+                    </SelectBox>
 
-                <InputError
-                    type="select"
-                    label="Group Rights"
-                    value={props.group}
-                    onChange={e => props.onChangeRights("group", e.target.value)}
-                >
-                    {options}
-                </InputError>
+                    <SelectBox
+                        onClick={() => props.onChangeSampleGroup("users_primary_group")}
+                        active={props.sampleGroup === "users_primary_group" ? true : ""}
+                    >
+                        <strong>User's primary group</strong>
+                        <p>Samples are assigned by the user in the creation form</p>
+                    </SelectBox>
+                </SampleGroupSelection>
+                <InputGroup>
+                    <InputLabel>Group Rights</InputLabel>
+                    <Select value={props.group} onChange={e => props.onChangeRights("group", e.target.value)}>
+                        {options}
+                    </Select>
+                </InputGroup>
 
-                <InputError
-                    name="all"
-                    type="select"
-                    label="All Users' Rights"
-                    value={props.all}
-                    onChange={e => props.onChangeRights("all", e.target.value)}
-                >
-                    {options}
-                </InputError>
+                <InputGroup>
+                    <InputLabel>All Users' Rights</InputLabel>
+                    <Select name="all" value={props.all} onChange={e => props.onChangeRights("all", e.target.value)}>
+                        {options}
+                    </Select>
+                </InputGroup>
             </BoxGroupSection>
         </BoxGroup>
     );

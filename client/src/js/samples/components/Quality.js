@@ -8,13 +8,18 @@ const QualityLegacyAlert = styled.div`
     margin-bottom: 20px;
 `;
 
+const StyledSampleQuality = styled.div`
+    display: flex;
+    flex-direction: column;
+`;
+
 export const SampleQuality = props => (
-    <React.Fragment>
+    <StyledSampleQuality>
         <QualityLegacyAlert>
             <LegacyAlert />
         </QualityLegacyAlert>
         <Quality {...props} />
-    </React.Fragment>
+    </StyledSampleQuality>
 );
 
 const mapStateToProps = state => {

@@ -1,20 +1,35 @@
-import { filter, get, map } from "lodash-es";
+import { filter, map, values } from "lodash-es";
 import React from "react";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import { BoxGroup, BoxGroupSection, Button, Icon, InputError, NoneFoundSection, RelativeTime } from "../../base";
-import { clearError } from "../../errors/actions";
+import {
+    Attribution,
+    BoxGroup,
+    BoxGroupSection,
+    Button,
+    ModalBody,
+    ModalFooter,
+    Input,
+    InputError,
+    InputGroup,
+    InputLabel,
+    Modal,
+    NoneFoundSection,
+    ModalHeader
+} from "../../base";
 
 import { findFiles } from "../../files/actions";
 import { getTargetChange, routerLocationHasState } from "../../utils/utils";
 import { createSubtraction } from "../actions";
 
-const SubtractionFileItemTop = styled.div`
+const StyledSubtractionFileItem = styled(BoxGroupSection)`
     display: flex;
-    justify-content: space-between;
+
+    ${Attribution} {
+        margin-left: auto;
+    }
 `;
 
 export class SubtractionFileItem extends React.Component {
@@ -26,24 +41,24 @@ export class SubtractionFileItem extends React.Component {
         const { active, name, uploaded_at, user } = this.props;
 
         return (
-            <BoxGroupSection active={active} onClick={this.handleClick}>
-                <SubtractionFileItemTop>
-                    <strong>{name}</strong>
-                    <span>
-                        Uploaded <RelativeTime time={uploaded_at} /> by {user.id}
-                    </span>
-                </SubtractionFileItemTop>
-            </BoxGroupSection>
+            <StyledSubtractionFileItem active={active} onClick={this.handleClick}>
+                <strong>{name}</strong>
+                <Attribution user={user.id} time={uploaded_at} />
+            </StyledSubtractionFileItem>
         );
     }
 }
 
+const SubtractionFileList = styled(BoxGroup)`
+    margin-bottom: 5px;
+`;
+
 const getInitialState = () => ({
-    subtractionId: "",
+    errorName: "",
+    errorFile: "",
     fileId: "",
-    nickname: "",
-    errorSubtractionId: "",
-    errorFile: ""
+    name: "",
+    nickname: ""
 });
 
 export class CreateSubtraction extends React.Component {
@@ -52,21 +67,9 @@ export class CreateSubtraction extends React.Component {
         this.state = getInitialState();
     }
 
-    static getDerivedStateFromProps(nextProps, prevState) {
-        if (!prevState.errorSubtractionId && nextProps.error) {
-            return { errorSubtractionId: nextProps.error };
-        }
-        return null;
-    }
-
     handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
-
         this.setState({ [name]: value, [error]: "" });
-
-        if (this.props.error) {
-            this.props.onClearError("CREATE_SUBTRACTION_ERROR");
-        }
     };
 
     handleModalEnter = () => {
@@ -75,9 +78,6 @@ export class CreateSubtraction extends React.Component {
 
     handleModalExited = () => {
         this.setState(getInitialState());
-        if (this.props.error) {
-            this.props.onClearError("CREATE_SUBTRACTION_ERROR");
-        }
     };
 
     handleSelectFile = fileId => {
@@ -90,93 +90,73 @@ export class CreateSubtraction extends React.Component {
     handleSubmit = e => {
         e.preventDefault();
 
-        let hasError = false;
+        const update = {};
 
-        if (!this.state.subtractionId) {
-            hasError = true;
-            this.setState({ errorSubtractionId: "Required Field" });
+        if (!this.state.name) {
+            update.errorName = "A name is required";
         }
 
         if (!this.state.fileId) {
-            hasError = true;
-            this.setState({ errorFile: "Please select a file" });
+            update.errorFile = "Please select a file";
         }
 
-        if (!hasError) {
-            this.props.onCreate(this.state);
+        if (values(update).length) {
+            return this.setState(update);
         }
+
+        this.props.onCreate(this.state);
     };
 
     render() {
-        const files = filter(this.props.files, { type: "subtraction" });
+        let fileComponents = map(this.props.files, file => (
+            <SubtractionFileItem
+                key={file.id}
+                {...file}
+                active={file.id === this.state.fileId}
+                onClick={this.handleSelectFile}
+            />
+        ));
 
-        let fileComponents;
-
-        if (files.length) {
-            fileComponents = map(files, file => (
-                <SubtractionFileItem
-                    key={file.id}
-                    {...file}
-                    active={file.id === this.state.fileId}
-                    onClick={this.handleSelectFile}
-                />
-            ));
-        } else {
+        if (!fileComponents.length) {
             fileComponents = (
-                <NoneFoundSection>
-                    <Icon name="info-circle" /> No files found. <Link to="/subtraction/files">Upload some</Link>.
+                <NoneFoundSection noun="files">
+                    <Link to="/subtraction/files">Upload some</Link>
                 </NoneFoundSection>
             );
         }
 
-        const inputErrorClassName = this.state.errorFile ? "input-form-error" : "input-form-error-none";
-
-        const errorMessage = (
-            <div className={inputErrorClassName} style={{ margin: "3px 0 0 0" }}>
-                {this.state.errorFile || "None"}
-            </div>
-        );
-
         return (
             <Modal
+                label="Create Subtraction"
                 show={this.props.show}
                 onHide={this.props.onHide}
                 onEnter={this.handleModalEnter}
                 onExited={this.handleModalExited}
             >
-                <Modal.Header>Create Subtraction</Modal.Header>
-
+                <ModalHeader>Create Subtraction</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body style={{ margin: "0 0 10px 0" }}>
-                        <InputError
-                            type="text"
-                            label="Unique Name"
-                            name="subtractionId"
-                            value={this.state.subtractionId}
-                            onChange={this.handleChange}
-                            error={this.state.errorSubtractionId}
-                        />
+                    <ModalBody>
+                        <InputGroup>
+                            <InputLabel>Name</InputLabel>
+                            <Input name="name" value={this.state.name} onChange={this.handleChange} />
+                            <InputError>{this.state.errorName}</InputError>
+                        </InputGroup>
 
-                        <InputError
-                            type="text"
-                            label="Nickname"
-                            name="nickname"
-                            value={this.state.nickname}
-                            onChange={this.handleChange}
-                        />
+                        <InputGroup>
+                            <InputLabel>Nickname</InputLabel>
+                            <Input name="nickname" value={this.state.nickname} onChange={this.handleChange} />
+                        </InputGroup>
 
-                        <h5>
-                            <strong>Files</strong>
-                        </h5>
-                        <BoxGroup>{fileComponents}</BoxGroup>
-                        {errorMessage}
-                    </Modal.Body>
+                        <label>Files</label>
+                        <SubtractionFileList>{fileComponents}</SubtractionFileList>
+                        <InputError>{this.state.errorFile}</InputError>
+                    </ModalBody>
 
-                    <Modal.Footer className="modal-footer">
-                        <Button type="submit" bsStyle="primary" icon="play" pullRight>
+                    <ModalFooter>
+                        <Button type="submit" color="blue" icon="play">
                             Start
                         </Button>
-                    </Modal.Footer>
+                    </ModalFooter>
                 </form>
             </Modal>
         );
@@ -185,13 +165,12 @@ export class CreateSubtraction extends React.Component {
 
 const mapStateToProps = state => ({
     show: routerLocationHasState(state, "createSubtraction"),
-    files: state.files.documents,
-    error: get(state, "errors.CREATE_SUBTRACTION_ERROR.message", "")
+    files: filter(state.files.documents, { type: "subtraction" })
 });
 
 const mapDispatchToProps = dispatch => ({
-    onCreate: ({ subtractionId, fileId, nickname }) => {
-        dispatch(createSubtraction(subtractionId, fileId, nickname));
+    onCreate: ({ fileId, name, nickname }) => {
+        dispatch(createSubtraction(fileId, name, nickname));
     },
 
     onListFiles: () => {
@@ -200,10 +179,6 @@ const mapDispatchToProps = dispatch => ({
 
     onHide: () => {
         dispatch(pushState({ createSubtraction: false }));
-    },
-
-    onClearError: error => {
-        dispatch(clearError(error));
     }
 });
 

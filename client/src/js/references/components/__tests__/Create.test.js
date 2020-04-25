@@ -1,6 +1,12 @@
 import { CreateReference, mapDispatchToProps } from "../Create";
 
 describe("<CreateReference />", () => {
+    const props = {
+        onSubmit: jest.fn()
+    };
+
+    let state;
+
     const e = {
         preventDefault: jest.fn(),
         target: {
@@ -9,28 +15,25 @@ describe("<CreateReference />", () => {
             error: "error"
         }
     };
-    const props = {
-        onSubmit: jest.fn()
-    };
-    let state;
+
     beforeEach(() => {
         state = {
-            name: [{ foo: "bar" }],
-            dataType: [{ foo: "bar" }],
-            description: "foo",
-            organism: "bar",
-            dataType: [{ foo: "bar" }],
-            errorDataType: "",
+            name: "",
+            description: "",
+            dataType: "genome",
+            organism: "",
             errorName: "",
-            mode: "foo"
+            errorDataType: "",
+            mode: "create"
         };
     });
 
-    it("should call handleChange() when ReferenceForm is changed", () => {
+    it("should render", () => {
         const wrapper = shallow(<CreateReference {...props} />);
-        wrapper.setState({
-            ...state
-        });
+        expect(wrapper).toMatchSnapshot();
+    });
+    it("handleChange should update name and error", () => {
+        const wrapper = shallow(<CreateReference {...props} />);
         wrapper.find("ReferenceForm").simulate("change", e);
         expect(wrapper.state()).toEqual({
             ...state,
@@ -38,49 +41,49 @@ describe("<CreateReference />", () => {
         });
     });
 
-    it("handleSubmit() should return errorName when [this.state.name.length = 0]", () => {
+    it("handleSubmit() should update errorName in state when [this.state.name.length = 0]", () => {
         const wrapper = shallow(<CreateReference {...props} />);
-        wrapper.setState({
-            ...state,
-            name: []
-        });
-
         wrapper.find("form").simulate("submit", e);
+        wrapper.setState({ errorDataType: "foo" });
         expect(wrapper.state()).toEqual({
             ...state,
-            errorName: "Required Field",
-            name: []
+            errorDataType: "foo",
+            errorName: "Required Field"
         });
     });
 
-    it("handleSubmit() should return errorName when [this.state.dataType.length = 0]", () => {
+    it("handleSubmit() should update errorName in state when [this.state.dataType.length = 0]", () => {
         const wrapper = shallow(<CreateReference {...props} />);
         wrapper.setState({
             ...state,
-            dataType: []
+            name: "foo",
+            dataType: ""
         });
         wrapper.find("form").simulate("submit", e);
         expect(wrapper.state()).toEqual({
             ...state,
-            dataType: [],
+            name: "foo",
+            dataType: "",
             errorDataType: "Required Field"
         });
     });
-
-    it("handleSubmit() should return onSubmit when [this.state.name.length!=0] and [this.state.dataType.length!=0]", () => {
+    it("handleSubmit should call this.props.onSubmit when [this.state.name.length!=0] and [this.state.dataType.length!=0]", () => {
         const wrapper = shallow(<CreateReference {...props} />);
         wrapper.setState({
-            ...state
+            ...state,
+            name: "foo",
+            description: "bar",
+            organism: "baz"
         });
         wrapper.find("form").simulate("submit", e);
-        expect(props.onSubmit).toHaveBeenCalledWith([{ foo: "bar" }], "foo", [{ foo: "bar" }], "bar");
+        expect(props.onSubmit).toHaveBeenCalledWith("foo", "bar", "genome", "baz");
     });
 });
 
 describe("mapDispatchToProps()", () => {
     const dispatch = jest.fn();
     const props = mapDispatchToProps(dispatch);
-    it("should return onSubmit() in props", () => {
+    it("should return onSubmit in props", () => {
         props.onSubmit("foo", "bar", "fee", "baz");
         expect(dispatch).toHaveBeenCalledWith({
             name: "foo",
@@ -90,9 +93,11 @@ describe("mapDispatchToProps()", () => {
             type: "CREATE_REFERENCE_REQUESTED"
         });
     });
-
-    it("should return onClearError() in props", () => {
+    it("should return onClearError in props", () => {
         props.onClearError("foo");
-        expect(dispatch).toHaveBeenCalledWith({ error: "foo", type: "CLEAR_ERROR" });
+        expect(dispatch).toHaveBeenCalledWith({
+            error: "foo",
+            type: "CLEAR_ERROR"
+        });
     });
 });

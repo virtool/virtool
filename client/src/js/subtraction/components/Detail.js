@@ -3,9 +3,8 @@ import numbro from "numbro";
 import React from "react";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, NotFound, Table, ViewHeader } from "../../base";
+import { Icon, LoadingPlaceholder, NotFound, Table, ViewHeader, ViewHeaderIcons, ViewHeaderTitle } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
-
 import { getSubtraction } from "../actions";
 import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";
@@ -25,7 +24,7 @@ export class SubtractionDetail extends React.Component {
         this.props.onGet(this.props.match.params.subtractionId);
     }
 
-    handleExit = () => {
+    handleHide = () => {
         this.setState({ showEdit: false });
     };
 
@@ -38,46 +37,28 @@ export class SubtractionDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const data = this.props.detail;
+        const detail = this.props.detail;
 
-        if (!data.ready) {
+        if (!detail.ready) {
             return <LoadingPlaceholder message="Subtraction is still being imported" />;
         }
 
-        let removeIcon;
-
-        if (!data.linked_samples.length) {
-            removeIcon = (
-                <Icon
-                    name="trash"
-                    bsStyle="danger"
-                    onClick={this.props.onShowRemove}
-                    style={{ paddingLeft: "5px" }}
-                    pullRight
-                />
-            );
-        }
-
-        const editIcon = (
-            <Icon name="pencil-alt" bsStyle="warning" onClick={() => this.setState({ showEdit: true })} pullRight />
-        );
-
         return (
             <div>
-                <ViewHeader title={`${data.id} - Subtraction`}>
-                    <Flex alignItems="flex-end">
-                        <FlexItem grow={0} shrink={0}>
-                            <strong>{data.id}</strong>
-                        </FlexItem>
-                        <FlexItem grow={1} shrink={0}>
-                            {this.props.canModify ? (
-                                <React.Fragment>
-                                    <small>{removeIcon}</small>
-                                    <small>{editIcon}</small>
-                                </React.Fragment>
-                            ) : null}
-                        </FlexItem>
-                    </Flex>
+                <ViewHeader title={detail.name}>
+                    <ViewHeaderTitle>
+                        {detail.name}
+                        {this.props.canModify && (
+                            <ViewHeaderIcons>
+                                <Icon
+                                    name="pencil-alt"
+                                    color="orange"
+                                    onClick={() => this.setState({ showEdit: true })}
+                                />
+                                <Icon name="trash" color="red" onClick={this.props.onShowRemove} />
+                            </ViewHeaderIcons>
+                        )}
+                    </ViewHeaderTitle>
                 </ViewHeader>
 
                 <Table>
@@ -88,32 +69,32 @@ export class SubtractionDetail extends React.Component {
                         </tr>
                         <tr>
                             <th>File</th>
-                            <td>{data.file.id}</td>
+                            <td>{detail.file.name || detail.file.id}</td>
                         </tr>
                         <tr>
                             <th>Sequence Count</th>
-                            <td>{data.count}</td>
+                            <td>{detail.count}</td>
                         </tr>
                         <tr>
                             <th>GC Estimate</th>
-                            <td>{calculateGC(data.gc)}</td>
+                            <td>{calculateGC(detail.gc)}</td>
                         </tr>
                         <tr>
                             <th>Linked Samples</th>
-                            <td>{data.linked_samples.length}</td>
+                            <td>{detail.linked_samples.length}</td>
                         </tr>
                     </tbody>
                 </Table>
 
-                <EditSubtraction show={this.state.showEdit} entry={this.props.detail} exited={this.handleExit} />
-                <RemoveSubtraction id={data.id} />
+                <EditSubtraction show={this.state.showEdit} onHide={this.handleHide} />
+                <RemoveSubtraction />
             </div>
         );
     }
 }
 
 const mapStateToProps = state => ({
-    error: get(state, "errors.GET_SUBTRACTION_ERROR", null),
+    error: get(state, "errors.GET_SUBTRACTION_ERROR"),
     canModify: checkAdminOrPermission(state, "modify_subtraction"),
     detail: state.subtraction.detail
 });

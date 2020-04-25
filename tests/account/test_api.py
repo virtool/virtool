@@ -19,7 +19,7 @@ async def test_get(spawn_client, static_time):
         "permissions": {p: False for p in virtool.users.utils.PERMISSIONS},
         "primary_group": "technician",
         "settings": {
-            "quick_analyze_algorithm": "pathoscope_bowtie",
+            "quick_analyze_workflow": "pathoscope_bowtie",
             "show_ids": True,
             "show_versions": True,
             "skip_quick_analyze_dialog": True
@@ -84,7 +84,7 @@ async def test_edit(error, spawn_client, resp_is, static_time):
                 "skip_quick_analyze_dialog": True,
                 "show_ids": True,
                 "show_versions": True,
-                "quick_analyze_algorithm": "pathoscope_bowtie"
+                "quick_analyze_workflow": "pathoscope_bowtie"
             },
             "email": "dev@virtool.ca",
             "id": "test"
@@ -106,7 +106,7 @@ async def test_get_settings(spawn_client):
         "skip_quick_analyze_dialog": True,
         "show_ids": True,
         "show_versions": True,
-        "quick_analyze_algorithm": "pathoscope_bowtie"
+        "quick_analyze_workflow": "pathoscope_bowtie"
     }
 
 
@@ -142,7 +142,7 @@ async def test_update_settings(invalid_input, spawn_client, resp_is):
             "skip_quick_analyze_dialog": True,
             "show_ids": False,
             "show_versions": True,
-            "quick_analyze_algorithm": "pathoscope_bowtie"
+            "quick_analyze_workflow": "pathoscope_bowtie"
         }
 
 
@@ -375,7 +375,7 @@ async def test_remove_api_key(error, spawn_client, resp_is):
         return
 
     assert await resp_is.no_content(resp)
-    assert await client.db.keys.count() == 0
+    assert await client.db.keys.count_documents({}) == 0
 
 
 async def test_remove_all_api_keys(spawn_client, resp_is):

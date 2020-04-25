@@ -1,5 +1,7 @@
+import asyncio
 import shutil
 
+import virtool.api.utils
 import virtool.jobs.db
 import virtool.subtractions.db
 import virtool.db.utils
@@ -8,37 +10,53 @@ import virtool.samples.utils
 import virtool.subtractions.utils
 import virtool.utils
 import virtool.validators
-from virtool.api import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, paginate
+from virtool.api.response import bad_request, json_response, no_content, not_found
 
 routes = virtool.http.routes.Routes()
+
+BASE_QUERY = {
+    "deleted": False
+}
 
 
 @routes.get("/api/subtractions")
 async def find(req):
     db = req.app["db"]
 
-    ids = req.query.get("ids", False)
+    ready = virtool.api.utils.get_query_bool(req, "ready")
+    short = virtool.api.utils.get_query_bool(req, "short")
 
-    if ids:
-        return json_response(await db.subtraction.distinct("_id", {"ready": True}))
-
-    term = req.query.get("find", None)
+    projection = ["name"] if short else virtool.subtractions.db.PROJECTION
 
     db_query = dict()
 
-    if term:
-        db_query.update(compose_regex_query(term, ["_id"]))
+    term = req.query.get("find")
 
-    data = await paginate(
+    if term:
+        db_query = virtool.api.utils.compose_regex_query(term, ["name", "nickname"])
+
+    if short:
+        documents = list()
+
+        async for document in db.subtraction.find({**db_query, **BASE_QUERY}, ["name"]):
+            documents.append(virtool.utils.base_processor(document))
+
+        return json_response(documents)
+
+    if ready:
+        db_query["ready"] = True
+
+    data = await virtool.api.utils.paginate(
         db.subtraction,
         db_query,
         req.query,
+        base_query=BASE_QUERY,
         sort="_id",
-        projection=virtool.subtractions.db.PROJECTION
+        projection=projection
     )
 
     data.update({
-        "ready_count": await db.subtraction.count({"ready": True})
+        "ready_count": await db.subtraction.count_documents({"ready": True})
     })
 
     return json_response(data)
@@ -65,7 +83,7 @@ async def get(req):
 
 
 @routes.post("/api/subtractions", permission="modify_subtraction", schema={
-    "subtraction_id": {
+    "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
         "empty": False,
@@ -88,12 +106,7 @@ async def create(req):
     """
     db = req.app["db"]
     data = req["data"]
-
-    subtraction_id = data["subtraction_id"]
-
-    if await db.subtraction.count({"_id": subtraction_id}):
-        return bad_request("Subtraction name already exists")
-
+    
     file_id = data["file_id"]
 
     file = await db.files.find_one(file_id, ["name"])
@@ -102,11 +115,13 @@ async def create(req):
         return bad_request("File does not exist")
 
     job_id = await virtool.db.utils.get_new_id(db.jobs)
+    subtraction_id = await virtool.db.utils.get_new_id(db.subtraction)
 
     user_id = req["client"].user_id
 
     document = {
-        "_id": data["subtraction_id"],
+        "_id": subtraction_id,
+        "name": data["name"],
         "nickname": data["nickname"],
         "ready": False,
         "is_host": True,
@@ -141,17 +156,21 @@ async def create(req):
     await req.app["jobs"].enqueue(job_id)
 
     headers = {
-        "Location": f"/api/account/keys/{subtraction_id}"
+        "Location": f"/api/subtraction/{subtraction_id}"
     }
 
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 
 
 @routes.patch("/api/subtractions/{subtraction_id}", permission="modify_subtraction", schema={
-    "nickname": {
+    "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
-        "required": True
+        "empty": False,
+    },
+    "nickname": {
+        "type": "string",
+        "coerce": virtool.validators.strip
     }
 })
 async def edit(req):
@@ -164,10 +183,20 @@ async def edit(req):
 
     subtraction_id = req.match_info["subtraction_id"]
 
+    update = dict()
+
+    try:
+        update["name"] = data["name"]
+    except KeyError:
+        pass
+
+    try:
+        update["nickname"] = data["nickname"]
+    except KeyError:
+        pass
+
     document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
-        "$set": {
-            "nickname": data["nickname"]
-        }
+        "$set": update
     })
 
     if document is None:
@@ -185,16 +214,9 @@ async def remove(req):
 
     subtraction_id = req.match_info["subtraction_id"]
 
-    if await db.samples.count({"subtraction.id": subtraction_id}):
-        return conflict("Has linked samples")
+    updated_count = await asyncio.shield(virtool.subtractions.db.delete(req.app, subtraction_id))
 
-    delete_result = await db.subtraction.delete_one({"_id": subtraction_id})
-
-    if delete_result.deleted_count == 0:
+    if updated_count == 0:
         return not_found()
-
-    index_path = virtool.subtractions.utils.calculate_index_path(settings, subtraction_id)
-
-    await req.app["run_in_thread"](shutil.rmtree, index_path, True)
 
     return no_content()

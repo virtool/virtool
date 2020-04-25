@@ -1,4 +1,5 @@
 import { PUSH_STATE } from "../../../app/actionTypes";
+import { Input, PasswordInput } from "../../../base";
 import { CreateUser, mapDispatchToProps, mapStateToProps } from "../Create";
 
 describe("<CreateUser />", () => {
@@ -7,16 +8,16 @@ describe("<CreateUser />", () => {
 
     beforeEach(() => {
         props = {
-            error: "foo",
+            error: "",
+            show: true,
             onClearError: jest.fn(),
-            onCreate: jest.fn()
+            onCreate: jest.fn(),
+            onHide: jest.fn()
         };
 
         state = {
-            confirm: "",
-            errorConfirm: "",
             errorPassword: "",
-            errorUserId: "foo",
+            errorUserId: "",
             forceReset: false,
             password: "",
             userId: ""
@@ -28,32 +29,41 @@ describe("<CreateUser />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call handleChange when InputError is changed", () => {
-        const e = {
-            target: { name: "name", value: "foo" }
-        };
+    it("should render with error", () => {
         const wrapper = shallow(<CreateUser {...props} />);
-        wrapper
-            .find("InputError")
-            .at(0)
-            .simulate("change", e);
-
-        expect(wrapper.state()).toEqual({
-            ...state,
-            name: "foo",
-            errorName: ""
+        wrapper.setState({
+            errorPassword: "Password too short"
         });
-
-        expect(props.onClearError).toHaveBeenCalledWith("CREATE_USER_ERROR");
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call handleModalExited when modal is exited", () => {
+    it("should render when name has changed", () => {
+        const e = {
+            target: { name: "userId", value: "bob" }
+        };
+        const wrapper = shallow(<CreateUser {...props} error="Error" />);
+        expect(wrapper).toMatchSnapshot();
+        wrapper.find(Input).simulate("change", e);
+        expect(props.onClearError).toHaveBeenCalled();
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render when password has changed", () => {
+        const e = {
+            target: { name: "password", value: "password" }
+        };
+        const wrapper = shallow(<CreateUser {...props} error="Error" />);
+        expect(wrapper).toMatchSnapshot();
+        wrapper.find(PasswordInput).simulate("change", e);
+        expect(props.onClearError).toHaveBeenCalled();
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should call onClearError() when handleModalExited() is called", () => {
+        props.error = "Error";
         const wrapper = shallow(<CreateUser {...props} />);
-        wrapper
-            .find("Modal")
-            .at(0)
-            .simulate("exited");
-        expect(props.onClearError).toHaveBeenCalledWith("CREATE_USER_ERROR");
+        wrapper.instance().handleModalExited();
+        expect(props.onClearError).toHaveBeenCalledWith();
     });
 
     it("should call handleToggleForceReset when Checkbox is clicked", () => {
@@ -85,22 +95,6 @@ describe("<CreateUser />", () => {
             password: "f",
             confirm: "f",
             errorPassword: "Passwords must contain at least 2 characters"
-        });
-    });
-
-    it("should call handleSubmit when form is submitted and [this.state.confirm !== this.state.password]", () => {
-        const e = {
-            preventDefault: jest.fn()
-        };
-        const wrapper = shallow(<CreateUser {...props} />);
-        wrapper.setState({ userId: "foo", password: "foo", confirm: "bar" });
-        wrapper.find("form").simulate("submit", e);
-        expect(wrapper.state()).toEqual({
-            ...state,
-            userId: "foo",
-            password: "foo",
-            confirm: "bar",
-            errorConfirm: "Passwords do not match"
         });
     });
 });
@@ -160,10 +154,9 @@ describe("mapDispatchToProps", () => {
     });
 
     it("should return onClearError() in props", () => {
-        const error = true;
-        result.onClearError(error);
+        result.onClearError();
         expect(dispatch).toHaveBeenCalledWith({
-            error: true,
+            error: "CREATE_USER_ERROR",
             type: "CLEAR_ERROR"
         });
     });

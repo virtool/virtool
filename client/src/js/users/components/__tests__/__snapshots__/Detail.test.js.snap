@@ -12,7 +12,7 @@ exports[`<UserDetail /> should render 1`] = `
         bob
       </span>
       <Detail__AdminIcon
-        bsStyle="primary"
+        color="blue"
         name="user-shield"
       />
       <Link
@@ -86,7 +86,7 @@ exports[`<UserDetail /> should render when [canModifyUser=false] 1`] = `
         bob
       </span>
       <Detail__AdminIcon
-        bsStyle="primary"
+        color="blue"
         name="user-shield"
       />
       <Link

@@ -1,137 +1,103 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<PathoscopeIsolate /> should render 1`] = `
-<PathoscopeIsolate
-  depth={13}
-  maxDepth={22}
-  name="Isolate A"
-  onScroll={[MockFunction]}
-  reads={102}
-  sequences={
-    Array [
-      Object {
-        "definition": "Foo Hit",
-        "filled": Array [
-          1,
-          2,
-          3,
-          4,
-          5,
-        ],
-        "id": "foo",
-        "length": 5,
-      },
-      Object {
-        "definition": "Bar Hit",
-        "filled": Array [
-          1,
-          2,
-          3,
-          4,
-          5,
-          4,
-          2,
-          3,
-        ],
-        "id": "bar",
-        "length": 8,
-      },
-    ]
-  }
-  showReads={false}
->
-  <div>
-    <Isolate__PathoscopeIsolateHeader>
-      <div
-        className="Isolate__PathoscopeIsolateHeader-sc-2hw4nu-2 kDplcs"
-      >
-        Isolate A
-        <PathoscopeIsolateWeight
-          reads={102}
-          showReads={false}
-        >
-          <strong
-            className="small text-success"
-          >
-            NaN
-          </strong>
-        </PathoscopeIsolateWeight>
-        <strong
-          className="small text-danger"
-        >
-          13
-        </strong>
-        <strong
-          className="small text-primary"
-        >
-          NaN
-        </strong>
-      </div>
-    </Isolate__PathoscopeIsolateHeader>
-    <Isolate__PathoscopeChartContainer>
-      <div
-        className="Isolate__PathoscopeChartContainer-sc-2hw4nu-0 eyChHh"
-      >
-        <Isolate__PathoscopeChartRibbon>
-          <div
-            className="Isolate__PathoscopeChartRibbon-sc-2hw4nu-1 gcdAE"
-          >
-            <CoverageChart
-              definition="Foo Hit"
-              id="foo"
-              key="0"
-              length={5}
-              showYAxis={true}
-              yMax={22}
-            >
-              <Coverage__StyledCoverageChart>
-                <div
-                  className="Coverage__StyledCoverageChart-umswn9-0 fBJPhh"
-                />
-              </Coverage__StyledCoverageChart>
-            </CoverageChart>
-            <CoverageChart
-              definition="Bar Hit"
-              id="bar"
-              key="1"
-              length={8}
-              showYAxis={false}
-              yMax={22}
-            >
-              <Coverage__StyledCoverageChart>
-                <div
-                  className="Coverage__StyledCoverageChart-umswn9-0 fBJPhh"
-                />
-              </Coverage__StyledCoverageChart>
-            </CoverageChart>
-          </div>
-        </Isolate__PathoscopeChartRibbon>
-      </div>
-    </Isolate__PathoscopeChartContainer>
-  </div>
-</PathoscopeIsolate>
+<Isolate__StyledPathoscopeIsolate>
+  <Isolate__PathoscopeIsolateHeader>
+    Isolate A
+    <PathoscopeIsolateWeight
+      pi={0.712}
+      reads={102}
+      showPathoscopeReads={false}
+    />
+    <Isolate__PathoscopeIsolateDepth>
+      13
+    </Isolate__PathoscopeIsolateDepth>
+    <Isolate__PathoscopeIsolateCoverage>
+      NaN
+    </Isolate__PathoscopeIsolateCoverage>
+  </Isolate__PathoscopeIsolateHeader>
+  <ScrollSyncPane
+    enabled={true}
+    group="default"
+  >
+    <Isolate__PathoscopeChartRibbon>
+      <CoverageChart
+        definition="Foo Hit"
+        id="foo"
+        key="0"
+        length={5}
+        showYAxis={true}
+        yMax={22}
+      />
+      <CoverageChart
+        definition="Bar Hit"
+        id="bar"
+        key="1"
+        length={8}
+        showYAxis={false}
+        yMax={22}
+      />
+    </Isolate__PathoscopeChartRibbon>
+  </ScrollSyncPane>
+</Isolate__StyledPathoscopeIsolate>
+`;
+
+exports[`<PathoscopeIsolate /> should render read count 1`] = `
+<Isolate__StyledPathoscopeIsolate>
+  <Isolate__PathoscopeIsolateHeader>
+    Isolate A
+    <PathoscopeIsolateWeight
+      pi={0.712}
+      reads={102}
+      showPathoscopeReads={true}
+    />
+    <Isolate__PathoscopeIsolateDepth>
+      13
+    </Isolate__PathoscopeIsolateDepth>
+    <Isolate__PathoscopeIsolateCoverage>
+      NaN
+    </Isolate__PathoscopeIsolateCoverage>
+  </Isolate__PathoscopeIsolateHeader>
+  <ScrollSyncPane
+    enabled={true}
+    group="default"
+  >
+    <Isolate__PathoscopeChartRibbon>
+      <CoverageChart
+        definition="Foo Hit"
+        id="foo"
+        key="0"
+        length={5}
+        showYAxis={true}
+        yMax={22}
+      />
+      <CoverageChart
+        definition="Bar Hit"
+        id="bar"
+        key="1"
+        length={8}
+        showYAxis={false}
+        yMax={22}
+      />
+    </Isolate__PathoscopeChartRibbon>
+  </ScrollSyncPane>
+</Isolate__StyledPathoscopeIsolate>
 `;
 
 exports[`<PathoscopeIsolateWeight /> should render reads 1`] = `
-<strong
-  className="small text-success"
->
+<Isolate__StyledPathoscopeIsolateWeight>
   121
-</strong>
+</Isolate__StyledPathoscopeIsolateWeight>
 `;
 
 exports[`<PathoscopeIsolateWeight /> should render weight 1`] = `
-<strong
-  className="small text-success"
->
+<Isolate__StyledPathoscopeIsolateWeight>
   0.321
-</strong>
+</Isolate__StyledPathoscopeIsolateWeight>
 `;
 
 exports[`<PathoscopeIsolateWeight /> should render weight in scientific notation 1`] = `
-<strong
-  className="small text-success"
->
+<Isolate__StyledPathoscopeIsolateWeight>
   3.21E-7
-</strong>
+</Isolate__StyledPathoscopeIsolateWeight>
 `;

@@ -1,0 +1,27 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SubtractionSelector /> should render 1`] = `
+<InputGroup>
+  <Input__InputLabel>
+    Subtraction
+  </Input__InputLabel>
+  <Select
+    name="subtraction"
+    onChange={[MockFunction]}
+    value="foo"
+  >
+    <option
+      key="foo"
+      value="foo"
+    >
+      Foo
+    </option>
+    <option
+      key="bar"
+      value="bar"
+    >
+      Bar
+    </option>
+  </Select>
+</InputGroup>
+`;

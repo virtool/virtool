@@ -1,5 +1,6 @@
 jest.mock("../../selectors");
 
+import { Select } from "../../../base";
 import { getCanModifyUser } from "../../selectors";
 import { UserRole, mapStateToProps } from "../Role";
 
@@ -29,7 +30,7 @@ describe("<UserRole />", () => {
 
     it("should call onSetUserRole() when selection changes", () => {
         const wrapper = shallow(<UserRole {...props} />);
-        wrapper.find("InputError").prop("onChange")({ target: { value: "limited" } });
+        wrapper.find(Select).prop("onChange")({ target: { value: "limited" } });
         expect(props.onSetUserRole).toHaveBeenCalledWith("bob", "limited");
     });
 });

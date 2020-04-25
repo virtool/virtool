@@ -4,12 +4,14 @@ import { connect } from "react-redux";
 import styled from "styled-components";
 import { Box, Container, ExternalLink, LoadingPlaceholder } from "../../base";
 import { Support } from "./Support";
-import { Upgrade } from "./Upgrade";
 
 const StyledWelcome = styled(Container)`
     ${Box}:first-child {
+        h1 {
+            margin: 10px 0;
+        }
         p {
-            margin-bottom: 20px;
+            margin: 0 0 15px;
         }
 
         a {
@@ -26,9 +28,7 @@ export const Welcome = ({ mongoVersion, version }) => {
     return (
         <StyledWelcome>
             <Box>
-                <h3>
-                    Virtool <small className="text-muted">{version}</small>
-                </h3>
+                <h1>Virtool {version}</h1>
                 <p>Viral infection diagnostics using next-generation sequencing</p>
 
                 <strong>
@@ -37,7 +37,6 @@ export const Welcome = ({ mongoVersion, version }) => {
                 </strong>
             </Box>
 
-            <Upgrade mongoVersion={mongoVersion} />
             <Support />
         </StyledWelcome>
     );

@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 
-import { TabLink, Tabs, ViewHeader, WideContainer } from "../../base";
+import { TabLink, Tabs, ViewHeader, ViewHeaderTitle, WideContainer } from "../../base";
 import { getAccount } from "../actions";
 import AccountProfile from "./Profile";
 import APIKeys from "./API/API";
@@ -13,7 +13,7 @@ export const Account = ({ userId, onGet }) => {
     return (
         <WideContainer>
             <ViewHeader title="Account">
-                <strong>Account</strong>
+                <ViewHeaderTitle>Account</ViewHeaderTitle>
             </ViewHeader>
 
             <Tabs>

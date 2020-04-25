@@ -7,7 +7,15 @@ import {
     UpdateSampleRows
 } from "../TaskArgs";
 
-const taskTypes = ["build_index", "create_sample", "create_subtraction", "pathoscope_bowtie", "nuvs", "update_sample"];
+const taskTypes = [
+    "aodp",
+    "build_index",
+    "create_sample",
+    "create_subtraction",
+    "pathoscope_bowtie",
+    "nuvs",
+    "update_sample"
+];
 
 describe("<TaskArgs />", () => {
     let props;

@@ -1,14 +1,13 @@
 import { forEach, reduce, replace, split, trimEnd } from "lodash-es";
 import React from "react";
-import { Modal, ProgressBar } from "react-bootstrap";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import Request from "superagent";
 import { pushState } from "../../app/actions";
-import { Button, Label, Loader } from "../../base";
+import { AffixedProgressBar, Button, ModalBody, ModalFooter, Label, Loader, Modal, ModalHeader } from "../../base";
 import { byteSize, routerLocationHasState } from "../../utils/utils";
-
 import { installSoftwareUpdates } from "../actions";
-import { ReleaseMarkdown } from "./Release";
+import { ReleaseMarkdown } from "./Markdown";
 
 export const attemptReload = () => {
     Request.get(`${window.location.origin}/api`).end((err, res) => {
@@ -38,17 +37,32 @@ export const mergeBody = releases => {
     return reduce(result, (body, list, header) => `${body}\n\n#### ${header}\n${list.join("")}`, "");
 };
 
-export const Process = ({ count, progress, size, step, updating }) => {
+const StyledInstallProcess = styled(ModalBody)`
+    padding: 50px 15px;
+    position: relative;
+    text-align: center;
+
+    p {
+        font-weight: bold;
+    }
+
+    small {
+        font-size: ${props => props.theme.fontSize.sm};
+        text-transform: capitalize;
+    }
+`;
+
+export const InstallProcess = ({ count, progress, size, step, updating }) => {
     if (updating && progress === 1 && !window.reloadInterval) {
         window.setTimeout(() => {
             window.reloadInterval = window.setInterval(attemptReload, 1000);
         }, 3000);
 
         return (
-            <Modal.Body className="text-center" style={{ padding: "50px 15px" }}>
+            <StyledInstallProcess>
                 <p>Restarting server</p>
-                <Loader color="#3c8786" />
-            </Modal.Body>
+                <Loader color="blue" />
+            </StyledInstallProcess>
         );
     }
 
@@ -59,15 +73,14 @@ export const Process = ({ count, progress, size, step, updating }) => {
     }
 
     return (
-        <Modal.Body>
-            <ProgressBar now={progress * 100} />
-            <p className="text-center">
-                <small>
-                    <span className="text-capitalize">{step}</span>
-                    {ratio}
-                </small>
-            </p>
-        </Modal.Body>
+        <StyledInstallProcess>
+            <AffixedProgressBar color="blue" now={progress * 100} />
+            <p>Installing Update</p>
+            <small>
+                <span>{step}</span>
+                {ratio}
+            </small>
+        </StyledInstallProcess>
     );
 };
 
@@ -78,28 +91,27 @@ export const SoftwareInstall = ({ onHide, onInstall, process, releases, show, up
 
     if (process === null) {
         content = (
-            <div>
-                <Modal.Body>
+            <React.Fragment>
+                <ModalBody>
                     <ReleaseMarkdown body={mergedBody} noMargin />
-                </Modal.Body>
+                </ModalBody>
 
-                <Modal.Footer>
-                    <Button bsStyle="primary" icon="download" onClick={onInstall}>
+                <ModalFooter>
+                    <Button color="blue" icon="download" onClick={onInstall}>
                         Install
                     </Button>
-                </Modal.Footer>
-            </div>
+                </ModalFooter>
+            </React.Fragment>
         );
     } else {
-        content = <Process {...process} size={releases[0].size} updating={updating} />;
+        content = <InstallProcess {...process} size={releases[0].size} updating={updating} />;
     }
 
     return (
-        <Modal show={show} onHide={onHide}>
-            <Modal.Header onHide={onHide} closeButton>
+        <Modal label="Software Update" show={show} onHide={onHide}>
+            <ModalHeader>
                 Software Update <Label>{releases[0].name}</Label>
-            </Modal.Header>
-
+            </ModalHeader>
             {content}
         </Modal>
     );

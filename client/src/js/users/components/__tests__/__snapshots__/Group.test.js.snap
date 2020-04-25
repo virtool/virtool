@@ -9,8 +9,6 @@ exports[`<UserGroup /> should render with [toggled=false] 1`] = `
   </span>
   <Checkbox
     checked={false}
-    partial={false}
-    pullRight={false}
   />
 </Group__StyledUserGroup>
 `;
@@ -24,8 +22,6 @@ exports[`<UserGroup /> should render with [toggled=true] 1`] = `
   </span>
   <Checkbox
     checked={true}
-    partial={false}
-    pullRight={false}
   />
 </Group__StyledUserGroup>
 `;

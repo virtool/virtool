@@ -2,78 +2,246 @@
 
 exports[`<EditSubtraction /> should render 1`] = `
 <Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
-  onExited={[MockFunction]}
+  label="Edit Subtraction"
   onHide={[MockFunction]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
   show={true}
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={true}
-    closeLabel="Close"
-  >
+  <ModalHeader>
     Edit Subtraction
   </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <ModalBody
-      bsClass="modal-body"
-      componentClass="div"
-      style={
-        Object {
-          "margin": "0 0 10px 0",
-        }
-      }
-    >
-      <InputError
-        label="Unique Name"
-        readOnly={true}
-        type="text"
-        value="foo"
-      />
-      <InputError
-        label="Nickname"
-        onChange={[Function]}
-        type="text"
-        value="baz"
-      />
-      <InputError
-        label="File"
-        readOnly={true}
-        type="text"
-        value="bar"
-      />
-    </ModalBody>
-    <ModalFooter
-      bsClass="modal-footer"
-      className="modal-footer"
-      componentClass="div"
-    >
-      <SaveButton
-        pullRight={true}
-      />
-    </ModalFooter>
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value="Prunus persica"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          name="nickname"
+          onChange={[Function]}
+          value="Peach"
+        />
+      </InputGroup>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<EditSubtraction /> should render after name is changed 1`] = `
+<Modal
+  label="Edit Subtraction"
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Edit Subtraction
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value="Prunus persica"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          name="nickname"
+          onChange={[Function]}
+          value="Peach"
+        />
+      </InputGroup>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<EditSubtraction /> should render after name is changed 2`] = `
+<Modal
+  label="Edit Subtraction"
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Edit Subtraction
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value="Foo"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          name="nickname"
+          onChange={[Function]}
+          value="Peach"
+        />
+      </InputGroup>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<EditSubtraction /> should render after nickname is changed 1`] = `
+<Modal
+  label="Edit Subtraction"
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Edit Subtraction
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value="Prunus persica"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          name="nickname"
+          onChange={[Function]}
+          value="Peach"
+        />
+      </InputGroup>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<EditSubtraction /> should render after nickname is changed 2`] = `
+<Modal
+  label="Edit Subtraction"
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Edit Subtraction
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value="Prunus persica"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          name="nickname"
+          onChange={[Function]}
+          value="Foo"
+        />
+      </InputGroup>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<EditSubtraction /> should render when [show=false] 1`] = `
+<Modal
+  label="Edit Subtraction"
+  onHide={[MockFunction]}
+  show={false}
+>
+  <ModalHeader>
+    Edit Subtraction
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value="Prunus persica"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          name="nickname"
+          onChange={[Function]}
+          value="Peach"
+        />
+      </InputGroup>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
   </form>
 </Modal>
 `;

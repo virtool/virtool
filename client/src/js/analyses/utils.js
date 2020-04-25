@@ -12,6 +12,7 @@ import {
     reject,
     sortBy,
     sumBy,
+    toNumber,
     uniq
 } from "lodash-es";
 import { formatIsolateName } from "../utils/utils";
@@ -52,6 +53,7 @@ export const extractNames = orfs => {
  * @param {Array} align - the coordinates
  * @param {Number} length - the length of the generated flat array
  * @returns {Array} - the flat array
+ *
  */
 export const fillAlign = ({ align, length }) => {
     const filled = Array(length);
@@ -74,18 +76,56 @@ export const fillAlign = ({ align, length }) => {
 };
 
 export const formatData = detail => {
-    if (detail.algorithm === "pathoscope_bowtie") {
+    if (detail.workflow === "pathoscope_bowtie") {
         return formatPathoscopeData(detail);
     }
 
-    if (detail.algorithm === "nuvs") {
+    if (detail.workflow === "nuvs") {
         return formatNuVsData(detail);
+    }
+
+    if (detail.workflow === "aodp") {
+        return formatAODPData(detail);
     }
 };
 
+export const formatAODPData = detail => {
+    const results = map(detail.results, result => {
+        const isolates = map(result.isolates, isolate => {
+            const sequences = map(isolate.sequences, sequence => {
+                return {
+                    ...sequence,
+                    identities: getSequenceIdentities(sequence)
+                };
+            });
+
+            return {
+                ...isolate,
+                sequences,
+                identities: getIdentities(sequences)
+            };
+        });
+
+        const identities = getIdentities(isolates);
+
+        return {
+            ...result,
+            isolates,
+            identities,
+            identity: max(identities)
+        };
+    });
+
+    return { ...detail, results };
+};
+
+const getIdentities = data => flatMap(data, item => item.identities);
+
+const getSequenceIdentities = sequence => flatMap(sequence.hits, hit => hit.identity);
 export const formatNuVsData = detail => {
     const results = map(detail.results, result => ({
         ...result,
+        id: toNumber(result.index),
         annotatedOrfCount: calculateAnnotatedOrfCount(result.orfs),
         e: calculateSequenceMinimumE(result.orfs),
         families: extractFamilies(result.orfs),
@@ -94,35 +134,31 @@ export const formatNuVsData = detail => {
 
     const longestSequence = maxBy(results, result => result.sequence.length);
 
-    const { algorithm, created_at, id, ready, user } = detail;
+    const { created_at, id, ready, user, workflow } = detail;
 
     return {
-        algorithm,
         created_at,
         id,
         ready,
         results,
         user,
+        workflow,
         maxSequenceLength: longestSequence.sequence.length
     };
 };
 
-export const formatSequence = (sequence, readCount) => {
-    const filled = fillAlign(sequence);
-
-    return {
-        ...sequence,
-        reads: sequence.pi * readCount,
-        filled
-    };
-};
+export const formatSequence = (sequence, readCount) => ({
+    ...sequence,
+    filled: fillAlign(sequence),
+    reads: sequence.pi * readCount
+});
 
 export const formatPathoscopeData = detail => {
     if (detail.results.length === 0) {
         return detail;
     }
 
-    const { algorithm, created_at, results, id, index, read_count, ready, reference, subtraction, user } = detail;
+    const { created_at, results, id, index, read_count, ready, reference, subtraction, user, workflow } = detail;
 
     const formatted = map(results, otu => {
         const isolateNames = [];
@@ -153,7 +189,6 @@ export const formatPathoscopeData = detail => {
                 sequences,
                 maxDepth: max(filled),
                 pi: sumBy(sequences, "pi"),
-                reads: sumBy(sequences, "reads"),
                 depth: median(filled)
             };
         });
@@ -176,7 +211,6 @@ export const formatPathoscopeData = detail => {
     });
 
     return {
-        algorithm,
         created_at,
         id,
         index,
@@ -186,8 +220,15 @@ export const formatPathoscopeData = detail => {
         ready,
         subtraction,
         subtractedCount: detail.subtracted_count,
-        user
+        user,
+        workflow
     };
+};
+
+export const fuseSearchKeys = {
+    pathoscope_bowtie: ["name", "abbreviation"],
+    nuvs: ["families", "names"],
+    aodp: ["name"]
 };
 
 /**

@@ -1,34 +1,15 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<ManageUsers /> renders correctly 1`] = `
+exports[`<ManageUsers /> should render 1`] = `
 <div>
-  <div
-    className="toolbar"
-  >
-    <FormGroup
-      bsClass="form-group"
-    >
-      <InputGroup
-        bsClass="input-group"
-      >
-        <InputGroupAddon
-          bsClass="input-group-addon"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="search"
-            pullRight={false}
-          />
-        </InputGroupAddon>
-        <FormControl
-          bsClass="form-control"
-          componentClass="input"
-          type="text"
-        />
-      </InputGroup>
-    </FormGroup>
-    <withRouter(LinkContainer)
+  <Toolbar>
+    <SearchInput
+      name="search"
+    />
+    <LinkButton
+      icon="users"
+      tip="Manage Group"
+      tipPlacement="top"
       to={
         Object {
           "state": Object {
@@ -36,16 +17,12 @@ exports[`<ManageUsers /> renders correctly 1`] = `
           },
         }
       }
-    >
-      <Button
-        bsStyle="default"
-        icon="users"
-        pullRight={false}
-        tip="Manage Groups"
-        tipPlacement="top"
-      />
-    </withRouter(LinkContainer)>
-    <withRouter(LinkContainer)
+    />
+    <LinkButton
+      color="blue"
+      icon="user-plus"
+      tip="Create User"
+      tipPlacement="top"
       to={
         Object {
           "state": Object {
@@ -53,16 +30,8 @@ exports[`<ManageUsers /> renders correctly 1`] = `
           },
         }
       }
-    >
-      <Button
-        bsStyle="primary"
-        icon="user-plus"
-        pullRight={false}
-        tip="Create User"
-        tipPlacement="top"
-      />
-    </withRouter(LinkContainer)>
-  </div>
+    />
+  </Toolbar>
   <Connect(UsersList) />
   <Connect(CreateUser) />
   <Connect(Groups) />

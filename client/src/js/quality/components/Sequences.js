@@ -5,7 +5,7 @@ import { max } from "lodash-es";
 import { createSVG } from "../../samples/chartUtils";
 import { toScientificNotation } from "../../utils/utils";
 
-const CreateSequencesChart = (element, data, baseWidth) => {
+export const drawSequencesChart = (element, data, baseWidth) => {
     const svg = createSVG(element, baseWidth);
 
     const width = baseWidth - svg.margin.right - svg.margin.left;
@@ -15,9 +15,7 @@ const CreateSequencesChart = (element, data, baseWidth) => {
         .range([svg.height, 0])
         .domain([0, max(data)]);
 
-    const x = scaleLinear()
-        .range([0, width])
-        .domain([0, data.length]);
+    const x = scaleLinear().range([0, width]).domain([0, data.length]);
 
     // Set up scales. Use formatter function to make scientific notation tick labels for y-axis.
     const xAxis = axisBottom(x);
@@ -30,9 +28,7 @@ const CreateSequencesChart = (element, data, baseWidth) => {
         .y(d => y(d));
 
     // Append the plot line to the SVG.
-    svg.append("path")
-        .attr("d", lineDrawer(data))
-        .attr("class", "graph-line");
+    svg.append("path").attr("d", lineDrawer(data)).attr("class", "graph-line");
 
     // Append a labelled x-axis to the SVG.
     svg.append("g")
@@ -60,5 +56,3 @@ const CreateSequencesChart = (element, data, baseWidth) => {
         .style("text-anchor", "end")
         .text("Read Count");
 };
-
-export default CreateSequencesChart;

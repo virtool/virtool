@@ -1,7 +1,7 @@
-const path = require("path")
-const HTMLPlugin = require("html-webpack-plugin")
-const { CleanWebpackPlugin } = require("clean-webpack-plugin")
-const MiniCssExtractPlugin = require("mini-css-extract-plugin")
+const path = require("path");
+const HTMLWebpackPlugin = require("html-webpack-plugin");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
   entry: "./src/js/index.js",
@@ -16,79 +16,60 @@ module.exports = {
           {
             loader: "eslint-loader",
             options: {
-              configFile: path.resolve(__dirname, "./.eslintrc")
-            }
-          }
-        ]
+              configFile: path.resolve(__dirname, "./.eslintrc"),
+            },
+          },
+        ],
       },
 
       {
         test: /\.css$/,
-        use: MiniCssExtractPlugin.loader
-      },
-
-      {
-        test: /\.less$/,
         use: [
           {
-            loader: MiniCssExtractPlugin.loader
+            loader: MiniCssExtractPlugin.loader,
           },
           "css-loader",
-          "less-loader"
-        ]
+        ],
       },
-
-      {
-        test: /\.(woff|woff2)$/,
-        use: {
-          loader: "url-loader?limit=100000"
-        }
-      }
-    ]
+    ],
   },
 
   devtool: "source-map",
 
   node: {
-    fs: "empty"
+    fs: "empty",
   },
 
   optimization: {
     splitChunks: {
-      chunks: "all"
-    }
+      chunks: "all",
+    },
   },
 
   output: {
     path: path.resolve(__dirname, "./dist"),
     filename: "app.[hash:8].js",
-    publicPath: "/static/"
+    publicPath: "/static/",
   },
 
   mode: "development",
 
   plugins: [
+    new CleanWebpackPlugin(),
+
     new MiniCssExtractPlugin({
       filename: "[name].[hash].css",
-      chunkFilename: "[id].[hash].css"
+      chunkFilename: "[id].[hash].css",
     }),
 
-    new HTMLPlugin({
+    new HTMLWebpackPlugin({
       filename: "index.html",
       title: "Virtool",
-      favicon: "./src/images/favicon.ico",
-      template: "./src/index.html",
-      inject: "body"
+      favicon: path.resolve(__dirname, "./src/images/favicon.ico"),
+      template: path.resolve(__dirname, "./src/index.html"),
+      inject: "body",
     }),
-
-    new CleanWebpackPlugin({
-      dry: false,
-      verbose: false,
-      cleanStaleWebpackAssets: true,
-      protectWebpackAssets: true,
-      dangerouslyAllowCleanPatternsOutsideProject: false
-    })
   ],
 
-  watch: true
+  watch: true,
 };

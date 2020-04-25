@@ -2,83 +2,304 @@
 
 exports[`<CreateUser /> should render 1`] = `
 <Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
+  label="Create User"
   onExited={[Function]}
-  onHide={[Function]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
-  show={false}
+  onHide={[MockFunction]}
+  show={true}
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={true}
-    closeLabel="Close"
-  >
+  <ModalHeader>
     Create User
   </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <Create__CreateUserContainer>
-      <InputError
-        error="foo"
-        label="Username"
-        name="userId"
-        onChange={[Function]}
-        value=""
-      />
-      <Create__CreateUserPasswords>
-        <InputError
-          error=""
-          label="Password"
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Username
+        </Input__InputLabel>
+        <Input
+          name="userId"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Password
+        </Input__InputLabel>
+        <PasswordInput
           name="password"
           onChange={[Function]}
-          type="password"
           value=""
         />
-        <InputError
-          error=""
-          label="Confirm"
-          name="confirm"
-          onChange={[Function]}
-          type="password"
-          value=""
-        />
-      </Create__CreateUserPasswords>
+        <Input__InputError />
+      </InputGroup>
       <Checkbox
         checked={false}
         label="Force user to reset password on login"
         onClick={[Function]}
-        partial={false}
-        pullRight={false}
       />
-    </Create__CreateUserContainer>
-    <ModalFooter
-      bsClass="modal-footer"
-      componentClass="div"
-    >
-      <SaveButton
-        pullRight={true}
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<CreateUser /> should render when name has changed 1`] = `
+<Modal
+  label="Create User"
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Create User
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Username
+        </Input__InputLabel>
+        <Input
+          name="userId"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError>
+          Error
+        </Input__InputError>
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Password
+        </Input__InputLabel>
+        <PasswordInput
+          name="password"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError />
+      </InputGroup>
+      <Checkbox
+        checked={false}
+        label="Force user to reset password on login"
+        onClick={[Function]}
       />
-    </ModalFooter>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<CreateUser /> should render when name has changed 2`] = `
+<Modal
+  label="Create User"
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Create User
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Username
+        </Input__InputLabel>
+        <Input
+          name="userId"
+          onChange={[Function]}
+          value="bob"
+        />
+        <Input__InputError>
+          Error
+        </Input__InputError>
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Password
+        </Input__InputLabel>
+        <PasswordInput
+          name="password"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError />
+      </InputGroup>
+      <Checkbox
+        checked={false}
+        label="Force user to reset password on login"
+        onClick={[Function]}
+      />
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<CreateUser /> should render when password has changed 1`] = `
+<Modal
+  label="Create User"
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Create User
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Username
+        </Input__InputLabel>
+        <Input
+          name="userId"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError>
+          Error
+        </Input__InputError>
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Password
+        </Input__InputLabel>
+        <PasswordInput
+          name="password"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError />
+      </InputGroup>
+      <Checkbox
+        checked={false}
+        label="Force user to reset password on login"
+        onClick={[Function]}
+      />
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<CreateUser /> should render when password has changed 2`] = `
+<Modal
+  label="Create User"
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Create User
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Username
+        </Input__InputLabel>
+        <Input
+          name="userId"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError>
+          Error
+        </Input__InputError>
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Password
+        </Input__InputLabel>
+        <PasswordInput
+          name="password"
+          onChange={[Function]}
+          value="password"
+        />
+        <Input__InputError />
+      </InputGroup>
+      <Checkbox
+        checked={false}
+        label="Force user to reset password on login"
+        onClick={[Function]}
+      />
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<CreateUser /> should render with error 1`] = `
+<Modal
+  label="Create User"
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Create User
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Username
+        </Input__InputLabel>
+        <Input
+          name="userId"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Password
+        </Input__InputLabel>
+        <PasswordInput
+          name="password"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError>
+          Password too short
+        </Input__InputError>
+      </InputGroup>
+      <Checkbox
+        checked={false}
+        label="Force user to reset password on login"
+        onClick={[Function]}
+      />
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <SaveButton />
+    </Modal__ModalFooter>
   </form>
 </Modal>
 `;

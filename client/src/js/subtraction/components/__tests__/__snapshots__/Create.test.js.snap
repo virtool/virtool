@@ -2,156 +2,421 @@
 
 exports[`<CreateSubtraction /> should render 1`] = `
 <Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
+  label="Create Subtraction"
   onEnter={[Function]}
   onExited={[Function]}
   onHide={[MockFunction]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
   show={true}
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={false}
-    closeLabel="Close"
-  >
+  <ModalHeader>
     Create Subtraction
   </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <ModalBody
-      bsClass="modal-body"
-      componentClass="div"
-      style={
-        Object {
-          "margin": "0 0 10px 0",
-        }
-      }
-    >
-      <InputError
-        error=""
-        label="Unique Name"
-        name="subtractionId"
-        onChange={[Function]}
-        type="text"
-        value=""
-      />
-      <InputError
-        label="Nickname"
-        name="nickname"
-        onChange={[Function]}
-        type="text"
-        value=""
-      />
-      <h5>
-        <strong>
-          Files
-        </strong>
-      </h5>
-      <Box__BoxGroup>
-        <NoneFoundSection>
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="info-circle"
-            pullRight={false}
-          />
-           No files found. 
-          <Link
-            to="/subtraction/files"
-          >
-            Upload some
-          </Link>
-          .
-        </NoneFoundSection>
-      </Box__BoxGroup>
-      <div
-        className="input-form-error-none"
-        style={
-          Object {
-            "margin": "3px 0 0 0",
-          }
-        }
-      >
-        None
-      </div>
-    </ModalBody>
-    <ModalFooter
-      bsClass="modal-footer"
-      className="modal-footer"
-      componentClass="div"
-    >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          name="nickname"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
+      <label>
+        Files
+      </label>
+      <Create__SubtractionFileList>
+        <SubtractionFileItem
+          active={false}
+          id="test"
+          key="test"
+          onClick={[Function]}
+        />
+      </Create__SubtractionFileList>
+      <Input__InputError />
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <Button
-        bsStyle="primary"
+        color="blue"
+        disabled={false}
         icon="play"
-        pullRight={true}
         tipPlacement="top"
         type="submit"
       >
         Start
       </Button>
-    </ModalFooter>
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<CreateSubtraction /> should render after "name" input changes 1`] = `
+<Modal
+  label="Create Subtraction"
+  onEnter={[Function]}
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Create Subtraction
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value="Foo"
+        />
+        <Input__InputError />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          name="nickname"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
+      <label>
+        Files
+      </label>
+      <Create__SubtractionFileList>
+        <SubtractionFileItem
+          active={false}
+          id="test"
+          key="test"
+          onClick={[Function]}
+        />
+      </Create__SubtractionFileList>
+      <Input__InputError />
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <Button
+        color="blue"
+        disabled={false}
+        icon="play"
+        tipPlacement="top"
+        type="submit"
+      >
+        Start
+      </Button>
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<CreateSubtraction /> should render after "nickname" input changes 1`] = `
+<Modal
+  label="Create Subtraction"
+  onEnter={[Function]}
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Create Subtraction
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          name="nickname"
+          onChange={[Function]}
+          value="Bar"
+        />
+      </InputGroup>
+      <label>
+        Files
+      </label>
+      <Create__SubtractionFileList>
+        <SubtractionFileItem
+          active={false}
+          id="test"
+          key="test"
+          onClick={[Function]}
+        />
+      </Create__SubtractionFileList>
+      <Input__InputError />
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <Button
+        color="blue"
+        disabled={false}
+        icon="play"
+        tipPlacement="top"
+        type="submit"
+      >
+        Start
+      </Button>
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<CreateSubtraction /> should render error when submitted with no unique name or file entered 1`] = `
+<Modal
+  label="Create Subtraction"
+  onEnter={[Function]}
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Create Subtraction
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError>
+          A name is required
+        </Input__InputError>
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          name="nickname"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
+      <label>
+        Files
+      </label>
+      <Create__SubtractionFileList>
+        <SubtractionFileItem
+          active={false}
+          id="test"
+          key="test"
+          onClick={[Function]}
+        />
+      </Create__SubtractionFileList>
+      <Input__InputError>
+        Please select a file
+      </Input__InputError>
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <Button
+        color="blue"
+        disabled={false}
+        icon="play"
+        tipPlacement="top"
+        type="submit"
+      >
+        Start
+      </Button>
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<CreateSubtraction /> should render when no files available 1`] = `
+<Modal
+  label="Create Subtraction"
+  onEnter={[Function]}
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Create Subtraction
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          name="nickname"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
+      <label>
+        Files
+      </label>
+      <Create__SubtractionFileList>
+        <NoneFoundSection
+          noun="files"
+        >
+          <Link
+            to="/subtraction/files"
+          >
+            Upload some
+          </Link>
+        </NoneFoundSection>
+      </Create__SubtractionFileList>
+      <Input__InputError />
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <Button
+        color="blue"
+        disabled={false}
+        icon="play"
+        tipPlacement="top"
+        type="submit"
+      >
+        Start
+      </Button>
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<CreateSubtraction /> should render with request error 1`] = `
+<Modal
+  label="Create Subtraction"
+  onEnter={[Function]}
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Create Subtraction
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          name="name"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          name="nickname"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
+      <label>
+        Files
+      </label>
+      <Create__SubtractionFileList>
+        <SubtractionFileItem
+          active={false}
+          id="test"
+          key="test"
+          onClick={[Function]}
+        />
+      </Create__SubtractionFileList>
+      <Input__InputError />
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <Button
+        color="blue"
+        disabled={false}
+        icon="play"
+        tipPlacement="top"
+        type="submit"
+      >
+        Start
+      </Button>
+    </Modal__ModalFooter>
   </form>
 </Modal>
 `;
 
 exports[`<SubtractionFileItem /> should render when [active=false] 1`] = `
-<Box__BoxGroupSection
+<Create__StyledSubtractionFileItem
   active={false}
   onClick={[Function]}
 >
-  <Create__SubtractionFileItemTop>
-    <strong>
-      test
-    </strong>
-    <span>
-      Uploaded 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
-      />
-       by 
-      test-user
-    </span>
-  </Create__SubtractionFileItemTop>
-</Box__BoxGroupSection>
+  <strong>
+    test
+  </strong>
+  <Attribution
+    time="2018-02-14T17:12:00.000000Z"
+    user="test-user"
+  />
+</Create__StyledSubtractionFileItem>
 `;
 
 exports[`<SubtractionFileItem /> should render when [active=true] 1`] = `
-<Box__BoxGroupSection
+<Create__StyledSubtractionFileItem
   active={true}
   onClick={[Function]}
 >
-  <Create__SubtractionFileItemTop>
-    <strong>
-      test
-    </strong>
-    <span>
-      Uploaded 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
-      />
-       by 
-      test-user
-    </span>
-  </Create__SubtractionFileItemTop>
-</Box__BoxGroupSection>
+  <strong>
+    test
+  </strong>
+  <Attribution
+    time="2018-02-14T17:12:00.000000Z"
+    user="test-user"
+  />
+</Create__StyledSubtractionFileItem>
 `;

@@ -1,27 +1,19 @@
-import CX from "classnames";
-import React from "react";
-import Marked from "marked";
 import PropTypes from "prop-types";
-import { replace } from "lodash-es";
-import { Button, Col, ListGroupItem, Row } from "react-bootstrap";
+import React from "react";
+import styled from "styled-components";
+import { BoxGroupSection, ExternalLink, Icon } from "../../base";
+import { ReleaseMarkdown } from "./Markdown";
 
-import { Icon } from "../../base";
+const ReleaseName = styled.span`
+    cursor: pointer;
+    flex: 2 0 auto;
+`;
 
-export const ReleaseMarkdown = ({ body, noMargin = false }) => {
-    let html = Marked(body);
-
-    html = replace(
-        html,
-        /#([0-9]+)/g,
-        "<a target='_blank' href='https://github.com/virtool/virtool/issues/$1'>#$1</a>"
-    );
-
-    return (
-        <div className={CX("markdown-container", { "no-margin": noMargin })}>
-            <div dangerouslySetInnerHTML={{ __html: html }} />
-        </div>
-    );
-};
+const ReleaseHeader = styled.div`
+    align-items: center;
+    display: flex;
+    font-weight: bold;
+`;
 
 export default class Release extends React.Component {
     constructor(props) {
@@ -50,32 +42,22 @@ export default class Release extends React.Component {
         let markdown;
 
         if (this.state.in) {
-            markdown = (
-                <Col xs={12}>
-                    <ReleaseMarkdown body={this.props.body} />
-                </Col>
-            );
+            markdown = <ReleaseMarkdown body={this.props.body} />;
         }
 
         return (
-            <ListGroupItem>
-                <Row>
-                    <Col xs={12}>
-                        <Row>
-                            <Col xs={9} style={{ cursor: "pointer" }} onClick={this.handleClick}>
-                                {caret} <strong>{this.props.name}</strong>
-                            </Col>
-                            <Col xs={3}>
-                                <Button bsSize="xsmall" target="_blank" href={this.props.html_url}>
-                                    <i className="fab fa-github" /> GitHub
-                                </Button>
-                            </Col>
-                        </Row>
-                    </Col>
+            <BoxGroupSection>
+                <ReleaseHeader>
+                    <ReleaseName onClick={this.handleClick}>
+                        {caret} <strong>{this.props.name}</strong>
+                    </ReleaseName>
+                    <ExternalLink href={this.props.html_url}>
+                        <i className="fab fa-github" /> View on GitHub
+                    </ExternalLink>
+                </ReleaseHeader>
 
-                    {markdown}
-                </Row>
-            </ListGroupItem>
+                {markdown}
+            </BoxGroupSection>
         );
     }
 }

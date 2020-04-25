@@ -1,0 +1,112 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<EditTarget /> should render 1`] = `
+<Modal
+  label="Edit Target"
+  onEnter={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Edit Target
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <TargetForm
+        description="Bar description"
+        length={490}
+        name="Bar"
+        onChange={[Function]}
+        required={true}
+      />
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <Button
+        color="blue"
+        disabled={false}
+        icon="save"
+        tipPlacement="top"
+        type="submit"
+      >
+        Submit
+      </Button>
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<EditTarget /> should render error when submitted without name 1`] = `
+<Modal
+  label="Edit Target"
+  onEnter={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Edit Target
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <TargetForm
+        description="This is a test"
+        length={310}
+        name=""
+        onChange={[Function]}
+        required={false}
+      />
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <Button
+        color="blue"
+        disabled={false}
+        icon="save"
+        tipPlacement="top"
+        type="submit"
+      >
+        Submit
+      </Button>
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<EditTarget /> should update when TargetForm onChange() prop called 1`] = `
+<Modal
+  label="Edit Target"
+  onEnter={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Edit Target
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <TargetForm
+        description="Bar description"
+        length={490}
+        name="Foo"
+        onChange={[Function]}
+        required={true}
+      />
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <Button
+        color="blue"
+        disabled={false}
+        icon="save"
+        tipPlacement="top"
+        type="submit"
+      >
+        Submit
+      </Button>
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;

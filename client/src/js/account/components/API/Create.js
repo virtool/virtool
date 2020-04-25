@@ -1,16 +1,58 @@
-import CX from "classnames";
 import { mapValues } from "lodash-es";
 import React from "react";
-import { Col, Row } from "react-bootstrap";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { pushState } from "../../../app/actions";
 
-import { Button, Flex, FlexItem, Icon, Input, InputError, Modal, SaveButton } from "../../../base";
+import {
+    ModalBody,
+    ModalFooter,
+    Flex,
+    FlexItem,
+    Icon,
+    Input,
+    InputContainer,
+    InputError,
+    InputGroup,
+    InputIcon,
+    InputLabel,
+    Modal,
+    SaveButton,
+    ModalHeader
+} from "../../../base";
 import { routerLocationHasState } from "../../../utils/utils";
 import { clearAPIKey, createAPIKey } from "../../actions";
 import CreateAPIKeyInfo from "./CreateInfo";
 import APIPermissions from "./Permissions";
+
+const CreateAPIKeyCopied = styled.p`
+    color: ${props => props.theme.color.blue};
+    visibility: ${props => (props.show ? "visible" : "hidden")};
+`;
+
+const CreateAPIKeyInput = styled(Input)`
+    text-align: center;
+`;
+
+const StyledCreateAPIKey = styled(ModalBody)`
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-left: 90px;
+    margin-right: 90px;
+    text-align: center;
+
+    strong {
+        color: ${props => props.theme.color.greenDark};
+        margin-bottom: 5px;
+    }
+`;
+
+const StyledFlex = styled(Flex)`
+    margin-top: 15px;
+    margin-bottom: 10px;
+`;
 
 export const getInitialState = props => ({
     name: "",
@@ -52,10 +94,9 @@ export class CreateAPIKey extends React.Component {
         const { name, permissions } = this.state;
 
         if (!this.state.name) {
-            this.setState({
-                error: "Required Field"
+            return this.setState({
+                error: "Provide a name for the key"
             });
-            return;
         }
 
         this.setState({ submitted: true }, () => {
@@ -72,51 +113,39 @@ export class CreateAPIKey extends React.Component {
 
         if (this.state.show) {
             content = (
-                <Modal.Body className="text-center">
-                    <Row>
-                        <Col xs={12}>
-                            <strong className="text-success">Here is your key.</strong>
-                        </Col>
-                    </Row>
-
+                <StyledCreateAPIKey>
+                    <strong>Here is your key.</strong>
                     <small>Make note of it now. For security purposes, it will not be shown again.</small>
 
-                    <Row style={{ marginTop: "10px", marginBottom: "5px" }}>
-                        <Col xs={12} md={8} mdOffset={2}>
-                            <Flex alignItems="stretch" alignContent="stretch">
-                                <FlexItem grow={1}>
-                                    <Input
-                                        style={{ marginBottom: 0 }}
-                                        formGroupStyle={{ marginBottom: 0 }}
-                                        className="text-center"
-                                        value={this.props.newKey}
-                                        readOnly
-                                    />
-                                </FlexItem>
+                    <StyledFlex alignItems="stretch" alignContent="stretch">
+                        <FlexItem grow={1}>
+                            <InputContainer align="right">
+                                <CreateAPIKeyInput value={this.props.newKey} readOnly />
                                 <CopyToClipboard text={this.props.newKey} onCopy={this.handleCopy}>
-                                    <Button icon="paste" bsStyle="primary" />
+                                    <InputIcon name="copy" />
                                 </CopyToClipboard>
-                            </Flex>
-                        </Col>
-                    </Row>
+                            </InputContainer>
+                        </FlexItem>
+                    </StyledFlex>
 
-                    <small className={CX("text-primary", { invisible: !this.state.copied })}>
+                    <CreateAPIKeyCopied show={this.state.copied}>
                         <Icon name="check" /> Copied
-                    </small>
-                </Modal.Body>
+                    </CreateAPIKeyCopied>
+                </StyledCreateAPIKey>
             );
         } else {
             content = (
                 <React.Fragment>
+                    <ModalHeader>Create API Key</ModalHeader>
                     <CreateAPIKeyInfo />
+
                     <form onSubmit={this.handleSubmit}>
-                        <Modal.Body>
-                            <InputError
-                                label="Name"
-                                value={this.state.name}
-                                onChange={this.handleChange}
-                                error={this.state.error}
-                            />
+                        <ModalBody>
+                            <InputGroup>
+                                <InputLabel>Name</InputLabel>
+                                <Input label="Name" value={this.state.name} onChange={this.handleChange} />
+                                <InputError>{this.state.error}</InputError>
+                            </InputGroup>
 
                             <label>Permissions</label>
 
@@ -124,22 +153,23 @@ export class CreateAPIKey extends React.Component {
                                 keyPermissions={this.state.permissions}
                                 onChange={this.handlePermissionChange}
                             />
-                        </Modal.Body>
+                        </ModalBody>
 
-                        <Modal.Footer>
+                        <ModalFooter>
                             <SaveButton />
-                        </Modal.Footer>
+                        </ModalFooter>
                     </form>
                 </React.Fragment>
             );
         }
 
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Create API Key
-                </Modal.Header>
-
+            <Modal
+                label="Create API Key"
+                show={this.props.show}
+                onHide={this.props.onHide}
+                onExited={this.handleModalExited}
+            >
                 {content}
             </Modal>
         );

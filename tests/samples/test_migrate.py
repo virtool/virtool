@@ -2,6 +2,10 @@ import virtool.samples.migrate
 
 
 async def test_add_library_type(snapshot, dbi):
+    """
+    Test that samples are assigned a library_type field with different `srna` field values.
+
+    """
     await dbi.samples.insert_many([
         {
             "_id": "foo",
@@ -104,4 +108,3 @@ async def test_update_ready(snapshot, dbi):
     await virtool.samples.migrate.update_ready(dbi.motor_client)
 
     snapshot.assert_match(await dbi.samples.find().to_list(None))
-

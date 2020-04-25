@@ -1,25 +1,25 @@
+import { get, includes } from "lodash-es";
 import React from "react";
-import { includes, get } from "lodash-es";
 import { connect } from "react-redux";
-import { Switch, Route, Redirect, Link } from "react-router-dom";
+import { Link, Redirect, Route, Switch } from "react-router-dom";
 
 import Analyses from "../../analyses/components/Analyses";
-import { getSample, hideSampleModal, showRemoveSample } from "../actions";
 import {
-    Flex,
-    FlexItem,
     Icon,
     LoadingPlaceholder,
-    ViewHeader,
-    RelativeTime,
-    Tabs,
+    NotFound,
     TabLink,
-    NotFound
+    Tabs,
+    ViewHeader,
+    ViewHeaderAttribution,
+    ViewHeaderIcons,
+    ViewHeaderTitle
 } from "../../base";
-import { getCanModify } from "../selectors";
 import Cache from "../../caches/components/Detail";
-import General from "./General";
+import { getSample, hideSampleModal, showRemoveSample } from "../actions";
+import { getCanModify } from "../selectors";
 import Files from "./Files/Files";
+import General from "./General";
 import Quality from "./Quality";
 import RemoveSample from "./Remove";
 import Rights from "./Rights";
@@ -57,30 +57,14 @@ class SampleDetail extends React.Component {
             if (includes(this.props.history.location.pathname, "general")) {
                 editIcon = (
                     <Link to={{ state: { editSample: true } }}>
-                        <small style={{ paddingLeft: "5px" }}>
-                            <Icon
-                                bsStyle="warning"
-                                className="hoverable"
-                                name="pencil-alt"
-                                tip="Edit Sample"
-                                tipPlacement="left"
-                            />
-                        </small>
+                        <Icon color="orange" name="pencil-alt" tip="Edit" hoverable />
                     </Link>
                 );
             }
 
             removeIcon = (
                 <Link to={{ state: { removeSample: true } }}>
-                    <small style={{ paddingLeft: "5px" }}>
-                        <Icon
-                            bsStyle="danger"
-                            className="hoverable"
-                            name="trash"
-                            tip="Remove Sample"
-                            tipPlacement="left"
-                        />
-                    </small>
+                    <Icon color="red" name="trash" tip="Remove" hoverable />
                 </Link>
             );
 
@@ -97,18 +81,15 @@ class SampleDetail extends React.Component {
 
         return (
             <div>
-                <ViewHeader title={`${detail.name} - Samples`}>
-                    <Flex alignItems="flex-end">
-                        <FlexItem grow={1}>
-                            <strong>{detail.name}</strong>
-                        </FlexItem>
-
-                        {editIcon}
-                        {removeIcon}
-                    </Flex>
-                    <div className="text-muted" style={{ fontSize: "12px" }}>
-                        Created <RelativeTime time={created_at} /> by {user.id}
-                    </div>
+                <ViewHeader title={detail.name}>
+                    <ViewHeaderTitle>
+                        {detail.name}
+                        <ViewHeaderIcons>
+                            {editIcon}
+                            {removeIcon}
+                        </ViewHeaderIcons>
+                    </ViewHeaderTitle>
+                    <ViewHeaderAttribution time={created_at} user={user.id} />
                 </ViewHeader>
 
                 <Tabs bsStyle="tabs">

@@ -1,7 +1,7 @@
+import PropTypes from "prop-types";
 import React from "react";
 import styled from "styled-components";
-import PropTypes from "prop-types";
-import { DangerLabel, Label } from "./Label";
+import { Label } from "./Label";
 
 const StyledNotFound = styled.div`
     align-items: center;
@@ -25,7 +25,7 @@ const StyledNotFound = styled.div`
  */
 export const NotFound = ({ status = "404", message }) => (
     <StyledNotFound>
-        <DangerLabel>{status}</DangerLabel>
+        <Label color="red">{status}</Label>
         <strong>{message || "Not found"}</strong>
     </StyledNotFound>
 );

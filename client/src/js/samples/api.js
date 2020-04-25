@@ -1,4 +1,4 @@
-import Request from "superagent";
+import { Request } from "../app/request";
 
 export const find = ({ term, page, pathoscope, nuvs }) =>
     Request.get("/api/samples").query({
@@ -12,7 +12,18 @@ export const filter = ({ term }) => Request.get(`/api/samples?find=${term}`);
 
 export const get = ({ sampleId }) => Request.get(`/api/samples/${sampleId}`);
 
-export const create = action => Request.post("/api/samples").send(action);
+export const create = action => {
+    const { name, isolate, host, locale, libraryType, subtraction, files } = action;
+    return Request.post("/api/samples").send({
+        name,
+        isolate,
+        host,
+        locale,
+        subtraction,
+        files,
+        library_type: libraryType
+    });
+};
 
 export const update = ({ sampleId, update }) => Request.patch(`/api/samples/${sampleId}`).send(update);
 

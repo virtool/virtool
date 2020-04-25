@@ -12,18 +12,14 @@ const series = [
     { color: "#777", label: "Cytosine" }
 ];
 
-const CreateNucleotidesChart = (element, data, baseWidth) => {
+export const drawNucleotidesChart = (element, data, baseWidth) => {
     const svg = createSVG(element, baseWidth);
 
     const width = baseWidth - svg.margin.left - svg.margin.right;
 
-    const y = scaleLinear()
-        .range([svg.height, 0])
-        .domain([0, 100]);
+    const y = scaleLinear().range([svg.height, 0]).domain([0, 100]);
 
-    const x = scaleLinear()
-        .range([0, width])
-        .domain([0, data.length]);
+    const x = scaleLinear().range([0, width]).domain([0, data.length]);
 
     // Create a d3 line function for generating the four lines showing nucleotide frequency.
     const lineDrawer = line()
@@ -68,5 +64,3 @@ const CreateNucleotidesChart = (element, data, baseWidth) => {
 
     appendLegend(svg, width, series);
 };
-
-export default CreateNucleotidesChart;

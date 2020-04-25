@@ -1,15 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<SamplesSettings /> should render when [loading=false] 1`] = `
-<div
-  className="settings-container"
->
+<Container__NarrowContainer>
   <ViewHeader
     title="Sample Settings"
-  />
+  >
+    <ViewHeader__ViewHeaderTitle>
+      Sample Settings
+    </ViewHeader__ViewHeaderTitle>
+  </ViewHeader>
   <Connect(UniqueNames) />
   <Connect(SampleRights) />
-</div>
+</Container__NarrowContainer>
 `;
 
 exports[`<SamplesSettings /> should render when [loading=true] 1`] = `<LoadingPlaceholder />`;

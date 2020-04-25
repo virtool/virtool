@@ -3,7 +3,7 @@
 exports[`<NotificationIcon /> should render empty div when [visible=false] 1`] = `<div />`;
 
 exports[`<NotificationIcon /> should render full component when [visible=true] 1`] = `
-<withRouter(LinkContainer)
+<Link
   to="/administration/updates"
 >
   <Update__UpdateIcon
@@ -12,5 +12,5 @@ exports[`<NotificationIcon /> should render full component when [visible=true] 1
     tip="Software Update"
     tipPlacement="left"
   />
-</withRouter(LinkContainer)>
+</Link>
 `;

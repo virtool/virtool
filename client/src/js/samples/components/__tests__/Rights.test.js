@@ -1,3 +1,4 @@
+import { Select } from "../../../base";
 import { SampleRights, mapStateToProps, mapDispatchToProps } from "../Rights";
 import { getCanModifyRights } from "../../selectors";
 jest.mock("../../selectors");
@@ -13,6 +14,7 @@ describe("<SampleRights />", () => {
     beforeEach(() => {
         props = {
             canModifyRights: true,
+            groups: [{ id: "managers" }, { id: "technicians" }],
             sampleId: "foo",
             onListGroups: jest.fn(),
             onChangeRights: jest.fn(),
@@ -37,7 +39,7 @@ describe("<SampleRights />", () => {
     it("should call handleChangeGroup() when input is changed", () => {
         const wrapper = shallow(<SampleRights {...props} />);
         wrapper
-            .find("Input")
+            .find(Select)
             .at(0)
             .simulate("change", e);
         expect(props.onChangeGroup).toHaveBeenCalledWith("foo", "bar");
@@ -46,14 +48,14 @@ describe("<SampleRights />", () => {
     it("should call handleChangeRights() when input is changed", () => {
         const wrapper = shallow(<SampleRights {...props} />);
         wrapper
-            .find("Input")
+            .find(Select)
             .at(1)
             .simulate("change", e);
         expect(props.onChangeRights).toHaveBeenCalledWith("foo", "group", "bar");
     });
 
     it("should return LoadingPlaceholder when[this.props.groups=null]", () => {
-        props.groupd = null;
+        props.groups = null;
         const wrapper = shallow(<SampleRights {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
@@ -74,7 +76,6 @@ describe("mapStateToProps()", () => {
                 group: "baz",
                 group_read: true,
                 group_write: false,
-                all_read: true,
                 user: { id: "Baz" },
                 id: "Boo"
             }

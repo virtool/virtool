@@ -24,7 +24,7 @@ async def check_setup(db_connection_string, db_name):
     db = get_db(db_connection_string, db_name)
 
     try:
-        names = await db.list_collection_names()
+        await db.list_collection_names()
     except OperationFailure as err:
         logger.warning(f"Database Setup: {str(err)}")
         if any(substr in str(err) for substr in ["Authentication failed", "no users authenticated"]):
@@ -68,7 +68,3 @@ async def populate_settings(db):
         "_id": "settings",
         **defaults
     })
-
-
-
-

@@ -1,0 +1,61 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Targets /> should render null when [dataType!=barcode] 1`] = `""`;
+
+exports[`<Targets /> should render when [canModify=false] 1`] = `
+<Box__BoxGroup>
+  <Targets__TargetsHeader>
+    <h2>
+      <span>
+        Targets
+      </span>
+    </h2>
+    <p>
+      Manage the allowable sequence targets for this barcode reference.
+    </p>
+  </Targets__TargetsHeader>
+  <TargetItem
+    canModify={false}
+    key="foo"
+    name="foo"
+    onEdit={[Function]}
+    onRemove={[Function]}
+  />
+</Box__BoxGroup>
+`;
+
+exports[`<Targets /> should render when [canModify=true] 1`] = `
+<Box__BoxGroup>
+  <Targets__TargetsHeader>
+    <h2>
+      <span>
+        Targets
+      </span>
+      <a
+        href="#"
+        onClick={[Function]}
+      >
+        Add target
+      </a>
+    </h2>
+    <p>
+      Manage the allowable sequence targets for this barcode reference.
+    </p>
+  </Targets__TargetsHeader>
+  <TargetItem
+    canModify={true}
+    key="foo"
+    name="foo"
+    onEdit={[Function]}
+    onRemove={[Function]}
+  />
+  <Connect(AddTarget)
+    onHide={[Function]}
+    show={false}
+  />
+  <Connect(EditTarget)
+    onHide={[Function]}
+    show={false}
+  />
+</Box__BoxGroup>
+`;

@@ -2,93 +2,54 @@
 
 exports[`<API /> should render two API keys 1`] = `
 <div>
-  <Flex
-    alignContent="stretch"
-    alignItems="center"
-    direction="row"
-    justifyContent="flex-start"
-    style={
+  <API__APIKeysHeader>
+    <div
+      style={
+        Object {
+          "whiteSpace": "wrap",
+        }
+      }
+    >
+      <span>
+        Manage API keys for accessing the 
+      </span>
+      <ExternalLink
+        href="https://www.virtool.ca/docs/developer/api_account/"
+      >
+        Virtool API
+      </ExternalLink>
+      <span>
+        .
+      </span>
+    </div>
+    <Link
+      to={
+        Object {
+          "state": Object {
+            "createAPIKey": true,
+          },
+        }
+      }
+    >
+      Create
+    </Link>
+  </API__APIKeysHeader>
+  <Connect(APIKey)
+    apiKey={
       Object {
-        "marginBottom": "10px",
-        "marginTop": "-7px",
+        "id": "foo",
       }
     }
-    wrap="nowrap"
-  >
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      shrink={1}
-    >
-      <div
-        style={
-          Object {
-            "whiteSpace": "wrap",
-          }
-        }
-      >
-        <span>
-          Manage API keys for accessing the 
-        </span>
-        <a
-          href="https://docs.virtool.ca/web-api/authentication.html"
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          Virtool API
-        </a>
-        <span>
-          .
-        </span>
-      </div>
-    </FlexItem>
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={1}
-      pad={7}
-      shrink={0}
-    >
-      <withRouter(LinkContainer)
-        className="pull-right"
-        to={
-          Object {
-            "state": Object {
-              "createAPIKey": true,
-            },
-          }
-        }
-      >
-        <Button
-          bsStyle="primary"
-          icon="key"
-          pullRight={true}
-          tipPlacement="top"
-        >
-          Create
-        </Button>
-      </withRouter(LinkContainer)>
-    </FlexItem>
-  </Flex>
-  <div>
-    <Connect(APIKey)
-      apiKey={
-        Object {
-          "id": "foo",
-        }
+    key="foo"
+  />
+  <Connect(APIKey)
+    apiKey={
+      Object {
+        "id": "bar",
       }
-      key="foo"
-    />
-    <Connect(APIKey)
-      apiKey={
-        Object {
-          "id": "bar",
-        }
-      }
-      key="bar"
-    />
-  </div>
+    }
+    key="bar"
+  />
   <Connect(CreateAPIKey) />
 </div>
 `;
@@ -101,80 +62,41 @@ exports[`<API /> should render when loading API keys 1`] = `
 
 exports[`<API /> should render with 0 API keys 1`] = `
 <div>
-  <Flex
-    alignContent="stretch"
-    alignItems="center"
-    direction="row"
-    justifyContent="flex-start"
-    style={
-      Object {
-        "marginBottom": "10px",
-        "marginTop": "-7px",
+  <API__APIKeysHeader>
+    <div
+      style={
+        Object {
+          "whiteSpace": "wrap",
+        }
       }
-    }
-    wrap="nowrap"
-  >
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      shrink={1}
     >
-      <div
-        style={
-          Object {
-            "whiteSpace": "wrap",
-          }
-        }
+      <span>
+        Manage API keys for accessing the 
+      </span>
+      <ExternalLink
+        href="https://www.virtool.ca/docs/developer/api_account/"
       >
-        <span>
-          Manage API keys for accessing the 
-        </span>
-        <a
-          href="https://docs.virtool.ca/web-api/authentication.html"
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          Virtool API
-        </a>
-        <span>
-          .
-        </span>
-      </div>
-    </FlexItem>
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={1}
-      pad={7}
-      shrink={0}
+        Virtool API
+      </ExternalLink>
+      <span>
+        .
+      </span>
+    </div>
+    <Link
+      to={
+        Object {
+          "state": Object {
+            "createAPIKey": true,
+          },
+        }
+      }
     >
-      <withRouter(LinkContainer)
-        className="pull-right"
-        to={
-          Object {
-            "state": Object {
-              "createAPIKey": true,
-            },
-          }
-        }
-      >
-        <Button
-          bsStyle="primary"
-          icon="key"
-          pullRight={true}
-          tipPlacement="top"
-        >
-          Create
-        </Button>
-      </withRouter(LinkContainer)>
-    </FlexItem>
-  </Flex>
-  <div>
-    <NoneFound
-      noun="API keys"
-    />
-  </div>
+      Create
+    </Link>
+  </API__APIKeysHeader>
+  <NoneFoundBox
+    noun="API keys"
+  />
   <Connect(CreateAPIKey) />
 </div>
 `;

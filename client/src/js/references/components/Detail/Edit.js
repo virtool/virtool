@@ -1,9 +1,7 @@
 import React from "react";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
-import { SaveButton } from "../../../base";
-import { clearError } from "../../../errors/actions";
+import { Modal, ModalBody, ModalFooter, ModalHeader, SaveButton } from "../../../base";
 import { getTargetChange, routerLocationHasState } from "../../../utils/utils";
 import { editReference } from "../../actions";
 import { ReferenceForm } from "../Form";
@@ -11,10 +9,8 @@ import { ReferenceForm } from "../Form";
 const getInitialState = detail => ({
     name: detail.name,
     description: detail.description,
-    dataType: detail.data_type,
     organism: detail.organism,
-    errorName: "",
-    errorDataType: ""
+    errorName: ""
 });
 
 export class EditReference extends React.Component {
@@ -26,7 +22,7 @@ export class EditReference extends React.Component {
     handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
 
-        if (name !== "name" && name !== "dataType") {
+        if (name !== "name") {
             return this.setState({ [name]: value });
         }
 
@@ -34,10 +30,6 @@ export class EditReference extends React.Component {
             [name]: value,
             [error]: ""
         });
-    };
-
-    handleHide = () => {
-        this.props.onHide(this.props);
     };
 
     handleModalEnter = () => {
@@ -51,36 +43,32 @@ export class EditReference extends React.Component {
             this.setState({ errorName: "Required Field" });
         }
 
-        if (!this.state.dataType.length) {
-            this.setState({ errorDataType: "Required Field" });
-        }
-
-        if (this.state.name.length && this.state.dataType.length) {
-            this.props.onSubmit(this.props.detail.id, {
-                name: this.state.name,
-                description: this.state.description,
-                data_type: this.state.dataType,
-                organism: this.state.organism,
-                internal_control: this.state.internalControl
-            });
+        if (this.state.name.length) {
+            const { errorName, ...update } = this.state;
+            this.props.onSubmit(this.props.detail.id, update);
             this.props.onHide();
         }
     };
 
     render() {
         return (
-            <Modal show={this.props.show} onHide={this.handleHide} onEnter={this.handleModalEnter}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Edit Reference
-                </Modal.Header>
+            <Modal label="Edit" show={this.props.show} onHide={this.props.onHide} onEnter={this.handleModalEnter}>
+                <ModalHeader>Edit Reference</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
-                        <ReferenceForm state={this.state} onChange={this.handleChange} />
-                    </Modal.Body>
+                    <ModalBody>
+                        <ReferenceForm
+                            description={this.state.description}
+                            organism={this.state.organism}
+                            mode={this.state.mode}
+                            name={this.state.name}
+                            errorName={this.state.errorSelect}
+                            onChange={this.handleChange}
+                        />
+                    </ModalBody>
 
-                    <Modal.Footer>
-                        <SaveButton pullRight />
-                    </Modal.Footer>
+                    <ModalFooter>
+                        <SaveButton />
+                    </ModalFooter>
                 </form>
             </Modal>
         );
@@ -99,10 +87,6 @@ const mapDispatchToProps = dispatch => ({
 
     onHide: () => {
         dispatch(pushState({ editReference: false }));
-    },
-
-    onClearError: error => {
-        dispatch(clearError(error));
     }
 });
 

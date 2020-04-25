@@ -1,13 +1,15 @@
 from copy import deepcopy
+from typing import Union, List
 
 import dictdiffer
+import pymongo.errors
 
 import virtool.otus.db
 import virtool.errors
 import virtool.history.utils
 import virtool.otus.utils
 import virtool.utils
-from virtool.api import paginate
+from virtool.api.utils import paginate
 
 MOST_RECENT_PROJECTION = [
     "_id",
@@ -34,54 +36,31 @@ PROJECTION = LIST_PROJECTION + [
 ]
 
 
-async def add(db, method_name, old, new, description, user_id, silent=False):
+async def add(
+        app,
+        method_name: str,
+        old: Union[None, dict],
+        new: Union[None, dict],
+        description: str,
+        user_id: str,
+        silent: bool = False
+) -> dict:
     """
     Add a change document to the history collection.
 
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
+    :param app: the application object
     :param method_name: the name of the handler method that executed the change
-    :type method_name: str
-
     :param old: the otu document prior to the change
-    :type new: Union[dict, None]
-
     :param new: the otu document after the change
-    :type new: Union[dict, None]
-
     :param description: a human readable description of the change
-    :type description: str
-
     :param user_id: the id of the requesting user
-    :type user_id: str
-
     :param silent: don't dispatch a message
-    :type: silent: bool
-
     :return: the change document
-    :rtype: Coroutine[dict]
 
     """
-    try:
-        otu_id = old["_id"]
-    except TypeError:
-        otu_id = new["_id"]
+    db = app["db"]
 
-    try:
-        otu_name = old["name"]
-    except TypeError:
-        otu_name = new["name"]
-
-    try:
-        otu_version = int(new["version"])
-    except (TypeError, KeyError):
-        otu_version = "removed"
-
-    try:
-        ref_id = old["reference"]["id"]
-    except (TypeError, KeyError):
-        ref_id = new["reference"]["id"]
+    otu_id, otu_name, otu_version, ref_id = virtool.history.utils.derive_otu_information(old, new)
 
     document = {
         "_id": ".".join([str(otu_id), str(otu_version)]),
@@ -114,7 +93,17 @@ async def add(db, method_name, old, new, description, user_id, silent=False):
     else:
         document["diff"] = virtool.history.utils.calculate_diff(old, new)
 
-    await db.history.insert_one(document, silent=silent)
+    try:
+        await db.history.insert_one(document, silent=silent)
+    except pymongo.errors.DocumentTooLarge:
+        await virtool.history.utils.write_diff_file(
+            app["settings"]["data_path"],
+            otu_id,
+            otu_version,
+            document["diff"]
+        )
+
+        await db.history.insert_one(dict(document, diff="file"), silent=silent)
 
     return document
 
@@ -133,18 +122,38 @@ async def find(db, req_query, base_query=None):
     return data
 
 
-async def get_contributors(db, query):
+async def get(app, change_id: str) -> dict:
+    """
+    Get a complete history document identified by the passed `changed_id`.
+
+    Loads diff field from file if necessary. Returns `None` if the document does not exist.
+
+    :param app: the application object
+    :param change_id: the ID of the change to get
+    :return: the change
+
+    """
+    document = await app["db"].history.find_one(change_id, PROJECTION)
+
+    if document and document["diff"] == "file":
+        otu_id, otu_version = change_id.split(".")
+
+        document["diff"] = await virtool.history.utils.read_diff_file(
+            app["settings"]["data_path"],
+            otu_id,
+            otu_version
+        )
+
+    return virtool.utils.base_processor(document)
+
+
+async def get_contributors(db, query: dict) -> List[dict]:
     """
     Return an list of contributors and their contribution count for a specific set of history.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param query: a query to filter scanned history by
-    :type query: dict
-
     :return: a list of contributors to the scanned history changes
-    :rtype: List[dict]
 
     """
     cursor = db.history.aggregate([
@@ -158,18 +167,13 @@ async def get_contributors(db, query):
     return [{"id": c["_id"], "count": c["count"]} async for c in cursor]
 
 
-async def get_most_recent_change(db, otu_id):
+async def get_most_recent_change(db, otu_id: str) -> dict:
     """
     Get the most recent change for the otu identified by the passed ``otu_id``.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param otu_id: the target otu_id
-    :type otu_id: str
-
     :return: the most recent change document
-    :rtype: Coroutine[dict]
 
     """
     return await db.history.find_one({
@@ -178,7 +182,17 @@ async def get_most_recent_change(db, otu_id):
     }, MOST_RECENT_PROJECTION, sort=[("otu.version", -1)])
 
 
-async def patch_to_verified(db, otu_id):
+async def patch_to_verified(app, otu_id: str) -> Union[dict, None]:
+    """
+    Patch the OTU identified by `otu_id` to the last verified version.
+
+    :param app: the application object
+    :param otu_id: the ID of the OTU to patch
+    :return: the patched otu
+
+    """
+    db = app["db"]
+
     current = await virtool.otus.db.join(db, otu_id) or dict()
 
     if current and current["verified"]:
@@ -187,6 +201,13 @@ async def patch_to_verified(db, otu_id):
     patched = deepcopy(current)
 
     async for change in db.history.find({"otu.id": otu_id}, sort=[("otu.version", -1)]):
+        if change["diff"] == "file":
+            change["diff"] = await virtool.history.utils.read_diff_file(
+                app["settings"]["data_path"],
+                otu_id,
+                change["otu"]["version"]
+            )
+
         if change["method_name"] == "remove":
             patched = change["diff"]
 
@@ -201,24 +222,19 @@ async def patch_to_verified(db, otu_id):
             return patched
 
 
-async def patch_to_version(db, otu_id, version):
+async def patch_to_version(app, otu_id: str, version: Union[str, int]) -> tuple:
     """
     Take a joined otu back in time to the passed ``version``. Uses the diffs in the change documents associated with
     the otu.
 
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
+    :param app: the application object
     :param otu_id: the id of the otu to patch
-    :type otu_id: str
-
     :param version: the version to patch to
-    :type version: str or int
-
     :return: the current joined otu, patched otu, and the ids of changes reverted in the process
-    :rtype: Coroutine[tuple]
 
     """
+    db = app["db"]
+
     # A list of history_ids reverted to produce the patched entry.
     reverted_history_ids = list()
 
@@ -233,6 +249,13 @@ async def patch_to_version(db, otu_id, version):
     async for change in db.history.find({"otu.id": otu_id}, sort=[("otu.version", -1)]):
         if change["otu"]["version"] == "removed" or change["otu"]["version"] > version:
             reverted_history_ids.append(change["_id"])
+
+            if change["diff"] == "file":
+                change["diff"] = await virtool.history.utils.read_diff_file(
+                    app["settings"]["data_path"],
+                    otu_id,
+                    change["otu"]["version"]
+                )
 
             if change["method_name"] == "remove":
                 patched = change["diff"]
@@ -252,16 +275,17 @@ async def patch_to_version(db, otu_id, version):
     return current, patched, reverted_history_ids
 
 
-async def revert(db, change_id):
+async def revert(app, change_id: str) -> dict:
     """
     Revert a history change given by the passed ``change_id``.
 
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+    :param app: the application object
+    :param change_id: a unique id for the change
+    :return: the updated OTU
 
-    :param change_id: a unique id for the cah
-    :return:
     """
+    db = app["db"]
+
     change = await db.history.find_one({"_id": change_id}, ["index"])
 
     if change["index"]["id"] != "unbuilt" or change["index"]["version"] != "unbuilt":
@@ -273,7 +297,7 @@ async def revert(db, change_id):
         otu_version = int(otu_version)
 
     _, patched, history_to_delete = await patch_to_version(
-        db,
+        app,
         otu_id,
         otu_version - 1
     )

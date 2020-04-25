@@ -1,3 +1,4 @@
+import { DropdownItem } from "../../../../base";
 import {
     mapDispatchToProps,
     mapStateToProps,
@@ -28,9 +29,9 @@ describe("<ReferenceDetailHeaderExportButton />", () => {
         const wrapper = shallow(<ReferenceDetailHeaderExportButton {...props} />);
         expect(props.onSelect).not.toHaveBeenCalled();
         wrapper
-            .find("MenuItem")
+            .find(DropdownItem)
             .at(0)
-            .simulate("select");
+            .simulate("click");
         expect(props.onSelect).toHaveBeenCalled();
     });
 });
@@ -99,52 +100,56 @@ describe("<ReferenceDetailHeader/>", () => {
         const wrapper = shallow(<ReferenceDetailHeader {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
-    it("should render when[showIcons=false]", () => {
+    it("should render when [showIcons=false]", () => {
         props.showIcons = false;
         const wrapper = shallow(<ReferenceDetailHeader {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 });
 
-describe("mapStateToProps", () => {
-    const state = {
-        references: {
-            detail: {
-                name: "foo",
-                id: 1,
-                cloned_from: "bar",
-                remotes_from: "baz",
-                created_at: "Foo",
-                user: {
-                    id: "Bar"
+describe("mapStateToProps()", () => {
+    it("should return props", () => {
+        const state = {
+            references: {
+                detail: {
+                    name: "foo",
+                    id: 1,
+                    cloned_from: "bar",
+                    remotes_from: "baz",
+                    created_at: "Foo",
+                    user: {
+                        id: "Bar"
+                    }
+                }
+            },
+            account: {
+                administrator: true
+            },
+            router: {
+                location: {
+                    pathname: "Baz/manage"
                 }
             }
-        },
-        account: {
-            administrator: true
-        },
-        router: {
-            location: {
-                pathname: "Baz/manage"
-            }
-        }
-    };
+        };
 
-    const props = mapStateToProps(state);
-    expect(props).toEqual({
-        id: 1,
-        name: "foo",
-        canModify: true,
-        createdAt: "Foo",
-        isClone: true,
-        isRemote: true,
-        showIcons: true,
-        userId: "Bar"
+        const props = mapStateToProps(state);
+        expect(props).toEqual({
+            id: 1,
+            name: "foo",
+            canModify: true,
+            createdAt: "Foo",
+            isClone: true,
+            isRemote: true,
+            showIcons: true,
+            userId: "Bar"
+        });
     });
 });
 describe("mapDispatchToProps", () => {
-    const dispatch = jest.fn();
-    const result = mapDispatchToProps(dispatch);
-    result.onEdit();
-    expect(dispatch).toHaveBeenCalledWith({ state: { editReference: true }, type: "PUSH_STATE" });
+    it("should return onEdit() in props", () => {
+        const dispatch = jest.fn();
+        const result = mapDispatchToProps(dispatch);
+        result.onEdit();
+        expect(dispatch).toHaveBeenCalledWith({ state: { editReference: true }, type: "PUSH_STATE" });
+    });
 });

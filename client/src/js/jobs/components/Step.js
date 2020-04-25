@@ -34,6 +34,18 @@ const JobStepTimestamp = ({ timestamp }) => (
 const StyledJobStepDescription = styled.div`
     display: flex;
     flex-direction: column;
+
+    > h4 {
+        font-size: ${props => props.theme.fontSize.lg};
+        font-weight: bold;
+        margin: 2px 0 6px;
+    }
+
+    > p {
+        color: ${props => props.theme.color.greyDarkest};
+        font-size: ${props => props.theme.fontSize.md};
+        margin: 0 0 3px;
+    }
 `;
 
 export const JobStepDescription = ({ stage, state, task, timestamp }) => {
@@ -41,8 +53,8 @@ export const JobStepDescription = ({ stage, state, task, timestamp }) => {
 
     return (
         <StyledJobStepDescription>
-            <strong>{title}</strong>
-            <small className="text-muted">{description}</small>
+            <h4>{title}</h4>
+            <p>{description}</p>
             <JobStepTimestamp timestamp={timestamp} />
         </StyledJobStepDescription>
     );
@@ -50,11 +62,11 @@ export const JobStepDescription = ({ stage, state, task, timestamp }) => {
 
 export const JobStepIcon = ({ complete, state }) => {
     if (state === "waiting") {
-        return <Icon name="pause" bsStyle="info" fixedWidth />;
+        return <Icon name="pause" color="purple" fixedWidth />;
     }
 
     if (complete) {
-        return <Icon name="arrow-circle-down" bsStyle="primary" fixedWidth />;
+        return <Icon name="arrow-circle-down" color="blue" fixedWidth />;
     }
 
     if (state === "running") {
@@ -62,15 +74,15 @@ export const JobStepIcon = ({ complete, state }) => {
     }
 
     if (state === "complete") {
-        return <Icon name="check" bsStyle="success" fixedWidth />;
+        return <Icon name="check" color="green" fixedWidth />;
     }
 
     if (state === "error") {
-        return <Icon name="times" bsStyle="danger" fixedWidth />;
+        return <Icon name="times" color="red" fixedWidth />;
     }
 
     if (state === "cancelled") {
-        return <Icon name="ban" bsStyle="danger" fixedWidth />;
+        return <Icon name="ban" color="red" fixedWidth />;
     }
 };
 

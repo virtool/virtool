@@ -25,18 +25,20 @@ describe("<JobItem />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it.each([[true, true], [true, false], [false, true], [false, false]])(
-        "should render when [canCancel=%p] and [canRemove=%p]",
-        (canCancel, canRemove) => {
-            props = {
-                ...props,
-                canCancel,
-                canRemove
-            };
-            const wrapper = shallow(<JobItem {...props} />);
-            expect(wrapper).toMatchSnapshot();
-        }
-    );
+    it.each([
+        [true, true],
+        [true, false],
+        [false, true],
+        [false, false]
+    ])("should render when [canCancel=%p] and [canRemove=%p]", (canCancel, canRemove) => {
+        props = {
+            ...props,
+            canCancel,
+            canRemove
+        };
+        const wrapper = shallow(<JobItem {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
 });
 
 describe("mapDispatchToProps", () => {

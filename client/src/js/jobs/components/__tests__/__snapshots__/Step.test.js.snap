@@ -2,45 +2,40 @@
 
 exports[`<JobStepDescription /> renders and calls getStepDescription 1`] = `
 <Step__StyledJobStepDescription>
-  <strong>
+  <h4>
     Foo
-  </strong>
-  <small
-    className="text-muted"
-  >
+  </h4>
+  <p>
     Bar
-  </small>
+  </p>
   <JobStepTimestamp />
 </Step__StyledJobStepDescription>
 `;
 
 exports[`<JobStepIcon /> renders correct icon when state cancelled 1`] = `
 <Icon
-  bsStyle="danger"
+  color="red"
   faStyle="fas"
   fixedWidth={true}
   name="ban"
-  pullRight={false}
 />
 `;
 
 exports[`<JobStepIcon /> renders correct icon when state complete 1`] = `
 <Icon
-  bsStyle="success"
+  color="green"
   faStyle="fas"
   fixedWidth={true}
   name="check"
-  pullRight={false}
 />
 `;
 
 exports[`<JobStepIcon /> renders correct icon when state error 1`] = `
 <Icon
-  bsStyle="danger"
+  color="red"
   faStyle="fas"
   fixedWidth={true}
   name="times"
-  pullRight={false}
 />
 `;
 
@@ -53,20 +48,18 @@ exports[`<JobStepIcon /> renders correct icon when state running 1`] = `
 
 exports[`<JobStepIcon /> renders correct icon when state waiting 1`] = `
 <Icon
-  bsStyle="info"
+  color="purple"
   faStyle="fas"
   fixedWidth={true}
   name="pause"
-  pullRight={false}
 />
 `;
 
 exports[`<JobStepIcon /> renders correct icon when step complete 1`] = `
 <Icon
-  bsStyle="primary"
+  color="blue"
   faStyle="fas"
   fixedWidth={true}
   name="arrow-circle-down"
-  pullRight={false}
 />
 `;

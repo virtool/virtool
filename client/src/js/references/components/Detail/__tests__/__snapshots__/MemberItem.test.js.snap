@@ -6,48 +6,24 @@ exports[`<MemberItem /> should render with [canModify=true] 1`] = `
     identicon="6be6d0a72a16cb633144ec03cdaef77804c6f94770184f83e0899fe6bdcb77ee"
   />
   bob
-  <FlexItem
-    alignSelf={null}
-    basis="auto"
-    grow={1}
-    shrink={1}
-  >
-    <Flex
-      alignContent="stretch"
-      alignItems="center"
-      className="pull-right"
-      direction="row"
-      justifyContent="flex-start"
-      wrap="nowrap"
-    >
-      <Icon
-        bsStyle="warning"
-        faStyle="fas"
-        fixedWidth={false}
-        name="edit"
-        onClick={[Function]}
-        pullRight={false}
-        tip="Modify"
-      />
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={0}
-        pad={true}
-        shrink={1}
-      >
-        <Icon
-          bsStyle="danger"
-          faStyle="fas"
-          fixedWidth={false}
-          name="trash"
-          onClick={[Function]}
-          pullRight={false}
-          tip="Remove"
-        />
-      </FlexItem>
-    </Flex>
-  </FlexItem>
+  <MemberItem__MemberItemIcons>
+    <Icon
+      color="orange"
+      faStyle="fas"
+      fixedWidth={false}
+      name="edit"
+      onClick={[Function]}
+      tip="Modify"
+    />
+    <Icon
+      color="red"
+      faStyle="fas"
+      fixedWidth={false}
+      name="trash"
+      onClick={[Function]}
+      tip="Remove"
+    />
+  </MemberItem__MemberItemIcons>
 </MemberItem__StyledMemberItem>
 `;
 

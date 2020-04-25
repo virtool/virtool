@@ -462,8 +462,6 @@ def calculate_coverage(vta_path, ref_lengths):
 
 
 def subtract(analysis_path, host_scores):
-    subtracted_count = 0
-
     vta_path = os.path.join(analysis_path, "to_isolates.vta")
 
     isolates_high_scores = collections.defaultdict(int)

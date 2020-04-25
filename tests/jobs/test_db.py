@@ -9,16 +9,16 @@ status = {
 }
 
 
-def test_processor(test_job, static_time):
+async def test_processor(dbi, static_time, test_job):
     """
     Test that the dispatch processor properly formats a raw job document into a dispatchable format.
 
     """
-    assert virtool.jobs.db.processor(test_job) == {
+    assert await virtool.jobs.db.processor(dbi, test_job) == {
         "id": "4c530449",
         "created_at": static_time.datetime,
         "args": {
-            "algorithm": "nuvs",
+            "workflow": "nuvs",
             "analysis_id": "e410429b",
             "index_id": "465428b0",
             "name": None,

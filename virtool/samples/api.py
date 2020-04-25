@@ -1,8 +1,10 @@
+import asyncio.tasks
 from copy import deepcopy
 from cerberus import Validator
 
 import virtool.analyses.utils
 import virtool.analyses.db
+import virtool.api.utils
 import virtool.files.db
 import virtool.jobs.db
 import virtool.samples.db
@@ -10,10 +12,11 @@ import virtool.db.utils
 import virtool.errors
 import virtool.http.routes
 import virtool.samples.utils
+import virtool.subtractions.db
 import virtool.utils
 import virtool.validators
-from virtool.api import bad_request, compose_regex_query, insufficient_rights, invalid_query, \
-    json_response, no_content, not_found, paginate
+from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
+    json_response, no_content, not_found
 
 QUERY_SCHEMA = {
     "find": {
@@ -47,7 +50,7 @@ async def find(req):
     """
     db = req.app["db"]
 
-    algorithm_query = virtool.samples.db.compose_analysis_query(req.query)
+    workflow_query = virtool.samples.db.compose_analysis_query(req.query)
 
     v = Validator(QUERY_SCHEMA, allow_unknown=True)
 
@@ -78,23 +81,23 @@ async def find(req):
 
     db_query = dict()
 
-    term = query.get("find", None)
+    term = query.get("find")
 
     if term:
-        db_query = compose_regex_query(term, ["name", "user.id"])
+        db_query = virtool.api.utils.compose_regex_query(term, ["name", "user.id"])
 
-    if algorithm_query:
+    if workflow_query:
         if db_query:
             db_query = {
                 "$and": [
                     db_query,
-                    algorithm_query
+                    workflow_query
                 ]
             }
         else:
-            db_query = algorithm_query
+            db_query = workflow_query
 
-    data = await paginate(
+    data = await virtool.api.utils.paginate(
         db.samples,
         db_query,
         req.query,
@@ -143,6 +146,8 @@ async def get(req):
                 "replace_url": f"/upload/samples/{sample_id}/files/{index + 1}"
             })
 
+    await virtool.subtractions.db.attach_subtraction(db, document)
+
     return json_response(virtool.utils.base_processor(document))
 
 
@@ -168,10 +173,14 @@ async def get(req):
         "type": "string",
         "coerce": virtool.validators.strip,
     },
-    "srna": {
-        "type": "boolean",
-        "coerce": virtool.utils.to_bool,
-        "default": False
+    "library_type": {
+        "type": "string",
+        "allowed": [
+            "normal",
+            "srna",
+            "amplicon"
+        ],
+        "default": "normal"
     },
     "subtraction": {
         "type": "string",
@@ -196,7 +205,7 @@ async def create(req):
         return bad_request(name_error_message)
 
     # Make sure a subtraction host was submitted and it exists.
-    if not await db.subtraction.count({"_id": data["subtraction"], "is_host": True}):
+    if not await db.subtraction.count_documents({"_id": data["subtraction"], "is_host": True}):
         return bad_request("Subtraction does not exist")
 
     # Make sure all of the passed file ids exist.
@@ -240,7 +249,7 @@ async def create(req):
         "group_write": settings["sample_group_write"],
         "all_read": settings["sample_all_read"],
         "all_write": settings["sample_all_write"],
-        "srna": data["srna"],
+        "library_type": data["library_type"],
         "subtraction": {
             "id": data["subtraction"]
         },
@@ -262,8 +271,7 @@ async def create(req):
 
     task_args = {
         "sample_id": sample_id,
-        "files": files,
-        "srna": data["srna"]
+        "files": files
     }
 
     # Create job document.
@@ -372,7 +380,7 @@ async def set_rights(req):
 
     sample_id = req.match_info["sample_id"]
 
-    if not await db.samples.count({"_id": sample_id}):
+    if not await db.samples.count_documents({"_id": sample_id}):
         return not_found()
 
     user_id = req["client"].user_id
@@ -381,7 +389,7 @@ async def set_rights(req):
     if not req["client"].administrator and user_id != await virtool.samples.db.get_sample_owner(db, sample_id):
         return insufficient_rights("Must be administrator or sample owner")
 
-    group = data.get("group", None)
+    group = data.get("group")
 
     if group:
         existing_group_ids = await db.groups.distinct("_id") + ["none"]
@@ -444,18 +452,18 @@ async def find_analyses(req):
 
         raise
 
-    term = req.query.get("term", None)
+    term = req.query.get("term")
 
     db_query = dict()
 
     if term:
-        db_query.update(compose_regex_query(term, ["reference.name", "user.id"]))
+        db_query.update(virtool.api.utils.compose_regex_query(term, ["reference.name", "user.id"]))
 
     base_query = {
         "sample.id": sample_id
     }
 
-    data = await paginate(
+    data = await virtool.api.utils.paginate(
         db.analyses,
         db_query,
         req.query,
@@ -464,22 +472,24 @@ async def find_analyses(req):
         sort=[("created_at", -1)]
     )
 
+    await asyncio.tasks.gather(*[virtool.subtractions.db.attach_subtraction(db, d) for d in data["documents"]])
+
     return json_response(data)
 
 
 @routes.post("/api/samples/{sample_id}/analyses", schema={
-    "algorithm": {
-        "type": "string",
-        "required": True,
-        "allowed": virtool.analyses.utils.ALGORITHM_NAMES
-    },
     "ref_id": {
         "type": "string",
         "required": True
     },
     "subtraction_id": {
         "type": "string"
-    }
+    },
+    "workflow": {
+        "type": "string",
+        "required": True,
+        "allowed": virtool.analyses.utils.WORKFLOW_NAMES
+    },
 })
 async def analyze(req):
     """
@@ -501,10 +511,10 @@ async def analyze(req):
 
         raise
 
-    if not await db.references.count({"_id": ref_id}):
+    if not await db.references.count_documents({"_id": ref_id}):
         return bad_request("Reference does not exist")
 
-    if not await db.indexes.count({"reference.id": ref_id, "ready": True}):
+    if not await db.indexes.count_documents({"reference.id": ref_id, "ready": True}):
         return bad_request("No ready index")
 
     subtraction_id = data.get("subtraction_id")
@@ -520,12 +530,12 @@ async def analyze(req):
         ref_id,
         subtraction_id,
         req["client"].user_id,
-        data["algorithm"]
+        data["workflow"]
     )
 
     document = virtool.utils.base_processor(document)
 
-    sample = await virtool.samples.db.recalculate_algorithm_tags(db, sample_id)
+    sample = await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
 
     await req.app["dispatcher"].dispatch("samples", "update", virtool.utils.base_processor(sample))
 

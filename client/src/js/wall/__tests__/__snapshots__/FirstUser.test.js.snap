@@ -15,28 +15,124 @@ exports[`<FirstUser /> should render 1`] = `
       <form
         onSubmit={[Function]}
       >
-        <Input
-          autoComplete={true}
-          formGroupStyle={Object {}}
-          label="Username"
-          name="username"
-          onChange={[Function]}
-          type="text"
-          value="foo"
-        />
-        <Input
-          autoComplete={true}
-          formGroupStyle={Object {}}
-          label="Password"
-          name="password"
-          onChange={[Function]}
-          type="password"
-          value="bar"
-        />
+        <InputGroup>
+          <Input__InputLabel>
+            Username
+          </Input__InputLabel>
+          <Input
+            onChange={[Function]}
+            value="bob"
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Password
+          </Input__InputLabel>
+          <PasswordInput
+            onChange={[Function]}
+            value="password"
+          />
+        </InputGroup>
         <Button
-          bsStyle="primary"
+          color="blue"
+          disabled={false}
           icon="user-plus"
-          pullRight={false}
+          tipPlacement="top"
+          type="submit"
+        >
+          Create User
+        </Button>
+      </form>
+    </FirstUser__FirstUserModalBody>
+  </FirstUser__FirstUserModal>
+</Container__WallContainer>
+`;
+
+exports[`<FirstUser /> should render when "password" changed 1`] = `
+<Container__WallContainer>
+  <FirstUser__FirstUserModal>
+    <FirstUser__FirstUserModalHeader>
+      <h2>
+        Setup User
+      </h2>
+      <p>
+        Create an initial administrative user to start using Virtool.
+      </p>
+    </FirstUser__FirstUserModalHeader>
+    <FirstUser__FirstUserModalBody>
+      <form
+        onSubmit={[Function]}
+      >
+        <InputGroup>
+          <Input__InputLabel>
+            Username
+          </Input__InputLabel>
+          <Input
+            onChange={[Function]}
+            value=""
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Password
+          </Input__InputLabel>
+          <PasswordInput
+            onChange={[Function]}
+            value="password"
+          />
+        </InputGroup>
+        <Button
+          color="blue"
+          disabled={false}
+          icon="user-plus"
+          tipPlacement="top"
+          type="submit"
+        >
+          Create User
+        </Button>
+      </form>
+    </FirstUser__FirstUserModalBody>
+  </FirstUser__FirstUserModal>
+</Container__WallContainer>
+`;
+
+exports[`<FirstUser /> should render when "username" changed 1`] = `
+<Container__WallContainer>
+  <FirstUser__FirstUserModal>
+    <FirstUser__FirstUserModalHeader>
+      <h2>
+        Setup User
+      </h2>
+      <p>
+        Create an initial administrative user to start using Virtool.
+      </p>
+    </FirstUser__FirstUserModalHeader>
+    <FirstUser__FirstUserModalBody>
+      <form
+        onSubmit={[Function]}
+      >
+        <InputGroup>
+          <Input__InputLabel>
+            Username
+          </Input__InputLabel>
+          <Input
+            onChange={[Function]}
+            value="bob"
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Password
+          </Input__InputLabel>
+          <PasswordInput
+            onChange={[Function]}
+            value=""
+          />
+        </InputGroup>
+        <Button
+          color="blue"
+          disabled={false}
+          icon="user-plus"
           tipPlacement="top"
           type="submit"
         >

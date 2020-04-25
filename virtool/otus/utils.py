@@ -1,12 +1,9 @@
-import logging
 from copy import deepcopy
 from typing import List, Union
 
 import virtool.errors
 import virtool.history.utils
 import virtool.utils
-
-logger = logging.getLogger(__name__)
 
 
 def evaluate_changes(data, document):
@@ -32,7 +29,7 @@ def evaluate_changes(data, document):
     if abbreviation == old_abbreviation:
         abbreviation = None
 
-    if schema == document.get("schema", None):
+    if schema == document.get("schema"):
         schema = None
 
     return name, abbreviation, schema
@@ -49,6 +46,12 @@ def extract_default_sequences(joined: dict) -> List[dict]:
     for isolate in joined["isolates"]:
         if isolate["default"]:
             return isolate["sequences"]
+
+
+def extract_sequences(otu):
+    for isolate in otu["isolates"]:
+        for sequence in isolate["sequences"]:
+            yield sequence
 
 
 def extract_sequence_ids(otu):
@@ -235,8 +238,7 @@ def verify(joined):
     # Give an isolate_inconsistency error the number of sequences is not the same for every isolate. Only give the
     # error if the otu is not also emtpy (empty_otu error).
     errors["isolate_inconsistency"] = (
-            len(set(isolate_sequence_counts)) != 1 and not
-    (errors["empty_otu"] or errors["empty_isolate"])
+            len(set(isolate_sequence_counts)) != 1 and not (errors["empty_otu"] or errors["empty_isolate"])
     )
 
     # If there is an error in the otu, return the errors object. Otherwise return False.

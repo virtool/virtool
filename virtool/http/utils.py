@@ -1,4 +1,5 @@
 import aiofiles
+import aiohttp.web_response
 
 import virtool.errors
 import virtool.http.proxy
@@ -36,3 +37,11 @@ async def download_file(app, url, target_path, progress_handler=None):
 
                 if progress_handler:
                     await progress_handler(len(chunk))
+
+
+def set_session_id_cookie(resp: aiohttp.web_response.Response, session_id: str):
+    resp.set_cookie("session_id", session_id, httponly=True, max_age=2600000)
+
+
+def set_session_token_cookie(resp: aiohttp.web_response.Response, session_token: str):
+    resp.set_cookie("session_token", session_token, httponly=True, max_age=2600000)

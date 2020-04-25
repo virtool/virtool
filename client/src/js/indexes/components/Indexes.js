@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
+import { LoadingPlaceholder, NoneFoundBox, ScrollList } from "../../base";
 import ReferenceDetailHeader from "../../references/components/Detail/Header";
 import ReferenceDetailTabs from "../../references/components/Detail/Tabs";
 import { findIndexes } from "../actions";
@@ -23,7 +23,7 @@ export class Indexes extends React.Component {
         let noIndexes;
 
         if (!this.props.documents.length) {
-            noIndexes = <NoneFound noun="indexes" />;
+            noIndexes = <NoneFoundBox noun="indexes" />;
         }
 
         return (

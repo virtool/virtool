@@ -1,9 +1,9 @@
-const path = require("path")
-const { CleanWebpackPlugin } = require("clean-webpack-plugin")
-const MiniCssExtractPlugin = require("mini-css-extract-plugin")
-const HTMLPlugin = require("html-webpack-plugin")
-const TerserWebpackPlugin = require("terser-webpack-plugin")
-const webpack = require("webpack")
+const path = require("path");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const HTMLPlugin = require("html-webpack-plugin");
+const TerserWebpackPlugin = require("terser-webpack-plugin");
+const webpack = require("webpack");
 
 module.exports = {
   entry: "./src/js/index.js",
@@ -18,39 +18,26 @@ module.exports = {
           {
             loader: "eslint-loader",
             options: {
-              configFile: path.resolve(__dirname, "./.eslintrc")
-            }
-          }
-        ]
+              configFile: path.resolve(__dirname, "./.eslintrc"),
+            },
+          },
+        ],
       },
 
       {
         test: /\.css$/,
-        use: MiniCssExtractPlugin.loader
-      },
-
-      {
-        test: /\.less$/,
         use: [
           {
-            loader: MiniCssExtractPlugin.loader
+            loader: MiniCssExtractPlugin.loader,
           },
           "css-loader",
-          "less-loader"
-        ]
+        ],
       },
-
-      {
-        test: /\.(woff|woff2)$/,
-        use: {
-          loader: "url-loader?limit=100000"
-        }
-      }
-    ]
+    ],
   },
 
   node: {
-    fs: "empty"
+    fs: "empty",
   },
 
   mode: "production",
@@ -58,29 +45,29 @@ module.exports = {
   optimization: {
     minimizer: [
       new TerserWebpackPlugin({
-        sourceMap: true
-      })
+        sourceMap: true,
+      }),
     ],
     splitChunks: {
-      chunks: "all"
-    }
+      chunks: "all",
+    },
   },
 
   output: {
     path: path.resolve(__dirname, "./dist"),
     filename: "app.[hash:8].js",
     sourceMapFilename: "[name].js.map",
-    publicPath: "/static/"
+    publicPath: "/static/",
   },
 
   plugins: [
     new webpack.DefinePlugin({
-      "process.env.NODE_ENV": JSON.stringify("production")
+      "process.env.NODE_ENV": JSON.stringify("production"),
     }),
 
     new MiniCssExtractPlugin({
       filename: "[name].[hash].css",
-      chunkFilename: "[id].[hash].css"
+      chunkFilename: "[id].[hash].css",
     }),
 
     new HTMLPlugin({
@@ -88,15 +75,9 @@ module.exports = {
       title: "Virtool",
       favicon: "./src/images/favicon.ico",
       template: "./src/index.html",
-      inject: "body"
+      inject: "body",
     }),
 
-    new CleanWebpackPlugin({
-      dry: false,
-      verbose: false,
-      cleanStaleWebpackAssets: true,
-      protectWebpackAssets: true,
-      dangerouslyAllowCleanPatternsOutsideProject: false
-    })
-  ]
+    new CleanWebpackPlugin(),
+  ],
 };

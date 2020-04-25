@@ -1,15 +1,21 @@
 import {
-    COLLAPSE_ANALYSIS,
     SET_ANALYSIS_SORT_KEY,
-    SET_PATHOSCOPE_FILTER,
-    TOGGLE_SHOW_PATHOSCOPE_READS,
-    TOGGLE_SORT_PATHOSCOPE_DESCENDING
+    TOGGLE_ANALYSIS_SORT_DESCENDING,
+    TOGGLE_FILTER_ISOLATES,
+    TOGGLE_FILTER_OTUS
 } from "../../../../app/actionTypes";
-import { PathoscopeDownloadDropdownTitle, PathoscopeToolbar, mapDispatchToProps, mapStateToProps } from "../Toolbar";
+import { Button } from "../../../../base";
+import { getFuse } from "../../../selectors";
+import { mapDispatchToProps, mapStateToProps, PathoscopeDownloadDropdownTitle, PathoscopeToolbar } from "../Toolbar";
+import { AnalysisViewerSort } from "../../Viewer/Sort";
+
+jest.mock("../../../selectors");
 
 describe("<PathoscopeDownloadDropdownTitle />", () => {
-    const wrapper = shallow(<PathoscopeDownloadDropdownTitle />);
-    expect(wrapper).toMatchSnapshot();
+    it("should render", () => {
+        const wrapper = shallow(<PathoscopeDownloadDropdownTitle />);
+        expect(wrapper).toMatchSnapshot();
+    });
 });
 
 describe("<Toolbar />", () => {
@@ -20,14 +26,15 @@ describe("<Toolbar />", () => {
             analysisId: "foo",
             filterIsolates: true,
             filterOTUs: true,
-            showReads: false,
+            showPathoscopeReads: false,
             sortDescending: true,
             sortKey: "coverage",
             onCollapse: jest.fn(),
-            onFilter: jest.fn(),
+            onToggleFilterOTUs: jest.fn(),
+            onToggleFilterIsolates: jest.fn(),
             onSetSortKey: jest.fn(),
-            onToggleShowReads: jest.fn(),
-            onToggleSortDescending: jest.fn()
+            onToggleSortDescending: jest.fn(),
+            onToggleShowPathoscopeReads: jest.fn()
         };
     });
 
@@ -48,59 +55,42 @@ describe("<Toolbar />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render when [filterOTUs=false] and [filterIsolates=false]", () => {
-        props.filterOTUs = false;
-        props.filterIsolates = false;
-        const wrapper = shallow(<PathoscopeToolbar {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("should render when [showReads=true]", () => {
-        props.filterOTUs = false;
-        const wrapper = shallow(<PathoscopeToolbar {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-
     it("should render when [sortDescending=false]", () => {
-        props.filterOTUs = false;
         const wrapper = shallow(<PathoscopeToolbar {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render when [sortKey='weight']", () => {
-        props.sortKey = "weight";
+    it.each(["weight", "depth"])("should render when [sortKey=%p]", sortKey => {
+        props.sortKey = sortKey;
         const wrapper = shallow(<PathoscopeToolbar {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call onCollapse() when corresponding button clicked", () => {
+    it("should render when [showPathoscopeReads=true]", () => {
+        props.showPathoscopeReads = true;
         const wrapper = shallow(<PathoscopeToolbar {...props} />);
-        expect(props.onCollapse).not.toHaveBeenCalled();
-        wrapper
-            .find("Button")
-            .at(1)
-            .simulate("click");
-        expect(props.onCollapse).toHaveBeenCalled();
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call onFilter() when filter selected", () => {
+    it("should call onToggleSortDescending() when corresponding button clicked", () => {
         const wrapper = shallow(<PathoscopeToolbar {...props} />);
-        expect(props.onFilter).not.toHaveBeenCalled();
-        wrapper
-            .find("#pathoscope-filter-dropdown")
-            .props()
-            .onSelect("OTUs");
-        expect(props.onFilter).toHaveBeenCalledWith("OTUs");
+        expect(props.onToggleSortDescending).not.toHaveBeenCalled();
+        wrapper.find(Button).at(0).simulate("click");
+        expect(props.onToggleSortDescending).toHaveBeenCalled();
     });
 
-    it("should call onFilter() when filter button clicked", () => {
+    it("should call onToggleFilterIsolates() when filter isolates button clicked", () => {
         const wrapper = shallow(<PathoscopeToolbar {...props} />);
-        expect(props.onFilter).not.toHaveBeenCalled();
-        wrapper
-            .find("Button")
-            .at(3)
-            .simulate("click");
-        expect(props.onFilter).toHaveBeenCalledWith();
+        expect(props.onToggleFilterIsolates).not.toHaveBeenCalled();
+        wrapper.find(Button).at(2).simulate("click");
+        expect(props.onToggleFilterOTUs).toHaveBeenCalled();
+    });
+
+    it("should call onToggleFilterOTUs() when filter selected", () => {
+        const wrapper = shallow(<PathoscopeToolbar {...props} />);
+        expect(props.onToggleFilterIsolates).not.toHaveBeenCalled();
+        wrapper.find(Button).at(3).simulate("click");
+        expect(props.onToggleFilterIsolates).toHaveBeenCalled();
     });
 
     it("should call onSetSortKey() when sort key selected", () => {
@@ -111,32 +101,21 @@ describe("<Toolbar />", () => {
             }
         };
         expect(props.onSetSortKey).not.toHaveBeenCalled();
-        wrapper.find("FormControl").simulate("change", e);
-        expect(props.onSetSortKey).toHaveBeenCalledWith("pi");
+        wrapper.find(AnalysisViewerSort).simulate("select");
+        expect(props.onSetSortKey).toHaveBeenCalled();
     });
 
-    it("should call onToggleShowReads() when corresponding button clicked", () => {
+    it("should call onToggleShowPathoscopeReads() when filter isolates button clicked", () => {
         const wrapper = shallow(<PathoscopeToolbar {...props} />);
-        expect(props.onToggleShowReads).not.toHaveBeenCalled();
-        wrapper
-            .find("Button")
-            .at(2)
-            .simulate("click");
-        expect(props.onToggleShowReads).toHaveBeenCalled();
-    });
-
-    it("should call onToggleSortDescending() when corresponding button clicked", () => {
-        const wrapper = shallow(<PathoscopeToolbar {...props} />);
-        expect(props.onToggleSortDescending).not.toHaveBeenCalled();
-        wrapper
-            .find("Button")
-            .at(0)
-            .simulate("click");
-        expect(props.onToggleSortDescending).toHaveBeenCalled();
+        expect(props.onToggleShowPathoscopeReads).not.toHaveBeenCalled();
+        wrapper.find(Button).at(1).simulate("click");
+        expect(props.onToggleShowPathoscopeReads).toHaveBeenCalled();
     });
 });
 
 describe("mapStateToProps()", () => {
+    getFuse.mockReturnValue("fuse");
+
     it("should return props", () => {
         const state = {
             analyses: {
@@ -145,7 +124,6 @@ describe("mapStateToProps()", () => {
                 },
                 filterIsolates: false,
                 filterOTUs: false,
-                showReads: false,
                 sortDescending: false,
                 sortKey: "pi"
             }
@@ -155,10 +133,11 @@ describe("mapStateToProps()", () => {
             analysisId: "foo",
             filterIsolates: false,
             filterOTUs: false,
-            showReads: false,
+            fuse: "fuse",
             sortDescending: false,
             sortKey: "pi"
         });
+        expect(getFuse).toHaveBeenCalledWith(state);
     });
 });
 
@@ -171,26 +150,17 @@ describe("mapDispatchToProps()", () => {
         props = mapDispatchToProps(dispatch);
     });
 
-    it("should return onCollapse() in props", () => {
-        props.onCollapse();
+    it("should return onToggleFilterOTUs() in props", () => {
+        props.onToggleFilterOTUs();
         expect(dispatch).toHaveBeenCalledWith({
-            type: COLLAPSE_ANALYSIS
+            type: TOGGLE_FILTER_OTUS
         });
     });
 
-    it.each(["OTUs", "isolates"])("should return onFilter() in props that works when [key=%p]", key => {
-        props.onFilter(key);
+    it("should return onToggleFilterIsolates() in props", () => {
+        props.onToggleFilterIsolates();
         expect(dispatch).toHaveBeenCalledWith({
-            type: SET_PATHOSCOPE_FILTER,
-            key
-        });
-    });
-
-    it("should return onFilter() in props that works with non-specific key", () => {
-        props.onFilter("foo");
-        expect(dispatch).toHaveBeenCalledWith({
-            type: SET_PATHOSCOPE_FILTER,
-            key: ""
+            type: TOGGLE_FILTER_ISOLATES
         });
     });
 
@@ -205,14 +175,7 @@ describe("mapDispatchToProps()", () => {
     it("should return onToggleSortDescending() in props", () => {
         props.onToggleSortDescending();
         expect(dispatch).toHaveBeenCalledWith({
-            type: TOGGLE_SORT_PATHOSCOPE_DESCENDING
-        });
-    });
-
-    it("should return onToggleShowReads() in props", () => {
-        props.onToggleShowReads();
-        expect(dispatch).toHaveBeenCalledWith({
-            type: TOGGLE_SHOW_PATHOSCOPE_READS
+            type: TOGGLE_ANALYSIS_SORT_DESCENDING
         });
     });
 });

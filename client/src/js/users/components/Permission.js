@@ -1,17 +1,31 @@
 import React from "react";
-import { Icon, SuccessBoxGroupSection, DangerBoxGroupSection } from "../../base";
+import styled from "styled-components";
+import { BoxGroupSection, Icon } from "../../base";
+
+const StyledPermissionIcon = styled(Icon)`
+    margin-right: 15px;
+`;
+
+const PermissionIcon = ({ value }) => (
+    <StyledPermissionIcon name={value ? "check" : "times"} color={value ? "green" : "red"} fixedWidth />
+);
+
+const StyledPermissionItem = styled(BoxGroupSection)`
+    align-items: center;
+    display: flex;
+`;
 
 export const PermissionItem = ({ permission, value }) => {
     if (value) {
         return (
-            <SuccessBoxGroupSection>
-                <code>{permission}</code> <Icon name={value ? "check" : "times"} pullRight />
-            </SuccessBoxGroupSection>
+            <StyledPermissionItem>
+                <PermissionIcon value={value} /> <code>{permission}</code>
+            </StyledPermissionItem>
         );
     }
     return (
-        <DangerBoxGroupSection>
-            <code>{permission}</code> <Icon name={value ? "check" : "times"} pullRight />
-        </DangerBoxGroupSection>
+        <StyledPermissionItem>
+            <PermissionIcon value={value} /> <code>{permission}</code>
+        </StyledPermissionItem>
     );
 };

@@ -1,9 +1,9 @@
 import { map } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
-import { DangerAlert } from "../../base";
+import { Alert } from "../../base";
 
-const StyledJobError = styled(DangerAlert)`
+const StyledJobError = styled(Alert)`
     display: block;
 `;
 
@@ -22,7 +22,7 @@ export const JobError = ({ error }) => {
 
         // Content replicates format of Python exceptions shown in Python console.
         return (
-            <StyledJobError>
+            <StyledJobError color="red">
                 <div>Traceback (most recent call last):</div>
                 {tracebackLines}
                 <p>

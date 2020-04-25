@@ -14,7 +14,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { device, Icon, Identicon, LoadingPlaceholder, RemoveBanner, WarningAlert } from "../../base";
+import { Alert, device, Icon, Identicon, LoadingPlaceholder, RemoveBanner } from "../../base";
 import { listGroups } from "../../groups/actions";
 
 import { getUser, removeUser } from "../actions";
@@ -70,13 +70,13 @@ export class UserDetail extends React.Component {
     render() {
         if (this.props.error.length) {
             return (
-                <WarningAlert level>
+                <Alert color="orange" level>
                     <Icon name="exclamation-circle" />
                     <span>
                         <strong>You do not have permission to manage users.</strong>
                         <span> Contact an administrator.</span>
                     </span>
-                </WarningAlert>
+                </Alert>
             );
         }
 
@@ -92,12 +92,12 @@ export class UserDetail extends React.Component {
                     <Identicon size={56} hash={identicon} />
                     <UserDetailTitle>
                         <span>{id}</span>
-                        {administrator ? <AdminIcon name="user-shield" bsStyle="primary" /> : null}
+                        {administrator ? <AdminIcon name="user-shield" color="blue" /> : null}
                         <Link to="/administration/users">Back To List</Link>
                     </UserDetailTitle>
                 </UserDetailHeader>
 
-                <Password />
+                <Password key={this.props.lastPasswordChange} />
 
                 <UserDetailGroups>
                     <div>
@@ -124,7 +124,8 @@ export class UserDetail extends React.Component {
 export const mapStateToProps = state => ({
     canModifyUser: getCanModifyUser(state),
     detail: state.users.detail,
-    error: get(state, "errors.GET_USER_ERROR.message", "")
+    error: get(state, "errors.GET_USER_ERROR.message", ""),
+    lastPasswordChange: get(state, "users.detail.last_password_change")
 });
 
 export const mapDispatchToProps = dispatch => ({

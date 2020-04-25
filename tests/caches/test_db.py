@@ -29,11 +29,10 @@ def test_create(paired, snapshot, dbs, static_time, test_random_alphanumeric, tr
     Test that the function works with default keyword arguments and when `paired` is either `True` or `False`.
 
     """
-    cache_id = virtool.caches.db.create(dbs, "foo", trim_parameters, paired)
+    cache = virtool.caches.db.create(dbs, "foo", trim_parameters, paired)
 
-    snapshot.assert_match(dbs.caches.find_one())
-
-    assert cache_id == test_random_alphanumeric.last_choice
+    snapshot.assert_match(cache, "return")
+    snapshot.assert_match(dbs.caches.find_one(), "db")
 
 
 def test_create_legacy(snapshot, dbs, static_time, test_random_alphanumeric, trim_parameters):
@@ -41,11 +40,10 @@ def test_create_legacy(snapshot, dbs, static_time, test_random_alphanumeric, tri
     Test that the function works when the `legacy` keyword argument is `True` instead of the default `False`.
 
     """
-    cache_id = virtool.caches.db.create(dbs, "foo", trim_parameters, False, legacy=True)
+    cache = virtool.caches.db.create(dbs, "foo", trim_parameters, False, legacy=True)
 
-    snapshot.assert_match(dbs.caches.find_one())
-
-    assert cache_id == test_random_alphanumeric.last_choice
+    snapshot.assert_match(cache, "return")
+    snapshot.assert_match(dbs.caches.find_one(), "db")
 
 
 def test_create_program(snapshot, dbs, static_time, test_random_alphanumeric, trim_parameters):
@@ -54,11 +52,10 @@ def test_create_program(snapshot, dbs, static_time, test_random_alphanumeric, tr
     (trimmomatic-0.2.3 instead of skewer-0.2.2).
 
     """
-    cache_id = virtool.caches.db.create(dbs, "foo", trim_parameters, False, program="trimmomatic-0.2.3")
+    cache = virtool.caches.db.create(dbs, "foo", trim_parameters, False, program="trimmomatic-0.2.3")
 
-    snapshot.assert_match(dbs.caches.find_one({"_id": test_random_alphanumeric.last_choice}))
-
-    assert cache_id == test_random_alphanumeric.last_choice
+    snapshot.assert_match(cache, "return")
+    snapshot.assert_match(dbs.caches.find_one({"_id": test_random_alphanumeric.last_choice}), "db")
 
 
 def test_create_duplicate(snapshot, dbs, static_time, test_random_alphanumeric, trim_parameters):
@@ -68,11 +65,10 @@ def test_create_duplicate(snapshot, dbs, static_time, test_random_alphanumeric, 
     """
     dbs.caches.insert_one({"_id": test_random_alphanumeric.next_choice[:8].lower()})
 
-    cache_id = virtool.caches.db.create(dbs, "foo", trim_parameters, False)
+    cache = virtool.caches.db.create(dbs, "foo", trim_parameters, False)
 
-    snapshot.assert_match(dbs.caches.find_one({"_id": test_random_alphanumeric.last_choice}))
-
-    assert cache_id == "u3cuwaoq"
+    snapshot.assert_match(cache, "return")
+    snapshot.assert_match(dbs.caches.find_one({"_id": test_random_alphanumeric.last_choice}), "db")
 
 
 @pytest.mark.parametrize("exists", [True, False])
@@ -107,7 +103,7 @@ async def test_remove(exception, dbi):
 
     await virtool.caches.db.remove(app, "baz")
 
-    assert await dbi.caches.count() == 0
+    assert await dbi.caches.count_documents({}) == 0
 
     app["run_in_thread"].assert_called_with(
         virtool.utils.rm,

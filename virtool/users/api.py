@@ -1,3 +1,5 @@
+import virtool.api.utils
+import virtool.http.utils
 import virtool.users.checks
 import virtool.hmm.db
 import virtool.users.sessions
@@ -10,8 +12,7 @@ import virtool.http.routes
 import virtool.users.utils
 import virtool.utils
 import virtool.validators
-from virtool.api import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, \
-    paginate
+from virtool.api.response import bad_request, conflict, json_response, no_content, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -24,14 +25,14 @@ async def find(req):
     """
     db = req.app["db"]
 
-    term = req.query.get("find", None)
+    term = req.query.get("find")
 
     db_query = dict()
 
     if term:
-        db_query.update(compose_regex_query(term, ["_id"]))
+        db_query.update(virtool.api.utils.compose_regex_query(term, ["_id"]))
 
-    data = await paginate(
+    data = await virtool.api.utils.paginate(
         db.users,
         db_query,
         req.query,
@@ -133,7 +134,7 @@ async def create_first(req):
     db = req.app["db"]
     data = await req.json()
 
-    if await db.users.count():
+    if await db.users.count_documents({}):
         return conflict("Virtool already has at least one user")
 
     if data["user_id"] == "virtool":
@@ -177,8 +178,8 @@ async def create_first(req):
         status=201
     )
 
-    resp.set_cookie("session_id", session["_id"])
-    resp.set_cookie("session_token", token)
+    virtool.http.utils.set_session_id_cookie(resp, session["_id"])
+    virtool.http.utils.set_session_token_cookie(resp, token)
 
     return resp
 
@@ -218,7 +219,7 @@ async def edit(req):
         if missing:
             return bad_request("Groups do not exist: " + ", ".join(missing))
 
-    primary_group = data.get("primary_group", None)
+    primary_group = data.get("primary_group")
 
     if primary_group and primary_group not in groups:
         return bad_request("Primary group does not exist")

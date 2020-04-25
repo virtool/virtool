@@ -5,9 +5,9 @@ exports[`<Account /> should render 1`] = `
   <ViewHeader
     title="Account"
   >
-    <strong>
+    <ViewHeader__ViewHeaderTitle>
       Account
-    </strong>
+    </ViewHeader__ViewHeaderTitle>
   </ViewHeader>
   <Tabs>
     <TabLink

@@ -1,36 +1,21 @@
 import React from "react";
-import styled from "styled-components";
-import { BoxGroup, BoxGroupHeader, BoxGroupSection, ExternalLink, Icon } from "../../base";
-
-const SupportHeader = styled(BoxGroupHeader)`
-    i {
-        margin-right: 5px;
-    }
-`;
-
-const SupportBody = styled(BoxGroupSection)`
-    h5 {
-        font-size: 14px;
-        font-weight: bold;
-
-        :not(:first-child) {
-            margin-top: 20px;
-        }
-    }
-`;
+import { BoxGroup, BoxGroupHeader, BoxGroupSection, BoxTitle, ExternalLink, Icon } from "../../base";
 
 export const Support = () => (
     <BoxGroup>
-        <SupportHeader>
+        <BoxGroupHeader>
             <h2>
-                <Icon name="question-circle" />
-                Support
+                <span>
+                    <Icon name="question-circle" /> Support
+                </span>
             </h2>
-        </SupportHeader>
-        <SupportBody>
-            <h5>Email</h5>
+        </BoxGroupHeader>
+        <BoxGroupSection>
+            <BoxTitle>Email</BoxTitle>
             <span>Please do not email the developers or other members of the lab for support.</span>
-            <h5>GitHub Issues</h5>
+        </BoxGroupSection>
+        <BoxGroupSection>
+            <BoxTitle>GitHub Issues</BoxTitle>
             <ExternalLink href="https://github.com/virtool/virtool/issues">Open an issue on GitHub</ExternalLink>
             <span> for:</span>
             <ul>
@@ -39,10 +24,12 @@ export const Support = () => (
                 <li>Feature requests</li>
             </ul>
             <span>Before opening an issue, check that there is not an existing issue addressing your problem.</span>
-            <h5>Gitter</h5>
+        </BoxGroupSection>
+        <BoxGroupSection>
+            <BoxTitle>Gitter</BoxTitle>
             <span>Chat on </span>
             <ExternalLink href="https://gitter.im/virtool/virtool">Gitter</ExternalLink>
             <span> to get support from the developers and other users.</span>
-        </SupportBody>
+        </BoxGroupSection>
     </BoxGroup>
 );

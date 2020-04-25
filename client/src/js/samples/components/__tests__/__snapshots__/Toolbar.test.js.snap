@@ -1,133 +1,49 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[` 1`] = `
+exports[`<SampleSearchToolbar /> should render when [canCreate=false] 1`] = `
 <div>
-  <div
-    className="toolbar"
-    key="toolbar"
-    style={
-      Object {
-        "marginBottom": "7px",
-      }
-    }
-  >
-    <FormGroup
-      bsClass="form-group"
-    >
-      <InputGroup
-        bsClass="input-group"
-      >
-        <InputGroupAddon
-          bsClass="input-group-addon"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="search fa-fw"
-            pullRight={false}
-          />
-        </InputGroupAddon>
-        <FormControl
-          bsClass="form-control"
-          componentClass="input"
-          onChange={[Function]}
-          placeholder="Sample name"
-          type="text"
-        />
-      </InputGroup>
-    </FormGroup>
-  </div>
-  <ListGroup
-    bsClass="list-group"
-    style={
-      Object {
-        "marginBottom": "7px",
-      }
-    }
-  >
-    <ListGroupItem
-      bsClass="list-group-item"
-      listItem={false}
-    >
-      <Row
-        bsClass="row"
-        componentClass="div"
-      >
-        <Col
-          bsClass="col"
-          componentClass="div"
-          xs={4}
-        >
-          <Connect(AlgorithmFilter) />
-        </Col>
-      </Row>
-    </ListGroupItem>
-  </ListGroup>
+  <Toolbar>
+    <SearchInput
+      onChange={[Function]}
+      placeholder="Sample name"
+      value=""
+    />
+  </Toolbar>
+  <Box>
+    <Connect(WorkflowFilter) />
+  </Box>
 </div>
 `;
 
-exports[` 2`] = `
+exports[`<SampleSearchToolbar /> should render when [canCreate=true] 1`] = `
 <div>
-  <div
-    className="toolbar"
-    key="toolbar"
-    style={
-      Object {
-        "marginBottom": "7px",
+  <Toolbar>
+    <SearchInput
+      onChange={[Function]}
+      placeholder="Sample name"
+      value=""
+    />
+    <LinkButton
+      color="blue"
+      tip="Create"
+      tipPlacement="top"
+      to={
+        Object {
+          "state": Object {
+            "createSample": true,
+          },
+        }
       }
-    }
-  >
-    <FormGroup
-      bsClass="form-group"
     >
-      <InputGroup
-        bsClass="input-group"
-      >
-        <InputGroupAddon
-          bsClass="input-group-addon"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="search fa-fw"
-            pullRight={false}
-          />
-        </InputGroupAddon>
-        <FormControl
-          bsClass="form-control"
-          componentClass="input"
-          onChange={[Function]}
-          placeholder="Sample name"
-          type="text"
-        />
-      </InputGroup>
-    </FormGroup>
-  </div>
-  <ListGroup
-    bsClass="list-group"
-    style={
-      Object {
-        "marginBottom": "7px",
-      }
-    }
-  >
-    <ListGroupItem
-      bsClass="list-group-item"
-      listItem={false}
-    >
-      <Row
-        bsClass="row"
-        componentClass="div"
-      >
-        <Col
-          bsClass="col"
-          componentClass="div"
-          xs={4}
-        >
-          <Connect(AlgorithmFilter) />
-        </Col>
-      </Row>
-    </ListGroupItem>
-  </ListGroup>
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="plus-square fa-fw"
+      />
+    </LinkButton>
+  </Toolbar>
+  <Box>
+    <Connect(WorkflowFilter) />
+  </Box>
 </div>
 `;

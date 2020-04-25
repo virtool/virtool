@@ -65,13 +65,7 @@ describe("<RebuildHistory />", () => {
         };
     });
 
-    it("should render without error", () => {
-        const wrapper = shallow(<RebuildHistory {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("should render with error", () => {
-        props.error = true;
+    it("should render", () => {
         const wrapper = shallow(<RebuildHistory {...props} />);
         expect(wrapper).toMatchSnapshot();
     });

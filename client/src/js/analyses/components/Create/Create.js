@@ -1,12 +1,13 @@
 import { forEach, xorBy } from "lodash-es";
 import React from "react";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
-import { AlgorithmSelect, Button, Flex, FlexItem } from "../../../base";
-import { getDefaultSubtraction, getSelectedDocuments } from "../../../samples/selectors";
-import { listSubtractionIds } from "../../../subtraction/actions";
+import { Button, Flex, FlexItem, Modal, ModalBody, ModalFooter, ModalHeader } from "../../../base";
+import { getDefaultSubtraction, getSampleLibraryType, getSelectedDocuments } from "../../../samples/selectors";
+import { shortlistSubtractions } from "../../../subtraction/actions";
 import { analyze } from "../../actions";
+import { getCompatibleReadyIndexes } from "../../selectors";
+import { WorkflowSelect } from "./WorkflowSelect";
 import { IndexSelector } from "./IndexSelector";
 import { SelectedSamples } from "./SelectedSamples";
 import { SubtractionSelector } from "./SubtractionSelector";
@@ -26,8 +27,8 @@ const MultiSummary = ({ samples, selected }) => {
     );
 };
 
-const getInitialState = ({ defaultSubtraction }) => ({
-    algorithm: "pathoscope_bowtie",
+const getInitialState = ({ defaultSubtraction, libraryType }) => ({
+    workflow: libraryType === "amplicon" ? "aodp" : "pathoscope_bowtie",
     selected: [],
     subtraction: defaultSubtraction,
     error: ""
@@ -40,16 +41,16 @@ export class CreateAnalysis extends React.Component {
     }
 
     componentDidMount() {
-        this.props.onListSubtractionIds();
+        this.props.onShortlistSubtractions();
     }
 
     handleEnter = () => {
-        this.props.onListSubtractionIds();
+        this.props.onShortlistSubtractions();
         this.setState(getInitialState(this.props));
     };
 
-    handleSelectAlgorithm = e => {
-        this.setState({ algorithm: e.target.value });
+    handleSelectWorkflow = e => {
+        this.setState({ workflow: e.target.value });
     };
 
     handleSelectIndex = index => {
@@ -70,32 +71,33 @@ export class CreateAnalysis extends React.Component {
         this.props.onAnalyze(
             this.props.documents,
             this.state.selected,
-            this.state.algorithm,
             this.state.subtraction,
-            this.props.userId
+            this.props.userId,
+            this.state.workflow
         );
 
         this.props.onHide();
     };
 
     render() {
-        const { selected, subtraction, algorithm } = this.state;
+        const { selected, subtraction, workflow } = this.state;
 
         const show = !!(this.props.documents && this.props.documents.length);
 
         return (
-            <Modal show={show} onHide={this.props.onHide} onEnter={this.handleEnter}>
-                <Modal.Header>Analyze</Modal.Header>
+            <Modal label="Analyze" show={show} size="lg" onHide={this.props.onHide} onEnter={this.handleEnter}>
+                <ModalHeader>Analyze</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
+                    <ModalBody>
                         <SelectedSamples samples={this.props.documents} />
-                        <AlgorithmSelect
-                            value={algorithm}
-                            onChange={this.handleSelectAlgorithm}
+                        <WorkflowSelect
+                            libraryType={this.props.libraryType}
+                            value={workflow}
+                            onChange={this.handleSelectWorkflow}
                             hasHmm={this.props.hasHmm}
                         />
                         <SubtractionSelector
-                            subtractions={this.props.subtractionIds}
+                            subtractions={this.props.subtractions}
                             value={subtraction}
                             onChange={this.handleSelectSubtraction}
                         />
@@ -105,23 +107,23 @@ export class CreateAnalysis extends React.Component {
                             selected={selected}
                             error={this.state.error}
                         />
-                    </Modal.Body>
-                    <Modal.Footer>
+                    </ModalBody>
+                    <ModalFooter>
                         <Flex alignItems="center">
                             <FlexItem grow={1}>
                                 <MultiSummary
-                                    algorithm={algorithm}
+                                    workflow={workflow}
                                     samples={this.props.documents}
                                     selected={this.state.selected}
                                 />
                             </FlexItem>
                             <FlexItem>
-                                <Button type="submit" bsStyle="primary" icon="play" disabled={!!this.state.error}>
+                                <Button type="submit" color="blue" icon="play" disabled={!!this.state.error}>
                                     Start
                                 </Button>
                             </FlexItem>
                         </Flex>
-                    </Modal.Footer>
+                    </ModalFooter>
                 </form>
             </Modal>
         );
@@ -132,24 +134,25 @@ const mapStateToProps = state => ({
     defaultSubtraction: getDefaultSubtraction(state),
     documents: getSelectedDocuments(state),
     hasHmm: !!state.hmms.total_count,
-    indexes: state.analyses.readyIndexes,
-    subtractionIds: state.subtraction.ids,
+    indexes: getCompatibleReadyIndexes(state),
+    libraryType: getSampleLibraryType(state),
+    subtractions: state.subtraction.shortlist,
     userId: state.account.id
 });
 
 const mapDispatchToProps = dispatch => ({
-    onAnalyze: (samples, references, algorithm, subtractionId, userId) => {
+    onAnalyze: (samples, references, subtractionId, userId, workflow) => {
         forEach(samples, ({ id }) => {
             forEach(references, ({ refId }) => {
-                dispatch(analyze(id, refId, algorithm, subtractionId, userId));
+                dispatch(analyze(id, refId, subtractionId, userId, workflow));
             });
         });
     },
     onHide: () => {
         dispatch(pushState({}));
     },
-    onListSubtractionIds: () => {
-        dispatch(listSubtractionIds());
+    onShortlistSubtractions: () => {
+        dispatch(shortlistSubtractions());
     }
 });
 

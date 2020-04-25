@@ -1,12 +1,10 @@
 import secrets
 import aiohttp.web
 
+URL_FONT_AWESOME = "https://use.fontawesome.com"
 CSP_CONNECT_SRC = "connect-src 'self' sentry.io"
-
 CSP_DEFAULT_SRC = "default-src 'self'"
-
-CSP_FONT_SRC = "font-src 'self' fonts.google.com use.fontawesome.com data:"
-
+CSP_FONT_SRC = f"font-src 'self' https://fonts.gstatic.com {URL_FONT_AWESOME}"
 CSP_IMG_SRC = "img-src 'self' data:"
 
 
@@ -36,7 +34,7 @@ def generate_csp_script_src(nonce: str) -> str:
     :return: script-src policy
 
     """
-    return f"script-src 'self' 'nonce-{nonce}' use.fontawesome.com"
+    return f"script-src 'self' 'nonce-{nonce}' {URL_FONT_AWESOME}"
 
 
 def generate_csp_style_src(nonce):
@@ -47,7 +45,7 @@ def generate_csp_style_src(nonce):
     :return: style-src policy
 
     """
-    return f"style-src 'self' 'nonce-{nonce}' use.fontawesome.com;"
+    return f"style-src 'self' 'nonce-{nonce}' https://fonts.googleapis.com {URL_FONT_AWESOME};"
 
 
 def generate_nonce() -> str:

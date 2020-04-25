@@ -105,8 +105,7 @@ def find_cache(db, sample_id: str, program: str, parameters: dict) -> Union[dict
         "sample.id": sample_id
     })
 
-    if document:
-        return virtool.utils.base_processor(document)
+    return virtool.utils.base_processor(document)
 
 
 def join_cache_path(settings: dict, cache_id: str):

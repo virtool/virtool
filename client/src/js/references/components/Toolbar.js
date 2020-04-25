@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Icon, LinkButton } from "../../base";
+import { Icon, LinkButton, SearchInput, Toolbar } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { findReferences } from "../actions";
 
@@ -9,31 +9,17 @@ export const ReferenceToolbar = ({ term, onFind, canCreate }) => {
 
     if (canCreate) {
         createButton = (
-            <LinkButton to={{ state: { newReference: true, createReference: true } }} tip="Create">
+            <LinkButton to={{ state: { newReference: true, createReference: true } }} color="blue" tip="Create">
                 <Icon name="plus-square fa-fw" />
             </LinkButton>
         );
     }
 
     return (
-        <div className="toolbar">
-            <div className="form-group">
-                <div className="input-group">
-                    <span id="find-addon" className="input-group-addon">
-                        <Icon name="search" />
-                    </span>
-                    <input
-                        aria-describedby="find-addon"
-                        className="form-control"
-                        type="text"
-                        placeholder="Reference name"
-                        value={term}
-                        onChange={onFind}
-                    />
-                </div>
-            </div>
+        <Toolbar>
+            <SearchInput placeholder="Reference name" value={term} onChange={onFind} />
             {createButton}
-        </div>
+        </Toolbar>
     );
 };
 

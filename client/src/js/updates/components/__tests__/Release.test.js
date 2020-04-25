@@ -1,28 +1,17 @@
-import { Col } from "react-bootstrap";
-import Release, { ReleaseMarkdown } from "../Release";
+import Release from "../Release";
 
 describe("<Release />", () => {
-    let props;
-    let wrapper;
+    const props = { name: "foo", body: "bar", html_url: "baz" };
 
-    it("renders correctly", () => {
-        props = {
-            body: "foo bar baz",
-            name: "test",
-            html_url: "www.github.com/virtool/virtool"
-        };
-        wrapper = shallow(<Release {...props} />);
-        wrapper
-            .find(Col)
-            .at(1)
-            .prop("onClick")();
+    it("should render", () => {
+        const wrapper = shallow(<Release {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders <ReleaseMarkdown /> subcomponent", () => {
-        props = { body: "hello world" };
-        wrapper = shallow(<ReleaseMarkdown {...props} />);
-        wrapper.setProps({ noMargin: true });
-        expect(wrapper).toMatchSnapshot();
+    it("should call handleClick when div is clicked", () => {
+        const wrapper = shallow(<Release {...props} />);
+        wrapper.find("Release__ReleaseName").simulate("click");
+
+        expect(wrapper.state().in).toEqual(true);
     });
 });

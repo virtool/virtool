@@ -72,6 +72,13 @@ exports[`<CreateSubtractionRows /> renders correctly 1`] = `
 </TaskArgsRow>
 `;
 
+exports[`<TaskArgs /> renders <TaskArgsRows /> correctly when task type is "aodp" 1`] = `
+<AnalysisRows
+  analysis_id="test-analysis"
+  sample_id="123abc"
+/>
+`;
+
 exports[`<TaskArgs /> renders <TaskArgsRows /> correctly when task type is "build_index" 1`] = `
 <BuildIndexRows
   analysis_id="test-analysis"

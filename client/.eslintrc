@@ -46,7 +46,9 @@
     "no-undef-init": [1],
     "no-unneeded-ternary": [1],
     "no-unused-expressions": [1],
-    "no-unused-vars": [1],
+    "no-unused-vars": [
+      1, { "ignoreRestSiblings": true }
+    ],
     "no-useless-concat": [1],
     "no-useless-rename": [1],
     "no-useless-return": [1],
@@ -104,7 +106,7 @@
   },
   "overrides": [
     {
-      "files": ["*.test.js", "setupTests.js"],
+      "files": ["*.test.js", "setupTests.js", "webpack.*.config.babel.js"],
       "env": {
         "jest/globals": true
       },

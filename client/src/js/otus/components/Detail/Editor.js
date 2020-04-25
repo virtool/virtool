@@ -2,12 +2,11 @@ import { get, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Badge, Box, BoxGroup, Icon, SectionHeader } from "../../../base";
-
+import { Badge, Box, BoxGroup, NoneFoundBox, SectionHeader } from "../../../base";
 import { checkRefRight } from "../../../utils/utils";
 import { selectIsolate, showAddIsolate } from "../../actions";
-import { IsolateButton } from "./IsolateButton";
-import IsolateDetail from "./IsolateDetail";
+import IsolateButton from "./Isolates/Item";
+import IsolateDetail from "./Isolates/Detail";
 
 const StyledIsolateEditor = styled.div`
     h4 > a {
@@ -16,14 +15,7 @@ const StyledIsolateEditor = styled.div`
 `;
 
 const IsolateEditorContainer = styled.div`
-    display: grid;
-    grid-gap: 10px;
-    grid-template-columns: minmax(230px, 1fr) 3fr;
-`;
-
-const IsolateEditorEmpty = styled(Box)`
-    text-align: center;
-    padding: 50px 0;
+    display: flex;
 `;
 
 const IsolateEditorHeader = styled(SectionHeader)`
@@ -42,15 +34,18 @@ const IsolateEditorHeader = styled(SectionHeader)`
 `;
 
 const IsolateEditorListContainer = styled(Box)`
+    flex: 0 0 auto;
     height: 420px;
+    margin: 0 15px 0 0;
     padding: 0;
     overflow-y: scroll;
+    width: 240px;
 `;
 
 const IsolateEditorList = styled(BoxGroup)`
     border: none;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    margin-bottom: 0;
+    box-shadow: ${props => props.theme.boxShadow.inset};
+    width: 100%;
 `;
 
 const IsolateEditor = props => {
@@ -70,11 +65,7 @@ const IsolateEditor = props => {
     ) : null;
 
     if (isolateComponents.length === 0) {
-        return (
-            <IsolateEditorEmpty>
-                <Icon name="flask" /> <strong>No Isolates</strong>. {addIsolateLink}.
-            </IsolateEditorEmpty>
-        );
+        return <NoneFoundBox noun="isolates">{addIsolateLink}.</NoneFoundBox>;
     }
 
     return (

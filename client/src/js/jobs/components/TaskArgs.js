@@ -63,6 +63,7 @@ export const TaskArgsRows = ({ taskType, taskArgs }) => {
         case "create_subtraction":
             return <CreateSubtractionRows {...taskArgs} />;
 
+        case "aodp":
         case "nuvs":
         case "pathoscope_bowtie":
             return <AnalysisRows {...taskArgs} />;

@@ -3,17 +3,26 @@ import React from "react";
 import { connect } from "react-redux";
 import { Redirect, Route, Switch } from "react-router-dom";
 import styled from "styled-components";
-import { Icon, LoadingPlaceholder, NotFound, TabLink, Tabs, ViewHeader } from "../../../base";
+import {
+    Icon,
+    LoadingPlaceholder,
+    NotFound,
+    TabLink,
+    Tabs,
+    ViewHeader,
+    ViewHeaderIcons,
+    ViewHeaderTitle
+} from "../../../base";
 import { Breadcrumb, BreadcrumbItem } from "../../../base/Breadcrumb";
 import { checkRefRight } from "../../../utils/utils";
 import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
-import AddIsolate from "./AddIsolate";
 import IsolateEditor from "./Editor";
-import EditOTU from "./EditOTU";
+import EditOTU from "./Edit";
 import General from "./General";
-import History from "./History";
-import RemoveOTU from "./RemoveOTU";
-import Schema from "./Schema";
+import History from "./History/History";
+import AddIsolate from "./Isolates/Add";
+import RemoveOTU from "./Remove";
+import Schema from "./Schema/Schema";
 
 const OTUSection = () => (
     <div>
@@ -23,24 +32,18 @@ const OTUSection = () => (
     </div>
 );
 
-const OTUDetailHeader = styled.h1`
+const OTUDetailTitle = styled(ViewHeaderTitle)`
     align-items: baseline;
     display: flex;
-    margin-bottom: 20px;
-    font-size: 24px;
-    font-weight: bold;
 
     small {
-        font-weight: bold;
-        padding-left: 7px;
+        color: ${props => props.theme.color.greyDark};
+        font-weight: 600;
+        margin-left: 7px;
 
         em {
             font-weight: normal;
         }
-    }
-
-    span:last-child {
-        margin-left: auto;
     }
 `;
 
@@ -61,32 +64,35 @@ class OTUDetail extends React.Component {
         const refId = this.props.detail.reference.id;
         const { id, name, abbreviation } = this.props.detail;
 
-        let iconButtons = [];
         let modifyOTUComponents;
+
+        let segmentComponent;
+        if (this.props.dataType !== "barcode") {
+            segmentComponent = <TabLink to={`/refs/${refId}/otus/${id}/schema`}>Schema</TabLink>;
+        }
+
+        let iconButtons;
 
         if (this.props.canModify) {
             iconButtons = (
-                <span>
-                    <small key="edit-icon" style={{ paddingLeft: "5px" }}>
-                        <Icon
-                            bsStyle="warning"
-                            name="pencil-alt"
-                            tip="Edit OTU"
-                            tipPlacement="left"
-                            onClick={this.props.showEdit}
-                        />
-                    </small>
-
-                    <small key="remove-icon" style={{ paddingLeft: "5px" }}>
-                        <Icon
-                            bsStyle="danger"
-                            name="trash"
-                            tip="Remove OTU"
-                            tipPlacement="left"
-                            onClick={this.props.showRemove}
-                        />
-                    </small>
-                </span>
+                <ViewHeaderIcons>
+                    <Icon
+                        key="edit-icon"
+                        color="orange"
+                        name="pencil-alt"
+                        tip="Edit OTU"
+                        tipPlacement="left"
+                        onClick={this.props.showEdit}
+                    />
+                    <Icon
+                        key="remove-icon"
+                        color="red"
+                        name="trash"
+                        tip="Remove OTU"
+                        tipPlacement="left"
+                        onClick={this.props.showRemove}
+                    />
+                </ViewHeaderIcons>
             );
 
             modifyOTUComponents = (
@@ -99,8 +105,6 @@ class OTUDetail extends React.Component {
 
         return (
             <div>
-                <ViewHeader title={`${name} - OTU`} />
-
                 <Breadcrumb>
                     <BreadcrumbItem to="/refs/">References</BreadcrumbItem>
                     <BreadcrumbItem to={`/refs/${refId}`}>{this.props.refName}</BreadcrumbItem>
@@ -108,15 +112,16 @@ class OTUDetail extends React.Component {
                     <BreadcrumbItem>{name}</BreadcrumbItem>
                 </Breadcrumb>
 
-                <OTUDetailHeader>
-                    <strong>{name}</strong>
-                    <small>{abbreviation || <em>No Abbreviation</em>}</small>
-                    {iconButtons}
-                </OTUDetailHeader>
+                <ViewHeader title={name}>
+                    <OTUDetailTitle>
+                        {name} <small>{abbreviation || <em>No Abbreviation</em>}</small>
+                        {iconButtons}
+                    </OTUDetailTitle>
+                </ViewHeader>
 
                 <Tabs>
                     <TabLink to={`/refs/${refId}/otus/${id}/otu`}>OTU</TabLink>
-                    <TabLink to={`/refs/${refId}/otus/${id}/schema`}>Schema</TabLink>
+                    {segmentComponent}
                     <TabLink to={`/refs/${refId}/otus/${id}/history`}>History</TabLink>
                 </Tabs>
 
@@ -138,7 +143,8 @@ const mapStateToProps = state => {
         error: get(state, "errors.GET_OTU_ERROR", null),
         detail: state.otus.detail,
         refName: state.references.detail.name,
-        canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu")
+        canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu"),
+        dataType: state.references.detail.data_type
     };
 };
 

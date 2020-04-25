@@ -1,5 +1,6 @@
 import json
 import os
+import pathlib
 import shutil
 
 import pymongo.errors
@@ -12,8 +13,8 @@ import virtool.jobs.job
 import virtool.jobs.utils
 import virtool.samples.db
 import virtool.samples.utils
-import virtool.utils
 import virtool.samples.utils
+import virtool.utils
 
 TRIMMING_PROGRAM = "skewer-0.2.2"
 
@@ -54,11 +55,13 @@ class Job(virtool.jobs.job.Job):
         # The parent folder for all data associated with the sample
         sample_path = os.path.join(self.settings["data_path"], "samples", self.params["sample_id"])
 
+        analysis_path = os.path.join(sample_path, "analysis", self.params["analysis_id"])
+
         analysis = self.db.analyses.find_one(self.params["analysis_id"], ["subtraction"])
 
         self.params.update({
             # The path to the directory where all analysis result files will be written.
-            "analysis_path": os.path.join(sample_path, "analysis", self.params["analysis_id"]),
+            "analysis_path": analysis_path,
 
             "index_path": os.path.join(
                 self.settings["data_path"],
@@ -72,26 +75,31 @@ class Job(virtool.jobs.job.Job):
             "paired": sample["paired"],
             #: The number of reads in the sample library. Assigned after database connection is made.
             "read_count": int(sample["quality"]["count"]),
-            "srna": sample.get("srna", False),
+            "sample_read_length": int(sample["quality"]["length"][1]),
+            "library_type": sample["library_type"],
+            "reads_path": os.path.join(analysis_path, "_reads"),
             "subtraction_path": os.path.join(
                 self.settings["data_path"],
                 "subtractions",
-                analysis["subtraction"]["id"].lower().replace(" ", "_"),
+                analysis["subtraction"]["id"],
                 "reference"
             )
         })
 
-        index_document = self.db.indexes.find_one(self.task_args["index_id"], ["manifest", "sequence_otu_map"])
+        index_info = get_index_info(
+            self.db,
+            self.settings,
+            self.task_args["index_id"]
+        )
 
-        sequence_otu_map = index_document.get("sequence_otu_map", None)
+        self.params.update(index_info)
 
-        if sequence_otu_map is None:
-            sequence_otu_map = get_sequence_otu_map(self.db, index_document["manifest"])
+        read_paths = [os.path.join(self.params["reads_path"], "reads_1.fq.gz")]
 
-        self.params.update({
-            "manifest": index_document["manifest"],
-            "sequence_otu_map": sequence_otu_map
-        })
+        if self.params["paired"]:
+            read_paths.append(os.path.join(self.params["reads_path"], "reads_2.fq.gz"))
+
+        self.params["read_paths"] = read_paths
 
     def make_analysis_dir(self):
         """
@@ -105,154 +113,36 @@ class Job(virtool.jobs.job.Job):
         Fetch cache
 
         """
-        self.intermediate["qc"] = None
+        os.makedirs(self.params["reads_path"])
 
         paired = self.params["paired"]
-        sample_id = self.params["sample_id"]
 
         parameters = get_trimming_parameters(
             paired,
-            self.params["srna"]
+            self.params["library_type"],
+            self.params["sample_read_length"]
         )
 
         cache = virtool.jobs.utils.find_cache(
             self.db,
-            sample_id,
+            self.params["sample_id"],
             TRIMMING_PROGRAM,
             parameters
         )
 
-        paths = None
-
         if cache:
-            paths = virtool.jobs.utils.join_cache_read_paths(self.settings, cache)
+            return self._fetch_cache(cache)
 
-            if paths:
-                self.intermediate["cache_id"] = cache["id"]
-                self.intermediate["qc"] = cache["quality"]
-                self.params["read_paths"] = paths
-                return
+        sample = self.db.samples.find_one(self.params["sample_id"])
+        paths = virtool.samples.utils.join_legacy_read_paths(self.settings, sample)
 
-        if paths is None:
-            sample = self.db.samples.find_one(sample_id)
-            paths = virtool.samples.utils.join_legacy_read_paths(self.settings, sample)
+        if paths:
+            return self._fetch_legacy(paths)
 
-            if paths:
-                self.intermediate["qc"] = sample["quality"]
-                self.params["read_paths"] = paths
-                return
-
-        if paths is None:
-            cache_id = virtool.caches.db.create(
-                self.db,
-                sample_id,
-                parameters,
-                paired
-            )
-
-            self.dispatch("caches", "update", [cache_id])
-
-            self.intermediate["cache_id"] = cache_id
-
-            # The path for the nascent cache. Trimmed file will be written here.
-            cache_path = virtool.jobs.utils.join_cache_path(self.settings, cache_id)
-
-            os.makedirs(cache_path)
-
-            # Paths for the trimmed read file(s).
-            paths = virtool.samples.utils.join_read_paths(
-                self.params["sample_path"],
-                self.params["paired"]
-            )
-
-            command = compose_trimming_command(
-                cache_path,
-                parameters,
-                self.proc,
-                paths
-            )
-
-            env = dict(os.environ, LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu")
-
-            self.run_subprocess(command, env=env)
-
-            move_trimming_results(cache_path, paired)
-
-            cached_read_paths = virtool.samples.utils.join_read_paths(cache_path, paired)
-
-            cache_files = list()
-
-            for index, path in enumerate(cached_read_paths):
-                name = f"reads_{index + 1}.fq.gz"
-
-                stats = virtool.utils.file_stats(path)
-
-                cache_files.append({
-                    "name": name,
-                    "size": stats["size"]
-                })
-
-            self.db.caches.update_one({"_id": cache_id}, {
-                "$set": {
-                    "files": cache_files
-                }
-            })
-
-            self.dispatch("caches", "update", [cache_id])
-
-            self.params["read_paths"] = cached_read_paths
-
-            return
-
-        self.params["read_paths"] = paths
-
-    def prepare_qc(self):
-        if self.intermediate["qc"]:
-            cache_id = self.intermediate.get("cache_id", None)
-
-            if cache_id:
-                self.db.analyses.update_one({"_id": self.params["analysis_id"]}, {
-                    "$set": {
-                        "cache": {
-                            "id": cache_id
-                        }
-                    }
-                })
-
-            return
-
-        cache_id = self.intermediate["cache_id"]
-
-        cache_path = virtool.jobs.utils.join_cache_path(self.settings, cache_id)
-
-        cache_paths = virtool.samples.utils.join_read_paths(cache_path, self.params["paired"])
-
-        fastqc_path = os.path.join(cache_path, "fastqc")
-
-        os.makedirs(fastqc_path)
-
-        virtool.jobs.fastqc.run_fastqc(
-            self.run_subprocess,
-            self.proc,
-            cache_paths,
-            fastqc_path
-        )
-
-        qc = virtool.jobs.fastqc.parse_fastqc(fastqc_path, cache_path)
-
-        self.intermediate["qc"] = qc
-
-        self.db.caches.update_one({"_id": cache_id}, {
-            "$set": {
-                "ready": True,
-                "quality": qc
-            }
-        })
-
-        self.dispatch("caches", "update", [cache_id])
+        return self._create_cache(parameters)
 
     def cleanup(self):
-        cache_id = self.intermediate.get("cache_id", None)
+        cache_id = self.intermediate.get("cache_id")
 
         if cache_id:
             cache = self.db.caches.find_one(cache_id, ["ready"])
@@ -274,17 +164,154 @@ class Job(virtool.jobs.job.Job):
 
         sample_id = self.params["sample_id"]
 
-        virtool.db.sync.recalculate_algorithm_tags(self.db, sample_id)
+        virtool.db.sync.recalculate_workflow_tags(self.db, sample_id)
 
         self.dispatch("samples", "update", [sample_id])
 
+    def _create_cache(self, parameters):
+        cache = virtool.caches.db.create(
+            self.db,
+            self.params["sample_id"],
+            parameters,
+            self.params["paired"]
+        )
 
-def get_sequence_otu_map(db, manifest):
+        cache_id = cache["id"]
+
+        self.dispatch("caches", "update", [cache_id])
+        self._set_cache_id(cache_id)
+
+        # The path for the nascent cache. Trimmed file will be written here.
+        cache_path = virtool.jobs.utils.join_cache_path(self.settings, cache_id)
+        os.makedirs(cache_path)
+
+        # A path to perform the trimming and QC in. Local to the analysis.
+        temp_cache_path = os.path.join(self.params["analysis_path"], "_cache")
+        os.makedirs(temp_cache_path)
+
+        # Paths for the sample read file(s).
+        paths = virtool.samples.utils.join_read_paths(
+            self.params["sample_path"],
+            self.params["paired"]
+        )
+
+        # Don't compress output if it is going to converted to FASTA.
+        command = compose_trimming_command(
+            temp_cache_path,
+            parameters,
+            self.proc,
+            paths
+        )
+
+        env = dict(os.environ, LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu")
+
+        self.run_subprocess(command, env=env)
+
+        rename_trimming_results(temp_cache_path)
+
+        self._run_cache_qc(cache_id, temp_cache_path)
+
+        copy_trimming_results(temp_cache_path, cache_path)
+
+        self._set_cache_stats(cache)
+        self._use_new_cache(temp_cache_path)
+
+    def _fetch_cache(self, cache):
+        cached_read_paths = virtool.jobs.utils.join_cache_read_paths(self.settings, cache)
+
+        for path in cached_read_paths:
+            local_path = os.path.join(self.params["reads_path"], pathlib.Path(path).name)
+            shutil.copy(path, local_path)
+
+        self._set_cache_id(cache["id"])
+
+    def _fetch_legacy(self, legacy_read_paths):
+        for path in legacy_read_paths:
+            local_path = os.path.join(self.params["reads_path"], pathlib.Path(path).name)
+            shutil.copy(path, local_path)
+
+    def _run_cache_qc(self, cache_id, temp_path):
+        fastqc_path = os.path.join(temp_path, "fastqc")
+
+        os.makedirs(fastqc_path)
+
+        read_paths = [os.path.join(temp_path, "reads_1.fq.gz")]
+
+        if self.params["paired"]:
+            read_paths.append(os.path.join(temp_path, "reads_2.fq.gz"))
+
+        virtool.jobs.fastqc.run_fastqc(
+            self.run_subprocess,
+            self.proc,
+            read_paths,
+            fastqc_path
+        )
+
+        qc = virtool.jobs.fastqc.parse_fastqc(fastqc_path, self.params["sample_path"])
+
+        self.db.caches.update_one({"_id": cache_id}, {
+            "$set": {
+                "quality": qc
+            }
+        })
+
+        self.dispatch("caches", "update", [cache_id])
+
+    def _set_cache_id(self, cache_id):
+        self.intermediate["cache_id"] = cache_id
+
+        self.db.analyses.update_one({"_id": self.params["analysis_id"]}, {
+            "$set": {
+                "cache": {
+                    "id": cache_id
+                }
+            }
+        })
+
+        self.dispatch("analyses", "update", [self.params["analysis_id"]])
+
+    def _set_cache_stats(self, cache):
+        paths = virtool.jobs.utils.join_cache_read_paths(self.settings, cache)
+        cache_files = list()
+
+        for path in paths:
+            name = pathlib.Path(path).name
+            stats = virtool.utils.file_stats(path)
+
+            cache_files.append({
+                "name": name,
+                "size": stats["size"]
+            })
+
+        self.db.caches.update_one({"_id": cache["id"]}, {
+            "$set": {
+                "files": cache_files,
+                "ready": True
+            }
+        })
+
+    def _use_new_cache(self, temp_cache_path):
+        names = ["reads_1.fq.gz"]
+
+        if self.params["paired"]:
+            names.append("reads_2.fq.gz")
+
+        for name in names:
+            shutil.move(
+                os.path.join(temp_cache_path, name),
+                os.path.join(self.params["reads_path"], name)
+            )
+
+        shutil.rmtree(temp_cache_path)
+
+
+def get_sequence_otu_map(db, settings, manifest):
     sequence_otu_map = dict()
 
     for otu_id, otu_version in manifest.items():
         _, patched, _ = virtool.db.sync.patch_otu_to_version(
             db,
+            settings,
             otu_id,
             otu_version
         )
@@ -297,22 +324,43 @@ def get_sequence_otu_map(db, manifest):
     return sequence_otu_map
 
 
-def move_trimming_results(path, paired):
-    if paired:
+def copy_trimming_results(src, dest):
+    shutil.copy(
+        os.path.join(src, "reads_1.fq.gz"),
+        dest
+    )
+
+    try:
+        shutil.copy(
+            os.path.join(src, "reads_2.fq.gz"),
+            dest
+        )
+    except FileNotFoundError:
+        pass
+
+
+def rename_trimming_results(path):
+    """
+    Rename Skewer output to a simple name used in Virtool.
+
+    :param path:
+    :return:
+
+    """
+    try:
         shutil.move(
-            os.path.join(path, "reads-trimmed-pair1.fastq.gz"),
-            os.path.join(path, "reads_1.fq.gz")
+            os.path.join(path, f"reads-trimmed.fastq.gz"),
+            os.path.join(path, f"reads_1.fq.gz")
+        )
+    except FileNotFoundError:
+        shutil.move(
+            os.path.join(path, f"reads-trimmed-pair1.fastq.gz"),
+            os.path.join(path, f"reads_1.fq.gz")
         )
 
         shutil.move(
-            os.path.join(path, "reads-trimmed-pair2.fastq.gz"),
-            os.path.join(path, "reads_2.fq.gz")
-        )
-
-    else:
-        shutil.move(
-            os.path.join(path, "reads-trimmed.fastq.gz"),
-            os.path.join(path, "reads_1.fq.gz")
+            os.path.join(path, f"reads-trimmed-pair2.fastq.gz"),
+            os.path.join(path, f"reads_2.fq.gz")
         )
 
     shutil.move(
@@ -321,25 +369,49 @@ def move_trimming_results(path, paired):
     )
 
 
-def get_trimming_parameters(paired: bool, srna: bool):
+def get_trimming_min_length(library_type, sample_read_length) -> int:
+    if library_type == "amplicon":
+        return round(0.95 * sample_read_length)
+
+    if sample_read_length < 80:
+        return 35
+
+    if sample_read_length < 160:
+        return 100
+
+    return 160
+
+
+def get_trimming_parameters(paired: bool, library_type: str, sample_read_length: int):
     """
 
     :param paired:
-    :param srna:
+    :param library_type:
+    :param sample_read_length:
     :return:
-    """
-    parameters = dict(virtool.samples.utils.TRIM_PARAMETERS)
 
-    if srna:
-        parameters.update({
+    """
+    min_length = get_trimming_min_length(library_type, sample_read_length)
+
+    if library_type == "amplicon":
+        return {
+            **virtool.samples.utils.TRIM_PARAMETERS,
+            "end_quality": 0,
+            "mean_quality": 0,
+            "min_length": min_length
+        }
+
+    if library_type == "srna":
+        return {
+            **virtool.samples.utils.TRIM_PARAMETERS,
             "min_length": 20,
             "max_length": 22
-        })
+        }
 
-    if paired:
-        parameters["mode"] = "any"
-
-    return parameters
+    return {
+        **virtool.samples.utils.TRIM_PARAMETERS,
+        "min_length": min_length
+    }
 
 
 def compose_trimming_command(cache_path: str, parameters: dict, proc, read_paths):
@@ -367,6 +439,24 @@ def compose_trimming_command(cache_path: str, parameters: dict, proc, read_paths
     command += read_paths
 
     return command
+
+
+def get_index_info(db, settings, index_id):
+    document = db.indexes.find_one(index_id, ["manifest", "sequence_otu_map"])
+
+    try:
+        sequence_otu_map = document["sequence_otu_map"]
+    except KeyError:
+        sequence_otu_map = get_sequence_otu_map(
+            db,
+            settings,
+            document["manifest"]
+        )
+
+    return {
+        "manifest": document["manifest"],
+        "sequence_otu_map": sequence_otu_map
+    }
 
 
 def set_analysis_results(db, analysis_id, analysis_path, results):

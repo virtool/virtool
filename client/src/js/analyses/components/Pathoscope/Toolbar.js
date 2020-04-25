@@ -1,19 +1,21 @@
-import React from "react";
-import styled from "styled-components";
-import { Dropdown, DropdownButton, FormControl, FormGroup, InputGroup, MenuItem } from "react-bootstrap";
+import React, { useCallback } from "react";
 import { connect } from "react-redux";
-import { Button, Checkbox, Flex, FlexItem, Icon, Toolbar } from "../../../base";
+import styled from "styled-components";
+import { Button, DropdownButton, DropdownItem, Icon, SearchInput, Toolbar } from "../../../base";
 import {
-    collapseAnalysis,
     setAnalysisSortKey,
-    setPathoscopeFilter,
-    togglePathoscopeSortDescending,
+    setSearchIds,
+    toggleAnalysisSortDescending,
+    toggleFilterIsolates,
+    toggleFilterOTUs,
     toggleShowPathoscopeReads
 } from "../../actions";
+import { getFuse } from "../../selectors";
+import { AnalysisViewerSort } from "../Viewer/Sort";
 
 export const PathoscopeDownloadDropdownTitle = () => (
     <span>
-        <Icon name="file-download" /> Export
+        <Icon name="file-download" /> Export <Icon name="caret-down" />
     </span>
 );
 
@@ -23,142 +25,108 @@ const StyledPathoscopeToolbar = styled(Toolbar)`
 `;
 
 export const PathoscopeToolbar = ({
+    id,
     analysisId,
     filterIsolates,
     filterOTUs,
-    showReads,
+    fuse,
+    showPathoscopeReads,
     sortDescending,
     sortKey,
-    onCollapse,
-    onFilter,
+    onSearch,
     onSetSortKey,
-    onToggleShowReads,
+    onToggleFilterIsolates,
+    onToggleFilterOTUs,
+    onToggleShowPathoscopeReads,
     onToggleSortDescending
 }) => {
+    const handleChange = useCallback(
+        e => {
+            onSearch(e.target.value, fuse);
+        },
+        [id]
+    );
+
     return (
         <StyledPathoscopeToolbar>
-            <FormGroup>
-                <InputGroup>
-                    <InputGroup.Button>
-                        <Button title="Sort Direction" onClick={onToggleSortDescending} tip="Sort List">
-                            <Icon name={sortDescending ? "sort-amount-down" : "sort-amount-up"} />
-                        </Button>
-                    </InputGroup.Button>
-                    <FormControl componentClass="select" value={sortKey} onChange={e => onSetSortKey(e.target.value)}>
-                        <option className="text-primary" value="coverage">
-                            Coverage
-                        </option>
-                        <option className="text-success" value="pi">
-                            Weight
-                        </option>
-                        <option className="text-danger" value="depth">
-                            Depth
-                        </option>
-                    </FormControl>
-                </InputGroup>
-            </FormGroup>
-
+            <SearchInput onChange={handleChange} onKeyDown={e => e.stopPropagation()} />
+            <AnalysisViewerSort workflow="pathoscope" sortKey={sortKey} onSelect={onSetSortKey} />
+            <Button title="Sort Direction" onClick={onToggleSortDescending} tip="Sort List">
+                <Icon name={sortDescending ? "sort-amount-down" : "sort-amount-up"} />
+            </Button>
             <Button
-                icon="compress"
-                title="Collapse"
-                tip="Collapse"
-                onClick={onCollapse}
-                className="hidden-xs"
-                disabled={false}
-            />
-
+                active={showPathoscopeReads}
+                icon="weight-hanging"
+                tip="Show read pseudo-counts instead of weight"
+                onClick={onToggleShowPathoscopeReads}
+            >
+                Show Reads
+            </Button>
             <Button
-                icon="chart-pie"
-                title="Weight Format"
-                tip="Weight Format"
-                active={!showReads}
-                className="hidden-xs"
-                onClick={onToggleShowReads}
-            />
-
-            <Dropdown
-                id="pathoscope-filter-dropdown"
-                onSelect={onFilter}
-                className="split-dropdown"
-                pullRight
-                style={{ zIndex: 1 }}
+                active={filterOTUs}
+                icon="filter"
+                tip="Hide OTUs with low coverage support"
+                onClick={onToggleFilterOTUs}
             >
-                <Button title="Filter" tip="Filter Results" onClick={onFilter} active={filterOTUs || filterIsolates}>
-                    <Icon name="filter" />
-                </Button>
-                <Dropdown.Toggle />
-                <Dropdown.Menu>
-                    <MenuItem eventKey="OTUs">
-                        <Flex>
-                            <FlexItem>
-                                <Checkbox checked={filterOTUs} />
-                            </FlexItem>
-                            <FlexItem pad={5}>OTUs</FlexItem>
-                        </Flex>
-                    </MenuItem>
-                    <MenuItem eventKey="isolates">
-                        <Flex>
-                            <FlexItem>
-                                <Checkbox checked={filterIsolates} />
-                            </FlexItem>
-                            <FlexItem pad={5}>Isolates</FlexItem>
-                        </Flex>
-                    </MenuItem>
-                </Dropdown.Menu>
-            </Dropdown>
-
-            <DropdownButton
-                id="download-dropdown"
-                title={<PathoscopeDownloadDropdownTitle />}
-                pullRight
-                style={{ zIndex: 1 }}
+                Filter OTUs
+            </Button>
+            <Button
+                active={filterIsolates}
+                icon="filter"
+                tip="Hide isolates with low coverage support"
+                onClick={onToggleFilterIsolates}
             >
-                <MenuItem href={`/download/analyses/${analysisId}.csv`}>
+                Filter Isolates
+            </Button>
+            <DropdownButton id="download-dropdown" title={<PathoscopeDownloadDropdownTitle />}>
+                <DropdownItem href={`/download/analyses/${analysisId}.csv`}>
                     <Icon name="file-csv" /> CSV
-                </MenuItem>
-                <MenuItem href={`/download/analyses/${analysisId}.xlsx`}>
+                </DropdownItem>
+                <DropdownItem href={`/download/analyses/${analysisId}.xlsx`}>
                     <Icon name="file-excel" /> Excel
-                </MenuItem>
+                </DropdownItem>
             </DropdownButton>
         </StyledPathoscopeToolbar>
     );
 };
 
 export const mapStateToProps = state => {
-    const { filterIsolates, filterOTUs, showReads, sortDescending, sortKey } = state.analyses;
+    const { filterIsolates, filterOTUs, showPathoscopeReads, sortDescending, sortKey } = state.analyses;
     return {
+        id: state.analyses.activeId,
         analysisId: state.analyses.detail.id,
         filterIsolates,
         filterOTUs,
-        showReads,
+        fuse: getFuse(state),
+        showPathoscopeReads,
         sortDescending,
         sortKey
     };
 };
 
 export const mapDispatchToProps = dispatch => ({
-    onCollapse: () => {
-        dispatch(collapseAnalysis());
+    onSearch: (term, fuse) => {
+        dispatch(setSearchIds(term ? fuse.search(term) : null));
     },
 
-    onFilter: key => {
-        if (key !== "OTUs" && key !== "isolates") {
-            key = "";
-        }
+    onToggleFilterIsolates: () => {
+        dispatch(toggleFilterIsolates());
+    },
 
-        dispatch(setPathoscopeFilter(key));
+    onToggleFilterOTUs: () => {
+        dispatch(toggleFilterOTUs());
     },
 
     onSetSortKey: key => {
         dispatch(setAnalysisSortKey(key));
     },
 
-    onToggleSortDescending: () => {
-        dispatch(togglePathoscopeSortDescending());
+    onToggleShowPathoscopeReads: () => {
+        dispatch(toggleShowPathoscopeReads());
     },
 
-    onToggleShowReads: () => {
-        dispatch(toggleShowPathoscopeReads());
+    onToggleSortDescending: () => {
+        dispatch(toggleAnalysisSortDescending());
     }
 });
 

@@ -1,67 +1,68 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Button /> renders correctly 1`] = `
-<button
-  className="btn btn-default"
-  onFocus={[Function]}
->
-  <div />
-</button>
+exports[`<Button /> should render 1`] = `
+<Button__StyledButton
+  color="grey"
+  disabled={false}
+  onClick={[MockFunction]}
+  type="button"
+/>
 `;
 
-exports[`<Button /> renders optional Tooltip when props.tip provided 1`] = `
-<Button
-  bsStyle="default"
-  pullRight={false}
-  tip="test_tip"
-  tipPlacement="top"
+exports[`<Button /> should render with children 1`] = `
+<Button__StyledButton
+  color="grey"
+  disabled={false}
+  onClick={[MockFunction]}
+  type="button"
 >
-  <OverlayTrigger
-    defaultOverlayShown={false}
-    overlay={
-      <Tooltip
-        bsClass="tooltip"
-        id="test_tip"
-        placement="right"
-      >
-        test_tip
-      </Tooltip>
-    }
-    placement="top"
-    trigger={
-      Array [
-        "hover",
-        "focus",
-      ]
-    }
-  >
-    <button
-      className="btn btn-default"
-      onBlur={[Function]}
-      onClick={null}
-      onFocus={[Function]}
-      onMouseOut={[Function]}
-      onMouseOver={[Function]}
-    >
-      <div />
-    </button>
-  </OverlayTrigger>
-</Button>
+  <span>
+    <span>
+      Test
+    </span>
+  </span>
+</Button__StyledButton>
 `;
 
-exports[`<Button /> renders optional icon 1`] = `
-<button
-  className="btn btn-default btn-with-icon"
-  onFocus={[Function]}
+exports[`<Button /> should render with icon 1`] = `
+<Button__StyledButton
+  color="grey"
+  disabled={false}
+  onClick={[MockFunction]}
+  type="button"
 >
-  <div>
-    <Icon
-      className="text-danger"
-      faStyle="fas"
-      fixedWidth={false}
-      name="folder"
-      pullRight={false}
-    />
-  </div>
-</button>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="folder"
+  />
+</Button__StyledButton>
+`;
+
+exports[`<Button /> should render with tooltip 1`] = `
+<Tooltip
+  position="top"
+  tip="Tooltip"
+>
+  <Button__StyledButton
+    color="grey"
+    disabled={false}
+    onClick={[MockFunction]}
+    type="button"
+  />
+</Tooltip>
+`;
+
+exports[`<Button /> should render with tooltip using tipPlacement prop 1`] = `
+<Tooltip
+  position="top"
+  tip="Tooltip"
+>
+  <Button__StyledButton
+    color="grey"
+    disabled={false}
+    onClick={[MockFunction]}
+    type="button"
+  />
+</Tooltip>
 `;

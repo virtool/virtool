@@ -1,3 +1,6 @@
+import asyncio
+
+import virtool.api.utils
 import virtool.history.db
 import virtool.indexes.db
 import virtool.jobs.db
@@ -7,8 +10,8 @@ import virtool.history.utils
 import virtool.http.routes
 import virtool.jobs.build_index
 import virtool.utils
-from virtool.api import bad_request, compose_regex_query, conflict, insufficient_rights, json_response, \
-    not_found, paginate
+from virtool.api.response import bad_request, conflict, insufficient_rights, json_response, \
+    not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -54,14 +57,15 @@ async def find(req):
     ready_indexes = list()
 
     async for agg in db.indexes.aggregate(pipeline):
-        reference_name = await virtool.db.utils.get_one_field(db.references, "name", agg["_id"])
+        reference = await db.references.find_one(agg["_id"], ["data_type", "name"])
 
         ready_indexes.append({
             "id": agg["index"],
             "version": agg["version"],
             "reference": {
                 "id": agg["_id"],
-                "name": reference_name
+                "name": reference["name"],
+                "data_type": reference["data_type"]
             }
         })
 
@@ -83,13 +87,18 @@ async def get(req):
     if not document:
         return not_found()
 
-    document = virtool.utils.base_processor(document)
+    contributors, otus = await asyncio.gather(
+        virtool.indexes.db.get_contributors(db, index_id),
+        virtool.indexes.db.get_otus(db, index_id)
+    )
 
-    document["contributors"] = await virtool.indexes.db.get_contributors(db, index_id)
+    document.update({
+        "change_count": sum(v["change_count"] for v in otus),
+        "contributors": contributors,
+        "otus": otus,
+    })
 
-    document["otus"] = await virtool.indexes.db.get_otus(db, index_id)
-
-    document["change_count"] = sum(v["change_count"] for v in document["otus"])
+    document = await virtool.indexes.db.processor(db, document)
 
     return json_response(document)
 
@@ -113,13 +122,13 @@ async def create(req):
     if not await virtool.references.db.check_right(req, reference, "build"):
         return insufficient_rights()
 
-    if await db.indexes.count({"reference.id": ref_id, "ready": False}):
+    if await db.indexes.count_documents({"reference.id": ref_id, "ready": False}):
         return conflict("Index build already in progress")
 
-    if await db.otus.count({"reference.id": ref_id, "verified": False}):
+    if await db.otus.count_documents({"reference.id": ref_id, "verified": False}):
         return bad_request("There are unverified OTUs")
 
-    if not await db.history.count({"reference.id": ref_id, "index.id": "unbuilt"}):
+    if not await db.history.count_documents({"reference.id": ref_id, "index.id": "unbuilt"}):
         return bad_request("There are no unbuilt changes")
 
     index_id = await virtool.db.utils.get_new_id(db.indexes)
@@ -199,19 +208,19 @@ async def find_history(req):
 
     index_id = req.match_info["index_id"]
 
-    if not await db.indexes.count({"_id": index_id}):
+    if not await db.indexes.count_documents({"_id": index_id}):
         return not_found()
 
-    term = req.query.get("term", None)
+    term = req.query.get("term")
 
     db_query = {
         "index.id": index_id
     }
 
     if term:
-        db_query.update(compose_regex_query(term, ["otu.name", "user.id"]))
+        db_query.update(virtool.api.utils.compose_regex_query(term, ["otu.name", "user.id"]))
 
-    data = await paginate(
+    data = await virtool.api.utils.paginate(
         db.history,
         db_query,
         req.query,

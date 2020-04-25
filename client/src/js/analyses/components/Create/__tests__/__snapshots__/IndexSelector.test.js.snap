@@ -1,0 +1,37 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<IndexSelector /> should render 1`] = `
+<Fragment>
+  <label>
+    References
+  </label>
+  <IndexSelectorList
+    error={
+      Array [
+        "foo",
+      ]
+    }
+    indexes={
+      Array [
+        Object {
+          "id": "foo",
+        },
+        Object {
+          "id": "bar",
+        },
+      ]
+    }
+    onSelect="foo"
+    selected={
+      Array [
+        Object {
+          "id": "foo",
+        },
+        Object {
+          "id": "bar",
+        },
+      ]
+    }
+  />
+</Fragment>
+`;

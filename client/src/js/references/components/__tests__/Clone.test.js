@@ -6,8 +6,10 @@ describe("<CloneReference />", () => {
         refDocuments: [{ foo: "bar" }],
         onSubmit: jest.fn()
     };
+
     let state;
     let e;
+
     beforeEach(() => {
         state = {
             reference: "",
@@ -29,6 +31,7 @@ describe("<CloneReference />", () => {
             }
         };
     });
+
     it("should render", () => {
         const wrapper = shallow(<CloneReference {...props} />);
         expect(wrapper.state()).toMatchSnapshot();
@@ -44,6 +47,7 @@ describe("<CloneReference />", () => {
         wrapper.find("ReferenceForm").simulate("change", e);
         expect(wrapper.state()).toEqual({
             ...state,
+            reference: "foo",
             name: "foo"
         });
     });
@@ -71,6 +75,7 @@ describe("<CloneReference />", () => {
         wrapper.find("ReferenceForm").simulate("change", e);
         expect(wrapper.state()).toEqual({
             ...state,
+            reference: "foo",
             foo: "bar"
         });
     });
@@ -79,7 +84,8 @@ describe("<CloneReference />", () => {
         const wrapper = shallow(<CloneReference {...props} />);
         wrapper.find("ReferenceSelect").simulate("select");
         expect(wrapper.state()).toEqual({
-            ...state
+            ...state,
+            reference: undefined
         });
     });
 
@@ -111,40 +117,42 @@ describe("<CloneReference />", () => {
             errorDataType: "Required Field"
         });
     });
-    it("handleSubmit() should return errorName when [this.state.reference.length=0]", () => {
+    it("handleSubmit() should return errorName when [!!this.state.reference]", () => {
         const wrapper = shallow(<CloneReference {...props} />);
         wrapper.setState({
             ...state,
             name: [{ foo: "bar" }],
             dataType: [{ foo: "bar" }],
-            reference: []
+            reference: ""
         });
         wrapper.find("form").simulate("submit", e);
         expect(wrapper.state()).toEqual({
             ...state,
             name: [{ foo: "bar" }],
             dataType: [{ foo: "bar" }],
-            reference: [],
+            reference: "",
             errorSelect: "Please select a source reference"
         });
     });
 });
 
 describe("mapStateToProps()", () => {
-    const state = {
-        router: {
-            location: {
-                state: {
-                    refId: "foo"
+    it("should return props", () => {
+        const state = {
+            router: {
+                location: {
+                    state: {
+                        id: "foo"
+                    }
                 }
-            }
-        },
-        references: { documents: "bar" }
-    };
-    const result = mapStateToProps(state);
-    expect(result).toEqual({
-        refId: "foo",
-        refDocuments: "bar"
+            },
+            references: { documents: "bar" }
+        };
+        const result = mapStateToProps(state);
+        expect(result).toEqual({
+            refId: "foo",
+            refDocuments: "bar"
+        });
     });
 });
 

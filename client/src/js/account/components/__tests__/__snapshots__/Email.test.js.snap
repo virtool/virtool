@@ -1,80 +1,144 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Email /> should render with error in props 1`] = `
+exports[`<Email /> should call onUpdateEmail() when valid form submitted 1`] = `
 <Box__BoxGroup>
   <Box__BoxGroupHeader>
     <h2>
       Email
     </h2>
   </Box__BoxGroupHeader>
-  <Email__EmailFormContainer>
-    <form
-      onSubmit={[Function]}
-    >
-      <InputError
-        error=""
-        label="Email address"
-        onBlur={[Function]}
-        onChange={[Function]}
-        value="foo@example.com"
-      />
-      <SaveButton
-        pullRight={true}
-      />
-    </form>
-  </Email__EmailFormContainer>
+  <Email__EmailForm
+    onSubmit={[Function]}
+  >
+    <InputGroup>
+      <Input__InputLabel>
+        Email Address
+      </Input__InputLabel>
+      <Input__InputContainer>
+        <Input
+          onBlur={[Function]}
+          onChange={[Function]}
+          value="baz@example.com"
+        />
+        <Input__InputError />
+      </Input__InputContainer>
+    </InputGroup>
+    <SaveButton />
+  </Email__EmailForm>
 </Box__BoxGroup>
 `;
 
-exports[`<Email /> should render with error in state 1`] = `
+exports[`<Email /> should render 1`] = `
 <Box__BoxGroup>
   <Box__BoxGroupHeader>
     <h2>
       Email
     </h2>
   </Box__BoxGroupHeader>
-  <Email__EmailFormContainer>
-    <form
-      onSubmit={[Function]}
-    >
-      <InputError
-        error="Foo error"
-        label="Email address"
-        onBlur={[Function]}
-        onChange={[Function]}
-        value="foo@example.com"
-      />
-      <SaveButton
-        pullRight={true}
-      />
-    </form>
-  </Email__EmailFormContainer>
+  <Email__EmailForm
+    onSubmit={[Function]}
+  >
+    <InputGroup>
+      <Input__InputLabel>
+        Email Address
+      </Input__InputLabel>
+      <Input__InputContainer>
+        <Input
+          onBlur={[Function]}
+          onChange={[Function]}
+          value="foo@example.com"
+        />
+        <Input__InputError />
+      </Input__InputContainer>
+    </InputGroup>
+    <SaveButton />
+  </Email__EmailForm>
 </Box__BoxGroup>
 `;
 
-exports[`<Email /> should render with initial email 1`] = `
+exports[`<Email /> should render when submitted value is invalid error 1`] = `
 <Box__BoxGroup>
   <Box__BoxGroupHeader>
     <h2>
       Email
     </h2>
   </Box__BoxGroupHeader>
-  <Email__EmailFormContainer>
-    <form
-      onSubmit={[Function]}
-    >
-      <InputError
-        error=""
-        label="Email address"
-        onBlur={[Function]}
-        onChange={[Function]}
-        value="foo@example.com"
-      />
-      <SaveButton
-        pullRight={true}
-      />
-    </form>
-  </Email__EmailFormContainer>
+  <Email__EmailForm
+    onSubmit={[Function]}
+  >
+    <InputGroup>
+      <Input__InputLabel>
+        Email Address
+      </Input__InputLabel>
+      <Input__InputContainer>
+        <Input
+          onBlur={[Function]}
+          onChange={[Function]}
+          value="not_an_email"
+        />
+        <Input__InputError />
+      </Input__InputContainer>
+    </InputGroup>
+    <SaveButton />
+  </Email__EmailForm>
+</Box__BoxGroup>
+`;
+
+exports[`<Email /> should render when submitted value is invalid error 2`] = `
+<Box__BoxGroup>
+  <Box__BoxGroupHeader>
+    <h2>
+      Email
+    </h2>
+  </Box__BoxGroupHeader>
+  <Email__EmailForm
+    onSubmit={[Function]}
+  >
+    <InputGroup>
+      <Input__InputLabel>
+        Email Address
+      </Input__InputLabel>
+      <Input__InputContainer>
+        <Input
+          onBlur={[Function]}
+          onChange={[Function]}
+          value="not_an_email"
+        />
+        <Input__InputError>
+          Please provide a valid email address
+        </Input__InputError>
+      </Input__InputContainer>
+    </InputGroup>
+    <SaveButton />
+  </Email__EmailForm>
+</Box__BoxGroup>
+`;
+
+exports[`<Email /> should render when when input changes 1`] = `
+<Box__BoxGroup>
+  <Box__BoxGroupHeader>
+    <h2>
+      Email
+    </h2>
+  </Box__BoxGroupHeader>
+  <Email__EmailForm
+    onSubmit={[Function]}
+  >
+    <InputGroup>
+      <Input__InputLabel>
+        Email Address
+      </Input__InputLabel>
+      <Input__InputContainer>
+        <Input
+          onBlur={[Function]}
+          onChange={[Function]}
+          value="bar@example.com"
+        />
+        <Input__InputError />
+      </Input__InputContainer>
+    </InputGroup>
+    <SaveButton />
+  </Email__EmailForm>
 </Box__BoxGroup>
 `;
 
@@ -85,21 +149,23 @@ exports[`<Email /> should render without initial email 1`] = `
       Email
     </h2>
   </Box__BoxGroupHeader>
-  <Email__EmailFormContainer>
-    <form
-      onSubmit={[Function]}
-    >
-      <InputError
-        error=""
-        label="Email address"
-        onBlur={[Function]}
-        onChange={[Function]}
-        value=""
-      />
-      <SaveButton
-        pullRight={true}
-      />
-    </form>
-  </Email__EmailFormContainer>
+  <Email__EmailForm
+    onSubmit={[Function]}
+  >
+    <InputGroup>
+      <Input__InputLabel>
+        Email Address
+      </Input__InputLabel>
+      <Input__InputContainer>
+        <Input
+          onBlur={[Function]}
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError />
+      </Input__InputContainer>
+    </InputGroup>
+    <SaveButton />
+  </Email__EmailForm>
 </Box__BoxGroup>
 `;

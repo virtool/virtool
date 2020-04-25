@@ -5,11 +5,10 @@ exports[`<JobStatusIcon /> should render when [pad=false] and [state="cancelled"
   pad={false}
 >
   <Icon
-    bsStyle="danger"
+    color="red"
     faStyle="fas"
     fixedWidth={false}
     name="times fa-fw"
-    pullRight={false}
   />
   <span>
     cancelled
@@ -22,11 +21,10 @@ exports[`<JobStatusIcon /> should render when [pad=false] and [state="complete"]
   pad={false}
 >
   <Icon
-    bsStyle="success"
+    color="green"
     faStyle="fas"
     fixedWidth={false}
     name="check fa-fw"
-    pullRight={false}
   />
   <span>
     complete
@@ -39,11 +37,10 @@ exports[`<JobStatusIcon /> should render when [pad=false] and [state="error"] 1`
   pad={false}
 >
   <Icon
-    bsStyle="danger"
+    color="red"
     faStyle="fas"
     fixedWidth={false}
     name="times fa-fw"
-    pullRight={false}
   />
   <span>
     error
@@ -84,11 +81,10 @@ exports[`<JobStatusIcon /> should render when [pad=true] and [state="cancelled"]
   pad={true}
 >
   <Icon
-    bsStyle="danger"
+    color="red"
     faStyle="fas"
     fixedWidth={false}
     name="times fa-fw"
-    pullRight={false}
   />
   <span>
     cancelled
@@ -101,11 +97,10 @@ exports[`<JobStatusIcon /> should render when [pad=true] and [state="complete"] 
   pad={true}
 >
   <Icon
-    bsStyle="success"
+    color="green"
     faStyle="fas"
     fixedWidth={false}
     name="check fa-fw"
-    pullRight={false}
   />
   <span>
     complete
@@ -118,11 +113,10 @@ exports[`<JobStatusIcon /> should render when [pad=true] and [state="error"] 1`]
   pad={true}
 >
   <Icon
-    bsStyle="danger"
+    color="red"
     faStyle="fas"
     fixedWidth={false}
     name="times fa-fw"
-    pullRight={false}
   />
   <span>
     error

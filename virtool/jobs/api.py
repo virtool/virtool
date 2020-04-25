@@ -1,11 +1,12 @@
 import os
 
+import virtool.api.utils
 import virtool.http.routes
 import virtool.jobs.db
 import virtool.resources
 import virtool.users.db
 import virtool.utils
-from virtool.api import compose_regex_query, conflict, json_response, no_content, not_found, paginate
+from virtool.api.response import conflict, json_response, no_content, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -18,19 +19,18 @@ async def find(req):
     """
     db = req.app["db"]
 
-    term = req.query.get("find", None)
+    term = req.query.get("find")
 
     db_query = dict()
 
     if term:
-        db_query.update(compose_regex_query(term, ["task", "user.id"]))
+        db_query.update(virtool.api.utils.compose_regex_query(term, ["task", "user.id"]))
 
-    data = await paginate(
+    data = await virtool.api.utils.paginate(
         db.jobs,
         db_query,
         req.query,
-        projection=virtool.jobs.db.PROJECTION,
-        processor=virtool.jobs.db.processor
+        projection=virtool.jobs.db.PROJECTION
     )
 
     data["documents"].sort(key=lambda d: d["created_at"])
@@ -83,7 +83,7 @@ async def cancel(req):
 async def clear(req):
     db = req.app["db"]
 
-    job_filter = req.query.get("filter", None)
+    job_filter = req.query.get("filter")
 
     # Remove jobs that completed successfully.
     complete = job_filter in [None, "finished", "complete"]

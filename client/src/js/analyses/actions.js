@@ -1,24 +1,24 @@
 import {
-    WS_INSERT_ANALYSIS,
-    WS_UPDATE_ANALYSIS,
-    WS_REMOVE_ANALYSIS,
-    FIND_ANALYSES,
-    GET_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
-    REMOVE_ANALYSIS,
+    CLEAR_ANALYSES,
     CLEAR_ANALYSIS,
-    COLLAPSE_ANALYSIS,
-    SET_PATHOSCOPE_FILTER,
-    TOGGLE_SORT_PATHOSCOPE_DESCENDING,
-    TOGGLE_SHOW_PATHOSCOPE_READS,
-    SET_ACTIVE_HIT_ID,
-    TOGGLE_FILTER_ORFS,
-    TOGGLE_FILTER_SEQUENCES,
-    SET_SEARCH_IDS,
+    FIND_ANALYSES,
+    GET_ANALYSIS,
+    REMOVE_ANALYSIS,
+    SET_ANALYSIS_ACTIVE_ID,
     SET_ANALYSIS_SORT_KEY,
-    TOGGLE_RESULT_EXPANDED,
-    CLEAR_ANALYSES
+    SET_AODP_FILTER,
+    SET_SEARCH_IDS,
+    TOGGLE_ANALYSIS_SORT_DESCENDING,
+    TOGGLE_FILTER_ISOLATES,
+    TOGGLE_FILTER_ORFS,
+    TOGGLE_FILTER_OTUS,
+    TOGGLE_FILTER_SEQUENCES,
+    TOGGLE_SHOW_PATHOSCOPE_READS,
+    WS_INSERT_ANALYSIS,
+    WS_REMOVE_ANALYSIS,
+    WS_UPDATE_ANALYSIS
 } from "../app/actionTypes";
 import { simpleActionCreator } from "../utils/utils";
 
@@ -51,10 +51,8 @@ export const wsRemoveAnalysis = data => ({
     data
 });
 
-export const collapseAnalysis = simpleActionCreator(COLLAPSE_ANALYSIS);
-
 export const setActiveHitId = id => ({
-    type: SET_ACTIVE_HIT_ID,
+    type: SET_ANALYSIS_ACTIVE_ID,
     id
 });
 
@@ -63,27 +61,23 @@ export const setSearchIds = ids => ({
     ids
 });
 
+export const setAODPFilter = filterMin => {
+    return {
+        type: SET_AODP_FILTER,
+        filterMin
+    };
+};
+
 export const setAnalysisSortKey = sortKey => ({
     type: SET_ANALYSIS_SORT_KEY,
     sortKey
 });
 
-export const setPathoscopeFilter = key => ({
-    type: SET_PATHOSCOPE_FILTER,
-    key
-});
-
+export const toggleFilterOTUs = simpleActionCreator(TOGGLE_FILTER_OTUS);
+export const toggleFilterIsolates = simpleActionCreator(TOGGLE_FILTER_ISOLATES);
 export const toggleFilterORFs = simpleActionCreator(TOGGLE_FILTER_ORFS);
-
 export const toggleFilterSequences = simpleActionCreator(TOGGLE_FILTER_SEQUENCES);
-
-export const togglePathoscopeSortDescending = simpleActionCreator(TOGGLE_SORT_PATHOSCOPE_DESCENDING);
-
-export const toggleResultExpanded = id => ({
-    type: TOGGLE_RESULT_EXPANDED,
-    id
-});
-
+export const toggleAnalysisSortDescending = simpleActionCreator(TOGGLE_ANALYSIS_SORT_DESCENDING);
 export const toggleShowPathoscopeReads = simpleActionCreator(TOGGLE_SHOW_PATHOSCOPE_READS);
 
 export const findAnalyses = (sampleId, term, page) => ({
@@ -114,17 +108,18 @@ export const clearAnalysis = simpleActionCreator(CLEAR_ANALYSIS);
  * @func
  * @param sampleId {string} unique sample id
  * @param refId {string} unique id for a reference
- * @param algorithm {string} algorithm type
+ * @param workflow {string} the workflow to run
+ * @param subtractionId {string} the subtraction to use for the analysis
  * @param userId {string} the id of the requesting user
  * @returns {object}
  */
-export const analyze = (sampleId, refId, algorithm, subtractionId, userId) => ({
+export const analyze = (sampleId, refId, subtractionId, userId, workflow) => ({
     type: ANALYZE.REQUESTED,
-    algorithm,
     refId,
     sampleId,
     subtractionId,
-    userId
+    userId,
+    workflow
 });
 
 /**

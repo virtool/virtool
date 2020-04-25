@@ -12,7 +12,8 @@ describe("<SubtractionItem />", () => {
 
     beforeEach(() => {
         props = {
-            id: "Foo Bar",
+            id: "foo",
+            name: "Foo",
             ready: true
         };
     });
@@ -29,15 +30,16 @@ describe("mapStateToProps()", () => {
         const state = {
             subtraction: {
                 documents: [
-                    { id: "foo", ready: true },
-                    { id: "bar", ready: true },
-                    { id: "baz", ready: true }
+                    { id: "foo", name: "Foo", ready: true },
+                    { id: "bar", name: "Bar", ready: true },
+                    { id: "baz", name: "Baz", ready: true }
                 ]
             }
         };
         const props = mapStateToProps(state, { index: 1 });
         expect(props).toEqual({
             id: "bar",
+            name: "Bar",
             ready: true
         });
     });

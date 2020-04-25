@@ -1,0 +1,118 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<AddTarget /> should render 1`] = `
+<Modal
+  label="Add Target"
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Add target
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <TargetForm
+        description=""
+        errorName=""
+        length={0}
+        name=""
+        onChange={[Function]}
+        onClick={[Function]}
+        required={false}
+      />
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <Button
+        color="blue"
+        disabled={false}
+        icon="save"
+        tipPlacement="top"
+        type="submit"
+      >
+        Submit
+      </Button>
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<AddTarget /> should render error when submitted without name 1`] = `
+<Modal
+  label="Add Target"
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Add target
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <TargetForm
+        description=""
+        errorName="Required Field"
+        length={0}
+        name=""
+        onChange={[Function]}
+        onClick={[Function]}
+        required={false}
+      />
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <Button
+        color="blue"
+        disabled={false}
+        icon="save"
+        tipPlacement="top"
+        type="submit"
+      >
+        Submit
+      </Button>
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<AddTarget /> should render required when form onClick() prop is called 1`] = `
+<Modal
+  label="Add Target"
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Add target
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <TargetForm
+        description=""
+        errorName=""
+        length={0}
+        name=""
+        onChange={[Function]}
+        onClick={[Function]}
+        required={true}
+      />
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
+      <Button
+        color="blue"
+        disabled={false}
+        icon="save"
+        tipPlacement="top"
+        type="submit"
+      >
+        Submit
+      </Button>
+    </Modal__ModalFooter>
+  </form>
+</Modal>
+`;

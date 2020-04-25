@@ -1,25 +1,21 @@
-import React, { useEffect, useRef } from "react";
+import React, { useContext, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { axisBottom, axisLeft } from "d3-axis";
+import { format } from "d3-format";
 import { scaleLinear } from "d3-scale";
 import { select } from "d3-selection";
 import { area } from "d3-shape";
+import { PathoscopeDetailContext } from "./Detail";
 
-const draw = (element, data, length, meta, yMax, xMin, showYAxis) => {
+const draw = (element, data, length, meta, yMax, xMin, onRendered) => {
     let svg = select(element).append("svg");
 
     const margin = {
         top: 10,
-        left: 15 + (showYAxis ? 30 : 0),
+        left: 35,
         bottom: 50,
         right: 10
     };
-
-    svg.append("text")
-        .text(yMax.toString())
-        .remove();
-
-    svg.remove();
 
     const height = 200 - margin.top - margin.bottom;
 
@@ -31,15 +27,11 @@ const draw = (element, data, length, meta, yMax, xMin, showYAxis) => {
 
     width -= margin.left + margin.right;
 
-    const x = scaleLinear()
-        .range([0, width])
-        .domain([0, length]);
+    const x = scaleLinear().range([0, width]).domain([0, length]);
 
-    const y = scaleLinear()
-        .range([height, 0])
-        .domain([0, yMax]);
+    const y = scaleLinear().range([height, 0]).domain([0, yMax]);
 
-    const xAxis = axisBottom(x);
+    select(element).selectAll("*").remove();
 
     // Construct the SVG canvas.
     svg = select(element)
@@ -55,47 +47,58 @@ const draw = (element, data, length, meta, yMax, xMin, showYAxis) => {
             .y0(d => y(d[1]))
             .y1(height);
 
-        svg.append("path")
-            .datum(data)
-            .attr("class", "depth-area")
-            .attr("d", areaDrawer);
+        svg.append("path").datum(data).attr("class", "depth-area").attr("d", areaDrawer);
     }
 
     // Set-up a y-axis that will appear at the top of the chart.
     svg.append("g")
         .attr("class", "x axis")
         .attr("transform", `translate(0,${height})`)
-        .call(xAxis)
+        .call(axisBottom(x).ticks(10))
         .selectAll("text")
         .style("text-anchor", "end")
         .attr("dx", "-0.8em")
         .attr("dy", "0.15em")
         .attr("transform", "rotate(-65)");
 
-    if (showYAxis) {
-        svg.append("g")
-            .attr("class", "y axis")
-            .call(axisLeft(y));
-    }
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(axisLeft(y).ticks(4).tickFormat(format(".0s")));
 
     svg.append("text")
         .attr("class", "coverage-label small")
         .attr("transform", "translate(4,10)")
-        .text(`${meta.id} - ${meta.definition}`);
+        .text(`${meta.accession} - ${meta.definition}`);
+
+    onRendered();
 };
 
 const StyledCoverageChart = styled.div`
     display: inline-block;
     margin-top: 5px;
+
+    path.depth-area {
+        fill: ${props => props.theme.color.blue};
+        stroke: ${props => props.theme.color.blue};
+    }
 `;
 
-export const CoverageChart = ({ data, definition, id, length, yMax, showYAxis }) => {
+export const CoverageChart = ({ accession, data, definition, id, length, yMax }) => {
     const chartEl = useRef(null);
 
-    useEffect(
-        () => draw(chartEl.current, data, length, { id, definition }, yMax, chartEl.current.offsetWidth, showYAxis),
-        [id]
-    );
+    const { onRendered } = useContext(PathoscopeDetailContext);
+
+    useEffect(() => {
+        draw(
+            chartEl.current,
+            data,
+            length,
+            { accession, id, definition },
+            yMax,
+            chartEl.current.offsetWidth,
+            onRendered
+        );
+    }, [id, onRendered]);
 
     return <StyledCoverageChart ref={chartEl} />;
 };

@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Attribution, LinkBox, ProgressBar } from "../../../base";
+import { Attribution, LinkBox, AffixedProgressBar } from "../../../base";
 import { getTaskDisplayName } from "../../../utils/utils";
 import { cancelJob, removeJob } from "../../actions";
 import { JobAction } from "./Action";
@@ -9,6 +9,7 @@ import { JobStatus } from "./Status";
 
 const JobItemBody = styled.div`
     padding: 10px 15px;
+    position: relative;
 
     ${Attribution} {
         font-size: 12px;
@@ -22,33 +23,36 @@ const JobItemContainer = styled.div`
 const JobItemHeader = styled.div`
     align-items: center;
     display: flex;
+    position: relative;
 `;
 
 const JobItemLinkBox = styled(LinkBox)`
-    padding: 0;
+    padding: 5px 0 0 0;
+    position: relative;
 `;
 
 export const JobItem = ({ id, task, state, progress, created_at, user, canCancel, canRemove, onCancel, onRemove }) => {
     const handleCancel = useCallback(() => onCancel(id), [id, canCancel]);
     const handleRemove = useCallback(() => onRemove(id), [id, canRemove]);
 
-    let progressStyle = "success";
-
     const progressValue = progress * 100;
 
+    let progressColor = "green";
+
     if (state === "running") {
-        progressStyle = "warning";
+        progressColor = "blue";
     }
 
     if (state === "error" || state === "cancelled") {
-        progressStyle = "danger";
+        progressColor = "red";
     }
 
     // Create the option components for the selected fields.
     return (
         <JobItemContainer>
             <JobItemLinkBox to={`/jobs/${id}`}>
-                <ProgressBar now={progressValue} bsStyle={progressStyle} affixed />
+                <AffixedProgressBar now={progressValue} color={progressColor} />
+
                 <JobItemBody>
                     <JobItemHeader>
                         <strong>{getTaskDisplayName(task)}</strong>

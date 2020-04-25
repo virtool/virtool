@@ -1,20 +1,12 @@
 import { find } from "lodash-es";
 import React from "react";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
-import styled from "styled-components";
-import { Alert, SaveButton } from "../../base";
+import { Alert, ModalBody, ModalFooter, SaveButton } from "../../base";
 import { clearError } from "../../errors/actions";
 import { getTargetChange } from "../../utils/utils";
 import { cloneReference } from "../actions";
 import { ReferenceForm } from "./Form";
 import { ReferenceSelect } from "./ReferenceSelect";
-
-const Container = styled.div`
-    display: flex;
-    flex-direction: column;
-    margin: 15px;
-`;
 
 const getInitialState = (refId, refArray) => {
     const originalRef = find(refArray, { id: refId });
@@ -32,9 +24,8 @@ const getInitialState = (refId, refArray) => {
             mode: "clone"
         };
     }
-
     return {
-        reference: "",
+        reference: refId,
         name: "",
         description: "",
         dataType: "genome",
@@ -87,7 +78,7 @@ export class CloneReference extends React.Component {
             return this.setState({ errorDataType: "Required Field" });
         }
 
-        if (!this.state.reference.length) {
+        if (!this.state.reference) {
             return this.setState({ errorSelect: "Please select a source reference" });
         }
 
@@ -102,8 +93,8 @@ export class CloneReference extends React.Component {
 
     render() {
         return (
-            <Container>
-                <form onSubmit={this.handleSubmit}>
+            <form onSubmit={this.handleSubmit}>
+                <ModalBody>
                     <Alert>
                         <strong>Clone an existing reference.</strong>
                     </Alert>
@@ -111,7 +102,7 @@ export class CloneReference extends React.Component {
                         references={this.props.refDocuments}
                         onSelect={this.handleSelect}
                         selected={this.state.reference}
-                        hasError={this.state.errorSelect}
+                        error={this.state.errorSelect}
                     />
                     <ReferenceForm
                         description={this.state.description}
@@ -123,17 +114,17 @@ export class CloneReference extends React.Component {
                         organism={this.state.organism}
                         onChange={this.handleChange}
                     />
-                    <Modal.Footer>
-                        <SaveButton disabled={!this.props.refDocuments.length} altText="Clone" />
-                    </Modal.Footer>
-                </form>
-            </Container>
+                </ModalBody>
+                <ModalFooter>
+                    <SaveButton disabled={!this.props.refDocuments.length} altText="Clone" />
+                </ModalFooter>
+            </form>
         );
     }
 }
 
 export const mapStateToProps = state => ({
-    refId: state.router.location.state.refId,
+    refId: state.router.location.state.id,
     refDocuments: state.references.documents
 });
 

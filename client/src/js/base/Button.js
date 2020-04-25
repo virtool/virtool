@@ -1,117 +1,172 @@
-import React from "react";
-import styled from "styled-components";
+import { get } from "lodash-es";
 import PropTypes from "prop-types";
-import CX from "classnames";
+import React from "react";
 import { NavLink } from "react-router-dom";
-import { Tooltip, OverlayTrigger } from "react-bootstrap";
+import styled from "styled-components";
 import { Icon } from "./Icon";
-import { bsStyles } from "./utils";
+import { Tooltip } from "./Tooltip";
 
-const StyledLinkButton = styled(NavLink)`
-    align-items: center;
-    background-color: #07689d;
-    color: #ffffff;
-    cursor: pointer;
-    display: inline-flex;
-    margin-bottom: 0;
-    padding: 6px 12px;
-    text-align: center;
-    white-space: nowrap;
-    user-select: none;
-    text-decoration: none !important;
-
-    &:hover {
-        background-color: #05486c;
-        border-color: #03314a;
-        color: #ffffff;
+const getButtonBackgroundColor = ({ active, color, theme }) => {
+    if (!color || color === "grey") {
+        return active ? theme.color.greyLightest : theme.color.white;
     }
 
-    &:focus {
-        color: #ffffff;
+    return get(theme, ["color", `${color}${active ? "Dark" : ""}`], theme.white);
+};
+
+const getButtonBorderColor = ({ color, theme }) => {
+    if (!color || color === "grey") {
+        return theme.color.greyLight;
+    }
+
+    return theme.color[color];
+};
+
+const getButtonForegroundColor = ({ color, theme }) => {
+    if (!color || color === "grey") {
+        return theme.color.black;
+    }
+
+    return theme.color.white;
+};
+
+const getButtonHoverColor = ({ color, theme }) => {
+    if (color && color !== "grey") {
+        return get(theme, ["color", `${color}Dark`], theme.white);
+    }
+
+    return theme.color.greyLightest;
+};
+
+const StyledButton = styled.button`
+    align-items: center;
+    background-color: ${getButtonBackgroundColor};
+    background-image: none;
+    border: 1px solid ${getButtonBorderColor};
+    border-radius: ${props => props.theme.borderRadius.sm};
+    box-shadow: ${props => (props.active ? props.theme.boxShadow.inset : "")};
+    color: ${getButtonForegroundColor};
+    cursor: pointer;
+    display: inline-flex;
+    font-weight: 500;
+    justify-content: center;
+    margin-bottom: 0;
+    min-width: 42px;
+    min-height: 36px;
+    opacity: ${props => (props.disabled ? 0.5 : 1)};
+    padding: 0 10px;
+    position: relative;
+    user-select: none;
+    text-decoration: none;
+    touch-action: manipulation;
+    transition: box-shadow 200ms ease-in-out;
+    white-space: nowrap;
+
+    i + span {
+        margin-left: 5px;
+    }
+
+    :focus {
+        color: ${getButtonForegroundColor};
+    }
+
+    :disabled {
+        cursor: not-allowed;
+    }
+
+    :not(:disabled):hover {
+        background-color: ${getButtonHoverColor};
+        border-color: ${getButtonHoverColor};
+        color: ${getButtonForegroundColor};
+    }
+
+    :not(:disabled)::after {
+        border-radius: ${props => props.theme.borderRadius.sm};
+        box-shadow: ${props => props.theme.boxShadow.lg};
+        content: "";
+        height: 100%;
+        width: 100%;
+        opacity: 0;
+        position: absolute;
+        transition: opacity 150ms ease, scale 150ms ease;
+        z-index: 0;
+    }
+
+    :not(:disabled):hover::after {
+        opacity: 1;
     }
 `;
 
-export const LinkButton = ({ children, className, to }) => (
-    <StyledLinkButton className={className} to={to} activeClassName="active">
-        {children}
-    </StyledLinkButton>
-);
+export const LinkButton = ({ children, color, className, icon, replace, tip, to }) => {
+    const button = (
+        <StyledButton as={NavLink} className={className} color={color} replace={replace} to={to}>
+            {icon && <Icon name={icon} />}
+            {children ? <span>{children}</span> : null}
+        </StyledButton>
+    );
 
-export class Button extends React.Component {
-    static propTypes = {
-        bsStyle: PropTypes.oneOf(bsStyles),
-        active: PropTypes.bool,
-        className: PropTypes.string,
-        disabled: PropTypes.bool,
-        block: PropTypes.bool,
-        pullRight: PropTypes.bool,
-        onClick: PropTypes.func,
-        style: PropTypes.object,
-        icon: PropTypes.string,
-        iconStyle: PropTypes.oneOf(bsStyles),
-        pad: PropTypes.bool,
-        children: PropTypes.node,
-        type: PropTypes.oneOf(["button", "submit"]),
-        bsSize: PropTypes.oneOf(["xsmall", "small", "large"]),
-        tip: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
-        tipPlacement: PropTypes.oneOf(["top", "right", "bottom", "left"])
-    };
-
-    static defaultProps = {
-        bsStyle: "default",
-        pullRight: false,
-        tipPlacement: "top"
-    };
-
-    blur = () => {
-        this.buttonNode.blur();
-    };
-
-    render() {
-        const className = CX("btn", `btn-${this.props.bsStyle}`, {
-            "btn-block": this.props.block,
-            "pull-right": this.props.pullRight,
-            active: this.props.active,
-            "btn-xs": this.props.bsSize === "xsmall",
-            "btn-sm": this.props.bsSize === "small",
-            "btn-lg": this.props.bsSize === "large",
-            "btn-with-icon": this.props.icon,
-            "btn-padded": this.props.pad
-        });
-
-        let icon;
-
-        if (this.props.icon) {
-            icon = <Icon name={this.props.icon} className={`text-${this.props.iconStyle}`} />;
-        }
-
-        const button = (
-            <button
-                type={this.props.type}
-                ref={node => (this.buttonNode = node)}
-                onFocus={this.blur}
-                className={className}
-                onClick={this.props.onClick}
-                style={this.props.style}
-                disabled={this.props.disabled}
-            >
-                <div>
-                    {icon}
-                    {this.props.children ? <span>{this.props.children}</span> : null}
-                </div>
-            </button>
-        );
-
-        if (this.props.tip) {
-            const tooltip = <Tooltip id={this.props.tip}>{this.props.tip}</Tooltip>;
-
-            return (
-                <OverlayTrigger placement={this.props.tipPlacement} overlay={tooltip}>
-                    {button}
-                </OverlayTrigger>
-            );
-        }
-
-        return button;
+    if (tip) {
+        return <Tooltip tip={tip}>{button}</Tooltip>;
     }
-}
+
+    return button;
+};
+
+LinkButton.propTypes = {
+    children: PropTypes.node,
+    color: PropTypes.string,
+    className: PropTypes.string,
+    icon: PropTypes.string,
+    replace: PropTypes.bool,
+    tip: PropTypes.string,
+    tipPlacement: PropTypes.oneOf(["top", "right", "bottom", "left"]),
+    to: PropTypes.oneOfType([PropTypes.object, PropTypes.string]).isRequired
+};
+
+LinkButton.defaultProps = {
+    tipPlacement: "top"
+};
+
+export const Button = ({ active, children, className, color, disabled, icon, tip, type, onBlur, onClick }) => {
+    const button = (
+        <StyledButton
+            active={active}
+            className={className}
+            color={color}
+            disabled={disabled}
+            type={type}
+            onBlur={onBlur}
+            onClick={onClick}
+        >
+            {icon && <Icon name={icon} />}
+            {children ? <span>{children}</span> : null}
+        </StyledButton>
+    );
+
+    if (tip) {
+        return <Tooltip tip={tip}>{button}</Tooltip>;
+    }
+
+    return button;
+};
+
+Button.propTypes = {
+    active: PropTypes.bool,
+    children: PropTypes.node,
+    className: PropTypes.string,
+    color: PropTypes.string,
+    disabled: PropTypes.bool,
+    icon: PropTypes.string,
+    tip: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+    tipPlacement: PropTypes.oneOf(["top", "right", "bottom", "left"]),
+    type: PropTypes.oneOf(["button", "submit"]),
+    onBlur: PropTypes.func,
+    onClick: PropTypes.func
+};
+
+Button.defaultProps = {
+    color: "grey",
+    disabled: false,
+    tipPlacement: "top",
+    type: "button"
+};

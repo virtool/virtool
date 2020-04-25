@@ -9,7 +9,7 @@ describe("<ReferenceSettings />", () => {
 
 describe("<References />", () => {
     it.each([true, false])("should render when [loading=%p]", loading => {
-        const wrapper = <References loading={loading} />;
+        const wrapper = shallow(<References loading={loading} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

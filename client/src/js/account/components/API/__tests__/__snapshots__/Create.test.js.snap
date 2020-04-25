@@ -2,147 +2,86 @@
 
 exports[`<CreateAPIKey /> should render when [props.newKey] and [state.copied] set 1`] = `
 <Modal
+  label="Create API Key"
   onExited={[Function]}
   onHide={[MockFunction]}
   show={true}
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={true}
-    closeLabel="Close"
-    onHide={[MockFunction]}
-  >
-    Create API Key
-  </ModalHeader>
-  <ModalBody
-    bsClass="modal-body"
-    className="text-center"
-    componentClass="div"
-  >
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={12}
-      >
-        <strong
-          className="text-success"
-        >
-          Here is your key.
-        </strong>
-      </Col>
-    </Row>
+  <Create__StyledCreateAPIKey>
+    <strong>
+      Here is your key.
+    </strong>
     <small>
       Make note of it now. For security purposes, it will not be shown again.
     </small>
-    <Row
-      bsClass="row"
-      componentClass="div"
-      style={
-        Object {
-          "marginBottom": "5px",
-          "marginTop": "10px",
-        }
-      }
+    <Create__StyledFlex
+      alignContent="stretch"
+      alignItems="stretch"
     >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={8}
-        mdOffset={2}
-        xs={12}
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={1}
+        shrink={1}
       >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
+        <Input__InputContainer
+          align="right"
         >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={1}
-            shrink={1}
-          >
-            <Input
-              autoComplete={true}
-              className="text-center"
-              formGroupStyle={
-                Object {
-                  "marginBottom": 0,
-                }
-              }
-              readOnly={true}
-              style={
-                Object {
-                  "marginBottom": 0,
-                }
-              }
-              type="text"
-              value="123abc"
-            />
-          </FlexItem>
+          <Create__CreateAPIKeyInput
+            readOnly={true}
+            value="123abc"
+          />
           <CopyToClipboard
             onCopy={[Function]}
             text="123abc"
           >
-            <Button
-              bsStyle="primary"
-              icon="paste"
-              pullRight={false}
-              tipPlacement="top"
+            <Input__InputIcon
+              name="copy"
             />
           </CopyToClipboard>
-        </Flex>
-      </Col>
-    </Row>
-    <small
-      className="text-primary"
+        </Input__InputContainer>
+      </FlexItem>
+    </Create__StyledFlex>
+    <Create__CreateAPIKeyCopied
+      show={true}
     >
       <Icon
         faStyle="fas"
         fixedWidth={false}
         name="check"
-        pullRight={false}
       />
        Copied
-    </small>
-  </ModalBody>
+    </Create__CreateAPIKeyCopied>
+  </Create__StyledCreateAPIKey>
 </Modal>
 `;
 
 exports[`<CreateAPIKey /> should render when [state.newKey] is empty 1`] = `
 <Modal
+  label="Create API Key"
   onExited={[Function]}
   onHide={[MockFunction]}
   show={true}
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={true}
-    closeLabel="Close"
-    onHide={[MockFunction]}
-  >
+  <ModalHeader>
     Create API Key
   </ModalHeader>
   <Connect(CreateAPIKeyInfo) />
   <form
     onSubmit={[Function]}
   >
-    <ModalBody
-      bsClass="modal-body"
-      componentClass="div"
-    >
-      <InputError
-        error=""
-        label="Name"
-        onChange={[Function]}
-        value=""
-      />
+    <Modal__ModalBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          label="Name"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError />
+      </InputGroup>
       <label>
         Permissions
       </label>
@@ -155,128 +94,66 @@ exports[`<CreateAPIKey /> should render when [state.newKey] is empty 1`] = `
         }
         onChange={[Function]}
       />
-    </ModalBody>
-    <ModalFooter
-      bsClass="modal-footer"
-      componentClass="div"
-    >
+    </Modal__ModalBody>
+    <Modal__ModalFooter>
       <SaveButton />
-    </ModalFooter>
+    </Modal__ModalFooter>
   </form>
 </Modal>
 `;
 
 exports[`<CreateAPIKey /> should render when [state.newKey] set 1`] = `
 <Modal
+  label="Create API Key"
   onExited={[Function]}
   onHide={[MockFunction]}
   show={true}
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={true}
-    closeLabel="Close"
-    onHide={[MockFunction]}
-  >
-    Create API Key
-  </ModalHeader>
-  <ModalBody
-    bsClass="modal-body"
-    className="text-center"
-    componentClass="div"
-  >
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={12}
-      >
-        <strong
-          className="text-success"
-        >
-          Here is your key.
-        </strong>
-      </Col>
-    </Row>
+  <Create__StyledCreateAPIKey>
+    <strong>
+      Here is your key.
+    </strong>
     <small>
       Make note of it now. For security purposes, it will not be shown again.
     </small>
-    <Row
-      bsClass="row"
-      componentClass="div"
-      style={
-        Object {
-          "marginBottom": "5px",
-          "marginTop": "10px",
-        }
-      }
+    <Create__StyledFlex
+      alignContent="stretch"
+      alignItems="stretch"
     >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={8}
-        mdOffset={2}
-        xs={12}
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={1}
+        shrink={1}
       >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
+        <Input__InputContainer
+          align="right"
         >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={1}
-            shrink={1}
-          >
-            <Input
-              autoComplete={true}
-              className="text-center"
-              formGroupStyle={
-                Object {
-                  "marginBottom": 0,
-                }
-              }
-              readOnly={true}
-              style={
-                Object {
-                  "marginBottom": 0,
-                }
-              }
-              type="text"
-              value="123abc"
-            />
-          </FlexItem>
+          <Create__CreateAPIKeyInput
+            readOnly={true}
+            value="123abc"
+          />
           <CopyToClipboard
             onCopy={[Function]}
             text="123abc"
           >
-            <Button
-              bsStyle="primary"
-              icon="paste"
-              pullRight={false}
-              tipPlacement="top"
+            <Input__InputIcon
+              name="copy"
             />
           </CopyToClipboard>
-        </Flex>
-      </Col>
-    </Row>
-    <small
-      className="text-primary invisible"
+        </Input__InputContainer>
+      </FlexItem>
+    </Create__StyledFlex>
+    <Create__CreateAPIKeyCopied
+      show={false}
     >
       <Icon
         faStyle="fas"
         fixedWidth={false}
         name="check"
-        pullRight={false}
       />
        Copied
-    </small>
-  </ModalBody>
+    </Create__CreateAPIKeyCopied>
+  </Create__StyledCreateAPIKey>
 </Modal>
 `;

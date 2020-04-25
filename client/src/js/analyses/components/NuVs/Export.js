@@ -6,10 +6,10 @@
  */
 import { forEach, map, reduce, replace } from "lodash-es";
 import React from "react";
-import { Modal } from "react-bootstrap";
+
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
-import { Button, ButtonGroup } from "../../../base/index";
+import { Button, ButtonGroup, ModalBody, Modal, ModalFooter, ModalHeader } from "../../../base/";
 import { followDynamicDownload, routerLocationHasState } from "../../../utils/utils";
 import { getResults } from "../../selectors";
 import NuVsExportPreview from "./ExportPreview";
@@ -107,13 +107,15 @@ export class NuVsExport extends React.Component {
 
     render() {
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Export NuVs Data
-                </Modal.Header>
-
+            <Modal
+                label="Export Analysis"
+                show={this.props.show}
+                onHide={this.props.onHide}
+                onExited={this.handleModalExited}
+            >
+                <ModalHeader>Export Analysis</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
+                    <ModalBody>
                         <ButtonGroup>
                             <Button
                                 type="button"
@@ -132,12 +134,12 @@ export class NuVsExport extends React.Component {
                         </ButtonGroup>
 
                         <NuVsExportPreview mode={this.state.mode} />
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button type="submit" bsStyle="primary" icon="download">
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button type="submit" color="blueDark" icon="download">
                             Download
                         </Button>
-                    </Modal.Footer>
+                    </ModalFooter>
                 </form>
             </Modal>
         );

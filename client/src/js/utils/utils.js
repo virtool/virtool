@@ -143,7 +143,7 @@ export const reportAPIError = action => window.Raven.captureException(action.err
 
 export const routerLocationHasState = (state, key, value) =>
     !!state.router.location.state &&
-    (value ? state.router.location.state[key] === value : state.router.location.state[key]);
+    (value ? state.router.location.state[key] === value : !!state.router.location.state[key]);
 
 /**
  * Returns an action creator that returns an action with ``type`` as the only property.
@@ -169,6 +169,7 @@ export const getTargetChange = target => ({
  * @type {object}
  */
 export const taskDisplayNames = {
+    aodp: "AODP",
     create_sample: "Create Sample",
     create_subtraction: "Create Subtraction",
     nuvs: "NuVs",

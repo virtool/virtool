@@ -1,41 +1,37 @@
-import { MemoryRouter } from "react-router-dom";
-import { OTUToolbar } from "../Toolbar";
+import { SearchInput } from "../../../base";
+import { OTUToolbar, FilterButton } from "../Toolbar";
 
 describe("<OTUToolbar />", () => {
     const props = {
         canModify: true,
         page: 2,
-        term: "foo",
         refId: "baz",
-        verified: false
+        term: "foo",
+        verified: false,
+        onFind: jest.fn()
     };
 
-    it("renders correctly", () => {
+    it("should render", () => {
         const wrapper = shallow(<OTUToolbar {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    describe("onFind is called", () => {
-        let onFind;
-        let wrapper;
+    it("should render when [verified=true]", () => {
+        props.verified = true;
+        const wrapper = shallow(<OTUToolbar {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
 
-        beforeEach(() => {
-            onFind = jest.fn();
-            wrapper = mount(
-                <MemoryRouter>
-                    <OTUToolbar {...props} onFind={onFind} />
-                </MemoryRouter>
-            );
-        });
+    it("should call onFind() when input changes", () => {
+        const wrapper = shallow(<OTUToolbar {...props} />);
+        const e = { target: { value: "baz" } };
+        wrapper.find(SearchInput).simulate("change", e);
+        expect(props.onFind).toHaveBeenCalledWith(props.refId, "baz", props.verified, 1);
+    });
 
-        it("when the input field changes", () => {
-            wrapper.find("input").prop("onChange")({ target: { value: "baz" } });
-            expect(onFind).toHaveBeenCalledWith(props.refId, "baz", props.verified, 1);
-        });
-
-        it("when the filter button is clicked", () => {
-            wrapper.find("#verified-button").prop("onClick")();
-            expect(onFind).toHaveBeenCalledWith(props.refId, props.term, !props.verified, 1);
-        });
+    it("should call onFind() when filter button is clicked", () => {
+        const wrapper = shallow(<OTUToolbar {...props} />);
+        wrapper.find("#verified-button").simulate("click");
+        expect(props.onFind).toHaveBeenCalledWith(props.refId, props.term, !props.verified, 1);
     });
 });

@@ -11,6 +11,13 @@ async def test_add(default, empty, existing_default, dbi, snapshot, test_otu, st
     correctly in all cases
 
     """
+    app = {
+        "db": dbi,
+        "settings": {
+            "data_path": "/foo"
+        }
+    }
+
     test_otu["isolates"][0]["default"] = existing_default
 
     if empty:
@@ -19,7 +26,7 @@ async def test_add(default, empty, existing_default, dbi, snapshot, test_otu, st
     await dbi.otus.insert_one(test_otu)
 
     return_value = await virtool.otus.isolates.add(
-        dbi,
+        app,
         "6116cba1",
         {
             "source_type": "isolate",
@@ -58,10 +65,17 @@ async def test_append(conflict, snapshot, dbi, test_otu, test_random_alphanumeri
 
 
 async def test_edit(dbi, snapshot, test_otu, static_time):
+    app = {
+        "db": dbi,
+        "settings": {
+            "data_path": "/foo"
+        }
+    }
+
     await dbi.otus.insert_one(test_otu)
 
     await virtool.otus.isolates.edit(
-        dbi,
+        app,
         "6116cba1",
         "cab8b360",
         {
@@ -81,6 +95,13 @@ async def test_remove(isolate_id, dbi, snapshot, test_otu, test_sequence, static
     Test removing an isolate. Make sure the default isolate is reassigned if the default isolate is removed.
 
     """
+    app = {
+        "db": dbi,
+        "settings": {
+            "data_path": "/foo"
+        }
+    }
+
     test_otu["isolates"].append({
         "default": False,
         "id": "bar",
@@ -92,7 +113,7 @@ async def test_remove(isolate_id, dbi, snapshot, test_otu, test_sequence, static
     await dbi.sequences.insert_one(test_sequence)
 
     await virtool.otus.isolates.remove(
-        dbi,
+        app,
         "6116cba1",
         isolate_id,
         "bob"
@@ -104,6 +125,13 @@ async def test_remove(isolate_id, dbi, snapshot, test_otu, test_sequence, static
 
 
 async def test_set_default(dbi, snapshot, test_otu, static_time):
+    app = {
+        "db": dbi,
+        "settings": {
+            "data_path": "/foo"
+        }
+    }
+
     test_otu["isolates"].append({
         "default": False,
         "id": "bar",
@@ -114,7 +142,7 @@ async def test_set_default(dbi, snapshot, test_otu, static_time):
     await dbi.otus.insert_one(test_otu)
 
     return_value = await virtool.otus.isolates.set_default(
-        dbi,
+        app,
         "6116cba1",
         "bar",
         "bob"

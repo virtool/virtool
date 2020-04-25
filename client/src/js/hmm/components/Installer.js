@@ -1,91 +1,73 @@
 import { get, replace } from "lodash-es";
 import React from "react";
-import { ProgressBar } from "react-bootstrap";
 import { connect } from "react-redux";
-
 import styled from "styled-components";
+import { AffixedProgressBar, Box, ExternalLink, Icon } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { installHMMs } from "../actions";
 import { getProcess } from "../selectors";
+import InstallOption from "./InstallOption";
 
-import { Box } from "../../base/Box";
-import { InstallOption } from "./InstallOption";
-
-const LoadingBar = styled.div`
-    width: 50%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    margin-left: 285px;
-`;
-const LoadingText = styled.div`
+const HMMInstalling = styled(Box)`
     display: flex;
     justify-content: center;
-    margin-bottom: 15px;
-    font-weight: bold;
+
+    h3 {
+        font-size: ${props => props.theme.fontSize.xl};
+    }
+
+    p {
+        text-align: center;
+        text-transform: capitalize;
+    }
 `;
 
-const Icon = styled.div`
+const StyledHMMInstaller = styled(Box)`
     display: flex;
-    font-size: 40px;
-    margin-left: 95px;
-    margin-right: 9px;
-`;
-const Button = styled.div`
-    width: 150px;
-`;
-const TextButton = styled.div`
-    display: flex;
-    flex-direction: column;
-`;
-const IconTextButton = styled.div`
-    display: flex;
-    align-items: top;
-    margin: 15px;
+    justify-content: center;
+    padding: 35px 0;
+
+    h3 {
+        font-size: ${props => props.theme.fontSize.xl};
+        margin: 0 0 3px;
+    }
+
+    > i {
+        font-size: 32px;
+        margin: 3px 10px 0;
+    }
 `;
 
-export class HMMInstaller extends React.Component {
-    render() {
-        if (this.props.process && !this.props.installed) {
-            const progress = this.props.process.progress * 100;
-            const step = replace(this.props.process.step, "_", " ");
-
-            const barStyle = progress === 100 ? "success" : "warning";
-
-            return (
-                <Box>
-                    <LoadingBar>
-                        <LoadingText>Installing</LoadingText>
-
-                        <ProgressBar bsStyle={barStyle} now={progress} />
-
-                        <LoadingText>
-                            <small className="text-muted text-capitalize">{step}</small>
-                        </LoadingText>
-                    </LoadingBar>
-                </Box>
-            );
-        }
+export const HMMInstaller = ({ installed, process }) => {
+    if (process && !installed) {
+        const progress = process.progress * 100;
+        const step = replace(process.step, "_", " ");
 
         return (
-            <Box>
-                <IconTextButton>
-                    <Icon>
-                        <i className="fas fa-info-circle text-primary" />
-                    </Icon>
-                    <TextButton>
-                        <p style={{ fontSize: "22px", margin: "0 0 3px" }}>No HMM data available.</p>
-                        <p className="text-muted">
-                            You can download and install the offical HMM data automatically from our
-                            <a href="https://github.com/virtool/virtool-hmm"> GitHub repository</a>.
-                        </p>
-                        <Button>{InstallOption(this.props)}</Button>
-                    </TextButton>
-                </IconTextButton>
-            </Box>
+            <HMMInstalling>
+                <AffixedProgressBar color="blue" now={progress} />
+                <div>
+                    <h3>Installing</h3>
+                    <p>{step}</p>
+                </div>
+            </HMMInstalling>
         );
     }
-}
+
+    return (
+        <StyledHMMInstaller>
+            <Icon name="info-circle" />
+            <div>
+                <h3>No HMM data available.</h3>
+                <p>
+                    You can download and install the official HMM data automatically from our
+                    <ExternalLink href="https://github.com/virtool/virtool-hmm"> GitHub repository</ExternalLink>.
+                </p>
+                <InstallOption />
+            </div>
+        </StyledHMMInstaller>
+    );
+};
 
 export const mapStateToProps = state => ({
     releaseId: get(state.hmms.status, "release.id"),

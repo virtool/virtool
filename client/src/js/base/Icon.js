@@ -1,36 +1,55 @@
-import CX from "classnames";
-import React from "react";
+import React, { useCallback } from "react";
 import PropTypes from "prop-types";
-import { Tooltip, OverlayTrigger } from "react-bootstrap";
+import { capitalize, get } from "lodash-es";
+import { Link } from "react-router-dom";
+import styled, { css } from "styled-components";
+import { Tooltip } from "./Tooltip";
 
-/**
- * A component for rendering a font icon. A tooltip can optionally be shown on hover.
- *
- */
-export const Icon = props => {
-    function handleClick(e) {
-        e.stopPropagation();
-        props.onClick(e);
+const getIconColor = ({ color, theme, shade = "dark" }) =>
+    get(theme, ["color", `${color}${capitalize(shade)}`], "inherit");
+
+const fixedWidth = css`
+    width: 8px;
+    text-align: center;
+    display: inline-block;
+`;
+
+const StyledIcon = styled.i`
+    color: ${getIconColor};
+    ${props => (props.hoverable || props.onClick ? "cursor: pointer;" : "")};
+    opacity: ${props => (props.hoverable || props.onClick ? 0.7 : 1)};
+
+    ${props => (props.fixedWidth ? fixedWidth : "")};
+
+    :hover {
+        opacity: 1;
     }
+`;
 
-    const className = CX(props.className, `${props.faStyle} fa-${props.name}`, {
-        [`text-${props.bsStyle}`]: props.bsStyle,
-        "pull-right": props.pullRight,
-        "fixed-width": props.fixedWidth,
-        "hoverable pointer": props.onClick
-    });
+export const Icon = ({ hoverable, style, ...props }) => {
+    const handleClick = useCallback(e => {
+        props.onClick(e);
+    }, []);
 
-    const style = { ...(props.pad ? { marginLeft: "3px" } : {}), ...props.style };
+    const className = `${props.className ? props.className + " " : ""} ${props.faStyle} fa-${props.name}`;
 
-    const icon = <i className={className} style={style} onClick={props.onClick ? handleClick : null} />;
+    const icon = (
+        <StyledIcon
+            className={className}
+            fixedWidth={props.fixedWidth}
+            hoverable={hoverable}
+            style={style}
+            onClick={props.onClick ? handleClick : null}
+            color={props.color}
+            shade={props.shade}
+        />
+    );
 
     if (props.tip) {
-        const tooltip = <Tooltip id={props.tip}>{props.tip}</Tooltip>;
-
         return (
-            <OverlayTrigger placement={props.tipPlacement || "top"} overlay={tooltip}>
+            <Tooltip position={props.tipPlacement || "top"} tip={props.tip}>
                 {icon}
-            </OverlayTrigger>
+            </Tooltip>
         );
     }
 
@@ -38,21 +57,24 @@ export const Icon = props => {
 };
 
 Icon.propTypes = {
+    color: PropTypes.oneOf(["blue", "green", "grey", "red", "orange", "purple"]),
     name: PropTypes.string.isRequired,
-    tip: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+    tip: PropTypes.node,
     tipPlacement: PropTypes.oneOf(["top", "right", "bottom", "left"]),
     faStyle: PropTypes.string,
     onClick: PropTypes.func,
-    bsStyle: PropTypes.string,
     className: PropTypes.string,
-    pullRight: PropTypes.bool,
     fixedWidth: PropTypes.bool,
-    style: PropTypes.object,
-    pad: PropTypes.bool
+    style: PropTypes.object
 };
 
 Icon.defaultProps = {
     faStyle: "fas",
-    pullRight: false,
     fixedWidth: false
 };
+
+export const LinkIcon = ({ to, replace, ...props }) => (
+    <Link to={to} replace={replace} hoverable>
+        <Icon {...props} />
+    </Link>
+);

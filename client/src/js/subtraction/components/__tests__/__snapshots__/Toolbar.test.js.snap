@@ -1,69 +1,27 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<SubtractionToolbar /> renders correctly when [canModify=false] 1`] = `
-<div
-  className="toolbar"
-  key="toolbar"
->
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupAddon
-        bsClass="input-group-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </InputGroupAddon>
-      <FormControl
-        bsClass="form-control"
-        componentClass="input"
-        placeholder="Name"
-        type="text"
-        value="test"
-      />
-    </InputGroup>
-  </FormGroup>
-</div>
+exports[`<SubtractionToolbar /> should not render create button when [canModify=false] 1`] = `
+<Toolbar>
+  <SearchInput
+    onChange={[MockFunction]}
+    placeholder="Name"
+    value="foo"
+  />
+</Toolbar>
 `;
 
-exports[`<SubtractionToolbar /> renders correctly when [canModify=true] 1`] = `
-<div
-  className="toolbar"
-  key="toolbar"
->
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupAddon
-        bsClass="input-group-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </InputGroupAddon>
-      <FormControl
-        bsClass="form-control"
-        componentClass="input"
-        placeholder="Name"
-        type="text"
-        value="test"
-      />
-    </InputGroup>
-  </FormGroup>
-  <withRouter(LinkContainer)
+exports[`<SubtractionToolbar /> should render create button when [canModify=true] 1`] = `
+<Toolbar>
+  <SearchInput
+    onChange={[MockFunction]}
+    placeholder="Name"
+    value="foo"
+  />
+  <LinkButton
+    color="blue"
+    icon="plus-square"
+    tip="Create"
+    tipPlacement="top"
     to={
       Object {
         "state": Object {
@@ -71,14 +29,6 @@ exports[`<SubtractionToolbar /> renders correctly when [canModify=true] 1`] = `
         },
       }
     }
-  >
-    <Button
-      bsStyle="primary"
-      icon="plus-square fa-fw"
-      pullRight={false}
-      tip="Create"
-      tipPlacement="top"
-    />
-  </withRouter(LinkContainer)>
-</div>
+  />
+</Toolbar>
 `;

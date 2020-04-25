@@ -1,9 +1,18 @@
 import { get, pick } from "lodash-es";
 import React from "react";
-import { Col, Modal, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { InputError, SaveButton } from "../../base";
+import {
+    ModalBody,
+    ModalFooter,
+    Input,
+    InputError,
+    InputGroup,
+    InputLabel,
+    Modal,
+    SaveButton,
+    ModalHeader
+} from "../../base";
 import { clearError } from "../../errors/actions";
 
 import { editSample } from "../actions";
@@ -22,13 +31,6 @@ class EditSample extends React.Component {
         this.state = getInitialState(this.props);
     }
 
-    static getDerivedStateFromProps(nextProps, prevState) {
-        if (prevState.error !== nextProps.error) {
-            return { error: nextProps.error };
-        }
-        return null;
-    }
-
     handleChange = e => {
         const { name, value } = e.target;
         this.setState({
@@ -37,7 +39,7 @@ class EditSample extends React.Component {
         });
 
         if (this.props.error) {
-            this.props.onClearError("UPDATE_SAMPLE_ERROR");
+            this.props.onClearError();
         }
     };
 
@@ -45,11 +47,10 @@ class EditSample extends React.Component {
         this.setState(getInitialState(this.props));
     };
 
-    handleModalHide = () => {
+    handleModalExited = () => {
         if (this.props.error) {
-            this.props.onClearError("UPDATE_SAMPLE_ERROR");
+            this.props.onClearError();
         }
-        this.props.onHide();
     };
 
     handleSubmit = e => {
@@ -65,58 +66,40 @@ class EditSample extends React.Component {
     };
 
     render() {
+        const error = this.state.error || this.props.error || "";
+
         return (
-            <Modal show={this.props.show} onEnter={this.handleModalEnter} onHide={this.handleModalHide}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Edit Sample
-                </Modal.Header>
+            <Modal
+                label="Edit Sample"
+                show={this.props.show}
+                onEnter={this.handleModalEnter}
+                onExited={this.handleModalExited}
+                onHide={this.props.onHide}
+            >
+                <ModalHeader>Edit Sample</ModalHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
-                        <Row>
-                            <Col xs={12}>
-                                <InputError
-                                    label="Name"
-                                    name="name"
-                                    value={this.state.name}
-                                    onChange={this.handleChange}
-                                    error={this.state.error}
-                                />
-                            </Col>
-                        </Row>
-
-                        <Row>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    label="Isolate"
-                                    name="isolate"
-                                    value={this.state.isolate}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    label="Host"
-                                    name="host"
-                                    value={this.state.host}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                        </Row>
-
-                        <Row>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    name="locale"
-                                    label="Locale"
-                                    value={this.state.locale}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                        </Row>
-                    </Modal.Body>
-                    <Modal.Footer>
+                    <ModalBody>
+                        <InputGroup>
+                            <InputLabel>Name</InputLabel>
+                            <Input name="name" value={this.state.name} onChange={this.handleChange} />
+                            <InputError>{error}</InputError>
+                        </InputGroup>
+                        <InputGroup>
+                            <InputLabel>Isolate</InputLabel>
+                            <Input name="isolate" value={this.state.isolate} onChange={this.handleChange} />
+                        </InputGroup>
+                        <InputGroup>
+                            <InputLabel>Host</InputLabel>
+                            <Input name="host" value={this.state.host} onChange={this.handleChange} />
+                        </InputGroup>
+                        <InputGroup>
+                            <InputLabel>Locale</InputLabel>
+                            <Input name="locale" value={this.state.locale} onChange={this.handleChange} />
+                        </InputGroup>
+                    </ModalBody>
+                    <ModalFooter>
                         <SaveButton />
-                    </Modal.Footer>
+                    </ModalFooter>
                 </form>
             </Modal>
         );
@@ -138,8 +121,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(editSample(sampleId, update));
     },
 
-    onClearError: error => {
-        dispatch(clearError(error));
+    onClearError: () => {
+        dispatch(clearError("UPDATE_SAMPLE_ERROR"));
     }
 });
 

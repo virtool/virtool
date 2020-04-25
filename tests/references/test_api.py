@@ -1,9 +1,27 @@
+import aiohttp.web
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 
-async def test_get_release(mocker, spawn_client, id_exists, resp_is):
+@pytest.mark.parametrize("error", [None, "400", "404"])
+async def test_get_release(error, mocker, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
+
+    if error != "404":
+        document = {
+            "_id": "foo",
+            "release": {
+               "id": "foo_release"
+            },
+            "remotes_from": {
+                "slug": "virtool/virtool"
+            }
+        }
+
+        if error == "400":
+            del document["remotes_from"]
+
+        await client.db.references.insert_one(document)
 
     m_fetch_and_update_release = mocker.patch(
         "virtool.references.db.fetch_and_update_release",
@@ -14,12 +32,11 @@ async def test_get_release(mocker, spawn_client, id_exists, resp_is):
 
     resp = await client.get("/api/refs/foo/release")
 
-    id_exists.assert_called_with(
-        client.db.references,
-        "foo"
-    )
+    if error == "400":
+        assert await resp_is.bad_request(resp, "Not a remote reference")
+        return
 
-    if not id_exists:
+    if error == "404":
         assert await resp_is.not_found(resp)
         return
 
@@ -141,13 +158,8 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
         }
     )
 
-    m_spawn.assert_called_with(
-        mocker.ANY,
-        m_process().run()
-    )
-
     m_update.assert_called_with(
-        client.app,
+        mocker.ANY,
         static_time.datetime,
         "process",
         "foo",
@@ -156,6 +168,8 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
         },
         "test"
     )
+
+    assert isinstance(m_update.call_args[0][0], aiohttp.web.Request)
 
     assert resp.status == 201
 
@@ -191,7 +205,8 @@ async def test_find_indexes(mocker, spawn_client, id_exists, md_proxy, resp_is):
     )
 
 
-async def test_create(mocker, spawn_client, test_random_alphanumeric, static_time):
+@pytest.mark.parametrize("data_type", ["genome", "barcode"])
+async def test_create(data_type, mocker, snapshot, spawn_client, test_random_alphanumeric, static_time):
     client = await spawn_client(authorize=True, permissions=["create_ref"])
 
     default_source_type = [
@@ -204,152 +219,135 @@ async def test_create(mocker, spawn_client, test_random_alphanumeric, static_tim
     data = {
         "name": "Test Viruses",
         "description": "A bunch of viruses used for testing",
-        "data_type": "genome",
+        "data_type": data_type,
         "organism": "virus"
     }
 
-    m_get_otu_count = mocker.patch("virtool.references.db.get_otu_count", make_mocked_coro(22))
-    m_get_unbuilt_count = mocker.patch("virtool.references.db.get_unbuilt_count", make_mocked_coro(5))
+    async def m_attach_computed(dbi, document):
+        return {
+            **document,
+            "contributors": [
+                {"bob": 4},
+                {"fred": 10}
+            ],
+            "internal_control": {
+                "id": "foo",
+                "name": "Foo virus"
+            },
+            "latest_build": {
+                "id": "foo",
+                "created_at": static_time.datetime
+            },
+            "otu_count": 22,
+            "unbuilt_change_count": 5,
+            "users": [{
+                "id": "test",
+                "build": True,
+                "modify": True,
+                "modify_otu": True,
+                "remove": True
+            }]
+        }
+
+    m_attach_computed = mocker.patch("virtool.references.db.attach_computed", m_attach_computed)
 
     resp = await client.post("/api/refs", data)
 
     assert resp.status == 201
 
-    assert resp.headers["Location"] == "/api/refs/" + test_random_alphanumeric.history[0]
+    assert resp.headers["Location"] == f"/api/refs/{test_random_alphanumeric.history[0]}"
 
-    assert await resp.json() == dict(
-        data,
-        id=test_random_alphanumeric.history[0],
-        created_at="2015-10-06T20:00:00Z",
-        user={
-            "id": "test"
-        },
-        users=[{
-            "build": True,
-            "id": "test",
-            "modify": True,
-            "modify_otu": True,
-            "remove": True
-        }],
-        groups=[],
-        contributors=[],
-        internal_control=None,
-        restrict_source_types=False,
-        otu_count=22,
-        unbuilt_change_count=5,
-        source_types=default_source_type,
-        latest_build=None
-    )
-
-    m_get_otu_count.assert_called_with(
-        client.db,
-        test_random_alphanumeric.history[0]
-    )
-
-    m_get_unbuilt_count.assert_called_with(
-        client.db,
-        test_random_alphanumeric.history[0]
-    )
+    snapshot.assert_match(await resp.json())
 
 
-@pytest.mark.parametrize("control_exists", [True, False])
-@pytest.mark.parametrize("control_id", [None, "", "baz"])
-async def test_edit(control_exists, control_id, mocker, spawn_client, check_ref_right, id_exists, resp_is):
+@pytest.mark.parametrize("data_type", ["genome", "barcode"])
+@pytest.mark.parametrize("error", [None, "403", "404", "422", "400"])
+async def test_edit(data_type, error, mocker, snapshot, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
-    m_find_one_and_update = mocker.patch.object(
-        client.db.references,
-        "find_one_and_update",
-        make_mocked_coro({
+    if error != "404":
+        await client.db.references.insert_one({
             "_id": "foo",
-            "name": "Test Reference"
+            "data_type": data_type,
+            "name": "Foo",
+            "users": [
+                {
+                    "id": "bob"
+                }
+            ]
         })
-    )
 
-    m_get_computed = mocker.patch(
-        "virtool.references.db.get_computed",
-        make_mocked_coro({
-            "computed": True
-        })
-    )
-
-    m_get_internal_control = mocker.patch(
-        "virtool.references.db.get_internal_control",
-        make_mocked_coro({"id": "baz"} if control_exists else None)
-    )
+    await client.db.users.insert_one({
+        "_id": "bob",
+        "identicon": "abc123"
+    })
 
     data = {
-        "name": "Tester",
-        "description": "This is a test reference."
+        "name": "Bar",
+        "description": "This is a test reference.",
+        "targets": [
+            {
+                "name": "CPN60",
+                "description": "",
+                "required": True
+            }
+        ]
     }
 
-    if control_id is not None:
-        data["internal_control"] = control_id
+    if error == "422":
+        data["targets"] = [
+            {
+                "description": True
+            }
+        ]
+
+    if error == "400":
+        data["targets"].append({
+            "name": "CPN60",
+            "description": "This has a duplicate name",
+            "required": False
+        })
+
+    can_modify = error != "403"
+
+    mocker.patch("virtool.references.db.check_right", make_mocked_coro(return_value=can_modify))
 
     resp = await client.patch("/api/refs/foo", data)
 
-    id_exists.assert_called_with(
-        client.db.references,
-        "foo"
-    )
+    if error == "400":
+        assert await resp_is.bad_request(resp, "The targets field may not contain duplicate names")
+        return
 
-    if not id_exists:
+    if error == "422":
+        assert await resp_is.invalid_input(resp, {
+            "targets": [
+                {
+                    "0": [
+                        {
+                            "description": ["must be of string type"],
+                            "name": ["required field"]
+                        }
+                    ]
+                }
+            ]
+        })
+        return
+
+    if error == "404":
         assert await resp_is.not_found(resp)
         return
 
-    check_ref_right.assert_called_with(
-        mocker.ANY,
-        "foo",
-        "modify"
-    )
-
-    assert check_ref_right.called_with_req()
-
-    if not check_ref_right:
+    if error == "403":
         assert await resp_is.insufficient_rights(resp)
         return
 
-    expected_internal_control = None
-
-    if control_id and control_exists:
-        expected_internal_control = {
-            "id": "baz"
-        }
-
-    update = {
-        "description": "This is a test reference.",
-        "name": "Tester"
-    }
-
-    if control_id is not None:
-        update["internal_control"] = expected_internal_control
-
-    m_find_one_and_update.assert_called_with(
-        {
-            "_id": "foo"
-        },
-        {
-            "$set": update
-        }
-    )
-
-    m_get_computed.assert_called_with(
-        client.db,
-        "foo",
-        control_id
-    )
-
-    if control_id:
-        m_get_internal_control.assert_called_with(
-            client.db,
-            "baz",
-            "foo"
-        )
+    snapshot.assert_match(await resp.json())
+    snapshot.assert_match(await client.db.references.find_one())
 
 
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
 @pytest.mark.parametrize("field", ["group", "user"])
-async def test_add_group_or_user(error, field, spawn_client, check_ref_right, resp_is, static_time):
+async def test_add_group_or_user(error, field, snapshot, spawn_client, check_ref_right, resp_is, static_time):
     """
     Test that the group or user is added to the reference when no error condition exists.
 
@@ -419,24 +417,13 @@ async def test_add_group_or_user(error, field, spawn_client, check_ref_right, re
 
     assert resp.status == 201
 
-    expected = {
-        "id": "tech" if field == "group" else "fred",
-        "created_at": static_time.iso,
-        "build": False,
-        "modify": True,
-        "modify_otu": False,
-        "remove": False
-    }
-
-    if field == "user":
-        expected["identicon"] = "foo_identicon"
-
-    assert await resp.json() == expected
+    snapshot.assert_match(await resp.json())
+    snapshot.assert_match(await client.db.references.find_one())
 
 
 @pytest.mark.parametrize("error", [None, "404_field", "404_ref"])
 @pytest.mark.parametrize("field", ["group", "user"])
-async def test_edit_group_or_user(error, field, spawn_client, check_ref_right, resp_is):
+async def test_edit_group_or_user(error, field, snapshot, spawn_client, check_ref_right, resp_is):
     client = await spawn_client(authorize=True)
 
     document = {
@@ -488,41 +475,13 @@ async def test_edit_group_or_user(error, field, spawn_client, check_ref_right, r
 
     assert resp.status == 200
 
-    expected = {
-        "id": subdocument_id,
-        "build": False,
-        "modify": False,
-        "modify_otu": False,
-        "remove": True
-    }
-
-    if field == "user":
-        expected["identicon"] = "foo_identicon"
-
-    assert await resp.json() == expected
-
-    assert await client.db.references.find_one() == {
-        "_id": "foo",
-        "groups": [{
-            "id": "tech",
-            "build": False,
-            "modify": False,
-            "modify_otu": False,
-            "remove": field == "group"
-        }],
-        "users": [{
-            "id": "fred",
-            "build": False,
-            "modify": False,
-            "modify_otu": False,
-            "remove": field == "user"
-        }]
-    }
+    snapshot.assert_match(await resp.json())
+    snapshot.assert_match(await client.db.references.find_one())
 
 
 @pytest.mark.parametrize("error", [None, "404_field", "404_ref"])
 @pytest.mark.parametrize("field", ["group", "user"])
-async def test_delete_group_or_user(error, field, spawn_client, check_ref_right, resp_is):
+async def test_delete_group_or_user(error, field, snapshot, spawn_client, check_ref_right, resp_is):
     client = await spawn_client(authorize=True)
 
     document = {
@@ -567,15 +526,4 @@ async def test_delete_group_or_user(error, field, spawn_client, check_ref_right,
 
     assert resp.status == 204
 
-    if field == "group":
-        expected = {
-            **document,
-            "groups": []
-        }
-    else:
-        expected = {
-            **document,
-            "users": []
-        }
-
-    assert await client.db.references.find_one() == expected
+    snapshot.assert_match(await client.db.references.find_one())

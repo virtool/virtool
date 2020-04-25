@@ -5,9 +5,9 @@ exports[`<Settings /> should render when [props.loading=false] 1`] = `
   <ViewHeader
     title="Administration"
   >
-    <strong>
+    <ViewHeader__ViewHeaderTitle>
       Administration
-    </strong>
+    </ViewHeader__ViewHeaderTitle>
   </ViewHeader>
   <Tabs
     bsStyle="tabs"
@@ -84,9 +84,9 @@ exports[`<Settings /> should render when [props.loading=true] 1`] = `
   <ViewHeader
     title="Administration"
   >
-    <strong>
+    <ViewHeader__ViewHeaderTitle>
       Administration
-    </strong>
+    </ViewHeader__ViewHeaderTitle>
   </ViewHeader>
   <Tabs
     bsStyle="tabs"

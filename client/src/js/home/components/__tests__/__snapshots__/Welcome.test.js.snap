@@ -3,14 +3,10 @@
 exports[`<Welcome /> should render 1`] = `
 <Welcome__StyledWelcome>
   <Box>
-    <h3>
+    <h1>
       Virtool 
-      <small
-        className="text-muted"
-      >
-        v1.2.3
-      </small>
-    </h3>
+      v1.2.3
+    </h1>
     <p>
       Viral infection diagnostics using next-generation sequencing
     </p>
@@ -27,15 +23,12 @@ exports[`<Welcome /> should render 1`] = `
       </ExternalLink>
     </strong>
   </Box>
-  <Upgrade
-    mongoVersion="3.6.3"
-  />
   <Support />
 </Welcome__StyledWelcome>
 `;
 
-exports[`<Welcome /> should render LoadingPlaceholder when version information is null 1`] = `<LoadingPlaceholder />`;
+exports[`<Welcome /> should render LoadingPlaceholder when version information is ("3.6.3", null) 1`] = `<LoadingPlaceholder />`;
 
-exports[`<Welcome /> should render LoadingPlaceholder when version information is null 2`] = `<LoadingPlaceholder />`;
+exports[`<Welcome /> should render LoadingPlaceholder when version information is (null, "v1.2.3") 1`] = `<LoadingPlaceholder />`;
 
-exports[`<Welcome /> should render LoadingPlaceholder when version information is null 3`] = `<LoadingPlaceholder />`;
+exports[`<Welcome /> should render LoadingPlaceholder when version information is (null, null) 1`] = `<LoadingPlaceholder />`;

@@ -1,8 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Modal } from "react-bootstrap";
 import { find, map } from "lodash-es";
-import { Button } from "../../../base";
+import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from "../../../base";
 import { editReferenceGroup, editReferenceUser } from "../../actions";
 import { MemberRight } from "./MemberRight";
 
@@ -54,17 +53,17 @@ export class EditReferenceMember extends React.Component {
             <MemberRight key={right} right={right} enabled={this.props[right]} onToggle={this.handleChange} />
         ));
 
+        const title = `Modify Rights for ${this.props.id}`;
+
         return (
-            <Modal show={!!this.props.show} onHide={this.props.onHide} onExited={this.handleExited}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Modify Rights for {this.props.id}
-                </Modal.Header>
-                <Modal.Body>{rightComponents}</Modal.Body>
-                <Modal.Footer>
-                    <Button bsStyle="primary" onClick={this.handleSubmit}>
-                        Add
+            <Modal label={title} show={!!this.props.show} onHide={this.props.onHide} onExited={this.handleExited}>
+                <ModalHeader>{title}</ModalHeader>
+                <ModalBody>{rightComponents}</ModalBody>
+                <ModalFooter>
+                    <Button color="blue" icon="save" onClick={this.handleSubmit}>
+                        Save
                     </Button>
-                </Modal.Footer>
+                </ModalFooter>
             </Modal>
         );
     }

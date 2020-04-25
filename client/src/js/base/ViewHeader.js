@@ -1,38 +1,59 @@
-import { isUndefined } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
-import Helmet from "react-helmet";
+import { Helmet } from "react-helmet";
 import styled from "styled-components";
-import { Badge, Flex, FlexItem } from "./index";
+import { Attribution, Badge } from "./index";
 
-const StyledViewHeader = styled.h2`
-    font-size: 26px;
-    margin-bottom: 20px;
+export const ViewHeaderAttribution = styled(Attribution)`
+    color: ${props => props.theme.color.darkgrey};
+    font-size: ${props => props.theme.fontSize.md};
+    margin-top: 5px;
 `;
 
-/**
- * A reusable header shown at the top of views that browse through paged items. For example, the OTU browser
- * contains a ``<ViewHeader />`` component with the title 'OTUs', and optional children.
- *
- */
-export const ViewHeader = ({ title, totalCount, children }) => (
-    <StyledViewHeader>
-        <Helmet title={title} />
-        {isUndefined(totalCount) ? null : (
-            <Flex alignItems="flex-end">
-                <FlexItem grow={0} shrink={0}>
-                    <strong>{title}</strong> <Badge>{totalCount}</Badge>
-                </FlexItem>
-            </Flex>
-        )}
+export const ViewHeaderIcons = styled.div`
+    align-items: center;
+    display: flex;
+    font-size: ${props => props.theme.fontSize.lg};
+    margin-left: auto;
+
+    > *:not(:last-child) {
+        margin-right: 5px;
+    }
+`;
+
+export const ViewHeaderTitle = styled.h1`
+    align-items: center;
+    display: flex;
+    font-weight: bold;
+    margin: 0;
+
+    ${Badge} {
+        border-radius: 10px;
+        font-size: ${props => props.theme.fontSize.md};
+        margin-left: 7px;
+        padding: 5px 7px;
+    }
+`;
+
+const StyledViewHeader = styled.div`
+    display: block;
+    margin: 10px 0 20px;
+`;
+
+export const ViewHeader = ({ className, title, children }) => (
+    <StyledViewHeader className={className}>
+        <Helmet>
+            <title>{title}</title>
+        </Helmet>
         {children}
     </StyledViewHeader>
 );
 
 ViewHeader.propTypes = {
+    children: PropTypes.node,
+    className: PropTypes.string,
     title: PropTypes.string.isRequired,
-    totalCount: PropTypes.number,
-    children: PropTypes.node
+    totalCount: PropTypes.number
 };
 
 export const SubviewHeader = styled.div`
@@ -40,13 +61,13 @@ export const SubviewHeader = styled.div`
 `;
 
 export const SubviewHeaderTitle = styled.div`
-    font-size: 16px;
+    font-size: ${props => props.theme.fontSize.lg};
     font-weight: bold;
     margin-bottom: 0;
 `;
 
 export const SubviewHeaderAttribution = styled.span`
-    color: #777777;
-    font-size: 12px;
+    color: ${props => props.theme.color.greyDarkest};
+    font-size: ${props => props.theme.fontSize.sm};
     font-weight: bold;
 `;

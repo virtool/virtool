@@ -1,4 +1,8 @@
 import virtool.utils
+import semver
+import sys
+
+MINIMUM_MONGO_VERSION = "3.6.0"
 
 
 def apply_projection(document, projection):
@@ -36,6 +40,23 @@ def apply_projection(document, projection):
     return {key: document[key] for key in document if projection.get(key, False)}
 
 
+async def check_mongo_version(db, logger):
+    """
+    Check the MongoDB version. Log a critical error and exit if it is too old.
+
+    :param db: the application database object
+    :param logger: the app logger
+
+    """
+    server_version = (await db.server_info())["version"]
+
+    if semver.compare(server_version, MINIMUM_MONGO_VERSION) == -1:
+        logger.critical(f"Virtool requires MongoDB {MINIMUM_MONGO_VERSION}. Found {server_version}.")
+        sys.exit(1)
+
+    logger.info(f"Found MongoDB {server_version}.")
+
+
 async def get_new_id(collection, excluded=None):
     """
     Returns a new, unique, id that can be used for inserting a new document. Will not return any id that is included
@@ -64,7 +85,7 @@ async def get_one_field(collection, field, query):
     if projected is None:
         return None
 
-    return projected.get(field, None)
+    return projected.get(field)
 
 
 async def get_non_existent_ids(collection, id_list):
@@ -86,7 +107,7 @@ async def id_exists(collection, _id):
     :rtype: bool
 
     """
-    return bool(await collection.count({"_id": _id}))
+    return bool(await collection.count_documents({"_id": _id}))
 
 
 async def ids_exist(collection, id_list):
@@ -103,7 +124,7 @@ async def ids_exist(collection, id_list):
     :rtype: bool
 
     """
-    return await collection.count({"_id": {"$in": id_list}}) == len(id_list)
+    return await collection.count_documents({"_id": {"$in": id_list}}) == len(id_list)
 
 
 async def determine_mongo_version(db):

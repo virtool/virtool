@@ -1,41 +1,37 @@
 import "d3-transition";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
+import styled from "styled-components";
 
-export default class QualityChart extends React.Component {
-    static propTypes = {
-        data: PropTypes.array,
-        createChart: PropTypes.func
-    };
+const StyledQualityChart = styled.div`
+    min-height: 385px;
 
-    componentDidMount() {
-        this.update();
-        window.addEventListener("resize", this.update);
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
     }
 
-    componentWillUnmount() {
-        window.removeEventListener("resize", this.update);
+    .axis-label {
+        text-anchor: middle;
     }
 
-    shouldComponentUpdate() {
-        // Don"t ever render the component. All changes are done via d3.
-        return false;
+    .graph-line {
+        fill: none;
+        stroke: ${props => props.theme.color.blue};
+        stroke-width: 2px;
     }
+`;
 
-    update = () => {
-        // Find the chart DOM node and get its width.
+export const QualityChart = ({ createChart, data, width }) => {
+    const ref = useRef(null);
+    useEffect(() => createChart(ref.current, data, width), [width]);
+    return <StyledQualityChart ref={ref} />;
+};
 
-        const width = this.chartNode.offsetWidth;
-
-        // Make sure the DOM node is empty before rendering the d3 chart.
-        this.chartNode.innerHTML = "";
-
-        // Create the updated/new chart.
-        this.props.createChart(this.chartNode, this.props.data, width);
-    };
-
-    render() {
-        // This is the div the chart will be rendered in.
-        return <div className="chart-container" ref={node => (this.chartNode = node)} />;
-    }
-}
+QualityChart.propTypes = {
+    createChart: PropTypes.func.isRequired,
+    data: PropTypes.array.isRequired,
+    width: PropTypes.number.isRequired
+};

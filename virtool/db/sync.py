@@ -3,11 +3,14 @@ Synchronous helper functions for working with the database using pymongo. These 
 not used.
 
 """
+import json
 from copy import deepcopy
+from typing import Union
 
 import dictdiffer
 import pymongo
 
+import virtool.history.utils
 import virtool.otus.utils
 import virtool.samples.utils
 
@@ -115,22 +118,16 @@ def join_otu(db, query, document=None):
     return virtool.otus.utils.merge_otu(document, sequences)
 
 
-def patch_otu_to_version(db, otu_id, version):
+def patch_otu_to_version(db, settings: dict, otu_id: str, version: Union[str, int]) -> tuple:
     """
     Take a joined otu back in time to the passed ``version``. Uses the diffs in the change documents associated with
     the otu.
 
     :param db: the application database object
-    :type db: :class:`~pymongo.database.Database`
-
+    :param settings: the application settings
     :param otu_id: the id of the otu to patch
-    :type otu_id: str
-
     :param version: the version to patch to
-    :type version: str or int
-
     :return: the current joined otu, patched otu, and the ids of changes reverted in the process
-    :rtype: Coroutine[tuple]
 
     """
     # A list of history_ids reverted to produce the patched entry.
@@ -147,6 +144,13 @@ def patch_otu_to_version(db, otu_id, version):
     for change in db.history.find({"otu.id": otu_id}, sort=[("otu.version", -1)]):
         if change["otu"]["version"] == "removed" or change["otu"]["version"] > version:
             reverted_history_ids.append(change["_id"])
+
+            if change["diff"] == "file":
+                change["diff"] = read_diff_file(
+                    settings["data_path"],
+                    otu_id,
+                    change["otu"]["version"]
+                )
 
             if change["method_name"] == "remove":
                 patched = change["diff"]
@@ -166,21 +170,37 @@ def patch_otu_to_version(db, otu_id, version):
     return current, patched, reverted_history_ids
 
 
-def recalculate_algorithm_tags(db, sample_id):
+def read_diff_file(data_path: str, otu_id: str, otu_version: Union[int, str]) -> dict:
     """
-    Recalculate and apply algorithm tags (eg. "ip", True) for a given sample. Finds the associated analyses and calls
-    :func:`calculate_algorithm_tags`, then applies the update to the sample document.
+    Read a history diff file from disk.
+
+    :param data_path: the application data path
+    :param otu_id: the change's OTU ID
+    :param otu_version: the change's OTU version
+    :return: the diff
+
+    """
+    path = virtool.history.utils.join_diff_path(
+        data_path,
+        otu_id,
+        otu_version
+    )
+
+    with open(path, "r") as f:
+        return json.load(f, object_hook=virtool.history.utils.json_object_hook)
+
+
+def recalculate_workflow_tags(db, sample_id: str):
+    """
+    Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param sample_id: the id of the sample to recalculate tags for
-    :type sample_id: str
 
     """
-    analyses = db.analyses.find({"sample.id": sample_id}, ["ready", "algorithm"])
+    analyses = db.analyses.find({"sample.id": sample_id}, ["ready", "workflow"])
 
-    update = virtool.samples.utils.calculate_algorithm_tags(analyses)
+    update = virtool.samples.utils.calculate_workflow_tags(analyses)
 
     db.samples.update_one({"_id": sample_id}, {
         "$set": update

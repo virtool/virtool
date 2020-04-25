@@ -1,14 +1,14 @@
-import React, { useState } from "react";
-import Measure from "react-measure";
+import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { filter, map, sortBy } from "lodash-es";
 import { Badge, Box } from "../../../base";
 import { getActiveHit, getMaxSequenceLength } from "../../selectors";
-
+import { useElementSize } from "../../../utils/hooks";
 import NuVsBLAST from "./BLAST";
 import NuVsORF from "./ORF";
 import NuVsSequence from "./Sequence";
+import { NuVsValues } from "./Values";
 
 const StyledNuVsFamilies = styled.div`
     border: 1px solid #ddd;
@@ -75,13 +75,13 @@ const StyledNuVsDetail = styled(Box)`
 `;
 
 export const NuVsDetail = ({ filterORFs, hit, maxSequenceLength }) => {
+    const [ref, { width }] = useElementSize();
+
     if (!hit) {
         return <StyledNuVsDetail>No Hits</StyledNuVsDetail>;
     }
 
     const { blast, e, families, index, orfs, sequence } = hit;
-
-    const [width, setWidth] = useState(-1);
 
     let filtered;
 
@@ -96,26 +96,21 @@ export const NuVsDetail = ({ filterORFs, hit, maxSequenceLength }) => {
     ));
 
     return (
-        <Measure offset onResize={contentRect => setWidth(contentRect.offset.width)}>
-            {({ measureRef }) => (
-                <StyledNuVsDetail ref={measureRef}>
-                    <NuVsDetailTitle>
-                        <h3>
-                            Sequence {index}
-                            <Badge>{sequence.length} bp</Badge>
-                        </h3>
-                        <span className="text-success">{orfs.length} ORFs</span> /{" "}
-                        <span className="text-danger">E = {e}</span>
-                        <NuVsFamilies families={families} />
-                    </NuVsDetailTitle>
-                    <NuVsLayout>
-                        <NuVsSequence key="sequence" sequence={sequence} width={width} />
-                        {orfComponents}
-                    </NuVsLayout>
-                    <NuVsBLAST sequenceIndex={index} blast={blast} sequence={sequence} />
-                </StyledNuVsDetail>
-            )}
-        </Measure>
+        <StyledNuVsDetail ref={ref}>
+            <NuVsDetailTitle>
+                <h3>
+                    Sequence {index}
+                    <Badge>{sequence.length} bp</Badge>
+                </h3>
+                <NuVsValues e={e} orfCount={orfs.length} />
+                <NuVsFamilies families={families} />
+            </NuVsDetailTitle>
+            <NuVsLayout>
+                <NuVsSequence key="sequence" sequence={sequence} width={width} />
+                {orfComponents}
+            </NuVsLayout>
+            <NuVsBLAST sequenceIndex={index} blast={blast} sequence={sequence} />
+        </StyledNuVsDetail>
     );
 };
 

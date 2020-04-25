@@ -1,10 +1,20 @@
 import { push } from "connected-react-router";
 import { find, get, includes, map, sortBy } from "lodash-es";
 import React from "react";
-import { InputGroup, Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { BoxGroup, Button, InputError, LoadingPlaceholder } from "../../base";
+import {
+    BoxGroup,
+    Input,
+    InputContainer,
+    InputError,
+    InputGroup,
+    InputIcon,
+    LoadingPlaceholder,
+    Modal,
+    ModalBody,
+    ModalHeader
+} from "../../base";
 import { clearError } from "../../errors/actions";
 import { routerLocationHasState } from "../../utils/utils";
 
@@ -12,7 +22,7 @@ import { createGroup, removeGroup, setGroupPermission } from "../actions";
 import { GroupDetail } from "./Detail";
 import Group from "./Group";
 
-const GroupsModalBody = styled(Modal.Body)`
+const GroupsModalBody = styled(ModalBody)`
     display: grid;
     grid-template-columns: 2fr 3fr;
     grid-column-gap: 15px;
@@ -38,7 +48,7 @@ class Groups extends React.Component {
         });
 
         if (this.props.error) {
-            this.props.onClearError("CREATE_GROUP_ERROR");
+            this.props.onClearError();
         }
     };
 
@@ -51,7 +61,7 @@ class Groups extends React.Component {
         });
 
         if (this.props.error) {
-            this.props.onClearError("CREATE_GROUP_ERROR");
+            this.props.onClearError();
         }
     };
 
@@ -60,7 +70,7 @@ class Groups extends React.Component {
 
         if (this.state.createGroupId === "") {
             this.setState({
-                error: "Group id missing"
+                error: "Name is required"
             });
         } else if (includes(this.state.createGroupId, " ")) {
             this.setState({
@@ -98,28 +108,29 @@ class Groups extends React.Component {
         }
 
         return (
-            <Modal bsSize="lg" show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Groups
-                </Modal.Header>
-
+            <Modal
+                label="Manage Groups"
+                show={this.props.show}
+                size="lg"
+                onHide={this.props.onHide}
+                onExited={this.handleModalExited}
+            >
+                <ModalHeader>Manage Groups</ModalHeader>
                 <GroupsModalBody>
                     <div>
-                        <InputGroup>
-                            <InputError
-                                type="text"
-                                value={this.state.createGroupId}
-                                onChange={this.handleChange}
-                                placeholder="Group name"
-                                error={error || this.state.error}
-                            />
-                            <InputGroup.Button style={{ verticalAlign: "top", zIndex: "0" }}>
-                                <Button type="button" icon="plus-square" bsStyle="primary" onClick={this.handleSubmit}>
-                                    &nbsp;Add
-                                </Button>
-                            </InputGroup.Button>
-                        </InputGroup>
-                        <br />
+                        <form onSubmit={this.handleSubmit}>
+                            <InputGroup>
+                                <InputContainer align="right">
+                                    <Input
+                                        value={this.state.createGroupId}
+                                        onChange={this.handleChange}
+                                        placeholder="New"
+                                    />
+                                    <InputIcon name="plus-circle" bsStyle="primary" onClick={this.handleSubmit} />
+                                </InputContainer>
+                                <InputError>{error || this.state.error}</InputError>
+                            </InputGroup>
+                        </form>
                         <BoxGroup>{groupComponents}</BoxGroup>
                     </div>
                     <GroupDetail
@@ -161,8 +172,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(setGroupPermission(groupId, permission, value));
     },
 
-    onClearError: error => {
-        dispatch(clearError(error));
+    onClearError: () => {
+        dispatch(clearError("CREATE_GROUP_ERROR"));
     }
 });
 

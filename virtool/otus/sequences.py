@@ -4,6 +4,7 @@ Database functions and utilities for sequences.
 """
 from typing import Union
 
+import virtool.db.utils
 import virtool.history
 import virtool.history.db
 import virtool.otus
@@ -12,18 +13,82 @@ import virtool.otus.utils
 import virtool.utils
 
 
-async def create(db, ref_id: str, otu_id: str, isolate_id: str, data: dict, user_id: str):
+async def check_segment_or_target(
+        db,
+        otu_id: str,
+        isolate_id: str,
+        sequence_id: Union[str, None],
+        ref_id: str,
+        data: dict
+) -> Union[str, None]:
+    """
+    Returns an error message string if the segment or target provided in `data` is not compatible with the parent
+    reference (target) or OTU (segment).
+
+    Returns `None` if the check passes.
+
+    :param db: the application database object
+    :param otu_id: the ID of the parent OTU
+    :param isolate_id: the ID of the parent isolate
+    :param sequence_id: the ID of the sequence if one is being edited
+    :param ref_id: the ID of the parent reference
+    :param data: the data dict containing a target or segment value
+    :return: message or `None` if check passes
+
+    """
+    reference = await db.references.find_one(ref_id, ["data_type", "targets"])
+
+    if reference["data_type"] == "barcode":
+        target = data.get("target")
+
+        if sequence_id is None and target is None:
+            return "The 'target' field is required for barcode references"
+
+        if target:
+            if target not in {t["name"] for t in reference.get("targets", [])}:
+                return f"Target {target} is not defined for the parent reference"
+
+            used_targets_query = {
+                "otu_id": otu_id,
+                "isolate_id": isolate_id
+            }
+
+            if sequence_id:
+                used_targets_query["_id"] = {
+                    "$ne": sequence_id
+                }
+
+            used_targets = await db.sequences.distinct("target", used_targets_query)
+
+            if target in used_targets:
+                return f"Target {target} is already used in isolate {isolate_id}"
+
+    if reference["data_type"] == "genome" and data.get("segment"):
+        schema = await virtool.db.utils.get_one_field(db.otus, "schema", otu_id) or list()
+
+        segment = data.get("segment")
+
+        if segment not in {s["name"] for s in schema}:
+            return f"Segment {segment} is not defined for the parent OTU"
+
+    return None
+
+
+async def create(app, ref_id: str, otu_id: str, isolate_id: str, data: dict, user_id: str):
     """
     Create a new sequence document. Update the
 
-    :param db:
-    :param ref_id:
-    :param otu_id:
-    :param isolate_id:
-    :param data:
-    :param user_id:
-    :return:
+    :param app: the application object
+    :param ref_id: the ID of the parent reference
+    :param otu_id: the ID of the parent OTU
+    :param isolate_id: the ID of the parent isolate
+    :param data: source data for the new sequence
+    :param user_id: the ID of the requesting user
+    :return: the new sequence
+
     """
+    db = app["db"]
+
     segment = data.get("segment")
 
     # Update POST data to make sequence document.
@@ -52,7 +117,7 @@ async def create(db, ref_id: str, otu_id: str, isolate_id: str, data: dict, user
     isolate = virtool.otus.utils.find_isolate(old["isolates"], isolate_id)
 
     await virtool.history.db.add(
-        db,
+        app,
         "create_sequence",
         old,
         new,
@@ -63,20 +128,22 @@ async def create(db, ref_id: str, otu_id: str, isolate_id: str, data: dict, user
     return virtool.utils.base_processor(sequence_document)
 
 
-async def edit(db, otu_id: str, isolate_id: str, sequence_id: str, data: dict, user_id: str) -> dict:
+async def edit(app, otu_id: str, isolate_id: str, sequence_id: str, data: dict, user_id: str) -> dict:
     """
-    Edit an existing sequence identified by its `otu_id`, `isolate_id`, and `sequence_id`. Returns the updated sequence
-    document.
+    Edit an existing sequence identified by its `otu_id`, `isolate_id`, and `sequence_id` using the passed update
+    `data`.
 
-    :param db:
-    :param otu_id:
-    :param isolate_id:
-    :param sequence_id:
-    :param data:
-    :param user_id:
+    :param app: the application object
+    :param otu_id: the ID of the parent OTU:
+    :param isolate_id: the ID of the parent isolate
+    :param sequence_id: the ID of the sequence to edit
+    :param data: the update to apply to the sequence
+    :param user_id: the ID of the requesting user
     :return: the updated sequence document
 
     """
+    db = app["db"]
+
     update = dict(data)
 
     if "sequence" in update:
@@ -99,7 +166,7 @@ async def edit(db, otu_id: str, isolate_id: str, sequence_id: str, data: dict, u
     isolate_name = virtool.otus.utils.format_isolate_name(isolate)
 
     await virtool.history.db.add(
-        db,
+        app,
         "edit_sequence",
         old,
         new,
@@ -116,13 +183,13 @@ async def get(db, otu_id: str, isolate_id: str, sequence_id: str) -> Union[dict,
     sequence do not exist.
 
     :param db:
-    :param otu_id:
-    :param isolate_id:
-    :param sequence_id:
+    :param otu_id: the ID of the parent OTU:
+    :param isolate_id: the ID of the parent isolate
+    :param sequence_id: the ID of the sequence to get
     :return: the sequence document
 
     """
-    if not await db.otus.count({"_id": otu_id, "isolates.id": isolate_id}):
+    if not await db.otus.count_documents({"_id": otu_id, "isolates.id": isolate_id}):
         return None
 
     query = {
@@ -139,7 +206,15 @@ async def get(db, otu_id: str, isolate_id: str, sequence_id: str) -> Union[dict,
     return virtool.utils.base_processor(document)
 
 
-async def increment_otu_version(db, otu_id) -> dict:
+async def increment_otu_version(db, otu_id: str) -> dict:
+    """
+    Increment the `version` field by one for the OTU identified by `otu_id`.
+
+    :param db: the application database client
+    :param otu_id: the ID of the OTU whose version should be increased
+    :return: the updated OTU document
+
+    """
     return await db.otus.find_one_and_update({"_id": otu_id}, {
         "$set": {
             "verified": False
@@ -150,17 +225,19 @@ async def increment_otu_version(db, otu_id) -> dict:
     })
 
 
-async def remove(db, otu_id: str, isolate_id: str, sequence_id: str, user_id: str):
+async def remove(app, otu_id: str, isolate_id: str, sequence_id: str, user_id: str):
     """
-    Remove the sequence identified by the passed `sequence_id`. The parent OTU will also be updated.
+    Remove the sequence identified by the passed `sequence_id`.
 
-    :param db:
-    :param otu_id:
-    :param isolate_id:
-    :param sequence_id:
-    :param user_id:
+    :param app: the application object
+    :param otu_id: the ID of the parent OTU:
+    :param isolate_id: the ID of the parent isolate
+    :param sequence_id: the ID of the sequence to remove
+    :param user_id: the ID of the requesting user
 
     """
+    db = app["db"]
+
     old = await virtool.otus.db.join(db, otu_id)
 
     isolate = virtool.otus.utils.find_isolate(old["isolates"], isolate_id)
@@ -176,7 +253,7 @@ async def remove(db, otu_id: str, isolate_id: str, sequence_id: str, user_id: st
     isolate_name = virtool.otus.utils.format_isolate_name(isolate)
 
     await virtool.history.db.add(
-        db,
+        app,
         "remove_sequence",
         old,
         new,
