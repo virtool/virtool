@@ -24,7 +24,7 @@ export const AnalysisMappingReferenceTitle = ({ index, reference }) => (
 );
 
 export const AnalysisMappingSubtractionTitle = ({ subtraction }) => (
-    <Link to={`/subtractions/${subtraction.id}`}>{subtraction.name}</Link>
+    <Link to={`/subtraction/${subtraction.id}`}>{subtraction.name}</Link>
 );
 
 const StyledAnalysisMapping = styled(Box)`
