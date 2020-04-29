@@ -4,11 +4,12 @@ from aiohttp.test_utils import make_mocked_coro
 
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("error", [None, "400", "403", "404"])
-async def test_get(ready, error, mocker, snapshot, spawn_client, resp_is):
+async def test_get(ready, error, mocker, snapshot, spawn_client, static_time, resp_is):
     client = await spawn_client(authorize=True)
 
     document = {
         "_id": "foobar",
+        "created_at": static_time.datetime,
         "ready": ready,
         "workflow": "pathoscope_bowtie",
         "results": {},
@@ -48,6 +49,7 @@ async def test_get(ready, error, mocker, snapshot, spawn_client, resp_is):
         "virtool.analyses.format.format_analysis",
         make_mocked_coro({
             "_id": "foo",
+            "created_at": static_time.datetime,
             "formatted": True
         })
     )
@@ -66,36 +68,15 @@ async def test_get(ready, error, mocker, snapshot, spawn_client, resp_is):
         assert await resp_is.not_found(resp)
         return
 
+    assert resp.status == 200
+
+    snapshot.assert_match(await resp.json())
+
     if ready:
-        assert resp.status == 200
-
-        assert await resp.json() == {
-            "id": "foo",
-            "formatted": True
-        }
-
         args = m_format_analysis.call_args[0]
-
         assert args[0] == client.app
         snapshot.assert_match(args[1], "format_analysis")
-
     else:
-        assert resp.status == 200
-
-        assert await resp.json() == {
-            "id": "foobar",
-            "ready": False,
-            "workflow": "pathoscope_bowtie",
-            "results": {},
-            "sample": {
-                "id": "baz"
-            },
-            "subtraction": {
-                "id": "plum",
-                "name": "Plum"
-            }
-        }
-
         assert not m_format_analysis.called
 
 
