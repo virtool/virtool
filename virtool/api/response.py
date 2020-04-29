@@ -2,7 +2,7 @@ from aiohttp import web
 from typing import Optional
 
 
-def json_response(data: dict, status: int = 200, headers: Optional[bool] = None) -> web.Response:
+def json_response(data: dict, status: int = 200, headers: Optional[dict] = None) -> web.Response:
     """
     Return a response object whose attached JSON dict will be formatted by middleware depending on the request's
     `Accept` header.
@@ -29,6 +29,10 @@ def no_content() -> web.Response:
 
     """
     return web.Response(status=204)
+
+
+def not_modified() -> web.Response:
+    return web.Response(status=304)
 
 
 def bad_gateway(message: str = "Bad gateway") -> web.Response:
