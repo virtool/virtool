@@ -249,7 +249,7 @@ export const median = values => {
     const lowerIndex = Math.floor(midIndex);
     const upperIndex = Math.ceil(midIndex);
 
-    return (sorted[lowerIndex] + sorted[upperIndex]) / 2;
+    return Math.round((sorted[lowerIndex] + sorted[upperIndex]) / 2);
 };
 
 /**
