@@ -110,25 +110,24 @@ def check_will_change(old, imported):
     return False
 
 
-def clean_export_list(otus, remote):
+def clean_export_list(otus):
     cleaned = list()
 
     otu_keys = OTU_KEYS + ["_id"]
     sequence_keys = SEQUENCE_KEYS + ["_id"]
 
     for otu in otus:
-        if remote:
-            try:
-                otu["_id"] = otu["remote"]["id"]
-            except KeyError:
-                pass
+        try:
+            otu["_id"] = otu["remote"]["id"]
+        except KeyError:
+            pass
 
-            for isolate in otu["isolates"]:
-                for sequence in isolate["sequences"]:
-                    try:
-                        sequence["_id"] = sequence["remote"]["id"]
-                    except KeyError:
-                        pass
+        for isolate in otu["isolates"]:
+            for sequence in isolate["sequences"]:
+                try:
+                    sequence["_id"] = sequence["remote"]["id"]
+                except KeyError:
+                    pass
 
         cleaned.append(clean_otu(otu, otu_keys, sequence_keys))
 
