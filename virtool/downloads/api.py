@@ -153,7 +153,6 @@ async def download_reference(req):
 
     """
     db = req.app["db"]
-
     ref_id = req.match_info["ref_id"]
 
     document = await db.references.find_one(ref_id, ["data_type", "organism", "targets"])
@@ -161,15 +160,9 @@ async def download_reference(req):
     if document is None:
         return virtool.api.response.not_found()
 
-    scope = req.query.get("scope", "built")
-
-    if scope not in ["built", "remote", "unbuilt", "unverified"]:
-        scope = "built"
-
     otu_list = await virtool.references.db.export(
         req.app,
-        ref_id,
-        scope
+        ref_id
     )
 
     data = {
@@ -190,7 +183,7 @@ async def download_reference(req):
     body = await req.app["run_in_process"](gzip.compress, bytes(json_string, "utf-8"))
 
     return web.Response(
-        headers={"Content-Disposition": f"attachment; filename=reference.{scope}.json.gz"},
+        headers={"Content-Disposition": f"attachment; filename=reference.json.gz"},
         content_type="application/gzip",
         body=body
     )

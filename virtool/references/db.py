@@ -1105,47 +1105,28 @@ async def edit(db, ref_id: str, data: dict) -> dict:
     return virtool.utils.base_processor(document)
 
 
-async def export(app, ref_id, scope):
+async def export(app, ref_id):
     db = app["db"]
 
     otu_list = list()
 
     query = {
-        "reference.id": ref_id
+        "reference.id": ref_id,
+        "last_indexed_version": {
+            "$ne": None
+        }
     }
 
-    if scope == "built" or scope == "remote":
-        query["last_indexed_version"] = {"$ne": None}
+    async for document in db.otus.find(query):
+        _, joined, _ = await virtool.history.db.patch_to_version(
+            app,
+            document["_id"],
+            document["last_indexed_version"]
+        )
 
-        async for document in db.otus.find(query):
-            _, joined, _ = await virtool.history.db.patch_to_version(
-                app,
-                document["_id"],
-                document["last_indexed_version"]
-            )
+        otu_list.append(joined)
 
-            otu_list.append(joined)
-
-    elif scope == "unbuilt":
-        async for document in db.otus.find(query):
-            last_verified = await virtool.history.db.patch_to_verified(
-                app,
-                document["_id"]
-            )
-
-            otu_list.append(last_verified)
-
-    else:
-        async for document in db.otus.find(query):
-            current = await virtool.otus.db.join(
-                db,
-                document["_id"],
-                document
-            )
-
-            otu_list.append(current)
-
-    return virtool.references.utils.clean_export_list(otu_list, scope == "remote")
+    return virtool.references.utils.clean_export_list(otu_list)
 
 
 async def finish_remote(app, release, ref_id: str, created_at: str, process_id: str, user_id: str):
