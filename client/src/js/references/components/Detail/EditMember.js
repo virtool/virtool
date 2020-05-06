@@ -1,7 +1,7 @@
+import { find, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { find, map } from "lodash-es";
-import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from "../../../base";
+import { Modal, ModalBody, ModalHeader } from "../../../base";
 import { editReferenceGroup, editReferenceUser } from "../../actions";
 import { MemberRight } from "./MemberRight";
 
@@ -59,11 +59,6 @@ export class EditReferenceMember extends React.Component {
             <Modal label={title} show={!!this.props.show} onHide={this.props.onHide} onExited={this.handleExited}>
                 <ModalHeader>{title}</ModalHeader>
                 <ModalBody>{rightComponents}</ModalBody>
-                <ModalFooter>
-                    <Button color="blue" icon="save" onClick={this.handleSubmit}>
-                        Save
-                    </Button>
-                </ModalFooter>
             </Modal>
         );
     }

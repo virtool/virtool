@@ -30,7 +30,10 @@ export const ReferenceOfficial = ({ show, onRemote }) => {
                         <ExternalLink href="https://github.com/virtool/ref-plant-viruses">
                             plant virus reference
                         </ExternalLink>
-                        <span> for install. Once installed, it can be kept automatically up-to-date.</span>
+                        <span>
+                            {" "}
+                            that can be installed automatically. Once installed, it can easily be kept up-to-date.
+                        </span>
                     </p>
                 </div>
                 <Button color="blue" icon="cloud-download-alt" onClick={onRemote}>

@@ -22,7 +22,10 @@ const path = `
 `;
 
 const StyledVTLogo = styled.div`
-    color: #edf7f6;
+    align-items: center;
+    color: currentColor;
+    display: flex;
+    justify-content: center;
     max-width: 30px;
     margin: 8px 8px 0 0;
 
