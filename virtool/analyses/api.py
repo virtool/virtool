@@ -7,6 +7,8 @@ import aiojobs.aiohttp
 
 import virtool.analyses.format
 import virtool.analyses.utils
+import virtool.api.json
+import virtool.api.response
 import virtool.bio
 import virtool.analyses.db
 import virtool.samples.db
@@ -35,6 +37,13 @@ async def get(req):
     if document is None:
         return not_found()
 
+    iso = virtool.api.json.isoformat(document["created_at"])
+
+    if_modified_since = req.headers.get("If-Modified-Since")
+
+    if if_modified_since and if_modified_since == iso:
+        return virtool.api.response.not_modified()
+
     sample = await db.samples.find_one({"_id": document["sample"]["id"]}, {"quality": False})
 
     if not sample:
@@ -50,7 +59,12 @@ async def get(req):
     if document["ready"]:
         document = await virtool.analyses.format.format_analysis(req.app, document)
 
-    return json_response(virtool.utils.base_processor(document))
+    headers = {
+        "Cache-Control": "no-cache",
+        "Last-Modified": virtool.api.json.isoformat(document["created_at"])
+    }
+
+    return json_response(virtool.utils.base_processor(document), headers=headers)
 
 
 @routes.delete("/api/analyses/{analysis_id}")

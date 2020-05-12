@@ -12,9 +12,11 @@ exports[`<ReferenceDetailHeader/> should render 1`] = `
         isRemote={true}
         onEdit={[MockFunction]}
       />
-      <ReferenceDetailHeaderExportButton
-        isClone={true}
-        onSelect={[Function]}
+      <Icon
+        color="purple"
+        faStyle="fas"
+        fixedWidth={false}
+        name="download"
       />
     </ViewHeader__ViewHeaderIcons>
   </ViewHeader__ViewHeaderTitle>
@@ -31,65 +33,12 @@ exports[`<ReferenceDetailHeader/> should render when [showIcons=false] 1`] = `
 >
   <ViewHeader__ViewHeaderTitle>
     baz
-    <ViewHeader__ViewHeaderIcons />
   </ViewHeader__ViewHeaderTitle>
   <ViewHeader__ViewHeaderAttribution
     time="foo"
     user={1}
   />
 </ViewHeader>
-`;
-
-exports[`<ReferenceDetailHeaderExportButton /> should render 1`] = `
-<DropdownIcon
-  name="download"
-  tip="Export"
->
-  <DropdownItem
-    onClick={[Function]}
-  >
-    <Header__ExportDropdownItem>
-      <h5>
-        Normal
-      </h5>
-      <p>
-        Export the reference with the local OTU IDs.
-      </p>
-    </Header__ExportDropdownItem>
-  </DropdownItem>
-  <DropdownItem
-    onClick={[Function]}
-  >
-    <Header__ExportDropdownItem>
-      <h5>
-        Source
-      </h5>
-      <p>
-        Export the reference using the OTU IDs from the source reference for this clone.
-      </p>
-    </Header__ExportDropdownItem>
-  </DropdownItem>
-</DropdownIcon>
-`;
-
-exports[`<ReferenceDetailHeaderExportButton /> should render when [isClone = false] 1`] = `
-<DropdownIcon
-  name="download"
-  tip="Export"
->
-  <DropdownItem
-    onClick={[Function]}
-  >
-    <Header__ExportDropdownItem>
-      <h5>
-        Normal
-      </h5>
-      <p>
-        Export the reference with the local OTU IDs.
-      </p>
-    </Header__ExportDropdownItem>
-  </DropdownItem>
-</DropdownIcon>
 `;
 
 exports[`<ReferenceDetailHeaderIcon /> should render 1`] = `

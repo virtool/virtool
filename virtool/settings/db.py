@@ -1,5 +1,7 @@
 import logging
 
+import virtool.settings.schema
+
 logger = logging.getLogger(__name__)
 
 PROJECTION = {
@@ -16,6 +18,22 @@ CONFIG_PROJECTION = (
     "sm_proc",
     "sm_mem"
 )
+
+
+async def ensure(db):
+    existing = await db.settings.find_one({"_id": "settings"}, {"_id": False}) or dict()
+    defaults = virtool.settings.schema.get_defaults()
+
+    ensure_update = {
+        **defaults,
+        **existing
+    }
+
+    await db.settings.update_one({"_id": "settings"}, {
+        "$set": ensure_update
+    }, upsert=True)
+
+    return ensure_update
 
 
 async def get(db):

@@ -11,6 +11,7 @@ import { LatestBuild } from "./LatestBuild";
 import RemoteReference from "./Remote";
 import ReferenceDetailTabs from "./Tabs";
 import Targets from "./Targets/Targets";
+import ReferenceExport from "./Export";
 
 const ReferenceManageTable = styled(Table)`
     tr:not(:first-of-type) td {
@@ -63,6 +64,7 @@ export const ReferenceManage = props => {
 
             <Contributors contributors={props.contributors} />
             <Targets />
+            <ReferenceExport />
         </div>
     );
 };

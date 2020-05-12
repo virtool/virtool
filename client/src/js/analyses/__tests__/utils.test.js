@@ -62,6 +62,26 @@ describe("formatPathoscopeData()", () => {
     });
 });
 
+describe("median()", () => {
+    it("should return median for odd-length list", () => {
+        const values = [17, 18, 5, 7, 41, 52, 67, 22, 3];
+        const result = median(values);
+        expect(result).toBe(18);
+    });
+
+    it("should return median for even-length list", () => {
+        const values = [17, 18, 5, 7, 41, 52, 67, 22];
+        const result = median(values);
+        expect(result).toBe(20);
+    });
+
+    it("should return median for even-length list with rounding", () => {
+        const values = [17, 18, 5, 7, 41, 52, 67, 21];
+        const result = median(values);
+        expect(result).toBe(20);
+    });
+});
+
 describe("mergeCoverage()", () => {
     let isolates;
 

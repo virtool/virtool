@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import { TabLink, Tabs, Modal, ModalHeader } from "../../base";
+import { Modal, ModalHeader, TabLink, Tabs } from "../../base";
 import { routerLocationHasState } from "../../utils/utils";
 import CloneReference from "./Clone";
 import CreateReference from "./Create";

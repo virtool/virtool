@@ -2,7 +2,7 @@ import { find } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import { connect } from "react-redux";
-import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from "../../../../base";
+import { Modal, ModalBody, ModalFooter, ModalHeader, SaveButton } from "../../../../base";
 import SegmentForm from "./Form";
 
 const getInitialState = () => ({
@@ -61,9 +61,7 @@ class Add extends React.Component {
                         <SegmentForm onChange={this.handleChange} newEntry={this.state.newEntry} />
                     </ModalBody>
                     <ModalFooter>
-                        <Button color="blue" type="submit">
-                            Save
-                        </Button>
+                        <SaveButton />
                     </ModalFooter>
                 </form>
             </Modal>

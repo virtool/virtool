@@ -1,40 +1,4 @@
-import { DropdownItem } from "../../../../base";
-import {
-    mapDispatchToProps,
-    mapStateToProps,
-    ReferenceDetailHeader,
-    ReferenceDetailHeaderExportButton,
-    ReferenceDetailHeaderIcon
-} from "../Header";
-
-describe("<ReferenceDetailHeaderExportButton />", () => {
-    let props;
-    beforeEach(() => {
-        props = {
-            isClone: true,
-            onSelect: jest.fn()
-        };
-    });
-
-    it("should render", () => {
-        const wrapper = shallow(<ReferenceDetailHeaderExportButton {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-    it("should render when [isClone = false]", () => {
-        props.isClone = false;
-        const wrapper = shallow(<ReferenceDetailHeaderExportButton {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-    it("should call onSelect prop of ReferenceDetailHeaderExportButton", () => {
-        const wrapper = shallow(<ReferenceDetailHeaderExportButton {...props} />);
-        expect(props.onSelect).not.toHaveBeenCalled();
-        wrapper
-            .find(DropdownItem)
-            .at(0)
-            .simulate("click");
-        expect(props.onSelect).toHaveBeenCalled();
-    });
-});
+import { mapDispatchToProps, mapStateToProps, ReferenceDetailHeader, ReferenceDetailHeaderIcon } from "../Header";
 
 describe("<ReferenceDetailHeaderIcon />", () => {
     let props;
@@ -71,10 +35,7 @@ describe("<ReferenceDetailHeaderIcon />", () => {
     it("should call onEdit", () => {
         props.isRemote = false;
         const wrapper = shallow(<ReferenceDetailHeaderIcon {...props} />);
-        wrapper
-            .find("Icon")
-            .at(0)
-            .simulate("click");
+        wrapper.find("Icon").at(0).simulate("click");
         expect(props.onEdit).toHaveBeenCalled();
     });
 });
@@ -134,11 +95,9 @@ describe("mapStateToProps()", () => {
 
         const props = mapStateToProps(state);
         expect(props).toEqual({
-            id: 1,
             name: "foo",
             canModify: true,
             createdAt: "Foo",
-            isClone: true,
             isRemote: true,
             showIcons: true,
             userId: "Bar"

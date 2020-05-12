@@ -42,18 +42,18 @@ class AddSequence extends React.Component {
 }
 
 export const mapStateToProps = state => {
-    const { activeIsolateId, sequences, show, targetName } = state.otus;
+    const { activeIsolateId, sequences, addSequence, targetName } = state.otus;
     const { dataType, targets } = state.references.detail;
 
     return {
         activeIsolateId,
         dataType,
         sequences,
-        show,
         targetName,
         targets,
         error: getError("ADD_SEQUENCE_ERROR"),
-        otuId: state.otus.detail.id
+        otuId: state.otus.detail.id,
+        show: addSequence
     };
 };
 

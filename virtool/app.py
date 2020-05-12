@@ -154,7 +154,7 @@ async def init_settings(app):
 
     """
     if app["setup"] is None:
-        from_db = await virtool.settings.db.get(app["db"])
+        from_db = await virtool.settings.db.ensure(app["db"])
         app["settings"].update(from_db)
 
 

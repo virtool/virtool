@@ -15,7 +15,6 @@ export * from "./ButtonToolbar";
 export * from "./Container";
 export * from "./Dropdown";
 export * from "./DropdownButton";
-export * from "./DropdownIcon";
 export * from "./ExternalLink";
 export * from "./Icon";
 export * from "./Identicon";

@@ -59,11 +59,7 @@ const NavBarRight = styled.div`
 `;
 
 const BarLogo = styled(VTLogo)`
-    margin-left: 35px;
-    margin-right: 25px;
-    svg {
-        margin-left: 3px;
-    }
+    margin: 0 30px 0 35px;
 `;
 
 export class Bar extends React.Component {
