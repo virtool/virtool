@@ -1,13 +1,11 @@
-import "./nonce";
 import * as Sentry from "@sentry/browser";
 import { createBrowserHistory } from "history";
+import "normalize.css";
 import React from "react";
 import ReactDOM from "react-dom";
 import App from "./app/App";
 import { createAppStore } from "./app/reducer";
-import "normalize.css";
-
-export * from "../style/style.css";
+import "./nonce";
 
 if (!window.virtool.dev) {
     Sentry.init({
