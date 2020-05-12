@@ -77,11 +77,11 @@ export class FirstUser extends React.Component {
                         <form onSubmit={this.handleSubmit}>
                             <InputGroup>
                                 <InputLabel>Username</InputLabel>
-                                <Input value={username} onChange={this.handleChange} />
+                                <Input name="username" value={username} onChange={this.handleChange} />
                             </InputGroup>
                             <InputGroup>
                                 <InputLabel>Password</InputLabel>
-                                <PasswordInput value={password} onChange={this.handleChange} />
+                                <PasswordInput name="password" value={password} onChange={this.handleChange} />
                             </InputGroup>
 
                             <Button type="submit" icon="user-plus" color="blue">
