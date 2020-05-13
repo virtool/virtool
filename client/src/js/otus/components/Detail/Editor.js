@@ -49,6 +49,8 @@ const IsolateEditorList = styled(BoxGroup)`
 `;
 
 const IsolateEditor = props => {
+    let body;
+
     const isolateComponents = map(props.isolates, (isolate, index) => (
         <IsolateButton
             key={index}
@@ -65,7 +67,16 @@ const IsolateEditor = props => {
     ) : null;
 
     if (isolateComponents.length === 0) {
-        return <NoneFoundBox noun="isolates">{addIsolateLink}.</NoneFoundBox>;
+        body = <NoneFoundBox noun="isolates" />;
+    } else {
+        body = (
+            <IsolateEditorContainer>
+                <IsolateEditorListContainer>
+                    <IsolateEditorList>{isolateComponents}</IsolateEditorList>
+                </IsolateEditorListContainer>
+                <IsolateDetail canModify={props.canModify} />
+            </IsolateEditorContainer>
+        );
     }
 
     return (
@@ -76,12 +87,7 @@ const IsolateEditor = props => {
                 {addIsolateLink}
             </IsolateEditorHeader>
 
-            <IsolateEditorContainer>
-                <IsolateEditorListContainer>
-                    <IsolateEditorList>{isolateComponents}</IsolateEditorList>
-                </IsolateEditorListContainer>
-                <IsolateDetail canModify={props.canModify} />
-            </IsolateEditorContainer>
+            {body}
         </StyledIsolateEditor>
     );
 };
