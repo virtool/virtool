@@ -107,7 +107,7 @@ export default function WSConnection({ getState, dispatch }) {
     this.establishConnection = () => {
         const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 
-        this.connection = new window.WebSocket(`${protocol}://localhost:9950/ws`);
+        this.connection = new window.WebSocket(`${protocol}://${window.location.host}/ws`);
 
         this.connection.onopen = () => {
             this.interval = 500;
