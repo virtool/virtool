@@ -162,7 +162,7 @@ def test_check_db(tmpdir, paired, dbs, mock_job):
     assert mock_job.params["subtraction_path"] == os.path.join(
         str(tmpdir),
         "subtractions",
-        "Prunus persica",
+        "prunus_persica",
         "reference"
     )
 
