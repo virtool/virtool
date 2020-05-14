@@ -51,7 +51,7 @@ async def delete(app, subtraction_id):
     await unlink_default_subtractions(db, subtraction_id)
 
     if update_result.modified_count:
-        index_path = virtool.subtractions.utils.calculate_index_path(settings, subtraction_id)
-        await app["run_in_thread"](shutil.rmtree, index_path, True)
+        path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction_id)
+        await app["run_in_thread"](shutil.rmtree, path, True)
 
     return update_result.modified_count
