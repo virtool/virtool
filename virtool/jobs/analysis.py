@@ -14,6 +14,7 @@ import virtool.jobs.utils
 import virtool.samples.db
 import virtool.samples.utils
 import virtool.samples.utils
+import virtool.subtractions.utils
 import virtool.utils
 
 TRIMMING_PROGRAM = "skewer-0.2.2"
@@ -78,11 +79,9 @@ class Job(virtool.jobs.job.Job):
             "sample_read_length": int(sample["quality"]["length"][1]),
             "library_type": sample["library_type"],
             "reads_path": os.path.join(analysis_path, "_reads"),
-            "subtraction_path": os.path.join(
-                self.settings["data_path"],
-                "subtractions",
-                analysis["subtraction"]["id"],
-                "reference"
+            "subtraction_path": virtool.subtractions.utils.join_subtraction_index_path(
+                self.settings,
+                analysis["subtraction"]["id"]
             )
         })
 
