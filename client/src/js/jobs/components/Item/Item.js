@@ -32,8 +32,8 @@ const JobItemLinkBox = styled(LinkBox)`
 `;
 
 export const JobItem = ({ id, task, state, progress, created_at, user, canCancel, canRemove, onCancel, onRemove }) => {
-    const handleCancel = useCallback(() => onCancel(id), [id, canCancel]);
-    const handleRemove = useCallback(() => onRemove(id), [id, canRemove]);
+    const handleCancel = useCallback(() => onCancel(id), [id, onCancel]);
+    const handleRemove = useCallback(() => onRemove(id), [id, onRemove]);
 
     const progressValue = progress * 100;
 
@@ -62,6 +62,7 @@ export const JobItem = ({ id, task, state, progress, created_at, user, canCancel
                 </JobItemBody>
             </JobItemLinkBox>
             <JobAction
+                key={state}
                 state={state}
                 canCancel={canCancel}
                 canRemove={canRemove}
