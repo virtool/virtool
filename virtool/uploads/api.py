@@ -1,5 +1,5 @@
 import os
-
+import aiofiles
 from cerberus import Validator
 
 import virtool.files.db
@@ -10,7 +10,7 @@ import virtool.http.routes
 import virtool.utils
 from virtool.api.response import invalid_query, json_response, not_found
 
-CHUNK_SIZE = 131072
+CHUNK_SIZE = 4096
 
 FILE_TYPES = [
     "reference",
@@ -39,13 +39,13 @@ async def naive_writer(req, file_id):
 
     size = 0
 
-    with open(file_path, "wb") as handle:
+    async with aiofiles.open(file_path, "wb") as handle:
         while True:
             chunk = await file.read_chunk(CHUNK_SIZE)
             if not chunk:
                 break
             size += len(chunk)
-            handle.write(chunk)
+            await handle.write(chunk)
 
 
 @routes.post("/upload/{file_type}", permission="upload_file")
