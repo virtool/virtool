@@ -1,101 +1,25 @@
-import argparse
+import asyncio
 import json
 import logging
 import os
 import sys
-import urllib.parse
 
+import click
 import psutil
 
+import virtool.app
+import virtool.db.mongo
+import virtool.db.utils
+import virtool.jobs.classes
+import virtool.jobs.job
+import virtool.logs
+import virtool.redis
 import virtool.utils
+from virtool.jobs.run import run_job
 
 logger = logging.getLogger(__name__)
 
-PATH = os.path.join(sys.path[0], "config.json")
-
-SCHEMA = {
-    # HTTP Server
-    "host": {
-        "type": "string",
-        "default": "localhost"
-    },
-    "port": {
-        "type": "integer",
-        "coerce": int,
-        "default": 9950
-    },
-
-    # File paths
-    "data_path": {
-        "type": "string",
-        "default": "data"
-    },
-    "watch_path": {
-        "type": "string",
-        "default": "watch"
-    },
-
-    # Host resource limits
-    "proc": {
-        "type": "integer",
-        "coerce": int,
-        "default": 4
-    },
-    "mem": {
-        "type": "integer",
-        "coerce": int,
-        "default": 8
-    },
-
-    # Job Limits
-    "lg_proc": {
-        "type": "integer",
-        "coerce": int,
-        "default": 4
-    },
-    "lg_mem": {
-        "type": "integer",
-        "coerce": int,
-        "default": 8
-    },
-    "sm_proc": {
-        "type": "integer",
-        "coerce": int,
-        "default": 2
-    },
-    "sm_mem": {
-        "type": "integer",
-        "coerce": int,
-        "default": 4
-    },
-
-    # MongoDB
-    "db_connection_string": {
-        "type": "string",
-        "default": ""
-    },
-    "db_name": {
-        "type": "string",
-        "default": ""
-    },
-
-    # Proxy
-    "proxy": {
-        "type": "string",
-        "default": ""
-    },
-
-    "force_setup": {
-        "type": "boolean",
-        "coerce": virtool.utils.to_bool,
-        "default": False
-    },
-
-    "force_version": {
-        "type": "string",
-        "default": ""
-    }
-}
+CONFIG_PATH = os.path.join(sys.path[0], "config.json")
 
 JOB_LIMIT_KEYS = (
     "lg_proc",
@@ -104,328 +28,229 @@ JOB_LIMIT_KEYS = (
     "sm_mem"
 )
 
-RESOURCE_TYPES = (
-    "proc",
-    "mem"
+OPTIONS = {
+    "data_path": click.option(
+        "--data-path",
+        default="data",
+        help="The path to the application data directory",
+        type=click.Path()
+    ),
+    "db_connection_string": click.option(
+        "--db-connection-string",
+        default="mongodb://localhost:27017",
+        help="The MongoDB connection string",
+        type=str
+    ),
+    "db_name": click.option(
+        "--db-name",
+        default="virtool",
+        help="The MongoDB database name",
+        type=str
+    ),
+    "dev": click.option(
+        "--dev",
+        help="Run in development mode",
+        is_flag=True
+    ),
+    "force_version": click.option(
+        "--force-version",
+        help="Make the instance think it is the passed version",
+        is_flag=True
+    ),
+    "host": click.option(
+        "--host",
+        default="localhost",
+        help="The host to listen on"
+    ),
+    "job_id": click.option(
+        "--job-id",
+        help="The ID of the job to run",
+        type=str,
+        required=True
+    ),
+    "no_check_db": click.option(
+        "--no-check-db",
+        help="Start without checking and repairing database",
+        is_flag=True
+    ),
+    "no_check_files": click.option(
+        "--no-check-files",
+        help="Start without ensuring data directory is valid",
+        is_flag=True
+    ),
+    "no_client": click.option(
+        "--no-client",
+        help="Start without serving client files",
+        is_flag=True
+    ),
+    "no_fetching": click.option(
+        "--no-fetching",
+        help="Start with automatic fetching disabled",
+        is_flag=True
+    ),
+    "no_file_manager": click.option(
+        "--no-file-manager",
+        help="Start without the file manager",
+        is_flag=True
+    ),
+    "no_job_manager": click.option(
+        "--no-job-manager",
+        help="Start without a job runner",
+        is_flag=True
+    ),
+    "no_sentry": click.option(
+        "--no-sentry",
+        help="Disable Sentry error reporting",
+        is_flag=True
+    ),
+    "lg_mem": click.option(
+        "--lg-mem",
+        default=1,
+        help="The maximum memory (GB) the runner may use"
+    ),
+    "lg_proc":click.option(
+        "--lg-proc",
+        default=1,
+        help="The maximum memory (GB) the runner may use"
+    ),
+    "mem": click.option(
+        "--mem",
+        default=1,
+        help="The maximum memory (GB) the instance may use"
+    ),
+    "port": click.option(
+        "--port",
+        default=9950,
+        help="The port to listen on"
+    ),
+    "proc": click.option(
+        "--proc",
+        default=1,
+        help="The maximum number of processes the instance can use"
+    ),
+    "proxy": click.option(
+        "--proxy",
+        help="The address for an internet proxy to connect through"
+    ),
+    "redis_connection_string": click.option(
+        "--redis-connection-string",
+        type=str,
+        required=True
+    ),
+    "sm_mem": click.option(
+        "--sm-mem",
+        default=1,
+        help="The maximum memory (GB) the runner may use"
+    ),
+    "sm_proc": click.option(
+        "--sm-proc",
+        default=1,
+        help="The maximum memory (GB) the runner may use"
+    ),
+    "temp_path": click.option(
+        "--temp-path",
+        type=click.Path(),
+        help="The path to local directory for temporary files"
+    ),
+    "verbose": click.option(
+        "--verbose",
+        is_flag=True
+    ),
+    "watch_path": click.option(
+        "--watch-path",
+        default="watch",
+        help="The path a directory to watch for read files",
+        type=click.Path()
+    )
+}
+
+ADDRESS_OPTIONS = (
+    "host",
+    "port"
 )
 
+COMMON_OPTIONS = (
+    "data_path",
+    "db_connection_string",
+    "db_name",
+    "dev",
+    "force_version",
+    "no_sentry",
+    "proxy",
+    "redis_connection_string",
+    "verbose"
+)
 
-def coerce(key, value):
+DISABLE_OPTIONS = (
+    "no_client",
+    "no_check_db",
+    "no_check_files",
+    "no_fetching",
+    "no_file_manager",
+    "no_job_manager"
+)
+
+RESOURCE_OPTIONS = (
+    "lg_mem",
+    "lg_proc",
+    "mem",
+    "proc",
+    "sm_mem",
+    "sm_proc"
+)
+
+MODE_SCOPED_OPTIONS = {
+    "job": (
+        *COMMON_OPTIONS,
+        "job_id",
+        "mem",
+        "proc",
+        "temp_path"
+    ),
+    "server": (
+        *ADDRESS_OPTIONS,
+        *COMMON_OPTIONS,
+        *DISABLE_OPTIONS
+    ),
+    "agent": (
+        *COMMON_OPTIONS,
+        *RESOURCE_OPTIONS,
+        "data_path",
+        "temp_path"
+    )
+}
+
+
+def use_options(mode):
+    option_keys = [
+        *COMMON_OPTIONS,
+        *MODE_SCOPED_OPTIONS[mode]
+    ]
+
+    options = [OPTIONS[key] for key in option_keys]
+
+    def inner(func):
+        for option in options:
+            func = option(func)
+
+        return func
+
+    return inner
+
+
+def create_default_map():
     try:
-        func = SCHEMA[key]["coerce"]
-    except KeyError:
-        return value
+        with open("./config.json", "r") as f:
+            json_config = json.load(f)
 
-    return func(value)
+            default_map = dict()
 
+            for mode, option_keys in MODE_SCOPED_OPTIONS.items():
+                default_map[mode] = {o: json_config[o] for o in option_keys if o in json_config}
 
-def file_exists():
-    path = os.path.join(sys.path[0], "config.json")
-    return os.path.exists(path)
-
-
-def get_defaults():
-    return {key: SCHEMA[key]["default"] for key in SCHEMA}
-
-
-def get_from_args():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "-H", "--host",
-        dest="host",
-        default=None,
-        help="the hostname the HTTP server should listen on"
-    )
-
-    parser.add_argument(
-        "-p", "--port",
-        dest="port",
-        default=None,
-        help="the port the HTTP server should listen on"
-    )
-
-    parser.add_argument(
-        "-d", "--data-path",
-        dest="data_path",
-        default=None,
-        help="the location to read and write data files to",
-        metavar="PATH"
-    )
-
-    parser.add_argument(
-        "-w", "--watch-path",
-        dest="watch_path",
-        default=None,
-        help="a location to continually retrieve sequencing files from",
-        metavar="PATH"
-    )
-
-    parser.add_argument(
-        "--proc",
-        dest="proc",
-        default=None,
-        help="the processor limit for this Virtool and its subprocesses"
-    )
-
-    parser.add_argument(
-        "--mem",
-        dest="mem",
-        default=None,
-        help="the memory limit (GB) for this Virtool and its subprocesses"
-    )
-
-    parser.add_argument(
-        "--db",
-        dest="db_connection_string",
-        default=None,
-        help="the MongoDB connection string"
-    )
-
-    parser.add_argument(
-        "--db-name",
-        dest="db_name",
-        default=None,
-        help="the MongoDB database name"
-    )
-
-    parser.add_argument(
-        "--lg-proc",
-        dest="lg_proc",
-        default=None,
-        help="processor limit for large jobs",
-        metavar="PROC"
-    )
-
-    parser.add_argument(
-        "--lg-mem",
-        dest="lg_mem",
-        default=None,
-        help="memory limit for large jobs",
-        metavar="MEM"
-    )
-
-    parser.add_argument(
-        "--sm-proc",
-        dest="sm_proc",
-        default=None,
-        help="processor limit for small jobs",
-        metavar="PROC"
-    )
-
-    parser.add_argument(
-        "--sm-mem",
-        dest="sm_mem",
-        default=None,
-        help="memory limit for small jobs",
-        metavar="MEM"
-    )
-
-    parser.add_argument(
-        "--no-client",
-        action="store_true",
-        default=False,
-        dest="no_client",
-        help="run without serving client files"
-    )
-
-    parser.add_argument(
-        "--no-db-checks",
-        action="store_true",
-        default=False,
-        dest="no_db_checks",
-        help="disable validating and repairing database on start"
-    )
-
-    parser.add_argument(
-        "--no-file-checks",
-        action="store_true",
-        default=False,
-        dest="no_file_checks",
-        help="disable checking the application data on start"
-    )
-
-    parser.add_argument(
-        "--no-file-manager",
-        action="store_true",
-        default=False,
-        dest="no_file_manager",
-        help="disable the file manager"
-    )
-
-    parser.add_argument(
-        "--no-job-manager",
-        action="store_true",
-        default=False,
-        dest="no_job_manager",
-        help="disable the job manager"
-    )
-
-    parser.add_argument(
-        "--no-refreshing",
-        action="store_true",
-        default=False,
-        dest="no_refreshing",
-        help="disable automatic checking for reference, HMM, and software releases"
-    )
-
-    parser.add_argument(
-        "--no-sentry",
-        action="store_true",
-        default=False,
-        dest="no_sentry",
-        help="disable automatic error reporting"
-    )
-
-    parser.add_argument(
-        "--no-setup",
-        action="store_true",
-        default=False,
-        dest="no_setup",
-        help="disable setup on server start"
-    )
-
-    parser.add_argument(
-        "--force-setup",
-        action="store_true",
-        default=False,
-        dest="force_setup",
-        help="force the server to start in setup mode"
-    )
-
-    parser.add_argument(
-        "--force-version",
-        dest="force_version",
-        const="v0.0.0",
-        help="make the server think it is the passed VERSION (default=v0.0.0)",
-        metavar="VERSION",
-        nargs="?"
-    )
-
-    parser.add_argument(
-        "--dev",
-        action="store_true",
-        default=False,
-        dest="dev",
-        help="run in dev mode"
-    )
-
-    parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        dest="verbose",
-        default=False,
-        help="log debug messages"
-    )
-
-    args = vars(parser.parse_args())
-
-    return {key: value for key, value in args.items() if value is not None}
-
-
-def get_from_env() -> dict:
-    settings = dict()
-
-    for key in SCHEMA:
-        name = "VT_" + key.upper()
-
-        try:
-            settings[key] = os.environ[name]
-        except KeyError:
-            pass
-
-    return settings
-
-
-def load_from_file() -> dict:
-    try:
-        with open(PATH, "r") as f:
-            return json.load(f)
-    except IOError:
-        return dict()
-
-
-def convert_db(config: dict):
-    """
-    Convert legacy database settings to a single connection string keyed by `db`. Remove all legacy database settings.
-
-    This function updates `settings in-place.
-
-    :param config: legacy settings
-
-    """
-    db_host = config.pop("db_host")
-    db_port = config.pop("db_port")
-    db_name = config["db_name"]
-
-    auth_string = ""
-    ssl_string = ""
-
-    username = config.pop("db_username")
-    password = config.pop("db_password")
-    use_auth = config.pop("db_use_auth")
-    use_ssl = config.pop("db_use_ssl")
-
-    if use_auth and username and password:
-        username = urllib.parse.quote_plus(username)
-        password = urllib.parse.quote_plus(password)
-
-        auth_string = f"{username}:{password}@"
-
-        # Only use SSL if enabled and auth is configured.
-        if use_ssl:
-            ssl_string += "?ssl=true"
-
-    config["db_connection_string"] = f"mongodb://{auth_string}{db_host}:{db_port}/{db_name}{ssl_string}"
-    config["db_name"] = config["db_name"]
-
-
-def remove_defaults(config: dict):
-    """
-    Remove all config pairs where the value matches the default settings. This keeps the config file minimal.
-
-    This function modifies the `config` in-place.
-
-    :param config: config dict
-
-    """
-    defaults = get_defaults()
-
-    for key in defaults:
-        if key in config and defaults[key] == config[key]:
-            config.pop(key, None)
-
-
-def resolve() -> dict:
-    """
-    Calculates and returns all non-database-stored settings based on command line options, `settings.json` content,
-    and `ENV`.
-
-    :return:
-
-    """
-    from_file = load_from_file()
-    from_args = get_from_args()
-    from_env = get_from_env()
-    from_defaults = get_defaults()
-
-    resolved = {**from_defaults, **from_env, **from_file, **from_args}
-
-    coerced = {key: coerce(key, value) for key, value in resolved.items()}
-
-    validate_limits(coerced)
-
-    return coerced
-
-
-def should_do_setup(config):
-    if config["force_setup"]:
-        return True
-
-    if config["no_setup"]:
-        return False
-
-    return not file_exists()
+            return default_map
+    except FileNotFoundError:
+        return None
 
 
 def validate_limits(config):
@@ -465,10 +290,37 @@ def validate_limits(config):
     return cpu_count, mem_total
 
 
-def write_to_file(data):
-    with open(PATH, "w") as f:
-        json_string = json.dumps(data, indent=4, sort_keys=True)
-        f.write(json_string)
+def entry():
+    default_map = create_default_map()
+    cli(auto_envvar_prefix="VT", default_map=default_map)
 
 
+@click.group()
+def cli():
+    pass
 
+
+@cli.command("server", help="Start a Virtool API and websocket server")
+@use_options("server")
+def start_server(**kwargs):
+    virtool.logs.configure(kwargs)
+    asyncio.get_event_loop().run_until_complete(virtool.app.run_app(kwargs))
+
+
+@cli.command("agent", help="Start as a minimal agent that starts jobs from Redis")
+@use_options("agent")
+def start_agent(**kwargs):
+    virtool.logs.configure(kwargs)
+    validate_limits(kwargs)
+    asyncio.get_event_loop().run_until_complete(virtool.jobs.run.run_agent(kwargs))
+
+
+@cli.command("job", help="Run a single existing Virtool job")
+@use_options("job")
+def start_job(**kwargs):
+    virtool.logs.configure(kwargs)
+    logger.info("Starting in job mode")
+
+    asyncio.get_event_loop().run_until_complete(run_job(
+        kwargs
+    ))

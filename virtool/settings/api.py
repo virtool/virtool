@@ -14,7 +14,7 @@ async def get(req):
 
     return json_response({
         **settings,
-        **{key: req.app["settings"][key] for key in virtool.settings.db.CONFIG_PROJECTION}
+        **{key: req.app["settings"].get(key) for key in virtool.settings.db.CONFIG_PROJECTION}
     })
 
 
