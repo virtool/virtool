@@ -92,12 +92,12 @@ const mapStateToProps = state => {
     const { found_count, page, page_count, total_count } = state.files;
 
     return {
-        documents: getFilteredFileIds(state),
         found_count,
         page,
         page_count,
         total_count,
         canUpload: checkAdminOrPermission(state, "upload_file"),
+        documents: getFilteredFileIds(state),
         storedFileType: state.files.fileType
     };
 };

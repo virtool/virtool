@@ -1,33 +1,28 @@
 import { getFilteredFileIds } from "../selectors";
 
-describe("Test Files Selectors", () => {
+describe("getFilteredFileIds()", () => {
     let state;
 
     beforeEach(() => {
         state = {
             files: {
                 documents: [
-                    { id: "foo", ready: true, reserved: false },
-                    { id: "fud", ready: true, reserved: false }
+                    { id: "foo", ready: true, reserved: false, uploaded_at: "2020-01-24T23:54:02Z" },
+                    { id: "bar", ready: true, reserved: false, uploaded_at: "2020-04-24T23:54:02Z" },
+                    { id: "baz", ready: true, reserved: false, uploaded_at: "2020-02-24T23:54:02Z" }
                 ]
             }
         };
     });
 
-    it("returns all document ids when appropriate", () => {
+    it("should return all document ids when appropriate", () => {
         const result = getFilteredFileIds(state);
-        expect(result).toEqual(["foo", "fud"]);
+        expect(result).toEqual(["bar", "baz", "foo"]);
     });
 
-    it("excludes ids unready documents", () => {
-        state.files.documents[0].ready = false;
-        const result = getFilteredFileIds(state);
-        expect(result).toEqual(["fud"]);
-    });
-
-    it("excludes ids reserved documents", () => {
+    it("should return only non-reserved document ids", () => {
         state.files.documents[1].reserved = true;
         const result = getFilteredFileIds(state);
-        expect(result).toEqual(["foo"]);
+        expect(result).toEqual(["baz", "foo"]);
     });
 });
