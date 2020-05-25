@@ -537,8 +537,6 @@ async def analyze(req):
 
     sample = await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
 
-    await req.app["dispatcher"].dispatch("samples", "update", virtool.utils.base_processor(sample))
-
     analysis_id = document["id"]
 
     return json_response(
