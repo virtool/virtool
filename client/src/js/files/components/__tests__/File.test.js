@@ -15,11 +15,18 @@ describe("<File />", () => {
             size: 10,
             uploadedAt: "2018-02-14T17:12:00.000000Z",
             user: { id: "bill" },
+            ready: true,
             onRemove: jest.fn()
         };
     });
 
     it("should render", () => {
+        const wrapper = shallow(<File {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render when [ready=false]", () => {
+        props.ready = false;
         const wrapper = shallow(<File {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
@@ -85,6 +92,7 @@ describe("mapStateToProps()", () => {
             id: "foo",
             name: "Foo",
             size: 1024,
+            ready: true,
             uploadedAt: "time_1",
             user: { id: "bob" }
         });

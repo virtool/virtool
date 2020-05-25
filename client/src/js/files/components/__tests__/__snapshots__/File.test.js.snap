@@ -16,6 +16,7 @@ exports[`<File /> should render 1`] = `
     </File__Creation>
   </File__FileHeader>
   <div>
+    <span />
     <Icon
       color="red"
       faStyle="fas"
@@ -48,7 +49,36 @@ exports[`<File /> should render when [canRemove=false] 1`] = `
       bill
     </File__Creation>
   </File__FileHeader>
-  <div />
+  <div>
+    <span />
+  </div>
+</File__StyledFile>
+`;
+
+exports[`<File /> should render when [ready=false] 1`] = `
+<File__StyledFile>
+  <File__FileHeader>
+    <strong>
+      foo.fa
+    </strong>
+    <File__Creation>
+      Uploaded 
+      <RelativeTime
+        time="2018-02-14T17:12:00.000000Z"
+      />
+       by 
+      bill
+    </File__Creation>
+  </File__FileHeader>
+  <span>
+    <Loader
+      size="14px"
+    />
+     
+    <strong>
+      Processing
+    </strong>
+  </span>
 </File__StyledFile>
 `;
 
@@ -66,6 +96,7 @@ exports[`<File /> should render when [user=null] 1`] = `
     </File__Creation>
   </File__FileHeader>
   <div>
+    <span />
     <Icon
       color="red"
       faStyle="fas"
