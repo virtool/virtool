@@ -1,3 +1,4 @@
+import aiofiles
 import collections
 import copy
 import csv
@@ -435,12 +436,12 @@ def rewrite_align(u, nu, vta_path, p_score_cutoff, path):
                     of.write(line)
 
 
-def calculate_coverage(vta_path, ref_lengths):
+def calculate_coverage(path, ref_lengths):
     coverage_dict = dict()
     pos_length_list = list()
 
-    with open(vta_path, "r") as old_handle:
-        for line in old_handle:
+    with open(path, "r") as f:
+        for line in f:
             _, ref_id, pos, length, _ = line.split(",")
 
             coverage_dict[ref_id] = None
@@ -461,33 +462,30 @@ def calculate_coverage(vta_path, ref_lengths):
     return coverage_dict
 
 
-def subtract(analysis_path, host_scores):
-    vta_path = os.path.join(analysis_path, "to_isolates.vta")
-
+async def subtract(target_path, output_path, host_scores):
     isolates_high_scores = collections.defaultdict(int)
 
-    with open(vta_path, "r") as handle:
-        for line in handle:
+    async with aiofiles.open(target_path, "r") as f:
+        async for line in f:
             fields = line.rstrip().split(",")
             read_id = fields[0]
             isolates_high_scores[read_id] = max(isolates_high_scores[read_id], float(fields[4]))
 
-    out_path = os.path.join(analysis_path, "subtracted.vta")
-
     subtracted_read_ids = set()
 
-    with open(vta_path, "r") as vta_handle:
-        with open(out_path, "w") as out_handle:
-            for line in vta_handle:
+    async with aiofiles.open(target_path, "r") as f_vta:
+        async with aiofiles.open(output_path, "w") as f_out:
+            async for line in f_vta:
                 fields = line.rstrip().split(",")
                 read_id = fields[0]
                 if isolates_high_scores[read_id] > host_scores.get(read_id, 0):
-                    out_handle.write(line)
+                    await f_out.write(line)
                 else:
                     subtracted_read_ids.add(read_id)
 
-    os.remove(vta_path)
-
-    shutil.move(out_path, vta_path)
-
     return len(subtracted_read_ids)
+
+
+def replace_after_subtraction(src, dest):
+    os.remove(dest)
+    shutil.move(src, dest)

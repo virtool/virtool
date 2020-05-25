@@ -1,10 +1,11 @@
+import aiofiles
 import logging
 import os
 
 logger = logging.getLogger(__name__)
 
 
-def calculate_fasta_gc(path):
+async def calculate_fasta_gc(path):
     nucleotides = {
         "a": 0,
         "t": 0,
@@ -16,8 +17,8 @@ def calculate_fasta_gc(path):
     count = 0
 
     # Go through the fasta file getting the nucleotide counts, lengths, and number of sequences
-    with open(path, "r") as handle:
-        for line in handle:
+    async with aiofiles.open(path, "r") as f:
+        async for line in f:
             if line[0] == ">":
                 count += 1
                 continue

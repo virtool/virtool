@@ -110,8 +110,7 @@ def test_read_fasta(illegal, tmpdir):
         ]
 
 
-@pytest.mark.parametrize("headers_only", [True, False], ids=["read_fastq_headers", "read_fastq"])
-def test_fastq(headers_only, tmpdir):
+async def test_read_fastq_from_path(tmpdir):
     tmpfile = tmpdir.join("test.fa")
 
     with open(os.path.join(TEST_FILES_PATH, "test.fq"), "r") as f:
@@ -122,7 +121,12 @@ def test_fastq(headers_only, tmpdir):
 
     tmpfile.write("".join(lines))
 
-    expected = [
+    result = list()
+
+    async for record in virtool.bio.read_fastq_from_path(str(tmpfile)):
+        result.append(record)
+
+    assert result == [
         (
             '@HWI-ST1410:82:C2VAGACXX:7:1101:1531:1859 1:N:0:AGTCAA',
             'NTGAGTATCTATTCTACAAATTCATTGATGTTTAGATGAATCGATATACATATTCATTAATAGTCTAGATCATGATATATACTTATCCCTCTAGGTGTCTG',
@@ -145,10 +149,28 @@ def test_fastq(headers_only, tmpdir):
         )
     ]
 
-    if headers_only:
-        assert virtool.bio.read_fastq_headers(str(tmpfile)) == [i[0] for i in expected]
-    else:
-        assert list(virtool.bio.read_fastq_from_path(str(tmpfile))) == expected
+
+async def test_read_fastq_headers(tmpdir):
+    tmpfile = tmpdir.join("test.fa")
+
+    with open(os.path.join(TEST_FILES_PATH, "test.fq"), "r") as f:
+        lines = list()
+
+        while len(lines) < 16:
+            lines.append(f.readline())
+
+    tmpfile.write("".join(lines))
+
+    results = list()
+
+    results = await virtool.bio.read_fastq_headers(str(tmpfile))
+
+    assert results == [
+        "@HWI-ST1410:82:C2VAGACXX:7:1101:1531:1859 1:N:0:AGTCAA",
+        "@HWI-ST1410:82:C2VAGACXX:7:1101:1648:1927 1:N:0:AGTCAA",
+        "@HWI-ST1410:82:C2VAGACXX:7:1101:2306:1918 1:N:0:AGTCAA",
+        "@HWI-ST1410:82:C2VAGACXX:7:1101:2582:1955 1:N:0:AGTCAA"
+    ]
 
 
 def test_reverse_complement():

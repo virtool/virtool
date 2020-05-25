@@ -182,7 +182,6 @@ async def create(req):
     # Create job document.
     job = await virtool.jobs.db.create(
         db,
-        req.app["settings"],
         "build_index",
         task_args,
         user_id,

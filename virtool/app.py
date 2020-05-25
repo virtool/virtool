@@ -22,7 +22,7 @@ import virtool.http.csp
 import virtool.http.errors
 import virtool.http.proxy
 import virtool.http.query
-import virtool.jobs.manager
+import virtool.jobs.agent
 import virtool.logs
 import virtool.references.db
 import virtool.resources
@@ -36,56 +36,6 @@ import virtool.utils
 import virtool.version
 
 logger = logging.getLogger(__name__)
-
-INTEGRATED_STARTUP = [
-    virtool.startup.init_version,
-    virtool.startup.init_events,
-    virtool.startup.init_db,
-    virtool.startup.init_dispatcher,
-    virtool.startup.init_settings,
-    virtool.startup.init_client_path,
-    virtool.startup.init_http_client,
-    virtool.startup.init_paths,
-    virtool.startup.init_routes,
-    virtool.startup.init_executors,
-    virtool.startup.init_sentry,
-    virtool.startup.init_check_db,
-    virtool.startup.init_resources,
-    virtool.startup.init_job_manager,
-    virtool.startup.init_file_manager,
-    virtool.startup.init_refresh
-]
-
-MASTER_SETUP = [
-    virtool.startup.init_version,
-    virtool.startup.init_events,
-    virtool.startup.init_db,
-    virtool.startup.init_dispatcher,
-    virtool.startup.init_settings,
-    virtool.startup.init_client_path,
-    virtool.startup.init_http_client,
-    virtool.startup.init_paths,
-    virtool.startup.init_routes,
-    virtool.startup.init_executors,
-    virtool.startup.init_redis,
-    virtool.startup.init_sentry,
-    virtool.startup.init_check_db,
-    virtool.startup.init_resources,
-    virtool.startup.init_job_manager,
-    virtool.startup.init_refresh
-]
-
-RUNNER_STARTUP = [
-    virtool.startup.init_routes,
-    virtool.startup.init_events,
-    virtool.startup.init_version,
-    virtool.startup.init_db,
-    virtool.startup.init_redis,
-    virtool.startup.init_settings,
-    virtool.startup.init_sentry,
-    virtool.startup.init_resources,
-    virtool.startup.init_job_manager
-]
 
 
 async def on_shutdown(app: aiohttp.web.Application):
@@ -128,7 +78,7 @@ async def on_shutdown(app: aiohttp.web.Application):
         pass
 
 
-def create_app(mode, config):
+def create_app(config):
     """
     Creates the Virtool application.
 
@@ -145,15 +95,29 @@ def create_app(mode, config):
     app = aiohttp.web.Application(middlewares=middlewares)
 
     app["config"] = config
-    app["mode"] = mode
     app["change_queue"] = asyncio.Queue()
+    app["mode"] = "server"
 
     aiojobs.aiohttp.setup(app)
 
-    if mode == "integrated":
-        app.on_startup.extend(INTEGRATED_STARTUP)
-    else:
-        app.on_startup.extend(MASTER_SETUP)
+    app.on_startup.extend([
+        virtool.startup.init_version,
+        virtool.startup.init_events,
+        virtool.startup.init_db,
+        virtool.startup.init_dispatcher,
+        virtool.startup.init_settings,
+        virtool.startup.init_client_path,
+        virtool.startup.init_http_client,
+        virtool.startup.init_paths,
+        virtool.startup.init_routes,
+        virtool.startup.init_executors,
+        virtool.startup.init_redis,
+        virtool.startup.init_sentry,
+        virtool.startup.init_check_db,
+        virtool.startup.init_resources,
+        virtool.startup.init_job_interface,
+        virtool.startup.init_refresh
+    ])
 
     app.on_response_prepare.append(virtool.http.csp.on_prepare)
     app.on_shutdown.append(on_shutdown)
@@ -190,10 +154,14 @@ async def create_app_runner(app: aiohttp.web.Application, host: str, port: int) 
     return runner
 
 
-async def run_app(mode, config):
-    app = create_app(mode, config)
+async def run_app(config):
+    app = create_app(config)
 
-    runner = await create_app_runner(app, config["host"], config["port"])
+    runner = await create_app_runner(
+        app,
+        config["host"],
+        config["port"]
+    )
 
     _, pending = await asyncio.wait(
         [wait_for_restart(runner, app["events"]), wait_for_shutdown(runner, app["events"])],

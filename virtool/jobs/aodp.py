@@ -1,185 +1,169 @@
+import collections
 import os
+import pathlib
 import shutil
-import sys
-from collections import defaultdict
 
+import aiofiles
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
-
 import virtool.jobs.analysis
+import virtool.jobs.job
+import virtool.samples.db
 import virtool.utils
 
 AODP_MAX_HOMOLOGY = 0
 AODP_OLIGO_SIZE = 8
 
 
-class Job(virtool.jobs.analysis.Job):
+async def check_db(job):
+    job.params["temp_index_path"] = os.path.join(job.temp_dir.name, "reference", "reference.fa")
+    job.params["aodp_output_path"] = os.path.join(job.params["temp_analysis_path"], "aodp.out")
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    job.params["index_path"] = os.path.join(
+        job.settings["data_path"],
+        "references",
+        job.task_args["ref_id"],
+        job.task_args["index_id"],
+        "ref.fa"
+    )
 
-        self._stage_list = [
-            self.make_analysis_dir,
-            self.prepare_index,
-            self.prepare_reads,
-            self.join_reads,
-            self.deduplicate_reads,
-            self.aodp,
-            self.import_results
-        ]
 
-        self.results = dict()
+async def prepare_index(job):
+    await job.run_in_executor(
+        os.makedirs,
+        pathlib.Path(job.params["temp_index_path"]).parent
+    )
 
-    def check_db(self):
-        super().check_db()
+    await job.run_in_executor(
+        shutil.copy,
+        job.params["index_path"],
+        job.params["temp_index_path"]
+    )
 
-        self.params["local_index_path"] = os.path.join(self.params["analysis_path"], "reference.fa")
-        self.params["aodp_output_path"] = os.path.join(self.params["analysis_path"], "aodp.out")
 
-        self.params["index_path"] = os.path.join(
-            self.settings["data_path"],
-            "references",
-            self.task_args["ref_id"],
-            self.task_args["index_id"],
-            "ref.fa"
-        )
+async def join_reads(job):
+    max_overlap = round(0.65 * job.params["sample_read_length"])
 
-    def prepare_index(self):
-        shutil.copy(
-            self.params["index_path"],
-            self.params["local_index_path"]
-        )
+    command = [
+        "flash",
+        "--max-overlap", str(max_overlap),
+        "-d", job.params["temp_analysis_path"],
+        "-o", "flash",
+        "-t", str(job.proc - 1),
+        *job.params["read_paths"]
+    ]
 
-    def join_reads(self):
-        max_overlap = round(0.65 * self.params["sample_read_length"])
-        output_prefix = os.path.join(self.params["analysis_path"], "flash")
+    await job.run_subprocess(command)
 
-        command = [
-            "flash",
-            "--max-overlap", str(max_overlap),
-            "-o", output_prefix,
-            "-t", str(self.proc - 1),
-            *self.params["read_paths"]
-        ]
+    joined_path = os.path.join(job.params["temp_analysis_path"], "flash.extendedFrags.fastq")
+    remainder_path = os.path.join(job.params["temp_analysis_path"], "flash.notCombined_1.fastq")
+    hist_path = os.path.join(job.params["temp_analysis_path"], "flash.hist")
 
-        self.run_subprocess(command)
+    job.results = {
+        "join_histogram": await parse_flash_histogram(hist_path),
+        "joined_pair_count": await virtool.utils.file_length(joined_path) / 4,
+        "remainder_pair_count": await virtool.utils.file_length(remainder_path) / 4
+    }
 
-        joined_path = f"{output_prefix}.extendedFrags.fastq"
-        remainder_path = f"{output_prefix}.notCombined_1.fastq"
-        hist_path = f"{output_prefix}.hist"
 
-        self.results = {
-            "join_histogram": parse_flash_hist(hist_path),
-            "joined_pair_count": virtool.utils.file_length(joined_path) / 4,
-            "remainder_pair_count": virtool.utils.file_length(remainder_path) / 4
+async def deduplicate_reads(job):
+    """
+    Remove duplicate reads. Store the counts for unique reads.
+
+    """
+    joined_path = os.path.join(job.params["temp_analysis_path"], "flash.extendedFrags.fastq")
+    output_path = os.path.join(job.params["temp_analysis_path"], "unique.fa")
+
+    counts = await job.run_in_executor(
+        run_dedup,
+        joined_path,
+        output_path
+    )
+
+    job.intermediate["sequence_counts"] = counts
+
+
+async def aodp(job):
+    cwd = job.params["temp_analysis_path"]
+
+    aodp_output_path = job.params["aodp_output_path"]
+    base_name = os.path.join(job.params["temp_analysis_path"], "aodp")
+    target_path = os.path.join(job.params["temp_analysis_path"], "unique.fa")
+
+    command = [
+        "aodp",
+        f"--basename={base_name}",
+        f"--threads={job.proc}",
+        f"--oligo-size={AODP_OLIGO_SIZE}",
+        f"--match={target_path}",
+        f"--match-output={aodp_output_path}",
+        f"--max-homolo={AODP_MAX_HOMOLOGY}",
+        job.params["temp_index_path"]
+    ]
+
+    await job.run_subprocess(command, cwd=cwd)
+
+    parsed = list()
+
+    async with aiofiles.open(job.params["aodp_output_path"], "r") as f:
+        async for line in f:
+            split = line.rstrip().split("\t")
+            assert len(split) == 7
+
+            sequence_id = split[1]
+
+            if sequence_id == "-":
+                continue
+
+            identity = split[2]
+
+            if identity[0] == "<":
+                continue
+            else:
+                identity = float(identity.replace("%", ""))
+
+            read_id = split[0]
+
+            sequence_id = split[1]
+
+            otu_id = job.params["sequence_otu_map"][sequence_id]
+            otu_version = job.params["manifest"][otu_id]
+
+            parsed.append({
+                "id": read_id,
+                "sequence_id": sequence_id,
+                "identity": identity,
+                "matched_length": int(split[3]),
+                "read_length": int(split[4]),
+                "min_cluster": int(split[5]),
+                "max_cluster": int(split[6]),
+                "count": job.intermediate["sequence_counts"][read_id],
+                "otu": {
+                    "version": otu_version,
+                    "id": otu_id
+                }
+            })
+
+    job.results["results"] = parsed
+
+
+async def import_results(job):
+    analysis_id = job.params["analysis_id"]
+    sample_id = job.params["sample_id"]
+
+    # Update the database document with the small data.
+    await job.db.analyses.update_one({"_id": analysis_id}, {
+        "$set": {
+            **job.results,
+            "ready": True
         }
+    })
 
-    def deduplicate_reads(self):
-        """
-        Remove duplicate reads. Store the counts for unique reads.
-
-        """
-        counts = defaultdict(int)
-
-        joined_path = os.path.join(self.params["analysis_path"], "flash.extendedFrags.fastq")
-        output_path = os.path.join(self.params["analysis_path"], "unique.fa")
-
-        with open(output_path, "w") as f:
-            for record in parse_joined_fastq(joined_path, counts):
-                SeqIO.write(record, f, format="fasta")
-
-        self.intermediate["sequence_counts"] = counts
-
-    def aodp(self):
-        cwd = self.params["analysis_path"]
-
-        aodp_output_path = self.params["aodp_output_path"]
-        base_name = os.path.join(self.params["analysis_path"], "aodp")
-        local_index_path = self.params["local_index_path"]
-        target_path = os.path.join(self.params["analysis_path"], "unique.fa")
-
-        if cwd[0] != "/":
-            cwd = os.path.join(sys.path[0], cwd)
-
-            aodp_output_path = os.path.join(sys.path[0], aodp_output_path)
-            base_name = os.path.join(sys.path[0], base_name)
-            local_index_path = os.path.join(sys.path[0], self.params["local_index_path"])
-            target_path = os.path.join(sys.path[0], target_path)
-
-        command = [
-            "aodp",
-            f"--basename={base_name}",
-            f"--threads={self.proc}",
-            f"--oligo-size={AODP_OLIGO_SIZE}",
-            f"--match={target_path}",
-            f"--match-output={aodp_output_path}",
-            f"--max-homolo={AODP_MAX_HOMOLOGY}",
-            local_index_path
-        ]
-
-        self.run_subprocess(command, cwd=cwd)
-
-        parsed = list()
-
-        with open(self.params["aodp_output_path"], "r") as f:
-            for line in f:
-                split = line.rstrip().split("\t")
-                assert len(split) == 7
-
-                sequence_id = split[1]
-
-                if sequence_id == "-":
-                    continue
-
-                identity = split[2]
-
-                if identity[0] == "<":
-                    continue
-                else:
-                    identity = float(identity.replace("%", ""))
-
-                read_id = split[0]
-
-                sequence_id = split[1]
-
-                otu_id = self.params["sequence_otu_map"][sequence_id]
-                otu_version = self.params["manifest"][otu_id]
-
-                parsed.append({
-                    "id": read_id,
-                    "sequence_id": sequence_id,
-                    "identity": identity,
-                    "matched_length": int(split[3]),
-                    "read_length": int(split[4]),
-                    "min_cluster": int(split[5]),
-                    "max_cluster": int(split[6]),
-                    "count": self.intermediate["sequence_counts"][read_id],
-                    "otu": {
-                        "version": otu_version,
-                        "id": otu_id
-                    }
-                })
-
-        self.results["results"] = parsed
-
-    def import_results(self):
-        analysis_id = self.params["analysis_id"]
-        sample_id = self.params["sample_id"]
-
-        # Update the database document with the small data.
-        self.db.analyses.update_one({"_id": analysis_id}, {
-            "$set": {
-                **self.results,
-                "ready": True
-            }
-        })
-
-        self.dispatch("analyses", "update", [analysis_id])
-        self.dispatch("samples", "update", [sample_id])
+    await virtool.samples.db.recalculate_workflow_tags(job.db, sample_id)
 
 
-def parse_joined_fastq(path: str, counts: defaultdict):
+def parse_joined_fastq(path: str, counts: collections.defaultdict):
     sequence_id_map = dict()
 
     for record in SeqIO.parse(path, format="fastq"):
@@ -194,11 +178,44 @@ def parse_joined_fastq(path: str, counts: defaultdict):
         counts[sequence_id] += 1
 
 
-def parse_flash_hist(path):
+async def parse_flash_histogram(path):
     hist = list()
 
-    with open(path, "r") as f:
-        for line in f:
+    async with aiofiles.open(path, "r") as f:
+        async for line in f:
             hist.append([int(i) for i in line.rstrip().split()])
 
     return hist
+
+
+def run_dedup(joined_path, output_path):
+    counts = collections.defaultdict(int)
+
+    with open(output_path, "w") as f:
+        for record in parse_joined_fastq(joined_path, counts):
+            SeqIO.write(record, f, format="fasta")
+
+    return dict(counts)
+
+
+aodp_job = virtool.jobs.job.Job()
+
+aodp_job.on_startup = [
+    virtool.jobs.analysis.check_db,
+    check_db
+]
+
+aodp_job.steps = [
+    virtool.jobs.analysis.make_analysis_dir,
+    prepare_index,
+    virtool.jobs.analysis.prepare_reads,
+    join_reads,
+    deduplicate_reads,
+    aodp,
+    import_results
+]
+
+aodp_job.on_cleanup = [
+    virtool.jobs.analysis.delete_analysis,
+    virtool.jobs.analysis.delete_cache
+]

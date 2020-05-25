@@ -17,7 +17,6 @@ import virtool.jobs.api
 import virtool.otus.api
 import virtool.processes.api
 import virtool.references.api
-import virtool.runner
 import virtool.samples.api
 import virtool.settings.api
 import virtool.software.api

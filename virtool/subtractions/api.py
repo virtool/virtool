@@ -147,7 +147,6 @@ async def create(req):
 
     await virtool.jobs.db.create(
         db,
-        req.app["settings"],
         "create_subtraction",
         task_args,
         user_id,
