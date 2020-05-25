@@ -134,7 +134,8 @@ async def create(req):
         },
         "job": {
             "id": job_id
-        }
+        },
+        "deleted": False
     }
 
     await db.subtraction.insert_one(document)
