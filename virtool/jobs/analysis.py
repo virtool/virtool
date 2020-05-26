@@ -157,7 +157,7 @@ class Job(virtool.jobs.job.Job):
         self.db.analyses.delete_one({"_id": self.params["analysis_id"]})
 
         try:
-            shutil.rmtree(self.params["analysis_path"])
+            shutil.rmtree(self.params["analysis_path"], ignore_errors=True)
         except FileNotFoundError:
             pass
 
