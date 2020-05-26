@@ -73,12 +73,7 @@ async def check_db(job):
         "sample_read_length": int(sample["quality"]["length"][1]),
         "library_type": sample["library_type"],
         "reads_path": os.path.join(job.temp_dir.name, "reads"),
-        "subtraction_path": os.path.join(
-            job.settings["data_path"],
-            "subtractions",
-            analysis["subtraction"]["id"],
-            "reference"
-        ),
+        "subtraction_path": virtool.subtractions.utils.join_subtraction_index_path(job.settings, analysis["subtraction"]["id"]),
         "raw_path": os.path.join(job.temp_dir.name, "raw"),
         "temp_cache_path": os.path.join(job.temp_dir.name, "cache"),
         "temp_analysis_path": temp_analysis_path

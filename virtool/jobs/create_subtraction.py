@@ -14,9 +14,8 @@ logger = logging.getLogger(__name__)
 async def check_db(job):
     job.params = dict(job.task_args)
 
-    subtraction_path = os.path.join(
-        job.settings["data_path"],
-        "subtractions",
+    subtraction_path = virtool.subtractions.utils.join_subtraction_path(
+        job.settings,
         job.params["subtraction_id"]
     )
 
