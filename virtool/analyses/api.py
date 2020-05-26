@@ -99,9 +99,18 @@ async def remove(req):
 
     await db.analyses.delete_one({"_id": analysis_id})
 
-    path = os.path.join(req.app["settings"]["data_path"], "samples", sample_id, "analysis", analysis_id)
+    path = os.path.join(
+        req.app["settings"]["data_path"],
+        "samples",
+        sample_id,
+        "analysis",
+        analysis_id
+    )
 
-    await req.app["run_in_thread"](virtool.utils.rm, path, True)
+    try:
+        await req.app["run_in_thread"](virtool.utils.rm, path, True)
+    except FileNotFoundError:
+        pass
 
     await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
 
