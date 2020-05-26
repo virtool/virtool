@@ -215,7 +215,6 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
         return
 
     if error == "409_workflow":
-        print(await resp.json())
         assert await resp_is.conflict(resp, "Not a NuVs analysis")
         return
 
@@ -237,12 +236,12 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
     assert await resp.json() == blast
 
     m_initialize_ncbi_blast.assert_called_with(
-        client.settings,
+        client.app["settings"],
         "GGAGTTAGATTGG"
     )
 
     m_check_rid.assert_called_with(
-        client.settings,
+        client.app["settings"],
         "FOOBAR1337"
     )
 

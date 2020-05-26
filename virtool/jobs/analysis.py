@@ -123,7 +123,7 @@ async def prepare_reads(job):
         job.params["sample_read_length"]
     )
 
-    cache = await virtool.caches.db.find_cache(
+    cache = await virtool.caches.db.find(
         job.db,
         job.params["sample_id"],
         TRIMMING_PROGRAM,

@@ -272,20 +272,23 @@ async def write_sequences_to_file(path: str, sequences: typing.Iterable):
             await f.write(line)
 
 
-build_index_job = virtool.jobs.job.Job()
+def create():
+    job = virtool.jobs.job.Job()
 
-build_index_job.on_startup = [
-    check_db
-]
+    job.on_startup = [
+        check_db
+    ]
 
-build_index_job.steps = [
-    mk_index_dir,
-    write_fasta,
-    bowtie_build,
-    replace_old
-]
+    job.steps = [
+        mk_index_dir,
+        write_fasta,
+        bowtie_build,
+        replace_old
+    ]
 
-build_index_job.on_cleanup = [
-    delete_index,
-    reset_history
-]
+    job.on_cleanup = [
+        delete_index,
+        reset_history
+    ]
+
+    return job

@@ -214,7 +214,7 @@ async def test_create(data_type, mocker, snapshot, spawn_client, test_random_alp
         "isolate"
     ]
 
-    client.settings["default_source_types"] = default_source_type
+    client.app["settings"]["default_source_types"] = default_source_type
 
     data = {
         "name": "Test Viruses",

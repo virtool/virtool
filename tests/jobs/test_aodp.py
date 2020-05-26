@@ -3,6 +3,7 @@ import filecmp
 import sys
 import shutil
 import pytest
+import io
 import virtool.jobs.aodp
 
 TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
@@ -10,7 +11,9 @@ TEST_REF_PATH = os.path.join(TEST_FILES_PATH, "aodp", "reference.fa")
 
 
 @pytest.fixture
-def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_name):
+async def mock_job(tmpdir, mocker, monkeypatch, request, dbi, test_db_connection_string, test_db_name):
+    monkeypatch.setattr('sys.stdin', io.StringIO('my input'))
+
     index_dir = tmpdir.mkdir("references").mkdir("foo_ref").mkdir("foo_index")
     shutil.copy(TEST_REF_PATH, index_dir.join("ref.fa"))
 
@@ -21,7 +24,7 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
         "db_name": test_db_name
     }
 
-    dbs.analyses.insert_one({
+    await dbi.analyses.insert_one({
         "_id": "foo_analysis",
         "workflow": "aodp",
         "ready": False,
@@ -33,7 +36,7 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
         }
     })
 
-    dbs.indexes.insert_one({
+    await dbi.indexes.insert_one({
         "_id": "foo_index",
         "manifest": {
             "foo": 1,
@@ -44,7 +47,7 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
         }
     })
 
-    dbs.samples.insert_one({
+    await dbi.samples.insert_one({
         "_id": "foo_sample",
         "library_type": "amplicon",
         "paired": False,
@@ -57,12 +60,12 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
         }
     })
 
-    dbs.references.insert_one({
+    await dbi.references.insert_one({
         "_id": "foo_ref",
         "data_type": "barcode"
     })
 
-    dbs.jobs.insert_one({
+    await dbi.jobs.insert_one({
         "_id": "foo_job",
         "task": "aodp",
         "args": {
@@ -77,24 +80,30 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
 
     queue = mocker.Mock()
 
-    job = virtool.jobs.aodp.Job(
-        test_db_connection_string,
-        test_db_name,
-        settings,
-        "foo_job",
-        queue
-    )
+    config = {
+        **settings,
+        "db_connection_string": test_db_connection_string,
+        "db_name": test_db_name,
+        "proc": 1,
+        "mem": 4
+    }
 
-    job.init_db()
+    job = virtool.jobs.aodp.create()
+
+    job.db = dbi
+    job.settings = config
+    job.id = "foo_job"
+
+    await job._connect_db()
+    await job._startup()
 
     return job
 
 
-def test_fetch_index(mock_job):
-    mock_job.check_db()
-    mock_job.prepare_index()
+async def test_fetch_index(mock_job):
+    await virtool.jobs.aodp.prepare_index(mock_job)
 
     assert filecmp.cmp(
         TEST_REF_PATH,
-        mock_job.params["local_index_path"],
+        mock_job.params["temp_index_path"],
     )

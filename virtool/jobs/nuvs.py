@@ -292,26 +292,29 @@ async def import_results(job):
     await virtool.samples.db.recalculate_workflow_tags(job.db, sample_id)
 
 
-nuvs_job = virtool.jobs.job.Job()
+def create():
+    job = virtool.jobs.job.Job()
 
-nuvs_job.on_startup = [
-    virtool.jobs.analysis.check_db
-]
+    job.on_startup = [
+        virtool.jobs.analysis.check_db
+    ]
 
-nuvs_job.steps = stage_list = [
-    virtool.jobs.analysis.make_analysis_dir,
-    virtool.jobs.analysis.prepare_reads,
-    eliminate_otus,
-    eliminate_subtraction,
-    reunite_pairs,
-    assemble,
-    process_fasta,
-    prepare_hmm,
-    vfam,
-    import_results
-]
+    job.steps = stage_list = [
+        virtool.jobs.analysis.make_analysis_dir,
+        virtool.jobs.analysis.prepare_reads,
+        eliminate_otus,
+        eliminate_subtraction,
+        reunite_pairs,
+        assemble,
+        process_fasta,
+        prepare_hmm,
+        vfam,
+        import_results
+    ]
 
-nuvs_job.on_cleanup = [
-    virtool.jobs.analysis.delete_analysis,
-    virtool.jobs.analysis.delete_cache
-]
+    job.on_cleanup = [
+        virtool.jobs.analysis.delete_analysis,
+        virtool.jobs.analysis.delete_cache
+    ]
+
+    return job

@@ -1,4 +1,6 @@
 import os
+
+import aiohttp.test_utils
 import pytest
 import types
 import virtool.jobs.build_index
@@ -65,20 +67,22 @@ def fake_otus():
 
 
 @pytest.fixture
-def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_name):
+async def mock_job(tmpdir, mocker, request, dbi, test_db_connection_string, test_db_name):
     tmpdir.mkdir("references").mkdir("foo")
 
     settings = {
         "data_path": str(tmpdir),
-        "db_name": test_db_name
+        "db_name": test_db_name,
+        "proc": 1,
+        "mem": 4
     }
 
-    dbs.references.insert_one({
+    await dbi.references.insert_one({
         "_id": "foo",
         "data_type": "genome"
     })
 
-    dbs.jobs.insert_one({
+    await dbi.jobs.insert_one({
         "_id": "foobar",
         "task": "build_index",
         "args": {
@@ -89,59 +93,54 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
         "mem": 8
     })
 
-    queue = mocker.Mock()
+    job = virtool.jobs.build_index.create()
 
-    job = virtool.jobs.build_index.Job(
-        test_db_connection_string,
-        test_db_name,
-        settings,
-        "foobar",
-        queue
-    )
+    job.db = dbi
+    job.settings = settings
+    job.id = "foobar"
 
-    job.init_db()
+    await job._connect_db()
+    await job._startup()
 
     return job
 
 
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
-def test_check_db(dbs, data_type, tmpdir, mock_job):
+async def test_check_db(dbi, data_type, tmpdir, mock_job):
     """
     Test that method provides the required parameters and that `data_type` is derived correctly.
 
     """
-    dbs.references.update_one({"_id": "foo"}, {
+    await dbi.references.update_one({"_id": "foo"}, {
         "$set": {
             "data_type": data_type
         }
     })
 
-    mock_job.check_db()
+    await virtool.jobs.build_index.check_db(mock_job)
 
     assert mock_job.params == {
         "data_type": data_type,
         "index_id": "bar",
         "index_path": os.path.join(str(tmpdir), "references/foo/bar"),
         "ref_id": "foo",
-        "reference_path": os.path.join(str(tmpdir), "references/foo")
+        "reference_path": os.path.join(str(tmpdir), "references/foo"),
+        "temp_index_path": os.path.join(mock_job.temp_dir.name, "bar")
     }
 
 
-def test_mk_index_dir(dbs, tmpdir, mock_job):
+async def test_mk_index_dir(tmpdir, mock_job):
     """
     Test that index dir is created successfully.
 
     """
-    mock_job.check_db()
-    assert not os.path.exists(mock_job.params["index_path"])
-
     # Path exists after `mk_index_dir` runs.
-    mock_job.mk_index_dir()
-    assert os.path.exists(mock_job.params["index_path"])
+    await virtool.jobs.build_index.mk_index_dir(mock_job)
+    assert os.path.exists(mock_job.params["temp_index_path"])
 
 
-def test_get_patched_otus(mocker, dbs):
-    m = mocker.patch("virtool.db.sync.patch_otu_to_version", return_value=(None, {"_id": "foo"}, None))
+async def test_get_patched_otus(mocker, dbi):
+    m = mocker.patch("virtool.history.db.patch_to_version", aiohttp.test_utils.make_mocked_coro((None, {"_id": "foo"}, None)))
 
     manifest = {
         "foo": 2,
@@ -153,13 +152,11 @@ def test_get_patched_otus(mocker, dbs):
         "data_path": "foo"
     }
 
-    patched_otus = virtool.jobs.build_index.get_patched_otus(
-        dbs,
+    patched_otus = await virtool.jobs.build_index.get_patched_otus(
+        dbi,
         settings,
         manifest
     )
-
-    assert isinstance(patched_otus, types.GeneratorType)
 
     assert list(patched_otus) == [
         {"_id": "foo"},
@@ -167,10 +164,15 @@ def test_get_patched_otus(mocker, dbs):
         {"_id": "foo"}
     ]
 
+    app_dict = {
+        "db": dbi,
+        "settings": settings
+    }
+
     m.assert_has_calls([
-        mocker.call(dbs, settings, "foo", 2),
-        mocker.call(dbs, settings, "bar", 10),
-        mocker.call(dbs, settings, "baz", 4)
+        mocker.call(app_dict, "foo", 2),
+        mocker.call(app_dict, "bar", 10),
+        mocker.call(app_dict, "baz", 4)
     ])
 
 
@@ -190,41 +192,7 @@ def test_get_sequences_from_patched_otus(data_type, mocker, snapshot, dbs, fake_
     snapshot.assert_match(sequence_otu_dict)
 
 
-def test_remove_unused_index_files(tmpdir):
-    """
-    Test that all and only non-active indexes are removed.
-
-    """
-    active_index_ids = [
-        "foo",
-        "baz"
-    ]
-
-    index_ids = [
-        "foo",
-        "bar",
-        "baz",
-        "boo"
-    ]
-
-    for index_id in index_ids:
-        tmpdir.mkdir(index_id).join("test.fa").write("hello world")
-
-    for index_id in index_ids:
-        assert os.listdir(os.path.join(str(tmpdir), index_id)) == ["test.fa"]
-
-    virtool.jobs.build_index.remove_unused_index_files(
-        str(tmpdir),
-        active_index_ids
-    )
-
-    assert set(os.listdir(str(tmpdir))) == set(active_index_ids)
-
-    for index_id in active_index_ids:
-        assert os.listdir(os.path.join(str(tmpdir), index_id)) == ["test.fa"]
-
-
-def test_write_sequences_to_file(snapshot, tmpdir):
+async def test_write_sequences_to_file(snapshot, tmpdir):
     sequences = [
         {
             "_id": "foo",
@@ -242,7 +210,7 @@ def test_write_sequences_to_file(snapshot, tmpdir):
 
     path = os.path.join(str(tmpdir), "output.fa")
 
-    virtool.jobs.build_index.write_sequences_to_file(path, sequences)
+    await virtool.jobs.build_index.write_sequences_to_file(path, sequences)
 
     with open(path, "r") as f:
         snapshot.assert_match(f.read())

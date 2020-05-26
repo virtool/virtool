@@ -152,20 +152,23 @@ async def delete_subtraction(job):
     await job.db.subtraction.delete_one({"_id": job.params["subtraction_id"]})
 
 
-create_subtraction_job = virtool.jobs.job.Job()
+def create():
+    job = virtool.jobs.job.Job()
 
-create_subtraction_job.on_startup = [
-    check_db
-]
+    job.on_startup = [
+        check_db
+    ]
 
-create_subtraction_job.steps = [
-    make_subtraction_dir,
-    unpack,
-    set_stats,
-    bowtie_build,
-    compress
-]
+    job.steps = [
+        make_subtraction_dir,
+        unpack,
+        set_stats,
+        bowtie_build,
+        compress
+    ]
 
-create_subtraction_job.on_cleanup = [
-    delete_subtraction
-]
+    job.on_cleanup = [
+        delete_subtraction
+    ]
+
+    return job

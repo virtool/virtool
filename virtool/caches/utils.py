@@ -1,7 +1,7 @@
 import os
 from typing import Union
 
-import virtool.samples
+import virtool.samples.utils
 
 
 def join_cache_path(settings: dict, cache_id: str):

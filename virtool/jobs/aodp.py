@@ -198,24 +198,27 @@ def run_dedup(joined_path, output_path):
     return dict(counts)
 
 
-aodp_job = virtool.jobs.job.Job()
+def create():
+    job = virtool.jobs.job.Job()
 
-aodp_job.on_startup = [
-    virtool.jobs.analysis.check_db,
-    check_db
-]
+    job.on_startup = [
+        virtool.jobs.analysis.check_db,
+        check_db
+    ]
 
-aodp_job.steps = [
-    virtool.jobs.analysis.make_analysis_dir,
-    prepare_index,
-    virtool.jobs.analysis.prepare_reads,
-    join_reads,
-    deduplicate_reads,
-    aodp,
-    import_results
-]
+    job.steps = [
+        virtool.jobs.analysis.make_analysis_dir,
+        prepare_index,
+        virtool.jobs.analysis.prepare_reads,
+        join_reads,
+        deduplicate_reads,
+        aodp,
+        import_results
+    ]
 
-aodp_job.on_cleanup = [
-    virtool.jobs.analysis.delete_analysis,
-    virtool.jobs.analysis.delete_cache
-]
+    job.on_cleanup = [
+        virtool.jobs.analysis.delete_analysis,
+        virtool.jobs.analysis.delete_cache
+    ]
+
+    return job

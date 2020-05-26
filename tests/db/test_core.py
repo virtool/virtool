@@ -54,50 +54,22 @@ class TestCollection:
 
         assert projected == document
 
-    @pytest.mark.parametrize("condition", [None, "param_silent", "attr_silent"])
-    @pytest.mark.parametrize("has_processor", [True, False])
-    async def test_dispatch_conditionally(self, condition, has_processor, mocker, create_test_collection):
+    @pytest.mark.parametrize("silent", [True, False])
+    async def test_enqueue_change(self, silent, mocker, create_test_collection):
         """
-        Test that `dispatch_conditionally` dispatches a message when not suppressed by the `silent` parameter or
-        :attr:`Collection.silent`.
+        Test that `dispatch_conditionally` dispatches a message when not suppressed by the `silent` parameter.
 
         """
-        collection = create_test_collection(silent=(condition == "attr_silent"))
+        collection = create_test_collection(silent=silent)
 
-        collection.apply_processor = make_mocked_coro(return_value={
-            "id": "foo",
-            "name": "Foo",
-            "tags": [
-                "bar",
-                "baz"
-            ]
-        })
+        await collection.enqueue_change("update", "foo", "bar")
 
-        document = {
-            "_id": "foo",
-            "name": "Foo",
-            "tags": [
-                "bar",
-                "baz"
-            ]
-        }
-
-        await collection.dispatch_conditionally(document, "update", silent=(condition == "param_silent"))
-
-        if condition is None:
-            collection.dispatch.assert_called_with("samples", "update", {
-                "id": "foo",
-                "name": "Foo",
-                "tags": [
-                    "bar",
-                    "baz"
-                ]
-            })
-
-            collection.apply_processor.assert_called_with(document)
+        if silent:
+            assert collection._enqueue_change.called is False
             return
 
-        assert collection.dispatch.called is False
+        collection._enqueue_change.assert_called_with("samples", "update", ("foo", "bar"))
+
 
     @pytest.mark.parametrize("attr_silent", [True, False])
     @pytest.mark.parametrize("param_silent", [True, False])
@@ -116,7 +88,7 @@ class TestCollection:
         assert delete_result.deleted_count == 2
 
         if not (attr_silent or param_silent):
-            collection.dispatch.assert_called_with("samples", "delete", ["foo", "baz"])
+            collection._enqueue_change.assert_called_with("samples", "delete", ("foo", "baz"))
 
         assert await test_motor.samples.find().to_list(None) == [
             {"_id": "bar", "tag": 2}
@@ -139,7 +111,7 @@ class TestCollection:
         assert delete_result.deleted_count == 1
 
         if not (attr_silent or param_silent):
-            collection.dispatch.assert_called_with("samples", "delete", ["foo"])
+            collection._enqueue_change.assert_called_with("samples", "delete", ("foo",))
 
         assert await test_motor.samples.find().to_list(None) == [
             {"_id": "bar", "tag": 2},

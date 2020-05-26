@@ -8,7 +8,7 @@ import virtool.app
 import virtool.dispatcher
 import virtool.startup
 import virtool.settings.schema
-import virtool.jobs.manager
+import virtool.jobs.agent
 
 
 @pytest.fixture

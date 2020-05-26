@@ -48,8 +48,6 @@ async def copy_files(job):
     files = job.params["files"]
     sample_id = job.params["sample_id"]
 
-    print(files)
-
     paths = [os.path.join(job.settings["data_path"], "files", file["id"]) for file in files]
 
     sizes = await job.run_in_executor(
@@ -146,22 +144,25 @@ async def release_files(job):
         })
 
 
-create_sample_job = virtool.jobs.job.Job()
+def create():
+    job = virtool.jobs.job.Job()
 
-create_sample_job.on_startup = [
-    check_db
-]
+    job.on_startup = [
+        check_db
+    ]
 
-create_sample_job.steps = [
-    make_sample_dir,
-    copy_files,
-    fastqc,
-    parse_fastqc,
-    upload,
-    clean_watch
-]
+    job.steps = [
+        make_sample_dir,
+        copy_files,
+        fastqc,
+        parse_fastqc,
+        upload,
+        clean_watch
+    ]
 
-create_sample_job.on_cleanup = [
-    delete_sample,
-    release_files
-]
+    job.on_cleanup = [
+        delete_sample,
+        release_files
+    ]
+
+    return job

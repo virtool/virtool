@@ -248,22 +248,25 @@ async def reset_samples(job):
             pass
 
 
-update_sample_job = virtool.jobs.job.Job()
+def create():
+    job = virtool.jobs.job.Job()
 
-update_sample_job.on_startup = [
-    check_db
-]
+    job.on_startup = [
+        check_db
+    ]
 
-update_sample_job.steps = [
-    copy_files,
-    fastqc,
-    parse_fastqc,
-    create_cache,
-    replace_old
-]
+    job.steps = [
+        copy_files,
+        fastqc,
+        parse_fastqc,
+        create_cache,
+        replace_old
+    ]
 
-update_sample_job.on_cleanup = [
-    delete_cache,
-    reset_analyses,
-    reset_samples
-]
+    job.on_cleanup = [
+        delete_cache,
+        reset_analyses,
+        reset_samples
+    ]
+
+    return job

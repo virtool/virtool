@@ -413,26 +413,29 @@ def run_patho(vta_path, reassigned_path):
     )
 
 
-pathoscope_job = virtool.jobs.job.Job()
+def create():
+    job = virtool.jobs.job.Job()
 
-pathoscope_job.on_startup = [
-    virtool.jobs.analysis.check_db
-]
+    job.on_startup = [
+        virtool.jobs.analysis.check_db
+    ]
 
-pathoscope_job.steps = [
-    virtool.jobs.analysis.make_analysis_dir,
-    virtool.jobs.analysis.prepare_reads,
-    map_default_isolates,
-    generate_isolate_fasta,
-    build_isolate_index,
-    map_isolates,
-    map_subtraction,
-    subtract_mapping,
-    pathoscope,
-    import_results
-]
+    job.steps = [
+        virtool.jobs.analysis.make_analysis_dir,
+        virtool.jobs.analysis.prepare_reads,
+        map_default_isolates,
+        generate_isolate_fasta,
+        build_isolate_index,
+        map_isolates,
+        map_subtraction,
+        subtract_mapping,
+        pathoscope,
+        import_results
+    ]
 
-pathoscope_job.on_cleanup = [
-    virtool.jobs.analysis.delete_analysis,
-    virtool.jobs.analysis.delete_cache
-]
+    job.on_cleanup = [
+        virtool.jobs.analysis.delete_analysis,
+        virtool.jobs.analysis.delete_cache
+    ]
+
+    return job

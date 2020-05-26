@@ -161,10 +161,7 @@ async def run_fastqc(run_subprocess, proc, read_paths, fastqc_path):
         *read_paths
     ]
 
-    async def handler(line):
-        print(line)
-
-    await run_subprocess(command, stdout_handler=handler)
+    await run_subprocess(command)
 
 
 def handle_base_quality_nan(split_line: list) -> list:

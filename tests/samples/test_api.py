@@ -2,6 +2,11 @@ import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
+class MockJobInterface:
+
+    def __init__(self):
+        self.enqueue_job = make_mocked_coro()
+
 
 @pytest.mark.parametrize("find,per_page,page,d_range,meta", [
     (None, None, None, range(0, 3), {
@@ -487,7 +492,9 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
 async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
-    client = await spawn_client(authorize=True, no_job_manager=False)
+    client = await spawn_client(authorize=True)
+
+    client.app["jobs"] = MockJobInterface()
 
     test_analysis = {
         "_id": "test_analysis",

@@ -169,6 +169,7 @@ class Job:
 
     async def _connect_db(self):
         logger.info("Retrieving job document")
+
         document = await self.db.jobs.find_one(self.id)
 
         self.task_name = document["task"]

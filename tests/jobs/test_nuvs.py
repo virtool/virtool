@@ -1,3 +1,5 @@
+import operator
+
 import pytest
 import filecmp
 import json
@@ -17,7 +19,7 @@ HOST_PATH = os.path.join(TEST_FILES_PATH, "index", "host")
 
 
 @pytest.fixture
-def mock_job(mocker, tmpdir, request, dbs, test_db_connection_string):
+async def mock_job(mocker, tmpdir, request, dbi, test_db_connection_string, test_db_name):
     # Add logs path.
     tmpdir.mkdir("logs").mkdir("jobs")
 
@@ -28,64 +30,40 @@ def mock_job(mocker, tmpdir, request, dbs, test_db_connection_string):
     shutil.copyfile(FASTQ_PATH, os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq"))
 
     settings = {
-        "data_path": str(tmpdir)
+        "data_path": str(tmpdir),
+        "db_connection_string": test_db_connection_string,
+        "db_name": test_db_name
     }
 
-    job = virtool.jobs.nuvs.Job(
-        test_db_connection_string,
-        "virtool",
-        settings,
-        "foo",
-        mocker.Mock()
-    )
+    job = virtool.jobs.nuvs.create()
 
-    job.db = dbs
-
-    job.proc = 2
-    job.proc = 8
+    job.db = dbi
+    job.id = "foobar"
+    job.mem = 4
+    job.proc = 1
+    job.settings = settings
 
     job.params = {
-        "sample_path": os.path.join(str(tmpdir), "samples", "foobar"),
         "analysis_id": "baz",
         "analysis_path": os.path.join(str(tmpdir), "samples", "foobar", "analysis", "baz"),
         "index_path": INDEX_PATH,
-        "subtraction_path": HOST_PATH,
         "read_paths": [
             os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq")
-        ]
+        ],
+        "sample_path": os.path.join(str(tmpdir), "samples", "foobar"),
+        "subtraction_path": HOST_PATH,
+        "temp_analysis_path": os.path.join(str(tmpdir), "temp", "temp_analysis")
     }
+
+    os.makedirs(job.params["temp_analysis_path"])
 
     return job
 
 
-@pytest.mark.parametrize("exists", [True, False])
-def test_make_analysis_dir(exists, mock_job):
-    """
-    Test that the stage method creates an analysis directory. If one already exists, it should throw an exception.
+async def test_eliminate_otus(mock_job):
+    await virtool.jobs.nuvs.eliminate_otus(mock_job)
 
-    """
-    if exists:
-        os.makedirs(mock_job.params["analysis_path"])
-
-    if exists:
-        with pytest.raises(FileExistsError) as excinfo:
-            mock_job.make_analysis_dir()
-
-        assert "[Errno 17] File exists" in str(excinfo.value)
-
-        return
-
-    mock_job.make_analysis_dir()
-
-    assert os.path.exists(mock_job.params["analysis_path"])
-
-
-def test_map_otus(mock_job):
-    os.mkdir(mock_job.params["analysis_path"])
-
-    mock_job.eliminate_otus()
-
-    actual_path = os.path.join(mock_job.params["analysis_path"], "unmapped_otus.fq")
+    actual_path = os.path.join(mock_job.params["temp_analysis_path"], "unmapped_otus.fq")
 
     with open(actual_path, "r") as f:
         actual = [line.rstrip() for line in f]
@@ -100,26 +78,22 @@ def test_map_otus(mock_job):
     assert actual == expected
 
 
-def test_map_subtraction(mock_job):
-    os.mkdir(mock_job.params["analysis_path"])
-
+async def test_map_subtraction(mock_job):
     shutil.copy(
         os.path.join(NUVS_PATH, "unmapped_otus.fq"),
-        os.path.join(mock_job.params["analysis_path"], "unmapped_otus.fq")
+        os.path.join(mock_job.params["temp_analysis_path"], "unmapped_otus.fq")
     )
 
-    mock_job.eliminate_subtraction()
+    await virtool.jobs.nuvs.eliminate_subtraction(mock_job)
 
 
 @pytest.mark.parametrize("is_paired", [False, True], ids=["unpaired", "paired"])
-def test_reunite_pairs(is_paired, mock_job):
+async def test_reunite_pairs(is_paired, mock_job):
     """
     Test that paired reads are reordered properly after a single-ended mapping process. Verify that nothing happens
     if the sample is not paired.
 
     """
-    os.mkdir(mock_job.params["analysis_path"])
-
     unite = None
 
     if is_paired:
@@ -137,7 +111,7 @@ def test_reunite_pairs(is_paired, mock_job):
 
         mock_job.params["read_paths"] = [l_path, r_path]
 
-        separate_path = os.path.join(mock_job.params["analysis_path"], "unmapped_hosts.fq")
+        separate_path = os.path.join(mock_job.params["temp_analysis_path"], "unmapped_hosts.fq")
 
         with open(separate_path, "w") as f:
             for line in unite["separate"]:
@@ -145,39 +119,35 @@ def test_reunite_pairs(is_paired, mock_job):
 
     mock_job.params["paired"] = is_paired
 
-    mock_job.reunite_pairs()
+    await virtool.jobs.nuvs.reunite_pairs(mock_job)
 
     if is_paired:
         for path, key in [("unmapped_1.fq", "united_left"), ("unmapped_2.fq", "united_right")]:
-            with open(os.path.join(mock_job.params["analysis_path"], path), "r") as f:
+            with open(os.path.join(mock_job.params["temp_analysis_path"], path), "r") as f:
                 lines = [l.rstrip() for l in f]
 
             assert lines == unite[key]
 
 
 @pytest.mark.parametrize("is_paired", [False, True], ids=["unpaired", "paired"])
-def test_assemble(is_paired, mock_job):
-    os.mkdir(mock_job.params["analysis_path"])
-
+async def test_assemble(is_paired, mock_job):
     mock_job.params["paired"] = is_paired
     mock_job.params["library_type"] = "normal"
-
     mock_job.proc = 2
-    mock_job.mem = 10
 
     if is_paired:
         for suffix in (1, 2):
             shutil.copy(
                 os.path.join(NUVS_PATH, "reads_{}.fq".format(suffix)),
-                os.path.join(mock_job.params["analysis_path"], "unmapped_{}.fq".format(suffix))
+                os.path.join(mock_job.params["temp_analysis_path"], "unmapped_{}.fq".format(suffix))
             )
     else:
         shutil.copy(
             os.path.join(NUVS_PATH, "reads_1.fq"),
-            os.path.join(mock_job.params["analysis_path"], "unmapped_hosts.fq")
+            os.path.join(mock_job.params["temp_analysis_path"], "unmapped_hosts.fq")
         )
 
-    mock_job.assemble()
+    await virtool.jobs.nuvs.assemble(mock_job)
 
     test_fasta_path = os.path.join(
         NUVS_PATH,
@@ -185,7 +155,7 @@ def test_assemble(is_paired, mock_job):
     )
 
     real_fasta_path = os.path.join(
-        mock_job.params["analysis_path"],
+        mock_job.params["temp_analysis_path"],
         "assembly.fa"
     )
 
@@ -195,29 +165,26 @@ def test_assemble(is_paired, mock_job):
     assert {item[1] for item in test_data} == {item[1] for item in real_data}
 
 
-def test_process_fasta(mock_job):
-    os.mkdir(mock_job.params["analysis_path"])
-
+async def test_process_fasta(snapshot, mock_job):
     shutil.copy(
         os.path.join(NUVS_PATH, "scaffolds_u.fa"),
-        os.path.join(mock_job.params["analysis_path"], "assembly.fa")
+        os.path.join(mock_job.params["temp_analysis_path"], "assembly.fa")
     )
 
-    mock_job.process_fasta()
+    await virtool.jobs.nuvs.process_fasta(mock_job)
 
-    # Make sure the results attribute matches the expected value.
-    with open(os.path.join(NUVS_PATH, "process_fasta"), "rb") as f:
-        assert pickle.load(f) == mock_job.results
+    sorted_sequences = sorted(mock_job.results["sequences"], key=operator.itemgetter("index"))
+
+    snapshot.assert_match(sorted_sequences)
 
     # Make sure the orf.fa file is correct.
     assert filecmp.cmp(
-        os.path.join(mock_job.params["analysis_path"], "orfs.fa"),
+        os.path.join(mock_job.params["temp_analysis_path"], "orfs.fa"),
         os.path.join(NUVS_PATH, "orfs.fa")
     )
 
 
-def test_press_hmm(mock_job):
-    os.mkdir(mock_job.params["analysis_path"])
+async def test_press_hmm(mock_job):
 
     hmm_path = os.path.join(mock_job.settings["data_path"], "hmm")
 
@@ -228,18 +195,16 @@ def test_press_hmm(mock_job):
         os.path.join(hmm_path, "profiles.hmm")
     )
 
-    mock_job.prepare_hmm()
+    await virtool.jobs.nuvs.prepare_hmm(mock_job)
 
-    listing = os.listdir(mock_job.params["analysis_path"])
+    listing = os.listdir(mock_job.params["temp_analysis_path"])
 
     # Check that all the pressed file were written to the analysis directory.
     assert all("profiles.hmm." + suffix in listing for suffix in ["h3p", "h3m", "h3f", "h3i"])
 
 
-def test_vfam(mock_job, dbs):
-    os.mkdir(mock_job.params["analysis_path"])
-
-    dbs.hmm.insert_many([
+async def test_vfam(capsys, snapshot, dbi, mock_job):
+    await dbi.hmm.insert_many([
         {
             "_id": "foo",
             "cluster": 2
@@ -250,7 +215,7 @@ def test_vfam(mock_job, dbs):
         }
     ])
 
-    with open(os.path.join(mock_job.params["analysis_path"], "orfs.fa"), "w") as f:
+    with open(os.path.join(mock_job.params["temp_analysis_path"], "orfs.fa"), "w") as f:
         f.write(">sequence_0.0\n")
         f.write(
             "MVAVRAPRRKRASATDLYKTCKAAGTCPPDVIPKIEGSTLADKILQWSGLGIFLGGLGIGTGTGSGGRTGYIPLGGGGRPSVVDIGPTRPPIIIEPVGPTEPSIVT"
@@ -270,79 +235,43 @@ def test_vfam(mock_job, dbs):
     for suffix in ["h3p", "h3m", "h3f", "h3i"]:
         shutil.copyfile(
             os.path.join(NUVS_PATH, "test.hmm." + suffix),
-            os.path.join(mock_job.params["analysis_path"], "profiles.hmm." + suffix)
+            os.path.join(mock_job.params["temp_analysis_path"], "profiles.hmm." + suffix)
         )
 
-    mock_job.results = [
-        {
-            "orfs": [
-                {"name": "Foo"}
-            ]
-        },
-        {},
-        {
-            "orfs": [
-                {"name": "Bar"}
-            ]
-        }
-    ]
+    mock_job.results = {
+        "sequences": [
+            {
+                "orfs": [
+                    {"name": "Foo"}
+                ]
+            },
+            {},
+            {
+                "orfs": [
+                    {"name": "Bar"}
+                ]
+            }
+        ]
+    }
 
-    mock_job.vfam()
+    await virtool.jobs.nuvs.vfam(mock_job)
 
-    assert mock_job.results == [
-        {
-            'orfs': [
-                {
-                    'name': 'Foo',
-                    'hits': [
-                        {
-                            'best_bias': 440.3,
-                            'best_e': 5e-135,
-                            'best_score': 4.5,
-                            'full_bias': 4.5,
-                            'full_e': 3.9e-135,
-                            'full_score': 440.7,
-                            'hit': 'bar'
-                        }
-                    ]
-                }
-            ]
-        },
-        {},
-        {
-            'orfs': [
-                {
-                    'name': 'Bar',
-                    'hits': [
-                        {
-                            'best_bias': 400.7,
-                            'best_e': 1.7e-123,
-                            'best_score': 0.8,
-                            'full_bias': 0.8,
-                            'full_e': 1.4e-123,
-                            'full_score': 401.0,
-                            'hit': 'foo'
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
+    snapshot.assert_match(mock_job.results)
 
 
-def test_import_results(mock_job, dbs):
+async def test_import_results(snapshot, dbi, mock_job):
     """
     Test that the stage method saves the result list to the analysis database document and updated the workflow tags on
     the associated sample document.
 
     """
-    dbs.samples.insert_one({
+    await dbi.samples.insert_one({
         "_id": "foobar",
         "pathoscope": False,
         "nuvs": "ip"
     })
 
-    dbs.analyses.insert_one({
+    await dbi.analyses.insert_one({
         "_id": "baz",
         "ready": False,
         "workflow": "nuvs",
@@ -353,62 +282,8 @@ def test_import_results(mock_job, dbs):
 
     mock_job.params["sample_id"] = "foobar"
 
-    mock_job.results = [
-        {
-            'orfs': [
-                {
-                    'name': 'Foo',
-                    'hits': [
-                        {
-                            'best_bias': 440.3,
-                            'best_e': 5e-135,
-                            'best_score': 4.5,
-                            'full_bias': 4.5,
-                            'full_e': 3.9e-135,
-                            'full_score': 440.7,
-                            'hit': 'bar'
-                        }
-                    ]
-                }
-            ]
-        },
-        {},
-        {
-            'orfs': [
-                {
-                    'name': 'Bar',
-                    'hits': [
-                        {
-                            'best_bias': 400.7,
-                            'best_e': 1.7e-123,
-                            'best_score': 0.8,
-                            'full_bias': 0.8,
-                            'full_e': 1.4e-123,
-                            'full_score': 401.0,
-                            'hit': 'foo'
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
-
-    mock_job.import_results()
-
-    assert dbs.samples.find_one() == {
-        "_id": "foobar",
-        "pathoscope": False,
-        "nuvs": True
-    }
-
-    assert dbs.analyses.find_one() == {
-        "_id": "baz",
-        "ready": True,
-        "workflow": "nuvs",
-        "sample": {
-            "id": "foobar"
-        },
-        "results": [
+    mock_job.results = {
+        "sequences": [
             {
                 'orfs': [
                     {
@@ -448,3 +323,8 @@ def test_import_results(mock_job, dbs):
             }
         ]
     }
+
+    await virtool.jobs.nuvs.import_results(mock_job)
+
+    snapshot.assert_match(await dbi.samples.find_one())
+    snapshot.assert_match(await dbi.analyses.find_one())
