@@ -430,6 +430,7 @@ def create():
         map_subtraction,
         subtract_mapping,
         pathoscope,
+        virtool.jobs.analysis.upload,
         import_results
     ]
 

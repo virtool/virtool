@@ -93,7 +93,7 @@ async def run_job(config):
 
     task = await virtool.db.utils.get_one_field(db.jobs, "task", config["job_id"])
 
-    job_obj = virtool.jobs.classes.TASK_CREATORS[task].create()
+    job_obj = virtool.jobs.classes.TASK_CREATORS[task]()
 
     await job_obj.run(
         db,

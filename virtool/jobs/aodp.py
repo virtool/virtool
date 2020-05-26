@@ -213,6 +213,7 @@ def create():
         join_reads,
         deduplicate_reads,
         aodp,
+        virtool.jobs.analysis.upload,
         import_results
     ]
 

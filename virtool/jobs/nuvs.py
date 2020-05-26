@@ -309,6 +309,7 @@ def create():
         process_fasta,
         prepare_hmm,
         vfam,
+        virtool.jobs.analysis.upload,
         import_results
     ]
 

@@ -331,3 +331,11 @@ async def set_analysis_results(db, analysis_id, analysis_path, results):
                 "ready": True
             }
         })
+
+
+async def upload(job):
+    await job.run_in_executor(
+        shutil.copytree,
+        job.params["temp_analysis_path"],
+        job.params["analysis_path"]
+    )
