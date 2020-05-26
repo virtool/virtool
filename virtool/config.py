@@ -65,8 +65,8 @@ OPTIONS = {
     "job_id": click.option(
         "--job-id",
         help="The ID of the job to run",
-        type=str,
-        required=True
+        required=True,
+        type=str
     ),
     "no_check_db": click.option(
         "--no-check-db",
@@ -134,8 +134,9 @@ OPTIONS = {
     ),
     "redis_connection_string": click.option(
         "--redis-connection-string",
+        help="The Redis connection string",
         type=str,
-        required=True
+        required=True,
     ),
     "sm_mem": click.option(
         "--sm-mem",
@@ -154,13 +155,8 @@ OPTIONS = {
     ),
     "verbose": click.option(
         "--verbose",
+        help="Log debug messages",
         is_flag=True
-    ),
-    "watch_path": click.option(
-        "--watch-path",
-        default="watch",
-        help="The path a directory to watch for read files",
-        type=click.Path()
     )
 }
 
