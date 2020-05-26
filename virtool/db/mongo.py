@@ -49,6 +49,6 @@ async def check_mongo_version(db):
         logger.critical(f"Virtool requires MongoDB {MINIMUM_MONGO_VERSION}. Found {server_version}.")
         sys.exit(1)
 
-    logger.info(f"Found MongoDB {server_version}.")
+    logger.info(f"Found MongoDB {server_version}")
 
 

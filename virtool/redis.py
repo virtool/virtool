@@ -11,11 +11,22 @@ logger = logging.getLogger(__name__)
 async def connect(redis_connection_strong: str) -> aioredis.Redis:
     try:
         redis = await aioredis.create_redis_pool(redis_connection_strong)
-        logger.debug("Connected to Redis")
+        await check_version(redis)
+
         return redis
     except ConnectionRefusedError:
         logger.fatal("Could not connect to Redis: Connection refused")
         sys.exit(1)
+
+
+async def check_version(redis):
+    info = await redis.execute("INFO", encoding="utf-8")
+
+    for line in info.split("\n"):
+        if line.startswith("redis_version"):
+            version = line.replace("redis_version:", "")
+            logger.info(f"Found Redis {version}")
+            return
 
 
 def create_dispatch(redis):
