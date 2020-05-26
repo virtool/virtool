@@ -29,9 +29,8 @@ class Job(virtool.jobs.job.Job):
     def check_db(self):
         self.params = dict(self.task_args)
 
-        subtraction_path = os.path.join(
-            self.settings["data_path"],
-            "subtractions",
+        subtraction_path = virtool.subtractions.utils.join_subtraction_path(
+            self.settings,
             self.params["subtraction_id"]
         )
 
