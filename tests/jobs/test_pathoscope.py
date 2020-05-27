@@ -1,7 +1,8 @@
-import os
-import sys
 import json
+import os
 import shutil
+import sys
+
 import pytest
 
 import virtool.jobs.pathoscope
@@ -20,8 +21,7 @@ SCORES = os.path.join(PATHOSCOPE_PATH, "scores")
 TO_SUBTRACTION_PATH = os.path.join(PATHOSCOPE_PATH, "to_subtraction.json")
 UNU_PATH = os.path.join(PATHOSCOPE_PATH, "unu")
 VTA_PATH = os.path.join(PATHOSCOPE_PATH, "test.vta")
-
-INDEX_PATH = os.path.join(TEST_FILES_PATH, "index")
+INDEXES_PATH = os.path.join(TEST_FILES_PATH, "index")
 FASTQ_PATH = os.path.join(TEST_FILES_PATH, "test.fq")
 HOST_PATH = os.path.join(TEST_FILES_PATH, "index", "host")
 
@@ -48,18 +48,12 @@ def otu_resource():
 
 
 @pytest.fixture
-def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_name, otu_resource):
-    # Add index files.
-    shutil.copytree(INDEX_PATH, os.path.join(str(tmpdir), "references", "original", "index3"))
-
+async def mock_job(tmpdir, dbi, test_db_connection_string, test_db_name, otu_resource):
     # Add logs path.
     tmpdir.mkdir("logs").mkdir("jobs")
 
     # Add sample path.
     tmpdir.mkdir("samples").mkdir("foobar").mkdir("analysis")
-
-    # Copy read files.
-    shutil.copyfile(FASTQ_PATH, os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq"))
 
     settings = {
         "data_path": str(tmpdir),
@@ -68,7 +62,7 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
 
     sequence_otu_map, _ = otu_resource
 
-    dbs.analyses.insert_one({
+    await dbi.analyses.insert_one({
         "_id": "baz",
         "workflow": "pathoscope_bowtie",
         "ready": False,
@@ -80,7 +74,7 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
         }
     })
 
-    dbs.jobs.insert_one({
+    await dbi.jobs.insert_one({
         "_id": "foobar",
         "task": "pathoscope_bowtie",
         "args": {
@@ -93,7 +87,7 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
         "mem": 8
     })
 
-    dbs.indexes.insert_one({
+    await dbi.indexes.insert_one({
         "_id": "index3",
         "manifest": {
             "foobar": 10,
@@ -103,90 +97,54 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
         "sequence_otu_map": sequence_otu_map
     })
 
-    dbs.samples.insert_one({
+    await dbi.samples.insert_one({
         "_id": "foobar",
         "paired": False,
         "library_type": "normal",
-        "subtraction": {
-            "id": "Arabidopsis thaliana"
-        },
         "quality": {
             "count": 1337,
             "length": [78, 101]
+        },
+        "subtraction": {
+            "id": "Arabidopsis thaliana"
         }
     })
 
-    queue = mocker.Mock()
+    job = virtool.jobs.pathoscope.create()
 
-    job = virtool.jobs.pathoscope.Job(
-        test_db_connection_string,
-        test_db_name,
-        settings,
-        "foobar",
-        queue
-    )
+    job.db = dbi
+    job.id = "foobar"
+    job.mem = 4
+    job.proc = 1
+    job.settings = settings
 
-    job.init_db()
+    job.params = {
+        "analysis_id": "baz",
+        "analysis_path": os.path.join(str(tmpdir), "samples", "foobar", "analysis", "baz"),
+        "index_path": os.path.join(INDEXES_PATH, "reference"),
+        "manifest": {
+            "foobar": 10,
+            "reo": 5,
+            "baz": 6
+        },
+        "read_paths": [
+            os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq")
+        ],
+        "sample_id": "foobar",
+        "sample_path": os.path.join(str(tmpdir), "samples", "foobar"),
+        "subtraction_path": HOST_PATH,
+        "temp_analysis_path": os.path.join(str(tmpdir), "temp", "temp_analysis")
+    }
+
+    os.makedirs(job.params["temp_analysis_path"])
 
     return job
 
 
-@pytest.mark.parametrize("paired", [False, True])
-def test_check_db(tmpdir, paired, dbs, mock_job):
-    """
-    Check that the method assigns various job attributes based on information from the database.
+async def test_map_default_isolates(tmpdir, mock_job):
+    shutil.copyfile(FASTQ_PATH, os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq"))
 
-    """
-    dbs.samples.update_one({"_id": "foobar"}, {
-        "$set": {
-            "paired": paired
-        }
-    })
-
-    dbs.subtraction.insert_many([
-        {"_id": "Arabidopsis thaliana"},
-        {"_id": "Prunus persica"},
-    ])
-
-    mock_job.check_db()
-
-    sample_path = os.path.join(str(tmpdir), "samples", "foobar")
-
-    assert mock_job.params["read_count"] == 1337
-
-    expected_read_filenames = ["reads_1.fastq"]
-
-    if paired:
-        expected_read_filenames.append("reads_2.fastq")
-
-    assert mock_job.params["subtraction_path"] == os.path.join(
-        str(tmpdir),
-        "subtractions",
-        "prunus_persica",
-        "reference"
-    )
-
-
-def test_make_analysis_dir(dbs, mock_job):
-    mock_job.check_db()
-
-    assert not os.path.isdir(mock_job.params["analysis_path"])
-
-    mock_job.make_analysis_dir()
-
-    assert os.path.isdir(mock_job.params["analysis_path"])
-
-
-def test_map_otus(tmpdir, dbs, mock_job):
-    mock_job.check_db()
-
-    os.makedirs(mock_job.params["analysis_path"])
-
-    mock_job.params["read_paths"] = [
-        os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq")
-    ]
-
-    mock_job.map_default_isolates()
+    await virtool.jobs.pathoscope.map_default_isolates(mock_job)
 
     assert sorted(mock_job.intermediate["to_otus"]) == sorted([
         "NC_013110",
@@ -209,76 +167,60 @@ def test_map_otus(tmpdir, dbs, mock_job):
     ])
 
 
-def test_map_isolates(snapshot, tmpdir, dbs, mock_job):
-    mock_job.check_db()
-
-    os.makedirs(mock_job.params["analysis_path"])
-
-    mock_job.params["read_paths"] = [
-        os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq")
-    ]
+async def test_map_isolates(snapshot, tmpdir, dbs, mock_job):
+    shutil.copyfile(FASTQ_PATH, os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq"))
 
     sample_path = os.path.join(str(tmpdir), "samples", "foobar")
-    index_path = os.path.join(str(tmpdir), "references", "original", "index3")
 
-    for filename in os.listdir(index_path):
-        shutil.copyfile(
-            os.path.join(index_path, filename),
-            os.path.join(sample_path, "analysis", "baz", filename.replace("reference", "isolates"))
-        )
+    for filename in os.listdir(INDEXES_PATH):
+        if "reference" in filename:
+            shutil.copyfile(
+                os.path.join(INDEXES_PATH, filename),
+                os.path.join(mock_job.params["temp_analysis_path"], filename.replace("reference", "isolates"))
+            )
 
     mock_job.proc = 2
 
-    mock_job.map_isolates()
+    await virtool.jobs.pathoscope.map_isolates(mock_job)
 
-    vta_path = os.path.join(mock_job.params["analysis_path"], "to_isolates.vta")
+    vta_path = os.path.join(mock_job.params["temp_analysis_path"], "to_isolates.vta")
 
     with open(vta_path, "r") as f:
         data = sorted([line.rstrip() for line in f])
-        snapshot.assert_match(data)
+        snapshot.assert_match(data, "isolates")
 
 
-def test_map_subtraction(snapshot, dbs, mock_job):
-    mock_job.check_db()
-
+async def test_map_subtraction(snapshot, dbs, mock_job):
     mock_job.proc = 2
     mock_job.params["subtraction_path"] = HOST_PATH
 
-    os.makedirs(mock_job.params["analysis_path"])
+    shutil.copyfile(FASTQ_PATH, os.path.join(mock_job.params["temp_analysis_path"], "mapped.fastq"))
 
-    shutil.copyfile(FASTQ_PATH, os.path.join(mock_job.params["analysis_path"], "mapped.fastq"))
+    await virtool.jobs.pathoscope.map_subtraction(mock_job)
 
-    mock_job.map_subtraction()
+    sorted_lines = sorted(mock_job.intermediate["to_subtraction"])
 
-    snapshot.assert_match(mock_job.intermediate)
+    snapshot.assert_match(sorted_lines, "subtraction")
 
 
-def test_subtract_mapping(dbs, mock_job):
-    mock_job.check_db()
-
-    os.makedirs(mock_job.params["analysis_path"])
-
+async def test_subtract_mapping(dbs, mock_job):
     with open(TO_SUBTRACTION_PATH, "r") as handle:
         mock_job.intermediate["to_subtraction"] = json.load(handle)
 
-    shutil.copyfile(VTA_PATH, os.path.join(mock_job.params["analysis_path"], "to_isolates.vta"))
+    shutil.copyfile(VTA_PATH, os.path.join(mock_job.params["temp_analysis_path"], "to_isolates.vta"))
 
-    mock_job.subtract_mapping()
+    await virtool.jobs.pathoscope.subtract_mapping(mock_job)
 
     assert mock_job.results["subtracted_count"] == 4
 
 
-def test_pathoscope(snapshot, dbs, mock_job):
-    mock_job.check_db()
-
-    os.makedirs(mock_job.params["analysis_path"])
-
+async def test_pathoscope(snapshot, mock_job):
     with open(REF_LENGTHS_PATH, "r") as handle:
         mock_job.intermediate["ref_lengths"] = json.load(handle)
 
     shutil.copyfile(
         VTA_PATH,
-        os.path.join(mock_job.params["analysis_path"], "to_isolates.vta")
+        os.path.join(mock_job.params["temp_analysis_path"], "to_isolates.vta")
     )
 
     mock_job.params["sequence_otu_map"] = {
@@ -309,29 +251,27 @@ def test_pathoscope(snapshot, dbs, mock_job):
         "NC_007448": "foobar"
     }
 
-    mock_job.pathoscope()
+    await virtool.jobs.pathoscope.pathoscope(mock_job)
 
-    with open(os.path.join(mock_job.params["analysis_path"], "reassigned.vta"), "r") as f:
+    with open(os.path.join(mock_job.params["temp_analysis_path"], "reassigned.vta"), "r") as f:
         data = sorted([line.rstrip() for line in f])
         snapshot.assert_match(data)
 
-    with open(os.path.join(mock_job.params["analysis_path"], "report.tsv"), "r") as f:
+    with open(os.path.join(mock_job.params["temp_analysis_path"], "report.tsv"), "r") as f:
         data = sorted([line.rstrip() for line in f])
         snapshot.assert_match(data)
 
     snapshot.assert_match(mock_job.results)
 
 
-def test_import_results(snapshot, dbs, mock_job):
-    mock_job.check_db()
-
+async def test_import_results(snapshot, dbi, mock_job):
     mock_job.results = {
         "results": "results will be here",
         "read_count": 1337,
         "ready": True
     }
 
-    mock_job.import_results()
+    await virtool.jobs.pathoscope.import_results(mock_job)
 
-    snapshot.assert_match(dbs.analyses.find_one())
-    snapshot.assert_match(dbs.samples.find_one())
+    snapshot.assert_match(await dbi.analyses.find_one())
+    snapshot.assert_match(await dbi.samples.find_one())

@@ -2,7 +2,7 @@
 Globals and utility functions for interacting with the jobs collection in the application database.
 
 """
-import virtool.jobs.manager
+import virtool.jobs.agent
 import virtool.utils
 
 OR_COMPLETE = [
@@ -65,14 +65,10 @@ async def clear(db, complete=False, failed=False):
     return removed
 
 
-async def create(db, settings, task_name, task_args, user_id, job_id=None):
-    proc, mem = virtool.jobs.manager.get_task_limits(settings, task_name)
-
+async def create(db, task_name, task_args, user_id, job_id=None):
     document = {
         "task": task_name,
         "args": task_args,
-        "proc": proc,
-        "mem": mem,
         "user": {
             "id": user_id
         },

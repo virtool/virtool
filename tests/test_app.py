@@ -6,8 +6,9 @@ import aiohttp.web
 
 import virtool.app
 import virtool.dispatcher
+import virtool.startup
 import virtool.settings.schema
-import virtool.jobs.manager
+import virtool.jobs.agent
 
 
 @pytest.fixture
@@ -33,7 +34,7 @@ async def test_init_executors(loop):
     """
     app = aiohttp.web.Application()
 
-    await virtool.app.init_executors(app)
+    await virtool.startup.init_executors(app)
 
     assert isinstance(app["executor"], concurrent.futures.ThreadPoolExecutor)
 
@@ -46,7 +47,7 @@ async def test_init_executors(loop):
 
 
 async def test_init_http_client(app):
-    await virtool.app.init_http_client(app)
+    await virtool.startup.init_http_client(app)
 
     assert app["version"] == "v1.2.3"
 
@@ -56,7 +57,7 @@ async def test_init_http_client(app):
 async def test_init_http_client_headers(mocker, app):
     m = mocker.patch("aiohttp.client.ClientSession")
 
-    await virtool.app.init_http_client(app)
+    await virtool.startup.init_http_client(app)
 
     headers = {
         "User-Agent": "virtool/v1.2.3"

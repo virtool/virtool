@@ -1,12 +1,24 @@
 import os
 import shutil
-from typing import Union
 
 import virtool.caches.db
 import virtool.samples.db
 import virtool.samples.utils
-import virtool.utils
 import virtool.samples.utils
+import virtool.utils
+
+TASK_LG = "lg"
+TASK_SM = "sm"
+
+TASK_SIZES = {
+    "build_index": TASK_SM,
+    "create_sample": TASK_SM,
+    "create_subtraction": TASK_SM,
+    "aodp": TASK_LG,
+    "nuvs": TASK_LG,
+    "pathoscope_bowtie": TASK_LG,
+    "update_sample": TASK_SM
+}
 
 
 def copy_files_to_sample(paths, sample_path, proc):
@@ -49,7 +61,7 @@ def copy_or_decompress(path: str, target: str, proc: int):
         shutil.copyfile(path, target)
 
 
-def get_sample_params(db, settings: dict, task_args: dict) -> dict:
+async def get_sample_params(db, settings: dict, task_args: dict) -> dict:
     """
     Return a `dict` of parameters that can be assigned to `self.params` in the `create_sample` and `update_sample` jobs.
 
@@ -71,69 +83,13 @@ def get_sample_params(db, settings: dict, task_args: dict) -> dict:
         sample_id
     )
 
-    document = db.samples.find_one(sample_id)
+    document = await db.samples.find_one(sample_id)
 
     params.update({
         "sample_path": sample_path,
-        "analysis_path": os.path.join(sample_path, "analysis"),
-        "fastqc_path": os.path.join(sample_path, "fastqc"),
         "document": document,
         "files": document["files"],
         "paired": document["paired"]
     })
 
     return params
-
-
-def find_cache(db, sample_id: str, program: str, parameters: dict) -> Union[dict, None]:
-    """
-    Find a cache matching the passed `sample_id`, `program` name and version, and set of trimming `parameters`.
-
-    If no matching cache exists, `None` will be returned.
-
-    :param db: the application database interface
-    :param sample_id: the id of the parent sample
-    :param program: the program and version used to create the cache
-    :param parameters: the parameters used for the trim
-    :return: a cache document
-
-    """
-    document = db.caches.find_one({
-        "hash": virtool.caches.db.calculate_cache_hash(parameters),
-        "missing": False,
-        "program": program,
-        "sample.id": sample_id
-    })
-
-    return virtool.utils.base_processor(document)
-
-
-def join_cache_path(settings: dict, cache_id: str):
-    """
-    Create a cache path string given the application settings and cache id.
-
-    :param settings: the application settings
-    :param cache_id: the id of the cache
-    :return: a cache path
-
-    """
-    return os.path.join(settings["data_path"], "caches", cache_id)
-
-
-def join_cache_read_paths(settings: dict, cache: dict) -> Union[list, None]:
-    """
-    Return a list of read paths for a cache given the application settings and the cache document.
-
-    The path list will contain two paths if paired, and one if not.
-
-    :param settings: the application settings
-    :param cache: a cache document
-    :return: a list of read paths
-
-    """
-    if not cache:
-        return None
-
-    cache_path = join_cache_path(settings, cache["id"])
-
-    return virtool.samples.utils.join_read_paths(cache_path, cache["paired"])

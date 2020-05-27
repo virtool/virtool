@@ -2,7 +2,7 @@
 # snapshottest: v1 - https://goo.gl/zC4yUc
 from __future__ import unicode_literals
 
-from snapshottest import Snapshot
+from snapshottest import GenericRepr, Snapshot
 
 
 snapshots = Snapshot()
@@ -92,4 +92,137 @@ snapshots['test_get[uvloop-None] 1'] = {
         'id': 'test'
     },
     'version': 0
+}
+
+snapshots['TestCreate.test[True-uvloop] 1'] = {
+    '_id': 'xjqvxigh',
+    'args': {
+        'index_id': 'u3cuwaoq',
+        'index_version': 9,
+        'manifest': 'manifest',
+        'ref_id': 'foo',
+        'user_id': 'test'
+    },
+    'status': [
+        {
+            'error': None,
+            'progress': 0,
+            'stage': None,
+            'state': 'waiting',
+            'timestamp': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)')
+        }
+    ],
+    'task': 'build_index',
+    'user': {
+        'id': 'test'
+    }
+}
+
+snapshots['TestCreate.test[True-uvloop] 2'] = {
+    '_id': 'u3cuwaoq',
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'has_files': True,
+    'job': {
+        'id': 'xjqvxigh'
+    },
+    'manifest': 'manifest',
+    'ready': False,
+    'reference': {
+        'id': 'foo'
+    },
+    'user': {
+        'id': 'test'
+    },
+    'version': 9
+}
+
+snapshots['TestCreate.test[True-uvloop] 3'] = {
+    'created_at': '2015-10-06T20:00:00Z',
+    'has_files': True,
+    'id': 'u3cuwaoq',
+    'job': {
+        'id': 'xjqvxigh'
+    },
+    'manifest': 'manifest',
+    'ready': False,
+    'reference': {
+        'id': 'foo'
+    },
+    'user': {
+        'id': 'test'
+    },
+    'version': 9
+}
+
+snapshots['test[uvloop-None] 1'] = {
+    'documents': [
+        {
+            'id': 'kjs8sa99.3',
+            'index': {
+                'id': 'foobar',
+                'version': 0
+            },
+            'method_name': 'add_sequence',
+            'otu': {
+                'id': 'kjs8sa99',
+                'name': 'Foo',
+                'version': 3
+            },
+            'user': {
+                'id': 'fred'
+            }
+        },
+        {
+            'id': 'zxbbvngc.2',
+            'index': {
+                'id': 'foobar',
+                'version': 0
+            },
+            'method_name': 'add_isolate',
+            'otu': {
+                'id': 'zxbbvngc',
+                'name': 'Test',
+                'version': 2
+            },
+            'user': {
+                'id': 'igboyes'
+            }
+        },
+        {
+            'id': 'zxbbvngc.1',
+            'index': {
+                'id': 'foobar',
+                'version': 0
+            },
+            'method_name': 'add_isolate',
+            'otu': {
+                'id': 'zxbbvngc',
+                'name': 'Test',
+                'version': 1
+            },
+            'user': {
+                'id': 'igboyes'
+            }
+        },
+        {
+            'id': 'zxbbvngc.0',
+            'index': {
+                'id': 'foobar',
+                'version': 0
+            },
+            'otu': {
+                'id': 'zxbbvngc',
+                'name': 'Test',
+                'version': 0
+            },
+            'user': {
+                'id': 'igboyes'
+            }
+        }
+    ],
+    'found_count': 4,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 6
 }

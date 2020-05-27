@@ -151,7 +151,7 @@ def parse_fastqc(fastqc_path: str, sample_path: str, prefix="fastqc_"):
     return fastqc
 
 
-def run_fastqc(run_subprocess, proc, read_paths, fastqc_path):
+async def run_fastqc(run_subprocess, proc, read_paths, fastqc_path):
     command = [
         "fastqc",
         "-f", "fastq",
@@ -161,7 +161,7 @@ def run_fastqc(run_subprocess, proc, read_paths, fastqc_path):
         *read_paths
     ]
 
-    run_subprocess(command)
+    await run_subprocess(command)
 
 
 def handle_base_quality_nan(split_line: list) -> list:

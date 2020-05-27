@@ -219,7 +219,7 @@ async def test_get(error, mocker, snapshot, resp_is, spawn_client, static_time):
 
 class TestCreate:
 
-    async def test(self, mocker, spawn_client, static_time, test_random_alphanumeric, check_ref_right, resp_is):
+    async def test(self, mocker, snapshot, spawn_client, static_time, test_random_alphanumeric, check_ref_right, resp_is):
         client = await spawn_client(authorize=True)
 
         client.app["settings"].update({
@@ -261,64 +261,15 @@ class TestCreate:
         assert resp.status == 201
 
         expected_id = test_random_alphanumeric.history[1]
-
         expected_job_id = test_random_alphanumeric.history[2]
-
-        expected = {
-            "_id": expected_id,
-            "version": 9,
-            "created_at": static_time.datetime,
-            "ready": False,
-            "has_files": True,
-            "manifest": "manifest",
-            "job": {
-                "id": expected_job_id
-            },
-            "reference": {
-                "id": "foo"
-            },
-            "user": {
-                "id": "test"
-            }
-        }
 
         assert resp.headers["Location"] == "/api/indexes/{}".format(expected_id)
 
-        assert await client.db.jobs.find_one() == {
-            "_id": test_random_alphanumeric.history[2],
-            "args": {
-                "index_id": "u3cuwaoq",
-                "index_version": 9,
-                "manifest": "manifest",
-                "ref_id": "foo",
-                "user_id": "test"
-            },
-            "mem": 2,
-            "proc": 1,
-            "status": [
-                {
-                    "error": None,
-                    "progress": 0,
-                    "stage": None,
-                    "state": "waiting",
-                    "timestamp": static_time.datetime
-                }
-            ],
-            "task": "build_index",
-            "user": {
-                "id": "test"
-            }
-        }
-
-        assert await client.db.indexes.find_one() == expected
-
-        expected["id"] = expected.pop("_id")
-        expected["created_at"] = static_time.iso
-
-        assert await resp.json() == expected
+        snapshot.assert_match(await client.db.jobs.find_one())
+        snapshot.assert_match(await client.db.indexes.find_one())
+        snapshot.assert_match(await resp.json())
 
         m_get_next_version.assert_called_with(client.db, "foo")
-
         m_create_manifest.assert_called_with(client.db, "foo")
 
         # Check that appropriate mocks were called.
@@ -368,7 +319,7 @@ class TestCreate:
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test(error, spawn_client, resp_is):
+async def test(error, snapshot, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
     if not error:
@@ -463,74 +414,4 @@ async def test(error, spawn_client, resp_is):
         return
 
     assert resp.status == 200
-
-    assert await resp.json() == {
-        "found_count": 4,
-        "page": 1,
-        "page_count": 1,
-        "per_page": 25,
-        "total_count": 6,
-        "documents": [
-            {
-                "id": "kjs8sa99.3",
-                "index": {
-                    "id": "foobar",
-                    "version": 0
-                },
-                "method_name": "add_sequence",
-                "user": {
-                    "id": "fred"
-                },
-                "otu": {
-                    "id": "kjs8sa99",
-                    "name": "Foo",
-                    "version": 3
-                }
-            },
-            {
-                "id": "zxbbvngc.2",
-                "index": {
-                    "id": "foobar", "version": 0
-                },
-                "method_name": "add_isolate",
-                "user": {
-                    "id": "igboyes"
-                },
-                "otu": {
-                    "id": "zxbbvngc",
-                    "name": "Test",
-                    "version": 2
-                }
-            },
-            {
-                "id": "zxbbvngc.1",
-                "index": {
-                    "id": "foobar", "version": 0
-                },
-                "method_name": "add_isolate",
-                "user": {
-                    "id": "igboyes"
-                },
-                "otu": {
-                    "id": "zxbbvngc",
-                    "name": "Test",
-                    "version": 1
-                }
-            },
-            {
-                "id": "zxbbvngc.0",
-                "index": {
-                    "id": "foobar",
-                    "version": 0
-                },
-                "user": {
-                    "id": "igboyes"
-                },
-                "otu": {
-                    "id": "zxbbvngc",
-                    "name": "Test",
-                    "version": 0
-                }
-            }
-        ]
-    }
+    snapshot.assert_match(await resp.json())

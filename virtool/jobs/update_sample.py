@@ -1,257 +1,272 @@
 import os
 
 import virtool.caches.db
+import virtool.caches.utils
 import virtool.files.db
-import virtool.samples.db
 import virtool.jobs.fastqc
 import virtool.jobs.job
 import virtool.jobs.utils
+import virtool.samples.db
 import virtool.samples.utils
 import virtool.utils
 
 
-class Job(virtool.jobs.job.Job):
+async def check_db(job):
+    job.params = virtool.jobs.utils.get_sample_params(
+        job.db,
+        job.settings,
+        job.task_args
+    )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
-        #: The ordered list of :ref:`stage methods <stage-methods>` that are called by the job.
-        self._stage_list = [
-            self.copy_files,
-            self.fastqc,
-            self.parse_fastqc,
-            self.create_cache,
-            self.replace_old
-        ]
+async def copy_files(job):
+    """
+    Copy the replacement files from the files directory to the sample directory.
 
-    def check_db(self):
-        self.params = virtool.jobs.utils.get_sample_params(
-            self.db,
-            self.settings,
-            self.task_args
-        )
+    The files are named replacement_reads_<suffix>.fq.gz. They will be compressed if necessary.
 
-    def copy_files(self):
-        """
-        Copy the replacement files from the files directory to the sample directory.
+    """
+    files = job.params["files"]
+    sample_id = job.params["sample_id"]
 
-        The files are named replacement_reads_<suffix>.fq.gz. They will be compressed if necessary.
+    paths = [os.path.join(job.settings["data_path"], "files", file["replacement"]["id"]) for file in files]
 
-        """
-        files = self.params["files"]
-        sample_id = self.params["sample_id"]
+    sizes = virtool.jobs.utils.copy_files_to_sample(
+        paths,
+        job.params["sample_path"],
+        job.proc
+    )
 
-        paths = [os.path.join(self.settings["data_path"], "files", file["replacement"]["id"]) for file in files]
+    raw = list()
 
-        sizes = virtool.jobs.utils.copy_files_to_sample(
-            paths,
-            self.params["sample_path"],
-            self.proc
-        )
+    for index, file in enumerate(files):
+        name = f"reads_{index + 1}.fq.gz"
 
-        raw = list()
+        raw.append({
+            "name": name,
+            "download_url": f"/download/samples/{sample_id}/{name}",
+            "size": sizes[index],
+            "from": file
+        })
 
-        for index, file in enumerate(files):
-            name = f"reads_{index + 1}.fq.gz"
+    job.intermediate["raw"] = raw
 
-            raw.append({
-                "name": name,
-                "download_url": f"/download/samples/{sample_id}/{name}",
-                "size": sizes[index],
-                "from": file
-            })
 
-        self.intermediate["raw"] = raw
+async def fastqc(job):
+    """
+    Runs FastQC on the replacement read files.
 
-    def fastqc(self):
-        """
-        Runs FastQC on the replacement read files.
+    """
+    fastq_path = job.params["fastqc_path"]
 
-        """
-        fastq_path = self.params["fastqc_path"]
+    try:
+        virtool.utils.rm(fastq_path, recursive=True)
+    except FileNotFoundError:
+        pass
 
+    os.mkdir(fastq_path)
+
+    paths = virtool.samples.utils.join_read_paths(
+        job.params["sample_path"],
+        job.params["paired"]
+    )
+
+    await virtool.jobs.fastqc.run_fastqc(
+        job.run_subprocess,
+        job.proc,
+        paths,
+        fastq_path
+    )
+
+
+async def parse_fastqc(job):
+    """
+    Capture the desired data from the FastQC output. The data is added to the samples database
+    in the main run() method
+
+    """
+    job.intermediate["qc"] = virtool.jobs.fastqc.parse_fastqc(
+        job.params["fastqc_path"],
+        job.params["sample_path"],
+        prefix="replacement_fastqc_"
+    )
+
+
+async def create_cache(job):
+    """
+    Create a cache from the old sample files.
+
+    These files constitute a valid cache because they were trimmed in the original CreateSample job.
+
+    """
+    sample_id = job.params["sample_id"]
+
+    job.intermediate["cache"] = await virtool.caches.db.create(
+        job.db,
+        sample_id,
+        virtool.samples.utils.LEGACY_TRIM_PARAMETERS,
+        job.params["paired"],
+        legacy=True
+    )
+
+    cache_id = job.intermediate["cache"]["id"]
+
+    files = list()
+
+    cache_path = virtool.caches.utils.join_cache_path(job.settings, cache_id)
+
+    os.makedirs(cache_path)
+
+    for index, file in enumerate(job.params["files"]):
+        path = os.path.join(job.params["sample_path"], file["name"])
+
+        name = f"reads_{index + 1}.fq.gz"
+
+        target = os.path.join(cache_path, name)
+
+        virtool.jobs.utils.copy_or_compress(path, target, job.proc)
+
+        stats = virtool.utils.file_stats(target)
+
+        files.append({
+            "name": name,
+            "size": stats["size"]
+        })
+
+    await job.db.caches.update_one({"_id": cache_id}, {
+        "$set": {
+            "ready": True,
+            "files": files,
+            "quality": job.params["document"]["quality"]
+        }
+    })
+
+    analysis_query = {"sample.id": sample_id}
+
+    await job.db.analyses.update_many(analysis_query, {
+        "$set": {
+            "cache": {
+                "id": cache_id
+            }
+        }
+    })
+
+
+async def replace_old(job):
+    sample_id = job.params["sample_id"]
+
+    files = list()
+
+    # Prepare new list for `files` field in sample document.
+    for index, file in enumerate(job.params["files"]):
+        name = f"reads_{index + 1}.fq.gz"
+
+        path = os.path.join(job.params["sample_path"], name)
+
+        stats = virtool.utils.file_stats(path)
+
+        files.append({
+            "name": name,
+            "download_url": f"/download/samples/{sample_id}/{name}",
+            "size": stats["size"],
+            "from": file["replacement"],
+            "raw": True
+        })
+
+    # Set new files as primary files for sample. Add prune flag, which will cause old files to be automatically
+    # removed when they are no longer in use by running analyses.
+    await job.db.samples.update_one({"_id": job.params["sample_id"]}, {
+        "$set": {
+            "files": files,
+            "prune": True,
+            "quality": job.intermediate["qc"]
+        },
+        "$unset": {
+            "update_job": ""
+        }
+    })
+
+
+async def delete_cache(job):
+    # Remove cache
+    cache = job.intermediate.get("cache")
+
+    if cache:
+        cache_id = cache["id"]
+        await job.db.delete_one({"_id": cache_id})
+        cache_path = virtool.caches.utils.join_cache_path(job.settings, cache_id)
+
+        # Remove cache directory.
         try:
-            virtool.utils.rm(fastq_path, recursive=True)
+            virtool.utils.rm(cache_path, recursive=True)
         except FileNotFoundError:
             pass
 
-        os.mkdir(fastq_path)
 
-        paths = virtool.samples.utils.join_read_paths(
-            self.params["sample_path"],
-            self.params["paired"]
-        )
+async def reset_analyses(job):
+    """
+    Undo analysis cache field addition.
 
-        virtool.jobs.fastqc.run_fastqc(
-            self.run_subprocess,
-            self.proc,
-            paths,
-            fastq_path
-        )
+    :param job:
 
-    def parse_fastqc(self):
-        """
-        Capture the desired data from the FastQC output. The data is added to the samples database
-        in the main run() method
+    """
+    analysis_query = {"sample.id": job.params["sample_id"]}
 
-        """
-        self.intermediate["qc"] = virtool.jobs.fastqc.parse_fastqc(
-            self.params["fastqc_path"],
-            self.params["sample_path"],
-            prefix="replacement_fastqc_"
-        )
+    job.db.analyses.update_many(analysis_query, {
+        "$unset": {
+            "cache": ""
+        }
+    })
 
-    def create_cache(self):
-        """
-        Create a cache from the old sample files.
 
-        These files constitute a valid cache because they were trimmed in the original CreateSample job.
+async def reset_samples(job):
+    """
+    Undo sample document changes.
 
-        """
-        sample_id = self.params["sample_id"]
+    :param job:
 
-        self.intermediate["cache"] = virtool.caches.db.create(
-            self.db,
-            sample_id,
-            virtool.samples.utils.LEGACY_TRIM_PARAMETERS,
-            self.params["paired"],
-            legacy=True
-        )
+    """
+    job.db.samples.update_one({"_id": job.params["sample_id"]}, {
+        "$set": {
+            # Use old files and quality fields.
+            "files": job.params["files"],
+            "quality": job.params["document"]["quality"]
+        },
+        "$unset": {
+            "prune": "",
+            "update_job": ""
+        }
+    })
 
-        cache_id = self.intermediate["cache"]["id"]
+    # Remove sample files.
+    paths = virtool.samples.utils.join_read_paths(job.params["sample_path"], paired=True)
 
-        self.dispatch("caches", "insert", [cache_id])
+    for path in paths:
+        try:
+            virtool.utils.rm(path)
+        except FileNotFoundError:
+            pass
 
-        files = list()
 
-        cache_path = virtool.jobs.utils.join_cache_path(self.settings, cache_id)
+def create():
+    job = virtool.jobs.job.Job()
 
-        os.makedirs(cache_path)
+    job.on_startup = [
+        check_db
+    ]
 
-        for index, file in enumerate(self.params["files"]):
-            path = os.path.join(self.params["sample_path"], file["name"])
+    job.steps = [
+        copy_files,
+        fastqc,
+        parse_fastqc,
+        create_cache,
+        replace_old
+    ]
 
-            name = f"reads_{index + 1}.fq.gz"
+    job.on_cleanup = [
+        delete_cache,
+        reset_analyses,
+        reset_samples
+    ]
 
-            target = os.path.join(cache_path, name)
-
-            virtool.jobs.utils.copy_or_compress(path, target, self.proc)
-
-            stats = virtool.utils.file_stats(target)
-
-            files.append({
-                "name": name,
-                "size": stats["size"]
-            })
-
-        self.db.caches.update_one({"_id": cache_id}, {
-            "$set": {
-                "ready": True,
-                "files": files,
-                "quality": self.params["document"]["quality"]
-            }
-        })
-
-        self.dispatch("caches", "update", [cache_id])
-
-        analysis_query = {"sample.id": sample_id}
-
-        self.db.analyses.update_many(analysis_query, {
-            "$set": {
-                "cache": {
-                    "id": cache_id
-                }
-            }
-        })
-
-        analysis_ids = self.db.analyses.distinct("_id", analysis_query)
-
-        self.dispatch("analyses", "update", analysis_ids)
-
-    def replace_old(self):
-        sample_id = self.params["sample_id"]
-
-        files = list()
-
-        # Prepare new list for `files` field in sample document.
-        for index, file in enumerate(self.params["files"]):
-            name = f"reads_{index + 1}.fq.gz"
-
-            path = os.path.join(self.params["sample_path"], name)
-
-            stats = virtool.utils.file_stats(path)
-
-            files.append({
-                "name": name,
-                "download_url": f"/download/samples/{sample_id}/{name}",
-                "size": stats["size"],
-                "from": file["replacement"],
-                "raw": True
-            })
-
-        # Set new files as primary files for sample. Add prune flag, which will cause old files to be automatically
-        # removed when they are no longer in use by running analyses.
-        self.db.samples.update_one({"_id": self.params["sample_id"]}, {
-            "$set": {
-                "files": files,
-                "prune": True,
-                "quality": self.intermediate["qc"]
-            },
-            "$unset": {
-                "update_job": ""
-            }
-        })
-
-        self.dispatch("samples", "update", [self.params["sample_id"]])
-
-    def cleanup(self):
-        # Remove cache
-        cache = self.intermediate.get("cache")
-
-        if cache:
-            cache_id = cache["id"]
-            self.db.delete_one({"_id": cache_id})
-            cache_path = virtool.jobs.utils.join_cache_path(self.settings, cache_id)
-            self.dispatch("caches", "delete", [cache_id])
-
-            # Remove cache directory.
-            try:
-                virtool.utils.rm(cache_path, recursive=True)
-            except FileNotFoundError:
-                pass
-
-        sample_id = self.params["sample_id"]
-
-        # Undo analysis cache field addition.
-        analysis_query = {"sample.id": sample_id}
-
-        self.db.analyses.update_many(analysis_query, {
-            "$unset": {
-                "cache": ""
-            }
-        })
-        analysis_ids = self.db.analyses.distinct("_id", analysis_query)
-        self.dispatch("analyses", "update", analysis_ids)
-
-        # Undo sample document changes.
-        self.db.samples.update_one({"_id": sample_id}, {
-            "$set": {
-                # Use old files and quality fields.
-                "files": self.params["files"],
-                "quality": self.params["document"]["quality"]
-            },
-            "$unset": {
-                "prune": "",
-                "update_job": ""
-            }
-        })
-        self.dispatch("samples", "update", [sample_id])
-
-        # Remove sample files.
-        paths = virtool.samples.utils.join_read_paths(self.params["sample_path"], paired=True)
-
-        for path in paths:
-            try:
-                virtool.utils.rm(path)
-            except FileNotFoundError:
-                pass
+    return job

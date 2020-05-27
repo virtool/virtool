@@ -1,9 +1,10 @@
+import aiohttp.test_utils
 import pytest
 import virtool.jobs.fastqc
 
 
 @pytest.mark.parametrize("paired", [True, False])
-def test_run_fastqc(paired, mocker):
+async def test_run_fastqc(paired, mocker):
     read_paths = [
         "/reads/reads_1.fq.gz"
     ]
@@ -11,9 +12,9 @@ def test_run_fastqc(paired, mocker):
     if paired:
         read_paths.append("/reads/reads_2.fq.gz")
 
-    m_run_subprocess = mocker.stub()
+    m_run_subprocess = aiohttp.test_utils.make_mocked_coro()
 
-    virtool.jobs.fastqc.run_fastqc(
+    await virtool.jobs.fastqc.run_fastqc(
         m_run_subprocess,
         4,
         read_paths,

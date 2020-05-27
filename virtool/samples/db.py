@@ -74,7 +74,6 @@ async def attempt_file_replacement(app, sample_id, user_id):
 
     job = await virtool.jobs.db.create(
         db,
-        app["settings"],
         "update_sample",
         task_args,
         user_id

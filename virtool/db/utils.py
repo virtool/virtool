@@ -1,8 +1,4 @@
 import virtool.utils
-import semver
-import sys
-
-MINIMUM_MONGO_VERSION = "3.6.0"
 
 
 def apply_projection(document, projection):
@@ -38,23 +34,6 @@ def apply_projection(document, projection):
         projection["_id"] = True
 
     return {key: document[key] for key in document if projection.get(key, False)}
-
-
-async def check_mongo_version(db, logger):
-    """
-    Check the MongoDB version. Log a critical error and exit if it is too old.
-
-    :param db: the application database object
-    :param logger: the app logger
-
-    """
-    server_version = (await db.server_info())["version"]
-
-    if semver.compare(server_version, MINIMUM_MONGO_VERSION) == -1:
-        logger.critical(f"Virtool requires MongoDB {MINIMUM_MONGO_VERSION}. Found {server_version}.")
-        sys.exit(1)
-
-    logger.info(f"Found MongoDB {server_version}.")
 
 
 async def get_new_id(collection, excluded=None):

@@ -6,309 +6,316 @@ import collections
 import os
 import shlex
 import shutil
-import tempfile
+
+import aiofiles
 
 import virtool.bio
-import virtool.db.sync
 import virtool.jobs.analysis
+import virtool.jobs.job
+import virtool.samples.db
 
 
 class SubprocessError(Exception):
     pass
 
 
-class Job(virtool.jobs.analysis.Job):
+async def eliminate_otus(job):
     """
-    A job class for NuVs, a custom workflow used for identifying potential viral sequences from sample libraries. The
-    workflow consists of the following steps:
-
-    1. Eliminate known viral reads by mapping the sample reads to the Virtool otu reference using ``bowtie2`` saving
-       unaligned reads.
-    2. Eliminate known host reads by mapping the reads remaining from the previous stage to the sample's subtraction
-       host using ``bowtie2`` and saving the unaligned reads.
-    3. Generate an assembly from the remaining reads using SPAdes.
-    4. Extract all significant open reading frames (ORF) from the assembled contigs.
-    5. Using HMMER/vFAM, identify possible viral domains in the ORFs.
+    Maps reads to the main otu reference using ``bowtie2``. Bowtie2 is set to use the search parameter
+    ``--very-fast-local`` and retain unaligned reads to the FASTA file ``unmapped_otus.fq``.
 
     """
+    command = [
+        "bowtie2",
+        "-p", str(job.proc),
+        "-k", str(1),
+        "--very-fast-local",
+        "-x", job.params["index_path"],
+        "--un", os.path.join(job.params["temp_analysis_path"], "unmapped_otus.fq"),
+        "-U", ",".join(job.params["read_paths"])
+    ]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    await job.run_subprocess(command)
 
-        self._stage_list = [
-            self.make_analysis_dir,
-            self.prepare_reads,
-            self.eliminate_otus,
-            self.eliminate_subtraction,
-            self.reunite_pairs,
-            self.assemble,
-            self.process_fasta,
-            self.prepare_hmm,
-            self.vfam,
-            self.import_results
-        ]
 
-        # Contigs that contain at least one acceptable ORF.
-        self.results = list()
+async def eliminate_subtraction(job):
+    """
+    Maps unaligned reads from :meth:`.map_otus` to the sample's subtraction host using ``bowtie2``. Bowtie2 is
+    set to use the search parameter ``--very-fast-local`` and retain unaligned reads to the FASTA file
+    ``unmapped_host.fq``.
 
-    def eliminate_otus(self):
-        """
-        Maps reads to the main otu reference using ``bowtie2``. Bowtie2 is set to use the search parameter
-        ``--very-fast-local`` and retain unaligned reads to the FASTA file ``unmapped_otus.fq``.
+    """
+    command = [
+        "bowtie2",
+        "--very-fast-local",
+        "-k", str(1),
+        "-p", str(job.proc),
+        "-x", shlex.quote(job.params["subtraction_path"]),
+        "--un", os.path.join(job.params["temp_analysis_path"], "unmapped_hosts.fq"),
+        "-U", os.path.join(job.params["temp_analysis_path"], "unmapped_otus.fq"),
+    ]
 
-        """
-        command = [
-            "bowtie2",
-            "-p", str(self.proc),
-            "-k", str(1),
-            "--very-fast-local",
-            "-x", self.params["index_path"],
-            "--un", os.path.join(self.params["analysis_path"], "unmapped_otus.fq"),
-            "-U", ",".join(self.params["read_paths"])
-        ]
+    await job.run_subprocess(command)
 
-        self.run_subprocess(command)
 
-    def eliminate_subtraction(self):
-        """
-        Maps unaligned reads from :meth:`.map_otus` to the sample's subtraction host using ``bowtie2``. Bowtie2 is
-        set to use the search parameter ``--very-fast-local`` and retain unaligned reads to the FASTA file
-        ``unmapped_host.fq``.
+async def reunite_pairs(job):
+    if job.params["paired"]:
+        unmapped_path = os.path.join(job.params["temp_analysis_path"], "unmapped_hosts.fq")
+        headers = await virtool.bio.read_fastq_headers(unmapped_path)
 
-        """
-        command = [
-            "bowtie2",
-            "--very-fast-local",
-            "-k", str(1),
-            "-p", str(self.proc),
-            "-x", shlex.quote(self.params["subtraction_path"]),
-            "--un", os.path.join(self.params["analysis_path"], "unmapped_hosts.fq"),
-            "-U", os.path.join(self.params["analysis_path"], "unmapped_otus.fq"),
-        ]
+        unmapped_roots = {h.split(" ")[0] for h in headers}
 
-        self.run_subprocess(command)
+        left_path = os.path.join(job.params["temp_analysis_path"], "unmapped_1.fq")
+        right_path = os.path.join(job.params["temp_analysis_path"], "unmapped_2.fq")
 
-    def reunite_pairs(self):
-        if self.params["paired"]:
-            unmapped_path = os.path.join(self.params["analysis_path"], "unmapped_hosts.fq")
-            headers = virtool.bio.read_fastq_headers(unmapped_path)
+        async with aiofiles.open(left_path, "w") as f:
+            async for header, seq, quality in virtool.bio.read_fastq_from_path(job.params["read_paths"][0]):
+                if header.split(" ")[0] in unmapped_roots:
+                    await f.write("\n".join([header, seq, "+", quality]) + "\n")
 
-            unmapped_roots = {h.split(" ")[0] for h in headers}
+        async with aiofiles.open(right_path, "w") as f:
+            async for header, seq, quality in virtool.bio.read_fastq_from_path(job.params["read_paths"][1]):
+                if header.split(" ")[0] in unmapped_roots:
+                    await f.write("\n".join([header, seq, "+", quality]) + "\n")
 
-            with open(os.path.join(self.params["analysis_path"], "unmapped_1.fq"), "w") as f:
-                for header, seq, quality in virtool.bio.read_fastq_from_path(self.params["read_paths"][0]):
-                    if header.split(" ")[0] in unmapped_roots:
-                        f.write("\n".join([header, seq, "+", quality]) + "\n")
 
-            with open(os.path.join(self.params["analysis_path"], "unmapped_2.fq"), "w") as f:
-                for header, seq, quality in virtool.bio.read_fastq_from_path(self.params["read_paths"][1]):
-                    if header.split(" ")[0] in unmapped_roots:
-                        f.write("\n".join([header, seq, "+", quality]) + "\n")
+async def assemble(job):
+    """
+    Call ``spades.py`` to assemble contigs from ``unmapped_hosts.fq``. Passes ``21,33,55,75`` for the ``-k``
+    argument.
 
-    def assemble(self):
-        """
-        Call ``spades.py`` to assemble contigs from ``unmapped_hosts.fq``. Passes ``21,33,55,75`` for the ``-k``
-        argument.
+    """
+    command = [
+        "spades.py",
+        "-t", str(job.proc - 1),
+        "-m", str(job.mem)
+    ]
 
-        """
-        command = [
-            "spades.py",
-            "-t", str(self.proc - 1),
-            "-m", str(self.mem)
-        ]
-
-        if self.params["paired"]:
-            command += [
-                "-1", os.path.join(self.params["analysis_path"], "unmapped_1.fq"),
-                "-2", os.path.join(self.params["analysis_path"], "unmapped_2.fq"),
-            ]
-        else:
-            command += [
-                "-s", os.path.join(self.params["analysis_path"], "unmapped_hosts.fq"),
-            ]
-
-        temp_dir = tempfile.TemporaryDirectory()
-
-        temp_path = temp_dir.name
-
-        k = "21,33,55,75"
-
-        if self.params["library_type"] == "srna":
-            k = "17,21,23"
-
+    if job.params["paired"]:
         command += [
-            "-o", temp_path,
-            "-k", k
+            "-1", os.path.join(job.params["temp_analysis_path"], "unmapped_1.fq"),
+            "-2", os.path.join(job.params["temp_analysis_path"], "unmapped_2.fq"),
+        ]
+    else:
+        command += [
+            "-s", os.path.join(job.params["temp_analysis_path"], "unmapped_hosts.fq"),
         ]
 
-        def stdout_handler(line):
-            self.add_log(line.rstrip(), indent=4)
+    temp_path = job.temp_dir.name
 
-        try:
-            self.run_subprocess(command, stdout_handler=stdout_handler)
-        except SubprocessError:
-            spades_log_path = os.path.join(temp_path, "spades.log")
+    k = "21,33,55,75"
 
-            if os.path.isfile(spades_log_path):
-                with open(spades_log_path, "r") as f:
-                    if "Error in malloc(): out of memory" in f.read():
-                        raise SubprocessError("Out of memory")
+    if job.params["library_type"] == "srna":
+        k = "17,21,23"
 
-            raise
+    command += [
+        "-o", temp_path,
+        "-k", k
+    ]
 
-        shutil.copyfile(
-            os.path.join(temp_path, "scaffolds.fasta"),
-            os.path.join(self.params["analysis_path"], "assembly.fa")
-        )
+    try:
+        await job.run_subprocess(command)
+    except SubprocessError:
+        spades_log_path = os.path.join(temp_path, "spades.log")
 
-        temp_dir.cleanup()
+        if os.path.isfile(spades_log_path):
+            async with aiofiles.open(spades_log_path, "r") as f:
+                if "Error in malloc(): out of memory" in await f.read():
+                    raise SubprocessError("Out of memory")
 
-    def process_fasta(self):
-        """
-        Finds ORFs in the contigs assembled by :meth:`.assemble`. Only ORFs that are 100+ amino acids long are recorded.
-        Contigs with no acceptable ORFs are discarded.
+        raise
 
-        """
-        assembly_path = os.path.join(self.params["analysis_path"], "assembly.fa")
+    await job.run_in_executor(
+        shutil.copyfile,
+        os.path.join(temp_path, "scaffolds.fasta"),
+        os.path.join(job.params["temp_analysis_path"], "assembly.fa")
+    )
 
-        assembly = virtool.bio.read_fasta(assembly_path)
 
-        for _, sequence in assembly:
+async def process_fasta(job):
+    """
+    Finds ORFs in the contigs assembled by :meth:`.assemble`. Only ORFs that are 100+ amino acids long are recorded.
+    Contigs with no acceptable ORFs are discarded.
 
-            sequence_length = len(sequence)
+    """
+    assembly_path = os.path.join(job.params["temp_analysis_path"], "assembly.fa")
 
-            # Don't consider the sequence if it is shorter than 300 bp.
-            if sequence_length < 300:
-                continue
+    assembly = await job.run_in_executor(
+        virtool.bio.read_fasta,
+        assembly_path
+    )
 
-            orfs = virtool.bio.find_orfs(sequence)
+    sequences = list()
 
-            # Don't consider the sequence if it has no ORFs.
-            if len(orfs) == 0:
-                continue
+    for _, sequence in assembly:
 
-            # Add an index field to each orf dict.
-            orfs = [dict(o, index=i) for i, o in enumerate(orfs)]
+        sequence_length = len(sequence)
 
-            for orf in orfs:
-                orf.pop("nuc")
-                orf["hits"] = list()
+        # Don't consider the sequence if it is shorter than 300 bp.
+        if sequence_length < 300:
+            continue
 
-            # Make an entry for the nucleotide sequence containing a unique integer index, the sequence itself, and
-            # all ORFs in the sequence.
-            self.results.append({
-                "index": len(self.results),
-                "sequence": sequence,
-                "orfs": orfs
-            })
+        orfs = virtool.bio.find_orfs(sequence)
 
-        # Write the ORFs to a FASTA file so that they can be analyzed using HMMER and vFAM.
-        with open(os.path.join(self.params["analysis_path"], "orfs.fa"), "w") as f:
-            for entry in self.results:
-                for orf in entry["orfs"]:
-                    f.write(f">sequence_{entry['index']}.{orf['index']}\n{orf['pro']}\n")
+        # Don't consider the sequence if it has no ORFs.
+        if len(orfs) == 0:
+            continue
 
-    def prepare_hmm(self):
+        # Add an index field to each orf dict.
+        orfs = [dict(o, index=i) for i, o in enumerate(orfs)]
 
-        shutil.copy(os.path.join(self.settings["data_path"], "hmm", "profiles.hmm"), self.params["analysis_path"])
+        for orf in orfs:
+            orf.pop("nuc")
+            orf["hits"] = list()
 
-        hmm_path = os.path.join(self.params["analysis_path"], "profiles.hmm")
+        # Make an entry for the nucleotide sequence containing a unique integer index, the sequence itself, and
+        # all ORFs in the sequence.
+        sequences.append({
+            "index": len(sequences),
+            "sequence": sequence,
+            "orfs": orfs
+        })
 
-        command = [
-            "hmmpress",
-            hmm_path
-        ]
+    # Write the ORFs to a FASTA file so that they can be analyzed using HMMER and vFAM.
+    orfs_path = os.path.join(job.params["temp_analysis_path"], "orfs.fa")
 
-        self.run_subprocess(command)
+    async with aiofiles.open(orfs_path, "w") as f:
+        for entry in sequences:
+            for orf in entry["orfs"]:
+                await f.write(f">sequence_{entry['index']}.{orf['index']}\n{orf['pro']}\n")
 
-        os.remove(hmm_path)
+    job.results["sequences"] = sequences
 
-    def vfam(self):
-        """
-        Searches for viral motifs in ORF translations generated by :meth:`.process_fasta`. Calls ``hmmscan`` and
-        searches against ``candidates.fa`` using the profile HMMs in ``data_path/hmm/vFam.hmm``.
 
-        Saves two files:
+async def prepare_hmm(job):
+    await job.run_in_executor(
+        shutil.copy,
+        os.path.join(job.settings["data_path"], "hmm", "profiles.hmm"),
+        job.params["temp_analysis_path"]
+    )
 
-        - ``hmm.tsv`` contains the raw output of `hmmer`
-        - ``hits.tsv`` contains the `hmmer` results formatted and annotated with the annotations from the Virtool HMM
-          database collection
+    hmm_path = os.path.join(job.params["temp_analysis_path"], "profiles.hmm")
 
-        """
-        # The path to output the hmmer results to.
-        tsv_path = os.path.join(self.params["analysis_path"], "hmm.tsv")
+    command = [
+        "hmmpress",
+        hmm_path
+    ]
 
-        command = [
-            "hmmscan",
-            "--tblout", tsv_path,
-            "--noali",
-            "--cpu", str(self.proc - 1),
-            os.path.join(self.params["analysis_path"], "profiles.hmm"),
-            os.path.join(self.params["analysis_path"], "orfs.fa")
-        ]
+    await job.run_subprocess(command)
 
-        self.run_subprocess(command)
+    await job.run_in_executor(
+        os.remove,
+        hmm_path
+    )
 
-        hits = collections.defaultdict(lambda: collections.defaultdict(list))
 
-        # Go through the raw HMMER results and annotate the HMM hits with data from the database.
-        with open(tsv_path, "r") as hmm_file:
-            for line in hmm_file:
-                if line.startswith("vFam"):
-                    line = line.split()
+async def vfam(job):
+    """
+    Searches for viral motifs in ORF translations generated by :meth:`.process_fasta`. Calls ``hmmscan`` and
+    searches against ``candidates.fa`` using the profile HMMs in ``data_path/hmm/vFam.hmm``.
 
-                    cluster_id = int(line[0].split("_")[1])
-                    annotation_id = (self.db.hmm.find_one({"cluster": int(cluster_id)}, {"_id": True}))["_id"]
+    Saves two files:
 
-                    # Expecting sequence_0.0
-                    sequence_index, orf_index = (int(x) for x in line[2].split("_")[1].split("."))
+    - ``hmm.tsv`` contains the raw output of `hmmer`
+    - ``hits.tsv`` contains the `hmmer` results formatted and annotated with the annotations from the Virtool HMM
+      database collection
 
-                    hits[sequence_index][orf_index].append({
-                        "hit": annotation_id,
-                        "full_e": float(line[4]),
-                        "full_score": float(line[5]),
-                        "full_bias": float(line[6]),
-                        "best_e": float(line[7]),
-                        "best_bias": float(line[8]),
-                        "best_score": float(line[9])
-                    })
+    """
+    # The path to output the hmmer results to.
+    tsv_path = os.path.join(job.params["temp_analysis_path"], "hmm.tsv")
 
-        for sequence_index in hits:
-            for orf_index in hits[sequence_index]:
-                self.results[sequence_index]["orfs"][orf_index]["hits"] = hits[sequence_index][orf_index]
+    command = [
+        "hmmscan",
+        "--tblout", tsv_path,
+        "--noali",
+        "--cpu", str(job.proc - 1),
+        os.path.join(job.params["temp_analysis_path"], "profiles.hmm"),
+        os.path.join(job.params["temp_analysis_path"], "orfs.fa")
+    ]
 
-            sequence = self.results[sequence_index]
+    await job.run_subprocess(command)
 
-            if all(len(o["hits"]) == 0 for o in sequence["orfs"]):
-                self.results.remove(sequence)
+    hits = collections.defaultdict(lambda: collections.defaultdict(list))
 
-    def import_results(self):
-        """
-        Save the results to the analysis document and set the ``ready`` field to ``True``.
+    # Go through the raw HMMER results and annotate the HMM hits with data from the database.
+    async with aiofiles.open(tsv_path, "r") as f:
+        async for line in f:
+            if line.startswith("vFam"):
+                line = line.split()
 
-        After the import is complete, :meth:`.indexes.Collection.cleanup_index_files` is called to remove any otus
-        indexes that are no longer being used by an active analysis job.
+                cluster_id = int(line[0].split("_")[1])
+                annotation_id = (await job.db.hmm.find_one({"cluster": int(cluster_id)}, {"_id": True}))["_id"]
 
-        """
-        analysis_id = self.params["analysis_id"]
-        sample_id = self.params["sample_id"]
+                # Expecting sequence_0.0
+                sequence_index, orf_index = (int(x) for x in line[2].split("_")[1].split("."))
 
-        virtool.jobs.analysis.set_analysis_results(
-            self.db,
-            analysis_id,
-            self.params["analysis_path"],
-            self.results
-        )
+                hits[sequence_index][orf_index].append({
+                    "hit": annotation_id,
+                    "full_e": float(line[4]),
+                    "full_score": float(line[5]),
+                    "full_bias": float(line[6]),
+                    "best_e": float(line[7]),
+                    "best_bias": float(line[8]),
+                    "best_score": float(line[9])
+                })
 
-        virtool.db.sync.recalculate_workflow_tags(self.db, sample_id)
+    sequences = job.results["sequences"]
 
-        self.dispatch("analyses", "update", [analysis_id])
-        self.dispatch("samples", "update", [sample_id])
+    for sequence_index in hits:
+        for orf_index in hits[sequence_index]:
+            sequences[sequence_index]["orfs"][orf_index]["hits"] = hits[sequence_index][orf_index]
 
-    def cleanup(self):
-        super().cleanup()
+        sequence = sequences[sequence_index]
 
-        try:
-            self.temp_dir.cleanup()
-        except AttributeError:
-            pass
+        if all(len(o["hits"]) == 0 for o in sequence["orfs"]):
+            sequences.remove(sequence)
+
+
+async def import_results(job):
+    """
+    Save the results to the analysis document and set the ``ready`` field to ``True``.
+
+    After the import is complete, :meth:`.indexes.Collection.cleanup_index_files` is called to remove any otus
+    indexes that are no longer being used by an active analysis job.
+
+    """
+    analysis_id = job.params["analysis_id"]
+    sample_id = job.params["sample_id"]
+
+    await virtool.jobs.analysis.set_analysis_results(
+        job.db,
+        analysis_id,
+        job.params["analysis_path"],
+        job.results["sequences"]
+    )
+
+    await virtool.samples.db.recalculate_workflow_tags(job.db, sample_id)
+
+
+def create():
+    job = virtool.jobs.job.Job()
+
+    job.on_startup = [
+        virtool.jobs.analysis.check_db
+    ]
+
+    job.steps = [
+        virtool.jobs.analysis.make_analysis_dir,
+        virtool.jobs.analysis.prepare_reads,
+        eliminate_otus,
+        eliminate_subtraction,
+        reunite_pairs,
+        assemble,
+        process_fasta,
+        prepare_hmm,
+        vfam,
+        virtool.jobs.analysis.upload,
+        import_results
+    ]
+
+    job.on_cleanup = [
+        virtool.jobs.analysis.delete_analysis,
+        virtool.jobs.analysis.delete_cache
+    ]
+
+    return job

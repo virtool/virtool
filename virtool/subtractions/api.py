@@ -134,7 +134,8 @@ async def create(req):
         },
         "job": {
             "id": job_id
-        }
+        },
+        "deleted": False
     }
 
     await db.subtraction.insert_one(document)
@@ -146,7 +147,6 @@ async def create(req):
 
     await virtool.jobs.db.create(
         db,
-        req.app["settings"],
         "create_subtraction",
         task_args,
         user_id,

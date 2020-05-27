@@ -3,7 +3,9 @@ import logging.handlers
 import coloredlogs
 
 
-def configure(verbose=False):
+def configure(config):
+    verbose = config["dev"] or config["verbose"]
+
     logging_level = logging.DEBUG if verbose else logging.INFO
 
     logging.captureWarnings(True)

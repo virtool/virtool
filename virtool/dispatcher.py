@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from copy import deepcopy
 from typing import Union
@@ -49,6 +50,8 @@ OPERATIONS = (
     "delete"
 )
 
+logger = logging.getLogger(__name__)
+
 
 class Connection:
 
@@ -81,10 +84,25 @@ async def default_writer(connection: Connection, message: dict):
 
 class Dispatcher:
 
-    def __init__(self):
+    def __init__(self, db, q):
         #: A dict of all active connections.
+        self.db = db
         self.connections = list()
-        logging.debug("Initialized dispatcher")
+        self.q = q
+
+    async def run(self):
+        logger.debug("Started dispatcher")
+        try:
+            while True:
+                interface, operation, id_list = await self.q.get()
+                await self.dispatch(interface, operation, id_list)
+                self.q.task_done()
+        except asyncio.CancelledError:
+            await self.q.join()
+
+            for conn in self.connections:
+                await conn.close()
+
 
     def add_connection(self, connection: Connection):
         """
@@ -124,40 +142,13 @@ class Dispatcher:
         except ValueError:
             pass
 
-    async def dispatch(
-            self,
-            interface: str,
-            operation: str,
-            data: Union[dict, list],
-            connections=None,
-            conn_filter=None,
-            conn_modifier=None,
-            writer=default_writer
-    ):
+    async def dispatch(self, interface: str, operation: str, id_list: Union[tuple, list]):
         """
         Dispatch a ``message`` with a conserved format to a selection of active ``connections``.
 
         :param interface: the name of the interface the client should perform the operation on
-        :type interface: str
-
         :param operation: a word used to tell the client what to do in response to the message
-        :type operation: str
-
-        :param data: the data the client will use
-        :type data: dict
-
-        :param connections: the connection(s) (:class:`.SocketHandler` objects) to dispatch the message to.
-        :type connections: list
-
-        :param conn_filter: filters the connections to which messages are written.
-        :type conn_filter: callable
-
-        :param conn_modifier: modifies the connection objects to which messages are written.
-        :type conn_modifier: callable
-
-        :param writer: modifies the written message based on the connection.
-        :type writer: callable
-
+        :param id_list: the data the client will use
         """
         if interface not in INTERFACES:
             raise ValueError(f'Unknown dispatch interface: {interface}')
@@ -165,37 +156,22 @@ class Dispatcher:
         if operation not in OPERATIONS:
             raise ValueError(f'Unknown dispatch operation: {operation}')
 
-        message = {
-            "operation": operation,
-            "interface": interface,
-            "data": data
-        }
-
         # If the connections parameter was not set, dispatch the message to all authorized connections. Authorized
         # connections have assigned ``user_id`` properties.
-        connections = connections or [conn for conn in self.connections if conn.user_id]
-
-        if conn_filter:
-            if not callable(conn_filter):
-                raise TypeError("conn_filter must be callable")
-
-            connections = [conn for conn in connections if conn_filter(conn)]
-
-        if conn_modifier:
-            if not callable(conn_modifier):
-                raise TypeError("conn_modifier must be callable")
-
-            for connection in connections:
-                conn_modifier(connection)
-
-        if writer and not callable(writer):
-            raise TypeError("writer must be callable")
+        connections = [conn for conn in self.connections if conn.user_id]
 
         connections_to_remove = list()
 
+        messages = await self.prepare_messages(
+            interface,
+            operation,
+            id_list
+        )
+
         for connection in connections:
             try:
-                await writer(connection, deepcopy(message))
+                for message in messages:
+                    await connection.send(message)
             except RuntimeError as err:
                 if "RuntimeError: unable to perform operation on <TCPTransport" in str(err):
                     connections_to_remove.append(connection)
@@ -212,3 +188,27 @@ class Dispatcher:
             await connection.close()
 
         logging.debug("Closed dispatcher")
+
+    async def prepare_messages(self, interface, operation, id_list):
+        if operation == "delete":
+            return [{
+                "interface": interface,
+                "operation": operation,
+                "data": id_list
+            }]
+
+        collection = getattr(self.db, interface)
+
+        projection = self.db.get_projection(interface)
+        apply_processor = self.db.get_processor(interface)
+
+        messages = list()
+
+        async for document in collection.find({"_id": {"$in": id_list}}, projection=projection):
+            messages.append({
+                "interface": interface,
+                "operation": operation,
+                "data": await apply_processor(document)
+            })
+
+        return messages

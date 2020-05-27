@@ -35,14 +35,14 @@ class Collection:
             self,
             name: str,
             collection: motor.motor_asyncio.AsyncIOMotorCollection,
-            dispatch: callable,
+            enqueue_change: callable,
             processor: callable,
             projection: Union[None, list, dict],
             silent: bool = False
     ):
         self.name = name
         self._collection = collection
-        self.dispatch = dispatch
+        self._enqueue_change = enqueue_change
         self.processor = processor
         self.projection = projection
         self.silent = silent
@@ -81,22 +81,21 @@ class Collection:
 
         return virtool.utils.base_processor(document)
 
-    async def dispatch_conditionally(self, document: dict, operation: str, silent: bool):
+    async def enqueue_change(self, operation: str, *id_list):
         """
         Dispatch updates if the collection is not `silent` and the `silent` parameter is `False`. Applies the collection
         projection and processor.
 
-        :param document: the document to dispatch
+        :param document_id: the id of the changed document
         :param operation: the operation to label the dispatch with (insert, update, delete)
         :param silent: don't perform the dispatch
 
         """
-        if not silent and not self.silent:
-            projected = self.apply_projection(document)
-            await self.dispatch(
+        if not self.silent:
+            await self._enqueue_change(
                 self.name,
                 operation,
-                await self.apply_processor(projected)
+                id_list
             )
 
     async def delete_many(self, query: dict, silent: bool = False) -> pymongo.results.DeleteResult:
@@ -112,8 +111,8 @@ class Collection:
 
         delete_result = await self._collection.delete_many(query)
 
-        if not silent and not self.silent and len(id_list):
-            await self.dispatch(self._collection.name, "delete", id_list)
+        if not silent and len(id_list):
+            await self.enqueue_change("delete", *id_list)
 
         return delete_result
 
@@ -126,13 +125,14 @@ class Collection:
         :return: the delete result
 
         """
-        document = await self._collection.find_one(query, ["_id"])
-
+        document_id = await virtool.db.utils.get_one_field(self._collection, "_id", query)
         delete_result = await self._collection.delete_one(query)
 
-        if not silent and not self.silent and document:
-            id_list = [document["_id"]]
-            await self.dispatch(self._collection.name, "delete", id_list)
+        if not silent and delete_result.deleted_count:
+            await self.enqueue_change(
+                "delete",
+                document_id
+            )
 
         return delete_result
 
@@ -165,7 +165,7 @@ class Collection:
         if document is None:
             return None
 
-        await self.dispatch_conditionally(document, "update", silent)
+        await self.enqueue_change("update", document["_id"])
 
         if projection:
             return virtool.db.utils.apply_projection(document, projection)
@@ -187,7 +187,10 @@ class Collection:
 
         try:
             await self._collection.insert_one(document)
-            await self.dispatch_conditionally(document, "insert", silent)
+
+            if not silent:
+                await self.enqueue_change("insert", document["_id"])
+
             return document
         except pymongo.errors.DuplicateKeyError:
             if generate_id:
@@ -204,45 +207,33 @@ class Collection:
             upsert=upsert
         )
 
-        if not self.silent:
-            await self.dispatch(
-                self.name,
-                "update",
-                await self.apply_processor(replacement)
-            )
+        await self.enqueue_change(
+            "update",
+            replacement["_id"]
+        )
 
         return document
 
     async def update_many(self, query, update, silent=False):
         updated_ids = await self._collection.distinct("_id", query)
-
         update_result = await self._collection.update_many(query, update)
 
-        if not silent and not self.silent:
-            async for document in self._collection.find({"_id": {"$in": updated_ids}}, projection=self.projection):
-                await self.dispatch(
-                    self.name,
-                    "update",
-                    await self.apply_processor(document)
-                )
+        if not silent:
+            await self.enqueue_change(
+                "update",
+                *updated_ids
+            )
 
         return update_result
 
     async def update_one(self, query, update, upsert=False, silent=False):
         document = await self.find_one(query, ["_id"])
-
         update_result = await self._collection.update_one(query, update, upsert=upsert)
 
-        if document:
-            document = await self.find_one(document["_id"], projection=self.projection)
-        else:
-            document = await self.find_one(query, projection=self.projection)
-
-        if not silent and not self.silent and document:
-            await self.dispatch(
-                self.name,
+        if not silent and document:
+            await self.enqueue_change(
                 "update",
-                await self.apply_processor(document)
+                document["_id"]
             )
 
         return update_result
@@ -250,9 +241,9 @@ class Collection:
 
 class DB:
 
-    def __init__(self, client, dispatch):
+    def __init__(self, client, enqueue_change):
         self.motor_client = client
-        self.dispatch = dispatch
+        self.enqueue_change = enqueue_change
 
         self.analyses = self.bind_collection(
             "analyses",
@@ -354,7 +345,7 @@ class DB:
         return Collection(
             name,
             self.motor_client[name],
-            self.dispatch,
+            self.enqueue_change,
             processor,
             projection,
             silent

@@ -5,22 +5,6 @@ import virtool.app
 import virtool.users.utils
 
 
-def get_settings(no_job_manager, setup):
-    return {
-        "enable_api": True,
-        "force_setup": setup,
-        "force_version": "v0.0.0",
-        "no_client": True,
-        "no_db_checks": True,
-        "no_job_manager": no_job_manager,
-        "no_file_checks": True,
-        "no_file_manager": True,
-        "no_refreshing": True,
-        "no_setup": True,
-        "no_sentry": True
-    }
-
-
 class VTClient:
 
     def __init__(self, loop, test_client, db_connection_string, db_name, create_user):
@@ -40,17 +24,21 @@ class VTClient:
             authorize=False,
             administrator=False,
             groups=None,
-            permissions=None,
-            no_job_manager=True,
-            setup=False
+            permissions=None
     ):
-
-        self.settings = get_settings(no_job_manager, setup)
-
-        self.settings["db_connection_string"] = self._db_connection_string
-        self.settings["db_name"] = self._db_name
-
-        app = virtool.app.create_app(self.settings)
+        app = virtool.app.create_app({
+            "db_connection_string": self._db_connection_string,
+            "db_name": self._db_name,
+            "enable_api": True,
+            "force_version": "v0.0.0",
+            "no_client": True,
+            "no_check_db": True,
+            "no_check_files": True,
+            "no_file_manager": True,
+            "no_fetching": True,
+            "no_job_interface": True,
+            "no_sentry": True
+        })
 
         self._client = await self._test_client(app)
 

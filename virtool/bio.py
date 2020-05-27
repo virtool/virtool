@@ -1,4 +1,7 @@
 import asyncio
+import typing
+
+import aiofiles
 import gzip
 import io
 import json
@@ -158,7 +161,7 @@ def read_fasta(path: str) -> List[tuple]:
     return data
 
 
-def read_fastq(f) -> Generator[tuple, None, list]:
+async def read_fastq(f) -> Generator[tuple, None, list]:
     """
     Read the FASTQ content in the file object `f`. Yields tuples containing the header, sequence, and quality.
 
@@ -171,7 +174,7 @@ def read_fastq(f) -> Generator[tuple, None, list]:
     header = None
     seq = None
 
-    for line in f:
+    async for line in f:
         if line == "+\n":
             had_plus = True
             continue
@@ -191,10 +194,8 @@ def read_fastq(f) -> Generator[tuple, None, list]:
             seq = None
             had_plus = False
 
-    return list()
 
-
-def read_fastq_from_path(path: str) -> Generator[tuple, None, None]:
+async def read_fastq_from_path(path: str) -> typing.AsyncIterable:
     """
     Read the FASTQ file at `path` and yields its content as tuples. Accepts both uncompressed and GZIP-compressed FASTQ
     files.
@@ -203,17 +204,12 @@ def read_fastq_from_path(path: str) -> Generator[tuple, None, None]:
     :return: tuples containing the header, sequence, and quality
 
     """
-    try:
-        with open(path, "r") as f:
-            for record in read_fastq(f):
-                yield record
-    except UnicodeDecodeError:
-        with gzip.open(path, "rt") as f:
-            for record in read_fastq(f):
-                yield record
+    async with aiofiles.open(path, "r") as f:
+        async for record in read_fastq(f):
+            yield record
 
 
-def read_fastq_headers(path: str) -> list:
+async def read_fastq_headers(path: str) -> list:
     """
     Return a list of FASTQ headers for the FASTQ file located at `path`. Only accepts uncompressed FASTQ files.
 
@@ -225,8 +221,8 @@ def read_fastq_headers(path: str) -> list:
 
     had_plus = False
 
-    with open(path, "r") as f:
-        for line in f:
+    async with aiofiles.open(path, "r") as f:
+        async for line in f:
             if line == "+\n":
                 had_plus = True
                 continue

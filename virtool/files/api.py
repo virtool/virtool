@@ -23,7 +23,6 @@ async def find(req):
     db = req.app["db"]
 
     base_query = {
-        "ready": True,
         "reserved": False
     }
 

@@ -6,7 +6,7 @@ from typing import Tuple
 import mako.template
 from aiohttp import web
 
-import virtool.app_routes
+import virtool.routes
 import virtool.http.utils
 import virtool.users.sessions
 import virtool.users.db

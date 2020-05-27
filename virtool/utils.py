@@ -1,4 +1,5 @@
 import datetime
+import aiofiles
 import gzip
 import os
 import re
@@ -159,12 +160,14 @@ def ensure_data_dir(data_path):
         os.makedirs(os.path.join(data_path, subdir), exist_ok=True)
 
 
-def file_length(path):
-    with open(path) as f:
-        for i, l in enumerate(f):
-            pass
+async def file_length(path):
+    length = 0
 
-    return i + 1
+    async with aiofiles.open(path) as f:
+        async for _ in f:
+            length += 1
+
+    return length
 
 
 def file_stats(path: str) -> dict:

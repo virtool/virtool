@@ -277,7 +277,6 @@ async def create(req):
     # Create job document.
     job = await virtool.jobs.db.create(
         db,
-        req.app["settings"],
         "create_sample",
         task_args,
         user_id
@@ -536,8 +535,6 @@ async def analyze(req):
     document = virtool.utils.base_processor(document)
 
     sample = await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
-
-    await req.app["dispatcher"].dispatch("samples", "update", virtool.utils.base_processor(sample))
 
     analysis_id = document["id"]
 

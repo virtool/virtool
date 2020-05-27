@@ -1,3 +1,5 @@
+from typing import Union
+
 import aiohttp.web
 import hashlib
 import json
@@ -5,6 +7,7 @@ import os
 
 import pymongo.errors
 
+import virtool.caches
 import virtool.utils
 
 PROJECTION = [
@@ -31,7 +34,43 @@ def calculate_cache_hash(parameters: dict) -> str:
     return hashlib.sha1(string.encode()).hexdigest()
 
 
-def create(db, sample_id: str, parameters: dict, paired: bool, legacy: bool = False, program: str = "skewer-0.2.2"):
+async def find(db, sample_id: str, program: str, parameters: dict) -> Union[dict, None]:
+    """
+    Find a cache matching the passed `sample_id`, `program` name and version, and set of trimming `parameters`.
+
+    If no matching cache exists, `None` will be returned.
+
+    :param db: the application database interface
+    :param sample_id: the id of the parent sample
+    :param program: the program and version used to create the cache
+    :param parameters: the parameters used for the trim
+    :return: a cache document
+
+    """
+    document = await db.caches.find_one({
+        "hash": virtool.caches.db.calculate_cache_hash(parameters),
+        "missing": False,
+        "program": program,
+        "sample.id": sample_id
+    })
+
+    return virtool.utils.base_processor(document)
+
+
+async def get(db, cache_id: str) -> dict:
+    """
+    Get the complete representation for the cache with the given `cache_id`.
+
+    :param db: the application database client
+    :param cache_id: the id of the cache to get
+    :return: the cache document
+
+    """
+    document = await db.caches.find_one(cache_id)
+    return virtool.utils.base_processor(document)
+
+
+async def create(db, sample_id: str, parameters: dict, paired: bool, legacy: bool = False, program: str = "skewer-0.2.2"):
     """
     Create and insert a new cache database document. Return the generated unique cache id.
 
@@ -63,26 +102,13 @@ def create(db, sample_id: str, parameters: dict, paired: bool, legacy: bool = Fa
             }
         }
 
-        db.caches.insert_one(document)
+        await db.caches.insert_one(document)
 
         return virtool.utils.base_processor(document)
 
     except pymongo.errors.DuplicateKeyError:
         # Keep trying to add the cache with new ids if the generated id is not unique.
-        return create(db, sample_id, parameters, paired, legacy=legacy, program=program)
-
-
-async def get(db, cache_id: str) -> dict:
-    """
-    Get the complete representation for the cache with the given `cache_id`.
-
-    :param db: the application database client
-    :param cache_id: the id of the cache to get
-    :return: the cache document
-
-    """
-    document = await db.caches.find_one(cache_id)
-    return virtool.utils.base_processor(document)
+        return await create(db, sample_id, parameters, paired, legacy=legacy, program=program)
 
 
 async def remove(app: aiohttp.web.Application, cache_id: str):

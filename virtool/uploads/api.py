@@ -1,12 +1,13 @@
+import logging
 import os
+
 import aiofiles
 from cerberus import Validator
 
-import virtool.files.db
-import virtool.uploads.db
-import virtool.samples.db
 import virtool.db.utils
+import virtool.files.db
 import virtool.http.routes
+import virtool.samples.db
 import virtool.utils
 from virtool.api.response import invalid_query, json_response, not_found
 
@@ -18,6 +19,8 @@ FILE_TYPES = [
     "hmm",
     "subtraction"
 ]
+
+logger = logging.getLogger("uploads")
 
 routes = virtool.http.routes.Routes()
 
@@ -47,6 +50,8 @@ async def naive_writer(req, file_id):
             size += len(chunk)
             await handle.write(chunk)
 
+    return size
+
 
 @routes.post("/upload/{file_type}", permission="upload_file")
 async def upload(req):
@@ -73,9 +78,14 @@ async def upload(req):
 
     file_id = document["id"]
 
-    await naive_writer(req, file_id)
+    size = await naive_writer(req, file_id)
 
-    await virtool.uploads.db.finish_upload(req.app, file_id)
+    await db.files.update_one({"_id": file_id}, {
+        "$set": {
+            "size": size,
+            "ready": True
+        }
+    })
 
     headers = {
         "Location": f"/api/files/{file_id}"

@@ -150,7 +150,6 @@ async def new(app, sample_id, ref_id, subtraction_id, user_id, workflow):
     # Create job document.
     job = await virtool.jobs.db.create(
         db,
-        settings,
         document["workflow"],
         task_args,
         user_id
