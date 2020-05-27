@@ -1,8 +1,8 @@
-import os
-import pathlib
-import sys
 import json
+import os
 import shutil
+import sys
+
 import pytest
 
 import virtool.jobs.pathoscope

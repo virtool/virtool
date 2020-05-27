@@ -299,7 +299,7 @@ def create():
         virtool.jobs.analysis.check_db
     ]
 
-    job.steps = stage_list = [
+    job.steps = [
         virtool.jobs.analysis.make_analysis_dir,
         virtool.jobs.analysis.prepare_reads,
         eliminate_otus,

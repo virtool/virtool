@@ -121,8 +121,6 @@ async def test_check_db(tmpdir, paired, dbi, mock_job):
         {"_id": "Prunus persica"},
     ])
 
-    sample_path = os.path.join(str(tmpdir), "samples", "foobar")
-
     await virtool.jobs.analysis.check_db(mock_job)
 
     assert mock_job.params["read_count"] == 1337

@@ -1,6 +1,4 @@
 import asyncio
-import json
-import json.decoder
 import logging
 import sys
 

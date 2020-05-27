@@ -1,6 +1,5 @@
 import os
 
-import aiohttp.test_utils
 import pytest
 
 import virtool.jobs.create_sample
