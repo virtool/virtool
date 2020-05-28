@@ -1,3 +1,4 @@
+import uvloop
 import asyncio
 import json
 import logging
@@ -287,6 +288,7 @@ def validate_limits(config):
 
 
 def entry():
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     default_map = create_default_map()
     cli(auto_envvar_prefix="VT", default_map=default_map)
 
@@ -300,6 +302,8 @@ def cli():
 @use_options("server")
 def start_server(**kwargs):
     virtool.logs.configure(kwargs)
+    data_path = kwargs["data_path"]
+    logger.info(f"Found data path: {data_path}")
     asyncio.get_event_loop().run_until_complete(virtool.app.run_app(kwargs))
 
 
@@ -307,6 +311,8 @@ def start_server(**kwargs):
 @use_options("agent")
 def start_agent(**kwargs):
     virtool.logs.configure(kwargs)
+    data_path = kwargs["data_path"]
+    logger.info(f"Found data path: {data_path}")
     validate_limits(kwargs)
     asyncio.get_event_loop().run_until_complete(virtool.jobs.run.run_agent(kwargs))
 
@@ -315,6 +321,8 @@ def start_agent(**kwargs):
 @use_options("job")
 def start_job(**kwargs):
     virtool.logs.configure(kwargs)
+    data_path = kwargs["data_path"]
+    logger.info(f"Found data path: {data_path}")
     logger.info("Starting in job mode")
 
     asyncio.get_event_loop().run_until_complete(run_job(
