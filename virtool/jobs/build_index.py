@@ -105,11 +105,17 @@ async def bowtie_build(job):
         await job.run_subprocess(command)
 
 
-async def replace_old(job):
+async def upload(job):
     """
     Replaces the old index with the newly generated one.
 
     """
+    await job.run_in_executor(
+        shutil.copytree,
+        job.params["temp_index_path"],
+        job.params["index_path"]
+    )
+
     # Tell the client the index is ready to be used and to no longer show it as building.
     await job.db.indexes.find_one_and_update({"_id": job.params["index_id"]}, {
         "$set": {
@@ -146,12 +152,6 @@ async def replace_old(job):
                 "last_indexed_version": version
             }
         })
-
-    await job.run_in_executor(
-        shutil.copytree,
-        job.params["temp_index_path"],
-        job.params["index_path"]
-    )
 
 
 async def delete_index(job: virtool.jobs.job.Job):
@@ -283,7 +283,7 @@ def create():
         mk_index_dir,
         write_fasta,
         bowtie_build,
-        replace_old
+        upload
     ]
 
     job.on_cleanup = [
