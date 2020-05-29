@@ -13,10 +13,10 @@ steps:
 
     commands:
       - pip install -qr requirements.txt
-      - pytest -x --db-connection-string mongodb://mongo:27017 --cov --cov-report xml
+      - pytest -x --db-connection-string mongodb://mongo:27017 --redis-connection-string redis://redis:6379 --cov --cov-report xml
 
   - name: coverage
-    image: python:3.6-alpine
+    image: python:3.8-alpine
     environment:
       CODACY_PROJECT_TOKEN:
         from_secret: CODACY_PROJECT_TOKEN
@@ -34,6 +34,11 @@ services:
     command: [--smallfiles, --nojournal]
     ports:
       - 27017
+
+  - name: redis
+    image: redis:6.0
+    ports:
+      - 6379
 
 ---
 kind: pipeline
