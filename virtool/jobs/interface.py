@@ -25,7 +25,7 @@ class JobInterface:
         Cancel the job with the given `job_id` if it is in the `_jobs_dict`.
 
         """
-        await self.db.jobs.update_one({"_id": job_id}, {
+        document = await self.db.jobs.find_one_and_update({"_id": job_id}, {
             "$set": {
                 "state": "cancelling"
             }
@@ -36,3 +36,5 @@ class JobInterface:
         await self.redis.publish("channel:cancel", job_id)
 
         logger.debug(f"Requested job cancellation via Redis: {job_id}")
+
+        return document

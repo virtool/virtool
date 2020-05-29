@@ -103,6 +103,7 @@ snapshots['TestCreate.test[True-uvloop] 1'] = {
         'ref_id': 'foo',
         'user_id': 'test'
     },
+    'state': 'waiting',
     'status': [
         {
             'error': None,

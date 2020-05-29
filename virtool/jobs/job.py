@@ -3,10 +3,8 @@ Classes, exceptions, and utilities for creating Virtool jobs.
 
 """
 import asyncio
-import asyncio.events
 import concurrent.futures.thread
 import logging
-import signal
 import subprocess
 import sys
 import tempfile
@@ -44,6 +42,8 @@ class Job:
         #: :attr:`.db_connection_string` and :attr:`.db_name`. Value is ``None`` until :meth:`.init_db` is called.
         self.db = None
 
+        self.redis = None
+
         #: The name of the job task (eg. `create_sample`). Value is ``None`` until :meth:`.init_db` is called.
         self.task_name = None
 
@@ -63,20 +63,34 @@ class Job:
         self._error = None
         self._process = None
         self._executor = None
+        self._scheduler = None
+        self._run_task = None
+        self._watch_cancel_task = None
 
-    async def run(self, db, config, job_id):
+    async def run(self, db, redis, config, job_id):
+        self.db = db
+        self.redis = redis
+        self.settings = config
+        self.id = job_id
+
+        logger.debug("Creating job tasks")
+        self._run_task = asyncio.create_task(self._run())
+        self._watch_cancel_task = asyncio.create_task(self._watch_cancel())
+
+        logger.debug("Waiting for job tasks")
+        await asyncio.gather(
+            self._run_task,
+            self._watch_cancel_task
+        )
+
+    async def _run(self):
         logger.debug("Job run method called")
 
         self._executor = concurrent.futures.thread.ThreadPoolExecutor()
 
-        set_signals()
-
-        self.db = db
-        self.settings = config
-        self.id = job_id
-
         try:
             await self._connect_db()
+            logger.debug("Running startup tasks")
             await self._startup()
 
             for coro in self.steps:
@@ -86,14 +100,9 @@ class Job:
 
             await self._add_status(state="complete")
 
-        except TerminationError:
+        except (asyncio.CancelledError, InterruptedError, KeyboardInterrupt):
             await self._add_status(state="cancelled")
-
-            if self._process:
-                self._process.kill()
-
             await self._cleanup()
-
         except:
             self._error = handle_exception()
             await self._add_status(state="error")
@@ -196,6 +205,21 @@ class Job:
         for coro in self.on_cleanup:
             await coro(self)
 
+    async def _watch_cancel(self):
+        logger.info("Watching for cancellation")
+
+        channel, = await self.redis.subscribe("channel:cancel")
+
+        try:
+            async for job_id in channel.iter(encoding="utf-8"):
+                if job_id == self.id:
+                    logger.info("Received cancellation message")
+
+                    self._run_task.cancel()
+                    self._watch_cancel_task.cancel()
+        except asyncio.CancelledError:
+            pass
+
     async def _add_status(self, state=None, stage=None):
         """
         Add a status entry to the job database document that describes this job.
@@ -248,18 +272,6 @@ class TerminationError(Exception):
     pass
 
 
-def set_signals():
-    # Prevent the signal from propagating to the main server process.
-    # See: https://stackoverflow.com/questions/50781181/os-kill-vs-process-terminate-within-aiohttp
-    signal.set_wakeup_fd(-1)
-
-    # Ignore keyboard interrupts. The manager will deal with the signal and cancel jobs safely.
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-    # When the manager terminates jobs, run the handle_sigterm method.
-    signal.signal(signal.SIGTERM, handle_sigterm)
-
-
 def handle_exception(max_tb: Optional[int] = 50) -> dict:
     """
     Transforms an exception into a :class:`dict` describing the error. The dict can be stored in MongoDB and used to
@@ -285,17 +297,6 @@ def handle_exception(max_tb: Optional[int] = 50) -> dict:
         "traceback": traceback.format_tb(trace_info, max_tb),
         "details": [str(arg) for arg in value.args]
     }
-
-
-def handle_sigterm(*args):
-    """
-    A handler for SIGTERM signals. Raises a TerminationError in :meth:`.Job.run` that allows the job to clean-up after
-    itself before terminating.
-
-    A SIGTERM is generally received as the result of explicit cancellation of the job by a user.
-
-    """
-    raise TerminationError
 
 
 async def watch_pipe(stream: asyncio.StreamReader, handler):
