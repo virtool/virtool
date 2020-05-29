@@ -75,10 +75,10 @@ class Job:
         self.settings = config
         self.id = job_id
 
-        await self._connect_db()
-        await self._startup()
-
         try:
+            await self._connect_db()
+            await self._startup()
+
             for coro in self.steps:
                 await self._run_step(coro)
 
