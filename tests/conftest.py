@@ -7,6 +7,7 @@ from tests.fixtures.groups import *
 from tests.fixtures.history import *
 from tests.fixtures.indexes import *
 from tests.fixtures.jobs import *
+from tests.fixtures.redis import *
 from tests.fixtures.references import *
 from tests.fixtures.response import *
 from tests.fixtures.setup import *
@@ -19,4 +20,10 @@ def pytest_addoption(parser):
         "--db-connection-string",
         action="store",
         default="mongodb://localhost:27017"
+    )
+
+    parser.addoption(
+        "--redis-connection-string",
+        action="store",
+        default="redis://localhost:6379"
     )

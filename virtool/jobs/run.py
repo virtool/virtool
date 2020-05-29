@@ -69,6 +69,8 @@ async def run_agent(config: dict):
         except asyncio.CancelledError:
             logging.debug("Closing scheduler")
             await app["scheduler"].close()
+            app["redis"].close()
+            await app["redis"].wait_closed()
 
     loop = asyncio.get_event_loop()
 
@@ -91,12 +93,17 @@ async def run_job(config):
         virtool.redis.create_dispatch(redis)
     )
 
-    task = await virtool.db.utils.get_one_field(db.jobs, "task", config["job_id"])
+    document = await db.jobs.find_one({"_id": config["job_id"]}, ["task", "state"])
 
-    job_obj = virtool.jobs.classes.TASK_CREATORS[task]()
+    if document["state"] == "waiting":
+        job_obj = virtool.jobs.classes.TASK_CREATORS[document["task"]]()
 
-    await job_obj.run(
-        db,
-        config,
-        config["job_id"]
-    )
+        await job_obj.run(
+            db,
+            redis,
+            config,
+            config["job_id"]
+        )
+
+    redis.close()
+    await redis.wait_closed()

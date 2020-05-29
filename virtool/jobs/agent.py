@@ -35,14 +35,7 @@ class DistributedJobAgent:
 
     async def run(self):
         logging.debug("Started distributed job manager")
-        self.cancel_channel, = await self.redis.subscribe("channel:cancel")
 
-        await asyncio.wait([
-            self._check_cancel(),
-            self._run_manager()
-        ])
-
-    async def _run_manager(self):
         try:
             while True:
                 next_jobs = dict()
@@ -76,31 +69,7 @@ class DistributedJobAgent:
                 await asyncio.sleep(0.3)
 
         except asyncio.CancelledError:
-            logging.debug("Stopping job runner")
-
-        logging.debug("Stopped job runner")
-
-    async def _cancel(self, job_id):
-        logger.info(f"Cancelling job: {job_id}")
-
-        self._process = job = self._jobs.get(job_id)
-
-        if job:
-            if job["process"] and job["process"].is_alive():
-                job["process"].terminate()
-            else:
-                await virtool.jobs.db.cancel(self.db, job_id)
-                del self._jobs[job_id]
-                await self.dispatch(
-                    "jobs",
-                    "update",
-                    [job_id]
-                )
-
-    async def _check_cancel(self):
-        async for job_id in self.cancel_channel.iter(encoding="utf-8"):
-            if job_id:
-                await self._cancel(job_id)
+            logging.debug("Stopped agent")
 
     async def _get_lg_job(self):
         job_id = await self.redis.lpop("jobs_lg", encoding="utf-8")
@@ -119,7 +88,10 @@ class DistributedJobAgent:
         return job_id
 
     async def _start_job(self, job_id):
-        document = await self.db.jobs.find_one(job_id, ["task", "args", "proc", "mem"])
+        document = await self.db.jobs.find_one(job_id, ["args", "task", "mem", "proc", "state"])
+
+        if document is None:
+            return None
 
         task = document["task"]
 

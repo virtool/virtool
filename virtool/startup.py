@@ -225,12 +225,7 @@ async def init_job_interface(app):
     if app["settings"].get("no_job_interface"):
         return logger.info("Running without job manager")
 
-    capture_exception = None
-
-    if "sentry" in app:
-        capture_exception = app["sentry"].captureException
-
-    app["jobs"] = virtool.jobs.interface.DistributedJobInterface(app, capture_exception)
+    app["jobs"] = virtool.jobs.interface.JobInterface(app)
 
 
 async def init_http_client(app: aiohttp.web.Application):
