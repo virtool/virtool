@@ -1,22 +1,43 @@
-Virtool
-=======
+# Virtool
 
-[![Build Status](https://travis-ci.org/virtool/virtool.svg?branch=master)](https://travis-ci.org/virtool/virtool)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/6b163267c1e74579862474edf3946e12)](https://www.codacy.com/app/virtool/virtool?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=virtool/virtool&amp;utm_campaign=Badge_Grade)
-[![Codacy Badge](https://api.codacy.com/project/badge/Coverage/6b163267c1e74579862474edf3946e12)](https://www.codacy.com/app/virtool/virtool?utm_source=github.com&utm_medium=referral&utm_content=virtool/virtool&utm_campaign=Badge_Coverage)
+_Cloud Development Branch_
 
 Virtool is a web-based application for diagnosing viral infections in plant samples using Illumina sequencing. 
   
 Website: https://www.virtool.ca
 Gitter: https://gitter.im/virtool
 
-#### Required Software
+## Setup
 
-| Software                                                            | Version |
-|---------------------------------------------------------------------|---------|
-| [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)    | 2.3.2   |
-| [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc) | 0.11.8  |
-| [HMMER](http://hmmer.org/)                                          | 3.1b2   |
-| [MongoDB](https://www.mongodb.com/)                                 | 3.6.0   |
-| [Skewer](https://github.com/relipmoc/skewer)                        | 0.2.2   |
-| [SPAdes](http://cab.spbu.ru/software/spades/)                       | 3.11.0  |
+1. Create a volume
+    ```shell script
+    docker volume create virtool
+    ```
+
+2. Run MongoDB 4.2+ and Redis 6.0+ and make accessible to Virtool containers.
+
+## Run Server
+
+```shell script
+docker run -p 9950:9950 -v virtool:/vt/data igboyes/virtool:0.1.2 python run.py server --db-connection-string mongodb://10.0.0.221:27017 --db-name virtool --redis-connection-string redis://10.0.0.221:6379 --host 0.0.0.0 --data-path /vt/data
+```
+
+- mount volume and provide its path to Virtool through the `--data-path` option
+- connect to previously started Redis and MongoDB servers
+
+### Starting Jobs
+When jobs are started on the server they are right-pushed into one of two lists:
+
+- `jobs_lg`: large jobs requiring around 16 cores and 32 GB RAM
+- `jobs_sm`: small jobs requiring around 4 cores and 8 GB RAM
+
+Poping 
+
+## Run Job
+
+docker run -v virtool:/vt/data igboyes/virtool:0.1.2 python run.py agent --db-connection-string mongodb://10.0.0.221:27017 --db-name virtool --redis-connectn-string redis://10.0.0.221:6379 --data-path /vt/data --proc 6 --mem 12 --lg-proc 6 --lg-mem 12 --sm-proc 2 --sm-mem 4
+  
+- provide the database connection information and `--data-path`
+- provide the `--job-id` option to specifiy which job should be run
+- use `--proc` and `--mem` to specify what resources are available for the job
+ 
