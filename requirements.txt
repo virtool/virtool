@@ -23,7 +23,6 @@ coloredlogs==14.0
 configobj==5.0.6
 contextvars==2.4
 coverage==5.0.4
-cx-Freeze==6.1
 dictdiffer==0.8.1
 et-xmlfile==1.0.1
 execnet==1.7.1
