@@ -69,6 +69,8 @@ async def run_agent(config: dict):
         except asyncio.CancelledError:
             logging.debug("Closing scheduler")
             await app["scheduler"].close()
+            app["redis"].close()
+            await app["redis"].wait_closed()
 
     loop = asyncio.get_event_loop()
 
