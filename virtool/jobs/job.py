@@ -213,6 +213,9 @@ class Job:
             self._progress = round((stage_index + 1) / (len(self.steps) + 1), 2)
 
         await self.db.jobs.update_one({"_id": self.id}, {
+            "$set": {
+                "state": self._state
+            },
             "$push": {
                 "status": {
                     "state": self._state,

@@ -6,12 +6,11 @@ import virtool.jobs.utils
 logger = logging.getLogger(__name__)
 
 
-class DistributedJobInterface:
+class JobInterface:
 
-    def __init__(self, app, capture_exception):
+    def __init__(self, app):
         self.db = app["db"]
         self.redis = app["redis"]
-        self.cancel_channel = None
 
     async def enqueue(self, job_id):
         task = await virtool.db.utils.get_one_field(self.db.jobs, "task", job_id)
@@ -26,5 +25,14 @@ class DistributedJobInterface:
         Cancel the job with the given `job_id` if it is in the `_jobs_dict`.
 
         """
+        await self.db.jobs.update_one({"_id": job_id}, {
+            "$set": {
+                "state": "cancelling"
+            }
+        })
+
+        await self.redis.lrem("jobs_lg", 0, job_id)
+        await self.redis.lrem("jobs_sm", 0, job_id)
         await self.redis.publish("channel:cancel", job_id)
+
         logger.debug(f"Requested job cancellation via Redis: {job_id}")

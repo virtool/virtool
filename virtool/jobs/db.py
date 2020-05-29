@@ -72,6 +72,7 @@ async def create(db, task_name, task_args, user_id, job_id=None):
         "user": {
             "id": user_id
         },
+        "state": "waiting",
         "status": [
             {
                 "state": "waiting",
