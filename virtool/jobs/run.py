@@ -1,59 +1,55 @@
 import asyncio
-import logging
 import signal
+import logging
 
 import aiojobs
 
 import virtool.db.mongo
-import virtool.db.utils
-import virtool.jobs.agent
-import virtool.jobs.classes
 import virtool.redis
 import virtool.startup
-
-JOB_STARTUP = [
-    virtool.startup.init_version,
-    virtool.startup.init_redis,
-    virtool.startup.init_settings
-]
-
-RUNNER_STARTUP = [
-    virtool.startup.init_version,
-    virtool.startup.init_redis,
-    virtool.startup.init_db,
-    virtool.startup.init_settings,
-    virtool.startup.init_sentry,
-    virtool.startup.init_resources,
-    virtool.startup.init_job_interface
-]
 
 logger = logging.getLogger(__name__)
 
 
-async def create_shallow_app(config):
-    return {
+async def create_shallow_app(config) -> dict:
+    """
+    This dict poses as an aiohttp application and can make use of the same startup and shutdown functions as the
+    web applications.
+
+    """
+    app_dict = {
         "change_queue": asyncio.Queue(),
         "config": config,
         "mode": "runner",
         "scheduler": await aiojobs.create_scheduler()
     }
 
+    await virtool.startup.init_version(app_dict)
+    await virtool.startup.init_redis(app_dict)
 
-async def run_agent(config: dict):
+    app_dict["db"] = await virtool.db.mongo.connect(
+        config,
+        virtool.redis.create_dispatch(app_dict["redis"])
+    )
+
+    await virtool.startup.init_settings(app_dict)
+    await virtool.startup.init_sentry(app_dict)
+    await virtool.startup.init_resources(app_dict)
+
+    return app_dict
+
+
+async def run(config: dict, cls):
     """
-    Run a job agent instance.
+    Run a job runner instance.
 
     :param config: the config values provided by the user
+    :param cls: the agent or runner class to use
 
     """
-    # This dict poses as an AIOHTTP application and can make use of the same startup and shutdown functions as the
-    # web applications.
     app = await create_shallow_app(config)
 
-    for func in RUNNER_STARTUP:
-        await func(app)
-
-    app["jobs"] = virtool.jobs.agent.DistributedJobAgent(
+    app["jobs"] = cls(
         app,
         None
     )
@@ -67,43 +63,17 @@ async def run_agent(config: dict):
             while True:
                 await asyncio.sleep(3600)
         except asyncio.CancelledError:
-            logging.debug("Closing scheduler")
+            logging.info("Closing scheduler")
             await app["scheduler"].close()
+
+            logging.info("Closing Redis client")
             app["redis"].close()
             await app["redis"].wait_closed()
 
     loop = asyncio.get_event_loop()
-
     task = loop.create_task(wait())
 
-    def handler():
-        task.cancel()
-
-    loop.add_signal_handler(signal.SIGINT, handler)
-    loop.add_signal_handler(signal.SIGTERM, handler)
+    loop.add_signal_handler(signal.SIGINT, task.cancel)
+    loop.add_signal_handler(signal.SIGTERM, task.cancel)
 
     await task
-
-
-async def run_job(config):
-    redis = await virtool.redis.connect(config["redis_connection_string"])
-
-    db = await virtool.db.mongo.connect(
-        config,
-        virtool.redis.create_dispatch(redis)
-    )
-
-    document = await db.jobs.find_one({"_id": config["job_id"]}, ["task", "state"])
-
-    if document["state"] == "waiting":
-        job_obj = virtool.jobs.classes.TASK_CREATORS[document["task"]]()
-
-        await job_obj.run(
-            db,
-            redis,
-            config,
-            config["job_id"]
-        )
-
-    redis.close()
-    await redis.wait_closed()

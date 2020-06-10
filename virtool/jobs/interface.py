@@ -18,7 +18,7 @@ class JobInterface:
 
         await self.redis.rpush(f"jobs_{size}", job_id)
 
-        logger.debug(f"Enqueued job via Redis: {job_id}")
+        logger.debug(f"Enqueued job: {job_id}")
 
     async def cancel(self, job_id):
         """

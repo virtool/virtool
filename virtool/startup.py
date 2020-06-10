@@ -4,9 +4,11 @@ import logging
 import os
 import signal
 import sys
+import typing
 
 import aiohttp.client
 import aiohttp.web
+import aiohttp.web_app
 import aiojobs
 import aiojobs.aiohttp
 import pymongo.errors
@@ -19,7 +21,7 @@ import virtool.db.utils
 import virtool.dispatcher
 import virtool.files.manager
 import virtool.hmm.db
-import virtool.jobs.agent
+import virtool.jobs.runner
 import virtool.jobs.interface
 import virtool.redis
 import virtool.references.db
@@ -47,7 +49,7 @@ def create_events() -> dict:
     }
 
 
-def get_scheduler_from_app(app) -> aiojobs.Scheduler:
+def get_scheduler_from_app(app: aiohttp.web_app.Application) -> aiojobs.Scheduler:
     scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
 
     if scheduler is None:
@@ -56,7 +58,7 @@ def get_scheduler_from_app(app) -> aiojobs.Scheduler:
     return scheduler
 
 
-async def init_check_db(app):
+async def init_check_db(app: aiohttp.web_app.Application):
     if app["config"].get("no_check_db"):
         return logger.info("Skipping database checks")
 
@@ -88,7 +90,7 @@ async def init_check_db(app):
     await db.sequences.create_index("name")
 
 
-async def init_client_path(app):
+async def init_client_path(app: aiohttp.web_app.Application):
     if not app["settings"]["no_client"]:
         app["client_path"] = await virtool.utils.get_client_path()
 
@@ -99,7 +101,7 @@ async def init_client_path(app):
         app.router.add_static("/static", app["client_path"])
 
 
-async def init_db(app):
+async def init_db(app: aiohttp.web_app.Application):
     """
     An application ``on_startup`` callback that attaches an instance of :class:`~AsyncIOMotorClient` and the ``db_name``
     to the Virtool ``app`` object. Also initializes collection indices.
@@ -118,7 +120,7 @@ async def init_db(app):
     app["db"] = await virtool.db.mongo.connect(app["config"], enqueue_change)
 
 
-async def init_dispatcher(app):
+async def init_dispatcher(app: aiohttp.web_app.Application):
     """
     An application ``on_startup`` callback that initializes a Virtool :class:`~.Dispatcher` object and attaches it to
     the ``app`` object.
@@ -137,7 +139,7 @@ async def init_dispatcher(app):
     await get_scheduler_from_app(app).spawn(app["dispatcher"].run())
 
 
-async def init_events(app):
+async def init_events(app: aiohttp.web_app.Application):
     events = create_events()
 
     loop = asyncio.get_event_loop()
@@ -177,7 +179,7 @@ async def init_executors(app: aiohttp.web.Application):
     app["process_executor"] = process_executor
 
 
-async def init_file_manager(app):
+async def init_file_manager(app: aiohttp.web_app.Application):
     """
     An application ``on_startup`` callback that initializes a Virtool :class:`virtool.file_manager.Manager` object and
     attaches it to the ``app`` object.
@@ -213,7 +215,7 @@ async def init_file_manager(app):
     await scheduler.spawn(app["file_manager"].run())
 
 
-async def init_job_interface(app):
+async def init_job_interface(app: aiohttp.web_app.Application):
     """
     An application `on_startup` callback that initializes a Virtool :class:`virtool.job_manager.Manager` object and
     puts it in app state.
@@ -223,7 +225,7 @@ async def init_job_interface(app):
 
     """
     if app["settings"].get("no_job_interface"):
-        return logger.info("Running without job manager")
+        return logger.info("Running without job interface")
 
     app["jobs"] = virtool.jobs.interface.JobInterface(app)
 
@@ -248,7 +250,7 @@ async def init_http_client(app: aiohttp.web.Application):
     app["client"] = aiohttp.client.ClientSession(headers=headers)
 
 
-async def init_paths(app):
+async def init_paths(app: aiohttp.web_app.Application):
     if app["settings"]["no_check_files"] is False:
         logger.info("Checking files")
         virtool.utils.ensure_data_dir(app["settings"]["data_path"])
@@ -259,7 +261,7 @@ async def init_paths(app):
             pass
 
 
-async def init_redis(app):
+async def init_redis(app: typing.Union[dict, aiohttp.web_app.Application]):
     redis_connection_strong = app["config"].get("redis_connection_string")
 
     if not redis_connection_strong:
@@ -269,6 +271,8 @@ async def init_redis(app):
     logger.info("Connecting to Redis")
     app["redis"] = await virtool.redis.connect(redis_connection_strong)
 
+
+async def init_listen_for_changes(app: aiohttp.web_app.Application):
     scheduler = get_scheduler_from_app(app)
     await scheduler.spawn(virtool.redis.listen_for_changes(app))
 
@@ -290,7 +294,7 @@ async def init_refresh(app: aiohttp.web.Application):
     await scheduler.spawn(virtool.software.db.refresh(app))
 
 
-async def init_resources(app: aiohttp.web.Application):
+async def init_resources(app: typing.Union[dict, aiohttp.web.Application]):
     """
     Set an initial value for the application resource values.
 
@@ -302,12 +306,12 @@ async def init_resources(app: aiohttp.web.Application):
     app["resources"] = virtool.resources.get()
 
 
-async def init_routes(app):
+async def init_routes(app: aiohttp.web_app.Application):
     logger.debug("Setting up routes")
     virtool.routes.setup_routes(app)
 
 
-async def init_sentry(app):
+async def init_sentry(app: typing.Union[dict, aiohttp.web_app.Application]):
     if not app["settings"]["no_sentry"] and app["settings"].get("enable_sentry", True) and not app["settings"]["dev"]:
         logger.info("Configuring Sentry")
         virtool.sentry.setup(app["version"])
@@ -316,7 +320,7 @@ async def init_sentry(app):
         logger.info("Skipped configuring Sentry")
 
 
-async def init_settings(app: aiohttp.web.Application):
+async def init_settings(app: typing.Union[dict, aiohttp.web.Application]):
     """
     Draws settings from the settings database collection and populates `app["settings"`.
 
@@ -333,7 +337,7 @@ async def init_settings(app: aiohttp.web.Application):
     }
 
 
-async def init_version(app: aiohttp.web.Application):
+async def init_version(app: typing.Union[dict, aiohttp.web.Application]):
     """
     Bind the application version to the application state `dict`.
 

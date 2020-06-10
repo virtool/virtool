@@ -21,7 +21,7 @@ import virtool.http.csp
 import virtool.http.errors
 import virtool.http.proxy
 import virtool.http.query
-import virtool.jobs.agent
+import virtool.jobs.runner
 import virtool.logs
 import virtool.references.db
 import virtool.resources
@@ -111,6 +111,7 @@ def create_app(config):
         virtool.startup.init_routes,
         virtool.startup.init_executors,
         virtool.startup.init_redis,
+        virtool.startup.init_listen_for_changes,
         virtool.startup.init_sentry,
         virtool.startup.init_check_db,
         virtool.startup.init_resources,

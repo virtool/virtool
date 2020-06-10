@@ -13,7 +13,7 @@ from typing import Optional
 
 import virtool.db.mongo
 import virtool.db.utils
-import virtool.jobs.agent
+import virtool.jobs.runner
 import virtool.jobs.db
 import virtool.redis
 import virtool.settings.db
@@ -93,8 +93,11 @@ class Job:
             logger.debug("Running startup tasks")
             await self._startup()
 
+            logger.debug("Running steps")
             for coro in self.steps:
                 await self._run_step(coro)
+
+            logger.debug("Finished running steps")
 
             self._progress = 1
 
@@ -116,6 +119,10 @@ class Job:
 
             await self._cleanup()
 
+        logger.debug("Stopping cancellation watch")
+        self._watch_cancel_task.cancel()
+
+        logger.debug("Cleaning up temporary directory")
         await self.run_in_executor(
             self.temp_dir.cleanup
         )

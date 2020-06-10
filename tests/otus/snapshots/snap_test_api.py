@@ -117,61 +117,6 @@ snapshots['TestCreate.test[True-uvloop-TMV-True] otu'] = {
     'version': 0
 }
 
-snapshots['TestCreate.test[True-uvloop-True] history'] = {
-    '_id': '9pfsom1b.0',
-    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'description': 'Created Tobacco mosaic virus',
-    'diff': {
-        '_id': '9pfsom1b',
-        'abbreviation': '',
-        'isolates': [
-        ],
-        'last_indexed_version': None,
-        'lower_name': 'tobacco mosaic virus',
-        'name': 'Tobacco mosaic virus',
-        'reference': {
-            'id': 'foo'
-        },
-        'schema': [
-        ],
-        'verified': False,
-        'version': 0
-    },
-    'index': {
-        'id': 'unbuilt',
-        'version': 'unbuilt'
-    },
-    'method_name': 'create',
-    'otu': {
-        'id': '9pfsom1b',
-        'name': 'Tobacco mosaic virus',
-        'version': 0
-    },
-    'reference': {
-        'id': 'foo'
-    },
-    'user': {
-        'id': 'test'
-    }
-}
-
-snapshots['TestCreate.test[True-uvloop-True] otu'] = {
-    '_id': '9pfsom1b',
-    'abbreviation': '',
-    'isolates': [
-    ],
-    'last_indexed_version': None,
-    'lower_name': 'tobacco mosaic virus',
-    'name': 'Tobacco mosaic virus',
-    'reference': {
-        'id': 'foo'
-    },
-    'schema': [
-    ],
-    'verified': False,
-    'version': 0
-}
-
 snapshots['TestSetAsDefault.test[True-uvloop] history'] = {
     '_id': '6116cba1.1',
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
@@ -1245,65 +1190,6 @@ snapshots['TestEditIsolate.test_force_case[True-uvloop] history'] = {
 }
 
 snapshots['TestCreate.test[True-uvloop-None-True] json'] = {
-    'abbreviation': '',
-    'id': '9pfsom1b',
-    'isolates': [
-    ],
-    'issues': {
-        'empty_isolate': False,
-        'empty_otu': True,
-        'empty_sequence': False,
-        'isolate_inconsistency': False
-    },
-    'last_indexed_version': None,
-    'most_recent_change': {
-        'created_at': '2015-10-06T20:00:00Z',
-        'description': 'Created Tobacco mosaic virus',
-        'diff': {
-            '_id': '9pfsom1b',
-            'abbreviation': '',
-            'isolates': [
-            ],
-            'last_indexed_version': None,
-            'lower_name': 'tobacco mosaic virus',
-            'name': 'Tobacco mosaic virus',
-            'reference': {
-                'id': 'foo'
-            },
-            'schema': [
-            ],
-            'verified': False,
-            'version': 0
-        },
-        'id': '9pfsom1b.0',
-        'index': {
-            'id': 'unbuilt',
-            'version': 'unbuilt'
-        },
-        'method_name': 'create',
-        'otu': {
-            'id': '9pfsom1b',
-            'name': 'Tobacco mosaic virus',
-            'version': 0
-        },
-        'reference': {
-            'id': 'foo'
-        },
-        'user': {
-            'id': 'test'
-        }
-    },
-    'name': 'Tobacco mosaic virus',
-    'reference': {
-        'id': 'foo'
-    },
-    'schema': [
-    ],
-    'verified': False,
-    'version': 0
-}
-
-snapshots['TestCreate.test[True-uvloop-True] json'] = {
     'abbreviation': '',
     'id': '9pfsom1b',
     'isolates': [

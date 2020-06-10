@@ -11,12 +11,13 @@ import psutil
 import virtool.app
 import virtool.db.mongo
 import virtool.db.utils
+import virtool.jobs.runner
 import virtool.jobs.classes
 import virtool.jobs.job
+import virtool.jobs.run
 import virtool.logs
 import virtool.redis
 import virtool.utils
-from virtool.jobs.run import run_job
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,11 @@ OPTIONS = {
         help="The ID of the job to run",
         required=True,
         type=str
+    ),
+    "job_list": click.option(
+        "--job-list", "-l",
+        default=["jobs_lg", "jobs_sm"],
+        multiple=True
     ),
     "no_check_db": click.option(
         "--no-check-db",
@@ -197,9 +203,15 @@ RESOURCE_OPTIONS = (
 )
 
 MODE_SCOPED_OPTIONS = {
-    "job": (
+    "agent": (
         *COMMON_OPTIONS,
-        "job_id",
+        *RESOURCE_OPTIONS,
+        "job_list",
+        "temp_path"
+    ),
+    "runner": (
+        *COMMON_OPTIONS,
+        "job_list",
         "mem",
         "proc",
         "temp_path"
@@ -208,12 +220,6 @@ MODE_SCOPED_OPTIONS = {
         *ADDRESS_OPTIONS,
         *COMMON_OPTIONS,
         *DISABLE_OPTIONS
-    ),
-    "agent": (
-        *COMMON_OPTIONS,
-        *RESOURCE_OPTIONS,
-        "data_path",
-        "temp_path"
     )
 }
 
@@ -307,24 +313,24 @@ def start_server(**kwargs):
     asyncio.get_event_loop().run_until_complete(virtool.app.run_app(kwargs))
 
 
-@cli.command("agent", help="Start as a minimal agent that starts jobs from Redis")
+@cli.command("agent", help="Start an agent that runs multiple jobs")
 @use_options("agent")
 def start_agent(**kwargs):
     virtool.logs.configure(kwargs)
     data_path = kwargs["data_path"]
     logger.info(f"Found data path: {data_path}")
     validate_limits(kwargs)
-    asyncio.get_event_loop().run_until_complete(virtool.jobs.run.run_agent(kwargs))
+
+    logger.info("Starting in agent mode")
+    asyncio.get_event_loop().run_until_complete(virtool.jobs.run.run(kwargs, virtool.jobs.runner.JobAgent))
 
 
-@cli.command("job", help="Run a single existing Virtool job")
-@use_options("job")
-def start_job(**kwargs):
+@cli.command("runner", help="Start a runner that runs one job at a time")
+@use_options("runner")
+def start_runner(**kwargs):
     virtool.logs.configure(kwargs)
     data_path = kwargs["data_path"]
     logger.info(f"Found data path: {data_path}")
-    logger.info("Starting in job mode")
 
-    asyncio.get_event_loop().run_until_complete(run_job(
-        kwargs
-    ))
+    logger.info("Starting in runner mode")
+    asyncio.get_event_loop().run_until_complete(virtool.jobs.run.run(kwargs, virtool.jobs.runner.JobRunner))

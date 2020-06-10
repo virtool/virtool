@@ -2,7 +2,7 @@
 Globals and utility functions for interacting with the jobs collection in the application database.
 
 """
-import virtool.jobs.agent
+import virtool.jobs.runner
 import virtool.utils
 
 OR_COMPLETE = [
