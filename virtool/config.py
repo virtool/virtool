@@ -73,6 +73,7 @@ OPTIONS = {
     "job_list": click.option(
         "--job-list", "-l",
         default=["jobs_lg", "jobs_sm"],
+        help="A Redis list key to pull job IDs from",
         multiple=True
     ),
     "no_check_db": click.option(
