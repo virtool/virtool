@@ -31,22 +31,22 @@ When jobs are started on the server they are right-pushed into one of two lists:
 - `jobs_lg`: large jobs requiring around 16 cores and 32 GB RAM
 - `jobs_sm`: small jobs requiring around 4 cores and 8 GB RAM 
 
-## Run Single Job
+## Runner
 
 ```shell script
-docker run -v virtool:/vt/data igboyes/virtool:0.1.2 python run.py job --db-connection-string mongodb://10.0.0.221:27017 --db-name virtool --redis-connection-string redis://10.0.0.221:6379 --data-path /vt/data --proc 6 --mem 12 --job-id foobar
+docker run -v virtool:/vt/data igboyes/virtool:0.1.4 python run.py runner --db-connection-string mongodb://10.0.0.221:27017 --db-name virtool --redis-connection-string redis://10.0.0.221:6379 --data-path /vt/data --proc 6 --mem 12 --job-list jobs_sm
 ```
 
-This will run a single workflow job given a job ID.
+This will run a single workflow job at a time based on job IDs pulled from the Redis `--job-list`. The runner will look for new IDs after it completes the current job.
 
 - provide the database connection information and `--data-path`
-- provide the `--job-id` option to specifiy which job should be run
+- provide the `--job-list` option to specify which Redis list(s) the runner should pull IDs from
 - use `--proc` and `--mem` to specify what resources are available for the job
  
  ## Run Job Agent
  
 ```shell script
-docker run -v virtool:/vt/data igboyes/virtool:0.1.2 python run.py agent --db-connection-string mongodb://10.0.0.221:27017 --db-name virtool --redis-connection-string redis://10.0.0.221:6379 --data-path /vt/data --proc 6 --mem 12 --lg-proc 6 --lg-mem 12 --sm-proc 2 --sm-mem 4
+docker run -v virtool:/vt/data igboyes/virtool:0.1.4 python run.py agent --db-connection-string mongodb://10.0.0.221:27017 --db-name virtool --redis-connection-string redis://10.0.0.221:6379 --data-path /vt/data --proc 6 --mem 12 --lg-proc 6 --lg-mem 12 --sm-proc 2 --sm-mem 4
 ```
 
 This will run a service that watches Redis for jobs and starts them using `subprocess`. It will keep track of the resource usage of the running jobs.
