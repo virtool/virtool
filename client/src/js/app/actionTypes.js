@@ -195,6 +195,7 @@ export const UPDATE_SAMPLE = createRequestActionType("UPDATE_SAMPLE");
 export const UPDATE_SAMPLE_RIGHTS = createRequestActionType("UPDATE_SAMPLE_RIGHTS");
 export const REMOVE_SAMPLE = createRequestActionType("REMOVE_SAMPLE");
 export const SELECT_SAMPLE = "SELECT_SAMPLE";
+export const DESELECT_SAMPLES = "DESELECT_SAMPLES";
 export const CLEAR_SAMPLE_SELECTION = "CLEAR_SAMPLE_SELECTION";
 export const SHOW_REMOVE_SAMPLE = "SHOW_REMOVE_SAMPLE";
 export const HIDE_SAMPLE_MODAL = "HIDE_SAMPLE_MODAL";

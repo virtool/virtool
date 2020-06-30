@@ -5,8 +5,11 @@ import { getTermSelectorFactory } from "../utils/selectors";
 
 export const getSampleGroups = state => state.account.groups;
 export const getSampleName = state => get(state, "samples.detail.name");
-const getGroups = state => state.account.groups;
-const getSample = state => state.samples.detail;
+export const getSampleDetail = state => state.samples.detail;
+export const getSampleDetailId = state => get(state, "samples.detail.id");
+export const getSampleLibraryType = state => get(state, "samples.detail.library_type");
+export const getSampleDocuments = state => state.samples.documents;
+export const getSelectedSampleIds = state => state.samples.selected;
 
 export const getCanModify = createSelector(
     [getAccountAdministrator, getSampleGroups, getSampleDetail, getAccountId],
@@ -53,25 +56,8 @@ export const getStateTerm = state => state.samples.term;
 
 export const getTerm = getTermSelectorFactory(getStateTerm);
 
-export const getSampleDetail = state => state.samples.detail;
-
-export const getSampleDetailId = state => get(state, "samples.detail.id");
-
-export const getSampleLibraryType = state => get(state, "samples.detail.library_type");
-
-export const getSampleDocuments = state => state.samples.documents;
-
-export const getSelectedSampleIds = state => get(state, "router.location.state.createAnalysis", []);
-
-export const getSelectedDocuments = createSelector(
-    [getSelectedSampleIds, getSampleDetail, getSampleDocuments],
-    (selected, detail, documents) => {
-        if (detail && selected.length === 1 && selected[0] === detail.id) {
-            return [detail];
-        }
-
-        return filter(documents, document => includes(selected, document.id));
-    }
+export const getSelectedSamples = createSelector([getSelectedSampleIds, getSampleDocuments], (selected, documents) =>
+    filter(documents, document => includes(selected, document.id))
 );
 
 export const getFilesUndersized = state => some(state.samples.detail.files, file => file.size < 10000000);
