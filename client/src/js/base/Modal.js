@@ -4,10 +4,11 @@ import { get } from "lodash-es";
 import PropTypes from "prop-types";
 import React, { useContext } from "react";
 import styled, { keyframes } from "styled-components";
-import { colors } from "../app/theme";
+import { colors, getBorder } from "../app/theme";
 import { Alert } from "./Alert";
 import { BoxGroupSection } from "./Box";
 import { CloseButton } from "./CloseButton";
+import { Tabs } from "./Tabs";
 
 const modalOverlayOpen = keyframes`
     0% {
@@ -44,7 +45,7 @@ export const ModalAlert = styled(Alert)`
     border-right: none;
     border-radius: 0;
     display: flex;
-    margin-bottom: 5px;
+    margin-bottom: 0;
 
     i {
         line-height: 20px;
@@ -59,8 +60,10 @@ export const ModalContent = styled(({ close, size, ...rest }) => <ReachDialogCon
     animation: ${props => (props.close ? modalContentClose : modalContentOpen)} 0.3s;
     animation-fill-mode: forwards;
     background: white;
+    border-radius: ${props => props.theme.borderRadius.lg};
     box-shadow: ${props => props.theme.boxShadow.lg};
     margin: -70px auto;
+    overflow: hidden;
     padding: 0;
     position: relative;
     width: ${props => (props.size === "lg" ? "900px" : "600px")};
@@ -74,7 +77,7 @@ export const ModalFooter = styled(({ modalStyle, ...rest }) => <BoxGroupSection 
     border-left: none;
     border-right: none;
     border-bottom: none;
-    border-top: ${props => (props.modalStyle === "danger" ? "none" : "")}
+    border-top: ${props => (props.modalStyle === "danger" ? "none" : "")};
     justify-content: end;
     text-align: right;
     overflow-y: auto;
@@ -100,6 +103,7 @@ export const ModalOverlay = styled(({ close, ...rest }) => <ReachDialogOverlay {
 const StyledModalHeader = styled(BoxGroupSection)`
     align-items: center;
     background-color: ${getModalBackgroundColor};
+    border-bottom: none !important;
     color: ${getModalForegroundColor};
     display: flex;
     font-size: ${props => props.theme.fontSize.lg};
@@ -120,7 +124,17 @@ export const ModalHeader = ({ children, className }) => {
     );
 };
 
-export const ModalBody = styled(BoxGroupSection)``;
+export const ModalBody = styled(BoxGroupSection)`
+    border-top: ${getBorder};
+
+    & ~ & {
+        border-top: none;
+    }
+
+    ${ModalAlert} ~ & {
+        border-top: none;
+    }
+`;
 
 export const ModalContext = React.createContext({});
 
@@ -141,6 +155,11 @@ export const ModalBodyOverlay = styled.div`
         font-size: ${props => props.theme.fontSize.xxl};
         z-index: 10001;
     }
+`;
+
+export const ModalTabs = styled(Tabs)`
+    border-bottom: none;
+    margin-bottom: 0;
 `;
 
 export class Modal extends React.Component {
