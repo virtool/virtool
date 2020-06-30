@@ -2,6 +2,7 @@
 
 exports[`<IndexSelectorItem /> should render 1`] = `
 <IndexSelectorItem__StyledIndexSelectorItem
+  active={true}
   onClick={[Function]}
 >
   <Checkbox
@@ -19,6 +20,7 @@ exports[`<IndexSelectorItem /> should render 1`] = `
 
 exports[`<IndexSelectorItem /> should render when [isSelected = false] 1`] = `
 <IndexSelectorItem__StyledIndexSelectorItem
+  active={false}
   onClick={[Function]}
 >
   <Checkbox

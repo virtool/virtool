@@ -2,7 +2,7 @@ import { forEach, includes, pull, slice } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { getAccountId } from "../../account/selectors";
-import CreateAnalysis from "../../analyses/components/Create/Create";
+import QuickAnalysis from "../../analyses/components/Create/Quick";
 import { Badge, LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader, ViewHeaderTitle } from "../../base";
 import { findHmms } from "../../hmm/actions";
 import { listReadyIndexes } from "../../indexes/actions";
@@ -105,7 +105,7 @@ export class SamplesList extends React.Component {
                 )}
 
                 <CreateSample />
-                <CreateAnalysis />
+                <QuickAnalysis />
             </div>
         );
     }

@@ -1,10 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<SelectedSamples /> should render 1`] = `
+exports[`<SelectedSamples /> should render when [samples.length=1] 1`] = `
 <Fragment>
-  <SelectedSamplesLabel
-    count={1}
-  />
+  <label>
+    Compatible Samples 
+    <Badge>
+      1
+    </Badge>
+  </label>
   <SelectedSamples__SelectedSamplesList
     count={1}
   >
@@ -20,9 +23,12 @@ exports[`<SelectedSamples /> should render 1`] = `
 
 exports[`<SelectedSamples /> should return when [samples.length=0] 1`] = `
 <Fragment>
-  <SelectedSamplesLabel
-    count={0}
-  />
+  <label>
+    Compatible Samples 
+    <Badge>
+      0
+    </Badge>
+  </label>
   <SelectedSamples__SelectedSamplesList
     count={0}
   />

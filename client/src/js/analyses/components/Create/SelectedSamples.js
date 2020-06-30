@@ -2,8 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { map } from "lodash-es";
 
-import { BoxGroup, BoxGroupSection } from "../../../base";
-import { SelectedSamplesLabel } from "./SelectedSamplesLabel";
+import { Badge, BoxGroup, BoxGroupSection } from "../../../base";
 
 const SelectedSamplesList = styled(BoxGroup)`
     margin-bottom: 16px;
@@ -26,7 +25,9 @@ export const SelectedSamples = ({ samples }) => {
 
     return (
         <React.Fragment>
-            <SelectedSamplesLabel count={count} />
+            <label>
+                Compatible Samples <Badge>{count}</Badge>
+            </label>
             <SelectedSamplesList count={count}>{sampleComponents}</SelectedSamplesList>
         </React.Fragment>
     );

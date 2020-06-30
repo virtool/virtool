@@ -1,0 +1,65 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<WorkflowSelector /> should have nuvs disabled when [hasHmm=false] 1`] = `
+<Fragment>
+  <label>
+    Workflows
+  </label>
+  <Box__BoxGroup>
+    <WorkflowSelectorItem
+      active={false}
+      key="pathoscope_bowtie"
+      onSelect={[MockFunction]}
+      workflow="pathoscope_bowtie"
+    />
+  </Box__BoxGroup>
+</Fragment>
+`;
+
+exports[`<WorkflowSelector /> should render when [libraryType="amplicon"] 1`] = `
+<Fragment>
+  <label>
+    Workflows
+  </label>
+  <Box__BoxGroup>
+    <WorkflowSelectorItem
+      active={false}
+      key="pathoscope_bowtie"
+      onSelect={[MockFunction]}
+      workflow="pathoscope_bowtie"
+    />
+  </Box__BoxGroup>
+</Fragment>
+`;
+
+exports[`<WorkflowSelector /> should render when [libraryType="normal"] 1`] = `
+<Fragment>
+  <label>
+    Workflows
+  </label>
+  <Box__BoxGroup>
+    <WorkflowSelectorItem
+      active={false}
+      key="pathoscope_bowtie"
+      onSelect={[MockFunction]}
+      workflow="pathoscope_bowtie"
+    />
+  </Box__BoxGroup>
+</Fragment>
+`;
+
+exports[`<WorkflowSelector /> should render when [libraryType="srna"] 1`] = `
+<Fragment>
+  <label>
+    Workflows
+  </label>
+  <Box__BoxGroup>
+    <WorkflowSelectorItem
+      active={false}
+      key="pathoscope_bowtie"
+      onSelect={[MockFunction]}
+      workflow="pathoscope_bowtie"
+    />
+  </Box__BoxGroup>
+</Fragment>
+`;
