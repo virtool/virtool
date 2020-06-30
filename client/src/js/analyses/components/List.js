@@ -1,6 +1,7 @@
 import { get, map, sortBy } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
+import { getAccountId } from "../../account/selectors";
 import { NoneFoundBox } from "../../base/index";
 import { getCanModify } from "../../samples/selectors";
 import { routerLocationHasState } from "../../utils/utils";
@@ -53,7 +54,7 @@ export class AnalysesList extends React.Component {
 
 const mapStateToProps = state => ({
     showCreate: routerLocationHasState(state, "createAnalysis"),
-    userId: state.account.id,
+    userId: getAccountId(state),
     sampleId: state.analyses.sampleId,
     analyses: state.analyses.documents,
     term: state.analyses.term,

@@ -1,14 +1,15 @@
 import { every, filter, get, includes, some } from "lodash-es";
 import { createSelector } from "reselect";
+import { getAccountAdministrator, getAccountId } from "../account/selectors";
 import { getTermSelectorFactory } from "../utils/selectors";
 
-const getAdministrator = state => state.account.administrator;
-const getUserId = state => state.account.id;
+export const getSampleGroups = state => state.account.groups;
+export const getSampleName = state => get(state, "samples.detail.name");
 const getGroups = state => state.account.groups;
 const getSample = state => state.samples.detail;
 
 export const getCanModify = createSelector(
-    [getAdministrator, getGroups, getSample, getUserId],
+    [getAccountAdministrator, getSampleGroups, getSampleDetail, getAccountId],
     (administrator, groups, sample, userId) => {
         if (sample) {
             return (
@@ -22,7 +23,7 @@ export const getCanModify = createSelector(
 );
 
 export const getCanModifyRights = createSelector(
-    [getAdministrator, getUserId, getSample],
+    [getAccountAdministrator, getAccountId, getSampleDetail],
     (administrator, userId, sample) => {
         if (sample === null) {
             return;

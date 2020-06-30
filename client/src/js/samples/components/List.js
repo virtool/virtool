@@ -1,6 +1,7 @@
 import { forEach, includes, pull, slice } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
+import { getAccountId } from "../../account/selectors";
 import CreateAnalysis from "../../analyses/components/Create/Create";
 import { Badge, LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader, ViewHeaderTitle } from "../../base";
 import { findHmms } from "../../hmm/actions";
@@ -111,7 +112,7 @@ export class SamplesList extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    userId: state.account.id,
+    userId: getAccountId(state),
     ...state.samples,
     term: getTerm(state),
     pathoscope: state.samples.pathoscopeCondition,

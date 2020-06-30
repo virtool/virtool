@@ -18,6 +18,7 @@ import {
     find,
     upperFirst
 } from "lodash-es";
+import { getAccountAdministrator } from "../account/selectors";
 
 /**
  * A string containing all alphanumeric digits in both cases.
@@ -197,14 +198,14 @@ export const toScientificNotation = number => {
 };
 
 export const checkAdminOrPermission = (state, permission) =>
-    state.account.administrator || state.account.permissions[permission];
+    getAccountAdministrator(state) || state.account.permissions[permission];
 
 export const checkRefRight = (state, permission) => {
     if (state.references.detail === null) {
         return;
     }
 
-    if (state.account.administrator) {
+    if (getAccountAdministrator(state)) {
         return true;
     }
 
