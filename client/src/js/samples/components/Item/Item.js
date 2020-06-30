@@ -5,15 +5,16 @@ import styled from "styled-components";
 import { pushState } from "../../../app/actions";
 import { Attribution, Checkbox, Icon, LinkBox, Loader } from "../../../base";
 import { selectSample } from "../../actions";
+import { getLibraryTypeDisplayName } from "../../utils";
 import { SampleItemLabels } from "./Labels";
 
 const SampleIconContainer = styled.div`
-    align-items: flex-start;
+    align-items: center;
     background: none;
     bottom: 0;
     display: flex;
     justify-content: center;
-    padding: 10px 12px 0;
+    padding: 0 15px;
     position: absolute;
     right: 0;
     top: 0;
@@ -51,19 +52,32 @@ const SampleItemContainer = styled.div`
     }
 `;
 
-const SampleItemTop = styled.div`
+const SampleItemLibraryType = styled.div`
     align-items: center;
+    color: ${props => props.theme.color.greyDark};
     display: flex;
-    position: relative;
+    flex: 1;
+    font-weight: 600;
 
-    > * {
-        width: 50%;
+    i:first-child {
+        margin-right: 10px;
     }
 `;
 
 const SampleItemLinkBox = styled(LinkBox)`
+    align-items: center;
+    display: flex;
     padding: 10px 45px 10px 45px;
     position: relative;
+`;
+
+const SampleItemTitle = styled.div`
+    flex: 3;
+    position: relative;
+
+    h5 {
+        margin: 0;
+    }
 `;
 
 class SampleEntry extends React.Component {
@@ -72,10 +86,10 @@ class SampleEntry extends React.Component {
     };
 
     render() {
-        let icon;
+        let endIcon;
 
         if (this.props.ready) {
-            icon = (
+            endIcon = (
                 <SampleIconContainer>
                     <Icon
                         name="chart-area"
@@ -88,7 +102,7 @@ class SampleEntry extends React.Component {
                 </SampleIconContainer>
             );
         } else {
-            icon = (
+            endIcon = (
                 <SampleIconContainer>
                     <div>
                         <Loader size="14px" color="#3c8786" />
@@ -105,14 +119,18 @@ class SampleEntry extends React.Component {
                 </SampleItemCheckboxContainer>
 
                 <SampleItemLinkBox to={`/samples/${this.props.id}`}>
-                    <SampleItemTop>
-                        <strong>{this.props.name}</strong>
-                        <SampleItemLabels nuvs={this.props.nuvs} pathoscope={this.props.pathoscope} />
-                    </SampleItemTop>
-                    <Attribution time={this.props.created_at} user={this.props.user.id} />
+                    <SampleItemTitle>
+                        <h5>{this.props.name}</h5>
+                        <Attribution time={this.props.created_at} user={this.props.user.id} />
+                    </SampleItemTitle>
+                    <SampleItemLibraryType>
+                        <Icon name={this.props.library_type === "amplicon" ? "barcode" : "dna"} fixedWidth />
+                        <span> {getLibraryTypeDisplayName(this.props.library_type)}</span>
+                    </SampleItemLibraryType>
+                    <SampleItemLabels nuvs={this.props.nuvs} pathoscope={this.props.pathoscope} />
                 </SampleItemLinkBox>
 
-                {icon}
+                {endIcon}
             </SampleItemContainer>
         );
     }
