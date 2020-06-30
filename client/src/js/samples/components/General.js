@@ -4,14 +4,9 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { BoxGroup, BoxGroupHeader, Table } from "../../base";
+import { getLibraryTypeDisplayName } from "../utils";
 import EditSample from "./Edit";
 import SampleFileSizeWarning from "./SampleFileSizeWarning.js";
-
-const libraryTypes = {
-    normal: "Normal",
-    srna: "sRNA",
-    amplicon: "Amplicon"
-};
 
 const StyledSampleDetailGeneral = styled.div`
     th {
@@ -26,11 +21,11 @@ export const SampleDetailGeneral = ({
     host,
     isolate,
     lengthRange,
+    libraryType,
     locale,
     name,
     paired,
-    subtraction,
-    libraryType
+    subtraction
 }) => (
     <StyledSampleDetailGeneral>
         <SampleFileSizeWarning />
@@ -134,7 +129,7 @@ export const mapStateToProps = state => {
         paired,
         count: numbro(count).format("0.0 a"),
         gc: numbro(gc / 100).format("0.0 %"),
-        libraryType: libraryTypes[library_type],
+        libraryType: getLibraryTypeDisplayName(library_type),
         lengthRange: length.join(" - "),
         subtraction
     };

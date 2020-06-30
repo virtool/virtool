@@ -1,3 +1,11 @@
+const libraryTypes = {
+    normal: "Normal",
+    srna: "sRNA",
+    amplicon: "Amplicon"
+};
+
+export const getLibraryTypeDisplayName = libraryType => libraryTypes[libraryType];
+
 export const setWorkflowFindParameters = (url, workflow, conditions) => {
     if (conditions.length === 0 || conditions.length === 3) {
         url.searchParams.delete(workflow);
