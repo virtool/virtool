@@ -24,7 +24,6 @@ const createRequestActionType = root => ({
 export const PUSH_STATE = "PUSH_STATE";
 export const SET_APP_PENDING = "SET_APP_PENDING";
 export const UNSET_APP_PENDING = "UNSET_APP_PENDING";
-export const WS_CLOSED = "WS_CLOSED";
 
 // Account
 export const GET_ACCOUNT = createRequestActionType("GET_ACCOUNT");
@@ -60,7 +59,6 @@ export const SET_ANALYSIS_ACTIVE_ID = "SET_ANALYSIS_ACTIVE_ID";
 export const SET_SEARCH_IDS = "SET_SEARCH_IDS";
 export const SET_AODP_FILTER = "ADD_AODP_FILTER";
 export const SET_ANALYSIS_SORT_KEY = "SET_ANALYSIS_SORT_KEY";
-export const TOGGLE_ANALYSIS_EXPANDED = "TOGGLE_ANALYSIS_EXPANDED";
 export const TOGGLE_FILTER_OTUS = "TOGGLE_FILTER_OTUS";
 export const TOGGLE_FILTER_ISOLATES = "TOGGLE_FILTER_ISOLATES";
 export const TOGGLE_FILTER_ORFS = "TOGGLE_FILTER_ORFS";
