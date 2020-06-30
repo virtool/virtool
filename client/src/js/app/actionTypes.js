@@ -44,7 +44,6 @@ export const RESET_PASSWORD = createRequestActionType("RESET_PASSWORD");
 // Administration Settings
 export const GET_SETTINGS = createRequestActionType("GET_SETTINGS");
 export const UPDATE_SETTINGS = createRequestActionType("UPDATE_SETTINGS");
-export const GET_CONTROL_READAHEAD = createRequestActionType("GET_CONTROL_READAHEAD");
 
 // Analysis
 export const WS_INSERT_ANALYSIS = "WS_INSERT_ANALYSIS";

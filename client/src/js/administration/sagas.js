@@ -1,11 +1,9 @@
-import { takeEvery, takeLatest, throttle } from "redux-saga/effects";
-import { GET_CONTROL_READAHEAD, GET_SETTINGS, UPDATE_SETTINGS } from "../app/actionTypes";
-import * as otusAPI from "../otus/api";
+import { takeEvery, takeLatest } from "redux-saga/effects";
+import { GET_SETTINGS, UPDATE_SETTINGS } from "../app/actionTypes";
 import { apiCall, setPending } from "../utils/sagas";
 import * as settingsAPI from "./api";
 
 export function* watchSettings() {
-    yield throttle(120, GET_CONTROL_READAHEAD.REQUESTED, getControlReadahead);
     yield takeLatest(GET_SETTINGS.REQUESTED, getSettings);
     yield takeEvery(UPDATE_SETTINGS.REQUESTED, updateSettings);
 }
@@ -20,8 +18,4 @@ function* updateSettings(action) {
             update: action.update
         })
     );
-}
-
-function* getControlReadahead(action) {
-    yield setPending(apiCall(otusAPI.listNames, action, GET_CONTROL_READAHEAD));
 }

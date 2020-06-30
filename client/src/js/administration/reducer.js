@@ -1,9 +1,7 @@
-import { GET_CONTROL_READAHEAD, GET_SETTINGS, UPDATE_SETTINGS } from "../app/actionTypes";
+import { GET_SETTINGS, UPDATE_SETTINGS } from "../app/actionTypes";
 
 export const initialState = {
-    data: null,
-    readahead: null,
-    readaheadPending: false
+    data: null
 };
 
 export default function settingsReducer(state = initialState, action) {
@@ -16,15 +14,6 @@ export default function settingsReducer(state = initialState, action) {
                 ...state,
                 data: { ...state.data, ...action.update }
             };
-
-        case GET_CONTROL_READAHEAD.REQUESTED:
-            return { ...state, readaheadPending: true };
-
-        case GET_CONTROL_READAHEAD.SUCCEEDED:
-            return { ...state, readahead: action.data, readaheadPending: false };
-
-        case GET_CONTROL_READAHEAD.FAILED:
-            return { ...state, readaheadPending: false };
 
         default:
             return state;
