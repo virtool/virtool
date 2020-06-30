@@ -1,3 +1,11 @@
+export const getDataTypeFromLibraryType = libraryType => {
+    if (libraryType === "amplicon") {
+        return "barcode";
+    }
+
+    return "genome";
+};
+
 const libraryTypes = {
     normal: "Normal",
     srna: "sRNA",
