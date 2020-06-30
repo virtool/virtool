@@ -1,19 +1,15 @@
 import Fuse from "fuse.js";
-import { filter, find, get, intersection, keyBy, map, reject, sortBy, toNumber, toString } from "lodash-es";
+import { filter, find, get, groupBy, intersection, keyBy, map, reject, sortBy, toNumber, toString } from "lodash-es";
 import { createSelector } from "reselect";
-import { getMaxReadLength, getSampleLibraryType } from "../samples/selectors";
+import { getRouterLocationState } from "../app/selectors";
+import { getMaxReadLength, getSampleLibraryType, getSelectedSamples } from "../samples/selectors";
 import { fuseSearchKeys } from "./utils";
 
-const getReadCount = state => state.analyses.detail.read_count;
-
+export const getReadCount = state => state.analyses.detail.read_count;
 export const getActiveId = state => state.analyses.activeId;
-
 export const getWorkflow = state => state.analyses.detail.workflow;
-
 export const getAnalysisDetailId = state => get(state, "analyses.detail.id", null);
-
 export const getResults = state => state.analyses.detail.results;
-
 export const getMaxSequenceLength = state => state.analyses.detail.maxSequenceLength;
 
 /**
@@ -67,20 +63,64 @@ export const getFilterIds = createSelector(
     }
 );
 
+export const getQuickAnalysisGroups = createSelector([getSelectedSamples], documents => {
+    const { barcode, genome } = groupBy(documents, document =>
+        document.library_type === "amplicon" ? "barcode" : "genome"
+    );
+
+    return {
+        barcode: barcode || [],
+        genome: genome || []
+    };
+});
+
+export const getQuickAnalysisMode = createSelector(
+    [getQuickAnalysisGroups, getRouterLocationState],
+    ({ genome }, routerLocationState) => {
+        const modeFromLocation = get(routerLocationState, "quickAnalysis");
+
+        if (modeFromLocation === true) {
+            return genome.length ? "genome" : "barcode";
+        }
+
+        if (modeFromLocation) {
+            return modeFromLocation;
+        }
+
+        return false;
+    }
+);
+
 const getReadyIndexes = state => state.analyses.readyIndexes;
 
-export const getCompatibleReadyIndexes = createSelector(
+export const getCompatibleIndexesWithDataType = createSelector(
+    [getQuickAnalysisMode, getReadyIndexes],
+    (mode, indexes) => {
+        return filter(indexes, ["reference.data_type", mode]);
+    }
+);
+
+export const getCompatibleIndexesWithLibraryType = createSelector(
     [getSampleLibraryType, getReadyIndexes],
-    (libraryType, readyIndexes) => {
-        return filter(readyIndexes, index => {
+    (libraryType, indexes) =>
+        filter(indexes, index => {
             if (index.reference.data_type === "barcode") {
                 return libraryType === "amplicon";
             }
 
             return libraryType === "normal" || libraryType === "srna";
-        });
-    }
+        })
 );
+
+export const getCompatibleSamples = createSelector([getQuickAnalysisMode, getSelectedSamples], (mode, samples) => {
+    return filter(samples, sample => {
+        if (mode === "barcode") {
+            return sample.library_type === "amplicon";
+        }
+
+        return sample.library_type === "normal" || sample.library_type === "srna";
+    });
+});
 
 export const getSearchIds = state => state.analyses.searchIds;
 

@@ -4,14 +4,13 @@
  * @module account/reducer
  */
 import {
-    GET_ACCOUNT,
-    UPDATE_ACCOUNT,
-    UPDATE_ACCOUNT_SETTINGS,
-    CHANGE_ACCOUNT_PASSWORD,
-    GET_API_KEYS,
-    CREATE_API_KEY,
     CLEAR_API_KEY,
-    LOGOUT
+    CREATE_API_KEY,
+    GET_ACCOUNT,
+    GET_API_KEYS,
+    LOGOUT,
+    UPDATE_ACCOUNT,
+    UPDATE_ACCOUNT_SETTINGS
 } from "../app/actionTypes";
 
 /**
@@ -21,10 +20,9 @@ import {
  * @type {object}
  */
 export const initialState = {
-    ready: false,
-    oldPasswordError: false,
     apiKeys: null,
-    newKey: null
+    newKey: null,
+    ready: false
 };
 
 /**
@@ -44,9 +42,6 @@ export default function accountReducer(state = initialState, action) {
 
         case GET_API_KEYS.SUCCEEDED:
             return { ...state, apiKeys: action.data };
-
-        case CHANGE_ACCOUNT_PASSWORD.SUCCEEDED:
-            return { ...state, oldPasswordError: false };
 
         case CREATE_API_KEY.REQUESTED:
             return { ...state, key: null };

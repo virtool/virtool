@@ -1,4 +1,3 @@
-import { Checkbox } from "./Checkbox";
 import { Flex, FlexItem } from "./Flex";
 import { ScrollList } from "./ScrollList";
 import { bsStyles } from "./utils";
@@ -45,5 +44,6 @@ export * from "./Tooltip";
 export * from "./UploadBar";
 export * from "./ViewHeader";
 export * from "./CloseButton";
+export * from "./Checkbox";
 
-export { bsStyles, Checkbox, Flex, FlexItem, ScrollList };
+export { bsStyles, Flex, FlexItem, ScrollList };

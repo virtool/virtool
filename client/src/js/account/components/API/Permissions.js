@@ -4,6 +4,7 @@ import React from "react";
 import styled from "styled-components";
 import { connect } from "react-redux";
 import { BoxGroup, BoxGroupSection, Checkbox } from "../../../base";
+import { getAccountAdministrator } from "../../selectors";
 
 export const APIPermissionName = styled(BoxGroupSection)`
     display: flex;
@@ -22,6 +23,7 @@ export const APIPermissions = ({ administrator, className, userPermissions, keyP
         return (
             <APIPermissionName
                 key={permission.name}
+                active={permission.allowed}
                 onClick={disabled ? null : () => onChange(permission.name, !permission.allowed)}
                 disabled={disabled}
             >
@@ -43,7 +45,7 @@ APIPermissions.propTypes = {
 };
 
 const mapStateToProps = state => ({
-    administrator: state.account.administrator,
+    administrator: getAccountAdministrator(state),
     userPermissions: state.account.permissions
 });
 

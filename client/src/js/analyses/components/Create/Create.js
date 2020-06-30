@@ -1,151 +1,132 @@
-import { forEach, xorBy } from "lodash-es";
-import React from "react";
+import { forEach } from "lodash-es";
+import React, { useEffect } from "react";
 import { connect } from "react-redux";
+import styled from "styled-components";
+import { getAccountId } from "../../../account/selectors";
 import { pushState } from "../../../app/actions";
-import { Button, Flex, FlexItem, Modal, ModalBody, ModalFooter, ModalHeader } from "../../../base";
-import { getDefaultSubtraction, getSampleLibraryType, getSelectedDocuments } from "../../../samples/selectors";
+import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from "../../../base";
+import { getDefaultSubtraction, getSampleDetailId, getSampleLibraryType } from "../../../samples/selectors";
+import { getDataTypeFromLibraryType } from "../../../samples/utils";
 import { shortlistSubtractions } from "../../../subtraction/actions";
+import { routerLocationHasState } from "../../../utils/utils";
 import { analyze } from "../../actions";
-import { getCompatibleReadyIndexes } from "../../selectors";
-import { WorkflowSelect } from "./WorkflowSelect";
+import { getCompatibleIndexesWithLibraryType } from "../../selectors";
+import HMMAlert from "../HMMAlert";
+import { useCreateAnalysis } from "./hooks";
 import { IndexSelector } from "./IndexSelector";
-import { SelectedSamples } from "./SelectedSamples";
 import { SubtractionSelector } from "./SubtractionSelector";
+import { CreateAnalysisSummary } from "./Summary";
+import { WorkflowSelector } from "./WorkflowSelector";
 
-const MultiSummary = ({ samples, selected }) => {
-    const product = selected.length * samples.length;
+const CreateAnalysisFooter = styled(ModalFooter)`
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+`;
 
-    if (product === 0) {
-        return null;
-    }
+export const CreateAnalysis = ({
+    accountId,
+    compatibleIndexes,
+    dataType,
+    defaultSubtraction,
+    hasHmm,
+    sampleId,
+    show,
+    subtractions,
+    onAnalyze,
+    onHide,
+    onShortlistSubtractions
+}) => {
+    useEffect(() => {
+        if (show) {
+            onShortlistSubtractions();
+        }
+    }, [show]);
+
+    const {
+        error,
+        indexes,
+        subtraction,
+        workflows,
+        setError,
+        setSubtraction,
+        toggleIndex,
+        toggleWorkflow
+    } = useCreateAnalysis(dataType, defaultSubtraction);
+
+    const handleSubmit = e => {
+        e.preventDefault();
+
+        if (!indexes.length) {
+            setError("Please select reference(s)");
+            return;
+        }
+
+        if (!workflows.length) {
+            setError("Please select workflow(s)");
+            return;
+        }
+
+        onAnalyze(sampleId, indexes, subtraction, accountId, workflows);
+        onHide();
+    };
 
     return (
-        <div style={{ textAlign: "left" }}>
-            {product} job
-            {product === 1 ? "" : "s"} will be started
-        </div>
+        <Modal label="Analyze" show={show} size="lg" onHide={onHide}>
+            <ModalHeader>Analyze</ModalHeader>
+            <form onSubmit={handleSubmit}>
+                <ModalBody>
+                    <HMMAlert />
+                    <WorkflowSelector
+                        dataType={dataType}
+                        hasHmm={hasHmm}
+                        workflows={workflows}
+                        onSelect={toggleWorkflow}
+                    />
+                    {dataType === "genome" && (
+                        <SubtractionSelector
+                            subtractions={subtractions}
+                            value={subtraction}
+                            onChange={e => setSubtraction(e.target.value)}
+                        />
+                    )}
+                    <IndexSelector
+                        error={error}
+                        indexes={compatibleIndexes}
+                        selected={indexes}
+                        onSelect={toggleIndex}
+                    />
+                </ModalBody>
+                <CreateAnalysisFooter>
+                    <CreateAnalysisSummary
+                        sampleCount={1}
+                        indexCount={indexes.length}
+                        workflowCount={workflows.length}
+                    />
+                    <Button type="submit" color="blue" icon="play">
+                        Start
+                    </Button>
+                </CreateAnalysisFooter>
+            </form>
+        </Modal>
     );
 };
 
-const getInitialState = ({ defaultSubtraction, libraryType }) => ({
-    workflow: libraryType === "amplicon" ? "aodp" : "pathoscope_bowtie",
-    selected: [],
-    subtraction: defaultSubtraction,
-    error: ""
-});
-
-export class CreateAnalysis extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = getInitialState(props);
-    }
-
-    componentDidMount() {
-        this.props.onShortlistSubtractions();
-    }
-
-    handleEnter = () => {
-        this.props.onShortlistSubtractions();
-        this.setState(getInitialState(this.props));
-    };
-
-    handleSelectWorkflow = e => {
-        this.setState({ workflow: e.target.value });
-    };
-
-    handleSelectIndex = index => {
-        this.setState({ selected: xorBy(this.state.selected, [index], "id"), error: "" });
-    };
-
-    handleSelectSubtraction = e => {
-        this.setState({ subtraction: e.target.value });
-    };
-
-    handleSubmit = e => {
-        e.preventDefault();
-
-        if (!this.state.selected.length) {
-            return this.setState({ error: "Please select reference(s)" });
-        }
-
-        this.props.onAnalyze(
-            this.props.documents,
-            this.state.selected,
-            this.state.subtraction,
-            this.props.userId,
-            this.state.workflow
-        );
-
-        this.props.onHide();
-    };
-
-    render() {
-        const { selected, subtraction, workflow } = this.state;
-
-        const show = !!(this.props.documents && this.props.documents.length);
-
-        return (
-            <Modal label="Analyze" show={show} size="lg" onHide={this.props.onHide} onEnter={this.handleEnter}>
-                <ModalHeader>Analyze</ModalHeader>
-                <form onSubmit={this.handleSubmit}>
-                    <ModalBody>
-                        <SelectedSamples samples={this.props.documents} />
-                        <WorkflowSelect
-                            libraryType={this.props.libraryType}
-                            value={workflow}
-                            onChange={this.handleSelectWorkflow}
-                            hasHmm={this.props.hasHmm}
-                        />
-                        <SubtractionSelector
-                            subtractions={this.props.subtractions}
-                            value={subtraction}
-                            onChange={this.handleSelectSubtraction}
-                        />
-                        <IndexSelector
-                            indexes={this.props.indexes}
-                            onSelect={this.handleSelectIndex}
-                            selected={selected}
-                            error={this.state.error}
-                        />
-                    </ModalBody>
-                    <ModalFooter>
-                        <Flex alignItems="center">
-                            <FlexItem grow={1}>
-                                <MultiSummary
-                                    workflow={workflow}
-                                    samples={this.props.documents}
-                                    selected={this.state.selected}
-                                />
-                            </FlexItem>
-                            <FlexItem>
-                                <Button type="submit" color="blue" icon="play" disabled={!!this.state.error}>
-                                    Start
-                                </Button>
-                            </FlexItem>
-                        </Flex>
-                    </ModalFooter>
-                </form>
-            </Modal>
-        );
-    }
-}
-
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
+    accountId: getAccountId(state),
+    compatibleIndexes: getCompatibleIndexesWithLibraryType(state),
+    dataType: getDataTypeFromLibraryType(getSampleLibraryType(state)),
     defaultSubtraction: getDefaultSubtraction(state),
-    documents: getSelectedDocuments(state),
     hasHmm: !!state.hmms.total_count,
-    indexes: getCompatibleReadyIndexes(state),
-    libraryType: getSampleLibraryType(state),
-    subtractions: state.subtraction.shortlist,
-    userId: state.account.id
+    sampleId: getSampleDetailId(state),
+    show: routerLocationHasState(state, "createAnalysis"),
+    subtractions: state.subtraction.shortlist
 });
 
-const mapDispatchToProps = dispatch => ({
-    onAnalyze: (samples, references, subtractionId, userId, workflow) => {
-        forEach(samples, ({ id }) => {
-            forEach(references, ({ refId }) => {
-                dispatch(analyze(id, refId, subtractionId, userId, workflow));
-            });
+export const mapDispatchToProps = dispatch => ({
+    onAnalyze: (sampleId, references, subtractionId, accountId, workflows) => {
+        forEach(references, ({ refId }) => {
+            forEach(workflows, workflow => dispatch(analyze(sampleId, refId, subtractionId, accountId, workflow)));
         });
     },
     onHide: () => {

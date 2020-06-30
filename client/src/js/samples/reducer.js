@@ -1,6 +1,7 @@
 import { xor } from "lodash-es";
 import {
     CLEAR_SAMPLE_SELECTION,
+    DESELECT_SAMPLES,
     FIND_READ_FILES,
     FIND_SAMPLES,
     GET_SAMPLE,
@@ -84,6 +85,12 @@ export default function samplesReducer(state = initialState, action) {
             return {
                 ...state,
                 selected: xor(state.selected, [action.sampleId])
+            };
+
+        case DESELECT_SAMPLES:
+            return {
+                ...state,
+                selected: xor(state.selected, action.sampleIds)
             };
 
         case CLEAR_SAMPLE_SELECTION:

@@ -9,10 +9,11 @@ describe("<SelectedSamples />", () => {
         };
     });
 
-    it("should render", () => {
+    it("should render when [samples.length=1]", () => {
         const wrapper = shallow(<SelectedSamples {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
+
     it("should return when [samples.length=0]", () => {
         props.samples = [];
         const wrapper = shallow(<SelectedSamples {...props} />);

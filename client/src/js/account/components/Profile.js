@@ -4,6 +4,7 @@ import { connect } from "react-redux";
 import styled from "styled-components";
 
 import { Flex, FlexItem, Icon, Identicon, Label } from "../../base";
+import { getAccountAdministrator, getAccountId } from "../selectors";
 import Email from "./Email";
 import ChangePassword from "./Password";
 
@@ -51,10 +52,10 @@ export const AccountProfile = ({ id, groups, identicon, administrator }) => {
 };
 
 export const mapStateToProps = state => ({
-    id: state.account.id,
+    id: getAccountId(state),
     identicon: state.account.identicon,
     groups: state.account.groups,
-    administrator: state.account.administrator
+    administrator: getAccountAdministrator(state)
 });
 
 export default connect(mapStateToProps)(AccountProfile);

@@ -1,22 +1,23 @@
-import { simpleActionCreator } from "../utils/utils";
 import {
-    WS_INSERT_SAMPLE,
-    WS_UPDATE_SAMPLE,
-    WS_REMOVE_SAMPLE,
-    FIND_SAMPLES,
-    FIND_READ_FILES,
-    GET_SAMPLE,
+    CLEAR_SAMPLE_SELECTION,
     CREATE_SAMPLE,
+    DESELECT_SAMPLES,
+    FIND_READ_FILES,
+    FIND_SAMPLES,
+    GET_SAMPLE,
+    HIDE_SAMPLE_MODAL,
+    REMOVE_SAMPLE,
     REPLACE_LEGACY_FILES,
+    SELECT_SAMPLE,
+    SHOW_REMOVE_SAMPLE,
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
-    REMOVE_SAMPLE,
-    SHOW_REMOVE_SAMPLE,
-    HIDE_SAMPLE_MODAL,
-    SELECT_SAMPLE,
-    CLEAR_SAMPLE_SELECTION,
-    UPLOAD_SAMPLE_FILE
+    UPLOAD_SAMPLE_FILE,
+    WS_INSERT_SAMPLE,
+    WS_REMOVE_SAMPLE,
+    WS_UPDATE_SAMPLE
 } from "../app/actionTypes";
+import { simpleActionCreator } from "../utils/utils";
 
 export const wsInsertSample = data => ({
     type: WS_INSERT_SAMPLE,
@@ -27,8 +28,8 @@ export const wsInsertSample = data => ({
  * Returns an action that should be dispatched when a sample document is updated via websocket.
  *
  * @func
- * @param update {object} update data passed in the websocket message
- * @returns {object}
+ * @param data {object} update data passed in the websocket message
+ * @returns {object} an action object
  */
 export const wsUpdateSample = data => ({
     type: WS_UPDATE_SAMPLE,
@@ -169,6 +170,11 @@ export const hideSampleModal = simpleActionCreator(HIDE_SAMPLE_MODAL);
 export const selectSample = sampleId => ({
     type: SELECT_SAMPLE,
     sampleId
+});
+
+export const deselectSamples = sampleIds => ({
+    type: DESELECT_SAMPLES,
+    sampleIds
 });
 
 export const clearSampleSelection = simpleActionCreator(CLEAR_SAMPLE_SELECTION);

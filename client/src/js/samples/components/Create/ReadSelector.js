@@ -116,7 +116,7 @@ export default class ReadSelector extends React.PureComponent {
                 <ReadSelectorHeader>
                     <strong>Read Files</strong>
                     <small>
-                        {this.props.selected.length} of {fileComponents.length} selected
+                        {this.props.selected.length} of {fileComponents.length || 0} selected
                     </small>
                 </ReadSelectorHeader>
 
