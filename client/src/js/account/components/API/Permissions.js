@@ -22,6 +22,7 @@ export const APIPermissions = ({ administrator, className, userPermissions, keyP
         return (
             <APIPermissionName
                 key={permission.name}
+                active={permission.allowed}
                 onClick={disabled ? null : () => onChange(permission.name, !permission.allowed)}
                 disabled={disabled}
             >
