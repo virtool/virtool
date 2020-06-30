@@ -174,8 +174,8 @@ export const taskDisplayNames = {
     create_sample: "Create Sample",
     create_subtraction: "Create Subtraction",
     nuvs: "NuVs",
-    pathoscope_bowtie: "PathoscopeBowtie",
-    pathoscope_snap: "PathoscopeSNAP",
+    pathoscope_bowtie: "Pathoscope",
+    pathoscope_snap: "Pathoscope",
     build_index: "Build Index"
 };
 
