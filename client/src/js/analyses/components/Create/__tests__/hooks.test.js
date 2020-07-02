@@ -2,8 +2,9 @@ import { act, renderHook } from "@testing-library/react-hooks";
 import { useCreateAnalysis } from "../hooks";
 
 describe("useCreateAnalysis()", () => {
+    const defaultSubtraction = "baz";
+
     let dataType = "genome";
-    let defaultSubtraction = "baz";
     let rerender;
     let result;
 

@@ -1,5 +1,4 @@
 import React from "react";
-import { Select } from "../../../../base";
 import { getCompatibleWorkflows, WorkflowSelector } from "../WorkflowSelector";
 import { WorkflowSelectorItem } from "../WorkflowSelectorItem";
 
