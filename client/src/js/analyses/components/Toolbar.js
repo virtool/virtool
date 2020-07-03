@@ -26,11 +26,11 @@ export const mapStateToProps = state => ({
 });
 
 export const mapDispatchToProps = dispatch => ({
-    onShowCreate: sampleId => {
-        dispatch(pushState({ createAnalysis: [sampleId] }));
-    },
     onFind: (sampleId, term, page) => {
         dispatch(findAnalyses(sampleId, term, page));
+    },
+    onShowCreate: sampleId => {
+        dispatch(pushState({ createAnalysis: sampleId }));
     }
 });
 

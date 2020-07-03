@@ -1,155 +1,118 @@
 import {
-    GET_ACCOUNT,
-    UPDATE_ACCOUNT,
-    UPDATE_ACCOUNT_SETTINGS,
-    CHANGE_ACCOUNT_PASSWORD,
-    GET_API_KEYS,
+    CLEAR_API_KEY,
     CREATE_API_KEY,
-    CLEAR_API_KEY
+    GET_ACCOUNT,
+    GET_API_KEYS,
+    UPDATE_ACCOUNT,
+    UPDATE_ACCOUNT_SETTINGS
 } from "../../app/actionTypes";
-import reducer, { initialState as reducerInitialState } from "../reducer";
+import reducer from "../reducer";
 
 describe("Account Reducer", () => {
-    const initialState = reducerInitialState;
-    let state;
-    let action;
-    let result;
-    let expected;
-
-    it("should return the initial state on first pass", () => {
-        result = reducer(undefined, {});
-        expected = initialState;
-
-        expect(result).toEqual(expected);
+    it("should return the initial state when [state=undefined]", () => {
+        const result = reducer(undefined, {});
+        expect(result).toEqual({
+            apiKeys: null,
+            newKey: null,
+            ready: false
+        });
     });
 
     it("should return the given state on other action types", () => {
-        action = {
+        const action = {
             type: "UNHANDLED_ACTION"
         };
-        result = reducer(initialState, action);
-        expected = initialState;
-
-        expect(result).toEqual(expected);
+        const state = { foo: "bar" };
+        const result = reducer(state, action);
+        expect(result).toEqual(state);
     });
 
     it("should handle GET_ACCOUNT_SUCCEEDED", () => {
-        state = {};
-        action = {
+        const action = {
             type: GET_ACCOUNT.SUCCEEDED,
-            data: {}
+            data: {
+                foo: "bar"
+            }
         };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            ...action.data,
+        const result = reducer({}, action);
+        expect(result).toEqual({
+            foo: "bar",
             ready: true
-        };
-
-        expect(result).toEqual(expected);
+        });
     });
 
     it("should handle UPDATE_ACCOUNT_SUCCEEDED", () => {
-        state = {};
-        action = {
+        const state = {
+            apiKeys: []
+        };
+        const action = {
             type: UPDATE_ACCOUNT.SUCCEEDED,
-            data: {}
+            data: {
+                foo: "bar"
+            }
         };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            ...action.data
-        };
-
-        expect(result).toEqual(expected);
+        const result = reducer(state, action);
+        expect(result).toEqual({ apiKeys: [], foo: "bar" });
     });
 
     it("should handle GET_API_KEYS_SUCCEEDED", () => {
-        state = {};
-        action = {
+        const keys = [{ id: "foo" }, { id: "bar" }];
+        const action = {
             type: GET_API_KEYS.SUCCEEDED,
-            data: {}
+            data: keys
         };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            apiKeys: action.data
-        };
-
-        expect(result).toEqual(expected);
-    });
-
-    it("should handle CHANGE_ACCOUNT_PASSWORD_SUCCEEDED", () => {
-        state = {};
-        action = {
-            type: CHANGE_ACCOUNT_PASSWORD.SUCCEEDED
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            oldPasswordError: false
-        };
-
-        expect(result).toEqual(expected);
+        const result = reducer({}, action);
+        expect(result).toEqual({ apiKeys: keys });
     });
 
     it("should handle CREATE_API_KEY_REQUESTED", () => {
-        state = {};
-        action = {
+        const state = {
+            key: "foo"
+        };
+        const action = {
             type: CREATE_API_KEY.REQUESTED
         };
-        result = reducer(state, action);
-        expected = {
-            ...state,
+        const result = reducer(state, action);
+        expect(result).toEqual({
             key: null
-        };
-
-        expect(result).toEqual(expected);
+        });
     });
 
     it("should handle CREATE_API_KEY_SUCCEEDED", () => {
-        state = {};
-        action = {
+        const action = {
             type: CREATE_API_KEY.SUCCEEDED,
             data: {
-                key: "testkey"
+                key: {
+                    id: "foo"
+                }
             }
         };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            newKey: action.data.key
-        };
-
-        expect(result).toEqual(expected);
+        const result = reducer({}, action);
+        expect(result).toEqual({
+            newKey: { id: "foo" }
+        });
     });
 
     it("should handle CLEAR_API_KEY", () => {
-        state = {};
-        action = {
+        const action = {
             type: CLEAR_API_KEY
         };
-        result = reducer(state, action);
-        expected = {
-            ...state,
+        const result = reducer({}, action);
+        expect(result).toEqual({
             newKey: null
-        };
-
-        expect(result).toEqual(expected);
+        });
     });
 
     it("should handle UPDATE_ACCOUNT_SETTINGS_SUCCEEDED", () => {
-        state = {};
-        action = {
+        const action = {
             type: UPDATE_ACCOUNT_SETTINGS.SUCCEEDED,
-            data: {}
+            data: {
+                foo: "bar"
+            }
         };
-        result = reducer(state, action);
-        expected = {
-            ...state,
+        const result = reducer({}, action);
+        expect(result).toEqual({
             settings: action.data
-        };
-
-        expect(result).toEqual(expected);
+        });
     });
 });

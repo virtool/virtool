@@ -137,9 +137,9 @@ export class CreateAPIKey extends React.Component {
             content = (
                 <React.Fragment>
                     <ModalHeader>Create API Key</ModalHeader>
-                    <CreateAPIKeyInfo />
 
                     <form onSubmit={this.handleSubmit}>
+                        <CreateAPIKeyInfo />
                         <ModalBody>
                             <InputGroup>
                                 <InputLabel>Name</InputLabel>

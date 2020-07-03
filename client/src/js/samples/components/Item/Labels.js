@@ -36,6 +36,7 @@ export const SampleItemLabel = ({ label, ready }) => (
 const StyledSampleItemLabels = styled.div`
     align-items: center;
     display: flex;
+    flex: 2;
 `;
 
 export const SampleItemLabels = ({ nuvs, pathoscope }) => (

@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import { Modal, ModalHeader, TabLink, Tabs } from "../../base";
+import { Modal, ModalHeader, ModalTabs, TabLink } from "../../base";
 import { routerLocationHasState } from "../../utils/utils";
 import CloneReference from "./Clone";
 import CreateReference from "./Create";
@@ -11,10 +11,6 @@ import ImportReference from "./Import";
 
 const AddReferenceHeader = styled(ModalHeader)`
     border-bottom: none !important;
-`;
-
-const AddReferenceTabs = styled(Tabs)`
-    margin-bottom: 0;
 `;
 
 export class AddReference extends React.Component {
@@ -62,7 +58,7 @@ export class AddReference extends React.Component {
         return (
             <Modal label="Add Reference" show={this.props.show} onHide={this.handleHide}>
                 <AddReferenceHeader>Add Reference</AddReferenceHeader>
-                <AddReferenceTabs>
+                <ModalTabs>
                     <TabLink
                         to={{ state: { newReference: true, createReference: true } }}
                         isActive={this.checkActive("isCreate")}
@@ -81,7 +77,7 @@ export class AddReference extends React.Component {
                     >
                         Clone
                     </TabLink>
-                </AddReferenceTabs>
+                </ModalTabs>
 
                 {this.renderForm()}
             </Modal>

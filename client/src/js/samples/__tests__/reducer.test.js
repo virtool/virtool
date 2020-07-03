@@ -9,7 +9,8 @@ import {
     SHOW_REMOVE_SAMPLE,
     HIDE_SAMPLE_MODAL,
     FIND_READ_FILES,
-    FIND_SAMPLES
+    FIND_SAMPLES,
+    DESELECT_SAMPLES
 } from "../../app/actionTypes";
 import reducer, { initialState } from "../reducer";
 
@@ -205,5 +206,14 @@ describe("Samples Reducer", () => {
         const action = { type: HIDE_SAMPLE_MODAL };
         const result = reducer({}, action);
         expect(result).toEqual({ showRemove: false });
+    });
+
+    it("should handle DESELECT_SAMPLES", () => {
+        const action = { type: DESELECT_SAMPLES, sampleIds: ["foo", "bad"] };
+        const state = { selected: ["foo", "bar", "bad", "baz"] };
+        const result = reducer(state, action);
+        expect(result).toEqual({
+            selected: ["bar", "baz"]
+        });
     });
 });

@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { getLinkedJob } from "../../../jobs/actions";
 import SampleFilesMessage from "../LegacyAlert";
-import SampleFileSizeWarning from "../SampleFileSizeWarning.js";
+import SampleFileSizeWarning from "../FileSizeWarning.js";
 import SampleFilesCache from "./Cache";
 import SampleFilesRaw from "./Raw";
 

@@ -3,6 +3,7 @@
 exports[`<Permissions /> should render correctly 1`] = `
 <Box__BoxGroup>
   <Permissions__APIPermissionName
+    active={true}
     disabled={false}
     key="test_create"
     onClick={[Function]}
@@ -15,6 +16,7 @@ exports[`<Permissions /> should render correctly 1`] = `
     />
   </Permissions__APIPermissionName>
   <Permissions__APIPermissionName
+    active={false}
     disabled={false}
     key="test_edit"
     onClick={[Function]}
@@ -27,6 +29,7 @@ exports[`<Permissions /> should render correctly 1`] = `
     />
   </Permissions__APIPermissionName>
   <Permissions__APIPermissionName
+    active={true}
     disabled={true}
     key="test_remove"
     onClick={null}
@@ -39,6 +42,7 @@ exports[`<Permissions /> should render correctly 1`] = `
     />
   </Permissions__APIPermissionName>
   <Permissions__APIPermissionName
+    active={false}
     disabled={true}
     key="test_view"
     onClick={null}
@@ -56,6 +60,7 @@ exports[`<Permissions /> should render correctly 1`] = `
 exports[`<Permissions /> should render no permission disabled when [props.administrator=true] 1`] = `
 <Box__BoxGroup>
   <Permissions__APIPermissionName
+    active={true}
     disabled={false}
     key="test_create"
     onClick={[Function]}
@@ -68,6 +73,7 @@ exports[`<Permissions /> should render no permission disabled when [props.admini
     />
   </Permissions__APIPermissionName>
   <Permissions__APIPermissionName
+    active={false}
     disabled={false}
     key="test_edit"
     onClick={[Function]}
@@ -80,6 +86,7 @@ exports[`<Permissions /> should render no permission disabled when [props.admini
     />
   </Permissions__APIPermissionName>
   <Permissions__APIPermissionName
+    active={true}
     disabled={false}
     key="test_remove"
     onClick={[Function]}
@@ -92,6 +99,7 @@ exports[`<Permissions /> should render no permission disabled when [props.admini
     />
   </Permissions__APIPermissionName>
   <Permissions__APIPermissionName
+    active={false}
     disabled={false}
     key="test_view"
     onClick={[Function]}

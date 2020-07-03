@@ -4,6 +4,7 @@ import { Switch, Redirect, Route } from "react-router-dom";
 
 import { TabLink, Tabs, ViewHeader, ViewHeaderTitle, WideContainer } from "../../base";
 import { getAccount } from "../actions";
+import { getAccountId } from "../selectors";
 import AccountProfile from "./Profile";
 import APIKeys from "./API/API";
 
@@ -31,7 +32,7 @@ export const Account = ({ userId, onGet }) => {
 };
 
 export const mapStateToProps = state => ({
-    userId: state.account.id
+    userId: getAccountId(state)
 });
 
 export const mapDispatchToProps = dispatch => ({

@@ -22,7 +22,7 @@
       "version": "detect"
     }
   },
-  "plugins": ["prettier", "import", "lodash", "react", "jest"],
+  "plugins": ["import", "jest", "prettier", "react", "react-hooks"],
   "rules": {
     "prettier/prettier": "error",
 
@@ -64,33 +64,6 @@
     // Import
     "import/named": [2],
     "import/order": [2],
-
-    // Lodash
-    "lodash/callback-binding": [1],
-    "lodash/collection-return": [1],
-    "lodash/no-double-unwrap": [1],
-    "lodash/no-extra-args": [1],
-    "lodash/no-unbound-this": [1],
-    "lodash/chaining": [2, "never"],
-    "lodash/identity-shorthand": [1],
-    "lodash/matches-prop-shorthand": [1],
-    "lodash/matches-shorthand": [1],
-    "lodash/prefer-compact": [1],
-    "lodash/prefer-flat-map": [1],
-    "lodash/prefer-map": [1],
-    "lodash/prefer-reject": [1],
-    "lodash/preferred-alias": [1],
-    "lodash/prefer-get": [1],
-    "lodash/prefer-includes": [1],
-    "lodash/prefer-is-nil": [1],
-    "lodash/prefer-lodash-method": [1, {"ignoreMethods": ["find"]}],
-    "lodash/prefer-lodash-typecheck": [1],
-    "lodash/prefer-matches": [1],
-    "lodash/prefer-noop": [1],
-    "lodash/prefer-over-quantifier": [1],
-    "lodash/prefer-some": [1],
-    "lodash/prefer-startswith": [1],
-    "lodash/prefer-times": [1],
 
     // React
     "react/prop-types": [1, { "skipUndeclared": true }],

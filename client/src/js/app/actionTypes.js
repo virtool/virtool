@@ -24,7 +24,6 @@ const createRequestActionType = root => ({
 export const PUSH_STATE = "PUSH_STATE";
 export const SET_APP_PENDING = "SET_APP_PENDING";
 export const UNSET_APP_PENDING = "UNSET_APP_PENDING";
-export const WS_CLOSED = "WS_CLOSED";
 
 // Account
 export const GET_ACCOUNT = createRequestActionType("GET_ACCOUNT");
@@ -44,7 +43,6 @@ export const RESET_PASSWORD = createRequestActionType("RESET_PASSWORD");
 // Administration Settings
 export const GET_SETTINGS = createRequestActionType("GET_SETTINGS");
 export const UPDATE_SETTINGS = createRequestActionType("UPDATE_SETTINGS");
-export const GET_CONTROL_READAHEAD = createRequestActionType("GET_CONTROL_READAHEAD");
 
 // Analysis
 export const WS_INSERT_ANALYSIS = "WS_INSERT_ANALYSIS";
@@ -61,7 +59,6 @@ export const SET_ANALYSIS_ACTIVE_ID = "SET_ANALYSIS_ACTIVE_ID";
 export const SET_SEARCH_IDS = "SET_SEARCH_IDS";
 export const SET_AODP_FILTER = "ADD_AODP_FILTER";
 export const SET_ANALYSIS_SORT_KEY = "SET_ANALYSIS_SORT_KEY";
-export const TOGGLE_ANALYSIS_EXPANDED = "TOGGLE_ANALYSIS_EXPANDED";
 export const TOGGLE_FILTER_OTUS = "TOGGLE_FILTER_OTUS";
 export const TOGGLE_FILTER_ISOLATES = "TOGGLE_FILTER_ISOLATES";
 export const TOGGLE_FILTER_ORFS = "TOGGLE_FILTER_ORFS";
@@ -196,6 +193,7 @@ export const UPDATE_SAMPLE = createRequestActionType("UPDATE_SAMPLE");
 export const UPDATE_SAMPLE_RIGHTS = createRequestActionType("UPDATE_SAMPLE_RIGHTS");
 export const REMOVE_SAMPLE = createRequestActionType("REMOVE_SAMPLE");
 export const SELECT_SAMPLE = "SELECT_SAMPLE";
+export const DESELECT_SAMPLES = "DESELECT_SAMPLES";
 export const CLEAR_SAMPLE_SELECTION = "CLEAR_SAMPLE_SELECTION";
 export const SHOW_REMOVE_SAMPLE = "SHOW_REMOVE_SAMPLE";
 export const HIDE_SAMPLE_MODAL = "HIDE_SAMPLE_MODAL";

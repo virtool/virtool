@@ -6,8 +6,10 @@ exports[`Checkbox should render 1`] = `
     checked={false}
     onClick={[MockFunction]}
   >
-    <Checkbox__CheckIcon
+    <Icon
       checked={false}
+      faStyle="fas"
+      fixedWidth={false}
       name="check"
     />
     <Checkbox__CheckboxInput />
@@ -26,8 +28,10 @@ exports[`Checkbox should render when [props.checked===true] 1`] = `
     checked={true}
     onClick={[MockFunction]}
   >
-    <Checkbox__CheckIcon
+    <Icon
       checked={true}
+      faStyle="fas"
+      fixedWidth={false}
       name="check"
     />
     <Checkbox__CheckboxInput />
@@ -46,8 +50,10 @@ exports[`Checkbox should render when [props.label===''] 1`] = `
     checked={false}
     onClick={[MockFunction]}
   >
-    <Checkbox__CheckIcon
+    <Icon
       checked={false}
+      faStyle="fas"
+      fixedWidth={false}
       name="check"
     />
     <Checkbox__CheckboxInput />

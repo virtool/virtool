@@ -1,6 +1,7 @@
 import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
+import { getAccountAdministrator } from "../../account/selectors";
 import { Alert, Icon, LinkButton, LoadingPlaceholder, SearchInput, Toolbar } from "../../base";
 import { clearError } from "../../errors/actions";
 import { listGroups } from "../../groups/actions";
@@ -72,7 +73,7 @@ export class ManageUsers extends React.Component {
 }
 
 export const mapStateToProps = state => ({
-    isAdmin: state.account.administrator,
+    isAdmin: getAccountAdministrator(state),
     term: state.users.filter,
     groups: state.groups.list,
     groupsFetched: state.groups.fetched,

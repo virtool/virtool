@@ -1,6 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Icon, ModalAlert } from "../../../base";
+import { getAccountAdministrator } from "../../selectors";
 
 export const CreateAPIKeyInfo = ({ administrator }) => {
     if (administrator) {
@@ -24,7 +25,7 @@ export const CreateAPIKeyInfo = ({ administrator }) => {
 };
 
 export const mapStateToProps = state => ({
-    administrator: state.account.administrator
+    administrator: getAccountAdministrator(state)
 });
 
 export default connect(mapStateToProps)(CreateAPIKeyInfo);
