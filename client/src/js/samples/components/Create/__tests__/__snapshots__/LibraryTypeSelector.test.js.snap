@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<LibraryTypeSelector> should select Amplicon type when [LibraryTypeSelector='amplicon'] 1`] = `
+exports[`<LibraryTypeSelector> should have Amplicon selected when [libraryType='amplicon'] 1`] = `
 <Fragment>
   <label>
     Library Type
@@ -43,7 +43,7 @@ exports[`<LibraryTypeSelector> should select Amplicon type when [LibraryTypeSele
 </Fragment>
 `;
 
-exports[`<LibraryTypeSelector> should select Normal type when [LibraryTypeSelector='normal'] 1`] = `
+exports[`<LibraryTypeSelector> should have Normal selected [libraryType='normal'] 1`] = `
 <Fragment>
   <label>
     Library Type
@@ -86,7 +86,7 @@ exports[`<LibraryTypeSelector> should select Normal type when [LibraryTypeSelect
 </Fragment>
 `;
 
-exports[`<LibraryTypeSelector> should select sRNA type when [LibraryTypeSelector='srna'] 1`] = `
+exports[`<LibraryTypeSelector> should have sRNA selected when [libraryType='srna'] 1`] = `
 <Fragment>
   <label>
     Library Type

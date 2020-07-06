@@ -9,34 +9,36 @@ describe("<LibraryTypeSelector>", () => {
         };
     });
 
-    it("should select Normal type when [LibraryTypeSelector='normal']", () => {
+    it("should have Normal selected [libraryType='normal']", () => {
         const wrapper = shallow(<LibraryTypeSelector {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should select sRNA type when [LibraryTypeSelector='srna']", () => {
+    it("should have sRNA selected when [libraryType='srna']", () => {
         props.libraryType = "srna";
         const wrapper = shallow(<LibraryTypeSelector {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
-    it("should select Amplicon type when [LibraryTypeSelector='amplicon']", () => {
+
+    it("should have Amplicon selected when [libraryType='amplicon']", () => {
         props.libraryType = "amplicon";
         const wrapper = shallow(<LibraryTypeSelector {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
+
     it("should call onSelect with libraryType normal when Normal type is clicked", () => {
-        const wrapper = shallow(<LibraryTypeSelector {...props} />);
-        wrapper.find("SelectBox").at(0).simulate("click");
+        const { getByText } = renderWithProviders(<LibraryTypeSelector {...props} />);
+        fireEvent.click(getByText("Normal"));
         expect(props.onSelect).toHaveBeenCalledWith("normal");
     });
     it("should call onSelect with libraryType srna when srna type is clicked", () => {
-        const wrapper = shallow(<LibraryTypeSelector {...props} />);
-        wrapper.find("SelectBox").at(1).simulate("click");
+        const { getByText } = renderWithProviders(<LibraryTypeSelector {...props} />);
+        fireEvent.click(getByText("sRNA"));
         expect(props.onSelect).toHaveBeenCalledWith("srna");
     });
     it("should call onSelect with libraryType amplicon when amplicon type is clicked", () => {
-        const wrapper = shallow(<LibraryTypeSelector {...props} />);
-        wrapper.find("SelectBox").at(2).simulate("click");
+        const { getByText } = renderWithProviders(<LibraryTypeSelector {...props} />);
+        fireEvent.click(getByText("Amplicon"));
         expect(props.onSelect).toHaveBeenCalledWith("amplicon");
     });
 });
