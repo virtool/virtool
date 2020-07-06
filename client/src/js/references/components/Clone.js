@@ -6,7 +6,7 @@ import { clearError } from "../../errors/actions";
 import { getTargetChange } from "../../utils/utils";
 import { cloneReference } from "../actions";
 import { ReferenceForm } from "./Form";
-import { ReferenceSelect } from "./ReferenceSelect";
+import { ReferenceSelector } from "./ReferenceSelector";
 
 const getInitialState = (refId, refArray) => {
     const originalRef = find(refArray, { id: refId });
@@ -98,7 +98,7 @@ export class CloneReference extends React.Component {
                     <Alert>
                         <strong>Clone an existing reference.</strong>
                     </Alert>
-                    <ReferenceSelect
+                    <ReferenceSelector
                         references={this.props.refDocuments}
                         onSelect={this.handleSelect}
                         selected={this.state.reference}

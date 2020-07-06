@@ -1,0 +1,79 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ReadOrientation /> should render when [index=0] 1`] = `
+<ReadSelectorItem__StyledReadOrientation>
+  LEFT
+</ReadSelectorItem__StyledReadOrientation>
+`;
+
+exports[`<ReadOrientation /> should render when [index=1] 1`] = `
+<ReadSelectorItem__StyledReadOrientation>
+  RIGHT
+</ReadSelectorItem__StyledReadOrientation>
+`;
+
+exports[`<ReadOrientation /> should render when [selected=false] 1`] = `""`;
+
+exports[`<ReadOrientation /> should render when [selected=true] 1`] = `
+<ReadSelectorItem__StyledReadOrientation>
+  LEFT
+</ReadSelectorItem__StyledReadOrientation>
+`;
+
+exports[`<ReadSelectorItem /> should render when [selected=false] 1`] = `
+<ReadSelectorItem__StyledReadItem
+  active={false}
+  onClick={[Function]}
+>
+  <ReadSelectorItem__ReadTitle>
+    <ReadSelectorItem__ReadIcon>
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file"
+      />
+    </ReadSelectorItem__ReadIcon>
+    <div>
+      <strong>
+        bar
+      </strong>
+      <div>
+        0.0B
+      </div>
+    </div>
+  </ReadSelectorItem__ReadTitle>
+  <ReadOrientation
+    index={0}
+    selected={false}
+  />
+</ReadSelectorItem__StyledReadItem>
+`;
+
+exports[`<ReadSelectorItem /> should render when [selected=true] 1`] = `
+<ReadSelectorItem__StyledReadItem
+  active={true}
+  onClick={[Function]}
+>
+  <ReadSelectorItem__ReadTitle>
+    <ReadSelectorItem__ReadIcon>
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file"
+      />
+    </ReadSelectorItem__ReadIcon>
+    <div>
+      <strong>
+        bar
+      </strong>
+      <div>
+        0.0B
+      </div>
+    </div>
+  </ReadSelectorItem__ReadTitle>
+  <ReadOrientation
+    index={0}
+    selected={true}
+  />
+</ReadSelectorItem__StyledReadItem>
+`;

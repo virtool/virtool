@@ -1,8 +1,8 @@
 import React, { useCallback } from "react";
 import styled from "styled-components";
-import { Checkbox, BoxGroupSection, Label } from "../../../base";
+import { Checkbox, Label, SelectBoxGroupSection } from "../../../base";
 
-const StyledIndexSelectorItem = styled(BoxGroupSection)`
+const StyledIndexSelectorItem = styled(SelectBoxGroupSection)`
     align-items: center;
     display: flex;
     user-select: none;

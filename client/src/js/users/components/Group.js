@@ -1,14 +1,11 @@
+import PropTypes from "prop-types";
 import React from "react";
 import styled from "styled-components";
-import PropTypes from "prop-types";
+import { Checkbox, SelectBoxGroupSection } from "../../base";
 
-import { BoxGroupSection, Checkbox } from "../../base";
-
-const StyledUserGroup = styled(BoxGroupSection)`
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
+const StyledUserGroup = styled(SelectBoxGroupSection)`
     text-transform: capitalize;
+    user-select: none;
 `;
 
 export class UserGroup extends React.Component {
@@ -24,9 +21,8 @@ export class UserGroup extends React.Component {
 
     render() {
         return (
-            <StyledUserGroup onClick={this.handleClick}>
-                <span>{this.props.id}</span>
-                <Checkbox checked={this.props.toggled} />
+            <StyledUserGroup active={this.props.toggled} onClick={this.handleClick}>
+                <Checkbox checked={this.props.toggled} label={this.props.id} />
             </StyledUserGroup>
         );
     }

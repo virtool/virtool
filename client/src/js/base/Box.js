@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { getBorder } from "../app/theme";
 import { Badge } from "./Badge";
-import { StyledCheckbox } from "./Checkbox";
+import { CheckboxLabel, StyledCheckbox } from "./Checkbox";
 import { Table } from "./Table";
 
 export const Box = styled.div`
@@ -45,18 +45,12 @@ export const BoxGroup = styled(Box)`
 `;
 
 export const BoxGroupSection = styled.div`
-    background-color: ${props => (props.active ? props.theme.color.blue : "transparent")};
+    background-color: transparent;
     border-radius: 0;
-    color: ${props => (props.active ? props.theme.color.white : "inherit")};
-    cursor: ${props => (props.onClick ? "pointer" : "auto")};
+    color: inherit;
+    cursor: auto;
     padding: 10px 15px;
     position: relative;
-
-    ${StyledCheckbox} {
-        background-color: ${props => (props.active ? props.theme.color.white : "transparent")};
-        color: ${props => props.theme.color[props.active ? "blueDark" : "greyLight"]};
-        margin-right: 5px;
-    }
 
     &[disabled] {
         background-color: #edf2f7;
@@ -70,6 +64,22 @@ export const BoxGroupSection = styled.div`
 
     &:not(:last-child) {
         border-bottom: ${getBorder};
+    }
+`;
+
+export const SelectBoxGroupSection = styled(BoxGroupSection)`
+    background-color: ${props => (props.active ? props.theme.color.blue : "transparent")};
+    color: ${props => (props.active ? props.theme.color.white : "inherit")};
+    cursor: pointer;
+
+    ${StyledCheckbox} {
+        background-color: ${props => (props.active ? props.theme.color.white : "transparent")};
+        color: ${props => props.theme.color[props.active ? "blueDark" : "greyLight"]};
+        margin-right: 10px;
+    }
+
+    ${CheckboxLabel} {
+        margin: 0;
     }
 `;
 
@@ -102,9 +112,6 @@ export const BoxGroupHeader = styled(BoxGroupSection)`
         margin: 5px 0 0;
     }
 `;
-
-BoxGroup.Header = BoxGroupHeader;
-BoxGroup.Section = BoxGroupSection;
 
 export const BoxTitle = styled.h1`
     font-size: 14px;

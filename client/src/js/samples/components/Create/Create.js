@@ -23,7 +23,7 @@ import { shortlistSubtractions } from "../../../subtraction/actions";
 import { getSubtractionShortlist } from "../../../subtraction/selectors";
 import { getTargetChange, routerLocationHasState } from "../../../utils/utils";
 import { createSample, findReadFiles } from "../../actions";
-import { LibraryTypeSelection } from "./LibraryTypeSelection";
+import { LibraryTypeSelector } from "./LibraryTypeSelector";
 import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
 
@@ -239,10 +239,7 @@ export class CreateSample extends React.Component {
                             </InputGroup>
                         </CreateSampleFields>
 
-                        <LibraryTypeSelection
-                            onSelect={this.handleLibrarySelect}
-                            libraryType={this.state.libraryType}
-                        />
+                        <LibraryTypeSelector onSelect={this.handleLibrarySelect} libraryType={this.state.libraryType} />
 
                         {userGroup}
 

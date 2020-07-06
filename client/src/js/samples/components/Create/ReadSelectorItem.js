@@ -1,9 +1,8 @@
+import PropTypes from "prop-types";
 import React, { useCallback } from "react";
 import styled from "styled-components";
-import PropTypes from "prop-types";
-
+import { Icon, SelectBoxGroupSection } from "../../../base";
 import { byteSize } from "../../../utils/utils";
-import { Icon, BoxGroupSection } from "../../../base";
 
 const ReadIcon = styled.span`
     font-size: 24px;
@@ -15,7 +14,7 @@ const ReadTitle = styled.div`
     display: flex;
 `;
 
-const StyledReadItem = styled(BoxGroupSection)`
+const StyledReadItem = styled(SelectBoxGroupSection)`
     align-items: center;
     display: flex;
     justify-content: space-between;
@@ -40,7 +39,7 @@ export const ReadOrientation = ({ index, selected }) => {
     return null;
 };
 
-export const ReadItem = ({ id, index, name, selected, size, onSelect }) => {
+export const ReadSelectorItem = ({ id, index, name, selected, size, onSelect }) => {
     const select = useCallback(() => onSelect(id), []);
 
     return (
@@ -59,11 +58,11 @@ export const ReadItem = ({ id, index, name, selected, size, onSelect }) => {
     );
 };
 
-ReadItem.defaultProps = {
+ReadSelectorItem.defaultProps = {
     selected: false
 };
 
-ReadItem.propTypes = {
+ReadSelectorItem.propTypes = {
     id: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired,
     index: PropTypes.number.isRequired,
@@ -72,4 +71,4 @@ ReadItem.propTypes = {
     selected: PropTypes.bool
 };
 
-export default ReadItem;
+export default ReadSelectorItem;

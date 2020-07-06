@@ -1,11 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<LibraryTypeSelection> should select Amplicon type when [LibraryTypeSelection='amplicon'] 1`] = `
+exports[`<LibraryTypeSelector> should select Amplicon type when [LibraryTypeSelector='amplicon'] 1`] = `
 <Fragment>
   <label>
     Library Type
   </label>
-  <LibraryTypeSelection__LibraryTypeSelectBoxContainer>
+  <LibraryTypeSelector__LibraryTypeSelectBoxContainer>
     <SelectBox
       active={false}
       onClick={[Function]}
@@ -39,16 +39,16 @@ exports[`<LibraryTypeSelection> should select Amplicon type when [LibraryTypeSel
         Search against barcode references using amplicon reads.
       </span>
     </SelectBox>
-  </LibraryTypeSelection__LibraryTypeSelectBoxContainer>
+  </LibraryTypeSelector__LibraryTypeSelectBoxContainer>
 </Fragment>
 `;
 
-exports[`<LibraryTypeSelection> should select Normal type when [LibraryTypeSelection='normal'] 1`] = `
+exports[`<LibraryTypeSelector> should select Normal type when [LibraryTypeSelector='normal'] 1`] = `
 <Fragment>
   <label>
     Library Type
   </label>
-  <LibraryTypeSelection__LibraryTypeSelectBoxContainer>
+  <LibraryTypeSelector__LibraryTypeSelectBoxContainer>
     <SelectBox
       active={true}
       onClick={[Function]}
@@ -82,16 +82,16 @@ exports[`<LibraryTypeSelection> should select Normal type when [LibraryTypeSelec
         Search against barcode references using amplicon reads.
       </span>
     </SelectBox>
-  </LibraryTypeSelection__LibraryTypeSelectBoxContainer>
+  </LibraryTypeSelector__LibraryTypeSelectBoxContainer>
 </Fragment>
 `;
 
-exports[`<LibraryTypeSelection> should select sRNA type when [LibraryTypeSelection='srna'] 1`] = `
+exports[`<LibraryTypeSelector> should select sRNA type when [LibraryTypeSelector='srna'] 1`] = `
 <Fragment>
   <label>
     Library Type
   </label>
-  <LibraryTypeSelection__LibraryTypeSelectBoxContainer>
+  <LibraryTypeSelector__LibraryTypeSelectBoxContainer>
     <SelectBox
       active={false}
       onClick={[Function]}
@@ -125,6 +125,6 @@ exports[`<LibraryTypeSelection> should select sRNA type when [LibraryTypeSelecti
         Search against barcode references using amplicon reads.
       </span>
     </SelectBox>
-  </LibraryTypeSelection__LibraryTypeSelectBoxContainer>
+  </LibraryTypeSelector__LibraryTypeSelectBoxContainer>
 </Fragment>
 `;

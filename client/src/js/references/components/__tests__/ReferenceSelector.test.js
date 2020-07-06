@@ -1,6 +1,6 @@
-import { ReferenceSelect } from "../ReferenceSelect";
+import { ReferenceSelector } from "../ReferenceSelector";
 
-describe("<ReferenceSelect />", () => {
+describe("<ReferenceSelector />", () => {
     let props;
     beforeEach(() => {
         props = {
@@ -12,13 +12,13 @@ describe("<ReferenceSelect />", () => {
     });
 
     it("should render", () => {
-        const wrapper = shallow(<ReferenceSelect {...props} />);
+        const wrapper = shallow(<ReferenceSelector {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("should render NoneFound when [references.length=0]", () => {
         props.references = [];
-        const wrapper = shallow(<ReferenceSelect {...props} />);
+        const wrapper = shallow(<ReferenceSelector {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

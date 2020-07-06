@@ -1,4 +1,5 @@
-import { APIPermissions, APIPermissionName } from "../Permissions";
+import { SelectBoxGroupSection } from "../../../../base";
+import { APIPermissions } from "../Permissions";
 
 describe("<Permissions />", () => {
     let props;
@@ -36,10 +37,7 @@ describe("<Permissions />", () => {
     it("should call onChange when permission clicked", () => {
         props.administrator = true;
         const wrapper = shallow(<APIPermissions {...props} />);
-        wrapper
-            .find(APIPermissionName)
-            .at(0)
-            .simulate("click");
+        wrapper.find(SelectBoxGroupSection).at(0).simulate("click");
         expect(props.onChange).toHaveBeenCalled();
     });
 });

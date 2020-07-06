@@ -32,19 +32,13 @@ describe("<UserGroups />", () => {
 
     it("should call onEditGroup() to disable membership", () => {
         const wrapper = shallow(<UserGroups {...props} />);
-        wrapper
-            .find("UserGroup")
-            .at(0)
-            .prop("onClick")("foo");
+        wrapper.find("UserGroup").at(0).prop("onClick")("foo");
         expect(props.onEditGroup).toHaveBeenCalledWith("bob", []);
     });
 
     it("should call onEditGroup() to enable membership", () => {
         const wrapper = shallow(<UserGroups {...props} />);
-        wrapper
-            .find("UserGroup")
-            .at(1)
-            .prop("onClick")("bar");
+        wrapper.find("UserGroup").at(1).prop("onClick")("bar");
         expect(props.onEditGroup).toHaveBeenCalledWith("bob", ["foo", "bar"]);
     });
 });
