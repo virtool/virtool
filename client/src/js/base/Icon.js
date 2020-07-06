@@ -74,7 +74,7 @@ Icon.defaultProps = {
 };
 
 export const LinkIcon = ({ to, replace, ...props }) => (
-    <Link to={to} replace={replace} hoverable>
-        <Icon {...props} />
+    <Link to={to} replace={replace}>
+        <Icon {...props} hoverable />
     </Link>
 );
