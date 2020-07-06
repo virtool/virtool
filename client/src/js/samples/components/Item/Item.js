@@ -1,10 +1,11 @@
-import { find, includes } from "lodash-es";
+import { find } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { pushState } from "../../../app/actions";
 import { Attribution, Checkbox, Icon, LinkBox, Loader } from "../../../base";
 import { selectSample } from "../../actions";
+import { getIsSelected } from "../../selectors";
 import { getLibraryTypeDisplayName } from "../../utils";
 import { SampleItemLabels } from "./Labels";
 
@@ -80,9 +81,13 @@ const SampleItemTitle = styled.div`
     }
 `;
 
-class SampleEntry extends React.Component {
+class SampleItem extends React.Component {
     handleCheck = e => {
         this.props.onSelect(this.props.id, this.props.index, e.shiftKey);
+    };
+
+    handleQuickAnalyze = () => {
+        this.props.onQuickAnalyze(this.props.id);
     };
 
     render() {
@@ -92,12 +97,12 @@ class SampleEntry extends React.Component {
             endIcon = (
                 <SampleIconContainer>
                     <Icon
+                        color="green"
                         name="chart-area"
+                        style={{ fontSize: "17px", zIndex: 10000 }}
                         tip="Quick Analyze"
                         tipPlacement="left"
-                        color="green"
-                        onClick={this.props.onQuickAnalyze}
-                        style={{ fontSize: "17px", zIndex: 10000 }}
+                        onClick={this.handleQuickAnalyze}
                     />
                 </SampleIconContainer>
             );
@@ -136,18 +141,23 @@ class SampleEntry extends React.Component {
     }
 }
 
-const mapStateToProps = (state, ownProps) => ({
-    ...find(state.samples.documents, { id: ownProps.id }),
-    checked: includes(state.samples.selected, ownProps.id)
-});
+export function mapStateToProps(state, ownProps) {
+    return {
+        ...find(state.samples.documents, { id: ownProps.id }),
+        checked: getIsSelected(state, ownProps.id)
+    };
+}
 
-const mapDispatchToProps = (dispatch, ownProps) => ({
-    onSelect: () => {
-        dispatch(selectSample(ownProps.id));
-    },
-    onQuickAnalyze: () => {
-        dispatch(pushState({ createAnalysis: [ownProps.id] }));
-    }
-});
+export function mapDispatchToProps(dispatch, ownProps) {
+    return {
+        onSelect: () => {
+            dispatch(selectSample(ownProps.id));
+        },
+        onQuickAnalyze: id => {
+            dispatch(selectSample(id));
+            dispatch(pushState({ quickAnalysis: true }));
+        }
+    };
+}
 
-export default connect(mapStateToProps, mapDispatchToProps)(SampleEntry);
+export default connect(mapStateToProps, mapDispatchToProps)(SampleItem);
