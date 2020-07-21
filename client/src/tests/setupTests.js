@@ -1,10 +1,10 @@
-import React from "react";
-import Enzyme, { shallow, render, mount } from "enzyme";
+import "@testing-library/jest-dom";
+import { fireEvent, render as rtlRender } from "@testing-library/react";
+import Enzyme, { mount, render, shallow } from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
+import React from "react";
 import { ThemeProvider } from "styled-components";
 import { theme } from "../js/app/theme";
-import { render as rtlRender } from "@testing-library/react";
-import { fireEvent } from "@testing-library/react";
 
 // React 16 Enzyme adapter
 
