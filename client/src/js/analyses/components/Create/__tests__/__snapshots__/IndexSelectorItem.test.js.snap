@@ -7,6 +7,7 @@ exports[`<IndexSelectorItem /> should render 1`] = `
 >
   <Checkbox
     checked={true}
+    disabled={false}
   />
   <strong>
     bar
@@ -25,6 +26,7 @@ exports[`<IndexSelectorItem /> should render when [isSelected = false] 1`] = `
 >
   <Checkbox
     checked={false}
+    disabled={false}
   />
   <strong>
     bar

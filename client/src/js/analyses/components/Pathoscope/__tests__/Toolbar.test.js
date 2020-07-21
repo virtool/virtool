@@ -6,8 +6,8 @@ import {
 } from "../../../../app/actionTypes";
 import { Button } from "../../../../base";
 import { getFuse } from "../../../selectors";
-import { mapDispatchToProps, mapStateToProps, PathoscopeDownloadDropdownTitle, PathoscopeToolbar } from "../Toolbar";
 import { AnalysisViewerSort } from "../../Viewer/Sort";
+import { mapDispatchToProps, mapStateToProps, PathoscopeDownloadDropdownTitle, PathoscopeToolbar } from "../Toolbar";
 
 jest.mock("../../../selectors");
 
@@ -95,11 +95,6 @@ describe("<Toolbar />", () => {
 
     it("should call onSetSortKey() when sort key selected", () => {
         const wrapper = shallow(<PathoscopeToolbar {...props} />);
-        const e = {
-            target: {
-                value: "pi"
-            }
-        };
         expect(props.onSetSortKey).not.toHaveBeenCalled();
         wrapper.find(AnalysisViewerSort).simulate("select");
         expect(props.onSetSortKey).toHaveBeenCalled();

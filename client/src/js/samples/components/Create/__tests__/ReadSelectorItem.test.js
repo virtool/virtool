@@ -1,4 +1,4 @@
-import { ReadItem, ReadOrientation } from "../ReadItem";
+import { ReadSelectorItem, ReadOrientation } from "../ReadSelectorItem";
 
 describe("<ReadOrientation />", () => {
     let props;
@@ -29,7 +29,7 @@ describe("<ReadOrientation />", () => {
     });
 });
 
-describe("<ReadItem />", () => {
+describe("<ReadSelectorItem />", () => {
     let props;
     beforeEach(() => {
         props = {
@@ -43,16 +43,16 @@ describe("<ReadItem />", () => {
     });
 
     it("should render when [selected=true]", () => {
-        const wrapper = shallow(<ReadItem {...props} />);
+        const wrapper = shallow(<ReadSelectorItem {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
     it("should render when [selected=false]", () => {
         props.selected = false;
-        const wrapper = shallow(<ReadItem {...props} />);
+        const wrapper = shallow(<ReadSelectorItem {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
-    it("should call onSelect when ReadItem is clicked", () => {
-        const wrapper = shallow(<ReadItem {...props} />);
+    it("should call onSelect when ReadSelectorItem is clicked", () => {
+        const wrapper = shallow(<ReadSelectorItem {...props} />);
         wrapper.simulate("click");
         expect(props.onSelect).toHaveBeenCalledWith("foo");
     });

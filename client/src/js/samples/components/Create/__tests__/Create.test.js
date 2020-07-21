@@ -1,6 +1,7 @@
 import React from "react";
 import { Input, InputIcon } from "../../../../base";
 import { CreateSample, mapDispatchToProps, mapStateToProps } from "../Create";
+import { LibraryTypeSelector } from "../LibraryTypeSelector";
 
 describe("<CreateSample>", () => {
     let props;
@@ -103,11 +104,11 @@ describe("<CreateSample>", () => {
         expect(wrapper.state()).toEqual({ ...state, isolate: "Foo Isolate" });
     });
 
-    it("handleLibrarySelect() should update libraryType when LibraryTypeSelection is selected", () => {
+    it("handleLibrarySelect() should update libraryType when LibraryTypeSelector is selected", () => {
         const libraryType = "srna";
         const wrapper = shallow(<CreateSample {...props} />);
         wrapper.setState(state);
-        wrapper.find("LibraryTypeSelection").at(0).simulate("select", libraryType);
+        wrapper.find(LibraryTypeSelector).at(0).simulate("select", libraryType);
         expect(wrapper.state()).toEqual({ ...state, libraryType });
     });
 

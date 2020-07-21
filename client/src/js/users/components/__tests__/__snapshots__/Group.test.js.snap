@@ -2,26 +2,26 @@
 
 exports[`<UserGroup /> should render with [toggled=false] 1`] = `
 <Group__StyledUserGroup
+  active={false}
   onClick={[Function]}
 >
-  <span>
-    bob
-  </span>
   <Checkbox
     checked={false}
+    disabled={false}
+    label="bob"
   />
 </Group__StyledUserGroup>
 `;
 
 exports[`<UserGroup /> should render with [toggled=true] 1`] = `
 <Group__StyledUserGroup
+  active={true}
   onClick={[Function]}
 >
-  <span>
-    bob
-  </span>
   <Checkbox
     checked={true}
+    disabled={false}
+    label="bob"
   />
 </Group__StyledUserGroup>
 `;

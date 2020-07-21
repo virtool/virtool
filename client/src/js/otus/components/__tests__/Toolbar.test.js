@@ -1,5 +1,5 @@
 import { SearchInput } from "../../../base";
-import { OTUToolbar, FilterButton } from "../Toolbar";
+import { OTUToolbar } from "../Toolbar";
 
 describe("<OTUToolbar />", () => {
     const props = {

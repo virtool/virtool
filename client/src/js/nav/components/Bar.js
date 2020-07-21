@@ -12,6 +12,7 @@ import Update from "./Update";
 const NavBarItem = styled(NavLink)`
     color: white;
     cursor: pointer;
+    font-weight: 500;
     height: 100%;
     display: flex;
     justify-content: center;

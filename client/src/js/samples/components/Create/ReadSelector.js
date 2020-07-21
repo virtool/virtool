@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Box, BoxGroup, Button, InputError, NoneFoundSection, SearchInput, Toolbar } from "../../../base";
 
-import ReadItem from "./ReadItem";
+import ReadSelectorItem from "./ReadSelectorItem";
 
 const ReadSelectorBox = styled(Box)`
     ${props => (props.error ? `border-color: ${props.theme.color.red};` : "")};
@@ -99,7 +99,13 @@ export default class ReadSelector extends React.PureComponent {
         let fileComponents = map(sortBy(files, "uploaded_at").reverse(), file => {
             const index = indexOf(this.props.selected, file.id);
             return (
-                <ReadItem key={file.id} {...file} index={index} selected={index > -1} onSelect={this.handleSelect} />
+                <ReadSelectorItem
+                    key={file.id}
+                    {...file}
+                    index={index}
+                    selected={index > -1}
+                    onSelect={this.handleSelect}
+                />
             );
         });
 

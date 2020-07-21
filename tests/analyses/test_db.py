@@ -62,19 +62,19 @@ class TestBLAST:
     @pytest.mark.parametrize("error", [None, "Error"])
     @pytest.mark.parametrize("ready", [None, True, False])
     @pytest.mark.parametrize("result", [None, {"foo": "bar"}])
-    async def test_update(self, check, ready, result, error, mocker, dbi, test_blast_obj, static_time):
+    async def test_update(self, snapshot, check, ready, result, error, mocker, dbi, test_blast_obj, static_time):
         m_check_rid = mocker.patch("virtool.bio.check_rid", make_mocked_coro(check))
 
-        document = {
+        await dbi.analyses.insert_one({
             "_id": "foo",
             "results": [
                 {"index": 2, "blast": "bar"},
                 {"index": 5, "blast": "baz"},
                 {"index": 12, "blast": "baz"}
-            ]
-        }
+            ],
+            "updated_at": static_time.datetime
+        })
 
-        await dbi.analyses.insert_one(document)
         await test_blast_obj.update(ready, result, error)
 
         if ready is None:
@@ -82,16 +82,7 @@ class TestBLAST:
         else:
             assert not m_check_rid.called
 
-        document["results"][1]["blast"] = {
-            "error": error,
-            "interval": 3,
-            "last_checked_at": static_time.datetime,
-            "ready": ready,
-            "result": result,
-            "rid": "ABC123"
-        }
-
-        assert await dbi.analyses.find_one() == document
+        snapshot.assert_match(await dbi.analyses.find_one())
 
 
 @pytest.mark.parametrize("workflow", [None, "foobar", "nuvs", "pathoscope"])
@@ -148,18 +139,19 @@ async def test_format_analysis(workflow, mocker):
         assert not m_format_nuvs.called
 
 
-async def test_remove_nuvs_blast(dbi):
+async def test_remove_nuvs_blast(snapshot, dbi, static_time):
     """
     Test that the correct BLAST result is removed.
 
     """
-    documents = [
+    await dbi.analyses.insert_many([
         {
             "_id": "foo",
             "results": [
                 {"index": 2, "blast": "bar"},
                 {"index": 5, "blast": "baz"},
-            ]
+            ],
+            "updated_at": static_time.datetime
         },
         {
 
@@ -167,11 +159,10 @@ async def test_remove_nuvs_blast(dbi):
             "results": [
                 {"index": 3, "blast": "bar"},
                 {"index": 9, "blast": "baz"},
-            ]
+            ],
+            "updated_at": static_time.datetime
         }
-    ]
-
-    await dbi.analyses.insert_many(documents)
+    ])
 
     await virtool.analyses.db.remove_nuvs_blast(
         dbi,
@@ -179,6 +170,4 @@ async def test_remove_nuvs_blast(dbi):
         5
     )
 
-    documents[0]["results"][1]["blast"] = None
-
-    assert await dbi.analyses.find().to_list(None) == documents
+    snapshot.assert_match(await dbi.analyses.find().to_list(None))

@@ -30,6 +30,8 @@ export function* apiCall(apiMethod, action, actionType, extra = {}, extraFunctio
         if (extraFunctions) {
             yield all(extraFunctions);
         }
+
+        return response;
     } catch (error) {
         const statusCode = get(error, "response.statusCode");
 
@@ -37,12 +39,12 @@ export function* apiCall(apiMethod, action, actionType, extra = {}, extraFunctio
             yield put({
                 type: LOGOUT.SUCCEEDED
             });
-            return;
+            return error.response;
         }
 
         if (get(error, "response.body")) {
             yield putGenericError(actionType, error);
-            return;
+            return error.response;
         }
 
         throw error;

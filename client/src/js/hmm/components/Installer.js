@@ -29,6 +29,7 @@ const StyledHMMInstaller = styled(Box)`
 
     h3 {
         font-size: ${props => props.theme.fontSize.xl};
+        font-weight: 500;
         margin: 0 0 3px;
     }
 

@@ -89,12 +89,7 @@ class SegmentForm extends React.Component {
                     </Select>
                 </InputGroup>
 
-                <Checkbox
-                    label="Segment Required"
-                    checked={this.state.isChecked}
-                    onClick={this.toggleRequired}
-                    pullLeft
-                />
+                <Checkbox label="Segment Required" checked={this.state.isChecked} onClick={this.toggleRequired} />
             </StyledSegmentForm>
         );
     }

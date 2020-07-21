@@ -1,13 +1,13 @@
+import { filter, map, sortBy } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { filter, map, sortBy } from "lodash-es";
 import { Badge, Box } from "../../../base";
-import { getActiveHit, getMaxSequenceLength } from "../../selectors";
 import { useElementSize } from "../../../utils/hooks";
+import { getActiveHit, getMaxSequenceLength } from "../../selectors";
 import NuVsBLAST from "./BLAST";
-import NuVsORF from "./ORF";
-import NuVsSequence from "./Sequence";
+import { NuVsORF } from "./ORF";
+import { NuVsSequence } from "./Sequence";
 import { NuVsValues } from "./Values";
 
 const StyledNuVsFamilies = styled.div`
@@ -81,7 +81,7 @@ export const NuVsDetail = ({ filterORFs, hit, maxSequenceLength }) => {
         return <StyledNuVsDetail>No Hits</StyledNuVsDetail>;
     }
 
-    const { blast, e, families, index, orfs, sequence } = hit;
+    const { e, families, index, orfs, sequence } = hit;
 
     let filtered;
 
@@ -106,10 +106,10 @@ export const NuVsDetail = ({ filterORFs, hit, maxSequenceLength }) => {
                 <NuVsFamilies families={families} />
             </NuVsDetailTitle>
             <NuVsLayout>
-                <NuVsSequence key="sequence" sequence={sequence} width={width} />
+                <NuVsSequence key="sequence" maxSequenceLength={maxSequenceLength} sequence={sequence} width={width} />
                 {orfComponents}
             </NuVsLayout>
-            <NuVsBLAST sequenceIndex={index} blast={blast} sequence={sequence} />
+            <NuVsBLAST />
         </StyledNuVsDetail>
     );
 };

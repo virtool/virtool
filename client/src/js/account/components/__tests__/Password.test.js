@@ -75,10 +75,7 @@ describe("<ChangePassword />", () => {
                 value: "foobar"
             }
         };
-        wrapper
-            .find(PasswordInput)
-            .at(1)
-            .simulate("change", e);
+        wrapper.find(PasswordInput).at(1).simulate("change", e);
         expect(props.onClearError).toHaveBeenCalled();
     });
 

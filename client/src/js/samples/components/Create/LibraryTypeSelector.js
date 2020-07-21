@@ -9,7 +9,7 @@ const LibraryTypeSelectBoxContainer = styled.div`
     grid-gap: 15px;
 `;
 
-export const LibraryTypeSelection = ({ onSelect, libraryType }) => (
+export const LibraryTypeSelector = ({ onSelect, libraryType }) => (
     <React.Fragment>
         <label>Library Type</label>
         <LibraryTypeSelectBoxContainer>

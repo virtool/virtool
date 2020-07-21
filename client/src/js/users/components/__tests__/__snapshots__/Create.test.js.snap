@@ -38,6 +38,7 @@ exports[`<CreateUser /> should render 1`] = `
       </InputGroup>
       <Checkbox
         checked={false}
+        disabled={false}
         label="Force user to reset password on login"
         onClick={[Function]}
       />
@@ -89,6 +90,7 @@ exports[`<CreateUser /> should render when name has changed 1`] = `
       </InputGroup>
       <Checkbox
         checked={false}
+        disabled={false}
         label="Force user to reset password on login"
         onClick={[Function]}
       />
@@ -140,6 +142,7 @@ exports[`<CreateUser /> should render when name has changed 2`] = `
       </InputGroup>
       <Checkbox
         checked={false}
+        disabled={false}
         label="Force user to reset password on login"
         onClick={[Function]}
       />
@@ -191,6 +194,7 @@ exports[`<CreateUser /> should render when password has changed 1`] = `
       </InputGroup>
       <Checkbox
         checked={false}
+        disabled={false}
         label="Force user to reset password on login"
         onClick={[Function]}
       />
@@ -242,6 +246,7 @@ exports[`<CreateUser /> should render when password has changed 2`] = `
       </InputGroup>
       <Checkbox
         checked={false}
+        disabled={false}
         label="Force user to reset password on login"
         onClick={[Function]}
       />
@@ -293,6 +298,7 @@ exports[`<CreateUser /> should render with error 1`] = `
       </InputGroup>
       <Checkbox
         checked={false}
+        disabled={false}
         label="Force user to reset password on login"
         onClick={[Function]}
       />

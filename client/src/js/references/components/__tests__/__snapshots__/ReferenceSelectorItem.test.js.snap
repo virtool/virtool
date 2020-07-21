@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<ReferenceSelectItem /> should render 1`] = `
-<ReferenceSelectItem__StyledReferenceSelectItem
+exports[`<ReferenceSelectorItem /> should render 1`] = `
+<ReferenceSelectorItem__StyledReferenceSelectItem
   onClick={[MockFunction]}
 >
   <strong>
@@ -17,5 +17,5 @@ exports[`<ReferenceSelectItem /> should render 1`] = `
        OTUs
     </Badge>
   </div>
-</ReferenceSelectItem__StyledReferenceSelectItem>
+</ReferenceSelectorItem__StyledReferenceSelectItem>
 `;

@@ -79,7 +79,7 @@
   },
   "overrides": [
     {
-      "files": ["*.test.js", "setupTests.js", "webpack.*.config.babel.js"],
+      "files": ["setupTests.js", "webpack.*.config.babel.js"],
       "env": {
         "jest/globals": true
       },
@@ -87,8 +87,6 @@
         "jest/prefer-to-have-length": "off",
         "jest/no-focused-tests": "warn",
         "react/react-in-jsx-scope": "off",
-        "lodash/prefer-lodash-method": "off",
-        "lodash/prefer-noop": "off",
         "no-undef": "off",
         "array-bracket-newline": "off"
       }

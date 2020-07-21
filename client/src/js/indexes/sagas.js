@@ -66,10 +66,11 @@ export function* listReadyIndexes(action) {
 }
 
 export function* createIndex(action) {
-    const extraFunc = {
-        closeModal: put(pushState({ rebuild: false }))
-    };
-    yield setPending(apiCall(indexesAPI.create, action, CREATE_INDEX, {}, extraFunc));
+    const response = yield apiCall(indexesAPI.create, action, CREATE_INDEX, {});
+
+    if (response.ok) {
+        yield put(pushState({ rebuild: false }));
+    }
 }
 
 export function* getIndexHistory(action) {

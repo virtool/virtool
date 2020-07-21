@@ -1,6 +1,6 @@
-import { ReferenceSelectItem } from "../ReferenceSelectItem";
+import { ReferenceSelectorItem } from "../ReferenceSelectorItem";
 
-describe("<ReferenceSelectItem />", () => {
+describe("<ReferenceSelectorItem />", () => {
     let props;
     beforeEach(() => {
         props = {
@@ -16,7 +16,7 @@ describe("<ReferenceSelectItem />", () => {
         };
     });
     it("should render", () => {
-        const wrapper = shallow(<ReferenceSelectItem {...props} />);
+        const wrapper = shallow(<ReferenceSelectorItem {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

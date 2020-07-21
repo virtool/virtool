@@ -1,4 +1,5 @@
 import { every, filter, get, includes, some } from "lodash-es";
+import createCachedSelector from "re-reselect";
 import { createSelector } from "reselect";
 import { getAccountAdministrator, getAccountId } from "../account/selectors";
 import { getTermSelectorFactory } from "../utils/selectors";
@@ -52,9 +53,12 @@ export const getIsReadyToReplace = createSelector(
     (files, jobId) => every(files, "replacement.id") && !jobId
 );
 
-export const getStateTerm = state => state.samples.term;
+export const getTerm = getTermSelectorFactory(state => state.samples.term);
 
-export const getTerm = getTermSelectorFactory(getStateTerm);
+export const getIsSelected = createCachedSelector(
+    [getSelectedSampleIds, (state, sampleId) => sampleId],
+    (selectedSampleIds, sampleId) => includes(selectedSampleIds, sampleId)
+)((state, sampleId) => sampleId);
 
 export const getSelectedSamples = createSelector([getSelectedSampleIds, getSampleDocuments], (selected, documents) =>
     filter(documents, document => includes(selected, document.id))
