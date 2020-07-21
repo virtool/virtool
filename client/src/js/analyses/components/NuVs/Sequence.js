@@ -1,13 +1,10 @@
-import React, { useEffect, useRef } from "react";
-import { connect } from "react-redux";
-import styled from "styled-components";
-
 import { axisTop } from "d3-axis";
 import { scaleLinear } from "d3-scale";
 import { select } from "d3-selection";
-import { getMaxSequenceLength } from "../../selectors";
+import React, { useEffect, useRef } from "react";
+import styled from "styled-components";
 
-const draw = (element, maxLength, sequenceLength) => {
+function draw(element, maxLength, sequenceLength) {
     element.innerHTML = "";
 
     const width = element.offsetWidth;
@@ -26,14 +23,14 @@ const draw = (element, maxLength, sequenceLength) => {
     group.append("rect").attr("x", 0).attr("y", 18).attr("width", x(sequenceLength)).attr("height", 8);
 
     group.append("g").attr("class", "x axis").attr("transform", "translate(0,16)").call(axisTop(x));
-};
+}
 
 const StyledNuVsSequence = styled.div`
     height: 32px;
     margin: 10px 0;
 `;
 
-const NuVsSequence = ({ maxSequenceLength, sequence, width }) => {
+export const NuVsSequence = ({ maxSequenceLength, sequence, width }) => {
     const chartEl = useRef(null);
 
     useEffect(() => draw(chartEl.current, maxSequenceLength, sequence.length), [sequence, width]);
@@ -44,9 +41,3 @@ const NuVsSequence = ({ maxSequenceLength, sequence, width }) => {
         </div>
     );
 };
-
-const mapStateToProps = state => ({
-    maxSequenceLength: getMaxSequenceLength(state)
-});
-
-export default connect(mapStateToProps)(NuVsSequence);
