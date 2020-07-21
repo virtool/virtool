@@ -53,9 +53,7 @@ export const getIsReadyToReplace = createSelector(
     (files, jobId) => every(files, "replacement.id") && !jobId
 );
 
-export const getStateTerm = state => state.samples.term;
-
-export const getTerm = getTermSelectorFactory(getStateTerm);
+export const getTerm = getTermSelectorFactory(state => state.samples.term);
 
 export const getIsSelected = createCachedSelector(
     [getSelectedSampleIds, (state, sampleId) => sampleId],
