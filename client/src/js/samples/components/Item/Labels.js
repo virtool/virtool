@@ -12,7 +12,7 @@ const StyledSampleItemLabel = styled.div`
     align-items: center;
     background-color: ${props => props.theme.color[props.ready ? "blueDark" : "white"]};
     border: 1px solid ${props => props.theme.color[props.ready ? "blueDark" : "greyLight"]};
-    border-radius: 2px;
+    border-radius: ${props => props.theme.borderRadius.sm};
     color: ${props => props.theme.color[props.ready ? "white" : "greyDarkest"]};
     display: flex;
     font-size: ${getFontSize("sm")};

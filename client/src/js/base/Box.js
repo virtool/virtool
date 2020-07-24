@@ -121,7 +121,7 @@ export const BoxTitle = styled.h1`
 `;
 
 export const SpacedBox = styled(Box)`
-    box-shadow: 1px 1px 2px 0 #d5d5d5;
+    box-shadow: ${props => props.theme.boxShadow.md};
     margin-bottom: 10px;
 `;
 

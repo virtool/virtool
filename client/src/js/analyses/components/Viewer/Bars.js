@@ -22,7 +22,7 @@ const StyledBarsLegendItem = styled.div`
 
 const Bar = styled.div`
     border: ${getBorder};
-    border-radius: ${props => props.theme.borderRadius.lg};
+    border-radius: ${props => props.theme.borderRadius.md};
     display: flex;
     height: 32px;
     margin-bottom: 15px;

@@ -13,8 +13,8 @@ const StyledAlert = styled.div`
     align-items: ${props => (props.level ? "center" : "normal")};
     background-color: ${getAlertBackgroundColor};
     border: 1px solid ${getColor};
-    border-radius: ${props => props.theme.borderRadius.lg};
-    border-left-width: 4px;
+    border-radius: ${props => props.theme.borderRadius.sm};
+    border-left-width: 5px;
     color: ${getTextColor};
     display: ${props => (props.block ? "block" : "flex")};
     margin-bottom: 16px;

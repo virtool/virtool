@@ -9,7 +9,7 @@ import PathoscopeToolbar from "./Toolbar";
 const StyledPathoscopeViewerScroller = styled.div`
     align-items: center;
     border: ${getBorder};
-    border-radius: 15px;
+    border-radius: ${props => props.theme.borderRadius.lg};
     bottom: 30px;
     color: ${props => props.theme.color.greyDark};
     cursor: pointer;

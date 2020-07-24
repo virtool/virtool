@@ -22,7 +22,7 @@ const ReadTitle = styled.div`
 const StyledReadOrientation = styled.div`
     background-color: ${props => props.theme.color.blueDark};
     border: 2px solid ${props => props.theme.color.white};
-    border-radius: ${props => props.theme.borderRadius.lg};
+    border-radius: ${props => props.theme.borderRadius.md};
     color: ${props => props.theme.color.white};
     font-size: ${getFontSize("sm")};
     font-weight: ${getFontWeight("bold")};

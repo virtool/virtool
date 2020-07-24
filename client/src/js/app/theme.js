@@ -5,7 +5,8 @@ export const colors = ["blue", "green", "grey", "orange", "purple", "red"];
 export const theme = {
     borderRadius: {
         sm: "3px",
-        lg: "6px"
+        md: "6px",
+        lg: "10px"
     },
     boxShadow: {
         xs: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
@@ -76,6 +77,8 @@ export const theme = {
         column: "15px"
     }
 };
+
+export const getActiveShadow = ({ active, theme }) => (active ? `inset 3px 0 0 ${theme.color.primary}` : "none");
 
 export const getBorder = ({ theme }) => `1px solid ${theme.color.greyLight}`;
 

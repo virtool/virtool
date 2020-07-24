@@ -5,7 +5,8 @@ exports[`<App /> renders correctly 1`] = `
   theme={
     Object {
       "borderRadius": Object {
-        "lg": "6px",
+        "lg": "10px",
+        "md": "6px",
         "sm": "3px",
       },
       "boxShadow": Object {

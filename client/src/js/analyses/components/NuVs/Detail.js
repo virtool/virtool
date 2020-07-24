@@ -13,18 +13,18 @@ import { NuVsValues } from "./Values";
 
 const StyledNuVsFamilies = styled.div`
     border: ${getBorder};
-    border-radius: 3px;
+    border-radius: ${props => props.theme.borderRadius.sm};
     display: flex;
-    margin: 5px 0;
+    margin: 10px 0 5px;
     overflow: hidden;
 
     div {
-        padding: 4px 8px;
+        padding: 5px 10px;
     }
 
     div:first-child {
         background-color: ${props => props.theme.color.greyLightest};
-        border-right: 1px solid ${getBorder};
+        border-right: ${getBorder};
     }
 `;
 

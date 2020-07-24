@@ -29,7 +29,6 @@ export const ViewHeaderTitle = styled.h1`
     margin: 0;
 
     ${Badge} {
-        border-radius: 10px;
         font-size: ${props => props.theme.fontSize.md};
         margin-left: 7px;
         padding: 5px 7px;

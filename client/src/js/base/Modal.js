@@ -60,7 +60,7 @@ export const ModalContent = styled(({ close, size, ...rest }) => <ReachDialogCon
     animation: ${props => (props.close ? modalContentClose : modalContentOpen)} 0.3s;
     animation-fill-mode: forwards;
     background: white;
-    border-radius: ${props => props.theme.borderRadius.lg};
+    border-radius: ${props => props.theme.borderRadius.md};
     box-shadow: ${props => props.theme.boxShadow.lg};
     margin: -70px auto;
     overflow: hidden;
