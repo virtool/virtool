@@ -99,34 +99,40 @@ export class HMMDetail extends React.Component {
                     <ViewHeaderTitle>{title}</ViewHeaderTitle>
                 </ViewHeader>
 
-                <Table>
-                    <tbody>
-                        <tr>
-                            <th>Cluster</th>
-                            <td>{this.props.detail.cluster}</td>
-                        </tr>
+                <BoxGroup>
+                    <BoxGroupHeader>
+                        <h2>General</h2>
+                    </BoxGroupHeader>
 
-                        <tr>
-                            <th>Best Definitions</th>
-                            <td>{names}</td>
-                        </tr>
+                    <Table>
+                        <tbody>
+                            <tr>
+                                <th>Cluster</th>
+                                <td>{this.props.detail.cluster}</td>
+                            </tr>
 
-                        <tr>
-                            <th>Length</th>
-                            <td>{this.props.detail.length}</td>
-                        </tr>
+                            <tr>
+                                <th>Best Definitions</th>
+                                <td>{names}</td>
+                            </tr>
 
-                        <tr>
-                            <th>Mean Entropy</th>
-                            <td>{this.props.detail.mean_entropy}</td>
-                        </tr>
+                            <tr>
+                                <th>Length</th>
+                                <td>{this.props.detail.length}</td>
+                            </tr>
 
-                        <tr>
-                            <th>Total Entropy</th>
-                            <td>{this.props.detail.total_entropy}</td>
-                        </tr>
-                    </tbody>
-                </Table>
+                            <tr>
+                                <th>Mean Entropy</th>
+                                <td>{this.props.detail.mean_entropy}</td>
+                            </tr>
+
+                            <tr>
+                                <th>Total Entropy</th>
+                                <td>{this.props.detail.total_entropy}</td>
+                            </tr>
+                        </tbody>
+                    </Table>
+                </BoxGroup>
 
                 <BoxGroup>
                     <BoxGroupHeader>

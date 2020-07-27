@@ -8,7 +8,6 @@ import {
     Icon,
     LoadingPlaceholder,
     NotFound,
-    Table,
     ViewHeader,
     ViewHeaderAttribution,
     ViewHeaderIcons,
@@ -18,7 +17,7 @@ import { getTaskDisplayName } from "../../utils/utils";
 import { getJob, removeJob } from "../actions";
 import JobError from "./Error";
 import JobSteps from "./Steps";
-import TaskArgs from "./TaskArgs";
+import { TaskArgs } from "./TaskArgs";
 
 const JobDetailBadge = styled(Badge)`
     text-transform: capitalize;
@@ -69,21 +68,6 @@ class JobDetail extends React.Component {
                     </ViewHeaderTitle>
                     <ViewHeaderAttribution time={detail.status[0].timestamp} user={detail.user.id} />
                 </ViewHeader>
-
-                <Table>
-                    <tbody>
-                        <tr>
-                            <th>Cores / Memory</th>
-                            <td>
-                                {detail.proc} CPUs / {detail.mem} GB
-                            </td>
-                        </tr>
-                    </tbody>
-                </Table>
-
-                <h4>
-                    <strong>Task Arguments</strong>
-                </h4>
 
                 <TaskArgs taskType={detail.task} taskArgs={detail.args} />
 
