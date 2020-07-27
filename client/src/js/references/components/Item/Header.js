@@ -46,7 +46,12 @@ export const ReferenceItemHeader = ({ createdAt, dataType, id, name, organism, o
     <StyledReferenceItemHeader>
         <h2>
             <ReferenceItemHeaderLink to={`/refs/${id}`}>{name}</ReferenceItemHeaderLink>
-            <LinkIcon to={{ state: { newReference: true, cloneReference: true, id } }} name="clone" tip="Clone" />
+            <LinkIcon
+                to={{ state: { newReference: true, cloneReference: true, id } }}
+                name="clone"
+                tip="Clone"
+                color="blue"
+            />
         </h2>
         <p>
             <span>

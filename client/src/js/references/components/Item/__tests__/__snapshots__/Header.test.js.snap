@@ -9,6 +9,7 @@ exports[`<ReferenceItemHeader /> should render 1`] = `
       Foo
     </Header__ReferenceItemHeaderLink>
     <LinkIcon
+      color="blue"
       name="clone"
       tip="Clone"
       to={

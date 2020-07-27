@@ -1,11 +1,12 @@
-import React, { useCallback } from "react";
+import { get } from "lodash-es";
 import PropTypes from "prop-types";
-import { capitalize, get } from "lodash-es";
+import React, { useCallback } from "react";
 import { Link } from "react-router-dom";
 import styled, { css } from "styled-components";
 import { Tooltip } from "./Tooltip";
 
-const getIconColor = ({ color, theme, shade = "" }) => get(theme, ["color", `${color}${capitalize(shade)}`], "inherit");
+const getIconColor = ({ color, theme }) => get(theme, ["color", color], "inherit");
+const getIconHoverColor = ({ color, theme }) => get(theme, ["color", `${color}Dark`], "inherit");
 
 const fixedWidth = css`
     width: 8px;
@@ -17,10 +18,9 @@ const StyledIcon = styled.i`
     color: ${getIconColor};
     ${props => (props.hoverable || props.onClick ? "cursor: pointer;" : "")};
     ${props => (props.fixedWidth ? fixedWidth : "")};
-    opacity: ${props => (props.hoverable || props.onClick ? 0.7 : 1)};
 
     :hover {
-        opacity: 1;
+        color: ${getIconHoverColor};
     }
 `;
 

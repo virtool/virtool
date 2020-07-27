@@ -43,7 +43,7 @@ const EmptyBarItem = styled(BarItem)`
 
 const BarsLegendItem = ({ color, count, title }) => (
     <StyledBarsLegendItem>
-        <Icon name="circle" color={color} shade="" />
+        <Icon name="circle" color={color} />
         <span>{title}</span>
         <span>{count}</span>
     </StyledBarsLegendItem>
