@@ -69,7 +69,7 @@ export const JobStepIcon = ({ complete, state }) => {
     }
 
     if (state === "running") {
-        return <JobStepLoader size="12px" color="#07689d" />;
+        return <JobStepLoader size="12px" color="primary" />;
     }
 
     if (state === "complete") {

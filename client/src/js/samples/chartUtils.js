@@ -1,6 +1,5 @@
 import { scaleOrdinal } from "d3-scale";
 import { select } from "d3-selection";
-import { symbol, symbolSquare } from "d3-shape";
 import { legendColor } from "d3-svg-legend";
 import { map } from "lodash-es";
 
@@ -16,10 +15,7 @@ const margin = {
 export const appendLegend = (svg, width, series) => {
     const legendScale = scaleOrdinal().domain(map(series, "label")).range(map(series, "color"));
 
-    const legend = legendColor()
-        .shape("path", symbol().type(symbolSquare).size(150)())
-        .shapePadding(10)
-        .scale(legendScale);
+    const legend = legendColor().shape("circle").shapeRadius(8).shapePadding(10).scale(legendScale);
 
     // Append legend, calling rendering function.
     svg.append("g")

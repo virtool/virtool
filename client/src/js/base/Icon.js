@@ -5,8 +5,7 @@ import { Link } from "react-router-dom";
 import styled, { css } from "styled-components";
 import { Tooltip } from "./Tooltip";
 
-const getIconColor = ({ color, theme, shade = "dark" }) =>
-    get(theme, ["color", `${color}${capitalize(shade)}`], "inherit");
+const getIconColor = ({ color, theme, shade = "" }) => get(theme, ["color", `${color}${capitalize(shade)}`], "inherit");
 
 const fixedWidth = css`
     width: 8px;

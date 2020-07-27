@@ -10,7 +10,7 @@ import { removeAnalysis } from "../actions";
 import { AnalysisItemRightIcon } from "./RightIcon";
 
 const StyledAnalysisItem = styled(SpacedBox)`
-    color: #555555;
+    color: ${props => props.theme.color.greyDarkest};
 
     &:hover {
         ${props => (props.ready ? "background-color: lightgrey;" : "")};

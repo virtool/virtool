@@ -2,6 +2,7 @@ import { get, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
+import { getBorder } from "../../app/theme";
 
 import {
     device,
@@ -40,7 +41,7 @@ const ClusterTable = styled(Table)`
         flex: 1 1 auto;
         display: block;
         overflow-y: auto;
-        border-top: 1px solid #dddddd;
+        border-top: ${getBorder};
 
         tr {
             width: 100%;

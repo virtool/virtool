@@ -2,7 +2,7 @@
 
 exports[`<RightIcon /> should render loader when [ready=false] 1`] = `
 <Loader
-  color="#3c8786"
+  color="primary"
   size="14px"
 />
 `;

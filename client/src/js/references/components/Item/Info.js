@@ -3,10 +3,10 @@ import { getFontSize, getFontWeight } from "../../../app/theme";
 import { Box } from "../../../base";
 
 export const ReferenceItemInfo = styled(Box)`
-    background-color: #f7fafc;
-    border-color: #718096;
-    border-radius: 3px;
-    font-weight: bold;
+    background-color: ${props => props.theme.color.greyLightest};
+    border-color: ${props => props.theme.color.greyDark};
+    border-radius: ${props => props.theme.borderRadius.sm};
+
     height: 100%;
     margin: 0;
     padding: 8px 11px;

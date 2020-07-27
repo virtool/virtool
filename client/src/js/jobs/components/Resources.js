@@ -6,7 +6,7 @@ import { connect } from "react-redux";
 import { Flex, FlexItem, LoadingPlaceholder, NotFound, SectionHeader, ViewHeader, ViewHeaderTitle } from "../../base";
 import { getResources } from "../actions";
 
-const color = "#d44b40";
+const color = "#9F7AEA";
 
 const JobsResourcesHeader = styled(SectionHeader)`
     margin-top: 20px;

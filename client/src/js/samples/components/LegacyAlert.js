@@ -7,7 +7,7 @@ import { Alert, Box, BoxTitle, ExternalLink, ProgressBar } from "../../base";
 import { getHasRawFilesOnly, getSampleUpdateJobId } from "../selectors";
 
 const SampleFilesJobStatus = styled.span`
-    color: #777777;
+    color: ${props => props.theme.color.greyDark};
     text-transform: uppercase;
 `;
 

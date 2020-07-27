@@ -13,7 +13,7 @@ const NavDropdownTrigger = styled.a`
     text-decoration: none;
 
     :hover {
-        color: #245251;
+        color: ${props => props.theme.color.primaryDarkest};
     }
 
     *:not(:last-child) {

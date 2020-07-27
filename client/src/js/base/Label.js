@@ -6,7 +6,7 @@ export const getLabelColor = props => getColor(props) || props.theme.color.greyD
 export const Label = styled.span`
     background-color: ${getLabelColor};
     border-radius: 2px;
-    color: #ffffff;
+    color: ${props => props.theme.color.white};
     display: inline;
     font-size: ${props => props.theme.fontSize.sm};
     font-weight: bold;

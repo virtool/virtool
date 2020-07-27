@@ -109,7 +109,7 @@ class SampleItem extends React.Component {
             endIcon = (
                 <SampleIconContainer>
                     <div>
-                        <Loader size="14px" color="#3c8786" />
+                        <Loader size="14px" color="primary" />
                         <strong>Creating</strong>
                     </div>
                 </SampleIconContainer>

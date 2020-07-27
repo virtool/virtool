@@ -17,9 +17,9 @@ import { WallContainer } from "./Container";
 
 const FirstUserModal = styled(BoxGroup)`
     align-items: stretch;
-    background-color: #fff;
-    border-radius: 4px;
-    box-shadow: rgba(0, 0, 0, 0.498039) 0 5px 15px 0;
+    background-color: ${props => props.theme.color.white};
+    border-radius: ${props => props.theme.borderRadius.sm};
+    box-shadow: ${props => props.theme.boxShadow.lg};
     display: flex;
     flex-direction: column;
     margin-bottom: 260px;

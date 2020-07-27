@@ -15,7 +15,7 @@ export const Box = styled.div`
     position: relative;
 
     &:hover {
-        ${props => (props.onClick ? "background-color: #f7fafc;" : "")}
+        ${props => (props.onClick ? `background-color: ${props.theme.color.greyHover};` : "")}
     }
 `;
 
@@ -48,18 +48,19 @@ export const BoxGroupSection = styled.div`
     background-color: transparent;
     border-radius: 0;
     color: inherit;
-    cursor: auto;
+    cursor: ${props => (props.onClick && !props.active ? "pointer" : "auto")};
     padding: 10px 15px;
     position: relative;
 
     &[disabled] {
-        background-color: #edf2f7;
+        background-color: ${props => props.theme.color.greyHover};
         cursor: not-allowed;
-        color: #718096;
+        color: ${props => props.theme.color.grey};
+        user-select: none;
     }
 
     &:hover {
-        ${props => (props.onClick && !props.active ? "background-color: #f7fafc;" : "")}
+        ${props => (props.onClick && !props.active ? `background-color: ${props.theme.color.greyHover};` : "")}
     }
 
     &:not(:last-child) {
@@ -129,15 +130,14 @@ export const LinkBox = styled(Link)`
     border-radius: ${props => props.theme.borderRadius.sm};
     box-shadow: ${props => props.theme.boxShadow.sm};
     box-sizing: border-box;
-    color: #333333 !important;
+    color: ${props => props.theme.color.black};
     cursor: pointer;
     display: block;
     margin-bottom: 12px;
     padding: 10px 15px;
     position: relative;
-    text-decoration: none !important;
 
     &:hover {
-        background-color: #f7fafc;
+        background-color: ${props => props.theme.color.greyHover};
     }
 `;

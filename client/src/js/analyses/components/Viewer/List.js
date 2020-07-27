@@ -3,19 +3,19 @@ import React from "react";
 import { connect } from "react-redux";
 import { FixedSizeList } from "react-window";
 import styled from "styled-components";
-import { getFontSize } from "../../../app/theme";
+import { getBorder, getFontSize } from "../../../app/theme";
 import { Key } from "../../../base";
 import { setActiveHitId } from "../../actions";
 import { getActiveHit, getMatches, getResults } from "../../selectors";
 import { useKeyNavigation } from "./hooks";
 
 const AnalysisViewerListHeader = styled.div`
-    background-color: #f5f5f5;
+    background-color: ${props => props.theme.color.greyLightest};
     border: 1px solid ${props => props.theme.color.greyLight};
     border-bottom: none;
     border-top-left-radius: ${props => props.theme.borderRadius.sm};
     border-top-right-radius: ${props => props.theme.borderRadius.sm};
-    box-shadow: 0 5px 5px -3px #d5d5d5;
+    box-shadow: 0 5px 5px -3px ${props => props.theme.color.greyLight};
     padding: 7px 15px;
     z-index: 1000;
 `;
@@ -27,7 +27,7 @@ const AnalysisViewerListFooter = styled.div`
 `;
 
 const AnalysisViewerListWindow = styled(FixedSizeList)`
-    border: 1px solid ${props => props.theme.color.greyLight};
+    border: ${getBorder};
     border-bottom-left-radius: ${props => props.theme.borderRadius.sm};
     border-bottom-right-radius: ${props => props.theme.borderRadius.sm};
 `;

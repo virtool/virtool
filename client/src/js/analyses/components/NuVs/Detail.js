@@ -2,6 +2,7 @@ import { filter, map, sortBy } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
+import { getBorder } from "../../../app/theme";
 import { Badge, Box } from "../../../base";
 import { useElementSize } from "../../../utils/hooks";
 import { getActiveHit, getMaxSequenceLength } from "../../selectors";
@@ -11,18 +12,19 @@ import { NuVsSequence } from "./Sequence";
 import { NuVsValues } from "./Values";
 
 const StyledNuVsFamilies = styled.div`
-    border: 1px solid #ddd;
+    border: ${getBorder};
     border-radius: 3px;
     display: flex;
-    margin: 3px 0;
+    margin: 5px 0;
+    overflow: hidden;
 
     div {
-        padding: 3px 8px;
+        padding: 4px 8px;
     }
 
     div:first-child {
-        background-color: #ddd;
-        border-right: 1px solid #ddd;
+        background-color: ${props => props.theme.color.greyLightest};
+        border-right: 1px solid ${getBorder};
     }
 `;
 
@@ -34,11 +36,11 @@ const NuVsFamilies = ({ families }) => (
 );
 
 const NuVsLayout = styled.div`
-    border: 1px solid #ddd;
+    border: ${getBorder};
     margin-bottom: 15px;
 
     & > div:nth-child(even) {
-        background-color: #f5f5f5;
+        background-color: ${props => props.theme.color.greyLightest};
     }
 `;
 

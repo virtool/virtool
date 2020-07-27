@@ -57,7 +57,7 @@ const StyledBLASTInProgress = styled(Box)`
 export const BLASTInProgress = ({ interval, lastCheckedAt, rid }) => {
     return (
         <StyledBLASTInProgress>
-            <Loader size="16px" color="#000" />
+            <Loader size="16px" color="primary" />
             <div>
                 <div>
                     <span>BLAST in progress</span>

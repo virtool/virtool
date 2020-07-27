@@ -10,7 +10,7 @@ import { WallLogo } from "./Logo";
 
 const ResetModal = styled(BoxGroup)`
     align-items: stretch;
-    background-color: #fff;
+    background-color: ${props => props.theme.color.white};
     border: none;
     border-radius: 4px;
     box-shadow: rgba(0, 0, 0, 0.498039) 0 5px 15px 0;

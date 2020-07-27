@@ -23,7 +23,7 @@ const LoginFooter = styled.div`
 
 const LoginModal = styled(Box)`
     align-items: stretch;
-    background-color: #fff;
+    background-color: ${props => props.theme.color.white};
     border: none;
     border-radius: ${props => props.theme.borderRadius.sm};
     box-shadow: ${props => props.theme.boxShadow.lg};

@@ -1,6 +1,5 @@
 import { Flex, FlexItem } from "./Flex";
 import { ScrollList } from "./ScrollList";
-import { bsStyles } from "./utils";
 
 export * from "./Alert";
 export * from "./Attribution";
@@ -45,4 +44,4 @@ export * from "./ViewHeader";
 export * from "./CloseButton";
 export * from "./Checkbox";
 
-export { bsStyles, Flex, FlexItem, ScrollList };
+export { Flex, FlexItem, ScrollList };

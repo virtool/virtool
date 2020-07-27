@@ -62,7 +62,7 @@ export const IndexItemIcon = ({ activeId, id, ready }) => {
 
     return (
         <StyledIndexItemIcon>
-            <Loader size="14px" color="#3c8786" />
+            <Loader size="14px" color="primary" />
             <strong> Building</strong>
         </StyledIndexItemIcon>
     );

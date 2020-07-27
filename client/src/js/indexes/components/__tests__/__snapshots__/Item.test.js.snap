@@ -83,7 +83,7 @@ exports[`<IndexItemIcon /> should render nothing when ready, but not active 1`] 
 exports[`<IndexItemIcon /> should render spinner when not ready 1`] = `
 <Item__StyledIndexItemIcon>
   <Loader
-    color="#3c8786"
+    color="primary"
     size="14px"
   />
   <strong>

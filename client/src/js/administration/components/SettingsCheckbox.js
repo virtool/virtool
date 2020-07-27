@@ -25,7 +25,7 @@ const StyledSettingsCheckbox = styled(Box)`
     }
 
     small {
-        color: #4a5568;
+        color: ${props => props.theme.color.greyDarkest};
         font-size: ${getFontSize("md")};
     }
 `;

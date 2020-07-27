@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import { getBorder } from "../app/theme";
 
 export const useDropdown = inputs => {
     const [visible, setVisible] = useState(false);
@@ -19,13 +20,14 @@ export const useDropdown = inputs => {
 };
 
 const StyledDropdownItem = styled.a`
-    color: black;
+    color: ${props => props.theme.color.black};
     cursor: pointer;
     min-width: 160px;
     padding: 10px 15px;
 
     &:hover {
-        background-color: #f5f5f5;
+        background-color: ${props => props.theme.color.greyHover};
+        color: ${props => props.theme.color.greyDarkest};
     }
 `;
 
@@ -46,9 +48,10 @@ export const DropdownItem = ({ children, href, rel, target, to, onClick }) => {
 };
 
 export const DropdownMenu = styled.div`
-    background-color: white;
-    border: 1px solid ${props => props.theme.color.greyLight};
-    box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+    background-color: ${props => props.theme.color.white};
+    border: ${getBorder};
+    border-radius: ${props => props.theme.borderRadius.sm};
+    box-shadow: ${props => props.theme.boxShadow.lg};
     display: ${props => (props.visible ? "flex" : "none")};
     flex-direction: column;
     position: absolute;

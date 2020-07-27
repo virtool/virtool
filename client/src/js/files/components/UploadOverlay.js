@@ -17,8 +17,8 @@ const StyledUploadOverlay = styled.div`
 `;
 
 const UploadOverlayContent = styled(BoxGroup)`
-    background-color: #ffffff;
-    box-shadow: 0 0 6px 0 #d5d5d5;
+    background-color: ${props => props.theme.color.white};
+    box-shadow: ${props => props.theme.boxShadow.lg};
     margin: 0;
 
     ${BoxGroupHeader} {

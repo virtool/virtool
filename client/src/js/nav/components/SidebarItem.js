@@ -2,34 +2,32 @@ import PropTypes from "prop-types";
 import React from "react";
 import styled from "styled-components";
 import { NavLink } from "react-router-dom";
+import { getFontSize, getFontWeight } from "../../app/theme";
 import { Icon } from "../../base";
 
 const StyledSidebarItem = styled(NavLink)`
-    color: #333333;
+    color: ${props => props.theme.color.greyDark};
     cursor: pointer;
     padding-bottom: 1.4rem;
     text-align: center;
     width: 100%;
-    opacity: 0.7;
-
-    &:focus {
-        text-decoration: none;
-    }
 
     &:hover {
-        opacity: 1;
-        text-decoration: none;
-        color: #07689d;
+        color: ${props => props.theme.color.greyDarkest};
     }
 
     &.active {
-        opacity: 1;
-        color: #07689d;
+        color: ${props => props.theme.color.primary};
+        font-weight: ${getFontWeight("thick")};
+    }
+
+    i {
+        font-size: 16px;
     }
 
     p {
         display: block;
-        font-size: ${props => props.theme.fontSize.sm};
+        font-size: ${getFontSize("md")};
         margin: 0.4rem 0;
     }
 `;

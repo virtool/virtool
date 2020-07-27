@@ -9,7 +9,7 @@ export const SubtractionItemIcon = ({ ready }) => {
         return <Icon name="check" color="green" />;
     }
 
-    return <Loader size="14px" color="#3c8786" />;
+    return <Loader size="14px" color="primary" />;
 };
 
 const StyledSubtractionItem = styled(LinkBox)`
