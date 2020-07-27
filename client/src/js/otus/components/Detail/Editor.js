@@ -7,13 +7,7 @@ import { Badge, Box, BoxGroup, NoneFoundBox, SubviewHeader, SubviewHeaderTitle }
 import { checkRefRight } from "../../../utils/utils";
 import { selectIsolate, showAddIsolate } from "../../actions";
 import IsolateDetail from "./Isolates/Detail";
-import IsolateButton from "./Isolates/Item";
-
-const StyledIsolateEditor = styled.div`
-    h4 > a {
-        font-size: ${props => props.theme.fontSize.md};
-    }
-`;
+import IsolateItem from "./Isolates/Item";
 
 const IsolateEditorContainer = styled.div`
     display: flex;
@@ -59,7 +53,7 @@ const IsolateEditor = props => {
     let body;
 
     const isolateComponents = map(props.isolates, (isolate, index) => (
-        <IsolateButton
+        <IsolateItem
             key={index}
             {...isolate}
             active={isolate.id === props.activeIsolateId}
@@ -87,7 +81,7 @@ const IsolateEditor = props => {
     }
 
     return (
-        <StyledIsolateEditor>
+        <React.Fragment>
             <SubviewHeader>
                 <IsolateEditorTitle>
                     Isolates <Badge>{isolateComponents.length}</Badge>
@@ -95,7 +89,7 @@ const IsolateEditor = props => {
                 </IsolateEditorTitle>
             </SubviewHeader>
             {body}
-        </StyledIsolateEditor>
+        </React.Fragment>
     );
 };
 
