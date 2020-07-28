@@ -57,7 +57,6 @@ const StyledButton = styled.button`
     padding: 0 10px;
     position: relative;
     user-select: none;
-    text-decoration: none;
     touch-action: manipulation;
     transition: box-shadow 200ms ease-in-out;
     white-space: nowrap;

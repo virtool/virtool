@@ -99,10 +99,6 @@ export const BoxGroupHeader = styled(BoxGroupSection)`
         font-weight: ${getFontWeight("thick")};
         margin: 0;
 
-        a {
-            text-decoration: none;
-        }
-
         ${Badge} {
             margin-left: 5px;
         }

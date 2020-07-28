@@ -10,7 +10,6 @@ const NavDropdownTrigger = styled.a`
     font-size: ${getFontSize("lg")};
     font-weight: ${getFontWeight("thick")};
     height: 45px;
-    text-decoration: none;
 
     :hover {
         color: ${props => props.theme.color.primaryDarkest};
