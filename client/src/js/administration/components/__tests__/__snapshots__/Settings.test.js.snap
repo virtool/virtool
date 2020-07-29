@@ -12,21 +12,21 @@ exports[`<Settings /> should render when [props.loading=false] 1`] = `
   <Tabs
     bsStyle="tabs"
   >
-    <TabLink
+    <Tabs__TabLink
       to="/administration/settings"
     >
       Settings
-    </TabLink>
-    <TabLink
+    </Tabs__TabLink>
+    <Tabs__TabLink
       to="/administration/users"
     >
       Users
-    </TabLink>
-    <TabLink
+    </Tabs__TabLink>
+    <Tabs__TabLink
       to="/administration/updates"
     >
       Updates
-    </TabLink>
+    </Tabs__TabLink>
   </Tabs>
   <Switch>
     <Redirect
@@ -91,21 +91,21 @@ exports[`<Settings /> should render when [props.loading=true] 1`] = `
   <Tabs
     bsStyle="tabs"
   >
-    <TabLink
+    <Tabs__TabLink
       to="/administration/settings"
     >
       Settings
-    </TabLink>
-    <TabLink
+    </Tabs__TabLink>
+    <Tabs__TabLink
       to="/administration/users"
     >
       Users
-    </TabLink>
-    <TabLink
+    </Tabs__TabLink>
+    <Tabs__TabLink
       to="/administration/updates"
     >
       Updates
-    </TabLink>
+    </Tabs__TabLink>
   </Tabs>
   <LoadingPlaceholder />
 </Container__WideContainer>

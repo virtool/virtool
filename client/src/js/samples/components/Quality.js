@@ -4,7 +4,7 @@ import styled from "styled-components";
 import { Quality } from "../../quality/components/Quality";
 import LegacyAlert from "./LegacyAlert";
 
-const QualityLegacyAlert = styled.div`
+const QualityLegacyAlert = styled(LegacyAlert)`
     margin-bottom: 20px;
 `;
 
@@ -15,9 +15,7 @@ const StyledSampleQuality = styled.div`
 
 export const SampleQuality = props => (
     <StyledSampleQuality>
-        <QualityLegacyAlert>
-            <LegacyAlert />
-        </QualityLegacyAlert>
+        <QualityLegacyAlert />
         <Quality {...props} />
     </StyledSampleQuality>
 );

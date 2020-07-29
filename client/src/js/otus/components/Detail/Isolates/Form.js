@@ -10,7 +10,7 @@ import { SourceType } from "../SourceType";
 const IsolateFormFields = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-column-gap: 15px;
+    grid-column-gap: ${props => props.theme.gap.column};
 `;
 
 export class IsolateForm extends React.Component {

@@ -1,22 +1,11 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Users
- */
-
 import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import { getFontSize, getFontWeight } from "../../app/theme";
 import { Alert, device, Icon, Identicon, LoadingPlaceholder, RemoveBanner } from "../../base";
 import { listGroups } from "../../groups/actions";
-
 import { getUser, removeUser } from "../actions";
 import { getCanModifyUser } from "../selectors";
 import UserGroups from "./Groups";
@@ -35,7 +24,7 @@ const UserDetailGroups = styled.div`
     @media (min-width: ${device.tablet}) {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        grid-gap: 17px;
+        grid-column-gap: ${props => props.theme.gap.column};
     }
 `;
 
@@ -45,14 +34,15 @@ const UserDetailHeader = styled.div`
 `;
 
 const UserDetailTitle = styled.div`
+    align-items: center;
     display: flex;
     flex: 1 0 auto;
-    font-size: 18px;
-    font-weight: bold;
-    padding: 10px 0 0 15px;
+    font-size: ${getFontSize("xl")};
+    font-weight: ${getFontWeight("bold")};
+    margin-left: 15px;
 
     a {
-        font-size: 14px;
+        font-size: ${getFontSize("md")};
         margin-left: auto;
     }
 `;
@@ -111,7 +101,7 @@ export class UserDetail extends React.Component {
 
                 {this.props.canModifyUser ? (
                     <RemoveBanner
-                        message="Click the Delete button to permanently remove this user."
+                        message="Permanently remove this user"
                         buttonText="Delete"
                         onClick={this.handleRemove}
                     />

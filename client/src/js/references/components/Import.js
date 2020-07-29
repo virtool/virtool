@@ -103,11 +103,6 @@ class ImportReference extends React.Component {
             message = file.ready ? `${file.name}` : "Uploading...";
         }
 
-        const fileErrorStyle = {
-            border: `1px solid ${this.state.errorFile.length ? "#d44b40" : "transparent"}`,
-            marginBottom: "3px"
-        };
-
         return (
             <form onSubmit={this.handleSubmit}>
                 <ImportReferenceDialogBody>
@@ -119,7 +114,7 @@ class ImportReference extends React.Component {
 
                     <ImportReferenceUploadContainer>
                         <AffixedProgressBar color={progress === 100 ? "green" : "orange"} now={progress} />
-                        <UploadBar onDrop={this.handleDrop} message={message} style={fileErrorStyle} />
+                        <UploadBar message={message} onDrop={this.handleDrop} />
                     </ImportReferenceUploadContainer>
 
                     <InputError>{this.state.errorFile}</InputError>

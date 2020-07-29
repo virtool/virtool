@@ -1,23 +1,25 @@
 import React from "react";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
+import { getFontWeight } from "../app/theme";
 
 export const Breadcrumb = styled.ol`
     padding: 3px 0;
     margin-bottom: 20px;
-    list-styled: none;
+    list-style: none;
     border-radius: 0;
 
     li {
-        list-styled: none;
+        list-style: none;
         display: inline-block;
-        color: #777777;
+        color: ${props => props.theme.color.greyDark};
 
         :not(:first-child) {
             ::before {
+                color: ${props => props.theme.color.grey};
                 content: "/";
+                font-weight: ${getFontWeight("thick")};
                 padding: 0 5px;
-                color: #ccc;
             }
         }
     }

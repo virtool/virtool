@@ -24,19 +24,19 @@ const PathoscopeIsolateHeader = styled.div`
 
 const PathoscopeIsolateCoverage = styled.strong`
     color: ${props => props.theme.color.blue};
-    font-size: 12px;
+    font-size: ${props => props.theme.fontSize.sm};
     padding-left: 5px;
 `;
 
 const PathoscopeIsolateDepth = styled.strong`
     color: ${props => props.theme.color.red};
-    font-size: 12px;
+    font-size: ${props => props.theme.fontSize.sm};
     padding-left: 5px;
 `;
 
 const StyledPathoscopeIsolateWeight = styled.strong`
     color: ${props => props.theme.color.green};
-    font-size: 12px;
+    font-size: ${props => props.theme.fontSize.sm};
 `;
 
 export const PathoscopeIsolateWeight = ({ pi, reads, showPathoscopeReads }) => (

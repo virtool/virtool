@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { getBorder } from "../app/theme";
+import { getBorder, getFontWeight } from "../app/theme";
 
 export const Table = styled.table`
     border-collapse: collapse;
@@ -25,7 +25,7 @@ export const Table = styled.table`
     }
 
     th {
-        font-weight: bold;
+        font-weight: ${getFontWeight("thick")};
         text-align: left;
     }
 

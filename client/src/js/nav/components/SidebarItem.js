@@ -2,42 +2,43 @@ import PropTypes from "prop-types";
 import React from "react";
 import styled from "styled-components";
 import { NavLink } from "react-router-dom";
+import { getFontSize, getFontWeight } from "../../app/theme";
 import { Icon } from "../../base";
-import { excludePaths } from "../utils";
 
 const StyledSidebarItem = styled(NavLink)`
-    color: #333333;
+    color: ${props => props.theme.color.greyDark};
     cursor: pointer;
-    padding-bottom: 1.6rem;
+    padding-bottom: 1.4rem;
     text-align: center;
     width: 100%;
-    opacity: 0.7;
-
-    &:focus {
-        text-decoration: none;
-    }
 
     &:hover {
-        opacity: 1;
-        text-decoration: none;
-        color: #07689d;
+        color: ${props => props.theme.color.greyDarkest};
     }
 
     &.active {
-        opacity: 1;
-        color: #07689d;
+        color: ${props => props.theme.color.primary};
+        font-weight: ${getFontWeight("thick")};
+    }
+
+    i {
+        font-size: 16px;
+    }
+
+    p {
+        display: block;
+        font-size: ${getFontSize("md")};
+        margin: 0.4rem 0;
     }
 `;
 
-const SideBarItemTitle = styled.small`
-    display: block;
-`;
+import { excludePaths } from "../utils";
 
 export default function SidebarItem({ exclude, icon, link, title }) {
     return (
         <StyledSidebarItem to={link} activeClassName="active" isActive={excludePaths(exclude)}>
             <Icon name={icon} />
-            <SideBarItemTitle>{title}</SideBarItemTitle>
+            <p>{title}</p>
         </StyledSidebarItem>
     );
 }

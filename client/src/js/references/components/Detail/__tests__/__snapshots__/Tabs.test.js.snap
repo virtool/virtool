@@ -2,28 +2,28 @@
 
 exports[`<ReferenceDetailTabs /> should render 1`] = `
 <Tabs>
-  <TabLink
+  <Tabs__TabLink
     to="/refs/foo/manage"
   >
     Manage
-  </TabLink>
-  <TabLink
+  </Tabs__TabLink>
+  <Tabs__TabLink
     to="/refs/foo/otus"
   >
     OTUs 
     <Badge>
       203
     </Badge>
-  </TabLink>
-  <TabLink
+  </Tabs__TabLink>
+  <Tabs__TabLink
     to="/refs/foo/indexes"
   >
     Indexes
-  </TabLink>
-  <TabLink
+  </Tabs__TabLink>
+  <Tabs__TabLink
     to="/refs/foo/settings"
   >
     Settings
-  </TabLink>
+  </Tabs__TabLink>
 </Tabs>
 `;

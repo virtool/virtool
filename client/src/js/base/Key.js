@@ -1,10 +1,11 @@
 import styled from "styled-components";
+import { getBorder } from "../app/theme";
 
 export const Key = styled.kbd`
     display: inline-block;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    box-shadow: inset 0 -1px #d1d5da;
+    border: ${getBorder};
+    border-radius: ${props => props.theme.borderRadius.sm};
+    box-shadow: ${props => props.theme.boxShadow.inset};
     height: 20px;
     line-height: 10px;
     padding: 3px 5px;

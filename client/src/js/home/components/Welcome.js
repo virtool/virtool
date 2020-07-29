@@ -2,20 +2,24 @@ import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
+import { getFontSize } from "../../app/theme";
 import { Box, Container, ExternalLink, LoadingPlaceholder } from "../../base";
 import { Support } from "./Support";
 
 const StyledWelcome = styled(Container)`
     ${Box}:first-child {
         h1 {
+            font-size: ${getFontSize("xxl")};
             margin: 10px 0;
         }
         p {
+            font-size: ${getFontSize("lg")};
             margin: 0 0 15px;
         }
 
         a {
             padding-right: 10px;
+            font-size: ${getFontSize("md")};
         }
     }
 `;

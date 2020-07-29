@@ -2,10 +2,10 @@
 
 exports[`<Login /> should render 1`] = `
 <Container__WallContainer>
-  <Logo__WallLogo
+  <Container__WallLogo
     height={42}
   />
-  <Login__LoginModal>
+  <Container__WallDialog>
     <form
       onSubmit={[Function]}
     >
@@ -48,16 +48,16 @@ exports[`<Login /> should render 1`] = `
         </Button>
       </Login__LoginFooter>
     </form>
-  </Login__LoginModal>
+  </Container__WallDialog>
 </Container__WallContainer>
 `;
 
 exports[`<Login /> should render checked remember checkbox 1`] = `
 <Container__WallContainer>
-  <Logo__WallLogo
+  <Container__WallLogo
     height={42}
   />
-  <Login__LoginModal>
+  <Container__WallDialog>
     <form
       onSubmit={[Function]}
     >
@@ -100,16 +100,16 @@ exports[`<Login /> should render checked remember checkbox 1`] = `
         </Button>
       </Login__LoginFooter>
     </form>
-  </Login__LoginModal>
+  </Container__WallDialog>
 </Container__WallContainer>
 `;
 
 exports[`<Login /> should render checked remember checkbox 2`] = `
 <Container__WallContainer>
-  <Logo__WallLogo
+  <Container__WallLogo
     height={42}
   />
-  <Login__LoginModal>
+  <Container__WallDialog>
     <form
       onSubmit={[Function]}
     >
@@ -152,16 +152,16 @@ exports[`<Login /> should render checked remember checkbox 2`] = `
         </Button>
       </Login__LoginFooter>
     </form>
-  </Login__LoginModal>
+  </Container__WallDialog>
 </Container__WallContainer>
 `;
 
 exports[`<Login /> should render filled username and password fields 1`] = `
 <Container__WallContainer>
-  <Logo__WallLogo
+  <Container__WallLogo
     height={42}
   />
-  <Login__LoginModal>
+  <Container__WallDialog>
     <form
       onSubmit={[Function]}
     >
@@ -204,16 +204,16 @@ exports[`<Login /> should render filled username and password fields 1`] = `
         </Button>
       </Login__LoginFooter>
     </form>
-  </Login__LoginModal>
+  </Container__WallDialog>
 </Container__WallContainer>
 `;
 
 exports[`<Login /> should render filled username and password fields 2`] = `
 <Container__WallContainer>
-  <Logo__WallLogo
+  <Container__WallLogo
     height={42}
   />
-  <Login__LoginModal>
+  <Container__WallDialog>
     <form
       onSubmit={[Function]}
     >
@@ -256,16 +256,16 @@ exports[`<Login /> should render filled username and password fields 2`] = `
         </Button>
       </Login__LoginFooter>
     </form>
-  </Login__LoginModal>
+  </Container__WallDialog>
 </Container__WallContainer>
 `;
 
 exports[`<Login /> should render filled username and password fields 3`] = `
 <Container__WallContainer>
-  <Logo__WallLogo
+  <Container__WallLogo
     height={42}
   />
-  <Login__LoginModal>
+  <Container__WallDialog>
     <form
       onSubmit={[Function]}
     >
@@ -308,6 +308,6 @@ exports[`<Login /> should render filled username and password fields 3`] = `
         </Button>
       </Login__LoginFooter>
     </form>
-  </Login__LoginModal>
+  </Container__WallDialog>
 </Container__WallContainer>
 `;

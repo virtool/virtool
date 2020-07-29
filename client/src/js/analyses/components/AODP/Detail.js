@@ -13,13 +13,13 @@ const AODPDetailIdentity = styled.div`
 
     > div:first-child {
         color: ${props => props.theme.color.blue};
-        font-size: 36px;
+        font-size: ${props => props.theme.fontSize.xxl};
     }
 
     > div:last-child {
         display: flex;
         flex-direction: column;
-        font-size: 12px;
+        font-size: ${props => props.theme.fontSize.sm};
         font-weight: bold;
         justify-content: center;
         margin-left: 5px;

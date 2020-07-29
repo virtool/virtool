@@ -2,62 +2,40 @@
 
 exports[`<AccountProfile /> should render when administrator 1`] = `
 <div>
-  <Flex
-    alignContent="stretch"
-    alignItems="stretch"
-    direction="row"
-    justifyContent="flex-start"
-    style={
-      Object {
-        "marginBottom": "15px",
-      }
-    }
-    wrap="nowrap"
-  >
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      shrink={1}
-    >
-      <Identicon
-        hash="randomhashof15c"
-      />
-    </FlexItem>
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      pad={10}
-      shrink={1}
-    >
-      <h5>
-        <strong>
-          foo
-           
+  <Profile__AccountProfileHeader>
+    <Identicon
+      hash="randomhashof15c"
+    />
+    <div>
+      <h3>
+        foo
+        <Label
+          color="purple"
+          key="administrator"
+        >
           <Icon
-            color="blue"
             faStyle="fas"
             fixedWidth={false}
             name="user-shield"
           />
-        </strong>
-      </h5>
-      <div>
-        <Profile__AccountProfileLabel
-          bsStyle="primary"
-          key="administrator"
-        >
-          Administrator
-        </Profile__AccountProfileLabel>
-        <Profile__AccountProfileLabel
+           Administrator
+        </Label>
+      </h3>
+      <Profile__AccountProfileGroups>
+        <Label
           key="test"
         >
+          <Icon
+            faStyle="fas"
+            fixedWidth={false}
+            name="users"
+          />
+           
           test
-        </Profile__AccountProfileLabel>
-      </div>
-    </FlexItem>
-  </Flex>
+        </Label>
+      </Profile__AccountProfileGroups>
+    </div>
+  </Profile__AccountProfileHeader>
   <Connect(Email) />
   <Connect(ChangePassword) />
 </div>
@@ -65,50 +43,29 @@ exports[`<AccountProfile /> should render when administrator 1`] = `
 
 exports[`<AccountProfile /> should render when not administrator 1`] = `
 <div>
-  <Flex
-    alignContent="stretch"
-    alignItems="stretch"
-    direction="row"
-    justifyContent="flex-start"
-    style={
-      Object {
-        "marginBottom": "15px",
-      }
-    }
-    wrap="nowrap"
-  >
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      shrink={1}
-    >
-      <Identicon
-        hash="randomhashof15c"
-      />
-    </FlexItem>
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      pad={10}
-      shrink={1}
-    >
-      <h5>
-        <strong>
-          foo
-           
-        </strong>
-      </h5>
-      <div>
-        <Profile__AccountProfileLabel
+  <Profile__AccountProfileHeader>
+    <Identicon
+      hash="randomhashof15c"
+    />
+    <div>
+      <h3>
+        foo
+      </h3>
+      <Profile__AccountProfileGroups>
+        <Label
           key="test"
         >
+          <Icon
+            faStyle="fas"
+            fixedWidth={false}
+            name="users"
+          />
+           
           test
-        </Profile__AccountProfileLabel>
-      </div>
-    </FlexItem>
-  </Flex>
+        </Label>
+      </Profile__AccountProfileGroups>
+    </div>
+  </Profile__AccountProfileHeader>
   <Connect(Email) />
   <Connect(ChangePassword) />
 </div>

@@ -4,8 +4,9 @@ export const colors = ["blue", "green", "grey", "orange", "purple", "red"];
 
 export const theme = {
     borderRadius: {
-        sm: "2px",
-        lg: "4px"
+        sm: "3px",
+        md: "6px",
+        lg: "10px"
     },
     boxShadow: {
         xs: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
@@ -16,52 +17,73 @@ export const theme = {
     },
     color: {
         black: "#000000",
-        blue: "#3182CE",
-        blueDark: "#2B6CB0",
-        blueDarkest: "#2A4365",
-        blueLight: "#63B3ED",
-        blueLightest: "#BEE3F8",
-        green: "#48BB78",
-        greenDark: "#38A169",
-        greenDarkest: "#2F855A",
-        greenLight: "#68D391",
-        greenLightest: "#C6F6D5",
+        blue: "#0B7FE5",
+        blueDark: "#0862C4",
+        blueDarkest: "#033384",
+        blueLight: "#6AC4F7",
+        blueLightest: "#CDF1FD",
+        green: "#1DAD57",
+        greenDark: "#159455",
+        greenDarkest: "#096449",
+        greenLight: "#73E68A",
+        greenLightest: "#D1FAD1",
         grey: "#A0AEC0",
         greyDark: "#718096",
         greyDarkest: "#4A5568",
         greyLight: "#CBD5E0",
-        greyLightest: "#E2E8F0",
-        orange: "#F6AD55",
-        orangeLight: "#FBD38D",
-        orangeLightest: "#FFFAF0",
-        orangeDark: "#DD6B20",
-        orangeDarkest: "#C05621",
-        primary: "#3c8786",
+        greyLightest: "#EDF2F7",
+        greyHover: "#F7FAFC",
+        orange: "#F7A000",
+        orangeLight: "#FCD265",
+        orangeLightest: "#FEF4CB",
+        orangeDark: "#D48100",
+        orangeDarkest: "#B16600",
+        primary: "#3C8786",
+        primaryDark: "#2B6E74",
+        primaryDarkest: "#1E5661",
+        primaryLight: "#6AB7AF",
+        primaryLightest: "#E8F5F5",
         purple: "#9F7AEA",
         purpleDark: "#805AD5",
         purpleDarkest: "#553C9A",
         purpleLight: "#D6BCFA",
         purpleLightest: "#FAF5FF",
-        red: "#E53E3E",
-        redDark: "#C53030",
-        redDarkest: "#9B2C2C",
-        redLight: "#FC8181",
-        redLightest: "#FED7D7",
-        white: "#fff"
+        red: "#E0282E",
+        redDark: "#C01D30",
+        redDarkest: "#A11431",
+        redLight: "#F58E7C",
+        redLightest: "#FDE1D3",
+        white: "#fff",
+        yellow: "#FFE030",
+        yellowLight: "#FFF082",
+        yellowLightest: "#FFFBD5",
+        yellowDark: "#DBBC23",
+        yellowDarkest: "#B79A18"
     },
     fontSize: {
         xs: "10px",
         sm: "12px",
         md: "14px",
         lg: "16px",
-        xl: "22px",
-        xxl: "28px"
+        xl: "24px",
+        xxl: "32px"
+    },
+    fontWeight: {
+        normal: 400,
+        thick: 500,
+        bold: 700
     },
     gap: {
         column: "15px"
     }
 };
 
+export const getActiveShadow = ({ active, theme }) => (active ? `inset 3px 0 0 ${theme.color.primary}` : "none");
+
 export const getBorder = ({ theme }) => `1px solid ${theme.color.greyLight}`;
 
 export const getColor = ({ color, theme }) => get(theme, ["color", color]);
+
+export const getFontSize = size => ({ theme }) => theme.fontSize[size];
+
+export const getFontWeight = weight => ({ theme }) => theme.fontWeight[weight];

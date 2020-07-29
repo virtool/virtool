@@ -31,7 +31,7 @@ const CreateSampleFields = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    grid-column-gap: 15px;
+    grid-column-gap: ${props => props.theme.gap.column};
 `;
 
 const extensionRegex = /^[a-z0-9]+-(.*)\.f[aq](st)?[aq]?(\.gz)?$/;

@@ -21,7 +21,7 @@ exports[`<ReadOrientation /> should render when [selected=true] 1`] = `
 `;
 
 exports[`<ReadSelectorItem /> should render when [selected=false] 1`] = `
-<ReadSelectorItem__StyledReadItem
+<ReadSelectorItem__StyledReadSelectorItem
   active={false}
   onClick={[Function]}
 >
@@ -46,11 +46,11 @@ exports[`<ReadSelectorItem /> should render when [selected=false] 1`] = `
     index={0}
     selected={false}
   />
-</ReadSelectorItem__StyledReadItem>
+</ReadSelectorItem__StyledReadSelectorItem>
 `;
 
 exports[`<ReadSelectorItem /> should render when [selected=true] 1`] = `
-<ReadSelectorItem__StyledReadItem
+<ReadSelectorItem__StyledReadSelectorItem
   active={true}
   onClick={[Function]}
 >
@@ -75,5 +75,5 @@ exports[`<ReadSelectorItem /> should render when [selected=true] 1`] = `
     index={0}
     selected={true}
   />
-</ReadSelectorItem__StyledReadItem>
+</ReadSelectorItem__StyledReadSelectorItem>
 `;

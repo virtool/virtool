@@ -2,16 +2,18 @@ import { replace } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import styled from "styled-components";
+import { getBorder } from "../../../app/theme";
 import { Table } from "../../../base";
 
 export const ExportPreviewCode = styled.div`
-    background-color: #edf2f7;
-    border: 1px solid #cbd5e0;
-    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
-    color: #4a5568;
+    background-color: ${props => props.theme.color.greyLightest};
+    border: ${getBorder};
+    border-radius: ${props => props.theme.borderRadius.sm};
+    box-shadow: ${props => props.theme.boxShadow.inset};
+    color: ${props => props.theme.color.greyDarkest};
     margin-bottom: 15px;
     min-height: 20px;
-    padding: 19px;
+    padding: 20px;
 `;
 
 export default function NuVsExportPreview({ mode }) {

@@ -10,5 +10,5 @@ export const AnalysisItemRightIcon = ({ canModify, onRemove, ready }) => {
         return null;
     }
 
-    return <Loader size="14px" color="#3c8786" />;
+    return <Loader size="14px" color="primary" />;
 };

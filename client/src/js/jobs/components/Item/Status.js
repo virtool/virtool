@@ -13,7 +13,6 @@ const StyledJobStatus = styled.div`
     }
 
     span:last-child {
-        font-weight: bold;
         text-transform: capitalize;
     }
 `;
@@ -22,7 +21,7 @@ export const JobStatus = ({ pad, state }) => {
     if (state === "waiting" || state === "running") {
         return (
             <StyledJobStatus pad={pad}>
-                <Loader size="14px" color="#3c8786" />
+                <Loader size="14px" color="primary" />
                 <span>{state}</span>
             </StyledJobStatus>
         );

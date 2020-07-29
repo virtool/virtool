@@ -3,6 +3,7 @@ import { transform } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import styled from "styled-components";
+import { getFontSize } from "../../app/theme";
 import { BoxGroup } from "../../base";
 import { PermissionItem } from "./Permission";
 
@@ -12,7 +13,7 @@ const UserPermissionsHeader = styled.div`
 
     small {
         color: ${props => props.theme.color.greyDarkest};
-        font-size: ${props => props.theme.fontSize.sm};
+        font-size: ${getFontSize("sm")};
         margin-left: auto;
     }
 `;

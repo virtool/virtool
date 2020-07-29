@@ -27,7 +27,7 @@ export const StyledCheckbox = styled(CustomCheckboxContainer)`
     align-items: center;
     background-color: ${getBackgroundColor};
     border: ${getBorder};
-    border-radius: 2px;
+    border-radius: ${props => props.theme.borderRadius.sm};
     color: ${getColor};
     cursor: pointer;
     display: inline-flex;

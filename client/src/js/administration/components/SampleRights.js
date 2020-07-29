@@ -2,20 +2,20 @@ import { includes, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { updateSetting, updateSettings } from "../actions";
 import { BoxGroup, BoxGroupHeader, BoxGroupSection, InputGroup, InputLabel, Select, SelectBox } from "../../base";
-
-const SampleGroupSelection = styled.div`
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-gap: 13px;
-`;
+import { updateSetting, updateSettings } from "../actions";
 
 const rights = [
     { label: "None", value: "" },
     { label: "Read", value: "r" },
     { label: "Read & write", value: "rw" }
 ];
+
+export const SampleRightsGroup = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-column-gap: ${props => props.theme.gap.column};
+`;
 
 export const SampleRights = props => {
     const options = map(rights, (entry, index) => (
@@ -32,7 +32,7 @@ export const SampleRights = props => {
             </BoxGroupHeader>
             <BoxGroupSection>
                 <label>Sample Group</label>
-                <SampleGroupSelection>
+                <SampleRightsGroup>
                     <SelectBox
                         onClick={() => props.onChangeSampleGroup("none")}
                         active={props.sampleGroup === "none" ? true : ""}
@@ -59,7 +59,8 @@ export const SampleRights = props => {
                         <strong>User's primary group</strong>
                         <p>Samples are assigned by the user in the creation form</p>
                     </SelectBox>
-                </SampleGroupSelection>
+                </SampleRightsGroup>
+
                 <InputGroup>
                     <InputLabel>Group Rights</InputLabel>
                     <Select value={props.group} onChange={e => props.onChangeRights("group", e.target.value)}>

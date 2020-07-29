@@ -1,12 +1,13 @@
 import React, { useCallback } from "react";
 import styled from "styled-components";
+import { getFontSize, getFontWeight } from "../../../../app/theme";
 import { BoxGroupSection, Icon } from "../../../../base";
 
 const TargetItemHeader = styled.h3`
     align-items: center;
     display: flex;
-    font-size: 14px;
-    font-weight: normal;
+    font-size: ${getFontSize("md")};
+    font-weight: ${getFontWeight("normal")};
     margin: 3px 0 6px;
 
     span {

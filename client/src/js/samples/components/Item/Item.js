@@ -3,6 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { pushState } from "../../../app/actions";
+import { getFontSize, getFontWeight } from "../../../app/theme";
 import { Attribution, Checkbox, Icon, LinkBox, Loader } from "../../../base";
 import { selectSample } from "../../actions";
 import { getIsSelected } from "../../selectors";
@@ -19,7 +20,7 @@ const SampleIconContainer = styled.div`
     position: absolute;
     right: 0;
     top: 0;
-    z-index: 900;
+    z-index: 10;
 
     > div {
         align-items: center;
@@ -41,16 +42,11 @@ const SampleItemCheckboxContainer = styled.div`
     top: 0;
     position: absolute;
     width: 45px;
-    z-index: 900;
+    z-index: 10;
 `;
 
 const SampleItemContainer = styled.div`
     position: relative;
-    z-index: 0;
-
-    ${Attribution} {
-        font-size: 12px;
-    }
 `;
 
 const SampleItemLibraryType = styled.div`
@@ -58,7 +54,8 @@ const SampleItemLibraryType = styled.div`
     color: ${props => props.theme.color.greyDark};
     display: flex;
     flex: 1;
-    font-weight: 600;
+    font-size: ${getFontSize("lg")};
+    font-weight: ${getFontWeight("thick")};
 
     i:first-child {
         margin-right: 10px;
@@ -77,6 +74,8 @@ const SampleItemTitle = styled.div`
     position: relative;
 
     h5 {
+        font-size: ${getFontSize("lg")};
+        font-weight: ${getFontWeight("thick")};
         margin: 0;
     }
 `;
@@ -110,7 +109,7 @@ class SampleItem extends React.Component {
             endIcon = (
                 <SampleIconContainer>
                     <div>
-                        <Loader size="14px" color="#3c8786" />
+                        <Loader size="14px" color="primary" />
                         <strong>Creating</strong>
                     </div>
                 </SampleIconContainer>

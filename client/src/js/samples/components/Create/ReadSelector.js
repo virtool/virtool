@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import React from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import { getFontWeight } from "../../../app/theme";
 import { Box, BoxGroup, Button, InputError, NoneFoundSection, SearchInput, Toolbar } from "../../../base";
 
 import ReadSelectorItem from "./ReadSelectorItem";
@@ -19,16 +20,14 @@ const ReadSelectorError = styled(InputError)`
     margin-bottom: 10px;
 `;
 
-const ReadSelectorHeader = styled.h5`
-    display: flex;
+const ReadSelectorHeader = styled.label`
     align-items: center;
+    display: flex;
+    font-weight: ${getFontWeight("thick")};
 
-    strong {
-        flex: 1 0 auto;
-    }
-
-    small {
+    span {
         color: grey;
+        margin-left: auto;
     }
 `;
 
@@ -121,9 +120,9 @@ export default class ReadSelector extends React.PureComponent {
             <div>
                 <ReadSelectorHeader>
                     <strong>Read Files</strong>
-                    <small>
+                    <span>
                         {this.props.selected.length} of {fileComponents.length || 0} selected
-                    </small>
+                    </span>
                 </ReadSelectorHeader>
 
                 <ReadSelectorBox error={this.props.error}>

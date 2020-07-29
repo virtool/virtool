@@ -3,12 +3,15 @@
 exports[`<ReferenceItemHeader /> should render 1`] = `
 <Header__StyledReferenceItemHeader>
   <h2>
-    <Header__ReferenceItemHeaderLink
+    <Link
       to="/refs/foo"
     >
       Foo
-    </Header__ReferenceItemHeaderLink>
-    <Link
+    </Link>
+    <LinkIcon
+      color="blue"
+      name="clone"
+      tip="Clone"
       to={
         Object {
           "state": Object {
@@ -18,14 +21,7 @@ exports[`<ReferenceItemHeader /> should render 1`] = `
           },
         }
       }
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="clone"
-        tip="Clone"
-      />
-    </Link>
+    />
   </h2>
   <p>
     <span>

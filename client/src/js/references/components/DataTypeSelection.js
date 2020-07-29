@@ -5,7 +5,7 @@ import { SelectBox } from "../../base";
 const SelectBoxContainer = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-gap: 11px;
+    grid-gap: ${props => props.theme.gap.column};
 `;
 
 export const DataTypeSelection = ({ onSelect, dataType }) => (

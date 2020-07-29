@@ -9,7 +9,7 @@ const StyledQualityChart = styled.div`
     .axis path,
     .axis line {
         fill: none;
-        stroke: #000;
+        stroke: ${props => props.theme.color.black};
         shape-rendering: crispEdges;
     }
 
@@ -19,8 +19,36 @@ const StyledQualityChart = styled.div`
 
     .graph-line {
         fill: none;
-        stroke: ${props => props.theme.color.blue};
+        shape-rendering: geometricPrecision;
         stroke-width: 2px;
+    }
+
+    .graph-line-blue {
+        stroke: ${props => props.theme.color.blue};
+    }
+
+    .graph-line-green {
+        stroke: ${props => props.theme.color.green};
+    }
+
+    .graph-line-yellow {
+        stroke: ${props => props.theme.color.yellow};
+    }
+
+    .graph-line-red {
+        stroke: ${props => props.theme.color.red};
+    }
+
+    .quality-area {
+        stroke: none;
+    }
+
+    .quality-area-yellow {
+        fill: ${props => props.theme.color.yellowLightest};
+    }
+
+    .quality-area-green {
+        fill: ${props => props.theme.color.greenLightest};
     }
 `;
 

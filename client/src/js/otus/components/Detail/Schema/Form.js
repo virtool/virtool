@@ -10,7 +10,7 @@ const moleculeTypes = ["", "ssDNA", "dsDNA", "ssRNA+", "ssRNA-", "ssRNA", "dsRNA
 const StyledSegmentForm = styled.div`
     display: grid;
     grid-template-columns: 3fr 1fr;
-    grid-gap: 15px;
+    grid-column-gap: ${props => props.theme.gap.column};
 `;
 
 class SegmentForm extends React.Component {

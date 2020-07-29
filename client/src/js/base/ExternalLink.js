@@ -7,9 +7,4 @@ export const UnstyledExternalLink = ({ children, className, href }) => (
     </a>
 );
 
-export const ExternalLink = styled(UnstyledExternalLink)`
-    &:hover,
-    &:focus {
-        text-decoration: none;
-    }
-`;
+export const ExternalLink = styled(UnstyledExternalLink)``;

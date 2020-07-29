@@ -113,7 +113,7 @@ class ReferenceMembers extends React.Component {
                 <BoxGroup>
                     <ReferenceMembersHeader>
                         <h2>
-                            <strong>{plural}</strong>
+                            {plural}
                             {addButton}
                         </h2>
                         <p>Manage membership and rights for reference {plural}.</p>

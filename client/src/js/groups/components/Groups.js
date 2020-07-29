@@ -25,7 +25,7 @@ import Group from "./Group";
 const GroupsModalBody = styled(ModalBody)`
     display: grid;
     grid-template-columns: 2fr 3fr;
-    grid-column-gap: 15px;
+    grid-column-gap: ${props => props.theme.gap.column};
 `;
 
 class Groups extends React.Component {
