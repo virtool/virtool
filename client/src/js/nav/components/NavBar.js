@@ -1,46 +1,13 @@
 import React from "react";
 import { connect } from "react-redux";
-import { NavLink } from "react-router-dom";
 import styled from "styled-components";
 import { logout } from "../../account/actions";
 import { DropdownItem, Icon, VTLogo } from "../../base";
 import { getSoftwareUpdates } from "../../updates/actions";
 import { isHomeActive } from "../utils";
 import { NavDropdown } from "./Dropdown";
+import { NavBarItem } from "./NavBarItem";
 import Update from "./Update";
-
-const NavBarItem = styled(NavLink)`
-    align-items: center;
-    color: white;
-    cursor: pointer;
-    display: flex;
-    font-size: ${props => props.theme.fontSize.lg};
-    font-weight: ${props => props.theme.fontWeight.thick};
-    height: 100%;
-    justify-content: center;
-    padding: 0 15px;
-
-    &:hover {
-        color: ${props => props.theme.color.primaryDarkest};
-    }
-
-    &.active {
-        background-color: ${props => props.theme.color.primaryDark};
-        color: ${props => props.theme.color.white};
-    }
-`;
-
-const NavBar = styled.div`
-    background-color: ${props => props.theme.color.primary};
-    color: white;
-    display: flex;
-    height: 45px;
-    justify-content: space-between;
-    position: fixed;
-    top: 0;
-    width: 100%;
-    z-index: 90;
-`;
 
 const NavBarLeft = styled.div`
     display: flex;
@@ -53,8 +20,20 @@ const NavBarRight = styled.div`
     margin-right: 15px;
 `;
 
-const BarLogo = styled(VTLogo)`
+const NavBarLogo = styled(VTLogo)`
     margin: 0 30px 0 35px;
+`;
+
+const StyledNavBar = styled.div`
+    background-color: ${props => props.theme.color.primary};
+    color: white;
+    display: flex;
+    height: 45px;
+    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 90;
 `;
 
 export class Bar extends React.Component {
@@ -64,9 +43,9 @@ export class Bar extends React.Component {
 
     render() {
         return (
-            <NavBar>
+            <StyledNavBar>
                 <NavBarLeft>
-                    <BarLogo />
+                    <NavBarLogo />
 
                     <NavBarItem to="/home" isActive={isHomeActive}>
                         Home
@@ -115,7 +94,7 @@ export class Bar extends React.Component {
                         <DropdownItem onClick={this.props.logout}>Logout</DropdownItem>
                     </NavDropdown>
                 </NavBarRight>
-            </NavBar>
+            </StyledNavBar>
         );
     }
 }

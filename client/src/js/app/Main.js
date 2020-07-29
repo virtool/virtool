@@ -8,7 +8,7 @@ import { getAccount } from "../account/actions";
 import { getSettings } from "../administration/actions";
 import { Container, LoadingPlaceholder } from "../base";
 import UploadOverlay from "../files/components/UploadOverlay";
-import NavBar from "../nav/components/Bar";
+import NavBar from "../nav/components/NavBar";
 import Sidebar from "../nav/components/Sidebar";
 import { listProcesses } from "../processes/actions";
 import WSConnection from "./websocket";

@@ -1,44 +1,44 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Bar /> should render 1`] = `
-<Bar__NavBar>
-  <Bar__NavBarLeft>
-    <Bar__BarLogo />
-    <Bar__NavBarItem
+<NavBar__StyledNavBar>
+  <NavBar__NavBarLeft>
+    <NavBar__NavBarLogo />
+    <NavBarItem
       isActive={[Function]}
       to="/home"
     >
       Home
-    </Bar__NavBarItem>
-    <Bar__NavBarItem
+    </NavBarItem>
+    <NavBarItem
       to="/jobs"
     >
       Jobs
-    </Bar__NavBarItem>
-    <Bar__NavBarItem
+    </NavBarItem>
+    <NavBarItem
       to="/samples"
     >
       Samples
-    </Bar__NavBarItem>
-    <Bar__NavBarItem
+    </NavBarItem>
+    <NavBarItem
       to="/refs"
     >
       References
-    </Bar__NavBarItem>
-    <Bar__NavBarItem
+    </NavBarItem>
+    <NavBarItem
       to="/hmm"
     >
       HMM
-    </Bar__NavBarItem>
-    <Bar__NavBarItem
+    </NavBarItem>
+    <NavBarItem
       to="/subtraction"
     >
       Subtraction
-    </Bar__NavBarItem>
-  </Bar__NavBarLeft>
-  <Bar__NavBarRight>
+    </NavBarItem>
+  </NavBar__NavBarLeft>
+  <NavBar__NavBarRight>
     <Connect(NotificationIcon) />
-    <Bar__NavBarItem
+    <NavBarItem
       rel="noopener noreferrer"
       target="_blank"
       to="//gitter.im/virtool/virtool"
@@ -48,8 +48,8 @@ exports[`<Bar /> should render 1`] = `
         fixedWidth={false}
         name="comments"
       />
-    </Bar__NavBarItem>
-    <Bar__NavBarItem
+    </NavBarItem>
+    <NavBarItem
       rel="noopener noreferrer"
       style={
         Object {
@@ -64,7 +64,7 @@ exports[`<Bar /> should render 1`] = `
         fixedWidth={false}
         name="book"
       />
-    </Bar__NavBarItem>
+    </NavBarItem>
     <NavDropdown
       userId="foo"
     >
@@ -91,6 +91,6 @@ exports[`<Bar /> should render 1`] = `
         Logout
       </DropdownItem>
     </NavDropdown>
-  </Bar__NavBarRight>
-</Bar__NavBar>
+  </NavBar__NavBarRight>
+</NavBar__StyledNavBar>
 `;

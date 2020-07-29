@@ -1,17 +1,15 @@
 import React from "react";
 import styled from "styled-components";
-import { getFontSize, getFontWeight } from "../../app/theme";
 import { Dropdown, DropdownMenu, Icon, useDropdown } from "../../base";
+import { NavBarItem } from "./NavBarItem";
 
-const NavDropdownTrigger = styled.a`
+const NavDropdownTrigger = styled(NavBarItem)`
     align-items: center;
-    color: white;
     display: flex;
-    font-size: ${getFontSize("lg")};
-    font-weight: ${getFontWeight("thick")};
     height: 45px;
+    padding: 0 10px;
 
-    :hover {
+    :focus {
         color: ${props => props.theme.color.primaryDarkest};
     }
 
@@ -23,15 +21,19 @@ const NavDropdownTrigger = styled.a`
 export const NavDropdown = ({ children, userId }) => {
     const [visible, toggle, hide] = useDropdown([userId]);
 
+    function handleClick(e) {
+        e.preventDefault();
+        toggle();
+    }
+
     return (
         <Dropdown>
-            <NavDropdownTrigger onClick={toggle} onBlur={hide} href="#">
+            <NavDropdownTrigger as="a" href="#" onClick={handleClick} onBlur={hide}>
                 <Icon name="user" />
                 <span>{userId}</span>
                 <Icon name="caret-down" />
             </NavDropdownTrigger>
-
-            <DropdownMenu right={-5} top={45} visible={visible}>
+            <DropdownMenu right={0} top={50} visible={visible}>
                 {children}
             </DropdownMenu>
         </Dropdown>

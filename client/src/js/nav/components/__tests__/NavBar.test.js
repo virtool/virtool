@@ -1,4 +1,4 @@
-import { Bar, mapStateToProps, mapDispatchToProps } from "../Bar";
+import { Bar, mapStateToProps, mapDispatchToProps } from "../NavBar";
 
 describe("<Bar />", () => {
     const props = {
