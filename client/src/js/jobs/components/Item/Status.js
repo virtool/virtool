@@ -13,7 +13,6 @@ const StyledJobStatus = styled.div`
     }
 
     span:last-child {
-        font-weight: bold;
         text-transform: capitalize;
     }
 `;

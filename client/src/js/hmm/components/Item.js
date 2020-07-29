@@ -2,7 +2,7 @@ import { keys, map, reject } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import styled from "styled-components";
-import { getFontSize } from "../../app/theme";
+import { getFontSize, getFontWeight } from "../../app/theme";
 import { Label, LinkBox } from "../../base";
 
 const StyledHMMItem = styled(LinkBox)`
@@ -12,6 +12,7 @@ const StyledHMMItem = styled(LinkBox)`
 
 const HMMItemCluster = styled.strong`
     flex: 0 0 48px;
+    font-weight: ${getFontWeight("thick")};
 `;
 
 const HMMItemName = styled.span`

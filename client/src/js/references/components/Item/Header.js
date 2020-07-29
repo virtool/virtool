@@ -9,10 +9,6 @@ const ReferenceItemDataDescriptor = styled.strong`
     text-transform: capitalize;
 `;
 
-const ReferenceItemHeaderLink = styled(Link)`
-    font-weight: bold;
-`;
-
 const StyledReferenceItemHeader = styled.div`
     padding: 10px 15px;
 
@@ -25,6 +21,7 @@ const StyledReferenceItemHeader = styled.div`
 
     h2 {
         font-size: ${getFontSize("lg")};
+        font-weight: ${getFontWeight("thick")};
         margin: 0 0 4px;
     }
 
@@ -45,7 +42,7 @@ const StyledReferenceItemHeader = styled.div`
 export const ReferenceItemHeader = ({ createdAt, dataType, id, name, organism, otuCount, userId }) => (
     <StyledReferenceItemHeader>
         <h2>
-            <ReferenceItemHeaderLink to={`/refs/${id}`}>{name}</ReferenceItemHeaderLink>
+            <Link to={`/refs/${id}`}>{name}</Link>
             <LinkIcon
                 to={{ state: { newReference: true, cloneReference: true, id } }}
                 name="clone"

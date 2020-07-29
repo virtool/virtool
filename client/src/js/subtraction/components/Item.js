@@ -25,7 +25,7 @@ const StyledSubtractionItem = styled(LinkBox)`
 
 export const SubtractionItem = ({ id, name, ready }) => (
     <StyledSubtractionItem key={id} to={`/subtraction/${id}`}>
-        <strong>{name}</strong>
+        <span>{name}</span>
         <span>
             <SubtractionItemIcon ready={ready} /> <span>{ready ? "Ready" : "Importing"}</span>
         </span>

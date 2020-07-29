@@ -41,6 +41,10 @@ const AnalysisItemTop = styled.div`
     font-size: ${getFontSize("lg")};
     font-weight: ${getFontWeight("thick")};
     justify-content: space-between;
+
+    a {
+        font-weight: ${getFontWeight("thick")};
+    }
 `;
 
 export const AnalysisItem = props => {
@@ -61,9 +65,7 @@ export const AnalysisItem = props => {
     return (
         <StyledAnalysisItem>
             <AnalysisItemTop>
-                <Link to={`/samples/${sampleId}/analyses/${id}`}>
-                    <strong>{getTaskDisplayName(workflow)}</strong>
-                </Link>
+                <Link to={`/samples/${sampleId}/analyses/${id}`}>{getTaskDisplayName(workflow)}</Link>
                 <AnalysisItemRightIcon canModify={canModify} onRemove={onRemove} ready={ready} />
             </AnalysisItemTop>
             <Attribution user={user.id} time={created_at} />

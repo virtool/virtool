@@ -6,9 +6,7 @@ exports[`<AnalysisItem /> should render 1`] = `
     <Link
       to="/samples/bar/analyses/baz"
     >
-      <strong>
-        NuVs
-      </strong>
+      NuVs
     </Link>
     <AnalysisItemRightIcon
       canModify={true}
@@ -63,9 +61,7 @@ exports[`<AnalysisItem /> should render when [placeholder=true] 1`] = `
     <Link
       to="/samples/bar/analyses/baz"
     >
-      <strong>
-        NuVs
-      </strong>
+      NuVs
     </Link>
     <AnalysisItemRightIcon
       canModify={true}
@@ -120,9 +116,7 @@ exports[`<AnalysisItem /> should render when [ready=false] 1`] = `
     <Link
       to="/samples/bar/analyses/baz"
     >
-      <strong>
-        NuVs
-      </strong>
+      NuVs
     </Link>
     <AnalysisItemRightIcon
       canModify={true}

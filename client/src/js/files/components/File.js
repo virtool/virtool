@@ -13,12 +13,16 @@ const FileHeader = styled.div`
     align-items: center;
     display: flex;
     font-size: ${getFontSize("lg")};
+    font-weight: ${getFontWeight("thick")};
+
+    strong {
+        font-weight: ${getFontWeight("thick")};
+    }
 
     span {
         margin-left: auto;
 
         span {
-            font-weight: ${getFontWeight("thick")};
             margin-right: 10px;
         }
     }

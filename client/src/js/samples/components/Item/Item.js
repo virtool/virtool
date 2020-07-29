@@ -75,6 +75,7 @@ const SampleItemTitle = styled.div`
 
     h5 {
         font-size: ${getFontSize("lg")};
+        font-weight: ${getFontWeight("thick")};
         margin: 0;
     }
 `;
