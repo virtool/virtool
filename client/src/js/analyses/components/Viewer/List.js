@@ -17,7 +17,7 @@ const AnalysisViewerListHeader = styled.div`
     border-top-right-radius: ${props => props.theme.borderRadius.sm};
     box-shadow: 0 5px 5px -3px ${props => props.theme.color.greyLight};
     padding: 7px 15px;
-    z-index: 1000;
+    z-index: 20;
 `;
 
 const AnalysisViewerListFooter = styled.div`
@@ -30,9 +30,11 @@ const AnalysisViewerListWindow = styled(FixedSizeList)`
     border: ${getBorder};
     border-bottom-left-radius: ${props => props.theme.borderRadius.sm};
     border-bottom-right-radius: ${props => props.theme.borderRadius.sm};
+    z-index: 10;
 `;
 
 const StyledAnalysisViewerList = styled.div`
+    position: relative;
     width: ${props => props.width}px;
 `;
 

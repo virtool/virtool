@@ -15,7 +15,6 @@ export const TabLink = styled(NavLink)`
     margin-bottom: -1px;
     padding: 10px 12px;
     text-align: center;
-    z-index: 999;
 
     &.active {
         border-bottom: 1px solid ${props => props.theme.color.primary};

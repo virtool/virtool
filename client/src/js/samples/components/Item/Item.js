@@ -20,7 +20,7 @@ const SampleIconContainer = styled.div`
     position: absolute;
     right: 0;
     top: 0;
-    z-index: 900;
+    z-index: 10;
 
     > div {
         align-items: center;
@@ -42,12 +42,11 @@ const SampleItemCheckboxContainer = styled.div`
     top: 0;
     position: absolute;
     width: 45px;
-    z-index: 900;
+    z-index: 10;
 `;
 
 const SampleItemContainer = styled.div`
     position: relative;
-    z-index: 0;
 `;
 
 const SampleItemLibraryType = styled.div`

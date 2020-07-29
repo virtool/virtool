@@ -11,7 +11,6 @@ import { JobStatus } from "./Status";
 const JobItemBody = styled.div`
     font-size: ${getFontSize("lg")};
     padding: 10px 15px;
-    position: relative;
 
     ${Attribution} {
         font-size: ${getFontSize("md")};
@@ -25,12 +24,11 @@ const JobItemContainer = styled.div`
 const JobItemHeader = styled.div`
     align-items: center;
     display: flex;
-    position: relative;
 `;
 
 const JobItemLinkBox = styled(LinkBox)`
     padding: 5px 0 0 0;
-    position: relative;
+    z-index: 10;
 `;
 
 export const JobItem = ({ id, task, state, progress, created_at, user, canCancel, canRemove, onCancel, onRemove }) => {

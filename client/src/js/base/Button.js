@@ -88,7 +88,6 @@ const StyledButton = styled.button`
         opacity: 0;
         position: absolute;
         transition: opacity 150ms ease, scale 150ms ease;
-        z-index: 0;
     }
 
     :not(:disabled):hover::after {

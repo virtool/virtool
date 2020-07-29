@@ -67,6 +67,7 @@ export const ModalContent = styled(({ close, size, ...rest }) => <ReachDialogCon
     padding: 0;
     position: relative;
     width: ${props => (props.size === "lg" ? "900px" : "600px")};
+    z-index: 110;
 
     @media (max-width: 991px) {
         width: 600px;
@@ -93,11 +94,7 @@ export const ModalOverlay = styled(({ close, ...rest }) => <ReachDialogOverlay {
     left: 0;
     overflow: auto;
     position: fixed;
-    z-index: 9999;
-
-    i.fas {
-        z-index: 10000;
-    }
+    z-index: 100;
 `;
 
 const StyledModalHeader = styled(BoxGroupSection)`
@@ -148,12 +145,11 @@ export const ModalBodyOverlay = styled.div`
     left: 0;
     bottom: 0;
     text-align: center;
-    z-index: 10000;
+    z-index: 120;
 
     span {
         flex: auto;
         font-size: ${props => props.theme.fontSize.xxl};
-        z-index: 10001;
     }
 `;
 

@@ -19,7 +19,6 @@ const StyledPathoscopeViewerScroller = styled.div`
     left: 30px;
     position: fixed;
     width: 40px;
-    z-index: 900;
 
     :hover {
         background-color: ${props => props.theme.color.greyLightest};
