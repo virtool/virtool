@@ -3,12 +3,11 @@ import React from "react";
 import styled from "styled-components";
 import { NavLink } from "react-router-dom";
 import { Icon } from "../../base";
-import { excludePaths } from "../utils";
 
 const StyledSidebarItem = styled(NavLink)`
     color: #333333;
     cursor: pointer;
-    padding-bottom: 1.6rem;
+    padding-bottom: 1.4rem;
     text-align: center;
     width: 100%;
     opacity: 0.7;
@@ -27,17 +26,21 @@ const StyledSidebarItem = styled(NavLink)`
         opacity: 1;
         color: #07689d;
     }
+
+    p {
+        display: block;
+        font-size: ${props => props.theme.fontSize.sm};
+        margin: 0.4rem 0;
+    }
 `;
 
-const SideBarItemTitle = styled.small`
-    display: block;
-`;
+import { excludePaths } from "../utils";
 
 export default function SidebarItem({ exclude, icon, link, title }) {
     return (
         <StyledSidebarItem to={link} activeClassName="active" isActive={excludePaths(exclude)}>
             <Icon name={icon} />
-            <SideBarItemTitle>{title}</SideBarItemTitle>
+            <p>{title}</p>
         </StyledSidebarItem>
     );
 }

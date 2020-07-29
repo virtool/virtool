@@ -6,10 +6,12 @@ export const SelectBox = styled(Box)`
     border-radius: ${props => props.theme.borderRadius.sm};
 
     div {
-        font-weight: bold;
+        font-weight: ${props => props.theme.fontWeight.thick};
+        padding-bottom: 5px;
     }
 
     span {
-        font-size: 11px;
+        color: ${props => props.theme.color.greyDarkest};
+        padding-top: 5px;
     }
 `;

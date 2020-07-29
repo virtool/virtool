@@ -8,7 +8,7 @@ export const Label = styled.span`
     border-radius: 2px;
     color: #ffffff;
     display: inline;
-    font-size: 12px;
+    font-size: ${props => props.theme.fontSize.sm};
     font-weight: bold;
     padding: 3px 5px;
     text-align: center;

@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import { getFontSize } from "../../../app/theme";
 import { Icon, Loader } from "../../../base";
 
 const SampleItemLabelIcon = styled.span`
@@ -14,10 +15,17 @@ const StyledSampleItemLabel = styled.div`
     border-radius: 2px;
     color: ${props => props.theme.color[props.ready ? "white" : "greyDarkest"]};
     display: flex;
-    font-size: 11px;
+    font-size: ${getFontSize("sm")};
     font-weight: bold;
-    margin-right: 5px;
     padding: 2px 4px;
+
+    &:not(:last-child) {
+        margin-right: 5px;
+    }
+
+    span:last-child {
+        margin-left: 3px;
+    }
 `;
 
 export const SampleItemLabel = ({ label, ready }) => (

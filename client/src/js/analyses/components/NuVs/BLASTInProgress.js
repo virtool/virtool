@@ -26,7 +26,7 @@ export const RIDLink = ({ rid }) => {
 };
 
 const StyledRIDTiming = styled.div`
-    font-size: 12px;
+    font-size: ${props => props.theme.fontSize.sm};
     margin-left: auto;
 `;
 

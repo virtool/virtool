@@ -1,18 +1,20 @@
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Attribution, LinkBox, AffixedProgressBar } from "../../../base";
+import { getFontSize } from "../../../app/theme";
+import { AffixedProgressBar, Attribution, LinkBox } from "../../../base";
 import { getTaskDisplayName } from "../../../utils/utils";
 import { cancelJob, removeJob } from "../../actions";
 import { JobAction } from "./Action";
 import { JobStatus } from "./Status";
 
 const JobItemBody = styled.div`
+    font-size: ${getFontSize("lg")};
     padding: 10px 15px;
     position: relative;
 
     ${Attribution} {
-        font-size: 12px;
+        font-size: ${getFontSize("md")};
     }
 `;
 

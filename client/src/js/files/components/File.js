@@ -2,73 +2,69 @@ import { find } from "lodash-es";
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { device, Icon, RelativeTime, SpacedBox } from "../../base";
+import { getFontSize, getFontWeight } from "../../app/theme";
+import { Icon, RelativeTime, SpacedBox } from "../../base";
 import { byteSize, checkAdminOrPermission } from "../../utils/utils";
 
 import { removeFile } from "../actions";
 import { getFilesById } from "../selectors";
 
-const StyledFile = styled(SpacedBox)`
-    display: flex;
-    justify-content: space-between;
-`;
-
 const FileHeader = styled.div`
-    align-items: flex-start;
+    align-items: center;
     display: flex;
+    font-size: ${getFontSize("lg")};
 
-    @media (max-width: ${device.desktop}) {
-        flex-direction: column;
+    span {
+        margin-left: auto;
+
+        span {
+            font-weight: ${getFontWeight("thick")};
+            margin-right: 10px;
+        }
     }
 `;
 
-const Creation = styled.div`
-    font-size: 12px;
-    margin-left: 9px;
-    margin-top: 1px;
-
-    @media (max-width: ${device.desktop}) {
-        margin: 0;
-    }
+const FileAttribution = styled.span`
+    font-size: ${props => props.theme.fontSize.md};
 `;
 
 export const File = ({ canRemove, id, name, size, uploadedAt, user, onRemove }) => {
     const handleRemove = useCallback(() => onRemove(id), [id]);
 
-    let creation;
+    let attribution;
 
     if (user === null) {
-        creation = (
-            <React.Fragment>
+        attribution = (
+            <FileAttribution>
                 Retrieved <RelativeTime time={uploadedAt} />
-            </React.Fragment>
+            </FileAttribution>
         );
     } else {
-        creation = (
-            <React.Fragment>
+        attribution = (
+            <FileAttribution>
                 Uploaded <RelativeTime time={uploadedAt} /> by {user.id}
-            </React.Fragment>
+            </FileAttribution>
         );
     }
 
     return (
-        <StyledFile>
+        <SpacedBox>
             <FileHeader>
                 <strong>{name}</strong>
-                <Creation>{creation}</Creation>
+                <span>
+                    <span>{byteSize(size)}</span>
+                    {canRemove && (
+                        <Icon
+                            name="trash"
+                            color="red"
+                            style={{ fontSize: "17px", marginLeft: "9px" }}
+                            onClick={handleRemove}
+                        />
+                    )}
+                </span>
             </FileHeader>
-            <div>
-                {byteSize(size)}
-                {canRemove ? (
-                    <Icon
-                        name="trash"
-                        color="red"
-                        style={{ fontSize: "17px", marginLeft: "9px" }}
-                        onClick={handleRemove}
-                    />
-                ) : null}
-            </div>
-        </StyledFile>
+            {attribution}
+        </SpacedBox>
     );
 };
 

@@ -8,7 +8,6 @@ import { getHasRawFilesOnly, getSampleUpdateJobId } from "../selectors";
 
 const SampleFilesJobStatus = styled.span`
     color: #777777;
-    font-size: 12px;
     text-transform: uppercase;
 `;
 
@@ -46,8 +45,8 @@ export const SampleFilesJobMessage = ({ job }) => {
     );
 };
 
-export const SampleFilesLegacyAlert = () => (
-    <Alert color="orange" block>
+export const SampleFilesLegacyAlert = ({ className }) => (
+    <Alert className={className} color="orange" block>
         <p>
             <strong>
                 Virtool now retains raw data for newly created samples instead of trimming during sample creation.

@@ -34,7 +34,6 @@ const FirstUserModal = styled(BoxGroup)`
 
 const FirstUserModalHeader = styled(BoxGroupHeader)`
     h2 {
-        font-size: 16px;
         margin: 5px 0 3px;
     }
 `;

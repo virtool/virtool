@@ -4,16 +4,16 @@ import { colors } from "../../base/utils";
 
 const AnalysisValueLabel = styled.div`
     color: #777777;
-    font-size: 12px;
-    font-weight: bold;
+    font-size: ${props => props.theme.fontSize.sm};
+    font-weight: ${props => props.theme.fontWeight.thick};
     text-align: right;
     text-transform: uppercase;
 `;
 
 const AnalysisValueNumber = styled.div`
     color: ${props => colors[props.color]};
-    font-size: 14px;
-    font-weight: bold;
+    font-size: ${props => props.theme.fontSize.md};
+    font-weight: ${props => props.theme.fontWeight.thick};
     text-align: right;
 `;
 

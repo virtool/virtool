@@ -8,7 +8,9 @@ exports[`<ReferenceItemHeader /> should render 1`] = `
     >
       Foo
     </Header__ReferenceItemHeaderLink>
-    <Link
+    <LinkIcon
+      name="clone"
+      tip="Clone"
       to={
         Object {
           "state": Object {
@@ -18,14 +20,7 @@ exports[`<ReferenceItemHeader /> should render 1`] = `
           },
         }
       }
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="clone"
-        tip="Clone"
-      />
-    </Link>
+    />
   </h2>
   <p>
     <span>

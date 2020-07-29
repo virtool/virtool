@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { getBorder } from "../app/theme";
+import { getBorder, getFontSize, getFontWeight } from "../app/theme";
 import { Badge } from "./Badge";
 import { CheckboxLabel, StyledCheckbox } from "./Checkbox";
 import { Table } from "./Table";
@@ -88,14 +88,14 @@ export const BoxGroupHeader = styled(BoxGroupSection)`
     background-color: ${props => props.theme.color.greyLightest};
     display: flex;
     flex-direction: column;
-    font-size: ${props => props.theme.fontSize.md};
+    font-size: ${getFontSize("md")};
     padding: 15px 15px 12px;
 
     h2 {
         align-items: center;
         display: flex;
-        font-size: 15px;
-        font-weight: bold;
+        font-size: ${props => props.theme.fontSize.lg};
+        font-weight: ${getFontWeight("thick")};
         margin: 0;
 
         a {
@@ -114,8 +114,8 @@ export const BoxGroupHeader = styled(BoxGroupSection)`
 `;
 
 export const BoxTitle = styled.h1`
-    font-size: 14px;
-    font-weight: bold;
+    font-size: ${props => props.theme.fontSize.md};
+    font-weight: ${props => props.theme.fontWeight.thick};
     margin: 5px 0 15px 0;
 `;
 
@@ -140,10 +140,4 @@ export const LinkBox = styled(Link)`
     &:hover {
         background-color: #f7fafc;
     }
-`;
-
-export const LinkBoxTop = styled.div`
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
 `;

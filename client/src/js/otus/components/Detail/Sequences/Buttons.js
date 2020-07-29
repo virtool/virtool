@@ -13,7 +13,7 @@ const SequenceHeaderButtons = styled.span`
     }
 
     i.fas {
-        font-size: 16px;
+        font-size: ${props => props.theme.fontSize.lg};
         margin-right: 5px;
     }
 

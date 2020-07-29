@@ -1,28 +1,28 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<IndexItem /> should render 1`] = `
-<Item__StyledIndexItem
+<Box__LinkBox
   to="/refs/foo/indexes/bar"
 >
-  <strong>
-    Version 
-    0
-  </strong>
-  <span>
-    Created 
-    <RelativeTime
-      time="2018-02-14T17:12:00.000000Z"
+  <Item__IndexItemTop>
+    <strong>
+      Version 
+      0
+    </strong>
+    <IndexItemChangeDescription
+      changeCount={3}
+      modifiedCount={5}
     />
-  </span>
-  <IndexItemChangeDescription
-    changeCount={3}
-    modifiedCount={5}
+    <IndexItemIcon
+      id="bar"
+      ready={true}
+    />
+  </Item__IndexItemTop>
+  <Attribution
+    time="2018-02-14T17:12:00.000000Z"
+    user="bob"
   />
-  <IndexItemIcon
-    id="bar"
-    ready={true}
-  />
-</Item__StyledIndexItem>
+</Box__LinkBox>
 `;
 
 exports[`<IndexItemChangeDescription /> should render 'No Changes' when changeCount is 0 1`] = `"No changes"`;

@@ -66,10 +66,6 @@ const TaxonomyGrid = styled.div`
     @media (max-width: ${device.tablet}) {
         grid-template-columns: 1fr;
     }
-
-    h5 {
-        font-weight: bold;
-    }
 `;
 
 export class HMMDetail extends React.Component {

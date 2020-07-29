@@ -11,11 +11,11 @@ const StyledNotFound = styled.div`
     justify-content: center;
 
     ${Label} {
-        font-size: 36px;
+        font-size: ${props => props.theme.fontSize.xxl};
     }
 
     strong {
-        font-size: 16px;
+        font-size: ${props => props.theme.fontSize.lg};
         padding-top: 15px;
     }
 `;

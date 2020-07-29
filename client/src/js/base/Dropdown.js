@@ -64,10 +64,4 @@ export const Dropdown = styled.div`
     justify-content: center;
     padding: 0;
     position: relative;
-
-    a,
-    a:focus,
-    a:hover {
-        text-decoration: none;
-    }
 `;

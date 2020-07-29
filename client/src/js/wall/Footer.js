@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { getFontSize } from "../app/theme";
 
 export const WallModalFooter = styled.div`
     align-items: center;
@@ -8,6 +9,6 @@ export const WallModalFooter = styled.div`
 
     & > span {
         color: ${props => props.theme.color.red};
-        font-size: ${props => props.theme.fontSize.xs};
+        font-size: ${getFontSize("xs")};
     }
 `;

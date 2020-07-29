@@ -8,7 +8,7 @@ exports[`<ManageUsers /> should render 1`] = `
     />
     <LinkButton
       icon="users"
-      tip="Manage Group"
+      tip="Manage Groups"
       tipPlacement="top"
       to={
         Object {

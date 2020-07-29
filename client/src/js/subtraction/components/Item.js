@@ -1,6 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
+import { getFontSize, getFontWeight } from "../../app/theme";
 import { Icon, LinkBox, Loader } from "../../base";
 
 export const SubtractionItemIcon = ({ ready }) => {
@@ -14,9 +15,10 @@ export const SubtractionItemIcon = ({ ready }) => {
 const StyledSubtractionItem = styled(LinkBox)`
     align-items: center;
     display: flex;
+    font-size: ${getFontSize("lg")};
+    font-weight: ${getFontWeight("thick")};
 
     > span:last-child {
-        font-weight: bold;
         margin-left: auto;
     }
 `;

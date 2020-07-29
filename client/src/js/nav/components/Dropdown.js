@@ -1,11 +1,14 @@
 import React from "react";
 import styled from "styled-components";
+import { getFontSize, getFontWeight } from "../../app/theme";
 import { Dropdown, DropdownMenu, Icon, useDropdown } from "../../base";
 
 const NavDropdownTrigger = styled.a`
     align-items: center;
     color: white;
     display: flex;
+    font-size: ${getFontSize("lg")};
+    font-weight: ${getFontWeight("thick")};
     height: 45px;
     text-decoration: none;
 

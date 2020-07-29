@@ -2,9 +2,9 @@ import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { Attribution, Icon, LinkBoxTop, SlashList, SpacedBox } from "../../base";
+import { getFontSize, getFontWeight } from "../../app/theme";
+import { Attribution, Icon, SlashList, SpacedBox } from "../../base";
 import { getCanModify } from "../../samples/selectors";
-
 import { getTaskDisplayName } from "../../utils/utils";
 import { removeAnalysis } from "../actions";
 import { AnalysisItemRightIcon } from "./RightIcon";
@@ -35,6 +35,14 @@ const AnalysisItemContent = styled.div`
     }
 `;
 
+const AnalysisItemTop = styled.div`
+    align-items: center;
+    display: flex;
+    font-size: ${getFontSize("lg")};
+    font-weight: ${getFontWeight("thick")};
+    justify-content: space-between;
+`;
+
 export const AnalysisItem = props => {
     const {
         canModify,
@@ -52,12 +60,12 @@ export const AnalysisItem = props => {
 
     return (
         <StyledAnalysisItem>
-            <LinkBoxTop>
+            <AnalysisItemTop>
                 <Link to={`/samples/${sampleId}/analyses/${id}`}>
                     <strong>{getTaskDisplayName(workflow)}</strong>
                 </Link>
                 <AnalysisItemRightIcon canModify={canModify} onRemove={onRemove} ready={ready} />
-            </LinkBoxTop>
+            </AnalysisItemTop>
             <Attribution user={user.id} time={created_at} />
             <AnalysisItemContent>
                 <Icon name="equals" />

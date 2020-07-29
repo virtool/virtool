@@ -3,6 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { pushState } from "../../../app/actions";
+import { getFontSize, getFontWeight } from "../../../app/theme";
 import { Attribution, Checkbox, Icon, LinkBox, Loader } from "../../../base";
 import { selectSample } from "../../actions";
 import { getIsSelected } from "../../selectors";
@@ -47,10 +48,6 @@ const SampleItemCheckboxContainer = styled.div`
 const SampleItemContainer = styled.div`
     position: relative;
     z-index: 0;
-
-    ${Attribution} {
-        font-size: 12px;
-    }
 `;
 
 const SampleItemLibraryType = styled.div`
@@ -58,7 +55,8 @@ const SampleItemLibraryType = styled.div`
     color: ${props => props.theme.color.greyDark};
     display: flex;
     flex: 1;
-    font-weight: 600;
+    font-size: ${getFontSize("lg")};
+    font-weight: ${getFontWeight("thick")};
 
     i:first-child {
         margin-right: 10px;
@@ -77,6 +75,7 @@ const SampleItemTitle = styled.div`
     position: relative;
 
     h5 {
+        font-size: ${getFontSize("lg")};
         margin: 0;
     }
 `;

@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { getFontSize, getFontWeight } from "../../../app/theme";
 import { Box } from "../../../base";
 
 export const ReferenceItemInfo = styled(Box)`
@@ -10,9 +11,15 @@ export const ReferenceItemInfo = styled(Box)`
     margin: 0;
     padding: 8px 11px;
 
-    small {
-        display: block;
-        font-weight: normal;
-        margin-left: auto;
+    h4 {
+        font-weight: ${getFontWeight("thick")};
+        font-size: ${getFontSize("md")};
+        margin: 0 0 3px;
+    }
+
+    p {
+        font-size: ${getFontSize("sm")};
+        font-weight: ${props => props.theme.fontWeight.normal};
+        margin: 0;
     }
 `;

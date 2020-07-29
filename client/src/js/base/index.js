@@ -36,7 +36,6 @@ export * from "./SectionHeader";
 export * from "./SelectBox";
 export * from "./SlashList";
 export * from "./Table";
-export * from "./TabLink";
 export * from "./Tabs";
 export * from "./TextArea";
 export * from "./Toolbar";

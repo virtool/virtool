@@ -2,7 +2,7 @@
 
 exports[`<AnalysisItem /> should render 1`] = `
 <Item__StyledAnalysisItem>
-  <Box__LinkBoxTop>
+  <Item__AnalysisItemTop>
     <Link
       to="/samples/bar/analyses/baz"
     >
@@ -15,7 +15,7 @@ exports[`<AnalysisItem /> should render 1`] = `
       onRemove={[MockFunction]}
       ready={false}
     />
-  </Box__LinkBoxTop>
+  </Item__AnalysisItemTop>
   <Attribution
     time="2018-02-14T17:12:00.000000Z"
     user="bob"
@@ -59,7 +59,7 @@ exports[`<AnalysisItem /> should render 1`] = `
 
 exports[`<AnalysisItem /> should render when [placeholder=true] 1`] = `
 <Item__StyledAnalysisItem>
-  <Box__LinkBoxTop>
+  <Item__AnalysisItemTop>
     <Link
       to="/samples/bar/analyses/baz"
     >
@@ -72,7 +72,7 @@ exports[`<AnalysisItem /> should render when [placeholder=true] 1`] = `
       onRemove={[MockFunction]}
       ready={false}
     />
-  </Box__LinkBoxTop>
+  </Item__AnalysisItemTop>
   <Attribution
     time="2018-02-14T17:12:00.000000Z"
     user="bob"
@@ -116,7 +116,7 @@ exports[`<AnalysisItem /> should render when [placeholder=true] 1`] = `
 
 exports[`<AnalysisItem /> should render when [ready=false] 1`] = `
 <Item__StyledAnalysisItem>
-  <Box__LinkBoxTop>
+  <Item__AnalysisItemTop>
     <Link
       to="/samples/bar/analyses/baz"
     >
@@ -129,7 +129,7 @@ exports[`<AnalysisItem /> should render when [ready=false] 1`] = `
       onRemove={[MockFunction]}
       ready={false}
     />
-  </Box__LinkBoxTop>
+  </Item__AnalysisItemTop>
   <Attribution
     time="2018-02-14T17:12:00.000000Z"
     user="bob"

@@ -5,8 +5,8 @@ exports[`<App /> renders correctly 1`] = `
   theme={
     Object {
       "borderRadius": Object {
-        "lg": "4px",
-        "sm": "2px",
+        "lg": "6px",
+        "sm": "3px",
       },
       "boxShadow": Object {
         "inset": "inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)",
@@ -54,9 +54,14 @@ exports[`<App /> renders correctly 1`] = `
         "lg": "16px",
         "md": "14px",
         "sm": "12px",
-        "xl": "22px",
+        "xl": "24px",
         "xs": "10px",
-        "xxl": "28px",
+        "xxl": "32px",
+      },
+      "fontWeight": Object {
+        "bold": 700,
+        "normal": 400,
+        "thick": 500,
       },
       "gap": Object {
         "column": "15px",

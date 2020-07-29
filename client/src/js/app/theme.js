@@ -4,8 +4,8 @@ export const colors = ["blue", "green", "grey", "orange", "purple", "red"];
 
 export const theme = {
     borderRadius: {
-        sm: "2px",
-        lg: "4px"
+        sm: "3px",
+        lg: "6px"
     },
     boxShadow: {
         xs: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
@@ -54,8 +54,13 @@ export const theme = {
         sm: "12px",
         md: "14px",
         lg: "16px",
-        xl: "22px",
-        xxl: "28px"
+        xl: "24px",
+        xxl: "32px"
+    },
+    fontWeight: {
+        normal: 400,
+        thick: 500,
+        bold: 700
     },
     gap: {
         column: "15px"
@@ -65,3 +70,7 @@ export const theme = {
 export const getBorder = ({ theme }) => `1px solid ${theme.color.greyLight}`;
 
 export const getColor = ({ color, theme }) => get(theme, ["color", color]);
+
+export const getFontSize = size => ({ theme }) => theme.fontSize[size];
+
+export const getFontWeight = weight => ({ theme }) => theme.fontWeight[weight];

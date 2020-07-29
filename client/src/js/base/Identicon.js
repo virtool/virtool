@@ -5,7 +5,7 @@ import Identiconjs from "identicon.js";
 
 const StyledIdenticon = styled.img`
     border-radius: ${props => props.size / 2}px;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    box-shadow: ${props => props.theme.boxShadow.sm};
     height: ${props => props.size}px;
     width: ${props => props.size}px;
 `;
@@ -16,8 +16,9 @@ const StyledIdenticon = styled.img`
  * @param size {number} the size of SVG to render
  * @param hash {string} the users identicon hash
  */
-export const Identicon = ({ size = 64, hash }) => {
+export const Identicon = ({ hash, size = 64 }) => {
     const data = new Identiconjs(hash, {
+        background: [226, 232, 240],
         size,
         format: "svg"
     });

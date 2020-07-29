@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import React from "react";
 import { Helmet } from "react-helmet";
 import styled from "styled-components";
+import { getFontWeight } from "../app/theme";
 import { Attribution, Badge } from "./index";
 
 export const ViewHeaderAttribution = styled(Attribution)`
@@ -61,13 +62,13 @@ export const SubviewHeader = styled.div`
 `;
 
 export const SubviewHeaderTitle = styled.div`
-    font-size: ${props => props.theme.fontSize.lg};
+    font-size: ${props => props.theme.fontSize.xl};
     font-weight: bold;
     margin-bottom: 0;
 `;
 
 export const SubviewHeaderAttribution = styled.span`
     color: ${props => props.theme.color.greyDarkest};
-    font-size: ${props => props.theme.fontSize.sm};
-    font-weight: bold;
+    font-size: ${props => props.theme.fontSize.md};
+    font-weight: ${getFontWeight("thick")};
 `;

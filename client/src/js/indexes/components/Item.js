@@ -1,13 +1,9 @@
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Icon, RelativeTime, Loader, LinkBox } from "../../base";
+import { getFontSize, getFontWeight } from "../../app/theme";
+import { Attribution, Icon, LinkBox, Loader } from "../../base";
 import { getActiveIndexId } from "../selectors";
-
-const StyledIndexItem = styled(LinkBox)`
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-`;
 
 export const IndexItemChangeDescription = ({ changeCount, modifiedCount }) => {
     if (changeCount === null) {
@@ -26,7 +22,28 @@ export const IndexItemChangeDescription = ({ changeCount, modifiedCount }) => {
     );
 };
 
+const IndexItemTop = styled.h3`
+    display: flex;
+    font-size: ${getFontSize("lg")};
+    margin: 0;
+
+    > strong {
+        flex: 1 0 120px;
+        font-weight: ${getFontWeight("thick")};
+    }
+
+    > span {
+        flex: 1 0 auto;
+        font-weight: ${getFontWeight("normal")};
+    }
+
+    > div {
+        flex: 1 0 auto;
+    }
+`;
+
 const StyledIndexItemIcon = styled.div`
+    margin-left: auto;
     text-align: right;
 `;
 
@@ -52,14 +69,17 @@ export const IndexItemIcon = ({ activeId, id, ready }) => {
 };
 
 export const IndexItem = ({ activeId, document, refId }) => (
-    <StyledIndexItem to={`/refs/${refId}/indexes/${document.id}`}>
-        <strong>Version {document.version}</strong>
-        <span>
-            Created <RelativeTime time={document.created_at} />
-        </span>
-        <IndexItemChangeDescription changeCount={document.change_count} modifiedCount={document.modified_otu_count} />
-        <IndexItemIcon activeId={activeId} id={document.id} ready={document.ready} />
-    </StyledIndexItem>
+    <LinkBox to={`/refs/${refId}/indexes/${document.id}`}>
+        <IndexItemTop>
+            <strong>Version {document.version}</strong>
+            <IndexItemChangeDescription
+                changeCount={document.change_count}
+                modifiedCount={document.modified_otu_count}
+            />
+            <IndexItemIcon activeId={activeId} id={document.id} ready={document.ready} />
+        </IndexItemTop>
+        <Attribution time={document.created_at} user={document.user.id} />
+    </LinkBox>
 );
 
 export const mapStateToProps = (state, props) => ({

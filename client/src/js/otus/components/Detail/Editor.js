@@ -2,15 +2,16 @@ import { get, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Badge, Box, BoxGroup, NoneFoundBox, SectionHeader } from "../../../base";
+import { getFontSize, getFontWeight } from "../../../app/theme";
+import { Badge, Box, BoxGroup, NoneFoundBox, SubviewHeader, SubviewHeaderTitle } from "../../../base";
 import { checkRefRight } from "../../../utils/utils";
 import { selectIsolate, showAddIsolate } from "../../actions";
-import IsolateButton from "./Isolates/Item";
 import IsolateDetail from "./Isolates/Detail";
+import IsolateButton from "./Isolates/Item";
 
 const StyledIsolateEditor = styled.div`
     h4 > a {
-        font-size: 14px;
+        font-size: ${props => props.theme.fontSize.md};
     }
 `;
 
@@ -18,7 +19,7 @@ const IsolateEditorContainer = styled.div`
     display: flex;
 `;
 
-const IsolateEditorHeader = styled(SectionHeader)`
+const IsolateEditorTitle = styled(SubviewHeaderTitle)`
     align-items: center;
     display: flex;
 
@@ -27,9 +28,15 @@ const IsolateEditorHeader = styled(SectionHeader)`
     }
 
     a {
+        align-self: flex-end;
+        font-size: ${getFontSize("md")};
+        font-weight: ${getFontWeight("thick")};
         margin-left: auto;
-        font-size: 14px;
-        font-weight: bold;
+    }
+
+    ${Badge} {
+        font-size: ${getFontSize("md")};
+        margin-left: 5px;
     }
 `;
 
@@ -81,12 +88,12 @@ const IsolateEditor = props => {
 
     return (
         <StyledIsolateEditor>
-            <IsolateEditorHeader>
-                <strong>Isolates</strong>
-                <Badge>{isolateComponents.length}</Badge>
-                {addIsolateLink}
-            </IsolateEditorHeader>
-
+            <SubviewHeader>
+                <IsolateEditorTitle>
+                    Isolates <Badge>{isolateComponents.length}</Badge>
+                    {addIsolateLink}
+                </IsolateEditorTitle>
+            </SubviewHeader>
             {body}
         </StyledIsolateEditor>
     );

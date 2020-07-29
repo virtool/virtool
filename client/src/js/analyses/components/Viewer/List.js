@@ -3,6 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { FixedSizeList } from "react-window";
 import styled from "styled-components";
+import { getFontSize } from "../../../app/theme";
 import { Key } from "../../../base";
 import { setActiveHitId } from "../../actions";
 import { getActiveHit, getMatches, getResults } from "../../selectors";
@@ -20,7 +21,7 @@ const AnalysisViewerListHeader = styled.div`
 `;
 
 const AnalysisViewerListFooter = styled.div`
-    font-size: 12px;
+    font-size: ${getFontSize("sm")};
     padding: 15px;
     text-align: center;
 `;

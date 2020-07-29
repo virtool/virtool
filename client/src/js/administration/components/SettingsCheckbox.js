@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import { getFontSize } from "../../app/theme";
 import { Box, Checkbox } from "../../base";
 
 const SettingsCheckboxContainer = styled.div`
@@ -16,16 +17,16 @@ const StyledSettingsCheckbox = styled(Box)`
     justify-content: space-between;
     padding: 15px 20px 12px 15px;
 
-    small {
-        color: #4a5568;
-        font-size: 14px;
-    }
-
     h2 {
-        display: block;
-        font-size: 15px;
+        font-size: ${props => props.theme.fontSize.lg};
+        font-weight: ${props => props.theme.fontWeight.thick};
         margin: 0 0 3px;
         padding-bottom: 5px;
+    }
+
+    small {
+        color: #4a5568;
+        font-size: ${getFontSize("md")};
     }
 `;
 

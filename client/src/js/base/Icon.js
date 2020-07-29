@@ -17,9 +17,8 @@ const fixedWidth = css`
 const StyledIcon = styled.i`
     color: ${getIconColor};
     ${props => (props.hoverable || props.onClick ? "cursor: pointer;" : "")};
-    opacity: ${props => (props.hoverable || props.onClick ? 0.7 : 1)};
-
     ${props => (props.fixedWidth ? fixedWidth : "")};
+    opacity: ${props => (props.hoverable || props.onClick ? 0.7 : 1)};
 
     :hover {
         opacity: 1;

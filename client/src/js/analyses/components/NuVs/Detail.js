@@ -48,20 +48,20 @@ const NuVsDetailTitle = styled.div`
     h3 {
         align-items: center;
         display: flex;
-        font-size: 14px;
+        font-size: ${props => props.theme.fontSize.lg};
         font-weight: bold;
         justify-content: space-between;
         margin: 0;
     }
 
     span {
-        font-size: 12px;
+        font-size: ${props => props.theme.fontSize.md};
         font-weight: bold;
     }
 
     ${Badge} {
-        font-size: 12px;
-        padding: 3px 7px;
+        font-size: ${props => props.theme.fontSize.md};
+        padding: 5px 10px;
     }
 `;
 

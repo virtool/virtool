@@ -3,6 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { login } from "../account/actions";
+import { getFontSize } from "../app/theme";
 import { Box, Button, Checkbox, Input, InputGroup, InputLabel, PasswordInput } from "../base";
 import { clearError } from "../errors/actions";
 import { WallContainer } from "./Container";
@@ -16,7 +17,7 @@ const LoginFooter = styled.div`
 
     & > span {
         color: ${props => props.theme.color.red};
-        font-size: ${props => props.theme.fontSize.sm};
+        font-size: ${getFontSize("sm")};
     }
 `;
 

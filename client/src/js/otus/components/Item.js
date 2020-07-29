@@ -2,32 +2,27 @@ import React from "react";
 import { get } from "lodash-es";
 import styled from "styled-components";
 import { connect } from "react-redux";
+import { getFontSize, getFontWeight } from "../../app/theme";
 import { LinkBox, Icon } from "../../base";
+
+const OTUItemAbbreviation = styled.span`
+    margin-left: auto;
+`;
+
+const OTUItemName = styled.strong`
+    font-size: ${getFontSize("lg")};
+    font-weight: ${getFontWeight("thick")};
+`;
 
 const StyledOTUItem = styled(LinkBox)`
     align-items: center;
-    display: grid;
-
-    grid-template-columns: 3fr 2fr auto;
-
-    @media (max-width: 990px) {
-        align-items: center;
-        grid-template-columns: 1fr 100fr auto;
-    }
-`;
-
-const OTUItemAbbreviation = styled.div`
-    @media (max-width: 990px) {
-        font-size: 85%;
-        margin-left: 5px;
-    }
+    display: flex;
 `;
 
 export const OTUItem = ({ abbreviation, id, name, refId, verified }) => (
     <StyledOTUItem key={id} to={`/refs/${refId}/otus/${id}`}>
-        <strong>{name}</strong>
+        <OTUItemName>{name}</OTUItemName>
         <OTUItemAbbreviation>{abbreviation}</OTUItemAbbreviation>
-
         {verified ? null : <Icon name="tag" tip="This OTU is unverified" />}
     </StyledOTUItem>
 );

@@ -1,84 +1,88 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<File /> should render 1`] = `
-<File__StyledFile>
+<Box__SpacedBox>
   <File__FileHeader>
     <strong>
       foo.fa
     </strong>
-    <File__Creation>
-      Uploaded 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
-      />
-       by 
-      bill
-    </File__Creation>
-  </File__FileHeader>
-  <div>
-    <Icon
-      color="red"
-      faStyle="fas"
-      fixedWidth={false}
-      name="trash"
-      onClick={[Function]}
-      style={
-        Object {
-          "fontSize": "17px",
-          "marginLeft": "9px",
+    <span>
+      <span />
+      <Icon
+        color="red"
+        faStyle="fas"
+        fixedWidth={false}
+        name="trash"
+        onClick={[Function]}
+        style={
+          Object {
+            "fontSize": "17px",
+            "marginLeft": "9px",
+          }
         }
-      }
+      />
+    </span>
+  </File__FileHeader>
+  <File__FileAttribution>
+    Uploaded 
+    <RelativeTime
+      time="2018-02-14T17:12:00.000000Z"
     />
-  </div>
-</File__StyledFile>
+     by 
+    bill
+  </File__FileAttribution>
+</Box__SpacedBox>
 `;
 
 exports[`<File /> should render when [canRemove=false] 1`] = `
-<File__StyledFile>
+<Box__SpacedBox>
   <File__FileHeader>
     <strong>
       foo.fa
     </strong>
-    <File__Creation>
-      Uploaded 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
-      />
-       by 
-      bill
-    </File__Creation>
+    <span>
+      <span />
+    </span>
   </File__FileHeader>
-  <div />
-</File__StyledFile>
+  <File__FileAttribution>
+    Uploaded 
+    <RelativeTime
+      time="2018-02-14T17:12:00.000000Z"
+    />
+     by 
+    bill
+  </File__FileAttribution>
+</Box__SpacedBox>
 `;
 
 exports[`<File /> should render when [user=null] 1`] = `
-<File__StyledFile>
+<Box__SpacedBox>
   <File__FileHeader>
     <strong>
       foo.fa
     </strong>
-    <File__Creation>
-      Retrieved 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
-      />
-    </File__Creation>
-  </File__FileHeader>
-  <div>
-    <Icon
-      color="red"
-      faStyle="fas"
-      fixedWidth={false}
-      name="trash"
-      onClick={[Function]}
-      style={
-        Object {
-          "fontSize": "17px",
-          "marginLeft": "9px",
+    <span>
+      <span />
+      <Icon
+        color="red"
+        faStyle="fas"
+        fixedWidth={false}
+        name="trash"
+        onClick={[Function]}
+        style={
+          Object {
+            "fontSize": "17px",
+            "marginLeft": "9px",
+          }
         }
-      }
+      />
+    </span>
+  </File__FileHeader>
+  <File__FileAttribution>
+    Retrieved 
+    <RelativeTime
+      time="2018-02-14T17:12:00.000000Z"
     />
-  </div>
-</File__StyledFile>
+  </File__FileAttribution>
+</Box__SpacedBox>
 `;

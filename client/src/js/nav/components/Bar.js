@@ -10,29 +10,23 @@ import { NavDropdown } from "./Dropdown";
 import Update from "./Update";
 
 const NavBarItem = styled(NavLink)`
+    align-items: center;
     color: white;
     cursor: pointer;
-    font-weight: 500;
-    height: 100%;
     display: flex;
+    font-size: ${props => props.theme.fontSize.lg};
+    font-weight: ${props => props.theme.fontWeight.thick};
+    height: 100%;
     justify-content: center;
-    align-items: center;
     padding: 0 15px;
 
-    &:focus {
-        text-decoration: none;
-    }
-
     &:hover {
-        opacity: 1;
-        text-decoration: none;
-        color: #245251;
+        color: ${props => props.theme.color.primaryDarkest};
     }
 
     &.active {
-        color: white;
-        opacity: 1;
-        background-color: rgb(50, 112, 111);
+        background-color: ${props => props.theme.color.primaryDark};
+        color: ${props => props.theme.color.white};
     }
 `;
 
