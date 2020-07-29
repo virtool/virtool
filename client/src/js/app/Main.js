@@ -29,7 +29,7 @@ const Fallback = () => (
 );
 
 const MainContainer = styled.div`
-    margin-top: 80px;
+    padding-top: 80px;
 `;
 
 const setupWebSocket = () => {

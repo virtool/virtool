@@ -17,7 +17,7 @@ const NavBarLeft = styled.div`
 const NavBarRight = styled.div`
     display: flex;
     align-items: center;
-    margin-right: 15px;
+    margin-right: calc(100% - 100vw + 20px);
 `;
 
 const NavBarLogo = styled(VTLogo)`

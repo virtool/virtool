@@ -92,7 +92,6 @@ export const ModalOverlay = styled(({ close, ...rest }) => <ReachDialogOverlay {
     right: 0;
     bottom: 0;
     left: 0;
-    overflow: auto;
     position: fixed;
     z-index: 100;
 `;

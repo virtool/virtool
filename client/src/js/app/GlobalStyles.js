@@ -22,7 +22,6 @@ export const GlobalStyles = createGlobalStyle`
     
     body {
         height: calc(100vh - 40px);
-        overflow-y: scroll;
     }
     
     h1 {
