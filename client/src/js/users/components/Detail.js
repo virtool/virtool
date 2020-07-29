@@ -101,7 +101,7 @@ export class UserDetail extends React.Component {
 
                 {this.props.canModifyUser ? (
                     <RemoveBanner
-                        message="Click the Delete button to permanently remove this user."
+                        message="Permanently remove this user"
                         buttonText="Delete"
                         onClick={this.handleRemove}
                     />

@@ -18,7 +18,7 @@ const StyledRemoveBanner = styled(Alert)`
 
 export const RemoveBanner = ({ message, buttonText, onClick }) => (
     <StyledRemoveBanner color="red">
-        <span>{message}</span>
+        <strong>{message}</strong>
         <Button color="red" icon="trash" onClick={onClick}>
             {buttonText}
         </Button>
