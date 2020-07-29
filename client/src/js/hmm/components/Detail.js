@@ -62,7 +62,7 @@ const ClusterTable = styled(Table)`
 const TaxonomyGrid = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr;
-    column-gap: 15px;
+    grid-column-gap: ${props => props.theme.gap.column};
 
     @media (max-width: ${device.tablet}) {
         grid-template-columns: 1fr;

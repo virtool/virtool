@@ -14,7 +14,7 @@ exports[`<SampleRights /> should render 1`] = `
     <label>
       Sample Group
     </label>
-    <SampleRights__SampleGroupSelection>
+    <SampleRights__SampleRightsGroup>
       <SelectBox
         active=""
         onClick={[Function]}
@@ -52,7 +52,7 @@ exports[`<SampleRights /> should render 1`] = `
           Samples are assigned by the user in the creation form
         </p>
       </SelectBox>
-    </SampleRights__SampleGroupSelection>
+    </SampleRights__SampleRightsGroup>
     <InputGroup>
       <Input__InputLabel>
         Group Rights
