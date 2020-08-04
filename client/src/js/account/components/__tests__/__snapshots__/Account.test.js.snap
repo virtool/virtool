@@ -10,16 +10,16 @@ exports[`<Account /> should render 1`] = `
     </ViewHeader__ViewHeaderTitle>
   </ViewHeader>
   <Tabs>
-    <TabLink
+    <Tabs__TabLink
       to="/account/profile"
     >
       Profile
-    </TabLink>
-    <TabLink
+    </Tabs__TabLink>
+    <Tabs__TabLink
       to="/account/api"
     >
       API
-    </TabLink>
+    </Tabs__TabLink>
   </Tabs>
   <Switch>
     <Redirect

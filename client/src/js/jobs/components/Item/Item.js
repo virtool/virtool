@@ -1,18 +1,19 @@
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Attribution, LinkBox, AffixedProgressBar } from "../../../base";
+import { getFontSize, getFontWeight } from "../../../app/theme";
+import { AffixedProgressBar, Attribution, LinkBox } from "../../../base";
 import { getTaskDisplayName } from "../../../utils/utils";
 import { cancelJob, removeJob } from "../../actions";
 import { JobAction } from "./Action";
 import { JobStatus } from "./Status";
 
 const JobItemBody = styled.div`
+    font-size: ${getFontSize("lg")};
     padding: 10px 15px;
-    position: relative;
 
     ${Attribution} {
-        font-size: 12px;
+        font-size: ${getFontSize("md")};
     }
 `;
 
@@ -23,12 +24,12 @@ const JobItemContainer = styled.div`
 const JobItemHeader = styled.div`
     align-items: center;
     display: flex;
-    position: relative;
+    font-weight: ${getFontWeight("thick")};
 `;
 
 const JobItemLinkBox = styled(LinkBox)`
     padding: 5px 0 0 0;
-    position: relative;
+    z-index: 10;
 `;
 
 export const JobItem = ({ id, task, state, progress, created_at, user, canCancel, canRemove, onCancel, onRemove }) => {
@@ -55,7 +56,7 @@ export const JobItem = ({ id, task, state, progress, created_at, user, canCancel
 
                 <JobItemBody>
                     <JobItemHeader>
-                        <strong>{getTaskDisplayName(task)}</strong>
+                        <span>{getTaskDisplayName(task)}</span>
                         <JobStatus state={state} pad={canCancel || canRemove} />
                     </JobItemHeader>
                     <Attribution time={created_at} user={user.id} />

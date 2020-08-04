@@ -2,7 +2,7 @@ import { map } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
 import { BoxGroup, InputError, NoneFoundSection } from "../../base";
-import { ReferenceSelectItem } from "./ReferenceSelectItem";
+import { ReferenceSelectorItem } from "./ReferenceSelectorItem";
 
 const ReferenceSelectList = styled(BoxGroup)`
     border-color: ${props => (props.error ? props.theme.color.red : props.theme.color.grey)};
@@ -16,9 +16,9 @@ const StyledReferenceSelect = styled.div`
     margin-bottom: 20px;
 `;
 
-export const ReferenceSelect = ({ references, error, selected, onSelect }) => {
+export const ReferenceSelector = ({ references, error, selected, onSelect }) => {
     let referenceComponents = map(references, reference => (
-        <ReferenceSelectItem
+        <ReferenceSelectorItem
             reference={reference}
             key={reference.id}
             onClick={() => onSelect(reference.id)}

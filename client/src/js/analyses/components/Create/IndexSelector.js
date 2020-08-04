@@ -4,8 +4,8 @@ import styled from "styled-components";
 import { BoxGroup, NoneFoundBox } from "../../../base";
 import { IndexSelectorItem } from "./IndexSelectorItem";
 
-const StyledIndexSelectorList = styled.div`
-    border: 1px solid ${props => (props.error.length ? "#d44b40" : "transparent")};
+const StyledIndexSelectorList = styled(BoxGroup)`
+    ${props => (props.error.length ? `border-color: ${props.theme.color.redDark};` : "")};
     max-height: 165px;
     overflow-y: auto;
 `;
@@ -19,11 +19,7 @@ export const IndexSelector = ({ error, indexes, selected, onSelect }) => {
             return <IndexSelectorItem key={index.id} {...index} isSelected={isSelected} onSelect={onSelect} />;
         });
 
-        content = (
-            <BoxGroup>
-                <StyledIndexSelectorList error={error}>{indexComponents}</StyledIndexSelectorList>
-            </BoxGroup>
-        );
+        content = <StyledIndexSelectorList error={error}>{indexComponents}</StyledIndexSelectorList>;
     } else {
         content = <NoneFoundBox noun="built references" />;
     }

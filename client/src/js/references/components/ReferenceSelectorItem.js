@@ -1,13 +1,13 @@
 import React from "react";
 import styled from "styled-components";
-import { Attribution, Badge, BoxGroupSection } from "../../base";
+import { Attribution, Badge, SelectBoxGroupSection } from "../../base";
 
-const StyledReferenceSelectItem = styled(BoxGroupSection)`
+const StyledReferenceSelectItem = styled(SelectBoxGroupSection)`
     display: grid;
     grid-template-columns: 2fr 2fr 1fr;
 `;
 
-export const ReferenceSelectItem = ({ active, reference, onClick }) => (
+export const ReferenceSelectorItem = ({ active, reference, onClick }) => (
     <StyledReferenceSelectItem active={active} onClick={onClick}>
         <strong>{reference.name}</strong>
         <Attribution time={reference.created_at} user={reference.user.id} />

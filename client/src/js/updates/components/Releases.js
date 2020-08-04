@@ -2,6 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
+import { getFontSize, getFontWeight } from "../../app/theme";
 import { BoxGroup, BoxGroupSection, Icon } from "../../base";
 import Install from "./Install";
 import ReleasesList from "./List";
@@ -12,6 +13,11 @@ const StyledReleases = styled(BoxGroup)`
 
     ${BoxGroupSection}:first-child {
         color: ${props => props.theme.color.greenDark};
+
+        strong {
+            font-size: ${getFontSize("lg")};
+            font-weight: ${getFontWeight("thick")};
+        }
     }
 `;
 

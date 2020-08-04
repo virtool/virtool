@@ -33,7 +33,7 @@ exports[`<UserDetail /> should render 1`] = `
   <Connect(UserRole) />
   <RemoveBanner
     buttonText="Delete"
-    message="Click the Delete button to permanently remove this user."
+    message="Permanently remove this user"
     onClick={[Function]}
   />
 </div>
@@ -68,7 +68,7 @@ exports[`<UserDetail /> should render when [administrator=false] 1`] = `
   <Connect(UserRole) />
   <RemoveBanner
     buttonText="Delete"
-    message="Click the Delete button to permanently remove this user."
+    message="Permanently remove this user"
     onClick={[Function]}
   />
 </div>

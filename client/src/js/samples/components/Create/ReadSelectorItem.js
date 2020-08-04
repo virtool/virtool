@@ -1,9 +1,9 @@
+import PropTypes from "prop-types";
 import React, { useCallback } from "react";
 import styled from "styled-components";
-import PropTypes from "prop-types";
-
+import { getFontSize, getFontWeight } from "../../../app/theme";
+import { Icon, SelectBoxGroupSection } from "../../../base";
 import { byteSize } from "../../../utils/utils";
-import { Icon, BoxGroupSection } from "../../../base";
 
 const ReadIcon = styled.span`
     font-size: 24px;
@@ -13,21 +13,19 @@ const ReadIcon = styled.span`
 const ReadTitle = styled.div`
     align-items: center;
     display: flex;
-`;
 
-const StyledReadItem = styled(BoxGroupSection)`
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
+    strong {
+        font-weight: ${getFontWeight("thick")};
+    }
 `;
 
 const StyledReadOrientation = styled.div`
-    background-color: #07689d;
-    border: 2px solid #ffffff;
-    border-radius: 4px;
-    color: #ffffff;
-    font-size: 12px;
-    font-weight: bold;
+    background-color: ${props => props.theme.color.blueDark};
+    border: 2px solid ${props => props.theme.color.white};
+    border-radius: ${props => props.theme.borderRadius.md};
+    color: ${props => props.theme.color.white};
+    font-size: ${getFontSize("sm")};
+    font-weight: ${getFontWeight("bold")};
     text-align: center;
     width: 48px;
 `;
@@ -40,11 +38,18 @@ export const ReadOrientation = ({ index, selected }) => {
     return null;
 };
 
-export const ReadItem = ({ id, index, name, selected, size, onSelect }) => {
+const StyledReadSelectorItem = styled(SelectBoxGroupSection)`
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    user-select: none;
+`;
+
+export const ReadSelectorItem = ({ id, index, name, selected, size, onSelect }) => {
     const select = useCallback(() => onSelect(id), []);
 
     return (
-        <StyledReadItem onClick={select} active={selected}>
+        <StyledReadSelectorItem onClick={select} active={selected}>
             <ReadTitle>
                 <ReadIcon>
                     <Icon name="file" />
@@ -55,15 +60,15 @@ export const ReadItem = ({ id, index, name, selected, size, onSelect }) => {
                 </div>
             </ReadTitle>
             <ReadOrientation index={index} selected={selected} />
-        </StyledReadItem>
+        </StyledReadSelectorItem>
     );
 };
 
-ReadItem.defaultProps = {
+ReadSelectorItem.defaultProps = {
     selected: false
 };
 
-ReadItem.propTypes = {
+ReadSelectorItem.propTypes = {
     id: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired,
     index: PropTypes.number.isRequired,
@@ -72,4 +77,4 @@ ReadItem.propTypes = {
     selected: PropTypes.bool
 };
 
-export default ReadItem;
+export default ReadSelectorItem;

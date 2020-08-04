@@ -1,10 +1,16 @@
 import React from "react";
 import styled from "styled-components";
+import { getBorder } from "../../app/theme";
 import { AffixedProgressBar, Icon } from "../../base";
 import { byteSize } from "../../utils/utils";
 
 const StyledUploadItem = styled.div`
     padding: 0;
+    position: relative;
+
+    &:not(:last-child) {
+        border-bottom: ${getBorder};
+    }
 `;
 
 const UploadItemTitle = styled.div`

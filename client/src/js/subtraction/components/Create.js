@@ -7,24 +7,24 @@ import { pushState } from "../../app/actions";
 import {
     Attribution,
     BoxGroup,
-    BoxGroupSection,
     Button,
-    ModalBody,
-    ModalFooter,
     Input,
     InputError,
     InputGroup,
     InputLabel,
     Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader,
     NoneFoundSection,
-    ModalHeader
+    SelectBoxGroupSection
 } from "../../base";
 
 import { findFiles } from "../../files/actions";
 import { getTargetChange, routerLocationHasState } from "../../utils/utils";
 import { createSubtraction } from "../actions";
 
-const StyledSubtractionFileItem = styled(BoxGroupSection)`
+const StyledSubtractionFileItem = styled(SelectBoxGroupSection)`
     display: flex;
 
     ${Attribution} {

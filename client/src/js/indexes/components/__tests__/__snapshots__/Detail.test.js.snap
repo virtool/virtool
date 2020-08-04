@@ -27,17 +27,17 @@ exports[`<IndexDetail /> should render 1`] = `
     />
   </ViewHeader>
   <Tabs>
-    <TabLink
+    <Tabs__TabLink
       to="/refs/foo/indexes/baz/general"
     >
       General
-    </TabLink>
-    <TabLink
+    </Tabs__TabLink>
+    <Tabs__TabLink
       to="/refs/foo/indexes/baz/changes"
     >
       Changes 
       <Badge />
-    </TabLink>
+    </Tabs__TabLink>
   </Tabs>
   <Switch>
     <Redirect

@@ -2,16 +2,16 @@
 
 exports[`<FirstUser /> should render 1`] = `
 <Container__WallContainer>
-  <FirstUser__FirstUserModal>
-    <FirstUser__FirstUserModalHeader>
+  <FirstUser__FirstUserDialog>
+    <FirstUser__FirstUserDialogHeader>
       <h2>
         Setup User
       </h2>
       <p>
         Create an initial administrative user to start using Virtool.
       </p>
-    </FirstUser__FirstUserModalHeader>
-    <FirstUser__FirstUserModalBody>
+    </FirstUser__FirstUserDialogHeader>
+    <FirstUser__FirstUserDialogBody>
       <form
         onSubmit={[Function]}
       >
@@ -45,23 +45,23 @@ exports[`<FirstUser /> should render 1`] = `
           Create User
         </Button>
       </form>
-    </FirstUser__FirstUserModalBody>
-  </FirstUser__FirstUserModal>
+    </FirstUser__FirstUserDialogBody>
+  </FirstUser__FirstUserDialog>
 </Container__WallContainer>
 `;
 
 exports[`<FirstUser /> should render when "password" changed 1`] = `
 <Container__WallContainer>
-  <FirstUser__FirstUserModal>
-    <FirstUser__FirstUserModalHeader>
+  <FirstUser__FirstUserDialog>
+    <FirstUser__FirstUserDialogHeader>
       <h2>
         Setup User
       </h2>
       <p>
         Create an initial administrative user to start using Virtool.
       </p>
-    </FirstUser__FirstUserModalHeader>
-    <FirstUser__FirstUserModalBody>
+    </FirstUser__FirstUserDialogHeader>
+    <FirstUser__FirstUserDialogBody>
       <form
         onSubmit={[Function]}
       >
@@ -95,23 +95,23 @@ exports[`<FirstUser /> should render when "password" changed 1`] = `
           Create User
         </Button>
       </form>
-    </FirstUser__FirstUserModalBody>
-  </FirstUser__FirstUserModal>
+    </FirstUser__FirstUserDialogBody>
+  </FirstUser__FirstUserDialog>
 </Container__WallContainer>
 `;
 
 exports[`<FirstUser /> should render when "username" changed 1`] = `
 <Container__WallContainer>
-  <FirstUser__FirstUserModal>
-    <FirstUser__FirstUserModalHeader>
+  <FirstUser__FirstUserDialog>
+    <FirstUser__FirstUserDialogHeader>
       <h2>
         Setup User
       </h2>
       <p>
         Create an initial administrative user to start using Virtool.
       </p>
-    </FirstUser__FirstUserModalHeader>
-    <FirstUser__FirstUserModalBody>
+    </FirstUser__FirstUserDialogHeader>
+    <FirstUser__FirstUserDialogBody>
       <form
         onSubmit={[Function]}
       >
@@ -145,7 +145,7 @@ exports[`<FirstUser /> should render when "username" changed 1`] = `
           Create User
         </Button>
       </form>
-    </FirstUser__FirstUserModalBody>
-  </FirstUser__FirstUserModal>
+    </FirstUser__FirstUserDialogBody>
+  </FirstUser__FirstUserDialog>
 </Container__WallContainer>
 `;

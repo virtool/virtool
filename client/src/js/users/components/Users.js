@@ -59,7 +59,7 @@ export class ManageUsers extends React.Component {
             <div>
                 <Toolbar>
                     <SearchInput name="search" value={this.state.term} onChange={this.props.onFind} />
-                    <LinkButton to={{ state: { groups: true } }} icon="users" tip="Manage Group" />
+                    <LinkButton to={{ state: { groups: true } }} icon="users" tip="Manage Groups" />
                     <LinkButton to={{ state: { createUser: true } }} icon="user-plus" tip="Create User" color="blue" />
                 </Toolbar>
 

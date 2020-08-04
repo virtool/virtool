@@ -38,12 +38,11 @@ const StyledJobStepDescription = styled.div`
     > h4 {
         font-size: ${props => props.theme.fontSize.lg};
         font-weight: bold;
-        margin: 2px 0 6px;
+        margin: 0 0 4px;
     }
 
     > p {
         color: ${props => props.theme.color.greyDarkest};
-        font-size: ${props => props.theme.fontSize.md};
         margin: 0 0 3px;
     }
 `;
@@ -70,7 +69,7 @@ export const JobStepIcon = ({ complete, state }) => {
     }
 
     if (state === "running") {
-        return <JobStepLoader size="12px" color="#07689d" />;
+        return <JobStepLoader size="12px" color="primary" />;
     }
 
     if (state === "complete") {

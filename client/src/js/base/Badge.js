@@ -4,7 +4,7 @@ import { getLabelColor } from "./Label";
 
 export const Badge = styled.span`
     background-color: ${getLabelColor};
-    border-radius: 10px;
+    border-radius: ${props => props.theme.borderRadius.lg};
     color: ${props => props.theme.color.white};
     display: inline-block;
     min-width: 10px;

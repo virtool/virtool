@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import React from "react";
 import { Link } from "react-router-dom";
-import { Table } from "../../base";
+import { BoxGroup, BoxGroupHeader, Table } from "../../base";
 
 const TaskArgsRow = ({ children, title }) => (
     <tr>
@@ -73,17 +73,21 @@ export const TaskArgsRows = ({ taskType, taskArgs }) => {
     }
 };
 
-const TaskArgs = props => (
-    <Table bordered>
-        <tbody>
-            <TaskArgsRows {...props} />
-        </tbody>
-    </Table>
+export const TaskArgs = props => (
+    <BoxGroup>
+        <BoxGroupHeader>
+            <h2>Arguments</h2>
+            <p>Run arguments that make this job unique.</p>
+        </BoxGroupHeader>
+        <Table>
+            <tbody>
+                <TaskArgsRows {...props} />
+            </tbody>
+        </Table>
+    </BoxGroup>
 );
 
 TaskArgs.propTypes = {
-    taskType: PropTypes.string,
-    taskArgs: PropTypes.object
+    taskType: PropTypes.string.isRequired,
+    taskArgs: PropTypes.object.isRequired
 };
-
-export default TaskArgs;

@@ -14,6 +14,10 @@ import Targets from "./Targets/Targets";
 import ReferenceExport from "./Export";
 
 const ReferenceManageTable = styled(Table)`
+    th {
+        width: 180px;
+    }
+
     tr:not(:first-of-type) td {
         text-transform: capitalize;
     }
@@ -35,22 +39,27 @@ export const ReferenceManage = props => {
         <div>
             <ReferenceDetailHeader />
             <ReferenceDetailTabs />
-            <ReferenceManageTable>
-                <tbody>
-                    <tr>
-                        <th>Description</th>
-                        <td>{props.description}</td>
-                    </tr>
-                    <tr>
-                        <th>Organism</th>
-                        <td>{props.organism}</td>
-                    </tr>
-                    <tr>
-                        <th>Data Type</th>
-                        <td>{props.data_type}</td>
-                    </tr>
-                </tbody>
-            </ReferenceManageTable>
+            <BoxGroup>
+                <BoxGroupHeader>
+                    <h2>General</h2>
+                </BoxGroupHeader>
+                <ReferenceManageTable>
+                    <tbody>
+                        <tr>
+                            <th>Description</th>
+                            <td>{props.description}</td>
+                        </tr>
+                        <tr>
+                            <th>Organism</th>
+                            <td>{props.organism}</td>
+                        </tr>
+                        <tr>
+                            <th>Data Type</th>
+                            <td>{props.data_type}</td>
+                        </tr>
+                    </tbody>
+                </ReferenceManageTable>
+            </BoxGroup>
 
             {remote}
             {clone}

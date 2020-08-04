@@ -6,10 +6,10 @@ import { SelectBox } from "../../../base";
 const LibraryTypeSelectBoxContainer = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    grid-gap: 15px;
+    grid-gap: ${props => props.theme.gap.column};
 `;
 
-export const LibraryTypeSelection = ({ onSelect, libraryType }) => (
+export const LibraryTypeSelector = ({ onSelect, libraryType }) => (
     <React.Fragment>
         <label>Library Type</label>
         <LibraryTypeSelectBoxContainer>

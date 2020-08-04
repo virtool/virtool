@@ -5,30 +5,28 @@ exports[`<IndexSelector /> should render 1`] = `
   <label>
     References
   </label>
-  <Box__BoxGroup>
-    <IndexSelector__StyledIndexSelectorList
-      error=""
-    >
-      <IndexSelectorItem
-        id="foo"
-        isSelected={true}
-        key="foo"
-        onSelect={[MockFunction]}
-      />
-      <IndexSelectorItem
-        id="bar"
-        isSelected={true}
-        key="bar"
-        onSelect={[MockFunction]}
-      />
-      <IndexSelectorItem
-        id="baz"
-        isSelected={false}
-        key="baz"
-        onSelect={[MockFunction]}
-      />
-    </IndexSelector__StyledIndexSelectorList>
-  </Box__BoxGroup>
+  <IndexSelector__StyledIndexSelectorList
+    error=""
+  >
+    <IndexSelectorItem
+      id="foo"
+      isSelected={true}
+      key="foo"
+      onSelect={[MockFunction]}
+    />
+    <IndexSelectorItem
+      id="bar"
+      isSelected={true}
+      key="bar"
+      onSelect={[MockFunction]}
+    />
+    <IndexSelectorItem
+      id="baz"
+      isSelected={false}
+      key="baz"
+      onSelect={[MockFunction]}
+    />
+  </IndexSelector__StyledIndexSelectorList>
 </Fragment>
 `;
 
@@ -48,29 +46,27 @@ exports[`<IndexSelector /> should render with error 1`] = `
   <label>
     References
   </label>
-  <Box__BoxGroup>
-    <IndexSelector__StyledIndexSelectorList
-      error="Error"
-    >
-      <IndexSelectorItem
-        id="foo"
-        isSelected={true}
-        key="foo"
-        onSelect={[MockFunction]}
-      />
-      <IndexSelectorItem
-        id="bar"
-        isSelected={true}
-        key="bar"
-        onSelect={[MockFunction]}
-      />
-      <IndexSelectorItem
-        id="baz"
-        isSelected={false}
-        key="baz"
-        onSelect={[MockFunction]}
-      />
-    </IndexSelector__StyledIndexSelectorList>
-  </Box__BoxGroup>
+  <IndexSelector__StyledIndexSelectorList
+    error="Error"
+  >
+    <IndexSelectorItem
+      id="foo"
+      isSelected={true}
+      key="foo"
+      onSelect={[MockFunction]}
+    />
+    <IndexSelectorItem
+      id="bar"
+      isSelected={true}
+      key="bar"
+      onSelect={[MockFunction]}
+    />
+    <IndexSelectorItem
+      id="baz"
+      isSelected={false}
+      key="baz"
+      onSelect={[MockFunction]}
+    />
+  </IndexSelector__StyledIndexSelectorList>
 </Fragment>
 `;

@@ -1,66 +1,39 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<UserItem /> should render when administrator=false] 1`] = `
-<Box__LinkBox
+<Item__StyledUserItem
   to="/administration/users/bob"
 >
-  <Item__StyledUserItem>
-    <Identicon
-      hash="foobar"
-      size={32}
-    />
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      pad={10}
-      shrink={1}
-    >
-      bob
-    </FlexItem>
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      pad={10}
-      shrink={1}
-    />
-  </Item__StyledUserItem>
-</Box__LinkBox>
+  <Identicon
+    hash="foobar"
+    size={32}
+  />
+  <strong>
+    bob
+  </strong>
+</Item__StyledUserItem>
 `;
 
 exports[`<UserItem /> should render when administrator=true] 1`] = `
-<Box__LinkBox
+<Item__StyledUserItem
   to="/administration/users/bob"
 >
-  <Item__StyledUserItem>
-    <Identicon
-      hash="foobar"
-      size={32}
+  <Identicon
+    hash="foobar"
+    size={32}
+  />
+  <strong>
+    bob
+  </strong>
+  <Label
+    color="purple"
+  >
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="user-shield"
     />
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      pad={10}
-      shrink={1}
-    >
-      bob
-    </FlexItem>
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      pad={10}
-      shrink={1}
-    >
-      <Icon
-        color="blue"
-        faStyle="fas"
-        fixedWidth={false}
-        name="user-shield"
-      />
-    </FlexItem>
-  </Item__StyledUserItem>
-</Box__LinkBox>
+     Administrator
+  </Label>
+</Item__StyledUserItem>
 `;

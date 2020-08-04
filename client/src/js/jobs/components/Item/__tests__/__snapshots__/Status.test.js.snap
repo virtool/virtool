@@ -53,7 +53,7 @@ exports[`<JobStatusIcon /> should render when [pad=false] and [state="running"] 
   pad={false}
 >
   <Loader
-    color="#3c8786"
+    color="primary"
     size="14px"
   />
   <span>
@@ -67,7 +67,7 @@ exports[`<JobStatusIcon /> should render when [pad=false] and [state="waiting"] 
   pad={false}
 >
   <Loader
-    color="#3c8786"
+    color="primary"
     size="14px"
   />
   <span>
@@ -129,7 +129,7 @@ exports[`<JobStatusIcon /> should render when [pad=true] and [state="running"] 1
   pad={true}
 >
   <Loader
-    color="#3c8786"
+    color="primary"
     size="14px"
   />
   <span>
@@ -143,7 +143,7 @@ exports[`<JobStatusIcon /> should render when [pad=true] and [state="waiting"] 1
   pad={true}
 >
   <Loader
-    color="#3c8786"
+    color="primary"
     size="14px"
   />
   <span>

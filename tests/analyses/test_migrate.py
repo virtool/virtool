@@ -1,3 +1,4 @@
+import datetime
 import os
 import pytest
 import json
@@ -89,6 +90,37 @@ async def test_add_subtractions_to_analyses(skip, dbi):
     assert await dbi.analyses.find().sort("_id").to_list(None) == expected
 
     assert return_value is (None if skip else True)
+
+
+async def test_add_updated_at(snapshot, dbi, static_time):
+    """
+    Ensure that the `updated_at` field is only added if it doesn't exist. Ensure that multiple update operation succeed.
+
+    """
+    await dbi.analyses.insert_many([
+        {
+            "_id": "foo",
+            "created_at": static_time.datetime
+        },
+        {
+            "_id": "bar",
+            "created_at": static_time.datetime,
+            "updated_at": static_time.datetime + datetime.timedelta(hours=9)
+        },
+        {
+            "_id": "baz",
+            "created_at": static_time.datetime
+        },
+        {
+            "_id": "bad",
+            "created_at": static_time.datetime,
+            "updated_at": static_time.datetime + datetime.timedelta(hours=2, minutes=32)
+        }
+    ])
+
+    await virtool.analyses.migrate.add_updated_at(dbi)
+
+    snapshot.assert_match(await dbi.analyses.find().to_list(None))
 
 
 async def test_migrate_analyses(mocker, dbi):

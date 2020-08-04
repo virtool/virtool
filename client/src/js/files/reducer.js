@@ -63,6 +63,7 @@ export const updateProgress = (state, action) => {
         if (upload.localId === action.localId) {
             return { ...upload, progress: action.progress };
         }
+
         return upload;
     });
 
@@ -80,13 +81,13 @@ export default function fileReducer(state = initialState, action) {
     switch (action.type) {
         case WS_INSERT_FILE:
             if (action.data.type === state.fileType) {
-                return insert(state, action, "created_at", true);
+                return insert(state, action, "uploaded_at", true);
             }
 
             return state;
 
         case WS_UPDATE_FILE:
-            return update(state, action, "created_at", true);
+            return update(state, action, "uploaded_at", true);
 
         case WS_REMOVE_FILE:
             return remove(state, action);

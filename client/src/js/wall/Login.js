@@ -3,10 +3,10 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { login } from "../account/actions";
-import { Box, Button, Checkbox, Input, InputGroup, InputLabel, PasswordInput } from "../base";
+import { getFontSize } from "../app/theme";
+import { Button, Checkbox, Input, InputGroup, InputLabel, PasswordInput } from "../base";
 import { clearError } from "../errors/actions";
-import { WallContainer } from "./Container";
-import { WallLogo } from "./Logo";
+import { WallContainer, WallDialog, WallLogo } from "./Container";
 
 const LoginFooter = styled.div`
     align-items: center;
@@ -16,21 +16,8 @@ const LoginFooter = styled.div`
 
     & > span {
         color: ${props => props.theme.color.red};
-        font-size: ${props => props.theme.fontSize.sm};
+        font-size: ${getFontSize("sm")};
     }
-`;
-
-const LoginModal = styled(Box)`
-    align-items: stretch;
-    background-color: #fff;
-    border: none;
-    border-radius: ${props => props.theme.borderRadius.sm};
-    box-shadow: ${props => props.theme.boxShadow.lg};
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 260px;
-    padding: 10px 15px;
-    width: 340px;
 `;
 
 export class Login extends React.Component {
@@ -68,7 +55,7 @@ export class Login extends React.Component {
         return (
             <WallContainer>
                 <WallLogo height={42} />
-                <LoginModal>
+                <WallDialog>
                     <form onSubmit={this.handleSubmit}>
                         <InputGroup>
                             <InputLabel>Username</InputLabel>
@@ -88,7 +75,7 @@ export class Login extends React.Component {
                             </Button>
                         </LoginFooter>
                     </form>
-                </LoginModal>
+                </WallDialog>
             </WallContainer>
         );
     }

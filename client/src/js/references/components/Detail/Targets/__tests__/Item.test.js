@@ -32,19 +32,13 @@ describe("<TargetItem />", () => {
 
     it("should call onEdit when edit icon clicked", () => {
         const wrapper = shallow(<TargetItem {...props} />);
-        wrapper
-            .find("Icon")
-            .at(0)
-            .simulate("click");
+        wrapper.find("Icon").at(0).simulate("click");
         expect(props.onEdit).toHaveBeenCalledWith("foo");
     });
 
     it("should call onRemove when remove icon clicked", () => {
         const wrapper = shallow(<TargetItem {...props} />);
-        wrapper
-            .find("Icon")
-            .at(1)
-            .simulate("click");
+        wrapper.find("Icon").at(1).simulate("click");
         expect(props.onRemove).toHaveBeenCalledWith("foo");
     });
 });

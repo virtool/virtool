@@ -23,7 +23,7 @@ import { shortlistSubtractions } from "../../../subtraction/actions";
 import { getSubtractionShortlist } from "../../../subtraction/selectors";
 import { getTargetChange, routerLocationHasState } from "../../../utils/utils";
 import { createSample, findReadFiles } from "../../actions";
-import { LibraryTypeSelection } from "./LibraryTypeSelection";
+import { LibraryTypeSelector } from "./LibraryTypeSelector";
 import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
 
@@ -31,7 +31,7 @@ const CreateSampleFields = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    grid-column-gap: 15px;
+    grid-column-gap: ${props => props.theme.gap.column};
 `;
 
 const extensionRegex = /^[a-z0-9]+-(.*)\.f[aq](st)?[aq]?(\.gz)?$/;
@@ -239,10 +239,7 @@ export class CreateSample extends React.Component {
                             </InputGroup>
                         </CreateSampleFields>
 
-                        <LibraryTypeSelection
-                            onSelect={this.handleLibrarySelect}
-                            libraryType={this.state.libraryType}
-                        />
+                        <LibraryTypeSelector onSelect={this.handleLibrarySelect} libraryType={this.state.libraryType} />
 
                         {userGroup}
 

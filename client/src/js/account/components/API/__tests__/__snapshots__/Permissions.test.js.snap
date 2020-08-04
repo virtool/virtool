@@ -2,114 +2,122 @@
 
 exports[`<Permissions /> should render correctly 1`] = `
 <Box__BoxGroup>
-  <Permissions__APIPermissionName
+  <Box__SelectBoxGroupSection
     active={true}
     disabled={false}
     key="test_create"
     onClick={[Function]}
   >
+    <Checkbox
+      checked={true}
+      disabled={false}
+    />
     <code>
       test_create
     </code>
-    <Checkbox
-      checked={true}
-    />
-  </Permissions__APIPermissionName>
-  <Permissions__APIPermissionName
+  </Box__SelectBoxGroupSection>
+  <Box__SelectBoxGroupSection
     active={false}
     disabled={false}
     key="test_edit"
     onClick={[Function]}
   >
+    <Checkbox
+      checked={false}
+      disabled={false}
+    />
     <code>
       test_edit
     </code>
-    <Checkbox
-      checked={false}
-    />
-  </Permissions__APIPermissionName>
-  <Permissions__APIPermissionName
+  </Box__SelectBoxGroupSection>
+  <Box__SelectBoxGroupSection
     active={true}
     disabled={true}
     key="test_remove"
     onClick={null}
   >
+    <Checkbox
+      checked={true}
+      disabled={false}
+    />
     <code>
       test_remove
     </code>
-    <Checkbox
-      checked={true}
-    />
-  </Permissions__APIPermissionName>
-  <Permissions__APIPermissionName
+  </Box__SelectBoxGroupSection>
+  <Box__SelectBoxGroupSection
     active={false}
     disabled={true}
     key="test_view"
     onClick={null}
   >
+    <Checkbox
+      checked={false}
+      disabled={false}
+    />
     <code>
       test_view
     </code>
-    <Checkbox
-      checked={false}
-    />
-  </Permissions__APIPermissionName>
+  </Box__SelectBoxGroupSection>
 </Box__BoxGroup>
 `;
 
 exports[`<Permissions /> should render no permission disabled when [props.administrator=true] 1`] = `
 <Box__BoxGroup>
-  <Permissions__APIPermissionName
+  <Box__SelectBoxGroupSection
     active={true}
     disabled={false}
     key="test_create"
     onClick={[Function]}
   >
+    <Checkbox
+      checked={true}
+      disabled={false}
+    />
     <code>
       test_create
     </code>
-    <Checkbox
-      checked={true}
-    />
-  </Permissions__APIPermissionName>
-  <Permissions__APIPermissionName
+  </Box__SelectBoxGroupSection>
+  <Box__SelectBoxGroupSection
     active={false}
     disabled={false}
     key="test_edit"
     onClick={[Function]}
   >
+    <Checkbox
+      checked={false}
+      disabled={false}
+    />
     <code>
       test_edit
     </code>
-    <Checkbox
-      checked={false}
-    />
-  </Permissions__APIPermissionName>
-  <Permissions__APIPermissionName
+  </Box__SelectBoxGroupSection>
+  <Box__SelectBoxGroupSection
     active={true}
     disabled={false}
     key="test_remove"
     onClick={[Function]}
   >
+    <Checkbox
+      checked={true}
+      disabled={false}
+    />
     <code>
       test_remove
     </code>
-    <Checkbox
-      checked={true}
-    />
-  </Permissions__APIPermissionName>
-  <Permissions__APIPermissionName
+  </Box__SelectBoxGroupSection>
+  <Box__SelectBoxGroupSection
     active={false}
     disabled={false}
     key="test_view"
     onClick={[Function]}
   >
+    <Checkbox
+      checked={false}
+      disabled={false}
+    />
     <code>
       test_view
     </code>
-    <Checkbox
-      checked={false}
-    />
-  </Permissions__APIPermissionName>
+  </Box__SelectBoxGroupSection>
 </Box__BoxGroup>
 `;

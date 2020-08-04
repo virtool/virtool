@@ -5,6 +5,7 @@ import pathlib
 import re
 
 import aiofiles
+import pymongo
 
 import virtool.analyses.utils
 import virtool.api.utils
@@ -32,6 +33,7 @@ async def migrate_analyses(app):
     await convert_pathoscope_files(db, settings)
     await rename_analysis_json_files(settings)
     await add_subtractions_to_analyses(db)
+    await add_updated_at(db)
     await virtool.db.migrate.delete_unready(db.analyses)
 
 
@@ -74,6 +76,22 @@ async def add_subtractions_to_analyses(db):
         })
 
     return True
+
+
+async def add_updated_at(db):
+    updates = list()
+
+    async for document in db.analyses.find({"updated_at": {"$exists": False}}, ["created_at"]):
+        updates.append(pymongo.UpdateOne({
+            "_id": document["_id"]
+        }, {
+            "$set": {
+                "updated_at": document["created_at"]
+            }
+        }))
+
+    if updates:
+        await db.analyses.bulk_write(updates)
 
 
 async def convert_pathoscope_file(db, analysis_id, sample_id, data_path):

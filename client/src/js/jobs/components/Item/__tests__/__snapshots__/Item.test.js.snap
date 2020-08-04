@@ -11,9 +11,9 @@ exports[`<JobItem /> should render when [canCancel=false] and [canRemove=false] 
     />
     <Item__JobItemBody>
       <Item__JobItemHeader>
-        <strong>
+        <span>
           Build Index
-        </strong>
+        </span>
         <JobStatus
           pad={false}
         />
@@ -44,9 +44,9 @@ exports[`<JobItem /> should render when [canCancel=false] and [canRemove=true] 1
     />
     <Item__JobItemBody>
       <Item__JobItemHeader>
-        <strong>
+        <span>
           Build Index
-        </strong>
+        </span>
         <JobStatus
           pad={true}
         />
@@ -77,9 +77,9 @@ exports[`<JobItem /> should render when [canCancel=true] and [canRemove=false] 1
     />
     <Item__JobItemBody>
       <Item__JobItemHeader>
-        <strong>
+        <span>
           Build Index
-        </strong>
+        </span>
         <JobStatus
           pad={true}
         />
@@ -110,9 +110,9 @@ exports[`<JobItem /> should render when [canCancel=true] and [canRemove=true] 1`
     />
     <Item__JobItemBody>
       <Item__JobItemHeader>
-        <strong>
+        <span>
           Build Index
-        </strong>
+        </span>
         <JobStatus
           pad={true}
         />
@@ -143,9 +143,9 @@ exports[`<JobItem /> should render when [state="cancelled"] 1`] = `
     />
     <Item__JobItemBody>
       <Item__JobItemHeader>
-        <strong>
+        <span>
           Build Index
-        </strong>
+        </span>
         <JobStatus
           pad={true}
           state="cancelled"
@@ -179,9 +179,9 @@ exports[`<JobItem /> should render when [state="complete"] 1`] = `
     />
     <Item__JobItemBody>
       <Item__JobItemHeader>
-        <strong>
+        <span>
           Build Index
-        </strong>
+        </span>
         <JobStatus
           pad={true}
           state="complete"
@@ -215,9 +215,9 @@ exports[`<JobItem /> should render when [state="error"] 1`] = `
     />
     <Item__JobItemBody>
       <Item__JobItemHeader>
-        <strong>
+        <span>
           Build Index
-        </strong>
+        </span>
         <JobStatus
           pad={true}
           state="error"
@@ -251,9 +251,9 @@ exports[`<JobItem /> should render when [state="running"] 1`] = `
     />
     <Item__JobItemBody>
       <Item__JobItemHeader>
-        <strong>
+        <span>
           Build Index
-        </strong>
+        </span>
         <JobStatus
           pad={true}
           state="running"
@@ -287,9 +287,9 @@ exports[`<JobItem /> should render when [state="waiting"] 1`] = `
     />
     <Item__JobItemBody>
       <Item__JobItemHeader>
-        <strong>
+        <span>
           Build Index
-        </strong>
+        </span>
         <JobStatus
           pad={true}
           state="waiting"

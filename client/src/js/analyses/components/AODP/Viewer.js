@@ -12,7 +12,7 @@ import AODPToolBar from "./Toolbar";
 const AODPPanes = styled.div`
     margin-top: 10px;
     display: grid;
-    grid-gap: 10px;
+    grid-gap: ${props => props.theme.gap.column};
     grid-template-columns: 300px 1fr;
 `;
 

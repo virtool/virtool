@@ -10,8 +10,8 @@ const StyledReferenceOfficial = styled(Box)`
     display: flex;
 
     h5 {
-        font-size: 16px;
-        font-weight: bold;
+        font-size: ${props => props.theme.fontSize.lg};
+        font-weight: ${props => props.theme.fontWeight.thick};
     }
 
     button {

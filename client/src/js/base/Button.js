@@ -57,7 +57,6 @@ const StyledButton = styled.button`
     padding: 0 10px;
     position: relative;
     user-select: none;
-    text-decoration: none;
     touch-action: manipulation;
     transition: box-shadow 200ms ease-in-out;
     white-space: nowrap;
@@ -89,7 +88,6 @@ const StyledButton = styled.button`
         opacity: 0;
         position: absolute;
         transition: opacity 150ms ease, scale 150ms ease;
-        z-index: 0;
     }
 
     :not(:disabled):hover::after {

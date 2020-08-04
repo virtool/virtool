@@ -15,7 +15,7 @@ const StyledProgress = styled.progress`
     }
 
     ::-webkit-progress-bar {
-        background-color: #f5f5f5;
+        background-color: ${props => props.theme.color.grey};
     }
 `;
 

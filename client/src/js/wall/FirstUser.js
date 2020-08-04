@@ -2,24 +2,15 @@ import { noop } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import {
-    BoxGroup,
-    BoxGroupHeader,
-    BoxGroupSection,
-    Button,
-    Input,
-    InputGroup,
-    InputLabel,
-    PasswordInput
-} from "../base";
+import { BoxGroupHeader, BoxGroupSection, Button, Input, InputGroup, InputLabel, PasswordInput } from "../base";
 import { createFirstUser } from "../users/actions";
-import { WallContainer } from "./Container";
+import { WallContainer, WallDialog } from "./Container";
 
-const FirstUserModal = styled(BoxGroup)`
+const FirstUserDialog = styled(WallDialog)`
     align-items: stretch;
-    background-color: #fff;
-    border-radius: 4px;
-    box-shadow: rgba(0, 0, 0, 0.498039) 0 5px 15px 0;
+    background-color: ${props => props.theme.color.white};
+    border-radius: ${props => props.theme.borderRadius.sm};
+    box-shadow: ${props => props.theme.boxShadow.lg};
     display: flex;
     flex-direction: column;
     margin-bottom: 260px;
@@ -32,14 +23,13 @@ const FirstUserModal = styled(BoxGroup)`
     }
 `;
 
-const FirstUserModalHeader = styled(BoxGroupHeader)`
+const FirstUserDialogHeader = styled(BoxGroupHeader)`
     h2 {
-        font-size: 16px;
         margin: 5px 0 3px;
     }
 `;
 
-const FirstUserModalBody = styled(BoxGroupSection)`
+const FirstUserDialogBody = styled(BoxGroupSection)`
     padding-top: 20px;
 `;
 
@@ -68,12 +58,12 @@ export class FirstUser extends React.Component {
         const { username, password } = this.state;
         return (
             <WallContainer>
-                <FirstUserModal>
-                    <FirstUserModalHeader>
+                <FirstUserDialog>
+                    <FirstUserDialogHeader>
                         <h2>Setup User</h2>
                         <p>Create an initial administrative user to start using Virtool.</p>
-                    </FirstUserModalHeader>
-                    <FirstUserModalBody>
+                    </FirstUserDialogHeader>
+                    <FirstUserDialogBody>
                         <form onSubmit={this.handleSubmit}>
                             <InputGroup>
                                 <InputLabel>Username</InputLabel>
@@ -88,8 +78,8 @@ export class FirstUser extends React.Component {
                                 Create User
                             </Button>
                         </form>
-                    </FirstUserModalBody>
-                </FirstUserModal>
+                    </FirstUserDialogBody>
+                </FirstUserDialog>
             </WallContainer>
         );
     }

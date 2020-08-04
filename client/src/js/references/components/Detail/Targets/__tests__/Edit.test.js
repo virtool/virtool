@@ -3,7 +3,6 @@ import { TargetForm } from "../Form";
 
 describe("<EditTarget />", () => {
     let props;
-    let state;
     let e;
 
     beforeEach(() => {
@@ -40,14 +39,6 @@ describe("<EditTarget />", () => {
                     required: true
                 }
             ]
-        };
-
-        state = {
-            name: "",
-            description: "",
-            length: 0,
-            required: false,
-            errorName: ""
         };
     });
 

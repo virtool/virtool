@@ -7,12 +7,13 @@ export const ReferenceItemBuild = ({ id, latestBuild, progress }) => {
     if (latestBuild && progress === 100) {
         return (
             <ReferenceItemInfo>
-                <strong>Latest Build </strong>
-                <span>is </span>
-                <Link to={`/refs/${id}/indexes/${latestBuild.id}`}>Index {latestBuild.version}</Link>
-                <small>
+                <h4>
+                    Latest Build is{" "}
+                    <Link to={`/refs/${id}/indexes/${latestBuild.id}`}>Index {latestBuild.version}</Link>
+                </h4>
+                <p>
                     Created <RelativeTime time={latestBuild.created_at} /> by {latestBuild.user.id}
-                </small>
+                </p>
             </ReferenceItemInfo>
         );
     }
@@ -26,9 +27,10 @@ export const ReferenceItemBuild = ({ id, latestBuild, progress }) => {
 
     return (
         <ReferenceItemInfo>
-            <strong>No index found. </strong>
-            <Link to={to}>Build one. </Link>
-            <small>You cannot use this reference until you have built an index for it.</small>
+            <h4>
+                No index found. <Link to={to}>Build one. </Link>
+            </h4>
+            <p>You cannot use this reference until you have built an index for it.</p>
         </ReferenceItemInfo>
     );
 };

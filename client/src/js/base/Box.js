@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { getBorder } from "../app/theme";
+import { getBorder, getFontSize, getFontWeight } from "../app/theme";
 import { Badge } from "./Badge";
-import { StyledCheckbox } from "./Checkbox";
+import { CheckboxLabel, StyledCheckbox } from "./Checkbox";
 import { Table } from "./Table";
 
 export const Box = styled.div`
@@ -15,7 +15,7 @@ export const Box = styled.div`
     position: relative;
 
     &:hover {
-        ${props => (props.onClick ? "background-color: #f7fafc;" : "")}
+        ${props => (props.onClick ? `background-color: ${props.theme.color.greyHover};` : "")}
     }
 `;
 
@@ -45,31 +45,42 @@ export const BoxGroup = styled(Box)`
 `;
 
 export const BoxGroupSection = styled.div`
-    background-color: ${props => (props.active ? props.theme.color.blue : "transparent")};
+    background-color: transparent;
     border-radius: 0;
-    color: ${props => (props.active ? props.theme.color.white : "inherit")};
-    cursor: ${props => (props.onClick ? "pointer" : "auto")};
+    color: inherit;
+    cursor: ${props => (props.onClick && !props.active ? "pointer" : "auto")};
     padding: 10px 15px;
     position: relative;
 
-    ${StyledCheckbox} {
-        background-color: ${props => (props.active ? props.theme.color.white : "transparent")};
-        color: ${props => props.theme.color[props.active ? "blueDark" : "greyLight"]};
-        margin-right: 5px;
-    }
-
     &[disabled] {
-        background-color: #edf2f7;
+        background-color: ${props => props.theme.color.greyHover};
         cursor: not-allowed;
-        color: #718096;
+        color: ${props => props.theme.color.grey};
+        user-select: none;
     }
 
     &:hover {
-        ${props => (props.onClick && !props.active ? "background-color: #f7fafc;" : "")}
+        ${props => (props.onClick && !props.active ? `background-color: ${props.theme.color.greyHover};` : "")}
     }
 
     &:not(:last-child) {
         border-bottom: ${getBorder};
+    }
+`;
+
+export const SelectBoxGroupSection = styled(BoxGroupSection)`
+    background-color: ${props => (props.active ? props.theme.color.blue : "transparent")};
+    color: ${props => (props.active ? props.theme.color.white : "inherit")};
+    cursor: pointer;
+
+    ${StyledCheckbox} {
+        background-color: ${props => (props.active ? props.theme.color.white : "transparent")};
+        color: ${props => props.theme.color[props.active ? "blueDark" : "greyLight"]};
+        margin-right: 10px;
+    }
+
+    ${CheckboxLabel} {
+        margin: 0;
     }
 `;
 
@@ -78,19 +89,15 @@ export const BoxGroupHeader = styled(BoxGroupSection)`
     background-color: ${props => props.theme.color.greyLightest};
     display: flex;
     flex-direction: column;
-    font-size: ${props => props.theme.fontSize.md};
+    font-size: ${getFontSize("md")};
     padding: 15px 15px 12px;
 
     h2 {
         align-items: center;
         display: flex;
-        font-size: 15px;
-        font-weight: bold;
+        font-size: ${props => props.theme.fontSize.lg};
+        font-weight: ${getFontWeight("thick")};
         margin: 0;
-
-        a {
-            text-decoration: none;
-        }
 
         ${Badge} {
             margin-left: 5px;
@@ -103,17 +110,14 @@ export const BoxGroupHeader = styled(BoxGroupSection)`
     }
 `;
 
-BoxGroup.Header = BoxGroupHeader;
-BoxGroup.Section = BoxGroupSection;
-
 export const BoxTitle = styled.h1`
-    font-size: 14px;
-    font-weight: bold;
+    font-size: ${props => props.theme.fontSize.md};
+    font-weight: ${props => props.theme.fontWeight.thick};
     margin: 5px 0 15px 0;
 `;
 
 export const SpacedBox = styled(Box)`
-    box-shadow: 1px 1px 2px 0 #d5d5d5;
+    box-shadow: ${props => props.theme.boxShadow.md};
     margin-bottom: 10px;
 `;
 
@@ -122,21 +126,14 @@ export const LinkBox = styled(Link)`
     border-radius: ${props => props.theme.borderRadius.sm};
     box-shadow: ${props => props.theme.boxShadow.sm};
     box-sizing: border-box;
-    color: #333333 !important;
+    color: ${props => props.theme.color.black};
     cursor: pointer;
     display: block;
     margin-bottom: 12px;
     padding: 10px 15px;
     position: relative;
-    text-decoration: none !important;
 
     &:hover {
-        background-color: #f7fafc;
+        background-color: ${props => props.theme.color.greyHover};
     }
-`;
-
-export const LinkBoxTop = styled.div`
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
 `;

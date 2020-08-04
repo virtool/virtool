@@ -2,71 +2,69 @@
 
 exports[`<ReferenceItemBuild /> should render 'No Build Found' when [latestBuild=null] 1`] = `
 <Info__ReferenceItemInfo>
-  <strong>
+  <h4>
     No index found. 
-  </strong>
-  <Link
-    to={
-      Object {
-        "pathname": "/refs/foo/indexes",
-        "state": Object {
-          "rebuild": true,
-        },
+    <Link
+      to={
+        Object {
+          "pathname": "/refs/foo/indexes",
+          "state": Object {
+            "rebuild": true,
+          },
+        }
       }
-    }
-  >
-    Build one. 
-  </Link>
-  <small>
+    >
+      Build one. 
+    </Link>
+  </h4>
+  <p>
     You cannot use this reference until you have built an index for it.
-  </small>
+  </p>
 </Info__ReferenceItemInfo>
 `;
 
 exports[`<ReferenceItemBuild /> should render 'No Build Found' when [progress=30] 1`] = `
 <Info__ReferenceItemInfo>
-  <strong>
+  <h4>
     No index found. 
-  </strong>
-  <Link
-    to={
-      Object {
-        "pathname": "/refs/foo/indexes",
-        "state": Object {
-          "rebuild": true,
-        },
+    <Link
+      to={
+        Object {
+          "pathname": "/refs/foo/indexes",
+          "state": Object {
+            "rebuild": true,
+          },
+        }
       }
-    }
-  >
-    Build one. 
-  </Link>
-  <small>
+    >
+      Build one. 
+    </Link>
+  </h4>
+  <p>
     You cannot use this reference until you have built an index for it.
-  </small>
+  </p>
 </Info__ReferenceItemInfo>
 `;
 
 exports[`<ReferenceItemBuild /> should render build info when latestBuild available and [progress=100] 1`] = `
 <Info__ReferenceItemInfo>
-  <strong>
-    Latest Build 
-  </strong>
-  <span>
-    is 
-  </span>
-  <Link
-    to="/refs/foo/indexes/bar"
-  >
-    Index 
-    3
-  </Link>
-  <small>
+  <h4>
+    Latest Build is
+     
+    <Link
+      to="/refs/foo/indexes/bar"
+    >
+      Index 
+      3
+    </Link>
+  </h4>
+  <p>
     Created 
     <RelativeTime
       time="2018-01-01T00:00:00.000000Z"
     />
      by 
     bob
-  </small>
+  </p>
 </Info__ReferenceItemInfo>
 `;

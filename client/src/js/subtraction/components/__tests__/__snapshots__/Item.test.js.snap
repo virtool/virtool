@@ -5,9 +5,9 @@ exports[`<SubtractionItem /> should render when [ready=false] 1`] = `
   key="foo"
   to="/subtraction/foo"
 >
-  <strong>
+  <span>
     Foo
-  </strong>
+  </span>
   <span>
     <SubtractionItemIcon
       ready={false}
@@ -25,9 +25,9 @@ exports[`<SubtractionItem /> should render when [ready=true] 1`] = `
   key="foo"
   to="/subtraction/foo"
 >
-  <strong>
+  <span>
     Foo
-  </strong>
+  </span>
   <span>
     <SubtractionItemIcon
       ready={true}
@@ -42,7 +42,7 @@ exports[`<SubtractionItem /> should render when [ready=true] 1`] = `
 
 exports[`<SubtractionItemIcon /> should render when [ready=false] 1`] = `
 <Loader
-  color="#3c8786"
+  color="primary"
   size="14px"
 />
 `;

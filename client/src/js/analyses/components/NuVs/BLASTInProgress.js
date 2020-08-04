@@ -26,7 +26,7 @@ export const RIDLink = ({ rid }) => {
 };
 
 const StyledRIDTiming = styled.div`
-    font-size: 12px;
+    font-size: ${props => props.theme.fontSize.sm};
     margin-left: auto;
 `;
 
@@ -57,7 +57,7 @@ const StyledBLASTInProgress = styled(Box)`
 export const BLASTInProgress = ({ interval, lastCheckedAt, rid }) => {
     return (
         <StyledBLASTInProgress>
-            <Loader size="16px" color="#000" />
+            <Loader size="16px" color="primary" />
             <div>
                 <div>
                     <span>BLAST in progress</span>

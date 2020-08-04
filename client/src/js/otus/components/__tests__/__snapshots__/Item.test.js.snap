@@ -5,9 +5,9 @@ exports[`<OTUItem /> should render when [verified=false] 1`] = `
   key="foo"
   to="/refs/baz/otus/foo"
 >
-  <strong>
+  <Item__OTUItemName>
     Foo
-  </strong>
+  </Item__OTUItemName>
   <Item__OTUItemAbbreviation>
     FB
   </Item__OTUItemAbbreviation>
@@ -25,9 +25,9 @@ exports[`<OTUItem /> should render when [verified=true] 1`] = `
   key="foo"
   to="/refs/baz/otus/foo"
 >
-  <strong>
+  <Item__OTUItemName>
     Foo
-  </strong>
+  </Item__OTUItemName>
   <Item__OTUItemAbbreviation>
     FB
   </Item__OTUItemAbbreviation>

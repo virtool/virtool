@@ -5,10 +5,8 @@ import {
     FIND_READ_FILES,
     FIND_SAMPLES,
     GET_SAMPLE,
-    HIDE_SAMPLE_MODAL,
     REMOVE_SAMPLE,
     SELECT_SAMPLE,
-    SHOW_REMOVE_SAMPLE,
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
     WS_INSERT_SAMPLE,
@@ -23,11 +21,7 @@ export const initialState = {
     page: 0,
     detail: null,
     readFiles: null,
-    showEdit: false,
-    showRemove: false,
     editError: false,
-    reservedFiles: [],
-    readyHosts: null,
     selected: [],
     pathoscopeCondition: [true, false, "ip"],
     nuvsCondition: [true, false, "ip"]
@@ -74,12 +68,6 @@ export default function samplesReducer(state = initialState, action) {
 
         case REMOVE_SAMPLE.SUCCEEDED:
             return { ...state, detail: null };
-
-        case SHOW_REMOVE_SAMPLE:
-            return { ...state, showRemove: true };
-
-        case HIDE_SAMPLE_MODAL:
-            return { ...state, showRemove: false };
 
         case SELECT_SAMPLE:
             return {

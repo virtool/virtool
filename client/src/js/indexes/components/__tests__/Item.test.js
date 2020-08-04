@@ -15,7 +15,10 @@ describe("<IndexItem />", () => {
                 created_at: "2018-02-14T17:12:00.000000Z",
                 version: 0,
                 change_count: 3,
-                modified_otu_count: 5
+                modified_otu_count: 5,
+                user: {
+                    id: "bob"
+                }
             }
         };
     });

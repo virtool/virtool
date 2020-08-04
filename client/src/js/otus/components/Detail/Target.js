@@ -5,7 +5,7 @@ import { BoxGroupSection, Button, Badge } from "../../../base";
 const TargetInfoHeader = styled.h4`
     align-items: center;
     display: flex;
-    font-size: 14px;
+    font-size: ${props => props.theme.fontSize.md};
     margin: 0;
 
     & > span:first-child {

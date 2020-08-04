@@ -2,8 +2,8 @@
 
 exports[`<NuVsItem /> should render when active 1`] = `
 <Item__StyledNuVsItem
+  active={true}
   onClick={[Function]}
-  selected={true}
 >
   <Item__NuVsItemHeader>
     <strong>
@@ -23,8 +23,8 @@ exports[`<NuVsItem /> should render when active 1`] = `
 
 exports[`<NuVsItem /> should render when not active 1`] = `
 <Item__StyledNuVsItem
+  active={false}
   onClick={[Function]}
-  selected={false}
 >
   <Item__NuVsItemHeader>
     <strong>
@@ -44,8 +44,8 @@ exports[`<NuVsItem /> should render when not active 1`] = `
 
 exports[`<NuVsItem /> should render when not active 2`] = `
 <Item__StyledNuVsItem
+  active={false}
   onClick={[Function]}
-  selected={false}
 >
   <Item__NuVsItemHeader>
     <strong>

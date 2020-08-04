@@ -1,15 +1,15 @@
 import { axisBottom, axisLeft } from "d3-axis";
 import { scaleLinear } from "d3-scale";
-import { line, area } from "d3-shape";
+import { area, line } from "d3-shape";
 import { forEach, map, min, values } from "lodash-es";
-
+import { theme } from "../../app/theme";
 import { appendLegend, createSVG } from "../../samples/chartUtils";
 
 const series = [
-    { label: "Mean", color: "#a94442" },
-    { label: "Median", color: "#428bca" },
-    { label: "Quartile", color: "#3C763D" },
-    { label: "Decile", color: "#FFF475" }
+    { label: "Mean", color: theme.color.red },
+    { label: "Median", color: theme.color.blue },
+    { label: "Quartile", color: theme.color.green },
+    { label: "Decile", color: theme.color.yellow }
 ];
 
 /**
@@ -83,19 +83,14 @@ export const drawBasesChart = (element, data, baseWidth) => {
         svg.append("path")
             .attr("d", area.func(data))
             .attr("class", "graph-line")
-            .style("stroke", "none")
-            .style("fill", area.name === "quartile" ? "#3C763D" : "#FFF475")
-            .style("opacity", 0.5);
+            .attr("class", `quality-area quality-area-${area.name === "quartile" ? "green" : "yellow"}`);
     });
 
     // Append the median line to the chart. Color is blue.
-    svg.append("path")
-        .attr("d", lineDrawer(data, "median", x, y))
-        .attr("class", "graph-line")
-        .style("stroke", "#428bca");
+    svg.append("path").attr("d", lineDrawer(data, "median", x, y)).attr("class", "graph-line graph-line-blue");
 
     // Append the median line to the chart. Color is red.
-    svg.append("path").attr("d", lineDrawer(data, "mean", x, y)).attr("class", "graph-line").style("stroke", "#a94442");
+    svg.append("path").attr("d", lineDrawer(data, "mean", x, y)).attr("class", "graph-line graph-line-red");
 
     // Append the x-axis to the chart.
     svg.append("g")

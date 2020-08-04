@@ -5,9 +5,7 @@ import styled from "styled-components";
 import { Icon } from "./Icon";
 
 const getBackgroundColor = ({ checked, theme }) => theme.color[checked ? "primary" : "transparent"];
-
 const getBorder = ({ checked, theme }) => (checked ? "none" : `2px solid ${theme.color.greyDark}`);
-
 const getColor = ({ checked, theme }) => theme.color[checked ? "white" : "grey"];
 
 const CheckboxContainer = styled.div`
@@ -18,17 +16,18 @@ const CheckboxInput = styled(CustomCheckboxInput)`
     display: none;
 `;
 
-const CheckboxLabel = styled.span`
+export const CheckboxLabel = styled.span`
     vertical-align: bottom;
     cursor: pointer;
     margin-left: 5px;
+    user-select: none;
 `;
 
 export const StyledCheckbox = styled(CustomCheckboxContainer)`
     align-items: center;
     background-color: ${getBackgroundColor};
     border: ${getBorder};
-    border-radius: 2px;
+    border-radius: ${props => props.theme.borderRadius.sm};
     color: ${getColor};
     cursor: pointer;
     display: inline-flex;
@@ -51,3 +50,8 @@ export const Checkbox = ({ checked, disabled, label, onClick }) => (
         {label ? <CheckboxLabel onClick={disabled ? null : onClick}>{label}</CheckboxLabel> : null}
     </CheckboxContainer>
 );
+
+Checkbox.defaultProps = {
+    checked: false,
+    disabled: false
+};

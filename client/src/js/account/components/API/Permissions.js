@@ -1,15 +1,9 @@
 import { map, sortBy } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
-import styled from "styled-components";
 import { connect } from "react-redux";
-import { BoxGroup, BoxGroupSection, Checkbox } from "../../../base";
+import { BoxGroup, Checkbox, SelectBoxGroupSection } from "../../../base";
 import { getAccountAdministrator } from "../../selectors";
-
-export const APIPermissionName = styled(BoxGroupSection)`
-    display: flex;
-    justify-content: space-between;
-`;
 
 export const APIPermissions = ({ administrator, className, userPermissions, keyPermissions, onChange }) => {
     const permissions = map(keyPermissions, (value, key) => ({
@@ -21,15 +15,15 @@ export const APIPermissions = ({ administrator, className, userPermissions, keyP
         const disabled = !administrator && !userPermissions[permission.name];
 
         return (
-            <APIPermissionName
+            <SelectBoxGroupSection
                 key={permission.name}
                 active={permission.allowed}
                 onClick={disabled ? null : () => onChange(permission.name, !permission.allowed)}
                 disabled={disabled}
             >
-                <code>{permission.name}</code>
                 <Checkbox checked={permission.allowed} />
-            </APIPermissionName>
+                <code>{permission.name}</code>
+            </SelectBoxGroupSection>
         );
     });
 

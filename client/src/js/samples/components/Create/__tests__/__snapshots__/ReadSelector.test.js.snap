@@ -6,12 +6,12 @@ exports[`<ReadSelector /> should render 1`] = `
     <strong>
       Read Files
     </strong>
-    <small>
+    <span>
       2
        of 
       1
        selected
-    </small>
+    </span>
   </ReadSelector__ReadSelectorHeader>
   <ReadSelector__ReadSelectorBox
     error="foo"
@@ -37,7 +37,7 @@ exports[`<ReadSelector /> should render 1`] = `
     </Toolbar>
     <ReadSelector__ReadSelectorList>
       <Box__BoxGroup>
-        <ReadItem
+        <ReadSelectorItem
           id="foo"
           index={0}
           key="foo"

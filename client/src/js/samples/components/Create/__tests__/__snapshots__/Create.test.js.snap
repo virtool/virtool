@@ -104,7 +104,7 @@ exports[`<CreateSample> should display error when form submitted with no name 1`
           />
         </InputGroup>
       </Create__CreateSampleFields>
-      <LibraryTypeSelection
+      <LibraryTypeSelector
         libraryType="normal"
         onSelect={[Function]}
       />
@@ -218,7 +218,7 @@ exports[`<CreateSample> should display error when form submitted with no subtrac
           />
         </InputGroup>
       </Create__CreateSampleFields>
-      <LibraryTypeSelection
+      <LibraryTypeSelector
         libraryType="normal"
         onSelect={[Function]}
       />
@@ -342,7 +342,7 @@ exports[`<CreateSample> should render 1`] = `
           />
         </InputGroup>
       </Create__CreateSampleFields>
-      <LibraryTypeSelection
+      <LibraryTypeSelector
         libraryType="normal"
         onSelect={[Function]}
       />

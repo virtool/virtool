@@ -1,16 +1,16 @@
 import React from "react";
 import styled from "styled-components";
 import { Dropdown, DropdownMenu, Icon, useDropdown } from "../../base";
+import { NavBarItem } from "./NavBarItem";
 
-const NavDropdownTrigger = styled.a`
+const NavDropdownTrigger = styled(NavBarItem)`
     align-items: center;
-    color: white;
     display: flex;
     height: 45px;
-    text-decoration: none;
+    padding: 0 10px;
 
-    :hover {
-        color: #245251;
+    :focus {
+        color: ${props => props.theme.color.primaryDarkest};
     }
 
     *:not(:last-child) {
@@ -21,15 +21,19 @@ const NavDropdownTrigger = styled.a`
 export const NavDropdown = ({ children, userId }) => {
     const [visible, toggle, hide] = useDropdown([userId]);
 
+    function handleClick(e) {
+        e.preventDefault();
+        toggle();
+    }
+
     return (
         <Dropdown>
-            <NavDropdownTrigger onClick={toggle} onBlur={hide} href="#">
+            <NavDropdownTrigger as="a" href="#" onClick={handleClick} onBlur={hide}>
                 <Icon name="user" />
                 <span>{userId}</span>
                 <Icon name="caret-down" />
             </NavDropdownTrigger>
-
-            <DropdownMenu right={-5} top={45} visible={visible}>
+            <DropdownMenu right={0} top={50} visible={visible}>
                 {children}
             </DropdownMenu>
         </Dropdown>

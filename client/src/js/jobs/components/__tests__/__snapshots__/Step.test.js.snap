@@ -41,7 +41,7 @@ exports[`<JobStepIcon /> renders correct icon when state error 1`] = `
 
 exports[`<JobStepIcon /> renders correct icon when state running 1`] = `
 <Step__JobStepLoader
-  color="#07689d"
+  color="primary"
   size="12px"
 />
 `;

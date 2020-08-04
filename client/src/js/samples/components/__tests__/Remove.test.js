@@ -27,19 +27,13 @@ describe("<Remove />", () => {
 
     it("calls onConfirm() with id when confirmed", () => {
         const wrapper = shallow(<RemoveSample {...props} />);
-        wrapper
-            .find(RemoveModal)
-            .props()
-            .onConfirm();
+        wrapper.find(RemoveModal).props().onConfirm();
         expect(props.onConfirm).toHaveBeenCalledWith("foo");
     });
 
     it("calls onHide() when RemoveModal.onHide() is called", () => {
         const wrapper = shallow(<RemoveSample {...props} />);
-        wrapper
-            .find(RemoveModal)
-            .props()
-            .onHide();
+        wrapper.find(RemoveModal).props().onHide();
         expect(props.onHide).toHaveBeenCalled();
     });
 });
