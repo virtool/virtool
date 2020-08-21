@@ -9,35 +9,36 @@ exports[`<Login /> should render 1`] = `
     <form
       onSubmit={[Function]}
     >
-      <InputGroup>
-        <Input__InputLabel>
-          Username
-        </Input__InputLabel>
-        <Input
-          autoFocus={true}
-          name="username"
-          onChange={[Function]}
-          value=""
+      <Box__BoxGroupSection>
+        <InputGroup>
+          <Input__InputLabel>
+            Username
+          </Input__InputLabel>
+          <Input
+            autoFocus={true}
+            name="username"
+            onChange={[Function]}
+            value=""
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Password
+          </Input__InputLabel>
+          <PasswordInput
+            name="password"
+            onChange={[Function]}
+            value=""
+          />
+        </InputGroup>
+        <Checkbox
+          checked={false}
+          disabled={false}
+          label="Remember Me"
+          onClick={[Function]}
         />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Password
-        </Input__InputLabel>
-        <PasswordInput
-          name="password"
-          onChange={[Function]}
-          value=""
-        />
-      </InputGroup>
-      <Checkbox
-        checked={false}
-        disabled={false}
-        label="Remember Me"
-        onClick={[Function]}
-      />
+      </Box__BoxGroupSection>
       <Login__LoginFooter>
-        <span />
         <Button
           color="blue"
           disabled={false}
@@ -46,6 +47,7 @@ exports[`<Login /> should render 1`] = `
         >
           Login
         </Button>
+        <span />
       </Login__LoginFooter>
     </form>
   </Container__WallDialog>
@@ -61,35 +63,36 @@ exports[`<Login /> should render checked remember checkbox 1`] = `
     <form
       onSubmit={[Function]}
     >
-      <InputGroup>
-        <Input__InputLabel>
-          Username
-        </Input__InputLabel>
-        <Input
-          autoFocus={true}
-          name="username"
-          onChange={[Function]}
-          value=""
+      <Box__BoxGroupSection>
+        <InputGroup>
+          <Input__InputLabel>
+            Username
+          </Input__InputLabel>
+          <Input
+            autoFocus={true}
+            name="username"
+            onChange={[Function]}
+            value=""
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Password
+          </Input__InputLabel>
+          <PasswordInput
+            name="password"
+            onChange={[Function]}
+            value=""
+          />
+        </InputGroup>
+        <Checkbox
+          checked={false}
+          disabled={false}
+          label="Remember Me"
+          onClick={[Function]}
         />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Password
-        </Input__InputLabel>
-        <PasswordInput
-          name="password"
-          onChange={[Function]}
-          value=""
-        />
-      </InputGroup>
-      <Checkbox
-        checked={false}
-        disabled={false}
-        label="Remember Me"
-        onClick={[Function]}
-      />
+      </Box__BoxGroupSection>
       <Login__LoginFooter>
-        <span />
         <Button
           color="blue"
           disabled={false}
@@ -98,6 +101,7 @@ exports[`<Login /> should render checked remember checkbox 1`] = `
         >
           Login
         </Button>
+        <span />
       </Login__LoginFooter>
     </form>
   </Container__WallDialog>
@@ -113,35 +117,36 @@ exports[`<Login /> should render checked remember checkbox 2`] = `
     <form
       onSubmit={[Function]}
     >
-      <InputGroup>
-        <Input__InputLabel>
-          Username
-        </Input__InputLabel>
-        <Input
-          autoFocus={true}
-          name="username"
-          onChange={[Function]}
-          value=""
+      <Box__BoxGroupSection>
+        <InputGroup>
+          <Input__InputLabel>
+            Username
+          </Input__InputLabel>
+          <Input
+            autoFocus={true}
+            name="username"
+            onChange={[Function]}
+            value=""
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Password
+          </Input__InputLabel>
+          <PasswordInput
+            name="password"
+            onChange={[Function]}
+            value=""
+          />
+        </InputGroup>
+        <Checkbox
+          checked={true}
+          disabled={false}
+          label="Remember Me"
+          onClick={[Function]}
         />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Password
-        </Input__InputLabel>
-        <PasswordInput
-          name="password"
-          onChange={[Function]}
-          value=""
-        />
-      </InputGroup>
-      <Checkbox
-        checked={true}
-        disabled={false}
-        label="Remember Me"
-        onClick={[Function]}
-      />
+      </Box__BoxGroupSection>
       <Login__LoginFooter>
-        <span />
         <Button
           color="blue"
           disabled={false}
@@ -150,6 +155,7 @@ exports[`<Login /> should render checked remember checkbox 2`] = `
         >
           Login
         </Button>
+        <span />
       </Login__LoginFooter>
     </form>
   </Container__WallDialog>
@@ -165,35 +171,36 @@ exports[`<Login /> should render filled username and password fields 1`] = `
     <form
       onSubmit={[Function]}
     >
-      <InputGroup>
-        <Input__InputLabel>
-          Username
-        </Input__InputLabel>
-        <Input
-          autoFocus={true}
-          name="username"
-          onChange={[Function]}
-          value=""
+      <Box__BoxGroupSection>
+        <InputGroup>
+          <Input__InputLabel>
+            Username
+          </Input__InputLabel>
+          <Input
+            autoFocus={true}
+            name="username"
+            onChange={[Function]}
+            value=""
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Password
+          </Input__InputLabel>
+          <PasswordInput
+            name="password"
+            onChange={[Function]}
+            value=""
+          />
+        </InputGroup>
+        <Checkbox
+          checked={false}
+          disabled={false}
+          label="Remember Me"
+          onClick={[Function]}
         />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Password
-        </Input__InputLabel>
-        <PasswordInput
-          name="password"
-          onChange={[Function]}
-          value=""
-        />
-      </InputGroup>
-      <Checkbox
-        checked={false}
-        disabled={false}
-        label="Remember Me"
-        onClick={[Function]}
-      />
+      </Box__BoxGroupSection>
       <Login__LoginFooter>
-        <span />
         <Button
           color="blue"
           disabled={false}
@@ -202,6 +209,7 @@ exports[`<Login /> should render filled username and password fields 1`] = `
         >
           Login
         </Button>
+        <span />
       </Login__LoginFooter>
     </form>
   </Container__WallDialog>
@@ -217,35 +225,36 @@ exports[`<Login /> should render filled username and password fields 2`] = `
     <form
       onSubmit={[Function]}
     >
-      <InputGroup>
-        <Input__InputLabel>
-          Username
-        </Input__InputLabel>
-        <Input
-          autoFocus={true}
-          name="username"
-          onChange={[Function]}
-          value="bob"
+      <Box__BoxGroupSection>
+        <InputGroup>
+          <Input__InputLabel>
+            Username
+          </Input__InputLabel>
+          <Input
+            autoFocus={true}
+            name="username"
+            onChange={[Function]}
+            value="bob"
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Password
+          </Input__InputLabel>
+          <PasswordInput
+            name="password"
+            onChange={[Function]}
+            value=""
+          />
+        </InputGroup>
+        <Checkbox
+          checked={false}
+          disabled={false}
+          label="Remember Me"
+          onClick={[Function]}
         />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Password
-        </Input__InputLabel>
-        <PasswordInput
-          name="password"
-          onChange={[Function]}
-          value=""
-        />
-      </InputGroup>
-      <Checkbox
-        checked={false}
-        disabled={false}
-        label="Remember Me"
-        onClick={[Function]}
-      />
+      </Box__BoxGroupSection>
       <Login__LoginFooter>
-        <span />
         <Button
           color="blue"
           disabled={false}
@@ -254,6 +263,7 @@ exports[`<Login /> should render filled username and password fields 2`] = `
         >
           Login
         </Button>
+        <span />
       </Login__LoginFooter>
     </form>
   </Container__WallDialog>
@@ -269,35 +279,36 @@ exports[`<Login /> should render filled username and password fields 3`] = `
     <form
       onSubmit={[Function]}
     >
-      <InputGroup>
-        <Input__InputLabel>
-          Username
-        </Input__InputLabel>
-        <Input
-          autoFocus={true}
-          name="username"
-          onChange={[Function]}
-          value="bob"
+      <Box__BoxGroupSection>
+        <InputGroup>
+          <Input__InputLabel>
+            Username
+          </Input__InputLabel>
+          <Input
+            autoFocus={true}
+            name="username"
+            onChange={[Function]}
+            value="bob"
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Password
+          </Input__InputLabel>
+          <PasswordInput
+            name="password"
+            onChange={[Function]}
+            value="foobar"
+          />
+        </InputGroup>
+        <Checkbox
+          checked={false}
+          disabled={false}
+          label="Remember Me"
+          onClick={[Function]}
         />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Password
-        </Input__InputLabel>
-        <PasswordInput
-          name="password"
-          onChange={[Function]}
-          value="foobar"
-        />
-      </InputGroup>
-      <Checkbox
-        checked={false}
-        disabled={false}
-        label="Remember Me"
-        onClick={[Function]}
-      />
+      </Box__BoxGroupSection>
       <Login__LoginFooter>
-        <span />
         <Button
           color="blue"
           disabled={false}
@@ -306,6 +317,7 @@ exports[`<Login /> should render filled username and password fields 3`] = `
         >
           Login
         </Button>
+        <span />
       </Login__LoginFooter>
     </form>
   </Container__WallDialog>
