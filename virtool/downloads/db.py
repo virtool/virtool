@@ -77,7 +77,7 @@ async def generate_otu_fasta(db, otu_id):
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param otu_id: the id of the otu whose sequences should be FASTA-fied
+    :param otu_id: the id of the otu whose sequences should be expressed in FASTA format
     :type otu_id: str
 
     :return: as FASTA filename and body

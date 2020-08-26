@@ -11,6 +11,7 @@ build_exe_options = {
     "include_files": [
         ("client/dist", "client"),
         "LICENSE",
+        "static",
         "templates",
         "readme.md"
     ],
