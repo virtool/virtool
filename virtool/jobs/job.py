@@ -197,6 +197,7 @@ class Job(multiprocessing.Process):
         :param stdout_handler: a function for handling STDOUT lines
         :param stderr_handler: a function for handling STDERR lines
         :param env: environmental variables to
+        :param cwd: working directory to use for process
         :return:
         """
         self.add_log(f"Command: {' '.join(command)}")

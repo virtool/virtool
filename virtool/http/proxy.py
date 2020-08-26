@@ -15,7 +15,11 @@ class ProxyRequest:
         self._kwargs = kwargs
 
     async def __aenter__(self):
-        self.resp = await self.method(self.url, proxy=self.proxy, **self._kwargs)
+        try:
+            self.resp = await self.method(self.url, proxy=self.proxy, **self._kwargs)
+        except aiohttp.ClientHttpProxyError as err:
+            if err.status == 407:
+                raise virtool.errors.ProxyError("Proxy authentication required")
 
         if self.resp.status == 407:
             raise virtool.errors.ProxyError("Proxy authentication failed")

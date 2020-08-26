@@ -250,7 +250,7 @@ async def init_check_db(app):
 
 
 async def init_client_path(app):
-    if not app["settings"]["no_client"]:
+    if app["setup"] is None and not app["settings"]["no_client"]:
         app["client_path"] = await virtool.utils.get_client_path()
 
         if app["client_path"] is None:

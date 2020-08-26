@@ -1,87 +1,68 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/main.${hash | h}.css">
-    <title>Setup - Virtool</title>
-</head>
+{% extends "setup.html" %} {% block title %}Setup - Virtool {% endblock %} {% block content %}
+    <h1>
+        Finish Setup
+    </h1>
+    <p class="subtitle">
+        When you click <em>Save and Restart</em>, the following will occur:
+    </p>
 
-<body>
+    <div>
 
-<div class="container-noside setup-finish">
-    <div class="row">
-        <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
-            <div class="list-group">
-                <div class="list-group-item spaced clearfix">
-                    <h4>
-                        Finish Setup
-                    </h4>
-                    <p>
-                        Virtool is ready to restart. When you click <em>Finish</em>, the following will occur:
-                    </p>
+        <div class="setup-summary">
+            <div class="setup-summary-icon">
+                <i class="fas fa-file-alt fa-fw"></i>
+            </div>
+            <div>
+                A configuration file will be written to:
+                <code class="text-info">{{ config_path }}</code>
+            </div>
+        </div>
 
-                    <div class="list-group">
-                        <div class="list-group-item setup-flex-center">
-                            <div class="setup-summary-icon">
-                                <i class="fas fa-file-alt fa-fw"></i>
-                            </div>
-                            <div>
-                                A configuration file will be written to:
-                                <small class="text-info">${config_path | h}</small>
-                            </div>
-                        </div>
-                        %if proxy:
-                            <div class="list-group-item setup-flex-center">
-                                <div class="setup-summary-icon">
-                                    <i class="fas fa-network-wired fa-fw"></i>
-                                </div>
-                                <div>
-                                    Virtool will use the proxy at:
-                                    <small class="text-info">${proxy | h}</small>
-                                </div>
-                            </div>
-                        %endif
-                        <div class="list-group-item setup-flex-center">
-                            <div class="setup-summary-icon">
-                                <i class="fas fa-folder fa-fw"></i>
-                            </div>
-                            <div>
-                                A data directory will be setup at:
-                                <small class="text-info">${data_path | h}</small>
-                            </div>
-                        </div>
-                        <div class="list-group-item setup-flex-center">
-                            <div class="setup-summary-icon">
-                                <i class="fas fa-folder fa-fw"></i>
-                            </div>
-                            <div>
-                                A watch directory will be created at:
-                                <small class="text-info">${watch_path | h}</small>
-
-                            </div>
-                        </div>
-                        <div class="list-group-item setup-flex-center">
-                            <div class="setup-summary-icon">
-                                <i class="fas fa-database fa-fw"></i>
-                            </div>
-                            <div>
-                                A database will be created with the name:
-                                <small class="text-info">${db_name | h}</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <a href="/setup/save"  class="btn btn-primary pull-right setup-save-button">
-                        <i class="fas fa-redo-alt"></i> Save and Restart
-                    </a>
+        {% if proxy %}
+            <div class="setup-summary">
+                <div class="setup-summary-icon">
+                    <i class="fas fa-network-wired fa-fw"></i>
                 </div>
+                <div>
+                    Virtool will use the proxy at:
+                    <code class="text-info">{{ proxy }}</code>
+                </div>
+            </div>
+        {% endif %}
+        <div class="setup-summary">
+            <div class="setup-summary-icon">
+                <i class="fas fa-folder fa-fw"></i>
+            </div>
+            <div>
+                A data directory will be setup at:
+                <code class="text-info">{{ data_path }}</code>
+            </div>
+        </div>
+        <div class="setup-summary">
+            <div class="setup-summary-icon">
+                <i class="fas fa-folder fa-fw"></i>
+            </div>
+            <div>
+                A watch directory will be created at:
+                <code class="text-info">{{ watch_path }}</code>
+            </div>
+        </div>
+        <div class="setup-summary">
+            <div class="setup-summary-icon">
+                <i class="fas fa-database fa-fw"></i>
+            </div>
+            <div>
+                A database will be created with the name:
+                <code class="text-info">{{ db_name }}</code>
             </div>
         </div>
     </div>
-</div>
-</body>
-</html>
+
+    <div class="setup-footer">
+        <div>
+            <a href="/setup/save" class="button">
+                <i class="fas fa-redo-alt"></i> Save and Restart
+            </a>
+        </div>
+    </div>
+{% endblock %}

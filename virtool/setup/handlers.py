@@ -5,13 +5,13 @@ import sys
 import motor.motor_asyncio
 from aiohttp import web
 from cerberus import Validator
-from mako.template import Template
 
 import virtool.config
 import virtool.settings.schema
 import virtool.setup.db
 import virtool.setup.paths
 import virtool.setup.proxy
+import virtool.templates
 import virtool.utils
 from virtool.api.response import json_response
 
@@ -34,9 +34,8 @@ async def get_main(req):
     Return the setup entry page.
 
     """
-    template = Template(filename=os.path.join(sys.path[0], "templates", "setup.html"))
-
-    html = template.render(hash=virtool.utils.get_static_hash(req))
+    template = virtool.templates.setup_template_env.get_template("setup.html")
+    html = template.render()
 
     return web.Response(body=html, content_type="text/html")
 
@@ -44,7 +43,7 @@ async def get_main(req):
 async def get_proxy(req):
     setup = req.app["setup"]
 
-    template = Template(filename=os.path.join(sys.path[0], "templates", "setup_proxy.html"))
+    template = virtool.templates.setup_template_env.get_template("setup_proxy.html")
 
     html = template.render(
         error=setup["proxy"]["error"],
@@ -78,7 +77,7 @@ async def get_db(req):
     ready = setup["db"]["ready"]
     error = setup["db"]["error"]
 
-    template = Template(filename=os.path.join(sys.path[0], "templates", "setup_db.html"))
+    template = virtool.templates.setup_template_env.get_template("setup_db.html")
 
     html = template.render(
         db_connection_string=db_connection_string,
@@ -109,7 +108,7 @@ async def post_db(req):
 async def get_path(req):
     mode = "data" if req.path == "/setup/data" else "watch"
 
-    template = Template(filename=os.path.join(sys.path[0], "templates", "setup_path.html"))
+    template = virtool.templates.setup_template_env.get_template("setup_path.html")
 
     html = template.render(
         hash=virtool.utils.get_static_hash(req),
@@ -164,7 +163,7 @@ async def get_finish(req):
     data_path = virtool.setup.paths.ensure_path_absolute(setup["data"]["path"])
     watch_path = virtool.setup.paths.ensure_path_absolute(setup["watch"]["path"])
 
-    template = Template(filename=os.path.join(sys.path[0], "templates", "setup_finish.html"))
+    template = virtool.templates.setup_template_env.get_template("setup_finish.html")
 
     html = template.render(
         config_path=config_path,
@@ -210,7 +209,7 @@ async def get_save(req):
 
     req.app["events"]["restart"].set()
 
-    template = Template(filename=os.path.join(sys.path[0], "templates", "setup_restart.html"))
+    template = virtool.templates.setup_template_env.get_template("setup_restart.html")
 
     html = template.render(
         hash=virtool.utils.get_static_hash(req),
