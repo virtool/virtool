@@ -30,8 +30,8 @@ export class Reset extends React.Component {
                     <BoxGroupHeader>
                         <p>You are required to set a new password before proceeding.</p>
                     </BoxGroupHeader>
-                    <BoxGroupSection>
-                        <form onSubmit={this.handleSubmit}>
+                    <form onSubmit={this.handleSubmit}>
+                        <BoxGroupSection>
                             <InputGroup>
                                 <InputLabel>Password</InputLabel>
                                 <PasswordInput
@@ -40,14 +40,14 @@ export class Reset extends React.Component {
                                     onChange={this.handleChange}
                                 />
                             </InputGroup>
-                            <WallDialogFooter>
-                                <span>{this.props.error}</span>
-                                <Button type="submit" color="blue">
-                                    Reset
-                                </Button>
-                            </WallDialogFooter>
-                        </form>
-                    </BoxGroupSection>
+                        </BoxGroupSection>
+                        <WallDialogFooter>
+                            <Button type="submit" color="blue">
+                                Reset
+                            </Button>
+                            <span>{this.props.error}</span>
+                        </WallDialogFooter>
+                    </form>
                 </WallDialog>
             </WallContainer>
         );

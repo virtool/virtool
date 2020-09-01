@@ -1,17 +1,18 @@
 import base64
 import os
-import sys
 from typing import Tuple
 
-import mako.template
+import aiofiles
+import jinja2
 from aiohttp import web
 
 import virtool.app_routes
-import virtool.http.utils
-import virtool.users.sessions
-import virtool.users.db
 import virtool.db.utils
 import virtool.errors
+import virtool.http.utils
+import virtool.templates
+import virtool.users.db
+import virtool.users.sessions
 import virtool.users.utils
 import virtool.utils
 from virtool.api.response import bad_request
@@ -61,16 +62,6 @@ async def can_use_api_key(req):
     return (req.path[0:4] == "/api" or req.path[0:7] == "/upload") and req.app["settings"]["enable_api"]
 
 
-async def client_path_error() -> web.Response:
-    """
-    Returns a response with a rendered error page indicating the the application client files could not be found.
-
-    :return: a response
-    """
-    html = get_client_file_error_template().render()
-    return web.Response(body=html, content_type="text/html")
-
-
 def get_ip(req: web.Request) -> str:
     """
     A convenience function for getting the client IP address from a :class:`~web.Request` object.
@@ -82,20 +73,9 @@ def get_ip(req: web.Request) -> str:
     return req.transport.get_extra_info("peername")[0]
 
 
-def get_client_file_error_template() -> mako.template.Template:
-    """
-    A convenience function for getting a :class:`~mako.template.Template` for an error page returned when the client
-    files cannot be found.
-
-    :return: an error page template
-
-    """
-    return mako.template.Template(filename=os.path.join(sys.path[0], "templates", "client_path_error.html"))
-
-
 def decode_authorization(authorization: str) -> Tuple[str, str]:
     """
-    Parse and decode an API key from an HTTP authorization header value. Thje
+    Parse and decode an API key from an HTTP authorization header value.
 
     :param authorization: the authorization header value for a API request
     :return: a tuple containing the user id and API key parsed from the authorization header
@@ -189,16 +169,15 @@ async def index_handler(req: web.Request) -> web.Response:
 
     path = os.path.join(req.app["client_path"], "index.html")
 
-    html = mako.template.Template(filename=path).render()
+    async with aiofiles.open(path, "r") as f:
+        template = jinja2.Template(await f.read(), autoescape=True)
 
-    html = html.replace("VERSION", req.app["version"])
-
-    html = html.replace('"DEV"', "true" if req.app["settings"]["dev"] else "false")
-
-    html = html.replace('"FIRST"', "true" if requires_first_user else "false")
-
-    html = html.replace('"LOGIN"', "true" if requires_login else "false")
-
-    html = html.replace("NONCE", req["nonce"])
+    html = template.render(
+        dev=req.app["settings"]["dev"],
+        first=requires_first_user,
+        login=requires_login,
+        nonce=req["nonce"],
+        version=req.app["version"]
+    )
 
     return web.Response(body=html, content_type="text/html")

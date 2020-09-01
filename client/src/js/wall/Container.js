@@ -24,19 +24,20 @@ export const WallDialog = styled.div`
     display: flex;
     flex-direction: column;
     margin-bottom: 260px;
-    padding: 10px 15px;
-    width: 340px;
+    overflow: hidden;
+    width: ${props => (props.size === "lg" ? "620px" : "340px")};
 `;
 
 export const WallDialogFooter = styled.div`
     align-items: center;
     display: flex;
+    flex-direction: row-reverse;
     justify-content: space-between;
-    margin-top: 15px;
+    padding: 10px 15px;
 
     & > span {
         color: ${props => props.theme.color.red};
-        font-size: ${getFontSize("xs")};
+        font-size: ${getFontSize("sm")};
     }
 `;
 

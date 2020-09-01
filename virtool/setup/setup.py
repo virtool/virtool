@@ -48,9 +48,6 @@ def setup_routes(app):
     app.router.add_post(r"/setup/watch", virtool.setup.handlers.post_path)
     app.router.add_get(r"/setup/finish", virtool.setup.handlers.get_finish)
     app.router.add_get(r"/setup/save", virtool.setup.handlers.get_save)
+    app.router.add_static(r"/static", "./static")
     app.router.add_get(r"/{suffix:.*}", virtool.setup.handlers.redirect)
 
-    try:
-        app.router.add_static("/static", app["client_path"])
-    except KeyError:
-        pass

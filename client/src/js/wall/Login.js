@@ -3,21 +3,12 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { login } from "../account/actions";
-import { getFontSize } from "../app/theme";
-import { Button, Checkbox, Input, InputGroup, InputLabel, PasswordInput } from "../base";
+import { BoxGroupSection, Button, Checkbox, Input, InputGroup, InputLabel, PasswordInput } from "../base";
 import { clearError } from "../errors/actions";
-import { WallContainer, WallDialog, WallLogo } from "./Container";
+import { WallContainer, WallDialog, WallDialogFooter, WallLogo } from "./Container";
 
-const LoginFooter = styled.div`
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
-    margin-top: 15px;
-
-    & > span {
-        color: ${props => props.theme.color.red};
-        font-size: ${getFontSize("sm")};
-    }
+const LoginFooter = styled(WallDialogFooter)`
+    border: none;
 `;
 
 export class Login extends React.Component {
@@ -57,22 +48,33 @@ export class Login extends React.Component {
                 <WallLogo height={42} />
                 <WallDialog>
                     <form onSubmit={this.handleSubmit}>
-                        <InputGroup>
-                            <InputLabel>Username</InputLabel>
-                            <Input name="username" value={this.state.username} onChange={this.handleChange} autoFocus />
-                        </InputGroup>
-                        <InputGroup>
-                            <InputLabel>Password</InputLabel>
-                            <PasswordInput name="password" value={this.state.password} onChange={this.handleChange} />
-                        </InputGroup>
+                        <BoxGroupSection>
+                            <InputGroup>
+                                <InputLabel>Username</InputLabel>
+                                <Input
+                                    name="username"
+                                    value={this.state.username}
+                                    onChange={this.handleChange}
+                                    autoFocus
+                                />
+                            </InputGroup>
+                            <InputGroup>
+                                <InputLabel>Password</InputLabel>
+                                <PasswordInput
+                                    name="password"
+                                    value={this.state.password}
+                                    onChange={this.handleChange}
+                                />
+                            </InputGroup>
 
-                        <Checkbox checked={this.state.remember} onClick={this.handleRemember} label="Remember Me" />
+                            <Checkbox checked={this.state.remember} onClick={this.handleRemember} label="Remember Me" />
+                        </BoxGroupSection>
 
                         <LoginFooter>
-                            <span>{this.props.error}</span>
                             <Button type="submit" color="blue">
                                 Login
                             </Button>
+                            <span>{this.props.error}</span>
                         </LoginFooter>
                     </form>
                 </WallDialog>

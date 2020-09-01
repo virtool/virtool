@@ -9,20 +9,20 @@ import virtool.genbank.api
 import virtool.groups.api
 import virtool.history.api
 import virtool.hmm.api
+import virtool.http.auth
+import virtool.http.root
+import virtool.http.ws
 import virtool.indexes.api
 import virtool.jobs.api
 import virtool.otus.api
 import virtool.processes.api
 import virtool.references.api
-import virtool.http.root
 import virtool.samples.api
 import virtool.settings.api
 import virtool.software.api
 import virtool.subtractions.api
 import virtool.uploads.api
 import virtool.users.api
-import virtool.http.ws
-import virtool.http.auth
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -73,3 +73,5 @@ def setup_routes(app):
 
     for routes in ROUTES:
         app.router.add_routes(routes)
+
+    app.router.add_static("/assets", "./static")
