@@ -2,6 +2,7 @@ import { differenceWith, filter, get, isEqual, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
+import { getFontSize } from "../../../../app/theme";
 import { Badge, BoxGroup, NoneFoundSection } from "../../../../base";
 import { checkRefRight, formatIsolateName } from "../../../../utils/utils";
 import { showAddSequence, showEditSequence, showRemoveSequence } from "../../../actions";
@@ -14,13 +15,14 @@ import Sequence from "./Sequence";
 const IsolateSequencesHeader = styled.label`
     align-items: center;
     display: flex;
+    font-weight: ${getFontSize("thick")};
 
     strong {
+        font-size: ${getFontSize("lg")};
         padding-right: 5px;
     }
 
     a {
-        font-weight: bold;
         margin-left: auto;
     }
 `;

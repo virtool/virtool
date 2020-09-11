@@ -1,4 +1,5 @@
-import { CloneReference, mapStateToProps, mapDispatchToProps } from "../Clone";
+import { CloneReference, mapDispatchToProps, mapStateToProps } from "../Clone";
+import { ReferenceSelector } from "../ReferenceSelector";
 
 describe("<CloneReference />", () => {
     const props = {
@@ -80,9 +81,9 @@ describe("<CloneReference />", () => {
         });
     });
 
-    it("should call handleSelect() when ReferenceSelect is selected", () => {
+    it("should call handleSelect() when ReferenceSelector is selected", () => {
         const wrapper = shallow(<CloneReference {...props} />);
-        wrapper.find("ReferenceSelect").simulate("select");
+        wrapper.find(ReferenceSelector).simulate("select");
         expect(wrapper.state()).toEqual({
             ...state,
             reference: undefined

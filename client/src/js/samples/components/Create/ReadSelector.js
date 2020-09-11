@@ -3,9 +3,10 @@ import PropTypes from "prop-types";
 import React from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import { getFontWeight } from "../../../app/theme";
 import { Box, BoxGroup, Button, InputError, NoneFoundSection, SearchInput, Toolbar } from "../../../base";
 
-import ReadItem from "./ReadItem";
+import ReadSelectorItem from "./ReadSelectorItem";
 
 const ReadSelectorBox = styled(Box)`
     ${props => (props.error ? `border-color: ${props.theme.color.red};` : "")};
@@ -19,16 +20,14 @@ const ReadSelectorError = styled(InputError)`
     margin-bottom: 10px;
 `;
 
-const ReadSelectorHeader = styled.h5`
-    display: flex;
+const ReadSelectorHeader = styled.label`
     align-items: center;
+    display: flex;
+    font-weight: ${getFontWeight("thick")};
 
-    strong {
-        flex: 1 0 auto;
-    }
-
-    small {
+    span {
         color: grey;
+        margin-left: auto;
     }
 `;
 
@@ -99,7 +98,13 @@ export default class ReadSelector extends React.PureComponent {
         let fileComponents = map(sortBy(files, "uploaded_at").reverse(), file => {
             const index = indexOf(this.props.selected, file.id);
             return (
-                <ReadItem key={file.id} {...file} index={index} selected={index > -1} onSelect={this.handleSelect} />
+                <ReadSelectorItem
+                    key={file.id}
+                    {...file}
+                    index={index}
+                    selected={index > -1}
+                    onSelect={this.handleSelect}
+                />
             );
         });
 
@@ -115,9 +120,9 @@ export default class ReadSelector extends React.PureComponent {
             <div>
                 <ReadSelectorHeader>
                     <strong>Read Files</strong>
-                    <small>
-                        {this.props.selected.length} of {fileComponents.length} selected
-                    </small>
+                    <span>
+                        {this.props.selected.length} of {fileComponents.length || 0} selected
+                    </span>
                 </ReadSelectorHeader>
 
                 <ReadSelectorBox error={this.props.error}>

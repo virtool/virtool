@@ -2,52 +2,52 @@ import { find } from "lodash-es";
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { device, Icon, Loader, RelativeTime, SpacedBox } from "../../base";
+import { getFontSize, getFontWeight } from "../../app/theme";
+import { Icon, Loader, RelativeTime, SpacedBox } from "../../base";
 import { byteSize, checkAdminOrPermission } from "../../utils/utils";
 
 import { removeFile } from "../actions";
 import { getFilesById } from "../selectors";
 
-const StyledFile = styled(SpacedBox)`
-    display: flex;
-    justify-content: space-between;
+const FileAttribution = styled.span`
+    font-size: ${getFontSize("md")};
 `;
 
 const FileHeader = styled.div`
-    align-items: flex-start;
+    align-items: center;
     display: flex;
+    font-size: ${getFontSize("lg")};
+    font-weight: ${getFontWeight("thick")};
 
-    @media (max-width: ${device.desktop}) {
-        flex-direction: column;
+    strong {
+        font-weight: ${getFontWeight("thick")};
     }
-`;
 
-const Creation = styled.div`
-    font-size: 12px;
-    margin-left: 9px;
-    margin-top: 1px;
+    span {
+        margin-left: auto;
 
-    @media (max-width: ${device.desktop}) {
-        margin: 0;
+        span {
+            margin-right: 10px;
+        }
     }
 `;
 
 export const File = ({ canRemove, id, name, ready, size, uploadedAt, user, onRemove }) => {
     const handleRemove = useCallback(() => onRemove(id), [id]);
 
-    let creation;
+    let attribution;
 
     if (user === null) {
-        creation = (
-            <React.Fragment>
+        attribution = (
+            <FileAttribution>
                 Retrieved <RelativeTime time={uploadedAt} />
-            </React.Fragment>
+            </FileAttribution>
         );
     } else {
-        creation = (
-            <React.Fragment>
+        attribution = (
+            <FileAttribution>
                 Uploaded <RelativeTime time={uploadedAt} /> by {user.id}
-            </React.Fragment>
+            </FileAttribution>
         );
     }
 
@@ -76,13 +76,13 @@ export const File = ({ canRemove, id, name, ready, size, uploadedAt, user, onRem
     }
 
     return (
-        <StyledFile>
+        <SpacedBox>
             <FileHeader>
                 <strong>{name}</strong>
-                <Creation>{creation}</Creation>
+                {attribution}
             </FileHeader>
             {right}
-        </StyledFile>
+        </SpacedBox>
     );
 };
 

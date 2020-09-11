@@ -1,19 +1,19 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<File /> should render 1`] = `
-<File__StyledFile>
+<Box__SpacedBox>
   <File__FileHeader>
     <strong>
       foo.fa
     </strong>
-    <File__Creation>
+    <File__FileAttribution>
       Uploaded 
       <RelativeTime
         time="2018-02-14T17:12:00.000000Z"
       />
        by 
       bill
-    </File__Creation>
+    </File__FileAttribution>
   </File__FileHeader>
   <div>
     <span />
@@ -31,44 +31,44 @@ exports[`<File /> should render 1`] = `
       }
     />
   </div>
-</File__StyledFile>
+</Box__SpacedBox>
 `;
 
 exports[`<File /> should render when [canRemove=false] 1`] = `
-<File__StyledFile>
+<Box__SpacedBox>
   <File__FileHeader>
     <strong>
       foo.fa
     </strong>
-    <File__Creation>
+    <File__FileAttribution>
       Uploaded 
       <RelativeTime
         time="2018-02-14T17:12:00.000000Z"
       />
        by 
       bill
-    </File__Creation>
+    </File__FileAttribution>
   </File__FileHeader>
   <div>
     <span />
   </div>
-</File__StyledFile>
+</Box__SpacedBox>
 `;
 
 exports[`<File /> should render when [ready=false] 1`] = `
-<File__StyledFile>
+<Box__SpacedBox>
   <File__FileHeader>
     <strong>
       foo.fa
     </strong>
-    <File__Creation>
+    <File__FileAttribution>
       Uploaded 
       <RelativeTime
         time="2018-02-14T17:12:00.000000Z"
       />
        by 
       bill
-    </File__Creation>
+    </File__FileAttribution>
   </File__FileHeader>
   <span>
     <Loader
@@ -79,21 +79,21 @@ exports[`<File /> should render when [ready=false] 1`] = `
       Processing
     </strong>
   </span>
-</File__StyledFile>
+</Box__SpacedBox>
 `;
 
 exports[`<File /> should render when [user=null] 1`] = `
-<File__StyledFile>
+<Box__SpacedBox>
   <File__FileHeader>
     <strong>
       foo.fa
     </strong>
-    <File__Creation>
+    <File__FileAttribution>
       Retrieved 
       <RelativeTime
         time="2018-02-14T17:12:00.000000Z"
       />
-    </File__Creation>
+    </File__FileAttribution>
   </File__FileHeader>
   <div>
     <span />
@@ -111,5 +111,5 @@ exports[`<File /> should render when [user=null] 1`] = `
       }
     />
   </div>
-</File__StyledFile>
+</Box__SpacedBox>
 `;

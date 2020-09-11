@@ -1,23 +1,26 @@
-import { find, includes } from "lodash-es";
+import { find } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { pushState } from "../../../app/actions";
+import { getFontSize, getFontWeight } from "../../../app/theme";
 import { Attribution, Checkbox, Icon, LinkBox, Loader } from "../../../base";
 import { selectSample } from "../../actions";
+import { getIsSelected } from "../../selectors";
+import { getLibraryTypeDisplayName } from "../../utils";
 import { SampleItemLabels } from "./Labels";
 
 const SampleIconContainer = styled.div`
-    align-items: flex-start;
+    align-items: center;
     background: none;
     bottom: 0;
     display: flex;
     justify-content: center;
-    padding: 10px 12px 0;
+    padding: 0 15px;
     position: absolute;
     right: 0;
     top: 0;
-    z-index: 900;
+    z-index: 10;
 
     > div {
         align-items: center;
@@ -39,59 +42,74 @@ const SampleItemCheckboxContainer = styled.div`
     top: 0;
     position: absolute;
     width: 45px;
-    z-index: 900;
+    z-index: 10;
 `;
 
 const SampleItemContainer = styled.div`
     position: relative;
-    z-index: 0;
-
-    ${Attribution} {
-        font-size: 12px;
-    }
 `;
 
-const SampleItemTop = styled.div`
+const SampleItemLibraryType = styled.div`
     align-items: center;
+    color: ${props => props.theme.color.greyDark};
     display: flex;
-    position: relative;
+    flex: 1;
+    font-size: ${getFontSize("lg")};
+    font-weight: ${getFontWeight("thick")};
 
-    > * {
-        width: 50%;
+    i:first-child {
+        margin-right: 10px;
     }
 `;
 
 const SampleItemLinkBox = styled(LinkBox)`
+    align-items: center;
+    display: flex;
     padding: 10px 45px 10px 45px;
     position: relative;
 `;
 
-class SampleEntry extends React.Component {
+const SampleItemTitle = styled.div`
+    flex: 3;
+    position: relative;
+
+    h5 {
+        font-size: ${getFontSize("lg")};
+        font-weight: ${getFontWeight("thick")};
+        margin: 0;
+    }
+`;
+
+class SampleItem extends React.Component {
     handleCheck = e => {
         this.props.onSelect(this.props.id, this.props.index, e.shiftKey);
     };
 
+    handleQuickAnalyze = () => {
+        this.props.onQuickAnalyze(this.props.id);
+    };
+
     render() {
-        let icon;
+        let endIcon;
 
         if (this.props.ready) {
-            icon = (
+            endIcon = (
                 <SampleIconContainer>
                     <Icon
+                        color="green"
                         name="chart-area"
+                        style={{ fontSize: "17px", zIndex: 10000 }}
                         tip="Quick Analyze"
                         tipPlacement="left"
-                        color="green"
-                        onClick={this.props.onQuickAnalyze}
-                        style={{ fontSize: "17px", zIndex: 10000 }}
+                        onClick={this.handleQuickAnalyze}
                     />
                 </SampleIconContainer>
             );
         } else {
-            icon = (
+            endIcon = (
                 <SampleIconContainer>
                     <div>
-                        <Loader size="14px" color="#3c8786" />
+                        <Loader size="14px" color="primary" />
                         <strong>Creating</strong>
                     </div>
                 </SampleIconContainer>
@@ -105,31 +123,40 @@ class SampleEntry extends React.Component {
                 </SampleItemCheckboxContainer>
 
                 <SampleItemLinkBox to={`/samples/${this.props.id}`}>
-                    <SampleItemTop>
-                        <strong>{this.props.name}</strong>
-                        <SampleItemLabels nuvs={this.props.nuvs} pathoscope={this.props.pathoscope} />
-                    </SampleItemTop>
-                    <Attribution time={this.props.created_at} user={this.props.user.id} />
+                    <SampleItemTitle>
+                        <h5>{this.props.name}</h5>
+                        <Attribution time={this.props.created_at} user={this.props.user.id} />
+                    </SampleItemTitle>
+                    <SampleItemLibraryType>
+                        <Icon name={this.props.library_type === "amplicon" ? "barcode" : "dna"} fixedWidth />
+                        <span> {getLibraryTypeDisplayName(this.props.library_type)}</span>
+                    </SampleItemLibraryType>
+                    <SampleItemLabels nuvs={this.props.nuvs} pathoscope={this.props.pathoscope} />
                 </SampleItemLinkBox>
 
-                {icon}
+                {endIcon}
             </SampleItemContainer>
         );
     }
 }
 
-const mapStateToProps = (state, ownProps) => ({
-    ...find(state.samples.documents, { id: ownProps.id }),
-    checked: includes(state.samples.selected, ownProps.id)
-});
+export function mapStateToProps(state, ownProps) {
+    return {
+        ...find(state.samples.documents, { id: ownProps.id }),
+        checked: getIsSelected(state, ownProps.id)
+    };
+}
 
-const mapDispatchToProps = (dispatch, ownProps) => ({
-    onSelect: () => {
-        dispatch(selectSample(ownProps.id));
-    },
-    onQuickAnalyze: () => {
-        dispatch(pushState({ createAnalysis: [ownProps.id] }));
-    }
-});
+export function mapDispatchToProps(dispatch, ownProps) {
+    return {
+        onSelect: () => {
+            dispatch(selectSample(ownProps.id));
+        },
+        onQuickAnalyze: id => {
+            dispatch(selectSample(id));
+            dispatch(pushState({ quickAnalysis: true }));
+        }
+    };
+}
 
-export default connect(mapStateToProps, mapDispatchToProps)(SampleEntry);
+export default connect(mapStateToProps, mapDispatchToProps)(SampleItem);

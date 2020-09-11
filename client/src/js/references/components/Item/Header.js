@@ -2,14 +2,11 @@ import PropTypes from "prop-types";
 import React from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { Attribution, Icon } from "../../../base";
+import { getFontSize, getFontWeight } from "../../../app/theme";
+import { Attribution, Icon, LinkIcon } from "../../../base";
 
 const ReferenceItemDataDescriptor = styled.strong`
     text-transform: capitalize;
-`;
-
-const ReferenceItemHeaderLink = styled(Link)`
-    font-weight: bold;
 `;
 
 const StyledReferenceItemHeader = styled.div`
@@ -22,17 +19,19 @@ const StyledReferenceItemHeader = styled.div`
         justify-content: space-between;
     }
 
-    p > strong {
-        text-transform: capitalize;
-    }
-
     h2 {
-        font-size: 16px;
+        font-size: ${getFontSize("lg")};
+        font-weight: ${getFontWeight("thick")};
         margin: 0 0 4px;
     }
 
     p {
-        font-size: 14px;
+        font-size: ${getFontSize("md")};
+
+        strong {
+            font-weight: ${getFontWeight("thick")};
+            text-transform: capitalize;
+        }
 
         i {
             margin-right: 4px;
@@ -43,10 +42,13 @@ const StyledReferenceItemHeader = styled.div`
 export const ReferenceItemHeader = ({ createdAt, dataType, id, name, organism, otuCount, userId }) => (
     <StyledReferenceItemHeader>
         <h2>
-            <ReferenceItemHeaderLink to={`/refs/${id}`}>{name}</ReferenceItemHeaderLink>
-            <Link to={{ state: { newReference: true, cloneReference: true, id } }}>
-                <Icon name="clone" tip="Clone" />
-            </Link>
+            <Link to={`/refs/${id}`}>{name}</Link>
+            <LinkIcon
+                to={{ state: { newReference: true, cloneReference: true, id } }}
+                name="clone"
+                tip="Clone"
+                color="blue"
+            />
         </h2>
         <p>
             <span>

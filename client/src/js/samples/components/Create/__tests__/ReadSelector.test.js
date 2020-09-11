@@ -52,20 +52,14 @@ describe("<ReadSelector />", () => {
         const e = {
             preventDefault: jest.fn()
         };
-        wrapper
-            .find(ReadSelectorButton)
-            .at(0)
-            .simulate("click", e);
+        wrapper.find(ReadSelectorButton).at(0).simulate("click", e);
         expect(wrapper.state()).toEqual({ filter: "" });
         expect(props.onSelect).toHaveBeenCalledWith([]);
     });
 
     it("should call reset when swap Button is clicked", () => {
         const wrapper = shallow(<ReadSelector {...props} />);
-        wrapper
-            .find(ReadSelectorButton)
-            .at(1)
-            .simulate("click");
+        wrapper.find(ReadSelectorButton).at(1).simulate("click");
         expect(props.onSelect).toHaveBeenCalledWith(["bar", "foo"]);
     });
 });

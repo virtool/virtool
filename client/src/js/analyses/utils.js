@@ -122,6 +122,7 @@ export const formatAODPData = detail => {
 const getIdentities = data => flatMap(data, item => item.identities);
 
 const getSequenceIdentities = sequence => flatMap(sequence.hits, hit => hit.identity);
+
 export const formatNuVsData = detail => {
     const results = map(detail.results, result => ({
         ...result,
@@ -134,9 +135,10 @@ export const formatNuVsData = detail => {
 
     const longestSequence = maxBy(results, result => result.sequence.length);
 
-    const { created_at, id, ready, user, workflow } = detail;
+    const { cache, created_at, id, ready, user, workflow } = detail;
 
     return {
+        cache,
         created_at,
         id,
         ready,
@@ -158,7 +160,7 @@ export const formatPathoscopeData = detail => {
         return detail;
     }
 
-    const { created_at, results, id, index, read_count, ready, reference, subtraction, user, workflow } = detail;
+    const { cache, created_at, results, id, index, read_count, ready, reference, subtraction, user, workflow } = detail;
 
     const formatted = map(results, otu => {
         const isolateNames = [];
@@ -211,6 +213,7 @@ export const formatPathoscopeData = detail => {
     });
 
     return {
+        cache,
         created_at,
         id,
         index,

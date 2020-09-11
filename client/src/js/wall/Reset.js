@@ -1,24 +1,9 @@
 import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
 import { resetPassword } from "../account/actions";
-import { BoxGroup, BoxGroupHeader, BoxGroupSection, Button, InputGroup, InputLabel, PasswordInput } from "../base";
-import { WallContainer } from "./Container";
-import { WallModalFooter } from "./Footer";
-import { WallLogo } from "./Logo";
-
-const ResetModal = styled(BoxGroup)`
-    align-items: stretch;
-    background-color: #fff;
-    border: none;
-    border-radius: 4px;
-    box-shadow: rgba(0, 0, 0, 0.498039) 0 5px 15px 0;
-    display: flex;
-    margin-bottom: 260px;
-    flex-direction: column;
-    width: 340px;
-`;
+import { BoxGroupHeader, BoxGroupSection, Button, InputGroup, InputLabel, PasswordInput } from "../base";
+import { WallContainer, WallDialog, WallDialogFooter, WallLogo } from "./Container";
 
 export class Reset extends React.Component {
     constructor(props) {
@@ -41,12 +26,12 @@ export class Reset extends React.Component {
         return (
             <WallContainer>
                 <WallLogo height={42} />
-                <ResetModal>
+                <WallDialog>
                     <BoxGroupHeader>
                         <p>You are required to set a new password before proceeding.</p>
                     </BoxGroupHeader>
-                    <BoxGroupSection>
-                        <form onSubmit={this.handleSubmit}>
+                    <form onSubmit={this.handleSubmit}>
+                        <BoxGroupSection>
                             <InputGroup>
                                 <InputLabel>Password</InputLabel>
                                 <PasswordInput
@@ -55,15 +40,15 @@ export class Reset extends React.Component {
                                     onChange={this.handleChange}
                                 />
                             </InputGroup>
-                            <WallModalFooter>
-                                <span>{this.props.error}</span>
-                                <Button type="submit" color="blue">
-                                    Reset
-                                </Button>
-                            </WallModalFooter>
-                        </form>
-                    </BoxGroupSection>
-                </ResetModal>
+                        </BoxGroupSection>
+                        <WallDialogFooter>
+                            <Button type="submit" color="blue">
+                                Reset
+                            </Button>
+                            <span>{this.props.error}</span>
+                        </WallDialogFooter>
+                    </form>
+                </WallDialog>
             </WallContainer>
         );
     }

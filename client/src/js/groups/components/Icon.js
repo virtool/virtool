@@ -3,9 +3,9 @@ import { Icon } from "../../base";
 
 export const GroupIcon = styled(Icon).attrs(() => ({ name: "users" }))`
     align-items: center;
-    background-color: #ebf8ff;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    background-color: ${props => props.theme.color.greyLightest};
+    border-radius: 100%;
+    box-shadow: ${props => props.theme.boxShadow.sm};
     display: flex;
     height: 24px;
     justify-content: center;

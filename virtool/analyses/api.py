@@ -37,7 +37,10 @@ async def get(req):
     if document is None:
         return not_found()
 
-    iso = virtool.api.json.isoformat(document["created_at"])
+    try:
+        iso = virtool.api.json.isoformat(document["updated_at"])
+    except KeyError:
+        iso = virtool.api.json.isoformat(document["created_at"])
 
     if_modified_since = req.headers.get("If-Modified-Since")
 

@@ -16,7 +16,7 @@ export const AODPItem = ({ active, hits, id, name, style, onSetActiveId }) => {
     const handleClick = useCallback(() => onSetActiveId(id), [id]);
 
     return (
-        <StyledAODPItem onClick={handleClick} style={style} selected={active}>
+        <StyledAODPItem active={active} style={style} onClick={handleClick}>
             <strong>{name}</strong>
             <Badge>{hits}</Badge>
         </StyledAODPItem>

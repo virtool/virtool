@@ -22,7 +22,7 @@ const StyledBarsLegendItem = styled.div`
 
 const Bar = styled.div`
     border: ${getBorder};
-    border-radius: ${props => props.theme.borderRadius.lg};
+    border-radius: ${props => props.theme.borderRadius.md};
     display: flex;
     height: 32px;
     margin-bottom: 15px;
@@ -33,7 +33,6 @@ const Bar = styled.div`
 const BarItem = styled.div`
     background-color: ${getColor};
     flex: ${props => props.size / 100} 0 auto;
-    z-index: 1;
 `;
 
 const EmptyBarItem = styled(BarItem)`
@@ -43,7 +42,7 @@ const EmptyBarItem = styled(BarItem)`
 
 const BarsLegendItem = ({ color, count, title }) => (
     <StyledBarsLegendItem>
-        <Icon name="circle" color={color} shade="" />
+        <Icon name="circle" color={color} />
         <span>{title}</span>
         <span>{count}</span>
     </StyledBarsLegendItem>
@@ -51,6 +50,7 @@ const BarsLegendItem = ({ color, count, title }) => (
 
 const StyledBars = styled.div`
     margin-bottom: 10px;
+    position: relative;
 `;
 
 export const Bars = ({ empty, items }) => {

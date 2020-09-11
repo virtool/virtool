@@ -8,13 +8,7 @@ export const RemoveReference = ({ canRemove, id, onConfirm }) => {
     const handleClick = useCallback(() => onConfirm(id), ["id"]);
 
     if (canRemove) {
-        return (
-            <RemoveBanner
-                message="Click the Delete button to permanently remove this reference."
-                buttonText="Delete"
-                onClick={handleClick}
-            />
-        );
+        return <RemoveBanner message="Permanently delete this reference" buttonText="Delete" onClick={handleClick} />;
     }
 
     return null;

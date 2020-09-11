@@ -2,6 +2,7 @@ import { get, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
+import { getBorder } from "../../app/theme";
 
 import {
     device,
@@ -40,7 +41,7 @@ const ClusterTable = styled(Table)`
         flex: 1 1 auto;
         display: block;
         overflow-y: auto;
-        border-top: 1px solid #dddddd;
+        border-top: ${getBorder};
 
         tr {
             width: 100%;
@@ -61,14 +62,10 @@ const ClusterTable = styled(Table)`
 const TaxonomyGrid = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr;
-    column-gap: 15px;
+    grid-column-gap: ${props => props.theme.gap.column};
 
     @media (max-width: ${device.tablet}) {
         grid-template-columns: 1fr;
-    }
-
-    h5 {
-        font-weight: bold;
     }
 `;
 
@@ -103,34 +100,40 @@ export class HMMDetail extends React.Component {
                     <ViewHeaderTitle>{title}</ViewHeaderTitle>
                 </ViewHeader>
 
-                <Table>
-                    <tbody>
-                        <tr>
-                            <th>Cluster</th>
-                            <td>{this.props.detail.cluster}</td>
-                        </tr>
+                <BoxGroup>
+                    <BoxGroupHeader>
+                        <h2>General</h2>
+                    </BoxGroupHeader>
 
-                        <tr>
-                            <th>Best Definitions</th>
-                            <td>{names}</td>
-                        </tr>
+                    <Table>
+                        <tbody>
+                            <tr>
+                                <th>Cluster</th>
+                                <td>{this.props.detail.cluster}</td>
+                            </tr>
 
-                        <tr>
-                            <th>Length</th>
-                            <td>{this.props.detail.length}</td>
-                        </tr>
+                            <tr>
+                                <th>Best Definitions</th>
+                                <td>{names}</td>
+                            </tr>
 
-                        <tr>
-                            <th>Mean Entropy</th>
-                            <td>{this.props.detail.mean_entropy}</td>
-                        </tr>
+                            <tr>
+                                <th>Length</th>
+                                <td>{this.props.detail.length}</td>
+                            </tr>
 
-                        <tr>
-                            <th>Total Entropy</th>
-                            <td>{this.props.detail.total_entropy}</td>
-                        </tr>
-                    </tbody>
-                </Table>
+                            <tr>
+                                <th>Mean Entropy</th>
+                                <td>{this.props.detail.mean_entropy}</td>
+                            </tr>
+
+                            <tr>
+                                <th>Total Entropy</th>
+                                <td>{this.props.detail.total_entropy}</td>
+                            </tr>
+                        </tbody>
+                    </Table>
+                </BoxGroup>
 
                 <BoxGroup>
                     <BoxGroupHeader>

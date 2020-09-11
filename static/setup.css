@@ -1,0 +1,89 @@
+:root {
+  --border: 1px solid #CBD5E0;
+}
+
+.setup-footer {
+  align-items: center;
+  display: flex;
+  margin-top: 30px;
+}
+
+.setup-footer > div:last-child {
+  margin-left: auto;
+}
+
+.setup-error {
+  color: #E0282E;
+  padding-right: 15px;
+}
+
+.setup-success {
+  color: #1DAD57;
+  padding-right: 15px;
+}
+
+.setup-summary {
+  align-items: center;
+  border-top: var(--border);
+  border-right: var(--border);
+  border-left: var(--border);
+  display: flex;
+}
+
+.setup-summary:first-child {
+  border-top-left-radius: 4px;
+  border-top-right-radius: 3px;
+}
+
+.setup-summary:last-child {
+  border-bottom: var(--border);
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 3px;
+}
+
+.setup-summary code {
+  display: block;
+  padding: 5px 0 0;
+}
+
+.setup-summary > div:first-child {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  width: 50px;
+}
+
+.setup-summary > div:last-child {
+  padding: 15px 10px 15px 0;
+}
+
+@keyframes loader {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(180deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+div.setup-loader-container {
+  padding: 30px 0;
+  text-align: center;
+}
+
+div.setup-loader {
+  animation: loader 0.75s 0s infinite linear;
+  animation-fill-mode: both;
+  border: 2px solid rgb(60, 135, 134);
+  border-bottom-color: transparent;
+  border-radius: 100%;
+  background: transparent;
+  display: inline-block;
+  height: 24px;
+  width: 24px;
+}

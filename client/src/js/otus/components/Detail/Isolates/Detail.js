@@ -12,7 +12,7 @@ import RemoveIsolate from "./Remove";
 const IsolateDetailHeader = styled(Box)`
     align-items: center;
     display: flex;
-    font-size: 16px;
+    font-size: ${props => props.theme.fontSize.lg};
     flex-direction: row;
     justify-content: space-between;
 

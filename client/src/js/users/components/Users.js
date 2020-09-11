@@ -1,6 +1,7 @@
 import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
+import { getAccountAdministrator } from "../../account/selectors";
 import { Alert, Icon, LinkButton, LoadingPlaceholder, SearchInput, Toolbar } from "../../base";
 import { clearError } from "../../errors/actions";
 import { listGroups } from "../../groups/actions";
@@ -58,7 +59,7 @@ export class ManageUsers extends React.Component {
             <div>
                 <Toolbar>
                     <SearchInput name="search" value={this.state.term} onChange={this.props.onFind} />
-                    <LinkButton to={{ state: { groups: true } }} icon="users" tip="Manage Group" />
+                    <LinkButton to={{ state: { groups: true } }} icon="users" tip="Manage Groups" />
                     <LinkButton to={{ state: { createUser: true } }} icon="user-plus" tip="Create User" color="blue" />
                 </Toolbar>
 
@@ -72,7 +73,7 @@ export class ManageUsers extends React.Component {
 }
 
 export const mapStateToProps = state => ({
-    isAdmin: state.account.administrator,
+    isAdmin: getAccountAdministrator(state),
     term: state.users.filter,
     groups: state.groups.list,
     groupsFetched: state.groups.fetched,

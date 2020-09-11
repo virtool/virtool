@@ -1,16 +1,16 @@
-import React from "react";
-import styled from "styled-components";
-import PropTypes from "prop-types";
-import { connect } from "react-redux";
 import { map, sortBy } from "lodash-es";
-import { BoxGroup, Icon } from "../../../base";
+import PropTypes from "prop-types";
+import React from "react";
+import { connect } from "react-redux";
+import styled from "styled-components";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection, Icon } from "../../../base";
 import {
-    addReferenceUser,
-    editReferenceUser,
-    removeReferenceUser,
     addReferenceGroup,
+    addReferenceUser,
     editReferenceGroup,
-    removeReferenceGroup
+    editReferenceUser,
+    removeReferenceGroup,
+    removeReferenceUser
 } from "../../../references/actions";
 import { checkRefRight } from "../../../utils/utils";
 import AddReferenceMember from "./AddMember";
@@ -27,7 +27,7 @@ const NewMemberLink = styled.a`
     margin-left: auto;
 `;
 
-const NoMembers = styled(BoxGroup.Section)`
+const NoMembers = styled(BoxGroupSection)`
     align-items: center;
     justify-content: center;
     display: flex;
@@ -37,7 +37,7 @@ const NoMembers = styled(BoxGroup.Section)`
     }
 `;
 
-const ReferenceMembersHeader = styled(BoxGroup.Header)`
+const ReferenceMembersHeader = styled(BoxGroupHeader)`
     padding-bottom: 10px;
 
     h2 {
@@ -113,7 +113,7 @@ class ReferenceMembers extends React.Component {
                 <BoxGroup>
                     <ReferenceMembersHeader>
                         <h2>
-                            <strong>{plural}</strong>
+                            {plural}
                             {addButton}
                         </h2>
                         <p>Manage membership and rights for reference {plural}.</p>

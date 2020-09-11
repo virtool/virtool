@@ -1,4 +1,11 @@
-import { getCanModify, getSampleDetail, getSampleDetailId, getSampleLibraryType, getStateTerm } from "../selectors";
+import {
+    getCanModify,
+    getDefaultSubtraction,
+    getFilesUndersized,
+    getSampleDetail,
+    getSampleDetailId,
+    getSampleLibraryType
+} from "../selectors";
 
 describe("getCanModify()", () => {
     let state;
@@ -63,15 +70,32 @@ describe("getCanModify()", () => {
     });
 });
 
-describe("getStateTerm()", () => {
-    it("should return sample find term", () => {
-        const state = {
-            samples: {
-                term: "foo"
-            }
+describe("getDefaultSubtraction()", () => {
+    let state;
+
+    beforeEach(() => {
+        state = {
+            samples: { detail: { subtraction: { id: "bar" } } },
+            subtraction: { shortlist: [{ id: "foo", name: "Foo" }] }
         };
-        const term = getStateTerm(state);
-        expect(term).toBe("foo");
+    });
+
+    it("should return sample's default subtraction when defined", () => {
+        const subtractionId = getDefaultSubtraction(state);
+        expect(subtractionId).toBe("bar");
+    });
+
+    it("should return first subtraction id sample has no default subtraction", () => {
+        state.samples.detail.subtraction = null;
+        const subtractionId = getDefaultSubtraction(state);
+        expect(subtractionId).toBe("foo");
+    });
+
+    it("should return undefined when no subtractions available", () => {
+        state.samples.detail.subtraction = null;
+        state.subtraction.shortlist = [];
+        const subtractionId = getDefaultSubtraction(state);
+        expect(subtractionId).toBeUndefined();
     });
 });
 
@@ -136,6 +160,43 @@ describe("getSampleLibraryType()", () => {
             }
         };
         const libraryType = getSampleLibraryType(state);
-        expect(libraryType).toBe(undefined);
+        expect(libraryType).toBeUndefined();
+    });
+});
+
+describe("getFilesUndersized()", () => {
+    let state;
+
+    beforeEach(() => {
+        state = {
+            samples: {
+                detail: {
+                    files: [
+                        { id: "foo1", size: 500000000 },
+                        { id: "foo2", size: 500000000 }
+                    ]
+                }
+            }
+        };
+    });
+
+    it("should return false when both files are not undersized", () => {
+        const result = getFilesUndersized(state);
+        expect(result).toBe(false);
+    });
+
+    it("should return true when one file is undersized", () => {
+        state.samples.detail.files[0].size = 5000;
+
+        const result = getFilesUndersized(state);
+        expect(result).toBe(true);
+    });
+
+    it("should return true when both files are undersized", () => {
+        state.samples.detail.files[0].size = 5000;
+        state.samples.detail.files[1].size = 5000;
+
+        const result = getFilesUndersized(state);
+        expect(result).toBe(true);
     });
 });

@@ -1,7 +1,8 @@
 import { forEach, includes, pull, slice } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import CreateAnalysis from "../../analyses/components/Create/Create";
+import { getAccountId } from "../../account/selectors";
+import QuickAnalysis from "../../analyses/components/Create/Quick";
 import { Badge, LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader, ViewHeaderTitle } from "../../base";
 import { findHmms } from "../../hmm/actions";
 import { listReadyIndexes } from "../../indexes/actions";
@@ -104,14 +105,14 @@ export class SamplesList extends React.Component {
                 )}
 
                 <CreateSample />
-                <CreateAnalysis />
+                <QuickAnalysis />
             </div>
         );
     }
 }
 
 const mapStateToProps = state => ({
-    userId: state.account.id,
+    userId: getAccountId(state),
     ...state.samples,
     term: getTerm(state),
     pathoscope: state.samples.pathoscopeCondition,

@@ -22,6 +22,7 @@ PROJECTION = [
     "reference",
     "sample",
     "subtraction",
+    "updated_at",
     "user"
 ]
 
@@ -85,7 +86,8 @@ class BLAST:
             "results.index": self.sequence_index
         }, {
             "$set": {
-                "results.$.blast": data
+                "results.$.blast": data,
+                "updated_at": virtool.utils.timestamp()
             }
         })
 
@@ -110,10 +112,13 @@ async def new(app, sample_id, ref_id, subtraction_id, user_id, workflow):
 
     job_id = await virtool.db.utils.get_new_id(db.jobs)
 
+    created_at = virtool.utils.timestamp()
+
     document = {
         "_id": analysis_id,
         "ready": False,
-        "created_at": virtool.utils.timestamp(),
+        "created_at": created_at,
+        "updated_at": created_at,
         "job": {
             "id": job_id
         },
@@ -201,7 +206,8 @@ async def update_nuvs_blast(
 
     document = await db.analyses.find_one_and_update({"_id": analysis_id, "results.index": sequence_index}, {
         "$set": {
-            "results.$.blast": data
+            "results.$.blast": data,
+            "updated_at": virtool.utils.timestamp()
         }
     })
 
@@ -211,7 +217,8 @@ async def update_nuvs_blast(
 async def remove_nuvs_blast(db, analysis_id, sequence_index):
     await db.analyses.update_one({"_id": analysis_id, "results.index": sequence_index}, {
         "$set": {
-            "results.$.blast": None
+            "results.$.blast": None,
+            "updated_at": virtool.utils.timestamp()
         }
     })
 

@@ -66,10 +66,10 @@ exports[`<CreateAPIKey /> should render when [state.newKey] is empty 1`] = `
   <ModalHeader>
     Create API Key
   </ModalHeader>
-  <Connect(CreateAPIKeyInfo) />
   <form
     onSubmit={[Function]}
   >
+    <Connect(CreateAPIKeyInfo) />
     <Modal__ModalBody>
       <InputGroup>
         <Input__InputLabel>

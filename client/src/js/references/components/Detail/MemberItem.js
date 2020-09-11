@@ -1,10 +1,10 @@
 import PropTypes from "prop-types";
 import React, { useCallback } from "react";
 import styled from "styled-components";
-import { BoxGroup, FlexItem, Icon, Identicon } from "../../../base";
+import { BoxGroupSection, FlexItem, Icon, Identicon } from "../../../base";
 import GroupIcon from "../../../groups/components/Icon";
 
-const StyledMemberItem = styled(BoxGroup.Section)`
+const StyledMemberItem = styled(BoxGroupSection)`
     align-items: center;
     display: flex;
 `;

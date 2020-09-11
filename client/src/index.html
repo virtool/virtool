@@ -1,33 +1,33 @@
 <!DOCTYPE html>
 <html>
+<head>
     <title>Virtool</title>
 
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+    <meta http-equiv="Pragma" content="no-cache"/>
+    <meta http-equiv="Expires" content="0"/>
 
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.14.0/css/all.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap"
+          rel="stylesheet">
 
-    <script nonce="NONCE">
-        window.__webpack_nonce__ = "NONCE";
+    <script nonce="{{ nonce }}">
+        window.__webpack_nonce__ = "{{ nonce }}";
 
         window.virtool = {
-            dev: "DEV",
-            first: "FIRST",
-            login: "LOGIN",
-            version: "VERSION"
+            dev: {{ "true" if dev else "false" }},
+            first: {{ "true" if first else "false" }},
+            login: {{ "true" if login else "false" }},
+            version: "{{ version }}"
         };
     </script>
+    <link rel="shortcut icon" href="<%= htmlWebpackPlugin.files.favicon %>?v=2" type="images/x-icon"/>
+</head>
 
-    <head>
-        <link rel="shortcut icon" href="<%= htmlWebpackPlugin.files.favicon %>?v=2" type="images/x-icon" />
-    </head>
-
-    <body>
-        <div id="app-container" />
-    </body>
+<body>
+<div id="app-container"/>
+</body>
 </html>

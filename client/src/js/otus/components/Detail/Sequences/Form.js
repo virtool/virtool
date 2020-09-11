@@ -118,7 +118,7 @@ export class SequenceForm extends React.Component {
             overlay = (
                 <ModalBodyOverlay>
                     <span>
-                        <Loader color="#fff" />
+                        <Loader color="white" />
                     </span>
                 </ModalBodyOverlay>
             );

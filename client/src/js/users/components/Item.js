@@ -1,22 +1,36 @@
+import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { get } from "lodash-es";
 import styled from "styled-components";
-import { FlexItem, Identicon, Icon, LinkBox } from "../../base";
+import { getFontSize, getFontWeight } from "../../app/theme";
+import { Icon, Identicon, Label, LinkBox } from "../../base";
 
-const StyledUserItem = styled.div`
+const StyledUserItem = styled(LinkBox)`
     display: flex;
     align-items: center;
+
+    strong {
+        font-size: ${getFontSize("lg")};
+        font-weight: ${getFontWeight("thick")};
+        padding-left: 10px;
+    }
+
+    ${Label} {
+        font-size: ${getFontSize("md")};
+        margin-left: auto;
+    }
 `;
 
 export const UserItem = ({ id, identicon, administrator }) => (
-    <LinkBox to={`/administration/users/${id}`}>
-        <StyledUserItem>
-            <Identicon size={32} hash={identicon} />
-            <FlexItem pad={10}>{id}</FlexItem>
-            <FlexItem pad={10}>{administrator ? <Icon name="user-shield" color="blue" /> : null}</FlexItem>
-        </StyledUserItem>
-    </LinkBox>
+    <StyledUserItem to={`/administration/users/${id}`}>
+        <Identicon size={32} hash={identicon} />
+        <strong>{id}</strong>
+        {administrator && (
+            <Label color="purple">
+                <Icon name="user-shield" /> Administrator
+            </Label>
+        )}
+    </StyledUserItem>
 );
 
 export const mapStateToProps = (state, ownProps) => {

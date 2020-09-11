@@ -10,7 +10,7 @@ const JobActionOverlay = styled.div`
     top: 0;
     right: 0;
     bottom: 0;
-    z-index: 900;
+    z-index: 20;
 `;
 
 export const JobAction = ({ state, canCancel, canRemove, onCancel, onRemove }) => {

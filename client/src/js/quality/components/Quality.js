@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import { getFontSize } from "../../app/theme";
 import { useElementSize } from "../../utils/hooks";
 import { QualityChart } from "./Chart";
 import { drawBasesChart } from "./Bases";
@@ -8,6 +9,7 @@ import { drawSequencesChart } from "./Sequences";
 
 const QualityTitle = styled.h5`
     display: flex;
+    font-size: ${getFontSize("lg")};
     justify-content: space-between;
 `;
 
@@ -23,14 +25,14 @@ export const Quality = ({ bases, composition, sequences }) => {
                     </QualityTitle>
                     <QualityChart createChart={drawBasesChart} data={bases} width={width} />
 
-                    <h5>
+                    <QualityTitle>
                         <strong>Nucleotide Composition at Read Positions</strong>
-                    </h5>
+                    </QualityTitle>
                     <QualityChart createChart={drawNucleotidesChart} data={composition} width={width} />
 
-                    <h5>
+                    <QualityTitle>
                         <strong>Read-wise Quality Occurrence</strong>
-                    </h5>
+                    </QualityTitle>
                     <QualityChart createChart={drawSequencesChart} data={sequences} width={width} />
                 </React.Fragment>
             )}

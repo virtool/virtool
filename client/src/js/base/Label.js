@@ -5,10 +5,10 @@ export const getLabelColor = props => getColor(props) || props.theme.color.greyD
 
 export const Label = styled.span`
     background-color: ${getLabelColor};
-    border-radius: 2px;
-    color: #ffffff;
+    border-radius: ${props => props.theme.borderRadius.sm};
+    color: ${props => props.theme.color.white};
     display: inline;
-    font-size: 12px;
+    font-size: ${props => props.theme.fontSize.sm};
     font-weight: bold;
     padding: 3px 5px;
     text-align: center;

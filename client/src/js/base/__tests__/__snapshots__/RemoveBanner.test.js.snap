@@ -4,9 +4,9 @@ exports[`<RemoveBanner /> renders correctly 1`] = `
 <RemoveBanner__StyledRemoveBanner
   color="red"
 >
-  <span>
+  <strong>
     test
-  </span>
+  </strong>
   <Button
     color="red"
     disabled={false}

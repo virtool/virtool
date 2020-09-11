@@ -1,15 +1,15 @@
 import {
-    WS_INSERT_SAMPLE,
-    WS_UPDATE_SAMPLE,
-    WS_REMOVE_SAMPLE,
-    GET_SAMPLE,
-    UPDATE_SAMPLE,
-    REMOVE_SAMPLE,
-    UPDATE_SAMPLE_RIGHTS,
-    SHOW_REMOVE_SAMPLE,
-    HIDE_SAMPLE_MODAL,
+    DESELECT_SAMPLES,
     FIND_READ_FILES,
-    FIND_SAMPLES
+    FIND_SAMPLES,
+    GET_SAMPLE,
+    REMOVE_SAMPLE,
+    SELECT_SAMPLE,
+    UPDATE_SAMPLE,
+    UPDATE_SAMPLE_RIGHTS,
+    WS_INSERT_SAMPLE,
+    WS_REMOVE_SAMPLE,
+    WS_UPDATE_SAMPLE
 } from "../../app/actionTypes";
 import reducer, { initialState } from "../reducer";
 
@@ -25,29 +25,18 @@ describe("Samples Reducer", () => {
         expect(result).toEqual(initialState);
     });
 
-    describe("should handle WS_INSERT_SAMPLE", () => {
+    it.each([null, []])("should handle WS_INSERT_SAMPLE and when when [documents=%p]", existing => {
         const action = {
             type: WS_INSERT_SAMPLE,
             data: {
-                id: "abc123",
-                name: "test"
+                id: "foo",
+                name: "Foo"
             }
         };
-
-        it("inserts entry when [documents=null]", () => {
-            const state = { documents: null };
-            const result = reducer(state, action);
-            expect(result).toEqual({
-                documents: [action.data]
-            });
-        });
-
-        it("inserts entry into current list otherwise", () => {
-            const state = { documents: [] };
-            const result = reducer(state, action);
-            expect(result).toEqual({
-                documents: [action.data]
-            });
+        const state = { documents: existing };
+        const result = reducer(state, action);
+        expect(result).toEqual({
+            documents: [action.data]
         });
     });
 
@@ -195,15 +184,30 @@ describe("Samples Reducer", () => {
         });
     });
 
-    it("should handle SHOW_REMOVE_SAMPLE", () => {
-        const action = { type: SHOW_REMOVE_SAMPLE };
-        const result = reducer({}, action);
-        expect(result).toEqual({ showRemove: true });
+    it("should handle SELECT_SAMPLE", () => {
+        const action = { type: SELECT_SAMPLE, sampleId: "foo" };
+        const state = { selected: ["bar", "baz"] };
+        const result = reducer(state, action);
+        expect(result).toEqual({
+            selected: ["bar", "baz", "foo"]
+        });
     });
 
-    it("should handle HIDE_SAMPLE_MODAL", () => {
-        const action = { type: HIDE_SAMPLE_MODAL };
-        const result = reducer({}, action);
-        expect(result).toEqual({ showRemove: false });
+    it("should handle SELECT_SAMPLE when sample already selected", () => {
+        const action = { type: SELECT_SAMPLE, sampleId: "foo" };
+        const state = { selected: ["bar", "foo", "baz"] };
+        const result = reducer(state, action);
+        expect(result).toEqual({
+            selected: ["bar", "baz"]
+        });
+    });
+
+    it("should handle DESELECT_SAMPLES", () => {
+        const action = { type: DESELECT_SAMPLES, sampleIds: ["foo", "bad"] };
+        const state = { selected: ["foo", "bar", "bad", "baz"] };
+        const result = reducer(state, action);
+        expect(result).toEqual({
+            selected: ["bar", "baz"]
+        });
     });
 });

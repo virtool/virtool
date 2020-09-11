@@ -2,6 +2,7 @@ import { line } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
 import { max } from "lodash-es";
+import { theme } from "../../app/theme";
 import { createSVG } from "../../samples/chartUtils";
 import { toScientificNotation } from "../../utils/utils";
 
@@ -28,7 +29,7 @@ export const drawSequencesChart = (element, data, baseWidth) => {
         .y(d => y(d));
 
     // Append the plot line to the SVG.
-    svg.append("path").attr("d", lineDrawer(data)).attr("class", "graph-line");
+    svg.append("path").attr("d", lineDrawer(data)).attr("class", "graph-line").attr("stroke", theme.color.greyDark);
 
     // Append a labelled x-axis to the SVG.
     svg.append("g")

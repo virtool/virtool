@@ -6,19 +6,19 @@ import { Badge, BoxGroup, BoxGroupHeader, BoxGroupSection } from "../../base";
 import { UploadItem } from "./UploadItem";
 
 const StyledUploadOverlay = styled.div`
-    ${props => (props.show ? "" : "display: none;")};
-    position: fixed;
     bottom: 0;
+    ${props => (props.show ? "" : "display: none;")};
+    max-width: 500px;
+    padding: 0 15px 15px 0;
+    position: fixed;
     right: 0;
     width: 35%;
-    max-width: 500px;
-    z-index: 1040;
-    padding: 0 15px 15px 0;
+    z-index: 90;
 `;
 
 const UploadOverlayContent = styled(BoxGroup)`
-    background-color: #ffffff;
-    box-shadow: 0 0 6px 0 #d5d5d5;
+    background-color: ${props => props.theme.color.white};
+    box-shadow: ${props => props.theme.boxShadow.lg};
     margin: 0;
 
     ${BoxGroupHeader} {

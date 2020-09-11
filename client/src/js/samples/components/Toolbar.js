@@ -1,41 +1,13 @@
 import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import { Box, Button, Icon, LinkButton, SearchInput, Toolbar } from "../../base";
+import { Box, Icon, LinkButton, SearchInput, Toolbar } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { clearSampleSelection, findSamples } from "../actions";
+import { SampleSelectionToolbar } from "./SelectionToolbar";
 import WorkflowFilter from "./WorkflowFilter";
 
-const StyledSampleSelectionToolbar = styled(Box)`
-    height: 185px;
-    margin-bottom: 15px;
-`;
-
-const SampleSelectionToolbarTop = styled.div`
-    align-items: center;
-    display: flex;
-
-    button {
-        margin-left: auto;
-    }
-`;
-
-const SampleSelectionToolbar = ({ onClear, onQuickAnalyze, selected }) => (
-    <StyledSampleSelectionToolbar>
-        <SampleSelectionToolbarTop>
-            <span>
-                <Icon name="times-circle" onClick={onClear} />
-                <span> {selected.length} samples selected</span>
-            </span>
-            <Button color="green" icon="chart-area" onClick={() => onQuickAnalyze(selected)}>
-                Quick Analyze
-            </Button>
-        </SampleSelectionToolbarTop>
-    </StyledSampleSelectionToolbar>
-);
-
-export const SampleSearchToolbar = ({ canCreate, onFind, term, pathoscope, nuvs }) => {
+export const SampleSearchToolbar = ({ canCreate, nuvs, pathoscope, term, onFind }) => {
     let createButton;
 
     if (canCreate) {
@@ -93,8 +65,8 @@ const mapDispatchToProps = dispatch => ({
     onSelect: sampleId => {
         dispatch(toggleSelectSample(sampleId));
     },
-    onQuickAnalyze: selected => {
-        dispatch(pushState({ createAnalysis: selected }));
+    onQuickAnalyze: () => {
+        dispatch(pushState({ quickAnalysis: true }));
     }
 });
 

@@ -5,14 +5,26 @@ describe("<IndexSelector />", () => {
 
     beforeEach(() => {
         props = {
-            indexes: [{ id: "foo" }, { id: "bar" }],
-            onSelect: "foo",
+            indexes: [{ id: "foo" }, { id: "bar" }, { id: "baz" }],
+            onSelect: jest.fn(),
             selected: [{ id: "foo" }, { id: "bar" }],
-            error: ["foo"]
+            error: ""
         };
     });
 
     it("should render", () => {
+        const wrapper = shallow(<IndexSelector {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render when [indexes.length = 0]", () => {
+        props.indexes = [];
+        const wrapper = shallow(<IndexSelector {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render with error", () => {
+        props.error = "Error";
         const wrapper = shallow(<IndexSelector {...props} />);
         expect(wrapper).toMatchSnapshot();
     });

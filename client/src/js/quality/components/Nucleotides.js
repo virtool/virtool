@@ -2,14 +2,15 @@ import { axisBottom, axisLeft } from "d3-axis";
 import { scaleLinear } from "d3-scale";
 import { line } from "d3-shape";
 import { forEach, unzip } from "lodash-es";
+import { theme } from "../../app/theme";
 
 import { appendLegend, createSVG } from "../../samples/chartUtils";
 
 const series = [
-    { color: "#428bca", label: "Guanine" },
-    { color: "#a94442", label: "Adenine" },
-    { color: "#3c763d", label: "Thymine" },
-    { color: "#777", label: "Cytosine" }
+    { label: "Guanine", color: theme.color.blue },
+    { label: "Adenine", color: theme.color.red },
+    { label: "Thymine", color: theme.color.green },
+    { label: "Cytosine", color: theme.color.greyDark }
 ];
 
 export const drawNucleotidesChart = (element, data, baseWidth) => {
@@ -29,11 +30,11 @@ export const drawNucleotidesChart = (element, data, baseWidth) => {
     // Append the four plot lines to the SVG.
     forEach(unzip(data), (set, index) => {
         svg.append("path")
+            .attr("class", "graph-line")
             .attr("d", () => lineDrawer(set))
-            .attr("stroke", () => series[index].color)
-            .attr("stroke-width", 2)
+            .attr("data-legend", () => series[index].label)
             .attr("fill", "none")
-            .attr("data-legend", () => series[index].label);
+            .attr("stroke", () => series[index].color);
     });
 
     // Append x-axis and label.

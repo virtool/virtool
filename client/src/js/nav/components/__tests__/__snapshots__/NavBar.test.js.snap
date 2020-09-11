@@ -1,0 +1,96 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Bar /> should render 1`] = `
+<NavBar__StyledNavBar>
+  <NavBar__NavBarLeft>
+    <NavBar__NavBarLogo />
+    <NavBarItem
+      isActive={[Function]}
+      to="/home"
+    >
+      Home
+    </NavBarItem>
+    <NavBarItem
+      to="/jobs"
+    >
+      Jobs
+    </NavBarItem>
+    <NavBarItem
+      to="/samples"
+    >
+      Samples
+    </NavBarItem>
+    <NavBarItem
+      to="/refs"
+    >
+      References
+    </NavBarItem>
+    <NavBarItem
+      to="/hmm"
+    >
+      HMM
+    </NavBarItem>
+    <NavBarItem
+      to="/subtraction"
+    >
+      Subtraction
+    </NavBarItem>
+  </NavBar__NavBarLeft>
+  <NavBar__NavBarRight>
+    <Connect(NotificationIcon) />
+    <NavBarItem
+      rel="noopener noreferrer"
+      target="_blank"
+      to="//gitter.im/virtool/virtool"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="comments"
+      />
+    </NavBarItem>
+    <NavBarItem
+      rel="noopener noreferrer"
+      style={
+        Object {
+          "paddingLeft": 0,
+        }
+      }
+      target="_blank"
+      to="//virtool.ca/docs/manual"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="book"
+      />
+    </NavBarItem>
+    <NavDropdown
+      userId="foo"
+    >
+      <DropdownItem
+        to="/account"
+      >
+        Account
+      </DropdownItem>
+      <DropdownItem
+        to="/administration"
+      >
+        Administration 
+      </DropdownItem>
+      <DropdownItem
+        rel="noopener noreferrer"
+        target="_blank"
+        to="//gitreports.com/issue/virtool/virtool"
+      >
+        Report Issue
+      </DropdownItem>
+      <DropdownItem
+        onClick={[MockFunction]}
+      >
+        Logout
+      </DropdownItem>
+    </NavDropdown>
+  </NavBar__NavBarRight>
+</NavBar__StyledNavBar>
+`;

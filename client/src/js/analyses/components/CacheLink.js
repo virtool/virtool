@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 
 const StyledAnalysisCacheLink = styled(Link)`
     float: right;
-    font-size: 14px;
+    font-size: ${props => props.theme.fontSize.md};
 `;
 
 export const AnalysisCacheLink = ({ id, sampleId }) => {

@@ -23,28 +23,19 @@ describe("<SampleRights />", () => {
     it("should call onChangeSampleGroup() when group SelectBox is clicked", () => {
         const wrapper = shallow(<SampleRights {...props} />);
 
-        wrapper
-            .find("SelectBox")
-            .at(0)
-            .simulate("click");
+        wrapper.find("SelectBox").at(0).simulate("click");
         expect(props.onChangeSampleGroup).toHaveBeenCalledWith("none");
     });
     it("should call onChangeSampleGroup() when force choice SelectBox is clicked", () => {
         const wrapper = shallow(<SampleRights {...props} />);
 
-        wrapper
-            .find("SelectBox")
-            .at(1)
-            .simulate("click");
+        wrapper.find("SelectBox").at(1).simulate("click");
         expect(props.onChangeSampleGroup).toHaveBeenCalledWith("force_choice");
     });
     it("should call onChangeSampleGroup() when users primary group SelectBox is clicked", () => {
         const wrapper = shallow(<SampleRights {...props} />);
 
-        wrapper
-            .find("SelectBox")
-            .at(2)
-            .simulate("click");
+        wrapper.find("SelectBox").at(2).simulate("click");
         expect(props.onChangeSampleGroup).toHaveBeenCalledWith("users_primary_group");
     });
 

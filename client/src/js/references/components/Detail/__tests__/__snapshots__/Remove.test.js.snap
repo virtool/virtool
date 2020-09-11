@@ -5,7 +5,7 @@ exports[`<RemoveReference /> should not render when user does not have permissio
 exports[`<RemoveReference /> should render when user has permission 1`] = `
 <RemoveBanner
   buttonText="Delete"
-  message="Click the Delete button to permanently remove this reference."
+  message="Permanently delete this reference"
   onClick={[Function]}
 />
 `;

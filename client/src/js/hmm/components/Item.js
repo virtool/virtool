@@ -2,14 +2,17 @@ import { keys, map, reject } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import styled from "styled-components";
+import { getFontSize, getFontWeight } from "../../app/theme";
 import { Label, LinkBox } from "../../base";
 
 const StyledHMMItem = styled(LinkBox)`
     display: flex;
+    font-size: ${getFontSize("lg")};
 `;
 
 const HMMItemCluster = styled.strong`
     flex: 0 0 48px;
+    font-weight: ${getFontWeight("thick")};
 `;
 
 const HMMItemName = styled.span`
@@ -19,6 +22,7 @@ const HMMItemName = styled.span`
 const HMMItemFamilies = styled.div`
     align-items: center;
     display: flex;
+    font-size: ${getFontSize("md")};
     margin-left: auto;
 `;
 

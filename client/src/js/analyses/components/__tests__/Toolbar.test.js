@@ -104,7 +104,7 @@ describe("mapDispatchToProps", () => {
         expect(dispatch).toHaveBeenCalledWith({
             type: PUSH_STATE,
             state: {
-                createAnalysis: ["foobar"]
+                createAnalysis: "foobar"
             }
         });
     });

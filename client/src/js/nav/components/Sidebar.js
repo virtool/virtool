@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { connect } from "react-redux";
 import { Route, Switch } from "react-router-dom";
+import { getAccountAdministrator } from "../../account/selectors";
 import SidebarItem from "./SidebarItem";
 
 const StyledSidebar = styled.nav`
@@ -68,7 +69,7 @@ export const Sidebar = ({ administrator }) => (
 );
 
 const mapStateToProps = state => ({
-    administrator: state.account.administrator
+    administrator: getAccountAdministrator(state)
 });
 
 export default connect(mapStateToProps, null)(Sidebar);

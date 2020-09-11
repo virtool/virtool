@@ -5,33 +5,68 @@ exports[`<IndexSelector /> should render 1`] = `
   <label>
     References
   </label>
-  <IndexSelectorList
-    error={
-      Array [
-        "foo",
-      ]
-    }
-    indexes={
-      Array [
-        Object {
-          "id": "foo",
-        },
-        Object {
-          "id": "bar",
-        },
-      ]
-    }
-    onSelect="foo"
-    selected={
-      Array [
-        Object {
-          "id": "foo",
-        },
-        Object {
-          "id": "bar",
-        },
-      ]
-    }
+  <IndexSelector__StyledIndexSelectorList
+    error=""
+  >
+    <IndexSelectorItem
+      id="foo"
+      isSelected={true}
+      key="foo"
+      onSelect={[MockFunction]}
+    />
+    <IndexSelectorItem
+      id="bar"
+      isSelected={true}
+      key="bar"
+      onSelect={[MockFunction]}
+    />
+    <IndexSelectorItem
+      id="baz"
+      isSelected={false}
+      key="baz"
+      onSelect={[MockFunction]}
+    />
+  </IndexSelector__StyledIndexSelectorList>
+</Fragment>
+`;
+
+exports[`<IndexSelector /> should render when [indexes.length = 0] 1`] = `
+<Fragment>
+  <label>
+    References
+  </label>
+  <NoneFoundBox
+    noun="built references"
   />
+</Fragment>
+`;
+
+exports[`<IndexSelector /> should render with error 1`] = `
+<Fragment>
+  <label>
+    References
+  </label>
+  <IndexSelector__StyledIndexSelectorList
+    error="Error"
+  >
+    <IndexSelectorItem
+      id="foo"
+      isSelected={true}
+      key="foo"
+      onSelect={[MockFunction]}
+    />
+    <IndexSelectorItem
+      id="bar"
+      isSelected={true}
+      key="bar"
+      onSelect={[MockFunction]}
+    />
+    <IndexSelectorItem
+      id="baz"
+      isSelected={false}
+      key="baz"
+      onSelect={[MockFunction]}
+    />
+  </IndexSelector__StyledIndexSelectorList>
 </Fragment>
 `;

@@ -1,12 +1,11 @@
 import asyncio
-import shutil
 
 import virtool.api.utils
-import virtool.jobs.db
-import virtool.subtractions.db
 import virtool.db.utils
 import virtool.http.routes
+import virtool.jobs.db
 import virtool.samples.utils
+import virtool.subtractions.db
 import virtool.subtractions.utils
 import virtool.utils
 import virtool.validators

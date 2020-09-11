@@ -37,6 +37,7 @@ exports[`<TargetForm /> should render 1`] = `
   </InputGroup>
   <Checkbox
     checked={false}
+    disabled={false}
     label="Required"
     onClick={[MockFunction]}
   />
@@ -80,6 +81,7 @@ exports[`<TargetForm /> should render with error 1`] = `
   </InputGroup>
   <Checkbox
     checked={false}
+    disabled={false}
     label="Required"
     onClick={[MockFunction]}
   />

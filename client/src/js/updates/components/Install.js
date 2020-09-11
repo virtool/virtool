@@ -4,6 +4,7 @@ import { connect } from "react-redux";
 import styled from "styled-components";
 import Request from "superagent";
 import { pushState } from "../../app/actions";
+import { getFontSize } from "../../app/theme";
 import { AffixedProgressBar, Button, ModalBody, ModalFooter, Label, Loader, Modal, ModalHeader } from "../../base";
 import { byteSize, routerLocationHasState } from "../../utils/utils";
 import { installSoftwareUpdates } from "../actions";
@@ -47,7 +48,7 @@ const StyledInstallProcess = styled(ModalBody)`
     }
 
     small {
-        font-size: ${props => props.theme.fontSize.sm};
+        font-size: ${getFontSize("sm")};
         text-transform: capitalize;
     }
 `;

@@ -4,15 +4,6 @@ import styled from "styled-components";
 import { RelativeTime } from "./RelativeTime";
 import { Identicon } from "./Identicon";
 
-const StyledPortrait = styled.img`
-    border-radius: 10px;
-    height: 16px;
-`;
-
-export const Portrait = ({ gravatar }) => (
-    <StyledPortrait alt="" src={`https://s.gravatar.com/avatar/${gravatar}?s=80`} />
-);
-
 export const UnstyledAttribution = ({ className, time, user, identicon, verb = "created" }) => {
     return (
         <span className={className}>

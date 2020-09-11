@@ -51,8 +51,11 @@ const NuVsORFHeader = styled.div`
 `;
 
 const NuVsORFValues = styled.span`
-font-size:
     font-weight: bold;
+
+    span {
+        margin-left: 8px;
+    }
 
     span:first-child {
         color: ${props => props.theme.color.blue};
@@ -63,7 +66,7 @@ font-size:
     }
 `;
 
-const NuVsORF = ({ hits, index, maxSequenceLength, pos, strand, width }) => {
+export const NuVsORF = ({ hits, index, maxSequenceLength, pos, strand, width }) => {
     const chartEl = useRef(null);
 
     useEffect(() => draw(chartEl.current, maxSequenceLength, pos, strand), [index, width]);
@@ -84,5 +87,3 @@ const NuVsORF = ({ hits, index, maxSequenceLength, pos, strand, width }) => {
         </div>
     );
 };
-
-export default NuVsORF;

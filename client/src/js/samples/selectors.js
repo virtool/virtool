@@ -1,14 +1,19 @@
 import { every, filter, get, includes, some } from "lodash-es";
+import createCachedSelector from "re-reselect";
 import { createSelector } from "reselect";
+import { getAccountAdministrator, getAccountId } from "../account/selectors";
 import { getTermSelectorFactory } from "../utils/selectors";
 
-const getAdministrator = state => state.account.administrator;
-const getUserId = state => state.account.id;
-const getGroups = state => state.account.groups;
-const getSample = state => state.samples.detail;
+export const getSampleGroups = state => state.account.groups;
+export const getSampleName = state => get(state, "samples.detail.name");
+export const getSampleDetail = state => state.samples.detail;
+export const getSampleDetailId = state => get(state, "samples.detail.id");
+export const getSampleLibraryType = state => get(state, "samples.detail.library_type");
+export const getSampleDocuments = state => state.samples.documents;
+export const getSelectedSampleIds = state => state.samples.selected;
 
 export const getCanModify = createSelector(
-    [getAdministrator, getGroups, getSample, getUserId],
+    [getAccountAdministrator, getSampleGroups, getSampleDetail, getAccountId],
     (administrator, groups, sample, userId) => {
         if (sample) {
             return (
@@ -22,7 +27,7 @@ export const getCanModify = createSelector(
 );
 
 export const getCanModifyRights = createSelector(
-    [getAdministrator, getUserId, getSample],
+    [getAccountAdministrator, getAccountId, getSampleDetail],
     (administrator, userId, sample) => {
         if (sample === null) {
             return;
@@ -48,29 +53,15 @@ export const getIsReadyToReplace = createSelector(
     (files, jobId) => every(files, "replacement.id") && !jobId
 );
 
-export const getStateTerm = state => state.samples.term;
+export const getTerm = getTermSelectorFactory(state => state.samples.term);
 
-export const getTerm = getTermSelectorFactory(getStateTerm);
+export const getIsSelected = createCachedSelector(
+    [getSelectedSampleIds, (state, sampleId) => sampleId],
+    (selectedSampleIds, sampleId) => includes(selectedSampleIds, sampleId)
+)((state, sampleId) => sampleId);
 
-export const getSampleDetail = state => state.samples.detail;
-
-export const getSampleDetailId = state => get(state, "samples.detail.id");
-
-export const getSampleLibraryType = state => get(state, "samples.detail.library_type");
-
-export const getSampleDocuments = state => state.samples.documents;
-
-export const getSelectedSampleIds = state => get(state, "router.location.state.createAnalysis", []);
-
-export const getSelectedDocuments = createSelector(
-    [getSelectedSampleIds, getSampleDetail, getSampleDocuments],
-    (selected, detail, documents) => {
-        if (detail && selected.length === 1 && selected[0] === detail.id) {
-            return [detail];
-        }
-
-        return filter(documents, document => includes(selected, document.id));
-    }
+export const getSelectedSamples = createSelector([getSelectedSampleIds, getSampleDocuments], (selected, documents) =>
+    filter(documents, document => includes(selected, document.id))
 );
 
 export const getFilesUndersized = state => some(state.samples.detail.files, file => file.size < 10000000);

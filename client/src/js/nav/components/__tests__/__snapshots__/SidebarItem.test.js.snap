@@ -11,8 +11,8 @@ exports[`<SidebarItem /> should render 1`] = `
     fixedWidth={false}
     name="fa-foo"
   />
-  <SidebarItem__SideBarItemTitle>
+  <p>
     Foobar
-  </SidebarItem__SideBarItemTitle>
+  </p>
 </SidebarItem__StyledSidebarItem>
 `;

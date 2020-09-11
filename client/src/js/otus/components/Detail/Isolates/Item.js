@@ -1,12 +1,14 @@
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
+import { getActiveShadow } from "../../../../app/theme";
 import { BoxGroupSection, Icon } from "../../../../base";
 import { formatIsolateName } from "../../../../utils/utils";
 
 const StyledIsolateItem = styled(BoxGroupSection)`
     align-items: center;
     border: none;
+    box-shadow: ${getActiveShadow};
     display: flex;
 
     & > span {

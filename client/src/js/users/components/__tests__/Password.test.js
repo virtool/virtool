@@ -1,9 +1,9 @@
 import { BoxGroupSection, Checkbox, PasswordInput } from "../../../base";
 import { Password, mapStateToProps, mapDispatchToProps } from "../Password";
 import { editUser } from "../../actions";
+
 describe("<Password />", () => {
     let props;
-    let state;
 
     beforeEach(() => {
         props = {
@@ -13,10 +13,6 @@ describe("<Password />", () => {
             minimumPasswordLength: 8,
             onSetForceReset: jest.fn(),
             onSubmit: jest.fn()
-        };
-        state = {
-            password: "foo",
-            error: ""
         };
     });
 
@@ -69,7 +65,7 @@ describe("<Password />", () => {
     });
 });
 
-describe("mapStateToProps", () => {
+describe("mapStateToProps()", () => {
     it("should return mapStateToProps", () => {
         let forceReset, id, lastPasswordChange, minimumPasswordLength;
 
@@ -99,7 +95,7 @@ describe("mapStateToProps", () => {
     });
 });
 
-describe("mapDispatchToProps", () => {
+describe("mapDispatchToProps()", () => {
     let dispatch;
     let props;
     beforeEach(() => {

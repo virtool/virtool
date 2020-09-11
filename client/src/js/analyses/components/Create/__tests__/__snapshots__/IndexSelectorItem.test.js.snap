@@ -2,10 +2,12 @@
 
 exports[`<IndexSelectorItem /> should render 1`] = `
 <IndexSelectorItem__StyledIndexSelectorItem
+  active={true}
   onClick={[Function]}
 >
   <Checkbox
     checked={true}
+    disabled={false}
   />
   <strong>
     bar
@@ -19,10 +21,12 @@ exports[`<IndexSelectorItem /> should render 1`] = `
 
 exports[`<IndexSelectorItem /> should render when [isSelected = false] 1`] = `
 <IndexSelectorItem__StyledIndexSelectorItem
+  active={false}
   onClick={[Function]}
 >
   <Checkbox
     checked={false}
+    disabled={false}
   />
   <strong>
     bar

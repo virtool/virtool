@@ -3,6 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import { getFontSize, getFontWeight } from "../../../app/theme";
 import { Box, ExternalLink, LoadingPlaceholder, NoneFoundBox } from "../../../base/index";
 
 import { getAPIKeys } from "../../actions";
@@ -12,11 +13,11 @@ import APIKey from "./Key";
 const APIKeysHeader = styled(Box)`
     align-items: center;
     display: flex;
-    font-weight: bold;
+    font-size: ${getFontSize("lg")};
+    font-weight: ${getFontWeight("thick")};
     margin-bottom: 15px;
 
     > a:last-child {
-        font-weight: bold;
         margin-left: auto;
     }
 `;

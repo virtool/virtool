@@ -24,10 +24,7 @@ describe("<Releases />", () => {
 
     it("should call onShowInstall when onShowInstall called on <ReleasesList />", () => {
         const wrapper = shallow(<Releases {...props} />);
-        wrapper
-            .find("ReleasesList")
-            .props()
-            .onShowInstall();
+        wrapper.find("ReleasesList").props().onShowInstall();
         expect(props.onShowInstall).toHaveBeenCalled();
     });
 });

@@ -44,11 +44,7 @@ describe("<SoftwareChannels />", () => {
 
     it("should call onSetSoftwareChannel() when radio button is clicked", () => {
         const wrapper = shallow(<SoftwareChannels {...props} />);
-        wrapper
-            .find("ChannelButton")
-            .at(1)
-            .props()
-            .onClick("beta");
+        wrapper.find("ChannelButton").at(1).props().onClick("beta");
         expect(props.onSetSoftwareChannel).toHaveBeenCalledWith("beta");
     });
 });

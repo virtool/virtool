@@ -1,6 +1,7 @@
 import { capitalize, includes, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
+import { getAccountAdministrator, getAccountId } from "../../account/selectors";
 
 import {
     Box,
@@ -102,8 +103,8 @@ export const mapStateToProps = state => {
 
     return {
         canModifyRights: getCanModifyRights(state),
-        accountId: state.account.id,
-        isAdmin: state.account.administrator,
+        accountId: getAccountId(state),
+        isAdmin: getAccountAdministrator(state),
         groups: state.groups.documents,
         ownerId: user.id,
         sampleId: id,

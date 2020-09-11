@@ -1,47 +1,9 @@
 import { noop } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
-import {
-    BoxGroup,
-    BoxGroupHeader,
-    BoxGroupSection,
-    Button,
-    Input,
-    InputGroup,
-    InputLabel,
-    PasswordInput
-} from "../base";
+import { BoxGroupHeader, BoxGroupSection, Button, Input, InputGroup, InputLabel, PasswordInput } from "../base";
 import { createFirstUser } from "../users/actions";
-import { WallContainer } from "./Container";
-
-const FirstUserModal = styled(BoxGroup)`
-    align-items: stretch;
-    background-color: #fff;
-    border-radius: 4px;
-    box-shadow: rgba(0, 0, 0, 0.498039) 0 5px 15px 0;
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 260px;
-    max-width: 620px;
-    width: 60%;
-
-    button {
-        margin-top: 15px;
-        float: right;
-    }
-`;
-
-const FirstUserModalHeader = styled(BoxGroupHeader)`
-    h2 {
-        font-size: 16px;
-        margin: 5px 0 3px;
-    }
-`;
-
-const FirstUserModalBody = styled(BoxGroupSection)`
-    padding-top: 20px;
-`;
+import { WallContainer, WallDialog, WallDialogFooter } from "./Container";
 
 export class FirstUser extends React.Component {
     constructor(props) {
@@ -68,13 +30,13 @@ export class FirstUser extends React.Component {
         const { username, password } = this.state;
         return (
             <WallContainer>
-                <FirstUserModal>
-                    <FirstUserModalHeader>
+                <WallDialog size="lg">
+                    <BoxGroupHeader>
                         <h2>Setup User</h2>
                         <p>Create an initial administrative user to start using Virtool.</p>
-                    </FirstUserModalHeader>
-                    <FirstUserModalBody>
-                        <form onSubmit={this.handleSubmit}>
+                    </BoxGroupHeader>
+                    <form onSubmit={this.handleSubmit}>
+                        <BoxGroupSection>
                             <InputGroup>
                                 <InputLabel>Username</InputLabel>
                                 <Input name="username" value={username} onChange={this.handleChange} />
@@ -83,13 +45,14 @@ export class FirstUser extends React.Component {
                                 <InputLabel>Password</InputLabel>
                                 <PasswordInput name="password" value={password} onChange={this.handleChange} />
                             </InputGroup>
-
+                        </BoxGroupSection>
+                        <WallDialogFooter>
                             <Button type="submit" icon="user-plus" color="blue">
                                 Create User
                             </Button>
-                        </form>
-                    </FirstUserModalBody>
-                </FirstUserModal>
+                        </WallDialogFooter>
+                    </form>
+                </WallDialog>
             </WallContainer>
         );
     }

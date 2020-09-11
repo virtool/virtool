@@ -9,53 +9,60 @@ exports[`<HMMDetail /> should render 1`] = `
       foo
     </ViewHeader__ViewHeaderTitle>
   </ViewHeader>
-  <Table>
-    <tbody>
-      <tr>
-        <th>
-          Cluster
-        </th>
-        <td>
-          bar
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Best Definitions
-        </th>
-        <td>
-          <Label
-            key="0"
-            spaced={true}
-          >
-            foo
-          </Label>
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Length
-        </th>
-        <td />
-      </tr>
-      <tr>
-        <th>
-          Mean Entropy
-        </th>
-        <td>
-          baz
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Total Entropy
-        </th>
-        <td>
-          boo
-        </td>
-      </tr>
-    </tbody>
-  </Table>
+  <Box__BoxGroup>
+    <Box__BoxGroupHeader>
+      <h2>
+        General
+      </h2>
+    </Box__BoxGroupHeader>
+    <Table>
+      <tbody>
+        <tr>
+          <th>
+            Cluster
+          </th>
+          <td>
+            bar
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Best Definitions
+          </th>
+          <td>
+            <Label
+              key="0"
+              spaced={true}
+            >
+              foo
+            </Label>
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Length
+          </th>
+          <td />
+        </tr>
+        <tr>
+          <th>
+            Mean Entropy
+          </th>
+          <td>
+            baz
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Total Entropy
+          </th>
+          <td>
+            boo
+          </td>
+        </tr>
+      </tbody>
+    </Table>
+  </Box__BoxGroup>
   <Box__BoxGroup>
     <Box__BoxGroupHeader>
       <h2>
