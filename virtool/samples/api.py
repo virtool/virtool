@@ -191,6 +191,10 @@ async def get(req):
         "minlength": 1,
         "maxlength": 2,
         "required": True
+    },
+    "notes": {
+        "type": "string",
+        "default": ''
     }
 })
 async def create(req):
@@ -306,6 +310,10 @@ async def create(req):
         "coerce": virtool.validators.strip,
     },
     "locale": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+    },
+    "notes": {
         "type": "string",
         "coerce": virtool.validators.strip,
     }
