@@ -23,7 +23,8 @@ LIST_PROJECTION = [
     "name",
     "nuvs",
     "ready",
-    "user"
+    "user",
+    "notes",
 ]
 
 PROJECTION = [

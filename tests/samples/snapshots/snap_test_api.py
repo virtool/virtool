@@ -24,6 +24,7 @@ snapshots['TestCreate.test[uvloop-none] 1'] = {
     'id': '9pfsom1b',
     'library_type': 'normal',
     'name': 'Foobar',
+    'notes': '',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
@@ -54,6 +55,7 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
     'id': '9pfsom1b',
     'library_type': 'normal',
     'name': 'Foobar',
+    'notes': '',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
@@ -84,6 +86,7 @@ snapshots['TestCreate.test[uvloop-force_choice] 1'] = {
     'id': '9pfsom1b',
     'library_type': 'normal',
     'name': 'Foobar',
+    'notes': '',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
@@ -114,6 +117,7 @@ snapshots['TestCreate.test[uvloop-none] 2'] = {
     'hold': True,
     'library_type': 'normal',
     'name': 'Foobar',
+    'notes': '',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
@@ -144,6 +148,7 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 2'] = {
     'hold': True,
     'library_type': 'normal',
     'name': 'Foobar',
+    'notes': '',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
@@ -174,6 +179,7 @@ snapshots['TestCreate.test[uvloop-force_choice] 2'] = {
     'hold': True,
     'library_type': 'normal',
     'name': 'Foobar',
+    'notes': '',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
@@ -426,7 +432,6 @@ snapshots['test_get[uvloop-False-None] 1'] = {
 snapshots['test_find_analyses[uvloop-None-None] 1'] = {
     'documents': [
         {
-            'workflow': 'pathoscope_bowtie',
             'created_at': '2015-10-06T20:00:00Z',
             'id': 'test_1',
             'index': {
@@ -446,10 +451,10 @@ snapshots['test_find_analyses[uvloop-None-None] 1'] = {
             },
             'user': {
                 'id': 'bob'
-            }
+            },
+            'workflow': 'pathoscope_bowtie'
         },
         {
-            'workflow': 'pathoscope_bowtie',
             'created_at': '2015-10-06T20:00:00Z',
             'id': 'test_2',
             'index': {
@@ -469,10 +474,10 @@ snapshots['test_find_analyses[uvloop-None-None] 1'] = {
             },
             'user': {
                 'id': 'fred'
-            }
+            },
+            'workflow': 'pathoscope_bowtie'
         },
         {
-            'workflow': 'pathoscope_bowtie',
             'created_at': '2015-10-06T20:00:00Z',
             'id': 'test_3',
             'index': {
@@ -492,7 +497,8 @@ snapshots['test_find_analyses[uvloop-None-None] 1'] = {
             },
             'user': {
                 'id': 'fred'
-            }
+            },
+            'workflow': 'pathoscope_bowtie'
         }
     ],
     'found_count': 3,
@@ -505,7 +511,6 @@ snapshots['test_find_analyses[uvloop-None-None] 1'] = {
 snapshots['test_find_analyses[uvloop-bob-None] 1'] = {
     'documents': [
         {
-            'workflow': 'pathoscope_bowtie',
             'created_at': '2015-10-06T20:00:00Z',
             'id': 'test_1',
             'index': {
@@ -525,7 +530,8 @@ snapshots['test_find_analyses[uvloop-bob-None] 1'] = {
             },
             'user': {
                 'id': 'bob'
-            }
+            },
+            'workflow': 'pathoscope_bowtie'
         }
     ],
     'found_count': 1,
@@ -538,7 +544,6 @@ snapshots['test_find_analyses[uvloop-bob-None] 1'] = {
 snapshots['test_find_analyses[uvloop-Baz-None] 1'] = {
     'documents': [
         {
-            'workflow': 'pathoscope_bowtie',
             'created_at': '2015-10-06T20:00:00Z',
             'id': 'test_1',
             'index': {
@@ -558,10 +563,10 @@ snapshots['test_find_analyses[uvloop-Baz-None] 1'] = {
             },
             'user': {
                 'id': 'bob'
-            }
+            },
+            'workflow': 'pathoscope_bowtie'
         },
         {
-            'workflow': 'pathoscope_bowtie',
             'created_at': '2015-10-06T20:00:00Z',
             'id': 'test_2',
             'index': {
@@ -581,7 +586,8 @@ snapshots['test_find_analyses[uvloop-Baz-None] 1'] = {
             },
             'user': {
                 'id': 'fred'
-            }
+            },
+            'workflow': 'pathoscope_bowtie'
         }
     ],
     'found_count': 2,
