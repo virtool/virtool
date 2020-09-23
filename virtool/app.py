@@ -147,7 +147,12 @@ async def create_app_runner(app: aiohttp.web.Application, host: str, port: int) 
 
     site = aiohttp.web.TCPSite(runner, host, port)
 
-    await site.start()
+    try:
+        await site.start()
+    except OSError as err:
+        if err.args[0] == 48:
+            logger.fatal(f"Could not bind address {(host, port)}")
+            sys.exit(1)
 
     logger.info(f"Listening at http://{host}:{port}")
 
