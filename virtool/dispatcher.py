@@ -40,7 +40,8 @@ INTERFACES = (
     "software",
     "status",
     "subtraction",
-    "users"
+    "users",
+    "labels"
 )
 
 #: Allowed operations. Calls to :meth:`.Dispatcher.dispatch` will be validated against these operations.

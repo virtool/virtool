@@ -25,6 +25,7 @@ import virtool.software.api
 import virtool.subtractions.api
 import virtool.uploads.api
 import virtool.users.api
+import virtool.labels.api
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -63,7 +64,8 @@ ROUTES = (
     virtool.software.api.routes,
     virtool.subtractions.api.routes,
     virtool.uploads.api.routes,
-    virtool.users.api.routes
+    virtool.users.api.routes,
+    virtool.labels.api.routes
 )
 
 

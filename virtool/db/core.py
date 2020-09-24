@@ -268,6 +268,8 @@ class DB:
 
         self.groups = self.bind_collection("groups")
 
+        self.labels = self.bind_collection("labels")
+
         self.history = self.bind_collection(
             "history",
             projection=virtool.history.db.PROJECTION
