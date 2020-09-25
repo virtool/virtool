@@ -1,4 +1,7 @@
+import re
 import virtool.users.utils
+
+RE_HEX_COLOR = re.compile("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")
 
 
 def strip(value: str) -> str:
@@ -20,3 +23,8 @@ def is_permission_dict(field, value, error):
 def has_unique_segment_names(field, value, error):
     if len({seg["name"] for seg in value}) != len(value):
         error(field, "list contains duplicate names")
+
+
+def is_valid_hex_color(field, value, error):
+    if not RE_HEX_COLOR.match(value):
+        error(field, "This is not a valid Hexadecimal color")

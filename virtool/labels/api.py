@@ -45,6 +45,7 @@ async def get(req):
     "color": {
         "type": "string",
         "coerce": virtool.validators.strip,
+        "validator": virtool.validators.is_valid_hex_color,
     },
     "description": {
         "type": "string",
@@ -59,11 +60,6 @@ async def create(req):
     """
     db = req.app["db"]
     data = req["data"]
-
-    valid_color = await virtool.labels.checks.check_hex_color(req)
-
-    if not valid_color:
-        return bad_request("This is not a valid Hexadecimal color")
 
     if await db.labels.count_documents({'name': data['name']}):
         return bad_request("Label name already exists")
@@ -94,6 +90,7 @@ async def create(req):
     "color": {
         "type": "string",
         "coerce": virtool.validators.strip,
+        "validator": virtool.validators.is_valid_hex_color,
     },
     "description": {
         "type": "string",
@@ -112,12 +109,6 @@ async def edit(req):
 
     if "name" in data and await db.labels.count_documents({"_id": {"$ne": label_id}, "name": data["name"]}):
         return bad_request("Label name already exists")
-
-    if "color" in data:
-        valid_color = await virtool.labels.checks.check_hex_color(req)
-
-        if not valid_color:
-            return bad_request("This is not a valid Hexadecimal color")
 
     document = await db.labels.find_one_and_update({"_id": label_id}, {
         "$set": data
