@@ -67,7 +67,7 @@ async def test_get(error, spawn_client, all_permissions, resp_is):
     }
 
 
-@pytest.mark.parametrize("error", [None, "400_exists", "400_color"])
+@pytest.mark.parametrize("error", [None, "400_exists", "422_color"])
 async def test_create(error, spawn_client, test_random_alphanumeric, resp_is):
     """
     Test that a label can be added to the database at ``POST /api/labels``.
@@ -86,7 +86,7 @@ async def test_create(error, spawn_client, test_random_alphanumeric, resp_is):
         "description": "This is a bug"
     }
 
-    if error == "400_color":
+    if error == "422_color":
         data["color"] = "#1234567"
 
     resp = await client.post("/api/labels", data)
@@ -95,8 +95,8 @@ async def test_create(error, spawn_client, test_random_alphanumeric, resp_is):
         assert await resp_is.bad_request(resp, "Label name already exists")
         return
 
-    if error == "400_color":
-        assert await resp_is.bad_request(resp, "This is not a valid Hexadecimal color")
+    if error == "422_color":
+        assert resp.status == 422
         return
 
     assert resp.status == 201
@@ -112,7 +112,7 @@ async def test_create(error, spawn_client, test_random_alphanumeric, resp_is):
     }
 
 
-@pytest.mark.parametrize("error", [None, "404", "400_exists", "400_color"])
+@pytest.mark.parametrize("error", [None, "404", "400_exists", "422_color"])
 async def test_edit(error, spawn_client, resp_is):
     """
         Test that a label can be edited to the database at ``PATCH /api/labels/:label_id``.
@@ -145,7 +145,7 @@ async def test_edit(error, spawn_client, resp_is):
     if error == "400_exists":
         data["name"] = "Question"
 
-    if error == "400_color":
+    if error == "422_color":
         data["color"] = "#123bzp"
 
     resp = await client.patch("/api/labels/test_1", data=data)
@@ -158,8 +158,8 @@ async def test_edit(error, spawn_client, resp_is):
         assert await resp_is.bad_request(resp, "Label name already exists")
         return
 
-    if error == "400_color":
-        assert await resp_is.bad_request(resp, "This is not a valid Hexadecimal color")
+    if error == "422_color":
+        assert resp.status == 422
         return
 
     assert resp.status == 200
