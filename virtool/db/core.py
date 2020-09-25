@@ -300,7 +300,7 @@ class DB:
         )
 
         self.labels = self.bind_collection("labels")
-        
+
         self.otus = self.bind_collection(
             "otus",
             projection=virtool.otus.db.PROJECTION
