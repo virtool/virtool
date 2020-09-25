@@ -1,7 +1,6 @@
 import virtool.http.routes
 import virtool.utils
 import virtool.validators
-import virtool.labels.checks
 import virtool.db.utils
 from virtool.api.response import bad_request, json_response, no_content, not_found
 
