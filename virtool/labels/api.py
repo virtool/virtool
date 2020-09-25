@@ -16,9 +16,9 @@ async def find(req):
     """
     db = req.app["db"]
 
-    document = db.labels.find()
+    cursor = db.labels.find()
 
-    return json_response([virtool.utils.base_processor(d) async for d in document])
+    return json_response([virtool.utils.base_processor(d) async for d in cursor])
 
 
 @routes.get("/api/labels/{label_id}")
@@ -29,7 +29,7 @@ async def get(req):
     """
     document = await req.app["db"].labels.find_one(req.match_info["label_id"])
 
-    if not document:
+    if document is None:
         return not_found()
 
     return json_response(virtool.utils.base_processor(document))
@@ -65,9 +65,7 @@ async def create(req):
     if not valid_color:
         return bad_request("This is not a valid Hexadecimal color")
 
-    name_exist = await db.labels.count_documents({'name': data['name']})
-
-    if name_exist:
+    if await db.labels.count_documents({'name': data['name']}):
         return bad_request("Label name already exists")
 
     label_id = await virtool.db.utils.get_new_id(db.labels)
@@ -82,7 +80,7 @@ async def create(req):
     await db.labels.insert_one(document)
 
     headers = {
-        "Location": "/api/labels/" + label_id
+        "Location": f"/api/labels/{label_id}"
     }
 
     return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
@@ -112,13 +110,10 @@ async def edit(req):
 
     label_id = req.match_info["label_id"]
 
-    if data["name"]:
-        name_exist = await db.labels.count_documents({"_id": {"$ne": label_id}, "name": data["name"]})
+    if "name" in data and await db.labels.count_documents({"_id": {"$ne": label_id}, "name": data["name"]}):
+        return bad_request("Label name already exists")
 
-        if name_exist:
-            return bad_request("Label name already exists")
-
-    if data["color"]:
+    if "color" in data:
         valid_color = await virtool.labels.checks.check_hex_color(req)
 
         if not valid_color:
