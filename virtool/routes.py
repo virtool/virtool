@@ -16,6 +16,7 @@ import virtool.http.root
 import virtool.http.ws
 import virtool.indexes.api
 import virtool.jobs.api
+import virtool.labels.api
 import virtool.otus.api
 import virtool.processes.api
 import virtool.references.api
@@ -54,6 +55,7 @@ ROUTES = (
     virtool.hmm.api.routes,
     virtool.indexes.api.routes,
     virtool.jobs.api.routes,
+    virtool.labels.api.routes,
     virtool.otus.api.routes,
     virtool.processes.api.routes,
     virtool.references.api.routes,
