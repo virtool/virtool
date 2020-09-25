@@ -16,6 +16,7 @@ import virtool.http.root
 import virtool.http.ws
 import virtool.indexes.api
 import virtool.jobs.api
+import virtool.labels.api
 import virtool.otus.api
 import virtool.processes.api
 import virtool.references.api
@@ -25,7 +26,6 @@ import virtool.software.api
 import virtool.subtractions.api
 import virtool.uploads.api
 import virtool.users.api
-import virtool.labels.api
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -55,6 +55,7 @@ ROUTES = (
     virtool.hmm.api.routes,
     virtool.indexes.api.routes,
     virtool.jobs.api.routes,
+    virtool.labels.api.routes,
     virtool.otus.api.routes,
     virtool.processes.api.routes,
     virtool.references.api.routes,
@@ -64,8 +65,7 @@ ROUTES = (
     virtool.software.api.routes,
     virtool.subtractions.api.routes,
     virtool.uploads.api.routes,
-    virtool.users.api.routes,
-    virtool.labels.api.routes
+    virtool.users.api.routes
 )
 
 

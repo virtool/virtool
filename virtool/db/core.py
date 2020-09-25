@@ -268,8 +268,6 @@ class DB:
 
         self.groups = self.bind_collection("groups")
 
-        self.labels = self.bind_collection("labels")
-
         self.history = self.bind_collection(
             "history",
             projection=virtool.history.db.PROJECTION
@@ -301,6 +299,8 @@ class DB:
             silent=True
         )
 
+        self.labels = self.bind_collection("labels")
+        
         self.otus = self.bind_collection(
             "otus",
             projection=virtool.otus.db.PROJECTION

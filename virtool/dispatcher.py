@@ -31,6 +31,7 @@ INTERFACES = (
     "hmm",
     "indexes",
     "jobs",
+    "labels",
     "otus",
     "processes",
     "references",
@@ -40,8 +41,7 @@ INTERFACES = (
     "software",
     "status",
     "subtraction",
-    "users",
-    "labels"
+    "users"
 )
 
 #: Allowed operations. Calls to :meth:`.Dispatcher.dispatch` will be validated against these operations.
