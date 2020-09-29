@@ -36,6 +36,10 @@ QUERY_SCHEMA = {
         "default": 15,
         "min": 1,
         "max": 100
+    },
+    "filter": {
+        "type": "string",
+        "default": ""
     }
 }
 
@@ -58,6 +62,12 @@ async def find(req):
         return invalid_query(v.errors)
 
     query = v.document
+
+    filter_query = dict()
+    if "filter" in req.query:
+        filter_query = {
+            "labels": {"$in": req.query.getall("filter")}
+        }
 
     rights_filter = [
         # The requesting user is the sample owner
@@ -96,6 +106,14 @@ async def find(req):
             }
         else:
             db_query = workflow_query
+
+    if filter_query:
+        db_query = {
+            "$and": [
+                db_query,
+                filter_query
+            ]
+        }
 
     data = await virtool.api.utils.paginate(
         db.samples,
@@ -195,6 +213,9 @@ async def get(req):
     "notes": {
         "type": "string",
         "default": ''
+    },
+    "labels": {
+        "type": "list"
     }
 })
 async def create(req):
@@ -316,6 +337,9 @@ async def create(req):
     "notes": {
         "type": "string",
         "coerce": virtool.validators.strip,
+    },
+    "labels": {
+        "type": "list"
     }
 })
 async def edit(req):
