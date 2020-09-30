@@ -45,6 +45,7 @@ async def get(req):
         "type": "string",
         "coerce": virtool.validators.strip,
         "validator": virtool.validators.is_valid_hex_color,
+        "default": "#A0AEC0"
     },
     "description": {
         "type": "string",
