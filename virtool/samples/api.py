@@ -358,9 +358,12 @@ async def edit(req):
             return bad_request(message)
 
     if "labels" in data:
+        non_existent_labels = list()
         for label in data["labels"]:
             if not await virtool.db.utils.id_exists(db.labels, label):
-                return bad_request(f"Label {label} does not exist")
+                non_existent_labels.append(label)
+        if non_existent_labels:
+            return bad_request(f"Label do not exist: {', '.join(non_existent_labels)}")
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": data
