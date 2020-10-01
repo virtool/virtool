@@ -213,9 +213,6 @@ async def get(req):
     "notes": {
         "type": "string",
         "default": ''
-    },
-    "labels": {
-        "type": "list"
     }
 })
 async def create(req):
@@ -355,10 +352,15 @@ async def edit(req):
     if not await virtool.samples.db.check_rights(db, sample_id, req["client"]):
         return insufficient_rights()
 
-    message = await virtool.samples.db.check_name(db, req.app["settings"], data["name"], sample_id=sample_id)
+    if "name" in data:
+        message = await virtool.samples.db.check_name(db, req.app["settings"], data["name"], sample_id=sample_id)
+        if message:
+            return bad_request(message)
 
-    if message:
-        return bad_request(message)
+    if "labels" in data:
+        for label in data["labels"]:
+            if not await virtool.db.utils.id_exists(db.labels, label):
+                return bad_request(f"Label {label} does not exist")
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": data
