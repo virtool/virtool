@@ -8,16 +8,24 @@ class MockJobInterface:
         self.enqueue_job = make_mocked_coro()
 
 
-@pytest.mark.parametrize("find,per_page,page,d_range,meta", [
-    (None, None, None, range(0, 3), {
+@pytest.mark.parametrize("find,per_page,page,label_filter,d_range,meta", [
+    (None, None, None, None, range(0, 3), {
         "page": 1,
         "per_page": 25,
         "page_count": 1,
         "found_count": 3,
         "total_count": 3
     }),
+    # Test ``label_filter`` query param.
+    (None, None, None, ["Question", "Info"], range(0, 3), {
+        "page": 1,
+        "per_page": 25,
+        "page_count": 1,
+        "found_count": 2,
+        "total_count": 3
+    }),
     # Test ``per_page`` query param.
-    (None, 2, 1, range(0, 2), {
+    (None, 2, 1, None, range(0, 2), {
         "page": 1,
         "per_page": 2,
         "page_count": 2,
@@ -25,7 +33,7 @@ class MockJobInterface:
         "total_count": 3
     }),
     # Test ``per_page`` and ``page`` query param.
-    (None, 2, 2, range(2, 3), {
+    (None, 2, 2, None, range(2, 3), {
         "page": 2,
         "per_page": 2,
         "page_count": 2,
@@ -33,21 +41,21 @@ class MockJobInterface:
         "total_count": 3
     }),
     # Test ``find`` query param and ``found_count`` response field.
-    ("gv", None, None, range(1, 3), {
+    ("gv", None, None, None, range(1, 3), {
         "page": 1,
         "per_page": 25,
         "page_count": 1,
         "found_count": 2,
         "total_count": 3
     }),
-    ("sp", None, None, range(0, 1), {
+    ("sp", None, None, None, range(0, 1), {
         "page": 1,
         "per_page": 25,
         "page_count": 1,
         "found_count": 1,
         "total_count": 3
     }),
-    ("fred", None, None, [0, 2], {
+    ("fred", None, None, None, [0, 2], {
         "page": 1,
         "per_page": 25,
         "page_count": 1,
@@ -55,7 +63,7 @@ class MockJobInterface:
         "total_count": 3
     })
 ])
-async def test_find(find, per_page, page, d_range, meta, snapshot, spawn_client, static_time):
+async def test_find(find, per_page, page, label_filter, d_range, meta, snapshot, spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
     time_1 = arrow.get(static_time.datetime).datetime
@@ -76,7 +84,8 @@ async def test_find(find, per_page, page, d_range, meta, snapshot, spawn_client,
             "name": "16GVP042",
             "pathoscope": False,
             "all_read": True,
-            "ready": True
+            "ready": True,
+            "labels": ["Bug", "Info"]
         },
         {
             "user": {
@@ -91,7 +100,8 @@ async def test_find(find, per_page, page, d_range, meta, snapshot, spawn_client,
             "name": "16GVP043",
             "pathoscope": False,
             "all_read": True,
-            "ready": True
+            "ready": True,
+            "labels": ["Bug"]
         },
         {
             "user": {
@@ -106,7 +116,8 @@ async def test_find(find, per_page, page, d_range, meta, snapshot, spawn_client,
             "_id": "cb400e6d",
             "name": "16SPP044",
             "pathoscope": False,
-            "all_read": True
+            "all_read": True,
+            "labels": ["Question"]
         }
     ])
 
@@ -121,6 +132,10 @@ async def test_find(find, per_page, page, d_range, meta, snapshot, spawn_client,
 
     if page is not None:
         query.append("page={}".format(page))
+
+    if label_filter is not None:
+        filter_query = '&filter='.join(label_filter)
+        query.append(("filter={}".format(filter_query)))
 
     if len(query):
         path += "?{}".format("&".join(query))

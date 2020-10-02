@@ -36,6 +36,10 @@ QUERY_SCHEMA = {
         "default": 15,
         "min": 1,
         "max": 100
+    },
+    "filter": {
+        "type": "string",
+        "default": ""
     }
 }
 
@@ -58,6 +62,12 @@ async def find(req):
         return invalid_query(v.errors)
 
     query = v.document
+
+    filter_query = dict()
+    if "filter" in req.query:
+        filter_query = {
+            "labels": {"$in": req.query.getall("filter")}
+        }
 
     rights_filter = [
         # The requesting user is the sample owner
@@ -96,6 +106,14 @@ async def find(req):
             }
         else:
             db_query = workflow_query
+
+    if filter_query:
+        db_query = {
+            "$and": [
+                db_query,
+                filter_query
+            ]
+        }
 
     data = await virtool.api.utils.paginate(
         db.samples,
@@ -316,6 +334,9 @@ async def create(req):
     "notes": {
         "type": "string",
         "coerce": virtool.validators.strip,
+    },
+    "labels": {
+        "type": "list"
     }
 })
 async def edit(req):
@@ -331,10 +352,18 @@ async def edit(req):
     if not await virtool.samples.db.check_rights(db, sample_id, req["client"]):
         return insufficient_rights()
 
-    message = await virtool.samples.db.check_name(db, req.app["settings"], data["name"], sample_id=sample_id)
+    if "name" in data:
+        message = await virtool.samples.db.check_name(db, req.app["settings"], data["name"], sample_id=sample_id)
+        if message:
+            return bad_request(message)
 
-    if message:
-        return bad_request(message)
+    if "labels" in data:
+        non_existent_labels = list()
+        for label in data["labels"]:
+            if not await virtool.db.utils.id_exists(db.labels, label):
+                non_existent_labels.append(label)
+        if non_existent_labels:
+            return bad_request(f"Labels do not exist: {', '.join(non_existent_labels)}")
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": data

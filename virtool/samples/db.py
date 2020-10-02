@@ -25,6 +25,7 @@ LIST_PROJECTION = [
     "ready",
     "user",
     "notes",
+    "labels",
 ]
 
 PROJECTION = [
