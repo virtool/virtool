@@ -1,5 +1,4 @@
 import virtool.account.utils
-import virtool.db.core
 import virtool.users.db
 import virtool.users.utils
 import virtool.utils
@@ -36,14 +35,22 @@ def compose_password_update(password: str) -> dict:
     }
 
 
-async def get(db, user_id):
+async def get(db, user_id: str) -> dict:
+    """
+    Get appropriately projected user document by id.
+
+    :param db: the application database object
+    :param user_id: the user id
+    :return: the projected user document
+
+    """
     return await db.users.find_one(
         user_id,
         PROJECTION
     )
 
 
-async def get_alternate_id(db: virtool.db.core.DB, name: str) -> str:
+async def get_alternate_id(db, name: str) -> str:
     """
     Get an alternate id for an API key whose provided `name` is not unique. Appends an integer suffix to the end of the
     `name`.
@@ -66,7 +73,7 @@ async def get_alternate_id(db: virtool.db.core.DB, name: str) -> str:
         suffix += 1
 
 
-async def create_api_key(db: virtool.db.core.DB, name: str, permissions: dict, user_id: str):
+async def create_api_key(db, name: str, permissions: dict, user_id: str) -> dict:
     """
     Create a new API key for the account with the given `user_id`.
 
