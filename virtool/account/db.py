@@ -36,7 +36,7 @@ def compose_password_update(password: str) -> dict:
     }
 
 
-async def get_document(db, user_id):
+async def get(db, user_id):
     return await db.users.find_one(
         user_id,
         PROJECTION

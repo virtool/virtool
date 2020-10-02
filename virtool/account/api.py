@@ -31,7 +31,7 @@ async def get(req):
     Get complete user document.
 
     """
-    document = await virtool.account.db.get_document(req.app["db"], req["client"].user_id)
+    document = await virtool.account.db.get(req.app["db"], req["client"].user_id)
     return json_response(virtool.utils.base_processor(document))
 
 
@@ -83,7 +83,7 @@ async def edit(req):
             "$set": update
         }, projection=virtool.account.db.PROJECTION)
     else:
-        document = await virtool.account.db.get_document(db, user_id)
+        document = await virtool.account.db.get(db, user_id)
 
     return json_response(virtool.utils.base_processor(document))
 
