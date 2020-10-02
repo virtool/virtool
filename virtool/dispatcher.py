@@ -13,7 +13,7 @@ import virtool.hmm.db
 import virtool.indexes.db
 import virtool.jobs.db
 import virtool.otus.db
-import virtool.processes.db
+import virtool.tasks.db
 import virtool.references.db
 import virtool.samples.db
 import virtool.software.db
@@ -33,7 +33,7 @@ INTERFACES = (
     "jobs",
     "labels",
     "otus",
-    "processes",
+    "tasks",
     "references",
     "samples",
     "sequences",

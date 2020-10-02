@@ -18,8 +18,8 @@ import virtool.history.utils
 import virtool.http.utils
 import virtool.otus.db
 import virtool.otus.utils
-import virtool.processes.db
-import virtool.processes.process
+import virtool.tasks.db
+import virtool.tasks.task
 import virtool.references.utils
 import virtool.users.db
 import virtool.utils
@@ -46,10 +46,10 @@ PROJECTION = [
 ]
 
 
-class CloneReferenceProcess(virtool.processes.process.Process):
+class CloneReferenceProcess(virtool.tasks.task.Task):
 
-    def __init__(self, app, process_id):
-        super().__init__(app, process_id)
+    def __init__(self, app, task_id):
+        super().__init__(app, task_id)
 
         self.steps = [
             self.copy_otus,
@@ -118,10 +118,10 @@ class CloneReferenceProcess(virtool.processes.process.Process):
         )
 
 
-class ImportReferenceProcess(virtool.processes.process.Process):
+class ImportReferenceProcess(virtool.tasks.task.Task):
 
-    def __init__(self, app, process_id):
-        super().__init__(app, process_id)
+    def __init__(self, app, task_id):
+        super().__init__(app, task_id)
 
         self.steps = [
             self.load_file,
@@ -232,10 +232,10 @@ class ImportReferenceProcess(virtool.processes.process.Process):
             await tracker.add(1)
 
 
-class RemoveReferenceProcess(virtool.processes.process.Process):
+class RemoveReferenceProcess(virtool.tasks.task.Task):
 
-    def __init__(self, app, process_id):
-        super().__init__(app, process_id)
+    def __init__(self, app, task_id):
+        super().__init__(app, task_id)
 
         self.steps = [
             self.remove_indexes,
@@ -298,7 +298,7 @@ class RemoveReferenceProcess(virtool.processes.process.Process):
             await tracker.add(1)
 
 
-class UpdateRemoteReferenceProcess(virtool.processes.process.Process):
+class UpdateRemoteReferenceProcess(virtool.tasks.task.Task):
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -1039,7 +1039,7 @@ async def create_remote(db, settings: dict, release: dict, remote_from: str, use
     }
 
 
-async def download_and_parse_release(app, url: str, process_id: str, progress_handler: callable):
+async def download_and_parse_release(app, url: str, task_id: str, progress_handler: callable):
     db = app["db"]
 
     with virtool.utils.get_temp_dir() as tempdir:
@@ -1054,7 +1054,7 @@ async def download_and_parse_release(app, url: str, process_id: str, progress_ha
             progress_handler
         )
 
-        await virtool.processes.db.update(db, process_id, progress=0.3, step="unpack")
+        await virtool.tasks.db.update(db, task_id, progress=0.3, step="unpack")
 
         return await app["run_in_thread"](virtool.references.utils.load_reference_file, download_path)
 
@@ -1129,12 +1129,12 @@ async def export(app, ref_id):
     return virtool.references.utils.clean_export_list(otu_list)
 
 
-async def finish_remote(app, release, ref_id: str, created_at: str, process_id: str, user_id: str):
+async def finish_remote(app, release, ref_id: str, created_at: str, task_id: str, user_id: str):
     db = app["db"]
 
-    progress_tracker = virtool.processes.process.ProgressTracker(
+    progress_tracker = virtool.tasks.task.ProgressTracker(
         db,
-        process_id,
+        task_id,
         release["size"],
         factor=0.3,
         increment=0.02
@@ -1144,22 +1144,22 @@ async def finish_remote(app, release, ref_id: str, created_at: str, process_id: 
         import_data = await download_and_parse_release(
             app,
             release["download_url"],
-            process_id,
+            task_id,
             progress_tracker.add
         )
     except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
-        return await virtool.processes.db.update(
+        return await virtool.tasks.db.update(
             db,
-            process_id,
+            task_id,
             errors=["Could not download reference data"]
         )
 
     try:
         data_type = import_data["data_type"]
     except KeyError:
-        return await virtool.processes.db.update(
+        return await virtool.tasks.db.update(
             db,
-            process_id,
+            task_id,
             errors=["Could not infer data type"]
         )
 
@@ -1177,20 +1177,20 @@ async def finish_remote(app, release, ref_id: str, created_at: str, process_id: 
     )
 
     if errors:
-        return await virtool.processes.db.update(db, process_id, errors=errors)
+        return await virtool.tasks.db.update(db, task_id, errors=errors)
 
-    await virtool.processes.db.update(
+    await virtool.tasks.db.update(
         db,
-        process_id,
+        task_id,
         progress=0.4,
         step="import"
     )
 
     otus = import_data["otus"]
 
-    progress_tracker = virtool.processes.process.ProgressTracker(
+    progress_tracker = virtool.tasks.task.ProgressTracker(
         db,
-        process_id,
+        task_id,
         len(otus),
         factor=0.3,
         initial=0.4
@@ -1210,16 +1210,16 @@ async def finish_remote(app, release, ref_id: str, created_at: str, process_id: 
         inserted_otu_ids.append(otu_id)
         await progress_tracker.add(1)
 
-    await virtool.processes.db.update(
+    await virtool.tasks.db.update(
         db,
-        process_id,
+        task_id,
         progress=0.7,
         step="create_history"
     )
 
-    progress_tracker = virtool.processes.process.ProgressTracker(
+    progress_tracker = virtool.tasks.task.ProgressTracker(
         db,
-        process_id,
+        task_id,
         len(otus),
         factor=0.3,
         initial=0.7
@@ -1245,7 +1245,7 @@ async def finish_remote(app, release, ref_id: str, created_at: str, process_id: 
 
     await fetch_and_update_release(app, ref_id)
 
-    await virtool.processes.db.update(db, process_id, progress=1)
+    await virtool.tasks.db.update(db, task_id, progress=1)
 
 
 async def insert_change(app, otu_id: str, verb: str, user_id: str, old: Union[None, dict] = None):
@@ -1369,7 +1369,7 @@ async def refresh_remotes(app):
     logging.debug("Stopped reference refresher")
 
 
-async def update(req, created_at, process_id, ref_id, release, user_id):
+async def update(req, created_at, task_id, ref_id, release, user_id):
     db = req.app["db"]
 
     update_subdocument = virtool.github.create_update_subdocument(
@@ -1384,14 +1384,14 @@ async def update(req, created_at, process_id, ref_id, release, user_id):
             "updates": update_subdocument
         },
         "$set": {
-            "process": {
-                "id": process_id
+            "task": {
+                "id": task_id
             },
             "updating": True
         }
     })
 
-    p = virtool.references.db.UpdateRemoteReferenceProcess(req.app, process_id)
+    p = virtool.references.db.UpdateRemoteReferenceProcess(req.app, task_id)
 
     await aiojobs.aiohttp.spawn(req, p.run())
 

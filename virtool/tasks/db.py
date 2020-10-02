@@ -1,30 +1,30 @@
-import virtool.processes.steps
+import virtool.tasks.steps
 import virtool.db.utils
-import virtool.processes.process
+import virtool.tasks.task
 import virtool.utils
 
 
-async def register(db, process_type, context=None):
-    process_id = await virtool.db.utils.get_new_id(db.processes)
+async def register(db, task_type, context=None):
+    task_id = await virtool.db.utils.get_new_id(db.tasks)
 
     document = {
-        "_id": process_id,
+        "_id": task_id,
         "complete": False,
         "count": 0,
         "created_at": virtool.utils.timestamp(),
         "progress": 0,
         "resumable": False,
         "context": context or dict(),
-        "step": virtool.processes.steps.FIRST_STEPS[process_type],
-        "type": process_type
+        "step": virtool.tasks.steps.FIRST_STEPS[task_type],
+        "type": task_type
     }
 
-    await db.processes.insert_one(document)
+    await db.tasks.insert_one(document)
 
     return virtool.utils.base_processor(document)
 
 
-async def update(db, process_id, count=None, progress=None, step=None, context_update=None, errors=None):
+async def update(db, task_id, count=None, progress=None, step=None, context_update=None, errors=None):
     update_dict = dict()
 
     if count is not None:
@@ -43,15 +43,15 @@ async def update(db, process_id, count=None, progress=None, step=None, context_u
         for key, value in context_update.items():
             update_dict[f"context.{key}"] = value
 
-    document = await db.processes.find_one_and_update({"_id": process_id}, {
+    document = await db.tasks.find_one_and_update({"_id": task_id}, {
         "$set": update_dict
     })
 
     return virtool.utils.base_processor(document)
 
 
-async def complete(db, process_id):
-    await db.processes.update_one({"_id": process_id}, {
+async def complete(db, task_id):
+    await db.tasks.update_one({"_id": task_id}, {
         "$set": {
             "complete": True,
             "progress": 1
@@ -59,5 +59,5 @@ async def complete(db, process_id):
     })
 
 
-async def remove(db, process_id):
-    await db.processes.delete_one({"_id": process_id})
+async def remove(db, task_id):
+    await db.tasks.delete_one({"_id": task_id})
