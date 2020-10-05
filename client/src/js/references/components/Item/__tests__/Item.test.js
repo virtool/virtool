@@ -71,7 +71,7 @@ describe("mapStateToProps()", () => {
                         },
                         name: "Foo",
                         organism: "virus",
-                        process: {
+                        task: {
                             id: "boo"
                         },
                         remotes_from: {

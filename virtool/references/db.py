@@ -36,9 +36,9 @@ PROJECTION = [
     "latest_build",
     "name",
     "organism",
-    "process",
     "release",
     "remotes_from",
+    "task",
     "unbuilt_count",
     "updates",
     "updating",
@@ -46,7 +46,7 @@ PROJECTION = [
 ]
 
 
-class CloneReferenceProcess(virtool.tasks.task.Task):
+class CloneReferenceTask(virtool.tasks.task.Task):
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)
@@ -118,7 +118,7 @@ class CloneReferenceProcess(virtool.tasks.task.Task):
         )
 
 
-class ImportReferenceProcess(virtool.tasks.task.Task):
+class ImportReferenceTask(virtool.tasks.task.Task):
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)
@@ -232,7 +232,7 @@ class ImportReferenceProcess(virtool.tasks.task.Task):
             await tracker.add(1)
 
 
-class RemoveReferenceProcess(virtool.tasks.task.Task):
+class RemoveReferenceTask(virtool.tasks.task.Task):
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)
@@ -298,7 +298,7 @@ class RemoveReferenceProcess(virtool.tasks.task.Task):
             await tracker.add(1)
 
 
-class UpdateRemoteReferenceProcess(virtool.tasks.task.Task):
+class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -1391,7 +1391,7 @@ async def update(req, created_at, task_id, ref_id, release, user_id):
         }
     })
 
-    p = virtool.references.db.UpdateRemoteReferenceProcess(req.app, task_id)
+    p = virtool.references.db.UpdateRemoteReferenceTask(req.app, task_id)
 
     await aiojobs.aiohttp.spawn(req, p.run())
 

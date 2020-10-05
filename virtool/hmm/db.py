@@ -348,7 +348,7 @@ async def install(app: virtool.types.App, task_id: str, release: dict, user_id: 
             progress=1
         )
 
-        logger.debug("Finished HMM install process")
+        logger.debug("Finished HMM install task")
 
 
 async def purge(db, settings: dict):

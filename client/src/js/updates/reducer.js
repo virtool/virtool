@@ -1,17 +1,17 @@
 import { get } from "lodash-es";
-import { WS_UPDATE_PROCESS, WS_UPDATE_STATUS, GET_SOFTWARE_UPDATES } from "../app/actionTypes";
+import { GET_SOFTWARE_UPDATES, WS_UPDATE_STATUS, WS_UPDATE_TASK } from "../app/actionTypes";
 
 export const initialState = {
-    process: null,
+    task: null,
     releases: null,
     showInstallModal: false
 };
 
 export default function updatesReducer(state = initialState, action) {
     switch (action.type) {
-        case WS_UPDATE_PROCESS:
-            if (action.data.id === get(state, "process.id")) {
-                return { ...state, process: action.data };
+        case WS_UPDATE_TASK:
+            if (action.data.id === get(state, "task.id")) {
+                return { ...state, task: action.data };
             }
 
             return state;

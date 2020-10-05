@@ -12,7 +12,7 @@ exports[`<SoftwareInstall /> should render 1`] = `
       test
     </Label>
   </ModalHeader>
-  <InstallProcess
+  <InstallTask
     0="one"
     1="two"
     2="three"

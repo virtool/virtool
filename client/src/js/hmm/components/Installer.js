@@ -5,7 +5,7 @@ import styled from "styled-components";
 import { AffixedProgressBar, Box, ExternalLink, Icon } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { installHMMs } from "../actions";
-import { getProcess } from "../selectors";
+import { getTask } from "../selectors";
 import InstallOption from "./InstallOption";
 
 const HMMInstalling = styled(Box)`
@@ -39,10 +39,10 @@ const StyledHMMInstaller = styled(Box)`
     }
 `;
 
-export const HMMInstaller = ({ installed, process }) => {
-    if (process && !installed) {
-        const progress = process.progress * 100;
-        const step = replace(process.step, "_", " ");
+export const HMMInstaller = ({ installed, task }) => {
+    if (task && !installed) {
+        const progress = task.progress * 100;
+        const step = replace(task.step, "_", " ");
 
         return (
             <HMMInstalling>
@@ -74,7 +74,7 @@ export const mapStateToProps = state => ({
     releaseId: get(state.hmms.status, "release.id"),
     installed: !!state.hmms.status.installed,
     canInstall: checkAdminOrPermission(state, "modify_hmm"),
-    process: getProcess(state)
+    task: getTask(state)
 });
 
 export const mapDispatchToProps = dispatch => ({

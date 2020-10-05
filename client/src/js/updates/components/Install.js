@@ -38,7 +38,7 @@ export const mergeBody = releases => {
     return reduce(result, (body, list, header) => `${body}\n\n#### ${header}\n${list.join("")}`, "");
 };
 
-const StyledInstallProcess = styled(ModalBody)`
+const StyledInstallTask = styled(ModalBody)`
     padding: 50px 15px;
     position: relative;
     text-align: center;
@@ -53,17 +53,17 @@ const StyledInstallProcess = styled(ModalBody)`
     }
 `;
 
-export const InstallProcess = ({ count, progress, size, step, updating }) => {
+export const InstallTask = ({ count, progress, size, step, updating }) => {
     if (updating && progress === 1 && !window.reloadInterval) {
         window.setTimeout(() => {
             window.reloadInterval = window.setInterval(attemptReload, 1000);
         }, 3000);
 
         return (
-            <StyledInstallProcess>
+            <StyledInstallTask>
                 <p>Restarting server</p>
                 <Loader color="blue" />
-            </StyledInstallProcess>
+            </StyledInstallTask>
         );
     }
 
@@ -74,23 +74,23 @@ export const InstallProcess = ({ count, progress, size, step, updating }) => {
     }
 
     return (
-        <StyledInstallProcess>
+        <StyledInstallTask>
             <AffixedProgressBar color="blue" now={progress * 100} />
             <p>Installing Update</p>
             <small>
                 <span>{step}</span>
                 {ratio}
             </small>
-        </StyledInstallProcess>
+        </StyledInstallTask>
     );
 };
 
-export const SoftwareInstall = ({ onHide, onInstall, process, releases, show, updating }) => {
+export const SoftwareInstall = ({ onHide, onInstall, releases, show, task, updating }) => {
     const mergedBody = mergeBody(releases);
 
     let content;
 
-    if (process === null) {
+    if (task === null) {
         content = (
             <React.Fragment>
                 <ModalBody>
@@ -105,7 +105,7 @@ export const SoftwareInstall = ({ onHide, onInstall, process, releases, show, up
             </React.Fragment>
         );
     } else {
-        content = <InstallProcess {...process} size={releases[0].size} updating={updating} />;
+        content = <InstallTask {...task} size={releases[0].size} updating={updating} />;
     }
 
     return (
@@ -120,8 +120,8 @@ export const SoftwareInstall = ({ onHide, onInstall, process, releases, show, up
 
 const mapStateToProps = state => ({
     show: routerLocationHasState(state, "install", true),
-    process: state.updates.process,
     releases: state.updates.releases,
+    task: state.updates.task,
     updating: state.updates.updating
 });
 

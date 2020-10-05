@@ -38,7 +38,7 @@ snapshots['test_migrate_status[uvloop-True-True-False] 1'] = [
         '_id': 'software',
         'installed': None,
         'mongo_version': '3.6.3',
-        'process': None,
+        'task': None,
         'releases': [
         ],
         'updating': False,
@@ -77,7 +77,7 @@ snapshots['test_migrate_status[uvloop-True-False-False] 1'] = [
         '_id': 'software',
         'installed': None,
         'mongo_version': '3.6.3',
-        'process': None,
+        'task': None,
         'releases': [
         ],
         'updating': False,
@@ -116,7 +116,7 @@ snapshots['test_migrate_status[uvloop-False-True-False] 1'] = [
         '_id': 'software',
         'installed': None,
         'mongo_version': '3.6.3',
-        'process': None,
+        'task': None,
         'releases': [
         ],
         'updating': False,
@@ -155,7 +155,7 @@ snapshots['test_migrate_status[uvloop-False-False-False] 1'] = [
         '_id': 'software',
         'installed': None,
         'mongo_version': '3.6.3',
-        'process': None,
+        'task': None,
         'releases': [
         ],
         'updating': False,

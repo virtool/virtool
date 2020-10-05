@@ -12,10 +12,10 @@ import hmmsReducer from "../hmm/reducer";
 import indexesReducer from "../indexes/reducer";
 import jobsReducer from "../jobs/reducer";
 import otusReducer from "../otus/reducer";
-import processesReducer from "../processes/reducer";
 import referencesReducer from "../references/reducer";
 import samplesReducer from "../samples/reducer";
 import subtractionReducer from "../subtraction/reducer";
+import tasksReducer from "../tasks/reducer";
 import updatesReducer from "../updates/reducer";
 import usersReducer from "../users/reducer";
 import { CREATE_FIRST_USER, LOGIN, LOGOUT, RESET_PASSWORD, SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
@@ -114,12 +114,12 @@ export const createAppStore = history => {
             indexes: indexesReducer,
             jobs: jobsReducer,
             otus: otusReducer,
-            processes: processesReducer,
             references: referencesReducer,
             router: connectRouter(history),
             samples: samplesReducer,
             settings: settingsReducer,
             subtraction: subtractionReducer,
+            tasks: tasksReducer,
             updates: updatesReducer,
             users: usersReducer
         }),

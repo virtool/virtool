@@ -4,7 +4,7 @@ describe("<SoftwareInstall />", () => {
     it("should render", () => {
         const props = {
             show: true,
-            process: ["one", "two", "three"],
+            task: ["one", "two", "three"],
             releases: [{ name: "test", size: 1024 }],
             updating: false,
             onInstall: jest.fn(),
