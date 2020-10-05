@@ -1,6 +1,10 @@
+"""
+Classes and functions for working with analyses on the server.
+
+"""
 import asyncio
 import os
-from typing import Tuple, Union
+from typing import Tuple, Optional
 
 import virtool.analyses.utils
 import virtool.bio
@@ -10,6 +14,7 @@ import virtool.indexes.db
 import virtool.jobs.db
 import virtool.otus.utils
 import virtool.samples.db
+import virtool.types
 import virtool.utils
 
 PROJECTION = [
@@ -55,7 +60,7 @@ class BLAST:
         await asyncio.sleep(self.interval)
         self.interval += 5
 
-    async def update(self, ready: bool, result: Union[None, dict], error: Union[None, str]) -> Tuple[dict, dict]:
+    async def update(self, ready: bool, result: Optional[dict], error: Optional[str]) -> Tuple[dict, dict]:
         """
         Update the BLAST data. Returns the BLAST data and the complete analysis document.
 
@@ -94,10 +99,18 @@ class BLAST:
         return data, document
 
 
-async def create(app, sample_id, ref_id, subtraction_id, user_id, workflow):
+async def create(app: virtool.types.App, sample_id: str, ref_id: str, subtraction_id: str, user_id: str, workflow: str) -> dict:
     """
     Creates a new analysis. Ensures that a valid subtraction host was the submitted. Configures read and write
     permissions on the sample document and assigns it a creator username based on the requesting connection.
+
+    :param app: the application object
+    :param sample_id: the ID of the sample to create an analysis for
+    :param ref_id: the ID of the reference to analyze against
+    :param subtraction_id: the ID of the subtraction to remove from the analysis
+    :param user_id: the ID of the user starting the job
+    :param workflow: the analysis workflow to run
+    :return: the analysis document
 
     """
     db = app["db"]
@@ -173,10 +186,10 @@ async def update_nuvs_blast(
         analysis_id: str,
         sequence_index: int,
         rid: str,
-        error: Union[None, str] = None,
+        error: Optional[str] = None,
         interval: int = 3,
-        ready: Union[None, bool] = None,
-        result: Union[None, dict] = None
+        ready: Optional[bool] = None,
+        result: Optional[dict] = None
 ) -> Tuple[dict, dict]:
     """
     Update the BLAST data for a sequence in a NuVs analysis.
@@ -214,7 +227,15 @@ async def update_nuvs_blast(
     return data, document
 
 
-async def remove_nuvs_blast(db, analysis_id, sequence_index):
+async def remove_nuvs_blast(db, analysis_id: str, sequence_index: int):
+    """
+    Remove the BLAST data for the identified NuVs contig sequence.
+
+    :param db: the application database object
+    :param analysis_id: the ID of the analysis containing the sequence
+    :param sequence_index: the index of the sequence to remove BLAST data from
+    :return:
+    """
     await db.analyses.update_one({"_id": analysis_id, "results.index": sequence_index}, {
         "$set": {
             "results.$.blast": None,
@@ -223,11 +244,12 @@ async def remove_nuvs_blast(db, analysis_id, sequence_index):
     })
 
 
-async def remove_orphaned_directories(app):
+async def remove_orphaned_directories(app: virtool.types.App):
     """
     Remove all analysis directories for which an analysis document does not exist in the database.
 
-    :param app:
+    :param app: the application object
+
     """
     db = app["db"]
 

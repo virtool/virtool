@@ -3,17 +3,19 @@ Provides request handlers for managing and viewing analyses.
 
 """
 import os
+
+import aiohttp.web
 import aiojobs.aiohttp
 
+import virtool.analyses.db
 import virtool.analyses.format
 import virtool.analyses.utils
 import virtool.api.json
 import virtool.api.response
 import virtool.bio
-import virtool.analyses.db
-import virtool.samples.db
 import virtool.errors
 import virtool.http.routes
+import virtool.samples.db
 import virtool.samples.utils
 import virtool.subtractions.db
 import virtool.utils
@@ -23,7 +25,7 @@ routes = virtool.http.routes.Routes()
 
 
 @routes.get("/api/analyses/{analysis_id}")
-async def get(req):
+async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Get a complete analysis document.
 
@@ -71,7 +73,7 @@ async def get(req):
 
 
 @routes.delete("/api/analyses/{analysis_id}")
-async def remove(req):
+async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Remove an analysis document by its id.
 
@@ -121,7 +123,7 @@ async def remove(req):
 
 
 @routes.put("/api/analyses/{analysis_id}/{sequence_index}/blast")
-async def blast(req):
+async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     BLAST a contig sequence that is part of a NuVs result record. The resulting BLAST data will be attached to that
     sequence.
