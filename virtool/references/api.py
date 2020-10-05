@@ -340,7 +340,7 @@ async def create(req):
 
         task = await virtool.tasks.db.register(db, "clone_reference", context=context)
 
-        t = virtool.references.db.CloneReferenceProcess(req.app, task["id"])
+        t = virtool.references.db.CloneReferenceTask(req.app, task["id"])
 
         document["task"] = {
             "id": t.id
@@ -372,9 +372,9 @@ async def create(req):
 
         task = await virtool.tasks.db.register(db, "import_reference", context=context)
 
-        t = virtool.references.db.ImportReferenceProcess(req.app, task["id"])
+        t = virtool.references.db.ImportReferenceTask(req.app, task["id"])
 
-        document["process"] = {
+        document["task"] = {
             "id": t.id
         }
 
@@ -556,12 +556,12 @@ async def remove(req):
         "_id": ref_id
     })
 
-    t = virtool.references.db.RemoveReferenceProcess(req.app, task["id"])
+    t = virtool.references.db.RemoveReferenceTask(req.app, task["id"])
 
     await aiojobs.aiohttp.spawn(req, t.run())
 
     headers = {
-        "Content-Location": f"/api/processes/{task['id']}"
+        "Content-Location": f"/api/tasks/{task['id']}"
     }
 
     return json_response(task, 202, headers)

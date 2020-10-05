@@ -50,10 +50,6 @@ async def get(req):
                 "url": "/api/otus",
                 "doc": f"{API_URL_ROOT}_otus.html"
             },
-            "processes": {
-                "url": "/api/processes",
-                "doc": f"{API_URL_ROOT}_processes.html"
-            },
             "references": {
                 "url": "/api/references",
                 "doc": f"{API_URL_ROOT}_references.html"
@@ -69,6 +65,10 @@ async def get(req):
             "subtraction": {
                 "url": "/api/subtraction",
                 "doc": f"{API_URL_ROOT}_subtraction.html"
+            },
+            "tasks": {
+                "url": "/api/tasks",
+                "doc": f"{API_URL_ROOT}_tasks.html"
             },
             "users": {
                 "url": "/api/users",

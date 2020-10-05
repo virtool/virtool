@@ -102,16 +102,16 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
             }
         })
 
-    m_process = mocker.patch("virtool.references.db.UpdateRemoteReferenceProcess")
+    mocker.patch("virtool.references.db.UpdateRemoteReferenceTask")
 
     m_register = mocker.patch(
         "virtool.tasks.db.register",
         make_mocked_coro({
-            "id": "process"
+            "id": "task"
         })
     )
 
-    m_spawn = mocker.patch("aiojobs.aiohttp.spawn", make_mocked_coro())
+    mocker.patch("aiojobs.aiohttp.spawn", make_mocked_coro())
 
     m_update = mocker.patch(
         "virtool.references.db.update",
@@ -161,7 +161,7 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
     m_update.assert_called_with(
         mocker.ANY,
         static_time.datetime,
-        "process",
+        "task",
         "foo",
         {
             "id": "bar"

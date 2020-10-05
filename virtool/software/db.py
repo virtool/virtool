@@ -180,10 +180,10 @@ async def refresh(app):
     logging.debug("Started HMM refresher")
 
 
-async def update_software_process(db, progress, step=None):
+async def update_software_task(db, progress, step=None):
     """
-    Update the process field in the software update document. Used to keep track of the current progress of the update
-    process.
+    Update the task field in the software update document. Used to keep track of the current progress of the update
+    task.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
@@ -195,12 +195,12 @@ async def update_software_process(db, progress, step=None):
     :type step: str
 
     """
-    return await update_status_process(db, "software", progress, step)
+    return await update_status_task(db, "software", progress, step)
 
 
-async def update_status_process(db, _id, progress, step=None, error=None):
+async def update_status_task(db, _id, progress, step=None, error=None):
     """
-    Update the process field in a status document. These fields are used to track long-running asynchronous processes
+    Update the task field in a status document. These fields are used to track long-running asynchronous tasks
     such as software updates or data imports.
 
     More specific update function can be built around this utility.
@@ -217,22 +217,22 @@ async def update_status_process(db, _id, progress, step=None, error=None):
     :param step: the name of the step in progress
     :type step: Coroutine[str]
 
-    :param error: an error that stopped the process
+    :param error: an error that stopped the task
     :type error: str
 
     :return: processed status document
-    :rtype: Coroutine[dict]
+    :rtype:
 
     """
     set_dict = {
-        "process.progress": progress
+        "task.progress": progress
     }
 
     if step:
-        set_dict["process.step"] = step
+        set_dict["task.step"] = step
 
     if error:
-        set_dict["process.error"] = error
+        set_dict["task.error"] = error
 
     document = await db.status.find_one_and_update({"_id": _id}, {
         "$set": set_dict
