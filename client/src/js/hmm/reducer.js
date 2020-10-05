@@ -3,7 +3,7 @@ import { updateDocuments } from "../utils/reducers";
 
 export const initialState = {
     term: "",
-    process: null,
+    task: null,
     documents: null,
     page: 0,
     detail: null
@@ -18,7 +18,7 @@ export default function hmmsReducer(state = initialState, action) {
                     status: {
                         ...state.status,
                         installed: action.data.installed,
-                        process: action.data.process,
+                        task: action.data.task,
                         release: action.data.release
                     }
                 };

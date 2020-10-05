@@ -20,8 +20,8 @@ import virtool.errors
 import virtool.github
 import virtool.hmm.utils
 import virtool.http.utils
-import virtool.processes.db
-import virtool.processes.process
+import virtool.tasks.db
+import virtool.tasks.task
 import virtool.types
 import virtool.utils
 
@@ -220,7 +220,7 @@ async def get_status(db) -> dict:
     return virtool.utils.base_processor(status)
 
 
-async def install(app: virtool.types.App, process_id: str, release: dict, user_id: str):
+async def install(app: virtool.types.App, task_id: str, release: dict, user_id: str):
     """
     Runs a background Task that:
 
@@ -238,18 +238,18 @@ async def install(app: virtool.types.App, process_id: str, release: dict, user_i
         5. import_annotations
 
     :param app: the app object
-    :param process_id: the id for the process document
+    :param task_id: the id for the process document
     :param release: the release to install
     :param user_id: the id of the user making the request
 
     """
     db = app["db"]
 
-    await virtool.processes.db.update(db, process_id, 0, step="download")
+    await virtool.tasks.db.update(db, task_id, 0, step="download")
 
-    progress_tracker = virtool.processes.process.ProgressTracker(
+    progress_tracker = virtool.tasks.task.ProgressTracker(
         db,
-        process_id,
+        task_id,
         release["size"],
         factor=0.4,
         increment=0.01
@@ -269,16 +269,16 @@ async def install(app: virtool.types.App, process_id: str, release: dict, user_i
                 progress_tracker.add
             )
         except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
-            await virtool.processes.db.update(
+            await virtool.tasks.db.update(
                 db,
-                process_id,
+                task_id,
                 errors=["Could not download HMM data"],
                 step="unpack"
             )
 
-        await virtool.processes.db.update(
+        await virtool.tasks.db.update(
             db,
-            process_id,
+            task_id,
             progress=0.4,
             step="unpack"
         )
@@ -289,9 +289,9 @@ async def install(app: virtool.types.App, process_id: str, release: dict, user_i
             temp_path
         )
 
-        await virtool.processes.db.update(
+        await virtool.tasks.db.update(
             db,
-            process_id,
+            task_id,
             progress=0.6,
             step="install_profiles"
         )
@@ -302,9 +302,9 @@ async def install(app: virtool.types.App, process_id: str, release: dict, user_i
 
         await app["run_in_thread"](shutil.move, os.path.join(decompressed_path, "profiles.hmm"), install_path)
 
-        await virtool.processes.db.update(
+        await virtool.tasks.db.update(
             db,
-            process_id,
+            task_id,
             progress=0.8,
             step="import_annotations"
         )
@@ -314,9 +314,9 @@ async def install(app: virtool.types.App, process_id: str, release: dict, user_i
 
         await purge(db, app["settings"])
 
-        progress_tracker = virtool.processes.process.ProgressTracker(
+        progress_tracker = virtool.tasks.task.ProgressTracker(
             db,
-            process_id,
+            task_id,
             len(annotations),
             factor=0.2,
             initial=0.8
@@ -342,13 +342,13 @@ async def install(app: virtool.types.App, process_id: str, release: dict, user_i
 
         logger.debug("Update HMM status")
 
-        await virtool.processes.db.update(
+        await virtool.tasks.db.update(
             db,
-            process_id,
+            task_id,
             progress=1
         )
 
-        logger.debug("Finished HMM install process")
+        logger.debug("Finished HMM install task")
 
 
 async def purge(db, settings: dict):

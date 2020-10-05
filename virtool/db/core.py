@@ -306,8 +306,8 @@ class DB:
             projection=virtool.otus.db.PROJECTION
         )
 
-        self.processes = self.bind_collection(
-            "processes"
+        self.tasks = self.bind_collection(
+            "tasks"
         )
 
         self.references = self.bind_collection(

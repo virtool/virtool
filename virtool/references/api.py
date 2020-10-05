@@ -8,7 +8,7 @@ import virtool.api.utils
 import virtool.history.db
 import virtool.indexes.db
 import virtool.otus.db
-import virtool.processes.db
+import virtool.tasks.db
 import virtool.references.db
 import virtool.users.db
 import virtool.db.utils
@@ -166,12 +166,12 @@ async def update(req):
         "user_id": user_id
     }
 
-    process = await virtool.processes.db.register(db, "update_remote_reference", context=context)
+    task = await virtool.tasks.db.register(db, "update_remote_reference", context=context)
 
     release, update_subdocument = await asyncio.shield(virtool.references.db.update(
         req,
         created_at,
-        process["id"],
+        task["id"],
         ref_id,
         release,
         user_id
@@ -338,15 +338,15 @@ async def create(req):
             "user_id": user_id
         }
 
-        process = await virtool.processes.db.register(db, "clone_reference", context=context)
+        task = await virtool.tasks.db.register(db, "clone_reference", context=context)
 
-        p = virtool.references.db.CloneReferenceProcess(req.app, process["id"])
+        t = virtool.references.db.CloneReferenceTask(req.app, task["id"])
 
-        document["process"] = {
-            "id": p.id
+        document["task"] = {
+            "id": t.id
         }
 
-        await aiojobs.aiohttp.spawn(req, p.run())
+        await aiojobs.aiohttp.spawn(req, t.run())
 
     elif import_from:
         if not await db.files.count_documents({"_id": import_from}):
@@ -370,15 +370,15 @@ async def create(req):
             "user_id": user_id
         }
 
-        process = await virtool.processes.db.register(db, "import_reference", context=context)
+        task = await virtool.tasks.db.register(db, "import_reference", context=context)
 
-        p = virtool.references.db.ImportReferenceProcess(req.app, process["id"])
+        t = virtool.references.db.ImportReferenceTask(req.app, task["id"])
 
-        document["process"] = {
-            "id": p.id
+        document["task"] = {
+            "id": t.id
         }
 
-        await aiojobs.aiohttp.spawn(req, p.run())
+        await aiojobs.aiohttp.spawn(req, t.run())
 
     elif remote_from:
         try:
@@ -408,10 +408,10 @@ async def create(req):
             user_id
         )
 
-        process = await virtool.processes.db.register(db, "remote_reference")
+        task = await virtool.tasks.db.register(db, "remote_reference")
 
-        document["process"] = {
-            "id": process["id"]
+        document["task"] = {
+            "id": task["id"]
         }
 
         await aiojobs.aiohttp.spawn(req, virtool.references.db.finish_remote(
@@ -419,7 +419,7 @@ async def create(req):
             release,
             document["_id"],
             document["created_at"],
-            process["id"],
+            task["id"],
             user_id
         ))
 
@@ -550,21 +550,21 @@ async def remove(req):
         "user_id": user_id
     }
 
-    process = await virtool.processes.db.register(db, "delete_reference", context=context)
+    task = await virtool.tasks.db.register(db, "delete_reference", context=context)
 
     await db.references.delete_one({
         "_id": ref_id
     })
 
-    p = virtool.references.db.RemoveReferenceProcess(req.app, process["id"])
+    t = virtool.references.db.RemoveReferenceTask(req.app, task["id"])
 
-    await aiojobs.aiohttp.spawn(req, p.run())
+    await aiojobs.aiohttp.spawn(req, t.run())
 
     headers = {
-        "Content-Location": f"/api/processes/{process['id']}"
+        "Content-Location": f"/api/tasks/{task['id']}"
     }
 
-    return json_response(process, 202, headers)
+    return json_response(task, 202, headers)
 
 
 @routes.get("/api/refs/{ref_id}/groups")

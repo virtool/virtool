@@ -5,11 +5,11 @@ export const getStateTerm = state => state.hmms.term;
 
 export const getTerm = getTermSelectorFactory(getStateTerm);
 
-export const getProcess = state => {
-    const processes = state.processes.documents;
-    const processId = get(state.hmms.status, "process.id");
-    if (processId && processes.length) {
-        const process = find(processes, { id: processId });
-        return process || undefined;
+export const getTask = state => {
+    const tasks = state.tasks.documents;
+    const taskId = get(state.hmms.status, "task.id");
+    if (taskId && tasks.length) {
+        const task = find(tasks, { id: taskId });
+        return task || undefined;
     }
 };

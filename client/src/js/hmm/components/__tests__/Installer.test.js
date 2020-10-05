@@ -6,27 +6,27 @@ describe("<HMMInstaller />", () => {
     beforeEach(() => {
         props = {
             releaseId: "foo",
-            process: { progress: "foo", step: "bar" },
+            task: { progress: "foo", step: "bar" },
             installed: false
         };
     });
 
-    it("should render when [this.props.process exsists] and [this.props.installed=false]", () => {
+    it("should render when [this.props.task exists] and [this.props.installed=false]", () => {
         const wrapper = shallow(<HMMInstaller {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
-    it("should render when [this.props.process = undefined] and [this.props.installed = false]", () => {
-        props.process = undefined;
+    it("should render when [this.props.task = undefined] and [this.props.installed = false]", () => {
+        props.task = undefined;
         const wrapper = shallow(<HMMInstaller {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
-    it("should render when [this.props.process exsists] and [this.props.installed=true]", () => {
+    it("should render when [this.props.task exists] and [this.props.installed=true]", () => {
         props.installed = true;
         const wrapper = shallow(<HMMInstaller {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
-    it("should render when [this.props.process = undefined] and [this.props.installed = true]", () => {
-        props.process = undefined;
+    it("should render when [this.props.task = undefined] and [this.props.installed = true]", () => {
+        props.task = undefined;
         props.installed = true;
         const wrapper = shallow(<HMMInstaller {...props} />);
         expect(wrapper).toMatchSnapshot();
@@ -36,7 +36,7 @@ describe("<HMMInstaller />", () => {
 describe("mapStateToProps()", () => {
     it("should return props", () => {
         const state = {
-            processId: 1,
+            taskId: 1,
 
             account: {
                 permissions: { foo: "bar" },
@@ -44,12 +44,12 @@ describe("mapStateToProps()", () => {
             },
             hmms: {
                 status: {
-                    process: { id: "foo" },
+                    task: { id: "foo" },
                     release: { id: "bar" },
                     installed: true
                 }
             },
-            processes: {
+            tasks: {
                 documents: [{ foo: "bar" }, { id: "foo" }],
                 id: 1,
                 progress: 10
@@ -60,7 +60,7 @@ describe("mapStateToProps()", () => {
         expect(result).toEqual({
             canInstall: true,
             installed: true,
-            process: { id: "foo" },
+            task: { id: "foo" },
             releaseId: "bar"
         });
     });

@@ -153,12 +153,11 @@ export const SHOW_EDIT_SEQUENCE = "SHOW_EDIT_SEQUENCE";
 export const SHOW_REMOVE_SEQUENCE = "SHOW_REMOVE_SEQUENCE";
 export const HIDE_OTU_MODAL = "HIDE_OTU_MODAL";
 
-// Processes
-export const WS_INSERT_PROCESS = "WS_INSERT_PROCESS";
-export const WS_UPDATE_PROCESS = "WS_UPDATE_PROCESS";
-export const WS_REMOVE_PROCESS = "WS_REMOVE_PROCESS";
-export const LIST_PROCESSES = createRequestActionType("LIST_PROCESSES");
-export const GET_PROCESS = createRequestActionType("GET_PROCESS");
+// Tasks
+export const WS_INSERT_TASK = "WS_INSERT_TASK";
+export const WS_UPDATE_TASK = "WS_UPDATE_TASK";
+export const LIST_TASKS = createRequestActionType("LIST_TASKS");
+export const GET_TASK = createRequestActionType("GET_TASK");
 
 // Refs
 export const WS_INSERT_REFERENCE = "WS_INSERT_REFERENCE";

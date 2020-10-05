@@ -5,11 +5,11 @@ import os
 
 import aiohttp
 
-import virtool.processes.db
+import virtool.tasks.db
 import virtool.db.utils
 import virtool.http.proxy
 import virtool.http.utils
-import virtool.processes.process
+import virtool.tasks.task
 import virtool.software.utils
 import virtool.software.utils
 import virtool.utils
@@ -75,7 +75,7 @@ async def fetch_and_update_releases(app, ignore_errors=False):
     return releases
 
 
-async def install(app, release, process_id):
+async def install(app, release, task_id):
     """
     Installs the update described by the passed release document.
 
@@ -86,9 +86,9 @@ async def install(app, release, process_id):
         # Download the release from GitHub and write it to a temporary directory.
         compressed_path = os.path.join(str(tempdir), "release.tar.gz")
 
-        progress_tracker = virtool.processes.process.ProgressTracker(
+        progress_tracker = virtool.tasks.task.ProgressTracker(
             db,
-            process_id,
+            task_id,
             release["size"],
             factor=0.5,
             increment=0.03,
@@ -103,14 +103,14 @@ async def install(app, release, process_id):
                 progress_handler=progress_tracker.add
             )
         except FileNotFoundError:
-            await virtool.processes.db.update(db, process_id, errors=[
+            await virtool.tasks.db.update(db, task_id, errors=[
                 "Could not write to release download location"
             ])
 
         # Start decompression step, reporting this to the DB.
-        await virtool.processes.db.update(
+        await virtool.tasks.db.update(
             db,
-            process_id,
+            task_id,
             progress=0.5,
             step="unpack"
         )
@@ -119,9 +119,9 @@ async def install(app, release, process_id):
         await app["run_in_thread"](virtool.utils.decompress_tgz, compressed_path, str(tempdir))
 
         # Start check tree step, reporting this to the DB.
-        await virtool.processes.db.update(
+        await virtool.tasks.db.update(
             db,
-            process_id,
+            task_id,
             progress=0.7,
             step="verify"
         )
@@ -132,14 +132,14 @@ async def install(app, release, process_id):
         good_tree = await app["run_in_thread"](virtool.software.utils.check_software_files, decompressed_path)
 
         if not good_tree:
-            await virtool.processes.db.update(db, process_id, errors=[
+            await virtool.tasks.db.update(db, task_id, errors=[
                 "Invalid unpacked installation tree"
             ])
 
         # Copy the update files to the install directory.
-        await virtool.processes.db.update(
+        await virtool.tasks.db.update(
             db,
-            process_id,
+            task_id,
             progress=0.9,
             step="install"
         )
@@ -150,9 +150,9 @@ async def install(app, release, process_id):
             virtool.software.utils.INSTALL_PATH
         )
 
-        await virtool.processes.db.update(
+        await virtool.tasks.db.update(
             db,
-            process_id,
+            task_id,
             progress=1
         )
 
@@ -180,10 +180,10 @@ async def refresh(app):
     logging.debug("Started HMM refresher")
 
 
-async def update_software_process(db, progress, step=None):
+async def update_software_task(db, progress, step=None):
     """
-    Update the process field in the software update document. Used to keep track of the current progress of the update
-    process.
+    Update the task field in the software update document. Used to keep track of the current progress of the update
+    task.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
@@ -195,12 +195,12 @@ async def update_software_process(db, progress, step=None):
     :type step: str
 
     """
-    return await update_status_process(db, "software", progress, step)
+    return await update_status_task(db, "software", progress, step)
 
 
-async def update_status_process(db, _id, progress, step=None, error=None):
+async def update_status_task(db, _id, progress, step=None, error=None):
     """
-    Update the process field in a status document. These fields are used to track long-running asynchronous processes
+    Update the task field in a status document. These fields are used to track long-running asynchronous tasks
     such as software updates or data imports.
 
     More specific update function can be built around this utility.
@@ -217,22 +217,22 @@ async def update_status_process(db, _id, progress, step=None, error=None):
     :param step: the name of the step in progress
     :type step: Coroutine[str]
 
-    :param error: an error that stopped the process
+    :param error: an error that stopped the task
     :type error: str
 
     :return: processed status document
-    :rtype: Coroutine[dict]
+    :rtype:
 
     """
     set_dict = {
-        "process.progress": progress
+        "task.progress": progress
     }
 
     if step:
-        set_dict["process.step"] = step
+        set_dict["task.step"] = step
 
     if error:
-        set_dict["process.error"] = error
+        set_dict["task.error"] = error
 
     document = await db.status.find_one_and_update({"_id": _id}, {
         "$set": set_dict

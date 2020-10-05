@@ -10,10 +10,10 @@ import { watchHmms } from "../hmm/sagas";
 import { watchIndexes } from "../indexes/sagas";
 import { watchJobs } from "../jobs/sagas";
 import { watchOTUs } from "../otus/sagas";
-import { watchProcesses } from "../processes/sagas";
 import { watchReferences } from "../references/sagas";
 import { watchSamples } from "../samples/sagas";
 import { watchSubtraction } from "../subtraction/sagas";
+import { watchTasks } from "../tasks/sagas";
 import { watchUpdates } from "../updates/sagas";
 import { watchUsers } from "../users/sagas";
 import { PUSH_STATE } from "./actionTypes";
@@ -45,7 +45,7 @@ function* rootSaga() {
         watchIndexes(),
         watchJobs(),
         watchOTUs(),
-        watchProcesses(),
+        watchTasks(),
         watchRouter(),
         watchSamples(),
         watchSettings(),

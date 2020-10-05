@@ -1,16 +1,16 @@
 import { get } from "lodash-es";
-import { wsInsertAnalysis, wsUpdateAnalysis, wsRemoveAnalysis } from "../analyses/actions";
-import { wsInsertFile, wsUpdateFile, wsRemoveFile } from "../files/actions";
-import { wsInsertGroup, wsUpdateGroup, wsRemoveGroup } from "../groups/actions";
-import { wsInsertIndex, wsUpdateIndex, wsInsertHistory } from "../indexes/actions";
-import { wsInsertJob, wsUpdateJob, wsRemoveJob } from "../jobs/actions";
-import { wsInsertOTU, wsUpdateOTU, wsRemoveOTU } from "../otus/actions";
-import { wsInsertProcess, wsUpdateProcess } from "../processes/actions";
-import { wsInsertReference, wsUpdateReference, wsRemoveReference } from "../references/actions";
-import { wsInsertSample, wsUpdateSample, wsRemoveSample } from "../samples/actions";
+import { wsInsertAnalysis, wsRemoveAnalysis, wsUpdateAnalysis } from "../analyses/actions";
+import { wsInsertFile, wsRemoveFile, wsUpdateFile } from "../files/actions";
+import { wsInsertGroup, wsRemoveGroup, wsUpdateGroup } from "../groups/actions";
+import { wsInsertHistory, wsInsertIndex, wsUpdateIndex } from "../indexes/actions";
+import { wsInsertJob, wsRemoveJob, wsUpdateJob } from "../jobs/actions";
+import { wsInsertOTU, wsRemoveOTU, wsUpdateOTU } from "../otus/actions";
+import { wsInsertReference, wsRemoveReference, wsUpdateReference } from "../references/actions";
+import { wsInsertSample, wsRemoveSample, wsUpdateSample } from "../samples/actions";
 import { wsUpdateStatus } from "../status/actions";
-import { wsInsertSubtraction, wsUpdateSubtraction, wsRemoveSubtraction } from "../subtraction/actions";
-import { wsInsertUser, wsUpdateUser, wsRemoveUser } from "../users/actions";
+import { wsInsertSubtraction, wsRemoveSubtraction, wsUpdateSubtraction } from "../subtraction/actions";
+import { wsInsertTask, wsUpdateTask } from "../tasks/actions";
+import { wsInsertUser, wsRemoveUser, wsUpdateUser } from "../users/actions";
 
 const actionCreatorWrapper = actionCreator => {
     return (state, message) => actionCreator(message.data);
@@ -30,10 +30,10 @@ const inserters = {
     indexes: actionCreatorWrapper(wsInsertIndex),
     jobs: actionCreatorWrapper(wsInsertJob),
     otus: actionCreatorWrapper(wsInsertOTU),
-    processes: actionCreatorWrapper(wsInsertProcess),
     references: actionCreatorWrapper(wsInsertReference),
     samples: actionCreatorWrapper(wsInsertSample),
     subtraction: actionCreatorWrapper(wsInsertSubtraction),
+    tasks: actionCreatorWrapper(wsInsertTask),
     users: actionCreatorWrapper(wsInsertUser)
 };
 
@@ -50,11 +50,11 @@ const updaters = {
     indexes: actionCreatorWrapper(wsUpdateIndex),
     jobs: actionCreatorWrapper(wsUpdateJob),
     otus: actionCreatorWrapper(wsUpdateOTU),
-    processes: actionCreatorWrapper(wsUpdateProcess),
     references: actionCreatorWrapper(wsUpdateReference),
     samples: actionCreatorWrapper(wsUpdateSample),
     status: actionCreatorWrapper(wsUpdateStatus),
     subtraction: actionCreatorWrapper(wsUpdateSubtraction),
+    tasks: actionCreatorWrapper(wsUpdateTask),
     users: actionCreatorWrapper(wsUpdateUser)
 };
 
