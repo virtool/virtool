@@ -2,7 +2,7 @@ from aiohttp import web
 from typing import Optional
 
 
-def json_response(data: dict, status: int = 200, headers: Optional[dict] = None) -> web.Response:
+def json_response(data: object, status: int = 200, headers: Optional[dict] = None) -> web.Response:
     """
     Return a response object whose attached JSON dict will be formatted by middleware depending on the request's
     `Accept` header.

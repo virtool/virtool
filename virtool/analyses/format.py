@@ -20,6 +20,7 @@ import virtool.db.utils
 import virtool.history.db
 import virtool.otus.db
 import virtool.otus.utils
+import virtool.types
 
 CSV_HEADERS = (
     "OTU",
@@ -48,7 +49,16 @@ def calculate_median_depths(document: dict) -> dict:
     return depths
 
 
-async def create_pathoscope_coverage_cache(db, document):
+async def create_pathoscope_coverage_cache(db, document: dict) -> dict:
+    """
+    Create a pathoscope coverage cache document. This saves the costly recalculation of coverage chart coordinates from
+    raw coverage arrays each time the analysis is retrieved.
+
+    :param db: the application database object
+    :param document: the analysis document to create cache for
+    :return: the coverage cache document
+
+    """
     cache = defaultdict(lambda: defaultdict(lambda: dict()))
 
     for hit in document["results"]:
@@ -73,7 +83,16 @@ async def create_pathoscope_coverage_cache(db, document):
     return document
 
 
-async def ensure_pathoscope_coverage_cache(db, document):
+async def ensure_pathoscope_coverage_cache(db, document: dict):
+    """
+    Attach coverage values to the passed document. Either retrieve an existing coverage cache document or generate a one
+    if one doesn't exist.
+
+    :param db: the application database object
+    :param document: the analysis document
+    :return: the analysis document with coverage attached
+
+    """
     cache = await db.coverage.find_one({"analysis.id": document["_id"]})
 
     if cache is None:
@@ -119,7 +138,15 @@ async def load_results(settings: dict, document: dict) -> dict:
     return document
 
 
-async def format_aodp(app, document):
+async def format_aodp(app: virtool.types.App, document):
+    """
+    Format an AODP analysis document by retrieving the detected OTUs and incorporating them into the returned document.
+
+    :param app: the application object
+    :param document: the document to format
+    :return: the formatted document
+    
+    """
     patched_otus = await gather_patched_otus(app, document["results"])
 
     hits = defaultdict(list)
@@ -141,7 +168,16 @@ async def format_aodp(app, document):
     }
 
 
-async def format_pathoscope(app, document):
+async def format_pathoscope(app: virtool.types.App, document: dict) -> dict:
+    """
+    Format a Pathoscope analysis document by retrieving the detected OTUs and incorporating them into the returned
+    document. Calculate metrics for different organizational levels: OTU, isolate, sequence.
+
+    :param app: the application object
+    :param document: the document to format
+    :return: the formatted document
+
+    """
     document = await load_results(
         app["settings"],
         document
@@ -212,7 +248,15 @@ async def format_pathoscope(app, document):
     return document
 
 
-async def format_nuvs(app, document):
+async def format_nuvs(app: virtool.types.App, document: dict) -> dict:
+    """
+    Format a NuVs analysis document by attaching the HMM annotation data to the results.
+
+    :param app: the application object
+    :param document: the document to format
+    :return: the formatted document
+
+    """
     document = await load_results(
         app["settings"],
         document
@@ -232,7 +276,15 @@ async def format_nuvs(app, document):
     return document
 
 
-async def format_analysis_to_excel(app, document):
+async def format_analysis_to_excel(app: virtool.types.App, document: dict) -> bytes:
+    """
+    Convert a pathoscope analysis document to byte-encoded Excel format for download.
+
+    :param app: the application object
+    :param document: the document to format
+    :return: the formatted Excel workbook
+
+    """
     depths = calculate_median_depths(document)
 
     formatted = await format_analysis(app, document)
@@ -280,7 +332,15 @@ async def format_analysis_to_excel(app, document):
     return output.getvalue()
 
 
-async def format_analysis_to_csv(app, document):
+async def format_analysis_to_csv(app: virtool.types.App, document: dict) -> str:
+    """
+    Convert a pathoscope analysis document to CSV format for download.
+
+    :param app: the application object
+    :param document: the document to format
+    :return: the formatted CSV data
+
+    """
     depths = calculate_median_depths(document)
 
     formatted = await format_analysis(app, document)
@@ -309,7 +369,7 @@ async def format_analysis_to_csv(app, document):
     return output.getvalue()
 
 
-async def format_analysis(app, document: dict) -> dict:
+async def format_analysis(app: virtool.types.App, document: dict) -> dict:
     """
     Format an analysis document to be returned by the API.
 
@@ -333,7 +393,16 @@ async def format_analysis(app, document: dict) -> dict:
     raise ValueError("Could not determine analysis workflow")
 
 
-async def gather_patched_otus(app, results):
+async def gather_patched_otus(app: virtool.types.App, results: list) -> dict:
+    """
+    Gather patched OTUs for each result item. Only fetch each id-version combination once. Make database requests
+    concurrently to save time.
+
+    :param app: the application object
+    :param results: the results field from a pathoscope analysis document
+    :return: a dict containing patched OTUs keyed by the OTU ID
+
+    """
     # Use set to only id-version combinations once.
     otu_specifiers = {(hit["otu"]["id"], hit["otu"]["version"]) for hit in results}
 

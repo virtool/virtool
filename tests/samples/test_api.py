@@ -556,7 +556,7 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
             "all_write": True
         })
 
-    m_new = mocker.patch("virtool.analyses.db.new", new=make_mocked_coro(test_analysis))
+    m_new = mocker.patch("virtool.analyses.db.create", new=make_mocked_coro(test_analysis))
 
     resp = await client.post("/api/samples/test/analyses", data={
         "workflow": "pathoscope_bowtie",

@@ -560,7 +560,7 @@ async def analyze(req):
         subtraction_id = subtraction["id"]
 
     # Generate a unique _id for the analysis entry
-    document = await virtool.analyses.db.new(
+    document = await virtool.analyses.db.create(
         req.app,
         sample_id,
         ref_id,
