@@ -1,4 +1,4 @@
-import { WS_UPDATE_PROCESS, WS_UPDATE_STATUS, GET_SOFTWARE_UPDATES } from "../../app/actionTypes";
+import { GET_SOFTWARE_UPDATES, WS_UPDATE_STATUS, WS_UPDATE_TASK } from "../../app/actionTypes";
 import reducer, { initialState } from "../reducer";
 
 describe("Updates Reducer", () => {
@@ -15,17 +15,17 @@ describe("Updates Reducer", () => {
         expect(result).toEqual(initialState);
     });
 
-    describe("should handle WS_UPDATE_PROCESS", () => {
-        it("when action id matches process.id in state, update process with websocket data", () => {
-            const state = { process: { id: "123abc" } };
-            const action = { type: WS_UPDATE_PROCESS, data: { id: "123abc" } };
+    describe("should handle WS_UPDATE_TASK", () => {
+        it("when action id matches task.id in state, update task with websocket data", () => {
+            const state = { task: { id: "123abc" } };
+            const action = { type: WS_UPDATE_TASK, data: { id: "123abc" } };
             const result = reducer(state, action);
-            expect(result).toEqual({ process: action.data });
+            expect(result).toEqual({ task: action.data });
         });
 
         it("otherwise return state", () => {
             const state = {};
-            const action = { type: WS_UPDATE_PROCESS, data: { id: "test" } };
+            const action = { type: WS_UPDATE_TASK, data: { id: "test" } };
             const result = reducer(state, action);
             expect(result).toEqual(state);
         });

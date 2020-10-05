@@ -23,7 +23,7 @@ describe("HMM Reducer", () => {
                 data: {
                     id: "hmm",
                     installed: {},
-                    process: {},
+                    task: {},
                     release: {}
                 }
             };
@@ -31,7 +31,7 @@ describe("HMM Reducer", () => {
             expect(result).toEqual({
                 status: {
                     installed: {},
-                    process: {},
+                    task: {},
                     release: {}
                 }
             });
