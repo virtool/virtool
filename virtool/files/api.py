@@ -47,6 +47,10 @@ async def find(req):
 
 @routes.delete("/api/files/{file_id}", permission="remove_file")
 async def remove(req):
+    """
+    Remove a file given its `file_id`.
+
+    """
     file_id = req.match_info["file_id"]
 
     deleted_count = await virtool.files.db.remove(
