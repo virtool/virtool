@@ -5,11 +5,11 @@ import os
 
 import aiohttp
 
-import virtool.processes.db
+import virtool.tasks.db
 import virtool.db.utils
 import virtool.http.proxy
 import virtool.http.utils
-import virtool.processes.process
+import virtool.tasks.task
 import virtool.software.utils
 import virtool.software.utils
 import virtool.utils
@@ -75,7 +75,7 @@ async def fetch_and_update_releases(app, ignore_errors=False):
     return releases
 
 
-async def install(app, release, process_id):
+async def install(app, release, task_id):
     """
     Installs the update described by the passed release document.
 
@@ -86,9 +86,9 @@ async def install(app, release, process_id):
         # Download the release from GitHub and write it to a temporary directory.
         compressed_path = os.path.join(str(tempdir), "release.tar.gz")
 
-        progress_tracker = virtool.processes.process.ProgressTracker(
+        progress_tracker = virtool.tasks.task.ProgressTracker(
             db,
-            process_id,
+            task_id,
             release["size"],
             factor=0.5,
             increment=0.03,
@@ -103,14 +103,14 @@ async def install(app, release, process_id):
                 progress_handler=progress_tracker.add
             )
         except FileNotFoundError:
-            await virtool.processes.db.update(db, process_id, errors=[
+            await virtool.tasks.db.update(db, task_id, errors=[
                 "Could not write to release download location"
             ])
 
         # Start decompression step, reporting this to the DB.
-        await virtool.processes.db.update(
+        await virtool.tasks.db.update(
             db,
-            process_id,
+            task_id,
             progress=0.5,
             step="unpack"
         )
@@ -119,9 +119,9 @@ async def install(app, release, process_id):
         await app["run_in_thread"](virtool.utils.decompress_tgz, compressed_path, str(tempdir))
 
         # Start check tree step, reporting this to the DB.
-        await virtool.processes.db.update(
+        await virtool.tasks.db.update(
             db,
-            process_id,
+            task_id,
             progress=0.7,
             step="verify"
         )
@@ -132,14 +132,14 @@ async def install(app, release, process_id):
         good_tree = await app["run_in_thread"](virtool.software.utils.check_software_files, decompressed_path)
 
         if not good_tree:
-            await virtool.processes.db.update(db, process_id, errors=[
+            await virtool.tasks.db.update(db, task_id, errors=[
                 "Invalid unpacked installation tree"
             ])
 
         # Copy the update files to the install directory.
-        await virtool.processes.db.update(
+        await virtool.tasks.db.update(
             db,
-            process_id,
+            task_id,
             progress=0.9,
             step="install"
         )
@@ -150,9 +150,9 @@ async def install(app, release, process_id):
             virtool.software.utils.INSTALL_PATH
         )
 
-        await virtool.processes.db.update(
+        await virtool.tasks.db.update(
             db,
-            process_id,
+            task_id,
             progress=1
         )
 

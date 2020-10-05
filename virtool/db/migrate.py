@@ -113,7 +113,7 @@ async def migrate_status(db, server_version):
         await db.status.update_one({"_id": "software"}, {
             "$set": {
                 "mongo_version": mongo_version,
-                "process": None,
+                "task": None,
                 "updating": False,
                 "version": server_version
             }
@@ -123,7 +123,7 @@ async def migrate_status(db, server_version):
         await db.status.insert_one({
             "_id": "hmm",
             "installed": None,
-            "process": None,
+            "task": None,
             "updates": list(),
             "release": None
         })

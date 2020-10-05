@@ -105,7 +105,7 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
     m_process = mocker.patch("virtool.references.db.UpdateRemoteReferenceProcess")
 
     m_register = mocker.patch(
-        "virtool.processes.db.register",
+        "virtool.tasks.db.register",
         make_mocked_coro({
             "id": "process"
         })

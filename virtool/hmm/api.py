@@ -9,7 +9,7 @@ import virtool.errors
 import virtool.github
 import virtool.hmm.db
 import virtool.http.routes
-import virtool.processes.db
+import virtool.tasks.db
 import virtool.utils
 from virtool.api.response import bad_gateway, bad_request, conflict, json_response, no_content, not_found
 
@@ -98,15 +98,15 @@ async def install(req):
     if await db.status.count_documents({"_id": "hmm", "updates.ready": False}):
         return conflict("Install already in progress")
 
-    process = await virtool.processes.db.register(
+    task = await virtool.tasks.db.register(
         db,
         "install_hmms"
     )
 
     document = await db.status.find_one_and_update({"_id": "hmm"}, {
         "$set": {
-            "process": {
-                "id": process["id"]
+            "task": {
+                "id": task["id"]
             }
         }
     })
@@ -126,7 +126,7 @@ async def install(req):
 
     await aiojobs.aiohttp.spawn(req, virtool.hmm.db.install(
         req.app,
-        process["id"],
+        task["id"],
         release,
         user_id
     ))
@@ -168,7 +168,7 @@ async def purge(req):
     await db.status.find_one_and_update({"_id": "hmm"}, {
         "$set": {
             "installed": None,
-            "process": None,
+            "task": None,
             "updates": list()
         }
     })

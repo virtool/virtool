@@ -1,18 +1,18 @@
 import logging
 
 import virtool.db.utils
-import virtool.processes.db
+import virtool.tasks.db
 
-logger = logging.getLogger("process")
+logger = logging.getLogger("task")
 
 
-class Process:
+class Task:
 
-    def __init__(self, app, process_id):
+    def __init__(self, app, task_id):
         self.app = app
         self.db = app["db"]
         self.run_in_thread = app["run_in_thread"]
-        self.id = process_id
+        self.id = task_id
         self.step = None
         self.steps = []
         self.intermediate = dict()
@@ -21,7 +21,7 @@ class Process:
         self.errored = False
 
     async def init_db(self):
-        self.document = await self.db.processes.find_one(self.id, {"_id": False})
+        self.document = await self.db.tasks.find_one(self.id, {"_id": False})
         self.context = self.document["context"]
 
     async def run(self):
@@ -33,7 +33,7 @@ class Process:
 
             self.step = func
 
-            await virtool.processes.db.update(
+            await virtool.tasks.db.update(
                 self.db,
                 self.id,
                 step=self.step.__name__
@@ -42,12 +42,12 @@ class Process:
             await func()
 
         if not self.errored:
-            await virtool.processes.db.complete(self.db, self.id)
+            await virtool.tasks.db.complete(self.db, self.id)
 
     async def update_context(self, update):
         with_prefix = {f"context.{key}": value for key, value in update.items()}
 
-        document = await self.db.processes.find_one_and_update({"_id": self.id}, {
+        document = await self.db.tasks.find_one_and_update({"_id": self.id}, {
             "$set": with_prefix
         })
 
@@ -73,7 +73,7 @@ class Process:
         pass
 
     async def error(self, errors: list):
-        await virtool.processes.db.update(
+        await virtool.tasks.db.update(
             self.db,
             self.id,
             errors=errors
@@ -82,14 +82,14 @@ class Process:
         await self.cleanup()
 
         for error in errors:
-            logger.info(f"Process {id} encountered error '{error}'")
+            logger.info(f"Task {id} encountered error '{error}'")
 
 
 class ProgressTracker:
 
-    def __init__(self, db, process_id, total, factor=1.0, increment=0.03, initial=0.0):
+    def __init__(self, db, task_id, total, factor=1.0, increment=0.03, initial=0.0):
         self.db = db
-        self.process_id = process_id
+        self.task_id = task_id
         self.total = total
         self.factor = factor
         self.increment = increment
@@ -110,9 +110,9 @@ class ProgressTracker:
         self.progress = self.initial + round(self.count / self.total * self.factor, 2)
 
         if self.progress - self.last_reported >= self.increment:
-            await virtool.processes.db.update(
+            await virtool.tasks.db.update(
                 self.db,
-                self.process_id,
+                self.task_id,
                 count=self.count,
                 progress=self.progress
             )

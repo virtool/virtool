@@ -5,7 +5,7 @@ import virtool.db.utils
 import virtool.github
 import virtool.hmm.db
 import virtool.http.routes
-import virtool.processes.db
+import virtool.tasks.db
 import virtool.software.db
 import virtool.software.utils
 import virtool.utils
@@ -52,7 +52,7 @@ async def install(req):
     except IndexError:
         return not_found("Could not find latest uninstalled release")
 
-    process = await virtool.processes.db.register(
+    task = await virtool.tasks.db.register(
         db,
         "update_software",
         context={
@@ -62,7 +62,7 @@ async def install(req):
 
     await db.status.update_one({"_id": "software"}, {
         "$set": {
-            "process": process,
+            "task": task,
             "updating": True
         }
     })
@@ -77,7 +77,7 @@ async def install(req):
     await aiojobs.aiohttp.spawn(req, virtool.software.db.install(
         req.app,
         latest_release,
-        process["id"]
+        task["id"]
     ))
 
     return json_response(update)
