@@ -3,7 +3,7 @@ name: server
 
 steps:
   - name: ping
-    image: mongo:3.6
+    image: mongo:4.2
     commands:
       - sleep 5
       - mongo --host mongo --eval "db.version()"
@@ -30,8 +30,8 @@ steps:
 
 services:
   - name: mongo
-    image: mongo:3.6
-    command: [--smallfiles, --nojournal]
+    image: mongo:4.2-bionic
+    command: [--nojournal]
     ports:
       - 27017
 
