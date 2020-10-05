@@ -94,7 +94,7 @@ class BLAST:
         return data, document
 
 
-async def new(app, sample_id, ref_id, subtraction_id, user_id, workflow):
+async def create(app, sample_id, ref_id, subtraction_id, user_id, workflow):
     """
     Creates a new analysis. Ensures that a valid subtraction host was the submitted. Configures read and write
     permissions on the sample document and assigns it a creator username based on the requesting connection.
