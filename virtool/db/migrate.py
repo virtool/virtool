@@ -99,13 +99,19 @@ async def migrate_status(db, server_version):
 
     mongo_version = await virtool.db.utils.determine_mongo_version(db)
 
+    await db.status.update_many({}, {
+        "$unset": {
+            "process": ""
+        }
+    })
+
     try:
         await db.status.insert_one({
             "_id": "software",
             "installed": None,
             "mongo_version": mongo_version,
-            "process": None,
             "releases": list(),
+            "task": None,
             "updating": False,
             "version": server_version,
         })
