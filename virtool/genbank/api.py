@@ -1,5 +1,5 @@
 """
-Provides request handlers for managing and viewing analyses.
+Provides request handlers for accessing GenBank through the web server.
 
 """
 import aiohttp

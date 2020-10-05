@@ -88,7 +88,7 @@ class TestCollection:
         assert delete_result.deleted_count == 2
 
         if not (attr_silent or param_silent):
-            collection._enqueue_change.assert_called_with("samples", "delete", ("foo", "baz"))
+            collection._enqueue_change.assert_called_with("samples", "delete", ("baz", "foo"))
 
         assert await test_motor.samples.find().to_list(None) == [
             {"_id": "bar", "tag": 2}

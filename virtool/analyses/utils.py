@@ -63,7 +63,7 @@ def find_nuvs_sequence_by_index(document: dict, sequence_index: int) -> Union[No
     return sequences[0]
 
 
-def join_analysis_path(data_path, analysis_id, sample_id):
+def join_analysis_path(data_path: str, analysis_id: str, sample_id: str):
     """
     Returns the path to an analysis JSON output file.
 
@@ -82,7 +82,18 @@ def join_analysis_path(data_path, analysis_id, sample_id):
     )
 
 
-def join_analysis_json_path(data_path, analysis_id, sample_id):
+def join_analysis_json_path(data_path: str, analysis_id: str, sample_id: str) -> str:
+    """
+    Join the path to an analysis JSON file for the given sample-analysis ID combination.
+
+    Analysis JSON files are created when the analysis data is too large for a MongoDB document.
+
+    :param data_path: the path to the application data
+    :param analysis_id: the ID of the analysis
+    :param sample_id: the ID of the sample
+    :return: a path
+
+    """
     return os.path.join(
         join_analysis_path(data_path, analysis_id, sample_id),
         "results.json"

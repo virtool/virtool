@@ -26,12 +26,12 @@ routes = virtool.http.routes.Routes()
 
 
 @routes.get("/api/account")
-async def get(req):
+async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Get complete user document.
 
     """
-    document = await virtool.account.db.get_document(req.app["db"], req["client"].user_id)
+    document = await virtool.account.db.get(req.app["db"], req["client"].user_id)
     return json_response(virtool.utils.base_processor(document))
 
 
@@ -50,7 +50,7 @@ async def get(req):
     }
 
 })
-async def edit(req):
+async def edit(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Edit the user account.
 
@@ -83,13 +83,13 @@ async def edit(req):
             "$set": update
         }, projection=virtool.account.db.PROJECTION)
     else:
-        document = await virtool.account.db.get_document(db, user_id)
+        document = await virtool.account.db.get(db, user_id)
 
     return json_response(virtool.utils.base_processor(document))
 
 
 @routes.get("/api/account/settings")
-async def get_settings(req):
+async def get_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Get account settings
 
@@ -118,7 +118,7 @@ async def get_settings(req):
         "required": False
     }
 })
-async def update_settings(req):
+async def update_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Update account settings.
 
@@ -143,7 +143,7 @@ async def update_settings(req):
 
 
 @routes.get("/api/account/keys")
-async def get_api_keys(req):
+async def get_api_keys(req: aiohttp.web.Request) -> aiohttp.web.Response:
     db = req.app["db"]
 
     user_id = req["client"].user_id
@@ -154,7 +154,7 @@ async def get_api_keys(req):
 
 
 @routes.get("/api/account/keys/{key_id}")
-async def get_api_key(req):
+async def get_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     db = req.app["db"]
     user_id = req["client"].user_id
     key_id = req.match_info["key_id"]
@@ -180,7 +180,7 @@ async def get_api_key(req):
         "validator": virtool.validators.is_permission_dict
     }
 })
-async def create_api_key(req):
+async def create_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Create a new API key. The new key value is returned in the response. This is the only response from the server that
     will ever include the key.
@@ -212,7 +212,7 @@ async def create_api_key(req):
         "required": True
     }
 })
-async def update_api_key(req):
+async def update_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Change the permissions for an existing API key.
 
@@ -251,7 +251,7 @@ async def update_api_key(req):
 
 
 @routes.delete("/api/account/keys/{key_id}")
-async def remove_api_key(req):
+async def remove_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     db = req.app["db"]
     user_id = req["client"].user_id
     key_id = req.match_info["key_id"]
@@ -268,7 +268,7 @@ async def remove_api_key(req):
 
 
 @routes.delete("/api/account/keys")
-async def remove_all_api_keys(req):
+async def remove_all_api_keys(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Remove all API keys for the session account.
 
@@ -293,7 +293,7 @@ async def remove_all_api_keys(req):
         "default": False
     }
 })
-async def login(req):
+async def login(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Create a new session for the user with `username`.
 
@@ -338,7 +338,7 @@ async def login(req):
 
 
 @routes.get("/api/account/logout", public=True)
-async def logout(req):
+async def logout(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Invalidates the requesting session, effectively logging out the user.
 
@@ -370,12 +370,9 @@ async def logout(req):
         "required": True
     }
 })
-async def reset(req):
+async def reset(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Handles `POST` requests for resetting the password for a session user.
-
-    :param req: the request to handle
-    :return: a response
 
     """
     db = req.app["db"]

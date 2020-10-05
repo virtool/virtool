@@ -1,3 +1,7 @@
+"""
+API request handlers for managing and querying HMM data.
+
+"""
 import os
 
 import aiohttp
@@ -47,6 +51,20 @@ async def find(req):
 
 @routes.get("/api/hmms/status")
 async def get_status(req):
+    """
+    Get the status of the HMM data. Contains the following fields:
+
+    - `errors`: lists any errors in the HMM data
+    - `id`: is always 'hmm'
+    - `installed`: a dict describing the installed HMM data
+    - `process.id`: the ID of the process installing the HMM data
+    - `release`: a dict describing the latest available release
+
+    Installed HMM data cannot currently be updated.
+
+    :param req:
+    :return:
+    """
     db = req.app["db"]
     status = await virtool.hmm.db.get_status(db)
     return json_response(status)
@@ -54,6 +72,10 @@ async def get_status(req):
 
 @routes.get("/api/hmms/status/release")
 async def get_release(req):
+    """
+    Get the latest release for the HMM data.
+
+    """
     try:
         release = await virtool.hmm.db.fetch_and_update_release(req.app)
     except virtool.errors.GitHubError as err:

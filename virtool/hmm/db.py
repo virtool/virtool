@@ -1,3 +1,7 @@
+"""
+Functions for working with HMM data on the server.
+
+"""
 import asyncio
 import json
 import logging
@@ -18,6 +22,7 @@ import virtool.hmm.utils
 import virtool.http.utils
 import virtool.tasks.db
 import virtool.tasks.task
+import virtool.types
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -215,7 +220,7 @@ async def get_status(db) -> dict:
     return virtool.utils.base_processor(status)
 
 
-async def install(app, task_id, release, user_id):
+async def install(app: virtool.types.App, task_id: str, release: dict, user_id: str):
     """
     Runs a background Task that:
 
@@ -233,16 +238,9 @@ async def install(app, task_id, release, user_id):
         5. import_annotations
 
     :param app: the app object
-    :type app: :class:`aiohttp.web.Application`
-
     :param task_id: the id for the process document
-    :type task_id: str
-
     :param release: the release to install
-    :type release: dict
-
     :param user_id: the id of the user making the request
-    :type user_id: str
 
     """
     db = app["db"]
@@ -372,7 +370,14 @@ async def purge(db, settings: dict):
     })
 
 
-async def refresh(app):
+async def refresh(app: virtool.types.App):
+    """
+    Periodically refreshes the release information for HMMs. Intended to be submitted as a job to
+    :class:`aiojobs.Scheduler`.
+
+    :param app: the application object
+
+    """
     try:
         logging.debug("Started HMM refresher")
 

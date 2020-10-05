@@ -1,8 +1,13 @@
+"""
+HTTP utilities for collecting data from GenBank on the API server.
+
+"""
 import io
 import logging
 
 import Bio.SeqIO
-
+import aiohttp
+from typing import Union, Optional
 import virtool.http.proxy
 
 logger = logging.getLogger(__name__)
@@ -13,21 +18,14 @@ TOOL = "virtool"
 FETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 
 
-async def fetch(settings, session, accession):
+async def fetch(settings: dict, session: aiohttp.ClientSession, accession: Union[int, str]) -> Optional[dict]:
     """
-    Fetch the Genbank record for the passed `accession`.
+    Fetch the Genbank record for the passed `accession`. Returns `None` if the Genbank record can not be found.
 
     :param settings: the application settings object
-    :type settings: :class:`virtool.app_settings.Settings`
-
     :param session: an aiohttp client session
-    :type session: :class:`aiohttp.ClientSession`
-
     :param accession: the accession to fetch
-    :type accession: Union[int,str]
-
     :return: parsed Genbank data
-    :rtype: dict
 
     """
     params = {
