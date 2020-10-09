@@ -1,5 +1,6 @@
 import pytest
 
+import virtool.db
 import virtool.db.utils
 
 
@@ -52,3 +53,25 @@ class TestApplyProjection:
             virtool.db.utils.apply_projection({}, "_id")
 
         assert "Invalid type for projection: <class 'str'>" in str(excinfo.value)
+
+
+async def test_delete_unready(dbi):
+    await dbi.analyses.insert_many([
+        {
+            "_id": 1,
+            "ready": True
+        },
+        {
+            "_id": 2,
+            "ready": False
+        }
+    ])
+
+    await virtool.db.utils.delete_unready(dbi.analyses)
+
+    assert await dbi.analyses.find().to_list(None) == [
+        {
+            "_id": 1,
+            "ready": True
+        }
+    ]

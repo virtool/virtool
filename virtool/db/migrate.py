@@ -2,86 +2,53 @@ import logging
 
 import pymongo.errors
 
-import virtool.analyses.migrate
-import virtool.caches.migrate
 import virtool.db.utils
-import virtool.jobs.db
-import virtool.otus.utils
-import virtool.references.migrate
-import virtool.samples.migrate
-import virtool.users.utils
-import virtool.utils
+import virtool.types
+from virtool.analyses.migrate import migrate_analyses
+from virtool.caches.migrate import migrate_caches
+from virtool.files.migrate import migrate_files
+from virtool.groups.migrate import migrate_groups
+from virtool.jobs.migrate import migrate_jobs
+from virtool.references.migrate import migrate_references
+from virtool.samples.migrate import migrate_samples
 
 logger = logging.getLogger(__name__)
 
 
-async def migrate(app):
+async def migrate(app: virtool.types.App):
     db = app["db"]
 
-    logger.info(" • analyses")
-    await virtool.analyses.migrate.migrate_analyses(app)
-    await virtool.caches.migrate.migrate_caches(app)
-    await migrate_files(db)
-    await migrate_groups(db)
-    await migrate_jobs(db)
-    await migrate_sessions(db)
-    await migrate_status(db, app["version"])
-    await virtool.samples.migrate.migrate_samples(app)
-    await virtool.references.migrate.migrate_references(app)
+    funcs = (
+        migrate_analyses,
+        migrate_caches,
+        migrate_files,
+        migrate_groups,
+        migrate_jobs,
+        migrate_sessions,
+        migrate_status,
+        migrate_samples,
+        migrate_references
+    )
+
+    for func in funcs:
+        name = func.__name__.replace("migrate_", "")
+        logger.info(f" • {name}")
+        await func(app)
 
 
-async def migrate_files(db):
+async def migrate_sessions(app: virtool.types.App):
     """
-    Make all files unreserved. This is only called when the server first starts.
+    Add the expiry index to the sessions collection.
 
-    """
-    logger.info(" • files")
-
-    await db.files.update_many({}, {
-        "$set": {
-            "reserved": False
-        }
-    }, silent=True)
-
-
-async def migrate_groups(db):
-    """
-    Ensure that the permissions object for each group matches the permissions defined in
-    `virtool.users.utils.PERMISSIONS`.
-
-    :param db:
+    :param app: the application object
 
     """
-    logger.info(" • groups")
-
-    await db.groups.update_many({}, {
-        "$unset": {
-            "_version": ""
-        }
-    })
-
-    async for group in db.groups.find():
-        await db.groups.update_one({"_id": group["_id"]}, {
-            "$set": {
-                "permissions": {perm: group["permissions"].get(perm, False) for perm in virtool.users.utils.PERMISSIONS}
-            }
-        }, silent=True)
+    await app["db"].sessions.create_index("expiresAt", expireAfterSeconds=0)
 
 
-async def migrate_jobs(db):
-    logger.info(" • jobs")
-    await virtool.jobs.db.delete_zombies(db)
-
-
-async def migrate_sessions(db):
-    logger.info(" • sessions")
-
-    await db.sessions.delete_many({"created_at": {"$exists": False}})
-    await db.sessions.create_index("expiresAt", expireAfterSeconds=0)
-
-
-async def migrate_status(db, server_version):
-    logger.info(" • status")
+async def migrate_status(app: virtool.types.App):
+    db = app["db"]
+    server_version = app["version"]
 
     await db.status.delete_many({
         "_id": {
