@@ -1,21 +1,24 @@
+"""
+Common functions for analysis jobs.
+
+"""
 import asyncio
 import json
 import logging
 import os
 import pathlib
 import shutil
+from typing import Union
 
 import pymongo.errors
 
 import virtool.caches.db
 import virtool.caches.utils
-import virtool.db
 import virtool.history.db
 import virtool.jobs.fastqc
 import virtool.jobs.job
 import virtool.jobs.utils
 import virtool.samples.db
-import virtool.samples.utils
 import virtool.samples.utils
 import virtool.subtractions.utils
 import virtool.utils
@@ -26,10 +29,17 @@ TRIMMING_PROGRAM = "skewer-0.2.2"
 logger = logging.getLogger(__name__)
 
 
-async def check_db(job):
+async def check_db(job: virtool.jobs.job.Job):
     """
-    Get some initial information from the database that will be required during the course of the job.
+    Get some initial information from the database that will be required during the course of the job. Store the data
+    in `job.params`.
 
+    Returned values are used by all analysis job types.
+
+    TODO: move to virtool-workflow and make specific to analysis workflows
+
+    :param job: the job object
+    :return:
     """
     logger.debug("Retrieving job parameters")
 
@@ -99,15 +109,26 @@ async def make_analysis_dir(job):
     """
     Make a directory for the analysis in the sample/analysis directory.
 
+    TODO: integrate into analysis working directory tree creation at start of all analysis workflows in virtool-workflow
+
     """
     await job.run_in_executor(os.mkdir, job.params["temp_analysis_path"])
     await job.run_in_executor(os.mkdir, job.params["raw_path"])
     await job.run_in_executor(os.mkdir, job.params["reads_path"])
 
 
-async def prepare_reads(job):
+async def prepare_reads(job: virtool.jobs.job.Job):
     """
-    Fetch cache
+    The first step of all analysis jobs.
+
+    Prepares the sample read data by either:
+    - fetching an existing trim cache if the parameters match
+    - creating a new trim cache if one doesn't exist
+    - fetching legacy sample data (to be deprecated)
+
+    TODO: integrate into all analysis workflows in virtool-workflow.
+
+    :param job: the job object
 
     """
     paired = job.params["paired"]
@@ -142,7 +163,13 @@ async def prepare_reads(job):
     return await create_cache(job, parameters)
 
 
-async def delete_analysis(job):
+async def delete_analysis(job: virtool.jobs.job.Job):
+    """
+    Delete the analysis associated with the job. To be called if the job fails.
+
+    :param job: the job object
+
+    """
     await job.db.analyses.delete_one({"_id": job.params["analysis_id"]})
 
     try:
@@ -153,7 +180,15 @@ async def delete_analysis(job):
     await virtool.samples.db.recalculate_workflow_tags(job.db, job.params["sample_id"])
 
 
-async def delete_cache(job):
+async def delete_cache(job: virtool.jobs.job.Job):
+    """
+    Delete the cache associated with the job.
+
+    TODO: Move logic to cache module in virtool-workflow. Call as part of failing analysis job clean-up.
+
+    :param job: the job object
+
+    """
     cache_id = job.intermediate.get("cache_id")
 
     if cache_id:
@@ -174,7 +209,13 @@ async def delete_cache(job):
                 pass
 
 
-async def fetch_cache(job, cache):
+async def fetch_cache(job, cache: dict):
+    """
+    Fetch the cache described by `cache`.
+
+    TODO: Reimplement in virtool-workflow
+
+    """
     cached_read_paths = virtool.caches.utils.join_cache_read_paths(job.settings, cache)
 
     coros = list()
@@ -188,7 +229,14 @@ async def fetch_cache(job, cache):
     await set_cache_id(job, cache["id"])
 
 
-async def fetch_legacy(job, legacy_read_paths):
+async def fetch_legacy(job: virtool.jobs.job.Job, legacy_read_paths: list):
+    """
+    Copy the read data from a legacy sample and to the analysis job read paths.
+
+    :param job: the job object
+    :param legacy_read_paths: the paths to the legacy reads
+
+    """
     coros = list()
 
     for path in legacy_read_paths:
@@ -206,7 +254,16 @@ async def fetch_legacy(job, legacy_read_paths):
     await asyncio.gather(*coros)
 
 
-async def get_sequence_otu_map(db, settings, manifest):
+async def get_sequence_otu_map(db, settings: dict, manifest: dict) -> dict:
+    """
+    Create a `dict` mapping sequence IDs to OTU IDs for a index described by `manifest`.
+
+    :param db: the application database object
+    :param settings: the application settings
+    :param manifest: the index manifest to base the map on
+    :return: the sequence-OTU map
+
+    """
     app_dict = {
         "db": db,
         "settings": settings
@@ -229,7 +286,14 @@ async def get_sequence_otu_map(db, settings, manifest):
     return sequence_otu_map
 
 
-def copy_trimming_results(src, dest):
+def copy_trimming_results(src: str, dest: str):
+    """
+    Copy FASTQ trimming results from the `src` directory to `dest`. Quietly handle paired and unpaired reads.
+
+    :param src: the src directory to copy from
+    :param dest: the dest directory to copy to
+
+    """
     shutil.copy(
         os.path.join(src, "reads_1.fq.gz"),
         dest
@@ -244,7 +308,16 @@ def copy_trimming_results(src, dest):
         pass
 
 
-def get_trimming_min_length(library_type, sample_read_length) -> int:
+def get_trimming_min_length(library_type: str, sample_read_length: int) -> int:
+    """
+    Calculate the minimum length of a read before it is discarded. This takes into account the library type (eg. srna)
+    and the maximum observed read length in the sample.
+
+    :param library_type: the sample library type
+    :param sample_read_length: the maximum read length observed in the sample
+    :return: the minimum allowed trimmed read length
+
+    """
     if library_type == "amplicon":
         return round(0.95 * sample_read_length)
 
@@ -257,7 +330,17 @@ def get_trimming_min_length(library_type, sample_read_length) -> int:
     return 160
 
 
-async def get_index_info(db, settings, index_id):
+async def get_index_info(db, settings: dict, index_id: str) -> dict:
+    """
+    Get the manifest and sequence-OTU map for the given index. If no sequence-OTU map is stored in the index document,
+    create one and return it.
+
+    :param db: the application database object
+    :param settings: the application settings
+    :param index_id: the ID of the index get info for
+    :return: the index  manifest and sequence-OTU map
+
+    """
     document = await db.indexes.find_one(index_id, ["manifest", "sequence_otu_map"])
 
     try:
@@ -275,13 +358,15 @@ async def get_index_info(db, settings, index_id):
     }
 
 
-def get_trimming_parameters(paired: bool, library_type: str, sample_read_length: int):
+def get_trimming_parameters(paired: bool, library_type: str, sample_read_length: int) -> dict:
     """
+    Derive trimming parameters based on the pairedness of the samples, the library type, and maximum observed read
+    length.
 
-    :param paired:
-    :param library_type:
-    :param sample_read_length:
-    :return:
+    :param paired: is the sample paired
+    :param library_type: library type (eg. srna)
+    :param sample_read_length: the maximum read length in the sample
+    :return: the trimming parameters
 
     """
     min_length = get_trimming_min_length(library_type, sample_read_length)
@@ -307,7 +392,19 @@ def get_trimming_parameters(paired: bool, library_type: str, sample_read_length:
     }
 
 
-async def set_analysis_results(db, analysis_id, analysis_path, results):
+async def set_analysis_results(db, analysis_id: str, analysis_path: str, results: Union[dict, list]):
+    """
+    Set the `results` field for an analysis.
+
+    If this exceeded the MongoDB document size limit, write the result to file and set the `results` field to 'file'.
+    The file will be parsed and returned when requested via the API.
+
+    :param db: the application database object
+    :param analysis_id: the ID analysis to set results for
+    :param analysis_path: the path to the analysis
+    :param results: the results data
+
+    """
     try:
         await db.analyses.update_one({"_id": analysis_id}, {
             "$set": {
@@ -328,7 +425,16 @@ async def set_analysis_results(db, analysis_id, analysis_path, results):
         })
 
 
-async def upload(job):
+async def upload(job: virtool.jobs.job.Job):
+    """
+    Copy the temporary analysis directory to a permanent location at `<data_path>/analyses/:id`.
+
+    TODO: Replace this with explicit selection of files to be retained in virtool-workflow
+
+    :param job: the job object
+
+    """
+
     await job.run_in_executor(
         shutil.copytree,
         job.params["temp_analysis_path"],
