@@ -9,16 +9,10 @@ import virtool.jobs.db
 import virtool.otus.utils
 import virtool.references.migrate
 import virtool.samples.migrate
-import virtool.subtractions.migrate
-import virtool.users.migrate
 import virtool.users.utils
 import virtool.utils
 
 logger = logging.getLogger(__name__)
-
-
-async def delete_unready(collection):
-    await collection.delete_many({"ready": False})
 
 
 async def migrate(app):
@@ -34,8 +28,6 @@ async def migrate(app):
     await migrate_status(db, app["version"])
     await virtool.samples.migrate.migrate_samples(app)
     await virtool.references.migrate.migrate_references(app)
-    await virtool.subtractions.migrate.migrate_subtractions(app)
-    await virtool.users.migrate.migrate_users(app)
 
 
 async def migrate_files(db):

@@ -110,3 +110,7 @@ async def determine_mongo_version(db):
 
     server_info = await db.motor_client.client.server_info()
     return server_info["version"]
+
+
+async def delete_unready(collection):
+    await collection.delete_many({"ready": False})

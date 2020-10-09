@@ -60,6 +60,12 @@ def base_processor(document: Union[dict, None]) -> Union[dict, None]:
     return document
 
 
+def chunk_list(lst, n):
+    """Yield successive n-sized chunks from `lst`."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
 def compress_file(path: str, target: str, processes: int = 1):
     """
     Compress the file at `path` to a gzipped file at `target`.

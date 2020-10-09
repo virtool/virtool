@@ -3,6 +3,7 @@ import pymongo
 import pytest
 
 import virtool.db.migrate
+import virtool.db.utils
 
 
 async def test_delete_unready(dbi):
@@ -17,7 +18,7 @@ async def test_delete_unready(dbi):
         }
     ])
 
-    await virtool.db.migrate.delete_unready(dbi.analyses)
+    await virtool.db.utils.delete_unready(dbi.analyses)
 
     assert await dbi.analyses.find().to_list(None) == [
         {
