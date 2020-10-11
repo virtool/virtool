@@ -12,7 +12,7 @@ const ReferenceItemBody = styled.div`
     align-items: stretch;
     display: grid;
     grid-template-columns: 1fr;
-    grid-column-gap: ${props => props.theme.gap.column};
+    grid-gap: ${props => props.theme.gap.column};
     margin-bottom: 5px;
     padding: 0 15px 5px;
 
