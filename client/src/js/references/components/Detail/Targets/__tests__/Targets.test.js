@@ -115,7 +115,7 @@ describe("mapStateToProps()", () => {
 });
 
 describe("mapDispatchToProps()", () => {
-    it("should return onRemove in props ", () => {
+    it("should return onRemove in props", () => {
         const dispatch = jest.fn();
         const props = mapDispatchToProps(dispatch);
         props.onRemove("foo", "bar");
