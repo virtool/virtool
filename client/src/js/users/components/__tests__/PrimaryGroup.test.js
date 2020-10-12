@@ -39,7 +39,7 @@ describe("mapStateToProps", () => {
 });
 
 describe("mapDispatchToProps", () => {
-    it("should return onSetPrimaryGroup() in props ", () => {
+    it("should return onSetPrimaryGroup() in props", () => {
         const dispatch = jest.fn();
         const props = mapDispatchToProps(dispatch);
 

@@ -34,7 +34,7 @@ describe("Checkbox", () => {
         expect(props.onClick).toHaveBeenCalled();
     });
 
-    it("should call onClick when [props.disabled===true] ", () => {
+    it("should call onClick when [props.disabled===true]", () => {
         props.disabled = true;
         const wrapper = shallow(<Checkbox {...props} />);
         wrapper.find(StyledCheckbox).simulate("click");
