@@ -1,7 +1,11 @@
+import asyncio
+import os
 import shutil
 
 import virtool.db.utils
 import virtool.subtractions.utils
+import virtool.tasks.task
+import virtool.tasks.db
 import virtool.utils
 
 PROJECTION = [
@@ -12,8 +16,67 @@ PROJECTION = [
     "job",
     "name",
     "nickname",
-    "user"
+    "user",
+    "has_file"
 ]
+
+
+class CreateSubtractionTask(virtool.tasks.task.Task):
+
+    def __init__(self, app, task_id):
+        super().__init__(app, task_id)
+
+        self.steps = [
+            self.generate_fasta,
+            self.compress_file,
+            self.update_db
+        ]
+
+    async def generate_fasta(self):
+        path = self.context["path"]
+        index_path = os.path.join(path, "reference")
+        target_path = os.path.join(path, "subtraction.fa")
+
+        command = f'bowtie2-inspect {index_path} > {target_path}'
+
+        proc = await asyncio.create_subprocess_shell(
+            command,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.PIPE)
+
+        await proc.communicate()
+
+        await virtool.tasks.db.update(
+            self.db,
+            self.id,
+            progress=0.4,
+        )
+
+    async def compress_file(self):
+        path = self.context["path"]
+        file_path = os.path.join(path, "subtraction.fa")
+        target_path = os.path.join(path, "subtraction.fa.gz")
+
+        await self.run_in_thread(virtool.utils.compress_file,
+                                 file_path,
+                                 target_path)
+
+        virtool.utils.rm(file_path)
+
+        await virtool.tasks.db.update(
+            self.db,
+            self.id,
+            progress=0.8,
+        )
+
+    async def update_db(self):
+        subtraction_id = self.context["subtraction_id"]
+
+        await self.db.subtraction.find_one_and_update({"_id": subtraction_id}, {
+            "$set": {
+                "has_file": True
+            }
+        })
 
 
 async def attach_subtraction(db, document: dict):

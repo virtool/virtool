@@ -110,6 +110,7 @@ def create_app(config):
         virtool.startup.init_paths,
         virtool.startup.init_routes,
         virtool.startup.init_executors,
+        virtool.startup.init_tasks,
         virtool.startup.init_redis,
         virtool.startup.init_listen_for_changes,
         virtool.startup.init_sentry,
