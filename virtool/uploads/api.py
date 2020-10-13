@@ -1,5 +1,8 @@
+import asyncio
+import logging
 import os
 import aiofiles
+import aiohttp.web_response
 from cerberus import Validator
 
 import virtool.files.db
@@ -9,6 +12,8 @@ import virtool.db.utils
 import virtool.http.routes
 import virtool.utils
 from virtool.api.response import invalid_query, json_response, not_found
+
+logger = logging.getLogger(__name__)
 
 CHUNK_SIZE = 4096
 
@@ -73,15 +78,29 @@ async def upload(req):
 
     file_id = document["id"]
 
-    await naive_writer(req, file_id)
+    try:
+        await naive_writer(req, file_id)
 
-    await virtool.uploads.db.finish_upload(req.app, file_id)
+        await virtool.uploads.db.finish_upload(req.app, file_id)
 
-    headers = {
-        "Location": f"/api/files/{file_id}"
-    }
+        logger.debug(f"Upload succeeded: {file_id}")
 
-    return json_response(document, status=201, headers=headers)
+        headers = {
+            "Location": f"/api/files/{file_id}"
+        }
+
+        return json_response(document, status=201, headers=headers)
+    except asyncio.CancelledError:
+        logger.debug(f"Upload aborted: {file_id}")
+
+        await virtool.files.db.remove(
+            db,
+            req.app["settings"],
+            req.app["run_in_thread"],
+            file_id
+        )
+
+        return aiohttp.web_response.Response(status=499)
 
 
 @routes.post("/upload/samples/{sample_id}/files/{suffix}")
