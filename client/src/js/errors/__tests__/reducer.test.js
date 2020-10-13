@@ -1,188 +1,156 @@
-import { forEach } from "lodash-es";
+import { reportAPIError } from "../../utils/utils";
+import reducer, { checkActionFailed, getErrorName, resetErrorName } from "../reducer";
 
 // Must mock target modules before imports to use in testing
 jest.mock("../../utils/utils");
-import * as utils from "../../utils/utils";
-import reducer, { checkActionFailed, getErrorName, resetErrorName } from "../reducer";
 
-describe("Errors Reducer", () => {
-    let state;
-    let action;
-    let result;
-    let expected;
-
+describe("reducer()", () => {
     it("should return the initial state (null)", () => {
-        result = reducer(undefined, {});
-
+        const result = reducer(undefined, {});
         expect(result).toBe(null);
     });
 
     it("should return the given state on other action types", () => {
-        state = {};
-        action = {
+        const action = {
             type: "UNHANDLED_ACTION"
         };
-        result = reducer(state, action);
-        expected = state;
+        const result = reducer({}, action);
+
+        expect(result).toEqual({});
+    });
+
+    it.each([
+        "CREATE_SAMPLE",
+        "UPDATE_SAMPLE",
+        "CREATE_OTU",
+        "EDIT_OTU",
+        "ADD_ISOLATE",
+        "EDIT_ISOLATE",
+        "ADD_SEQUENCE",
+        "EDIT_SEQUENCE",
+        "CREATE_INDEX",
+        "CREATE_SUBTRACTION",
+        "UPDATE_ACCOUNT",
+        "CHANGE_ACCOUNT_PASSWORD",
+        "CREATE_USER",
+        "EDIT_USER",
+        "CREATE_GROUP"
+    ])("should handle %p_FAILED actions", actionTypePrefix => {
+        const state = {};
+        const action = {
+            type: `${actionTypePrefix}_FAILED`,
+            status: 409,
+            message: "There was an error"
+        };
+        const result = reducer(state, action);
+
+        const expected = {
+            [`${actionTypePrefix}_ERROR`]: {
+                status: 409,
+                message: "There was an error"
+            }
+        };
 
         expect(result).toEqual(expected);
     });
 
-    describe("should handle target _FAILED actions", () => {
-        const failedActions = [
-            "CREATE_SAMPLE",
-            "UPDATE_SAMPLE",
-            "CREATE_OTU",
-            "EDIT_OTU",
-            "ADD_ISOLATE",
-            "EDIT_ISOLATE",
-            "ADD_SEQUENCE",
-            "EDIT_SEQUENCE",
-            "CREATE_INDEX",
-            "CREATE_SUBTRACTION",
-            "UPDATE_ACCOUNT",
-            "CHANGE_ACCOUNT_PASSWORD",
-            "CREATE_USER",
-            "EDIT_USER",
-            "CREATE_GROUP"
-        ];
-
-        forEach(failedActions, failedActionType => {
-            it(failedActionType, () => {
-                state = {};
-                action = {
-                    type: failedActionType + "_FAILED",
-                    status: 409,
-                    message: "test action failed"
-                };
-                result = reducer(state, action);
-
-                const failedActionError = failedActionType + "_ERROR";
-
-                expected = {
-                    [failedActionError]: {
-                        status: 409,
-                        message: "test action failed"
-                    }
-                };
-
-                expect(result).toEqual(expected);
-            });
-        });
-    });
-
     it("should report uncaught errors and return state", () => {
-        const spy = jest.spyOn(utils, "reportAPIError");
-
-        state = {};
-        action = {
+        const state = {};
+        const action = {
             type: "TEST_FAILED",
             status: 400,
             message: "test action failed"
         };
-        result = reducer(state, action);
-        expected = state;
+        const result = reducer(state, action);
 
-        expect(spy).toHaveBeenCalledWith(action);
+        expect(reportAPIError).toHaveBeenCalledWith(action);
         expect(result).toEqual(state);
-
-        // Reset mocks and restore modules to non-mocked versions
-        spy.mockReset();
-        spy.mockRestore();
     });
 
     it("should clear error when same type action is requested", () => {
-        state = {
+        const state = {
             CREATE_SAMPLE_ERROR: {
                 status: 409,
                 message: "test action failed previously"
             }
         };
-        action = {
+        const action = {
             type: "CREATE_SAMPLE_REQUESTED",
             status: 200,
             message: "requesting same action again"
         };
-        result = reducer(state, action);
-        expected = {
-            CREATE_SAMPLE_ERROR: null
-        };
+        const result = reducer(state, action);
 
-        expect(result).toEqual(expected);
+        expect(result).toEqual({
+            CREATE_SAMPLE_ERROR: null
+        });
         expect(reducer({}, action)).toEqual({});
     });
 
     it("should clear error on CLEAR_ERROR action", () => {
-        state = {
+        const state = {
             CREATE_SAMPLE_ERROR: {
                 status: 409,
                 message: "test action failed previously"
             }
         };
-        action = {
+        const action = {
             type: "CLEAR_ERROR",
             error: "CREATE_SAMPLE_ERROR"
         };
-        result = reducer(state, action);
-        expected = {
+        const result = reducer(state, action);
+        const expected = {
             CREATE_SAMPLE_ERROR: null
         };
-
         expect(result).toEqual(expected);
         expect(reducer({}, action)).toEqual(expected);
     });
+});
 
-    describe("Errors Reducer Helper Functions", () => {
-        describe("checkActionFailed", () => {
-            it("returns action if action.type ends in '_FAILED'", () => {
-                action = { type: "TEST_FAILED" };
-                result = checkActionFailed(action);
-                expected = { type: "TEST_FAILED" };
+describe("checkActionFailed()", () => {
+    it("should return action if action.type ends in '_FAILED'", () => {
+        const action = { type: "TEST_FAILED" };
+        const result = checkActionFailed(action);
 
-                expect(result).toEqual(expected);
-            });
+        expect(result).toEqual({ type: "TEST_FAILED" });
+    });
 
-            it("returns false if action.type does not end in '_FAILED'", () => {
-                action = { type: "TEST_OTHER" };
-                result = checkActionFailed(action);
+    it("should return false if action.type does not end in '_FAILED'", () => {
+        const action = { type: "TEST_OTHER" };
+        const result = checkActionFailed(action);
 
-                expect(result).toBe(false);
-            });
-        });
+        expect(result).toBe(false);
+    });
+});
 
-        describe("getErrorName", () => {
-            it("returns '_FAILED' action with '_ERROR' suffix", () => {
-                action = { type: "TEST_FAILED" };
-                result = getErrorName(action);
-                expected = "TEST_ERROR";
+describe("getErrorName()", () => {
+    it("should return '_FAILED' action with '_ERROR' suffix", () => {
+        const action = { type: "TEST_FAILED" };
+        const result = getErrorName(action);
 
-                expect(result).toEqual(expected);
-            });
+        expect(result).toEqual("TEST_ERROR");
+    });
 
-            it("return action.type otherwise", () => {
-                action = { type: "TEST_OTHER" };
-                result = getErrorName(action);
-                expected = "TEST_OTHER";
+    it("should return action.type otherwise", () => {
+        const action = { type: "TEST_OTHER" };
+        const result = getErrorName(action);
 
-                expect(result).toBe(expected);
-            });
-        });
+        expect(result).toBe("TEST_OTHER");
+    });
+});
 
-        describe("resetErrorName", () => {
-            it("returns '_REQUESTED' action with '_ERROR' suffix", () => {
-                action = { type: "TEST_REQUESTED" };
-                result = resetErrorName(action);
-                expected = "TEST_ERROR";
+describe("resetErrorName()", () => {
+    it("should return '_REQUESTED' action with '_ERROR' suffix", () => {
+        const action = { type: "TEST_REQUESTED" };
+        const result = resetErrorName(action);
 
-                expect(result).toEqual(expected);
-            });
+        expect(result).toEqual("TEST_ERROR");
+    });
 
-            it("returns undefined otherwise", () => {
-                action = { type: "TEST_OTHER" };
-                result = resetErrorName(action);
+    it("should return undefined otherwise", () => {
+        const action = { type: "TEST_OTHER" };
+        const result = resetErrorName(action);
 
-                expect(result).toBe(undefined);
-            });
-        });
+        expect(result).toBe(undefined);
     });
 });

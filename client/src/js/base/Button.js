@@ -38,7 +38,7 @@ const getButtonHoverColor = ({ color, theme }) => {
     return theme.color.greyLightest;
 };
 
-const StyledButton = styled.button`
+export const StyledButton = styled.button`
     align-items: center;
     background-color: ${getButtonBackgroundColor};
     background-image: none;

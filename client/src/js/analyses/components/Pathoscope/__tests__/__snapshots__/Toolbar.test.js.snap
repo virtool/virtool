@@ -1,21 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<PathoscopeDownloadDropdownTitle /> should render 1`] = `
-<span>
-  <Icon
-    faStyle="fas"
-    fixedWidth={false}
-    name="file-download"
-  />
-   Export 
-  <Icon
-    faStyle="fas"
-    fixedWidth={false}
-    name="caret-down"
-  />
-</span>
-`;
-
 exports[`<Toolbar /> should render 1`] = `
 <Toolbar__StyledPathoscopeToolbar>
   <SearchInput
@@ -78,31 +62,43 @@ exports[`<Toolbar /> should render 1`] = `
   >
     Filter Isolates
   </Button>
-  <DropdownButton
-    id="download-dropdown"
-    title={<PathoscopeDownloadDropdownTitle />}
-  >
-    <DropdownItem
-      href="/download/analyses/foo.csv"
-    >
+  <Menu>
+    <DropdownButton>
       <Icon
         faStyle="fas"
         fixedWidth={false}
-        name="file-csv"
+        name="file-download"
       />
-       CSV
-    </DropdownItem>
-    <DropdownItem
-      href="/download/analyses/foo.xlsx"
-    >
+       Export 
       <Icon
         faStyle="fas"
         fixedWidth={false}
-        name="file-excel"
+        name="caret-down"
       />
-       Excel
-    </DropdownItem>
-  </DropdownButton>
+    </DropdownButton>
+    <Dropdown__DropdownMenuList>
+      <Dropdown__DropdownMenuItem
+        onSelect={[Function]}
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="file-csv"
+        />
+         CSV
+      </Dropdown__DropdownMenuItem>
+      <Dropdown__DropdownMenuItem
+        onSelect={[Function]}
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="file-excel"
+        />
+         Excel
+      </Dropdown__DropdownMenuItem>
+    </Dropdown__DropdownMenuList>
+  </Menu>
 </Toolbar__StyledPathoscopeToolbar>
 `;
 
@@ -168,31 +164,43 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
   >
     Filter Isolates
   </Button>
-  <DropdownButton
-    id="download-dropdown"
-    title={<PathoscopeDownloadDropdownTitle />}
-  >
-    <DropdownItem
-      href="/download/analyses/foo.csv"
-    >
+  <Menu>
+    <DropdownButton>
       <Icon
         faStyle="fas"
         fixedWidth={false}
-        name="file-csv"
+        name="file-download"
       />
-       CSV
-    </DropdownItem>
-    <DropdownItem
-      href="/download/analyses/foo.xlsx"
-    >
+       Export 
       <Icon
         faStyle="fas"
         fixedWidth={false}
-        name="file-excel"
+        name="caret-down"
       />
-       Excel
-    </DropdownItem>
-  </DropdownButton>
+    </DropdownButton>
+    <Dropdown__DropdownMenuList>
+      <Dropdown__DropdownMenuItem
+        onSelect={[Function]}
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="file-csv"
+        />
+         CSV
+      </Dropdown__DropdownMenuItem>
+      <Dropdown__DropdownMenuItem
+        onSelect={[Function]}
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="file-excel"
+        />
+         Excel
+      </Dropdown__DropdownMenuItem>
+    </Dropdown__DropdownMenuList>
+  </Menu>
 </Toolbar__StyledPathoscopeToolbar>
 `;
 
@@ -258,31 +266,43 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
   >
     Filter Isolates
   </Button>
-  <DropdownButton
-    id="download-dropdown"
-    title={<PathoscopeDownloadDropdownTitle />}
-  >
-    <DropdownItem
-      href="/download/analyses/foo.csv"
-    >
+  <Menu>
+    <DropdownButton>
       <Icon
         faStyle="fas"
         fixedWidth={false}
-        name="file-csv"
+        name="file-download"
       />
-       CSV
-    </DropdownItem>
-    <DropdownItem
-      href="/download/analyses/foo.xlsx"
-    >
+       Export 
       <Icon
         faStyle="fas"
         fixedWidth={false}
-        name="file-excel"
+        name="caret-down"
       />
-       Excel
-    </DropdownItem>
-  </DropdownButton>
+    </DropdownButton>
+    <Dropdown__DropdownMenuList>
+      <Dropdown__DropdownMenuItem
+        onSelect={[Function]}
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="file-csv"
+        />
+         CSV
+      </Dropdown__DropdownMenuItem>
+      <Dropdown__DropdownMenuItem
+        onSelect={[Function]}
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="file-excel"
+        />
+         Excel
+      </Dropdown__DropdownMenuItem>
+    </Dropdown__DropdownMenuList>
+  </Menu>
 </Toolbar__StyledPathoscopeToolbar>
 `;
 
@@ -348,31 +368,43 @@ exports[`<Toolbar /> should render when [showPathoscopeReads=true] 1`] = `
   >
     Filter Isolates
   </Button>
-  <DropdownButton
-    id="download-dropdown"
-    title={<PathoscopeDownloadDropdownTitle />}
-  >
-    <DropdownItem
-      href="/download/analyses/foo.csv"
-    >
+  <Menu>
+    <DropdownButton>
       <Icon
         faStyle="fas"
         fixedWidth={false}
-        name="file-csv"
+        name="file-download"
       />
-       CSV
-    </DropdownItem>
-    <DropdownItem
-      href="/download/analyses/foo.xlsx"
-    >
+       Export 
       <Icon
         faStyle="fas"
         fixedWidth={false}
-        name="file-excel"
+        name="caret-down"
       />
-       Excel
-    </DropdownItem>
-  </DropdownButton>
+    </DropdownButton>
+    <Dropdown__DropdownMenuList>
+      <Dropdown__DropdownMenuItem
+        onSelect={[Function]}
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="file-csv"
+        />
+         CSV
+      </Dropdown__DropdownMenuItem>
+      <Dropdown__DropdownMenuItem
+        onSelect={[Function]}
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="file-excel"
+        />
+         Excel
+      </Dropdown__DropdownMenuItem>
+    </Dropdown__DropdownMenuList>
+  </Menu>
 </Toolbar__StyledPathoscopeToolbar>
 `;
 
@@ -438,31 +470,43 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
   >
     Filter Isolates
   </Button>
-  <DropdownButton
-    id="download-dropdown"
-    title={<PathoscopeDownloadDropdownTitle />}
-  >
-    <DropdownItem
-      href="/download/analyses/foo.csv"
-    >
+  <Menu>
+    <DropdownButton>
       <Icon
         faStyle="fas"
         fixedWidth={false}
-        name="file-csv"
+        name="file-download"
       />
-       CSV
-    </DropdownItem>
-    <DropdownItem
-      href="/download/analyses/foo.xlsx"
-    >
+       Export 
       <Icon
         faStyle="fas"
         fixedWidth={false}
-        name="file-excel"
+        name="caret-down"
       />
-       Excel
-    </DropdownItem>
-  </DropdownButton>
+    </DropdownButton>
+    <Dropdown__DropdownMenuList>
+      <Dropdown__DropdownMenuItem
+        onSelect={[Function]}
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="file-csv"
+        />
+         CSV
+      </Dropdown__DropdownMenuItem>
+      <Dropdown__DropdownMenuItem
+        onSelect={[Function]}
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="file-excel"
+        />
+         Excel
+      </Dropdown__DropdownMenuItem>
+    </Dropdown__DropdownMenuList>
+  </Menu>
 </Toolbar__StyledPathoscopeToolbar>
 `;
 
@@ -528,31 +572,43 @@ exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
   >
     Filter Isolates
   </Button>
-  <DropdownButton
-    id="download-dropdown"
-    title={<PathoscopeDownloadDropdownTitle />}
-  >
-    <DropdownItem
-      href="/download/analyses/foo.csv"
-    >
+  <Menu>
+    <DropdownButton>
       <Icon
         faStyle="fas"
         fixedWidth={false}
-        name="file-csv"
+        name="file-download"
       />
-       CSV
-    </DropdownItem>
-    <DropdownItem
-      href="/download/analyses/foo.xlsx"
-    >
+       Export 
       <Icon
         faStyle="fas"
         fixedWidth={false}
-        name="file-excel"
+        name="caret-down"
       />
-       Excel
-    </DropdownItem>
-  </DropdownButton>
+    </DropdownButton>
+    <Dropdown__DropdownMenuList>
+      <Dropdown__DropdownMenuItem
+        onSelect={[Function]}
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="file-csv"
+        />
+         CSV
+      </Dropdown__DropdownMenuItem>
+      <Dropdown__DropdownMenuItem
+        onSelect={[Function]}
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="file-excel"
+        />
+         Excel
+      </Dropdown__DropdownMenuItem>
+    </Dropdown__DropdownMenuList>
+  </Menu>
 </Toolbar__StyledPathoscopeToolbar>
 `;
 
@@ -618,30 +674,42 @@ exports[`<Toolbar /> should render when [sortKey="weight"] 1`] = `
   >
     Filter Isolates
   </Button>
-  <DropdownButton
-    id="download-dropdown"
-    title={<PathoscopeDownloadDropdownTitle />}
-  >
-    <DropdownItem
-      href="/download/analyses/foo.csv"
-    >
+  <Menu>
+    <DropdownButton>
       <Icon
         faStyle="fas"
         fixedWidth={false}
-        name="file-csv"
+        name="file-download"
       />
-       CSV
-    </DropdownItem>
-    <DropdownItem
-      href="/download/analyses/foo.xlsx"
-    >
+       Export 
       <Icon
         faStyle="fas"
         fixedWidth={false}
-        name="file-excel"
+        name="caret-down"
       />
-       Excel
-    </DropdownItem>
-  </DropdownButton>
+    </DropdownButton>
+    <Dropdown__DropdownMenuList>
+      <Dropdown__DropdownMenuItem
+        onSelect={[Function]}
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="file-csv"
+        />
+         CSV
+      </Dropdown__DropdownMenuItem>
+      <Dropdown__DropdownMenuItem
+        onSelect={[Function]}
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="file-excel"
+        />
+         Excel
+      </Dropdown__DropdownMenuItem>
+    </Dropdown__DropdownMenuList>
+  </Menu>
 </Toolbar__StyledPathoscopeToolbar>
 `;

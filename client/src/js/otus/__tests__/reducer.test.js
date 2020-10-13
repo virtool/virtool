@@ -190,7 +190,7 @@ describe("OTUs Reducer:", () => {
         });
     });
 
-    describe("Actions that close all modals: ", () => {
+    describe("Actions that close all modals:", () => {
         const actionList = [
             GET_OTU.SUCCEEDED,
             EDIT_OTU.SUCCEEDED,

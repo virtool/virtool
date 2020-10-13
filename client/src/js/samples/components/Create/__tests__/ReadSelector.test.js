@@ -19,7 +19,7 @@ describe("<ReadSelector />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call onChange() on update if files change ", () => {
+    it("should call onChange() on update if files change", () => {
         const wrapper = shallow(<ReadSelector {...props} />);
         wrapper.setProps({
             files: [{ id: "foo", size: 2048, name: "Bar" }]
@@ -27,7 +27,7 @@ describe("<ReadSelector />", () => {
         expect(props.onSelect).toHaveBeenCalled();
     });
 
-    it("should not call onChange() on update files do not change ", () => {
+    it("should not call onChange() on update files do not change", () => {
         const files = props.files;
         const wrapper = shallow(<ReadSelector {...props} />);
         wrapper.setProps({

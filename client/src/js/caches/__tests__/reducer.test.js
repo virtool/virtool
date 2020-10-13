@@ -5,7 +5,7 @@ describe("<cacheReducer />", () => {
     const state = {
         detail: null
     };
-    it("should return ", () => {
+    it("should return", () => {
         const action = {
             type: "UNHANDLED"
         };
