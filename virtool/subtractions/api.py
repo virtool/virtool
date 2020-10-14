@@ -122,6 +122,7 @@ async def create(req):
         "_id": subtraction_id,
         "name": data["name"],
         "nickname": data["nickname"],
+        "deleted": False,
         "ready": False,
         "is_host": True,
         "file": {
