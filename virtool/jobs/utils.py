@@ -1,5 +1,6 @@
 import os
 import shutil
+import time
 from typing import Union
 
 import virtool.caches.db
@@ -98,12 +99,20 @@ def find_cache(db, sample_id: str, program: str, parameters: dict) -> Union[dict
     :return: a cache document
 
     """
+
     document = db.caches.find_one({
         "hash": virtool.caches.db.calculate_cache_hash(parameters),
         "missing": False,
         "program": program,
         "sample.id": sample_id
     })
+
+    if document:
+        cache_id = document["_id"]
+
+        while document["ready"] is False:
+            time.sleep(2)
+            document = db.caches.find_one(cache_id)
 
     return virtool.utils.base_processor(document)
 

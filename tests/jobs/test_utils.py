@@ -80,6 +80,7 @@ def test_find_cache(exists, missing, returned_hash, mocker, dbs):
             "program": "skewer-0.2.2",
             "hash": "abc123",
             "missing": missing,
+            "ready": True,
             "sample": {
                 "id": "foo"
             }
@@ -100,6 +101,7 @@ def test_find_cache(exists, missing, returned_hash, mocker, dbs):
         "program": "skewer-0.2.2",
         "hash": "abc123",
         "missing": False,
+        "ready": True,
         "sample": {
             "id": "foo"
         }
