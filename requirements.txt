@@ -28,6 +28,7 @@ coverage==5.0.4
 cryptography==3.0
 cx-Freeze==6.1
 dictdiffer==0.8.1
+dnspython==2.0.0
 et-xmlfile==1.0.1
 execnet==1.7.1
 fastdiff==0.2.0
