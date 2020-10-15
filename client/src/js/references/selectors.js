@@ -28,7 +28,11 @@ export const getReferenceItemTaskId = (state, index) => get(state, ["references"
 
 export const getReferenceItemProgress = createSelector([getReferenceItemTaskId, getTasks], (id, tasks) => {
     if (tasks.length && id) {
-        return find(tasks, { id }).progress * 100;
+        const task = find(tasks, { id });
+
+        if (task) {
+            return task.progress * 100;
+        }
     }
 
     return 100;
