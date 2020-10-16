@@ -46,26 +46,3 @@ def join_subtraction_index_path(settings: dict, subtraction_id: str) -> str:
         join_subtraction_path(settings, subtraction_id),
         "reference"
     )
-
-
-async def check_subtraction_file(app):
-    db = app["db"]
-    settings = app["settings"]
-    cursor = db.subtraction.find()
-    subtraction_without_file = []
-
-    async for subtraction in cursor:
-        path = join_subtraction_path(settings, subtraction["_id"])
-
-        if not glob.glob(f'{path}/*.fa.gz'):
-            has_file = False
-            subtraction_without_file.append(subtraction["_id"])
-        else:
-            has_file = True
-
-        await db.subtraction.find_one_and_update({"_id": subtraction["_id"]}, {
-            "$set": {
-                "has_file": has_file
-            }
-        })
-    return subtraction_without_file

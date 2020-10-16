@@ -366,20 +366,11 @@ async def init_version(app: typing.Union[dict, aiohttp.web.Application]):
 
 async def init_tasks(app: aiohttp.web.Application):
     db = app["db"]
-    settings = app["settings"]
-    logger.info("Checking subtraction files")
+    logger.info("Checking subtraction FASTA files")
 
-    subtraction_without_file = await virtool.subtractions.utils.check_subtraction_file(app)
     scheduler = get_scheduler_from_app(app)
 
-    if subtraction_without_file:
-        for subtraction_id in subtraction_without_file:
-            context = {
-                "subtraction_id": subtraction_id,
-                "path": os.path.join(settings["data_path"], "subtractions", subtraction_id)
-            }
+    task = await virtool.tasks.db.register(db, "write_subtraction_fasta")
+    t = virtool.subtractions.db.WriteSubtractionFASTATask(app, task["id"])
 
-            task = await virtool.tasks.db.register(db, "create_subtraction", context=context)
-            t = virtool.subtractions.db.CreateSubtractionTask(app, task["id"])
-
-            await scheduler.spawn(t.run())
+    await scheduler.spawn(t.run())
