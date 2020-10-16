@@ -1,5 +1,7 @@
 """
-Functions for creating read caches when running analyses.
+Functions for creating read caches when running analyses. Only used in analysis jobs.
+
+TODO: This entire module should be moved to virtool-workflow and reimplemented as necessary.
 
 """
 import asyncio
@@ -10,6 +12,7 @@ import shutil
 
 import virtool.caches.db
 import virtool.jobs.fastqc
+import virtool.jobs.job
 import virtool.jobs.utils
 import virtool.samples.utils
 import virtool.utils
@@ -17,8 +20,18 @@ import virtool.utils
 logger = logging.getLogger(__name__)
 
 
-async def create_cache(job, parameters):
+async def create_cache(job: virtool.jobs.job.Job, parameters: dict):
+    """
+    Create a cache document in the database and run the processes required to create the cache on disk.
+
+    TODO: Move to virtool-workflow and reimplement as needed. Custom read prep steps for a workflow would be run here.
+
+    :param job: the job object
+    :param parameters: the parameters used to trim the reads
+
+    """
     logger.debug("Creating new cache in database")
+
     cache = await virtool.caches.db.create(
         job.db,
         job.params["sample_id"],
@@ -68,7 +81,18 @@ async def create_cache(job, parameters):
     await use_cache(job)
 
 
-async def fetch_raw(job):
+async def fetch_raw(job: virtool.jobs.job.Job):
+    """
+    Fetch the sample read files required to create the cache associated with `job`. This will only be called if no
+    existing cache matches the parameters required for the analysis `job`.
+
+    TODO: Move to virtool-workflow. Hide from workflow developer. They should have the raw sample data automatically
+          available for their read prep steps.
+
+    :param job: the job object
+    :return: the paths to the raw reads
+
+    """
     paired = job.params["paired"]
 
     paths = virtool.samples.utils.join_read_paths(
@@ -95,7 +119,16 @@ async def fetch_raw(job):
     return raw_paths
 
 
-async def run_cache_qc(job):
+async def run_cache_qc(job: virtool.jobs.job.Job):
+    """
+    Run FastQC, parse the results, and update the cache document `quality` field.
+
+    TODO: Move completely to virtool-workflow. Should be run on result after workflow developer's read prep steps
+          execute. Behaviour cannot be modified by workflow developer.
+
+    :param job: the job object
+
+    """
     cache_id = job.intermediate["cache_id"]
 
     fastqc_path = os.path.join(
@@ -133,7 +166,18 @@ async def run_cache_qc(job):
     })
 
 
-async def set_cache_stats(job, cache):
+async def set_cache_stats(job: virtool.jobs.job.Job, cache: dict):
+    """
+    Set the cache as ready and set the stats for the trimmed read files at the `files` field. Called at the end of
+    cache creation.
+
+    TODO: Move to virtool-workflow. Not modifiable by workflow developer. Will happen after a workflow's read prep
+          steps.
+
+    :param job: the job object
+    :param cache: the cache document
+
+    """
     paths = virtool.samples.utils.join_read_paths(
         job.params["temp_cache_path"],
         job.params["paired"]
@@ -158,7 +202,16 @@ async def set_cache_stats(job, cache):
     })
 
 
-async def save_cache(job):
+async def save_cache(job: virtool.jobs.job.Job):
+    """
+    Save created cache files to the caches path in Virtool's application data folder.
+
+    TODO: Move to virtool-workflow and reimplement. Runs outside workflow read prep steps and is not modifiable by
+          workflow dev.
+
+    :param job: the job object associated with the cache
+
+    """
     await job.run_in_executor(
         shutil.copytree,
         job.params["temp_cache_path"],
@@ -166,7 +219,16 @@ async def save_cache(job):
     )
 
 
-async def use_cache(job):
+async def use_cache(job: virtool.jobs.job.Job):
+    """
+    Use a cache that was created during the course of this `job`. Moves the trimmed read files from the temporary cache
+    creation path to the reads path used for running the analysis steps.
+
+    TODO: Move to virtool-workflow and abstract from workflow developer
+
+    :param job: the job object
+
+    """
     names = ["reads_1.fq.gz"]
 
     if job.params["paired"]:
@@ -189,11 +251,13 @@ async def use_cache(job):
     )
 
 
-def rename_trimming_results(path):
+def rename_trimming_results(path: str):
     """
-    Rename Skewer output to a simple name used in Virtool.
+    Rename Skewer output to simple naming used in Virtool. Used in cache creation.
 
-    :param path:
+    TODO: Move to virtool-workflow. Abstract from workflow developer.
+
+    :param path: the path to the read files
 
     """
     try:
@@ -218,7 +282,18 @@ def rename_trimming_results(path):
     )
 
 
-def compose_trimming_command(cache_path: str, parameters: dict, proc, read_paths):
+def compose_trimming_command(cache_path: str, parameters: dict, proc: int, read_paths: list) -> list:
+    """
+    Compose a Skewer trimming command for creating a cache at `cache_path` from the reads at `read_paths` using the trim
+    `parameters` provided. Use `proc` as the CPU/thread count parameter.
+
+    :param cache_path: the path to create the trim cache files in
+    :param parameters: the trim parameters
+    :param proc: the number of processes to use
+    :param read_paths: the paths to the source raw reads
+    :return: a Skewer command
+
+    """
     command = [
         "skewer",
         "-r", str(parameters["max_error_rate"]),
@@ -245,7 +320,17 @@ def compose_trimming_command(cache_path: str, parameters: dict, proc, read_paths
     return command
 
 
-async def set_cache_id(job, cache_id):
+async def set_cache_id(job: virtool.jobs.job.Job, cache_id: str):
+    """
+    Utility for setting the cache ID on an analysis job.
+
+    TODO: Move to virtool-workflow and reimplement or remove as necessary.
+
+    :param job: the job object
+    :param cache_id: the cache ID
+
+    """
+
     job.intermediate["cache_id"] = cache_id
 
     await job.db.analyses.update_one({"_id": job.params["analysis_id"]}, {
