@@ -24,6 +24,8 @@ async def eliminate_otus(job):
     Maps reads to the main otu reference using ``bowtie2``. Bowtie2 is set to use the search parameter
     ``--very-fast-local`` and retain unaligned reads to the FASTA file ``unmapped_otus.fq``.
 
+    TODO: Will remain a step in workflow-nuvs
+
     """
     command = [
         "bowtie2",
@@ -44,6 +46,8 @@ async def eliminate_subtraction(job):
     set to use the search parameter ``--very-fast-local`` and retain unaligned reads to the FASTA file
     ``unmapped_host.fq``.
 
+    TODO: Will remain a step in workflow-nuvs
+
     """
     command = [
         "bowtie2",
@@ -58,7 +62,15 @@ async def eliminate_subtraction(job):
     await job.run_subprocess(command)
 
 
-async def reunite_pairs(job):
+async def reunite_pairs(job: virtool.jobs.job.Job):
+    """
+    Reunite paired end reads after some were removed during subtraction elimination.
+
+    TODO: Will be a step in workflow-nuvs
+
+    :param job: the job object
+
+    """
     if job.params["paired"]:
         unmapped_path = os.path.join(job.params["temp_analysis_path"], "unmapped_hosts.fq")
         headers = await virtool.bio.read_fastq_headers(unmapped_path)
@@ -83,6 +95,8 @@ async def assemble(job):
     """
     Call ``spades.py`` to assemble contigs from ``unmapped_hosts.fq``. Passes ``21,33,55,75`` for the ``-k``
     argument.
+
+    TODO: Will remain as a step in workflow-nuvs.
 
     """
     command = [
@@ -137,6 +151,8 @@ async def process_fasta(job):
     Finds ORFs in the contigs assembled by :meth:`.assemble`. Only ORFs that are 100+ amino acids long are recorded.
     Contigs with no acceptable ORFs are discarded.
 
+    TODO: Will remain as a step in workflow-nuvs.
+
     """
     assembly_path = os.path.join(job.params["temp_analysis_path"], "assembly.fa")
 
@@ -187,7 +203,16 @@ async def process_fasta(job):
     job.results["sequences"] = sequences
 
 
-async def prepare_hmm(job):
+async def prepare_hmm(job: virtool.jobs.job.Job):
+    """
+    Copy the profiles.hmm file from the data directory to the temporary analysis directory and build it out using
+    `hmmpress`.
+
+    TODO: Should be turned into fixture in virtool-workflow
+
+    :param job: the job object
+
+    """
     await job.run_in_executor(
         shutil.copy,
         os.path.join(job.settings["data_path"], "hmm", "profiles.hmm"),
@@ -219,6 +244,8 @@ async def vfam(job):
     - ``hmm.tsv`` contains the raw output of `hmmer`
     - ``hits.tsv`` contains the `hmmer` results formatted and annotated with the annotations from the Virtool HMM
       database collection
+
+    TODO: Will remain a job step in workflow-nuvs. Will require HMM fixture.
 
     """
     # The path to output the hmmer results to.
@@ -277,6 +304,9 @@ async def import_results(job):
 
     After the import is complete, :meth:`.indexes.Collection.cleanup_index_files` is called to remove any otus
     indexes that are no longer being used by an active analysis job.
+
+    TODO: Should be incorporated into generic result import functionality that occurs at the end of all analysis type
+          workflows.
 
     """
     analysis_id = job.params["analysis_id"]
