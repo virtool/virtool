@@ -365,6 +365,9 @@ async def init_version(app: typing.Union[dict, aiohttp.web.Application]):
 
 
 async def init_tasks(app: aiohttp.web.Application):
+    if app["config"].get("no_check_db"):
+        return logger.info("Skipping subtraction FASTA files checks")
+
     db = app["db"]
     logger.info("Checking subtraction FASTA files")
 
