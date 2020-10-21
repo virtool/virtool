@@ -5,5 +5,6 @@ FIRST_STEPS = {
     "remote_reference": "download",
     "update_remote_reference": "download",
     "update_software": "download",
-    "install_hmms": "download"
+    "install_hmms": "download",
+    "write_subtraction_fasta": "check_subtraction_fasta_files"
 }

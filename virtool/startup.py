@@ -30,6 +30,9 @@ import virtool.routes
 import virtool.sentry
 import virtool.settings.db
 import virtool.software.db
+import virtool.subtractions.utils
+import virtool.subtractions.db
+import virtool.tasks.db
 import virtool.utils
 import virtool.version
 
@@ -359,3 +362,18 @@ async def init_version(app: typing.Union[dict, aiohttp.web.Application]):
     logger.info(f"Mode: {app['mode']}")
 
     app["version"] = version
+
+
+async def init_tasks(app: aiohttp.web.Application):
+    if app["config"].get("no_check_db"):
+        return logger.info("Skipping subtraction FASTA files checks")
+
+    db = app["db"]
+    logger.info("Checking subtraction FASTA files")
+
+    scheduler = get_scheduler_from_app(app)
+
+    task = await virtool.tasks.db.register(db, "write_subtraction_fasta")
+    t = virtool.subtractions.db.WriteSubtractionFASTATask(app, task["id"])
+
+    await scheduler.spawn(t.run())
