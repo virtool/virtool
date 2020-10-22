@@ -377,3 +377,15 @@ async def init_tasks(app: aiohttp.web.Application):
     t = virtool.subtractions.db.WriteSubtractionFASTATask(app, task["id"])
 
     await scheduler.spawn(t.run())
+
+
+async def init_index_file(app: aiohttp.web.Application):
+    db = app["db"]
+    logger.info("Checking Index JSON files")
+
+    scheduler = get_scheduler_from_app(app)
+
+    task = await virtool.tasks.db.register(db, "create_index_json")
+    t = virtool.references.db.CreateIndexJsonTask(app, task["id"])
+
+    await scheduler.spawn(t.run())

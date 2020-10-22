@@ -2,6 +2,8 @@ import asyncio
 import json.decoder
 import logging
 import os
+import glob
+import gzip
 from typing import List, Union
 
 import aiohttp
@@ -23,6 +25,7 @@ import virtool.tasks.task
 import virtool.references.utils
 import virtool.users.db
 import virtool.utils
+import virtool.api.json
 
 PROJECTION = [
     "_id",
@@ -431,6 +434,83 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
                 "updating": False
             }
         })
+
+
+class CreateIndexJsonTask(virtool.tasks.task.Task):
+
+    def __init__(self, app, task_id):
+        super().__init__(app, task_id)
+
+        self.steps = [
+            self.check_files,
+            self.create_json
+        ]
+
+        self.index_without_json = []
+
+    async def check_files(self):
+        db = self.db
+        settings = self.app["settings"]
+        async for index in db.indexes.find():
+            index_id = index["_id"]
+            ref_id = index["reference"]["id"]
+            path = os.path.join(settings["data_path"], "references", ref_id, index_id)
+            has_json = True
+
+            if not glob.glob(f'{path}/reference.json.gz'):
+                has_json = False
+                self.index_without_json.append(index_id)
+
+            await db.indexes.find_one_and_update({"_id": index_id}, {
+                "$set": {
+                    "has_json": has_json
+                }
+            })
+
+    async def create_json(self):
+
+        for index_id in self.index_without_json:
+            index_document = await self.db.indexes.find_one({"_id": index_id})
+            ref_id = index_document["reference"]["id"]
+
+            document = await self.db.references.find_one(ref_id, ["data_type", "organism", "targets"])
+
+            otu_list = await virtool.references.db.export(
+                self.app,
+                ref_id
+            )
+
+            data = {
+                "otus": otu_list,
+                "data_type": document["data_type"],
+                "organism": document["organism"]
+            }
+
+            try:
+                data["targets"] = document["targets"]
+            except KeyError:
+                pass
+
+            file_path = os.path.join(
+                self.app["settings"]["data_path"], 
+                "references", 
+                ref_id, 
+                index_id, 
+                "reference.json.gz")
+
+            # Convert the list of OTUs to a JSON-formatted string.
+            json_string = json.dumps(data, cls=virtool.api.json.CustomEncoder)
+
+            # Compress the JSON string with gzip.
+            # body = await self.app["run_in_process"](gzip.compress, bytes(json_string, "utf-8"))
+            with gzip.open(file_path, 'wb') as f:
+                f.write(bytes(json_string, "utf-8"))
+
+            await self.db.indexes.find_one_and_update({"_id": index_id}, {
+                "$set": {
+                    "has_json": True
+                }
+            })
 
 
 async def processor(db, document: dict) -> dict:
