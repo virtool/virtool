@@ -265,14 +265,14 @@ async def init_paths(app: aiohttp.web_app.Application):
 
 
 async def init_redis(app: typing.Union[dict, aiohttp.web_app.Application]):
-    redis_connection_strong = app["config"].get("redis_connection_string")
+    redis_connection_string = app["config"].get("redis_connection_string")
 
-    if not redis_connection_strong:
+    if not redis_connection_string:
         logger.debug("Redis not configured")
         return
 
     logger.info("Connecting to Redis")
-    app["redis"] = await virtool.redis.connect(redis_connection_strong)
+    app["redis"] = await virtool.redis.connect(redis_connection_string)
 
 
 async def init_listen_for_changes(app: aiohttp.web_app.Application):
