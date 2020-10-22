@@ -8,9 +8,13 @@ import aioredis
 logger = logging.getLogger(__name__)
 
 
-async def connect(redis_connection_strong: str) -> aioredis.Redis:
+async def connect(redis_connection_string: str) -> aioredis.Redis:
+    if not redis_connection_string.startswith("redis://"):
+        logger.fatal("Invalid Redis connection string")
+        sys.exit(1)
+
     try:
-        redis = await aioredis.create_redis_pool(redis_connection_strong)
+        redis = await aioredis.create_redis_pool(redis_connection_string)
         await check_version(redis)
 
         return redis
