@@ -1,6 +1,5 @@
 import asyncio
 import glob
-import gzip
 import json.decoder
 import logging
 import os
@@ -492,10 +491,10 @@ class CreateIndexJSONTask(virtool.tasks.task.Task):
                 pass
 
             file_path = os.path.join(
-                self.app["settings"]["data_path"], 
-                "references", 
-                ref_id, 
-                index_id, 
+                self.app["settings"]["data_path"],
+                "references",
+                ref_id,
+                index_id,
                 "reference.json.gz")
 
             # Convert the list of OTUs to a JSON-formatted string.
