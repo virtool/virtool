@@ -1,9 +1,9 @@
 import asyncio
+import glob
+import gzip
 import json.decoder
 import logging
 import os
-import glob
-import gzip
 from typing import List, Union
 
 import aiohttp
@@ -12,6 +12,7 @@ import pymongo
 import semver
 
 import virtool.api
+import virtool.api.json
 import virtool.db.utils
 import virtool.errors
 import virtool.github
@@ -25,7 +26,6 @@ import virtool.tasks.task
 import virtool.references.utils
 import virtool.users.db
 import virtool.utils
-import virtool.api.json
 
 PROJECTION = [
     "_id",
@@ -436,28 +436,29 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
         })
 
 
-class CreateIndexJsonTask(virtool.tasks.task.Task):
+class CreateIndexJSONTask(virtool.tasks.task.Task):
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)
 
         self.steps = [
-            self.check_files,
-            self.create_json
+            self.check_index_json_files,
+            self.create_index_json_files
         ]
 
         self.index_without_json = []
 
-    async def check_files(self):
+    async def check_index_json_files(self):
         db = self.db
         settings = self.app["settings"]
+
         async for index in db.indexes.find():
             index_id = index["_id"]
             ref_id = index["reference"]["id"]
-            path = os.path.join(settings["data_path"], "references", ref_id, index_id)
+            index_path = os.path.join(settings["data_path"], "references", ref_id, index_id)
             has_json = True
 
-            if not glob.glob(f'{path}/reference.json.gz'):
+            if not glob.glob(f'{index_path}/reference.json.gz'):
                 has_json = False
                 self.index_without_json.append(index_id)
 
@@ -467,11 +468,10 @@ class CreateIndexJsonTask(virtool.tasks.task.Task):
                 }
             })
 
-    async def create_json(self):
-
+    async def create_index_json_files(self):
         for index_id in self.index_without_json:
-            index_document = await self.db.indexes.find_one({"_id": index_id})
-            ref_id = index_document["reference"]["id"]
+            index = await self.db.indexes.find_one({"_id": index_id})
+            ref_id = index["reference"]["id"]
 
             document = await self.db.references.find_one(ref_id, ["data_type", "organism", "targets"])
 
@@ -501,8 +501,7 @@ class CreateIndexJsonTask(virtool.tasks.task.Task):
             # Convert the list of OTUs to a JSON-formatted string.
             json_string = json.dumps(data, cls=virtool.api.json.CustomEncoder)
 
-            # Compress the JSON string with gzip.
-            # body = await self.app["run_in_process"](gzip.compress, bytes(json_string, "utf-8"))
+            # Compress the JSON string to a gzip file.
             with gzip.open(file_path, 'wb') as f:
                 f.write(bytes(json_string, "utf-8"))
 
