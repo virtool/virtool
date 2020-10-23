@@ -502,8 +502,9 @@ class CreateIndexJSONTask(virtool.tasks.task.Task):
             json_string = json.dumps(data, cls=virtool.api.json.CustomEncoder)
 
             # Compress the JSON string to a gzip file.
-            with gzip.open(file_path, 'wb') as f:
-                f.write(bytes(json_string, "utf-8"))
+            await self.run_in_thread(virtool.utils.compress_json_with_gzip,
+                                     json_string,
+                                     file_path)
 
             await self.db.indexes.find_one_and_update({"_id": index_id}, {
                 "$set": {
