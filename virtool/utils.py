@@ -96,6 +96,11 @@ def compress_file_with_pigz(path, target, processes):
         subprocess.call(command, stdout=f)
 
 
+def compress_json_with_gzip(json_string, target):
+    with gzip.open(target, 'wb') as f:
+        f.write(bytes(json_string, "utf-8"))
+
+
 def coerce_list(obj) -> list:
     """
     Takes an object of any type and returns a list. If ``obj`` is a list it will be passed back with modification.
