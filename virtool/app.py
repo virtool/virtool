@@ -13,7 +13,6 @@ import virtool.db.migrate
 import virtool.db.utils
 import virtool.dispatcher
 import virtool.errors
-import virtool.files.manager
 import virtool.hmm.db
 import virtool.http.accept
 import virtool.http.auth
