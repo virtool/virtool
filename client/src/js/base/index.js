@@ -12,7 +12,7 @@ export * from "./ButtonGroup";
 export * from "./ButtonToolbar";
 export * from "./Container";
 export * from "./Dropdown";
-export * from "./DropdownButton";
+export * from "./Dropdown";
 export * from "./ExternalLink";
 export * from "./Icon";
 export * from "./Identicon";

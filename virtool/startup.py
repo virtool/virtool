@@ -70,6 +70,12 @@ async def init_check_db(app: aiohttp.web_app.Application):
     logger.info("Checking database")
     await virtool.db.migrate.migrate(app)
 
+    # Make sure the indexes collection exists before later trying to set an compound index on it.
+    try:
+        await db.motor_client.create_collection("indexes")
+    except pymongo.errors.CollectionInvalid:
+        pass
+
     logger.info("Checking database indexes")
     await db.analyses.create_index("sample.id")
     await db.analyses.create_index([("created_at", -1)])

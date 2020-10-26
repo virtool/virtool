@@ -1,10 +1,10 @@
-from typing import Union
-
-import aiohttp.web
+import asyncio
 import hashlib
 import json
 import os
+from typing import Optional, Union
 
+import aiohttp.web
 import pymongo.errors
 
 import virtool.caches
@@ -34,7 +34,7 @@ def calculate_cache_hash(parameters: dict) -> str:
     return hashlib.sha1(string.encode()).hexdigest()
 
 
-async def find(db, sample_id: str, program: str, parameters: dict) -> Union[dict, None]:
+async def find(db, sample_id: str, program: str, parameters: dict) -> Optional[dict]:
     """
     Find a cache matching the passed `sample_id`, `program` name and version, and set of trimming `parameters`.
 
@@ -53,6 +53,32 @@ async def find(db, sample_id: str, program: str, parameters: dict) -> Union[dict
         "program": program,
         "sample.id": sample_id
     })
+
+    return virtool.utils.base_processor(document)
+
+
+async def find_and_wait(db, sample_id: str, program: str, parameters: dict) -> Optional[dict]:
+    """
+    Find a cache matching the passed `sample_id`, `program` name and version, and set of trimming `parameters`. Wait
+    for the cache to be ready if it is still being created.
+
+    If no matching cache exists, `None` will be returned.
+
+    :param db: the application database interface
+    :param sample_id: the id of the parent sample
+    :param program: the program and version used to create the cache
+    :param parameters: the parameters used for the trim
+    :return: a cache document
+
+    """
+    document = await db.caches.find_one(db, sample_id, program, parameters)
+
+    if document:
+        cache_id = document["_id"]
+
+        while document["ready"] is False:
+            await asyncio.sleep(2)
+            document = await db.caches.find_one(cache_id)
 
     return virtool.utils.base_processor(document)
 

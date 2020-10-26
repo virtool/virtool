@@ -5,7 +5,6 @@ exports[`<Bar /> should render 1`] = `
   <NavBar__NavBarLeft>
     <NavBar__NavBarLogo />
     <NavBarItem
-      isActive={[Function]}
       to="/home"
     >
       Home
@@ -51,11 +50,6 @@ exports[`<Bar /> should render 1`] = `
     </NavBarItem>
     <NavBarItem
       rel="noopener noreferrer"
-      style={
-        Object {
-          "paddingLeft": 0,
-        }
-      }
       target="_blank"
       to="//virtool.ca/docs/manual"
     >
@@ -65,32 +59,45 @@ exports[`<Bar /> should render 1`] = `
         name="book"
       />
     </NavBarItem>
-    <NavDropdown
-      userId="foo"
-    >
-      <DropdownItem
-        to="/account"
-      >
-        Account
-      </DropdownItem>
-      <DropdownItem
-        to="/administration"
-      >
-        Administration 
-      </DropdownItem>
-      <DropdownItem
-        rel="noopener noreferrer"
-        target="_blank"
-        to="//gitreports.com/issue/virtool/virtool"
-      >
-        Report Issue
-      </DropdownItem>
-      <DropdownItem
-        onClick={[MockFunction]}
-      >
-        Logout
-      </DropdownItem>
-    </NavDropdown>
+    <Menu>
+      <NavBar__NavDropdownButton>
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="user"
+        />
+        <span />
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="caret-down"
+        />
+      </NavBar__NavDropdownButton>
+      <Dropdown__DropdownMenuList>
+        <Dropdown__DropdownMenuLink
+          to="/account"
+        >
+          Account
+        </Dropdown__DropdownMenuLink>
+        <Dropdown__DropdownMenuLink
+          to="/administration"
+        >
+          Administration 
+        </Dropdown__DropdownMenuLink>
+        <Dropdown__DropdownMenuLink
+          rel="noopener noreferrer"
+          target="_blank"
+          to="//gitreports.com/issue/virtool/virtool"
+        >
+          Report Issue
+        </Dropdown__DropdownMenuLink>
+        <Dropdown__DropdownMenuItem
+          onSelect={[MockFunction]}
+        >
+          Logout
+        </Dropdown__DropdownMenuItem>
+      </Dropdown__DropdownMenuList>
+    </Menu>
   </NavBar__NavBarRight>
 </NavBar__StyledNavBar>
 `;
