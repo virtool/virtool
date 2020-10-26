@@ -48,7 +48,7 @@ async def check_db(job):
 
 async def mk_index_dir(job):
     """
-    Make dir for the new index at ``<data_path/references/<index_id>``.
+    Make dir for the new index at ``<data_path>/references/<index_id>``.
 
     """
     await job.run_in_executor(
@@ -158,6 +158,10 @@ async def upload(job):
 
 
 async def build_json(job):
+    """
+    Create a reference.json.gz file at ``<data_path>/references/<ref_id>/<index_id>``.
+
+    """
     await job.db.indexes.find_one_and_update({"_id": job.params["index_id"]}, {
         "$set": {
             "has_json": False
