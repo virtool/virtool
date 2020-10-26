@@ -96,11 +96,6 @@ OPTIONS = {
         help="Start with automatic fetching disabled",
         is_flag=True
     ),
-    "no_file_manager": click.option(
-        "--no-file-manager",
-        help="Start without the file manager",
-        is_flag=True
-    ),
     "no_job_manager": click.option(
         "--no-job-manager",
         help="Start without a job runner",
@@ -190,7 +185,6 @@ DISABLE_OPTIONS = (
     "no_check_db",
     "no_check_files",
     "no_fetching",
-    "no_file_manager",
     "no_job_manager"
 )
 

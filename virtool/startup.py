@@ -1,7 +1,6 @@
 import asyncio
 import concurrent.futures
 import logging
-import os
 import signal
 import sys
 import typing
@@ -19,10 +18,9 @@ import virtool.db.migrate
 import virtool.db.mongo
 import virtool.db.utils
 import virtool.dispatcher
-import virtool.files.manager
 import virtool.hmm.db
-import virtool.jobs.runner
 import virtool.jobs.interface
+import virtool.jobs.runner
 import virtool.redis
 import virtool.references.db
 import virtool.resources
@@ -30,8 +28,8 @@ import virtool.routes
 import virtool.sentry
 import virtool.settings.db
 import virtool.software.db
-import virtool.subtractions.utils
 import virtool.subtractions.db
+import virtool.subtractions.utils
 import virtool.tasks.db
 import virtool.utils
 import virtool.version
@@ -188,42 +186,6 @@ async def init_executors(app: aiohttp.web.Application):
     app["process_executor"] = process_executor
 
 
-async def init_file_manager(app: aiohttp.web_app.Application):
-    """
-    An application ``on_startup`` callback that initializes a Virtool :class:`virtool.file_manager.Manager` object and
-    attaches it to the ``app`` object.
-
-    :param app: the app object
-    :type app: :class:`aiohttp.aiohttp.web.Application`
-
-    """
-    if app["settings"]["no_file_manager"]:
-        return logger.info("Running without file manager")
-
-    files_path = os.path.join(app["settings"]["data_path"], "files")
-    watch_path = app["settings"]["watch_path"]
-
-    if not os.path.exists(files_path):
-        logger.fatal(f"Files path path does not exist: '{files_path}'")
-        sys.exit(1)
-
-    if not os.path.exists(watch_path):
-        logger.fatal(f"Watch path does not exist: '{watch_path}'")
-        sys.exit(1)
-
-    app["file_manager"] = virtool.files.manager.Manager(
-        app["executor"],
-        app["db"],
-        files_path,
-        watch_path,
-        clean_interval=20
-    )
-
-    scheduler = get_scheduler_from_app(app)
-
-    await scheduler.spawn(app["file_manager"].run())
-
-
 async def init_job_interface(app: aiohttp.web_app.Application):
     """
     An application `on_startup` callback that initializes a Virtool :class:`virtool.job_manager.Manager` object and
@@ -263,11 +225,6 @@ async def init_paths(app: aiohttp.web_app.Application):
     if app["settings"]["no_check_files"] is False:
         logger.info("Checking files")
         virtool.utils.ensure_data_dir(app["settings"]["data_path"])
-
-        try:
-            os.mkdir(app["settings"]["watch_path"])
-        except (FileExistsError, KeyError):
-            pass
 
 
 async def init_redis(app: typing.Union[dict, aiohttp.web_app.Application]):
