@@ -449,23 +449,10 @@ class CreateIndexJSONTask(virtool.tasks.task.Task):
 
     async def check_index_json_files(self):
         db = self.db
-        settings = self.app["settings"]
 
         async for index in db.indexes.find():
-            index_id = index["_id"]
-            ref_id = index["reference"]["id"]
-            index_path = os.path.join(settings["data_path"], "references", ref_id, index_id)
-            has_json = True
-
-            if not glob.glob(f'{index_path}/reference.json.gz'):
-                has_json = False
-                self.index_without_json.append(index_id)
-
-            await db.indexes.find_one_and_update({"_id": index_id}, {
-                "$set": {
-                    "has_json": has_json
-                }
-            })
+            if "has_json" not in index or index["has_json"] is False:
+                self.index_without_json.append(index["_id"])
 
     async def create_index_json_files(self):
         for index_id in self.index_without_json:
