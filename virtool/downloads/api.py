@@ -153,6 +153,10 @@ async def download_index_json(req):
     index_id = req.match_info["index_id"]
 
     document = await db.indexes.find_one(index_id)
+
+    if document is None:
+        return virtool.api.response.not_found()
+    
     ref_id = document["reference"]["id"]
 
     if "has_json" not in document or document["has_json"] is False:
