@@ -3,8 +3,6 @@ Provides request handlers for file downloads.
 
 """
 import os
-import gzip
-import json
 
 from aiohttp import web
 
