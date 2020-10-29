@@ -78,6 +78,7 @@ export const getSample = sampleId => ({
  * @param isolate {string} the originating isolate
  * @param host {string} the exact host
  * @param locale {string} location in which the sample was collected
+ * @param notes {string} notes for the sample
  * @param srna {boolean} does the sample contain sRNA reads
  * @param subtraction {string} name of the associated subtraction host genome
  * @param files {object} file ids of one or two files

@@ -29,6 +29,11 @@ export const InputLabel = styled.label`
     font-weight: 500;
 `;
 
+export const NotesLabel = styled.label`
+    font-weight: 500;
+    display: block;
+`;
+
 export class UnstyledInput extends React.Component {
     constructor(props) {
         super(props);

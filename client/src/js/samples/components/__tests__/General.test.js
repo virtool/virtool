@@ -1,5 +1,4 @@
 import { mapStateToProps, SampleDetailGeneral } from "../General";
-
 describe("<SampleDetailGeneral />", () => {
     let props;
 
@@ -13,6 +12,7 @@ describe("<SampleDetailGeneral />", () => {
             lengthRange: "41 - 76",
             locale: "Bar",
             name: "Foo",
+            notes: "Edit the sample to add additional notes.",
             paired: false,
             subtraction: {
                 id: "baz",
@@ -26,6 +26,22 @@ describe("<SampleDetailGeneral />", () => {
         props.paired = paired;
         const wrapper = shallow(<SampleDetailGeneral {...props} />);
         expect(wrapper).toMatchSnapshot();
+    });
+
+    it("renders <ReleaseMarkdown /> component", () => {
+        const wrapper = shallow(<SampleDetailGeneral {...props} />);
+        expect(wrapper.find("ReleaseMarkdown")).toMatchSnapshot();
+    });
+
+    it("renders <EditSample /> component", () => {
+        const wrapper = shallow(<SampleDetailGeneral {...props} />);
+        expect(wrapper.find("EditSample")).toMatchSnapshot();
+    });
+
+    it("renders both Edit notes components ", () => {
+        const wrapper = shallow(<SampleDetailGeneral />);
+        expect(wrapper.find("ReleaseMarkdown")).toMatchSnapshot();
+        expect(wrapper.find("TextArea")).toMatchSnapshot();
     });
 });
 
@@ -41,6 +57,7 @@ describe("mapStateToProps()", () => {
                     host: "Malus domestica",
                     isolate: "Isolate Foo",
                     locale: "Bar",
+                    notes: "FooBar",
                     paired: false,
                     quality: {
                         gc: 31.2452,
@@ -62,6 +79,7 @@ describe("mapStateToProps()", () => {
             host: "Malus domestica",
             isolate: "Isolate Foo",
             locale: "Bar",
+            notes: "FooBar",
             name: "Foo",
             paired: false,
             gc: "31.2 %",

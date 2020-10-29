@@ -19,6 +19,21 @@ export const Box = styled.div`
     }
 `;
 
+export const NotesBox = styled.div`
+    border: ${getBorder};
+    border-radius: ${props => props.theme.borderRadius.sm};
+    box-sizing: border-box;
+    cursor: ${props => (props.onClick ? "pointer" : "auto")};
+    padding: 10px 15px;
+    position: relative;
+    overflow-y: scroll;
+    overflow-x: scroll;
+    max-height: 375px;
+    &:hover {
+        ${props => (props.onClick ? `background-color: ${props.theme.color.greyHover};` : "")}
+    }
+`;
+
 export const BoxGroup = styled(Box)`
     border-radius: ${props => props.theme.borderRadius.sm};
     padding: 0;
