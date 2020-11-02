@@ -96,7 +96,11 @@ def compress_file_with_pigz(path, target, processes):
         subprocess.call(command, stdout=f)
 
 
-def compress_json_with_gzip(json_string, target):
+def compress_json_with_gzip(json_string: str, target: str):
+    """
+    Compress the JSON string to a gzipped file at `target`.
+
+    """
     with gzip.open(target, 'wb') as f:
         f.write(bytes(json_string, "utf-8"))
 
