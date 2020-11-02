@@ -332,11 +332,18 @@ async def init_tasks(app: aiohttp.web.Application):
         return logger.info("Skipping subtraction FASTA files checks")
 
     db = app["db"]
-    logger.info("Checking subtraction FASTA files")
-
     scheduler = get_scheduler_from_app(app)
 
-    task = await virtool.tasks.db.register(db, "write_subtraction_fasta")
-    t = virtool.subtractions.db.WriteSubtractionFASTATask(app, task["id"])
+    logger.info("Checking subtraction FASTA files")
 
-    await scheduler.spawn(t.run())
+    subtraction_task = await virtool.tasks.db.register(db, "write_subtraction_fasta")
+    write_subtraction_fasta_task = virtool.subtractions.db.WriteSubtractionFASTATask(app, subtraction_task["id"])
+
+    await scheduler.spawn(write_subtraction_fasta_task.run())
+
+    logger.info("Checking index JSON files")
+    index_task = await virtool.tasks.db.register(db, "create_index_json")
+    create_index_json_task = virtool.references.db.CreateIndexJSONTask(app, index_task["id"])
+
+    await scheduler.spawn(create_index_json_task.run())
+
