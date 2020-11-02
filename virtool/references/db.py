@@ -444,9 +444,7 @@ class CreateIndexJSONTask(virtool.tasks.task.Task):
         ]
 
     async def create_index_json_files(self):
-        index_without_json = self.db.indexes.find({"has_json": {"$ne": True}})
-
-        async for index in index_without_json:
+        async for index in self.db.indexes.find({"has_json": {"$ne": True}}):
             index_id = index["_id"]
             ref_id = index["reference"]["id"]
 
