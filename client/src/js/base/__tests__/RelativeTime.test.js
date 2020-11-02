@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import { RelativeTime } from "../RelativeTime";
 
 const fakeTime = "2019-02-10T17:11:00.000000Z";
@@ -33,8 +33,11 @@ describe("<RelativeTime />", () => {
         renderWithProviders(<RelativeTime time="2019-04-22T10:20:20Z" />);
         expect(await screen.getByText("10 seconds ago")).toBeInTheDocument();
 
-        Date.now.mockReturnValue(new Date("2019-04-22T10:20:40Z"));
-        jest.advanceTimersToNextTimer();
+        act(() => {
+            Date.now.mockReturnValue(new Date("2019-04-22T10:20:40Z"));
+            jest.advanceTimersToNextTimer();
+        });
+
         expect(await screen.findByText("20 seconds ago")).toBeInTheDocument();
     });
 

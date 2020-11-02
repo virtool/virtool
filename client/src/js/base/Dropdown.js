@@ -1,25 +1,12 @@
-import React, { useCallback, useState } from "react";
+import { Menu, MenuButton, MenuItem, MenuLink, MenuList } from "@reach/menu-button";
+import "@reach/menu-button/styles.css";
+import React from "react";
 import { Link } from "react-router-dom";
-import styled from "styled-components";
-import { getBorder } from "../app/theme";
+import styled, { css, keyframes } from "styled-components";
+import { getBorder, getFontSize } from "../app/theme";
+import { StyledButton } from "./Button";
 
-export const useDropdown = inputs => {
-    const [visible, setVisible] = useState(false);
-
-    const toggle = useCallback(() => {
-        setVisible(!visible);
-    }, [...inputs, visible]);
-
-    const hide = useCallback(() => {
-        setTimeout(() => {
-            setVisible(false);
-        }, 100);
-    }, [...inputs]);
-
-    return [visible, toggle, hide];
-};
-
-const StyledDropdownItem = styled.a`
+const dropdownItemMixin = css`
     color: ${props => props.theme.color.black};
     cursor: pointer;
     min-width: 160px;
@@ -27,44 +14,44 @@ const StyledDropdownItem = styled.a`
 
     &:hover {
         background-color: ${props => props.theme.color.greyHover};
-        color: ${props => props.theme.color.greyDarkest};
+        color: ${props => props.theme.color.black};
     }
 `;
 
-export const DropdownItem = ({ children, href, rel, target, to, onClick }) => {
-    if (to) {
-        return (
-            <StyledDropdownItem as={Link} rel={rel} target={target} to={to}>
-                {children}
-            </StyledDropdownItem>
-        );
-    }
+const slideDown = keyframes`
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
-    return (
-        <StyledDropdownItem href={href} onClick={onClick}>
-            {children}
-        </StyledDropdownItem>
-    );
-};
-
-export const DropdownMenu = styled.div`
-    background-color: ${props => props.theme.color.white};
+export const DropdownMenuList = styled(MenuList)`
+    animation: ${slideDown} ease-in 100ms;
     border: ${getBorder};
     border-radius: ${props => props.theme.borderRadius.sm};
     box-shadow: ${props => props.theme.boxShadow.lg};
-    display: ${props => (props.visible ? "flex" : "none")};
+    display: flex;
     flex-direction: column;
-    position: absolute;
-    right: ${props => props.right}px;
-    top: ${props => props.top}px;
-    z-index: 100;
+    font-size: ${getFontSize("md")};
+    padding: 0;
 `;
 
-export const Dropdown = styled.div`
-    align-items: stretch;
-    background: transparent;
-    display: flex;
-    justify-content: center;
-    padding: 0;
-    position: relative;
+export const DropdownMenuItem = styled(MenuItem)`
+    ${dropdownItemMixin}
 `;
+
+export const DropdownMenuLink = styled(({ children, className, to }) => (
+    <MenuLink as={Link} className={className} to={to}>
+        {children}
+    </MenuLink>
+))`
+    ${dropdownItemMixin}
+`;
+
+export const DropdownButton = ({ children }) => <StyledButton as={MenuButton}>{children}</StyledButton>;
+
+export const Dropdown = Menu;

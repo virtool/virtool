@@ -115,7 +115,7 @@ describe("mapStateToProps()", () => {
 });
 
 describe("mapDispatchToProps()", () => {
-    it("should return onSubmit() in props ", () => {
+    it("should return onSubmit() in props", () => {
         const dispatch = jest.fn();
         const props = mapDispatchToProps(dispatch);
         props.onSubmit("foo", "bar");

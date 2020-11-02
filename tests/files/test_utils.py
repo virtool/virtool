@@ -1,28 +1,6 @@
-import aionotify
 import pytest
 
 import virtool.files.utils
-
-
-@pytest.mark.parametrize("flag,event_type", [
-    (aionotify.Flags.CREATE, "create"),
-    (aionotify.Flags.DELETE, "delete"),
-    (aionotify.Flags.CLOSE_WRITE, "close"),
-    (aionotify.Flags.MOVED_FROM, "delete"),
-    (aionotify.Flags.MOVED_TO, "create")
-])
-def test_get_event_type(flag, event_type, mocker):
-    """
-    Test that function can interpret event objects to event types.
-
-    """
-    m_parse = mocker.patch("aionotify.Flags.parse", return_value=[flag])
-
-    class Event:
-        flags = [flag]
-
-    assert virtool.files.utils.get_event_type(Event()) == event_type
-    m_parse.assert_called_with([flag])
 
 
 @pytest.mark.parametrize("filename,expected", [

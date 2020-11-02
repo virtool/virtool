@@ -119,7 +119,7 @@ export const QuickAnalyze = ({
                         <SubtractionSelector
                             subtractions={subtractions}
                             value={subtraction}
-                            onChange={setSubtraction}
+                            onChange={e => setSubtraction(e.target.value)}
                         />
                     )}
                     <IndexSelector

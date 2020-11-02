@@ -5,7 +5,7 @@ import { ModalBody, ModalFooter, Input, InputError, InputGroup, InputLabel, Save
 const OTUFormBody = styled(ModalBody)`
     display: grid;
     grid-template-columns: 9fr 4fr;
-    grid-column-gap: ${props => props.gap.column};
+    grid-column-gap: ${props => props.theme.gap.column};
 `;
 
 export const OTUForm = ({ abbreviation, name, error, onChange, onSubmit }) => (

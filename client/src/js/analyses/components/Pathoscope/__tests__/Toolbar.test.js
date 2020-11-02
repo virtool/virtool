@@ -7,16 +7,9 @@ import {
 import { Button } from "../../../../base";
 import { getFuse } from "../../../selectors";
 import { AnalysisViewerSort } from "../../Viewer/Sort";
-import { mapDispatchToProps, mapStateToProps, PathoscopeDownloadDropdownTitle, PathoscopeToolbar } from "../Toolbar";
+import { mapDispatchToProps, mapStateToProps, PathoscopeToolbar } from "../Toolbar";
 
 jest.mock("../../../selectors");
-
-describe("<PathoscopeDownloadDropdownTitle />", () => {
-    it("should render", () => {
-        const wrapper = shallow(<PathoscopeDownloadDropdownTitle />);
-        expect(wrapper).toMatchSnapshot();
-    });
-});
 
 describe("<Toolbar />", () => {
     let props;

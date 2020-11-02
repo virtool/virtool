@@ -1,10 +1,12 @@
 import asyncio.tasks
+import json
 import os
 import shutil
 import typing
 
 import aiofiles
 
+import virtool.api.json
 import virtool.errors
 import virtool.history.db
 import virtool.history.utils
@@ -12,6 +14,7 @@ import virtool.indexes.db
 import virtool.jobs.job
 import virtool.otus.db
 import virtool.otus.utils
+import virtool.references.db
 import virtool.utils
 
 
@@ -45,7 +48,7 @@ async def check_db(job):
 
 async def mk_index_dir(job):
     """
-    Make dir for the new index at ``<data_path/references/<index_id>``.
+    Make dir for the new index at ``<data_path>/references/<index_id>``.
 
     """
     await job.run_in_executor(
@@ -152,6 +155,53 @@ async def upload(job):
                 "last_indexed_version": version
             }
         })
+
+
+async def build_json(job):
+    """
+    Create a reference.json.gz file at ``<data_path>/references/<ref_id>/<index_id>``.
+
+    """
+    document = await job.db.references.find_one(job.params["ref_id"], ["data_type", "organism", "targets"])
+
+    app_dict = {
+        "db": job.db,
+        "settings": job.settings
+    }
+
+    otu_list = await virtool.references.db.export(
+        app_dict,
+        job.params["ref_id"]
+    )
+
+    data = {
+        "otus": otu_list,
+        "data_type": document["data_type"],
+        "organism": document["organism"]
+    }
+
+    try:
+        data["targets"] = document["targets"]
+    except KeyError:
+        pass
+
+    file_path = os.path.join(
+        job.params["index_path"],
+        "reference.json.gz")
+
+    # Convert the list of OTUs to a JSON-formatted string.
+    json_string = json.dumps(data, cls=virtool.api.json.CustomEncoder)
+
+    # Compress the JSON string to a gzip file.
+    await job.run_in_executor(virtool.utils.compress_json_with_gzip,
+                              json_string,
+                              file_path)
+
+    await job.db.indexes.find_one_and_update({"_id": job.params["index_id"]}, {
+        "$set": {
+            "has_json": True
+        }
+    })
 
 
 async def delete_index(job: virtool.jobs.job.Job):
@@ -283,7 +333,8 @@ def create():
         mk_index_dir,
         write_fasta,
         bowtie_build,
-        upload
+        upload,
+        build_json
     ]
 
     job.on_cleanup = [

@@ -16,7 +16,7 @@ import virtool.utils
 
 logger = logging.getLogger(__name__)
 
-VIRTOOL_RELEASES_URL = "https://www.virtool.ca/releases3"
+VIRTOOL_RELEASES_URL = "https://www.virtool.ca/releases4"
 
 
 class SoftwareInstallTask(virtool.tasks.task.Task):
