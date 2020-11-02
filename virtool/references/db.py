@@ -10,6 +10,7 @@ import pymongo
 import semver
 
 import virtool.api
+import virtool.api.json
 import virtool.db.utils
 import virtool.errors
 import virtool.github
@@ -431,6 +432,60 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
                 "updating": False
             }
         })
+
+
+class CreateIndexJSONTask(virtool.tasks.task.Task):
+
+    def __init__(self, app, task_id):
+        super().__init__(app, task_id)
+
+        self.steps = [
+            self.create_index_json_files
+        ]
+
+    async def create_index_json_files(self):
+        async for index in self.db.indexes.find({"has_json": {"$ne": True}}):
+            index_id = index["_id"]
+            ref_id = index["reference"]["id"]
+
+            document = await self.db.references.find_one(ref_id, ["data_type", "organism", "targets"])
+
+            otu_list = await virtool.references.db.export(
+                self.app,
+                ref_id
+            )
+
+            data = {
+                "otus": otu_list,
+                "data_type": document["data_type"],
+                "organism": document["organism"]
+            }
+
+            try:
+                data["targets"] = document["targets"]
+            except KeyError:
+                pass
+
+            file_path = os.path.join(
+                self.app["settings"]["data_path"],
+                "references",
+                ref_id,
+                index_id,
+                "reference.json.gz")
+
+            # Convert the list of OTUs to a JSON-formatted string.
+            json_string = json.dumps(data, cls=virtool.api.json.CustomEncoder)
+
+            # Compress the JSON string to a gzip file.
+            await self.run_in_thread(virtool.utils.compress_json_with_gzip,
+                                     json_string,
+                                     file_path)
+
+            await self.db.indexes.find_one_and_update({"_id": index_id}, {
+                "$set": {
+                    "has_json": True
+                }
+            })
 
 
 async def processor(db, document: dict) -> dict:
