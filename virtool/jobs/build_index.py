@@ -162,12 +162,6 @@ async def build_json(job):
     Create a reference.json.gz file at ``<data_path>/references/<ref_id>/<index_id>``.
 
     """
-    await job.db.indexes.find_one_and_update({"_id": job.params["index_id"]}, {
-        "$set": {
-            "has_json": False
-        }
-    })
-
     document = await job.db.references.find_one(job.params["ref_id"], ["data_type", "organism", "targets"])
 
     app_dict = {
