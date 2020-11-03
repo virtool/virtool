@@ -8,6 +8,7 @@ import {
     GET_SAMPLE,
     REMOVE_SAMPLE,
     UPDATE_SAMPLE,
+    UPDATE_LABEL,
     UPDATE_SAMPLE_RIGHTS,
     UPLOAD_SAMPLE_FILE,
     WS_UPDATE_SAMPLE
@@ -88,6 +89,11 @@ export function* createSample(action) {
 export function* updateSample(action) {
     const extraFunc = { closeModal: put(push({ editSample: false })) };
     yield setPending(apiCall(samplesAPI.update, action, UPDATE_SAMPLE, {}, extraFunc));
+}
+
+export function* labelEdit(action) {
+    const extraFunc = { closeModal: put(push({ labelEdit: false })) };
+    yield setPending(apiCall(samplesAPI.update, action, UPDATE_LABEL, {}, extraFunc));
 }
 
 export function* updateSampleRights(action) {

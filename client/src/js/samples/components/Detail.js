@@ -47,6 +47,7 @@ const SampleDetail = ({ canModify, detail, error, history, match, onGetSample })
 
     let editIcon;
     let removeIcon;
+    let labelIcon;
     let rightsTabLink;
 
     if (canModify) {
@@ -59,6 +60,8 @@ const SampleDetail = ({ canModify, detail, error, history, match, onGetSample })
         }
 
         removeIcon = <LinkIcon color="red" to={{ state: { removeSample: true } }} name="trash" tip="Remove" />;
+
+        labelIcon = <LinkIcon color="blue" to={{ state: { labelEdit: true } }} name="fas fa-tag" tip="Labels" />;
 
         rightsTabLink = (
             <TabLink to={`/samples/${sampleId}/rights`}>
@@ -78,6 +81,7 @@ const SampleDetail = ({ canModify, detail, error, history, match, onGetSample })
                     {detail.name}
                     <ViewHeaderIcons>
                         {editIcon}
+                        {labelIcon}
                         {removeIcon}
                     </ViewHeaderIcons>
                 </ViewHeaderTitle>

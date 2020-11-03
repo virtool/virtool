@@ -11,6 +11,7 @@ import {
     SELECT_SAMPLE,
     SHOW_REMOVE_SAMPLE,
     UPDATE_SAMPLE,
+    UPDATE_LABEL,
     UPDATE_SAMPLE_RIGHTS,
     UPLOAD_SAMPLE_FILE,
     WS_INSERT_SAMPLE,
@@ -104,6 +105,18 @@ export const createSample = (name, isolate, host, locale, libraryType, subtracti
  */
 export const editSample = (sampleId, update) => ({
     type: UPDATE_SAMPLE.REQUESTED,
+    sampleId,
+    update
+});
+
+/**
+ * @func
+ * @param {*} sampleId {string} unique sample id
+ * @param {*} update {object} update data
+ * @returns {object}
+ */
+export const labelEdit = (sampleId, update) => ({
+    type: UPDATE_LABEL.REQUESTED,
     sampleId,
     update
 });

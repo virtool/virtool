@@ -224,3 +224,6 @@ export const REMOVE_USER = createRequestActionType("REMOVE_USER");
 export const WS_UPDATE_STATUS = "WS_UPDATE_STATUS";
 export const GET_SOFTWARE_UPDATES = createRequestActionType("GET_SOFTWARE_UPDATES");
 export const INSTALL_SOFTWARE_UPDATES = createRequestActionType("INSTALL_SOFTWARE_UPDATES");
+
+//Labels
+export const UPDATE_LABEL = createRequestActionType("UPDATE_LABEL");

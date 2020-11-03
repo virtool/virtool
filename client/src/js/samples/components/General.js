@@ -6,6 +6,7 @@ import styled from "styled-components";
 import { BoxGroup, BoxGroupHeader, Table } from "../../base";
 import { getLibraryTypeDisplayName } from "../utils";
 import EditSample from "./Edit";
+import LabelEdit from "./Label";
 import SampleFileSizeWarning from "./FileSizeWarning.js";
 
 const StyledSampleDetailGeneral = styled.div`
@@ -113,6 +114,7 @@ export const SampleDetailGeneral = ({
         </BoxGroup>
 
         <EditSample />
+        <LabelEdit />
     </StyledSampleDetailGeneral>
 );
 
