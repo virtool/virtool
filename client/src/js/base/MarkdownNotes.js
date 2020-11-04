@@ -10,7 +10,7 @@ const NotesBox = styled(Box)`
 `;
 
 export const MarkdownNotes = ({ notes }) => {
-    let markedNotes = Marked(notes ? notes : "Edit the sample to add additional notes.");
+    const markedNotes = Marked(notes ? notes : "Edit the sample to add additional notes.");
     return (
         <NotesBox>
             <div dangerouslySetInnerHTML={{ __html: markedNotes }} />
