@@ -12,11 +12,13 @@ Gitter: https://gitter.im/virtool
 
 #### Required Software
 
-| Software                                                            | Version |
-|---------------------------------------------------------------------|---------|
-| [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)    | 2.3.2   |
-| [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc) | 0.11.8  |
-| [HMMER](http://hmmer.org/)                                          | 3.1b2   |
-| [MongoDB](https://www.mongodb.com/)                                 | 3.6.0   |
-| [Skewer](https://github.com/relipmoc/skewer)                        | 0.2.2   |
-| [SPAdes](http://cab.spbu.ru/software/spades/)                       | 3.11.0  |
+| Software                                                            | Version | Use
+|:--------------------------------------------------------------------|:--------|:------------------------------------------------|
+| [AODP](https://bitbucket.org/wenchen_aafc/aodp_v2.0_release/)       | 2.5.0.1 | Barcode-based amplicon analysis                 |
+| [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)    | 2.3.2   | Read mapping for known and novel virus analysis |
+| [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc) | 0.11.8  | Read quality analyis                            |
+| [FLASH](https://ccb.jhu.edu/software/FLASH/)                        | 1.2.11  | Read joining during amplicon analysis           |
+| [HMMER](http://hmmer.org/)                                          | 3.1b2   | Viral motif prediction for novel virus analysis |
+| [MongoDB](https://www.mongodb.com/)                                 | 3.6.0   | Backing database                                |
+| [Skewer](https://github.com/relipmoc/skewer)                        | 0.2.2   | Read trimming                                   |
+| [SPAdes](http://cab.spbu.ru/software/spades/)                       | 3.11.0  | Contig assembly during amplicon analysis        |
