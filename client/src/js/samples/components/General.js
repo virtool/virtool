@@ -3,10 +3,9 @@ import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { NotesBox, BoxGroup, BoxGroupHeader, Table } from "../../base";
+import { BoxGroup, BoxGroupHeader, Table, MarkdownNotes } from "../../base";
 import { getLibraryTypeDisplayName } from "../utils";
-import { ReleaseMarkdown } from "../../updates/components/Markdown";
-import EditSample from "./Edit";
+import EditSample from "./Edit/Edit";
 import SampleFileSizeWarning from "./FileSizeWarning.js";
 
 const StyledSampleDetailGeneral = styled.div`
@@ -119,9 +118,7 @@ export const SampleDetailGeneral = ({
                 <h2>Notes</h2>
                 <p>Additional notes about the sample.</p>
             </BoxGroupHeader>
-            <NotesBox>
-                <ReleaseMarkdown body={notes ? notes : "Edit the sample to add additional notes."}></ReleaseMarkdown>
-            </NotesBox>
+            <MarkdownNotes notes={notes}></MarkdownNotes>
         </BoxGroup>
 
         <EditSample />

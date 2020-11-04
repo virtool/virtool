@@ -28,9 +28,9 @@ describe("<SampleDetailGeneral />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders <ReleaseMarkdown /> component", () => {
+    it("renders <MarkdownNotes /> component", () => {
         const wrapper = shallow(<SampleDetailGeneral {...props} />);
-        expect(wrapper.find("ReleaseMarkdown")).toMatchSnapshot();
+        expect(wrapper.find("MarkdownNotes")).toMatchSnapshot();
     });
 
     it("renders <EditSample /> component", () => {
@@ -40,7 +40,7 @@ describe("<SampleDetailGeneral />", () => {
 
     it("renders both Edit notes components ", () => {
         const wrapper = shallow(<SampleDetailGeneral />);
-        expect(wrapper.find("ReleaseMarkdown")).toMatchSnapshot();
+        expect(wrapper.find("MarkdownNotes")).toMatchSnapshot();
         expect(wrapper.find("TextArea")).toMatchSnapshot();
     });
 });

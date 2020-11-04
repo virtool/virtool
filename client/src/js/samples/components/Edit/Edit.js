@@ -1,11 +1,10 @@
 import { get, pick } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { pushState } from "../../app/actions";
-import { TextArea } from "../../base/TextArea";
-import { ReleaseMarkdown } from "../../updates/components/Markdown";
-import { Button } from "../../base/Button";
-import { NotesBox } from "../../base/Box";
+import styled from "styled-components";
+import { pushState } from "../../../app/actions";
+import { clearError } from "../../../errors/actions";
+import { editSample } from "../../actions";
 import {
     ModalBody,
     ModalFooter,
@@ -13,21 +12,22 @@ import {
     InputError,
     InputGroup,
     InputLabel,
-    NotesLabel,
     Modal,
     SaveButton,
     ModalHeader
-} from "../../base";
-import { clearError } from "../../errors/actions";
-import { editSample } from "../actions";
+} from "../../../base";
+import { Notes } from "./Notes";
 
-const getInitialState = ({ name, isolate, host, locale, notes, isPreview }) => ({
+const NotesInputLabel = styled(InputLabel)`
+    display: block;
+`;
+
+const getInitialState = ({ name, isolate, host, locale, notes }) => ({
     name: name || "",
     isolate: isolate || "",
     host: host || "",
     locale: locale || "",
     notes: notes || "",
-    isPreview: isPreview || false,
     error: ""
 });
 
@@ -59,10 +59,6 @@ class EditSample extends React.Component {
         }
     };
 
-    handlePreview = e => {
-        this.setState({ isPreview: e });
-    };
-
     handleSubmit = e => {
         e.preventDefault();
 
@@ -71,14 +67,11 @@ class EditSample extends React.Component {
                 error: "Required Field"
             });
         }
-
         this.props.onEdit(this.props.id, pick(this.state, ["name", "isolate", "host", "locale", "notes"]));
     };
 
     render() {
         const error = this.state.error || this.props.error || "";
-        const isPreview = this.state.isPreview;
-        const notes = this.state.notes;
         return (
             <Modal
                 label="Edit Sample"
@@ -108,23 +101,8 @@ class EditSample extends React.Component {
                             <Input name="locale" value={this.state.locale} onChange={this.handleChange} />
                         </InputGroup>
                         <InputGroup classname="mark-input">
-                            <NotesLabel>Notes</NotesLabel>
-                            <Button onClick={() => this.handlePreview(false)}>Write</Button>
-                            <Button onClick={() => this.handlePreview(true)}>Preview</Button>
-                            {isPreview ? (
-                                <NotesBox>
-                                    <ReleaseMarkdown
-                                        body={notes ? notes : "Edit the sample to add additional notes."}
-                                    ></ReleaseMarkdown>
-                                </NotesBox>
-                            ) : (
-                                <TextArea
-                                    name="notes"
-                                    value={this.state.notes}
-                                    onChange={this.handleChange}
-                                    className="input"
-                                />
-                            )}
+                            <NotesInputLabel>Notes</NotesInputLabel>
+                            <Notes name="notes" notes={this.state.notes} onNotesChanges={this.handleChange} />
                         </InputGroup>
                     </ModalBody>
                     <ModalFooter>
