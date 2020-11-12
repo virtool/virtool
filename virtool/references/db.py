@@ -2,6 +2,7 @@ import asyncio
 import json.decoder
 import logging
 import os
+import shutil
 from typing import List, Union
 
 import aiohttp
@@ -239,64 +240,84 @@ class RemoveReferenceTask(virtool.tasks.task.Task):
         super().__init__(app, task_id)
 
         self.steps = [
+            self.remove_directory,
             self.remove_indexes,
             self.remove_unreferenced_otus,
             self.remove_referenced_otus
         ]
 
-    async def remove_indexes(self):
-        ref_id = self.context["ref_id"]
+        self.non_existent_references = []
 
-        await self.db.indexes.delete_many({
-            "reference.id": ref_id
-        })
-
-    async def remove_unreferenced_otus(self):
-        ref_id = self.context["ref_id"]
-
-        referenced_otu_ids = await self.db.analyses.distinct("results.otu.id", {"reference.id": ref_id})
-
-        unreferenced_otu_ids = await self.db.otus.distinct("_id", {
-            "reference.id": ref_id,
-            "_id": {
-                "$not": {
-                    "$in": referenced_otu_ids
-                }
-            }
-        })
-
-        diff_file_change_ids = await self.db.history.distinct("_id", {
-            "diff": "file",
-            "otu.id": {
-                "$in": unreferenced_otu_ids
-            }
-        })
-
-        await asyncio.gather(
-            self.db.otus.delete_many({"_id": {"$in": unreferenced_otu_ids}}),
-            self.db.history.delete_many({"otu.id": {"$in": unreferenced_otu_ids}}),
-            self.db.sequences.delete_many({"otu_id": {"$in": unreferenced_otu_ids}}),
-            virtool.history.utils.remove_diff_files(self.app, diff_file_change_ids)
+    async def remove_directory(self):
+        print("Start!")
+        path = os.path.join(
+            self.app["settings"]["data_path"],
+            "references"
         )
 
-    async def remove_referenced_otus(self):
-        ref_id = self.context["ref_id"]
-        user_id = self.context["user_id"]
+        reference_ids = os.listdir(path)
+        exist_ref = await self.db.references.distinct("_id", {
+            "_id": {
+                "$in": reference_ids
+            }
+        })
+        self.non_existent_references = [ref_id for ref_id in reference_ids if ref_id not in exist_ref]
 
-        otu_count = await self.db.otus.count_documents({"reference.id": ref_id})
+        for dir_name in self.non_existent_references:
+            shutil.rmtree(os.path.join(path, dir_name))
 
-        tracker = self.get_tracker(otu_count)
+    async def remove_indexes(self):
+        for ref_id in self.non_existent_references:
+            await self.db.indexes.delete_many({
+                "reference.id": ref_id
+            })
 
-        async for document in self.db.otus.find({"reference.id": ref_id}):
-            await virtool.otus.db.remove(
-                self.app,
-                document["_id"],
-                user_id,
-                document=document,
-                silent=True
+    async def remove_unreferenced_otus(self):
+        for ref_id in self.non_existent_references:
+            referenced_otu_ids = await self.db.analyses.distinct("results.otu.id", {"reference.id": ref_id})
+
+            unreferenced_otu_ids = await self.db.otus.distinct("_id", {
+                "reference.id": ref_id,
+                "_id": {
+                    "$not": {
+                        "$in": referenced_otu_ids
+                    }
+                }
+            })
+
+            diff_file_change_ids = await self.db.history.distinct("_id", {
+                "diff": "file",
+                "otu.id": {
+                    "$in": unreferenced_otu_ids
+                }
+            })
+
+            await asyncio.gather(
+                self.db.otus.delete_many({"_id": {"$in": unreferenced_otu_ids}}),
+                self.db.history.delete_many({"otu.id": {"$in": unreferenced_otu_ids}}),
+                self.db.sequences.delete_many({"otu_id": {"$in": unreferenced_otu_ids}}),
+                virtool.history.utils.remove_diff_files(self.app, diff_file_change_ids)
             )
 
-            await tracker.add(1)
+    async def remove_referenced_otus(self):
+        user_id = self.context["user_id"]
+
+        for ref_id in self.non_existent_references:
+            otu_count = await self.db.otus.count_documents({"reference.id": ref_id})
+
+            tracker = self.get_tracker(otu_count)
+
+            async for document in self.db.otus.find({"reference.id": ref_id}):
+                await virtool.otus.db.remove(
+                    self.app,
+                    document["_id"],
+                    user_id,
+                    document=document,
+                    silent=True
+                )
+
+                await tracker.add(1)
+        print("Done!")
 
 
 class UpdateRemoteReferenceTask(virtool.tasks.task.Task):

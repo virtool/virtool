@@ -13,6 +13,7 @@ from string import ascii_letters, ascii_lowercase, digits
 from typing import Iterable, Union
 
 import arrow
+import asyncio
 
 RE_STATIC_HASH = re.compile("^main.([a-z0-9]+).css$")
 
@@ -299,6 +300,15 @@ def should_use_pigz(processes: int) -> bool:
 
     """
     return bool(processes > 1 and shutil.which("pigz"))
+
+
+async def spawn_periodically(scheduler, task, interval):
+    try:
+        while True:
+            await scheduler.spawn(task.run())
+            await asyncio.sleep(interval)
+    except asyncio.CancelledError:
+        pass
 
 
 def timestamp() -> datetime.datetime:
