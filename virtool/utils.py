@@ -1,5 +1,4 @@
 import datetime
-import aiofiles
 import gzip
 import os
 import re
@@ -13,6 +12,7 @@ from string import ascii_letters, ascii_lowercase, digits
 from typing import Iterable, Union
 
 import aiojobs
+import aiofiles
 import arrow
 import asyncio
 import virtool.tasks.task
