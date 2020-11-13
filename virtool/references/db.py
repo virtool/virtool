@@ -249,19 +249,18 @@ class RemoveReferenceTask(virtool.tasks.task.Task):
         self.non_existent_references = []
 
     async def remove_directory(self):
-        print("Start!")
         path = os.path.join(
             self.app["settings"]["data_path"],
             "references"
         )
 
         reference_ids = os.listdir(path)
-        exist_ref = await self.db.references.distinct("_id", {
+        existent_references = await self.db.references.distinct("_id", {
             "_id": {
                 "$in": reference_ids
             }
         })
-        self.non_existent_references = [ref_id for ref_id in reference_ids if ref_id not in exist_ref]
+        self.non_existent_references = [ref_id for ref_id in reference_ids if ref_id not in existent_references]
 
         for dir_name in self.non_existent_references:
             shutil.rmtree(os.path.join(path, dir_name))
@@ -317,7 +316,6 @@ class RemoveReferenceTask(virtool.tasks.task.Task):
                 )
 
                 await tracker.add(1)
-        print("Done!")
 
 
 class UpdateRemoteReferenceTask(virtool.tasks.task.Task):

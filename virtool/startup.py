@@ -347,3 +347,8 @@ async def init_tasks(app: aiohttp.web.Application):
 
     await scheduler.spawn(create_index_json_task.run())
 
+    reference_task = await virtool.tasks.db.register(db, "remove_directory", context={"user_id": "virtool"})
+    remove_reference_task = virtool.references.db.RemoveReferenceTask(app, reference_task["id"])
+
+    await scheduler.spawn(virtool.utils.spawn_periodically(scheduler, remove_reference_task, 3600))
+
