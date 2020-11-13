@@ -3,10 +3,10 @@ name: Virtool CI
 on:
   push:
     branches:
-      - feature-actions
+      - release-5.0.0
   pull_request:
     branches:
-      - feature-actions
+      - release-5.0.0
 
 jobs:
   server:
@@ -22,7 +22,7 @@ jobs:
         ports:
           - 27017:27017
     container:
-      image: python:3.8-buster
+      image: virtool/external-tools:0.1.2
 
     steps:
       - uses: actions/checkout@v2
