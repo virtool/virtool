@@ -1,0 +1,59 @@
+name: Virtool CI
+
+on:
+  push:
+    branches:
+      - cloud
+  pull_request:
+    branches:
+      - cloud
+
+jobs:
+  server:
+
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:6.0
+        ports:
+          - 6379:6379
+      mongo:
+        image: mongo:4.2
+        ports:
+          - 27017:27017
+    container:
+      image: python:3.8-buster
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: test
+        run: |
+          pip install -qr requirements.txt
+          pytest -x --db-connection-string mongodb://localhost:27017 --redis-connection-string redis://localhost:6379 --cov --cov-report xml
+
+
+  client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12'
+      - name: test
+        run: |
+          cd client
+          npm i
+          npx jest --coverage
+
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: node:12-stretch
+    steps:
+      - uses: actions/checkout@v2
+      - name: client
+        run: |
+          cd client
+          npm i
+          npx webpack --config webpack.production.config.babel.js
+
