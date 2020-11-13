@@ -1,5 +1,5 @@
 FIRST_STEPS = {
-    "delete_reference": "delete_indexes",
+    "delete_reference": "remove_directory",
     "clone_reference": "copy_otus",
     "import_reference": "load_file",
     "remote_reference": "download",
