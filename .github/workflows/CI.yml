@@ -3,10 +3,10 @@ name: Virtool CI
 on:
   push:
     branches:
-      - cloud
+      - feature-actions
   pull_request:
     branches:
-      - cloud
+      - feature-actions
 
 jobs:
   server:
@@ -29,7 +29,7 @@ jobs:
       - name: test
         run: |
           pip install -qr requirements.txt
-          pytest -x --db-connection-string mongodb://localhost:27017 --redis-connection-string redis://localhost:6379 --cov --cov-report xml
+          pytest  -x --db-connection-string mongodb://localhost:27017 --redis-connection-string redis://localhost:6379 --cov --cov-report xml
 
 
   client:
