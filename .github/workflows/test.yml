@@ -41,7 +41,7 @@ jobs:
           npm i
           npx jest --coverage
 
- build:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -62,7 +62,7 @@ jobs:
           cd client
           npm i
           npx webpack --config webpack.production.config.babel.js
-          
+
       - name: Build server
         run: |
           pip install -r requirements.txt
