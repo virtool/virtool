@@ -9,7 +9,7 @@ on:
       - gh-actions-master
 
 jobs:
-  test:
+  test-server:
     runs-on: ubuntu-latest
 
     services:
@@ -28,7 +28,7 @@ jobs:
           pip install -qr requirements.txt
           pytest  -x --db-connection-string mongodb://mongo:27017 --cov --cov-report xml
 
-  client:
+  test-client:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -43,6 +43,8 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    needs: [test-server, test-client]
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
 
     steps:
       - uses: actions/checkout@v2
@@ -71,7 +73,6 @@ jobs:
           python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
           python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); print(flags&os.O_NONBLOCK);'
           python setup.py build
-          ls
           cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
           cd gh_build
           tar -czf virtool.tar.gz virtool
