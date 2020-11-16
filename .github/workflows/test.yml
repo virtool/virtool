@@ -65,7 +65,14 @@ jobs:
           npm i
           npx webpack --config webpack.production.config.babel.js
 
+      - name: set version
+        id: set_version
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+        if: startsWith(github.ref, 'refs/tags/v')
+
       - name: Build server
+        env:
+          RELEASE_VERSION: ${{ steps.set_version.outputs.tag }}
         run: |
           pip install -r requirements.txt
           mkdir gh_build
@@ -74,6 +81,7 @@ jobs:
           python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); print(flags&os.O_NONBLOCK);'
           python setup.py build
           cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
+          if [ "$RELEASE_VERSION" ]; then echo $RELEASE_VERSION > version.txt; else echo "v0.0.0" > version.txt; fi
           cd gh_build
           tar -czf virtool.tar.gz virtool
 
