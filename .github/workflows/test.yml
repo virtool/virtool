@@ -3,10 +3,10 @@ name: Virtool CI
 on:
   push:
     branches:
-      - master
+      - gh-actions-master
   pull_request:
     branches:
-      - master
+      - gh-actions-master
 
 jobs:
   server:
