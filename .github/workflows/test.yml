@@ -9,7 +9,7 @@ on:
       - gh-actions-master
 
 jobs:
-  server:
+  test:
     runs-on: ubuntu-latest
 
     services:
@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: test
+      - name: Test server
         run: |
           pip install -qr requirements.txt
           pytest  -x --db-connection-string mongodb://mongo:27017 --cov --cov-report xml
@@ -35,8 +35,44 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '12'
-      - name: test
+      - name: Test client
         run: |
           cd client
           npm i
           npx jest --coverage
+
+ build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+            node-version: '12'
+
+      - name: Use Python 3.6
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+
+      - name: Build client
+        run: |
+          cd client
+          npm i
+          npx webpack --config webpack.production.config.babel.js
+          
+      - name: Build server
+        run: |
+          pip install -r requirements.txt
+          mkdir gh_build
+          mkdir gh_build/virtool
+          python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
+          python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); print(flags&os.O_NONBLOCK);'
+          python setup.py build
+          ls
+          cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
+          cd gh_build
+          tar -czf virtool.tar.gz virtool
+
