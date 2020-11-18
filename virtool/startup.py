@@ -31,6 +31,7 @@ import virtool.software.db
 import virtool.subtractions.db
 import virtool.subtractions.utils
 import virtool.tasks.db
+import virtool.tasks.utils
 import virtool.utils
 import virtool.version
 
@@ -350,5 +351,5 @@ async def init_tasks(app: aiohttp.web.Application):
     reference_task = await virtool.tasks.db.register(db, "remove_directory", context={"user_id": "virtool"})
     remove_reference_task = virtool.references.db.RemoveReferenceTask(app, reference_task["id"])
 
-    await scheduler.spawn(virtool.utils.spawn_periodically(scheduler, remove_reference_task, 3600))
+    await scheduler.spawn(virtool.tasks.utils.spawn_periodically(scheduler, remove_reference_task, 3600))
 

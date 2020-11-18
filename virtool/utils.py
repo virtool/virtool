@@ -304,23 +304,6 @@ def should_use_pigz(processes: int) -> bool:
     return bool(processes > 1 and shutil.which("pigz"))
 
 
-async def spawn_periodically(scheduler: aiojobs.Scheduler, task: virtool.tasks.task.Task,  interval: int):
-    """
-    Spawn a task regularly at a given interval.
-
-    :param scheduler: an aiojobs container for managed jobs.
-    :param task: a Virtool task
-    :param interval: a time interval
-
-    """
-    try:
-        while True:
-            await scheduler.spawn(task.run())
-            await asyncio.sleep(interval)
-    except asyncio.CancelledError:
-        pass
-
-
 def timestamp() -> datetime.datetime:
     """
     Returns a datetime object representing the current UTC time. The last 3 digits of the microsecond frame are set

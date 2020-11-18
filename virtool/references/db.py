@@ -263,13 +263,14 @@ class RemoveReferenceTask(virtool.tasks.task.Task):
         self.non_existent_references = [ref_id for ref_id in reference_ids if ref_id not in existent_references]
 
         for dir_name in self.non_existent_references:
-            shutil.rmtree(os.path.join(path, dir_name))
+            await self.app["run_in_thread"](shutil.rmtree, os.path.join(path, dir_name), True)
 
     async def remove_indexes(self):
-        for ref_id in self.non_existent_references:
-            await self.db.indexes.delete_many({
-                "reference.id": ref_id
-            })
+        await self.db.indexes.delete_many({
+            "reference.id": {
+                "$in": self.non_existent_references
+            }
+        })
 
     async def remove_unreferenced_otus(self):
         for ref_id in self.non_existent_references:
@@ -302,10 +303,6 @@ class RemoveReferenceTask(virtool.tasks.task.Task):
         user_id = self.context["user_id"]
 
         for ref_id in self.non_existent_references:
-            otu_count = await self.db.otus.count_documents({"reference.id": ref_id})
-
-            tracker = self.get_tracker(otu_count)
-
             async for document in self.db.otus.find({"reference.id": ref_id}):
                 await virtool.otus.db.remove(
                     self.app,
@@ -314,8 +311,6 @@ class RemoveReferenceTask(virtool.tasks.task.Task):
                     document=document,
                     silent=True
                 )
-
-                await tracker.add(1)
 
 
 class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
