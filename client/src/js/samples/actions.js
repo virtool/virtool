@@ -5,6 +5,7 @@ import {
     FIND_READ_FILES,
     FIND_SAMPLES,
     GET_SAMPLE,
+    GET_LABELS,
     HIDE_SAMPLE_MODAL,
     REMOVE_SAMPLE,
     REPLACE_LEGACY_FILES,
@@ -119,6 +120,30 @@ export const labelEdit = (sampleId, update) => ({
     type: UPDATE_LABEL.REQUESTED,
     sampleId,
     update
+});
+
+/**
+ * Returns action that can trigger an API call to get sample labels.
+ *
+ * @func
+ * @returns {object}
+ */
+export const getLabels = () => ({
+    type: GET_LABELS.REQUESTED,
+});
+
+/**
+ * Returns action that can trigger an API call for creating a new label.
+ * 
+ * @func
+ * @param name {string} name for label
+ * @param color  {string} color name or hex value of label
+ * @return {object}
+ */
+export const createLabel = (name, color) => ({
+    type: CREATE_SAMPLE.REQUESTED,
+    name,
+    color
 });
 
 /**

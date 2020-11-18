@@ -6,7 +6,7 @@ import styled from "styled-components";
 import { BoxGroup, BoxGroupHeader, Table } from "../../base";
 import { getLibraryTypeDisplayName } from "../utils";
 import EditSample from "./Edit";
-import LabelEdit from "./Label";
+import LabelEdit from "./LabelEditor/LabelEditor";
 import SampleFileSizeWarning from "./FileSizeWarning.js";
 
 const StyledSampleDetailGeneral = styled.div`

@@ -1,6 +1,7 @@
 import { push } from "connected-react-router";
 import { includes } from "lodash-es";
 import { call, put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { get } from "superagent";
 import {
     CREATE_SAMPLE,
     FIND_READ_FILES,
@@ -11,7 +12,9 @@ import {
     UPDATE_LABEL,
     UPDATE_SAMPLE_RIGHTS,
     UPLOAD_SAMPLE_FILE,
-    WS_UPDATE_SAMPLE
+    WS_UPDATE_SAMPLE,
+    GET_LABELS,
+    CREATE_LABEL
 } from "../app/actionTypes";
 import * as filesAPI from "../files/api";
 import { createUploadChannel, watchUploadChannel } from "../files/sagas";
@@ -30,6 +33,7 @@ export function* watchSamples() {
     yield takeEvery(UPLOAD_SAMPLE_FILE.REQUESTED, uploadSampleFile);
     yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
     yield takeEvery(WS_UPDATE_SAMPLE, wsUpdateSample);
+    yield takeLatest(GET_LABELS.REQUESTED, getLabels);
 }
 
 export function* wsUpdateSample(action) {
@@ -79,6 +83,16 @@ export function* getSample(action) {
     } catch (error) {
         yield putGenericError(GET_SAMPLE, error);
     }
+}
+
+export function* getLabels(action) {
+    const response = yield samplesAPI.getLabels(action);
+    yield put({ type: GET_LABELS.SUCCEEDED, data: response.body});
+}
+
+export function* createLabel(action) {
+    const extraFunc = { closeModal: put(push({ state: { create: false } })) };
+    yield setPending(apiCall(samplesAPI.createLabel, action, CREATE_LABEL, {}, extraFunc));
 }
 
 export function* createSample(action) {

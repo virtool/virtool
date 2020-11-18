@@ -3,10 +3,18 @@ import { getColor } from "../app/theme";
 
 export const getLabelColor = props => getColor(props) || props.theme.color.greyDark;
 
+export const getContrastColor = props => {
+    const red = parseInt(props.color.substr(1, 2), 16);
+    const green = parseInt(props.color.substr(3, 2), 16);
+    const blue = parseInt(props.color.substr(5, 2), 16);
+    const yiq = (red * 299 + green * 587 + blue * 114) / 1000;
+    return yiq >= 128 ? "black" : "white";
+};
+
 export const Label = styled.span`
     background-color: ${getLabelColor};
     border-radius: ${props => props.theme.borderRadius.sm};
-    color: ${props => props.theme.color.white};
+    color: ${getContrastColor};
     display: inline;
     font-size: ${props => props.theme.fontSize.sm};
     font-weight: bold;

@@ -4,6 +4,7 @@ import {
     DESELECT_SAMPLES,
     FIND_READ_FILES,
     FIND_SAMPLES,
+    GET_LABELS,
     GET_SAMPLE,
     REMOVE_SAMPLE,
     SELECT_SAMPLE,
@@ -60,6 +61,12 @@ export default function samplesReducer(state = initialState, action) {
         case GET_SAMPLE.SUCCEEDED:
             return { ...state, detail: action.data };
 
+        case GET_LABELS.REQUESTED:{
+            return { ...state, detail: null };
+        }
+        case GET_LABELS.SUCCEEDED:{
+            return { ...state, labels: action.data };
+        }
         case UPDATE_SAMPLE.SUCCEEDED:
             return { ...state, detail: { ...state.detail, ...action.data } };
 
