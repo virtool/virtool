@@ -11,11 +11,8 @@ from random import choice
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Iterable, Union
 
-import aiojobs
 import aiofiles
 import arrow
-import asyncio
-import virtool.tasks.task
 
 RE_STATIC_HASH = re.compile("^main.([a-z0-9]+).css$")
 
