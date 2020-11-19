@@ -28,6 +28,12 @@ jobs:
           pip install -qr requirements.txt
           pytest  -x --db-connection-string mongodb://mongo:27017 --redis-connection-string redis://redis:6379 --cov --cov-report xml
 
+      - name: Run codacy-coverage-reporter
+        uses: codacy/codacy-coverage-reporter-action@master
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: $GITHUB_WORKSPACE/coverage.xml
+
 
   client:
     runs-on: ubuntu-latest
