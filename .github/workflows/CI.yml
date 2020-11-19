@@ -29,6 +29,7 @@ jobs:
           pytest  -x --db-connection-string mongodb://mongo:27017 --redis-connection-string redis://redis:6379 --cov --cov-report xml
 
       - name: Run codacy-coverage-reporter
+        if: ${{ github.event_name == 'push' }}
         uses: codacy/codacy-coverage-reporter-action@master
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
