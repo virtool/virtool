@@ -28,6 +28,13 @@ jobs:
           pip install -qr requirements.txt
           pytest  -x --db-connection-string mongodb://mongo:27017 --cov --cov-report xml
 
+      - name: Run codacy-coverage-reporter
+        if: ${{ github.event_name == 'push' }}
+        uses: codacy/codacy-coverage-reporter-action@master
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: $GITHUB_WORKSPACE/coverage.xml
+
   test-client:
     runs-on: ubuntu-latest
     steps:
