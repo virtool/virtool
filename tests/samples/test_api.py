@@ -503,7 +503,7 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
 
     snapshot.assert_match(await resp.json())
 
-@pytest.mark.parametrize("error", [None, "400_reference", "400_index", "400_ready_index", "404"])
+@pytest.mark.parametrize("error", [None, "400_reference", "400_index", "400_ready_index", "400_subtraction", "404"])
 async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
@@ -548,6 +548,11 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
             "ready": error != "400_ready_index"
         })
 
+    if error != "400_subtraction":
+        await client.db.subtraction.insert_one({
+            "_id": "bar"
+        })
+
     if error != "404":
         await client.db.samples.insert_one({
             "_id": "test",
@@ -561,7 +566,7 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
     resp = await client.post("/api/samples/test/analyses", data={
         "workflow": "pathoscope_bowtie",
         "ref_id": "foo",
-        "subtraction_id": "bar"
+        "subtractions": ["bar"]
     })
 
     if error == "400_reference":
@@ -570,6 +575,10 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
 
     if error == "400_index" or error == "400_ready_index":
         assert await resp_is.bad_request(resp, "No ready index")
+        return
+
+    if error == "400_subtraction":
+        assert await resp_is.bad_request(resp, "Subtractions do not exist: bar")
         return
 
     if error == "404":
@@ -588,7 +597,7 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
         client.app,
         "test",
         "foo",
-        "bar",
+        ["bar"],
         "test",
         "pathoscope_bowtie"
     )
