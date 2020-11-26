@@ -518,8 +518,8 @@ async def find_analyses(req):
         "type": "string",
         "required": True
     },
-    "subtraction_id": {
-        "type": "string"
+    "subtractions": {
+        "type": "list"
     },
     "workflow": {
         "type": "string",
@@ -553,18 +553,23 @@ async def analyze(req):
     if not await db.indexes.count_documents({"reference.id": ref_id, "ready": True}):
         return bad_request("No ready index")
 
-    subtraction_id = data.get("subtraction_id")
+    subtractions = data.get("subtractions")
 
-    if subtraction_id is None:
-        subtraction = await virtool.db.utils.get_one_field(db.samples, "subtraction", sample_id)
-        subtraction_id = subtraction["id"]
+    if subtractions is None:
+        subtractions = []
+    else:
+        existent_subtractions = await db.subtraction.distinct("_id")
+        non_existent_subtractions = [subtraction for subtraction in subtractions if subtraction not in existent_subtractions]
+
+        if non_existent_subtractions:
+            return bad_request("Subtractions do not exist: " + ", ".join(non_existent_subtractions))
 
     # Generate a unique _id for the analysis entry
     document = await virtool.analyses.db.create(
         req.app,
         sample_id,
         ref_id,
-        subtraction_id,
+        subtractions,
         req["client"].user_id,
         data["workflow"]
     )
