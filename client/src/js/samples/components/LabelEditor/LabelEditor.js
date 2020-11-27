@@ -1,12 +1,13 @@
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { get } from "lodash-es";
+import { get, map } from "lodash-es";
 import { pushState } from "../../../app/actions";
 import { Modal, ModalHeader, ModalBody, ModalFooter, Table } from "../../../base";
-import { labelEdit, getLabels } from "../../actions";
+import { labelEdit, getLabels, createLabel, removeLabel, updateLabel } from "../../actions";
 import { CreateLabel } from "./CreateLabel";
 import { LabelItem } from "./LabelItem";
+import { EditLabel } from "./EditLabel";
 
 export const LabelTable = styled(Table)`
     border: none;
@@ -33,8 +34,11 @@ export const LabelFooter = styled(ModalFooter)`
     text-align: left;
 `;
 
-const getInitialState = ({ isCreate, isEdit }) => ({
-    isCreate: isCreate || false,
+const getInitialState = ({ id, name, description, color, isEdit }) => ({
+    id: id || false,
+    name: name || "",
+    description: description || "",
+    color: color || "",
     isEdit: isEdit || false,
     error: ""
 });
@@ -50,21 +54,50 @@ class LabelEdit extends React.Component {
         this.props.onLoadLabels();
     };
 
-    handleCreate = () => {
-        this.setState({ isCreate: true });
-    };
-
     handleModalExited = () => {
         if (this.props.error) {
             this.props.onClearError();
         }
     };
 
-    submitNewLabel = () => {
-        this.props.submitNewLabel();
-    }
+    submitNewLabel = e => {
+        const { name, description, color } = e;
+        this.props.submitNewLabel(name, description, color);
+        this.props.onLoadLabels();
+    };
+
+    removeLabel = id => {
+        this.props.removeLabel(id);
+    };
+
+    updateLabel = e => {
+        const { id, name, description, color } = e;
+        this.props.updateLabel(id, name, description, color);
+    };
+
+    editLabel = (id, name, description, color) => {
+        this.setState({
+            isEdit: true,
+            id,
+            name,
+            description,
+            color
+        });
+    };
 
     render() {
+        const isEdit = this.state.isEdit;
+        const labels = map(this.props.labels, label => (
+            <LabelItem
+                key={label.id}
+                name={label.name}
+                color={label.color}
+                description={label.description}
+                id={label.id}
+                removeLabel={this.removeLabel}
+                editLabel={this.editLabel}
+            ></LabelItem>
+        ));
         return (
             <Modal
                 label="Label Editor"
@@ -81,14 +114,21 @@ class LabelEdit extends React.Component {
                                 <th>Labels</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <LabelItem color="blue" name="Testing" description="Hello World"></LabelItem>
-                            <LabelItem color="#FFB6C1" name="A really long name" description="This is a test description."></LabelItem>
-                        </tbody>
+                        <tbody>{labels}</tbody>
                     </LabelTable>
                 </ModalBody>
                 <LabelFooter>
-                    <CreateLabel></CreateLabel>
+                    {isEdit ? (
+                        <EditLabel
+                            name={this.state.name}
+                            description={this.state.description}
+                            color={this.state.color}
+                            id={this.state.id}
+                            updateLabel={this.updateLabel}
+                        ></EditLabel>
+                    ) : (
+                        <CreateLabel submitNewLabel={this.submitNewLabel}></CreateLabel>
+                    )}
                 </LabelFooter>
             </Modal>
         );
@@ -97,9 +137,9 @@ class LabelEdit extends React.Component {
 
 const mapStateToProps = state => ({
     ...state.samples.detail,
+    labels: state.samples.labels,
     show: get(state.router.location.state, "labelEdit", false),
     error: get(state, "errors.UPDATE_SAMPLE_ERROR.message", "")
-    
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -115,8 +155,16 @@ const mapDispatchToProps = dispatch => ({
         dispatch(getLabels());
     },
 
-    submitNewLabel: () => {
-        dispatch(createLabel());
+    submitNewLabel: (name, description, color) => {
+        dispatch(createLabel(name, description, color));
+    },
+
+    removeLabel: id => {
+        dispatch(removeLabel(id));
+    },
+
+    updateLabel: (id, name, description, color) => {
+        dispatch(updateLabel(id, name, description, color));
     }
 });
 

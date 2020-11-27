@@ -32,7 +32,7 @@ const SampleDetail = ({ canModify, detail, error, history, match, onGetSample })
     useEffect(() => {
         onGetSample(sampleId);
     }, [sampleId]);
-    
+
     if (error) {
         return <NotFound />;
     }

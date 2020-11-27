@@ -1,7 +1,6 @@
 import { push } from "connected-react-router";
 import { includes } from "lodash-es";
 import { call, put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
-import { get } from "superagent";
 import {
     CREATE_SAMPLE,
     FIND_READ_FILES,
@@ -14,7 +13,8 @@ import {
     UPLOAD_SAMPLE_FILE,
     WS_UPDATE_SAMPLE,
     GET_LABELS,
-    CREATE_LABEL
+    CREATE_LABEL,
+    REMOVE_LABEL
 } from "../app/actionTypes";
 import * as filesAPI from "../files/api";
 import { createUploadChannel, watchUploadChannel } from "../files/sagas";
@@ -34,6 +34,9 @@ export function* watchSamples() {
     yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
     yield takeEvery(WS_UPDATE_SAMPLE, wsUpdateSample);
     yield takeLatest(GET_LABELS.REQUESTED, getLabels);
+    yield throttle(500, CREATE_LABEL.REQUESTED, createLabel);
+    yield throttle(300, REMOVE_LABEL.REQUESTED, removeLabel);
+    yield takeEvery(UPDATE_LABEL.REQUESTED, updateLabel);
 }
 
 export function* wsUpdateSample(action) {
@@ -87,12 +90,19 @@ export function* getSample(action) {
 
 export function* getLabels(action) {
     const response = yield samplesAPI.getLabels(action);
-    yield put({ type: GET_LABELS.SUCCEEDED, data: response.body});
+    yield put({ type: GET_LABELS.SUCCEEDED, data: response.body });
 }
 
 export function* createLabel(action) {
-    const extraFunc = { closeModal: put(push({ state: { create: false } })) };
-    yield setPending(apiCall(samplesAPI.createLabel, action, CREATE_LABEL, {}, extraFunc));
+    yield setPending(apiCall(samplesAPI.createLabel, action, CREATE_LABEL));
+}
+
+export function* removeLabel(action) {
+    yield setPending(apiCall(samplesAPI.removeLabel, action, REMOVE_LABEL));
+}
+
+export function* updateLabel(action) {
+    yield setPending(apiCall(samplesAPI.updateLabel, action, UPDATE_LABEL));
 }
 
 export function* createSample(action) {

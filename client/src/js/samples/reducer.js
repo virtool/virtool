@@ -6,8 +6,10 @@ import {
     FIND_SAMPLES,
     GET_LABELS,
     GET_SAMPLE,
+    REMOVE_LABEL,
     REMOVE_SAMPLE,
     SELECT_SAMPLE,
+    UPDATE_LABEL,
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
     WS_INSERT_SAMPLE,
@@ -61,12 +63,14 @@ export default function samplesReducer(state = initialState, action) {
         case GET_SAMPLE.SUCCEEDED:
             return { ...state, detail: action.data };
 
-        case GET_LABELS.REQUESTED:{
-            return { ...state, detail: null };
-        }
-        case GET_LABELS.SUCCEEDED:{
+        case GET_LABELS.REQUESTED:
+            return { ...state, labels: {...state.labels} };
+        case GET_LABELS.SUCCEEDED:
             return { ...state, labels: action.data };
-        }
+        case REMOVE_LABEL.SUCCEEDED:
+            return { ...state };
+        case UPDATE_LABEL.SUCCEEDED:
+            return { ...state };
         case UPDATE_SAMPLE.SUCCEEDED:
             return { ...state, detail: { ...state.detail, ...action.data } };
 

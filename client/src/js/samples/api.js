@@ -15,8 +15,21 @@ export const get = ({ sampleId }) => Request.get(`/api/samples/${sampleId}`);
 export const getLabels = () => Request.get("/api/labels");
 
 export const createLabel = action => {
+    const { name, description, color } = action;
     return Request.post("/api/labels").send({
         name,
+        description,
+        color
+    });
+};
+
+export const removeLabel = ({ labelId }) => Request.delete(`/api/labels/${labelId}`);
+
+export const updateLabel = action => {
+    const { labelId, name, description, color } = action;
+    return Request.patch(`/api/labels/${labelId}`).send({
+        name,
+        description,
         color
     });
 };

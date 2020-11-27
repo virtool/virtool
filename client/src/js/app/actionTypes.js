@@ -228,3 +228,5 @@ export const INSTALL_SOFTWARE_UPDATES = createRequestActionType("INSTALL_SOFTWAR
 //Labels
 export const UPDATE_LABEL = createRequestActionType("UPDATE_LABEL");
 export const GET_LABELS = createRequestActionType("GET_LABELS");
+export const CREATE_LABEL = createRequestActionType("CREATE_LABEL");
+export const REMOVE_LABEL = createRequestActionType("REMOVE_LABEL");

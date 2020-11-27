@@ -6,6 +6,8 @@ import {
     FIND_SAMPLES,
     GET_SAMPLE,
     GET_LABELS,
+    CREATE_LABEL,
+    REMOVE_LABEL,
     HIDE_SAMPLE_MODAL,
     REMOVE_SAMPLE,
     REPLACE_LEGACY_FILES,
@@ -129,20 +131,52 @@ export const labelEdit = (sampleId, update) => ({
  * @returns {object}
  */
 export const getLabels = () => ({
-    type: GET_LABELS.REQUESTED,
+    type: GET_LABELS.REQUESTED
+});
+
+/**
+ * Returns action that can trigger an API call for removing a label.
+ *
+ * @func
+ * @param labelId {string} unique label id
+ * @returns {object}
+ */
+export const removeLabel = labelId => ({
+    type: REMOVE_LABEL.REQUESTED,
+    labelId
 });
 
 /**
  * Returns action that can trigger an API call for creating a new label.
- * 
+ *
  * @func
  * @param name {string} name for label
+ * @param description {string} description of label
  * @param color  {string} color name or hex value of label
  * @return {object}
  */
-export const createLabel = (name, color) => ({
-    type: CREATE_SAMPLE.REQUESTED,
+export const createLabel = (name, description, color) => ({
+    type: CREATE_LABEL.REQUESTED,
     name,
+    description,
+    color
+});
+
+/**
+ * Returns action that can trigger an API call for updating a label
+ *
+ * @func
+ * @param id
+ * @param name
+ * @param description
+ * @param color
+ * @return {object}
+ */
+export const updateLabel = (labelId, name, description, color) => ({
+    type: UPDATE_LABEL.REQUESTED,
+    labelId,
+    name,
+    description,
     color
 });
 

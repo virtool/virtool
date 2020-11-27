@@ -32,26 +32,60 @@ export class ColorSelector extends React.Component {
 
     handleButtonChange = color => {
         this.setState({
-            color: color
+            color
         });
-        this.props.onColorChange({ color: color });
+        this.props.onColorChange({ color });
     };
 
     render() {
+        const color = this.state.color;
         return (
             <InputGroup>
                 <InputLabel>Select a color</InputLabel>
                 <div>
-                    <ColorButton color="green" onClick={() => this.handleButtonChange("green")}></ColorButton>
-                    <ColorButton color="orange" onClick={() => this.handleButtonChange("orange")}></ColorButton>
-                    <ColorButton color="yellow" onClick={() => this.handleButtonChange("yellow")}></ColorButton>
-                    <ColorButton color="red" onClick={() => this.handleButtonChange("red")}></ColorButton>
-                    <ColorButton color="purple" onClick={() => this.handleButtonChange("purple")}></ColorButton>
-                    <ColorButton color="blue" onClick={() => this.handleButtonChange("blue")}></ColorButton>
-                    <ColorButton color="primary" onClick={() => this.handleButtonChange("primary")}></ColorButton>
+                    <ColorButton
+                        name="color"
+                        color="green"
+                        onClick={() => this.handleButtonChange("#1DAD57")}
+                    ></ColorButton>
+                    <ColorButton
+                        name="color"
+                        color="orange"
+                        onClick={() => this.handleButtonChange("#F7A000")}
+                    ></ColorButton>
+                    <ColorButton
+                        name="color"
+                        color="yellow"
+                        onClick={() => this.handleButtonChange("#FFE030")}
+                    ></ColorButton>
+                    <ColorButton
+                        name="color"
+                        color="red"
+                        onClick={() => this.handleButtonChange("#E0282E")}
+                    ></ColorButton>
+                    <ColorButton
+                        name="color"
+                        color="purple"
+                        onClick={() => this.handleButtonChange("#9F7AEA")}
+                    ></ColorButton>
+                    <ColorButton
+                        name="color"
+                        color="blue"
+                        onClick={() => this.handleButtonChange("#0B7FE5")}
+                    ></ColorButton>
+                    <ColorButton
+                        name="color"
+                        color="primary"
+                        onClick={() => this.handleButtonChange("#3C8786")}
+                    ></ColorButton>
                 </div>
                 <InputLabel>or enter a custom color </InputLabel>
-                <ColorInput placeholder="Ex. #D3D3D3" name="color" onChange={this.handleChange}></ColorInput>
+                <ColorInput
+                    placeholder="Ex. #D3D3D3"
+                    name="color"
+                    value={color}
+                    onChange={this.handleChange}
+                ></ColorInput>
             </InputGroup>
         );
     }

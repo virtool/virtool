@@ -1,20 +1,31 @@
 import React from "react";
+import { connect } from "react-redux";
 import styled from "styled-components";
-import { Label, LinkIcon } from "../../../base";
+import { Label, Icon } from "../../../base";
 
-const getInitialState = ({ name, color, description }) => ({
+const getInitialState = ({ name, color, description, id }) => ({
     name: name || "",
     color: color || "",
-    description: description || ""
+    description: description || "",
+    id: id || ""
 });
+
+export const getContrastColor = props => {
+    const red = parseInt(props.color.substr(1, 2), 16);
+    const green = parseInt(props.color.substr(3, 2), 16);
+    const blue = parseInt(props.color.substr(5, 2), 16);
+    const yiq = (red * 299 + green * 587 + blue * 114) / 1000;
+    return yiq >= 128 ? "black" : "white";
+};
 
 export const BigLabel = styled(Label)`
     padding: 5px;
     font-size: ${props => props.theme.fontSize.lg};
     background-color: ${props => props.color};
+    color: ${getContrastColor};
 `;
 
-export const TableIcon = styled(LinkIcon)`
+export const TableIcon = styled(Icon)`
     padding: 0px 8px;
     font-size: ${props => props.theme.fontSize.lg};
 `;
@@ -29,28 +40,48 @@ export const IconColumn = styled.td`
     max-width: 75px;
 `;
 
-
 export class LabelItem extends React.Component {
     constructor(props) {
         super(props);
         this.state = getInitialState(this.props);
     }
 
+    onRemove = id => {
+        this.props.removeLabel(id);
+    };
+
+    onEdit = (id, name, color, description) => {
+        this.props.editLabel(id, name, color, description);
+    };
+
     render() {
         const name = this.state.name;
         const color = this.state.color;
         const description = this.state.description;
+        const id = this.state.id;
         return (
             <tr>
                 <td>
                     <BigLabel color={color}>{name}</BigLabel>
                     <Description>{description}</Description>
-                    </td>
+                </td>
                 <IconColumn>
-                    <TableIcon color="orange" to="" name="pencil-alt" tip="Edit" />
-                    <TableIcon color="red" to="" name="fas fa-times" tip="Remove" />
+                    <TableIcon
+                        color="orange"
+                        onClick={() => this.onEdit(id, name, description, color)}
+                        name="pencil-alt"
+                        tip="Edit"
+                    />
+                    <TableIcon color="red" onClick={() => this.onRemove(id)} name="fas fa-times" tip="Remove" />
                 </IconColumn>
             </tr>
         );
     }
 }
+const mapStateToProps = state => ({
+    name: sate.name,
+    color: state.color,
+    description: state.description
+});
+
+export default connect(mapStateToProps)(LabelItem);

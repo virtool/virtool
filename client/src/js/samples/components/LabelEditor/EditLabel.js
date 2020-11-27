@@ -2,14 +2,15 @@ import React from "react";
 import { InputGroup, InputLabel, Input, Button, InputError } from "../../../base";
 import { ColorSelector } from "./ColorSelector";
 
-const getInitialState = ({ labelName, color, description, errorName }) => ({
-    labelName: labelName || "",
+const getInitialState = ({ name, color, description, id, errorName }) => ({
+    name: name || "",
     color: color || "",
     description: description || "",
+    id: id || "",
     errorName: errorName || ""
 });
 
-export class CreateLabel extends React.Component {
+export class EditLabel extends React.Component {
     constructor(props) {
         super(props);
         this.state = getInitialState(this.props);
@@ -27,12 +28,13 @@ export class CreateLabel extends React.Component {
         this.setState(e);
     };
 
-    handleSubmit = () => {
-        if (this.state.labelName === "") {
+    handleSave = () => {
+        if (this.state.name === "") {
             this.setState({ errorName: "Please enter a label name" });
         } else {
-            this.props.submitNewLabel({
-                name: this.state.labelName,
+            this.props.updateLabel({
+                id: this.state.id,
+                name: this.state.name,
                 description: this.state.description,
                 color: this.state.color
             });
@@ -40,20 +42,20 @@ export class CreateLabel extends React.Component {
     };
 
     render() {
-        const labelName = this.state.labelName;
+        const name = this.state.name;
         const description = this.state.description;
         const color = this.state.color;
         const errorName = this.errorName;
         return (
             <div>
-                <h3>Create a label</h3>
+                <h3>Edit a label</h3>
                 <form>
                     <InputGroup>
                         <InputLabel>Name</InputLabel>
                         <Input
                             placeholder="Label name"
-                            name="labelName"
-                            value={labelName}
+                            name="name"
+                            value={name}
                             onChange={this.handleChange}
                             error={errorName}
                         ></Input>
@@ -67,9 +69,10 @@ export class CreateLabel extends React.Component {
                         ></Input>
                     </InputGroup>
                     <ColorSelector name="color" color={color} onColorChange={this.handleColorSelection}></ColorSelector>
-                    <Button color="green" onClick={this.handleSubmit}>
-                        Create
+                    <Button color="green" onClick={this.handleSave}>
+                        Save
                     </Button>
+                    <Button onClick={this.cancelEdit}>Cancel</Button>
                 </form>
             </div>
         );
