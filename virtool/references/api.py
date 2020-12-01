@@ -530,7 +530,7 @@ async def edit(req):
 @routes.delete("/api/refs/{ref_id}")
 async def remove(req):
     """
-    Remove a reference and its otus, history, and indexes.
+    Delete a reference and its otus, history, and indexes.
 
     """
     db = req.app["db"]
@@ -556,7 +556,7 @@ async def remove(req):
         "_id": ref_id
     })
 
-    t = virtool.references.db.RemoveReferenceTask(req.app, task["id"])
+    t = virtool.references.db.DeleteReferenceTask(req.app, task["id"])
 
     await aiojobs.aiohttp.spawn(req, t.run())
 
