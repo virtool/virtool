@@ -95,10 +95,12 @@ export function* getLabels(action) {
 
 export function* createLabel(action) {
     yield setPending(apiCall(samplesAPI.createLabel, action, CREATE_LABEL));
+    yield call(getLabels, { type: GET_LABELS.REQUESTED });
 }
 
 export function* removeLabel(action) {
     yield setPending(apiCall(samplesAPI.removeLabel, action, REMOVE_LABEL));
+    yield call(getLabels, { type: GET_LABELS.REQUESTED });
 }
 
 export function* updateLabel(action) {

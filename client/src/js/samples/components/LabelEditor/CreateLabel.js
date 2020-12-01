@@ -2,11 +2,12 @@ import React from "react";
 import { InputGroup, InputLabel, Input, Button, InputError } from "../../../base";
 import { ColorSelector } from "./ColorSelector";
 
-const getInitialState = ({ labelName, color, description, errorName }) => ({
+const getInitialState = ({ labelName, color, description, errorName, errorColor }) => ({
     labelName: labelName || "",
     color: color || "",
     description: description || "",
-    errorName: errorName || ""
+    errorName: errorName || "",
+    errorColor: errorColor || ""
 });
 
 export class CreateLabel extends React.Component {
@@ -30,6 +31,8 @@ export class CreateLabel extends React.Component {
     handleSubmit = () => {
         if (this.state.labelName === "") {
             this.setState({ errorName: "Please enter a label name" });
+        } else if (this.state.color === "") {
+            this.setState({ errorColor: "Please select a color" });
         } else {
             this.props.submitNewLabel({
                 name: this.state.labelName,
@@ -43,7 +46,8 @@ export class CreateLabel extends React.Component {
         const labelName = this.state.labelName;
         const description = this.state.description;
         const color = this.state.color;
-        const errorName = this.errorName;
+        const errorName = this.state.errorName;
+        const errorColor = this.state.errorColor;
         return (
             <div>
                 <h3>Create a label</h3>
@@ -66,7 +70,12 @@ export class CreateLabel extends React.Component {
                             onChange={this.handleChange}
                         ></Input>
                     </InputGroup>
-                    <ColorSelector name="color" color={color} onColorChange={this.handleColorSelection}></ColorSelector>
+                    <ColorSelector
+                        name="color"
+                        color={color}
+                        errorColor={errorColor}
+                        onColorChange={this.handleColorSelection}
+                    ></ColorSelector>
                     <Button color="green" onClick={this.handleSubmit}>
                         Create
                     </Button>

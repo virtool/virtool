@@ -35,7 +35,7 @@ export const LabelFooter = styled(ModalFooter)`
 `;
 
 const getInitialState = ({ id, name, description, color, isEdit }) => ({
-    id: id || false,
+    id: id || "",
     name: name || "",
     description: description || "",
     color: color || "",
@@ -63,7 +63,6 @@ class LabelEdit extends React.Component {
     submitNewLabel = e => {
         const { name, description, color } = e;
         this.props.submitNewLabel(name, description, color);
-        this.props.onLoadLabels();
     };
 
     removeLabel = id => {
@@ -73,6 +72,10 @@ class LabelEdit extends React.Component {
     updateLabel = e => {
         const { id, name, description, color } = e;
         this.props.updateLabel(id, name, description, color);
+        this.setState({
+            isEdit: false
+        });
+        this.props.onLoadLabels();
     };
 
     editLabel = (id, name, description, color) => {
@@ -82,6 +85,12 @@ class LabelEdit extends React.Component {
             name,
             description,
             color
+        });
+    };
+
+    cancelEdit = () => {
+        this.setState({
+            isEdit: false
         });
     };
 
@@ -125,6 +134,7 @@ class LabelEdit extends React.Component {
                             color={this.state.color}
                             id={this.state.id}
                             updateLabel={this.updateLabel}
+                            cancelEdit={this.cancelEdit}
                         ></EditLabel>
                     ) : (
                         <CreateLabel submitNewLabel={this.submitNewLabel}></CreateLabel>
@@ -135,14 +145,14 @@ class LabelEdit extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     ...state.samples.detail,
     labels: state.samples.labels,
     show: get(state.router.location.state, "labelEdit", false),
     error: get(state, "errors.UPDATE_SAMPLE_ERROR.message", "")
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onHide: () => {
         dispatch(pushState({ showEdit: false }));
     },

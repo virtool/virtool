@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { Button, Input, InputGroup, InputLabel } from "../../../base";
+import { Button, Input, InputGroup, InputLabel, InputError } from "../../../base";
 
 export const ColorButton = styled(Button)`
     background-color: ${props => props.color};
@@ -85,7 +85,9 @@ export class ColorSelector extends React.Component {
                     name="color"
                     value={color}
                     onChange={this.handleChange}
+                    error={this.props.errorColor}
                 ></ColorInput>
+                <InputError>{this.props.errorColor}</InputError>
             </InputGroup>
         );
     }

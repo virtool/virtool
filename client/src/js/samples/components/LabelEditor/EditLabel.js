@@ -2,12 +2,13 @@ import React from "react";
 import { InputGroup, InputLabel, Input, Button, InputError } from "../../../base";
 import { ColorSelector } from "./ColorSelector";
 
-const getInitialState = ({ name, color, description, id, errorName }) => ({
+const getInitialState = ({ name, color, description, id, errorName, errorColor }) => ({
     name: name || "",
     color: color || "",
     description: description || "",
     id: id || "",
-    errorName: errorName || ""
+    errorName: errorName || "",
+    errorColor: errorColor || ""
 });
 
 export class EditLabel extends React.Component {
@@ -31,6 +32,8 @@ export class EditLabel extends React.Component {
     handleSave = () => {
         if (this.state.name === "") {
             this.setState({ errorName: "Please enter a label name" });
+        } else if (this.state.color === "") {
+            this.setState({ errorColor: "Please select a color" });
         } else {
             this.props.updateLabel({
                 id: this.state.id,
@@ -41,11 +44,16 @@ export class EditLabel extends React.Component {
         }
     };
 
+    cancelEdit = () => {
+        this.props.cancelEdit();
+    };
+
     render() {
         const name = this.state.name;
         const description = this.state.description;
         const color = this.state.color;
-        const errorName = this.errorName;
+        const errorName = this.state.errorName;
+        const errorColor = this.state.errorColor;
         return (
             <div>
                 <h3>Edit a label</h3>
@@ -68,7 +76,12 @@ export class EditLabel extends React.Component {
                             onChange={this.handleChange}
                         ></Input>
                     </InputGroup>
-                    <ColorSelector name="color" color={color} onColorChange={this.handleColorSelection}></ColorSelector>
+                    <ColorSelector
+                        name="color"
+                        color={color}
+                        onColorChange={this.handleColorSelection}
+                        errorColor={errorColor}
+                    ></ColorSelector>
                     <Button color="green" onClick={this.handleSave}>
                         Save
                     </Button>

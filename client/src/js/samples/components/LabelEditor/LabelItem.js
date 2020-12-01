@@ -27,7 +27,7 @@ export const BigLabel = styled(Label)`
 
 export const TableIcon = styled(Icon)`
     padding: 0px 8px;
-    font-size: ${props => props.theme.fontSize.lg};
+    font-size: 20px;
 `;
 
 export const Description = styled.p`
