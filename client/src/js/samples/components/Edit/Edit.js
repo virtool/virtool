@@ -14,9 +14,9 @@ import {
     InputLabel,
     Modal,
     SaveButton,
-    ModalHeader
+    ModalHeader,
+    TextArea
 } from "../../../base";
-import { Notes } from "./Notes";
 
 const NotesInputLabel = styled(InputLabel)`
     display: block;
@@ -102,7 +102,12 @@ class EditSample extends React.Component {
                         </InputGroup>
                         <InputGroup classname="mark-input">
                             <NotesInputLabel>Notes</NotesInputLabel>
-                            <Notes name="notes" notes={this.state.notes} onNotesChanges={this.handleChange} />
+                            <TextArea
+                                name="notes"
+                                value={this.state.notes}
+                                onChange={this.handleChange}
+                                className="input"
+                            />
                         </InputGroup>
                     </ModalBody>
                     <ModalFooter>
