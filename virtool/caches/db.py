@@ -71,14 +71,14 @@ async def find_and_wait(db, sample_id: str, program: str, parameters: dict) -> O
     :return: a cache document
 
     """
-    document = await db.caches.find_one(db, sample_id, program, parameters)
+    document = await find(db, sample_id, program, parameters)
 
     if document:
-        cache_id = document["_id"]
+        cache_id = document["id"]
 
         while document["ready"] is False:
             await asyncio.sleep(2)
-            document = await db.caches.find_one(cache_id)
+            document = virtool.utils.base_processor(await db.caches.find_one(cache_id))
 
     return virtool.utils.base_processor(document)
 

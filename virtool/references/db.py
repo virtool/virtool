@@ -234,7 +234,7 @@ class ImportReferenceTask(virtool.tasks.task.Task):
             await tracker.add(1)
 
 
-class RemoveReferenceTask(virtool.tasks.task.Task):
+class DeleteReferenceTask(virtool.tasks.task.Task):
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)
