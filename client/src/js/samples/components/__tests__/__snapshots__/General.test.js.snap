@@ -1,17 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<SampleDetailGeneral /> renders <EditSample /> component 1`] = `null`;
-
-exports[`<SampleDetailGeneral /> renders <MarkdownNotes /> component 1`] = `
-<MarkdownNotes
-  notes="Edit the sample to add additional notes."
-/>
-`;
-
-exports[`<SampleDetailGeneral /> renders both Edit notes components  1`] = `<MarkdownNotes />`;
-
-exports[`<SampleDetailGeneral /> renders both Edit notes components  2`] = `null`;
-
 exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
 <General__StyledSampleDetailGeneral>
   <Connect(SampleFileSizeWarning) />
@@ -156,8 +144,8 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
         Additional notes about the sample.
       </p>
     </Box__BoxGroupHeader>
-    <MarkdownNotes
-      notes="Edit the sample to add additional notes."
+    <Markdown
+      markdown="Example notes"
     />
   </Box__BoxGroup>
   <Connect(EditSample) />
@@ -308,8 +296,8 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
         Additional notes about the sample.
       </p>
     </Box__BoxGroupHeader>
-    <MarkdownNotes
-      notes="Edit the sample to add additional notes."
+    <Markdown
+      markdown="Example notes"
     />
   </Box__BoxGroup>
   <Connect(EditSample) />

@@ -12,7 +12,7 @@ describe("<SampleDetailGeneral />", () => {
             lengthRange: "41 - 76",
             locale: "Bar",
             name: "Foo",
-            notes: "Edit the sample to add additional notes.",
+            notes: "Example notes",
             paired: false,
             subtraction: {
                 id: "baz",
@@ -26,22 +26,6 @@ describe("<SampleDetailGeneral />", () => {
         props.paired = paired;
         const wrapper = shallow(<SampleDetailGeneral {...props} />);
         expect(wrapper).toMatchSnapshot();
-    });
-
-    it("renders <MarkdownNotes /> component", () => {
-        const wrapper = shallow(<SampleDetailGeneral {...props} />);
-        expect(wrapper.find("MarkdownNotes")).toMatchSnapshot();
-    });
-
-    it("renders <EditSample /> component", () => {
-        const wrapper = shallow(<SampleDetailGeneral {...props} />);
-        expect(wrapper.find("EditSample")).toMatchSnapshot();
-    });
-
-    it("renders both Edit notes components ", () => {
-        const wrapper = shallow(<SampleDetailGeneral />);
-        expect(wrapper.find("MarkdownNotes")).toMatchSnapshot();
-        expect(wrapper.find("TextArea")).toMatchSnapshot();
     });
 });
 

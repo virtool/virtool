@@ -1,26 +1,21 @@
 import { get, pick } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
 import { pushState } from "../../../app/actions";
-import { clearError } from "../../../errors/actions";
-import { editSample } from "../../actions";
 import {
-    ModalBody,
-    ModalFooter,
     Input,
     InputError,
     InputGroup,
     InputLabel,
     Modal,
-    SaveButton,
+    ModalBody,
+    ModalFooter,
     ModalHeader,
+    SaveButton,
     TextArea
 } from "../../../base";
-
-const NotesInputLabel = styled(InputLabel)`
-    display: block;
-`;
+import { clearError } from "../../../errors/actions";
+import { editSample } from "../../actions";
 
 const getInitialState = ({ name, isolate, host, locale, notes }) => ({
     name: name || "",
@@ -101,7 +96,7 @@ class EditSample extends React.Component {
                             <Input name="locale" value={this.state.locale} onChange={this.handleChange} />
                         </InputGroup>
                         <InputGroup classname="mark-input">
-                            <NotesInputLabel>Notes</NotesInputLabel>
+                            <InputLabel>Notes</InputLabel>
                             <TextArea
                                 name="notes"
                                 value={this.state.notes}

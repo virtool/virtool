@@ -22,7 +22,7 @@ export * from "./Label";
 export * from "./Loader";
 export * from "./LoadingPlaceholder";
 export * from "./Logo";
-export * from "./MarkdownNotes";
+export * from "./Markdown";
 export * from "./Modal";
 export * from "./NoneFound";
 export * from "./NotFound";

@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Markdown /> should render NoneFound without markdown 1`] = `
+<Markdown__StyledMarkdown>
+  <NoneFound
+    noun="notes"
+  />
+</Markdown__StyledMarkdown>
+`;
+
+exports[`<Markdown /> should render with markdown 1`] = `
+<Markdown__StyledMarkdown
+  dangerouslySetInnerHTML={
+    Object {
+      "__html": "<pre><code>        # Heading
+        body</code></pre>",
+    }
+  }
+/>
+`;
