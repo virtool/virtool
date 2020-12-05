@@ -1,27 +1,28 @@
 import { get, pick } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { pushState } from "../../app/actions";
+import { pushState } from "../../../app/actions";
 import {
-    ModalBody,
-    ModalFooter,
     Input,
     InputError,
     InputGroup,
     InputLabel,
     Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader,
     SaveButton,
-    ModalHeader
-} from "../../base";
-import { clearError } from "../../errors/actions";
+    TextArea
+} from "../../../base";
+import { clearError } from "../../../errors/actions";
+import { editSample } from "../../actions";
 
-import { editSample } from "../actions";
-
-const getInitialState = ({ name, isolate, host, locale }) => ({
+const getInitialState = ({ name, isolate, host, locale, notes }) => ({
     name: name || "",
     isolate: isolate || "",
     host: host || "",
     locale: locale || "",
+    notes: notes || "",
     error: ""
 });
 
@@ -61,13 +62,11 @@ class EditSample extends React.Component {
                 error: "Required Field"
             });
         }
-
-        this.props.onEdit(this.props.id, pick(this.state, ["name", "isolate", "host", "locale"]));
+        this.props.onEdit(this.props.id, pick(this.state, ["name", "isolate", "host", "locale", "notes"]));
     };
 
     render() {
         const error = this.state.error || this.props.error || "";
-
         return (
             <Modal
                 label="Edit Sample"
@@ -95,6 +94,15 @@ class EditSample extends React.Component {
                         <InputGroup>
                             <InputLabel>Locale</InputLabel>
                             <Input name="locale" value={this.state.locale} onChange={this.handleChange} />
+                        </InputGroup>
+                        <InputGroup classname="mark-input">
+                            <InputLabel>Notes</InputLabel>
+                            <TextArea
+                                name="notes"
+                                value={this.state.notes}
+                                onChange={this.handleChange}
+                                className="input"
+                            />
                         </InputGroup>
                     </ModalBody>
                     <ModalFooter>
