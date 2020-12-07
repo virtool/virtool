@@ -136,7 +136,8 @@ class Job(virtool.jobs.job.Job):
         paths = virtool.samples.utils.join_legacy_read_paths(self.settings, sample)
 
         if paths:
-            return self._fetch_legacy(paths)
+            self.params["read_paths"] = self._fetch_legacy(paths)
+            return
 
         return self._create_cache(parameters)
 
@@ -225,9 +226,14 @@ class Job(virtool.jobs.job.Job):
         self._set_cache_id(cache["id"])
 
     def _fetch_legacy(self, legacy_read_paths):
+        local_paths = list()
+
         for path in legacy_read_paths:
             local_path = os.path.join(self.params["reads_path"], pathlib.Path(path).name)
+            local_paths.append(local_path)
             shutil.copy(path, local_path)
+
+        return local_paths
 
     def _run_cache_qc(self, cache_id, temp_path):
         fastqc_path = os.path.join(temp_path, "fastqc")
