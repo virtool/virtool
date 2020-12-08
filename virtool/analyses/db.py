@@ -99,7 +99,7 @@ class BLAST:
         return data, document
 
 
-async def create(app: virtool.types.App, sample_id: str, ref_id: str, subtraction_id: str, user_id: str, workflow: str) -> dict:
+async def create(app: virtool.types.App, sample_id: str, ref_id: str, subtractions: list, user_id: str, workflow: str) -> dict:
     """
     Creates a new analysis. Ensures that a valid subtraction host was the submitted. Configures read and write
     permissions on the sample document and assigns it a creator username based on the requesting connection.
@@ -107,7 +107,7 @@ async def create(app: virtool.types.App, sample_id: str, ref_id: str, subtractio
     :param app: the application object
     :param sample_id: the ID of the sample to create an analysis for
     :param ref_id: the ID of the reference to analyze against
-    :param subtraction_id: the ID of the subtraction to remove from the analysis
+    :param subtractions: the list of the subtraction IDs to remove from the analysis
     :param user_id: the ID of the user starting the job
     :param workflow: the analysis workflow to run
     :return: the analysis document
@@ -147,9 +147,7 @@ async def create(app: virtool.types.App, sample_id: str, ref_id: str, subtractio
             "id": ref_id,
             "name": await virtool.db.utils.get_one_field(db.references, "name", ref_id)
         },
-        "subtraction": {
-            "id": subtraction_id
-        },
+        "subtractions": subtractions,
         "user": {
             "id": user_id,
         }
