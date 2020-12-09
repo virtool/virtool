@@ -1,7 +1,27 @@
+"""
+Work with groups in the database.
+
+Schema:
+- _id (str) the group name
+- permissions (Object) the permissions for the group laid out as permission keys with boolean values indicating whether
+  the group has the permission or not
+  - cancel_job
+  - create_ref
+  - create_sample
+  - modify_hmm
+  - modify_subtraction
+  - remove_file
+  - remove_job
+  - upload_file
+
+TODO: Add unique name field and use standard ID for _id
+
+"""
+
 import asyncio
 
-import virtool.users.db
 import virtool.groups.utils
+import virtool.users.db
 import virtool.utils
 
 

@@ -1,3 +1,18 @@
+"""
+Work with uploaded files in the database.
+
+Schema:
+- _id (str) unique ID for the file - ID = unique prefix + file name
+- name (str) name of the uploaded file
+- ready (bool) true when the file is ready to be used
+- reserved (bool) true if the file has been reserved by a workflow and shouldn't be shown to users
+- size (int) the size of the file on disk in bytes
+- type (Enum["reads", "sample_replacement", "subtraction"]) the type of file
+- uploaded_at (datetime) when the file upload completed
+- user (Object) described the uploading user
+  - id (str) the ID of the user
+
+"""
 import logging
 import os
 import pathlib

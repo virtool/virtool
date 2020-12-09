@@ -1,12 +1,34 @@
+"""
+Work with OTU history in the database.
+
+Schema:
+- _id (str) the change ID - ID = OTU ID + '.' + version (eg. a9b22vuj.2)
+- created_at (datetime) when the change was made
+- description (str) a human-readable description of the operation
+- diff (JSON) a diff of the change created by the dictdiffer package
+- index (Object) describes the index associated with the change - null for unbuilt changes
+  - id (str) the ID of the index
+  - version (int) the version of the reference represented by the index
+- legacy (Object) contains legacy data
+- method_name (str) the name of the change method (eg. create_sequence, remove, clone)
+- otu (Object) describes the associated OTU
+  - id (str) the OTU ID
+  - name (str) the OTU name at the time the change was made
+- reference (Object) describes the parent reference
+  - id (str) the reference ID
+- user (Object) describes the user that made the change
+  - id (str) the user ID
+
+"""
 from copy import deepcopy
 from typing import Union, List
 
 import dictdiffer
 import pymongo.errors
 
-import virtool.otus.db
 import virtool.errors
 import virtool.history.utils
+import virtool.otus.db
 import virtool.otus.utils
 import virtool.utils
 from virtool.api.utils import paginate

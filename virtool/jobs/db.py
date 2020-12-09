@@ -1,5 +1,20 @@
 """
-Globals and utility functions for interacting with the jobs collection in the application database.
+Constants and utility functions for interacting with the jobs collection in the application database.
+
+Schema:
+- _id (str) the instance-unique job ID
+- args (Object) user- and application-defined args required by the workflow (eg. ref_id, sample_id)
+- mem (int) memory in GB allowed for the job
+- proc (int) CPU count allowed for the job
+- status (List[Object]) describes the state history of the job
+  - error (Object) describes an encountered error
+  - progress (float) the job progress between 0.0 - 1.0
+  - stage (str) the step the job is at (should be changed to step)
+  - state (Enum["running", "waiting", "complete", "error", "cancelled"]) the state the job is in
+  - timestamp (datetime) the time the status object was added
+- task (str) the workflow identifier (should be changed to workflow)
+- user (Object) describes the user that started the job
+  - id (str) the user ID
 
 """
 import virtool.jobs.runner

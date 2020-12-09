@@ -1,6 +1,25 @@
+"""
+Work with indexes in the database.
+
+Schema:
+- _id (str) the instance-unique ID for the index
+- created_at (datetime) when the index record was created
+- has_files (bool) if there are index files on disk for this record
+- job (Object) describes the associated index build job
+  - id (str) the job ID
+- manifest (Object) describes the state of the reference when the index was created - OTU IDs are keys, versions are values
+- ready (bool) set to true when the Build Index workflow completes
+- reference (Object) describes the parent reference
+  - id (str) the reference ID
+- version (int) the version of the reference represented by the index
+- user (Object) describes the creating user
+  - id (str) the user ID
+
+"""
 import asyncio
-import pymongo
 from typing import Union
+
+import pymongo
 
 import virtool.api.utils
 import virtool.history.db

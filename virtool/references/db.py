@@ -1,3 +1,59 @@
+"""
+Work with references in the database
+
+Schema:
+- _id (str) the instance-unique reference ID
+- cloned_from (Object) describes the reference this one was cloned from (can be null)
+  - id (str) the ID of the source reference
+  - name (str) the name of the source reference at the time of cloning
+- created_at (datetime) when the reference was created
+- data_type (Enum["genome", "barcode"]) the type of data stored in the reference
+- description (str) a user-defined description for the the reference
+- groups (List[Object]) describes groups assigned to the reference and their rights
+  - id (str) the group ID
+  - build (bool) the group can create new builds of the reference
+  - modify (bool) the group can modify the non-OTU reference data
+  - modify_otu (bool) the group can modify OTUs
+  - remove (bool) the group can remove the reference
+- groups (List[Object]) describes users assigned to the reference and their rights
+  - id (str) the user ID
+  - build (bool) the user can create new builds of the reference
+  - modify (bool) the user can modify the non-OTU reference data
+  - modify_otu (bool) the user can modify OTUs
+  - remove (bool) the user can remove the reference
+- internal_control (str) the ID for an OTU that is used as an internal control in the lab
+- name (str) the reference name
+- organism (str) the organism represented in the reference (eg. virus, bacteria, fungus)
+- task (Object) a task associated with a current reference operation
+  - id (str) the task ID
+- release (Object) describes the latest remote reference release
+  - body (str) the Markdown-formatted release body from GitHub
+  - content_type (str) release content type - should always be application/gzip
+  - download_url (str) the GitHUB URL at which the reference release can be downloaded
+  - etag (str) the release ETag - allows caching of the release check result
+  - filename (str) the name of the release file
+  - html_url (str) the URL to the web page for the release on GitHub
+  - id (str) the unique ID for the release from GitHub
+  - name (str) the name of the release (eg. v1.4.0)
+  - newer (bool) true if there is a newer release available
+  - published_at (datetime) when the release was published on GitHub
+  - retrieved_at (datetime) when teh release was retrieved from GitHub
+  - size (int) size of the release file in bytes
+- remotes_from (Object) describes where the reference remotes from (can be null)
+  - errors (Array) errors related to the remote reference
+  - slug (str) the GitHub repository slug for the reference
+- restrict_source_types (bool) restricts the source types users may use when creating isolates
+- source_types (Array[str]) a set of allowable source types
+- updates (Array[Object]) a history of updates applied to the remote reference
+  - SHARES FIELDS WITH release
+  - user (Object) describes the user that applied the update
+    - id (str) the user ID
+- updating (bool) the remote reference is being updated
+- user (Object) describes the creating user
+  - id (str) the user ID
+
+
+"""
 import asyncio
 import json.decoder
 import logging
@@ -20,9 +76,9 @@ import virtool.history.utils
 import virtool.http.utils
 import virtool.otus.db
 import virtool.otus.utils
+import virtool.references.utils
 import virtool.tasks.db
 import virtool.tasks.task
-import virtool.references.utils
 import virtool.users.db
 import virtool.utils
 
