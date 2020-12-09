@@ -15,14 +15,13 @@ async def migrate_analyses(app: virtool.types.App):
 
 
 async def change_to_subtractions_list(db):
-    async for document in db.analyses.find():
-        if "subtraction" in document:
-            await db.analyses.update_one({"_id": document["_id"]}, {
-                "$set": {
-                    "subtractions": [document["subtraction"]["id"]]
-                },
-                "$unset": {
-                    "subtraction": ""
-                }
-            })
+    async for document in db.analyses.find({"subtraction": {"$exists": True}}):
+        await db.analyses.update_one({"_id": document["_id"]}, {
+            "$set": {
+                "subtractions": [document["subtraction"]["id"]]
+            },
+            "$unset": {
+                "subtraction": ""
+            }
+        })
 
