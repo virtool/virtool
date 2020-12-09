@@ -29,3 +29,24 @@ snapshots['test_add_updated_at[uvloop] 1'] = [
         'updated_at': GenericRepr('datetime.datetime(2015, 10, 6, 22, 32)')
     }
 ]
+
+snapshots['test_change_to_subtractions_list[uvloop] 1'] = [
+    {
+        '_id': 'foo',
+        'subtractions': [
+            'prunus'
+        ]
+    },
+    {
+        '_id': 'bar',
+        'subtractions': [
+            'malus'
+        ]
+    },
+    {
+        '_id': 'baz',
+        'subtractions': [
+            'malus'
+        ]
+    }
+]
