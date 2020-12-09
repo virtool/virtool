@@ -1,5 +1,22 @@
 """
-Functions for working with HMM data on the server.
+Work with HMM data in the database.
+
+Schema:
+- _id (str) a unique ID for the HMM annotation/cluster
+- cluster (int) the hmmer cluster number
+- count (int) the number of protein sequences in the cluster
+- entries (List[Object]) describes the sequences included in the cluster
+  - accession (str) the accession for the protein sequence (eg. NP_050260.1)
+  - gi (str) the GI for the protein sequence
+  - name (str) the human-readable name for the sequence (eg. nuclear egress membrance protein)
+  - organism (str) the source organism (eg. Pandoravirus salinus)
+- families (Object) describes the incidence of taxonomic families in the cluster - key by family names with counts as values
+- genera (Object) describes the incidence of genera in the cluster - key by genus names with counts as values
+- hidden (bool) set to true if the annotation is from a deleted HMM dataset but is still referred to in analyses
+- length (int) the length of the profile
+- mean_entropy (float) see hmmer docs
+- name (List[str]) the top three names observed in the member sequences
+- total_entropy (float) see hmmer docs
 
 """
 import asyncio
@@ -8,10 +25,10 @@ import logging
 import os
 import shutil
 
-import pymongo.results
 import aiofiles
 import aiohttp.client_exceptions
 import aiohttp.web
+import pymongo.results
 
 import virtool.analyses.utils
 import virtool.db.core

@@ -1,8 +1,28 @@
+"""
+Work with caches in the database. Caches are bundles of trimmed read and QC data generated during analyses.
+
+Schema:
+- _id (str) the ID of the cache
+- created_at (datetime) when the cache record was created
+- files (Array[Object]) describes trimmed FASTQ files
+  - name (str) the name of the trimmed read file on disk
+  - size (int) the size of the file
+- hash (str) a hash that uniquely identifies the trim - calculated from the trim parameters used to create the cache
+- missing (bool) set to true if the cache cannot be found on disk
+- paired (bool) set to true if the cache represents paired data
+- parameters (Object) the parameters used to trim the data
+- program (str) the name of the program used to trim the data (eg. skewer-0.2.2)
+- quality (JSON) the FastQC output converted to a JSON object
+- ready (bool) set to true when the cache has be successfully created
+- sample (Object) describes the sample the cache is dervied from
+  - id (str) the sample ID
+
+"""
 import asyncio
 import hashlib
 import json
 import os
-from typing import Optional, Union
+from typing import Optional
 
 import aiohttp.web
 import pymongo.errors

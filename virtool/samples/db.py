@@ -1,3 +1,42 @@
+"""
+Code for working with samples in the database and filesystem.
+
+Sample schema:
+- _id (str) a sample identifier unique to the instance
+- all_read (bool) true when all instance users can read the sample
+- all_write (bool) true when all instance users can modify or delete the sample
+- created_at (datetime) the creation timestamp
+- files (Array[Object]) objects describing uploaded files
+  - download_url (str) the URL path at which the file can be downloaded
+  - from (Object) describes where the file came from
+     - id (str) unique ID of the file - random string prepended to uploaded file name
+     - name (str) the original name of the uploaded file
+     - size (str) the size of the original file
+     - uploaded_at (datetime) when the upload was initiated
+  - name (str) the file name on disk
+  - raw (str) true if the file is raw data - this is only false for legacy samples that were trimmed on import
+  - size (int) the size of the file in bytes
+  - size (int) the size of the file in bytes
+- group (str) the ID of the owner group
+- group_read (bool) true when the owner group can read the sample
+- group_write (bool) true when the owner group can modify or delete the sample
+- host (str) user-entered host
+- isolate (str) user-entered isolate
+- labels (List[str]) list of label IDs attached to the sample
+- library_type (Allowed["normal", "srna", "amplicon"]) the type of sequencing library
+- local (str) user-entered locale - replicated field from many plant virus Genbank records
+- paired (bool) true when the sample is paired
+- pathoscope (bool) true when at least one pathoscope analysis has been completed for the sample
+- name (str) user-entered name
+- notes (str) user-entered notes
+- nuvs (bool) true when at least one nuvs analysis has been completed for the sample
+- quality (JSON) quality data imported from FastQC
+- ready (bool) true when the sample creation workflow is complete
+- subtraction (str) the default subtraction ID
+- user (dict) the creating user
+  - id (str) the user ID
+
+"""
 import aiohttp.web
 import asyncio
 import logging

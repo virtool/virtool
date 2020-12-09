@@ -1,5 +1,30 @@
 """
-Classes and functions for working with analyses on the server.
+Work with analyses in the database.
+
+Schema:
+- _id (str) the ID for the analysis
+- cache (Object) describes the cache associated with the sample
+  - id (str) the ID of the cache
+- created_at (datetime) when the analyses document was first created
+- index (Object) describes the index analyzed against
+  - id (str) the index ID
+- job (Object) describes the workflow job
+  - id (str) the job ID
+- read_count (int)
+  - the number of reads involved in the analysis
+- ready (bool) true when the analysis workflow has completed
+- reference (Object) described the reference analyzed against
+  - id (str) the ID of the reference
+- results (JSON) the result payload of the workflow
+- sample (Object) describes the sample analyzed
+  - id (str) the sample ID
+- subtracted_count (int) number of reads subtracted (should be in results)
+- subtraction (Object) describes the subtraction
+  - id (str) the subtraction ID
+- updated_at (datetime) when the analysis was last modified - used for browser caching
+- user (Object) describes the creating user
+  - id (str) the user ID
+- workflow (Enum["aodp", "nuvs", "pathoscope") the workflow
 
 """
 import asyncio
