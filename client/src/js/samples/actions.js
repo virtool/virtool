@@ -40,12 +40,12 @@ export const wsUpdateSample = data => ({
  * Returns an action that should be dispatched when a sample document is removed via websocket.
  *
  * @func
- * @param id {string} the id for the specific sample
+ * @param data {string} the id for the specific sample
  * @returns {object}
  */
-export const wsRemoveSample = id => ({
+export const wsRemoveSample = data => ({
     type: WS_REMOVE_SAMPLE,
-    id
+    data
 });
 
 export const findSamples = (term, page = 1, pathoscope = [], nuvs = []) => ({
