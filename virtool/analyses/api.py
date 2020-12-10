@@ -121,7 +121,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if not read:
         return insufficient_rights()
 
-    await virtool.subtractions.db.attach_subtraction(db, document)
+    await virtool.subtractions.db.attach_subtractions(db, document)
 
     if document["ready"]:
         document = await virtool.analyses.format.format_analysis(req.app, document)
