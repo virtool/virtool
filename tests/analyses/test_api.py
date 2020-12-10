@@ -16,15 +16,19 @@ async def test_get(ready, error, mocker, snapshot, spawn_client, static_time, re
         "sample": {
             "id": "baz"
         },
-        "subtraction": {
-            "id": "plum"
-        }
+        "subtractions": ["plum", "apple"]
     }
 
-    await client.db.subtraction.insert_one({
-        "_id": "plum",
-        "name": "Plum"
-    })
+    await client.db.subtraction.insert_many([
+        {
+            "_id": "plum",
+            "name": "Plum"
+        },
+        {
+            "_id": "apple",
+            "name": "Apple"
+        }
+    ])
 
     if error != "400":
         await client.db.samples.insert_one({
