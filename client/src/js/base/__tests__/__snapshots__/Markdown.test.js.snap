@@ -13,7 +13,8 @@ exports[`<Markdown /> should render with markdown 1`] = `
   dangerouslySetInnerHTML={
     Object {
       "__html": "<pre><code>        # Heading
-        body</code></pre>",
+        body</code></pre>
+",
     }
   }
 />
