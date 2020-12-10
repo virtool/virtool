@@ -3,10 +3,10 @@ name: Virtool CI
 on:
   push:
     branches:
-      - feature-actions
+      - release-5.0.0
   pull_request:
     branches:
-      - feature-actions
+      - release-5.0.0
 
 jobs:
   server:
@@ -16,7 +16,7 @@ jobs:
       redis:
         image: redis:6.0
       mongo:
-        image: mongo:4.2
+        image: mongo:4.4
 
     container:
       image: virtool/external-tools:0.1.2
@@ -42,7 +42,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
-          node-version: '12'
+          node-version: '14'
       - name: test
         run: |
           cd client
@@ -52,7 +52,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: node:12-stretch
+      image: node:14-stretch
     steps:
       - uses: actions/checkout@v2
       - name: client
