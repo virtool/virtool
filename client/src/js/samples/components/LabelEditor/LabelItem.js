@@ -18,20 +18,21 @@ export const getContrastColor = props => {
     return yiq >= 128 ? "black" : "white";
 };
 
-export const BigLabel = styled(Label)`
+export const StyledLabel = styled(Label)`
     padding: 5px;
     font-size: ${props => props.theme.fontSize.lg};
     background-color: ${props => props.color};
     color: ${getContrastColor};
 `;
 
-export const TableIcon = styled(Icon)`
+export const StyledIcon = styled(Icon)`
     padding: 0px 8px;
     font-size: 20px;
 `;
 
 export const Description = styled.p`
     padding: 0px 8px;
+    margin: 0px;
     display: inline-block;
 `;
 export const IconColumn = styled.td`
@@ -46,8 +47,8 @@ export class LabelItem extends React.Component {
         this.state = getInitialState(this.props);
     }
 
-    onRemove = id => {
-        this.props.removeLabel(id);
+    onRemove = (id, name) => {
+        this.props.removeLabel(id, name);
     };
 
     onEdit = (id, name, color, description) => {
@@ -62,17 +63,17 @@ export class LabelItem extends React.Component {
         return (
             <tr>
                 <td>
-                    <BigLabel color={color}>{name}</BigLabel>
+                    <StyledLabel color={color}>{name}</StyledLabel>
                     <Description>{description}</Description>
                 </td>
                 <IconColumn>
-                    <TableIcon
+                    <StyledIcon
                         color="orange"
                         onClick={() => this.onEdit(id, name, description, color)}
                         name="pencil-alt"
                         tip="Edit"
                     />
-                    <TableIcon color="red" onClick={() => this.onRemove(id)} name="fas fa-times" tip="Remove" />
+                    <StyledIcon color="red" onClick={() => this.onRemove(id, name)} name="fas fa-times" tip="Remove" />
                 </IconColumn>
             </tr>
         );

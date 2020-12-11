@@ -113,18 +113,6 @@ export const editSample = (sampleId, update) => ({
 });
 
 /**
- * @func
- * @param {*} sampleId {string} unique sample id
- * @param {*} update {object} update data
- * @returns {object}
- */
-export const labelEdit = (sampleId, update) => ({
-    type: UPDATE_LABEL.REQUESTED,
-    sampleId,
-    update
-});
-
-/**
  * Returns action that can trigger an API call to get sample labels.
  *
  * @func

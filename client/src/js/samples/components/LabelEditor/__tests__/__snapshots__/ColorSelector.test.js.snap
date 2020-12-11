@@ -1,0 +1,56 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ColorSelector> should render 1`] = `
+<InputGroup>
+  <Input__InputLabel>
+    Select a color
+  </Input__InputLabel>
+  <div>
+    <ColorSelector__StyledColorButton
+      color="green"
+      name="color"
+      onClick={[Function]}
+    />
+    <ColorSelector__StyledColorButton
+      color="orange"
+      name="color"
+      onClick={[Function]}
+    />
+    <ColorSelector__StyledColorButton
+      color="yellow"
+      name="color"
+      onClick={[Function]}
+    />
+    <ColorSelector__StyledColorButton
+      color="red"
+      name="color"
+      onClick={[Function]}
+    />
+    <ColorSelector__StyledColorButton
+      color="purple"
+      name="color"
+      onClick={[Function]}
+    />
+    <ColorSelector__StyledColorButton
+      color="blue"
+      name="color"
+      onClick={[Function]}
+    />
+    <ColorSelector__StyledColorButton
+      color="primary"
+      name="color"
+      onClick={[Function]}
+    />
+  </div>
+  <Input__InputLabel>
+    or enter a custom color 
+  </Input__InputLabel>
+  <ColorSelector__StyledInput
+    name="color"
+    onChange={[Function]}
+    placeholder="Ex. #D3D3D3"
+    value=""
+  />
+  <Input__InputError />
+</InputGroup>
+`;

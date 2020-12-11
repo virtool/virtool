@@ -1,28 +1,4 @@
-import { mapDispatchToProps, mapStateToProps } from "../LabelEditor";
-import { EditLabel } from "../EditLabel";
-import { CreateLabel } from "../CreateLabel";
-import { ColorSelector } from "../ColorSelector";
-
-describe("<EditLabel>", () => {
-    it("should render", () => {
-        const wrapper = shallow(<EditLabel />);
-        expect(wrapper).toMatchSnapshot();
-    });
-});
-
-describe("<CreateLabel>", () => {
-    it("should render", () => {
-        const wrapper = shallow(<CreateLabel />);
-        expect(wrapper).toMatchSnapshot();
-    });
-});
-
-describe("<ColorSelector>", () => {
-    it("should render", () => {
-        const wrapper = shallow(<ColorSelector />);
-        expect(wrapper).toMatchSnapshot();
-    });
-});
+import { mapDispatchToProps } from "../LabelEditor";
 
 describe("mapDispatchToProps()", () => {
     const dispatch = jest.fn();

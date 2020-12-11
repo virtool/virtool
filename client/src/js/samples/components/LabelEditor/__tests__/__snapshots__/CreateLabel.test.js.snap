@@ -1,0 +1,107 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<CreateLabel> should render when [show=false] 1`] = `
+<Modal
+  label="Create Label"
+  onHide={[MockFunction]}
+  show={false}
+>
+  <ModalHeader>
+    Create a label
+  </ModalHeader>
+  <Modal__ModalBody>
+    <form>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          error=""
+          name="labelName"
+          onChange={[Function]}
+          placeholder="Label name"
+          value="Foobar"
+        />
+        <Input__InputError />
+        <Input__InputLabel>
+          Description
+        </Input__InputLabel>
+        <Input
+          name="description"
+          onChange={[Function]}
+          placeholder="Description"
+          value="FooDesc"
+        />
+      </InputGroup>
+      <ColorSelector
+        color="#FFF000"
+        errorColor=""
+        name="color"
+        onColorChange={[Function]}
+      />
+      <Button
+        color="green"
+        disabled={false}
+        onClick={[Function]}
+        tipPlacement="top"
+        type="button"
+      >
+        Create
+      </Button>
+    </form>
+  </Modal__ModalBody>
+</Modal>
+`;
+
+exports[`<CreateLabel> should render when [show=true] 1`] = `
+<Modal
+  label="Create Label"
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Create a label
+  </ModalHeader>
+  <Modal__ModalBody>
+    <form>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          error=""
+          name="labelName"
+          onChange={[Function]}
+          placeholder="Label name"
+          value="Foobar"
+        />
+        <Input__InputError />
+        <Input__InputLabel>
+          Description
+        </Input__InputLabel>
+        <Input
+          name="description"
+          onChange={[Function]}
+          placeholder="Description"
+          value="FooDesc"
+        />
+      </InputGroup>
+      <ColorSelector
+        color="#FFF000"
+        errorColor=""
+        name="color"
+        onColorChange={[Function]}
+      />
+      <Button
+        color="green"
+        disabled={false}
+        onClick={[Function]}
+        tipPlacement="top"
+        type="button"
+      >
+        Create
+      </Button>
+    </form>
+  </Modal__ModalBody>
+</Modal>
+`;

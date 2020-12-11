@@ -136,7 +136,6 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
     </Table>
   </Box__BoxGroup>
   <Connect(EditSample) />
-  <Connect(LabelEdit) />
 </General__StyledSampleDetailGeneral>
 `;
 
@@ -276,6 +275,5 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
     </Table>
   </Box__BoxGroup>
   <Connect(EditSample) />
-  <Connect(LabelEdit) />
 </General__StyledSampleDetailGeneral>
 `;

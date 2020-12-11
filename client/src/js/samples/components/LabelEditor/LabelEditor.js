@@ -2,14 +2,13 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { get, map } from "lodash-es";
-import { pushState } from "../../../app/actions";
-import { Modal, ModalHeader, ModalBody, ModalFooter, Table } from "../../../base";
-import { labelEdit, getLabels, createLabel, removeLabel, updateLabel } from "../../actions";
+import { Table, ViewHeader, ViewHeaderTitle, RemoveModal, Button, BoxGroup, BoxGroupHeader, Flex } from "../../../base";
+import { getLabels, createLabel, removeLabel, updateLabel } from "../../actions";
 import { CreateLabel } from "./CreateLabel";
 import { LabelItem } from "./LabelItem";
 import { EditLabel } from "./EditLabel";
 
-export const LabelTable = styled(Table)`
+export const StyledTable = styled(Table)`
     border: none;
 
     thead {
@@ -18,6 +17,7 @@ export const LabelTable = styled(Table)`
 
     th {
         font-size: ${props => props.theme.fontSize.lg};
+        border: none;
     }
 
     tr {
@@ -30,16 +30,18 @@ export const LabelTable = styled(Table)`
     }
 `;
 
-export const LabelFooter = styled(ModalFooter)`
-    text-align: left;
+export const StyledButton = styled(Button)`
+    margin-left: auto;
 `;
 
-const getInitialState = ({ id, name, description, color, isEdit }) => ({
+const getInitialState = ({ id, name, description, color, isEdit, isRemove, isCreate }) => ({
     id: id || "",
     name: name || "",
     description: description || "",
     color: color || "",
     isEdit: isEdit || false,
+    isRemove: isRemove || false,
+    isCreate: isCreate || false,
     error: ""
 });
 
@@ -49,24 +51,17 @@ class LabelEdit extends React.Component {
         this.state = getInitialState(this.props);
     }
 
-    handleModalEnter = () => {
+    componentDidMount = () => {
         this.setState(getInitialState(this.props));
         this.props.onLoadLabels();
-    };
-
-    handleModalExited = () => {
-        if (this.props.error) {
-            this.props.onClearError();
-        }
     };
 
     submitNewLabel = e => {
         const { name, description, color } = e;
         this.props.submitNewLabel(name, description, color);
-    };
-
-    removeLabel = id => {
-        this.props.removeLabel(id);
+        this.setState({
+            isCreate: false
+        });
     };
 
     updateLabel = e => {
@@ -75,7 +70,6 @@ class LabelEdit extends React.Component {
         this.setState({
             isEdit: false
         });
-        this.props.onLoadLabels();
     };
 
     editLabel = (id, name, description, color) => {
@@ -88,14 +82,34 @@ class LabelEdit extends React.Component {
         });
     };
 
-    cancelEdit = () => {
+    removeLabel = () => {
+        this.props.removeLabel(this.state.id);
         this.setState({
-            isEdit: false
+            isRemove: false
+        });
+    };
+
+    onCreate = () => {
+        this.setState({
+            isCreate: true
+        });
+    };
+
+    onRemove = (id, name) => {
+        this.setState({
+            isRemove: true,
+            id,
+            name
+        });
+    };
+
+    cancelModal = modalType => {
+        this.setState({
+            [modalType]: false
         });
     };
 
     render() {
-        const isEdit = this.state.isEdit;
         const labels = map(this.props.labels, label => (
             <LabelItem
                 key={label.id}
@@ -103,44 +117,51 @@ class LabelEdit extends React.Component {
                 color={label.color}
                 description={label.description}
                 id={label.id}
-                removeLabel={this.removeLabel}
+                removeLabel={this.onRemove}
                 editLabel={this.editLabel}
             ></LabelItem>
         ));
         return (
-            <Modal
-                label="Label Editor"
-                show={this.props.show}
-                onEnter={this.handleModalEnter}
-                onExited={this.handleModalExited}
-                onHide={this.props.onHide}
-            >
-                <ModalHeader>Label Editor</ModalHeader>
-                <ModalBody>
-                    <LabelTable>
-                        <thead>
-                            <tr>
-                                <th>Labels</th>
-                            </tr>
-                        </thead>
+            <div>
+                <ViewHeader title="Label Editor">
+                    <ViewHeaderTitle>Label Editor</ViewHeaderTitle>
+                </ViewHeader>
+                <BoxGroup>
+                    <BoxGroupHeader>
+                        <Flex>
+                            <h2>Labels</h2>
+                            <StyledButton color="green" icon="fas fa-plus" onClick={() => this.onCreate()}>
+                                New Label
+                            </StyledButton>
+                        </Flex>
+
+                    </BoxGroupHeader>
+                    <StyledTable>
                         <tbody>{labels}</tbody>
-                    </LabelTable>
-                </ModalBody>
-                <LabelFooter>
-                    {isEdit ? (
-                        <EditLabel
-                            name={this.state.name}
-                            description={this.state.description}
-                            color={this.state.color}
-                            id={this.state.id}
-                            updateLabel={this.updateLabel}
-                            cancelEdit={this.cancelEdit}
-                        ></EditLabel>
-                    ) : (
-                        <CreateLabel submitNewLabel={this.submitNewLabel}></CreateLabel>
-                    )}
-                </LabelFooter>
-            </Modal>
+                    </StyledTable>
+                </BoxGroup>
+                <CreateLabel
+                    show={this.state.isCreate}
+                    onHide={() => this.cancelModal("isCreate")}
+                    submitNewLabel={this.submitNewLabel}
+                ></CreateLabel>
+                <EditLabel
+                    id={this.state.id}
+                    name={this.state.name}
+                    description={this.state.description}
+                    color={this.state.color}
+                    show={this.state.isEdit}
+                    onHide={() => this.cancelModal("isEdit")}
+                    updateLabel={this.updateLabel}
+                ></EditLabel>
+                <RemoveModal
+                    noun="Label"
+                    name={this.state.name}
+                    show={this.state.isRemove}
+                    onConfirm={this.removeLabel}
+                    onHide={() => this.cancelModal("isRemove")}
+                ></RemoveModal>
+            </div>
         );
     }
 }
@@ -148,19 +169,10 @@ class LabelEdit extends React.Component {
 export const mapStateToProps = state => ({
     ...state.samples.detail,
     labels: state.samples.labels,
-    show: get(state.router.location.state, "labelEdit", false),
     error: get(state, "errors.UPDATE_SAMPLE_ERROR.message", "")
 });
 
 export const mapDispatchToProps = dispatch => ({
-    onHide: () => {
-        dispatch(pushState({ showEdit: false }));
-    },
-
-    onEdit: (sampleId, update) => {
-        dispatch(labelEdit(sampleId, update));
-    },
-
     onLoadLabels: () => {
         dispatch(getLabels());
     },

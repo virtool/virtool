@@ -105,6 +105,7 @@ export function* removeLabel(action) {
 
 export function* updateLabel(action) {
     yield setPending(apiCall(samplesAPI.updateLabel, action, UPDATE_LABEL));
+    yield call(getLabels, { type: GET_LABELS.REQUESTED });
 }
 
 export function* createSample(action) {
@@ -115,11 +116,6 @@ export function* createSample(action) {
 export function* updateSample(action) {
     const extraFunc = { closeModal: put(push({ editSample: false })) };
     yield setPending(apiCall(samplesAPI.update, action, UPDATE_SAMPLE, {}, extraFunc));
-}
-
-export function* labelEdit(action) {
-    const extraFunc = { closeModal: put(push({ labelEdit: false })) };
-    yield setPending(apiCall(samplesAPI.update, action, UPDATE_LABEL, {}, extraFunc));
 }
 
 export function* updateSampleRights(action) {

@@ -1,0 +1,97 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<EditLabel> should render when [show=false] 1`] = `
+<Modal
+  label="Create Label"
+  onEnter={[Function]}
+  onHide={[MockFunction]}
+  show={false}
+>
+  <ModalHeader>
+    Edit a label
+  </ModalHeader>
+  <Modal__ModalBody>
+    <form>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          error=""
+          name="name"
+          onChange={[Function]}
+          placeholder="Label name"
+          value=""
+        />
+        <Input__InputError />
+        <Input__InputLabel>
+          Description
+        </Input__InputLabel>
+        <Input
+          name="description"
+          onChange={[Function]}
+          placeholder="Description"
+          value="BarFoo"
+        />
+      </InputGroup>
+      <Button
+        color="green"
+        disabled={false}
+        onClick={[Function]}
+        tipPlacement="top"
+        type="button"
+      >
+        Save
+      </Button>
+    </form>
+  </Modal__ModalBody>
+</Modal>
+`;
+
+exports[`<EditLabel> should render when [show=true] 1`] = `
+<Modal
+  label="Create Label"
+  onEnter={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Edit a label
+  </ModalHeader>
+  <Modal__ModalBody>
+    <form>
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          error=""
+          name="name"
+          onChange={[Function]}
+          placeholder="Label name"
+          value=""
+        />
+        <Input__InputError />
+        <Input__InputLabel>
+          Description
+        </Input__InputLabel>
+        <Input
+          name="description"
+          onChange={[Function]}
+          placeholder="Description"
+          value="BarFoo"
+        />
+      </InputGroup>
+      <Button
+        color="green"
+        disabled={false}
+        onClick={[Function]}
+        tipPlacement="top"
+        type="button"
+      >
+        Save
+      </Button>
+    </form>
+  </Modal__ModalBody>
+</Modal>
+`;

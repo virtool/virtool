@@ -45,6 +45,19 @@ exports[`<Samples /> should render 1`] = `
           "$$typeof": Symbol(react.memo),
           "WrappedComponent": [Function],
           "compare": null,
+          "displayName": "Connect(LabelEdit)",
+          "type": [Function],
+        }
+      }
+      exact={true}
+      path="/samples/labels"
+    />
+    <Route
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
           "displayName": "Connect(SampleDetail)",
           "type": [Function],
         }

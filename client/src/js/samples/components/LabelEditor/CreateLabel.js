@@ -1,5 +1,6 @@
 import React from "react";
-import { InputGroup, InputLabel, Input, Button, InputError } from "../../../base";
+import { connect } from "react-redux";
+import { InputGroup, InputLabel, Input, Button, InputError, Modal, ModalHeader, ModalBody } from "../../../base";
 import { ColorSelector } from "./ColorSelector";
 
 const getInitialState = ({ labelName, color, description, errorName, errorColor }) => ({
@@ -49,38 +50,51 @@ export class CreateLabel extends React.Component {
         const errorName = this.state.errorName;
         const errorColor = this.state.errorColor;
         return (
-            <div>
-                <h3>Create a label</h3>
-                <form>
-                    <InputGroup>
-                        <InputLabel>Name</InputLabel>
-                        <Input
-                            placeholder="Label name"
-                            name="labelName"
-                            value={labelName}
-                            onChange={this.handleChange}
-                            error={errorName}
-                        ></Input>
-                        <InputError>{errorName}</InputError>
-                        <InputLabel>Description</InputLabel>
-                        <Input
-                            placeholder="Description"
-                            name="description"
-                            value={description}
-                            onChange={this.handleChange}
-                        ></Input>
-                    </InputGroup>
-                    <ColorSelector
-                        name="color"
-                        color={color}
-                        errorColor={errorColor}
-                        onColorChange={this.handleColorSelection}
-                    ></ColorSelector>
-                    <Button color="green" onClick={this.handleSubmit}>
-                        Create
-                    </Button>
-                </form>
-            </div>
+            <Modal label="Create Label" show={this.props.show} onHide={this.props.onHide}>
+                <ModalHeader>Create a label</ModalHeader>
+                <ModalBody>
+                    <form>
+                        <InputGroup>
+                            <InputLabel>Name</InputLabel>
+                            <Input
+                                placeholder="Label name"
+                                name="labelName"
+                                value={labelName}
+                                onChange={this.handleChange}
+                                error={errorName}
+                            ></Input>
+                            <InputError>{errorName}</InputError>
+                            <InputLabel>Description</InputLabel>
+                            <Input
+                                placeholder="Description"
+                                name="description"
+                                value={description}
+                                onChange={this.handleChange}
+                            ></Input>
+                        </InputGroup>
+                        <ColorSelector
+                            name="color"
+                            color={color}
+                            errorColor={errorColor}
+                            onColorChange={this.handleColorSelection}
+                        ></ColorSelector>
+                        <Button color="green" onClick={this.handleSubmit}>
+                            Create
+                        </Button>
+                    </form>
+                </ModalBody>
+            </Modal>
         );
     }
 }
+export const mapStateToProps = state => ({
+    show: get(state.router.location.state, "labelCreate", false)
+});
+
+export const mapDispatchToProps = dispatch => ({
+    onHide: () => {
+        dispatch(pushState({ labelCreate: false }));
+    }
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(CreateLabel);
