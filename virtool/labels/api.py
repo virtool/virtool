@@ -108,7 +108,7 @@ async def edit(req):
     label_id = req.match_info["label_id"]
 
     if not data:
-        return empty_request("The request body is empty")
+        return empty_request()
 
     if "name" in data and await db.labels.count_documents({"_id": {"$ne": label_id}, "name": data["name"]}):
         return bad_request("Label name already exists")
