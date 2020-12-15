@@ -2,7 +2,7 @@ import virtool.http.routes
 import virtool.utils
 import virtool.validators
 import virtool.db.utils
-from virtool.api.response import bad_request, json_response, no_content, not_found
+from virtool.api.response import bad_request, empty_request, json_response, no_content, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -10,7 +10,7 @@ routes = virtool.http.routes.Routes()
 @routes.get("/api/labels")
 async def find(req):
     """
-        Get a list of all label documents in the database.
+    Get a list of all label documents in the database.
 
     """
     db = req.app["db"]
@@ -23,7 +23,7 @@ async def find(req):
 @routes.get("/api/labels/{label_id}")
 async def get(req):
     """
-        Get a complete label document.
+    Get a complete label document.
 
     """
     document = await req.app["db"].labels.find_one(req.match_info["label_id"])
@@ -55,7 +55,7 @@ async def get(req):
 })
 async def create(req):
     """
-        Add a new label to the labels database.
+    Add a new label to the labels database.
 
     """
     db = req.app["db"]
@@ -99,13 +99,16 @@ async def create(req):
 })
 async def edit(req):
     """
-        Edit an existing label.
+    Edit an existing label.
 
     """
     db = req.app["db"]
     data = req["data"]
 
     label_id = req.match_info["label_id"]
+
+    if not data:
+        return empty_request("The request body is empty")
 
     if "name" in data and await db.labels.count_documents({"_id": {"$ne": label_id}, "name": data["name"]}):
         return bad_request("Label name already exists")
@@ -123,7 +126,7 @@ async def edit(req):
 @routes.delete("/api/labels/{label_id}")
 async def remove(req):
     """
-        Remove a label.
+    Remove a label.
 
     """
     db = req.app["db"]
