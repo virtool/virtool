@@ -112,7 +112,7 @@ async def test_create(error, spawn_client, test_random_alphanumeric, resp_is):
     }
 
 
-@pytest.mark.parametrize("error", [None, "404", "400_exists", "422_color"])
+@pytest.mark.parametrize("error", [None, "404", "400_exists", "422_color", "422_data"])
 async def test_edit(error, spawn_client, resp_is):
     """
         Test that a label can be edited to the database at ``PATCH /api/labels/:label_id``.
@@ -135,12 +135,14 @@ async def test_edit(error, spawn_client, resp_is):
                 "description": "Question from a user"
             }
         ])
+    data = dict()
 
-    data = {
-        "name": "Bug",
-        "color": "#fc5203",
-        "description": "Need to be fixed"
-    }
+    if error != "422_data":
+        data = {
+            "name": "Bug",
+            "color": "#fc5203",
+            "description": "Need to be fixed"
+        }
 
     if error == "400_exists":
         data["name"] = "Question"
@@ -158,7 +160,7 @@ async def test_edit(error, spawn_client, resp_is):
         assert await resp_is.bad_request(resp, "Label name already exists")
         return
 
-    if error == "422_color":
+    if error == "422_color" or error == "422_data":
         assert resp.status == 422
         return
 
