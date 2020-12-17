@@ -30,223 +30,11 @@ JOB_LIMIT_KEYS = (
     "sm_mem"
 )
 
-OPTIONS = {
-    "data_path": click.option(
-        "--data-path",
-        default="data",
-        help="The path to the application data directory",
-        type=click.Path()
-    ),
-    "db_connection_string": click.option(
-        "--db-connection-string",
-        default="mongodb://localhost:27017",
-        help="The MongoDB connection string",
-        type=str
-    ),
-    "db_name": click.option(
-        "--db-name",
-        default="virtool",
-        help="The MongoDB database name",
-        type=str
-    ),
-    "dev": click.option(
-        "--dev",
-        help="Run in development mode",
-        is_flag=True
-    ),
-    "force_version": click.option(
-        "--force-version",
-        help="Make the instance think it is the passed version",
-        is_flag=True
-    ),
-    "host": click.option(
-        "--host",
-        default="localhost",
-        help="The host to listen on"
-    ),
-    "job_id": click.option(
-        "--job-id",
-        help="The ID of the job to run",
-        required=True,
-        type=str
-    ),
-    "job_list": click.option(
-        "--job-list", "-l",
-        default=["jobs_lg", "jobs_sm"],
-        help="A Redis list key to pull job IDs from",
-        multiple=True
-    ),
-    "no_check_db": click.option(
-        "--no-check-db",
-        help="Start without checking and repairing database",
-        is_flag=True
-    ),
-    "no_check_files": click.option(
-        "--no-check-files",
-        help="Start without ensuring data directory is valid",
-        is_flag=True
-    ),
-    "no_client": click.option(
-        "--no-client",
-        help="Start without serving client files",
-        is_flag=True
-    ),
-    "no_fetching": click.option(
-        "--no-fetching",
-        help="Start with automatic fetching disabled",
-        is_flag=True
-    ),
-    "no_job_manager": click.option(
-        "--no-job-manager",
-        help="Start without a job runner",
-        is_flag=True
-    ),
-    "no_sentry": click.option(
-        "--no-sentry",
-        help="Disable Sentry error reporting",
-        is_flag=True
-    ),
-    "lg_mem": click.option(
-        "--lg-mem",
-        default=1,
-        help="The maximum memory (GB) the runner may use"
-    ),
-    "lg_proc":click.option(
-        "--lg-proc",
-        default=1,
-        help="The maximum memory (GB) the runner may use"
-    ),
-    "mem": click.option(
-        "--mem",
-        default=1,
-        help="The maximum memory (GB) the instance may use"
-    ),
-    "port": click.option(
-        "--port",
-        default=9950,
-        help="The port to listen on"
-    ),
-    "proc": click.option(
-        "--proc",
-        default=1,
-        help="The maximum number of processes the instance can use"
-    ),
-    "proxy": click.option(
-        "--proxy",
-        help="The address for an internet proxy to connect through"
-    ),
-    "redis_connection_string": click.option(
-        "--redis-connection-string",
-        help="The Redis connection string",
-        type=str,
-        required=True,
-    ),
-    "sm_mem": click.option(
-        "--sm-mem",
-        default=1,
-        help="The maximum memory (GB) the runner may use"
-    ),
-    "sm_proc": click.option(
-        "--sm-proc",
-        default=1,
-        help="The maximum memory (GB) the runner may use"
-    ),
-    "temp_path": click.option(
-        "--temp-path",
-        type=click.Path(),
-        help="The path to local directory for temporary files"
-    ),
-    "verbose": click.option(
-        "--verbose",
-        help="Log debug messages",
-        is_flag=True
-    )
-}
-
-ADDRESS_OPTIONS = (
-    "host",
-    "port"
-)
-
-COMMON_OPTIONS = (
-    "data_path",
-    "db_connection_string",
-    "db_name",
-    "dev",
-    "force_version",
-    "no_sentry",
-    "proxy",
-    "redis_connection_string",
-    "verbose"
-)
-
-DISABLE_OPTIONS = (
-    "no_client",
-    "no_check_db",
-    "no_check_files",
-    "no_fetching",
-    "no_job_manager"
-)
-
-RESOURCE_OPTIONS = (
-    "lg_mem",
-    "lg_proc",
-    "mem",
-    "proc",
-    "sm_mem",
-    "sm_proc"
-)
-
-MODE_SCOPED_OPTIONS = {
-    "agent": (
-        *COMMON_OPTIONS,
-        *RESOURCE_OPTIONS,
-        "job_list",
-        "temp_path"
-    ),
-    "runner": (
-        *COMMON_OPTIONS,
-        "job_list",
-        "mem",
-        "proc",
-        "temp_path"
-    ),
-    "server": (
-        *ADDRESS_OPTIONS,
-        *COMMON_OPTIONS,
-        *DISABLE_OPTIONS
-    )
-}
-
-
-def use_options(mode):
-    option_keys = [
-        *COMMON_OPTIONS,
-        *MODE_SCOPED_OPTIONS[mode]
-    ]
-
-    options = [OPTIONS[key] for key in option_keys]
-
-    def inner(func):
-        for option in options:
-            func = option(func)
-
-        return func
-
-    return inner
-
 
 def create_default_map():
     try:
         with open("./config.json", "r") as f:
-            json_config = json.load(f)
-
-            default_map = dict()
-
-            for mode, option_keys in MODE_SCOPED_OPTIONS.items():
-                default_map[mode] = {o: json_config[o] for o in option_keys if o in json_config}
-
-            return default_map
+            return json.load(f)
     except FileNotFoundError:
         return None
 
@@ -295,37 +83,218 @@ def entry():
 
 
 @click.group()
-def cli():
-    pass
+@click.option(
+    "--data-path",
+    default="data",
+    help="The path to the application data directory",
+    type=click.Path()
+)
+@click.option(
+    "--db-connection-string",
+    default="mongodb://localhost:27017",
+    help="The MongoDB connection string",
+    type=str
+)
+@click.option(
+    "--db-name",
+    default="virtool",
+    help="The MongoDB database name",
+    type=str
+)
+@click.option(
+    "--dev",
+    help="Run in development mode",
+    is_flag=True
+)
+@click.option(
+    "--force-version",
+    help="Make the instance think it is a different version",
+    type=str
+)
+@click.option(
+    "--no-sentry",
+    help="Disable Sentry error reporting",
+    is_flag=True
+)
+@click.option(
+    "--proxy",
+    help="The address for an internet proxy to connect through",
+    type=str
+)
+@click.option(
+    "--redis-connection-string",
+    help="The Redis connection string",
+    type=str,
+    required=True,
+)
+@click.option(
+    "--verbose",
+    help="Log debug messages",
+    is_flag=True
+)
+@click.pass_context
+def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_sentry, proxy, redis_connection_string, verbose):
+    ctx.ensure_object(dict)
+    ctx.obj.update({
+        "data_path": data_path,
+        "db_connection_string": db_connection_string,
+        "db_name": db_name,
+        "dev": dev,
+        "force_version": force_version,
+        "no_sentry": no_sentry,
+        "proxy": proxy,
+        "redis_connection_string": redis_connection_string,
+        "verbose": verbose
+    })
 
 
 @cli.command("server", help="Start a Virtool API and websocket server")
-@use_options("server")
-def start_server(**kwargs):
-    virtool.logs.configure(kwargs)
-    data_path = kwargs["data_path"]
-    logger.info(f"Found data path: {data_path}")
-    asyncio.get_event_loop().run_until_complete(virtool.app.run_app(kwargs))
+@click.option(
+    "--host",
+    default="localhost",
+    help="The host to listen on",
+    type=str
+)
+@click.option(
+    "--port",
+    default=9950,
+    help="The port to listen on",
+    type=int
+)
+@click.option(
+    "--no-check-db",
+    help="Start without checking and repairing database",
+    is_flag=True
+)
+@click.option(
+    "--no-check-files",
+    help="Start without ensuring data directory is valid",
+    is_flag=True
+)
+@click.option(
+    "--no-client",
+    help="Start without serving client files",
+    is_flag=True
+)
+@click.option(
+    "--no-fetching",
+    help="Start with automatic fetching disabled",
+    is_flag=True
+)
+@click.pass_context
+def start_server(ctx, host, port, no_check_db, no_check_files, no_client, no_fetching):
+    virtool.logs.configure(ctx.obj["dev"], ctx.obj["verbose"])
+    config = {
+        **ctx.obj,
+        "host": host,
+        "port": port,
+        "no_check_db": no_check_db,
+        "no_check_files": no_check_files,
+        "no_client": no_client,
+        "no_fetching": no_fetching
+    }
 
-
-@cli.command("agent", help="Start an agent that runs multiple jobs")
-@use_options("agent")
-def start_agent(**kwargs):
-    virtool.logs.configure(kwargs)
-    data_path = kwargs["data_path"]
-    logger.info(f"Found data path: {data_path}")
-    validate_limits(kwargs)
-
-    logger.info("Starting in agent mode")
-    asyncio.get_event_loop().run_until_complete(virtool.jobs.run.run(kwargs, virtool.jobs.runner.JobAgent))
+    logger.info("Starting in server mode")
+    asyncio.get_event_loop().run_until_complete(virtool.app.run_app(config))
 
 
 @cli.command("runner", help="Start a runner that runs one job at a time")
-@use_options("runner")
-def start_runner(**kwargs):
-    virtool.logs.configure(kwargs)
-    data_path = kwargs["data_path"]
-    logger.info(f"Found data path: {data_path}")
+@click.option(
+    "--job-list", "-l",
+    default=["jobs_lg", "jobs_sm"],
+    help="A Redis list key to pull job IDs from",
+    multiple=True,
+    type=str
+)
+@click.option(
+    "--mem",
+    default=1,
+    help="The maximum memory (GB) the instance may use",
+    type=int
+)
+@click.option(
+    "--proc",
+    default=1,
+    help="The maximum number of processes the instance can use",
+    type=int
+)
+@click.option(
+    "--temp-path",
+    type=click.Path(),
+    help="The path to local directory for temporary files"
+)
+@click.pass_context
+def start_runner(ctx, job_list, mem, proc, temp_path):
+    virtool.logs.configure(ctx.obj["dev"], ctx.obj["verbose"])
+    config = {
+        **ctx.obj,
+        "job_list": job_list,
+        "mem": mem,
+        "proc": proc,
+        "temp_path": temp_path
+    }
 
     logger.info("Starting in runner mode")
-    asyncio.get_event_loop().run_until_complete(virtool.jobs.run.run(kwargs, virtool.jobs.runner.JobRunner))
+    asyncio.get_event_loop().run_until_complete(virtool.jobs.run.run(config, virtool.jobs.runner.JobRunner))
+
+
+@cli.command("agent", help="Start an agent that runs multiple jobs")
+@click.option(
+    "--job-list", "-l",
+    default=["jobs_lg", "jobs_sm"],
+    help="A Redis list key to pull job IDs from",
+    multiple=True
+)
+@click.option(
+    "--lg-mem",
+    default=1,
+    help="The maximum memory (GB) the runner may use"
+)
+@click.option(
+    "--lg-proc",
+    default=1,
+    help="The maximum memory (GB) the runner may use"
+)
+@click.option(
+    "--mem",
+    default=1,
+    help="The maximum memory (GB) the instance may use"
+)
+@click.option(
+    "--proc",
+    default=1,
+    help="The maximum number of processes the instance can use"
+)
+@click.option(
+    "--sm-mem",
+    default=1,
+    help="The maximum memory (GB) the runner may use"
+)
+@click.option(
+    "--sm-proc",
+    default=1,
+    help="The maximum memory (GB) the runner may use"
+)
+@click.option(
+    "--temp-path",
+    type=click.Path(),
+    help="The path to local directory for temporary files"
+)
+@click.pass_context
+def start_agent(ctx, job_list, lg_mem, lg_proc, mem, proc, sm_mem, sm_proc, temp_path):
+    virtool.logs.configure(ctx.obj["dev"], ctx.obj["verbose"])
+    config = {
+        **ctx.obj,
+        "job_list": job_list,
+        "lg_mem": lg_mem,
+        "lg_proc": lg_proc,
+        "mem": mem,
+        "proc": proc,
+        "sm_mem": sm_mem,
+        "sm_proc": sm_proc,
+        "temp_path": temp_path
+    }
+    validate_limits(config)
+
+    logger.info("Starting in agent mode")
+    asyncio.get_event_loop().run_until_complete(virtool.jobs.run.run(config, virtool.jobs.runner.JobAgent))
