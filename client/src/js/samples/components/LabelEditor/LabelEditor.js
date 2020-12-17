@@ -134,7 +134,6 @@ class LabelEdit extends React.Component {
                                 New Label
                             </StyledButton>
                         </Flex>
-
                     </BoxGroupHeader>
                     <StyledTable>
                         <tbody>{labels}</tbody>
