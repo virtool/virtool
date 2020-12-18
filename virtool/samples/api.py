@@ -164,7 +164,7 @@ async def get(req):
                 "replace_url": f"/upload/samples/{sample_id}/files/{index + 1}"
             })
 
-    await virtool.subtractions.db.attach_subtraction(db, document)
+    await virtool.subtractions.db.attach_subtractions(db, document)
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -200,8 +200,8 @@ async def get(req):
         ],
         "default": "normal"
     },
-    "subtraction": {
-        "type": "string",
+    "subtractions": {
+        "type": "list",
         "required": True
     },
     "files": {
@@ -226,9 +226,10 @@ async def create(req):
     if name_error_message:
         return bad_request(name_error_message)
 
-    # Make sure a subtraction host was submitted and it exists.
-    if not await db.subtraction.count_documents({"_id": data["subtraction"], "is_host": True}):
-        return bad_request("Subtraction does not exist")
+    # Make sure each subtraction host was submitted and it exists.
+    for subtraction in data["subtractions"]:
+        if not await db.subtraction.count_documents({"_id": subtraction, "is_host": True}):
+            return bad_request(f"Subtraction {subtraction} does not exist")
 
     # Make sure all of the passed file ids exist.
     if not await virtool.db.utils.ids_exist(db.files, data["files"]):
@@ -272,9 +273,7 @@ async def create(req):
         "all_read": settings["sample_all_read"],
         "all_write": settings["sample_all_write"],
         "library_type": data["library_type"],
-        "subtraction": {
-            "id": data["subtraction"]
-        },
+        "subtractions": data["subtractions"],
         "user": {
             "id": user_id
         },
