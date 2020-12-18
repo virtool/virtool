@@ -155,6 +155,17 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
     client = await spawn_client(authorize=True)
 
     if not error:
+        await client.db.subtraction.insert_many([
+            {
+                "_id": "foo",
+                "name": "Foo"
+            },
+            {
+                "_id": "bar",
+                "name": "Bar"
+            }
+        ])
+
         await client.db.samples.insert_one({
             "_id": "test",
             "name": "Test",
@@ -166,7 +177,8 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
                     "name": "Bar.fq.gz",
                     "download_url": "/download/samples/files/file_1.fq.gz"
                 }
-            ]
+            ],
+            "subtractions": ["foo", "bar"]
         })
 
     resp = await client.get("api/samples/test")
@@ -224,7 +236,7 @@ class TestCreate:
         request_data = {
             "name": "Foobar",
             "files": ["test.fq"],
-            "subtraction": "apple",
+            "subtractions": ["apple"],
         }
 
         if group_setting == "force_choice":
@@ -265,7 +277,7 @@ class TestCreate:
         resp = await client.post("/api/samples", {
             "name": "Foobar",
             "files": ["test.fq"],
-            "subtraction": "apple"
+            "subtractions": ["apple"]
         })
 
         assert await resp_is.bad_request(resp, "Sample name is already in use")
@@ -291,7 +303,7 @@ class TestCreate:
         resp = await client.post("/api/samples", {
             "name": "Foobar",
             "files": ["test.fq"],
-            "subtraction": "apple"
+            "subtractions": ["apple"]
         })
 
         assert await resp_is.bad_request(resp, "Group value required for sample creation")
@@ -312,7 +324,7 @@ class TestCreate:
         resp = await client.post("/api/samples", {
             "name": "Foobar",
             "files": ["test.fq"],
-            "subtraction": "apple",
+            "subtractions": ["apple"],
             "group": "foobar"
         })
 
@@ -327,7 +339,7 @@ class TestCreate:
         resp = await client.post("/api/samples", {
             "name": "Foobar",
             "files": ["test.fq"],
-            "subtraction": "apple"
+            "subtractions": ["apple"]
         })
 
         if in_db:
@@ -336,7 +348,7 @@ class TestCreate:
                 "is_host": False
             })
 
-        assert await resp_is.bad_request(resp, "Subtraction does not exist")
+        assert await resp_is.bad_request(resp, "Subtraction apple does not exist")
 
     @pytest.mark.parametrize("one_exists", [True, False])
     async def test_file_dne(self, one_exists, spawn_client, resp_is):
@@ -361,7 +373,7 @@ class TestCreate:
         resp = await client.post("/api/samples", {
             "name": "Foobar",
             "files": ["test.fq", "baz.fq"],
-            "subtraction": "apple"
+            "subtractions": ["apple"]
         })
 
         assert await resp_is.bad_request(resp, "File does not exist")

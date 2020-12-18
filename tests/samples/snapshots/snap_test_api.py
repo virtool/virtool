@@ -30,9 +30,7 @@ snapshots['TestCreate.test[uvloop-none] 1'] = {
     'pathoscope': False,
     'quality': None,
     'ready': False,
-    'subtraction': {
-        'id': 'apple'
-    },
+    'subtractions': ['apple'],
     'user': {
         'id': 'test'
     }
@@ -61,9 +59,7 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
     'pathoscope': False,
     'quality': None,
     'ready': False,
-    'subtraction': {
-        'id': 'apple'
-    },
+    'subtractions': ['apple'],
     'user': {
         'id': 'test'
     }
@@ -92,9 +88,7 @@ snapshots['TestCreate.test[uvloop-force_choice] 1'] = {
     'pathoscope': False,
     'quality': None,
     'ready': False,
-    'subtraction': {
-        'id': 'apple'
-    },
+    'subtractions': ['apple'],
     'user': {
         'id': 'test'
     }
@@ -123,9 +117,7 @@ snapshots['TestCreate.test[uvloop-none] 2'] = {
     'pathoscope': False,
     'quality': None,
     'ready': False,
-    'subtraction': {
-        'id': 'apple'
-    },
+    'subtractions': ['apple'],
     'user': {
         'id': 'test'
     }
@@ -154,9 +146,7 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 2'] = {
     'pathoscope': False,
     'quality': None,
     'ready': False,
-    'subtraction': {
-        'id': 'apple'
-    },
+    'subtractions': ['apple'],
     'user': {
         'id': 'test'
     }
@@ -185,9 +175,7 @@ snapshots['TestCreate.test[uvloop-force_choice] 2'] = {
     'pathoscope': False,
     'quality': None,
     'ready': False,
-    'subtraction': {
-        'id': 'apple'
-    },
+    'subtractions': ['apple'],
     'user': {
         'id': 'test'
     }
@@ -207,7 +195,17 @@ snapshots['test_get[uvloop-True-None] 1'] = {
     ],
     'id': 'test',
     'name': 'Test',
-    'ready': True
+    'ready': True,
+    'subtractions': [
+        {
+            'id': 'foo',
+            'name': 'Foo'
+        },
+        {
+            'id': 'bar',
+            'name': 'Bar'
+        }
+    ]
 }
 
 snapshots['test_get[uvloop-False-None] 1'] = {
@@ -223,7 +221,17 @@ snapshots['test_get[uvloop-False-None] 1'] = {
     ],
     'id': 'test',
     'name': 'Test',
-    'ready': False
+    'ready': False,
+    'subtractions': [
+        {
+            'id': 'foo',
+            'name': 'Foo'
+        },
+        {
+            'id': 'bar',
+            'name': 'Bar'
+        }
+    ]
 }
 
 snapshots['test_find_analyses[uvloop-None-None] 1'] = {
