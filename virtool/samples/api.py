@@ -227,9 +227,13 @@ async def create(req):
         return bad_request(name_error_message)
 
     # Make sure each subtraction host was submitted and it exists.
-    for subtraction in data["subtractions"]:
-        if not await db.subtraction.count_documents({"_id": subtraction, "is_host": True}):
-            return bad_request(f"Subtraction {subtraction} does not exist")
+    non_existent_subtractions = await virtool.db.utils.check_missing_ids(
+        db.subtraction,
+        data["subtractions"],
+        {"is_host": True}
+    )
+    if non_existent_subtractions:
+        return bad_request("Subtractions do not exist: " + ", ".join(non_existent_subtractions))
 
     # Make sure all of the passed file ids exist.
     if not await virtool.db.utils.ids_exist(db.files, data["files"]):
@@ -557,9 +561,7 @@ async def analyze(req):
     if subtractions is None:
         subtractions = []
     else:
-        existent_subtractions = await db.subtraction.distinct("_id")
-        non_existent_subtractions = [subtraction for subtraction in subtractions if subtraction not in existent_subtractions]
-
+        non_existent_subtractions = await virtool.db.utils.check_missing_ids(db.subtraction, subtractions)
         if non_existent_subtractions:
             return bad_request("Subtractions do not exist: " + ", ".join(non_existent_subtractions))
 
