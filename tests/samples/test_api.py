@@ -336,19 +336,19 @@ class TestCreate:
 
         client.app["settings"]["sample_unique_names"] = True
 
-        resp = await client.post("/api/samples", {
-            "name": "Foobar",
-            "files": ["test.fq"],
-            "subtractions": ["apple"]
-        })
-
         if in_db:
             await client.db.subtraction.insert_one({
                 "_id": "apple",
                 "is_host": False
             })
 
-        assert await resp_is.bad_request(resp, "Subtraction apple does not exist")
+        resp = await client.post("/api/samples", {
+            "name": "Foobar",
+            "files": ["test.fq"],
+            "subtractions": ["apple"]
+        })
+
+        assert await resp_is.bad_request(resp, "Subtractions do not exist: apple")
 
     @pytest.mark.parametrize("one_exists", [True, False])
     async def test_file_dne(self, one_exists, spawn_client, resp_is):
