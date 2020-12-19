@@ -36,6 +36,27 @@ def apply_projection(document, projection):
     return {key: document[key] for key in document if projection.get(key, False)}
 
 
+async def check_missing_ids(collection, id_list, query=None):
+    """
+    Check if all IDs in the ``id_list`` exist in the database.
+
+    :param collection: the Mongo collection to check ``id_list`` against
+    :type collection: :class:`motor.motor_asyncio.AsyncIOMotorCollection`
+
+    :param id_list: the IDs to check for
+    :type: id_list: list
+
+    :param query: a MongoDB query
+    :type: query: dict
+
+    :return: all non-existent IDs
+    :rtype: set
+
+    """
+    existent_ids = await collection.distinct("_id", query)
+    return set(id_list) - set(existent_ids)
+
+
 async def get_new_id(collection, excluded=None):
     """
     Returns a new, unique, id that can be used for inserting a new document. Will not return any id that is included
