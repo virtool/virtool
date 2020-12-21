@@ -9,6 +9,7 @@ import virtool.downloads.api
 import virtool.files.api
 import virtool.genbank.api
 import virtool.groups.api
+import virtool.health.api
 import virtool.history.api
 import virtool.hmm.api
 import virtool.http.auth
@@ -51,6 +52,7 @@ ROUTES = (
     virtool.files.api.routes,
     virtool.genbank.api.routes,
     virtool.groups.api.routes,
+    virtool.health.api.routes,
     virtool.history.api.routes,
     virtool.hmm.api.routes,
     virtool.indexes.api.routes,
