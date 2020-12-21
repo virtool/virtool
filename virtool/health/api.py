@@ -2,7 +2,7 @@
 Provides request handlers for Kubernetes health check.
 
 """
-from aiohttp import web
+from virtool.api.response import json_response
 import virtool.http.routes
 
 routes = virtool.http.routes.Routes()
@@ -13,7 +13,7 @@ async def is_alive(req):
     """
     Check if the server is alive.
     """
-    return web.Response(text="alive", status=200)
+    return json_response({"alive": True})
 
 
 @routes.get("/api/health/ready")
@@ -21,4 +21,5 @@ async def is_ready(req):
     """
     Check if the server is ready.
     """
-    return web.Response(text="ready", status=200)
+    return json_response({"ready": True})
+
