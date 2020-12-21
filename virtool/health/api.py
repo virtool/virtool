@@ -21,5 +21,7 @@ async def is_ready(req):
     """
     Check if the server is ready.
     """
-    return json_response({"ready": True})
-
+    if req.app['ready']:
+        return json_response({"ready": True})
+    else:
+        return json_response({"ready": False}, status=500)
