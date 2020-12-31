@@ -37,6 +37,12 @@ async def recalculate_all_workflow_tags(db):
 
 
 async def change_to_subtractions_list(db):
+    """
+    Transform `subtraction` field to a list and rename it as `subtractions`.
+
+    :param db: the application database object
+
+    """
     async for document in db.samples.find({"subtraction": {"$exists": True}}):
         await db.samples.update_one({"_id": document["_id"]}, {
             "$set": {
