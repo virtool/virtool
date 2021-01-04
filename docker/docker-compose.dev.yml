@@ -18,3 +18,25 @@ services:
               
         logging:
             driver: none
+
+    postgres:
+        image: postgres:13.1
+        ports:
+            - "5432:5432"
+        restart: always
+        environment:
+            POSTGRES_USER: virtool
+            POSTGRES_PASSWORD: virtool
+        volumes:
+            - /postgres/data:/var/lib/postgresql/data
+        logging:
+            driver: none
+
+    pgadmin4:
+        image: dpage/pgadmin4:4.29
+        environment:
+            PGADMIN_DEFAULT_EMAIL: dev@virtool.ca
+            PGADMIN_DEFAULT_PASSWORD: virtool
+        volumes:
+            - /pgadmin4/data:/var/lib/pgadmin4/data
+        depends_on: [postgres]
