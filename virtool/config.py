@@ -117,6 +117,12 @@ def entry():
     is_flag=True
 )
 @click.option(
+    "--postgres-connection-string",
+    help="The PostgreSQL connection string",
+    type=str,
+    default="postgresql://virtool:virtool@localhost/virtool"
+)
+@click.option(
     "--proxy",
     help="The address for an internet proxy to connect through",
     type=str
@@ -133,7 +139,7 @@ def entry():
     is_flag=True
 )
 @click.pass_context
-def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_sentry, proxy, redis_connection_string, verbose):
+def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_sentry, proxy, postgres_connection_string, redis_connection_string, verbose):
     ctx.ensure_object(dict)
     ctx.obj.update({
         "data_path": data_path,
@@ -143,6 +149,7 @@ def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_se
         "force_version": force_version,
         "no_sentry": no_sentry,
         "proxy": proxy,
+        "postgres_connection_string": postgres_connection_string,
         "redis_connection_string": redis_connection_string,
         "verbose": verbose
     })
