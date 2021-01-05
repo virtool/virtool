@@ -14,16 +14,18 @@ async def connect(postgres_connection_string: str) -> sqlalchemy.engine:
 
     try:
         postgres = create_engine(postgres_connection_string)
-        await check_version(postgres)
+        connection = postgres.connect()
 
-        return postgres.connect()
+        await check_version(connection)
+
+        return connection
     except ConnectionRefusedError:
         logger.fatal("Could not connect to PostgreSQL: Connection refused")
         sys.exit(1)
 
 
-async def check_version(postgres):
-    with postgres.connect() as con:
+async def check_version(connection):
+    with connection as con:
         info = con.execute('SHOW server_version').fetchone()
 
     version = info[0].split()[0]
