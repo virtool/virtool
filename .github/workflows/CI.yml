@@ -3,7 +3,7 @@ name: Virtool CI
 on:
   push:
     branches:
-      - psql-setup
+      - release-5.0.0
   pull_request:
     branches:
       - release-5.0.0
