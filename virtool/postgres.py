@@ -2,7 +2,8 @@ import logging
 import sys
 
 import sqlalchemy
-from sqlalchemy import create_engine
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
 
 logger = logging.getLogger(__name__)
 
@@ -13,21 +14,19 @@ async def connect(postgres_connection_string: str) -> sqlalchemy.engine:
         sys.exit(1)
 
     try:
-        postgres = create_engine(postgres_connection_string)
-        connection = postgres.connect()
+        postgres = create_async_engine(postgres_connection_string)
+        async with postgres.connect() as connection:
+            await check_version(connection)
 
-        await check_version(connection)
-
-        return connection
+            return connection
     except ConnectionRefusedError:
         logger.fatal("Could not connect to PostgreSQL: Connection refused")
         sys.exit(1)
 
 
 async def check_version(connection):
-    with connection as con:
-        info = con.execute('SHOW server_version').fetchone()
+    info = await connection.execute(text('SHOW server_version'))
 
-    version = info[0].split()[0]
+    version = info.first()[0].split()[0]
     logger.info(f"Found PostgreSQL {version}")
     return
