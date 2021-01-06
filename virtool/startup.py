@@ -230,7 +230,14 @@ async def init_paths(app: aiohttp.web_app.Application):
 
 
 async def init_postgres(app: aiohttp.web_app.Application):
-    postgres_connection_string = app["config"].get("postgres_connection_string")
+    """
+     An application ``on_startup`` callback that attaches an instance of :class:`~AsyncConnection`
+     to the Virtool ``app`` object.
+
+     :param app: the app object
+
+     """
+    postgres_connection_string = app["config"]["postgres_connection_string"]
 
     logger.info("Connecting to PostgreSQL")
 
