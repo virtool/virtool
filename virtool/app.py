@@ -107,6 +107,7 @@ def create_app(config):
         virtool.startup.init_client_path,
         virtool.startup.init_http_client,
         virtool.startup.init_paths,
+        virtool.startup.init_postgres,
         virtool.startup.init_routes,
         virtool.startup.init_executors,
         virtool.startup.init_tasks,

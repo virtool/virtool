@@ -21,6 +21,7 @@ import virtool.dispatcher
 import virtool.hmm.db
 import virtool.jobs.interface
 import virtool.jobs.runner
+import virtool.postgres
 import virtool.redis
 import virtool.references.db
 import virtool.resources
@@ -226,6 +227,21 @@ async def init_paths(app: aiohttp.web_app.Application):
     if app["settings"]["no_check_files"] is False:
         logger.info("Checking files")
         virtool.utils.ensure_data_dir(app["settings"]["data_path"])
+
+
+async def init_postgres(app: aiohttp.web_app.Application):
+    """
+     An application ``on_startup`` callback that attaches an instance of :class:`~AsyncConnection`
+     to the Virtool ``app`` object.
+
+     :param app: the app object
+
+     """
+    postgres_connection_string = app["config"]["postgres_connection_string"]
+
+    logger.info("Connecting to PostgreSQL")
+
+    app["postgres"] = await virtool.postgres.connect(postgres_connection_string)
 
 
 async def init_redis(app: typing.Union[dict, aiohttp.web_app.Application]):

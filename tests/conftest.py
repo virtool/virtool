@@ -27,3 +27,9 @@ def pytest_addoption(parser):
         action="store",
         default="redis://localhost:6379"
     )
+
+    parser.addoption(
+        "--postgres-connection-string",
+        action="store",
+        default="postgresql://virtool:virtool@postgres/virtool"
+    )

@@ -17,6 +17,16 @@ jobs:
         image: redis:6.0
       mongo:
         image: mongo:4.4
+      postgres:
+        image: postgres:13.1
+        env:
+          POSTGRES_USER: virtool
+          POSTGRES_PASSWORD: virtool
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     container:
       image: virtool/external-tools:0.1.2
