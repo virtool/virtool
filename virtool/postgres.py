@@ -29,4 +29,3 @@ async def check_version(connection):
 
     version = info.first()[0].split()[0]
     logger.info(f"Found PostgreSQL {version}")
-    return
