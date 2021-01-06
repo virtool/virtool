@@ -1,7 +1,6 @@
 import logging
 import sys
 
-import sqlalchemy
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection, create_async_engine
 
