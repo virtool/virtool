@@ -15,7 +15,7 @@ async def connect(postgres_connection_string: str) -> AsyncConnection:
     :return: an AsyncConnection object
 
     """
-    if not postgres_connection_string.startswith("postgresql://"):
+    if not postgres_connection_string.startswith("postgresql+asyncpg://"):
         logger.fatal("Invalid PostgreSQL connection string")
         sys.exit(1)
 
