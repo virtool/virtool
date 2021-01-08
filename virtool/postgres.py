@@ -4,6 +4,7 @@ import sys
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection, create_async_engine
 
+import virtool.models
 logger = logging.getLogger(__name__)
 
 
@@ -21,9 +22,10 @@ async def connect(postgres_connection_string: str) -> AsyncConnection:
 
     try:
         postgres = create_async_engine(postgres_connection_string)
+        await virtool.models.create_tables(postgres)
+
         async with postgres.connect() as connection:
             await check_version(connection)
-
             return connection
     except ConnectionRefusedError:
         logger.fatal("Could not connect to PostgreSQL: Connection refused")
