@@ -10,7 +10,7 @@ def configure(dev, verbose):
 
     logging.captureWarnings(True)
 
-    log_format = "{asctime:<20} {module<11} {levelname:<8} {message}" \
+    log_format = "{asctime:<20} {module:<11} {levelname:<8} {message}" \
         if not verbose else \
         "{asctime:<20} {module:<11} {levelname:<8} {message} [{name}:{funcName}:{lineno}]"
 
