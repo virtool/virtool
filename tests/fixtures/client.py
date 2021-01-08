@@ -99,7 +99,7 @@ class VTClient:
 def spawn_client(loop, request, aiohttp_client, test_motor, test_db_name, create_user):
     db_connection_string = request.config.getoption("db_connection_string", "mongodb://localhost:27017")
     postgres_connection_string = request.config.getoption("postgres_connection_string",
-                                                          "postgresql://virtool:virtool@postgres/virtool")
+                                                          "postgresql+asyncpg://virtool:virtool@postgres/virtool")
 
     client = VTClient(loop, aiohttp_client, db_connection_string, postgres_connection_string, test_db_name, create_user)
 

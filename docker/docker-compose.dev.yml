@@ -8,14 +8,14 @@ services:
             - /mongo/data:/data/db
         logging:
             driver: none
-        
+
     redis:
         image: redis:6.0
         ports:
             - "6379:6379"
         volumes:
             - /redis/data:/data
-              
+
         logging:
             driver: none
 
