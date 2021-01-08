@@ -118,9 +118,9 @@ def entry():
 )
 @click.option(
     "--postgres-connection-string",
-    help="The PostgreSQL connection string",
+    help="The PostgreSQL connection string (must begin with 'postgresql+asyncpg://')",
     type=str,
-    default="postgresql://virtool:virtool@localhost/virtool"
+    default="postgresql+asyncpg://virtool:virtool@localhost/virtool"
 )
 @click.option(
     "--proxy",
@@ -132,6 +132,7 @@ def entry():
     help="The Redis connection string",
     type=str,
     required=True,
+    default="redis://localhost:6379"
 )
 @click.option(
     "--verbose",
