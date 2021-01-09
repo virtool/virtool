@@ -1,3 +1,5 @@
+import motor.motor_asyncio
+
 import virtool.utils
 
 
@@ -34,6 +36,23 @@ def apply_projection(document, projection):
         projection["_id"] = True
 
     return {key: document[key] for key in document if projection.get(key, False)}
+
+
+async def check_missing_ids(
+        collection: motor.motor_asyncio.AsyncIOMotorCollection,
+        id_list: list,
+        query: dict = None):
+    """
+    Check if all IDs in the ``id_list`` exist in the database.
+
+    :param collection: the Mongo collection to check ``id_list`` against
+    :param id_list: the IDs to check for
+    :param query: a MongoDB query
+    :return: all non-existent IDs
+
+    """
+    existent_ids = await collection.distinct("_id", query)
+    return set(id_list) - set(existent_ids)
 
 
 async def get_new_id(collection, excluded=None):
