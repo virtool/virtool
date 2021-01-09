@@ -75,3 +75,24 @@ async def test_delete_unready(dbi):
             "ready": True
         }
     ]
+
+
+async def test_check_missing_ids(dbi):
+    await dbi.subtraction.insert_many([
+        {
+            "_id": "foo",
+            "name": "Foo",
+        },
+        {
+            "_id": "bar",
+            "name": "Bar",
+        }
+    ])
+
+    non_existent_subtractions = await virtool.db.utils.check_missing_ids(
+        dbi.subtraction,
+        ["foo", "bar", "baz"]
+    )
+
+    assert non_existent_subtractions == {"baz"}
+

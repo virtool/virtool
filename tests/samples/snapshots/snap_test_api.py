@@ -30,6 +30,8 @@ snapshots['test_get[uvloop-True-None] 1'] = {
     ],
     'name': 'Test',
     'ready': True
+    'subtractions': ['apple']
+    'subtractions': ['apple'],
 }
 
 snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
@@ -60,9 +62,7 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
     'pathoscope': False,
     'quality': None,
     'ready': False,
-    'subtraction': {
-        'id': 'apple'
-    },
+    'subtractions': ['apple'],
     'user': {
         'id': 'test'
     }
@@ -111,6 +111,7 @@ snapshots['TestCreate.test[uvloop-none] 2'] = {
     'hold': True,
     'is_legacy': False,
     'labels': [
+    'subtractions': ['apple'],
     ],
     'library_type': 'normal',
     'name': 'Foobar',
@@ -120,9 +121,7 @@ snapshots['TestCreate.test[uvloop-none] 2'] = {
     'pathoscope': False,
     'quality': None,
     'ready': False,
-    'subtraction': {
-        'id': 'apple'
-    },
+    'subtractions': ['apple'],
     'user': {
         'id': 'test'
     }

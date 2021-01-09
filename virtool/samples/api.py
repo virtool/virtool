@@ -190,7 +190,7 @@ async def get(req):
                 "replace_url": f"/upload/samples/{sample_id}/files/{index + 1}"
             })
 
-    await virtool.subtractions.db.attach_subtraction(db, document)
+    await virtool.subtractions.db.attach_subtractions(db, document)
 
     document = await virtool.samples.db.attach_labels(req.app["pg"], document)
 
@@ -251,8 +251,8 @@ async def get_cache(req):
         ],
         "default": "normal"
     },
-    "subtraction": {
-        "type": "string",
+    "subtractions": {
+        "type": "list",
         "required": True
     },
     "files": {
@@ -281,6 +281,15 @@ async def create(req):
     if name_error_message:
         return bad_request(name_error_message)
 
+    # Make sure each subtraction host was submitted and it exists.
+    non_existent_subtractions = await virtool.db.utils.check_missing_ids(
+        db.subtraction,
+        data["subtractions"],
+        {"is_host": True}
+    )
+    if non_existent_subtractions:
+        return bad_request("Subtractions do not exist: " + ", ".join(non_existent_subtractions))
+        
     if "labels" in data:
         non_existent_labels = await check_labels(pg, data["labels"])
 
@@ -341,9 +350,7 @@ async def create(req):
         "all_read": settings["sample_all_read"],
         "all_write": settings["sample_all_write"],
         "library_type": data["library_type"],
-        "subtraction": {
-            "id": data["subtraction"]
-        },
+        "subtractions": data["subtractions"],
         "user": {
             "id": user_id
         },
@@ -710,9 +717,7 @@ async def analyze(req):
     if subtractions is None:
         subtractions = []
     else:
-        existent_subtractions = await db.subtraction.distinct("_id")
-        non_existent_subtractions = [subtraction for subtraction in subtractions if subtraction not in existent_subtractions]
-
+        non_existent_subtractions = await virtool.db.utils.check_missing_ids(db.subtraction, subtractions)
         if non_existent_subtractions:
             return bad_request("Subtractions do not exist: " + ", ".join(non_existent_subtractions))
 
