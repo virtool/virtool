@@ -193,7 +193,7 @@ async def refresh(app):
     except asyncio.CancelledError:
         pass
 
-    logging.debug("Started HMM refresher")
+    logging.debug("Stopped software refresher")
 
 
 async def update_software_task(db, progress, step=None):
