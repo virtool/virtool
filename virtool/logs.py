@@ -1,8 +1,6 @@
 import logging.handlers
 from rich.logging import RichHandler
 
-import coloredlogs
-
 
 def configure(dev, verbose):
     verbose = dev or verbose
