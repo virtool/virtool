@@ -1,8 +1,12 @@
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 import virtool.http.routes
 import virtool.utils
 import virtool.validators
 import virtool.db.utils
 from virtool.api.response import bad_request, empty_request, json_response, no_content, not_found
+from virtool.models import Label
 
 routes = virtool.http.routes.Routes()
 
@@ -13,11 +17,20 @@ async def find(req):
     Get a list of all label documents in the database.
 
     """
-    db = req.app["db"]
+    document = list()
+    async with AsyncSession(req.app["postgres"]) as session:
+        result = await session.execute(select(Label))
+        labels = result.scalars().all()
+        for label in labels:
+            d = {
+                "id": label.id,
+                "name": label.name,
+                "color": label.color,
+                "description": label.description
+            }
+            document.append(d)
 
-    cursor = db.labels.find()
-
-    return json_response([virtool.utils.base_processor(d) async for d in cursor])
+    return json_response(document)
 
 
 @routes.get("/api/labels/{label_id}")
@@ -26,12 +39,20 @@ async def get(req):
     Get a complete label document.
 
     """
-    document = await req.app["db"].labels.find_one(req.match_info["label_id"])
+    async with AsyncSession(req.app["postgres"]) as session:
+        result = await session.execute(select(Label).filter_by(id=req.match_info["label_id"]))
+        label = result.scalar()
+        if label is None:
+            return not_found()
 
-    if document is None:
-        return not_found()
+        d = {
+            "id": label.id,
+            "name": label.name,
+            "color": label.color,
+            "description": label.description
+        }
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(virtool.utils.base_processor(d))
 
 
 @routes.post("/api/labels", schema={
@@ -61,10 +82,15 @@ async def create(req):
     db = req.app["db"]
     data = req["data"]
 
-    if await db.labels.count_documents({'name': data['name']}):
-        return bad_request("Label name already exists")
+    async with AsyncSession(req.app["postgres"]) as session:
+        result = await session.execute(select(Label).filter_by(name=data["name"]))
+        if result.scalars().all():
+            return bad_request("Label name already exists")
 
-    label_id = await virtool.db.utils.get_new_id(db.labels)
+        label_id = await virtool.db.utils.get_new_id(db.labels)
+
+        label = Label(id=label_id, name=data["name"], color=data["color"], description=data["description"])
+        session.add(label)
 
     document = {
         "_id": label_id,
@@ -72,8 +98,6 @@ async def create(req):
         "color": data["color"],
         "description": data["description"]
     }
-
-    await db.labels.insert_one(document)
 
     headers = {
         "Location": f"/api/labels/{label_id}"
@@ -102,7 +126,6 @@ async def edit(req):
     Edit an existing label.
 
     """
-    db = req.app["db"]
     data = req["data"]
 
     label_id = req.match_info["label_id"]
@@ -110,16 +133,27 @@ async def edit(req):
     if not data:
         return empty_request()
 
-    if "name" in data and await db.labels.count_documents({"_id": {"$ne": label_id}, "name": data["name"]}):
-        return bad_request("Label name already exists")
+    async with AsyncSession(req.app["postgres"]) as session:
+        result = await session.execute(select(Label).filter(Label.id != label_id, Label.name == data["name"]))
+        if "name" in data and len(result.scalars().all()) > 0:
+            return bad_request("Label name already exists")
 
-    document = await db.labels.find_one_and_update({"_id": label_id}, {
-        "$set": data
-    })
+        result = await session.execute(select(Label).filter_by(id=label_id))
+        label = result.scalar()
+        if label is None:
+            return not_found()
 
-    if document is None:
-        return not_found()
+        label.name = data["name"]
+        label.color = data["color"]
+        label.description = data["description"]
+        await session.commit()
 
+    document = {
+        "_id": label_id,
+        "name": data["name"],
+        "color": data["color"],
+        "description": data["description"]
+    }
     return json_response(virtool.utils.base_processor(document))
 
 
@@ -139,4 +173,3 @@ async def remove(req):
         return not_found()
 
     return no_content()
-
