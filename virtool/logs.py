@@ -1,4 +1,5 @@
 import logging.handlers
+from rich.logging import RichHandler
 
 import coloredlogs
 
@@ -10,20 +11,20 @@ def configure(dev, verbose):
 
     logging.captureWarnings(True)
 
-    log_format = "{asctime:<20} {module:<11} {levelname:<8} {message}" \
+    log_format = "%(asctime)-20s %(module)-11s %(message)s" \
         if not verbose else \
-        "{asctime:<20} {module:<11} {levelname:<8} {message} [{name}:{funcName}:{lineno}]"
+        "%(asctime)-20s %(module)-11s %(message)s"
 
-    coloredlogs.install(
+    logging.basicConfig(
         level=logging_level,
-        fmt=log_format,
-        style="{"
+        format=log_format,
+        datefmt="%Y-%m-%d %H:%M:%S",
+        handlers=[RichHandler(level=logging_level, show_time=False, rich_tracebacks=True)]
     )
 
-    logger = logging.getLogger()
+    logger = logging.getLogger("rich")
 
     handler = logging.handlers.RotatingFileHandler("virtool.log", maxBytes=1000000, backupCount=5)
-    handler.setFormatter(logging.Formatter(log_format, style="{"))
 
     logger.addHandler(handler)
 
