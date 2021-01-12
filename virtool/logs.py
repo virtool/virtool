@@ -9,7 +9,8 @@ def configure(dev, verbose):
 
     logging.captureWarnings(True)
 
-    log_format = "%(asctime)-20s %(module)-11s %(message)s"
+    log_file_format = "{levelname:<8} {asctime:<20} {module:<11} {message} [{name}:{funcName}:{lineno}]"
+    log_format = "%(asctime)-20s %(module)-11s %(message)8s"
 
     logging.basicConfig(
         level=logging_level,
@@ -18,10 +19,10 @@ def configure(dev, verbose):
         handlers=[RichHandler(level=logging_level, show_time=False, rich_tracebacks=True, markup=True)]
     )
 
-    logger = logging.getLogger("rich")
+    logger = logging.getLogger()
 
     handler = logging.handlers.RotatingFileHandler("virtool.log", maxBytes=1000000, backupCount=5)
-    handler.setFormatter(logging.Formatter(log_format))
+    handler.setFormatter(logging.Formatter(log_file_format, style="{"))
 
     logger.addHandler(handler)
 
