@@ -21,6 +21,7 @@ def configure(dev, verbose):
     logger = logging.getLogger("rich")
 
     handler = logging.handlers.RotatingFileHandler("virtool.log", maxBytes=1000000, backupCount=5)
+    handler.setFormatter(logging.Formatter(log_format))
 
     logger.addHandler(handler)
 
