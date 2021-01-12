@@ -10,13 +10,13 @@ from virtool.models import Base
 
 @pytest.fixture(scope="function")
 async def engine():
-    engine = create_async_engine("postgresql+asyncpg://virtool:virtool@localhost/virtool", isolation_level="AUTOCOMMIT")
+    engine = create_async_engine("postgresql+asyncpg://virtool:virtool@postgres/virtool", isolation_level="AUTOCOMMIT")
     async with engine.connect() as conn:
         try:
             await conn.execute(text("CREATE DATABASE test"))
         except ProgrammingError:
             pass
-    return create_async_engine("postgresql+asyncpg://virtool:virtool@localhost/test")
+    return create_async_engine("postgresql+asyncpg://virtool:virtool@postgres/test")
 
 
 @pytest.fixture(scope="function")
