@@ -8,25 +8,14 @@ async def test_find(spawn_client, dbsession):
 
     """
     client = await spawn_client(authorize=True, administrator=True)
-    label1 = Label(id="test_1", name="Bug", color="#a83432")
-    label2 = Label(id="test_2", name="Question", color="#03fc20")
+
+    label1 = Label(id="test_1", name="Bug", color="#a83432", description="This is a bug")
+    label2 = Label(id="test_2", name="Question", color="#03fc20", description="This is a question")
 
     async with dbsession as session:
         session.add(label1)
         session.add(label2)
         await session.commit()
-    # await client.db.labels.insert_many([
-    #     {
-    #         "_id": "test_1",
-    #         "name": "Bug",
-    #         "color": "#a83432"
-    #     },
-    #     {
-    #         "_id": "test_2",
-    #         "name": "Question",
-    #         "color": "#03fc20"
-    #     }
-    # ])
 
     resp = await client.get("/api/labels")
     assert resp.status == 200
@@ -36,13 +25,13 @@ async def test_find(spawn_client, dbsession):
             "id": "test_1",
             "name": "Bug",
             "color": "#a83432",
-            "description": None
+            "description": "This is a bug"
         },
         {
             "id": "test_2",
             "name": "Question",
             "color": "#03fc20",
-            "description": None
+            "description": "This is a question"
         }
     ]
 
@@ -60,11 +49,6 @@ async def test_get(error, spawn_client, all_permissions, resp_is, dbsession):
         async with dbsession as session:
             session.add(label)
             await session.commit()
-        # await client.db.labels.insert_one({
-        #     "_id": "test",
-        #     "name": "Bug",
-        #     "color": "#a83432"
-        # })
 
     resp = await client.get("/api/labels/test")
 
@@ -143,20 +127,7 @@ async def test_edit(error, spawn_client, dbsession, resp_is):
             session.add(label1)
             session.add(label2)
             await session.commit()
-        # await client.db.labels.insert_many([
-        #     {
-        #         "_id": "test_1",
-        #         "name": "Bug",
-        #         "color": "#a83432",
-        #         "description": "This is a bug"
-        #     },
-        #     {
-        #         "_id": "test_2",
-        #         "name": "Question",
-        #         "color": "#32a85f",
-        #         "description": "Question from a user"
-        #     }
-        # ])
+
     data = dict()
 
     if error != "422_data":
@@ -179,8 +150,6 @@ async def test_edit(error, spawn_client, dbsession, resp_is):
         return
 
     if error == "400_exists":
-        res = await resp.json()
-        print(res)
         assert await resp_is.bad_request(resp, "Label name already exists")
         return
 
@@ -197,26 +166,24 @@ async def test_edit(error, spawn_client, dbsession, resp_is):
     }
 
 
-# @pytest.mark.parametrize("error", [None, "400"])
-# async def test_remove(error, spawn_client, resp_is):
-#     """
-#         Test that a label can be deleted to the database at ``DELETE /api/labels/:label_id``.
-#
-#     """
-#     client = await spawn_client(authorize=True, administrator=True)
-#
-#     if not error:
-#         await client.db.labels.insert_one({
-#                 "_id": "test",
-#                 "name": "Bug",
-#                 "color": "#a83432",
-#                 "description": "This is a bug"
-#         })
-#
-#     resp = await client.delete("/api/labels/test")
-#
-#     if error:
-#         assert await resp_is.not_found(resp)
-#         return
-#
-#     assert await resp_is.no_content(resp)
+@pytest.mark.parametrize("error", [None, "400"])
+async def test_remove(error, spawn_client, dbsession, resp_is):
+    """
+        Test that a label can be deleted to the database at ``DELETE /api/labels/:label_id``.
+
+    """
+    client = await spawn_client(authorize=True, administrator=True)
+
+    if not error:
+        label = Label(id="test", name="Bug", color="#a83432", description="This is a bug")
+        async with dbsession as session:
+            session.add(label)
+            await session.commit()
+
+    resp = await client.delete("/api/labels/test")
+
+    if error:
+        assert await resp_is.not_found(resp)
+        return
+
+    assert await resp_is.no_content(resp)
