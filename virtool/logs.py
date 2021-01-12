@@ -9,15 +9,13 @@ def configure(dev, verbose):
 
     logging.captureWarnings(True)
 
-    log_format = "%(asctime)-20s %(module)-11s %(message)s" \
-        if not verbose else \
-        "%(asctime)-20s %(module)-11s %(message)s"
+    log_format = "%(asctime)-20s %(module)-11s %(message)s"
 
     logging.basicConfig(
         level=logging_level,
         format=log_format,
         datefmt="%Y-%m-%d %H:%M:%S",
-        handlers=[RichHandler(level=logging_level, show_time=False, rich_tracebacks=True)]
+        handlers=[RichHandler(level=logging_level, show_time=False, rich_tracebacks=True, markup=True)]
     )
 
     logger = logging.getLogger("rich")
