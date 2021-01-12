@@ -42,6 +42,7 @@ async def get(req):
     async with AsyncSession(req.app["postgres"]) as session:
         result = await session.execute(select(Label).filter_by(id=req.match_info["label_id"]))
         label = result.scalar()
+
         if label is None:
             return not_found()
 
@@ -84,6 +85,7 @@ async def create(req):
 
     async with AsyncSession(req.app["postgres"]) as session:
         result = await session.execute(select(Label).filter_by(name=data["name"]))
+
         if result.scalars().all():
             return bad_request("Label name already exists")
 
@@ -91,6 +93,7 @@ async def create(req):
 
         label = Label(id=label_id, name=data["name"], color=data["color"], description=data["description"])
         session.add(label)
+        await session.commit()
 
     document = {
         "_id": label_id,
@@ -135,11 +138,13 @@ async def edit(req):
 
     async with AsyncSession(req.app["postgres"]) as session:
         result = await session.execute(select(Label).filter(Label.id != label_id, Label.name == data["name"]))
-        if "name" in data and len(result.scalars().all()) > 0:
+
+        if "name" in data and result.scalars().all():
             return bad_request("Label name already exists")
 
         result = await session.execute(select(Label).filter_by(id=label_id))
         label = result.scalar()
+
         if label is None:
             return not_found()
 
@@ -163,13 +168,16 @@ async def remove(req):
     Remove a label.
 
     """
-    db = req.app["db"]
-
     label_id = req.match_info["label_id"]
 
-    delete_result = await db.labels.delete_one({"_id": label_id})
+    async with AsyncSession(req.app["postgres"]) as session:
+        result = await session.execute(select(Label).filter_by(id=label_id))
+        label = result.scalar()
 
-    if delete_result.deleted_count == 0:
-        return not_found()
+        if label is None:
+            return not_found()
+
+        session.delete(label)
+        await session.commit()
 
     return no_content()
