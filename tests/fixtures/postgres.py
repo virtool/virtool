@@ -9,7 +9,7 @@ from virtool.models import Base
 
 
 @pytest.fixture(scope="function")
-async def engine():
+async def test_engine():
     engine = create_async_engine("postgresql+asyncpg://virtool:virtool@postgres/virtool", isolation_level="AUTOCOMMIT")
     async with engine.connect() as conn:
         try:
@@ -20,13 +20,13 @@ async def engine():
 
 
 @pytest.fixture(scope="function")
-async def dbsession(engine, loop):
-    async with engine.begin() as conn:
+async def test_session(test_engine, loop):
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
-    session = AsyncSession(bind=engine)
+    session = AsyncSession(bind=test_engine)
     yield session
-    async with engine.begin() as conn:
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
     await session.close()
