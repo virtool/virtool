@@ -9,14 +9,14 @@ def configure(dev, verbose):
 
     logging.captureWarnings(True)
 
-    log_file_format = "{levelname:<8} {asctime:<20} {module:<11} {message} [{name}:{funcName}:{lineno}]"
-    log_format = "%(module)-11s %(message)8s"
+    log_file_format = "{asctime:<20} {levelname:<8} {module:<11} {message} [{name}:{funcName}:{lineno}]"
+    log_format = "%(asctime)-20s %(levelname)-8s %(module)-11s %(message)8s"
 
     logging.basicConfig(
         level=logging_level,
         format=log_format,
         datefmt="[%Y-%m-%d %H:%M:%S]",
-        handlers=[RichHandler(level=logging_level, rich_tracebacks=True, markup=True)]
+        handlers=[RichHandler(level=logging_level, show_time=False, show_level=False, rich_tracebacks=True, markup=True)]
     )
 
     logger = logging.getLogger()
