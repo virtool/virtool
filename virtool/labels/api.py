@@ -46,14 +46,14 @@ async def get(req):
         if label is None:
             return not_found()
 
-        d = {
+        document = {
             "id": label.id,
             "name": label.name,
             "color": label.color,
             "description": label.description
         }
 
-    return json_response(virtool.utils.base_processor(d))
+    return json_response(document)
 
 
 @routes.post("/api/labels", schema={
@@ -96,7 +96,7 @@ async def create(req):
         await session.commit()
 
     document = {
-        "_id": label_id,
+        "id": label_id,
         "name": data["name"],
         "color": data["color"],
         "description": data["description"]
@@ -106,7 +106,7 @@ async def create(req):
         "Location": f"/api/labels/{label_id}"
     }
 
-    return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
+    return json_response(document, status=201, headers=headers)
 
 
 @routes.patch("/api/labels/{label_id}", schema={
@@ -154,12 +154,12 @@ async def edit(req):
         await session.commit()
 
     document = {
-        "_id": label_id,
+        "id": label_id,
         "name": data["name"],
         "color": data["color"],
         "description": data["description"]
     }
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(document)
 
 
 @routes.delete("/api/labels/{label_id}")
