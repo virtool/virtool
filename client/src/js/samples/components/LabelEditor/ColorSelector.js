@@ -1,94 +1,48 @@
-import React from "react";
+import React, { useCallback } from "react";
+//import { useCallback } from "react";
 import styled from "styled-components";
 import { Button, Input, InputGroup, InputLabel, InputError } from "../../../base";
 
-export const StyledColorButton = styled(Button)`
+const ColorSelectorButton = styled(Button)`
     background-color: ${props => props.color};
-    margin: 0px 2px;
+    margin: 0 2px;
 `;
 
-export const StyledInput = styled(Input)`
+const ColorSelectorInput = styled(Input)`
     width: 40%;
 `;
 
-const getInitialState = ({ color }) => ({
-    color: color || ""
-});
+export const ColorSelector = ({ color, errorColor, onColorChange }) => {
+    const handleChange = useCallback(e => {
+        onColorChange({ color: e.target.value });
+    });
 
-export class ColorSelector extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = getInitialState(this.props);
-    }
+    const handleButtonChange = useCallback(color => {
+        onColorChange({ color });
+    });
 
-    handleChange = e => {
-        const { name, value } = e.target;
-        this.setState({
-            [name]: value,
-            error: ""
-        });
-        this.props.onColorChange({ color: value });
-    };
+    const colors = ["#1DAD57", "#F7A000", "#FFE030", "#E0282E", "#9F7AEA", "#0B7FE5", "#3C8786"];
+    const colorSelectors = colors.map(color => (
+        <ColorSelectorButton
+            key={color}
+            name="color"
+            color={color}
+            onClick={() => handleButtonChange(color)}
+        ></ColorSelectorButton>
+    ));
 
-    handleButtonChange = color => {
-        this.setState({
-            color
-        });
-        this.props.onColorChange({ color });
-    };
-
-    render() {
-        const color = this.state.color;
-        return (
-            <InputGroup>
-                <InputLabel>Select a color</InputLabel>
-                <div>
-                    <StyledColorButton
-                        name="color"
-                        color="green"
-                        onClick={() => this.handleButtonChange("#1DAD57")}
-                    ></StyledColorButton>
-                    <StyledColorButton
-                        name="color"
-                        color="orange"
-                        onClick={() => this.handleButtonChange("#F7A000")}
-                    ></StyledColorButton>
-                    <StyledColorButton
-                        name="color"
-                        color="yellow"
-                        onClick={() => this.handleButtonChange("#FFE030")}
-                    ></StyledColorButton>
-                    <StyledColorButton
-                        name="color"
-                        color="red"
-                        onClick={() => this.handleButtonChange("#E0282E")}
-                    ></StyledColorButton>
-                    <StyledColorButton
-                        name="color"
-                        color="purple"
-                        onClick={() => this.handleButtonChange("#9F7AEA")}
-                    ></StyledColorButton>
-                    <StyledColorButton
-                        name="color"
-                        color="blue"
-                        onClick={() => this.handleButtonChange("#0B7FE5")}
-                    ></StyledColorButton>
-                    <StyledColorButton
-                        name="color"
-                        color="primary"
-                        onClick={() => this.handleButtonChange("#3C8786")}
-                    ></StyledColorButton>
-                </div>
-                <InputLabel>or enter a custom color </InputLabel>
-                <StyledInput
-                    placeholder="Ex. #D3D3D3"
-                    name="color"
-                    value={color}
-                    onChange={this.handleChange}
-                    error={this.props.errorColor}
-                ></StyledInput>
-                <InputError>{this.props.errorColor}</InputError>
-            </InputGroup>
-        );
-    }
-}
+    return (
+        <InputGroup>
+            <InputLabel>Select a color</InputLabel>
+            <div>{colorSelectors}</div>
+            <InputLabel>or enter a custom color </InputLabel>
+            <ColorSelectorInput
+                placeholder="Ex. #D3D3D3"
+                name="color"
+                value={color}
+                onChange={handleChange}
+            ></ColorSelectorInput>
+            <InputError>{errorColor}</InputError>
+        </InputGroup>
+    );
+};

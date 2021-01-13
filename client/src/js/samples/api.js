@@ -12,7 +12,7 @@ export const filter = ({ term }) => Request.get(`/api/samples?find=${term}`);
 
 export const get = ({ sampleId }) => Request.get(`/api/samples/${sampleId}`);
 
-export const getLabels = () => Request.get("/api/labels");
+export const list = () => Request.get("/api/labels");
 
 export const createLabel = action => {
     const { name, description, color } = action;

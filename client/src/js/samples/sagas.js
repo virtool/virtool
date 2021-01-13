@@ -89,7 +89,7 @@ export function* getSample(action) {
 }
 
 export function* getLabels(action) {
-    const response = yield samplesAPI.getLabels(action);
+    const response = yield samplesAPI.list(action);
     yield put({ type: GET_LABELS.SUCCEEDED, data: response.body });
 }
 

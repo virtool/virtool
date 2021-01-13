@@ -6,38 +6,45 @@ exports[`<ColorSelector> should render 1`] = `
     Select a color
   </Input__InputLabel>
   <div>
-    <ColorSelector__StyledColorButton
-      color="green"
+    <ColorSelector__ColorSelectorButton
+      color="#1DAD57"
+      key="#1DAD57"
       name="color"
       onClick={[Function]}
     />
-    <ColorSelector__StyledColorButton
-      color="orange"
+    <ColorSelector__ColorSelectorButton
+      color="#F7A000"
+      key="#F7A000"
       name="color"
       onClick={[Function]}
     />
-    <ColorSelector__StyledColorButton
-      color="yellow"
+    <ColorSelector__ColorSelectorButton
+      color="#FFE030"
+      key="#FFE030"
       name="color"
       onClick={[Function]}
     />
-    <ColorSelector__StyledColorButton
-      color="red"
+    <ColorSelector__ColorSelectorButton
+      color="#E0282E"
+      key="#E0282E"
       name="color"
       onClick={[Function]}
     />
-    <ColorSelector__StyledColorButton
-      color="purple"
+    <ColorSelector__ColorSelectorButton
+      color="#9F7AEA"
+      key="#9F7AEA"
       name="color"
       onClick={[Function]}
     />
-    <ColorSelector__StyledColorButton
-      color="blue"
+    <ColorSelector__ColorSelectorButton
+      color="#0B7FE5"
+      key="#0B7FE5"
       name="color"
       onClick={[Function]}
     />
-    <ColorSelector__StyledColorButton
-      color="primary"
+    <ColorSelector__ColorSelectorButton
+      color="#3C8786"
+      key="#3C8786"
       name="color"
       onClick={[Function]}
     />
@@ -45,11 +52,10 @@ exports[`<ColorSelector> should render 1`] = `
   <Input__InputLabel>
     or enter a custom color 
   </Input__InputLabel>
-  <ColorSelector__StyledInput
+  <ColorSelector__ColorSelectorInput
     name="color"
     onChange={[Function]}
     placeholder="Ex. #D3D3D3"
-    value=""
   />
   <Input__InputError />
 </InputGroup>

@@ -2,57 +2,37 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { get, map } from "lodash-es";
-import { Table, ViewHeader, ViewHeaderTitle, RemoveModal, Button, BoxGroup, BoxGroupHeader, Flex } from "../../../base";
+import { ViewHeader, ViewHeaderTitle, RemoveModal, Button, BoxGroup, BoxGroupHeader, Flex } from "../../../base";
 import { getLabels, createLabel, removeLabel, updateLabel } from "../../actions";
 import { CreateLabel } from "./CreateLabel";
 import { LabelItem } from "./LabelItem";
 import { EditLabel } from "./EditLabel";
 
-export const StyledTable = styled(Table)`
-    border: none;
-
-    thead {
-        text-decoration: underline;
-    }
-
-    th {
-        font-size: ${props => props.theme.fontSize.lg};
-        border: none;
-    }
-
-    tr {
-        border-bottom: none;
-    }
-
-    td {
-        border: none;
-        min-width: 80px;
-    }
+const LabelContainer = styled.div`
+    display: flex;
+    flex-direction: column;
 `;
 
-export const StyledButton = styled(Button)`
+const StyledButton = styled(Button)`
     margin-left: auto;
 `;
-
-const getInitialState = ({ id, name, description, color, isEdit, isRemove, isCreate }) => ({
-    id: id || "",
-    name: name || "",
-    description: description || "",
-    color: color || "",
-    isEdit: isEdit || false,
-    isRemove: isRemove || false,
-    isCreate: isCreate || false,
-    error: ""
-});
 
 class LabelEdit extends React.Component {
     constructor(props) {
         super(props);
-        this.state = getInitialState(this.props);
+        this.state = {
+            id: "",
+            name: "",
+            description: "",
+            color: "",
+            isEdit: false,
+            isRemove: false,
+            isCreate: false,
+            error: ""
+        };
     }
 
     componentDidMount = () => {
-        this.setState(getInitialState(this.props));
         this.props.onLoadLabels();
     };
 
@@ -130,14 +110,12 @@ class LabelEdit extends React.Component {
                     <BoxGroupHeader>
                         <Flex>
                             <h2>Labels</h2>
-                            <StyledButton color="green" icon="fas fa-plus" onClick={() => this.onCreate()}>
+                            <StyledButton color="blue" icon="fas fa-plus" onClick={() => this.onCreate()}>
                                 New Label
                             </StyledButton>
                         </Flex>
                     </BoxGroupHeader>
-                    <StyledTable>
-                        <tbody>{labels}</tbody>
-                    </StyledTable>
+                    <LabelContainer>{labels}</LabelContainer>
                 </BoxGroup>
                 <CreateLabel
                     show={this.state.isCreate}

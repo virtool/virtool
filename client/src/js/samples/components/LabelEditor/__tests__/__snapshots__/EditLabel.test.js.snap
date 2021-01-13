@@ -20,7 +20,6 @@ exports[`<EditLabel> should render when [show=false] 1`] = `
           error=""
           name="name"
           onChange={[Function]}
-          placeholder="Label name"
           value=""
         />
         <Input__InputError />
@@ -30,12 +29,16 @@ exports[`<EditLabel> should render when [show=false] 1`] = `
         <Input
           name="description"
           onChange={[Function]}
-          placeholder="Description"
           value="BarFoo"
         />
       </InputGroup>
+      <ColorSelector
+        color="#3C8786"
+        errorColor=""
+        onColorChange={[Function]}
+      />
       <Button
-        color="green"
+        color="blue"
         disabled={false}
         onClick={[Function]}
         tipPlacement="top"
@@ -68,7 +71,6 @@ exports[`<EditLabel> should render when [show=true] 1`] = `
           error=""
           name="name"
           onChange={[Function]}
-          placeholder="Label name"
           value=""
         />
         <Input__InputError />
@@ -78,12 +80,16 @@ exports[`<EditLabel> should render when [show=true] 1`] = `
         <Input
           name="description"
           onChange={[Function]}
-          placeholder="Description"
           value="BarFoo"
         />
       </InputGroup>
+      <ColorSelector
+        color="#3C8786"
+        errorColor=""
+        onColorChange={[Function]}
+      />
       <Button
-        color="green"
+        color="blue"
         disabled={false}
         onClick={[Function]}
         tipPlacement="top"

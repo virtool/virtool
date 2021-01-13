@@ -19,8 +19,7 @@ exports[`<CreateLabel> should render when [show=false] 1`] = `
           error=""
           name="labelName"
           onChange={[Function]}
-          placeholder="Label name"
-          value="Foobar"
+          value=""
         />
         <Input__InputError />
         <Input__InputLabel>
@@ -29,18 +28,16 @@ exports[`<CreateLabel> should render when [show=false] 1`] = `
         <Input
           name="description"
           onChange={[Function]}
-          placeholder="Description"
-          value="FooDesc"
+          value=""
         />
       </InputGroup>
       <ColorSelector
-        color="#FFF000"
+        color=""
         errorColor=""
-        name="color"
         onColorChange={[Function]}
       />
       <Button
-        color="green"
+        color="blue"
         disabled={false}
         onClick={[Function]}
         tipPlacement="top"
@@ -72,8 +69,7 @@ exports[`<CreateLabel> should render when [show=true] 1`] = `
           error=""
           name="labelName"
           onChange={[Function]}
-          placeholder="Label name"
-          value="Foobar"
+          value=""
         />
         <Input__InputError />
         <Input__InputLabel>
@@ -82,18 +78,16 @@ exports[`<CreateLabel> should render when [show=true] 1`] = `
         <Input
           name="description"
           onChange={[Function]}
-          placeholder="Description"
-          value="FooDesc"
+          value=""
         />
       </InputGroup>
       <ColorSelector
-        color="#FFF000"
+        color=""
         errorColor=""
-        name="color"
         onColorChange={[Function]}
       />
       <Button
-        color="green"
+        color="blue"
         disabled={false}
         onClick={[Function]}
         tipPlacement="top"

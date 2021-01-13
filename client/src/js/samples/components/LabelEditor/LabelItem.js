@@ -1,5 +1,4 @@
 import React from "react";
-import { connect } from "react-redux";
 import styled from "styled-components";
 import { Label, Icon } from "../../../base";
 
@@ -10,7 +9,7 @@ const getInitialState = ({ name, color, description, id }) => ({
     id: id || ""
 });
 
-export const getContrastColor = props => {
+const getContrastColor = props => {
     const red = parseInt(props.color.substr(1, 2), 16);
     const green = parseInt(props.color.substr(3, 2), 16);
     const blue = parseInt(props.color.substr(5, 2), 16);
@@ -18,27 +17,31 @@ export const getContrastColor = props => {
     return yiq >= 128 ? "black" : "white";
 };
 
-export const StyledLabel = styled(Label)`
-    padding: 5px;
+const LabelItemExample = styled(Label)`
     font-size: ${props => props.theme.fontSize.lg};
     background-color: ${props => props.color};
     color: ${getContrastColor};
 `;
 
-export const StyledIcon = styled(Icon)`
-    padding: 0px 8px;
+const LabelRow = styled.div`
+    margin: 5px 8px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+`;
+
+const IconFlex = styled.div`
+    align-self: flex-end;
+    margin-left: auto;
+`;
+const LabelIcon = styled(Icon)`
+    margin: 0 10px;
     font-size: 20px;
 `;
 
-export const Description = styled.p`
-    padding: 0px 8px;
-    margin: 0px;
-    display: inline-block;
-`;
-export const IconColumn = styled.td`
-    text-align: right;
-    min-width: 50px;
-    max-width: 75px;
+const Description = styled.p`
+    margin: 5px 8px;
 `;
 
 export class LabelItem extends React.Component {
@@ -47,42 +50,35 @@ export class LabelItem extends React.Component {
         this.state = getInitialState(this.props);
     }
 
-    onRemove = (id, name) => {
+    handleRemove = (id, name) => {
         this.props.removeLabel(id, name);
     };
 
-    onEdit = (id, name, color, description) => {
+    handleEdit = (id, name, color, description) => {
         this.props.editLabel(id, name, color, description);
     };
 
     render() {
-        const name = this.state.name;
-        const color = this.state.color;
-        const description = this.state.description;
-        const id = this.state.id;
+        const { name, color, description, id } = this.state;
         return (
-            <tr>
-                <td>
-                    <StyledLabel color={color}>{name}</StyledLabel>
-                    <Description>{description}</Description>
-                </td>
-                <IconColumn>
-                    <StyledIcon
+            <LabelRow>
+                <LabelItemExample color={color}>{name}</LabelItemExample>
+                <Description>{description}</Description>
+                <IconFlex>
+                    <LabelIcon
                         color="orange"
-                        onClick={() => this.onEdit(id, name, description, color)}
+                        onClick={() => this.handleEdit(id, name, description, color)}
                         name="pencil-alt"
                         tip="Edit"
                     />
-                    <StyledIcon color="red" onClick={() => this.onRemove(id, name)} name="fas fa-times" tip="Remove" />
-                </IconColumn>
-            </tr>
+                    <LabelIcon
+                        color="red"
+                        onClick={() => this.handleRemove(id, name)}
+                        name="fas fa-times"
+                        tip="Remove"
+                    />
+                </IconFlex>
+            </LabelRow>
         );
     }
 }
-const mapStateToProps = state => ({
-    name: sate.name,
-    color: state.color,
-    description: state.description
-});
-
-export default connect(mapStateToProps)(LabelItem);

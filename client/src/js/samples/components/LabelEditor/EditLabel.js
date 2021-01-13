@@ -2,12 +2,11 @@ import React from "react";
 import { InputGroup, InputLabel, Input, Button, InputError, Modal, ModalHeader, ModalBody } from "../../../base";
 import { ColorSelector } from "./ColorSelector";
 
-const getInitialState = ({ name, color, description, id, modalEntered, errorName, errorColor }) => ({
+const getInitialState = ({ name, color, description, id, errorName, errorColor }) => ({
     name: name || "",
     color: color || "",
     description: description || "",
     id: id || "",
-    modalEntered: modalEntered || false,
     errorName: errorName || "",
     errorColor: errorColor || ""
 });
@@ -32,9 +31,6 @@ export class EditLabel extends React.Component {
 
     handleModalEnter = () => {
         this.setState(getInitialState(this.props));
-        this.setState({
-            modalEntered: true
-        });
     };
 
     handleSave = () => {
@@ -53,11 +49,7 @@ export class EditLabel extends React.Component {
     };
 
     render() {
-        const name = this.state.name;
-        const description = this.state.description;
-        const color = this.state.color;
-        const errorName = this.state.errorName;
-        const errorColor = this.state.errorColor;
+        const { name, description, color, errorName, errorColor } = this.state;
         return (
             <Modal
                 label="Create Label"
@@ -70,31 +62,17 @@ export class EditLabel extends React.Component {
                     <form>
                         <InputGroup>
                             <InputLabel>Name</InputLabel>
-                            <Input
-                                placeholder="Label name"
-                                name="name"
-                                value={name}
-                                onChange={this.handleChange}
-                                error={errorName}
-                            ></Input>
+                            <Input name="name" value={name} onChange={this.handleChange} error={errorName}></Input>
                             <InputError>{errorName}</InputError>
                             <InputLabel>Description</InputLabel>
-                            <Input
-                                placeholder="Description"
-                                name="description"
-                                value={description}
-                                onChange={this.handleChange}
-                            ></Input>
+                            <Input name="description" value={description} onChange={this.handleChange}></Input>
                         </InputGroup>
-                        {this.state.modalEntered && (
-                            <ColorSelector
-                                name="color"
-                                color={color}
-                                onColorChange={this.handleColorSelection}
-                                errorColor={errorColor}
-                            ></ColorSelector>
-                        )}
-                        <Button color="green" onClick={this.handleSave}>
+                        <ColorSelector
+                            color={color}
+                            onColorChange={this.handleColorSelection}
+                            errorColor={errorColor}
+                        ></ColorSelector>
+                        <Button color="blue" onClick={this.handleSave}>
                             Save
                         </Button>
                     </form>
