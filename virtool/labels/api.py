@@ -1,4 +1,5 @@
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.http.routes
@@ -84,16 +85,14 @@ async def create(req):
     data = req["data"]
 
     async with AsyncSession(req.app["postgres"]) as session:
-        result = await session.execute(select(Label).filter_by(name=data["name"]))
-
-        if result.scalars().all():
-            return bad_request("Label name already exists")
-
         label_id = await virtool.db.utils.get_new_id(db.labels)
 
         label = Label(id=label_id, name=data["name"], color=data["color"], description=data["description"])
         session.add(label)
-        await session.commit()
+        try:
+            await session.commit()
+        except IntegrityError:
+            return bad_request("Label name already exists")
 
     document = {
         "id": label_id,
@@ -137,11 +136,6 @@ async def edit(req):
         return empty_request()
 
     async with AsyncSession(req.app["postgres"]) as session:
-        result = await session.execute(select(Label).filter(Label.id != label_id, Label.name == data["name"]))
-
-        if "name" in data and result.scalars().all():
-            return bad_request("Label name already exists")
-
         result = await session.execute(select(Label).filter_by(id=label_id))
         label = result.scalar()
 
@@ -151,7 +145,10 @@ async def edit(req):
         label.name = data["name"]
         label.color = data["color"]
         label.description = data["description"]
-        await session.commit()
+        try:
+            await session.commit()
+        except IntegrityError:
+            return bad_request("Label name already exists")
 
     document = {
         "id": label_id,
