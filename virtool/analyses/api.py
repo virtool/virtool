@@ -2,6 +2,7 @@
 Provides request handlers for managing and viewing analyses.
 
 """
+import asyncio
 import os
 
 import aiohttp.web
@@ -12,6 +13,7 @@ import virtool.analyses.format
 import virtool.analyses.utils
 import virtool.api.json
 import virtool.api.response
+import virtool.api.utils
 import virtool.bio
 import virtool.errors
 import virtool.http.routes
@@ -70,6 +72,29 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     }
 
     return json_response(virtool.utils.base_processor(document), headers=headers)
+
+
+@routes.get("/api/analyses")
+async def find(req: aiohttp.web.Request) -> aiohttp.web.Response:
+    """
+    Find and list all analyses.
+
+    """
+    db = req.app["db"]
+
+    db_query = dict()
+
+    data = await virtool.api.utils.paginate(
+        db.analyses,
+        db_query,
+        req.query,
+        projection=virtool.analyses.db.PROJECTION,
+        sort=[("created_at", -1)]
+    )
+
+    await asyncio.tasks.gather(*[virtool.subtractions.db.attach_subtraction(db, d) for d in data["documents"]])
+
+    return json_response(data)
 
 
 @routes.delete("/api/analyses/{analysis_id}")
