@@ -9,12 +9,12 @@ async def test_find(spawn_client, test_session):
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    label1 = Label(id="test_1", name="Bug", color="#a83432", description="This is a bug")
-    label2 = Label(id="test_2", name="Question", color="#03fc20", description="This is a question")
+    label_1 = Label(id="test_1", name="Bug", color="#a83432", description="This is a bug")
+    label_2 = Label(id="test_2", name="Question", color="#03fc20", description="This is a question")
 
     async with test_session as session:
-        session.add(label1)
-        session.add(label2)
+        session.add(label_1)
+        session.add(label_2)
         await session.commit()
 
     resp = await client.get("/api/labels")
@@ -121,11 +121,11 @@ async def test_edit(error, spawn_client, test_session, resp_is):
     client = await spawn_client(authorize=True, administrator=True)
 
     if error != "404":
-        label1 = Label(id="test_1", name="Bug", color="#a83432", description="This is a bug")
-        label2 = Label(id="test_2", name="Question", color="#03fc20", description="Question from a user")
+        label_1 = Label(id="test_1", name="Bug", color="#a83432", description="This is a bug")
+        label_2 = Label(id="test_2", name="Question", color="#03fc20", description="Question from a user")
         async with test_session as session:
-            session.add(label1)
-            session.add(label2)
+            session.add(label_1)
+            session.add(label_2)
             await session.commit()
 
     data = dict()
