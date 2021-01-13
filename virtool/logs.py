@@ -15,7 +15,7 @@ def configure(dev, verbose):
     logging.basicConfig(
         level=logging_level,
         format=log_format,
-        datefmt="%Y-%m-%d %H:%M:%S",
+        datefmt="[%Y-%m-%d %H:%M:%S]",
         handlers=[RichHandler(level=logging_level, rich_tracebacks=True, markup=True)]
     )
 
