@@ -8,7 +8,7 @@ class Label(Base):
     __tablename__ = 'labels'
 
     id = Column(String, primary_key=True)
-    name = Column(String)
+    name = Column(String, unique=True)
     color = Column(String)
     description = Column(String)
 
