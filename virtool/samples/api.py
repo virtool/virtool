@@ -362,11 +362,10 @@ async def edit(req):
 
     if "labels" in data:
         non_existent_labels = list()
-        for label in data["labels"]:
+        for label_id in data["labels"]:
             async with AsyncSession(req.app["postgres"]) as session:
-                result = await session.execute(select(Label).filter_by(id=label))
-                if result.scalar() is None:
-                    non_existent_labels.append(label)
+                if (await session.execute(select(Label).filter_by(id=label_id))).first() is None:
+                    non_existent_labels.append(str(label_id))
 
         if non_existent_labels:
             return bad_request(f"Labels do not exist: {', '.join(non_existent_labels)}")
