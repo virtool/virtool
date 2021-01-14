@@ -3,11 +3,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.http.routes
-import virtool.utils
 import virtool.validators
 import virtool.db.utils
 from virtool.api.response import bad_request, empty_request, json_response, no_content, not_found
-from virtool.models import Label
+from virtool.labels.models import Label
 
 routes = virtool.http.routes.Routes()
 

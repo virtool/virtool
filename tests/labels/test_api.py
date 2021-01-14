@@ -1,5 +1,5 @@
 import pytest
-from virtool.models import Label
+from virtool.labels.models import Label
 
 
 async def test_find(spawn_client, test_session):

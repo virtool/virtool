@@ -19,7 +19,7 @@ import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
     json_response, no_content, not_found
-from virtool.models import Label
+from virtool.labels.models import Label
 
 QUERY_SCHEMA = {
     "find": {
