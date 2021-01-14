@@ -101,9 +101,6 @@ async def test_create(error, spawn_client, test_random_alphanumeric, test_sessio
 
     assert resp.status == 201
 
-    # expected_id = test_random_alphanumeric.history[0]
-    # assert resp.headers["Location"] == "/api/labels/" + expected_id
-
     assert await resp.json() == {
         "id": 1,
         "name": "Bug",
@@ -166,24 +163,24 @@ async def test_edit(error, spawn_client, test_session, resp_is):
     }
 
 
-# @pytest.mark.parametrize("error", [None, "400"])
-# async def test_remove(error, spawn_client, test_session, resp_is):
-#     """
-#         Test that a label can be deleted to the database at ``DELETE /api/labels/:label_id``.
-#
-#     """
-#     client = await spawn_client(authorize=True, administrator=True)
-#
-#     if not error:
-#         label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
-#         async with test_session as session:
-#             session.add(label)
-#             await session.commit()
-#
-#     resp = await client.delete("/api/labels/1")
-#
-#     if error:
-#         assert await resp_is.not_found(resp)
-#         return
-#
-#     assert await resp_is.no_content(resp)
+@pytest.mark.parametrize("error", [None, "400"])
+async def test_remove(error, spawn_client, test_session, resp_is):
+    """
+        Test that a label can be deleted to the database at ``DELETE /api/labels/:label_id``.
+
+    """
+    client = await spawn_client(authorize=True, administrator=True)
+
+    if not error:
+        label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+        async with test_session as session:
+            session.add(label)
+            await session.commit()
+
+    resp = await client.delete("/api/labels/1")
+
+    if error:
+        assert await resp_is.not_found(resp)
+        return
+
+    assert await resp_is.no_content(resp)

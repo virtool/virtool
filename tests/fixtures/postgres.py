@@ -8,15 +8,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from virtool.models import Base
 
 
+@pytest.fixture
+def test_pg_connection_string(request):
+    return request.config.getoption("postgres_connection_string")
+
+
 @pytest.fixture(scope="function")
-async def pg_engine():
-    engine = create_async_engine("postgresql+asyncpg://virtool:virtool@postgres/virtool", isolation_level="AUTOCOMMIT")
+async def pg_engine(test_pg_connection_string):
+    engine = create_async_engine("postgresql+asyncpg://virtool:virtool@localhost/virtool", isolation_level="AUTOCOMMIT")
     async with engine.connect() as conn:
         try:
             await conn.execute(text("CREATE DATABASE test"))
         except ProgrammingError:
             pass
-    return create_async_engine("postgresql+asyncpg://virtool:virtool@postgres/test")
+    return create_async_engine(test_pg_connection_string)
 
 
 @pytest.fixture(scope="function")
