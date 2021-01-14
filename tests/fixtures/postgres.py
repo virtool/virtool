@@ -15,7 +15,9 @@ def test_pg_connection_string(request):
 
 @pytest.fixture(scope="function")
 async def pg_engine(test_pg_connection_string):
-    engine = create_async_engine("postgresql+asyncpg://virtool:virtool@localhost/virtool", isolation_level="AUTOCOMMIT")
+    pg_connection_string = test_pg_connection_string.split('/')
+    pg_connection_string[-1] = 'virtool'
+    engine = create_async_engine('/'.join(pg_connection_string), isolation_level="AUTOCOMMIT")
     async with engine.connect() as conn:
         try:
             await conn.execute(text("CREATE DATABASE test"))
