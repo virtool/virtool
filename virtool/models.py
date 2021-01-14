@@ -13,8 +13,8 @@ class Label(Base):
     description = Column(String)
 
     def __repr__(self):
-        return "<Label(name='%s', color='%s', description='%s')>" % (
-            self.name, self.color, self.description)
+        return "<Label(id= '%s', name='%s', color='%s', description='%s')>" % (
+            self.id, self.name, self.color, self.description)
 
 
 async def create_tables(engine):
