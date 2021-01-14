@@ -32,5 +32,5 @@ def pytest_addoption(parser):
     parser.addoption(
         "--postgres-connection-string",
         action="store",
-        default=f"postgresql+asyncpg://virtool:virtool@localhost/test"
+        default="postgresql+asyncpg://virtool:virtool@localhost/test"
     )
