@@ -9,7 +9,7 @@ class Label(Base):
 
     id = Column(Integer, Sequence('labels_id_seq'), primary_key=True)
     name = Column(String, unique=True)
-    color = Column(String)
+    color = Column(String(length=7))
     description = Column(String)
 
     def __repr__(self):
