@@ -41,7 +41,7 @@ async def get(req):
 
     """
     async with AsyncSession(req.app["postgres"]) as session:
-        result = await session.execute(select(Label).filter_by(id=req.match_info["label_id"]))
+        result = await session.execute(select(Label).filter_by(id=int(req.match_info["label_id"])))
         label = result.scalar()
 
         if label is None:
@@ -85,11 +85,12 @@ async def create(req):
     data = req["data"]
 
     async with AsyncSession(req.app["postgres"]) as session:
-        label_id = await virtool.db.utils.get_new_id(db.labels)
-
-        label = Label(id=label_id, name=data["name"], color=data["color"], description=data["description"])
+        label = Label(name=data["name"], color=data["color"], description=data["description"])
         session.add(label)
+
         try:
+            await session.flush()
+            label_id = label.id
             await session.commit()
         except IntegrityError:
             return bad_request("Label name already exists")
@@ -130,7 +131,7 @@ async def edit(req):
     """
     data = req["data"]
 
-    label_id = req.match_info["label_id"]
+    label_id = int(req.match_info["label_id"])
 
     if not data:
         return empty_request()
@@ -165,7 +166,7 @@ async def remove(req):
     Remove a label.
 
     """
-    label_id = req.match_info["label_id"]
+    label_id = int(req.match_info["label_id"])
 
     async with AsyncSession(req.app["postgres"]) as session:
         result = await session.execute(select(Label).filter_by(id=label_id))
