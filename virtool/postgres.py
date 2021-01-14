@@ -2,10 +2,12 @@ import logging
 import sys
 
 from sqlalchemy import text
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
-import virtool.models
 logger = logging.getLogger(__name__)
+
+Base = declarative_base()
 
 
 async def connect(postgres_connection_string: str) -> AsyncEngine:
@@ -24,7 +26,7 @@ async def connect(postgres_connection_string: str) -> AsyncEngine:
         postgres = create_async_engine(postgres_connection_string)
 
         await check_version(postgres)
-        await virtool.models.create_tables(postgres)
+        await create_tables(postgres)
 
         return postgres
     except ConnectionRefusedError:
@@ -44,3 +46,8 @@ async def check_version(engine: AsyncEngine):
 
     version = info.first()[0].split()[0]
     logger.info(f"Found PostgreSQL {version}")
+
+
+async def create_tables(engine):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

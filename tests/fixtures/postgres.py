@@ -5,7 +5,7 @@ from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from virtool.models import Base
+from virtool.postgres import Base
 
 
 @pytest.fixture
