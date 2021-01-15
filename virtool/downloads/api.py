@@ -21,6 +21,7 @@ import virtool.http.routes
 import virtool.otus.utils
 import virtool.utils
 import virtool.samples.utils
+import virtool.subtractions.utils
 
 routes = virtool.http.routes.Routes()
 
@@ -203,4 +204,31 @@ async def download_sequence(req):
 
     return web.Response(text=fasta, headers={
         "Content-Disposition": f"attachment; filename={filename}"
+    })
+
+
+@routes.get("/download/subtraction/{subtraction_id}")
+async def download_subtraction(req):
+    """
+    Download a FASTA file for the given subtraction.
+
+    """
+    db = req.app["db"]
+    subtraction_id = req.match_info["subtraction_id"]
+
+    document = await db.subtraction.find_one(subtraction_id)
+
+    if document is None:
+        return virtool.api.response.not_found()
+
+    if "has_file" not in document or document["has_file"] is False:
+        return virtool.api.response.not_found("Subtraction FASTA file not found")
+
+    path = os.path.join(
+        virtool.subtractions.utils.join_subtraction_path(req.app["settings"], subtraction_id),
+        "subtraction.fa.gz"
+    )
+
+    return web.FileResponse(path, headers={
+        "Content-Type": "application/gzip"
     })
