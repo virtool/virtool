@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 
 from snapshottest import GenericRepr, Snapshot
 
-
 snapshots = Snapshot()
 
 snapshots['test_get[uvloop-None-True] format_analysis'] = {
@@ -43,4 +42,83 @@ snapshots['test_get[uvloop-None-False] 1'] = {
         'name': 'Plum'
     },
     'workflow': 'pathoscope_bowtie'
+}
+
+snapshots['test_find[uvloop-None] 1'] = {
+    'documents': [
+        {
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 'test_1',
+            'index': {
+                'id': 'foo',
+                'version': 2
+            },
+            'job': {
+                'id': 'test'
+            },
+            'ready': True,
+            'reference': {
+                'id': 'baz',
+                'name': 'Baz'
+            },
+            'sample': {
+                'id': 'test'
+            },
+            'user': {
+                'id': 'bob'
+            },
+            'workflow': 'pathoscope_bowtie'
+        },
+        {
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 'test_2',
+            'index': {
+                'id': 'foo',
+                'version': 2
+            },
+            'job': {
+                'id': 'test'
+            },
+            'ready': True,
+            'reference': {
+                'id': 'baz',
+                'name': 'Baz'
+            },
+            'sample': {
+                'id': 'test'
+            },
+            'user': {
+                'id': 'fred'
+            },
+            'workflow': 'pathoscope_bowtie'
+        },
+        {
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 'test_3',
+            'index': {
+                'id': 'foo',
+                'version': 2
+            },
+            'job': {
+                'id': 'test'
+            },
+            'ready': True,
+            'reference': {
+                'id': 'foo',
+                'name': 'Foo'
+            },
+            'sample': {
+                'id': 'test'
+            },
+            'user': {
+                'id': 'fred'
+            },
+            'workflow': 'pathoscope_bowtie'
+        }
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3
 }
