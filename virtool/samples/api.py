@@ -252,8 +252,8 @@ async def get_cache(req):
         "default": "normal"
     },
     "subtractions": {
-        "type": "list",
-        "required": True
+        "type": "list"
+
     },
     "files": {
         "type": "list",
@@ -281,12 +281,15 @@ async def create(req):
     if name_error_message:
         return bad_request(name_error_message)
 
+    subtractions = data.get("subtractions", list())
+
     # Make sure each subtraction host was submitted and it exists.
     non_existent_subtractions = await virtool.db.utils.check_missing_ids(
         db.subtraction,
-        data["subtractions"],
+        subtractions,
         {"is_host": True}
     )
+
     if non_existent_subtractions:
         return bad_request("Subtractions do not exist: " + ", ".join(non_existent_subtractions))
         
@@ -350,7 +353,7 @@ async def create(req):
         "all_read": settings["sample_all_read"],
         "all_write": settings["sample_all_write"],
         "library_type": data["library_type"],
-        "subtractions": data["subtractions"],
+        "subtractions": subtractions,
         "user": {
             "id": user_id
         },
