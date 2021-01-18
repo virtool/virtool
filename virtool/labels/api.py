@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import virtool.http.routes
 import virtool.validators
 import virtool.db.utils
+import virtool.labels.db
 from virtool.api.response import bad_request, empty_request, json_response, no_content, not_found
 from virtool.labels.models import Label
 
@@ -50,7 +51,8 @@ async def get(req):
             "id": label.id,
             "name": label.name,
             "color": label.color,
-            "description": label.description
+            "description": label.description,
+            "count": await virtool.labels.db.count_samples(req.app["db"], label.id)
         }
 
     return json_response(document)
@@ -98,7 +100,8 @@ async def create(req):
         "id": label_id,
         "name": data["name"],
         "color": data["color"],
-        "description": data["description"]
+        "description": data["description"],
+        "count": await virtool.labels.db.count_samples(db, label_id)
     }
 
     headers = {
