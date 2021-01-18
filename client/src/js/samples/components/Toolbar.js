@@ -12,7 +12,7 @@ export const SampleSearchToolbar = ({ canCreate, nuvs, pathoscope, term, onFind 
 
     if (canCreate) {
         createButton = (
-            <LinkButton to={{ state: { createSample: true } }} color="blue" tip="Create">
+            <LinkButton to="/samples/create" color="blue" tip="Create">
                 <Icon name="plus-square fa-fw" />
             </LinkButton>
         );
