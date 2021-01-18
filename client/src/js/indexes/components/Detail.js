@@ -7,6 +7,7 @@ import {
     Breadcrumb,
     BreadcrumbItem,
     LoadingPlaceholder,
+    NarrowContainer,
     NotFound,
     TabLink,
     Tabs,
@@ -64,15 +65,17 @@ export class IndexDetail extends React.Component {
                     </TabLink>
                 </Tabs>
 
-                <Switch>
-                    <Redirect
-                        from="/refs/:refId/indexes/:indexId"
-                        to={`/refs/${refId}/indexes/${indexId}/general`}
-                        exact
-                    />
-                    <Route path="/refs/:refId/indexes/:indexId/general" component={IndexGeneral} />
-                    <Route path="/refs/:refId/indexes/:indexId/changes" component={IndexChanges} />
-                </Switch>
+                <NarrowContainer>
+                    <Switch>
+                        <Redirect
+                            from="/refs/:refId/indexes/:indexId"
+                            to={`/refs/${refId}/indexes/${indexId}/general`}
+                            exact
+                        />
+                        <Route path="/refs/:refId/indexes/:indexId/general" component={IndexGeneral} />
+                        <Route path="/refs/:refId/indexes/:indexId/changes" component={IndexChanges} />
+                    </Switch>
+                </NarrowContainer>
             </div>
         );
     }

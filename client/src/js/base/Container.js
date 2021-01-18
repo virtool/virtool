@@ -6,6 +6,10 @@ export const Container = styled.div`
     padding: 0 35px 0 98px;
 `;
 
+export const NarrowPaddedContainer = styled(Container)`
+    max-width: 1150px;
+`;
+
 export const NarrowContainer = styled.div`
     max-width: 1150px;
 `;

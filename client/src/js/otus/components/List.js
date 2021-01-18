@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { LoadingPlaceholder, NoneFoundBox, ScrollList } from "../../base";
+import { LoadingPlaceholder, NarrowContainer, NoneFoundBox, ScrollList } from "../../base";
 import RebuildAlert from "../../indexes/components/RebuildAlert";
 import ReferenceDetailHeader from "../../references/components/Detail/Header";
 import ReferenceDetailTabs from "../../references/components/Detail/Tabs";
@@ -30,7 +30,7 @@ export class OTUsList extends React.Component {
         }
 
         return (
-            <div>
+            <NarrowContainer>
                 <ReferenceDetailHeader />
                 <ReferenceDetailTabs />
 
@@ -49,7 +49,7 @@ export class OTUsList extends React.Component {
                     pageCount={this.props.page_count}
                     renderRow={this.renderRow}
                 />
-            </div>
+            </NarrowContainer>
         );
     }
 }

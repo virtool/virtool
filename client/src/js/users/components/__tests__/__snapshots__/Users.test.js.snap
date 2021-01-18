@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<ManageUsers /> should render 1`] = `
-<div>
+<Fragment>
   <Toolbar>
     <SearchInput
       name="search"
@@ -35,5 +35,5 @@ exports[`<ManageUsers /> should render 1`] = `
   <Connect(UsersList) />
   <Connect(CreateUser) />
   <Connect(Groups) />
-</div>
+</Fragment>
 `;

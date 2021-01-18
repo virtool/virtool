@@ -3,10 +3,10 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { getFontSize } from "../../app/theme";
-import { Box, Container, ExternalLink, LoadingPlaceholder } from "../../base";
+import { Box, ExternalLink, LoadingPlaceholder, NarrowPaddedContainer } from "../../base";
 import { Support } from "./Support";
 
-const StyledWelcome = styled(Container)`
+const StyledWelcome = styled(NarrowPaddedContainer)`
     ${Box}:first-child {
         h1 {
             font-size: ${getFontSize("xxl")};
