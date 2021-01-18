@@ -2,7 +2,7 @@ import React from "react";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { connect } from "react-redux";
 import { mapSettingsStateToProps } from "../../administration/mappers";
-import { PaddedContainer, LoadingPlaceholder, NarrowContainer, ViewHeader, ViewHeaderTitle } from "../../base";
+import { Container, LoadingPlaceholder, NarrowContainer, ViewHeader, ViewHeaderTitle } from "../../base";
 import SourceTypes from "./SourceTypes";
 import ReferenceList from "./List";
 import ReferenceDetail from "./Detail/Detail";
@@ -22,14 +22,14 @@ export const References = ({ loading }) => {
     }
 
     return (
-        <PaddedContainer>
+        <Container>
             <Switch>
                 <Route path="/refs" component={ReferenceList} exact />
                 <Redirect from="/refs/settings/*" to="/refs/settings" />
                 <Route path="/refs/settings" component={ReferenceSettings} />
                 <Route path="/refs/:refId" component={ReferenceDetail} />
             </Switch>
-        </PaddedContainer>
+        </Container>
     );
 };
 

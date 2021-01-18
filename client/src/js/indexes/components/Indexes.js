@@ -1,8 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { LoadingPlaceholder, NarrowContainer, NoneFoundBox, ScrollList } from "../../base";
-import ReferenceDetailHeader from "../../references/components/Detail/Header";
-import ReferenceDetailTabs from "../../references/components/Detail/Tabs";
+import { LoadingPlaceholder, NoneFoundBox, ScrollList } from "../../base";
 import { findIndexes } from "../actions";
 import IndexItem from "./Item";
 import RebuildIndex from "./Rebuild";
@@ -27,25 +25,20 @@ export class Indexes extends React.Component {
         }
 
         return (
-            <div>
-                <ReferenceDetailHeader />
-                <ReferenceDetailTabs />
-
+            <React.Fragment>
                 <RebuildAlert />
                 <RebuildIndex />
 
-                <NarrowContainer>
-                    {noIndexes}
+                {noIndexes}
 
-                    <ScrollList
-                        documents={this.props.documents}
-                        onLoadNextPage={page => this.props.onLoadNextPage(this.props.refId, page)}
-                        page={this.props.page}
-                        pageCount={this.props.page_count}
-                        renderRow={this.renderRow}
-                    />
-                </NarrowContainer>
-            </div>
+                <ScrollList
+                    documents={this.props.documents}
+                    onLoadNextPage={page => this.props.onLoadNextPage(this.props.refId, page)}
+                    page={this.props.page}
+                    pageCount={this.props.page_count}
+                    renderRow={this.renderRow}
+                />
+            </React.Fragment>
         );
     }
 }
