@@ -44,6 +44,24 @@ async def test_get(error, spawn_client, all_permissions, test_session, resp_is):
     """
     client = await spawn_client(authorize=True, administrator=True)
 
+    await client.db.samples.insert_many([
+        {
+            "_id": "foo",
+            "name": "Foo",
+            "labels": [1, 2]
+        },
+        {
+            "_id": "bar",
+            "name": "Bar",
+            "labels": [1]
+        },
+        {
+            "_id": "baz",
+            "name": "Baz",
+            "labels": []
+        }
+    ])
+
     if not error:
         label = Label(id=1, name="Bug", color="#a83432", description="This is a test")
         async with test_session as session:
@@ -62,7 +80,8 @@ async def test_get(error, spawn_client, all_permissions, test_session, resp_is):
         "id": 1,
         "name": "Bug",
         "color": "#a83432",
-        "description": "This is a test"
+        "description": "This is a test",
+        "count": 2
     }
 
 
@@ -73,6 +92,24 @@ async def test_create(error, spawn_client, test_random_alphanumeric, test_sessio
 
     """
     client = await spawn_client(authorize=True, administrator=True)
+
+    await client.db.samples.insert_many([
+        {
+            "_id": "foo",
+            "name": "Foo",
+            "labels": [2]
+        },
+        {
+            "_id": "bar",
+            "name": "Bar",
+            "labels": [1]
+        },
+        {
+            "_id": "baz",
+            "name": "Baz",
+            "labels": []
+        }
+    ])
 
     if error == "400_exists":
         label = Label(id=1, name="Bug")
@@ -105,7 +142,8 @@ async def test_create(error, spawn_client, test_random_alphanumeric, test_sessio
         "id": 1,
         "name": "Bug",
         "color": "#a83432",
-        "description": "This is a bug"
+        "description": "This is a bug",
+        "count": 1
     }
 
 
