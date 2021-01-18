@@ -1,9 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<ReferenceManage /> should render when [props.cloned_from={ Bar: 'Bee' }] 1`] = `
-<div>
-  <Connect(ReferenceDetailHeader) />
-  <Connect(ReferenceDetailTabs) />
+<Container__NarrowContainer>
   <Box__BoxGroup>
     <Box__BoxGroupHeader>
       <h2>
@@ -43,7 +41,7 @@ exports[`<ReferenceManage /> should render when [props.cloned_from={ Bar: 'Bee' 
   <Clone
     source={
       Object {
-        "Bar": "Bee",
+        "bar": "bee",
       }
     }
   />
@@ -67,13 +65,11 @@ exports[`<ReferenceManage /> should render when [props.cloned_from={ Bar: 'Bee' 
   />
   <Connect(Targets) />
   <Connect(ExportReference) />
-</div>
+</Container__NarrowContainer>
 `;
 
 exports[`<ReferenceManage /> should render when [props.remotes_from=null] 1`] = `
-<div>
-  <Connect(ReferenceDetailHeader) />
-  <Connect(ReferenceDetailTabs) />
+<Container__NarrowContainer>
   <Box__BoxGroup>
     <Box__BoxGroupHeader>
       <h2>
@@ -109,6 +105,7 @@ exports[`<ReferenceManage /> should render when [props.remotes_from=null] 1`] = 
       </tbody>
     </Manage__ReferenceManageTable>
   </Box__BoxGroup>
+  <Connect(Remote) />
   <Clone
     source={
       Object {
@@ -136,5 +133,5 @@ exports[`<ReferenceManage /> should render when [props.remotes_from=null] 1`] = 
   />
   <Connect(Targets) />
   <Connect(ExportReference) />
-</div>
+</Container__NarrowContainer>
 `;

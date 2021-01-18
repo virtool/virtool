@@ -1,19 +1,5 @@
 import { GET_INDEX, GET_INDEX_HISTORY } from "../../../app/actionTypes";
-import { IndexDetail, IndexDetailBreadCrumb, mapStateToProps, mapDispatchToProps } from "../Detail";
-
-describe("<IndexDetailBreadCrumb />", () => {
-    it("should render", () => {
-        const props = {
-            refDetail: {
-                id: "baz",
-                name: "Baz"
-            },
-            version: 2
-        };
-        const wrapper = shallow(<IndexDetailBreadCrumb {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-});
+import { IndexDetail, mapDispatchToProps, mapStateToProps } from "../Detail";
 
 describe("<IndexDetail />", () => {
     let props;

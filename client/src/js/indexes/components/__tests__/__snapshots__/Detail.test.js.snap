@@ -6,85 +6,20 @@ exports[`<IndexDetail /> should render <NotFound /> when GET_INDEX_ERROR is set 
 
 exports[`<IndexDetail /> should render 1`] = `
 <div>
-  <IndexDetailBreadCrumb
-    refDetail={
-      Object {
-        "id": "foo",
-        "name": "Foo",
-      }
-    }
-    version={3}
-  />
-  <ViewHeader
-    title="Index 3 - Foo"
-  >
-    <ViewHeader__ViewHeaderTitle>
+  <ViewHeader__SubviewHeader>
+    <ViewHeader__SubviewHeaderTitle>
       Index 
       3
-    </ViewHeader__ViewHeaderTitle>
-    <ViewHeader__ViewHeaderAttribution
-      time="2018-02-14T17:12:00.000000Z"
-    />
-  </ViewHeader>
-  <Tabs>
-    <Tabs__TabLink
-      to="/refs/foo/indexes/baz/general"
-    >
-      General
-    </Tabs__TabLink>
-    <Tabs__TabLink
-      to="/refs/foo/indexes/baz/changes"
-    >
-      Changes 
-      <Badge />
-    </Tabs__TabLink>
-  </Tabs>
-  <Switch>
-    <Redirect
-      exact={true}
-      from="/refs/:refId/indexes/:indexId"
-      to="/refs/foo/indexes/baz/general"
-    />
-    <Route
-      component={[Function]}
-      path="/refs/:refId/indexes/:indexId/general"
-    />
-    <Route
-      component={
-        Object {
-          "$$typeof": Symbol(react.memo),
-          "WrappedComponent": [Function],
-          "compare": null,
-          "displayName": "Connect(IndexChanges)",
-          "type": [Function],
-        }
-      }
-      path="/refs/:refId/indexes/:indexId/changes"
-    />
-  </Switch>
+    </ViewHeader__SubviewHeaderTitle>
+    <ViewHeader__SubviewHeaderAttribution>
+       built 
+      <RelativeTime
+        time="2018-02-14T17:12:00.000000Z"
+      />
+    </ViewHeader__SubviewHeaderAttribution>
+  </ViewHeader__SubviewHeader>
+  <Container__NarrowContainer>
+    <IndexGeneral />
+  </Container__NarrowContainer>
 </div>
-`;
-
-exports[`<IndexDetailBreadCrumb /> should render 1`] = `
-<Breadcrumb>
-  <BreadcrumbItem
-    to="/refs/"
-  >
-    References
-  </BreadcrumbItem>
-  <BreadcrumbItem
-    to="/refs/baz"
-  >
-    Baz
-  </BreadcrumbItem>
-  <BreadcrumbItem
-    to="/refs/baz/indexes"
-  >
-    Indexes
-  </BreadcrumbItem>
-  <BreadcrumbItem>
-    Index 
-    2
-  </BreadcrumbItem>
-</Breadcrumb>
 `;

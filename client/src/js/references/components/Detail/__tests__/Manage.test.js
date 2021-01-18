@@ -6,13 +6,13 @@ describe("<ReferenceManage />", () => {
     beforeEach(() => {
         props = {
             id: "foo",
-            cloned_from: { bar: "bee" },
+            clonedFrom: { bar: "bee" },
             contributors: "baz",
             description: "boo",
-            latest_build: { Foo: "fee" },
+            latestBuild: { Foo: "fee" },
             organism: "Bar",
-            remotes_from: "Boo",
-            data_type: "Boo"
+            remotesFrom: "Boo",
+            dataType: "Boo"
         };
     });
 
@@ -48,13 +48,13 @@ describe("mapStateToProps()", () => {
         const props = mapStateToProps(state);
         expect(props).toEqual({
             id: "foo",
-            cloned_from: { bar: "bee" },
+            clonedFrom: { bar: "bee" },
             contributors: "baz",
             description: "boo",
-            latest_build: { Foo: "fee" },
+            latestBuild: { Foo: "fee" },
             organism: "Bar",
-            remotes_from: "Boo",
-            data_type: "Boo"
+            remotesFrom: "Boo",
+            dataType: "Boo"
         });
     });
 });

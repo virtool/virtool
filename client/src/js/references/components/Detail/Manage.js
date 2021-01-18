@@ -6,12 +6,10 @@ import { BoxGroup, BoxGroupHeader, NarrowContainer, Table } from "../../../base"
 import { Contributors } from "../../../indexes/components/Contributors";
 import { checkUpdates, updateRemoteReference } from "../../actions";
 import { Clone } from "./Clone";
-import ReferenceDetailHeader from "./Header";
+import ReferenceExport from "./Export";
 import { LatestBuild } from "./LatestBuild";
 import RemoteReference from "./Remote";
-import ReferenceDetailTabs from "./Tabs";
 import Targets from "./Targets/Targets";
-import ReferenceExport from "./Export";
 
 const ReferenceManageTable = styled(Table)`
     th {
@@ -23,73 +21,64 @@ const ReferenceManageTable = styled(Table)`
     }
 `;
 
-export const ReferenceManage = props => {
-    let remote;
-    let clone;
+export const ReferenceManage = ({
+    clonedFrom,
+    contributors,
+    dataType,
+    description,
+    id,
+    latestBuild,
+    organism,
+    remotesFrom
+}) => (
+    <NarrowContainer>
+        <BoxGroup>
+            <BoxGroupHeader>
+                <h2>General</h2>
+            </BoxGroupHeader>
+            <ReferenceManageTable>
+                <tbody>
+                    <tr>
+                        <th>Description</th>
+                        <td>{description}</td>
+                    </tr>
+                    <tr>
+                        <th>Organism</th>
+                        <td>{organism}</td>
+                    </tr>
+                    <tr>
+                        <th>Data Type</th>
+                        <td>{dataType}</td>
+                    </tr>
+                </tbody>
+            </ReferenceManageTable>
+        </BoxGroup>
 
-    if (props.remotes_from) {
-        remote = <RemoteReference />;
-    }
+        {remotesFrom && <RemoteReference />}
+        {clonedFrom && <Clone source={clonedFrom} />}
 
-    if (props.cloned_from) {
-        clone = <Clone source={props.cloned_from} />;
-    }
+        <BoxGroup>
+            <BoxGroupHeader>
+                <h2>Latest Index Build</h2>
+            </BoxGroupHeader>
+            <LatestBuild id={id} latestBuild={latestBuild} />
+        </BoxGroup>
 
-    return (
-        <div>
-            <ReferenceDetailHeader />
-            <ReferenceDetailTabs />
-
-            <NarrowContainer>
-                <BoxGroup>
-                    <BoxGroupHeader>
-                        <h2>General</h2>
-                    </BoxGroupHeader>
-                    <ReferenceManageTable>
-                        <tbody>
-                            <tr>
-                                <th>Description</th>
-                                <td>{props.description}</td>
-                            </tr>
-                            <tr>
-                                <th>Organism</th>
-                                <td>{props.organism}</td>
-                            </tr>
-                            <tr>
-                                <th>Data Type</th>
-                                <td>{props.data_type}</td>
-                            </tr>
-                        </tbody>
-                    </ReferenceManageTable>
-                </BoxGroup>
-
-                {remote}
-                {clone}
-
-                <BoxGroup>
-                    <BoxGroupHeader>
-                        <h2>Latest Index Build</h2>
-                    </BoxGroupHeader>
-                    <LatestBuild id={props.id} latestBuild={props.latest_build} />
-                </BoxGroup>
-
-                <Contributors contributors={props.contributors} />
-                <Targets />
-                <ReferenceExport />
-            </NarrowContainer>
-        </div>
-    );
-};
+        <Contributors contributors={contributors} />
+        <Targets />
+        <ReferenceExport />
+    </NarrowContainer>
+);
 
 export const mapStateToProps = state => ({
     id: state.references.detail.id,
-    cloned_from: state.references.detail.cloned_from,
+    clonedFrom: state.references.detail.cloned_from,
     contributors: state.references.detail.contributors,
     description: state.references.detail.description,
-    latest_build: state.references.detail.latest_build,
+    latestBuild: state.references.detail.latest_build,
     organism: state.references.detail.organism,
-    remotes_from: state.references.detail.remotes_from,
-    data_type: state.references.detail.data_type
+    remotesFrom: state.references.detail.remotes_from,
+    dataType: state.references.detail.data_type
 });
 
 export const mapDispatchToProps = dispatch => ({

@@ -2,7 +2,7 @@ import { get } from "lodash-es";
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { Redirect, Route, Switch } from "react-router-dom";
-import { LoadingPlaceholder, NotFound } from "../../../base";
+import { LoadingPlaceholder, NarrowContainer, NotFound } from "../../../base";
 import IndexDetail from "../../../indexes/components/Detail";
 import Indexes from "../../../indexes/components/Indexes";
 import OTUDetail from "../../../otus/components/Detail/Detail";
@@ -10,8 +10,10 @@ import OTUList from "../../../otus/components/List";
 import { checkRefRight } from "../../../utils/utils";
 import { getReference } from "../../actions";
 import EditReference from "./Edit";
+import ReferenceDetailHeader from "./Header";
 import ReferenceManage from "./Manage";
 import ReferenceSettings from "./Settings";
+import ReferenceDetailTabs from "./Tabs";
 
 const ReferenceDetail = ({ error, id, match, onGetReference }) => {
     const matchId = match.params.refId;
@@ -27,19 +29,29 @@ const ReferenceDetail = ({ error, id, match, onGetReference }) => {
     }
 
     return (
-        <div>
+        <React.Fragment>
             <Switch>
-                <Route path="/refs/:refId/otus/:otuId" component={OTUDetail} />
-                <Route path="/refs/:refId/indexes/:indexId" component={IndexDetail} />
-                <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />
-                <Route path="/refs/:refId/manage" component={ReferenceManage} />
-                <Route path="/refs/:refId/otus" component={OTUList} />
-                <Route path="/refs/:refId/indexes" component={Indexes} />
-                <Route path="/refs/:refId/settings" component={ReferenceSettings} />
+                <Route path="/refs/:refId/otus/:otuId" />
+                <Route path="/refs">
+                    <ReferenceDetailHeader />
+                    <ReferenceDetailTabs />
+                </Route>
             </Switch>
 
+            <NarrowContainer>
+                <Switch>
+                    <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />
+                    <Route path="/refs/:refId/manage" component={ReferenceManage} />
+                    <Route path="/refs/:refId/otus" component={OTUList} exact />
+                    <Route path="/refs/:refId/otus/:otuId" component={OTUDetail} />
+                    <Route path="/refs/:refId/indexes" component={Indexes} exact />
+                    <Route path="/refs/:refId/indexes/:indexId" component={IndexDetail} />
+                    <Route path="/refs/:refId/settings" component={ReferenceSettings} />
+                </Switch>
+            </NarrowContainer>
+
             <EditReference />
-        </div>
+        </React.Fragment>
     );
 };
 
