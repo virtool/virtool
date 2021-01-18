@@ -13,6 +13,7 @@ import virtool.bio
 import virtool.analyses.db
 import virtool.db.utils
 import virtool.downloads.db
+import virtool.downloads.utils
 import virtool.history.db
 import virtool.otus.db
 import virtool.references.db
@@ -229,6 +230,9 @@ async def download_subtraction(req):
         "subtraction.fa.gz"
     )
 
+    filename = virtool.downloads.utils.format_subtraction_filename(subtraction_id, document["name"])
+
     return web.FileResponse(path, headers={
-        "Content-Type": "application/gzip"
+        "Content-Type": "application/gzip",
+        "Content-Disposition": f"attachment; filename={filename}"
     })
