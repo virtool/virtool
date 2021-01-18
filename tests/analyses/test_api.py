@@ -80,9 +80,12 @@ async def test_get(ready, error, mocker, snapshot, spawn_client, static_time, re
         assert not m_format_analysis.called
 
 
-@pytest.mark.parametrize("error", [None, "404"])
+@pytest.mark.parametrize("error", [None, "403", "404"])
 async def test_find(error, snapshot, mocker, spawn_client, resp_is, static_time):
-    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
+    if error == "403":
+        mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(False, False))
+    else:
+        mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
     client = await spawn_client(authorize=True)
 
@@ -93,7 +96,7 @@ async def test_find(error, snapshot, mocker, spawn_client, resp_is, static_time)
         "all_write": True
     })
 
-    if not error:
+    if not error == "404":
         await client.db.analyses.insert_many([
             {
                 "_id": "test_1",
@@ -171,8 +174,11 @@ async def test_find(error, snapshot, mocker, spawn_client, resp_is, static_time)
 
     resp = await client.get("/api/analyses")
 
-    if error:
+    if error == "404":
         assert await resp_is.not_found(resp)
+        return
+    elif error == "403":
+        assert await resp_is.insufficient_rights(resp)
         return
 
     assert resp.status == 200
