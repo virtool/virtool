@@ -3,7 +3,15 @@ import React from "react";
 import { connect } from "react-redux";
 import { getAccountId } from "../../account/selectors";
 import QuickAnalysis from "../../analyses/components/Create/Quick";
-import { Badge, LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader, ViewHeaderTitle } from "../../base";
+import {
+    Badge,
+    LoadingPlaceholder,
+    NarrowContainer,
+    NoneFoundBox,
+    ScrollList,
+    ViewHeader,
+    ViewHeaderTitle
+} from "../../base";
 import { findHmms } from "../../hmm/actions";
 import { listReadyIndexes } from "../../indexes/actions";
 import { findSamples } from "../actions";
@@ -85,7 +93,7 @@ export class SamplesList extends React.Component {
         const { term, pathoscope, nuvs } = this.props;
 
         return (
-            <div>
+            <NarrowContainer>
                 <ViewHeader title="Samples">
                     <ViewHeaderTitle>
                         Samples <Badge>{this.props.total_count}</Badge>
@@ -106,7 +114,7 @@ export class SamplesList extends React.Component {
 
                 <CreateSample />
                 <QuickAnalysis />
-            </div>
+            </NarrowContainer>
         );
     }
 }

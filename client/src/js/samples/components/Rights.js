@@ -11,6 +11,7 @@ import {
     InputGroup,
     InputLabel,
     LoadingPlaceholder,
+    NarrowContainer,
     Select
 } from "../../base";
 import { listGroups } from "../../groups/actions";
@@ -52,48 +53,50 @@ export class SampleRights extends React.Component {
         ));
 
         return (
-            <BoxGroup>
-                <BoxGroupHeader>
-                    <h2>Sample Rights</h2>
-                    <p>Control who can read and write this sample and which user group owns the sample.</p>
-                </BoxGroupHeader>
-                <BoxGroupSection>
-                    <InputGroup>
-                        <InputLabel>Group</InputLabel>
-                        <Select value={this.props.group} onChange={this.handleChangeGroup}>
-                            <option value="none">None</option>
-                            {groupOptionComponents}
-                        </Select>
-                    </InputGroup>
+            <NarrowContainer>
+                <BoxGroup>
+                    <BoxGroupHeader>
+                        <h2>Sample Rights</h2>
+                        <p>Control who can read and write this sample and which user group owns the sample.</p>
+                    </BoxGroupHeader>
+                    <BoxGroupSection>
+                        <InputGroup>
+                            <InputLabel>Group</InputLabel>
+                            <Select value={this.props.group} onChange={this.handleChangeGroup}>
+                                <option value="none">None</option>
+                                {groupOptionComponents}
+                            </Select>
+                        </InputGroup>
 
-                    <InputGroup>
-                        <InputLabel>Group Rights</InputLabel>
-                        <Select
-                            name="groupRights"
-                            value={groupRights}
-                            onChange={e => this.handleChangeRights(e, "group")}
-                        >
-                            <option value="">None</option>
-                            <option value="r">Read</option>
-                            <option value="rw">Read & write</option>
-                        </Select>
-                    </InputGroup>
+                        <InputGroup>
+                            <InputLabel>Group Rights</InputLabel>
+                            <Select
+                                name="groupRights"
+                                value={groupRights}
+                                onChange={e => this.handleChangeRights(e, "group")}
+                            >
+                                <option value="">None</option>
+                                <option value="r">Read</option>
+                                <option value="rw">Read & write</option>
+                            </Select>
+                        </InputGroup>
 
-                    <InputGroup>
-                        <InputLabel>All Users' Rights</InputLabel>
-                        <Select
-                            name="allUsers"
-                            label="All Users' Rights"
-                            value={allRights}
-                            onChange={e => this.handleChangeRights(e, "all")}
-                        >
-                            <option value="">None</option>
-                            <option value="r">Read</option>
-                            <option value="rw">Read & write</option>
-                        </Select>
-                    </InputGroup>
-                </BoxGroupSection>
-            </BoxGroup>
+                        <InputGroup>
+                            <InputLabel>All Users' Rights</InputLabel>
+                            <Select
+                                name="allUsers"
+                                label="All Users' Rights"
+                                value={allRights}
+                                onChange={e => this.handleChangeRights(e, "all")}
+                            >
+                                <option value="">None</option>
+                                <option value="r">Read</option>
+                                <option value="rw">Read & write</option>
+                            </Select>
+                        </InputGroup>
+                    </BoxGroupSection>
+                </BoxGroup>
+            </NarrowContainer>
         );
     }
 }

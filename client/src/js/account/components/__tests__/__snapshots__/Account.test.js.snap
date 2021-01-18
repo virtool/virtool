@@ -21,36 +21,38 @@ exports[`<Account /> should render 1`] = `
       API
     </Tabs__TabLink>
   </Tabs>
-  <Switch>
-    <Redirect
-      exact={true}
-      from="/account"
-      to="/account/profile"
-    />
-    <Route
-      component={
-        Object {
-          "$$typeof": Symbol(react.memo),
-          "WrappedComponent": [Function],
-          "compare": null,
-          "displayName": "Connect(AccountProfile)",
-          "type": [Function],
+  <Container__NarrowContainer>
+    <Switch>
+      <Redirect
+        exact={true}
+        from="/account"
+        to="/account/profile"
+      />
+      <Route
+        component={
+          Object {
+            "$$typeof": Symbol(react.memo),
+            "WrappedComponent": [Function],
+            "compare": null,
+            "displayName": "Connect(AccountProfile)",
+            "type": [Function],
+          }
         }
-      }
-      path="/account/profile"
-    />
-    <Route
-      component={
-        Object {
-          "$$typeof": Symbol(react.memo),
-          "WrappedComponent": [Function],
-          "compare": null,
-          "displayName": "Connect(APIKeys)",
-          "type": [Function],
+        path="/account/profile"
+      />
+      <Route
+        component={
+          Object {
+            "$$typeof": Symbol(react.memo),
+            "WrappedComponent": [Function],
+            "compare": null,
+            "displayName": "Connect(APIKeys)",
+            "type": [Function],
+          }
         }
-      }
-      path="/account/api"
-    />
-  </Switch>
+        path="/account/api"
+      />
+    </Switch>
+  </Container__NarrowContainer>
 </Container__WideContainer>
 `;

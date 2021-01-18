@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 
-import { BoxGroup, BoxGroupHeader, Table } from "../../../base";
+import { BoxGroup, BoxGroupHeader, NarrowContainer, Table } from "../../../base";
 import { Contributors } from "../../../indexes/components/Contributors";
 import { checkUpdates, updateRemoteReference } from "../../actions";
 import { Clone } from "./Clone";
@@ -39,41 +39,44 @@ export const ReferenceManage = props => {
         <div>
             <ReferenceDetailHeader />
             <ReferenceDetailTabs />
-            <BoxGroup>
-                <BoxGroupHeader>
-                    <h2>General</h2>
-                </BoxGroupHeader>
-                <ReferenceManageTable>
-                    <tbody>
-                        <tr>
-                            <th>Description</th>
-                            <td>{props.description}</td>
-                        </tr>
-                        <tr>
-                            <th>Organism</th>
-                            <td>{props.organism}</td>
-                        </tr>
-                        <tr>
-                            <th>Data Type</th>
-                            <td>{props.data_type}</td>
-                        </tr>
-                    </tbody>
-                </ReferenceManageTable>
-            </BoxGroup>
 
-            {remote}
-            {clone}
+            <NarrowContainer>
+                <BoxGroup>
+                    <BoxGroupHeader>
+                        <h2>General</h2>
+                    </BoxGroupHeader>
+                    <ReferenceManageTable>
+                        <tbody>
+                            <tr>
+                                <th>Description</th>
+                                <td>{props.description}</td>
+                            </tr>
+                            <tr>
+                                <th>Organism</th>
+                                <td>{props.organism}</td>
+                            </tr>
+                            <tr>
+                                <th>Data Type</th>
+                                <td>{props.data_type}</td>
+                            </tr>
+                        </tbody>
+                    </ReferenceManageTable>
+                </BoxGroup>
 
-            <BoxGroup>
-                <BoxGroupHeader>
-                    <h2>Latest Index Build</h2>
-                </BoxGroupHeader>
-                <LatestBuild id={props.id} latestBuild={props.latest_build} />
-            </BoxGroup>
+                {remote}
+                {clone}
 
-            <Contributors contributors={props.contributors} />
-            <Targets />
-            <ReferenceExport />
+                <BoxGroup>
+                    <BoxGroupHeader>
+                        <h2>Latest Index Build</h2>
+                    </BoxGroupHeader>
+                    <LatestBuild id={props.id} latestBuild={props.latest_build} />
+                </BoxGroup>
+
+                <Contributors contributors={props.contributors} />
+                <Targets />
+                <ReferenceExport />
+            </NarrowContainer>
         </div>
     );
 };
