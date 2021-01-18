@@ -222,7 +222,7 @@ async def download_subtraction(req):
     if document is None:
         return virtool.api.response.not_found()
 
-    if "has_file" not in document or document["has_file"] is False:
+    if not document.get("has_file", False):
         return virtool.api.response.not_found("Subtraction FASTA file not found")
 
     path = os.path.join(
