@@ -3,10 +3,12 @@ name: Virtool CI
 on:
   push:
     branches:
-      - release-5.0.0
+      - release/5.0.0
+      - feature/**
   pull_request:
     branches:
-      - release-5.0.0
+      - release/5.0.0
+      - feature/**
 
 jobs:
   server:
