@@ -64,9 +64,14 @@ async def change_to_subtractions_list(db):
 
     """
     async for document in db.samples.find({"subtraction": {"$exists": True}}):
+        try:
+            subtractions = [document["subtraction"]["id"]]
+        except TypeError:
+            subtractions = list()
+
         await db.samples.update_one({"_id": document["_id"]}, {
             "$set": {
-                "subtractions": [document["subtraction"]["id"]]
+                "subtractions": subtractions
             },
             "$unset": {
                 "subtraction": ""
