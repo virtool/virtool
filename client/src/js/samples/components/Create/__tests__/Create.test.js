@@ -120,14 +120,6 @@ describe("<CreateSample>", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should display error when form submitted with no subtractions available", () => {
-        props.subtractions = [];
-        const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.setState({ ...state, selected: ["foo"] });
-        wrapper.find("form").simulate("submit", e);
-        expect(wrapper).toMatchSnapshot();
-    });
-
     it("handleSubmit() should update errorFile when form is submitted and [this.props.selected=[]]", () => {
         const wrapper = shallow(<CreateSample {...props} />);
         wrapper.setState({

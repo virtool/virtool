@@ -46,17 +46,6 @@ export class SubtractionList extends React.Component {
             subtractionComponents = <NoneFoundBox noun="subtractions" />;
         }
 
-        let alert;
-
-        if (!this.props.ready_host_count && !this.props.total_count) {
-            alert = (
-                <Alert color="orange" level>
-                    <Icon name="exclamation-circle" />
-                    <strong>A host genome must be added before samples can be created and analyzed.</strong>
-                </Alert>
-            );
-        }
-
         return (
             <div>
                 <ViewHeader title="Subtraction">
@@ -64,8 +53,6 @@ export class SubtractionList extends React.Component {
                         Subtraction <Badge>{this.props.total_count}</Badge>
                     </ViewHeaderTitle>
                 </ViewHeader>
-
-                {alert}
 
                 <SubtractionToolbar />
 
