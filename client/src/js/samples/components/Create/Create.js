@@ -120,7 +120,6 @@ export class CreateSample extends React.Component {
                 subtractionId || get(this.props.subtractions, [0, "id"]),
                 this.state.selected
             );
-            this.props.history.push("/samples");
         }
     };
 
