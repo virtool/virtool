@@ -38,12 +38,23 @@ async def test_change_to_subtractions_list(snapshot, dbi):
         },
         {
             "_id": "baz",
-            "subtraction": {
-                "id": "malus"
-            }
+            "subtraction": None
         }
     ])
 
     await virtool.samples.migrate.change_to_subtractions_list(dbi)
 
-    snapshot.assert_match(await dbi.samples.find().to_list(None))
+    assert await dbi.samples.find().to_list(None) == [
+        {
+            "_id": "foo",
+            "subtractions": ["prunus"]
+        },
+        {
+            "_id": "bar",
+            "subtractions": ["malus"]
+        },
+        {
+            "_id": "baz",
+            "subtractions": []
+        }
+    ]
