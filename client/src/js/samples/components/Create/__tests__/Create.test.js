@@ -70,24 +70,6 @@ describe("<CreateSample>", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    // it("should update state when Modal exits", () => {
-    //     const wrapper = shallow(<CreateSample {...props} />);
-    //     wrapper.setState(state);
-    //     expect(wrapper.state()).toEqual({
-    //         errorFile: "",
-    //         errorName: "",
-    //         errorSubtraction: "",
-    //         group: "",
-    //         host: "",
-    //         isolate: "",
-    //         libraryType: "normal",
-    //         locale: "",
-    //         name: "",
-    //         selected: [],
-    //         subtractionId: ""
-    //     });
-    // });
-
     it("handleChange() should update state [name] and [error] when InputError is changed and [name=name]", () => {
         const wrapper = shallow(<CreateSample {...props} />);
         wrapper.setState(state);
@@ -251,11 +233,6 @@ describe("mapDispatchToProps()", () => {
             files: "files",
             type: "CREATE_SAMPLE_REQUESTED"
         });
-    });
-
-    it("should return onHide() in props", () => {
-        props.onHide();
-        expect(dispatch).toHaveBeenCalledWith({ state: { create: false }, type: "PUSH_STATE" });
     });
 
     it("should return onClearError() in props", () => {

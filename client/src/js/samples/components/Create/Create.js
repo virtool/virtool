@@ -2,7 +2,6 @@ import { filter, get, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { pushState } from "../../../app/actions";
 import {
     Input,
     InputContainer,
@@ -122,7 +121,6 @@ export class CreateSample extends React.Component {
                 this.state.selected
             );
             this.props.history.push("/samples");
-            this.setState(getInitialState(this.props));
         }
     };
 
@@ -139,7 +137,6 @@ export class CreateSample extends React.Component {
     };
 
     render() {
-        console.log(this.state);
         if (this.props.subtractions === null || this.props.readyReads === null) {
             return <LoadingPlaceholder margin="36px" />;
         }
