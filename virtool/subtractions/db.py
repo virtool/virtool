@@ -38,7 +38,7 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
         db = self.db
         settings = self.app["settings"]
 
-        async for subtraction in db.subtraction.find():
+        async for subtraction in db.subtraction.find({"deleted": False}):
             path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
             has_file = True
 
