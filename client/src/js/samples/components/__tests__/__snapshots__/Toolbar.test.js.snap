@@ -27,13 +27,7 @@ exports[`<SampleSearchToolbar /> should render when [canCreate=true] 1`] = `
       color="blue"
       tip="Create"
       tipPlacement="top"
-      to={
-        Object {
-          "state": Object {
-            "createSample": true,
-          },
-        }
-      }
+      to="/samples/create"
     >
       <Icon
         faStyle="fas"

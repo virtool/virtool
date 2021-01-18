@@ -10,7 +10,6 @@ describe("<CreateSample>", () => {
 
     beforeEach(() => {
         props = {
-            show: true,
             error: "",
             subtractions: [
                 {
@@ -25,7 +24,11 @@ describe("<CreateSample>", () => {
             readyReads: [],
             forceGroupChoice: false,
             onCreate: jest.fn(),
-            onHide: jest.fn()
+            onHide: jest.fn(),
+            onLoadSubtractionsAndFiles: jest.fn(),
+            history: {
+                push: jest.fn()
+            }
         };
         state = {
             name: "Sample 1",
@@ -67,24 +70,23 @@ describe("<CreateSample>", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should update state when Modal exits", () => {
-        const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.setState(state);
-        wrapper.instance().handleModalExited();
-        expect(wrapper.state()).toEqual({
-            errorFile: "",
-            errorName: "",
-            errorSubtraction: "",
-            group: "",
-            host: "",
-            isolate: "",
-            libraryType: "normal",
-            locale: "",
-            name: "",
-            selected: [],
-            subtractionId: ""
-        });
-    });
+    // it("should update state when Modal exits", () => {
+    //     const wrapper = shallow(<CreateSample {...props} />);
+    //     wrapper.setState(state);
+    //     expect(wrapper.state()).toEqual({
+    //         errorFile: "",
+    //         errorName: "",
+    //         errorSubtraction: "",
+    //         group: "",
+    //         host: "",
+    //         isolate: "",
+    //         libraryType: "normal",
+    //         locale: "",
+    //         name: "",
+    //         selected: [],
+    //         subtractionId: ""
+    //     });
+    // });
 
     it("handleChange() should update state [name] and [error] when InputError is changed and [name=name]", () => {
         const wrapper = shallow(<CreateSample {...props} />);
@@ -223,7 +225,6 @@ describe("mapStateToProps()", () => {
                     reserved: false
                 }
             ],
-            show: false,
             subtractions
         });
     });

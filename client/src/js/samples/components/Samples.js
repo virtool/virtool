@@ -6,6 +6,7 @@ import FileManager from "../../files/components/Manager";
 import SampleDetail from "./Detail";
 import SamplesList from "./List";
 import SamplesSettings from "./Settings";
+import CreateSample from "./Create/Create";
 
 export const SampleFileManager = () => (
     <NarrowContainer>
@@ -19,6 +20,7 @@ export const Samples = () => (
             <Route path="/samples" component={SamplesList} exact />
             <Route path="/samples/files" component={SampleFileManager} exact />
             <Route path="/samples/settings" component={SamplesSettings} />
+            <Route path="/samples/create" component={CreateSample} />
             <Route path="/samples/:sampleId" component={SampleDetail} />
         </Switch>
     </Container>
