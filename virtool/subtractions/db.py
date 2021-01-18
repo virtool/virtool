@@ -181,9 +181,9 @@ async def get_linked_samples(db, subtraction_id):
 
 
 async def unlink_default_subtractions(db, subtraction_id):
-    await db.samples.update_many({"subtraction.id": subtraction_id}, {
-        "$set": {
-            "subtraction": None
+    await db.samples.update_many({"subtractions": subtraction_id}, {
+        "$pull": {
+            "subtractions": subtraction_id
         }
     })
 
