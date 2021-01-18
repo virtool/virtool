@@ -47,7 +47,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         """
         settings = self.app["settings"]
 
-        async for subtraction in self.db.subtraction.find({"deleted": False, "files": {"$exists": False}}):
+        async for subtraction in db.subtraction.find({"deleted": False}):
             path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
             await self.app["run_in_thread"](virtool.subtractions.utils.rename_bowtie_files, path)
 
