@@ -24,11 +24,13 @@ class VTClient:
             self,
             authorize=False,
             administrator=False,
+            dev=False,
             groups=None,
             permissions=None
     ):
         app = virtool.app.create_app({
             "db_connection_string": self._db_connection_string,
+            "dev": dev,
             "postgres_connection_string": self._postgres_connection_string,
             "db_name": self._db_name,
             "enable_api": True,
