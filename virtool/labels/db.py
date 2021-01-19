@@ -1,2 +1,2 @@
-async def count_samples(db, label_id):
-    return await db.samples.count_documents({"labels": {"$in": [label_id]}})
+async def attach_sample_count(db, document, label_id):
+    document.update({"count": await db.samples.count_documents({"labels": {"$in": [label_id]}})})
