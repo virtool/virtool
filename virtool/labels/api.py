@@ -33,7 +33,7 @@ async def find(req):
             }
             documents.append(d)
 
-    await asyncio.gather(*[virtool.labels.db.attach_sample_count(req.app["db"], d, d["id"]) for d in documents])
+    documents = await asyncio.gather(*[virtool.labels.db.attach_sample_count(req.app["db"], d, d["id"]) for d in documents])
 
     return json_response(documents)
 
@@ -58,7 +58,7 @@ async def get(req):
             "description": label.description
         }
 
-    await virtool.labels.db.attach_sample_count(req.app["db"], document, label.id)
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], document, label.id)
 
     return json_response(document)
 
@@ -107,7 +107,7 @@ async def create(req):
         "description": data["description"]
     }
 
-    await virtool.labels.db.attach_sample_count(req.app["db"], document, label_id)
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], document, label_id)
 
     headers = {
         "Location": f"/api/labels/{label_id}"
@@ -164,7 +164,7 @@ async def edit(req):
         "color": data["color"],
         "description": data["description"]
     }
-    await virtool.labels.db.attach_sample_count(req.app["db"], document, label_id)
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], document, label_id)
 
     return json_response(document)
 
