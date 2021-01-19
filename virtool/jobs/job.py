@@ -160,10 +160,10 @@ class Job:
         if stderr_handler:
             async def _stderr_handler(line):
                 await stderr_handler(line)
-                logger.info(f"STDERR: {line.rstrip()}")
+                logger.info(f"STDERR: {line.decode().rstrip()}")
         else:
             async def _stderr_handler(line):
-                logger.info(f"STDERR: {line.rstrip()}")
+                logger.info(f"STDERR: {line.decode().rstrip()}")
 
         self._process = await asyncio.create_subprocess_exec(
             *command,
