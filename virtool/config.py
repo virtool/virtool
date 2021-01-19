@@ -191,7 +191,8 @@ def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_se
 )
 @click.pass_context
 def start_server(ctx, host, port, no_check_db, no_check_files, no_client, no_fetching):
-    virtool.logs.configure(ctx.obj["dev"], ctx.obj["verbose"])
+    virtool.logs.configure_server(ctx.obj["dev"], ctx.obj["verbose"])
+    
     config = {
         **ctx.obj,
         "host": host,
@@ -233,7 +234,8 @@ def start_server(ctx, host, port, no_check_db, no_check_files, no_client, no_fet
 )
 @click.pass_context
 def start_runner(ctx, job_list, mem, proc, temp_path):
-    virtool.logs.configure(ctx.obj["dev"], ctx.obj["verbose"])
+    virtool.logs.configure_runner(ctx.obj["dev"], ctx.obj["verbose"])
+
     config = {
         **ctx.obj,
         "job_list": job_list,
