@@ -7,6 +7,7 @@ import styled from "styled-components";
 import { getAccount } from "../account/actions";
 import { getSettings } from "../administration/actions";
 import { Container, LoadingPlaceholder } from "../base";
+import DevDialog from "../dev/components/Dialog";
 import UploadOverlay from "../files/components/UploadOverlay";
 import NavBar from "../nav/components/NavBar";
 import Sidebar from "../nav/components/Sidebar";
@@ -71,6 +72,7 @@ export const Main = ({ ready, onLoad }) => {
 
                 <Sidebar />
 
+                <DevDialog />
                 <UploadOverlay />
             </div>
         );
