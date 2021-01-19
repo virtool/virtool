@@ -43,12 +43,16 @@ import logging
 import os
 import pymongo.results
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 import virtool.jobs.db
 import virtool.db.utils
 import virtool.errors
 import virtool.samples.utils
 import virtool.utils
 import virtool.samples.utils
+from virtool.labels.models import Label
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +96,21 @@ RIGHTS_PROJECTION = {
     "all_write": True,
     "user": True
 }
+
+
+async def attach_labels(app, document):
+    if document.get("labels"):
+        for index, label_id in enumerate(document["labels"]):
+            async with AsyncSession(app["postgres"]) as session:
+                result = await session.execute(select(Label).filter_by(id=label_id))
+                label = result.scalar()
+
+            document["labels"][index] = {
+                "id": label_id,
+                "name": label.name,
+                "description": label.description,
+                "color": label.color
+            }
 
 
 async def attempt_file_replacement(app, sample_id, user_id):
