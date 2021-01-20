@@ -111,6 +111,7 @@ async def attach_labels(app, document):
                 "description": label.description,
                 "color": label.color
             }
+    return document
 
 
 async def attempt_file_replacement(app, sample_id, user_id):
