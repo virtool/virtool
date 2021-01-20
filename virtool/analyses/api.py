@@ -92,16 +92,10 @@ async def find(req: aiohttp.web.Request) -> aiohttp.web.Response:
         sort=[("created_at", -1)]
     )
 
-    if len(data["documents"]) == 0:
-        return not_found()
-
     checked_documents = []
     for document in data["documents"]:
         if await virtool.samples.db.check_rights(db, document["sample"]["id"], req["client"], write=False):
             checked_documents.append(document)
-
-    if len(checked_documents) == 0:
-        return insufficient_rights()
 
     data["documents"] = checked_documents
 
