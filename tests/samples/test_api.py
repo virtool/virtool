@@ -2,6 +2,9 @@ import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
+from virtool.labels.models import Label
+
+
 class MockJobInterface:
 
     def __init__(self):
@@ -63,12 +66,23 @@ class MockJobInterface:
         "total_count": 3
     })
 ])
-async def test_find(find, per_page, page, label_filter, d_range, meta, snapshot, spawn_client, static_time):
+async def test_find(find, per_page, page, label_filter, d_range, meta, snapshot, spawn_client, static_time,
+                    test_session):
     client = await spawn_client(authorize=True)
 
     time_1 = arrow.get(static_time.datetime).datetime
     time_2 = arrow.get(static_time.datetime).shift(hours=1).datetime
     time_3 = arrow.get(static_time.datetime).shift(hours=2).datetime
+
+    label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+    label_2 = Label(id=2, name="Info", color="#03fc20", description="This is a info")
+    label_3 = Label(id=3, name="Question", color="#0d321d", description="This is a question")
+
+    async with test_session as session:
+        session.add(label_1)
+        session.add(label_2)
+        session.add(label_3)
+        await session.commit()
 
     await client.db.samples.insert_many([
         {
@@ -85,7 +99,7 @@ async def test_find(find, per_page, page, label_filter, d_range, meta, snapshot,
             "pathoscope": False,
             "all_read": True,
             "ready": True,
-            "labels": ["Bug", "Info"]
+            "labels": [1, 2]
         },
         {
             "user": {
@@ -101,7 +115,7 @@ async def test_find(find, per_page, page, label_filter, d_range, meta, snapshot,
             "pathoscope": False,
             "all_read": True,
             "ready": True,
-            "labels": ["Bug"]
+            "labels": [1]
         },
         {
             "user": {
@@ -117,7 +131,7 @@ async def test_find(find, per_page, page, label_filter, d_range, meta, snapshot,
             "name": "16SPP044",
             "pathoscope": False,
             "all_read": True,
-            "labels": ["Question"]
+            "labels": [3]
         }
     ])
 
@@ -149,10 +163,15 @@ async def test_find(find, per_page, page, label_filter, d_range, meta, snapshot,
 
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("ready", [True, False])
-async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static_time):
+async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static_time, test_session):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
     client = await spawn_client(authorize=True)
+
+    label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+    async with test_session as session:
+        session.add(label_1)
+        await session.commit()
 
     if not error:
         await client.db.samples.insert_one({
@@ -166,7 +185,8 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
                     "name": "Bar.fq.gz",
                     "download_url": "/download/samples/files/file_1.fq.gz"
                 }
-            ]
+            ],
+            "labels": [1]
         })
 
     resp = await client.get("api/samples/test")
@@ -502,6 +522,7 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
     assert resp.status == 200
 
     snapshot.assert_match(await resp.json())
+
 
 @pytest.mark.parametrize("error", [None, "400_reference", "400_index", "400_ready_index", "404"])
 async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
