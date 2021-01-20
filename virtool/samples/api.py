@@ -218,6 +218,9 @@ async def get(req):
     "notes": {
         "type": "string",
         "default": ''
+    },
+    "labels": {
+        "type": "list"
     }
 })
 async def create(req):
@@ -230,6 +233,12 @@ async def create(req):
 
     if name_error_message:
         return bad_request(name_error_message)
+
+    if "labels" in data:
+        non_existent_labels = await check_labels(data["labels"], req.app["postgres"])
+
+        if non_existent_labels:
+            return bad_request(f"Labels do not exist: {', '.join(non_existent_labels)}")
 
     # Make sure a subtraction host was submitted and it exists.
     if not await db.subtraction.count_documents({"_id": data["subtraction"], "is_host": True}):
@@ -283,6 +292,7 @@ async def create(req):
         "user": {
             "id": user_id
         },
+        "labels": data.get("labels"),
         "paired": len(data["files"]) == 2
     })
 
