@@ -128,6 +128,9 @@ async def find(req):
         reverse=True
     )
 
+    for d in data["documents"]:
+        d = await virtool.samples.db.attach_labels(req.app, d)
+
     return json_response(data)
 
 
@@ -168,6 +171,8 @@ async def get(req):
             })
 
     await virtool.subtractions.db.attach_subtraction(db, document)
+
+    document = await virtool.samples.db.attach_labels(req.app, document)
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -374,6 +379,8 @@ async def edit(req):
         "$set": data
     }, projection=virtool.samples.db.LIST_PROJECTION)
 
+    document = await virtool.samples.db.attach_labels(req.app, document)
+
     processed = virtool.utils.base_processor(document)
 
     return json_response(processed)
@@ -390,6 +397,8 @@ async def replace(req):
     )
 
     document = await req.app["db"].samples.find_one(sample_id, virtool.samples.db.PROJECTION)
+
+    document = await virtool.samples.db.attach_labels(req.app, document)
 
     return json_response(virtool.utils.base_processor(document))
 
