@@ -1,5 +1,10 @@
 import os
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from virtool.labels.models import Label
+
 PATHOSCOPE_TASK_NAMES = [
     "pathoscope_bowtie",
     "pathoscope_barracuda"
@@ -50,6 +55,16 @@ def calculate_workflow_tags(analyses: list) -> dict:
         "pathoscope": pathoscope,
         "nuvs": nuvs
     }
+
+
+async def check_labels(labels, postgres_db):
+    non_existent_labels = list()
+    for label_id in labels:
+        async with AsyncSession(postgres_db) as session:
+            if (await session.execute(select(Label).filter_by(id=label_id))).first() is None:
+                non_existent_labels.append(str(label_id))
+
+    return non_existent_labels
 
 
 def get_sample_rights(sample: dict, client):

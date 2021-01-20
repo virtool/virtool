@@ -21,6 +21,8 @@ from virtool.api.response import bad_request, insufficient_rights, invalid_query
     json_response, no_content, not_found
 from virtool.labels.models import Label
 
+from virtool.samples.utils import check_labels
+
 QUERY_SCHEMA = {
     "find": {
         "type": "string",
@@ -361,11 +363,7 @@ async def edit(req):
             return bad_request(message)
 
     if "labels" in data:
-        non_existent_labels = list()
-        for label_id in data["labels"]:
-            async with AsyncSession(req.app["postgres"]) as session:
-                if (await session.execute(select(Label).filter_by(id=label_id))).first() is None:
-                    non_existent_labels.append(str(label_id))
+        non_existent_labels = check_labels(data["labels"], req.app["postgres"])
 
         if non_existent_labels:
             return bad_request(f"Labels do not exist: {', '.join(non_existent_labels)}")
