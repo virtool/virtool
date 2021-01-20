@@ -38,7 +38,7 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
         db = self.db
         settings = self.app["settings"]
 
-        async for subtraction in db.subtraction.find():
+        async for subtraction in db.subtraction.find({"deleted": False}):
             path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
             has_file = True
 
@@ -129,9 +129,9 @@ async def get_linked_samples(db, subtraction_id):
 
 
 async def unlink_default_subtractions(db, subtraction_id):
-    await db.samples.update_many({"subtraction.id": subtraction_id}, {
-        "$set": {
-            "subtraction": None
+    await db.samples.update_many({"subtractions": subtraction_id}, {
+        "$pull": {
+            "subtractions": subtraction_id
         }
     })
 
