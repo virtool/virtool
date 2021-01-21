@@ -107,13 +107,15 @@ async def migrate_subtractions_list(collection: AsyncIOMotorCollection):
     Transform `subtraction` field to a list and rename it as `subtractions`.
 
     """
+    updates = list()
+
     async for document in collection.find({"subtraction": {"$exists": True}}):
         try:
             subtractions = [document["subtraction"]["id"]]
         except TypeError:
             subtractions = list()
 
-        await collection.update_one({"_id": document["_id"]}, {
+        update = pymongo.UpdateOne({"_id": document["_id"]}, {
             "$set": {
                 "subtractions": subtractions
             },
@@ -121,3 +123,7 @@ async def migrate_subtractions_list(collection: AsyncIOMotorCollection):
                 "subtraction": ""
             }
         })
+
+        updates.append(update)
+
+    await collection.bulk_write(updates)
