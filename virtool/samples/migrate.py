@@ -1,5 +1,6 @@
 import asyncio
 
+import virtool.db.migrate
 import virtool.db.utils
 import virtool.samples.db
 import virtool.types
@@ -19,7 +20,7 @@ async def migrate_samples(app: virtool.types.App):
 
     await recalculate_all_workflow_tags(db)
     await virtool.db.utils.delete_unready(db.samples)
-    await change_to_subtractions_list(db)
+    await virtool.db.migrate.migrate_subtractions_list(db.samples)
 
 
 async def recalculate_all_workflow_tags(db):
@@ -35,25 +36,3 @@ async def recalculate_all_workflow_tags(db):
         coros = [virtool.samples.db.recalculate_workflow_tags(db, sample_id) for sample_id in chunk]
         await asyncio.gather(*coros)
 
-
-async def change_to_subtractions_list(db):
-    """
-    Transform `subtraction` field to a list and rename it as `subtractions`.
-
-    :param db: the application database object
-
-    """
-    async for document in db.samples.find({"subtraction": {"$exists": True}}):
-        try:
-            subtractions = [document["subtraction"]["id"]]
-        except TypeError:
-            subtractions = list()
-
-        await db.samples.update_one({"_id": document["_id"]}, {
-            "$set": {
-                "subtractions": subtractions
-            },
-            "$unset": {
-                "subtraction": ""
-            }
-        })
