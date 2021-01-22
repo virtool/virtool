@@ -46,6 +46,7 @@ export const BoxGroup = styled(Box)`
 
 export const BoxGroupSection = styled.div`
     background-color: transparent;
+    border: none;
     border-radius: 0;
     color: inherit;
     cursor: ${props => (props.onClick && !props.active ? "pointer" : "auto")};
@@ -72,6 +73,12 @@ export const SelectBoxGroupSection = styled(BoxGroupSection)`
     background-color: ${props => (props.active ? props.theme.color.blue : "transparent")};
     color: ${props => (props.active ? props.theme.color.white : "inherit")};
     cursor: pointer;
+    width: 100%;
+
+    &:focus {
+        box-shadow: inset 0 0 0 2px rgba(43, 108, 176, 0.5);
+        outline: none;
+    }
 
     ${StyledCheckbox} {
         background-color: ${props => (props.active ? props.theme.color.white : "transparent")};
