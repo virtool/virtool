@@ -5,13 +5,16 @@ import os
 import aiofiles
 import aiohttp.web
 from cerberus import Validator
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.db.utils
 import virtool.files.db
 import virtool.http.routes
 import virtool.samples.db
 import virtool.utils
-from virtool.api.response import invalid_query, json_response, not_found
+from virtool.api.response import invalid_query, json_response, not_found, bad_request
+from virtool.uploads.models import Upload
 
 logger = logging.getLogger("uploads")
 
@@ -23,7 +26,6 @@ FILE_TYPES = [
     "hmm",
     "subtraction"
 ]
-
 
 routes = virtool.http.routes.Routes()
 
@@ -37,11 +39,11 @@ def naive_validator(req):
         return v.errors
 
 
-async def naive_writer(req, file_id):
+async def naive_writer(req, upload_id, name):
     reader = await req.multipart()
     file = await reader.next()
 
-    file_path = os.path.join(req.app["settings"]["data_path"], "files", file_id)
+    file_path = os.path.join(req.app["settings"]["data_path"], "files", f"{upload_id}-{name}")
 
     size = 0
 
@@ -53,13 +55,11 @@ async def naive_writer(req, file_id):
             size += len(chunk)
             await handle.write(chunk)
 
-    return size
+    return size, file_path
 
 
 @routes.post("/upload/{file_type}", permission="upload_file")
-async def upload(req):
-    db = req.app["db"]
-
+async def create(req):
     file_type = req.match_info["file_type"]
 
     if file_type not in FILE_TYPES:
@@ -70,42 +70,60 @@ async def upload(req):
     if errors:
         return invalid_query(errors)
 
-    filename = req.query["name"]
-
-    document = await virtool.files.db.create(
-        db,
-        filename,
-        file_type,
-        user_id=req["client"].user_id
-    )
-
-    file_id = document["id"]
-
-    try:
-        size = await naive_writer(req, file_id)
-
-        await db.files.update_one({"_id": file_id}, {
-            "$set": {
-                "size": size,
-                "ready": True
-            }
-        })
-
-        logger.debug(f"Upload succeeded: {file_id}")
-
-        headers = {
-            "Location": f"/api/files/{file_id}"
-        }
-
-        return json_response(document, status=201, headers=headers)
-    except asyncio.CancelledError:
-        logger.debug(f"Upload aborted: {file_id}")
-
-        await virtool.files.db.remove(
-            db,
-            req.app["settings"],
-            req.app["run_in_thread"],
-            file_id
+    async with AsyncSession(req.app["postgres"]) as session:
+        upload = Upload(
+            created_at=virtool.utils.timestamp(),
+            field=req["client"].user_id,
+            name=req.query["name"],
+            ready=False,
+            removed=False,
+            reserved=False,
+            type=req.match_info["file_type"],
         )
 
-        return aiohttp.web.Response(status=499)
+        session.add(upload)
+
+        try:
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            return bad_request("File name already exists")
+
+        upload_id = upload.id
+
+        try:
+            size, name_on_disk = await naive_writer(req, upload_id, upload.name)
+
+            upload.size = size
+            upload.name_on_disk = name_on_disk
+            upload.uploaded_at = virtool.utils.timestamp()
+
+            await session.commit()
+
+            document = {
+                "created_at": upload.created_at,
+                "field": upload.field,
+                "name": upload.name,
+                "name_on_disk": name_on_disk,
+                "ready": upload.ready,
+                "removed": upload.removed,
+                "reserved": upload.reserved,
+                "size": size,
+                "type": upload.type,
+                "uploaded_at": upload.uploaded_at
+            }
+
+            logger.debug(f"Upload succeeded: {upload_id}")
+
+            headers = {
+                "Location": f"/api/files/{upload_id}"
+            }
+
+            return json_response(document, status=201, headers=headers)
+        except asyncio.CancelledError:
+            logger.debug(f"Upload aborted: {upload_id}")
+
+            await session.delete(upload)
+            await session.commit()
+
+            return aiohttp.web.Response(status=499)
