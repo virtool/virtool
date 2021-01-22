@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom";
+import "jest-styled-components";
 import { fireEvent, render as rtlRender } from "@testing-library/react";
 import Enzyme, { mount, render, shallow } from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
