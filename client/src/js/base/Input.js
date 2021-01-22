@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import styled from "styled-components";
+import { getFontWeight } from "../app/theme";
 import { Icon } from "./Icon";
 
 const InputContext = React.createContext("");
 
-const getInputFocusColor = ({ error }) => (error ? "rgba(229, 62, 62, 0.5)" : "rgba(43, 108, 176, 0.5)");
+export const getInputFocusColor = ({ error }) => (error ? "rgba(229, 62, 62, 0.5)" : "rgba(43, 108, 176, 0.5)");
 
 export const InputError = styled.p`
     color: ${props => props.theme.color.red};
     font-size: ${props => props.theme.fontSize.sm};
+    font-weight: ${getFontWeight("thick")};
     margin: 5px 0 -10px;
     min-height: 18px;
     text-align: right;
