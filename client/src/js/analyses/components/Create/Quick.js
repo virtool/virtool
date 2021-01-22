@@ -1,4 +1,4 @@
-import { forEach } from "lodash-es";
+import { forEach, get } from "lodash-es";
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
@@ -6,7 +6,7 @@ import { getAccountId } from "../../../account/selectors";
 import { pushState } from "../../../app/actions";
 import { Badge, Button, Icon, Modal, ModalBody, ModalFooter, ModalHeader, ModalTabs, TabLink } from "../../../base";
 import { deselectSamples } from "../../../samples/actions";
-import { getDefaultSubtraction, getSelectedSamples } from "../../../samples/selectors";
+import { getSelectedSamples } from "../../../samples/selectors";
 import { shortlistSubtractions } from "../../../subtraction/actions";
 import { analyze } from "../../actions";
 import {
@@ -17,7 +17,7 @@ import {
 } from "../../selectors";
 import HMMAlert from "../HMMAlert";
 import { useCreateAnalysis } from "./hooks";
-import { IndexSelector } from "./IndexSelector";
+import { ReferenceSelector } from "./ReferenceSelector";
 import { SelectedSamples } from "./SelectedSamples";
 import { SubtractionSelector } from "./SubtractionSelector";
 import { CreateAnalysisSummary } from "./Summary";
@@ -62,22 +62,13 @@ export const QuickAnalyze = ({
         }
     }, [mode]);
 
-    // This hook is shared with the analyze modal for single samples.
-    const {
-        error,
-        indexes,
-        subtraction,
-        workflows,
-        setError,
-        setSubtraction,
-        toggleIndex,
-        toggleWorkflow
-    } = useCreateAnalysis(mode);
+    // Use this as the subtraction if none is selected.
+    const firstSubtractionId = get(subtractions, [0, "id"]);
 
     const handleSubmit = e => {
         e.preventDefault();
 
-        if (!indexes.length) {
+        if (!references.length) {
             return setError("Please select reference(s)");
         }
 
@@ -85,9 +76,21 @@ export const QuickAnalyze = ({
             return setError("Please select workflow(s)");
         }
 
-        onAnalyze(compatibleSamples, indexes, subtraction, accountId, workflows);
+        onAnalyze(compatibleSamples, references, subtraction || firstSubtractionId, accountId, workflows);
         onUnselect(compatibleSamples.map(sample => sample.id));
     };
+
+    // This hook is shared with the analyze modal for single samples.
+    const {
+        error,
+        references,
+        subtraction,
+        workflows,
+        setError,
+        setReferences,
+        setSubtraction,
+        setWorkflows
+    } = useCreateAnalysis(mode);
 
     return (
         <Modal label="Quick Analyze" show={show} size="lg" onHide={onHide}>
@@ -113,7 +116,7 @@ export const QuickAnalyze = ({
                         dataType={mode || "genome"}
                         hasHmm={hasHmm}
                         workflows={workflows}
-                        onSelect={toggleWorkflow}
+                        onSelect={setWorkflows}
                     />
                     {mode === "genome" && (
                         <SubtractionSelector
@@ -122,16 +125,16 @@ export const QuickAnalyze = ({
                             onChange={e => setSubtraction(e.target.value)}
                         />
                     )}
-                    <IndexSelector
-                        indexes={compatibleIndexes}
-                        onSelect={toggleIndex}
-                        selected={indexes}
+                    <ReferenceSelector
                         error={error}
+                        indexes={compatibleIndexes}
+                        selected={references}
+                        onChange={setReferences}
                     />
                 </ModalBody>
                 <QuickAnalyzeFooter>
                     <CreateAnalysisSummary
-                        indexCount={indexes.length}
+                        indexCount={references.length}
                         sampleCount={compatibleSamples.length}
                         workflowCount={workflows.length}
                     />
@@ -149,7 +152,6 @@ export const mapStateToProps = state => ({
     accountId: getAccountId(state),
     compatibleIndexes: getCompatibleIndexesWithDataType(state),
     compatibleSamples: getCompatibleSamples(state),
-    defaultSubtraction: getDefaultSubtraction(state),
     hasHmm: !!state.hmms.total_count,
     mode: getQuickAnalysisMode(state),
     samples: getSelectedSamples(state),
@@ -159,7 +161,7 @@ export const mapStateToProps = state => ({
 export const mapDispatchToProps = dispatch => ({
     onAnalyze: (samples, references, subtractionId, accountId, workflows) => {
         forEach(samples, ({ id }) => {
-            forEach(references, ({ refId }) => {
+            forEach(references, refId => {
                 forEach(workflows, workflow => dispatch(analyze(id, refId, subtractionId, accountId, workflow)));
             });
         });
