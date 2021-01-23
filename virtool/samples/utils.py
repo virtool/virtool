@@ -57,14 +57,18 @@ def calculate_workflow_tags(analyses: list) -> dict:
     }
 
 
-async def check_labels(labels, postgres_db):
-    non_existent_labels = list()
-    for label_id in labels:
-        async with AsyncSession(postgres_db) as session:
-            if (await session.execute(select(Label).filter_by(id=label_id))).first() is None:
-                non_existent_labels.append(str(label_id))
+async def check_labels(pg, labels: list) -> list:
+    """"
+    Check for existence of labels given in sample creation request
 
-    return non_existent_labels
+    :param pg: PostgreSQL database connection object
+    :param labels: list of labels given in the sample creation request
+    :return: a list containing any labels given in the request that aren't in the Labels db, if any
+    """
+    async with AsyncSession(pg) as session:
+        results = await session.execute(select(Label.id).filter(Label.id.in_(labels)))
+
+        return [str(label) for label in labels if label not in set(results.all())]
 
 
 def get_sample_rights(sample: dict, client):

@@ -235,7 +235,7 @@ async def create(req):
         return bad_request(name_error_message)
 
     if "labels" in data:
-        non_existent_labels = await check_labels(data["labels"], req.app["postgres"])
+        non_existent_labels = await check_labels(req.app["postgres"], data["labels"])
 
         if non_existent_labels:
             return bad_request(f"Labels do not exist: {', '.join(non_existent_labels)}")
