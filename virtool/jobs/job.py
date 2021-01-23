@@ -128,6 +128,10 @@ class Job:
 
             await self._cleanup()
 
+        if self._process:
+            self._process.terminate()
+            await self._process.wait()
+
         logger.debug("Stopping cancellation watch")
         self._watch_cancel_task.cancel()
 
