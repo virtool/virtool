@@ -79,9 +79,7 @@ async def test_find(find, per_page, page, label_filter, d_range, meta, snapshot,
     label_3 = Label(id=3, name="Question", color="#0d321d", description="This is a question")
 
     async with test_session as session:
-        session.add(label_1)
-        session.add(label_2)
-        session.add(label_3)
+        session.add_all([label_1, label_2, label_3])
         await session.commit()
 
     await client.db.samples.insert_many([

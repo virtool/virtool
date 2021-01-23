@@ -13,8 +13,7 @@ async def test_find(spawn_client, test_session):
     label_2 = Label(id=2, name="Question", color="#03fc20", description="This is a question")
 
     async with test_session as session:
-        session.add(label_1)
-        session.add(label_2)
+        session.add_all([label_1, label_2])
         await session.commit()
 
     resp = await client.get("/api/labels")
