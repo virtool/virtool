@@ -373,7 +373,7 @@ async def edit(req):
             return bad_request(message)
 
     if "labels" in data:
-        non_existent_labels = check_labels(data["labels"], req.app["postgres"])
+        non_existent_labels = await check_labels(data["labels"], req.app["postgres"])
 
         if non_existent_labels:
             return bad_request(f"Labels do not exist: {', '.join(non_existent_labels)}")
