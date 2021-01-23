@@ -292,7 +292,7 @@ async def create(req):
         "user": {
             "id": user_id
         },
-        "labels": data.get("labels"),
+        "labels": data.get("labels", []),
         "paired": len(data["files"]) == 2
     })
 
