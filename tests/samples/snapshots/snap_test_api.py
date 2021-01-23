@@ -22,7 +22,8 @@ snapshots['TestCreate.test[uvloop-none] 1'] = {
     'group_write': True,
     'hold': True,
     'id': '9pfsom1b',
-    'labels': None,
+    'labels': [
+    ],
     'library_type': 'normal',
     'name': 'Foobar',
     'notes': '',
@@ -54,7 +55,8 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
     'group_write': True,
     'hold': True,
     'id': '9pfsom1b',
-    'labels': None,
+    'labels': [
+    ],
     'library_type': 'normal',
     'name': 'Foobar',
     'notes': '',
@@ -86,7 +88,8 @@ snapshots['TestCreate.test[uvloop-force_choice] 1'] = {
     'group_write': True,
     'hold': True,
     'id': '9pfsom1b',
-    'labels': None,
+    'labels': [
+    ],
     'library_type': 'normal',
     'name': 'Foobar',
     'notes': '',
@@ -118,7 +121,8 @@ snapshots['TestCreate.test[uvloop-none] 2'] = {
     'group_read': True,
     'group_write': True,
     'hold': True,
-    'labels': None,
+    'labels': [
+    ],
     'library_type': 'normal',
     'name': 'Foobar',
     'notes': '',
@@ -150,7 +154,8 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 2'] = {
     'group_read': True,
     'group_write': True,
     'hold': True,
-    'labels': None,
+    'labels': [
+    ],
     'library_type': 'normal',
     'name': 'Foobar',
     'notes': '',
@@ -182,7 +187,8 @@ snapshots['TestCreate.test[uvloop-force_choice] 2'] = {
     'group_read': True,
     'group_write': True,
     'hold': True,
-    'labels': None,
+    'labels': [
+    ],
     'library_type': 'normal',
     'name': 'Foobar',
     'notes': '',
