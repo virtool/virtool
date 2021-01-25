@@ -9,43 +9,36 @@ exports[`<ColorSelector> should render 1`] = `
     <ColorSelector__ColorSelectorButton
       color="#1DAD57"
       key="#1DAD57"
-      name="color"
       onClick={[Function]}
     />
     <ColorSelector__ColorSelectorButton
       color="#F7A000"
       key="#F7A000"
-      name="color"
       onClick={[Function]}
     />
     <ColorSelector__ColorSelectorButton
       color="#FFE030"
       key="#FFE030"
-      name="color"
       onClick={[Function]}
     />
     <ColorSelector__ColorSelectorButton
       color="#E0282E"
       key="#E0282E"
-      name="color"
       onClick={[Function]}
     />
     <ColorSelector__ColorSelectorButton
       color="#9F7AEA"
       key="#9F7AEA"
-      name="color"
       onClick={[Function]}
     />
     <ColorSelector__ColorSelectorButton
       color="#0B7FE5"
       key="#0B7FE5"
-      name="color"
       onClick={[Function]}
     />
     <ColorSelector__ColorSelectorButton
       color="#3C8786"
       key="#3C8786"
-      name="color"
       onClick={[Function]}
     />
   </div>
@@ -55,7 +48,7 @@ exports[`<ColorSelector> should render 1`] = `
   <ColorSelector__ColorSelectorInput
     name="color"
     onChange={[Function]}
-    placeholder="Ex. #D3D3D3"
+    placeholder="#D3D3D3"
   />
   <Input__InputError />
 </InputGroup>

@@ -12,28 +12,6 @@ export const filter = ({ term }) => Request.get(`/api/samples?find=${term}`);
 
 export const get = ({ sampleId }) => Request.get(`/api/samples/${sampleId}`);
 
-export const list = () => Request.get("/api/labels");
-
-export const createLabel = action => {
-    const { name, description, color } = action;
-    return Request.post("/api/labels").send({
-        name,
-        description,
-        color
-    });
-};
-
-export const removeLabel = ({ labelId }) => Request.delete(`/api/labels/${labelId}`);
-
-export const updateLabel = action => {
-    const { labelId, name, description, color } = action;
-    return Request.patch(`/api/labels/${labelId}`).send({
-        name,
-        description,
-        color
-    });
-};
-
 export const create = action => {
     const { name, isolate, host, locale, libraryType, subtraction, files } = action;
     return Request.post("/api/samples").send({

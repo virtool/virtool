@@ -1,7 +1,8 @@
 import React, { useCallback } from "react";
-//import { useCallback } from "react";
 import styled from "styled-components";
-import { Button, Input, InputGroup, InputLabel, InputError } from "../../../base";
+import { Button, Input, InputGroup, InputLabel, InputError } from "../../base";
+
+const colors = ["#1DAD57", "#F7A000", "#FFE030", "#E0282E", "#9F7AEA", "#0B7FE5", "#3C8786"];
 
 const ColorSelectorButton = styled(Button)`
     background-color: ${props => props.color};
@@ -14,21 +15,15 @@ const ColorSelectorInput = styled(Input)`
 
 export const ColorSelector = ({ color, errorColor, onColorChange }) => {
     const handleChange = useCallback(e => {
-        onColorChange({ color: e.target.value });
+        onColorChange(e.target.value);
     });
 
     const handleButtonChange = useCallback(color => {
-        onColorChange({ color });
+        onColorChange(color);
     });
 
-    const colors = ["#1DAD57", "#F7A000", "#FFE030", "#E0282E", "#9F7AEA", "#0B7FE5", "#3C8786"];
     const colorSelectors = colors.map(color => (
-        <ColorSelectorButton
-            key={color}
-            name="color"
-            color={color}
-            onClick={() => handleButtonChange(color)}
-        ></ColorSelectorButton>
+        <ColorSelectorButton key={color} color={color} onClick={() => handleButtonChange(color)}></ColorSelectorButton>
     ));
 
     return (
@@ -36,12 +31,7 @@ export const ColorSelector = ({ color, errorColor, onColorChange }) => {
             <InputLabel>Select a color</InputLabel>
             <div>{colorSelectors}</div>
             <InputLabel>or enter a custom color </InputLabel>
-            <ColorSelectorInput
-                placeholder="Ex. #D3D3D3"
-                name="color"
-                value={color}
-                onChange={handleChange}
-            ></ColorSelectorInput>
+            <ColorSelectorInput placeholder="#D3D3D3" name="color" value={color} onChange={handleChange} />
             <InputError>{errorColor}</InputError>
         </InputGroup>
     );

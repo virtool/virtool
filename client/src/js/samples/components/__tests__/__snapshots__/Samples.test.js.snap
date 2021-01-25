@@ -45,7 +45,7 @@ exports[`<Samples /> should render 1`] = `
           "$$typeof": Symbol(react.memo),
           "WrappedComponent": [Function],
           "compare": null,
-          "displayName": "Connect(LabelEdit)",
+          "displayName": "Connect(Labels)",
           "type": [Function],
         }
       }

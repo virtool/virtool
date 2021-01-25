@@ -8,13 +8,9 @@ import {
     GET_SAMPLE,
     REMOVE_SAMPLE,
     UPDATE_SAMPLE,
-    UPDATE_LABEL,
     UPDATE_SAMPLE_RIGHTS,
     UPLOAD_SAMPLE_FILE,
-    WS_UPDATE_SAMPLE,
-    GET_LABELS,
-    CREATE_LABEL,
-    REMOVE_LABEL
+    WS_UPDATE_SAMPLE
 } from "../app/actionTypes";
 import * as filesAPI from "../files/api";
 import { createUploadChannel, watchUploadChannel } from "../files/sagas";
@@ -33,10 +29,6 @@ export function* watchSamples() {
     yield takeEvery(UPLOAD_SAMPLE_FILE.REQUESTED, uploadSampleFile);
     yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
     yield takeEvery(WS_UPDATE_SAMPLE, wsUpdateSample);
-    yield takeLatest(GET_LABELS.REQUESTED, getLabels);
-    yield throttle(500, CREATE_LABEL.REQUESTED, createLabel);
-    yield throttle(300, REMOVE_LABEL.REQUESTED, removeLabel);
-    yield takeEvery(UPDATE_LABEL.REQUESTED, updateLabel);
 }
 
 export function* wsUpdateSample(action) {
@@ -86,26 +78,6 @@ export function* getSample(action) {
     } catch (error) {
         yield putGenericError(GET_SAMPLE, error);
     }
-}
-
-export function* getLabels(action) {
-    const response = yield samplesAPI.list(action);
-    yield put({ type: GET_LABELS.SUCCEEDED, data: response.body });
-}
-
-export function* createLabel(action) {
-    yield setPending(apiCall(samplesAPI.createLabel, action, CREATE_LABEL));
-    yield call(getLabels, { type: GET_LABELS.REQUESTED });
-}
-
-export function* removeLabel(action) {
-    yield setPending(apiCall(samplesAPI.removeLabel, action, REMOVE_LABEL));
-    yield call(getLabels, { type: GET_LABELS.REQUESTED });
-}
-
-export function* updateLabel(action) {
-    yield setPending(apiCall(samplesAPI.updateLabel, action, UPDATE_LABEL));
-    yield call(getLabels, { type: GET_LABELS.REQUESTED });
 }
 
 export function* createSample(action) {

@@ -4,19 +4,16 @@ import {
     DESELECT_SAMPLES,
     FIND_READ_FILES,
     FIND_SAMPLES,
-    GET_LABELS,
     GET_SAMPLE,
-    REMOVE_LABEL,
     REMOVE_SAMPLE,
     SELECT_SAMPLE,
-    UPDATE_LABEL,
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
     WS_INSERT_SAMPLE,
     WS_REMOVE_SAMPLE,
     WS_UPDATE_SAMPLE
 } from "../app/actionTypes";
-import { insert, remove, update, updateDocuments, updateMember } from "../utils/reducers";
+import { insert, remove, update, updateDocuments } from "../utils/reducers";
 
 export const initialState = {
     documents: null,
@@ -62,19 +59,6 @@ export default function samplesReducer(state = initialState, action) {
 
         case GET_SAMPLE.SUCCEEDED:
             return { ...state, detail: action.data };
-
-        case GET_LABELS.REQUESTED:
-            return { ...state, labels: { ...state.labels } };
-        case GET_LABELS.SUCCEEDED:
-            return { ...state, labels: action.data };
-        case REMOVE_LABEL.SUCCEEDED:
-            return { ...state };
-        case UPDATE_LABEL.REQUESTED:
-            return { ...state, labels: null };
-        case UPDATE_LABEL.SUCCEEDED:
-            let labels = state.labels;
-            labels = updateMember(labels, action);
-            return { ...state, labels };
         case UPDATE_SAMPLE.SUCCEEDED:
             return { ...state, detail: { ...state.detail, ...action.data } };
 
