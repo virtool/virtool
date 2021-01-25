@@ -100,19 +100,18 @@ RIGHTS_PROJECTION = {
 
 
 async def attach_labels(app, document):
+    labels = list()
     if document.get("labels"):
-        for index, label_id in enumerate(document["labels"]):
+        for label_id in document["labels"]:
             async with AsyncSession(app["postgres"]) as session:
-                result = await session.execute(select(Label).filter_by(id=label_id))
-                label = result.scalar()
+                label = (await session.execute(select(Label).filter_by(id=label_id))).scalar()
 
-            document["labels"][index] = {
-                "id": label_id,
-                "name": label.name,
-                "description": label.description,
-                "color": label.color
-            }
-    return document
+            labels.append(label.to_dict())
+
+    return {
+        **document,
+        "labels": labels
+    }
 
 
 async def attempt_file_replacement(app, sample_id, user_id):
