@@ -25,13 +25,7 @@ async def find(req):
         result = await session.execute(select(Label))
         labels = result.scalars().all()
         for label in labels:
-            d = {
-                "id": label.id,
-                "name": label.name,
-                "color": label.color,
-                "description": label.description
-            }
-            documents.append(d)
+            documents.append(label.to_dict())
 
     documents = await asyncio.gather(*[virtool.labels.db.attach_sample_count(req.app["db"], d, d["id"]) for d in documents])
 
@@ -51,14 +45,7 @@ async def get(req):
         if label is None:
             return not_found()
 
-        document = {
-            "id": label.id,
-            "name": label.name,
-            "color": label.color,
-            "description": label.description
-        }
-
-    document = await virtool.labels.db.attach_sample_count(req.app["db"], document, label.id)
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], label.to_dict(), label.id)
 
     return json_response(document)
 
@@ -95,22 +82,15 @@ async def create(req):
 
         try:
             await session.flush()
-            label_id = label.id
+            document = label.to_dict()
             await session.commit()
         except IntegrityError:
             return bad_request("Label name already exists")
 
-    document = {
-        "id": label_id,
-        "name": data["name"],
-        "color": data["color"],
-        "description": data["description"]
-    }
-
-    document = await virtool.labels.db.attach_sample_count(req.app["db"], document, label_id)
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], document, document["id"])
 
     headers = {
-        "Location": f"/api/labels/{label_id}"
+        "Location": f"/api/labels/{document['id']}"
     }
 
     return json_response(document, status=201, headers=headers)
@@ -153,17 +133,12 @@ async def edit(req):
         label.name = data["name"]
         label.color = data["color"]
         label.description = data["description"]
+        document = label.to_dict()
         try:
             await session.commit()
         except IntegrityError:
             return bad_request("Label name already exists")
 
-    document = {
-        "id": label_id,
-        "name": data["name"],
-        "color": data["color"],
-        "description": data["description"]
-    }
     document = await virtool.labels.db.attach_sample_count(req.app["db"], document, label_id)
 
     return json_response(document)
