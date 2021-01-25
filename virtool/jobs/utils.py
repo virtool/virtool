@@ -17,7 +17,6 @@ TASK_SIZES = {
     "aodp": TASK_LG,
     "nuvs": TASK_LG,
     "pathoscope_bowtie": TASK_LG,
-    "update_sample": TASK_SM
 }
 
 
@@ -63,7 +62,7 @@ def copy_or_decompress(path: str, target: str, proc: int):
 
 async def get_sample_params(db, settings: dict, task_args: dict) -> dict:
     """
-    Return a `dict` of parameters that can be assigned to `self.params` in the `create_sample` and `update_sample` jobs.
+    Return a `dict` of parameters that can be assigned to `self.params` in the `create_sample` job.
 
     This function should be called in :method:`~virtool.job.Job.check_db`.
 
