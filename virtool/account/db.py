@@ -1,3 +1,17 @@
+"""
+Work with the current user account and its API keys.
+
+API Key Schema:
+- _id (str) the hashed API key - never returned
+- id (str) the API key ID
+- name (str) user-defined name for the API key
+- groups (Array[str]) list of groups the API key user is a member of
+- permissions (Object) user-defined permissions possessed by the key - permission names are keys with boolean values
+- created_at (datetime) when the API key was created)
+- user (Object) describes the parent user
+    id (str) the user ID
+
+"""
 import virtool.account.utils
 import virtool.users.db
 import virtool.users.utils

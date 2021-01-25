@@ -7,11 +7,12 @@ import virtool.users.utils
 
 class VTClient:
 
-    def __init__(self, loop, test_client, db_connection_string, db_name, create_user):
+    def __init__(self, loop, test_client, db_connection_string, postgres_connection_string, db_name, create_user):
         self._loop = loop
         self._test_client = test_client
         self._create_user = create_user
         self._db_connection_string = db_connection_string
+        self._postgres_connection_string = postgres_connection_string
         self._db_name = db_name
         self._client = None
         self.settings = None
@@ -23,11 +24,14 @@ class VTClient:
             self,
             authorize=False,
             administrator=False,
+            dev=False,
             groups=None,
             permissions=None
     ):
         app = virtool.app.create_app({
             "db_connection_string": self._db_connection_string,
+            "dev": dev,
+            "postgres_connection_string": self._postgres_connection_string,
             "db_name": self._db_name,
             "enable_api": True,
             "force_version": "v0.0.0",
@@ -94,9 +98,10 @@ class VTClient:
 
 
 @pytest.fixture
-def spawn_client(loop, request, aiohttp_client, test_motor, test_db_name, create_user):
+def spawn_client(loop, request, aiohttp_client, test_motor, test_db_name, test_session, create_user):
     db_connection_string = request.config.getoption("db_connection_string", "mongodb://localhost:27017")
+    postgres_connection_string = request.config.getoption("postgres_connection_string")
 
-    client = VTClient(loop, aiohttp_client, db_connection_string, test_db_name, create_user)
+    client = VTClient(loop, aiohttp_client, db_connection_string, postgres_connection_string, test_db_name, create_user)
 
     return client.connect

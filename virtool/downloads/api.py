@@ -3,8 +3,6 @@ Provides request handlers for file downloads.
 
 """
 import os
-import gzip
-import json
 
 from aiohttp import web
 
@@ -15,6 +13,7 @@ import virtool.bio
 import virtool.analyses.db
 import virtool.db.utils
 import virtool.downloads.db
+import virtool.downloads.utils
 import virtool.history.db
 import virtool.otus.db
 import virtool.references.db
@@ -23,6 +22,7 @@ import virtool.http.routes
 import virtool.otus.utils
 import virtool.utils
 import virtool.samples.utils
+import virtool.subtractions.utils
 
 routes = virtool.http.routes.Routes()
 
@@ -145,48 +145,35 @@ async def download_otu(req):
     })
 
 
-@routes.get("/download/refs/{ref_id}")
-async def download_reference(req):
+@routes.get("/download/indexes/{index_id}")
+async def download_index_json(req):
     """
-    Export all otus and sequences for a given reference as a gzipped JSON string. Made available as a downloadable file
-    named ``reference.json.gz``.
+    Download a gzipped JSON file named ``reference.json.gz`` for a given index.
 
     """
     db = req.app["db"]
-    ref_id = req.match_info["ref_id"]
+    index_id = req.match_info["index_id"]
 
-    document = await db.references.find_one(ref_id, ["data_type", "organism", "targets"])
+    document = await db.indexes.find_one(index_id)
 
     if document is None:
         return virtool.api.response.not_found()
+    
+    ref_id = document["reference"]["id"]
 
-    otu_list = await virtool.references.db.export(
-        req.app,
-        ref_id
-    )
+    if "has_json" not in document or document["has_json"] is False:
+        return virtool.api.response.not_found("Index JSON file not found")
 
-    data = {
-        "otus": otu_list,
-        "data_type": document["data_type"],
-        "organism": document["organism"]
-    }
+    path = os.path.join(
+        req.app["settings"]["data_path"],
+        "references",
+        ref_id,
+        index_id,
+        "reference.json.gz")
 
-    try:
-        data["targets"] = document["targets"]
-    except KeyError:
-        pass
-
-    # Convert the list of OTUs to a JSON-formatted string.
-    json_string = json.dumps(data, cls=virtool.api.json.CustomEncoder)
-
-    # Compress the JSON string with gzip.
-    body = await req.app["run_in_process"](gzip.compress, bytes(json_string, "utf-8"))
-
-    return web.Response(
-        headers={"Content-Disposition": f"attachment; filename=reference.json.gz"},
-        content_type="application/gzip",
-        body=body
-    )
+    return web.FileResponse(path, headers={
+        "Content-Type": "application/gzip"
+    })
 
 
 @routes.get("/download/sequences/{sequence_id}")
@@ -217,5 +204,35 @@ async def download_sequence(req):
         return web.Response(status=404)
 
     return web.Response(text=fasta, headers={
+        "Content-Disposition": f"attachment; filename={filename}"
+    })
+
+
+@routes.get("/download/subtraction/{subtraction_id}")
+async def download_subtraction(req):
+    """
+    Download a FASTA file for the given subtraction.
+
+    """
+    db = req.app["db"]
+    subtraction_id = req.match_info["subtraction_id"]
+
+    document = await db.subtraction.find_one(subtraction_id)
+
+    if document is None:
+        return virtool.api.response.not_found()
+
+    if not document.get("has_file", False):
+        return virtool.api.response.not_found("Subtraction FASTA file not found")
+
+    path = os.path.join(
+        virtool.subtractions.utils.join_subtraction_path(req.app["settings"], subtraction_id),
+        "subtraction.fa.gz"
+    )
+
+    filename = virtool.downloads.utils.format_subtraction_filename(subtraction_id, document["name"])
+
+    return web.FileResponse(path, headers={
+        "Content-Type": "application/gzip",
         "Content-Disposition": f"attachment; filename={filename}"
     })

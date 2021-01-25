@@ -56,7 +56,8 @@ async def install(req):
         db,
         "update_software",
         context={
-            "file_size": latest_release["size"]
+            "file_size": latest_release["size"],
+            "release": latest_release
         }
     )
 
@@ -74,10 +75,8 @@ async def install(req):
         virtool.utils.timestamp()
     )
 
-    await aiojobs.aiohttp.spawn(req, virtool.software.db.install(
-        req.app,
-        latest_release,
-        task["id"]
-    ))
+    t = virtool.software.db.SoftwareInstallTask(req.app, task["id"])
+
+    await aiojobs.aiohttp.spawn(req, t.run())
 
     return json_response(update)

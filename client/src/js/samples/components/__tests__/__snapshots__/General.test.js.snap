@@ -135,6 +135,19 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
       </tbody>
     </Table>
   </Box__BoxGroup>
+  <Box__BoxGroup>
+    <Box__BoxGroupHeader>
+      <h2>
+        Notes
+      </h2>
+      <p>
+        Additional notes about the sample.
+      </p>
+    </Box__BoxGroupHeader>
+    <Markdown
+      markdown="Example notes"
+    />
+  </Box__BoxGroup>
   <Connect(EditSample) />
 </General__StyledSampleDetailGeneral>
 `;
@@ -273,6 +286,19 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
         </tr>
       </tbody>
     </Table>
+  </Box__BoxGroup>
+  <Box__BoxGroup>
+    <Box__BoxGroupHeader>
+      <h2>
+        Notes
+      </h2>
+      <p>
+        Additional notes about the sample.
+      </p>
+    </Box__BoxGroupHeader>
+    <Markdown
+      markdown="Example notes"
+    />
   </Box__BoxGroup>
   <Connect(EditSample) />
 </General__StyledSampleDetailGeneral>

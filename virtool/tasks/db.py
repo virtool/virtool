@@ -1,5 +1,18 @@
-import virtool.tasks.steps
+"""
+Work with tasks in the database.
+
+Schema
+- _id (str) the process ID
+- complete (bool) true when the process has completed
+- context (Object) required data specific to the task type
+- created_at (datetime) when the process was created
+- progress (float) the current progress between 0.0 - 1.0
+- step (str) the current active step in the process
+- type (str) the type of process
+
+"""
 import virtool.db.utils
+import virtool.tasks.steps
 import virtool.tasks.task
 import virtool.utils
 

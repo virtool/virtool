@@ -1,9 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<OTUsList /> should render 1`] = `
-<div>
-  <Connect(ReferenceDetailHeader) />
-  <Connect(ReferenceDetailTabs) />
+<Container__NarrowContainer>
   <Connect(RebuildAlert) />
   <Connect(OTUToolbar) />
   <Connect(CreateOTU)
@@ -60,15 +58,13 @@ exports[`<OTUsList /> should render 1`] = `
     pageCount={1}
     renderRow={[Function]}
   />
-</div>
+</Container__NarrowContainer>
 `;
 
 exports[`<OTUsList /> should render when [this.props.documents === null] 1`] = `<LoadingPlaceholder />`;
 
 exports[`<OTUsList /> should render when [this.props.documents.length == false] 1`] = `
-<div>
-  <Connect(ReferenceDetailHeader) />
-  <Connect(ReferenceDetailTabs) />
+<Container__NarrowContainer>
   <Connect(RebuildAlert) />
   <Connect(OTUToolbar) />
   <Connect(CreateOTU)
@@ -120,5 +116,5 @@ exports[`<OTUsList /> should render when [this.props.documents.length == false] 
     pageCount={1}
     renderRow={[Function]}
   />
-</div>
+</Container__NarrowContainer>
 `;

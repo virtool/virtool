@@ -2,6 +2,7 @@ import logging
 
 import virtool.db.utils
 import virtool.tasks.db
+import virtool.utils
 
 logger = logging.getLogger("task")
 
@@ -19,6 +20,7 @@ class Task:
         self.document = None
         self.context = None
         self.errored = False
+        self.temp_dir = virtool.utils.get_temp_dir()
 
     async def init_db(self):
         self.document = await self.db.tasks.find_one(self.id, {"_id": False})
@@ -43,6 +45,7 @@ class Task:
 
         if not self.errored:
             await virtool.tasks.db.complete(self.db, self.id)
+            self.temp_dir.cleanup()
 
     async def update_context(self, update):
         with_prefix = {f"context.{key}": value for key, value in update.items()}

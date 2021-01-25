@@ -1,8 +1,9 @@
 import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Redirect, Route, Switch } from "react-router-dom";
+import { Link, Redirect, Route, Switch } from "react-router-dom";
 import styled from "styled-components";
+import { getFontWeight } from "../../../app/theme";
 import {
     Icon,
     LoadingPlaceholder,
@@ -13,11 +14,10 @@ import {
     ViewHeaderIcons,
     ViewHeaderTitle
 } from "../../../base";
-import { Breadcrumb, BreadcrumbItem } from "../../../base/Breadcrumb";
 import { checkRefRight } from "../../../utils/utils";
 import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
-import IsolateEditor from "./Editor";
 import EditOTU from "./Edit";
+import IsolateEditor from "./Editor";
 import General from "./General";
 import History from "./History/History";
 import AddIsolate from "./Isolates/Add";
@@ -44,6 +44,15 @@ const OTUDetailTitle = styled(ViewHeaderTitle)`
         em {
             font-weight: normal;
         }
+    }
+`;
+
+const OTUDetailSubtitle = styled.p`
+    font-size: ${props => props.theme.fontSize.md};
+    margin-top: 5px;
+
+    strong {
+        font-weight: ${getFontWeight("thick")};
     }
 `;
 
@@ -104,19 +113,16 @@ class OTUDetail extends React.Component {
         }
 
         return (
-            <div>
-                <Breadcrumb>
-                    <BreadcrumbItem to="/refs/">References</BreadcrumbItem>
-                    <BreadcrumbItem to={`/refs/${refId}`}>{this.props.refName}</BreadcrumbItem>
-                    <BreadcrumbItem to={`/refs/${refId}/otus`}>OTUs</BreadcrumbItem>
-                    <BreadcrumbItem>{name}</BreadcrumbItem>
-                </Breadcrumb>
-
+            <React.Fragment>
                 <ViewHeader title={name}>
                     <OTUDetailTitle>
                         {name} <small>{abbreviation || <em>No Abbreviation</em>}</small>
                         {iconButtons}
                     </OTUDetailTitle>
+                    <OTUDetailSubtitle>
+                        <strong>From Reference / </strong>
+                        <Link to={`/refs/${this.props.detail.reference.id}`}>{this.props.refName}</Link>
+                    </OTUDetailSubtitle>
                 </ViewHeader>
 
                 <Tabs>
@@ -133,7 +139,7 @@ class OTUDetail extends React.Component {
                     <Route path="/refs/:refId/otus/:otuId/history" component={History} />
                     <Route path="/refs/:refId/otus/:otuId/schema" component={Schema} />
                 </Switch>
-            </div>
+            </React.Fragment>
         );
     };
 }

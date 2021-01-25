@@ -13,7 +13,7 @@ export const RemoveSegment = ({ activeName, schema, show, onHide, onSubmit }) =>
 };
 
 RemoveSegment.propTypes = {
-    activeName: PropTypes.string.isRequired,
+    activeName: PropTypes.string,
     schema: PropTypes.arrayOf(PropTypes.object),
     show: PropTypes.bool.isRequired,
     onHide: PropTypes.func,

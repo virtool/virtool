@@ -9,6 +9,7 @@ export const getSampleName = state => get(state, "samples.detail.name");
 export const getSampleDetail = state => state.samples.detail;
 export const getSampleDetailId = state => get(state, "samples.detail.id");
 export const getSampleLibraryType = state => get(state, "samples.detail.library_type");
+export const getSampleNotes = state => get(state, "samples.detail.notes");
 export const getSampleDocuments = state => state.samples.documents;
 export const getSelectedSampleIds = state => state.samples.selected;
 

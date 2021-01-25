@@ -1,9 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<SampleFileManager /> should render 1`] = `
-<Connect(FileManager)
-  fileType="reads"
-/>
+<Container__NarrowContainer>
+  <Connect(FileManager)
+    fileType="reads"
+  />
+</Container__NarrowContainer>
 `;
 
 exports[`<Samples /> should render 1`] = `
@@ -51,6 +53,18 @@ exports[`<Samples /> should render 1`] = `
       }
       exact={true}
       path="/samples/labels"
+    />
+        <Route
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(CreateSample)",
+          "type": [Function],
+        }
+      }
+      path="/samples/create"
     />
     <Route
       component={

@@ -2,7 +2,7 @@ import { get, map, sortBy } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { getAccountId } from "../../account/selectors";
-import { NoneFoundBox } from "../../base/index";
+import { NarrowContainer, NoneFoundBox } from "../../base/index";
 import { getCanModify } from "../../samples/selectors";
 import { routerLocationHasState } from "../../utils/utils";
 import CreateAnalysis from "./Create/Create";
@@ -32,7 +32,7 @@ export class AnalysesList extends React.Component {
         }
 
         return (
-            <div>
+            <NarrowContainer>
                 <AnalysisHMMAlert />
                 <AnalysesToolbar />
 
@@ -47,7 +47,7 @@ export class AnalysesList extends React.Component {
                     refIndexes={this.props.indexes}
                     userId={this.props.userId}
                 />
-            </div>
+            </NarrowContainer>
         );
     }
 }

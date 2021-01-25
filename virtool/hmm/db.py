@@ -1,5 +1,22 @@
 """
-Functions for working with HMM data on the server.
+Work with HMM data in the database.
+
+Schema:
+- _id (str) a unique ID for the HMM annotation/cluster
+- cluster (int) the hmmer cluster number
+- count (int) the number of protein sequences in the cluster
+- entries (List[Object]) describes the sequences included in the cluster
+  - accession (str) the accession for the protein sequence (eg. NP_050260.1)
+  - gi (str) the GI for the protein sequence
+  - name (str) the human-readable name for the sequence (eg. nuclear egress membrance protein)
+  - organism (str) the source organism (eg. Pandoravirus salinus)
+- families (Object) describes the incidence of taxonomic families in the cluster - key by family names with counts as values
+- genera (Object) describes the incidence of genera in the cluster - key by genus names with counts as values
+- hidden (bool) set to true if the annotation is from a deleted HMM dataset but is still referred to in analyses
+- length (int) the length of the profile
+- mean_entropy (float) see hmmer docs
+- name (List[str]) the top three names observed in the member sequences
+- total_entropy (float) see hmmer docs
 
 """
 import asyncio
@@ -8,10 +25,10 @@ import logging
 import os
 import shutil
 
-import pymongo.results
 import aiofiles
 import aiohttp.client_exceptions
 import aiohttp.web
+import pymongo.results
 
 import virtool.analyses.utils
 import virtool.db.core
@@ -36,6 +53,150 @@ PROJECTION = [
     "count",
     "families"
 ]
+
+
+class HMMInstallTask(virtool.tasks.task.Task):
+    """
+    Runs a background Task that:
+        - downloads the official profiles.hmm.gz file
+        - decompresses the vthmm.tar.gz file
+        - moves the file to the correct data path
+        - downloads the official annotations.json.gz file
+        - imports the annotations into the database
+
+    Task reports the following stages to the hmm_install status document:
+        1. download
+        3. decompress
+        4. install_profiles
+        5. import_annotations
+
+    :param app: the app object
+    :param task_id: the id for the process document
+    :param release: the release to install
+    :param user_id: the id of the user making the request
+
+    """
+
+    def __init__(self, app, task_id):
+        super().__init__(app, task_id)
+
+        self.steps = [
+            self.download,
+            self.decompress,
+            self.install_profiles,
+            self.import_annotations
+        ]
+
+        self.temp_path = self.temp_dir.name
+
+    async def download(self):
+        release = self.context["release"]
+
+        await virtool.tasks.db.update(self.db, self.id, 0, step="download")
+
+        progress_tracker = virtool.tasks.task.ProgressTracker(
+            self.db,
+            self.id,
+            release["size"],
+            factor=0.4,
+            increment=0.01
+        )
+
+        path = os.path.join(self.temp_path, "hmm.tar.gz")
+
+        try:
+            await virtool.http.utils.download_file(
+                self.app,
+                release["download_url"],
+                path,
+                progress_tracker.add
+            )
+        except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
+            await virtool.tasks.db.update(
+                self.db,
+                self.id,
+                errors=["Could not download HMM data"],
+                step="unpack"
+            )
+
+    async def decompress(self):
+        await virtool.tasks.db.update(
+            self.db,
+            self.id,
+            progress=0.4,
+            step="unpack"
+        )
+
+        await self.run_in_thread(
+            virtool.utils.decompress_tgz,
+            os.path.join(self.temp_path, "hmm.tar.gz"),
+            self.temp_path
+        )
+
+    async def install_profiles(self):
+        await virtool.tasks.db.update(
+            self.db,
+            self.id,
+            progress=0.6,
+            step="install_profiles"
+        )
+
+        decompressed_path = os.path.join(self.temp_path, "hmm")
+
+        install_path = os.path.join(self.app["settings"]["data_path"], "hmm", "profiles.hmm")
+
+        await self.run_in_thread(shutil.move, os.path.join(decompressed_path, "profiles.hmm"), install_path)
+
+    async def import_annotations(self):
+        release = self.context["release"]
+
+        await virtool.tasks.db.update(
+            self.db,
+            self.id,
+            progress=0.8,
+            step="import_annotations"
+        )
+
+        async with aiofiles.open(os.path.join(self.temp_path, "hmm", "annotations.json"), "r") as f:
+            annotations = json.loads(await f.read())
+
+        await purge(self.db, self.app["settings"])
+
+        progress_tracker = virtool.tasks.task.ProgressTracker(
+            self.db,
+            self.id,
+            len(annotations),
+            factor=0.2,
+            initial=0.8
+        )
+
+        for annotation in annotations:
+            await self.db.hmm.insert_one(dict(annotation, hidden=False))
+            await progress_tracker.add(1)
+
+        logger.debug(f"Inserted {len(annotations)} annotations")
+
+        try:
+            release_id = int(release["id"])
+        except TypeError:
+            release_id = release["id"]
+
+        await self.db.status.update_one({"_id": "hmm", "updates.id": release_id}, {
+            "$set": {
+                "installed": virtool.github.create_update_subdocument(release, True, self.context["user_id"]),
+                "updates.$.ready": True
+            }
+        })
+
+        logger.debug("Update HMM status")
+
+        await virtool.tasks.db.update(
+            self.db,
+            self.id,
+            progress=1
+        )
+
+        logger.debug("Finished HMM install task")
 
 
 async def delete_unreferenced_hmms(db, settings: dict) -> pymongo.results.DeleteResult:
@@ -218,137 +379,6 @@ async def get_status(db) -> dict:
     del status["updates"]
 
     return virtool.utils.base_processor(status)
-
-
-async def install(app: virtool.types.App, task_id: str, release: dict, user_id: str):
-    """
-    Runs a background Task that:
-
-        - downloads the official profiles.hmm.gz file
-        - decompresses the vthmm.tar.gz file
-        - moves the file to the correct data path
-        - downloads the official annotations.json.gz file
-        - imports the annotations into the database
-
-    Task reports the following stages to the hmm_install status document:
-
-        1. download
-        3. decompress
-        4. install_profiles
-        5. import_annotations
-
-    :param app: the app object
-    :param task_id: the id for the process document
-    :param release: the release to install
-    :param user_id: the id of the user making the request
-
-    """
-    db = app["db"]
-
-    await virtool.tasks.db.update(db, task_id, 0, step="download")
-
-    progress_tracker = virtool.tasks.task.ProgressTracker(
-        db,
-        task_id,
-        release["size"],
-        factor=0.4,
-        increment=0.01
-    )
-
-    with virtool.utils.get_temp_dir() as tempdir:
-
-        temp_path = str(tempdir)
-
-        path = os.path.join(temp_path, "hmm.tar.gz")
-
-        try:
-            await virtool.http.utils.download_file(
-                app,
-                release["download_url"],
-                path,
-                progress_tracker.add
-            )
-        except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
-            await virtool.tasks.db.update(
-                db,
-                task_id,
-                errors=["Could not download HMM data"],
-                step="unpack"
-            )
-
-        await virtool.tasks.db.update(
-            db,
-            task_id,
-            progress=0.4,
-            step="unpack"
-        )
-
-        await app["run_in_thread"](
-            virtool.utils.decompress_tgz,
-            path,
-            temp_path
-        )
-
-        await virtool.tasks.db.update(
-            db,
-            task_id,
-            progress=0.6,
-            step="install_profiles"
-        )
-
-        decompressed_path = os.path.join(temp_path, "hmm")
-
-        install_path = os.path.join(app["settings"]["data_path"], "hmm", "profiles.hmm")
-
-        await app["run_in_thread"](shutil.move, os.path.join(decompressed_path, "profiles.hmm"), install_path)
-
-        await virtool.tasks.db.update(
-            db,
-            task_id,
-            progress=0.8,
-            step="import_annotations"
-        )
-
-        async with aiofiles.open(os.path.join(decompressed_path, "annotations.json"), "r") as f:
-            annotations = json.loads(await f.read())
-
-        await purge(db, app["settings"])
-
-        progress_tracker = virtool.tasks.task.ProgressTracker(
-            db,
-            task_id,
-            len(annotations),
-            factor=0.2,
-            initial=0.8
-        )
-
-        for annotation in annotations:
-            await db.hmm.insert_one(dict(annotation, hidden=False))
-            await progress_tracker.add(1)
-
-        logger.debug(f"Inserted {len(annotations)} annotations")
-
-        try:
-            release_id = int(release["id"])
-        except TypeError:
-            release_id = release["id"]
-
-        await db.status.update_one({"_id": "hmm", "updates.id": release_id}, {
-            "$set": {
-                "installed": virtool.github.create_update_subdocument(release, True, user_id),
-                "updates.$.ready": True
-            }
-        })
-
-        logger.debug("Update HMM status")
-
-        await virtool.tasks.db.update(
-            db,
-            task_id,
-            progress=1
-        )
-
-        logger.debug("Finished HMM install task")
 
 
 async def purge(db, settings: dict):

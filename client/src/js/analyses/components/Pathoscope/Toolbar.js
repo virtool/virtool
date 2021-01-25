@@ -1,7 +1,17 @@
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Button, DropdownButton, DropdownItem, Icon, SearchInput, Toolbar } from "../../../base";
+import {
+    Button,
+    Dropdown,
+    DropdownButton,
+    DropdownMenuItem,
+    DropdownMenuList,
+    Icon,
+    SearchInput,
+    Toolbar
+} from "../../../base";
+import { followDownload } from "../../../utils/utils";
 import {
     setAnalysisSortKey,
     setSearchIds,
@@ -12,12 +22,6 @@ import {
 } from "../../actions";
 import { getFuse } from "../../selectors";
 import { AnalysisViewerSort } from "../Viewer/Sort";
-
-export const PathoscopeDownloadDropdownTitle = () => (
-    <span>
-        <Icon name="file-download" /> Export <Icon name="caret-down" />
-    </span>
-);
 
 const StyledPathoscopeToolbar = styled(Toolbar)`
     display: flex;
@@ -78,14 +82,19 @@ export const PathoscopeToolbar = ({
             >
                 Filter Isolates
             </Button>
-            <DropdownButton id="download-dropdown" title={<PathoscopeDownloadDropdownTitle />}>
-                <DropdownItem href={`/download/analyses/${analysisId}.csv`}>
-                    <Icon name="file-csv" /> CSV
-                </DropdownItem>
-                <DropdownItem href={`/download/analyses/${analysisId}.xlsx`}>
-                    <Icon name="file-excel" /> Excel
-                </DropdownItem>
-            </DropdownButton>
+            <Dropdown>
+                <DropdownButton>
+                    <Icon name="file-download" /> Export <Icon name="caret-down" />
+                </DropdownButton>
+                <DropdownMenuList>
+                    <DropdownMenuItem onSelect={() => followDownload(`/download/analyses/${analysisId}.csv`)}>
+                        <Icon name="file-csv" /> CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => followDownload(`/download/analyses/${analysisId}.xlsx`)}>
+                        <Icon name="file-excel" /> Excel
+                    </DropdownMenuItem>
+                </DropdownMenuList>
+            </Dropdown>
         </StyledPathoscopeToolbar>
     );
 };

@@ -66,7 +66,7 @@ class FileManager extends React.Component {
         const title = `${this.props.fileType === "reads" ? "Read" : capitalize(this.props.fileType)} Files`;
 
         return (
-            <div>
+            <React.Fragment>
                 <ViewHeader title={title}>
                     <ViewHeaderTitle>
                         {title} <Badge>{this.props.total_count}</Badge>
@@ -83,7 +83,7 @@ class FileManager extends React.Component {
                     pageCount={this.props.page_count}
                     renderRow={this.renderRow}
                 />
-            </div>
+            </React.Fragment>
         );
     }
 }

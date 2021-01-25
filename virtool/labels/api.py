@@ -1,8 +1,15 @@
+import asyncio
+
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+
 import virtool.http.routes
-import virtool.utils
 import virtool.validators
 import virtool.db.utils
-from virtool.api.response import bad_request, json_response, no_content, not_found
+import virtool.labels.db
+from virtool.api.response import bad_request, empty_request, json_response, no_content, not_found
+from virtool.labels.models import Label
 
 routes = virtool.http.routes.Routes()
 
@@ -10,28 +17,50 @@ routes = virtool.http.routes.Routes()
 @routes.get("/api/labels")
 async def find(req):
     """
-        Get a list of all label documents in the database.
+    Get a list of all label documents in the database.
 
     """
-    db = req.app["db"]
+    documents = list()
+    async with AsyncSession(req.app["postgres"]) as session:
+        result = await session.execute(select(Label))
+        labels = result.scalars().all()
+        for label in labels:
+            d = {
+                "id": label.id,
+                "name": label.name,
+                "color": label.color,
+                "description": label.description
+            }
+            documents.append(d)
 
-    cursor = db.labels.find()
+    documents = await asyncio.gather(*[virtool.labels.db.attach_sample_count(req.app["db"], d, d["id"]) for d in documents])
 
-    return json_response([virtool.utils.base_processor(d) async for d in cursor])
+    return json_response(documents)
 
 
 @routes.get("/api/labels/{label_id}")
 async def get(req):
     """
-        Get a complete label document.
+    Get a complete label document.
 
     """
-    document = await req.app["db"].labels.find_one(req.match_info["label_id"])
+    async with AsyncSession(req.app["postgres"]) as session:
+        result = await session.execute(select(Label).filter_by(id=int(req.match_info["label_id"])))
+        label = result.scalar()
 
-    if document is None:
-        return not_found()
+        if label is None:
+            return not_found()
 
-    return json_response(virtool.utils.base_processor(document))
+        document = {
+            "id": label.id,
+            "name": label.name,
+            "color": label.color,
+            "description": label.description
+        }
+
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], document, label.id)
+
+    return json_response(document)
 
 
 @routes.post("/api/labels", schema={
@@ -55,31 +84,36 @@ async def get(req):
 })
 async def create(req):
     """
-        Add a new label to the labels database.
+    Add a new label to the labels database.
 
     """
-    db = req.app["db"]
     data = req["data"]
 
-    if await db.labels.count_documents({'name': data['name']}):
-        return bad_request("Label name already exists")
+    async with AsyncSession(req.app["postgres"]) as session:
+        label = Label(name=data["name"], color=data["color"], description=data["description"])
+        session.add(label)
 
-    label_id = await virtool.db.utils.get_new_id(db.labels)
+        try:
+            await session.flush()
+            label_id = label.id
+            await session.commit()
+        except IntegrityError:
+            return bad_request("Label name already exists")
 
     document = {
-        "_id": label_id,
+        "id": label_id,
         "name": data["name"],
         "color": data["color"],
         "description": data["description"]
     }
 
-    await db.labels.insert_one(document)
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], document, label_id)
 
     headers = {
         "Location": f"/api/labels/{label_id}"
     }
 
-    return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
+    return json_response(document, status=201, headers=headers)
 
 
 @routes.patch("/api/labels/{label_id}", schema={
@@ -99,41 +133,58 @@ async def create(req):
 })
 async def edit(req):
     """
-        Edit an existing label.
+    Edit an existing label.
 
     """
-    db = req.app["db"]
     data = req["data"]
 
-    label_id = req.match_info["label_id"]
+    label_id = int(req.match_info["label_id"])
 
-    if "name" in data and await db.labels.count_documents({"_id": {"$ne": label_id}, "name": data["name"]}):
-        return bad_request("Label name already exists")
+    if not data:
+        return empty_request()
 
-    document = await db.labels.find_one_and_update({"_id": label_id}, {
-        "$set": data
-    })
+    async with AsyncSession(req.app["postgres"]) as session:
+        result = await session.execute(select(Label).filter_by(id=label_id))
+        label = result.scalar()
 
-    if document is None:
-        return not_found()
+        if label is None:
+            return not_found()
 
-    return json_response(virtool.utils.base_processor(document))
+        label.name = data["name"]
+        label.color = data["color"]
+        label.description = data["description"]
+        try:
+            await session.commit()
+        except IntegrityError:
+            return bad_request("Label name already exists")
+
+    document = {
+        "id": label_id,
+        "name": data["name"],
+        "color": data["color"],
+        "description": data["description"]
+    }
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], document, label_id)
+
+    return json_response(document)
 
 
 @routes.delete("/api/labels/{label_id}")
 async def remove(req):
     """
-        Remove a label.
+    Remove a label.
 
     """
-    db = req.app["db"]
+    label_id = int(req.match_info["label_id"])
 
-    label_id = req.match_info["label_id"]
+    async with AsyncSession(req.app["postgres"]) as session:
+        result = await session.execute(select(Label).filter_by(id=label_id))
+        label = result.scalar()
 
-    delete_result = await db.labels.delete_one({"_id": label_id})
+        if label is None:
+            return not_found()
 
-    if delete_result.deleted_count == 0:
-        return not_found()
+        session.delete(label)
+        await session.commit()
 
     return no_content()
-

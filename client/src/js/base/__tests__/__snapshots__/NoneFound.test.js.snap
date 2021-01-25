@@ -19,8 +19,9 @@ exports[`<NoneFoundBox /> should render with [noun='boxes' 1`] = `
     Object {
       "$$typeof": Symbol(react.forward_ref),
       "attrs": Array [],
-      "componentStyle": ComponentStyle {
-        "baseHash": -1953322717,
+      "componentStyle": e {
+        "baseHash": 325442612,
+        "baseStyle": undefined,
         "componentId": "Box-x49ol5-0",
         "isStatic": false,
         "rules": Array [

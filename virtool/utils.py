@@ -1,5 +1,4 @@
 import datetime
-import aiofiles
 import gzip
 import os
 import re
@@ -12,6 +11,7 @@ from random import choice
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Iterable, Union
 
+import aiofiles
 import arrow
 
 RE_STATIC_HASH = re.compile("^main.([a-z0-9]+).css$")
@@ -94,6 +94,15 @@ def compress_file_with_pigz(path, target, processes):
 
     with open(target, "wb") as f:
         subprocess.call(command, stdout=f)
+
+
+def compress_json_with_gzip(json_string: str, target: str):
+    """
+    Compress the JSON string to a gzipped file at `target`.
+
+    """
+    with gzip.open(target, 'wb') as f:
+        f.write(bytes(json_string, "utf-8"))
 
 
 def coerce_list(obj) -> list:

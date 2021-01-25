@@ -1,10 +1,8 @@
 import React from "react";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { LoadingPlaceholder, NoneFoundBox, ScrollList } from "../../base";
+import { LoadingPlaceholder, NarrowContainer, NoneFoundBox, ScrollList } from "../../base";
 import RebuildAlert from "../../indexes/components/RebuildAlert";
-import ReferenceDetailHeader from "../../references/components/Detail/Header";
-import ReferenceDetailTabs from "../../references/components/Detail/Tabs";
 import { findOTUs } from "../actions";
 import { getTerm } from "../selectors";
 import CreateOTU from "./Create";
@@ -30,10 +28,7 @@ export class OTUsList extends React.Component {
         }
 
         return (
-            <div>
-                <ReferenceDetailHeader />
-                <ReferenceDetailTabs />
-
+            <NarrowContainer>
                 <RebuildAlert />
                 <OTUToolbar />
                 <CreateOTU {...this.props} />
@@ -49,7 +44,7 @@ export class OTUsList extends React.Component {
                     pageCount={this.props.page_count}
                     renderRow={this.renderRow}
                 />
-            </div>
+            </NarrowContainer>
         );
     }
 }

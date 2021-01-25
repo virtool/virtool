@@ -1,7 +1,15 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Redirect, Route, Switch } from "react-router-dom";
-import { LoadingPlaceholder, TabLink, Tabs, ViewHeader, ViewHeaderTitle, WideContainer } from "../../base";
+import {
+    LoadingPlaceholder,
+    NarrowContainer,
+    TabLink,
+    Tabs,
+    ViewHeader,
+    ViewHeaderTitle,
+    WideContainer
+} from "../../base";
 import Updates from "../../updates/components/Viewer";
 
 import UserDetail from "../../users/components/Detail";
@@ -38,7 +46,7 @@ export const Settings = ({ loading }) => {
                 <TabLink to="/administration/updates">Updates</TabLink>
             </Tabs>
 
-            {content}
+            <NarrowContainer>{content}</NarrowContainer>
         </WideContainer>
     );
 };

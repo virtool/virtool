@@ -111,7 +111,7 @@ export default class ReadSelector extends React.PureComponent {
         if (!fileComponents.length) {
             fileComponents = (
                 <NoneFoundSection noun="files">
-                    <Link to="samples/files">Upload some</Link>
+                    <Link to="/samples/files">Upload some</Link>
                 </NoneFoundSection>
             );
         }

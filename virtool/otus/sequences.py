@@ -1,6 +1,19 @@
 """
 Database functions and utilities for sequences.
 
+Sequence Document Schema:
+- _id (str) unique ID for the sequence
+- definition (str) a wordy definition for the sequence - same as definitiion field from Genbank
+- host (str) a user-defined host - same as host feature field from Genbank
+- sequence (str) the nucleotide sequence
+- isolate_id (str) the ID of the parent isolate
+- accession (str) the user-defined accession for the sequence - should be a Genbank accession when possible
+- otu_id (str) the ID of the parent OTU
+- reference (Object) described the parent reference
+  - id (str) the reference ID
+- segment (str) the ID of the schema segment for this sequence
+- remote (str) the remote ID for the sequence if it was imported or remoted
+
 """
 from typing import Union
 

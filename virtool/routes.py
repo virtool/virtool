@@ -5,6 +5,7 @@ import sys
 import virtool.account.api
 import virtool.analyses.api
 import virtool.caches.api
+import virtool.dev.api
 import virtool.downloads.api
 import virtool.files.api
 import virtool.genbank.api
@@ -74,6 +75,10 @@ def setup_routes(app):
         app.router.add_get(path, virtool.http.auth.index_handler)
 
     app.router.add_get("/ws", virtool.http.ws.root)
+
+    if app["config"]["dev"]:
+        logger.info("Enabling development API")
+        app.router.add_routes(virtool.dev.api.routes)
 
     for routes in ROUTES:
         app.router.add_routes(routes)

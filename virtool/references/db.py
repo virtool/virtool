@@ -1,7 +1,64 @@
+"""
+Work with references in the database
+
+Schema:
+- _id (str) the instance-unique reference ID
+- cloned_from (Object) describes the reference this one was cloned from (can be null)
+  - id (str) the ID of the source reference
+  - name (str) the name of the source reference at the time of cloning
+- created_at (datetime) when the reference was created
+- data_type (Enum["genome", "barcode"]) the type of data stored in the reference
+- description (str) a user-defined description for the the reference
+- groups (List[Object]) describes groups assigned to the reference and their rights
+  - id (str) the group ID
+  - build (bool) the group can create new builds of the reference
+  - modify (bool) the group can modify the non-OTU reference data
+  - modify_otu (bool) the group can modify OTUs
+  - remove (bool) the group can remove the reference
+- groups (List[Object]) describes users assigned to the reference and their rights
+  - id (str) the user ID
+  - build (bool) the user can create new builds of the reference
+  - modify (bool) the user can modify the non-OTU reference data
+  - modify_otu (bool) the user can modify OTUs
+  - remove (bool) the user can remove the reference
+- internal_control (str) the ID for an OTU that is used as an internal control in the lab
+- name (str) the reference name
+- organism (str) the organism represented in the reference (eg. virus, bacteria, fungus)
+- task (Object) a task associated with a current reference operation
+  - id (str) the task ID
+- release (Object) describes the latest remote reference release
+  - body (str) the Markdown-formatted release body from GitHub
+  - content_type (str) release content type - should always be application/gzip
+  - download_url (str) the GitHUB URL at which the reference release can be downloaded
+  - etag (str) the release ETag - allows caching of the release check result
+  - filename (str) the name of the release file
+  - html_url (str) the URL to the web page for the release on GitHub
+  - id (str) the unique ID for the release from GitHub
+  - name (str) the name of the release (eg. v1.4.0)
+  - newer (bool) true if there is a newer release available
+  - published_at (datetime) when the release was published on GitHub
+  - retrieved_at (datetime) when teh release was retrieved from GitHub
+  - size (int) size of the release file in bytes
+- remotes_from (Object) describes where the reference remotes from (can be null)
+  - errors (Array) errors related to the remote reference
+  - slug (str) the GitHub repository slug for the reference
+- restrict_source_types (bool) restricts the source types users may use when creating isolates
+- source_types (Array[str]) a set of allowable source types
+- updates (Array[Object]) a history of updates applied to the remote reference
+  - SHARES FIELDS WITH release
+  - user (Object) describes the user that applied the update
+    - id (str) the user ID
+- updating (bool) the remote reference is being updated
+- user (Object) describes the creating user
+  - id (str) the user ID
+
+
+"""
 import asyncio
 import json.decoder
 import logging
 import os
+import shutil
 from typing import List, Union
 
 import aiohttp
@@ -10,6 +67,7 @@ import pymongo
 import semver
 
 import virtool.api
+import virtool.api.json
 import virtool.db.utils
 import virtool.errors
 import virtool.github
@@ -18,9 +76,9 @@ import virtool.history.utils
 import virtool.http.utils
 import virtool.otus.db
 import virtool.otus.utils
+import virtool.references.utils
 import virtool.tasks.db
 import virtool.tasks.task
-import virtool.references.utils
 import virtool.users.db
 import virtool.utils
 
@@ -232,70 +290,83 @@ class ImportReferenceTask(virtool.tasks.task.Task):
             await tracker.add(1)
 
 
-class RemoveReferenceTask(virtool.tasks.task.Task):
+class DeleteReferenceTask(virtool.tasks.task.Task):
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)
 
         self.steps = [
+            self.remove_directory,
             self.remove_indexes,
             self.remove_unreferenced_otus,
             self.remove_referenced_otus
         ]
 
-    async def remove_indexes(self):
-        ref_id = self.context["ref_id"]
+        self.non_existent_references = []
 
+    async def remove_directory(self):
+        path = os.path.join(
+            self.app["settings"]["data_path"],
+            "references"
+        )
+
+        reference_ids = os.listdir(path)
+        existent_references = await self.db.references.distinct("_id", {
+            "_id": {
+                "$in": reference_ids
+            }
+        })
+        self.non_existent_references = [ref_id for ref_id in reference_ids if ref_id not in existent_references]
+
+        for dir_name in self.non_existent_references:
+            await self.app["run_in_thread"](shutil.rmtree, os.path.join(path, dir_name), True)
+
+    async def remove_indexes(self):
         await self.db.indexes.delete_many({
-            "reference.id": ref_id
+            "reference.id": {
+                "$in": self.non_existent_references
+            }
         })
 
     async def remove_unreferenced_otus(self):
-        ref_id = self.context["ref_id"]
+        for ref_id in self.non_existent_references:
+            referenced_otu_ids = await self.db.analyses.distinct("results.otu.id", {"reference.id": ref_id})
 
-        referenced_otu_ids = await self.db.analyses.distinct("results.otu.id", {"reference.id": ref_id})
-
-        unreferenced_otu_ids = await self.db.otus.distinct("_id", {
-            "reference.id": ref_id,
-            "_id": {
-                "$not": {
-                    "$in": referenced_otu_ids
+            unreferenced_otu_ids = await self.db.otus.distinct("_id", {
+                "reference.id": ref_id,
+                "_id": {
+                    "$not": {
+                        "$in": referenced_otu_ids
+                    }
                 }
-            }
-        })
+            })
 
-        diff_file_change_ids = await self.db.history.distinct("_id", {
-            "diff": "file",
-            "otu.id": {
-                "$in": unreferenced_otu_ids
-            }
-        })
+            diff_file_change_ids = await self.db.history.distinct("_id", {
+                "diff": "file",
+                "otu.id": {
+                    "$in": unreferenced_otu_ids
+                }
+            })
 
-        await asyncio.gather(
-            self.db.otus.delete_many({"_id": {"$in": unreferenced_otu_ids}}),
-            self.db.history.delete_many({"otu.id": {"$in": unreferenced_otu_ids}}),
-            self.db.sequences.delete_many({"otu_id": {"$in": unreferenced_otu_ids}}),
-            virtool.history.utils.remove_diff_files(self.app, diff_file_change_ids)
-        )
-
-    async def remove_referenced_otus(self):
-        ref_id = self.context["ref_id"]
-        user_id = self.context["user_id"]
-
-        otu_count = await self.db.otus.count_documents({"reference.id": ref_id})
-
-        tracker = self.get_tracker(otu_count)
-
-        async for document in self.db.otus.find({"reference.id": ref_id}):
-            await virtool.otus.db.remove(
-                self.app,
-                document["_id"],
-                user_id,
-                document=document,
-                silent=True
+            await asyncio.gather(
+                self.db.otus.delete_many({"_id": {"$in": unreferenced_otu_ids}}),
+                self.db.history.delete_many({"otu.id": {"$in": unreferenced_otu_ids}}),
+                self.db.sequences.delete_many({"otu_id": {"$in": unreferenced_otu_ids}}),
+                virtool.history.utils.remove_diff_files(self.app, diff_file_change_ids)
             )
 
-            await tracker.add(1)
+    async def remove_referenced_otus(self):
+        user_id = self.context["user_id"]
+
+        for ref_id in self.non_existent_references:
+            async for document in self.db.otus.find({"reference.id": ref_id}):
+                await virtool.otus.db.remove(
+                    self.app,
+                    document["_id"],
+                    user_id,
+                    document=document,
+                    silent=True
+                )
 
 
 class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
@@ -431,6 +502,60 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
                 "updating": False
             }
         })
+
+
+class CreateIndexJSONTask(virtool.tasks.task.Task):
+
+    def __init__(self, app, task_id):
+        super().__init__(app, task_id)
+
+        self.steps = [
+            self.create_index_json_files
+        ]
+
+    async def create_index_json_files(self):
+        async for index in self.db.indexes.find({"has_json": {"$ne": True}}):
+            index_id = index["_id"]
+            ref_id = index["reference"]["id"]
+
+            document = await self.db.references.find_one(ref_id, ["data_type", "organism", "targets"])
+
+            otu_list = await virtool.references.db.export(
+                self.app,
+                ref_id
+            )
+
+            data = {
+                "otus": otu_list,
+                "data_type": document["data_type"],
+                "organism": document["organism"]
+            }
+
+            try:
+                data["targets"] = document["targets"]
+            except KeyError:
+                pass
+
+            file_path = os.path.join(
+                self.app["settings"]["data_path"],
+                "references",
+                ref_id,
+                index_id,
+                "reference.json.gz")
+
+            # Convert the list of OTUs to a JSON-formatted string.
+            json_string = json.dumps(data, cls=virtool.api.json.CustomEncoder)
+
+            # Compress the JSON string to a gzip file.
+            await self.run_in_thread(virtool.utils.compress_json_with_gzip,
+                                     json_string,
+                                     file_path)
+
+            await self.db.indexes.find_one_and_update({"_id": index_id}, {
+                "$set": {
+                    "has_json": True
+                }
+            })
 
 
 async def processor(db, document: dict) -> dict:

@@ -120,23 +120,27 @@ async def install(req):
     if await db.status.count_documents({"_id": "hmm", "updates.ready": False}):
         return conflict("Install already in progress")
 
+    release = await virtool.db.utils.get_one_field(db.status, "release", "hmm")
+
+    if release is None:
+        return bad_request("Target release does not exist")
+
     task = await virtool.tasks.db.register(
         db,
-        "install_hmms"
+        "install_hmms",
+        context={
+            "user_id": user_id,
+            "release": release
+        }
     )
 
-    document = await db.status.find_one_and_update({"_id": "hmm"}, {
+    await db.status.find_one_and_update({"_id": "hmm"}, {
         "$set": {
             "task": {
                 "id": task["id"]
             }
         }
     })
-
-    release = document.get("release")
-
-    if release is None:
-        return bad_request("Target release does not exist")
 
     update = virtool.github.create_update_subdocument(release, False, user_id)
 
@@ -146,12 +150,9 @@ async def install(req):
         }
     })
 
-    await aiojobs.aiohttp.spawn(req, virtool.hmm.db.install(
-        req.app,
-        task["id"],
-        release,
-        user_id
-    ))
+    t = virtool.hmm.db.HMMInstallTask(req.app, task["id"])
+
+    await aiojobs.aiohttp.spawn(req, t.run())
 
     return json_response(update)
 

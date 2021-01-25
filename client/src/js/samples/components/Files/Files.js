@@ -1,6 +1,7 @@
 import { get } from "lodash-es";
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
+import { NarrowContainer } from "../../../base";
 import { getLinkedJob } from "../../../jobs/actions";
 import SampleFilesMessage from "../LegacyAlert";
 import SampleFileSizeWarning from "../FileSizeWarning.js";
@@ -15,12 +16,12 @@ const SampleDetailFiles = ({ onGetJob, jobId }) => {
     }, [jobId]);
 
     return (
-        <React.Fragment>
+        <NarrowContainer>
             <SampleFileSizeWarning />
             <SampleFilesMessage />
             <SampleFilesRaw />
             <SampleFilesCache />
-        </React.Fragment>
+        </NarrowContainer>
     );
 };
 

@@ -4,6 +4,7 @@ import { watchAccount } from "../account/sagas";
 import { watchSettings } from "../administration/sagas";
 import { watchAnalyses } from "../analyses/sagas";
 import { watchCaches } from "../caches/sagas";
+import { watchDev } from "../dev/sagas";
 import { watchFiles } from "../files/sagas";
 import { watchGroups } from "../groups/sagas";
 import { watchHmms } from "../hmm/sagas";
@@ -40,6 +41,7 @@ function* rootSaga() {
         watchAccount(),
         watchAnalyses(),
         watchCaches(),
+        watchDev(),
         watchFiles(),
         watchSubtraction(),
         watchHmms(),
