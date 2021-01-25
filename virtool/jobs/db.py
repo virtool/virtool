@@ -40,12 +40,19 @@ PROJECTION = [
 ]
 
 
-async def cancel(db, job_id):
+async def cancel(db, job_id: str) -> dict:
+    """
+    Add a cancellation status sub-document to the job identified by `job_id`.
+
+    :param db: the application database connection
+    :param job_id: the ID of the job to add a cancellation status for
+
+    """
     document = await db.jobs.find_one(job_id, ["status"])
 
     latest = document["status"][-1]
 
-    await db.jobs.update_one({"_id": job_id}, {
+    return await db.jobs.find_one_and_update({"_id": job_id}, {
         "$push": {
             "status": {
                 "state": "cancelled",
@@ -55,7 +62,7 @@ async def cancel(db, job_id):
                 "timestamp": virtool.utils.timestamp()
             }
         }
-    })
+    }, projection=virtool.jobs.db.PROJECTION)
 
 
 async def clear(db, complete=False, failed=False):
