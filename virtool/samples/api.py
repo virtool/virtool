@@ -128,8 +128,8 @@ async def find(req):
         reverse=True
     )
 
-    for d in data["documents"]:
-        d = await virtool.samples.db.attach_labels(req.app, d)
+    for i in range(len(data["documents"])):
+        data["documents"][i] = await virtool.samples.db.attach_labels(req.app, data["documents"][i])
 
     return json_response(data)
 
