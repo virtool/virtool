@@ -33,9 +33,7 @@ async def test_enqueue(size, dbi, redis, job_interface):
 
 
 @pytest.mark.parametrize("size", ["lg", "sm"])
-async def test_cancel(size, dbi, redis, job_interface):
-    channel, = await redis.subscribe("channel:cancel")
-
+async def test_cancel_waiting(size, dbi, redis, job_interface, static_time):
     await redis.rpush(f"jobs_{size}", "foo")
 
     list_keys = ["jobs_lg", "jobs_sm"]
@@ -45,7 +43,51 @@ async def test_cancel(size, dbi, redis, job_interface):
 
     await dbi.jobs.insert_one({
         "_id": "foo",
-        "state": "waiting"
+        "state": "waiting",
+        "status": [{
+            "state": "running",
+            "stage": "foo",
+            "error": None,
+            "progress": 0.33,
+            "timestamp": static_time.datetime
+        }]
+    })
+
+    await job_interface.cancel("foo")
+
+    # Check that job ID was removed from lists.
+    for key in list_keys:
+        assert await redis.lrange(key, 0, 5, encoding="utf-8") == ["bar", "baz", "boo"]
+
+    # Check that job document was updated.
+    assert await dbi.jobs.find_one() == {
+        "_id": "foo",
+        "state": "waiting",
+        "status": [
+            {
+                "state": "running",
+                "stage": "foo",
+                "error": None,
+                "progress": 0.33,
+                "timestamp": static_time.datetime
+            },
+            {
+                "state": "cancelled",
+                "stage": "foo",
+                "error": None,
+                "progress": 0.33,
+                "timestamp": static_time.datetime
+            }
+        ]
+    }
+
+
+async def test_cancel_running(dbi, redis, job_interface):
+    channel, = await redis.subscribe("channel:cancel")
+
+    await dbi.jobs.insert_one({
+        "_id": "foo",
+        "state": "running"
     })
 
     await job_interface.cancel("foo")
@@ -62,8 +104,3 @@ async def test_cancel(size, dbi, redis, job_interface):
         break
 
     await redis.unsubscribe("channel:cancel")
-
-    # Check that job ID was removed from lists.
-    for key in list_keys:
-        assert await redis.lrange(key, 0, 5, encoding="utf-8") == ["bar", "baz", "boo"]
-

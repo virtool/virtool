@@ -2,7 +2,6 @@ import pytest
 
 import virtool.jobs.db
 
-
 status = {
     "state": "running",
     "progress": 0.5
@@ -37,53 +36,42 @@ async def test_processor(dbi, static_time, test_job):
     }
 
 
-@pytest.mark.parametrize("empty", [True, False], ids=["empty", "not-empty"])
-async def test_get_waiting_and_running(empty, dbi):
-    documents = list()
-
-    if not empty:
-        documents.append({
-            "_id": "foo",
-            "status": [
-                {"state": "waiting"},
-                {"state": "running"},
-            ]
-        })
-
-    documents.append({
-        "_id": "bar",
-        "status": [
-            {"state": "waiting"},
-            {"state": "running"},
-            {"state": "complete"}
-        ]
+async def test_cancel(dbi, static_time):
+    await dbi.jobs.insert_one({
+        "_id": "foo",
+        "state": "waiting",
+        "status": [{
+            "state": "running",
+            "stage": "foo",
+            "error": None,
+            "progress": 0.33,
+            "timestamp": static_time.datetime
+        }]
     })
 
-    if not empty:
-        documents += [
+    await virtool.jobs.db.cancel(dbi, "foo")
+
+    # Check that job document was updated.
+    assert await dbi.jobs.find_one() == {
+        "_id": "foo",
+        "state": "waiting",
+        "status": [
             {
-                "_id": "baz",
-                "status": [
-                    {"state": "waiting"}
-                ]
+                "state": "running",
+                "stage": "foo",
+                "error": None,
+                "progress": 0.33,
+                "timestamp": static_time.datetime
             },
             {
-                "_id": "bat",
-                "status": [
-                    {"state": "waiting"},
-                    {"state": "running"}
-                ]
+                "state": "cancelled",
+                "stage": "foo",
+                "error": None,
+                "progress": 0.33,
+                "timestamp": static_time.datetime
             }
         ]
-
-    await dbi.jobs.insert_many(documents)
-
-    expected = list()
-
-    if not empty:
-        expected = ["foo", "baz", "bat"]
-
-    assert await virtool.jobs.db.get_waiting_and_running_ids(dbi) == expected
+    }
 
 
 async def test_delete_zombies(dbi):
@@ -134,3 +122,52 @@ async def test_delete_zombies(dbi):
         documents[3],
         documents[1]
     ]
+
+
+@pytest.mark.parametrize("empty", [True, False], ids=["empty", "not-empty"])
+async def test_get_waiting_and_running(empty, dbi):
+    documents = list()
+
+    if not empty:
+        documents.append({
+            "_id": "foo",
+            "status": [
+                {"state": "waiting"},
+                {"state": "running"},
+            ]
+        })
+
+    documents.append({
+        "_id": "bar",
+        "status": [
+            {"state": "waiting"},
+            {"state": "running"},
+            {"state": "complete"}
+        ]
+    })
+
+    if not empty:
+        documents += [
+            {
+                "_id": "baz",
+                "status": [
+                    {"state": "waiting"}
+                ]
+            },
+            {
+                "_id": "bat",
+                "status": [
+                    {"state": "waiting"},
+                    {"state": "running"}
+                ]
+            }
+        ]
+
+    await dbi.jobs.insert_many(documents)
+
+    expected = list()
+
+    if not empty:
+        expected = ["foo", "baz", "bat"]
+
+    assert await virtool.jobs.db.get_waiting_and_running_ids(dbi) == expected
