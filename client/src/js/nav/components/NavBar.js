@@ -84,6 +84,12 @@ export class Bar extends React.Component {
                         <Icon name="book" />
                     </NavBarItem>
 
+                    {this.props.dev && (
+                        <NavBarItem to={{ state: { devCommands: true } }}>
+                            <Icon color="red" name="bug" />
+                        </NavBarItem>
+                    )}
+
                     <Dropdown>
                         <NavDropdownButton>
                             <Icon name="user" />
@@ -113,6 +119,7 @@ export class Bar extends React.Component {
 
 export const mapStateToProps = state => ({
     ...state.account,
+    dev: state.app.dev,
     pending: state.app.pending
 });
 

@@ -1,4 +1,3 @@
-import uvloop
 import asyncio
 import json
 import logging
@@ -7,14 +6,15 @@ import sys
 
 import click
 import psutil
+import uvloop
 
 import virtool.app
 import virtool.db.mongo
 import virtool.db.utils
-import virtool.jobs.runner
 import virtool.jobs.classes
 import virtool.jobs.job
 import virtool.jobs.run
+import virtool.jobs.runner
 import virtool.logs
 import virtool.redis
 import virtool.utils
@@ -140,7 +140,8 @@ def entry():
     is_flag=True
 )
 @click.pass_context
-def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_sentry, proxy, postgres_connection_string, redis_connection_string, verbose):
+def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_sentry, proxy, postgres_connection_string,
+        redis_connection_string, verbose):
     ctx.ensure_object(dict)
     ctx.obj.update({
         "data_path": data_path,
@@ -191,7 +192,8 @@ def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_se
 )
 @click.pass_context
 def start_server(ctx, host, port, no_check_db, no_check_files, no_client, no_fetching):
-    virtool.logs.configure(ctx.obj["dev"], ctx.obj["verbose"])
+    virtool.logs.configure_server(ctx.obj["dev"], ctx.obj["verbose"])
+
     config = {
         **ctx.obj,
         "host": host,
@@ -233,7 +235,8 @@ def start_server(ctx, host, port, no_check_db, no_check_files, no_client, no_fet
 )
 @click.pass_context
 def start_runner(ctx, job_list, mem, proc, temp_path):
-    virtool.logs.configure(ctx.obj["dev"], ctx.obj["verbose"])
+    virtool.logs.configure_runner(ctx.obj["dev"], ctx.obj["verbose"])
+
     config = {
         **ctx.obj,
         "job_list": job_list,
@@ -290,7 +293,8 @@ def start_runner(ctx, job_list, mem, proc, temp_path):
 )
 @click.pass_context
 def start_agent(ctx, job_list, lg_mem, lg_proc, mem, proc, sm_mem, sm_proc, temp_path):
-    virtool.logs.configure(ctx.obj["dev"], ctx.obj["verbose"])
+    virtool.logs.configure_base_logger(ctx.obj["dev"], ctx.obj["verbose"])
+
     config = {
         **ctx.obj,
         "job_list": job_list,
@@ -302,6 +306,7 @@ def start_agent(ctx, job_list, lg_mem, lg_proc, mem, proc, sm_mem, sm_proc, temp
         "sm_proc": sm_proc,
         "temp_path": temp_path
     }
+
     validate_limits(config)
 
     logger.info("Starting in agent mode")

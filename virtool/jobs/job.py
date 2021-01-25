@@ -5,6 +5,8 @@ Classes, exceptions, and utilities for creating Virtool jobs.
 import asyncio
 import concurrent.futures.thread
 import logging
+import logging.handlers
+import os
 import subprocess
 import sys
 import tempfile
@@ -13,11 +15,12 @@ from typing import Optional
 
 import virtool.db.mongo
 import virtool.db.utils
-import virtool.jobs.runner
 import virtool.jobs.db
+import virtool.jobs.runner
 import virtool.redis
 import virtool.settings.db
 import virtool.utils
+from virtool.logs import get_log_format
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +87,12 @@ class Job:
         )
 
     async def _run(self):
+        log_path = os.path.join(self.settings["data_path"], "logs", "jobs", self.id)
+        handler = logging.FileHandler(log_path)
+        handler.setFormatter(logging.Formatter(get_log_format(True), style="{"))
+
+        logger.addHandler(handler)
+
         logger.debug("Job run method called")
 
         self._executor = concurrent.futures.thread.ThreadPoolExecutor()
@@ -127,6 +136,8 @@ class Job:
             self.temp_dir.cleanup
         )
 
+        logger.removeHandler(handler)
+
     async def run_in_executor(self, func, *args):
         return await asyncio.get_event_loop().run_in_executor(self._executor, func, *args)
 
@@ -136,7 +147,8 @@ class Job:
             stdout_handler=None,
             stderr_handler=None,
             env: Optional[dict] = None,
-            cwd: Optional[str] = None
+            cwd: Optional[str] = None,
+            decode: bool = True
     ):
         logger.info(f"Running command in subprocess: {' '.join(command)}")
 
@@ -148,10 +160,10 @@ class Job:
         if stderr_handler:
             async def _stderr_handler(line):
                 await stderr_handler(line)
-                logger.info(f"STDERR: {line.rstrip()}")
+                logger.info(f"STDERR: {line.decode().rstrip()}")
         else:
             async def _stderr_handler(line):
-                logger.info(f"STDERR: {line.rstrip()}")
+                logger.info(f"STDERR: {line.decode().rstrip()}")
 
         self._process = await asyncio.create_subprocess_exec(
             *command,

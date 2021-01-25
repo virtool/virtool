@@ -1,3 +1,5 @@
+import asyncio
+
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -5,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import virtool.http.routes
 import virtool.validators
 import virtool.db.utils
+import virtool.labels.db
 from virtool.api.response import bad_request, empty_request, json_response, no_content, not_found
 from virtool.labels.models import Label
 
@@ -17,7 +20,7 @@ async def find(req):
     Get a list of all label documents in the database.
 
     """
-    document = list()
+    documents = list()
     async with AsyncSession(req.app["postgres"]) as session:
         result = await session.execute(select(Label))
         labels = result.scalars().all()
@@ -28,9 +31,11 @@ async def find(req):
                 "color": label.color,
                 "description": label.description
             }
-            document.append(d)
+            documents.append(d)
 
-    return json_response(document)
+    documents = await asyncio.gather(*[virtool.labels.db.attach_sample_count(req.app["db"], d, d["id"]) for d in documents])
+
+    return json_response(documents)
 
 
 @routes.get("/api/labels/{label_id}")
@@ -52,6 +57,8 @@ async def get(req):
             "color": label.color,
             "description": label.description
         }
+
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], document, label.id)
 
     return json_response(document)
 
@@ -80,7 +87,6 @@ async def create(req):
     Add a new label to the labels database.
 
     """
-    db = req.app["db"]
     data = req["data"]
 
     async with AsyncSession(req.app["postgres"]) as session:
@@ -100,6 +106,8 @@ async def create(req):
         "color": data["color"],
         "description": data["description"]
     }
+
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], document, label_id)
 
     headers = {
         "Location": f"/api/labels/{label_id}"
@@ -156,6 +164,8 @@ async def edit(req):
         "color": data["color"],
         "description": data["description"]
     }
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], document, label_id)
+
     return json_response(document)
 
 

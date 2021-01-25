@@ -25,6 +25,9 @@ export const PUSH_STATE = "PUSH_STATE";
 export const SET_APP_PENDING = "SET_APP_PENDING";
 export const UNSET_APP_PENDING = "UNSET_APP_PENDING";
 
+// Dev
+export const POST_DEV_COMMAND = createRequestActionType("POST_DEV_COMMAND");
+
 // Account
 export const GET_ACCOUNT = createRequestActionType("GET_ACCOUNT");
 export const UPDATE_ACCOUNT = createRequestActionType("UPDATE_ACCOUNT");
