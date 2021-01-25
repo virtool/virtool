@@ -4,7 +4,6 @@ import {
     WS_REMOVE_JOB,
     FIND_JOBS,
     GET_JOB,
-    GET_RESOURCES,
     GET_LINKED_JOB
 } from "../app/actionTypes";
 import { updateDocuments, insert, update, remove } from "../utils/reducers";
@@ -17,7 +16,6 @@ export const initialState = {
     detail: null,
     filter: "",
     fetched: false,
-    resources: null,
     linkedJobs: {}
 };
 
@@ -49,9 +47,6 @@ export default function jobsReducer(state = initialState, action) {
 
         case GET_JOB.SUCCEEDED:
             return { ...state, detail: action.data };
-
-        case GET_RESOURCES.SUCCEEDED:
-            return { ...state, resources: action.data };
 
         default:
             return state;

@@ -1,4 +1,3 @@
-import { simpleActionCreator } from "../utils/utils";
 import {
     WS_INSERT_JOB,
     WS_UPDATE_JOB,
@@ -8,7 +7,6 @@ import {
     CANCEL_JOB,
     REMOVE_JOB,
     CLEAR_JOBS,
-    GET_RESOURCES,
     GET_LINKED_JOB
 } from "../app/actionTypes";
 
@@ -106,11 +104,3 @@ export const clearJobs = scope => ({
     type: CLEAR_JOBS.REQUESTED,
     scope
 });
-
-/**
- * Returns action that can trigger an API call for getting computing resource limits.
- *
- * @func
- * @returns {object}
- */
-export const getResources = simpleActionCreator(GET_RESOURCES.REQUESTED);

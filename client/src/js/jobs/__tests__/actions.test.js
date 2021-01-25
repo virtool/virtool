@@ -6,7 +6,6 @@ import {
     CANCEL_JOB,
     REMOVE_JOB,
     CLEAR_JOBS,
-    GET_RESOURCES,
     FIND_JOBS
 } from "../../app/actionTypes";
 import {
@@ -17,7 +16,6 @@ import {
     cancelJob,
     removeJob,
     clearJobs,
-    getResources,
     findJobs
 } from "../actions";
 
@@ -93,13 +91,6 @@ describe("Jobs Action Creators:", () => {
         expect(result).toEqual({
             type: CLEAR_JOBS.REQUESTED,
             scope
-        });
-    });
-
-    it("getResources: returns action to retrieve computing resources data", () => {
-        const result = getResources();
-        expect(result).toEqual({
-            type: GET_RESOURCES.REQUESTED
         });
     });
 });

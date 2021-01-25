@@ -1,4 +1,4 @@
-import { WS_INSERT_JOB, WS_UPDATE_JOB, WS_REMOVE_JOB, GET_JOB, GET_RESOURCES, FIND_JOBS } from "../../app/actionTypes";
+import { WS_INSERT_JOB, WS_UPDATE_JOB, WS_REMOVE_JOB, GET_JOB, FIND_JOBS } from "../../app/actionTypes";
 import reducer, { initialState as reducerInitialState } from "../reducer";
 
 describe("Job Reducer", () => {
@@ -129,19 +129,6 @@ describe("Job Reducer", () => {
         expect(result).toEqual({
             ...state,
             detail: action.data
-        });
-    });
-
-    it("should handle GET_RESOURCES_SUCCEEDED", () => {
-        const state = {};
-        const action = {
-            type: GET_RESOURCES.SUCCEEDED,
-            data: {}
-        };
-        const result = reducer(state, action);
-        expect(result).toEqual({
-            ...state,
-            resources: action.data
         });
     });
 });

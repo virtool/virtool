@@ -26,13 +26,7 @@ export const Sidebar = ({ administrator }) => (
         </Route>
         <Route path="/jobs">
             <StyledSidebar>
-                <SidebarItem
-                    exclude={["/jobs/resources", "/jobs/settings"]}
-                    title="Browse"
-                    link="/jobs"
-                    icon="th-list"
-                />
-                <SidebarItem title="Resources" link="/jobs/resources" icon="tachometer-alt" />
+                <SidebarItem exclude={["/jobs/settings"]} title="Browse" link="/jobs" icon="th-list" />
             </StyledSidebar>
         </Route>
         <Route path="/samples">

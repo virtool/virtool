@@ -24,18 +24,6 @@ exports[`<Jobs /> should render when loaded 1`] = `
           "$$typeof": Symbol(react.memo),
           "WrappedComponent": [Function],
           "compare": null,
-          "displayName": "Connect(JobsResources)",
-          "type": [Function],
-        }
-      }
-      path="/jobs/resources"
-    />
-    <Route
-      component={
-        Object {
-          "$$typeof": Symbol(react.memo),
-          "WrappedComponent": [Function],
-          "compare": null,
           "displayName": "Connect(JobDetail)",
           "type": [Function],
         }

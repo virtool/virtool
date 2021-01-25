@@ -30,7 +30,6 @@ import {
     GET_HMM,
     GET_INDEX,
     GET_SUBTRACTION,
-    GET_RESOURCES,
     UPDATE_SETTINGS,
     FIND_USERS,
     GET_USER,
@@ -112,7 +111,6 @@ export default function errorsReducer(state = null, action) {
             case EDIT_USER.FAILED:
             case CREATE_GROUP.FAILED:
             case GET_JOB.FAILED:
-            case GET_RESOURCES.FAILED:
             case GET_SAMPLE.FAILED:
             case GET_ANALYSIS.FAILED:
             case GET_REFERENCE.FAILED:
