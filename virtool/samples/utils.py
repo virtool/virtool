@@ -60,7 +60,7 @@ def calculate_workflow_tags(analyses: list) -> dict:
     }
 
 
-async def check_labels(pg: AsyncEngine, labels: List[int]) -> List[int]:
+async def check_labels(pg: AsyncSession, labels: List[int]) -> List[int]:
     """"
     Check for existence of label IDs given in sample creation request
 
@@ -68,10 +68,11 @@ async def check_labels(pg: AsyncEngine, labels: List[int]) -> List[int]:
     :param labels: list of label IDs given in the sample creation request
     :return: a list containing any label IDs given in the request that do not exist
     """
-    async with AsyncSession(pg) as session:
-        results = await session.execute(select(Label.id).filter(Label.id.in_(labels)))
+    async with pg as session:
+        query = await session.execute(select(Label).filter(Label.id.in_(labels)))
+        results = {label.id for label in query.scalars().all()}
 
-    return [label for label in labels if label not in set(results.all())]
+    return [label for label in labels if label not in results]
 
 
 def get_sample_rights(sample: dict, client):
