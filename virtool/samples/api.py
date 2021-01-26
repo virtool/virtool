@@ -1,27 +1,25 @@
 import asyncio.tasks
 from copy import deepcopy
-from cerberus import Validator
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 
-import virtool.analyses.utils
+from cerberus import Validator
+
 import virtool.analyses.db
+import virtool.analyses.utils
 import virtool.api.utils
-import virtool.files.db
-import virtool.jobs.db
-import virtool.samples.db
 import virtool.db.utils
 import virtool.errors
+import virtool.files.db
 import virtool.http.routes
+import virtool.jobs.db
+import virtool.samples.db
 import virtool.samples.utils
 import virtool.subtractions.db
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
     json_response, no_content, not_found
-from virtool.labels.models import Label
-
-from virtool.samples.utils import check_labels
+from virtool.samples.utils import check_labels, create_bad_labels_response
 
 QUERY_SCHEMA = {
     "find": {
@@ -238,7 +236,7 @@ async def create(req):
         non_existent_labels = await check_labels(req.app["postgres"], data["labels"])
 
         if non_existent_labels:
-            return bad_request(f"Labels do not exist: {', '.join(non_existent_labels)}")
+            return bad_request(create_bad_labels_response(non_existent_labels))
 
     # Make sure a subtraction host was submitted and it exists.
     if not await db.subtraction.count_documents({"_id": data["subtraction"], "is_host": True}):
@@ -376,7 +374,7 @@ async def edit(req):
         non_existent_labels = await check_labels(data["labels"], req.app["postgres"])
 
         if non_existent_labels:
-            return bad_request(f"Labels do not exist: {', '.join(non_existent_labels)}")
+            return bad_request(create_bad_labels_response(non_existent_labels))
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": data

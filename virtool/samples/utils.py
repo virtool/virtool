@@ -58,7 +58,7 @@ def calculate_workflow_tags(analyses: list) -> dict:
     }
 
 
-async def check_labels(pg: AsyncEngine, labels: List[int]) -> List[str]:
+async def check_labels(pg: AsyncEngine, labels: List[int]) -> List[int]:
     """"
     Check for existence of labels given in sample creation request
 
@@ -69,7 +69,7 @@ async def check_labels(pg: AsyncEngine, labels: List[int]) -> List[str]:
     async with AsyncSession(pg) as session:
         results = await session.execute(select(Label.id).filter(Label.id.in_(labels)))
 
-        return [str(label) for label in labels if label not in set(results.all())]
+        return [label for label in labels if label not in set(results.all())]
 
 
 def get_sample_rights(sample: dict, client):
@@ -86,6 +86,16 @@ def get_sample_rights(sample: dict, client):
     write = sample["all_write"] or (is_group_member and sample["group_write"])
 
     return read, write
+
+
+def create_bad_labels_response(labels: List[int]):
+    """
+    Creates a response for a bad request involving labels that do not exist
+
+    :param labels: A list of labels that do not exist in the Labels db
+    :return: A message to give in a `bad_request()` response
+    """
+    return f"Labels do not exist: {', '.join(str(label) for label in labels)}"
 
 
 def join_legacy_read_path(sample_path: str, suffix: int) -> str:
