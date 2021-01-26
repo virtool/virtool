@@ -1,11 +1,7 @@
 import os
-from typing import List
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
-
-from virtool.labels.models import Label
-
+from requests import Response
+from virtool.api.response import bad_request
 PATHOSCOPE_TASK_NAMES = [
     "pathoscope_bowtie",
     "pathoscope_barracuda"
@@ -58,20 +54,6 @@ def calculate_workflow_tags(analyses: list) -> dict:
     }
 
 
-async def check_labels(pg: AsyncEngine, labels: List[int]) -> List[int]:
-    """"
-    Check for existence of labels given in sample creation request
-
-    :param pg: PostgreSQL database connection object
-    :param labels: list of labels given in the sample creation request
-    :return: a list containing any labels given in the request that aren't in the Labels db, if any
-    """
-    async with AsyncSession(pg) as session:
-        results = await session.execute(select(Label.id).filter(Label.id.in_(labels)))
-
-        return [label for label in labels if label not in set(results.all())]
-
-
 def get_sample_rights(sample: dict, client):
     if client.administrator or sample["user"]["id"] == client.user_id:
         return True, True
@@ -88,14 +70,14 @@ def get_sample_rights(sample: dict, client):
     return read, write
 
 
-def create_bad_labels_response(labels: List[int]):
+def bad_labels_response(labels: List[int]) -> Response:
     """
-    Creates a response for a bad request involving labels that do not exist
+    Creates a response that indicates that some label IDs do not exist
 
-    :param labels: A list of labels that do not exist in the Labels db
-    :return: A message to give in a `bad_request()` response
+    :param labels: A list of label IDs that do not exist
+    :return: A `bad_request()` response
     """
-    return f"Labels do not exist: {', '.join(str(label) for label in labels)}"
+    return bad_request(f"Labels do not exist: {', '.join(str(label) for label in labels)}")
 
 
 def join_legacy_read_path(sample_path: str, suffix: int) -> str:

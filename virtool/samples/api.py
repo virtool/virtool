@@ -18,7 +18,7 @@ import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
     json_response, no_content, not_found
-from virtool.samples.utils import check_labels, create_bad_labels_response
+from virtool.samples.utils import check_labels, bad_labels_response
 
 QUERY_SCHEMA = {
     "find": {
@@ -235,7 +235,7 @@ async def create(req):
         non_existent_labels = await check_labels(req.app["postgres"], data["labels"])
 
         if non_existent_labels:
-            return bad_request(create_bad_labels_response(non_existent_labels))
+            return bad_labels_response(non_existent_labels)
 
     # Make sure a subtraction host was submitted and it exists.
     if not await db.subtraction.count_documents({"_id": data["subtraction"], "is_host": True}):
@@ -373,7 +373,7 @@ async def edit(req):
         non_existent_labels = await check_labels(data["labels"], req.app["postgres"])
 
         if non_existent_labels:
-            return bad_request(create_bad_labels_response(non_existent_labels))
+            return bad_labels_response(non_existent_labels)
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": data
