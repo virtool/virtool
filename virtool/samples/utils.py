@@ -1,7 +1,8 @@
 import os
+from typing import List
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 from virtool.labels.models import Label
 
@@ -57,7 +58,7 @@ def calculate_workflow_tags(analyses: list) -> dict:
     }
 
 
-async def check_labels(pg, labels: list) -> list:
+async def check_labels(pg: AsyncEngine, labels: List[int]) -> List[str]:
     """"
     Check for existence of labels given in sample creation request
 
