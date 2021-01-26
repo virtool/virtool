@@ -1,6 +1,5 @@
 import asyncio.tasks
 from copy import deepcopy
-from typing import List
 
 from cerberus import Validator
 
