@@ -1,7 +1,13 @@
 import os
+from typing import List
 
 from requests import Response
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+
 from virtool.api.response import bad_request
+from virtool.labels.models import Label
+
 PATHOSCOPE_TASK_NAMES = [
     "pathoscope_bowtie",
     "pathoscope_barracuda"
@@ -52,6 +58,20 @@ def calculate_workflow_tags(analyses: list) -> dict:
         "pathoscope": pathoscope,
         "nuvs": nuvs
     }
+
+
+async def check_labels(pg: AsyncEngine, labels: List[int]) -> List[int]:
+    """"
+    Check for existence of label IDs given in sample creation request
+
+    :param pg: PostgreSQL database connection object
+    :param labels: list of label IDs given in the sample creation request
+    :return: a list containing any label IDs given in the request that do not exist
+    """
+    async with AsyncSession(pg) as session:
+        results = await session.execute(select(Label.id).filter(Label.id.in_(labels)))
+
+    return [label for label in labels if label not in set(results.all())]
 
 
 def get_sample_rights(sample: dict, client):
