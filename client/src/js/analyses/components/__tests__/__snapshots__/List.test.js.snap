@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<AnalysesList /> renders 1`] = `
-<div>
+<Container__NarrowContainer>
   <Connect(AnalysisHMMAlert) />
   <Connect(AnalysesToolbar) />
   <Connect(AnalysisItem)
@@ -22,5 +22,5 @@ exports[`<AnalysesList /> renders 1`] = `
     show={false}
     userId="bob"
   />
-</div>
+</Container__NarrowContainer>
 `;

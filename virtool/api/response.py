@@ -110,6 +110,21 @@ def conflict(message: str = "Conflict") -> web.Response:
     }, status=409)
 
 
+def empty_request(message: str = "Empty request") -> web.Response:
+    """
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON body
+    ``{"message": "Empty request"}``.
+
+    :param message: text to send instead of 'Empty request'
+    :return: the response
+
+    """
+    return json_response({
+        "id": "empty_request",
+        "message": message
+    }, status=422)
+
+
 def invalid_input(errors: dict) -> web.Response:
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON body

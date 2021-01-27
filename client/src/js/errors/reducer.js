@@ -62,7 +62,7 @@ export const getErrorName = action => replace(action.type, "_FAILED", "_ERROR");
  * Clears error if a new request is made for the same category.
  *
  * @func
- * @param state {object}
+ * @param action {object}
  * @returns {object}
  */
 export const resetErrorName = action => {

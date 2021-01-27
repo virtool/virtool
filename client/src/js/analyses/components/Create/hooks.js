@@ -1,34 +1,41 @@
-import { xor, xorBy } from "lodash-es";
 import { useEffect, useState } from "react";
 
 export const useCreateAnalysis = (dataType, defaultSubtraction) => {
-    const [error, setError] = useState("");
-    const [indexes, setIndexes] = useState([]);
+    const [errors, setErrors] = useState({});
+    const [references, setReferences] = useState([]);
     const [subtraction, setSubtraction] = useState(defaultSubtraction);
     const [workflows, setWorkflows] = useState([]);
 
-    const toggleIndex = index => {
-        setIndexes(prev => xorBy(prev, [index], "id"));
-        setError("");
+    const setReferencesAndError = references => {
+        setReferences(references);
+        setErrors({
+            ...errors,
+            references: false
+        });
     };
 
-    const toggleWorkflow = workflow => {
-        setWorkflows(xor(workflows, [workflow]));
+    const setWorkflowsAndError = workflows => {
+        setWorkflows(workflows);
+        setErrors({
+            ...errors,
+            workflows: false
+        });
     };
 
     useEffect(() => {
-        setIndexes([]);
+        setErrors({});
+        setReferences([]);
         setWorkflows([]);
     }, [dataType]);
 
     return {
-        error,
-        indexes,
+        errors,
+        references,
         subtraction,
         workflows,
-        setError,
+        setErrors,
+        setReferences: setReferencesAndError,
         setSubtraction,
-        toggleIndex,
-        toggleWorkflow
+        setWorkflows: setWorkflowsAndError
     };
 };

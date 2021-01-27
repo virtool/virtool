@@ -8,16 +8,7 @@ import {
     CLEAR_JOBS,
     FIND_JOBS
 } from "../../app/actionTypes";
-import {
-    wsInsertJob,
-    wsUpdateJob,
-    wsRemoveJob,
-    getJob,
-    cancelJob,
-    removeJob,
-    clearJobs,
-    findJobs
-} from "../actions";
+import { wsInsertJob, wsUpdateJob, wsRemoveJob, getJob, cancelJob, removeJob, clearJobs, findJobs } from "../actions";
 
 describe("Jobs Action Creators:", () => {
     it("wsInsertJob: returns action for job insert via websocket", () => {

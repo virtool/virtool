@@ -1,41 +1,15 @@
 """
-Utilities for working with uploaded files and file watching on the server.
-
+Utilities for working with uploaded files
 """
 import os
 
-try:
-    import aionotify
-except (ImportError, OSError):
-    aionotify = None
-
-#: Files with these extensions will be consumed from the watch folder and be entered into Virtool's file manager.
+#: Files with these extensions will be considered valid read files
 FILE_EXTENSION_FILTER = (
     ".fq.gz",
     ".fastq.gz",
     ".fq",
     ".fastq"
 )
-
-
-def get_event_type(event):
-    """
-    Get a simplified event type from :package:`aionotify` flags.
-
-    :param event: an inotify event
-    :return: a simple string event type
-
-    """
-    flags = aionotify.Flags.parse(event.flags)
-
-    if aionotify.Flags.CREATE in flags or aionotify.Flags.MOVED_TO in flags:
-        return "create"
-
-    if aionotify.Flags.DELETE in flags or aionotify.Flags.MOVED_FROM in flags:
-        return "delete"
-
-    if aionotify.Flags.CLOSE_WRITE in flags:
-        return "close"
 
 
 def has_read_extension(filename):

@@ -10,7 +10,6 @@ describe("<CreateSample>", () => {
 
     beforeEach(() => {
         props = {
-            show: true,
             error: "",
             subtractions: [
                 {
@@ -25,7 +24,11 @@ describe("<CreateSample>", () => {
             readyReads: [],
             forceGroupChoice: false,
             onCreate: jest.fn(),
-            onHide: jest.fn()
+            onHide: jest.fn(),
+            onLoadSubtractionsAndFiles: jest.fn(),
+            history: {
+                push: jest.fn()
+            }
         };
         state = {
             name: "Sample 1",
@@ -65,25 +68,6 @@ describe("<CreateSample>", () => {
         props.readyReads = null;
         const wrapper = shallow(<CreateSample {...props} />);
         expect(wrapper).toMatchSnapshot();
-    });
-
-    it("should update state when Modal exits", () => {
-        const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.setState(state);
-        wrapper.instance().handleModalExited();
-        expect(wrapper.state()).toEqual({
-            errorFile: "",
-            errorName: "",
-            errorSubtraction: "",
-            group: "",
-            host: "",
-            isolate: "",
-            libraryType: "normal",
-            locale: "",
-            name: "",
-            selected: [],
-            subtractionId: ""
-        });
     });
 
     it("handleChange() should update state [name] and [error] when InputError is changed and [name=name]", () => {
@@ -223,7 +207,6 @@ describe("mapStateToProps()", () => {
                     reserved: false
                 }
             ],
-            show: false,
             subtractions
         });
     });
@@ -250,11 +233,6 @@ describe("mapDispatchToProps()", () => {
             files: "files",
             type: "CREATE_SAMPLE_REQUESTED"
         });
-    });
-
-    it("should return onHide() in props", () => {
-        props.onHide();
-        expect(dispatch).toHaveBeenCalledWith({ state: { create: false }, type: "PUSH_STATE" });
     });
 
     it("should return onClearError() in props", () => {

@@ -10,7 +10,6 @@ PROJECTION = {
 
 CONFIG_PROJECTION = (
     "data_path",
-    "watch_path",
     "proc",
     "mem",
     "lg_proc",

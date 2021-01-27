@@ -1,6 +1,8 @@
 import asyncio.tasks
 from copy import deepcopy
 from cerberus import Validator
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.analyses.utils
 import virtool.analyses.db
@@ -17,6 +19,7 @@ import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
     json_response, no_content, not_found
+from virtool.labels.models import Label
 
 QUERY_SCHEMA = {
     "find": {
@@ -359,9 +362,11 @@ async def edit(req):
 
     if "labels" in data:
         non_existent_labels = list()
-        for label in data["labels"]:
-            if not await virtool.db.utils.id_exists(db.labels, label):
-                non_existent_labels.append(label)
+        for label_id in data["labels"]:
+            async with AsyncSession(req.app["postgres"]) as session:
+                if (await session.execute(select(Label).filter_by(id=label_id))).first() is None:
+                    non_existent_labels.append(str(label_id))
+
         if non_existent_labels:
             return bad_request(f"Labels do not exist: {', '.join(non_existent_labels)}")
 

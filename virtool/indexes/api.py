@@ -148,6 +148,7 @@ async def create(req):
         "manifest": manifest,
         "ready": False,
         "has_files": True,
+        "has_json": False,
         "job": {
             "id": job_id
         },

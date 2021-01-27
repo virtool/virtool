@@ -3,12 +3,12 @@ import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { BoxGroup, BoxGroupHeader, Table } from "../../base";
+import { BoxGroup, BoxGroupHeader, Table, Markdown, NarrowContainer } from "../../base";
 import { getLibraryTypeDisplayName } from "../utils";
-import EditSample from "./Edit";
+import EditSample from "./Edit/Edit";
 import SampleFileSizeWarning from "./FileSizeWarning.js";
 
-const StyledSampleDetailGeneral = styled.div`
+const StyledSampleDetailGeneral = styled(NarrowContainer)`
     th {
         width: 220px;
     }
@@ -24,6 +24,7 @@ export const SampleDetailGeneral = ({
     libraryType,
     locale,
     name,
+    notes,
     paired,
     subtraction
 }) => (
@@ -112,12 +113,20 @@ export const SampleDetailGeneral = ({
             </Table>
         </BoxGroup>
 
+        <BoxGroup>
+            <BoxGroupHeader>
+                <h2>Notes</h2>
+                <p>Additional notes about the sample.</p>
+            </BoxGroupHeader>
+            <Markdown markdown={notes} />
+        </BoxGroup>
+
         <EditSample />
     </StyledSampleDetailGeneral>
 );
 
 export const mapStateToProps = state => {
-    const { name, host, isolate, locale, paired, quality, library_type, subtraction } = state.samples.detail;
+    const { name, host, isolate, locale, paired, quality, library_type, subtraction, notes } = state.samples.detail;
     const { count, encoding, gc, length } = quality;
 
     return {
@@ -126,6 +135,7 @@ export const mapStateToProps = state => {
         isolate,
         locale,
         name,
+        notes,
         paired,
         count: numbro(count).format("0.0 a"),
         gc: numbro(gc / 100).format("0.0 %"),

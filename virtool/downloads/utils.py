@@ -35,3 +35,16 @@ def format_fasta_filename(*args) -> str:
     filename = ".".join(args).replace(" ", "_") + ".fa"
 
     return filename.lower()
+
+
+def format_subtraction_filename(subtraction_id: str, subtraction_name: str):
+    """
+    Format a subtraction filename of the form "subtraction-subtraction_id-subtraction_name.fa.gz".
+
+    :param subtraction_id: the subtraction id
+    :param subtraction_name: the subtraction name
+    :return: a compound subtraction filename
+
+    """
+    name = subtraction_name.replace(" ", "-").lower()
+    return f"subtraction-{subtraction_id}-{name}.fa.gz"

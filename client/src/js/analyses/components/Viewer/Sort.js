@@ -1,7 +1,7 @@
+import { map } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
-import { map } from "lodash-es";
-import { DropdownButton, DropdownItem, Icon } from "../../../base";
+import { Dropdown, DropdownButton, DropdownMenuItem, DropdownMenuList, Icon } from "../../../base";
 
 const workflowSortKeys = {
     aodp: ["identity"],
@@ -9,7 +9,7 @@ const workflowSortKeys = {
     nuvs: ["length", "e", "orfs"]
 };
 
-const StyledSortDropdownButtonTitle = styled.div`
+const SortDropdownButton = styled(DropdownButton)`
     align-items: center;
     display: flex;
     width: ${props => sortWidths[props.workflow]};
@@ -37,24 +37,20 @@ const sortWidths = {
 
 export const AnalysisViewerSort = ({ workflow, onSelect, sortKey }) => {
     const options = map(workflowSortKeys[workflow], key => (
-        <DropdownItem key={key} onClick={() => onSelect(key)}>
+        <DropdownMenuItem key={key} onSelect={() => onSelect(key)}>
             {sortTitles[key]}
-        </DropdownItem>
+        </DropdownMenuItem>
     ));
 
     return (
-        <DropdownButton
-            id={`${workflow}-sort-dropdown`}
-            title={
-                <StyledSortDropdownButtonTitle workflow={workflow}>
-                    <span>
-                        <Icon name="sort" /> Sort: {sortTitles[sortKey]}
-                    </span>
-                    <Icon name="caret-down" />
-                </StyledSortDropdownButtonTitle>
-            }
-        >
-            {options}
-        </DropdownButton>
+        <Dropdown>
+            <SortDropdownButton workflow={workflow}>
+                <span>
+                    <Icon name="sort" /> Sort: {sortTitles[sortKey]}
+                </span>
+                <Icon name="caret-down" />
+            </SortDropdownButton>
+            <DropdownMenuList>{options}</DropdownMenuList>
+        </Dropdown>
     );
 };

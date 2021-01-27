@@ -1,7 +1,32 @@
+"""
+Work with subtractions in the database.
+
+Schema:
+- _id (str) the unique ID for the subtraction
+- count (int) the number of sequences in the subtraction reference (ie. FASTA entry count)
+- deleted (bool) subtractions aren't truly deleted; this flag is set to true
+- file (Object) a description of the source file for the subtraction
+  - id (str) the unique ID for the file
+  - name (str) the name of the uploaded file
+- gc (float) the GC ratio of the subtraction
+- is_host (bool) true when the subtraction is a virus host - currently always true
+- job (str) the ID of the job associated with creation of the subtraction
+- name (str) the user-defined name
+- nickname (str) the user-defined nickname for the subtraction
+- ready (bool) true when the subtraction creation workflow is complete
+- user (Object) describes the creating user
+  - id (str) the ID of the user
+
+"""
+import asyncio
+import glob
+import os
 import shutil
 
 import virtool.db.utils
 import virtool.subtractions.utils
+import virtool.tasks.task
+import virtool.tasks.db
 import virtool.utils
 
 PROJECTION = [
@@ -12,8 +37,86 @@ PROJECTION = [
     "job",
     "name",
     "nickname",
-    "user"
+    "user",
+    "has_file"
 ]
+
+
+class WriteSubtractionFASTATask(virtool.tasks.task.Task):
+
+    def __init__(self, app, task_id):
+        super().__init__(app, task_id)
+
+        self.steps = [
+            self.check_subtraction_fasta_files,
+            self.generate_fasta_files,
+        ]
+
+        self.subtractions_without_fasta = []
+
+    async def check_subtraction_fasta_files(self):
+        db = self.db
+        settings = self.app["settings"]
+
+        async for subtraction in db.subtraction.find():
+            path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
+            has_file = True
+
+            if not glob.glob(f'{path}/*.fa.gz'):
+                has_file = False
+                self.subtractions_without_fasta.append(subtraction["_id"])
+
+            await db.subtraction.find_one_and_update({"_id": subtraction["_id"]}, {
+                "$set": {
+                    "has_file": has_file
+                }
+            })
+
+        await virtool.tasks.db.update(
+            self.db,
+            self.id,
+            progress=0.2,
+        )
+
+    async def generate_fasta_files(self):
+        settings = self.app["settings"]
+
+        tracker = self.get_tracker(len(self.subtractions_without_fasta))
+
+        for subtraction in self.subtractions_without_fasta:
+            index_path = virtool.subtractions.utils.join_subtraction_index_path(settings, subtraction)
+            fasta_path = os.path.join(
+                virtool.subtractions.utils.join_subtraction_path(settings, subtraction),
+                "subtraction.fa"
+            )
+
+            command = f'bowtie2-inspect {index_path} > {fasta_path}'
+
+            proc = await asyncio.create_subprocess_shell(
+                command,
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.PIPE)
+
+            await proc.communicate()
+
+            target_path = os.path.join(
+                virtool.subtractions.utils.join_subtraction_path(settings, subtraction),
+                "subtraction.fa.gz"
+            )
+
+            await self.run_in_thread(virtool.utils.compress_file,
+                                     fasta_path,
+                                     target_path)
+
+            virtool.utils.rm(fasta_path)
+
+            await self.db.subtraction.find_one_and_update({"_id": subtraction}, {
+                    "$set": {
+                        "has_file": True
+                    }
+                })
+
+            await tracker.add(1)
 
 
 async def attach_subtraction(db, document: dict):

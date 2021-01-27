@@ -1,58 +1,94 @@
 import pytest
+from virtool.labels.models import Label
 
 
-async def test_find(spawn_client):
+async def test_find(spawn_client, test_session):
     """
     Test that a ``GET /api/labels`` return a complete list of labels.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
-    await client.db.labels.insert_many([
+
+    label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+    label_2 = Label(id=2, name="Question", color="#03fc20", description="This is a question")
+
+    await client.db.samples.insert_many([
         {
-            "_id": "test_1",
-            "name": "Bug",
-            "color": "#a83432"
+            "_id": "foo",
+            "name": "Foo",
+            "labels": [2]
         },
         {
-            "_id": "test_2",
-            "name": "Question",
-            "color": "#03fc20"
+            "_id": "bar",
+            "name": "Bar",
+            "labels": [1]
+        },
+        {
+            "_id": "baz",
+            "name": "Baz",
+            "labels": [2]
         }
     ])
+
+    async with test_session as session:
+        session.add(label_1)
+        session.add(label_2)
+        await session.commit()
 
     resp = await client.get("/api/labels")
     assert resp.status == 200
 
     assert await resp.json() == [
         {
-            "id": "test_1",
+            "id": 1,
             "name": "Bug",
-            "color": "#a83432"
+            "color": "#a83432",
+            "description": "This is a bug",
+            "count": 1
         },
         {
-            "id": "test_2",
+            "id": 2,
             "name": "Question",
-            "color": "#03fc20"
+            "color": "#03fc20",
+            "description": "This is a question",
+            "count": 2
         }
     ]
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, spawn_client, all_permissions, resp_is):
+async def test_get(error, spawn_client, all_permissions, test_session, resp_is):
     """
     Test that a ``GET /api/labels/:label_id`` return the correct label document.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    if not error:
-        await client.db.labels.insert_one({
-            "_id": "test",
-            "name": "Bug",
-            "color": "#a83432"
-        })
+    await client.db.samples.insert_many([
+        {
+            "_id": "foo",
+            "name": "Foo",
+            "labels": [2]
+        },
+        {
+            "_id": "bar",
+            "name": "Bar",
+            "labels": [1]
+        },
+        {
+            "_id": "baz",
+            "name": "Baz",
+            "labels": [2]
+        }
+    ])
 
-    resp = await client.get("/api/labels/test")
+    if not error:
+        label = Label(id=1, name="Bug", color="#a83432", description="This is a test")
+        async with test_session as session:
+            session.add(label)
+            await session.commit()
+
+    resp = await client.get("/api/labels/1")
 
     if error:
         assert await resp_is.not_found(resp)
@@ -61,24 +97,45 @@ async def test_get(error, spawn_client, all_permissions, resp_is):
     assert resp.status == 200
 
     assert await resp.json() == {
-        "id": "test",
+        "id": 1,
         "name": "Bug",
-        "color": "#a83432"
+        "color": "#a83432",
+        "description": "This is a test",
+        "count": 1
     }
 
 
 @pytest.mark.parametrize("error", [None, "400_exists", "422_color"])
-async def test_create(error, spawn_client, test_random_alphanumeric, resp_is):
+async def test_create(error, spawn_client, test_random_alphanumeric, test_session, resp_is):
     """
     Test that a label can be added to the database at ``POST /api/labels``.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
 
+    await client.db.samples.insert_many([
+        {
+            "_id": "foo",
+            "name": "Foo",
+            "labels": [2]
+        },
+        {
+            "_id": "bar",
+            "name": "Bar",
+            "labels": [1]
+        },
+        {
+            "_id": "baz",
+            "name": "Baz",
+            "labels": [2]
+        }
+    ])
+
     if error == "400_exists":
-        await client.db.labels.insert_one({
-            "name": "Bug"
-        })
+        label = Label(id=1, name="Bug")
+        async with test_session as session:
+            session.add(label)
+            await session.commit()
 
     data = {
         "name": "Bug",
@@ -101,46 +158,57 @@ async def test_create(error, spawn_client, test_random_alphanumeric, resp_is):
 
     assert resp.status == 201
 
-    expected_id = test_random_alphanumeric.history[0]
-    assert resp.headers["Location"] == "/api/labels/" + expected_id
-
     assert await resp.json() == {
-        "id": expected_id,
+        "id": 1,
         "name": "Bug",
         "color": "#a83432",
-        "description": "This is a bug"
+        "description": "This is a bug",
+        "count": 1
     }
 
 
-@pytest.mark.parametrize("error", [None, "404", "400_exists", "422_color"])
-async def test_edit(error, spawn_client, resp_is):
+@pytest.mark.parametrize("error", [None, "404", "400_exists", "422_color", "422_data"])
+async def test_edit(error, spawn_client, test_session, resp_is):
     """
         Test that a label can be edited to the database at ``PATCH /api/labels/:label_id``.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    if error != "404":
-        await client.db.labels.insert_many([
-            {
-                "_id": "test_1",
-                "name": "Bug",
-                "color": "#a83432",
-                "description": "This is a bug"
-            },
-            {
-                "_id": "test_2",
-                "name": "Question",
-                "color": "#32a85f",
-                "description": "Question from a user"
-            }
-        ])
+    await client.db.samples.insert_many([
+        {
+            "_id": "foo",
+            "name": "Foo",
+            "labels": [2]
+        },
+        {
+            "_id": "bar",
+            "name": "Bar",
+            "labels": [1]
+        },
+        {
+            "_id": "baz",
+            "name": "Baz",
+            "labels": [2]
+        }
+    ])
 
-    data = {
-        "name": "Bug",
-        "color": "#fc5203",
-        "description": "Need to be fixed"
-    }
+    if error != "404":
+        label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+        label_2 = Label(id=2, name="Question", color="#03fc20", description="Question from a user")
+        async with test_session as session:
+            session.add(label_1)
+            session.add(label_2)
+            await session.commit()
+
+    data = dict()
+
+    if error != "422_data":
+        data = {
+            "name": "Bug",
+            "color": "#fc5203",
+            "description": "Need to be fixed"
+        }
 
     if error == "400_exists":
         data["name"] = "Question"
@@ -148,7 +216,7 @@ async def test_edit(error, spawn_client, resp_is):
     if error == "422_color":
         data["color"] = "#123bzp"
 
-    resp = await client.patch("/api/labels/test_1", data=data)
+    resp = await client.patch("/api/labels/1", data=data)
 
     if error == "404":
         assert await resp_is.not_found(resp)
@@ -158,21 +226,22 @@ async def test_edit(error, spawn_client, resp_is):
         assert await resp_is.bad_request(resp, "Label name already exists")
         return
 
-    if error == "422_color":
+    if error == "422_color" or error == "422_data":
         assert resp.status == 422
         return
 
     assert resp.status == 200
     assert await resp.json() == {
-        "id": "test_1",
+        "id": 1,
         "name": "Bug",
         "color": "#fc5203",
-        "description": "Need to be fixed"
+        "description": "Need to be fixed",
+        "count": 1
     }
 
 
 @pytest.mark.parametrize("error", [None, "400"])
-async def test_remove(error, spawn_client, resp_is):
+async def test_remove(error, spawn_client, test_session, resp_is):
     """
         Test that a label can be deleted to the database at ``DELETE /api/labels/:label_id``.
 
@@ -180,14 +249,12 @@ async def test_remove(error, spawn_client, resp_is):
     client = await spawn_client(authorize=True, administrator=True)
 
     if not error:
-        await client.db.labels.insert_one({
-                "_id": "test",
-                "name": "Bug",
-                "color": "#a83432",
-                "description": "This is a bug"
-        })
+        label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+        async with test_session as session:
+            session.add(label)
+            await session.commit()
 
-    resp = await client.delete("/api/labels/test")
+    resp = await client.delete("/api/labels/1")
 
     if error:
         assert await resp_is.not_found(resp)

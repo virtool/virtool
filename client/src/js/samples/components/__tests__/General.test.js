@@ -1,5 +1,4 @@
 import { mapStateToProps, SampleDetailGeneral } from "../General";
-
 describe("<SampleDetailGeneral />", () => {
     let props;
 
@@ -13,6 +12,7 @@ describe("<SampleDetailGeneral />", () => {
             lengthRange: "41 - 76",
             locale: "Bar",
             name: "Foo",
+            notes: "Example notes",
             paired: false,
             subtraction: {
                 id: "baz",
@@ -41,6 +41,7 @@ describe("mapStateToProps()", () => {
                     host: "Malus domestica",
                     isolate: "Isolate Foo",
                     locale: "Bar",
+                    notes: "FooBar",
                     paired: false,
                     quality: {
                         gc: 31.2452,
@@ -62,6 +63,7 @@ describe("mapStateToProps()", () => {
             host: "Malus domestica",
             isolate: "Isolate Foo",
             locale: "Bar",
+            notes: "FooBar",
             name: "Foo",
             paired: false,
             gc: "31.2 %",

@@ -7,6 +7,7 @@ from tests.fixtures.groups import *
 from tests.fixtures.history import *
 from tests.fixtures.indexes import *
 from tests.fixtures.jobs import *
+from tests.fixtures.postgres import *
 from tests.fixtures.redis import *
 from tests.fixtures.references import *
 from tests.fixtures.response import *
@@ -26,4 +27,10 @@ def pytest_addoption(parser):
         "--redis-connection-string",
         action="store",
         default="redis://localhost:6379"
+    )
+
+    parser.addoption(
+        "--postgres-connection-string",
+        action="store",
+        default="postgresql+asyncpg://virtool:virtool@localhost/test"
     )

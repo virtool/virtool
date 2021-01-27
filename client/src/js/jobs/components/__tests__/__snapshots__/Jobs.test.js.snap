@@ -3,7 +3,7 @@
 exports[`<Jobs /> should render placeholder when loading 1`] = `<LoadingPlaceholder />`;
 
 exports[`<Jobs /> should render when loaded 1`] = `
-<Container>
+<Container__NarrowPaddedContainer>
   <Switch>
     <Route
       component={
@@ -31,5 +31,5 @@ exports[`<Jobs /> should render when loaded 1`] = `
       path="/jobs/:jobId"
     />
   </Switch>
-</Container>
+</Container__NarrowPaddedContainer>
 `;

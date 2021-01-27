@@ -83,6 +83,7 @@ export function* getSample(action) {
 export function* createSample(action) {
     const extraFunc = { closeModal: put(push({ state: { create: false } })) };
     yield setPending(apiCall(samplesAPI.create, action, CREATE_SAMPLE, {}, extraFunc));
+    yield put(push("/samples"));
 }
 
 export function* updateSample(action) {

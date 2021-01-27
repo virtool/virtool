@@ -1,5 +1,20 @@
 """
-Globals and utility functions for interacting with the jobs collection in the application database.
+Constants and utility functions for interacting with the jobs collection in the application database.
+
+Schema:
+- _id (str) the instance-unique job ID
+- args (Object) user- and application-defined args required by the workflow (eg. ref_id, sample_id)
+- mem (int) memory in GB allowed for the job
+- proc (int) CPU count allowed for the job
+- status (List[Object]) describes the state history of the job
+  - error (Object) describes an encountered error
+  - progress (float) the job progress between 0.0 - 1.0
+  - stage (str) the step the job is at (should be changed to step)
+  - state (Enum["running", "waiting", "complete", "error", "cancelled"]) the state the job is in
+  - timestamp (datetime) the time the status object was added
+- task (str) the workflow identifier (should be changed to workflow)
+- user (Object) describes the user that started the job
+  - id (str) the user ID
 
 """
 import virtool.jobs.runner
@@ -25,12 +40,19 @@ PROJECTION = [
 ]
 
 
-async def cancel(db, job_id):
+async def cancel(db, job_id: str) -> dict:
+    """
+    Add a cancellation status sub-document to the job identified by `job_id`.
+
+    :param db: the application database connection
+    :param job_id: the ID of the job to add a cancellation status for
+
+    """
     document = await db.jobs.find_one(job_id, ["status"])
 
     latest = document["status"][-1]
 
-    await db.jobs.update_one({"_id": job_id}, {
+    return await db.jobs.find_one_and_update({"_id": job_id}, {
         "$push": {
             "status": {
                 "state": "cancelled",
@@ -40,7 +62,7 @@ async def cancel(db, job_id):
                 "timestamp": virtool.utils.timestamp()
             }
         }
-    })
+    }, projection=virtool.jobs.db.PROJECTION)
 
 
 async def clear(db, complete=False, failed=False):

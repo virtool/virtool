@@ -16,7 +16,109 @@ import virtool.utils
 
 logger = logging.getLogger(__name__)
 
-VIRTOOL_RELEASES_URL = "https://www.virtool.ca/releases3"
+VIRTOOL_RELEASES_URL = "https://www.virtool.ca/releases4"
+
+
+class SoftwareInstallTask(virtool.tasks.task.Task):
+
+    def __init__(self, app, task_id):
+        super().__init__(app, task_id)
+
+        self.steps = [
+            self.download,
+            self.decompress,
+            self.check_tree,
+            self.copy_files,
+        ]
+
+        self.temp_path = self.temp_dir.name
+
+    async def download(self):
+        db = self.db
+        release = self.context["release"]
+
+        # Download the release from GitHub and write it to a temporary directory.
+        compressed_path = os.path.join(self.temp_path, "release.tar.gz")
+
+        progress_tracker = virtool.tasks.task.ProgressTracker(
+            db,
+            self.id,
+            release["size"],
+            factor=0.5,
+            increment=0.03,
+            initial=0
+        )
+
+        try:
+            await virtool.http.utils.download_file(
+                self.app,
+                release["download_url"],
+                compressed_path,
+                progress_handler=progress_tracker.add
+            )
+        except FileNotFoundError:
+            await virtool.tasks.db.update(db, self.id, errors=[
+                "Could not write to release download location"
+            ])
+
+    async def decompress(self):
+        await virtool.tasks.db.update(
+            self.db,
+            self.id,
+            progress=0.5,
+            step="unpack"
+        )
+
+        # Decompress the gzipped tarball to the root of the temporary directory.
+        await self.run_in_thread(
+            virtool.utils.decompress_tgz,
+            os.path.join(self.temp_path, "release.tar.gz"),
+            self.temp_path
+        )
+
+    async def check_tree(self):
+        # Start check tree step, reporting this to the DB.
+        await virtool.tasks.db.update(
+            self.db,
+            self.id,
+            progress=0.7,
+            step="verify"
+        )
+
+        # Check that the file structure matches our expectations.
+        decompressed_path = os.path.join(self.temp_path, "virtool")
+
+        good_tree = await self.run_in_thread(virtool.software.utils.check_software_files, decompressed_path)
+
+        if not good_tree:
+            await virtool.tasks.db.update(self.db, self.id, errors=[
+                "Invalid unpacked installation tree"
+            ])
+
+    async def copy_files(self):
+        # Copy the update files to the install directory.
+        await virtool.tasks.db.update(
+            self.db,
+            self.id,
+            progress=0.9,
+            step="install"
+        )
+
+        await self.run_in_thread(
+            virtool.software.utils.copy_software_files,
+            os.path.join(self.temp_path, "virtool"),
+            virtool.software.utils.INSTALL_PATH
+        )
+
+        await virtool.tasks.db.update(
+            self.db,
+            self.id,
+            progress=1
+        )
+
+        await asyncio.sleep(1.5)
+
+        self.app["events"]["restart"].set()
 
 
 async def fetch_and_update_releases(app, ignore_errors=False):
@@ -75,92 +177,6 @@ async def fetch_and_update_releases(app, ignore_errors=False):
     return releases
 
 
-async def install(app, release, task_id):
-    """
-    Installs the update described by the passed release document.
-
-    """
-    db = app["db"]
-
-    with virtool.utils.get_temp_dir() as tempdir:
-        # Download the release from GitHub and write it to a temporary directory.
-        compressed_path = os.path.join(str(tempdir), "release.tar.gz")
-
-        progress_tracker = virtool.tasks.task.ProgressTracker(
-            db,
-            task_id,
-            release["size"],
-            factor=0.5,
-            increment=0.03,
-            initial=0
-        )
-
-        try:
-            await virtool.http.utils.download_file(
-                app,
-                release["download_url"],
-                compressed_path,
-                progress_handler=progress_tracker.add
-            )
-        except FileNotFoundError:
-            await virtool.tasks.db.update(db, task_id, errors=[
-                "Could not write to release download location"
-            ])
-
-        # Start decompression step, reporting this to the DB.
-        await virtool.tasks.db.update(
-            db,
-            task_id,
-            progress=0.5,
-            step="unpack"
-        )
-
-        # Decompress the gzipped tarball to the root of the temporary directory.
-        await app["run_in_thread"](virtool.utils.decompress_tgz, compressed_path, str(tempdir))
-
-        # Start check tree step, reporting this to the DB.
-        await virtool.tasks.db.update(
-            db,
-            task_id,
-            progress=0.7,
-            step="verify"
-        )
-
-        # Check that the file structure matches our expectations.
-        decompressed_path = os.path.join(str(tempdir), "virtool")
-
-        good_tree = await app["run_in_thread"](virtool.software.utils.check_software_files, decompressed_path)
-
-        if not good_tree:
-            await virtool.tasks.db.update(db, task_id, errors=[
-                "Invalid unpacked installation tree"
-            ])
-
-        # Copy the update files to the install directory.
-        await virtool.tasks.db.update(
-            db,
-            task_id,
-            progress=0.9,
-            step="install"
-        )
-
-        await app["run_in_thread"](
-            virtool.software.utils.copy_software_files,
-            decompressed_path,
-            virtool.software.utils.INSTALL_PATH
-        )
-
-        await virtool.tasks.db.update(
-            db,
-            task_id,
-            progress=1
-        )
-
-        await asyncio.sleep(1.5)
-
-        app["events"]["restart"].set()
-
-
 async def refresh(app):
     """
     To be run in job scheduler. Automatically checks for software releases every 12 hours.
@@ -177,7 +193,7 @@ async def refresh(app):
     except asyncio.CancelledError:
         pass
 
-    logging.debug("Started HMM refresher")
+    logging.debug("Stopped software refresher")
 
 
 async def update_software_task(db, progress, step=None):

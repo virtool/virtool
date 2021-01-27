@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Badge, LoadingPlaceholder, ScrollList, ViewHeader, ViewHeaderTitle } from "../../base";
+import { Badge, LoadingPlaceholder, NarrowContainer, ScrollList, ViewHeader, ViewHeaderTitle } from "../../base";
 import { routerLocationHasState } from "../../utils/utils";
 import { findReferences, remoteReference } from "../actions";
 import { getTerm } from "../selectors";
@@ -22,7 +22,7 @@ class ReferenceList extends React.Component {
         }
 
         return (
-            <div>
+            <NarrowContainer>
                 <ViewHeader title="References">
                     <ViewHeaderTitle>
                         References <Badge>{this.props.total_count}</Badge>
@@ -41,7 +41,7 @@ class ReferenceList extends React.Component {
                 />
 
                 <AddReference />
-            </div>
+            </NarrowContainer>
         );
     }
 }

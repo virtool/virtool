@@ -1,7 +1,6 @@
 import asyncio
 import concurrent.futures
 import logging
-import os
 import signal
 import sys
 import typing
@@ -19,10 +18,10 @@ import virtool.db.migrate
 import virtool.db.mongo
 import virtool.db.utils
 import virtool.dispatcher
-import virtool.files.manager
 import virtool.hmm.db
-import virtool.jobs.runner
 import virtool.jobs.interface
+import virtool.jobs.runner
+import virtool.postgres
 import virtool.redis
 import virtool.references.db
 import virtool.resources
@@ -30,6 +29,10 @@ import virtool.routes
 import virtool.sentry
 import virtool.settings.db
 import virtool.software.db
+import virtool.subtractions.db
+import virtool.subtractions.utils
+import virtool.tasks.db
+import virtool.tasks.utils
 import virtool.utils
 import virtool.version
 
@@ -66,6 +69,12 @@ async def init_check_db(app: aiohttp.web_app.Application):
 
     logger.info("Checking database")
     await virtool.db.migrate.migrate(app)
+
+    # Make sure the indexes collection exists before later trying to set an compound index on it.
+    try:
+        await db.motor_client.create_collection("indexes")
+    except pymongo.errors.CollectionInvalid:
+        pass
 
     logger.info("Checking database indexes")
     await db.analyses.create_index("sample.id")
@@ -179,42 +188,6 @@ async def init_executors(app: aiohttp.web.Application):
     app["process_executor"] = process_executor
 
 
-async def init_file_manager(app: aiohttp.web_app.Application):
-    """
-    An application ``on_startup`` callback that initializes a Virtool :class:`virtool.file_manager.Manager` object and
-    attaches it to the ``app`` object.
-
-    :param app: the app object
-    :type app: :class:`aiohttp.aiohttp.web.Application`
-
-    """
-    if app["settings"]["no_file_manager"]:
-        return logger.info("Running without file manager")
-
-    files_path = os.path.join(app["settings"]["data_path"], "files")
-    watch_path = app["settings"]["watch_path"]
-
-    if not os.path.exists(files_path):
-        logger.fatal(f"Files path path does not exist: '{files_path}'")
-        sys.exit(1)
-
-    if not os.path.exists(watch_path):
-        logger.fatal(f"Watch path does not exist: '{watch_path}'")
-        sys.exit(1)
-
-    app["file_manager"] = virtool.files.manager.Manager(
-        app["executor"],
-        app["db"],
-        files_path,
-        watch_path,
-        clean_interval=20
-    )
-
-    scheduler = get_scheduler_from_app(app)
-
-    await scheduler.spawn(app["file_manager"].run())
-
-
 async def init_job_interface(app: aiohttp.web_app.Application):
     """
     An application `on_startup` callback that initializes a Virtool :class:`virtool.job_manager.Manager` object and
@@ -255,21 +228,31 @@ async def init_paths(app: aiohttp.web_app.Application):
         logger.info("Checking files")
         virtool.utils.ensure_data_dir(app["settings"]["data_path"])
 
-        try:
-            os.mkdir(app["settings"]["watch_path"])
-        except (FileExistsError, KeyError):
-            pass
+
+async def init_postgres(app: aiohttp.web_app.Application):
+    """
+     An application ``on_startup`` callback that attaches an instance of :class:`~AsyncConnection`
+     to the Virtool ``app`` object.
+
+     :param app: the app object
+
+     """
+    postgres_connection_string = app["config"]["postgres_connection_string"]
+
+    logger.info("Connecting to PostgreSQL")
+
+    app["postgres"] = await virtool.postgres.connect(postgres_connection_string)
 
 
 async def init_redis(app: typing.Union[dict, aiohttp.web_app.Application]):
-    redis_connection_strong = app["config"].get("redis_connection_string")
+    redis_connection_string = app["config"].get("redis_connection_string")
 
-    if not redis_connection_strong:
+    if not redis_connection_string:
         logger.debug("Redis not configured")
         return
 
     logger.info("Connecting to Redis")
-    app["redis"] = await virtool.redis.connect(redis_connection_strong)
+    app["redis"] = await virtool.redis.connect(redis_connection_string)
 
 
 async def init_listen_for_changes(app: aiohttp.web_app.Application):
@@ -359,3 +342,30 @@ async def init_version(app: typing.Union[dict, aiohttp.web.Application]):
     logger.info(f"Mode: {app['mode']}")
 
     app["version"] = version
+
+
+async def init_tasks(app: aiohttp.web.Application):
+    if app["config"].get("no_check_db"):
+        return logger.info("Skipping subtraction FASTA files checks")
+
+    db = app["db"]
+    scheduler = get_scheduler_from_app(app)
+
+    logger.info("Checking subtraction FASTA files")
+
+    subtraction_task = await virtool.tasks.db.register(db, "write_subtraction_fasta")
+    write_subtraction_fasta_task = virtool.subtractions.db.WriteSubtractionFASTATask(app, subtraction_task["id"])
+
+    await scheduler.spawn(write_subtraction_fasta_task.run())
+
+    logger.info("Checking index JSON files")
+    index_task = await virtool.tasks.db.register(db, "create_index_json")
+    create_index_json_task = virtool.references.db.CreateIndexJSONTask(app, index_task["id"])
+
+    await scheduler.spawn(create_index_json_task.run())
+
+    reference_task = await virtool.tasks.db.register(db, "delete_reference", context={"user_id": "virtool"})
+    delete_reference_task = virtool.references.db.DeleteReferenceTask(app, reference_task["id"])
+
+    await scheduler.spawn(virtool.tasks.utils.spawn_periodically(scheduler, delete_reference_task, 3600))
+

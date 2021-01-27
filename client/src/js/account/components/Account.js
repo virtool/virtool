@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 
-import { TabLink, Tabs, ViewHeader, ViewHeaderTitle, WideContainer } from "../../base";
+import { NarrowContainer, TabLink, Tabs, ViewHeader, ViewHeaderTitle, WideContainer } from "../../base";
 import { getAccount } from "../actions";
 import { getAccountId } from "../selectors";
 import AccountProfile from "./Profile";
@@ -22,11 +22,13 @@ export const Account = ({ userId, onGet }) => {
                 <TabLink to="/account/api">API</TabLink>
             </Tabs>
 
-            <Switch>
-                <Redirect from="/account" to="/account/profile" exact />
-                <Route path="/account/profile" component={AccountProfile} />
-                <Route path="/account/api" component={APIKeys} />
-            </Switch>
+            <NarrowContainer>
+                <Switch>
+                    <Redirect from="/account" to="/account/profile" exact />
+                    <Route path="/account/profile" component={AccountProfile} />
+                    <Route path="/account/api" component={APIKeys} />
+                </Switch>
+            </NarrowContainer>
         </WideContainer>
     );
 };

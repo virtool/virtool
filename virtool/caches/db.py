@@ -1,10 +1,30 @@
-from typing import Union
+"""
+Work with caches in the database. Caches are bundles of trimmed read and QC data generated during analyses.
 
-import aiohttp.web
+Schema:
+- _id (str) the ID of the cache
+- created_at (datetime) when the cache record was created
+- files (Array[Object]) describes trimmed FASTQ files
+  - name (str) the name of the trimmed read file on disk
+  - size (int) the size of the file
+- hash (str) a hash that uniquely identifies the trim - calculated from the trim parameters used to create the cache
+- missing (bool) set to true if the cache cannot be found on disk
+- paired (bool) set to true if the cache represents paired data
+- parameters (Object) the parameters used to trim the data
+- program (str) the name of the program used to trim the data (eg. skewer-0.2.2)
+- quality (JSON) the FastQC output converted to a JSON object
+- ready (bool) set to true when the cache has be successfully created
+- sample (Object) describes the sample the cache is dervied from
+  - id (str) the sample ID
+
+"""
+import asyncio
 import hashlib
 import json
 import os
+from typing import Optional
 
+import aiohttp.web
 import pymongo.errors
 
 import virtool.caches
@@ -34,7 +54,7 @@ def calculate_cache_hash(parameters: dict) -> str:
     return hashlib.sha1(string.encode()).hexdigest()
 
 
-async def find(db, sample_id: str, program: str, parameters: dict) -> Union[dict, None]:
+async def find(db, sample_id: str, program: str, parameters: dict) -> Optional[dict]:
     """
     Find a cache matching the passed `sample_id`, `program` name and version, and set of trimming `parameters`.
 
@@ -53,6 +73,32 @@ async def find(db, sample_id: str, program: str, parameters: dict) -> Union[dict
         "program": program,
         "sample.id": sample_id
     })
+
+    return virtool.utils.base_processor(document)
+
+
+async def find_and_wait(db, sample_id: str, program: str, parameters: dict) -> Optional[dict]:
+    """
+    Find a cache matching the passed `sample_id`, `program` name and version, and set of trimming `parameters`. Wait
+    for the cache to be ready if it is still being created.
+
+    If no matching cache exists, `None` will be returned.
+
+    :param db: the application database interface
+    :param sample_id: the id of the parent sample
+    :param program: the program and version used to create the cache
+    :param parameters: the parameters used for the trim
+    :return: a cache document
+
+    """
+    document = await find(db, sample_id, program, parameters)
+
+    if document:
+        cache_id = document["id"]
+
+        while document["ready"] is False:
+            await asyncio.sleep(2)
+            document = virtool.utils.base_processor(await db.caches.find_one(cache_id))
 
     return virtool.utils.base_processor(document)
 

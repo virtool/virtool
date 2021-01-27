@@ -6,7 +6,6 @@ import { getFontWeight } from "../app/theme";
 import { Attribution, Badge } from "./index";
 
 export const ViewHeaderAttribution = styled(Attribution)`
-    color: ${props => props.theme.color.darkgrey};
     font-size: ${props => props.theme.fontSize.md};
     margin-top: 5px;
 `;

@@ -1,0 +1,75 @@
+name: Virtool CI
+
+on:
+  push:
+    branches:
+      - release/5.0.0
+      - feature/**
+  pull_request:
+    branches:
+      - release/5.0.0
+      - feature/**
+
+jobs:
+  server:
+
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:6.0
+      mongo:
+        image: mongo:4.4
+      postgres:
+        image: postgres:13.1
+        env:
+          POSTGRES_USER: virtool
+          POSTGRES_PASSWORD: virtool
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    container:
+      image: virtool/external-tools:0.1.2
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: test
+        run: |
+          pip install -qr requirements.txt
+          pytest  -x --db-connection-string mongodb://mongo:27017 --redis-connection-string redis://redis:6379 --postgres-connection-string postgresql+asyncpg://virtool:virtool@postgres/test --cov --cov-report xml
+
+      - name: Run codacy-coverage-reporter
+        if: ${{ github.event_name == 'push' }}
+        uses: codacy/codacy-coverage-reporter-action@master
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: $GITHUB_WORKSPACE/coverage.xml
+
+
+  client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14'
+      - name: test
+        run: |
+          cd client
+          npm i
+          npx jest --coverage
+
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: node:14-stretch
+    steps:
+      - uses: actions/checkout@v2
+      - name: client
+        run: |
+          cd client
+          npm i
+          npx webpack --config webpack.production.config.babel.js
+

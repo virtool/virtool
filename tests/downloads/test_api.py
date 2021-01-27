@@ -60,3 +60,31 @@ async def test_all(get, missing, spawn_client):
         assert resp.status == 404
     else:
         assert resp.status == 200
+
+
+@pytest.mark.parametrize("error", [None, "404"])
+async def test_download_subtraction(error, tmpdir, spawn_client, resp_is):
+    client = await spawn_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    tmpdir.mkdir("subtractions").mkdir("foo").join("subtraction.fa.gz").write("test")
+
+    subtraction = {
+        "_id": "foo",
+        "name": "Foo",
+        "has_file": True
+    }
+
+    if error == "404":
+        subtraction["has_file"] = False
+
+    await client.db.subtraction.insert_one(subtraction)
+
+    resp = await client.get("/download/subtraction/foo")
+
+    if error == "404":
+        assert resp.status == 404
+        return
+
+    assert resp.status == 200

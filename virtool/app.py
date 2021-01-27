@@ -13,7 +13,6 @@ import virtool.db.migrate
 import virtool.db.utils
 import virtool.dispatcher
 import virtool.errors
-import virtool.files.manager
 import virtool.hmm.db
 import virtool.http.accept
 import virtool.http.auth
@@ -108,8 +107,10 @@ def create_app(config):
         virtool.startup.init_client_path,
         virtool.startup.init_http_client,
         virtool.startup.init_paths,
+        virtool.startup.init_postgres,
         virtool.startup.init_routes,
         virtool.startup.init_executors,
+        virtool.startup.init_tasks,
         virtool.startup.init_redis,
         virtool.startup.init_listen_for_changes,
         virtool.startup.init_sentry,

@@ -1,397 +1,355 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<CreateSample> should display error when form submitted with no name 1`] = `
-<Modal
-  label="Create Sample"
-  onExited={[Function]}
-  onHide={[MockFunction]}
-  show={true}
-  size="lg"
->
-  <ModalHeader>
-    Create Sample
-  </ModalHeader>
+<div>
+  <ViewHeader
+    title="Create Sample"
+  >
+    <ViewHeader__ViewHeaderTitle>
+      Create Sample
+    </ViewHeader__ViewHeaderTitle>
+  </ViewHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__ModalBody>
-      <Create__CreateSampleFields>
-        <InputGroup>
-          <Input__InputLabel>
-            Sample Name
-          </Input__InputLabel>
-          <Input__InputContainer
-            align="right"
+    <Create__CreateSampleFields>
+      <InputGroup>
+        <Input__InputLabel>
+          Sample Name
+        </Input__InputLabel>
+        <Input__InputContainer
+          align="right"
+        >
+          <Input
+            autocomplete={false}
+            error="Required Field"
+            name="name"
+            onChange={[Function]}
+            value=""
+          />
+          <Input__InputIcon
+            disabled={false}
+            name="magic"
+            onClick={[Function]}
+          />
+        </Input__InputContainer>
+        <Input__InputError>
+          Required Field
+        </Input__InputError>
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Locale
+        </Input__InputLabel>
+        <Input
+          name="locale"
+          onChange={[Function]}
+          value="Timbuktu"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Isolate
+        </Input__InputLabel>
+        <Input
+          name="isolate"
+          onChange={[Function]}
+          value="Isolate"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Default Subtraction
+        </Input__InputLabel>
+        <Select
+          name="subtractionId"
+          onChange={[Function]}
+          value="sub_bar"
+        >
+          <option
+            key="sub_foo"
+            value="sub_foo"
           >
-            <Input
-              autocomplete={false}
-              error="Required Field"
-              name="name"
-              onChange={[Function]}
-              value=""
-            />
-            <Input__InputIcon
-              disabled={false}
-              name="magic"
-              onClick={[Function]}
-            />
-          </Input__InputContainer>
-          <Input__InputError>
-            Required Field
-          </Input__InputError>
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Locale
-          </Input__InputLabel>
-          <Input
-            name="locale"
-            onChange={[Function]}
-            value="Timbuktu"
-          />
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Isolate
-          </Input__InputLabel>
-          <Input
-            name="isolate"
-            onChange={[Function]}
-            value="Isolate"
-          />
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Default Subtraction
-          </Input__InputLabel>
-          <Select
-            name="subtractionId"
-            onChange={[Function]}
+            Sub Foo
+          </option>
+          <option
+            key="sub_bar"
             value="sub_bar"
           >
-            <option
-              key="sub_foo"
-              value="sub_foo"
-            >
-              Sub Foo
-            </option>
-            <option
-              key="sub_bar"
-              value="sub_bar"
-            >
-              Sub Bar
-            </option>
-          </Select>
-          <Input__InputError />
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Host
-          </Input__InputLabel>
-          <Input
-            name="host"
-            onChange={[Function]}
-            value="Host"
-          />
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Pairedness
-          </Input__InputLabel>
-          <Input
-            readOnly={true}
-            value="Paired"
-          />
-        </InputGroup>
-      </Create__CreateSampleFields>
-      <LibraryTypeSelector
-        libraryType="normal"
-        onSelect={[Function]}
-      />
-      <ReadSelector
-        error=""
-        files={Array []}
-        onSelect={[Function]}
-        selected={
-          Array [
-            "abc123-Foo.fq.gz",
-            "789xyz-Bar.fq.gz",
-          ]
-        }
-      />
-    </Modal__ModalBody>
-    <Modal__ModalFooter>
-      <SaveButton />
-    </Modal__ModalFooter>
+            Sub Bar
+          </option>
+        </Select>
+        <Input__InputError />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Host
+        </Input__InputLabel>
+        <Input
+          name="host"
+          onChange={[Function]}
+          value="Host"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Pairedness
+        </Input__InputLabel>
+        <Input
+          readOnly={true}
+          value="Paired"
+        />
+      </InputGroup>
+    </Create__CreateSampleFields>
+    <LibraryTypeSelector
+      libraryType="normal"
+      onSelect={[Function]}
+    />
+    <ReadSelector
+      error=""
+      files={Array []}
+      onSelect={[Function]}
+      selected={
+        Array [
+          "abc123-Foo.fq.gz",
+          "789xyz-Bar.fq.gz",
+        ]
+      }
+    />
+    <SaveButton />
   </form>
-</Modal>
+</div>
 `;
 
 exports[`<CreateSample> should display error when form submitted with no subtractions available 1`] = `
-<Modal
-  label="Create Sample"
-  onExited={[Function]}
-  onHide={[MockFunction]}
-  show={true}
-  size="lg"
->
-  <ModalHeader>
-    Create Sample
-  </ModalHeader>
+<div>
+  <ViewHeader
+    title="Create Sample"
+  >
+    <ViewHeader__ViewHeaderTitle>
+      Create Sample
+    </ViewHeader__ViewHeaderTitle>
+  </ViewHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__ModalBody>
-      <Create__CreateSampleFields>
-        <InputGroup>
-          <Input__InputLabel>
-            Sample Name
-          </Input__InputLabel>
-          <Input__InputContainer
-            align="right"
-          >
-            <Input
-              autocomplete={false}
-              error=""
-              name="name"
-              onChange={[Function]}
-              value="Sample 1"
-            />
-            <Input__InputIcon
-              disabled={false}
-              name="magic"
-              onClick={[Function]}
-            />
-          </Input__InputContainer>
-          <Input__InputError />
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Locale
-          </Input__InputLabel>
+    <Create__CreateSampleFields>
+      <InputGroup>
+        <Input__InputLabel>
+          Sample Name
+        </Input__InputLabel>
+        <Input__InputContainer
+          align="right"
+        >
           <Input
-            name="locale"
+            autocomplete={false}
+            error=""
+            name="name"
             onChange={[Function]}
-            value="Timbuktu"
+            value="Sample 1"
           />
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Isolate
-          </Input__InputLabel>
-          <Input
-            name="isolate"
-            onChange={[Function]}
-            value="Isolate"
+          <Input__InputIcon
+            disabled={false}
+            name="magic"
+            onClick={[Function]}
           />
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Default Subtraction
-          </Input__InputLabel>
-          <Select
-            name="subtractionId"
-            onChange={[Function]}
-            value="sub_bar"
-          />
-          <Input__InputError>
-            At least one subtraction must be added to Virtool before samples can be analyzed.
-          </Input__InputError>
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Host
-          </Input__InputLabel>
-          <Input
-            name="host"
-            onChange={[Function]}
-            value="Host"
-          />
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Pairedness
-          </Input__InputLabel>
-          <Input
-            readOnly={true}
-            value="Unpaired"
-          />
-        </InputGroup>
-      </Create__CreateSampleFields>
-      <LibraryTypeSelector
-        libraryType="normal"
-        onSelect={[Function]}
-      />
-      <ReadSelector
-        error=""
-        files={Array []}
-        onSelect={[Function]}
-        selected={
-          Array [
-            "foo",
-          ]
-        }
-      />
-    </Modal__ModalBody>
-    <Modal__ModalFooter>
-      <SaveButton />
-    </Modal__ModalFooter>
+        </Input__InputContainer>
+        <Input__InputError />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Locale
+        </Input__InputLabel>
+        <Input
+          name="locale"
+          onChange={[Function]}
+          value="Timbuktu"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Isolate
+        </Input__InputLabel>
+        <Input
+          name="isolate"
+          onChange={[Function]}
+          value="Isolate"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Default Subtraction
+        </Input__InputLabel>
+        <Select
+          name="subtractionId"
+          onChange={[Function]}
+          value="sub_bar"
+        />
+        <Input__InputError>
+          At least one subtraction must be added to Virtool before samples can be analyzed.
+        </Input__InputError>
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Host
+        </Input__InputLabel>
+        <Input
+          name="host"
+          onChange={[Function]}
+          value="Host"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Pairedness
+        </Input__InputLabel>
+        <Input
+          readOnly={true}
+          value="Unpaired"
+        />
+      </InputGroup>
+    </Create__CreateSampleFields>
+    <LibraryTypeSelector
+      libraryType="normal"
+      onSelect={[Function]}
+    />
+    <ReadSelector
+      error=""
+      files={Array []}
+      onSelect={[Function]}
+      selected={
+        Array [
+          "foo",
+        ]
+      }
+    />
+    <SaveButton />
   </form>
-</Modal>
+</div>
 `;
 
 exports[`<CreateSample> should render 1`] = `
-<Modal
-  label="Create Sample"
-  onExited={[Function]}
-  onHide={[MockFunction]}
-  show={true}
-  size="lg"
->
-  <ModalHeader>
-    Create Sample
-  </ModalHeader>
+<div>
+  <ViewHeader
+    title="Create Sample"
+  >
+    <ViewHeader__ViewHeaderTitle>
+      Create Sample
+    </ViewHeader__ViewHeaderTitle>
+  </ViewHeader>
   <form
     onSubmit={[Function]}
   >
-    <Modal__ModalBody>
-      <Create__CreateSampleFields>
-        <InputGroup>
-          <Input__InputLabel>
-            Sample Name
-          </Input__InputLabel>
-          <Input__InputContainer
-            align="right"
-          >
-            <Input
-              autocomplete={false}
-              error=""
-              name="name"
-              onChange={[Function]}
-              value=""
-            />
-            <Input__InputIcon
-              disabled={true}
-              name="magic"
-              onClick={[Function]}
-            />
-          </Input__InputContainer>
-          <Input__InputError />
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Locale
-          </Input__InputLabel>
+    <Create__CreateSampleFields>
+      <InputGroup>
+        <Input__InputLabel>
+          Sample Name
+        </Input__InputLabel>
+        <Input__InputContainer
+          align="right"
+        >
           <Input
-            name="locale"
+            autocomplete={false}
+            error=""
+            name="name"
             onChange={[Function]}
             value=""
           />
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Isolate
-          </Input__InputLabel>
-          <Input
-            name="isolate"
-            onChange={[Function]}
-            value=""
+          <Input__InputIcon
+            disabled={true}
+            name="magic"
+            onClick={[Function]}
           />
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Default Subtraction
-          </Input__InputLabel>
-          <Select
-            name="subtractionId"
-            onChange={[Function]}
+        </Input__InputContainer>
+        <Input__InputError />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Locale
+        </Input__InputLabel>
+        <Input
+          name="locale"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Isolate
+        </Input__InputLabel>
+        <Input
+          name="isolate"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Default Subtraction
+        </Input__InputLabel>
+        <Select
+          name="subtractionId"
+          onChange={[Function]}
+          value="sub_foo"
+        >
+          <option
+            key="sub_foo"
             value="sub_foo"
           >
-            <option
-              key="sub_foo"
-              value="sub_foo"
-            >
-              Sub Foo
-            </option>
-            <option
-              key="sub_bar"
-              value="sub_bar"
-            >
-              Sub Bar
-            </option>
-          </Select>
-          <Input__InputError />
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Host
-          </Input__InputLabel>
-          <Input
-            name="host"
-            onChange={[Function]}
-            value=""
-          />
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Pairedness
-          </Input__InputLabel>
-          <Input
-            readOnly={true}
-            value="Unpaired"
-          />
-        </InputGroup>
-      </Create__CreateSampleFields>
-      <LibraryTypeSelector
-        libraryType="normal"
-        onSelect={[Function]}
-      />
-      <ReadSelector
-        error=""
-        files={Array []}
-        onSelect={[Function]}
-        selected={Array []}
-      />
-    </Modal__ModalBody>
-    <Modal__ModalFooter>
-      <SaveButton />
-    </Modal__ModalFooter>
+            Sub Foo
+          </option>
+          <option
+            key="sub_bar"
+            value="sub_bar"
+          >
+            Sub Bar
+          </option>
+        </Select>
+        <Input__InputError />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Host
+        </Input__InputLabel>
+        <Input
+          name="host"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Pairedness
+        </Input__InputLabel>
+        <Input
+          readOnly={true}
+          value="Unpaired"
+        />
+      </InputGroup>
+    </Create__CreateSampleFields>
+    <LibraryTypeSelector
+      libraryType="normal"
+      onSelect={[Function]}
+    />
+    <ReadSelector
+      error=""
+      files={Array []}
+      onSelect={[Function]}
+      selected={Array []}
+    />
+    <SaveButton />
   </form>
-</Modal>
+</div>
 `;
 
 exports[`<CreateSample> should render LoadingPlaceholder when [this.props.readyReads=null] 1`] = `
-<Modal
-  label="Create Sample"
-  onHide={[MockFunction]}
-  show={true}
-  size="lg"
->
-  <ModalHeader>
-    Create Sample
-  </ModalHeader>
-  <Modal__ModalBody>
-    <LoadingPlaceholder
-      margin="36px"
-    />
-  </Modal__ModalBody>
-</Modal>
+<LoadingPlaceholder
+  margin="36px"
+/>
 `;
 
 exports[`<CreateSample> should render LoadingPlaceholder when [this.props.subtractions=null] 1`] = `
-<Modal
-  label="Create Sample"
-  onHide={[MockFunction]}
-  show={true}
-  size="lg"
->
-  <ModalHeader>
-    Create Sample
-  </ModalHeader>
-  <Modal__ModalBody>
-    <LoadingPlaceholder
-      margin="36px"
-    />
-  </Modal__ModalBody>
-</Modal>
+<LoadingPlaceholder
+  margin="36px"
+/>
 `;
