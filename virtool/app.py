@@ -82,9 +82,9 @@ def create_app(config):
 
     """
     middlewares = [
+        virtool.http.csp.middleware,
         virtool.http.auth.middleware,
         virtool.http.accept.middleware,
-        virtool.http.csp.middleware,
         virtool.http.errors.middleware,
         virtool.http.proxy.middleware,
         virtool.http.query.middleware
