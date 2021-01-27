@@ -51,3 +51,10 @@ async def check_version(engine: AsyncEngine):
 async def create_tables(engine):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+
+def to_dict(self):
+    return {c.name: getattr(self, c.name, None) for c in self.__table__.columns}
+
+
+Base.to_dict = to_dict

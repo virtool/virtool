@@ -206,6 +206,14 @@ snapshots['test_get[uvloop-True-None] 1'] = {
         }
     ],
     'id': 'test',
+    'labels': [
+        {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug'
+        }
+    ],
     'name': 'Test',
     'ready': True
 }
@@ -222,6 +230,14 @@ snapshots['test_get[uvloop-False-None] 1'] = {
         }
     ],
     'id': 'test',
+    'labels': [
+        {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug'
+        }
+    ],
     'name': 'Test',
     'ready': False
 }
@@ -402,7 +418,12 @@ snapshots['test_find[uvloop-None-None-None-None-d_range0-meta0] 1'] = {
             'id': 'cb400e6d',
             'isolate': '',
             'labels': [
-                'Question'
+                {
+                    'color': '#0d321d',
+                    'description': 'This is a question',
+                    'id': 3,
+                    'name': 'Question'
+                }
             ],
             'name': '16SPP044',
             'nuvs': False,
@@ -418,8 +439,18 @@ snapshots['test_find[uvloop-None-None-None-None-d_range0-meta0] 1'] = {
             'id': 'beb1eb10',
             'isolate': 'Thing',
             'labels': [
-                'Bug',
-                'Info'
+                {
+                    'color': '#a83432',
+                    'description': 'This is a bug',
+                    'id': 1,
+                    'name': 'Bug'
+                },
+                {
+                    'color': '#03fc20',
+                    'description': 'This is a info',
+                    'id': 2,
+                    'name': 'Info'
+                }
             ],
             'name': '16GVP042',
             'nuvs': False,
@@ -435,7 +466,12 @@ snapshots['test_find[uvloop-None-None-None-None-d_range0-meta0] 1'] = {
             'id': '72bb8b31',
             'isolate': 'Test',
             'labels': [
-                'Bug'
+                {
+                    'color': '#a83432',
+                    'description': 'This is a bug',
+                    'id': 1,
+                    'name': 'Bug'
+                }
             ],
             'name': '16GVP043',
             'nuvs': False,
@@ -455,43 +491,10 @@ snapshots['test_find[uvloop-None-None-None-None-d_range0-meta0] 1'] = {
 
 snapshots['test_find[uvloop-None-None-None-label_filter1-d_range1-meta1] 1'] = {
     'documents': [
-        {
-            'created_at': '2015-10-06T22:00:00Z',
-            'host': '',
-            'id': 'cb400e6d',
-            'isolate': '',
-            'labels': [
-                'Question'
-            ],
-            'name': '16SPP044',
-            'nuvs': False,
-            'pathoscope': False,
-            'ready': True,
-            'user': {
-                'id': 'fred'
-            }
-        },
-        {
-            'created_at': '2015-10-06T21:00:00Z',
-            'host': '',
-            'id': 'beb1eb10',
-            'isolate': 'Thing',
-            'labels': [
-                'Bug',
-                'Info'
-            ],
-            'name': '16GVP042',
-            'nuvs': False,
-            'pathoscope': False,
-            'ready': True,
-            'user': {
-                'id': 'bob'
-            }
-        }
     ],
-    'found_count': 2,
+    'found_count': 0,
     'page': 1,
-    'page_count': 1,
+    'page_count': 0,
     'per_page': 25,
     'total_count': 3
 }
@@ -504,7 +507,12 @@ snapshots['test_find[uvloop-None-2-1-None-d_range2-meta2] 1'] = {
             'id': 'cb400e6d',
             'isolate': '',
             'labels': [
-                'Question'
+                {
+                    'color': '#0d321d',
+                    'description': 'This is a question',
+                    'id': 3,
+                    'name': 'Question'
+                }
             ],
             'name': '16SPP044',
             'nuvs': False,
@@ -520,8 +528,18 @@ snapshots['test_find[uvloop-None-2-1-None-d_range2-meta2] 1'] = {
             'id': 'beb1eb10',
             'isolate': 'Thing',
             'labels': [
-                'Bug',
-                'Info'
+                {
+                    'color': '#a83432',
+                    'description': 'This is a bug',
+                    'id': 1,
+                    'name': 'Bug'
+                },
+                {
+                    'color': '#03fc20',
+                    'description': 'This is a info',
+                    'id': 2,
+                    'name': 'Info'
+                }
             ],
             'name': '16GVP042',
             'nuvs': False,
@@ -547,7 +565,12 @@ snapshots['test_find[uvloop-None-2-2-None-d_range3-meta3] 1'] = {
             'id': '72bb8b31',
             'isolate': 'Test',
             'labels': [
-                'Bug'
+                {
+                    'color': '#a83432',
+                    'description': 'This is a bug',
+                    'id': 1,
+                    'name': 'Bug'
+                }
             ],
             'name': '16GVP043',
             'nuvs': False,
@@ -573,8 +596,18 @@ snapshots['test_find[uvloop-gv-None-None-None-d_range4-meta4] 1'] = {
             'id': 'beb1eb10',
             'isolate': 'Thing',
             'labels': [
-                'Bug',
-                'Info'
+                {
+                    'color': '#a83432',
+                    'description': 'This is a bug',
+                    'id': 1,
+                    'name': 'Bug'
+                },
+                {
+                    'color': '#03fc20',
+                    'description': 'This is a info',
+                    'id': 2,
+                    'name': 'Info'
+                }
             ],
             'name': '16GVP042',
             'nuvs': False,
@@ -590,7 +623,12 @@ snapshots['test_find[uvloop-gv-None-None-None-d_range4-meta4] 1'] = {
             'id': '72bb8b31',
             'isolate': 'Test',
             'labels': [
-                'Bug'
+                {
+                    'color': '#a83432',
+                    'description': 'This is a bug',
+                    'id': 1,
+                    'name': 'Bug'
+                }
             ],
             'name': '16GVP043',
             'nuvs': False,
@@ -616,7 +654,12 @@ snapshots['test_find[uvloop-sp-None-None-None-d_range5-meta5] 1'] = {
             'id': 'cb400e6d',
             'isolate': '',
             'labels': [
-                'Question'
+                {
+                    'color': '#0d321d',
+                    'description': 'This is a question',
+                    'id': 3,
+                    'name': 'Question'
+                }
             ],
             'name': '16SPP044',
             'nuvs': False,
@@ -642,7 +685,12 @@ snapshots['test_find[uvloop-fred-None-None-None-d_range6-meta6] 1'] = {
             'id': 'cb400e6d',
             'isolate': '',
             'labels': [
-                'Question'
+                {
+                    'color': '#0d321d',
+                    'description': 'This is a question',
+                    'id': 3,
+                    'name': 'Question'
+                }
             ],
             'name': '16SPP044',
             'nuvs': False,
@@ -658,7 +706,12 @@ snapshots['test_find[uvloop-fred-None-None-None-d_range6-meta6] 1'] = {
             'id': '72bb8b31',
             'isolate': 'Test',
             'labels': [
-                'Bug'
+                {
+                    'color': '#a83432',
+                    'description': 'This is a bug',
+                    'id': 1,
+                    'name': 'Bug'
+                }
             ],
             'name': '16GVP043',
             'nuvs': False,

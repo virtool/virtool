@@ -3,6 +3,7 @@ import pytest
 
 import virtool.samples.db
 import virtool.samples.utils
+from virtool.labels.models import Label
 
 
 class TestCalculateWorkflowTags:
@@ -276,3 +277,31 @@ class TestRemoveSamples:
         assert os.listdir(str(samples_dir)) == []
 
         assert not await dbi.samples.count_documents({})
+
+
+async def test_attach_labels(spawn_client, test_session):
+    client = await spawn_client(authorize=True)
+
+    label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+    label_2 = Label(id=2, name="Question", color="#03fc20", description="This is a question")
+
+    async with test_session as session:
+        session.add_all([label_1, label_2])
+        await session.commit()
+
+    document = {
+        "id": "foo",
+        "name": "Foo",
+        "labels": [1, 2]
+    }
+
+    result = await virtool.samples.db.attach_labels(client.app, document)
+
+    assert result == {
+        "id": "foo",
+        "name": "Foo",
+        "labels": [
+            {"id": 1, "name": "Bug", "color": "#a83432", "description": "This is a bug"},
+            {"id": 2, "name": "Question", "color": "#03fc20", "description": "This is a question"}
+        ]
+    }
