@@ -69,8 +69,8 @@ async def check_labels(pg: AsyncSession, labels: List[int]) -> List[int]:
     :return: a list containing any label IDs given in the request that do not exist
     """
     async with pg as session:
-        query = await session.execute(select(Label).filter(Label.id.in_(labels)))
-        results = {label.id for label in query.scalars().all()}
+        query = await session.execute(select(Label.id).filter(Label.id.in_(labels)))
+        results = {label for label in query.scalars().all()}
 
     return [label for label in labels if label not in results]
 
