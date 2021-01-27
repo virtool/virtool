@@ -1,25 +1,25 @@
 import asyncio.tasks
 from copy import deepcopy
+
 from cerberus import Validator
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import virtool.analyses.utils
 import virtool.analyses.db
+import virtool.analyses.utils
 import virtool.api.utils
-import virtool.files.db
-import virtool.jobs.db
-import virtool.samples.db
 import virtool.db.utils
 import virtool.errors
+import virtool.files.db
 import virtool.http.routes
+import virtool.jobs.db
+import virtool.samples.db
 import virtool.samples.utils
 import virtool.subtractions.db
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
     json_response, no_content, not_found
-from virtool.labels.models import Label
+from virtool.samples.utils import check_labels, bad_labels_response
 
 QUERY_SCHEMA = {
     "find": {
@@ -221,10 +221,14 @@ async def get(req):
     "notes": {
         "type": "string",
         "default": ''
+    },
+    "labels": {
+        "type": "list"
     }
 })
 async def create(req):
     db = req.app["db"]
+    pg = req.app["postgres"]
     data = req["data"]
     user_id = req["client"].user_id
     settings = req.app["settings"]
@@ -233,6 +237,12 @@ async def create(req):
 
     if name_error_message:
         return bad_request(name_error_message)
+
+    if "labels" in data:
+        non_existent_labels = await check_labels(AsyncSession(pg), data["labels"])
+
+        if non_existent_labels:
+            return bad_labels_response(non_existent_labels)
 
     # Make sure a subtraction host was submitted and it exists.
     if not await db.subtraction.count_documents({"_id": data["subtraction"], "is_host": True}):
@@ -286,6 +296,7 @@ async def create(req):
         "user": {
             "id": user_id
         },
+        "labels": data.get("labels", []),
         "paired": len(data["files"]) == 2
     })
 
@@ -353,6 +364,7 @@ async def edit(req):
 
     """
     db = req.app["db"]
+    pg = req.app["postgres"]
     data = req["data"]
 
     sample_id = req.match_info["sample_id"]
@@ -366,14 +378,10 @@ async def edit(req):
             return bad_request(message)
 
     if "labels" in data:
-        non_existent_labels = list()
-        for label_id in data["labels"]:
-            async with AsyncSession(req.app["postgres"]) as session:
-                if (await session.execute(select(Label).filter_by(id=label_id))).first() is None:
-                    non_existent_labels.append(str(label_id))
+        non_existent_labels = await check_labels(AsyncSession(pg), data["labels"])
 
         if non_existent_labels:
-            return bad_request(f"Labels do not exist: {', '.join(non_existent_labels)}")
+            return bad_labels_response(non_existent_labels)
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": data

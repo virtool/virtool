@@ -384,6 +384,30 @@ class TestCreate:
 
         assert await resp_is.bad_request(resp, "File does not exist")
 
+    @pytest.mark.parametrize("exists", [True, False])
+    async def test_label_dne(self, exists, spawn_client, test_session, resp_is):
+        client = await spawn_client(authorize=True, permissions=["create_sample"])
+
+        client.app["settings"]["sample_unique_names"] = True
+
+        if exists:
+            label = Label(id=1, name="Orange", color="#FFA500", description="An orange")
+            async with test_session as session:
+                session.add(label)
+                await session.commit()
+
+        resp = await client.post("/api/samples", {
+            "name": "Foobar",
+            "files": ["test.fq"],
+            "subtraction": "apple",
+            "labels": [1]
+        })
+
+        assert resp.status == 400
+
+        if not exists:
+            assert await resp_is.bad_request(resp, "Labels do not exist: 1")
+
 
 @pytest.mark.parametrize("delete_result,resp_is_attr", [(1, "no_content"), (0, "not_found")])
 async def test_remove(delete_result, resp_is_attr, mocker, spawn_client, resp_is, create_delete_result):

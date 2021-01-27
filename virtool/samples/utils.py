@@ -1,4 +1,12 @@
 import os
+from typing import List
+
+from requests import Response
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from virtool.api.response import bad_request
+from virtool.labels.models import Label
 
 PATHOSCOPE_TASK_NAMES = [
     "pathoscope_bowtie",
@@ -52,6 +60,21 @@ def calculate_workflow_tags(analyses: list) -> dict:
     }
 
 
+async def check_labels(pg: AsyncSession, labels: List[int]) -> List[int]:
+    """"
+    Check for existence of label IDs given in sample creation request
+
+    :param pg: PostgreSQL database connection object
+    :param labels: list of label IDs given in the sample creation request
+    :return: a list containing any label IDs given in the request that do not exist
+    """
+    async with pg as session:
+        query = await session.execute(select(Label.id).filter(Label.id.in_(labels)))
+        results = {label for label in query.scalars().all()}
+
+    return [label for label in labels if label not in results]
+
+
 def get_sample_rights(sample: dict, client):
     if client.administrator or sample["user"]["id"] == client.user_id:
         return True, True
@@ -66,6 +89,16 @@ def get_sample_rights(sample: dict, client):
     write = sample["all_write"] or (is_group_member and sample["group_write"])
 
     return read, write
+
+
+def bad_labels_response(labels: List[int]) -> Response:
+    """
+    Creates a response that indicates that some label IDs do not exist
+
+    :param labels: A list of label IDs that do not exist
+    :return: A `bad_request()` response
+    """
+    return bad_request(f"Labels do not exist: {', '.join(str(label) for label in labels)}")
 
 
 def join_legacy_read_path(sample_path: str, suffix: int) -> str:
