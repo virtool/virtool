@@ -114,43 +114,6 @@ async def attach_labels(app, document):
     }
 
 
-async def attempt_file_replacement(app, sample_id, user_id):
-    db = app["db"]
-
-    files = await refresh_replacements(db, sample_id)
-
-    if not all([file.get("replacement") for file in files]):
-        return None
-
-    update_job = await virtool.db.utils.get_one_field(db.samples, "update_job", sample_id)
-
-    if update_job and await virtool.db.utils.id_exists(db.jobs, update_job["id"]):
-        return
-
-    logger.info(f"Starting file replacement for sample {sample_id}")
-
-    task_args = {
-        "sample_id": sample_id
-    }
-
-    job = await virtool.jobs.db.create(
-        db,
-        "update_sample",
-        task_args,
-        user_id
-    )
-
-    await app["jobs"].enqueue(job["_id"])
-
-    await db.samples.update_one({"_id": sample_id}, {
-        "$set": {
-            "update_job": {
-                "id": job["_id"]
-            }
-        }
-    })
-
-
 async def check_name(db, settings, name, sample_id=None):
     if settings["sample_unique_names"]:
         query = {
