@@ -3,7 +3,7 @@ from typing import List
 
 from requests import Response
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.api.response import bad_request
 from virtool.labels.models import Label
