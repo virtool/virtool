@@ -42,7 +42,7 @@ import virtool.samples.db
 import virtool.types
 import virtool.utils
 
-PROJECTION = [
+PROJECTION = (
     "_id",
     "workflow",
     "created_at",
@@ -54,7 +54,7 @@ PROJECTION = [
     "subtraction",
     "updated_at",
     "user"
-]
+)
 
 
 class BLAST:
