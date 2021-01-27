@@ -5,7 +5,7 @@ from sqlalchemy import Column, String, Boolean, Integer, DateTime, Enum
 from virtool.postgres import Base
 
 
-class ResourceType(enum.Enum):
+class UploadType(enum.Enum):
     reference = "reference"
     reads = "reads"
     subtraction = "subtraction"
@@ -23,7 +23,7 @@ class Upload(Base):
     removed = Column(Boolean)
     reserved = Column(Boolean)
     size = Column(Integer)
-    type = Column(Enum(ResourceType))
+    type = Column(Enum(UploadType))
     user = Column(String)
     uploaded_at = Column(DateTime)
 
