@@ -15,7 +15,7 @@ def apply_projection(document, projection):
     :rtype: dict
 
     """
-    if isinstance(projection, list):
+    if isinstance(projection, (list, tuple)):
         if "_id" not in projection:
             projection.append("_id")
 

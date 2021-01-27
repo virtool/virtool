@@ -1,14 +1,21 @@
+"""
+API request handlers for account endpoints.
+
+These endpoints modify and return data about the user account associated with the session or API key making the
+requests.
+
+"""
 import aiohttp.web
 
-import virtool.analyses.utils
-import virtool.http.utils
-import virtool.users.checks
 import virtool.account.db
-import virtool.users.sessions
-import virtool.users.db
+import virtool.analyses.utils
 import virtool.db.utils
 import virtool.http.auth
 import virtool.http.routes
+import virtool.http.utils
+import virtool.users.checks
+import virtool.users.db
+import virtool.users.sessions
 import virtool.users.utils
 import virtool.utils
 import virtool.validators
@@ -143,7 +150,11 @@ async def update_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.get("/api/account/keys")
-async def get_api_keys(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def list_api_keys(req: aiohttp.web.Request) -> aiohttp.web.Response:
+    """
+    List API keys associated with the authenticated user account.
+
+    """
     db = req.app["db"]
 
     user_id = req["client"].user_id
@@ -155,6 +166,10 @@ async def get_api_keys(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 @routes.get("/api/account/keys/{key_id}")
 async def get_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
+    """
+    Get the complete representation of the API key identified by the `key_id`.
+
+    """
     db = req.app["db"]
     user_id = req["client"].user_id
     key_id = req.match_info["key_id"]
@@ -252,6 +267,10 @@ async def update_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 @routes.delete("/api/account/keys/{key_id}")
 async def remove_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
+    """
+    Remove an API key by its ID.
+
+    """
     db = req.app["db"]
     user_id = req["client"].user_id
     key_id = req.match_info["key_id"]
@@ -270,7 +289,7 @@ async def remove_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
 @routes.delete("/api/account/keys")
 async def remove_all_api_keys(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
-    Remove all API keys for the session account.
+    Remove all API keys for the account associated with the requesting session.
 
     """
     await req.app["db"].keys.delete_many({"user.id": req["client"].user_id})

@@ -1,23 +1,15 @@
 """
 Work with the current user account and its API keys.
 
-API Key Schema:
-- _id (str) the hashed API key - never returned
-- id (str) the API key ID
-- name (str) user-defined name for the API key
-- groups (Array[str]) list of groups the API key user is a member of
-- permissions (Object) user-defined permissions possessed by the key - permission names are keys with boolean values
-- created_at (datetime) when the API key was created)
-- user (Object) describes the parent user
-    id (str) the user ID
-
 """
+from typing import Dict, Any
+
 import virtool.account.utils
 import virtool.users.db
 import virtool.users.utils
 import virtool.utils
 
-PROJECTION = [
+PROJECTION = (
     "_id",
     "administrator",
     "email",
@@ -27,10 +19,10 @@ PROJECTION = [
     "permissions",
     "primary_group",
     "settings"
-]
+)
 
 
-def compose_password_update(password: str) -> dict:
+def compose_password_update(password: str) -> Dict[str, Any]:
     """
     Compose an update dict for self-changing a users account password. This will disable forced reset and won't
     invalidate current sessions, unlike a password change by an administrator.
@@ -39,8 +31,6 @@ def compose_password_update(password: str) -> dict:
     :return: a password update
 
     """
-    # Update the user document. Remove all sessions so those clients will have to authenticate with the new
-    # password.
     return {
         "password": virtool.users.utils.hash_password(password),
         "invalidate_sessions": False,
@@ -49,7 +39,7 @@ def compose_password_update(password: str) -> dict:
     }
 
 
-async def get(db, user_id: str) -> dict:
+async def get(db, user_id: str) -> Dict[str, Any]:
     """
     Get appropriately projected user document by id.
 
@@ -87,7 +77,7 @@ async def get_alternate_id(db, name: str) -> str:
         suffix += 1
 
 
-async def create_api_key(db, name: str, permissions: dict, user_id: str) -> dict:
+async def create_api_key(db, name: str, permissions: Dict[str, bool], user_id: str) -> Dict[str, Any]:
     """
     Create a new API key for the account with the given `user_id`.
 
