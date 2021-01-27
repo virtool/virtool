@@ -1,6 +1,6 @@
 """
-Functions and data to use for formatting Pathoscope and NuVs analysis document. Formatted documents are destined for
-API responses or CSV/Excel formatted file downloads.
+Functions and data to use for formatting Pathoscope and NuVs analysis document. Formatted documents
+are destined for API responses or CSV/Excel formatted file downloads.
 
 """
 import asyncio
@@ -9,6 +9,7 @@ import io
 import json
 import statistics
 from collections import defaultdict
+from typing import Any, Dict, List
 
 import aiofiles
 import openpyxl.styles
@@ -33,7 +34,7 @@ CSV_HEADERS = (
 )
 
 
-def calculate_median_depths(document: dict) -> dict:
+def calculate_median_depths(document: Dict[str, Any]) -> Dict[str, int]:
     """
     Calculate the median depth for all hits (sequences) in a Pathoscope result document.
 
@@ -51,8 +52,8 @@ def calculate_median_depths(document: dict) -> dict:
 
 async def create_pathoscope_coverage_cache(db, document: dict) -> dict:
     """
-    Create a pathoscope coverage cache document. This saves the costly recalculation of coverage chart coordinates from
-    raw coverage arrays each time the analysis is retrieved.
+    Create a pathoscope coverage cache document. This saves the costly recalculation of coverage
+    chart coordinates from raw coverage arrays each time the analysis is retrieved.
 
     :param db: the application database object
     :param document: the analysis document to create cache for
@@ -69,7 +70,10 @@ async def create_pathoscope_coverage_cache(db, document: dict) -> dict:
                 sequence_id = sequence["id"]
 
                 if sequence.get("align"):
-                    cache[otu_id][isolate_id][sequence_id] = virtool.analyses.utils.transform_coverage_to_coordinates(sequence["align"])
+                    cache[otu_id][isolate_id][
+                        sequence_id] = virtool.analyses.utils.transform_coverage_to_coordinates(
+                        sequence["align"]
+                    )
 
     document = {
         "analysis": {
@@ -83,14 +87,16 @@ async def create_pathoscope_coverage_cache(db, document: dict) -> dict:
     return document
 
 
-async def ensure_pathoscope_coverage_cache(db, document: dict):
+async def ensure_pathoscope_coverage_cache(db, document: Dict[str, Any]):
     """
-    Attach coverage values to the passed document. Either retrieve an existing coverage cache document or generate a one
-    if one doesn't exist.
+    Attach coverage values to the passed document. Either retrieve an existing coverage cache
+    document or generate a one if one doesn't exist.
+
+    Modifies the document in-place.
+
 
     :param db: the application database object
     :param document: the analysis document
-    :return: the analysis document with coverage attached
 
     """
     cache = await db.coverage.find_one({"analysis.id": document["_id"]})
@@ -109,10 +115,11 @@ async def ensure_pathoscope_coverage_cache(db, document: dict):
                     sequence["align"] = cache["cache"][otu_id][isolate_id][sequence_id]
 
 
-async def load_results(settings: dict, document: dict) -> dict:
+async def load_results(settings: Dict[str, Any], document: Dict[str, Any]) -> dict:
     """
-    Load the analysis results. Hide the alternative loading from a `results.json` file. These files are only
-    generated if the analysis data would have exceeded the MongoDB size limit (16mb).
+    Load the analysis results. Hide the alternative loading from a `results.json` file.
+    These files are only generated if the analysis data would have exceeded the MongoDB size
+    limit (16mb).
 
     The document is returned unmodified if loading from file is not required.
 
@@ -138,9 +145,10 @@ async def load_results(settings: dict, document: dict) -> dict:
     return document
 
 
-async def format_aodp(app: virtool.types.App, document):
+async def format_aodp(app: virtool.types.App, document: Dict[str, Any]):
     """
-    Format an AODP analysis document by retrieving the detected OTUs and incorporating them into the returned document.
+    Format an AODP analysis document by retrieving the detected OTUs and incorporating them into
+    the returned document.
 
     :param app: the application object
     :param document: the document to format
@@ -168,10 +176,11 @@ async def format_aodp(app: virtool.types.App, document):
     }
 
 
-async def format_pathoscope(app: virtool.types.App, document: dict) -> dict:
+async def format_pathoscope(app: virtool.types.App, document: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Format a Pathoscope analysis document by retrieving the detected OTUs and incorporating them into the returned
-    document. Calculate metrics for different organizational levels: OTU, isolate, sequence.
+    Format a Pathoscope analysis document by retrieving the detected OTUs and incorporating them
+    into the returned document. Calculate metrics for different organizational levels: OTU,
+    isolate, and sequence.
 
     :param app: the application object
     :param document: the document to format
@@ -196,7 +205,8 @@ async def format_pathoscope(app: virtool.types.App, document: dict) -> dict:
         max_ref_length = 0
 
         for isolate in otu_document["isolates"]:
-            max_ref_length = max(max_ref_length, max([len(s["sequence"]) for s in isolate["sequences"]]))
+            max_ref_length = max(max_ref_length,
+                                 max([len(s["sequence"]) for s in isolate["sequences"]]))
 
         otu = {
             "id": otu_id,
@@ -223,7 +233,8 @@ async def format_pathoscope(app: virtool.types.App, document: dict) -> dict:
 
     for otu in document["results"]:
         for isolate in list(otu["isolates"]):
-            if not any((key in sequence for sequence in isolate["sequences"]) for key in ("pi", "final")):
+            if not any((key in sequence for sequence in isolate["sequences"]) for key in
+                       ("pi", "final")):
                 otu["isolates"].remove(isolate)
                 continue
 
@@ -248,7 +259,7 @@ async def format_pathoscope(app: virtool.types.App, document: dict) -> dict:
     return document
 
 
-async def format_nuvs(app: virtool.types.App, document: dict) -> dict:
+async def format_nuvs(app: virtool.types.App, document: Dict[str, Any]) -> Dict[str, Any]:
     """
     Format a NuVs analysis document by attaching the HMM annotation data to the results.
 
@@ -276,7 +287,7 @@ async def format_nuvs(app: virtool.types.App, document: dict) -> dict:
     return document
 
 
-async def format_analysis_to_excel(app: virtool.types.App, document: dict) -> bytes:
+async def format_analysis_to_excel(app: virtool.types.App, document: Dict[str, Any]) -> bytes:
     """
     Convert a pathoscope analysis document to byte-encoded Excel format for download.
 
@@ -332,7 +343,7 @@ async def format_analysis_to_excel(app: virtool.types.App, document: dict) -> by
     return output.getvalue()
 
 
-async def format_analysis_to_csv(app: virtool.types.App, document: dict) -> str:
+async def format_analysis_to_csv(app: virtool.types.App, document: Dict[str, Any]) -> str:
     """
     Convert a pathoscope analysis document to CSV format for download.
 
@@ -369,7 +380,7 @@ async def format_analysis_to_csv(app: virtool.types.App, document: dict) -> str:
     return output.getvalue()
 
 
-async def format_analysis(app: virtool.types.App, document: dict) -> dict:
+async def format_analysis(app: virtool.types.App, document: Dict[str, Any]) -> Dict[str, any]:
     """
     Format an analysis document to be returned by the API.
 
@@ -393,10 +404,10 @@ async def format_analysis(app: virtool.types.App, document: dict) -> dict:
     raise ValueError("Could not determine analysis workflow")
 
 
-async def gather_patched_otus(app: virtool.types.App, results: list) -> dict:
+async def gather_patched_otus(app: virtool.types.App, results: List[dict]) -> Dict[str, dict]:
     """
-    Gather patched OTUs for each result item. Only fetch each id-version combination once. Make database requests
-    concurrently to save time.
+    Gather patched OTUs for each result item. Only fetch each id-version combination once. Make
+    database requests concurrently to save time.
 
     :param app: the application object
     :param results: the results field from a pathoscope analysis document

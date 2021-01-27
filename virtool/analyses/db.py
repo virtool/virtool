@@ -1,35 +1,10 @@
 """
 Work with analyses in the database.
 
-Schema:
-- _id (str) the ID for the analysis
-- cache (Object) describes the cache associated with the sample
-  - id (str) the ID of the cache
-- created_at (datetime) when the analyses document was first created
-- index (Object) describes the index analyzed against
-  - id (str) the index ID
-- job (Object) describes the workflow job
-  - id (str) the job ID
-- read_count (int)
-  - the number of reads involved in the analysis
-- ready (bool) true when the analysis workflow has completed
-- reference (Object) described the reference analyzed against
-  - id (str) the ID of the reference
-- results (JSON) the result payload of the workflow
-- sample (Object) describes the sample analyzed
-  - id (str) the sample ID
-- subtracted_count (int) number of reads subtracted (should be in results)
-- subtraction (Object) describes the subtraction
-  - id (str) the subtraction ID
-- updated_at (datetime) when the analysis was last modified - used for browser caching
-- user (Object) describes the creating user
-  - id (str) the user ID
-- workflow (Enum["aodp", "nuvs", "pathoscope") the workflow
-
 """
 import asyncio
 import os
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Any, Dict
 
 import virtool.analyses.utils
 import virtool.bio
@@ -58,6 +33,10 @@ PROJECTION = (
 
 
 class BLAST:
+    """
+    A class for representing a long-lived remote BLAST search.
+
+    """
 
     def __init__(self, db, settings: dict, analysis_id: str, sequence_index: int, rid: str):
         self.db = db
@@ -85,7 +64,12 @@ class BLAST:
         await asyncio.sleep(self.interval)
         self.interval += 5
 
-    async def update(self, ready: bool, result: Optional[dict], error: Optional[str]) -> Tuple[dict, dict]:
+    async def update(
+            self,
+            ready: bool,
+            result: Optional[dict],
+            error: Optional[str]
+    ) -> Tuple[dict, dict]:
         """
         Update the BLAST data. Returns the BLAST data and the complete analysis document.
 
@@ -124,7 +108,14 @@ class BLAST:
         return data, document
 
 
-async def create(app: virtool.types.App, sample_id: str, ref_id: str, subtraction_id: str, user_id: str, workflow: str) -> dict:
+async def create(
+        app: virtool.types.App,
+        sample_id: str,
+        ref_id: str,
+        subtraction_id: str,
+        user_id: str,
+        workflow: str
+) -> Dict[str, Any]:
     """
     Creates a new analysis. Ensures that a valid subtraction host was the submitted. Configures read and write
     permissions on the sample document and assigns it a creator username based on the requesting connection.
@@ -242,12 +233,13 @@ async def update_nuvs_blast(
         "result": result
     }
 
-    document = await db.analyses.find_one_and_update({"_id": analysis_id, "results.index": sequence_index}, {
-        "$set": {
-            "results.$.blast": data,
-            "updated_at": virtool.utils.timestamp()
-        }
-    })
+    document = await db.analyses.find_one_and_update(
+        {"_id": analysis_id, "results.index": sequence_index}, {
+            "$set": {
+                "results.$.blast": data,
+                "updated_at": virtool.utils.timestamp()
+            }
+        })
 
     return data, document
 
