@@ -1,6 +1,15 @@
-from sqlalchemy import Column, String, Boolean, Integer, DateTime
+import enum
+
+from sqlalchemy import Column, String, Boolean, Integer, DateTime, Enum
 
 from virtool.postgres import Base
+
+
+class ResourceType(enum.Enum):
+    reference = "reference"
+    reads = "reads"
+    subtraction = "subtraction"
+    null = None
 
 
 class Upload(Base):
@@ -8,14 +17,14 @@ class Upload(Base):
 
     id = Column(Integer, primary_key=True)
     created_at = Column(DateTime)
-    field = Column(String)
-    name = Column(String, unique=True)
+    name = Column(String)
     name_on_disk = Column(String, unique=True)
     ready = Column(Boolean)
     removed = Column(Boolean)
     reserved = Column(Boolean)
     size = Column(Integer)
-    type = Column(String)
+    type = Column(Enum(ResourceType))
+    user = Column(String)
     uploaded_at = Column(DateTime)
 
     def __repr__(self):
