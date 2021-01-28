@@ -59,7 +59,6 @@ export default function samplesReducer(state = initialState, action) {
 
         case GET_SAMPLE.SUCCEEDED:
             return { ...state, detail: action.data };
-
         case UPDATE_SAMPLE.SUCCEEDED:
             return { ...state, detail: { ...state.detail, ...action.data } };
 

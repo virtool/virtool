@@ -20,6 +20,7 @@ export const Samples = () => (
             <Route path="/samples" component={SamplesList} exact />
             <Route path="/samples/files" component={SampleFileManager} exact />
             <Route path="/samples/settings" component={SamplesSettings} />
+            <Route path="/samples/labels" component={LabelEdit} exact />
             <Route path="/samples/create" component={CreateSample} />
             <Route path="/samples/:sampleId" component={SampleDetail} />
         </Switch>
