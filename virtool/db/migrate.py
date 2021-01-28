@@ -16,8 +16,14 @@ logger = logging.getLogger(__name__)
 
 
 async def migrate(app: virtool.types.App):
-    db = app["db"]
+    """
+    Update all collections on application start.
 
+    Used for applying MongoDB schema and file storage changes.
+
+    :param app: the application object
+
+    """
     funcs = (
         migrate_analyses,
         migrate_caches,
@@ -47,6 +53,12 @@ async def migrate_sessions(app: virtool.types.App):
 
 
 async def migrate_status(app: virtool.types.App):
+    """
+    Automatically update the status collection.
+
+    :param app: the application object
+
+    """
     db = app["db"]
     server_version = app["version"]
 

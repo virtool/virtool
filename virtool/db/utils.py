@@ -1,18 +1,20 @@
+"""
+Utilities for working with MongoDB.
+
+"""
+from typing import Any, Dict, List, Optional, Sequence, Union
+
 import virtool.utils
+from virtool.types import Projection
 
 
-def apply_projection(document, projection):
+def apply_projection(document: Dict, projection: Projection):
     """
     Apply a Mongo-style projection to a document and return it.
 
     :param document: the document to project
-    :type document: dict
-
     :param projection: the projection to apply
-    :type projection: Union[dict,list]
-
     :return: the projected document
-    :rtype: dict
 
     """
     if isinstance(projection, (list, tuple)):
@@ -36,19 +38,36 @@ def apply_projection(document, projection):
     return {key: document[key] for key in document if projection.get(key, False)}
 
 
-async def get_new_id(collection, excluded=None):
+async def delete_unready(collection):
     """
-    Returns a new, unique, id that can be used for inserting a new document. Will not return any id that is included
-    in ``excluded``.
+    Delete documents in the `collection` where the `ready` field is set to `false`.
+
+    :param collection: the collection to modify
+
+    """
+    await collection.delete_many({"ready": False})
+
+
+async def determine_mongo_version(db):
+    """
+    Return the MongoDB server version of a passed database object (`db`).
+
+    :param db: a database object
+    :return: the MongoDB server version
+
+    """
+    server_info = await db.motor_client.client.server_info()
+    return server_info["version"]
+
+
+async def get_new_id(collection, excluded: Optional[Sequence[str]] = None) -> str:
+    """
+    Returns a new, unique, id that can be used for inserting a new document. Will not return any id
+    that is included in ``excluded``.
 
     :param collection: the Mongo collection to get a new _id for
-    :type collection: :class:`motor.motor_asyncio.AsyncIOMotorCollection`
-
     :param excluded: a list of ids to exclude from the search
-    :type excluded: Union[list, set]
-
-    :return: an id unique to the collection
-    :rtype: str
+    :return: an ID unique within the collection
 
     """
     excluded = set(excluded or set())
@@ -58,7 +77,16 @@ async def get_new_id(collection, excluded=None):
     return virtool.utils.random_alphanumeric(length=8, excluded=excluded)
 
 
-async def get_one_field(collection, field, query):
+async def get_one_field(collection, field: str, query: Union[str, Dict]) -> Any:
+    """
+    Get the value for a single `field` from a single document matching the `query`.
+
+    :param collection: the database collection to search
+    :param field: the field to return
+    :param query: the document matching query
+    :return: the field
+
+    """
     projected = await collection.find_one(query, [field])
 
     if projected is None:
@@ -67,50 +95,38 @@ async def get_one_field(collection, field, query):
     return projected.get(field)
 
 
-async def get_non_existent_ids(collection, id_list):
+async def get_non_existent_ids(collection, id_list: Sequence[str]):
+    """
+    Return the IDs that are in `id_list`, but don't exist in the specified `collection`.
+
+    :param collection: the database collection to check
+    :param id_list: a list of document IDs to check for existence
+    :return: a list of non-existent IDs
+
+    """
     existing_group_ids = await collection.distinct("_id", {"_id": {"$in": id_list}})
     return set(id_list) - set(existing_group_ids)
 
 
-async def id_exists(collection, _id):
+async def id_exists(collection, id_: str) -> bool:
     """
     Check if the document id exists in the collection.
 
     :param collection: the Mongo collection to check the _id against
-    :type collection: :class:`motor.motor_asyncio.AsyncIOMotorCollection`
-
-    :param _id: the _id to check for
-    :type _id: str
-
-    :return: ``bool`` indicating if the id exists
-    :rtype: bool
+    :param id_: the _id to check for
+    :return: does the id exist
 
     """
-    return bool(await collection.count_documents({"_id": _id}))
+    return bool(await collection.count_documents({"_id": id_}))
 
 
-async def ids_exist(collection, id_list):
+async def ids_exist(collection, id_list: List[str]) -> bool:
     """
-    Check if all of the ids passed in ``id_list`` exist in the collection.
+    Check if all of the document IDs in ``id_list`` exist in the collection.
 
     :param collection: the Mongo collection to check ``id_list`` against
-    :type collection: :class:`motor.motor_asyncio.AsyncIOMotorCollection`
-
     :param id_list: the ids to check for
-    :type id_list: str
-
-    :return: ``bool`` indicating if the ids exist
-    :rtype: bool
+    :return: do the IDs exist
 
     """
     return await collection.count_documents({"_id": {"$in": id_list}}) == len(id_list)
-
-
-async def determine_mongo_version(db):
-
-    server_info = await db.motor_client.client.server_info()
-    return server_info["version"]
-
-
-async def delete_unready(collection):
-    await collection.delete_many({"ready": False})
