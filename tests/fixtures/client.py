@@ -9,14 +9,12 @@ class VTClient:
 
     def __init__(
             self,
-            loop,
             test_client,
             db_connection_string,
             postgres_connection_string,
             db_name,
             create_user
     ):
-        self._loop = loop
         self._test_client = test_client
         self._create_user = create_user
         self._db_connection_string = db_connection_string
@@ -113,16 +111,14 @@ def spawn_client(
         request,
         aiohttp_client,
         test_motor,
+        test_db_connection_string,
         test_db_name,
         pg_session,
         create_user
 ):
-    db_connection_string = request.config.getoption("db_connection_string")
-
     client = VTClient(
-        loop,
         aiohttp_client,
-        db_connection_string,
+        test_db_connection_string,
         pg_connection_string,
         test_db_name,
         create_user
