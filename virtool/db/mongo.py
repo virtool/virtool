@@ -17,7 +17,7 @@ logger = logging.getLogger("mongo")
 async def connect(
         config: Dict[str, Any],
         enqueue_change: Callable[[str, str, List[str]], Awaitable[None]]
-) -> virtool.db.core.DB:
+):
     """
     Connect to a MongoDB server and return an application database object.
 
