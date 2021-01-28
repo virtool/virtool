@@ -64,7 +64,7 @@ async def pg_engine(
 
 
 @pytest.fixture
-async def test_session(pg_engine: AsyncEngine) -> AsyncSession:
+async def pg_session(pg_engine: AsyncEngine) -> AsyncSession:
     """
     Return an :class:`AsyncSession` object backed by a test database that can be used for testing
     calls to SQLAlchemy.

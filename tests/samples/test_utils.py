@@ -14,10 +14,10 @@ def labels():
 
 
 @pytest.mark.parametrize("exists", [0, 1, 2])
-async def test_check_labels(exists, labels, spawn_client, test_session):
+async def test_check_labels(exists, labels, spawn_client, pg_session):
     ids = [label.id for label in labels]
 
-    async with test_session as session:
+    async with pg_session as session:
         session.add_all(labels[:exists])
 
         await session.commit()

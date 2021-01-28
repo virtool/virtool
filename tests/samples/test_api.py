@@ -67,7 +67,7 @@ class MockJobInterface:
     })
 ])
 async def test_find(find, per_page, page, label_filter, d_range, meta, snapshot, spawn_client, static_time,
-                    test_session):
+                    pg_session):
     client = await spawn_client(authorize=True)
 
     time_1 = arrow.get(static_time.datetime).datetime
@@ -78,7 +78,7 @@ async def test_find(find, per_page, page, label_filter, d_range, meta, snapshot,
     label_2 = Label(id=2, name="Info", color="#03fc20", description="This is a info")
     label_3 = Label(id=3, name="Question", color="#0d321d", description="This is a question")
 
-    async with test_session as session:
+    async with pg_session as session:
         session.add_all([label_1, label_2, label_3])
         await session.commit()
 
@@ -161,13 +161,13 @@ async def test_find(find, per_page, page, label_filter, d_range, meta, snapshot,
 
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("ready", [True, False])
-async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static_time, test_session):
+async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static_time, pg_session):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
     client = await spawn_client(authorize=True)
 
     label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
-    async with test_session as session:
+    async with pg_session as session:
         session.add(label_1)
         await session.commit()
 
@@ -385,14 +385,14 @@ class TestCreate:
         assert await resp_is.bad_request(resp, "File does not exist")
 
     @pytest.mark.parametrize("exists", [True, False])
-    async def test_label_dne(self, exists, spawn_client, test_session, resp_is):
+    async def test_label_dne(self, exists, spawn_client, pg_session, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         client.app["settings"]["sample_unique_names"] = True
 
         if exists:
             label = Label(id=1, name="Orange", color="#FFA500", description="An orange")
-            async with test_session as session:
+            async with pg_session as session:
                 session.add(label)
                 await session.commit()
 
