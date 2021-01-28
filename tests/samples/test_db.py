@@ -295,7 +295,7 @@ async def test_attach_labels(spawn_client, pg_session):
         "labels": [1, 2]
     }
 
-    result = await virtool.samples.db.attach_labels(client.app, document)
+    result = await virtool.samples.db.attach_labels(client.app["postgres"], document)
 
     assert result == {
         "id": "foo",
