@@ -243,6 +243,10 @@ async def create(req):
         if non_existent_labels:
             return bad_labels_response(non_existent_labels)
 
+        data = await virtool.samples.db.attach_labels(pg, data)
+    else:
+        data["labels"] = []
+
     # Make sure a subtraction host was submitted and it exists.
     if not await db.subtraction.count_documents({"_id": data["subtraction"], "is_host": True}):
         return bad_request("Subtraction does not exist")
@@ -295,7 +299,6 @@ async def create(req):
         "user": {
             "id": user_id
         },
-        "labels": data.get("labels", []),
         "paired": len(data["files"]) == 2
     })
 

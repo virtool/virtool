@@ -111,10 +111,10 @@ async def attach_labels(pg: AsyncEngine, document: dict) -> dict:
     """
     labels = list()
     if document.get("labels"):
-        for label_id in document["labels"]:
-            async with AsyncSession(pg) as session:
-                label = (await session.execute(select(Label).filter_by(id=label_id))).scalar()
+        async with AsyncSession(pg) as session:
+            results = await session.execute(select(Label).filter(Label.id.in_(document["labels"])))
 
+        for label in results.scalars():
             labels.append(label.to_dict())
 
     return {
