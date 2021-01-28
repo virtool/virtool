@@ -61,7 +61,6 @@ export const updateMember = (list, action) => {
     if (!list) {
         return list;
     }
-
     return map(list, item => {
         if (item.id === action.data.id) {
             return action.data;

@@ -47,6 +47,7 @@ const SampleDetail = ({ canModify, detail, error, history, match, onGetSample })
 
     let editIcon;
     let removeIcon;
+    let labelIcon;
     let rightsTabLink;
 
     if (canModify) {
@@ -78,6 +79,7 @@ const SampleDetail = ({ canModify, detail, error, history, match, onGetSample })
                     {detail.name}
                     <ViewHeaderIcons>
                         {editIcon}
+                        {labelIcon}
                         {removeIcon}
                     </ViewHeaderIcons>
                 </ViewHeaderTitle>
