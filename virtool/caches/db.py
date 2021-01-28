@@ -15,7 +15,7 @@ import virtool.caches
 import virtool.utils
 from virtool.types import App
 
-PROJECTION = [
+PROJECTION = (
     "_id",
     "created_at",
     "files",
@@ -23,7 +23,7 @@ PROJECTION = [
     "program",
     "ready",
     "sample"
-]
+)
 
 
 def calculate_cache_hash(parameters: Dict[str, Any]) -> str:

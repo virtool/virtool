@@ -8,6 +8,7 @@ from multidict import MultiDictProxy
 
 import virtool.users.utils
 import virtool.utils
+from virtool.types import Projection
 
 
 def compose_exists_query(field: str) -> Dict[str, Dict[str, bool]]:
@@ -57,7 +58,7 @@ async def paginate(
         db_query: Union[Dict, MultiDictProxy[str]],
         url_query: Union[Dict, MultiDictProxy[str]],
         sort: Optional[Union[List[Tuple[str, int]], str]] = None,
-        projection: Optional[Union[Dict[str, bool], List[str]]] = None,
+        projection: Optional[Projection] = None,
         base_query: Optional[Dict] = None,
         reverse: bool = False
 ):
