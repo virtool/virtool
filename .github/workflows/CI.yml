@@ -12,7 +12,6 @@ on:
 
 jobs:
   server:
-
     runs-on: ubuntu-latest
     services:
       redis:
@@ -31,7 +30,7 @@ jobs:
           --health-retries 5
 
     container:
-      image: virtool/external-tools:0.1.2
+      image: virtool/external-tools:0.2.0
 
     steps:
       - uses: actions/checkout@v2
