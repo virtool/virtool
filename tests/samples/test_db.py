@@ -279,7 +279,7 @@ class TestRemoveSamples:
         assert not await dbi.samples.count_documents({})
 
 
-async def test_attach_labels(pg_session, pg_engine):
+async def test_attach_labels(spawn_client, pg_session, pg_engine):
     label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
     label_2 = Label(id=2, name="Question", color="#03fc20", description="This is a question")
 
