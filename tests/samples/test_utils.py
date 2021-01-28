@@ -22,7 +22,7 @@ async def test_check_labels(exists, labels, spawn_client, pg_session):
 
         await session.commit()
 
-    bad_labels = await check_labels(session, ids)
+    bad_labels = await check_labels(client.app["postgres"], ids)
 
     assert len(bad_labels) == (2 - exists)
 

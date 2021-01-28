@@ -2,7 +2,6 @@ import asyncio.tasks
 from copy import deepcopy
 
 from cerberus import Validator
-from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.analyses.db
 import virtool.analyses.utils
@@ -239,7 +238,7 @@ async def create(req):
         return bad_request(name_error_message)
 
     if "labels" in data:
-        non_existent_labels = await check_labels(AsyncSession(pg), data["labels"])
+        non_existent_labels = await check_labels(pg, data["labels"])
 
         if non_existent_labels:
             return bad_labels_response(non_existent_labels)
@@ -378,7 +377,7 @@ async def edit(req):
             return bad_request(message)
 
     if "labels" in data:
-        non_existent_labels = await check_labels(AsyncSession(pg), data["labels"])
+        non_existent_labels = await check_labels(pg, data["labels"])
 
         if non_existent_labels:
             return bad_labels_response(non_existent_labels)
