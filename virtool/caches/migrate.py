@@ -1,9 +1,14 @@
+"""
+Operation that should be performed on caches when the application starts.
+
+"""
+
 import os
 
-import virtool.types
+from virtool.types import App
 
 
-async def migrate_caches(app: virtool.types.App):
+async def migrate_caches(app: App):
     """
     Apply automatic updates to cache documents on application start.
 
@@ -13,9 +18,10 @@ async def migrate_caches(app: virtool.types.App):
     await add_missing_field(app)
 
 
-async def add_missing_field(app: virtool.types.App):
+async def add_missing_field(app: App):
     """
-    Add a field `missing` to all cache documents. Set the field to `True` if the cache is not found on disk.
+    Add a field `missing` to all cache documents. Set the field to `True` if the cache is not
+    found on disk.
 
     :param app: the application object
 

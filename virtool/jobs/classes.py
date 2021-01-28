@@ -4,7 +4,6 @@ import virtool.jobs.create_sample
 import virtool.jobs.create_subtraction
 import virtool.jobs.nuvs
 import virtool.jobs.pathoscope
-import virtool.jobs.update_sample
 
 TASK_CREATORS = {
     "aodp": virtool.jobs.aodp.create,
@@ -13,5 +12,4 @@ TASK_CREATORS = {
     "create_sample": virtool.jobs.create_sample.create,
     "nuvs": virtool.jobs.nuvs.create,
     "pathoscope_bowtie": virtool.jobs.pathoscope.create,
-    "update_sample": virtool.jobs.update_sample.create
 }

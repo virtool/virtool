@@ -2,7 +2,7 @@ import pytest
 from virtool.labels.models import Label
 
 
-async def test_find(spawn_client, test_session):
+async def test_find(spawn_client, pg_session):
     """
     Test that a ``GET /api/labels`` return a complete list of labels.
 
@@ -30,7 +30,7 @@ async def test_find(spawn_client, test_session):
         }
     ])
 
-    async with test_session as session:
+    async with pg_session as session:
         session.add_all([label_1, label_2])
         await session.commit()
 
@@ -56,7 +56,7 @@ async def test_find(spawn_client, test_session):
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, spawn_client, all_permissions, test_session, resp_is):
+async def test_get(error, spawn_client, all_permissions, pg_session, resp_is):
     """
     Test that a ``GET /api/labels/:label_id`` return the correct label document.
 
@@ -83,7 +83,7 @@ async def test_get(error, spawn_client, all_permissions, test_session, resp_is):
 
     if not error:
         label = Label(id=1, name="Bug", color="#a83432", description="This is a test")
-        async with test_session as session:
+        async with pg_session as session:
             session.add(label)
             await session.commit()
 
@@ -105,7 +105,7 @@ async def test_get(error, spawn_client, all_permissions, test_session, resp_is):
 
 
 @pytest.mark.parametrize("error", [None, "400_exists", "422_color"])
-async def test_create(error, spawn_client, test_random_alphanumeric, test_session, resp_is):
+async def test_create(error, spawn_client, test_random_alphanumeric, pg_session, resp_is):
     """
     Test that a label can be added to the database at ``POST /api/labels``.
 
@@ -132,7 +132,7 @@ async def test_create(error, spawn_client, test_random_alphanumeric, test_sessio
 
     if error == "400_exists":
         label = Label(id=1, name="Bug")
-        async with test_session as session:
+        async with pg_session as session:
             session.add(label)
             await session.commit()
 
@@ -167,7 +167,7 @@ async def test_create(error, spawn_client, test_random_alphanumeric, test_sessio
 
 
 @pytest.mark.parametrize("error", [None, "404", "400_exists", "422_color", "422_data"])
-async def test_edit(error, spawn_client, test_session, resp_is):
+async def test_edit(error, spawn_client, pg_session, resp_is):
     """
         Test that a label can be edited to the database at ``PATCH /api/labels/:label_id``.
 
@@ -195,7 +195,7 @@ async def test_edit(error, spawn_client, test_session, resp_is):
     if error != "404":
         label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
         label_2 = Label(id=2, name="Question", color="#03fc20", description="Question from a user")
-        async with test_session as session:
+        async with pg_session as session:
             session.add_all([label_1, label_2])
             await session.commit()
 
@@ -239,7 +239,7 @@ async def test_edit(error, spawn_client, test_session, resp_is):
 
 
 @pytest.mark.parametrize("error", [None, "400"])
-async def test_remove(error, spawn_client, test_session, resp_is):
+async def test_remove(error, spawn_client, pg_session, resp_is):
     """
         Test that a label can be deleted to the database at ``DELETE /api/labels/:label_id``.
 
@@ -248,7 +248,7 @@ async def test_remove(error, spawn_client, test_session, resp_is):
 
     if not error:
         label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
-        async with test_session as session:
+        async with pg_session as session:
             session.add(label)
             await session.commit()
 

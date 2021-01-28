@@ -1,11 +1,12 @@
+from typing import Any, Dict, Optional
+
 from aiohttp import web
-from typing import Optional
 
 
 def json_response(data: object, status: int = 200, headers: Optional[dict] = None) -> web.Response:
     """
-    Return a response object whose attached JSON dict will be formatted by middleware depending on the request's
-    `Accept` header.
+    Return a response object whose attached JSON dict will be formatted by middleware depending on
+    the request's `Accept` header.
 
     :param data: the data to send in the response as JSON
     :param status: the HTTP status code for the response
@@ -23,7 +24,8 @@ def json_response(data: object, status: int = 200, headers: Optional[dict] = Non
 
 def no_content() -> web.Response:
     """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``204`` status and no body.
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``204`` status and no
+    body.
 
     :return: the response
 
@@ -37,8 +39,8 @@ def not_modified() -> web.Response:
 
 def bad_gateway(message: str = "Bad gateway") -> web.Response:
     """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``502`` status and the JSON body
-    ``{"message": "Bad gateway"}``.
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``502`` status and the
+    JSON body ``{"message": "Bad gateway"}``.
 
     :param message: text to send instead of 'Bad gateway'
     :return: the response
@@ -52,8 +54,8 @@ def bad_gateway(message: str = "Bad gateway") -> web.Response:
 
 def bad_request(message: str = "Bad request") -> web.Response:
     """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``400`` status the JSON body
-    ``{"message": "Bad request"}``.
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``400`` status the JSON
+    body ``{"message": "Bad request"}``.
 
     :param message: text to send instead of 'Bad request'
     :return: the response
@@ -67,8 +69,8 @@ def bad_request(message: str = "Bad request") -> web.Response:
 
 def insufficient_rights(message: str = "Insufficient rights") -> web.Response:
     """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``401`` status and the JSON body
-    ``{"message": "Bad request"}``.
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``401`` status and the
+    JSON body ``{"message": "Bad request"}``.
 
     :param message: text to send instead of 'Bad request'
     :return: the response
@@ -82,8 +84,8 @@ def insufficient_rights(message: str = "Insufficient rights") -> web.Response:
 
 def not_found(message: str = "Not found") -> web.Response:
     """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``404`` status the JSON body
-    ``{"message": "Not found"}``.
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``404`` status the JSON
+    body ``{"message": "Not found"}``.
 
     :param message: text to send instead of 'Not found'
     :return: the response
@@ -97,8 +99,8 @@ def not_found(message: str = "Not found") -> web.Response:
 
 def conflict(message: str = "Conflict") -> web.Response:
     """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``409`` status the JSON body
-    ``{"message": "Conflict"}``.
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``409`` status the JSON
+    body ``{"message": "Conflict"}``.
 
     :param message: text to send instead of 'Not found'
     :return: the response
@@ -112,8 +114,8 @@ def conflict(message: str = "Conflict") -> web.Response:
 
 def empty_request(message: str = "Empty request") -> web.Response:
     """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON body
-    ``{"message": "Empty request"}``.
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON
+    body ``{"message": "Empty request"}``.
 
     :param message: text to send instead of 'Empty request'
     :return: the response
@@ -125,10 +127,10 @@ def empty_request(message: str = "Empty request") -> web.Response:
     }, status=422)
 
 
-def invalid_input(errors: dict) -> web.Response:
+def invalid_input(errors: Dict[str, Any]) -> web.Response:
     """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON body
-    ``{"message": "Invalid input", "errors": <errors>}``.
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON
+    body ``{"message": "Invalid input", "errors": <errors>}``.
 
     :param errors: error output from a :class:`cerberus.Validator` that led to the error response
     :return: the response
@@ -141,10 +143,10 @@ def invalid_input(errors: dict) -> web.Response:
     }, status=422)
 
 
-def invalid_query(errors: dict) -> web.Response:
+def invalid_query(errors: Dict[str, Any]) -> web.Response:
     """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON body
-    ``{"message": "Invalid query", "errors": <errors>}``.
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON
+    body ``{"message": "Invalid query", "errors": <errors>}``.
 
     :param errors: error output from a :class:`cerberus.Validator` that led to the error response
     :return: the response

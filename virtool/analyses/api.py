@@ -21,7 +21,8 @@ import virtool.samples.db
 import virtool.samples.utils
 import virtool.subtractions.db
 import virtool.utils
-from virtool.api.response import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
+from virtool.api.response import bad_request, conflict, insufficient_rights, \
+    json_response, no_content, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -51,7 +52,10 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if if_modified_since and if_modified_since == iso:
         return virtool.api.response.not_modified()
 
-    sample = await db.samples.find_one({"_id": document["sample"]["id"]}, {"quality": False})
+    sample = await db.samples.find_one(
+        {"_id": document["sample"]["id"]},
+        {"quality": False}
+    )
 
     if not sample:
         return bad_request("Parent sample does not exist")
@@ -94,12 +98,18 @@ async def find(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     checked_documents = []
     for document in data["documents"]:
-        if await virtool.samples.db.check_rights(db, document["sample"]["id"], req["client"], write=False):
+        if await virtool.samples.db.check_rights(
+                db,
+                document["sample"]["id"],
+                req["client"],
+                write=False
+        ):
             checked_documents.append(document)
 
     data["documents"] = checked_documents
 
-    await asyncio.tasks.gather(*[virtool.subtractions.db.attach_subtraction(db, d) for d in data["documents"]])
+    await asyncio.tasks.gather(
+        *[virtool.subtractions.db.attach_subtraction(db, d) for d in data["documents"]])
 
     return json_response(data)
 
@@ -114,14 +124,20 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     analysis_id = req.match_info["analysis_id"]
 
-    document = await db.analyses.find_one({"_id": analysis_id}, ["job", "ready", "sample"])
+    document = await db.analyses.find_one(
+        {"_id": analysis_id},
+        ["job", "ready", "sample"]
+    )
 
     if not document:
         return not_found()
 
     sample_id = document["sample"]["id"]
 
-    sample = await db.samples.find_one({"_id": sample_id}, virtool.samples.db.PROJECTION)
+    sample = await db.samples.find_one(
+        {"_id": sample_id},
+        virtool.samples.db.PROJECTION
+    )
 
     if not sample:
         return bad_request("Parent sample does not exist")
@@ -157,8 +173,8 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
 @routes.put("/api/analyses/{analysis_id}/{sequence_index}/blast")
 async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
-    BLAST a contig sequence that is part of a NuVs result record. The resulting BLAST data will be attached to that
-    sequence.
+    BLAST a contig sequence that is part of a NuVs result record. The resulting BLAST
+    data will be attached to that sequence.
 
     """
     db = req.app["db"]
@@ -167,7 +183,10 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     analysis_id = req.match_info["analysis_id"]
     sequence_index = int(req.match_info["sequence_index"])
 
-    document = await db.analyses.find_one({"_id": analysis_id}, ["ready", "workflow", "results", "sample"])
+    document = await db.analyses.find_one(
+        {"_id": analysis_id},
+        ["ready", "workflow", "results", "sample"]
+    )
 
     if not document:
         return not_found("Analysis not found")
@@ -178,12 +197,16 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if not document["ready"]:
         return conflict("Analysis is still running")
 
-    sequence = virtool.analyses.utils.find_nuvs_sequence_by_index(document, sequence_index)
+    sequence = virtool.analyses.utils.find_nuvs_sequence_by_index(document,
+                                                                  sequence_index)
 
     if sequence is None:
         return not_found("Sequence not found")
 
-    sample = await db.samples.find_one({"_id": document["sample"]["id"]}, virtool.samples.db.PROJECTION)
+    sample = await db.samples.find_one(
+        {"_id": document["sample"]["id"]},
+        virtool.samples.db.PROJECTION
+    )
 
     if not sample:
         return bad_request("Parent sample does not exist")
@@ -193,7 +216,8 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if not write:
         return insufficient_rights()
 
-    # Start a BLAST at NCBI with the specified sequence. Return a RID that identifies the BLAST run.
+    # Start a BLAST at NCBI with the specified sequence. Return a RID that identifies
+    # the BLAST run.
     rid, _ = await virtool.bio.initialize_ncbi_blast(req.app["settings"], sequence)
 
     blast_data, document = await virtool.analyses.db.update_nuvs_blast(
@@ -204,8 +228,8 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
         rid
     )
 
-    # Wait on BLAST request as a Task until the it completes on NCBI. At that point the sequence in the DB will be
-    # updated with the BLAST result.
+    # Wait on BLAST request as a Task until the it completes on NCBI. At that point the
+    # sequence in the DB will be updated with the BLAST result.
     await aiojobs.aiohttp.spawn(req, virtool.bio.wait_for_blast_result(
         req.app,
         analysis_id,
