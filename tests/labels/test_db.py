@@ -1,7 +1,7 @@
 from virtool.labels.db import attach_sample_count
 
 
-async def test_attach_sample_count(spawn_client, test_session):
+async def test_attach_sample_count(spawn_client, pg_session):
     client = await spawn_client(authorize=True)
 
     await client.db.samples.insert_many([

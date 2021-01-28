@@ -114,7 +114,7 @@ def spawn_client(
         aiohttp_client,
         test_motor,
         test_db_name,
-        test_session,
+        pg_session,
         create_user
 ):
     db_connection_string = request.config.getoption("db_connection_string")
