@@ -75,7 +75,7 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
         await virtool.tasks.db.update(
             self.db,
             self.id,
-            progress=0.2,
+            progress=20,
         )
 
     async def generate_fasta_files(self):

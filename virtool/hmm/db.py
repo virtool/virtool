@@ -98,8 +98,8 @@ class HMMInstallTask(virtool.tasks.task.Task):
             self.db,
             self.id,
             release["size"],
-            factor=0.4,
-            increment=0.01
+            factor=40,
+            increment=1
         )
 
         path = os.path.join(self.temp_path, "hmm.tar.gz")
@@ -123,7 +123,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
         await virtool.tasks.db.update(
             self.db,
             self.id,
-            progress=0.4,
+            progress=40,
             step="unpack"
         )
 
@@ -137,7 +137,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
         await virtool.tasks.db.update(
             self.db,
             self.id,
-            progress=0.6,
+            progress=60,
             step="install_profiles"
         )
 
@@ -153,7 +153,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
         await virtool.tasks.db.update(
             self.db,
             self.id,
-            progress=0.8,
+            progress=80,
             step="import_annotations"
         )
 
@@ -166,8 +166,8 @@ class HMMInstallTask(virtool.tasks.task.Task):
             self.db,
             self.id,
             len(annotations),
-            factor=0.2,
-            initial=0.8
+            factor=20,
+            initial=80
         )
 
         for annotation in annotations:
@@ -193,7 +193,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
         await virtool.tasks.db.update(
             self.db,
             self.id,
-            progress=1
+            progress=100
         )
 
         logger.debug("Finished HMM install task")

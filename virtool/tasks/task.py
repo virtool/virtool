@@ -60,7 +60,7 @@ class Task:
         return self.context
 
     def get_tracker(self, total):
-        factor = 1 / len(self.steps)
+        factor = round(100 / len(self.steps))
         initial = self.steps.index(self.step) * factor
 
         return ProgressTracker(
@@ -68,7 +68,7 @@ class Task:
             self.id,
             total,
             factor=factor,
-            increment=0.005,
+            increment=5,
             initial=initial
         )
 
@@ -90,7 +90,7 @@ class Task:
 
 class ProgressTracker:
 
-    def __init__(self, db, task_id, total, factor=1.0, increment=0.03, initial=0.0):
+    def __init__(self, db, task_id, total, factor=100, increment=3, initial=0):
         self.db = db
         self.task_id = task_id
         self.total = total
@@ -110,7 +110,7 @@ class ProgressTracker:
 
         self.count = count
 
-        self.progress = self.initial + round(self.count / self.total * self.factor, 2)
+        self.progress = self.initial + round(self.count / self.total * self.factor)
 
         if self.progress - self.last_reported >= self.increment:
             await virtool.tasks.db.update(

@@ -44,8 +44,8 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
             db,
             self.id,
             release["size"],
-            factor=0.5,
-            increment=0.03,
+            factor=50,
+            increment=3,
             initial=0
         )
 
@@ -65,7 +65,7 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
         await virtool.tasks.db.update(
             self.db,
             self.id,
-            progress=0.5,
+            progress=50,
             step="unpack"
         )
 
@@ -81,7 +81,7 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
         await virtool.tasks.db.update(
             self.db,
             self.id,
-            progress=0.7,
+            progress=70,
             step="verify"
         )
 
@@ -100,7 +100,7 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
         await virtool.tasks.db.update(
             self.db,
             self.id,
-            progress=0.9,
+            progress=90,
             step="install"
         )
 
@@ -113,7 +113,7 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
         await virtool.tasks.db.update(
             self.db,
             self.id,
-            progress=1
+            progress=100
         )
 
         await asyncio.sleep(1.5)
