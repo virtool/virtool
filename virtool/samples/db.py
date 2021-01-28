@@ -44,7 +44,7 @@ import os
 import pymongo.results
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 import virtool.jobs.db
 import virtool.db.utils
@@ -99,11 +99,20 @@ RIGHTS_PROJECTION = {
 }
 
 
-async def attach_labels(app, document):
+async def attach_labels(pg: AsyncEngine, document: dict) -> dict:
+    """
+    Finds label documents for each label ID given in a request body, then converts each document into a dictionary to
+    be placed in the list of dictionaries in the updated sample document
+
+
+    :param pg: PostgreSQL database connection object
+    :param document: sample document to be used for creating or editing a sample
+    :return: sample document with updated `labels` entry containing a list of label dictionaries
+    """
     labels = list()
     if document.get("labels"):
         for label_id in document["labels"]:
-            async with AsyncSession(app["postgres"]) as session:
+            async with AsyncSession(pg) as session:
                 label = (await session.execute(select(Label).filter_by(id=label_id))).scalar()
 
             labels.append(label.to_dict())
