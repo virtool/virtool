@@ -3,12 +3,12 @@ Utilities used for working with cache files within analysis workflows.
 
 """
 import os
-from typing import Union
+from typing import Any, Dict, List, Optional
 
 import virtool.samples.utils
 
 
-def join_cache_path(settings: dict, cache_id: str):
+def join_cache_path(settings: Dict[str, Any], cache_id: str):
     """
     Create a cache path string given the application settings and cache id.
 
@@ -20,7 +20,7 @@ def join_cache_path(settings: dict, cache_id: str):
     return os.path.join(settings["data_path"], "caches", cache_id)
 
 
-def join_cache_read_paths(settings: dict, cache: dict) -> Union[list, None]:
+def join_cache_read_paths(settings: Dict[str, Any], cache: dict) -> Optional[List[str]]:
     """
     Return a list of read paths for a cache given the application settings and the cache document.
 

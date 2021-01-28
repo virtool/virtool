@@ -1,34 +1,19 @@
 """
-Work with caches in the database. Caches are bundles of trimmed read and QC data generated during analyses.
-
-Schema:
-- _id (str) the ID of the cache
-- created_at (datetime) when the cache record was created
-- files (Array[Object]) describes trimmed FASTQ files
-  - name (str) the name of the trimmed read file on disk
-  - size (int) the size of the file
-- hash (str) a hash that uniquely identifies the trim - calculated from the trim parameters used to create the cache
-- missing (bool) set to true if the cache cannot be found on disk
-- paired (bool) set to true if the cache represents paired data
-- parameters (Object) the parameters used to trim the data
-- program (str) the name of the program used to trim the data (eg. skewer-0.2.2)
-- quality (JSON) the FastQC output converted to a JSON object
-- ready (bool) set to true when the cache has be successfully created
-- sample (Object) describes the sample the cache is dervied from
-  - id (str) the sample ID
+Work with caches in the database. Caches are bundles of trimmed read and QC data generated during
+analyses.
 
 """
 import asyncio
 import hashlib
 import json
 import os
-from typing import Optional
+from typing import Any, Dict, Optional
 
-import aiohttp.web
 import pymongo.errors
 
 import virtool.caches
 import virtool.utils
+from virtool.types import App
 
 PROJECTION = [
     "_id",
@@ -41,10 +26,12 @@ PROJECTION = [
 ]
 
 
-def calculate_cache_hash(parameters: dict) -> str:
+def calculate_cache_hash(parameters: Dict[str, Any]) -> str:
     """
-    Calculate a hash from the parameters `dict` for a cache. The parameters are arguments passed to a trimming program.
-    Caches can be reused when the hash of the trim parameters for a a new analysis matches an existing cache.
+    Calculate a hash from the parameters `dict` for a cache.
+
+    The parameters are arguments passed to a trimming program. Caches can be reused when the hash
+    of the trim parameters for a a new analysis matches an existing cache.
 
     :param parameters: the trimming parameters
     :return: the cache hash
@@ -54,9 +41,10 @@ def calculate_cache_hash(parameters: dict) -> str:
     return hashlib.sha1(string.encode()).hexdigest()
 
 
-async def find(db, sample_id: str, program: str, parameters: dict) -> Optional[dict]:
+async def find(db, sample_id: str, program: str, parameters: Dict[str, Any]) -> Optional[dict]:
     """
-    Find a cache matching the passed `sample_id`, `program` name and version, and set of trimming `parameters`.
+    Find a cache matching the passed `sample_id`, `program` name and version, and set of trimming
+    `parameters`.
 
     If no matching cache exists, `None` will be returned.
 
@@ -77,12 +65,17 @@ async def find(db, sample_id: str, program: str, parameters: dict) -> Optional[d
     return virtool.utils.base_processor(document)
 
 
-async def find_and_wait(db, sample_id: str, program: str, parameters: dict) -> Optional[dict]:
+async def find_and_wait(
+        db, sample_id: str,
+        program: str,
+        parameters: Dict[str, Any]
+) -> Optional[dict]:
     """
-    Find a cache matching the passed `sample_id`, `program` name and version, and set of trimming `parameters`. Wait
-    for the cache to be ready if it is still being created.
+    Find a cache matching the passed `sample_id`, `program` name and version, and set of trimming
+    `parameters`.
 
-    If no matching cache exists, `None` will be returned.
+    Waits for the cache to be ready if it is still being created. If no matching cache exists,
+    `None` will be returned.
 
     :param db: the application database interface
     :param sample_id: the id of the parent sample
@@ -103,7 +96,7 @@ async def find_and_wait(db, sample_id: str, program: str, parameters: dict) -> O
     return virtool.utils.base_processor(document)
 
 
-async def get(db, cache_id: str) -> dict:
+async def get(db, cache_id: str) -> Dict[str, Any]:
     """
     Get the complete representation for the cache with the given `cache_id`.
 
@@ -116,7 +109,14 @@ async def get(db, cache_id: str) -> dict:
     return virtool.utils.base_processor(document)
 
 
-async def create(db, sample_id: str, parameters: dict, paired: bool, legacy: bool = False, program: str = "skewer-0.2.2"):
+async def create(
+        db,
+        sample_id: str,
+        parameters: Dict[str, Any],
+        paired: bool,
+        legacy: bool = False,
+        program: str = "skewer-0.2.2"
+):
     """
     Create and insert a new cache database document. Return the generated unique cache id.
 
@@ -157,7 +157,7 @@ async def create(db, sample_id: str, parameters: dict, paired: bool, legacy: boo
         return await create(db, sample_id, parameters, paired, legacy=legacy, program=program)
 
 
-async def remove(app: aiohttp.web.Application, cache_id: str):
+async def remove(app: App, cache_id: str):
     """
     Remove the cache database document and files with the given `cache_id`.
 
