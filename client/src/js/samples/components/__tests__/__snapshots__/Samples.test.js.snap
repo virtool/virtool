@@ -47,24 +47,24 @@ exports[`<Samples /> should render 1`] = `
           "$$typeof": Symbol(react.memo),
           "WrappedComponent": [Function],
           "compare": null,
-<<<<<<< HEAD
-<<<<<<< HEAD
-          "displayName": "Connect(CreateSample)",
-          "type": [Function],
-        }
-      }
-      path="/samples/create"
-=======
-          "displayName": "Connect(LabelEdit)",
-=======
           "displayName": "Connect(Labels)",
->>>>>>> 03defcf... Moved Labels and api, improved tests
           "type": [Function],
         }
       }
       exact={true}
       path="/samples/labels"
->>>>>>> 7a3bdec... Moved Label Editor to sidebar, updated tests
+    />
+    <Route
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(CreateSample)",
+          "type": [Function],
+        }
+      }
+      path="/samples/create"
     />
     <Route
       component={

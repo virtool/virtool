@@ -1,22 +1,23 @@
-import { LIST_LABELS, REMOVE_LABEL, UPDATE_LABEL } from "../app/actionTypes";
-import { updateMember } from "../utils/reducers";
+import { CREATE_LABEL, LIST_LABELS, REMOVE_LABEL, UPDATE_LABEL } from "../app/actionTypes";
+import { insert, remove, update } from "../utils/reducers";
 
 export const initialState = {
-    list: {}
+    documents: []
 };
 
 export default function labelsReducer(state = initialState, action) {
     switch (action.type) {
         case LIST_LABELS.SUCCEEDED:
-            return { list: action.data };
-        case REMOVE_LABEL.SUCCEEDED:
-            return { ...state };
-        case UPDATE_LABEL.REQUESTED:
-            return { ...state };
+            return { ...state, documents: action.data };
+
+        case CREATE_LABEL.SUCCEEDED:
+            return insert(state, action);
+
         case UPDATE_LABEL.SUCCEEDED:
-            let list = state.list;
-            list = updateMember(list, action);
-            return { ...state, list };
+            return update(state, action);
+
+        case REMOVE_LABEL.SUCCEEDED:
+            return remove(state, action);
 
         default:
             return state;
