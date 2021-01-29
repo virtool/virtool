@@ -2,7 +2,7 @@ import logging
 
 import pymongo.errors
 
-import virtool.db.utils
+import virtool.db.mongo
 import virtool.types
 from virtool.analyses.migrate import migrate_analyses
 from virtool.caches.migrate import migrate_caches
@@ -68,7 +68,7 @@ async def migrate_status(app: virtool.types.App):
         }
     })
 
-    mongo_version = await virtool.db.utils.determine_mongo_version(db)
+    mongo_version = await virtool.db.mongo.check_mongo_version(db)
 
     await db.status.update_many({}, {
         "$unset": {
