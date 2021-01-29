@@ -34,7 +34,6 @@ async def create_shallow_app(config) -> dict:
 
     await virtool.startup.init_settings(app_dict)
     await virtool.startup.init_sentry(app_dict)
-    await virtool.startup.init_resources(app_dict)
 
     return app_dict
 

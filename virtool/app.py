@@ -23,7 +23,6 @@ import virtool.http.query
 import virtool.jobs.runner
 import virtool.logs
 import virtool.references.db
-import virtool.resources
 import virtool.routes
 import virtool.sentry
 import virtool.settings.db
@@ -115,7 +114,6 @@ def create_app(config):
         virtool.startup.init_listen_for_changes,
         virtool.startup.init_sentry,
         virtool.startup.init_check_db,
-        virtool.startup.init_resources,
         virtool.startup.init_job_interface,
         virtool.startup.init_refresh
     ])
