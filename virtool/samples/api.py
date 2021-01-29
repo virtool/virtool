@@ -2,7 +2,6 @@ import asyncio.tasks
 from copy import deepcopy
 
 from cerberus import Validator
-from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.analyses.db
 import virtool.analyses.utils
@@ -129,7 +128,7 @@ async def find(req):
     )
 
     for i in range(len(data["documents"])):
-        data["documents"][i] = await virtool.samples.db.attach_labels(req.app, data["documents"][i])
+        data["documents"][i] = await virtool.samples.db.attach_labels(req.app["postgres"], data["documents"][i])
 
     return json_response(data)
 
@@ -172,7 +171,7 @@ async def get(req):
 
     await virtool.subtractions.db.attach_subtraction(db, document)
 
-    document = await virtool.samples.db.attach_labels(req.app, document)
+    document = await virtool.samples.db.attach_labels(req.app["postgres"], document)
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -239,10 +238,14 @@ async def create(req):
         return bad_request(name_error_message)
 
     if "labels" in data:
-        non_existent_labels = await check_labels(AsyncSession(pg), data["labels"])
+        non_existent_labels = await check_labels(pg, data["labels"])
 
         if non_existent_labels:
             return bad_labels_response(non_existent_labels)
+
+        data = await virtool.samples.db.attach_labels(pg, data)
+    else:
+        data["labels"] = []
 
     # Make sure a subtraction host was submitted and it exists.
     if not await db.subtraction.count_documents({"_id": data["subtraction"], "is_host": True}):
@@ -296,7 +299,6 @@ async def create(req):
         "user": {
             "id": user_id
         },
-        "labels": data.get("labels", []),
         "paired": len(data["files"]) == 2
     })
 
@@ -378,7 +380,7 @@ async def edit(req):
             return bad_request(message)
 
     if "labels" in data:
-        non_existent_labels = await check_labels(AsyncSession(pg), data["labels"])
+        non_existent_labels = await check_labels(pg, data["labels"])
 
         if non_existent_labels:
             return bad_labels_response(non_existent_labels)
@@ -387,7 +389,7 @@ async def edit(req):
         "$set": data
     }, projection=virtool.samples.db.LIST_PROJECTION)
 
-    document = await virtool.samples.db.attach_labels(req.app, document)
+    document = await virtool.samples.db.attach_labels(pg, document)
 
     processed = virtool.utils.base_processor(document)
 
@@ -406,7 +408,7 @@ async def replace(req):
 
     document = await req.app["db"].samples.find_one(sample_id, virtool.samples.db.PROJECTION)
 
-    document = await virtool.samples.db.attach_labels(req.app, document)
+    document = await virtool.samples.db.attach_labels(req.app["postgres"], document)
 
     return json_response(virtool.utils.base_processor(document))
 

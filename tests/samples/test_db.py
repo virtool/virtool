@@ -279,9 +279,7 @@ class TestRemoveSamples:
         assert not await dbi.samples.count_documents({})
 
 
-async def test_attach_labels(spawn_client, pg_session):
-    client = await spawn_client(authorize=True)
-
+async def test_attach_labels(spawn_client, pg_session, pg_engine):
     label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
     label_2 = Label(id=2, name="Question", color="#03fc20", description="This is a question")
 
@@ -295,7 +293,7 @@ async def test_attach_labels(spawn_client, pg_session):
         "labels": [1, 2]
     }
 
-    result = await virtool.samples.db.attach_labels(client.app, document)
+    result = await virtool.samples.db.attach_labels(pg_engine, document)
 
     assert result == {
         "id": "foo",

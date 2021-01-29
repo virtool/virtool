@@ -3,7 +3,7 @@ from typing import List
 
 from requests import Response
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 from virtool.api.response import bad_request
 from virtool.labels.models import Label
@@ -60,7 +60,7 @@ def calculate_workflow_tags(analyses: list) -> dict:
     }
 
 
-async def check_labels(pg: AsyncSession, labels: List[int]) -> List[int]:
+async def check_labels(pg: AsyncEngine, labels: List[int]) -> List[int]:
     """"
     Check for existence of label IDs given in sample creation request
 
@@ -68,7 +68,7 @@ async def check_labels(pg: AsyncSession, labels: List[int]) -> List[int]:
     :param labels: list of label IDs given in the sample creation request
     :return: a list containing any label IDs given in the request that do not exist
     """
-    async with pg as session:
+    async with AsyncSession(pg) as session:
         query = await session.execute(select(Label.id).filter(Label.id.in_(labels)))
         results = {label for label in query.scalars().all()}
 
