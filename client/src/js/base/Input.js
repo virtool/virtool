@@ -60,6 +60,7 @@ export class UnstyledInput extends React.Component {
                 autoFocus={this.props.autoFocus}
                 children={this.props.children}
                 className={this.props.className}
+                id={this.props.id}
                 max={this.props.max}
                 min={this.props.min}
                 name={this.props.name}
