@@ -44,7 +44,7 @@ async def run(config: dict, cls):
     Run a job runner instance.
 
     :param config: the config values provided by the user
-    :param cls: the agent or runner class to use
+    :param cls: the runner class to use
 
     """
     app = await create_shallow_app(config)
