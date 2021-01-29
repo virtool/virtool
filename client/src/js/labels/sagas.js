@@ -1,7 +1,9 @@
-import { call, put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
-import { UPDATE_LABEL, LIST_LABELS, CREATE_LABEL, REMOVE_LABEL } from "../app/actionTypes";
-import { apiCall, setPending } from "../utils/sagas";
+import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { pushState } from "../app/actions";
+import { CREATE_LABEL, LIST_LABELS, REMOVE_LABEL, UPDATE_LABEL } from "../app/actionTypes";
+import { apiCall } from "../utils/sagas";
 import * as labelsAPI from "./api";
+import { listLabels as listLabelsAction } from "./actions";
 
 export function* watchLabels() {
     yield takeLatest(LIST_LABELS.REQUESTED, listLabels);
@@ -16,16 +18,26 @@ export function* listLabels(action) {
 }
 
 export function* createLabel(action) {
-    yield setPending(apiCall(labelsAPI.create, action, CREATE_LABEL));
-    yield call(listLabels, { type: LIST_LABELS.REQUESTED });
+    const { ok } = yield apiCall(labelsAPI.create, action, CREATE_LABEL);
+
+    if (ok) {
+        yield put(pushState({ createLabel: false }));
+    }
 }
 
 export function* removeLabel(action) {
-    yield setPending(apiCall(labelsAPI.remove, action, REMOVE_LABEL));
-    yield call(listLabels, { type: LIST_LABELS.REQUESTED });
+    const { ok } = yield apiCall(labelsAPI.remove, action, REMOVE_LABEL);
+
+    if (ok) {
+        yield put(pushState({ removeLabel: false }));
+        yield put(listLabelsAction());
+    }
 }
 
 export function* updateLabel(action) {
-    yield setPending(apiCall(labelsAPI.update, action, UPDATE_LABEL));
-    yield call(listLabels, { type: LIST_LABELS.REQUESTED });
+    const { ok } = yield apiCall(labelsAPI.update, action, UPDATE_LABEL);
+
+    if (ok) {
+        yield put(pushState({ updateLabel: false }));
+    }
 }

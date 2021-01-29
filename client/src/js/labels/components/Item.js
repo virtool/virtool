@@ -1,6 +1,6 @@
-import React, { useCallback } from "react";
+import React from "react";
 import styled from "styled-components";
-import { Label, LinkIcon, BoxGroupSection } from "../../base";
+import { BoxGroupSection, Label, LinkIcon } from "../../base";
 
 const getContrastColor = props => {
     const red = parseInt(props.color.substr(1, 2), 16);
@@ -9,6 +9,15 @@ const getContrastColor = props => {
     const yiq = (red * 299 + green * 587 + blue * 114) / 1000;
     return yiq >= 128 ? "black" : "white";
 };
+
+const LabelItemContainer = styled.div`
+    position: relative;
+`;
+
+const LabelItemBox = styled(BoxGroupSection)`
+    align-items: center;
+    display: flex;
+`;
 
 const LabelItemExampleContainer = styled.div`
     min-width: 30%;
@@ -20,57 +29,34 @@ const LabelItemExample = styled(Label)`
     color: ${getContrastColor};
 `;
 
-const LabelRow = styled(BoxGroupSection)`
+const LabelItemIcons = styled.div`
+    align-items: center;
+    background-color: transparent;
     display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
+    font-size: 17px;
+    padding-right: 15px;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+
+    *:not(:first-child) {
+        margin-left: 5px;
+    }
 `;
 
-const IconFlex = styled.div`
-    align-self: flex-end;
-    margin-left: auto;
-`;
-const LabelIcon = styled(LinkIcon)`
-    margin: 0 5px;
-    font-size: 20px;
-`;
-
-const Description = styled.p`
-    margin: 5px 8px;
-`;
-
-export const Item = ({ name, color, description, id, removeLabel, editLabel }) => {
-    const handleRemove = useCallback((id, name) => {
-        removeLabel(id, name);
-    });
-
-    const handleEdit = useCallback((id, name, color, description) => {
-        editLabel(id, name, color, description);
-    });
-
-    return (
-        <LabelRow>
+export const Item = ({ name, color, description, id }) => (
+    <LabelItemContainer>
+        <LabelItemBox>
             <LabelItemExampleContainer>
                 <LabelItemExample color={color}>{name}</LabelItemExample>
             </LabelItemExampleContainer>
-            <Description>{description}</Description>
-            <IconFlex>
-                <LabelIcon
-                    to={{ state: { editLabel: true } }}
-                    color="orange"
-                    onClick={() => handleEdit(id, name, description, color)}
-                    name="pencil-alt"
-                    tip="Edit"
-                />
-                <LabelIcon
-                    to={{ state: { removeLabel: true } }}
-                    color="red"
-                    onClick={() => handleRemove(id, name)}
-                    name="fas fa-trash"
-                    tip="Remove"
-                />
-            </IconFlex>
-        </LabelRow>
-    );
-};
+            {description}
+        </LabelItemBox>
+        <LabelItemIcons>
+            <LinkIcon to={{ state: { editLabel: id } }} color="orange" name="pencil-alt" tip="Edit" />
+            <LinkIcon to={{ state: { removeLabel: id } }} color="red" name="fas fa-trash" tip="Remove" />
+        </LabelItemIcons>
+    </LabelItemContainer>
+);

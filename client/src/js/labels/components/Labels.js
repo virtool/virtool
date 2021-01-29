@@ -3,13 +3,15 @@ import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { BoxGroup, BoxGroupHeader, RemoveModal, ViewHeader, ViewHeaderTitle } from "../../base";
-import { listLabels, removeLabel } from "../actions";
-import { routerLocationHasState } from "../../utils/utils";
 import { pushState } from "../../app/actions";
+import { BoxGroup, BoxGroupHeader, LoadingPlaceholder, NarrowContainer, ViewHeader, ViewHeaderTitle } from "../../base";
+import { routerLocationHasState } from "../../utils/utils";
+import { listLabels } from "../actions";
+import { getLabels } from "../selectors";
 import CreateLabel from "./Create";
 import EditLabel from "./Edit";
 import { Item } from "./Item";
+import RemoveLabel from "./Remove";
 
 const LabelsHeader = styled(BoxGroupHeader)`
     h2 {
@@ -21,36 +23,15 @@ const LabelsHeader = styled(BoxGroupHeader)`
 `;
 
 export class Labels extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            id: ""
-        };
-    }
-
     componentDidMount = () => {
         this.props.onLoadLabels();
     };
 
-    removeLabel = () => {
-        this.props.removeLabel(this.state.id);
-        this.props.onHide();
-    };
-
-    onEdit = id => {
-        this.setState({
-            id
-        });
-    };
-
-    onRemove = (id, name) => {
-        this.setState({
-            id,
-            name
-        });
-    };
-
     render() {
+        if (this.props.labels === null) {
+            return <LoadingPlaceholder />;
+        }
+
         const labels = map(this.props.labels, label => (
             <Item
                 key={label.id}
@@ -64,9 +45,9 @@ export class Labels extends React.Component {
         ));
 
         return (
-            <div>
-                <ViewHeader title="Label Editor">
-                    <ViewHeaderTitle>Label Editor</ViewHeaderTitle>
+            <NarrowContainer>
+                <ViewHeader title="Labels">
+                    <ViewHeaderTitle>Labels</ViewHeaderTitle>
                 </ViewHeader>
                 <BoxGroup>
                     <LabelsHeader>
@@ -81,32 +62,22 @@ export class Labels extends React.Component {
                     {labels}
                 </BoxGroup>
                 <CreateLabel />
-                <EditLabel id={this.state.id} />
-                <RemoveModal
-                    noun="Label"
-                    name={this.state.name}
-                    show={this.props.show}
-                    onConfirm={this.removeLabel}
-                    onHide={this.props.onHide}
-                />
-            </div>
+                <EditLabel />
+                <RemoveLabel />
+            </NarrowContainer>
         );
     }
 }
 
 export const mapStateToProps = state => ({
     show: routerLocationHasState(state, "removeLabel"),
-    labels: state.labels.list,
+    labels: getLabels(state),
     error: get(state, "errors.UPDATE_SAMPLE_ERROR.message", "")
 });
 
 export const mapDispatchToProps = dispatch => ({
     onLoadLabels: () => {
         dispatch(listLabels());
-    },
-
-    removeLabel: id => {
-        dispatch(removeLabel(id));
     },
 
     onHide: () => {

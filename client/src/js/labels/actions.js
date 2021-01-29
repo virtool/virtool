@@ -42,7 +42,7 @@ export const createLabel = (name, description, color) => ({
  * Returns action that can trigger an API call for updating a label
  *
  * @func
- * @param id
+ * @param labelId
  * @param name
  * @param description
  * @param color
