@@ -80,26 +80,3 @@ class JobRunner(Base):
 
     async def _run_job(self):
         pass
-
-
-def get_available_resources(settings, jobs):
-    used = get_used_resources(jobs)
-    return {key: settings[key] - used[key] for key in ["proc", "mem"]}
-
-
-def get_used_resources(jobs):
-    running_jobs = [j for j in jobs.values() if j["process"]]
-
-    return {
-        "proc": sum(j["proc"] for j in running_jobs),
-        "mem": sum(j["mem"] for j in running_jobs)
-    }
-
-
-def get_task_limits(settings, task_name):
-    size = virtool.jobs.utils.TASK_SIZES[task_name]
-
-    proc = settings[f"{size}_proc"]
-    mem = settings[f"{size}_mem"]
-
-    return proc, mem
