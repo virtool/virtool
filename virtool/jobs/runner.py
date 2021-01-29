@@ -17,7 +17,7 @@ import virtool.utils
 logger = logging.getLogger(__name__)
 
 
-class Base:
+class JobRunner:
 
     def __init__(self, app, capture_exception):
         self.db = app["db"]
@@ -31,9 +31,6 @@ class Base:
             logger.debug(f"Pulled job '{job_id}' from Redis list '{key}'")
 
         return job_id
-
-
-class JobRunner(Base):
 
     async def run(self):
         logging.debug("Started job runner")
