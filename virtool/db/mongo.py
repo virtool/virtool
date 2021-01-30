@@ -53,7 +53,7 @@ async def check_mongo_version(db: AsyncIOMotorClient):
     :param db: the application database object
 
     """
-    server_version = (await db.server_info())["version"]
+    server_version = await get_server_version(db)
 
     if semver.compare(server_version, MINIMUM_MONGO_VERSION) == -1:
         logger.critical(
@@ -62,3 +62,7 @@ async def check_mongo_version(db: AsyncIOMotorClient):
         sys.exit(1)
 
     logger.info(f"Found MongoDB {server_version}")
+
+
+async def get_server_version(db: AsyncIOMotorClient) -> str:
+    return (await db.server_info())["version"]
