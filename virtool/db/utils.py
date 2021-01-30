@@ -48,18 +48,6 @@ async def delete_unready(collection):
     await collection.delete_many({"ready": False})
 
 
-async def determine_mongo_version(db):
-    """
-    Return the MongoDB server version of a passed database object (`db`).
-
-    :param db: a database object
-    :return: the MongoDB server version
-
-    """
-    server_info = await db.motor_client.client.server_info()
-    return server_info["version"]
-
-
 async def get_new_id(collection, excluded: Optional[Sequence[str]] = None) -> str:
     """
     Returns a new, unique, id that can be used for inserting a new document. Will not return any id
