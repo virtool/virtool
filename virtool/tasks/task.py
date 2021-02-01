@@ -2,6 +2,7 @@ import logging
 
 import virtool.db.utils
 import virtool.tasks.db
+import virtool.tasks.pg
 import virtool.utils
 
 logger = logging.getLogger("task")
@@ -12,6 +13,7 @@ class Task:
     def __init__(self, app, task_id):
         self.app = app
         self.db = app["db"]
+        self.pg = app["postgres"]
         self.run_in_thread = app["run_in_thread"]
         self.id = task_id
         self.step = None
@@ -23,7 +25,7 @@ class Task:
         self.temp_dir = virtool.utils.get_temp_dir()
 
     async def init_db(self):
-        self.document = await self.db.tasks.find_one(self.id, {"_id": False})
+        self.document = (await virtool.tasks.pg.get(self.pg, self.id)).to_dict()
         self.context = self.document["context"]
 
     async def run(self):
@@ -35,8 +37,8 @@ class Task:
 
             self.step = func
 
-            await virtool.tasks.db.update(
-                self.db,
+            await virtool.tasks.pg.update(
+                self.pg,
                 self.id,
                 step=self.step.__name__
             )
@@ -44,7 +46,7 @@ class Task:
             await func()
 
         if not self.errored:
-            await virtool.tasks.db.complete(self.db, self.id)
+            await virtool.tasks.pg.complete(self.pg, self.id)
             self.temp_dir.cleanup()
 
     async def update_context(self, update):
