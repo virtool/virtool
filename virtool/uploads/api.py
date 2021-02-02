@@ -63,30 +63,29 @@ async def naive_writer(req, upload_id, name):
 @routes.post("/upload/{file_type}", permission="upload_file")
 async def upload(req):
     db = req.app["postgres"]
-
     file_type = req.match_info["file_type"]
-    name = req.query["name"]
-
-    if file_type not in FILE_TYPES:
-        return not_found()
 
     errors = naive_validator(req)
 
     if errors:
         return invalid_query(errors)
 
+    name = req.query["name"]
+
+    if file_type not in FILE_TYPES:
+        return bad_request("Unsupported file type")
+
     try:
-        document = await virtool.uploads.db.create(db, name, file_type, req["client"].user_id)
+        document = await virtool.uploads.db.create(db, name, file_type, user=req["client"].user_id)
     except IntegrityError:
         return bad_request("File name already exists")
 
     upload_id = document["id"]
 
-    try:
-        size, uploaded_at = await naive_writer(req, upload_id, name)
-
-        async with AsyncSession(db) as session:
-            upload = session.execute(select(Upload).filter_by(id=upload_id)).scalar()
+    async with AsyncSession(db) as session:
+        try:
+            upload = (await session.execute(select(Upload).filter_by(id=upload_id))).scalar()
+            size, uploaded_at = await naive_writer(req, upload_id, name)
 
             upload.size = size
             upload.name_on_disk = f"{upload_id}-{name}"
@@ -100,17 +99,17 @@ async def upload(req):
                 "uploaded_at": uploaded_at
             })
 
-        logger.debug(f"Upload succeeded: {upload_id}")
+            logger.debug(f"Upload succeeded: {upload_id}")
 
-        headers = {
-            "Location": f"/api/files/{upload_id}"
-        }
+            headers = {
+                "Location": f"/api/files/{upload_id}"
+            }
 
-        return json_response(document, status=201, headers=headers)
-    except asyncio.CancelledError:
-        logger.debug(f"Upload aborted: {upload_id}")
+            return json_response(document, status=201, headers=headers)
+        except asyncio.CancelledError:
+            logger.debug(f"Upload aborted: {upload_id}")
 
-        await session.delete(upload)
-        await session.commit()
+            await session.delete(upload)
+            await session.commit()
 
-        return aiohttp.web.Response(status=499)
+            return aiohttp.web.Response(status=499)
