@@ -12,6 +12,7 @@ class Task(Base):
     context = Column(JSONB)
     count = Column(Integer)
     created_at = Column(DateTime)
+    error = Column(String)
     file_size = Column(Integer)
     progress = Column(Integer)
     step = Column(String)
@@ -19,5 +20,5 @@ class Task(Base):
 
     def __repr__(self):
         return f"<Task(id={self.id}, complete={self.complete}, context={self.context}, " \
-               f"count={self.count}, created_at={self.created_at}, file_size={self.file_size}, " \
-               f"progress={self.progress}, step={self.step}, type={self.type})>"
+               f"count={self.count}, created_at={self.created_at}, error={self.error}, " \
+               f"file_size={self.file_size}, progress={self.progress}, step={self.step}, type={self.type})>"
