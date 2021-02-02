@@ -5,7 +5,6 @@ import {
     FIND_JOBS,
     GET_JOB,
     GET_LINKED_JOB,
-    GET_RESOURCES,
     REMOVE_JOB,
     WS_UPDATE_JOB
 } from "../app/actionTypes";
@@ -19,7 +18,6 @@ export function* watchJobs() {
     yield takeEvery(CANCEL_JOB.REQUESTED, cancelJob);
     yield takeEvery(REMOVE_JOB.REQUESTED, removeJob);
     yield takeLatest(CLEAR_JOBS.REQUESTED, clearJobs);
-    yield takeLatest(GET_RESOURCES.REQUESTED, getResources);
     yield takeLatest(WS_UPDATE_JOB, wsUpdateJob);
     yield takeEvery(GET_LINKED_JOB.REQUESTED, getLinkedJob);
 }
@@ -62,8 +60,4 @@ export function* removeJob(action) {
 
 export function* clearJobs(action) {
     yield setPending(apiCall(jobsAPI.clear, action, REMOVE_JOB));
-}
-
-export function* getResources() {
-    yield apiCall(jobsAPI.getResources, {}, GET_RESOURCES);
 }

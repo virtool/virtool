@@ -1,15 +1,13 @@
-import { simpleActionCreator } from "../utils/utils";
 import {
-    WS_INSERT_JOB,
-    WS_UPDATE_JOB,
-    WS_REMOVE_JOB,
+    CANCEL_JOB,
+    CLEAR_JOBS,
     FIND_JOBS,
     GET_JOB,
-    CANCEL_JOB,
+    GET_LINKED_JOB,
     REMOVE_JOB,
-    CLEAR_JOBS,
-    GET_RESOURCES,
-    GET_LINKED_JOB
+    WS_INSERT_JOB,
+    WS_REMOVE_JOB,
+    WS_UPDATE_JOB
 } from "../app/actionTypes";
 
 export const wsInsertJob = data => ({
@@ -106,11 +104,3 @@ export const clearJobs = scope => ({
     type: CLEAR_JOBS.REQUESTED,
     scope
 });
-
-/**
- * Returns action that can trigger an API call for getting computing resource limits.
- *
- * @func
- * @returns {object}
- */
-export const getResources = simpleActionCreator(GET_RESOURCES.REQUESTED);

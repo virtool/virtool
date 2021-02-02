@@ -6,20 +6,9 @@ import {
     CANCEL_JOB,
     REMOVE_JOB,
     CLEAR_JOBS,
-    GET_RESOURCES,
     FIND_JOBS
 } from "../../app/actionTypes";
-import {
-    wsInsertJob,
-    wsUpdateJob,
-    wsRemoveJob,
-    getJob,
-    cancelJob,
-    removeJob,
-    clearJobs,
-    getResources,
-    findJobs
-} from "../actions";
+import { wsInsertJob, wsUpdateJob, wsRemoveJob, getJob, cancelJob, removeJob, clearJobs, findJobs } from "../actions";
 
 describe("Jobs Action Creators:", () => {
     it("wsInsertJob: returns action for job insert via websocket", () => {
@@ -93,13 +82,6 @@ describe("Jobs Action Creators:", () => {
         expect(result).toEqual({
             type: CLEAR_JOBS.REQUESTED,
             scope
-        });
-    });
-
-    it("getResources: returns action to retrieve computing resources data", () => {
-        const result = getResources();
-        expect(result).toEqual({
-            type: GET_RESOURCES.REQUESTED
         });
     });
 });
