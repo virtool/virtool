@@ -1,9 +1,14 @@
 import logging
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 import virtool.db.utils
 import virtool.tasks.db
 import virtool.tasks.pg
 import virtool.utils
+
+import virtool.tasks.models
 
 logger = logging.getLogger("task")
 
@@ -50,14 +55,15 @@ class Task:
             self.temp_dir.cleanup()
 
     async def update_context(self, update):
-        with_prefix = {f"context.{key}": value for key, value in update.items()}
+        async with AsyncSession(self.pg) as session:
+            result = await session.execute(select(virtool.tasks.models.Task).filter_by(id=self.id))
+            task = result.scalar()
+            for key, value in update.items():
+                task.context[key] = value
 
-        document = await self.db.tasks.find_one_and_update({"_id": self.id}, {
-            "$set": with_prefix
-        })
-
-        self.document = document
-        self.context = document["context"]
+            self.document = task.to_dict()
+            self.context = self.document["context"]
+            await session.commit()
 
         return self.context
 
@@ -77,17 +83,16 @@ class Task:
     async def cleanup(self):
         pass
 
-    async def error(self, errors: list):
-        await virtool.tasks.db.update(
-            self.db,
-            self.id,
-            errors=errors
-        )
+    async def error(self, error: str):
+        async with AsyncSession(self.pg) as session:
+            result = await session.execute(select(virtool.tasks.models.Task).filter_by(id=self.id))
+            task = result.scalar()
+            task.error = error
+            await session.commit()
 
         await self.cleanup()
 
-        for error in errors:
-            logger.info(f"Task {id} encountered error '{error}'")
+        logger.info(f"Task {self.id} encountered error '{error}'")
 
 
 class ProgressTracker:
