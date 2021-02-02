@@ -12,7 +12,6 @@ Schema
 
 """
 import virtool.db.utils
-import virtool.tasks.steps
 import virtool.tasks.task
 import virtool.utils
 
@@ -28,7 +27,6 @@ async def register(db, task_type, context=None):
         "progress": 0,
         "resumable": False,
         "context": context or dict(),
-        "step": virtool.tasks.steps.FIRST_STEPS[task_type],
         "type": task_type
     }
 
