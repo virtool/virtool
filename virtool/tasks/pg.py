@@ -2,7 +2,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.db.utils
-import virtool.tasks.steps
 import virtool.tasks.task
 import virtool.utils
 from virtool.tasks.models import Task
@@ -31,7 +30,6 @@ async def register(pg_engine, task_type, context=None):
         count=0,
         created_at=virtool.utils.timestamp(),
         progress=0,
-        step=virtool.tasks.steps.FIRST_STEPS[task_type],
         type=task_type
     )
 
