@@ -6,6 +6,7 @@ import virtool.github
 import virtool.hmm.db
 import virtool.http.routes
 import virtool.tasks.db
+import virtool.tasks.pg
 import virtool.software.db
 import virtool.software.utils
 import virtool.utils
@@ -52,8 +53,8 @@ async def install(req):
     except IndexError:
         return not_found("Could not find latest uninstalled release")
 
-    task = await virtool.tasks.db.register(
-        db,
+    task = await virtool.tasks.pg.register(
+        req.app["postgres"],
         "update_software",
         context={
             "file_size": latest_release["size"],

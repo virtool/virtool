@@ -14,6 +14,7 @@ import virtool.github
 import virtool.hmm.db
 import virtool.http.routes
 import virtool.tasks.db
+import virtool.tasks.pg
 import virtool.utils
 from virtool.api.response import bad_gateway, bad_request, conflict, json_response, no_content, not_found
 
@@ -125,8 +126,8 @@ async def install(req):
     if release is None:
         return bad_request("Target release does not exist")
 
-    task = await virtool.tasks.db.register(
-        db,
+    task = await virtool.tasks.pg.register(
+        req.app["postgres"],
         "install_hmms",
         context={
             "user_id": user_id,
