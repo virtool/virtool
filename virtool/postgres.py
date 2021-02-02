@@ -5,6 +5,8 @@ from sqlalchemy import text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
+import virtool.api.json
+
 logger = logging.getLogger(__name__)
 
 Base = declarative_base()
@@ -23,7 +25,7 @@ async def connect(postgres_connection_string: str) -> AsyncEngine:
         sys.exit(1)
 
     try:
-        postgres = create_async_engine(postgres_connection_string)
+        postgres = create_async_engine(postgres_connection_string, json_serializer=virtool.api.json.dumps)
 
         await check_version(postgres)
         await create_tables(postgres)
