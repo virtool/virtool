@@ -11,11 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.db.utils
 import virtool.files.db
-import virtool.uploads.db
 import virtool.http.routes
 import virtool.samples.db
+import virtool.uploads.db
 import virtool.utils
-from virtool.api.response import invalid_query, json_response, not_found, bad_request
+from virtool.api.response import invalid_query, json_response, bad_request
 from virtool.uploads.models import Upload
 
 logger = logging.getLogger("uploads")
