@@ -65,4 +65,10 @@ async def check_mongo_version(db: AsyncIOMotorClient):
 
 
 async def get_server_version(db: AsyncIOMotorClient) -> str:
-    return (await db.server_info())["version"]
+    """
+    Gets a server version string from the running MongoDB client.
+
+    :param db: the application database object
+    :return: MongoDB server version in string format
+    """
+    return (await db.motor_client.client.server_info())["version"]
