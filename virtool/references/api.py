@@ -9,6 +9,7 @@ import virtool.history.db
 import virtool.indexes.db
 import virtool.otus.db
 import virtool.tasks.db
+import virtool.tasks.pg
 import virtool.references.db
 import virtool.users.db
 import virtool.db.utils
@@ -166,7 +167,7 @@ async def update(req):
         "user_id": user_id
     }
 
-    task = await virtool.tasks.db.register(db, "update_remote_reference", context=context)
+    task = await virtool.tasks.pg.register(req.app["postgres"], "update_remote_reference", context=context)
 
     release, update_subdocument = await asyncio.shield(virtool.references.db.update(
         req,
@@ -338,7 +339,7 @@ async def create(req):
             "user_id": user_id
         }
 
-        task = await virtool.tasks.db.register(db, "clone_reference", context=context)
+        task = await virtool.tasks.pg.register(req.app["postgres"], "clone_reference", context=context)
 
         t = virtool.references.db.CloneReferenceTask(req.app, task["id"])
 
@@ -370,7 +371,7 @@ async def create(req):
             "user_id": user_id
         }
 
-        task = await virtool.tasks.db.register(db, "import_reference", context=context)
+        task = await virtool.tasks.pg.register(req.app["postgres"], "import_reference", context=context)
 
         t = virtool.references.db.ImportReferenceTask(req.app, task["id"])
 
@@ -408,7 +409,7 @@ async def create(req):
             user_id
         )
 
-        task = await virtool.tasks.db.register(db, "remote_reference")
+        task = await virtool.tasks.pg.register(req.app["postgres"], "remote_reference")
 
         document["task"] = {
             "id": task["id"]
@@ -550,14 +551,14 @@ async def remove(req):
         "user_id": user_id
     }
 
-    task = await virtool.tasks.db.register(db, "delete_reference", context=context)
+    task = await virtool.tasks.pg.register(req.app["postgres"], "delete_reference", context=context)
 
     await db.references.delete_one({
         "_id": ref_id
     })
 
     t = virtool.references.db.DeleteReferenceTask(req.app, task["id"])
-
+    await req.app["tasks"].put(t)
     await aiojobs.aiohttp.spawn(req, t.run())
 
     headers = {
