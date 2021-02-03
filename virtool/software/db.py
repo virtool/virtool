@@ -5,10 +5,10 @@ import os
 
 import aiohttp
 
-import virtool.tasks.db
 import virtool.db.utils
 import virtool.http.proxy
 import virtool.http.utils
+import virtool.tasks.pg
 import virtool.tasks.task
 import virtool.software.utils
 import virtool.software.utils
@@ -57,13 +57,11 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
                 progress_handler=progress_tracker.add
             )
         except FileNotFoundError:
-            await virtool.tasks.db.update(db, self.id, errors=[
-                "Could not write to release download location"
-            ])
+            await virtool.tasks.pg.update(self.pg, self.id, error="Could not write to release download location")
 
     async def decompress(self):
-        await virtool.tasks.db.update(
-            self.db,
+        await virtool.tasks.pg.update(
+            self.pg,
             self.id,
             progress=0.5,
             step="unpack"
@@ -78,8 +76,8 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
 
     async def check_tree(self):
         # Start check tree step, reporting this to the DB.
-        await virtool.tasks.db.update(
-            self.db,
+        await virtool.tasks.pg.update(
+            self.pg,
             self.id,
             progress=0.7,
             step="verify"
@@ -91,14 +89,12 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
         good_tree = await self.run_in_thread(virtool.software.utils.check_software_files, decompressed_path)
 
         if not good_tree:
-            await virtool.tasks.db.update(self.db, self.id, errors=[
-                "Invalid unpacked installation tree"
-            ])
+            await virtool.tasks.pg.update(self.pg, self.id, error="Invalid unpacked installation tree")
 
     async def copy_files(self):
         # Copy the update files to the install directory.
-        await virtool.tasks.db.update(
-            self.db,
+        await virtool.tasks.pg.update(
+            self.pg,
             self.id,
             progress=0.9,
             step="install"
@@ -110,8 +106,8 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
             virtool.software.utils.INSTALL_PATH
         )
 
-        await virtool.tasks.db.update(
-            self.db,
+        await virtool.tasks.pg.update(
+            self.pg,
             self.id,
             progress=1
         )

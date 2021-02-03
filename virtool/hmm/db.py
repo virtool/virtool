@@ -37,7 +37,7 @@ import virtool.errors
 import virtool.github
 import virtool.hmm.utils
 import virtool.http.utils
-import virtool.tasks.db
+import virtool.tasks.pg
 import virtool.tasks.task
 import virtool.types
 import virtool.utils
@@ -92,7 +92,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
     async def download(self):
         release = self.context["release"]
 
-        await virtool.tasks.db.update(self.db, self.id, 0, step="download")
+        await virtool.tasks.pg.update(self.pg, self.id, 0, step="download")
 
         progress_tracker = virtool.tasks.task.ProgressTracker(
             self.db,
@@ -112,16 +112,16 @@ class HMMInstallTask(virtool.tasks.task.Task):
                 progress_tracker.add
             )
         except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
-            await virtool.tasks.db.update(
-                self.db,
+            await virtool.tasks.pg.update(
+                self.pg,
                 self.id,
-                errors=["Could not download HMM data"],
+                error="Could not download HMM data",
                 step="unpack"
             )
 
     async def decompress(self):
-        await virtool.tasks.db.update(
-            self.db,
+        await virtool.tasks.pg.update(
+            self.pg,
             self.id,
             progress=0.4,
             step="unpack"
@@ -134,8 +134,8 @@ class HMMInstallTask(virtool.tasks.task.Task):
         )
 
     async def install_profiles(self):
-        await virtool.tasks.db.update(
-            self.db,
+        await virtool.tasks.pg.update(
+            self.pg,
             self.id,
             progress=0.6,
             step="install_profiles"
@@ -150,8 +150,8 @@ class HMMInstallTask(virtool.tasks.task.Task):
     async def import_annotations(self):
         release = self.context["release"]
 
-        await virtool.tasks.db.update(
-            self.db,
+        await virtool.tasks.pg.update(
+            self.pg,
             self.id,
             progress=0.8,
             step="import_annotations"
@@ -190,8 +190,8 @@ class HMMInstallTask(virtool.tasks.task.Task):
 
         logger.debug("Update HMM status")
 
-        await virtool.tasks.db.update(
-            self.db,
+        await virtool.tasks.pg.update(
+            self.pg,
             self.id,
             progress=1
         )
