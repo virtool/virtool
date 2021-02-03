@@ -76,8 +76,9 @@ async def install(req):
         virtool.utils.timestamp()
     )
 
-    t = virtool.software.db.SoftwareInstallTask(req.app, task["id"])
-
-    await aiojobs.aiohttp.spawn(req, t.run())
+    await req.app["task_runner"].add_task(task["id"])
+    # t = virtool.software.db.SoftwareInstallTask(req.app, task["id"])
+    #
+    # await aiojobs.aiohttp.spawn(req, t.run())
 
     return json_response(update)

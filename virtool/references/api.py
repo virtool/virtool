@@ -340,14 +340,14 @@ async def create(req):
         }
 
         task = await virtool.tasks.pg.register(req.app["postgres"], "clone_reference", context=context)
-
-        t = virtool.references.db.CloneReferenceTask(req.app, task["id"])
+        await req.app["task_runner"].add_task(task["id"])
+        # t = virtool.references.db.CloneReferenceTask(req.app, task["id"])
 
         document["task"] = {
-            "id": t.id
+            "id": task["id"]
         }
 
-        await aiojobs.aiohttp.spawn(req, t.run())
+        # await aiojobs.aiohttp.spawn(req, t.run())
 
     elif import_from:
         if not await db.files.count_documents({"_id": import_from}):
@@ -372,14 +372,14 @@ async def create(req):
         }
 
         task = await virtool.tasks.pg.register(req.app["postgres"], "import_reference", context=context)
-
-        t = virtool.references.db.ImportReferenceTask(req.app, task["id"])
+        await req.app["task_runner"].add_task(task["id"])
+        # t = virtool.references.db.ImportReferenceTask(req.app, task["id"])
 
         document["task"] = {
-            "id": t.id
+            "id": task["id"]
         }
 
-        await aiojobs.aiohttp.spawn(req, t.run())
+        # await aiojobs.aiohttp.spawn(req, t.run())
 
     elif remote_from:
         try:
@@ -416,14 +416,14 @@ async def create(req):
             "user_id": user_id
         }
         task = await virtool.tasks.pg.register(req.app["postgres"], "remote_reference", context=context)
-
+        await req.app["task_runner"].add_task(task["id"])
         document["task"] = {
             "id": task["id"]
         }
 
-        t = virtool.references.db.RemoteReferenceTask(req.app, task["id"])
+        # t = virtool.references.db.RemoteReferenceTask(req.app, task["id"])
 
-        await aiojobs.aiohttp.spawn(req, t.run())
+        # await aiojobs.aiohttp.spawn(req, t.run())
 
     else:
         document = await virtool.references.db.create_document(
@@ -553,14 +553,14 @@ async def remove(req):
     }
 
     task = await virtool.tasks.pg.register(req.app["postgres"], "delete_reference", context=context)
-
+    await req.app["task_runner"].add_task(task["id"])
     await db.references.delete_one({
         "_id": ref_id
     })
 
-    t = virtool.references.db.DeleteReferenceTask(req.app, task["id"])
+    # t = virtool.references.db.DeleteReferenceTask(req.app, task["id"])
 
-    await aiojobs.aiohttp.spawn(req, t.run())
+    # await aiojobs.aiohttp.spawn(req, t.run())
 
     headers = {
         "Content-Location": f"/api/tasks/{task['id']}"

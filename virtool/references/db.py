@@ -1516,9 +1516,7 @@ async def update(req, created_at, task_id, ref_id, release, user_id):
         }
     })
 
-    p = virtool.references.db.UpdateRemoteReferenceTask(req.app, task_id)
-
-    await aiojobs.aiohttp.spawn(req, p.run())
+    await req.app["task_runner"].add_task(task_id)
 
     return release, update_subdocument
 

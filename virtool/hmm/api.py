@@ -150,9 +150,10 @@ async def install(req):
         }
     })
 
-    t = virtool.hmm.db.HMMInstallTask(req.app, task["id"])
-
-    await aiojobs.aiohttp.spawn(req, t.run())
+    await req.app["task_runner"].add_task(task["id"])
+    # t = virtool.hmm.db.HMMInstallTask(req.app, task["id"])
+    #
+    # await aiojobs.aiohttp.spawn(req, t.run())
 
     return json_response(update)
 

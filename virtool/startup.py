@@ -36,6 +36,7 @@ import virtool.tasks.pg
 import virtool.tasks.utils
 import virtool.utils
 import virtool.version
+from virtool.tasks.runner import TaskRunner
 
 logger = logging.getLogger("startup")
 
@@ -345,28 +346,26 @@ async def init_version(app: typing.Union[dict, aiohttp.web.Application]):
     app["version"] = version
 
 
+async def init_task_runner(app):
+    scheduler = get_scheduler_from_app(app)
+    app["task_runner"] = TaskRunner(app, scheduler)
+    await scheduler.spawn(app["task_runner"].run())
+
+
 async def init_tasks(app: aiohttp.web.Application):
     if app["config"].get("no_check_db"):
         return logger.info("Skipping subtraction FASTA files checks")
 
     pg = app["postgres"]
-    scheduler = get_scheduler_from_app(app)
 
     logger.info("Checking subtraction FASTA files")
-
     subtraction_task = await virtool.tasks.pg.register(pg, "write_subtraction_fasta")
-    write_subtraction_fasta_task = virtool.subtractions.db.WriteSubtractionFASTATask(app, subtraction_task["id"])
-
-    await scheduler.spawn(write_subtraction_fasta_task.run())
+    await app["task_runner"].add_task(subtraction_task["id"])
 
     logger.info("Checking index JSON files")
     index_task = await virtool.tasks.pg.register(pg, "create_index_json")
-    create_index_json_task = virtool.references.db.CreateIndexJSONTask(app, index_task["id"])
-
-    await scheduler.spawn(create_index_json_task.run())
+    await app["task_runner"].add_task(index_task["id"])
 
     reference_task = await virtool.tasks.pg.register(pg, "delete_reference", context={"user_id": "virtool"})
-    delete_reference_task = virtool.references.db.DeleteReferenceTask(app, reference_task["id"])
-
-    await scheduler.spawn(virtool.tasks.utils.spawn_periodically(scheduler, delete_reference_task, 3600))
+    await app["task_runner"].add_task(reference_task["id"])
 
