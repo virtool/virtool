@@ -78,6 +78,7 @@ import virtool.otus.db
 import virtool.otus.utils
 import virtool.references.utils
 import virtool.tasks.db
+import virtool.tasks.pg
 import virtool.tasks.task
 import virtool.users.db
 import virtool.utils
@@ -288,6 +289,137 @@ class ImportReferenceTask(virtool.tasks.task.Task):
             )
 
             await tracker.add(1)
+
+
+class RemoteReferenceTask(virtool.tasks.task.Task):
+
+    def __init__(self, app, task_id):
+        super().__init__(app, task_id)
+
+        self.steps = [
+            self.download,
+            self.create_history,
+            self.update_reference
+        ]
+
+        self.import_data = None
+        self.inserted_otu_ids = list()
+
+    async def download(self):
+        progress_tracker = virtool.tasks.task.ProgressTracker(
+            self.db,
+            self.id,
+            self.context["release"]["size"],
+            factor=0.3,
+            increment=0.02
+        )
+
+        try:
+            self.import_data = await download_and_parse_release(
+                self.app,
+                self.context["release"]["download_url"],
+                self.id,
+                progress_tracker.add
+            )
+        except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
+            return await virtool.tasks.pg.update(
+                self.pg,
+                self.id,
+                error="Could not download reference data"
+            )
+
+        try:
+            data_type = self.import_data["data_type"]
+        except KeyError:
+            return await virtool.tasks.pg.update(
+                self.pg,
+                self.id,
+                error="Could not infer data type"
+            )
+
+        await self.db.references.update_one({"_id": self.context["ref_id"]}, {
+            "$set": {
+                "data_type": data_type,
+                "organism": self.import_data.get("organism", "Unknown")
+            }
+        })
+
+        error = virtool.references.utils.check_import_data(
+            self.import_data,
+            strict=True,
+            verify=True
+        )
+
+        if error:
+            return await virtool.tasks.pg.update(self.pg, self.id, error=error)
+
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            progress=0.4,
+            step="import"
+        )
+
+    async def create_history(self):
+        otus = self.import_data["otus"]
+
+        progress_tracker = virtool.tasks.task.ProgressTracker(
+            self.db,
+            self.id,
+            len(otus),
+            factor=0.3,
+            initial=0.4
+        )
+
+        for otu in otus:
+            otu_id = await insert_joined_otu(
+                self.db,
+                otu,
+                self.context["created_at"],
+                self.context["ref_id"],
+                self.context["user_id"],
+                remote=True
+            )
+            self.inserted_otu_ids.append(otu_id)
+            await progress_tracker.add(1)
+
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            progress=0.7,
+            step="create_history"
+        )
+
+    async def update_reference(self):
+        progress_tracker = virtool.tasks.task.ProgressTracker(
+            self.db,
+            self.id,
+            len(self.import_data["otus"]),
+            factor=0.3,
+            initial=0.7
+        )
+
+        for otu_id in self.inserted_otu_ids:
+            await insert_change(
+                self.app,
+                otu_id,
+                "remote",
+                self.context["user_id"]
+            )
+
+            await progress_tracker.add(1)
+
+        await self.db.references.update_one({"_id": self.context["ref_id"], "updates.id": self.context["release"]["id"]}, {
+            "$set": {
+                "installed": virtool.github.create_update_subdocument(self.context["release"], True, self.context["user_id"]),
+                "updates.$.ready": True,
+                "updating": False
+            }
+        })
+
+        await fetch_and_update_release(self.app, self.context["ref_id"])
+
+        await virtool.tasks.pg.update(self.pg, self.id, progress=1)
 
 
 class DeleteReferenceTask(virtool.tasks.task.Task):
@@ -1252,125 +1384,6 @@ async def export(app, ref_id):
         otu_list.append(joined)
 
     return virtool.references.utils.clean_export_list(otu_list)
-
-
-async def finish_remote(app, release, ref_id: str, created_at: str, task_id: str, user_id: str):
-    db = app["db"]
-
-    progress_tracker = virtool.tasks.task.ProgressTracker(
-        db,
-        task_id,
-        release["size"],
-        factor=0.3,
-        increment=0.02
-    )
-
-    try:
-        import_data = await download_and_parse_release(
-            app,
-            release["download_url"],
-            task_id,
-            progress_tracker.add
-        )
-    except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
-        return await virtool.tasks.db.update(
-            db,
-            task_id,
-            errors=["Could not download reference data"]
-        )
-
-    try:
-        data_type = import_data["data_type"]
-    except KeyError:
-        return await virtool.tasks.db.update(
-            db,
-            task_id,
-            errors=["Could not infer data type"]
-        )
-
-    await db.references.update_one({"_id": ref_id}, {
-        "$set": {
-            "data_type": data_type,
-            "organism": import_data.get("organism", "Unknown")
-        }
-    })
-
-    errors = virtool.references.utils.check_import_data(
-        import_data,
-        strict=True,
-        verify=True
-    )
-
-    if errors:
-        return await virtool.tasks.db.update(db, task_id, errors=errors)
-
-    await virtool.tasks.db.update(
-        db,
-        task_id,
-        progress=0.4,
-        step="import"
-    )
-
-    otus = import_data["otus"]
-
-    progress_tracker = virtool.tasks.task.ProgressTracker(
-        db,
-        task_id,
-        len(otus),
-        factor=0.3,
-        initial=0.4
-    )
-
-    inserted_otu_ids = list()
-
-    for otu in otus:
-        otu_id = await insert_joined_otu(
-            db,
-            otu,
-            created_at,
-            ref_id,
-            user_id,
-            remote=True
-        )
-        inserted_otu_ids.append(otu_id)
-        await progress_tracker.add(1)
-
-    await virtool.tasks.db.update(
-        db,
-        task_id,
-        progress=0.7,
-        step="create_history"
-    )
-
-    progress_tracker = virtool.tasks.task.ProgressTracker(
-        db,
-        task_id,
-        len(otus),
-        factor=0.3,
-        initial=0.7
-    )
-
-    for otu_id in inserted_otu_ids:
-        await insert_change(
-            app,
-            otu_id,
-            "remote",
-            user_id
-        )
-
-        await progress_tracker.add(1)
-
-    await db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
-        "$set": {
-            "installed": virtool.github.create_update_subdocument(release, True, user_id),
-            "updates.$.ready": True,
-            "updating": False
-        }
-    })
-
-    await fetch_and_update_release(app, ref_id)
-
-    await virtool.tasks.db.update(db, task_id, progress=1)
 
 
 async def insert_change(app, otu_id: str, verb: str, user_id: str, old: Union[None, dict] = None):

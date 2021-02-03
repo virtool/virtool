@@ -409,20 +409,21 @@ async def create(req):
             user_id
         )
 
-        task = await virtool.tasks.pg.register(req.app["postgres"], "remote_reference")
+        context = {
+            "release": release,
+            "ref_id": document["_id"],
+            "created_at": document["created_at"],
+            "user_id": user_id
+        }
+        task = await virtool.tasks.pg.register(req.app["postgres"], "remote_reference", context=context)
 
         document["task"] = {
             "id": task["id"]
         }
 
-        await aiojobs.aiohttp.spawn(req, virtool.references.db.finish_remote(
-            req.app,
-            release,
-            document["_id"],
-            document["created_at"],
-            task["id"],
-            user_id
-        ))
+        t = virtool.references.db.RemoteReferenceTask(req.app, task["id"])
+
+        await aiojobs.aiohttp.spawn(req, t.run())
 
     else:
         document = await virtool.references.db.create_document(
@@ -558,7 +559,7 @@ async def remove(req):
     })
 
     t = virtool.references.db.DeleteReferenceTask(req.app, task["id"])
-    await req.app["tasks"].put(t)
+
     await aiojobs.aiohttp.spawn(req, t.run())
 
     headers = {
