@@ -24,7 +24,6 @@ import virtool.jobs.runner
 import virtool.postgres
 import virtool.redis
 import virtool.references.db
-import virtool.resources
 import virtool.routes
 import virtool.sentry
 import virtool.settings.db
@@ -275,18 +274,6 @@ async def init_refresh(app: aiohttp.web.Application):
     await scheduler.spawn(virtool.references.db.refresh_remotes(app))
     await scheduler.spawn(virtool.hmm.db.refresh(app))
     await scheduler.spawn(virtool.software.db.refresh(app))
-
-
-async def init_resources(app: typing.Union[dict, aiohttp.web.Application]):
-    """
-    Set an initial value for the application resource values.
-
-    This value will be updated every time a client GETs `/api/jobs/resources`.
-
-    :param app: the application object
-
-    """
-    app["resources"] = virtool.resources.get()
 
 
 async def init_routes(app: aiohttp.web_app.Application):
