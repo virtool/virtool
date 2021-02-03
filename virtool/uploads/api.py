@@ -5,13 +5,18 @@ import os
 import aiofiles
 import aiohttp.web
 from cerberus import Validator
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.db.utils
 import virtool.files.db
 import virtool.http.routes
 import virtool.samples.db
+import virtool.uploads.db
 import virtool.utils
-from virtool.api.response import invalid_query, json_response, not_found
+from virtool.api.response import invalid_query, json_response, bad_request
+from virtool.uploads.models import Upload
 
 logger = logging.getLogger("uploads")
 
@@ -23,7 +28,6 @@ FILE_TYPES = [
     "hmm",
     "subtraction"
 ]
-
 
 routes = virtool.http.routes.Routes()
 
@@ -37,11 +41,11 @@ def naive_validator(req):
         return v.errors
 
 
-async def naive_writer(req, file_id):
+async def naive_writer(req, upload_id, name):
     reader = await req.multipart()
     file = await reader.next()
 
-    file_path = os.path.join(req.app["settings"]["data_path"], "files", file_id)
+    file_path = os.path.join(req.app["settings"]["data_path"], "files", f"{upload_id}-{name}")
 
     size = 0
 
@@ -53,59 +57,59 @@ async def naive_writer(req, file_id):
             size += len(chunk)
             await handle.write(chunk)
 
-    return size
+    return size, virtool.utils.timestamp()
 
 
 @routes.post("/upload/{file_type}", permission="upload_file")
 async def upload(req):
-    db = req.app["db"]
-
+    db = req.app["postgres"]
     file_type = req.match_info["file_type"]
-
-    if file_type not in FILE_TYPES:
-        return not_found()
 
     errors = naive_validator(req)
 
     if errors:
         return invalid_query(errors)
 
-    filename = req.query["name"]
+    name = req.query["name"]
 
-    document = await virtool.files.db.create(
-        db,
-        filename,
-        file_type,
-        user_id=req["client"].user_id
-    )
-
-    file_id = document["id"]
+    if file_type not in FILE_TYPES:
+        return bad_request("Unsupported file type")
 
     try:
-        size = await naive_writer(req, file_id)
+        document = await virtool.uploads.db.create(db, name, file_type, user=req["client"].user_id)
+    except IntegrityError:
+        return bad_request("File name already exists")
 
-        await db.files.update_one({"_id": file_id}, {
-            "$set": {
+    upload_id = document["id"]
+
+    async with AsyncSession(db) as session:
+        try:
+            upload = (await session.execute(select(Upload).filter_by(id=upload_id))).scalar()
+            size, uploaded_at = await naive_writer(req, upload_id, name)
+
+            upload.size = size
+            upload.name_on_disk = f"{upload_id}-{name}"
+            upload.uploaded_at = uploaded_at
+
+            await session.commit()
+
+            document.update({
                 "size": size,
-                "ready": True
+                "name_on_disk": f"{upload_id}-{name}",
+                "uploaded_at": uploaded_at
+            })
+
+            logger.debug(f"Upload succeeded: {upload_id}")
+
+            headers = {
+                "Location": f"/api/files/{upload_id}"
             }
-        })
 
-        logger.debug(f"Upload succeeded: {file_id}")
+            return json_response(document, status=201, headers=headers)
+        except asyncio.CancelledError:
+            logger.debug(f"Upload aborted: {upload_id}")
 
-        headers = {
-            "Location": f"/api/files/{file_id}"
-        }
+            await session.delete(upload)
+            await session.commit()
 
-        return json_response(document, status=201, headers=headers)
-    except asyncio.CancelledError:
-        logger.debug(f"Upload aborted: {file_id}")
-
-        await virtool.files.db.remove(
-            db,
-            req.app["settings"],
-            req.app["run_in_thread"],
-            file_id
-        )
-
-        return aiohttp.web.Response(status=499)
+            return aiohttp.web.Response(status=499)
