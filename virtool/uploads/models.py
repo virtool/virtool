@@ -6,6 +6,7 @@ from virtool.postgres import Base
 
 
 class UploadType(enum.Enum):
+    hmm = "hmm"
     reference = "reference"
     reads = "reads"
     subtraction = "subtraction"
@@ -28,6 +29,6 @@ class Upload(Base):
     uploaded_at = Column(DateTime)
 
     def __repr__(self):
-        return f"<Upload(id={self.id}, created_at={self.created_at}, name={self.name}, " \
-               f"name_on_disk={self.name_on_disk}, ready={self.ready}, reserved={self.reserved}, " \
-               f"size={self.size}, type={self.type}, uploaded_at={self.uploaded_at}, user={self.user}"
+        return """<Upload(id= {self.id}, created_at={self.created_at}, name={self.name}, \
+               name_on_disk={self.name_on_disk}, ready={self.ready}, removed={self.removed}, reserved={self.reserved}, \
+               size={self.size}, type={self.type}, user={self.user}, uploaded_at={self.uploaded_at}>"""
