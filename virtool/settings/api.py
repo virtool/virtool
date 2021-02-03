@@ -1,6 +1,5 @@
 import virtool.settings.db
 import virtool.http.routes
-import virtool.resources
 import virtool.settings.schema
 import virtool.utils
 from virtool.api.response import json_response

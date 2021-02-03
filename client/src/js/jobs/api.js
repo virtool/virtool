@@ -9,5 +9,3 @@ export const cancel = ({ jobId }) => Request.put(`/api/jobs/${jobId}/cancel`);
 export const remove = ({ jobId }) => Request.delete(`/api/jobs/${jobId}`);
 
 export const clear = ({ scope }) => Request.delete("/api/jobs").query({ filter: scope || "finished" });
-
-export const getResources = () => Request.get("/api/resources");

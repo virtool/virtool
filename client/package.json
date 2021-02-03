@@ -37,7 +37,6 @@
     "react-redux": "^7.2.1",
     "react-router-dom": "^5.2.0",
     "react-scroll-sync": "^0.8.0",
-    "react-svg-gauge": "^1.0.10",
     "react-tippy": "^1.4.0",
     "react-window": "^1.8.5",
     "redux": "^4.0.5",
