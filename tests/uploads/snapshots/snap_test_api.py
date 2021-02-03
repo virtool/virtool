@@ -62,3 +62,17 @@ snapshots['TestUpload.test[uvloop-subtraction] 1'] = {
     'uploaded_at': '2015-10-06T20:00:00Z',
     'user': 'test'
 }
+
+snapshots['TestUpload.test[uvloop-None] 1'] = {
+    'created_at': '2015-10-06T20:00:00Z',
+    'id': 1,
+    'name': 'Test.fq.gz',
+    'name_on_disk': '1-Test.fq.gz',
+    'ready': False,
+    'removed': False,
+    'reserved': False,
+    'size': 9081,
+    'type': None,
+    'uploaded_at': '2015-10-06T20:00:00Z',
+    'user': 'test'
+}
