@@ -26,7 +26,7 @@ import shutil
 import virtool.db.utils
 import virtool.subtractions.utils
 import virtool.tasks.task
-import virtool.tasks.db
+import virtool.tasks.pg
 import virtool.utils
 
 PROJECTION = [
@@ -58,7 +58,7 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
         db = self.db
         settings = self.app["settings"]
 
-        async for subtraction in db.subtraction.find():
+        async for subtraction in db.subtraction.find({"deleted": False}):
             path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
             has_file = True
 
@@ -72,8 +72,8 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
                 }
             })
 
-        await virtool.tasks.db.update(
-            self.db,
+        await virtool.tasks.pg.update(
+            self.pg,
             self.id,
             progress=0.2,
         )

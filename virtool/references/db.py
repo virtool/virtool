@@ -77,7 +77,6 @@ import virtool.http.utils
 import virtool.otus.db
 import virtool.otus.utils
 import virtool.references.utils
-import virtool.tasks.db
 import virtool.tasks.pg
 import virtool.tasks.task
 import virtool.users.db
@@ -198,21 +197,12 @@ class ImportReferenceTask(virtool.tasks.task.Task):
         try:
             self.import_data = await self.run_in_thread(virtool.references.utils.load_reference_file, path)
         except json.decoder.JSONDecodeError as err:
-            return await self.error([{
-                "id": "json_error",
-                "message": str(err).split("JSONDecodeError: ")[1]
-            }])
+            return await self.error(str(err).split("JSONDecodeError: ")[1])
         except OSError as err:
             if "Not a gzipped file" in str(err):
-                return await self.error([{
-                    "id": "not_gzipped",
-                    "message": "Not a gzipped file"
-                }])
+                return await self.error("Not a gzipped file")
             else:
-                return await self.error([{
-                    "id": "unhandled",
-                    "message": str(err)
-                }])
+                return await self.error(str(err))
 
     async def set_metadata(self):
         ref_id = self.context["ref_id"]
@@ -539,10 +529,7 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
                 )
 
         except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
-            return await self.error([{
-                "id": "download_error",
-                "message": "Could not download reference data"
-            }])
+            return await self.error("Could not download reference data")
 
     async def update_otus(self):
         update_data = self.intermediate["update_data"]
@@ -1297,7 +1284,7 @@ async def create_remote(db, settings: dict, release: dict, remote_from: str, use
 
 
 async def download_and_parse_release(app, url: str, task_id: str, progress_handler: callable):
-    db = app["db"]
+    pg = app["postgres"]
 
     with virtool.utils.get_temp_dir() as tempdir:
         temp_path = str(tempdir)
@@ -1311,7 +1298,7 @@ async def download_and_parse_release(app, url: str, task_id: str, progress_handl
             progress_handler
         )
 
-        await virtool.tasks.db.update(db, task_id, progress=0.3, step="unpack")
+        await virtool.tasks.pg.update(pg, task_id, progress=0.3, step="unpack")
 
         return await app["run_in_thread"](virtool.references.utils.load_reference_file, download_path)
 

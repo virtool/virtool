@@ -13,7 +13,6 @@ import virtool.errors
 import virtool.github
 import virtool.hmm.db
 import virtool.http.routes
-import virtool.tasks.db
 import virtool.tasks.pg
 import virtool.utils
 from virtool.api.response import bad_gateway, bad_request, conflict, json_response, no_content, not_found
