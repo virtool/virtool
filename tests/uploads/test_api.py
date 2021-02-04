@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from virtool.uploads.api import UPLOAD_TYPES
+from virtool.uploads.models import Upload
 
 
 class TestUpload:
@@ -63,3 +64,32 @@ class TestUpload:
         resp = await client.post_form("/api/uploads?type=foobar&name=Test.fq.gz", data=files)
 
         assert await resp_is.bad_request(resp, message="Unsupported upload type")
+
+
+class TestFind:
+    @pytest.fixture
+    async def prepare_db(self, pg_session, static_time):
+        upload_1 = Upload(id=1, name="test.fq.gz", type="reads", user="danny")
+        upload_2 = Upload(id=2, name="test.fq.gz", type="subtraction", user="lester")
+        upload_3 = Upload(id=3, name="test.fq.gz", user="jake")
+
+        async with pg_session as session:
+            session.add_all([upload_1, upload_2, upload_3])
+
+            await session.commit()
+
+    @pytest.mark.parametrize("type_", ["reads", "reference", None])
+    @pytest.mark.parametrize("user", ["danny", "lester", "jake"])
+    async def test(self, spawn_client, resp_is, snapshot, type_, user, prepare_db):
+        client = await spawn_client(authorize=True, administrator=True)
+
+        if type_:
+            resp = await client.get(f"/api/uploads?type={type_}&user={user}")
+        else:
+            resp = await client.get(f"/api/uploads?user={user}")
+
+            assert resp.status == 200
+
+        assert resp.status == 200
+
+        snapshot.assert_match(await resp.json())
