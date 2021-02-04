@@ -110,3 +110,35 @@ async def upload(req):
             await session.commit()
 
             return aiohttp.web.Response(status=499)
+
+
+@routes.get("/api/uploads")
+async def find(req):
+    db = req.app["postgres"]
+    document = list()
+    filters = list()
+    user = req.query.get("user")
+
+    if user:
+        filters.append(Upload.user == user)
+
+    try:
+        filters.append(Upload.type == req.query["type"])
+    except KeyError:
+        pass
+
+    async with AsyncSession(db) as session:
+        if filters:
+            result = await session.execute(select(Upload).filter(*filters))
+        else:
+            result = await session.execute(select(Upload))
+
+        for upload in result.scalars().all():
+            document.append(upload.to_dict())
+
+    resp = json_response(document)
+
+    return resp
+
+
+
