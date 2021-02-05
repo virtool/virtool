@@ -8,23 +8,26 @@ from virtool.uploads.api import UPLOAD_TYPES
 from virtool.uploads.models import Upload
 
 
+@pytest.fixture
+def files(tmpdir):
+    tmpdir.mkdir("files")
+
+    path = Path(sys.path[0]) / "tests" / "test_files" / "test.fq.gz"
+
+    files = {
+        "file": open(path, "rb")
+    }
+
+    return files
+
+
 class TestUpload:
 
     @pytest.mark.parametrize("upload_type", UPLOAD_TYPES)
-    async def test(self, upload_type, tmpdir, snapshot, spawn_client, static_time):
+    async def test(self, files, upload_type, tmpdir, snapshot, spawn_client, static_time):
         client = await spawn_client(authorize=True, permissions=["upload_file"])
 
         client.app["settings"]["data_path"] = str(tmpdir)
-
-        # This is where the file should end up.
-        files_dir = tmpdir.mkdir("files")
-
-        # This is the path to the file to be uploaded.
-        path = Path(sys.path[0]) / "tests" / "test_files" / "test.fq.gz"
-
-        files = {
-            "file": open(path, "rb")
-        }
 
         if upload_type:
             resp = await client.post_form(f"/api/uploads?type={upload_type}&name=Test.fq.gz", data=files)
@@ -33,18 +36,12 @@ class TestUpload:
 
         assert resp.status == 201
 
-        assert os.listdir(str(files_dir)) == ["1-Test.fq.gz"]
+        assert os.listdir(tmpdir / "files") == ["1-Test.fq.gz"]
 
         snapshot.assert_match(await resp.json())
 
-    async def test_invalid_query(self, spawn_client, resp_is):
+    async def test_invalid_query(self, files, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["upload_file"])
-
-        path = Path(sys.path[0]) / "tests" / "test_files" / "test.fq.gz"
-
-        files = {
-            "file": open(path, "rb")
-        }
 
         resp = await client.post_form("/api/uploads", data=files)
 
@@ -52,14 +49,8 @@ class TestUpload:
             "name": ["required field"]
         })
 
-    async def test_bad_type(self, spawn_client, resp_is):
+    async def test_bad_type(self, files, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["upload_file"])
-
-        path = Path(sys.path[0]) / "tests" / "test_files" / "test.fq.gz"
-
-        files = {
-            "file": open(path, "rb")
-        }
 
         resp = await client.post_form("/api/uploads?type=foobar&name=Test.fq.gz", data=files)
 
@@ -88,8 +79,47 @@ class TestFind:
         else:
             resp = await client.get(f"/api/uploads?user={user}")
 
-            assert resp.status == 200
-
         assert resp.status == 200
 
         snapshot.assert_match(await resp.json())
+
+
+class TestGet:
+    @pytest.mark.parametrize("exists", [True, False])
+    async def test(self, exists, files, resp_is, spawn_client, tmpdir):
+        client = await spawn_client(authorize=True, administrator=True)
+
+        client.app["settings"]["data_path"] = str(tmpdir)
+
+        if exists:
+            await client.post_form("/api/uploads?name=test.fq.gz", data=files)
+
+        resp = await client.get("/api/uploads/1")
+
+        if exists:
+            assert resp.status == 200
+        else:
+            assert await resp_is.not_found(resp, message="Upload record not found")
+
+    @pytest.mark.parametrize("exists", [True, False])
+    async def test_bad_attribute(self, exists, resp_is, spawn_client, pg_session, tmpdir):
+        client = await spawn_client(authorize=True, administrator=True)
+
+        client.app["settings"]["data_path"] = str(tmpdir)
+
+        async with pg_session as session:
+            if exists:
+                session.add(Upload(name="test.fq.gz", name_on_disk="1-test.fq.gz"))
+            else:
+                session.add(Upload(name="test.fq.gz"))
+
+            await session.commit()
+
+        resp = await client.get("/api/uploads/1")
+
+        if exists:
+            assert resp.status == 404
+        else:
+            assert await resp_is.bad_request(resp, message="Upload record has no name_on_disk attribute")
+
+
