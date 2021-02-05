@@ -67,16 +67,19 @@ class Task:
 
         return self.context
 
-    def get_tracker(self, total):
-        factor = 1 / len(self.steps)
-        initial = self.steps.index(self.step) * factor
+    async def get_tracker(self, file_size=0):
+        async with AsyncSession(self.pg) as session:
+            result = await session.execute(select(virtool.tasks.models.Task).filter_by(id=self.id))
+            task = result.scalar().to_dict()
+            initial = task["progress"]
+
+        total = round((100 - initial) / (len(self.steps) - self.steps.index(self.step)))
 
         return ProgressTracker(
-            self.db,
+            self.pg,
             self.id,
             total,
-            factor=factor,
-            increment=0.005,
+            file_size=file_size,
             initial=initial
         )
 
@@ -97,36 +100,22 @@ class Task:
 
 class ProgressTracker:
 
-    def __init__(self, db, task_id, total, factor=1.0, increment=0.03, initial=0.0):
-        self.db = db
+    def __init__(self, pg, task_id, total, initial=0.0, file_size=0):
+        self.pg = pg
         self.task_id = task_id
         self.total = total
-        self.factor = factor
-        self.increment = increment
         self.initial = initial
+        self.file_size = file_size
 
-        self.count = 0
-        self.last_reported = 0
         self.progress = self.initial
 
     async def add(self, value):
-        count = self.count + value
+        self.progress += (value / self.file_size) * self.total
 
-        if count > self.total:
-            raise ValueError("Count cannot exceed total")
+        async with AsyncSession(self.pg) as session:
+            result = await session.execute(select(virtool.tasks.models.Task).filter_by(id=self.task_id))
+            task = result.scalar()
+            task.progress = round(self.progress)
+            await session.commit()
 
-        self.count = count
-
-        self.progress = self.initial + round(self.count / self.total * self.factor, 2)
-
-        if self.progress - self.last_reported >= self.increment:
-            await virtool.tasks.db.update(
-                self.db,
-                self.task_id,
-                count=self.count,
-                progress=self.progress
-            )
-
-            self.last_reported = self.progress
-
-        return self.progress
+        return round(self.progress)

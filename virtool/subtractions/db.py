@@ -57,6 +57,7 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
     async def check_subtraction_fasta_files(self):
         db = self.db
         settings = self.app["settings"]
+        tracker = await self.get_tracker()
 
         async for subtraction in db.subtraction.find({"deleted": False}):
             path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
@@ -75,13 +76,14 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=0.2,
+            progress=tracker.initial + tracker.total,
+            step="check_subtraction_fasta_files"
         )
 
     async def generate_fasta_files(self):
         settings = self.app["settings"]
 
-        tracker = self.get_tracker(len(self.subtractions_without_fasta))
+        tracker = await self.get_tracker()
 
         for subtraction in self.subtractions_without_fasta:
             index_path = virtool.subtractions.utils.join_subtraction_index_path(settings, subtraction)
@@ -116,7 +118,12 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
                     }
                 })
 
-            await tracker.add(1)
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            progress=tracker.initial + tracker.total,
+            step="generate_fasta_files"
+        )
 
 
 async def attach_subtraction(db, document: dict):

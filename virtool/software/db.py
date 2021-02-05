@@ -40,30 +40,24 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
         # Download the release from GitHub and write it to a temporary directory.
         compressed_path = os.path.join(self.temp_path, "release.tar.gz")
 
-        progress_tracker = virtool.tasks.task.ProgressTracker(
-            db,
-            self.id,
-            release["size"],
-            factor=0.5,
-            increment=0.03,
-            initial=0
-        )
+        tracker = await self.get_tracker(release["size"])
 
         try:
             await virtool.http.utils.download_file(
                 self.app,
                 release["download_url"],
                 compressed_path,
-                progress_handler=progress_tracker.add
+                progress_handler=tracker.add
             )
         except FileNotFoundError:
             await virtool.tasks.pg.update(self.pg, self.id, error="Could not write to release download location")
 
     async def decompress(self):
+        tracker = await self.get_tracker()
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=0.5,
+            progress=tracker.initial + tracker.total,
             step="unpack"
         )
 
@@ -76,10 +70,11 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
 
     async def check_tree(self):
         # Start check tree step, reporting this to the DB.
+        tracker = await self.get_tracker()
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=0.7,
+            progress=tracker.initial + tracker.total,
             step="verify"
         )
 
@@ -93,10 +88,11 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
 
     async def copy_files(self):
         # Copy the update files to the install directory.
+        tracker = await self.get_tracker()
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=0.9,
+            progress=tracker.initial + tracker.total,
             step="install"
         )
 
@@ -104,12 +100,6 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
             virtool.software.utils.copy_software_files,
             os.path.join(self.temp_path, "virtool"),
             virtool.software.utils.INSTALL_PATH
-        )
-
-        await virtool.tasks.pg.update(
-            self.pg,
-            self.id,
-            progress=1
         )
 
         await asyncio.sleep(1.5)
