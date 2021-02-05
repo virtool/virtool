@@ -359,8 +359,13 @@ async def init_tasks(app: aiohttp.web.Application):
     pg = app["postgres"]
 
     logger.info("Checking subtraction FASTA files")
-    subtraction_task = await virtool.tasks.pg.register(pg, "write_subtraction_fasta")
-    await app["task_runner"].add_task(subtraction_task["id"])
+    subtractions_without_fasta = await virtool.subtractions.db.check_subtraction_fasta_files(app["db"], app["settings"])
+    for subtraction in subtractions_without_fasta:
+        subtraction_task = await virtool.tasks.pg.register(
+            pg,
+            "write_subtraction_fasta",
+            context={"subtraction": subtraction})
+        await app["task_runner"].add_task(subtraction_task["id"])
 
     logger.info("Checking index JSON files")
     index_task = await virtool.tasks.pg.register(pg, "create_index_json")
@@ -368,4 +373,3 @@ async def init_tasks(app: aiohttp.web.Application):
 
     reference_task = await virtool.tasks.pg.register(pg, "delete_reference", context={"user_id": "virtool"})
     await app["task_runner"].add_task(reference_task["id"])
-
