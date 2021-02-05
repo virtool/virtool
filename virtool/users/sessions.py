@@ -6,6 +6,7 @@ from typing import Tuple, Union
 import virtool.db.core
 import virtool.db.utils
 import virtool.utils
+from virtool.utils import generate_key
 
 
 async def create_session(db, ip, user_id=None, remember=False):
@@ -32,10 +33,7 @@ async def create_session(db, ip, user_id=None, remember=False):
     token = None
 
     if user_id:
-        token = secrets.token_hex(32)
-
-        hashed = hashlib.sha256(token.encode()).hexdigest()
-
+        token, hashed = generate_key()
         user_document = await db.users.find_one(user_id)
 
         session.update({

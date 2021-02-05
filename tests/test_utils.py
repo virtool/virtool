@@ -46,6 +46,20 @@ def test_base_processor(document, result):
     assert virtool.utils.base_processor(document) == result
 
 
+def test_generate_key(mocker):
+    """
+    Test that API keys are generated using UUID4 and that :func:`generate_api_key()` returns the
+    raw and hashed version of the key. Hashing is done through a call to :func:`hash_api_key`.
+
+    """
+    m_token_hex = mocker.patch("secrets.token_hex", return_value="foobar")
+    assert virtool.utils.generate_key() == (
+        "foobar",
+        "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"
+    )
+    m_token_hex.assert_called_with(32)
+
+
 def test_decompress_tgz(tmpdir):
     path = str(tmpdir)
 
@@ -59,29 +73,33 @@ def test_decompress_tgz(tmpdir):
 
     assert os.listdir(os.path.join(path, "de")) == ["virtool"]
 
-    assert set(os.listdir(os.path.join(path, "de", "virtool"))) == {"run", "client", "VERSION", "install.sh"}
+    assert set(os.listdir(os.path.join(path, "de", "virtool"))) == {
+        "run",
+        "client",
+        "VERSION", "install.sh"
+    }
 
 
 class TestRandomAlphanumeric:
 
     def test_default(self, alphanumeric):
         for _ in range(0, 10):
-            an = virtool.utils.random_alphanumeric()
-            assert len(an) == 6
-            assert all(l in alphanumeric for l in an)
+            result = virtool.utils.random_alphanumeric()
+            assert len(result) == 6
+            assert all(a in alphanumeric for a in result)
 
     def test_length(self, alphanumeric):
         for length in [7, 10, 25, 12, 4, 22, 17, 30, 8, 14, 19]:
-            an = virtool.utils.random_alphanumeric(length)
-            assert len(an) == length
-            assert all(l in alphanumeric for l in an)
+            result = virtool.utils.random_alphanumeric(length)
+            assert len(result) == length
+            assert all(a in alphanumeric for a in result)
 
     def test_excluded(self, alphanumeric):
         for _ in range(0, 5):
-            an = virtool.utils.random_alphanumeric(excluded=["87e9wa"])
-            assert an != "87e9wa"
-            assert len(an) == 6
-            assert all(l in alphanumeric for l in an)
+            result = virtool.utils.random_alphanumeric(excluded=["87e9wa"])
+            assert result != "87e9wa"
+            assert len(result) == 6
+            assert all(a in alphanumeric for a in result)
 
 
 @pytest.mark.parametrize("recursive,expected", [
@@ -90,7 +108,8 @@ class TestRandomAlphanumeric:
 ])
 def test_rm(recursive, expected, tmpdir):
     """
-    Test that a file can be removed and that a folder can be removed when `recursive` is set to `True`.
+    Test that a file can be removed and that a folder can be removed when `recursive` is set to
+    `True`.
 
     """
     tmpdir.join("foo.txt").write("hello world")
@@ -131,8 +150,8 @@ def test_should_use_pigz(processes, which, mocker):
 
 def test_timestamp(mocker):
     """
-    Test that the timestamp util returns a datetime object with the last 3 digits of the microsecond frame set to
-    zero.
+    Test that the timestamp util returns a datetime object with the last 3 digits of the
+    microsecond frame set to zero.
 
     """
     m = mocker.Mock(return_value=arrow.Arrow(2017, 10, 6, 20, 0, 0, 612304))
