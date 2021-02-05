@@ -25,6 +25,7 @@ class VTClient:
         self.server = None
         self.app = None
         self.db = None
+        self.postgres = None
 
     async def connect(
             self,
@@ -59,6 +60,7 @@ class VTClient:
         self.server = self._client.server
         self.app = self.server.app
         self.db = self.app.get("db", None)
+        self.postgres = self.app.get("postgres", None)
 
         if authorize:
             user_document = self._create_user("test", administrator, groups, permissions)

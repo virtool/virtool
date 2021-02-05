@@ -48,7 +48,7 @@ async def test_find(spawn_client, pg_session, snapshot, static_time):
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, spawn_client, all_permissions, pg_session, static_time, resp_is):
+async def test_get(error, spawn_client, all_permissions, pg_session, static_time, snapshot, resp_is):
     """
     Test that a ``GET /api/tasks/:task_id`` return the correct task document.
 
@@ -81,16 +81,4 @@ async def test_get(error, spawn_client, all_permissions, pg_session, static_time
 
     assert resp.status == 200
 
-    assert await resp.json() == {
-        'complete': True,
-        'context': {
-            'user_id': 'test_1'
-        },
-        'count': 40,
-        'created_at': '2015-10-06T20:00:00Z',
-        'file_size': 1024,
-        'id': 1,
-        'progress': 100,
-        'step': 'download',
-        'type': 'clone_reference'
-    }
+    snapshot.assert_match(await resp.json())
