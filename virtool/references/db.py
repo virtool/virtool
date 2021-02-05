@@ -62,7 +62,6 @@ import shutil
 from typing import List, Union
 
 import aiohttp
-import aiojobs.aiohttp
 import pymongo
 import semver
 

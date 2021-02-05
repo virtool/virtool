@@ -1,5 +1,3 @@
-import pytest
-
 import virtool.tasks.pg
 from virtool.tasks.models import Task
 

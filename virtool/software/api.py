@@ -1,5 +1,4 @@
 import aiohttp
-import aiojobs.aiohttp
 
 import virtool.db.utils
 import virtool.github

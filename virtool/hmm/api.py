@@ -5,7 +5,6 @@ API request handlers for managing and querying HMM data.
 import os
 
 import aiohttp
-import aiojobs.aiohttp
 
 import virtool.api.utils
 import virtool.db.utils
