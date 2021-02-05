@@ -16,7 +16,7 @@ class TaskRunner:
         self.scheduler = scheduler
 
     async def run(self):
-        logging.debug("Started task runner")
+        logging.info("Started task runner")
 
         try:
             while True:
