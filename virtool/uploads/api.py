@@ -6,7 +6,7 @@ from pathlib import Path
 import aiofiles
 import aiohttp.web
 from cerberus import Validator
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.db.utils
@@ -82,12 +82,12 @@ async def upload(req):
 
     async with AsyncSession(db) as session:
         try:
-            upload = (await session.execute(select(Upload).filter_by(id=upload_id))).scalar()
+            result = (await session.execute(select(Upload).filter_by(id=upload_id))).scalar()
             size, uploaded_at = await naive_writer(req, upload_id, name)
 
-            upload.size = size
-            upload.name_on_disk = f"{upload_id}-{name}"
-            upload.uploaded_at = uploaded_at
+            result.size = size
+            result.name_on_disk = f"{upload_id}-{name}"
+            result.uploaded_at = uploaded_at
 
             await session.commit()
 
@@ -107,7 +107,7 @@ async def upload(req):
         except asyncio.CancelledError:
             logger.debug(f"Upload aborted: {upload_id}")
 
-            await session.delete(upload)
+            await session.delete(result)
             await session.commit()
 
             return aiohttp.web.Response(status=499)
@@ -152,12 +152,42 @@ async def get(req):
 
         if not result:
             return not_found("Upload record not found")
-    try:
-        file_path = Path(req.app["settings"]["data_path"]) / "files" / result.name_on_disk
-    except TypeError:
-        return bad_request("Upload record has no name_on_disk attribute")
 
-    if not file_path.exists():
-        return not_found("Upload not found on local disk")
+    # check if the file has been removed as a result of a `DELETE` request
+    if result.removed:
+        return not_found("Uploaded file has already been removed")
 
-    return aiohttp.web.FileResponse(file_path)
+    upload_path = Path(req.app["settings"]["data_path"]) / "files" / result.name_on_disk
+
+    # check if the file has been manually removed by the user
+    if not upload_path.exists():
+        return not_found("Uploaded file not found at expected location")
+
+    return aiohttp.web.FileResponse(upload_path)
+
+
+@routes.delete("/api/uploads/{id}", permission="remove_file")
+async def delete(req):
+    db = req.app["postgres"]
+    upload_id = int(req.match_info["id"])
+
+    async with AsyncSession(db) as session:
+        result = (await session.execute(select(Upload).where(Upload.id == upload_id))).scalar()
+
+        if not result:
+            return not_found("Upload record not found")
+
+        if result.removed:
+            return bad_request("Uploaded file has already been removed")
+
+        try:
+            os.remove(Path(req.app["settings"]["data_path"]) / "files" / result.name_on_disk)
+        except FileNotFoundError:
+            return not_found("Uploaded file not found at expected location")
+
+        result.removed = True
+        result.removed_at = virtool.utils.timestamp()
+
+        await session.commit()
+
+    return aiohttp.web.Response(status=204)

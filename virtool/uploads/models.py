@@ -10,7 +10,6 @@ class UploadType(str, enum.Enum):
     reference = "reference"
     reads = "reads"
     subtraction = "subtraction"
-    null = None
 
 
 class Upload(Base):
@@ -22,6 +21,7 @@ class Upload(Base):
     name_on_disk = Column(String, unique=True)
     ready = Column(Boolean)
     removed = Column(Boolean)
+    removed_at = Column(DateTime)
     reserved = Column(Boolean)
     size = Column(Integer)
     type = Column(Enum(UploadType))

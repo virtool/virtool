@@ -102,24 +102,74 @@ class TestGet:
             assert await resp_is.not_found(resp, message="Upload record not found")
 
     @pytest.mark.parametrize("exists", [True, False])
-    async def test_bad_attribute(self, exists, resp_is, spawn_client, pg_session, tmpdir):
+    async def test_upload_removed(self, exists, resp_is, spawn_client, pg_session, tmpdir):
         client = await spawn_client(authorize=True, administrator=True)
 
         client.app["settings"]["data_path"] = str(tmpdir)
 
         async with pg_session as session:
             if exists:
-                session.add(Upload(name="test.fq.gz", name_on_disk="1-test.fq.gz"))
+                session.add(Upload(name_on_disk="1-test.fq.gz", removed=False))
             else:
-                session.add(Upload(name="test.fq.gz"))
+                session.add(Upload(name_on_disk="1-test.fq.gz", removed=True))
 
             await session.commit()
 
         resp = await client.get("/api/uploads/1")
 
         if exists:
-            assert resp.status == 404
+            assert await resp_is.not_found(resp, message="Uploaded file not found at expected location")
         else:
-            assert await resp_is.bad_request(resp, message="Upload record has no name_on_disk attribute")
+            assert await resp_is.not_found(resp, message="Uploaded file has already been removed")
 
 
+class TestDelete:
+    async def test(self, files, spawn_client, snapshot, tmpdir):
+        client = await spawn_client(authorize=True, administrator=True)
+
+        client.app["settings"]["data_path"] = str(tmpdir)
+
+        await client.post_form("/api/uploads?name=test.fq.gz", data=files)
+
+        resp = await client.delete("/api/uploads/1")
+        assert resp.status == 204
+
+        resp = await client.get("api/uploads/1")
+        assert resp.status == 404
+
+    @pytest.mark.parametrize("removed", [True, False])
+    async def test_already_removed(self, removed, spawn_client, tmpdir, pg_session):
+        client = await spawn_client(authorize=True, administrator=True)
+
+        client.app["settings"]["data_path"] = str(tmpdir)
+
+        async with pg_session as session:
+            if removed:
+                session.add(Upload(name_on_disk="1-test.fq.gz", removed=True))
+            else:
+                session.add(Upload(name_on_disk="1-test.fq.gz", removed=False))
+
+            await session.commit()
+
+        resp = await client.delete("/api/uploads/1")
+
+        if removed:
+            assert resp.status == 400
+        else:
+            assert resp.status == 404
+
+    @pytest.mark.parametrize("exists", [True, False])
+    async def test_record_dne(self, exists, spawn_client, pg_session):
+        client = await spawn_client(authorize=True, administrator=True)
+
+        if exists:
+            async with pg_session as session:
+                session.add(Upload(name_on_disk="1-test.fq.gz", removed=True))
+                await session.commit()
+
+        resp = await client.delete("/api/uploads/1")
+
+        if exists:
+            assert resp.status == 400
+        else:
+            assert resp.status == 404
