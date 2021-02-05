@@ -105,7 +105,7 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
     mocker.patch("virtool.references.db.UpdateRemoteReferenceTask")
 
     m_register = mocker.patch(
-        "virtool.tasks.db.register",
+        "virtool.tasks.pg.register",
         make_mocked_coro({
             "id": "task"
         })
@@ -146,7 +146,7 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
         return
 
     m_register.assert_called_with(
-        client.db,
+        client.postgres,
         "update_remote_reference",
         context={
             "created_at": static_time.datetime,
