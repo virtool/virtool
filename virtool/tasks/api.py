@@ -22,4 +22,4 @@ async def get(req):
     if not document:
         return not_found()
 
-    return json_response(document.to_dict())
+    return json_response(document)

@@ -30,7 +30,7 @@ class Task:
         self.temp_dir = virtool.utils.get_temp_dir()
 
     async def init_db(self):
-        self.document = (await virtool.tasks.pg.get(self.pg, self.id)).to_dict()
+        self.document = await virtool.tasks.pg.get(self.pg, self.id)
         self.context = self.document["context"]
 
     async def run(self):
