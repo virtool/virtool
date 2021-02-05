@@ -91,16 +91,9 @@ class HMMInstallTask(virtool.tasks.task.Task):
 
     async def download(self):
         release = self.context["release"]
-
         await virtool.tasks.pg.update(self.pg, self.id, 0, step="download")
 
-        progress_tracker = virtool.tasks.task.ProgressTracker(
-            self.db,
-            self.id,
-            release["size"],
-            factor=0.4,
-            increment=0.01
-        )
+        tracker = await self.get_tracker(release["size"])
 
         path = os.path.join(self.temp_path, "hmm.tar.gz")
 
@@ -109,7 +102,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
                 self.app,
                 release["download_url"],
                 path,
-                progress_tracker.add
+                tracker.add
             )
         except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
             await virtool.tasks.pg.update(
@@ -120,10 +113,12 @@ class HMMInstallTask(virtool.tasks.task.Task):
             )
 
     async def decompress(self):
+        tracker = await self.get_tracker()
+
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=0.4,
+            progress=tracker.initial + tracker.total,
             step="unpack"
         )
 
@@ -134,10 +129,12 @@ class HMMInstallTask(virtool.tasks.task.Task):
         )
 
     async def install_profiles(self):
+        tracker = await self.get_tracker()
+
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=0.6,
+            progress=tracker.initial + tracker.total,
             step="install_profiles"
         )
 
@@ -149,11 +146,9 @@ class HMMInstallTask(virtool.tasks.task.Task):
 
     async def import_annotations(self):
         release = self.context["release"]
-
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=0.8,
             step="import_annotations"
         )
 
@@ -162,17 +157,11 @@ class HMMInstallTask(virtool.tasks.task.Task):
 
         await purge(self.db, self.app["settings"])
 
-        progress_tracker = virtool.tasks.task.ProgressTracker(
-            self.db,
-            self.id,
-            len(annotations),
-            factor=0.2,
-            initial=0.8
-        )
+        tracker = await self.get_tracker(len(annotations))
 
         for annotation in annotations:
             await self.db.hmm.insert_one(dict(annotation, hidden=False))
-            await progress_tracker.add(1)
+            await tracker.add(1)
 
         logger.debug(f"Inserted {len(annotations)} annotations")
 
@@ -189,13 +178,6 @@ class HMMInstallTask(virtool.tasks.task.Task):
         })
 
         logger.debug("Update HMM status")
-
-        await virtool.tasks.pg.update(
-            self.pg,
-            self.id,
-            progress=1
-        )
-
         logger.debug("Finished HMM install task")
 
 

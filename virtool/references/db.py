@@ -120,7 +120,7 @@ class CloneReferenceTask(virtool.tasks.task.Task):
         ref_id = self.context["ref_id"]
         user_id = self.context["user_id"]
 
-        tracker = self.get_tracker(len(manifest))
+        tracker = await self.get_tracker(len(manifest))
 
         inserted_otu_ids = list()
 
@@ -151,7 +151,7 @@ class CloneReferenceTask(virtool.tasks.task.Task):
         user_id = self.context["user_id"]
         inserted_otu_ids = self.context["inserted_otu_ids"]
 
-        tracker = self.get_tracker(len(inserted_otu_ids))
+        tracker = await self.get_tracker(len(inserted_otu_ids))
 
         for otu_id in inserted_otu_ids:
             await insert_change(self.app, otu_id, "clone", user_id)
@@ -193,7 +193,7 @@ class ImportReferenceTask(virtool.tasks.task.Task):
 
     async def load_file(self):
         path = self.context["path"]
-
+        tracker = await self.get_tracker()
         try:
             self.import_data = await self.run_in_thread(virtool.references.utils.load_reference_file, path)
         except json.decoder.JSONDecodeError as err:
@@ -204,8 +204,16 @@ class ImportReferenceTask(virtool.tasks.task.Task):
             else:
                 return await self.error(str(err))
 
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            progress=tracker.initial + tracker.total,
+            step="load_file"
+        )
+
     async def set_metadata(self):
         ref_id = self.context["ref_id"]
+        tracker = await self.get_tracker()
 
         try:
             data_type = self.import_data["data_type"]
@@ -234,7 +242,16 @@ class ImportReferenceTask(virtool.tasks.task.Task):
             "$set": update_dict
         })
 
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            progress=tracker.initial + tracker.total,
+            step="set_metadata"
+        )
+
     async def validate(self):
+        tracker = await self.get_tracker()
+
         errors = virtool.references.utils.check_import_data(
             self.import_data,
             strict=False,
@@ -244,6 +261,13 @@ class ImportReferenceTask(virtool.tasks.task.Task):
         if errors:
             return await self.error(errors)
 
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            progress=tracker.initial + tracker.total,
+            step="validate"
+        )
+
     async def import_otus(self):
         created_at = self.context["created_at"]
         ref_id = self.context["ref_id"]
@@ -251,7 +275,7 @@ class ImportReferenceTask(virtool.tasks.task.Task):
 
         otus = self.import_data["otus"]
 
-        tracker = self.get_tracker(len(otus))
+        tracker = await self.get_tracker(len(otus))
 
         inserted_otu_ids = list()
 
@@ -268,7 +292,7 @@ class ImportReferenceTask(virtool.tasks.task.Task):
         inserted_otu_ids = self.context["inserted_otu_ids"]
         user_id = self.context["user_id"]
 
-        tracker = self.get_tracker(len(inserted_otu_ids))
+        tracker = await self.get_tracker(len(inserted_otu_ids))
 
         for otu_id in inserted_otu_ids:
             await insert_change(
@@ -296,20 +320,14 @@ class RemoteReferenceTask(virtool.tasks.task.Task):
         self.inserted_otu_ids = list()
 
     async def download(self):
-        progress_tracker = virtool.tasks.task.ProgressTracker(
-            self.db,
-            self.id,
-            self.context["release"]["size"],
-            factor=0.3,
-            increment=0.02
-        )
+        tracker = await self.get_tracker(self.context["release"]["size"])
 
         try:
             self.import_data = await download_and_parse_release(
                 self.app,
                 self.context["release"]["download_url"],
                 self.id,
-                progress_tracker.add
+                tracker.add
             )
         except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
             return await virtool.tasks.pg.update(
@@ -346,20 +364,13 @@ class RemoteReferenceTask(virtool.tasks.task.Task):
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=0.4,
             step="import"
         )
 
     async def create_history(self):
         otus = self.import_data["otus"]
 
-        progress_tracker = virtool.tasks.task.ProgressTracker(
-            self.db,
-            self.id,
-            len(otus),
-            factor=0.3,
-            initial=0.4
-        )
+        tracker = await self.get_tracker(len(otus))
 
         for otu in otus:
             otu_id = await insert_joined_otu(
@@ -371,23 +382,16 @@ class RemoteReferenceTask(virtool.tasks.task.Task):
                 remote=True
             )
             self.inserted_otu_ids.append(otu_id)
-            await progress_tracker.add(1)
+            await tracker.add(1)
 
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=0.7,
             step="create_history"
         )
 
     async def update_reference(self):
-        progress_tracker = virtool.tasks.task.ProgressTracker(
-            self.db,
-            self.id,
-            len(self.import_data["otus"]),
-            factor=0.3,
-            initial=0.7
-        )
+        tracker = await self.get_tracker(len(self.import_data["otus"]))
 
         for otu_id in self.inserted_otu_ids:
             await insert_change(
@@ -397,7 +401,7 @@ class RemoteReferenceTask(virtool.tasks.task.Task):
                 self.context["user_id"]
             )
 
-            await progress_tracker.add(1)
+            await tracker.add(1)
 
         await self.db.references.update_one({"_id": self.context["ref_id"], "updates.id": self.context["release"]["id"]}, {
             "$set": {
@@ -409,7 +413,11 @@ class RemoteReferenceTask(virtool.tasks.task.Task):
 
         await fetch_and_update_release(self.app, self.context["ref_id"])
 
-        await virtool.tasks.pg.update(self.pg, self.id, progress=1)
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            step="Update_reference"
+        )
 
 
 class DeleteReferenceTask(virtool.tasks.task.Task):
@@ -427,6 +435,8 @@ class DeleteReferenceTask(virtool.tasks.task.Task):
         self.non_existent_references = []
 
     async def remove_directory(self):
+        tracker = await self.get_tracker()
+
         path = os.path.join(
             self.app["settings"]["data_path"],
             "references"
@@ -443,14 +453,32 @@ class DeleteReferenceTask(virtool.tasks.task.Task):
         for dir_name in self.non_existent_references:
             await self.app["run_in_thread"](shutil.rmtree, os.path.join(path, dir_name), True)
 
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            progress=tracker.initial + tracker.total,
+            step="remove_directory"
+        )
+
     async def remove_indexes(self):
+        tracker = await self.get_tracker()
+
         await self.db.indexes.delete_many({
             "reference.id": {
                 "$in": self.non_existent_references
             }
         })
 
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            progress=tracker.initial + tracker.total,
+            step="remove_indexes"
+        )
+
     async def remove_unreferenced_otus(self):
+        tracker = await self.get_tracker()
+
         for ref_id in self.non_existent_references:
             referenced_otu_ids = await self.db.analyses.distinct("results.otu.id", {"reference.id": ref_id})
 
@@ -477,7 +505,16 @@ class DeleteReferenceTask(virtool.tasks.task.Task):
                 virtool.history.utils.remove_diff_files(self.app, diff_file_change_ids)
             )
 
+            await virtool.tasks.pg.update(
+                self.pg,
+                self.id,
+                progress=tracker.initial + tracker.total,
+                step="remove_unreferenced_otus"
+            )
+
     async def remove_referenced_otus(self):
+        tracker = await self.get_tracker()
+
         user_id = self.context["user_id"]
 
         for ref_id in self.non_existent_references:
@@ -489,6 +526,13 @@ class DeleteReferenceTask(virtool.tasks.task.Task):
                     document=document,
                     silent=True
                 )
+
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            progress=tracker.initial + tracker.total,
+            step="remove_referenced_otus"
+        )
 
 
 class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
@@ -508,7 +552,7 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
         url = self.context["release"]["download_url"]
         file_size = self.context["release"]["size"]
 
-        tracker = self.get_tracker(file_size)
+        tracker = await self.get_tracker(file_size)
 
         try:
             with virtool.utils.get_temp_dir() as tempdir:
@@ -534,7 +578,7 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
     async def update_otus(self):
         update_data = self.intermediate["update_data"]
 
-        tracker = self.get_tracker(len(update_data["otus"]))
+        tracker = await self.get_tracker(len(update_data["otus"]))
 
         # The remote ids in the update otus.
         otu_ids_in_update = {otu["_id"] for otu in update_data["otus"]}
@@ -563,7 +607,7 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
     async def create_history(self):
         updated_list = self.intermediate["updated_list"]
 
-        tracker = self.get_tracker(len(updated_list))
+        tracker = await self.get_tracker(len(updated_list))
 
         for old_or_id in updated_list:
             try:
@@ -592,7 +636,7 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
             }
         })
 
-        tracker = self.get_tracker(len(to_delete))
+        tracker = await self.get_tracker(len(to_delete))
 
         for otu_id in to_delete:
             await virtool.otus.db.remove(
@@ -604,6 +648,7 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
             await tracker.add(1)
 
     async def update_reference(self):
+        tracker = await self.get_tracker()
         ref_id = self.context["ref_id"]
         release = self.context["release"]
 
@@ -622,6 +667,13 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
             }
         })
 
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            progress=tracker.initial + tracker.total,
+            step="update_reference"
+        )
+
 
 class CreateIndexJSONTask(virtool.tasks.task.Task):
 
@@ -633,6 +685,7 @@ class CreateIndexJSONTask(virtool.tasks.task.Task):
         ]
 
     async def create_index_json_files(self):
+        tracker = await self.get_tracker()
         async for index in self.db.indexes.find({"has_json": {"$ne": True}}):
             index_id = index["_id"]
             ref_id = index["reference"]["id"]
@@ -675,6 +728,13 @@ class CreateIndexJSONTask(virtool.tasks.task.Task):
                     "has_json": True
                 }
             })
+
+            await virtool.tasks.pg.update(
+                self.pg,
+                self.id,
+                progress=tracker.initial + tracker.total,
+                step="create_index_json_files"
+            )
 
 
 async def processor(db, document: dict) -> dict:
@@ -1298,7 +1358,7 @@ async def download_and_parse_release(app, url: str, task_id: str, progress_handl
             progress_handler
         )
 
-        await virtool.tasks.pg.update(pg, task_id, progress=0.3, step="unpack")
+        await virtool.tasks.pg.update(pg, task_id, step="unpack")
 
         return await app["run_in_thread"](virtool.references.utils.load_reference_file, download_path)
 
