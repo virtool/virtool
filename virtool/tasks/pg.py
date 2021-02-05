@@ -17,10 +17,13 @@ async def find(pg_engine):
 
 
 async def get(pg_engine, task_id):
+    document = dict()
     async with AsyncSession(pg_engine) as session:
-        result = await session.execute(select(Task).filter_by(id=task_id))
+        result = (await session.execute(select(Task).filter_by(id=task_id))).scalar()
+    if result:
+        document = result.to_dict()
 
-    return result.scalar()
+    return document
 
 
 async def register(pg_engine, task_type, context=None):
