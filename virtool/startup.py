@@ -346,9 +346,9 @@ async def init_version(app: typing.Union[dict, aiohttp.web.Application]):
     app["version"] = version
 
 
-async def init_task_runner(app):
+async def init_task_runner(app: aiohttp.web.Application):
     scheduler = get_scheduler_from_app(app)
-    app["task_runner"] = TaskRunner(app, scheduler)
+    app["task_runner"] = TaskRunner(app)
     await scheduler.spawn(app["task_runner"].run())
 
 
