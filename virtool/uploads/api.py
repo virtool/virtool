@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+from pathlib import Path
 
 import aiofiles
 import aiohttp.web
@@ -14,7 +15,7 @@ import virtool.http.routes
 import virtool.samples.db
 import virtool.uploads.db
 import virtool.utils
-from virtool.api.response import invalid_query, json_response, bad_request
+from virtool.api.response import invalid_query, json_response, bad_request, not_found
 from virtool.uploads.models import Upload
 
 logger = logging.getLogger("uploads")
@@ -141,4 +142,22 @@ async def find(req):
     return resp
 
 
+@routes.get("/api/uploads/{id}")
+async def get(req):
+    db = req.app["postgres"]
+    upload_id = int(req.match_info["id"])
 
+    async with AsyncSession(db) as session:
+        result = (await session.execute(select(Upload).filter_by(id=upload_id))).scalar()
+
+        if not result:
+            return not_found("Upload record not found")
+    try:
+        file_path = Path(req.app["settings"]["data_path"]) / "files" / result.name_on_disk
+    except TypeError:
+        return bad_request("Upload record has no name_on_disk attribute")
+
+    if not file_path.exists():
+        return not_found("Upload not found on local disk")
+
+    return aiohttp.web.FileResponse(file_path)
