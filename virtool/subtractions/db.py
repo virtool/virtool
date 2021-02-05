@@ -95,7 +95,15 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
         )
 
 
-async def check_subtraction_fasta_files(db, settings):
+async def check_subtraction_fasta_files(db, settings: dict) -> list:
+    """
+    Check subtraction directories for files and set 'has_file' to boolean based on whether .fa.gz exists.
+
+    :param db: the application database client
+    :param settings: the application settings
+    :return: a list of subtraction IDs without FASTA files
+
+    """
     subtractions_without_fasta = list()
 
     async for subtraction in db.subtraction.find({"deleted": False}):

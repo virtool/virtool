@@ -347,6 +347,13 @@ async def init_version(app: typing.Union[dict, aiohttp.web.Application]):
 
 
 async def init_task_runner(app: aiohttp.web.Application):
+    """
+    An application `on_startup` callback that initializes a Virtool :class:`virtool.tasks.runner.TaskRunner` object and
+    puts it in app state.
+
+    :param app: the app object
+
+    """
     scheduler = get_scheduler_from_app(app)
     app["task_runner"] = TaskRunner(app)
     await scheduler.spawn(app["task_runner"].run())
