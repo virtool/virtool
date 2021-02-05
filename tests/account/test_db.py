@@ -1,13 +1,12 @@
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 import virtool.account.db
-import virtool.account.utils
 
 
 def test_compose_password_update(mocker, static_time):
     """
-    Test that compose password returns the expected update `dict`. Ensure the password is hashed using
-    :func:`hash_password`.
+    Test that compose password returns the expected update `dict`. Ensure the password is hashed
+    using :func:`hash_password`.
 
     """
     m_hash_password = mocker.patch("virtool.users.utils.hash_password", return_value="foobar")
@@ -40,14 +39,25 @@ async def test_get_alternate_id(existing, expected, dbi):
 
 
 @pytest.mark.parametrize("administrator", [True, False], ids=["administrator", "limited"])
-@pytest.mark.parametrize("has_permission", [True, False], ids=["has permission", "missing permission"])
+@pytest.mark.parametrize(
+    "has_permission", [True, False],
+    ids=["has permission", "missing permission"]
+)
 async def test_create_api_key(administrator, has_permission, mocker, dbi, static_time):
     """
-    Test that an API key is created correctly with varying key owner administrator status and permissions.
+    Test that an API key is created correctly with varying key owner administrator status and
+    permissions.
 
     """
-    m_get_alternate_id = mocker.patch("virtool.account.db.get_alternate_id", make_mocked_coro("foo_0"))
-    m_generate_api_key = mocker.patch("virtool.account.utils.generate_api_key", return_value=("bar", "baz"))
+    m_get_alternate_id = mocker.patch(
+        "virtool.account.db.get_alternate_id",
+        make_mocked_coro("foo_0")
+    )
+
+    m_generate_key = mocker.patch(
+        "virtool.utils.generate_key",
+        return_value=("bar", "baz")
+    )
 
     groups = [
         "technicians",
@@ -95,14 +105,14 @@ async def test_create_api_key(administrator, has_permission, mocker, dbi, static
         }
     }
 
-    # The key should not have the `create_subtraction` permission set unless the key owner is and administrator or has
-    # the `create_subtraction` permission themselves.
+    # The key should not have the `create_subtraction` permission set unless the key owner is and
+    # administrator or has the `create_subtraction` permission themselves.
     if administrator or has_permission:
         expected["permissions"]["create_subtraction"] = True
 
     # Check that expected functions were called.
     m_get_alternate_id.assert_called_with(dbi, "Foo")
-    m_generate_api_key.assert_called_with()
+    m_generate_key.assert_called()
 
     # Check returned document matches expected.
     assert document == expected
@@ -118,5 +128,3 @@ async def test_create_api_key(administrator, has_permission, mocker, dbi, static
     })
 
     assert await dbi.keys.find_one() == expected
-
-

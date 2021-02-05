@@ -1,7 +1,9 @@
 import datetime
 import gzip
+import hashlib
 import os
 import re
+import secrets
 import shutil
 import subprocess
 import sys
@@ -9,7 +11,7 @@ import tarfile
 import tempfile
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Iterable, Union
+from typing import Iterable, Tuple, Union
 
 import aiofiles
 import arrow
@@ -200,6 +202,15 @@ def file_stats(path: str) -> dict:
         "size": stats.st_size,
         "modify": arrow.get(stats.st_mtime).datetime
     }
+
+
+def generate_key() -> Tuple[str, str]:
+    key = secrets.token_hex(32)
+    return key, hash_key(key)
+
+
+def hash_key(key: str) -> str:
+    return hashlib.sha256(key.encode()).hexdigest()
 
 
 async def get_client_path() -> str:

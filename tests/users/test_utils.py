@@ -60,11 +60,14 @@ def test_check_legacy_password(password, salt, result):
 ], ids=["success", "failure"])
 def test_check_password(password, hashed, result):
     """
-    Test that passwords are validated against bcrypt hashed ones correctly in success and failure cases.
+    Test that passwords are validated against bcrypt hashed ones correctly in success and failure
+    cases.
 
     """
     assert virtool.users.utils.check_password(password, hashed) is result
 
 
 def test_generate_base_permissions():
-    assert virtool.users.utils.generate_base_permissions() == {p: False for p in virtool.users.utils.PERMISSIONS}
+    assert virtool.users.utils.generate_base_permissions() == {
+        p: False for p in virtool.users.utils.PERMISSIONS
+    }
