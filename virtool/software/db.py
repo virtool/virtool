@@ -34,7 +34,6 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
         self.temp_path = self.temp_dir.name
 
     async def download(self):
-        db = self.db
         release = self.context["release"]
 
         # Download the release from GitHub and write it to a temporary directory.

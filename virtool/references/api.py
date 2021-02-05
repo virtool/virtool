@@ -2,7 +2,6 @@ import asyncio
 import os
 
 import aiohttp
-import aiojobs.aiohttp
 
 import virtool.api.utils
 import virtool.history.db
