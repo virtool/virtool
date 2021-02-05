@@ -9,11 +9,9 @@ from virtool.tasks.classes import TASK_CLASSES
 
 
 class TaskRunner:
-
-    def __init__(self, app, scheduler):
+    def __init__(self, app):
         self.q = asyncio.Queue()
         self.app = app
-        self.scheduler = scheduler
 
     async def run(self):
         logging.info("Started task runner")
@@ -41,6 +39,8 @@ class TaskRunner:
         async with AsyncSession(self.app["postgres"]) as session:
             result = await session.execute(select(Task).filter_by(id=task_id))
             document = result.scalar().to_dict()
+        loop = asyncio.get_event_loop()
+        task_class = TASK_CLASSES[document["type"]](self.app, task_id)
+        task = loop.create_task(task_class.run())
 
-        task = TASK_CLASSES[document["type"]](self.app, task_id)
-        await self.scheduler.spawn(task.run())
+        await task
