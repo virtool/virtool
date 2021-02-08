@@ -27,7 +27,7 @@ async def find(req):
         for label in labels:
             documents.append(label.to_dict())
 
-    documents = await asyncio.gather(*[virtool.labels.db.attach_sample_count(req.app["db"], d, d["id"]) for d in documents])
+    documents = await asyncio.gather(*[virtool.labels.db.attach_sample_count(req.app["db"], d) for d in documents])
 
     return json_response(documents)
 
@@ -45,7 +45,7 @@ async def get(req):
         if label is None:
             return not_found()
 
-    document = await virtool.labels.db.attach_sample_count(req.app["db"], label.to_dict(), label.id)
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], label.to_dict())
 
     return json_response(document)
 
@@ -87,7 +87,7 @@ async def create(req):
         except IntegrityError:
             return bad_request("Label name already exists")
 
-    document = await virtool.labels.db.attach_sample_count(req.app["db"], document, document["id"])
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], document)
 
     headers = {
         "Location": f"/api/labels/{document['id']}"
@@ -139,7 +139,7 @@ async def edit(req):
         except IntegrityError:
             return bad_request("Label name already exists")
 
-    document = await virtool.labels.db.attach_sample_count(req.app["db"], document, label_id)
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], document)
 
     return json_response(document)
 
