@@ -6,7 +6,7 @@ from pathlib import Path
 import aiofiles
 import aiohttp.web
 from cerberus import Validator
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.db.utils
