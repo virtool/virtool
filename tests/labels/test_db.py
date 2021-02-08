@@ -42,9 +42,9 @@ async def test_attach_sample_count(spawn_client, pg_session):
         "color": "#02db21",
         "description": "This is a info"
     }
-    result_1 = await attach_sample_count(client.app["db"], document_1, 1)
-    result_2 = await attach_sample_count(client.app["db"], document_2, 2)
-    result_3 = await attach_sample_count(client.app["db"], document_3, 3)
+    result_1 = await attach_sample_count(client.app["db"], document_1)
+    result_2 = await attach_sample_count(client.app["db"], document_2)
+    result_3 = await attach_sample_count(client.app["db"], document_3)
 
     assert result_1 == {
         "id": 1,
