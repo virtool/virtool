@@ -30,6 +30,7 @@ import virtool.settings.db
 import virtool.subtractions.db
 import virtool.users.db
 import virtool.utils
+from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
 from virtool.types import Projection
 
 
@@ -123,7 +124,7 @@ class Collection:
         delete_result = await self._collection.delete_many(query)
 
         if not silent and len(id_list):
-            await self.enqueue_change("delete", *id_list)
+            await self.enqueue_change(DELETE, *id_list)
 
         return delete_result
 
@@ -141,7 +142,7 @@ class Collection:
 
         if not silent and delete_result.deleted_count:
             await self.enqueue_change(
-                "delete",
+                DELETE,
                 document_id
             )
 
@@ -177,7 +178,7 @@ class Collection:
             return None
 
         if not silent:
-            await self.enqueue_change("update", document["_id"])
+            await self.enqueue_change(UPDATE, document["_id"])
 
         if projection:
             return virtool.db.utils.apply_projection(document, projection)
@@ -205,7 +206,7 @@ class Collection:
             await self._collection.insert_one(document)
 
             if not silent:
-                await self.enqueue_change("insert", document["_id"])
+                await self.enqueue_change(INSERT, document["_id"])
 
             return document
         except pymongo.errors.DuplicateKeyError:
@@ -237,7 +238,7 @@ class Collection:
         )
 
         await self.enqueue_change(
-            "update",
+            UPDATE,
             replacement["_id"]
         )
 
@@ -262,7 +263,7 @@ class Collection:
 
         if not silent:
             await self.enqueue_change(
-                "update",
+                UPDATE,
                 *updated_ids
             )
 
@@ -289,7 +290,7 @@ class Collection:
 
         if not silent and document:
             await self.enqueue_change(
-                "update",
+                UPDATE,
                 document["_id"]
             )
 
