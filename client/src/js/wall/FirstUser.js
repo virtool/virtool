@@ -42,16 +42,16 @@ export class FirstUser extends React.Component {
                         <h2>Setup User</h2>
                         <p>Create an initial administrative user to start using Virtool.</p>
                     </BoxGroupHeader>
-                    <Formik initialValues={this.state} validate={validate} onSubmit={this.handleSubmit}>
+                    <Formik initialValues={this.state} validate={this.validate} onSubmit={this.handleSubmit}>
                         <Form>
                             <BoxGroupSection>
                                 <InputGroup>
                                     <InputLabel>Username</InputLabel>
-                                    <Input name="username" value={username} onChange={this.handleChange} />
+                                    <Field type="text" name="username"/>
                                 </InputGroup>
                                 <InputGroup>
                                     <InputLabel>Password</InputLabel>
-                                    <PasswordInput name="password" value={password} onChange={this.handleChange} />
+                                    <Field type="password" name="password"/>
                                 </InputGroup>
                             </BoxGroupSection>
                             <WallDialogFooter>
@@ -69,8 +69,7 @@ export class FirstUser extends React.Component {
 
 export const mapDispatchToProps = dispatch => ({
     onSubmit: (username, password) => {
-        //dispatch(createFirstUser(username, password));
-        console.log("Dispatch action");
+        dispatch(createFirstUser(username, password));
     }
 });
 
