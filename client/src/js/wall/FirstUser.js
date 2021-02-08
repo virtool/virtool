@@ -1,6 +1,7 @@
 import { noop } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
+import { Formik, Form, Field, ErrorMessage } from "formik";
 import { BoxGroupHeader, BoxGroupSection, Button, Input, InputGroup, InputLabel, PasswordInput } from "../base";
 import { createFirstUser } from "../users/actions";
 import { WallContainer, WallDialog, WallDialogFooter } from "./Container";
@@ -26,6 +27,12 @@ export class FirstUser extends React.Component {
         this.props.onSubmit(this.state.username, this.state.password);
     };
 
+    validate = values => {
+        let errors = {};
+
+        return error;
+    };
+
     render() {
         const { username, password } = this.state;
         return (
@@ -35,23 +42,25 @@ export class FirstUser extends React.Component {
                         <h2>Setup User</h2>
                         <p>Create an initial administrative user to start using Virtool.</p>
                     </BoxGroupHeader>
-                    <form onSubmit={this.handleSubmit}>
-                        <BoxGroupSection>
-                            <InputGroup>
-                                <InputLabel>Username</InputLabel>
-                                <Input name="username" value={username} onChange={this.handleChange} />
-                            </InputGroup>
-                            <InputGroup>
-                                <InputLabel>Password</InputLabel>
-                                <PasswordInput name="password" value={password} onChange={this.handleChange} />
-                            </InputGroup>
-                        </BoxGroupSection>
-                        <WallDialogFooter>
-                            <Button type="submit" icon="user-plus" color="blue">
-                                Create User
-                            </Button>
-                        </WallDialogFooter>
-                    </form>
+                    <Formik initialValues={this.state} validate={validate} onSubmit={this.handleSubmit}>
+                        <Form>
+                            <BoxGroupSection>
+                                <InputGroup>
+                                    <InputLabel>Username</InputLabel>
+                                    <Input name="username" value={username} onChange={this.handleChange} />
+                                </InputGroup>
+                                <InputGroup>
+                                    <InputLabel>Password</InputLabel>
+                                    <PasswordInput name="password" value={password} onChange={this.handleChange} />
+                                </InputGroup>
+                            </BoxGroupSection>
+                            <WallDialogFooter>
+                                <Button type="submit" icon="user-plus" color="blue">
+                                    Create User
+                                </Button>
+                            </WallDialogFooter>
+                        </Form>
+                    </Formik>
                 </WallDialog>
             </WallContainer>
         );
@@ -60,7 +69,8 @@ export class FirstUser extends React.Component {
 
 export const mapDispatchToProps = dispatch => ({
     onSubmit: (username, password) => {
-        dispatch(createFirstUser(username, password));
+        //dispatch(createFirstUser(username, password));
+        console.log("Dispatch action");
     }
 });
 
