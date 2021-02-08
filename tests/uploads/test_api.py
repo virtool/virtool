@@ -32,7 +32,7 @@ class TestUpload:
         if upload_type:
             resp = await client.post_form(f"/api/uploads?type={upload_type}&name=Test.fq.gz", data=files)
         else:
-            resp = await client.post_form(f"/api/uploads?name=Test.fq.gz", data=files)
+            resp = await client.post_form("/api/uploads?name=Test.fq.gz", data=files)
 
         assert resp.status == 201
 
