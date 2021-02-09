@@ -20,6 +20,11 @@ export const FirstUser = ({onSubmit}) => {
     const validate = values => {
         let errors = {};
 
+        const minimum_password_length = 8;
+
+        if(values.password.length < minimum_password_length)
+            errors.password = "password should be at least 8 characters long"
+        
         return errors;
     };
 
@@ -40,6 +45,7 @@ export const FirstUser = ({onSubmit}) => {
                                 <InputGroup>
                                     <InputLabel>Password</InputLabel>
                                     <Field type="password" name="password"/>
+                                    <ErrorMessage name="password"/>
                                 </InputGroup>
                             </BoxGroupSection>
                             <WallDialogFooter>
