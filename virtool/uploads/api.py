@@ -3,9 +3,7 @@ import logging
 import os
 from pathlib import Path
 
-import aiofiles
 import aiohttp.web
-from cerberus import Validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,8 +12,8 @@ import virtool.files.db
 import virtool.http.routes
 import virtool.samples.db
 import virtool.uploads.db
-import virtool.utils
 import virtool.uploads.utils
+import virtool.utils
 from virtool.api.response import invalid_query, json_response, bad_request, not_found
 from virtool.uploads.models import Upload
 
@@ -34,6 +32,10 @@ routes = virtool.http.routes.Routes()
 
 @routes.post("/api/uploads", permission="upload_file")
 async def upload(req):
+    """
+    Upload a new file and add it to the `uploads` SQL table
+
+    """
     pg = req.app["postgres"]
     upload_type = req.query.get("type")
 
@@ -49,6 +51,9 @@ async def upload(req):
 
     new_upload = await virtool.uploads.db.create(req, pg, name, upload_type, user=req["client"].user_id)
 
+    if not new_upload:
+        return aiohttp.web.Response(status=499)
+
     upload_id = new_upload["id"]
 
     logger.debug(f"Upload succeeded: {upload_id}")
@@ -62,8 +67,12 @@ async def upload(req):
 
 @routes.get("/api/uploads")
 async def find(req):
+    """
+    Get a list of upload documents from the `uploads` SQL table
+
+    """
     pg = req.app["postgres"]
-    upload_ = list()
+    uploads = list()
     filters = list()
     user = req.query.get("user")
     upload_type = req.query.get("type")
@@ -83,15 +92,17 @@ async def find(req):
         results = await session.execute(query)
 
     for result in results.scalars().all():
-        upload_.append(result.to_dict())
+        uploads.append(result.to_dict())
 
-    resp = json_response(upload_)
-
-    return resp
+    return json_response(uploads)
 
 
 @routes.get("/api/uploads/{id}")
 async def get(req):
+    """
+    Download a file.
+
+    """
     pg = req.app["postgres"]
     upload_id = int(req.match_info["id"])
 
@@ -116,6 +127,10 @@ async def get(req):
 
 @routes.delete("/api/uploads/{id}", permission="remove_file")
 async def delete(req):
+    """
+    Delete an upload.
+
+    """
     pg = req.app["postgres"]
     upload_id = int(req.match_info["id"])
 
