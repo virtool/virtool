@@ -119,7 +119,7 @@ async def find(req):
     upload_ = list()
     filters = list()
     user = req.query.get("user")
-    type_ = req.query["type"]
+    type_ = req.query.get("type")
 
     if user:
         filters.append(Upload.user == user)
@@ -131,12 +131,12 @@ async def find(req):
         query = select(Upload)
 
         if filters:
-            query.filter(*filters)
+            query = query.filter(*filters)
 
-        results = session.execute(query)
+        results = await session.execute(query)
 
-        for result in results.scalars().all():
-            upload_.append(result.to_dict())
+    for result in results.scalars().all():
+        upload_.append(result.to_dict())
 
     resp = json_response(upload_)
 
