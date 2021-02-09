@@ -118,7 +118,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=tracker.initial + tracker.total,
+            progress=tracker.step_completed,
             step="unpack"
         )
 
@@ -134,7 +134,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=tracker.initial + tracker.total,
+            progress=tracker.step_completed,
             step="install_profiles"
         )
 

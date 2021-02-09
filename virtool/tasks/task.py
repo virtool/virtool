@@ -108,6 +108,7 @@ class ProgressTracker:
         self.file_size = file_size
 
         self.progress = self.initial
+        self.step_completed = self.initial + self.total
 
     async def add(self, value):
         self.progress += (value / self.file_size) * self.total
