@@ -152,11 +152,11 @@ async def get(req):
         result = (await session.execute(select(Upload).filter_by(id=upload_id))).scalar()
 
         if not result:
-            return not_found("Upload record not found")
+            return not_found()
 
     # check if the file has been removed as a result of a `DELETE` request
     if result.removed:
-        return not_found("Uploaded file has already been removed")
+        return not_found()
 
     upload_path = Path(req.app["settings"]["data_path"]) / "files" / result.name_on_disk
 
@@ -175,11 +175,8 @@ async def delete(req):
     async with AsyncSession(db) as session:
         result = (await session.execute(select(Upload).where(Upload.id == upload_id))).scalar()
 
-        if not result:
-            return not_found("Upload record not found")
-
-        if result.removed:
-            return bad_request("Uploaded file has already been removed")
+        if not result or result.removed:
+            return not_found()
 
         try:
             await req.app["run_in_thread"](
