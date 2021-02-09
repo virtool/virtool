@@ -301,10 +301,10 @@ class DB:
 
     def __init__(
             self,
-            client: AsyncIOMotorClient,
-            enqueue_change: Callable[[str, str, List[str]], Awaitable[None]]
+            motor_client: AsyncIOMotorClient,
+            enqueue_change: Callable[[str, str, Sequence[str]], Awaitable[None]]
     ):
-        self.motor_client = client
+        self.motor_client = motor_client
         self.enqueue_change = enqueue_change
 
         self.analyses = self.bind_collection(
