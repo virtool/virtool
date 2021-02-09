@@ -32,4 +32,4 @@ class Upload(Base):
         return f"<Upload(id={self.id}, created_at={self.created_at}, name={self.name}, " \
                f"name_on_disk={self.name_on_disk}, ready={self.ready}, removed={self.removed}, " \
                f"reserved={self.reserved}, " f"size={self.size}, type={self.type}, user={self.user}, " \
-               f"uploaded_at={self.uploaded_at}>"
+               f"uploaded_at={self.uploaded_at})>"
