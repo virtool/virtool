@@ -12,7 +12,7 @@ import virtool.jobs.runner
 
 
 @pytest.fixture
-async def app(loop):
+async def app():
     version = "v1.2.3"
 
     app = {
@@ -28,7 +28,7 @@ async def app(loop):
         pass
 
 
-async def test_init_executors(loop):
+async def test_init_executors():
     """
     Test that an instance of :class:`.ThreadPoolExecutor` is added to ``app`` state and that it works.
     """
@@ -41,7 +41,7 @@ async def test_init_executors(loop):
     def func(*args):
         return sum(args)
 
-    result = await loop.run_in_executor(None, func, 1, 5, 6, 2)
+    result = await app["run_in_thread"](func, 1, 5, 6, 2)
 
     assert result == 14
 
