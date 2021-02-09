@@ -1,20 +1,27 @@
-import asyncio
 import logging
-import json
 import sys
-
-import aioredis
+from typing import Optional
+from aioredis import Redis, create_redis_pool
 
 logger = logging.getLogger(__name__)
 
 
-async def connect(redis_connection_string: str) -> aioredis.Redis:
+async def connect(redis_connection_string: str) -> Redis:
+    """
+    Create a connection to the Redis server specified in the passed `redis_connection_string`.
+
+    Will exit the application if the server cannot be reached.
+
+    :param redis_connection_string: the Redis connection string
+    :return: a Redis connection object
+
+    """
     if not redis_connection_string.startswith("redis://"):
         logger.fatal("Invalid Redis connection string")
         sys.exit(1)
 
     try:
-        redis = await aioredis.create_redis_pool(redis_connection_string)
+        redis = await create_redis_pool(redis_connection_string)
         await check_version(redis)
 
         return redis
@@ -23,52 +30,23 @@ async def connect(redis_connection_string: str) -> aioredis.Redis:
         sys.exit(1)
 
 
-async def check_version(redis):
+async def check_version(redis: Redis) -> Optional[str]:
+    """
+    Check the version of the server represented in the passed :class:`Redis` object.
+
+    The version is logged and returned by the function.
+
+    :param redis: the Redis connection
+    :return: the version
+
+    """
     info = await redis.execute("INFO", encoding="utf-8")
 
     for line in info.split("\n"):
         if line.startswith("redis_version"):
             version = line.replace("redis_version:", "")
             logger.info(f"Found Redis {version}")
-            return
 
+            return version
 
-def create_dispatch(redis):
-    async def func(interface, operation, id_list):
-        json_string = json.dumps({
-            "interface": interface,
-            "operation": operation,
-            "id_list": id_list
-        })
-
-        await redis.publish("channel:dispatch", json_string)
-
-        logger.debug(f"Dispatched message via Redis: {interface}.{operation}")
-
-    return func
-
-
-async def listen_for_changes(app):
-    logging.debug("Started listening for changes")
-
-    dispatch_channel, = await app["redis"].subscribe("channel:dispatch")
-
-    try:
-        while True:
-            message = await dispatch_channel.get_json()
-
-            if message is not None:
-                interface = message["interface"]
-                operation = message["operation"]
-
-                await app["change_queue"].put([
-                    interface,
-                    operation,
-                    message["id_list"]
-                ])
-
-                logger.debug(f"Received change: {interface}.{operation}")
-    except asyncio.CancelledError:
-        pass
-
-    logging.debug("Stopped listening for changes")
+    return None

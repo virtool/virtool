@@ -2,7 +2,7 @@ import logging
 
 from aiohttp import web
 
-import virtool.dispatcher
+import virtool.dispatcher.dispatcher
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ async def root(req):
 
     await ws.prepare(req)
 
-    connection = virtool.dispatcher.Connection(ws, req["client"])
+    connection = virtool.dispatcher.dispatcher.Connection(ws, req["client"])
 
     req.app["dispatcher"].add_connection(connection)
 

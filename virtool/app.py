@@ -92,7 +92,6 @@ def create_app(config):
     app = aiohttp.web.Application(middlewares=middlewares)
 
     app["config"] = config
-    app["change_queue"] = asyncio.Queue()
     app["mode"] = "server"
 
     aiojobs.aiohttp.setup(app)
@@ -101,17 +100,16 @@ def create_app(config):
         virtool.startup.init_version,
         virtool.startup.init_events,
         virtool.startup.init_db,
+        virtool.startup.init_redis,
+        virtool.startup.init_postgres,
         virtool.startup.init_dispatcher,
         virtool.startup.init_settings,
         virtool.startup.init_client_path,
         virtool.startup.init_http_client,
         virtool.startup.init_paths,
-        virtool.startup.init_postgres,
         virtool.startup.init_routes,
         virtool.startup.init_executors,
         virtool.startup.init_tasks,
-        virtool.startup.init_redis,
-        virtool.startup.init_listen_for_changes,
         virtool.startup.init_sentry,
         virtool.startup.init_check_db,
         virtool.startup.init_job_interface,
