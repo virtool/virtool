@@ -137,27 +137,6 @@ class TestDelete:
         resp = await client.get("api/uploads/1")
         assert resp.status == 404
 
-    @pytest.mark.parametrize("removed", [True, False])
-    async def test_already_removed(self, removed, spawn_client, tmpdir, pg_session):
-        client = await spawn_client(authorize=True, administrator=True)
-
-        client.app["settings"]["data_path"] = str(tmpdir)
-
-        async with pg_session as session:
-            if removed:
-                session.add(Upload(name_on_disk="1-test.fq.gz", removed=True))
-            else:
-                session.add(Upload(name_on_disk="1-test.fq.gz", removed=False))
-
-            await session.commit()
-
-        resp = await client.delete("/api/uploads/1")
-
-        if removed:
-            assert resp.status == 400
-        else:
-            assert resp.status == 404
-
     @pytest.mark.parametrize("exists", [True, False])
     async def test_record_dne(self, exists, spawn_client, pg_session):
         client = await spawn_client(authorize=True, administrator=True)
