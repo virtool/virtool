@@ -31,8 +31,8 @@ async def create(db, name: str, upload_type: str, reserved: bool = False, user: 
         session.add(upload)
 
         await session.flush()
-        document = upload.to_dict()
+        upload = upload.to_dict()
 
         await session.commit()
 
-        return document
+        return upload
