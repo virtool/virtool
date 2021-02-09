@@ -182,9 +182,12 @@ async def delete(req):
             return bad_request("Uploaded file has already been removed")
 
         try:
-            os.remove(Path(req.app["settings"]["data_path"]) / "files" / result.name_on_disk)
+            await req.app["run_in_thread"](
+                os.remove,
+                Path(req.app["settings"]["data_path"]) / "files" / result.name_on_disk
+            )
         except FileNotFoundError:
-            return not_found("Uploaded file not found at expected location")
+            pass
 
         result.removed = True
         result.removed_at = virtool.utils.timestamp()
