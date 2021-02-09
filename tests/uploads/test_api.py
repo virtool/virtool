@@ -99,7 +99,7 @@ class TestGet:
         if exists:
             assert resp.status == 200
         else:
-            assert await resp_is.not_found(resp, message="Upload record not found")
+            assert resp.status == 404
 
     @pytest.mark.parametrize("exists", [True, False])
     async def test_upload_removed(self, exists, resp_is, spawn_client, pg_session, tmpdir):
