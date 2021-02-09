@@ -2,20 +2,20 @@ import asyncio
 import logging
 from pathlib import Path
 from typing import Union
-import aiohttp.web
 
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
-import virtool.utils
 import virtool.uploads.utils
+import virtool.utils
 from virtool.uploads.models import Upload
 
 logger = logging.getLogger("uploads")
 
 
-async def create(req, pg: AsyncEngine, name: str, upload_type: str, reserved: bool = False, user: Union[None, str] = None):
+async def create(req, pg: AsyncEngine, name: str, upload_type: str, reserved: bool = False,
+                 user: Union[None, str] = None) -> dict:
     """
-    Writes a new upload to disk and creates a new row in the `Upload` SQL table. Returns a dictionary representation
+    Writes a new upload to disk and creates a new row in the `uploads` SQL table. Returns a dictionary representation
     of the new row.
 
     :param req: Request handler object
@@ -24,7 +24,7 @@ async def create(req, pg: AsyncEngine, name: str, upload_type: str, reserved: bo
     :param upload_type: the type of upload (e.g. reads)
     :param reserved: should the file immediately be reserved (used for legacy samples)
     :param user: the id of the uploading user
-    :return: Dictionary representation of new row in the `Uploads` SQL table
+    :return: Dictionary representation of new row in the `uploads` SQL table
     """
     async with AsyncSession(pg) as session:
         upload = Upload(
@@ -53,7 +53,7 @@ async def create(req, pg: AsyncEngine, name: str, upload_type: str, reserved: bo
             await session.delete(upload)
             await session.commit()
 
-            return aiohttp.web.Response(status=499)
+            return None
 
         upload.size = size
         upload.uploaded_at = virtool.utils.timestamp()

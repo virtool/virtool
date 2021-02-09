@@ -4,7 +4,11 @@ from cerberus import Validator
 CHUNK_SIZE = 4096
 
 
-def naive_validator(req):
+def naive_validator(req) -> Validator.errors:
+    """
+    Validate `name` given in a HTTP request using cerberus
+
+    """
     v = Validator({
         "name": {"type": "string", "required": True}
     }, allow_unknown=True)
@@ -13,7 +17,12 @@ def naive_validator(req):
         return v.errors
 
 
-async def naive_writer(req, file_path):
+async def naive_writer(req, file_path) -> int:
+    """
+    Write a new file from a HTTP multipart request.
+
+    :return: size of the new file in bytes
+    """
     reader = await req.multipart()
     file = await reader.next()
 
