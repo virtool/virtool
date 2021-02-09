@@ -6,6 +6,10 @@ from virtool.postgres import Base
 
 
 class UploadType(str, enum.Enum):
+    """
+    Enumerated type for possible upload types
+
+    """
     hmm = "hmm"
     reference = "reference"
     reads = "reads"
@@ -13,6 +17,10 @@ class UploadType(str, enum.Enum):
 
 
 class Upload(Base):
+    """
+    SQL table to store all new uploads
+
+    """
     __tablename__ = "uploads"
 
     id = Column(Integer, primary_key=True)
