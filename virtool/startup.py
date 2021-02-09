@@ -1,9 +1,11 @@
 import asyncio
 import concurrent.futures
+import json
 import logging
 import signal
 import sys
 import typing
+from typing import Sequence
 
 import aiohttp.client
 import aiohttp.web
@@ -34,6 +36,8 @@ import virtool.tasks.db
 import virtool.tasks.utils
 import virtool.utils
 import virtool.version
+from virtool.dispatcher.dispatcher import Dispatcher
+from virtool.dispatcher.listener import RedisDispatcherListener
 
 logger = logging.getLogger("startup")
 
@@ -120,28 +124,34 @@ async def init_db(app: aiohttp.web_app.Application):
     """
     logger.info("Connecting to MongoDB")
 
-    async def enqueue_change(interface, operation, id_list):
-        await app["change_queue"].put([
-            interface, operation, id_list
-        ])
+    async def enqueue_change(interface: str, operation: str, id_list: Sequence[str]):
+        json_string = json.dumps({
+            "interface": interface,
+            "operation": operation,
+            "id_list": id_list
+        })
+
+        await app["redis"].publish("channel:dispatch", json_string)
 
     app["db"] = await virtool.db.mongo.connect(app["config"], enqueue_change)
 
 
 async def init_dispatcher(app: aiohttp.web_app.Application):
     """
-    An application ``on_startup`` callback that initializes a Virtool :class:`~.Dispatcher` object and attaches it to
-    the ``app`` object.
+    An application ``on_startup`` callback that initializes a Virtool :class:`~.Dispatcher` object
+    and attaches it to the ``app`` object.
 
     :param app: the app object
-    :type app: :class:`aiohttp.aiohttp.web.Application`
 
     """
     logger.info("Starting dispatcher")
 
-    app["dispatcher"] = virtool.dispatcher.Dispatcher(
+    channel, = await app["redis"].subscribe("channel:dispatch")
+
+    app["dispatcher"] = Dispatcher(
+        app["postgres"],
         app["db"],
-        app["change_queue"]
+        RedisDispatcherListener(channel)
     )
 
     await get_scheduler_from_app(app).spawn(app["dispatcher"].run())
@@ -252,11 +262,6 @@ async def init_redis(app: typing.Union[dict, aiohttp.web_app.Application]):
 
     logger.info("Connecting to Redis")
     app["redis"] = await virtool.redis.connect(redis_connection_string)
-
-
-async def init_listen_for_changes(app: aiohttp.web_app.Application):
-    scheduler = get_scheduler_from_app(app)
-    await scheduler.spawn(virtool.redis.listen_for_changes(app))
 
 
 async def init_refresh(app: aiohttp.web.Application):
