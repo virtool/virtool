@@ -21,6 +21,18 @@ def files(tmpdir):
     return files
 
 
+@pytest.fixture
+async def prepare_db(pg_session, static_time):
+    upload_1 = Upload(id=1, name="test.fq.gz", type="reads", user="danny")
+    upload_2 = Upload(id=2, name="test.fq.gz", type="subtraction", user="lester")
+    upload_3 = Upload(id=3, name="test.fq.gz", user="jake")
+
+    async with pg_session as session:
+        session.add_all([upload_1, upload_2, upload_3])
+
+        await session.commit()
+
+
 class TestUpload:
 
     @pytest.mark.parametrize("upload_type", UPLOAD_TYPES)
@@ -58,17 +70,6 @@ class TestUpload:
 
 
 class TestFind:
-    @pytest.fixture
-    async def prepare_db(self, pg_session, static_time):
-        upload_1 = Upload(id=1, name="test.fq.gz", type="reads", user="danny")
-        upload_2 = Upload(id=2, name="test.fq.gz", type="subtraction", user="lester")
-        upload_3 = Upload(id=3, name="test.fq.gz", user="jake")
-
-        async with pg_session as session:
-            session.add_all([upload_1, upload_2, upload_3])
-
-            await session.commit()
-
     @pytest.mark.parametrize("type_", ["reads", "reference", None])
     @pytest.mark.parametrize("user", ["danny", "lester", "jake"])
     async def test(self, spawn_client, resp_is, snapshot, type_, user, prepare_db):
@@ -130,6 +131,24 @@ class TestDelete:
 
         resp = await client.get("api/uploads/1")
         assert resp.status == 404
+
+    @pytest.mark.parametrize("exists", [True, False])
+    async def test_already_removed(self, exists, spawn_client, tmpdir, pg_session):
+        client = await spawn_client(authorize=True, administrator=True)
+
+        client.app["settings"]["data_path"] = str(tmpdir)
+
+        async with pg_session as session:
+            session.add(Upload(name_on_disk="1-test.fq.gz", removed=exists))
+
+            await session.commit()
+
+        resp = await client.delete("/api/uploads/1")
+
+        if exists:
+            assert resp.status == 404
+        else:
+            assert resp.status == 204
 
     @pytest.mark.parametrize("exists", [True, False])
     async def test_record_dne(self, exists, spawn_client, pg_session, tmpdir):

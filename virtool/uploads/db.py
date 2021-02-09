@@ -1,23 +1,32 @@
+import asyncio
+import logging
+from pathlib import Path
 from typing import Union
+import aiohttp.web
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 import virtool.utils
+import virtool.uploads.utils
 from virtool.uploads.models import Upload
 
+logger = logging.getLogger("uploads")
 
-async def create(db, name: str, upload_type: str, reserved: bool = False, user: Union[None, str] = None):
+
+async def create(req, pg: AsyncEngine, name: str, upload_type: str, reserved: bool = False, user: Union[None, str] = None):
     """
-    Creates and commits a new upload document
+    Writes a new upload to disk and creates a new row in the `Upload` SQL table. Returns a dictionary representation
+    of the new row.
 
-    :param db: PostgreSQL database object
+    :param req: Request handler object
+    :param pg: PostgreSQL database object
     :param name: the name of the upload
     :param upload_type: the type of upload (e.g. reads)
     :param reserved: should the file immediately be reserved (used for legacy samples)
     :param user: the id of the uploading user
-    :return: a JSON response document
+    :return: Dictionary representation of new row in the `Uploads` SQL table
     """
-    async with AsyncSession(db) as session:
+    async with AsyncSession(pg) as session:
         upload = Upload(
             created_at=virtool.utils.timestamp(),
             name=name,
@@ -31,6 +40,24 @@ async def create(db, name: str, upload_type: str, reserved: bool = False, user: 
         session.add(upload)
 
         await session.flush()
+
+        upload.name_on_disk = f"{upload.id}-{upload.name}"
+
+        file_path = Path(req.app["settings"]["data_path"]) / "files" / upload.name_on_disk
+
+        try:
+            size = await virtool.uploads.utils.naive_writer(req, file_path)
+        except asyncio.CancelledError:
+            logger.debug(f"Upload aborted: {upload.id}")
+
+            await session.delete(upload)
+            await session.commit()
+
+            return aiohttp.web.Response(status=499)
+
+        upload.size = size
+        upload.uploaded_at = virtool.utils.timestamp()
+
         upload = upload.to_dict()
 
         await session.commit()
