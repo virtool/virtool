@@ -76,9 +76,9 @@ async def upload(req):
     if upload_type not in UPLOAD_TYPES:
         return bad_request("Unsupported upload type")
 
-    document = await virtool.uploads.db.create(db, name, upload_type, user=req["client"].user_id)
+    upload_ = await virtool.uploads.db.create(db, name, upload_type, user=req["client"].user_id)
 
-    upload_id = document["id"]
+    upload_id = upload_["id"]
 
     async with AsyncSession(db) as session:
         try:
@@ -91,7 +91,7 @@ async def upload(req):
 
             await session.commit()
 
-            document.update({
+            upload_.update({
                 "size": size,
                 "name_on_disk": f"{upload_id}-{name}",
                 "uploaded_at": uploaded_at
@@ -103,7 +103,7 @@ async def upload(req):
                 "Location": f"/api/uploads/{upload_id}"
             }
 
-            return json_response(document, status=201, headers=headers)
+            return json_response(upload_, status=201, headers=headers)
         except asyncio.CancelledError:
             logger.debug(f"Upload aborted: {upload_id}")
 
@@ -116,28 +116,29 @@ async def upload(req):
 @routes.get("/api/uploads")
 async def find(req):
     db = req.app["postgres"]
-    document = list()
+    upload_ = list()
     filters = list()
     user = req.query.get("user")
+    type_ = req.query["type"]
 
     if user:
         filters.append(Upload.user == user)
 
-    try:
-        filters.append(Upload.type == req.query["type"])
-    except KeyError:
-        pass
+    if type_:
+        filters.append(Upload.type == type_)
 
     async with AsyncSession(db) as session:
+        query = select(Upload)
+
         if filters:
-            result = await session.execute(select(Upload).filter(*filters))
-        else:
-            result = await session.execute(select(Upload))
+            query.filter(*filters)
 
-        for upload in result.scalars().all():
-            document.append(upload.to_dict())
+        results = session.execute(query)
 
-    resp = json_response(document)
+        for result in results.scalars().all():
+            upload_.append(result.to_dict())
+
+    resp = json_response(upload_)
 
     return resp
 
