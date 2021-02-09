@@ -38,13 +38,15 @@ import virtool.utils
 import virtool.version
 from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.listener import RedisDispatcherListener
+from virtool.types import App
 
 logger = logging.getLogger("startup")
 
 
 def create_events() -> dict:
     """
-    Create and store :class:`asyncio.Event` objects for triggering an application restart or shutdown.
+    Create and store :class:`asyncio.Event` objects for triggering an application restart or
+    shutdown.
 
     :return: a `dict` containing :class:`~asyncio.Event` objects for restart and shutdown
 
@@ -113,10 +115,11 @@ async def init_client_path(app: aiohttp.web_app.Application):
         app.router.add_static("/static", app["client_path"])
 
 
-async def init_db(app: aiohttp.web_app.Application):
+async def init_db(app: App):
     """
-    An application ``on_startup`` callback that attaches an instance of :class:`~AsyncIOMotorClient` and the ``db_name``
-    to the Virtool ``app`` object. Also initializes collection indices.
+    An application ``on_startup`` callback that attaches an instance of
+    :class:`~AsyncIOMotorClient` and the ``db_name`` to the Virtool ``app`` object. Also
+    initializes collection indices.
 
     :param app: the app object
     :type app: :class:`aiohttp.aiohttp.web.Application`
@@ -170,8 +173,8 @@ async def init_events(app: aiohttp.web_app.Application):
 
 async def init_executors(app: aiohttp.web.Application):
     """
-    An application ``on_startup`` callback that initializes a :class:`~ThreadPoolExecutor` and attaches it to the
-    ``app`` object.
+    An application ``on_startup`` callback that initializes a :class:`~ThreadPoolExecutor` and
+    attaches it to the ``app`` object.
 
     :param app: the application object
 
