@@ -6,43 +6,31 @@ import { BoxGroupHeader, BoxGroupSection, Button, Input, InputGroup, InputLabel,
 import { createFirstUser } from "../users/actions";
 import { WallContainer, WallDialog, WallDialogFooter } from "./Container";
 
-export class FirstUser extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            username: "",
-            password: ""
-        };
-    }
+export const FirstUser = ({onSubmit}) => {
 
-    handleChange = e => {
-        const { name, value } = e.target;
-        this.setState({
-            [name]: value
-        });
+    const initialValues = {
+        username: "",
+        password: ""
     };
 
-    handleSubmit = e => {
-        e.preventDefault();
-        this.props.onSubmit(this.state.username, this.state.password);
+    const handleSubmit = values => {
+        onSubmit(values.username, values.password);
     };
 
-    validate = values => {
+    const validate = values => {
         let errors = {};
 
-        return error;
+        return errors;
     };
 
-    render() {
-        const { username, password } = this.state;
-        return (
+    return (
             <WallContainer>
                 <WallDialog size="lg">
                     <BoxGroupHeader>
                         <h2>Setup User</h2>
                         <p>Create an initial administrative user to start using Virtool.</p>
                     </BoxGroupHeader>
-                    <Formik initialValues={this.state} validate={this.validate} onSubmit={this.handleSubmit}>
+                    <Formik initialValues={initialValues} validate={validate} onSubmit={handleSubmit}>
                         <Form>
                             <BoxGroupSection>
                                 <InputGroup>
@@ -64,12 +52,12 @@ export class FirstUser extends React.Component {
                 </WallDialog>
             </WallContainer>
         );
-    }
-}
+};
 
 export const mapDispatchToProps = dispatch => ({
     onSubmit: (username, password) => {
-        dispatch(createFirstUser(username, password));
+        // dispatch(createFirstUser(username, password));
+        console.log("Dispatching action: Username: " + username + " Password: " + password);
     }
 });
 
