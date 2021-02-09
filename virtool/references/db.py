@@ -206,7 +206,7 @@ class ImportReferenceTask(virtool.tasks.task.Task):
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=tracker.initial + tracker.total,
+            progress=tracker.step_completed,
             step="load_file"
         )
 
@@ -244,7 +244,7 @@ class ImportReferenceTask(virtool.tasks.task.Task):
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=tracker.initial + tracker.total,
+            progress=tracker.step_completed,
             step="set_metadata"
         )
 
@@ -263,7 +263,7 @@ class ImportReferenceTask(virtool.tasks.task.Task):
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=tracker.initial + tracker.total,
+            progress=tracker.step_completed,
             step="validate"
         )
 
@@ -455,7 +455,7 @@ class DeleteReferenceTask(virtool.tasks.task.Task):
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=tracker.initial + tracker.total,
+            progress=tracker.step_completed,
             step="remove_directory"
         )
 
@@ -471,7 +471,7 @@ class DeleteReferenceTask(virtool.tasks.task.Task):
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=tracker.initial + tracker.total,
+            progress=tracker.step_completed,
             step="remove_indexes"
         )
 
@@ -507,7 +507,7 @@ class DeleteReferenceTask(virtool.tasks.task.Task):
             await virtool.tasks.pg.update(
                 self.pg,
                 self.id,
-                progress=tracker.initial + tracker.total,
+                progress=tracker.step_completed,
                 step="remove_unreferenced_otus"
             )
 
@@ -529,7 +529,7 @@ class DeleteReferenceTask(virtool.tasks.task.Task):
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=tracker.initial + tracker.total,
+            progress=tracker.step_completed,
             step="remove_referenced_otus"
         )
 
@@ -669,7 +669,7 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            progress=tracker.initial + tracker.total,
+            progress=tracker.step_completed,
             step="update_reference"
         )
 
@@ -731,7 +731,7 @@ class CreateIndexJSONTask(virtool.tasks.task.Task):
             await virtool.tasks.pg.update(
                 self.pg,
                 self.id,
-                progress=tracker.initial + tracker.total,
+                progress=tracker.step_completed,
                 step="create_index_json_files"
             )
 
