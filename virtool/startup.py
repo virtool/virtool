@@ -257,12 +257,7 @@ async def init_postgres(app: aiohttp.web_app.Application):
 
 
 async def init_redis(app: typing.Union[dict, aiohttp.web_app.Application]):
-    redis_connection_string = app["config"].get("redis_connection_string")
-
-    if not redis_connection_string:
-        logger.debug("Redis not configured")
-        return
-
+    redis_connection_string = app["config"]["redis_connection_string"]
     logger.info("Connecting to Redis")
     app["redis"] = await virtool.redis.connect(redis_connection_string)
 
