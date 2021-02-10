@@ -146,7 +146,8 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
         return
 
     m_register.assert_called_with(
-        client.postgres,
+        client.pg,
+        client.app["task_runner"],
         "update_remote_reference",
         context={
             "created_at": static_time.datetime,
