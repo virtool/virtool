@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from sqlalchemy import select
 
 from virtool.uploads.api import UPLOAD_TYPES
 from virtool.uploads.models import Upload
@@ -36,7 +37,7 @@ async def prepare_db(pg_session, static_time):
 class TestUpload:
 
     @pytest.mark.parametrize("upload_type", UPLOAD_TYPES)
-    async def test(self, files, upload_type, tmpdir, snapshot, spawn_client, static_time):
+    async def test(self, files, upload_type, tmpdir, snapshot, spawn_client, static_time, pg_session):
         client = await spawn_client(authorize=True, permissions=["upload_file"])
 
         client.app["settings"]["data_path"] = str(tmpdir)
@@ -48,9 +49,15 @@ class TestUpload:
 
         assert resp.status == 201
 
-        assert os.listdir(tmpdir / "files") == ["1-Test.fq.gz"]
-
         snapshot.assert_match(await resp.json())
+
+        # check if new `upload` was properly committed to db
+        async with pg_session as session:
+            upload = (await session.execute(select(Upload).filter(Upload.id == 1))).scalar()
+
+            assert upload is not None
+
+        assert os.listdir(tmpdir / "files") == ["1-Test.fq.gz"]
 
     async def test_invalid_query(self, files, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["upload_file"])
