@@ -40,11 +40,11 @@ export const FirstUser = ({onSubmit}) => {
                             <BoxGroupSection>
                                 <InputGroup>
                                     <InputLabel>Username</InputLabel>
-                                    <Field type="text" name="username"/>
+                                    <Field type="text" name="username" as={Input}/>
                                 </InputGroup>
                                 <InputGroup>
                                     <InputLabel>Password</InputLabel>
-                                    <Field type="password" name="password"/>
+                                    <Field name="password" as={PasswordInput}/>
                                 </InputGroup>
                             </BoxGroupSection>
                             <WallDialogFooter>
