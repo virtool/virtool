@@ -45,13 +45,13 @@ export const FirstUser = ({onSubmit}) => {
                                 <InputGroup>
                                     <InputLabel>Password</InputLabel>
                                     <Field type="password" name="password"/>
-                                    <ErrorMessage name="password"/>
                                 </InputGroup>
                             </BoxGroupSection>
                             <WallDialogFooter>
                                 <Button type="submit" icon="user-plus" color="blue">
                                     Create User
                                 </Button>
+                                <ErrorMessage name="password"/>
                             </WallDialogFooter>
                         </Form>
                     </Formik>
