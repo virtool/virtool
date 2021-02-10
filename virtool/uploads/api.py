@@ -31,7 +31,7 @@ routes = virtool.http.routes.Routes()
 
 
 @routes.post("/api/uploads", permission="upload_file")
-async def upload(req):
+async def create(req):
     """
     Upload a new file and add it to the `uploads` SQL table
 
@@ -49,12 +49,26 @@ async def upload(req):
     if upload_type not in UPLOAD_TYPES:
         return bad_request("Unsupported upload type")
 
-    new_upload = await virtool.uploads.db.create(req, pg, name, upload_type, user=req["client"].user_id)
+    upload = await virtool.uploads.db.create(pg, name, upload_type, user=req["client"].user_id)
 
-    if not new_upload:
+    upload_id = upload["id"]
+
+    file_path = Path(req.app["settings"]["data_path"]) / "files" / upload["name_on_disk"]
+
+    try:
+        size = await virtool.uploads.utils.naive_writer(req, file_path)
+    except asyncio.CancelledError:
+        logger.debug(f"Upload aborted: {upload_id}")
+        # need to remove from table
+
         return aiohttp.web.Response(status=499)
 
-    upload_id = new_upload["id"]
+    upload = await virtool.uploads.db.finalize(pg, size, upload_id, virtool.utils.timestamp())
+
+    if not upload:
+        await req.app["run_in_thread"](os.remove, file_path)
+        # need to remove from table
+        return not_found("Document not found in table after file upload")
 
     logger.debug(f"Upload succeeded: {upload_id}")
 
@@ -62,7 +76,7 @@ async def upload(req):
         "Location": f"/api/uploads/{upload_id}"
     }
 
-    return json_response(new_upload, status=201, headers=headers)
+    return json_response(upload, status=201, headers=headers)
 
 
 @routes.get("/api/uploads")
