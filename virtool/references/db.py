@@ -104,6 +104,7 @@ PROJECTION = [
 
 
 class CloneReferenceTask(virtool.tasks.task.Task):
+    task_type = "clone_reference"
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)
@@ -176,6 +177,7 @@ class CloneReferenceTask(virtool.tasks.task.Task):
 
 
 class ImportReferenceTask(virtool.tasks.task.Task):
+    task_type = "import_reference"
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)
@@ -305,6 +307,7 @@ class ImportReferenceTask(virtool.tasks.task.Task):
 
 
 class RemoteReferenceTask(virtool.tasks.task.Task):
+    task_type = "remote_reference"
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)
@@ -420,6 +423,7 @@ class RemoteReferenceTask(virtool.tasks.task.Task):
 
 
 class DeleteReferenceTask(virtool.tasks.task.Task):
+    task_type = "delete_reference"
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)
@@ -535,6 +539,7 @@ class DeleteReferenceTask(virtool.tasks.task.Task):
 
 
 class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
+    task_type = "update_remote_reference"
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -675,6 +680,7 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
 
 
 class CreateIndexJSONTask(virtool.tasks.task.Task):
+    task_type = "create_index_json"
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)

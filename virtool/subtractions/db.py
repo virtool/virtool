@@ -43,6 +43,7 @@ PROJECTION = [
 
 
 class WriteSubtractionFASTATask(virtool.tasks.task.Task):
+    task_type = "write_subtraction_fasta"
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)
