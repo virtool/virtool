@@ -12,17 +12,9 @@ import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
 from virtool.api.response import invalid_query, json_response, bad_request, not_found
-from virtool.uploads.models import Upload
+from virtool.uploads.models import Upload, UPLOAD_TYPES
 
 logger = logging.getLogger("uploads")
-
-UPLOAD_TYPES = [
-    "hmm",
-    "reference",
-    "reads",
-    "subtraction",
-    None
-]
 
 routes = virtool.http.routes.Routes()
 

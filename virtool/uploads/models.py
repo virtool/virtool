@@ -10,10 +10,18 @@ class UploadType(str, enum.Enum):
     Enumerated type for possible upload types
 
     """
+
+    @classmethod
+    def to_list(cls):
+        return [e.value for e in cls.__members__.values()]
+
     hmm = "hmm"
     reference = "reference"
     reads = "reads"
     subtraction = "subtraction"
+
+
+UPLOAD_TYPES = [*UploadType.to_list(), None]
 
 
 class Upload(Base):
