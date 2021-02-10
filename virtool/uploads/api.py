@@ -110,17 +110,16 @@ async def get(req):
     pg = req.app["postgres"]
     upload_id = int(req.match_info["id"])
 
-    async with AsyncSession(pg) as session:
-        result = (await session.execute(select(Upload).filter_by(id=upload_id))).scalar()
+    upload = await virtool.uploads.db.get(pg, upload_id)
 
-        if not result:
-            return not_found()
-
-    # check if the file has been removed as a result of a `DELETE` request
-    if result.removed:
+    if not upload:
         return not_found()
 
-    upload_path = Path(req.app["settings"]["data_path"]) / "files" / result.name_on_disk
+    # check if the file has been removed as a result of a `DELETE` request
+    if upload.removed:
+        return not_found()
+
+    upload_path = Path(req.app["settings"]["data_path"]) / "files" / upload.name_on_disk
 
     # check if the file has been manually removed by the user
     if not upload_path.exists():
