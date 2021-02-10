@@ -368,15 +368,13 @@ async def init_tasks(app: aiohttp.web.Application):
     logger.info("Checking subtraction FASTA files")
     subtractions_without_fasta = await virtool.subtractions.db.check_subtraction_fasta_files(app["db"], app["settings"])
     for subtraction in subtractions_without_fasta:
-        subtraction_task = await virtool.tasks.pg.register(
+        await virtool.tasks.pg.register(
             pg,
+            app["task_runner"],
             "write_subtraction_fasta",
             context={"subtraction": subtraction})
-        await app["task_runner"].add_task(subtraction_task["id"])
 
     logger.info("Checking index JSON files")
-    index_task = await virtool.tasks.pg.register(pg, "create_index_json")
-    await app["task_runner"].add_task(index_task["id"])
+    await virtool.tasks.pg.register(pg, app["task_runner"], "create_index_json")
 
-    reference_task = await virtool.tasks.pg.register(pg, "delete_reference", context={"user_id": "virtool"})
-    await app["task_runner"].add_task(reference_task["id"])
+    await virtool.tasks.pg.register(pg, app["task_runner"], "delete_reference", context={"user_id": "virtool"})

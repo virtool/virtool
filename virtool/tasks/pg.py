@@ -26,7 +26,7 @@ async def get(pg_engine, task_id):
     return document
 
 
-async def register(pg_engine, task_type, context=None):
+async def register(pg_engine, task_runner, task_type, context=None):
     task = Task(
         complete=False,
         context=context or dict(),
@@ -42,7 +42,9 @@ async def register(pg_engine, task_type, context=None):
         document = task.to_dict()
         await session.commit()
 
-    return virtool.utils.base_processor(document)
+    await task_runner.q.put(document["id"])
+
+    return document
 
 
 async def update(pg_engine, task_id, count=None, progress=None, step=None, context_update=None, error=None):

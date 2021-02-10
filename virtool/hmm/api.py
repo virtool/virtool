@@ -126,6 +126,7 @@ async def install(req):
 
     task = await virtool.tasks.pg.register(
         req.app["postgres"],
+        req.app["task_runner"],
         "install_hmms",
         context={
             "user_id": user_id,
@@ -148,8 +149,6 @@ async def install(req):
             "updates": update
         }
     })
-
-    await req.app["task_runner"].add_task(task["id"])
 
     return json_response(update)
 

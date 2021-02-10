@@ -32,13 +32,11 @@ class TaskRunner:
         except asyncio.CancelledError:
             logging.info("Stopped task runner")
 
-    async def add_task(self, task_id):
-        await self.q.put(task_id)
-
     async def run_task(self, task_id):
         async with AsyncSession(self.app["postgres"]) as session:
             result = await session.execute(select(Task).filter_by(id=task_id))
             document = result.scalar().to_dict()
+
         loop = asyncio.get_event_loop()
         task_class = TASK_CLASSES[document["type"]](self.app, task_id)
         task = loop.create_task(task_class.run())
