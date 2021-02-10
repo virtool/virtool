@@ -86,7 +86,6 @@ async def find(req):
 
     """
     pg = req.app["postgres"]
-    uploads = list()
     filters = list()
     user = req.query.get("user")
     upload_type = req.query.get("type")
@@ -97,16 +96,7 @@ async def find(req):
     if upload_type:
         filters.append(Upload.type == upload_type)
 
-    async with AsyncSession(pg) as session:
-        query = select(Upload)
-
-        if filters:
-            query = query.filter(*filters)
-
-        results = await session.execute(query)
-
-    for result in results.scalars().all():
-        uploads.append(result.to_dict())
+    uploads = await virtool.uploads.db.find(pg, filters)
 
     return json_response(uploads)
 
