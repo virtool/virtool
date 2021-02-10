@@ -73,3 +73,20 @@ async def finalize(pg, size: int, upload_id: int, uploaded_at: datetime):
         await session.commit()
 
         return upload
+
+
+async def find(pg, filters):
+    uploads = list()
+
+    async with AsyncSession(pg) as session:
+        query = select(Upload)
+
+        if filters:
+            query = query.filter(*filters)
+
+        results = await session.execute(query)
+
+    for result in results.scalars().all():
+        uploads.append(result.to_dict())
+
+    return uploads
