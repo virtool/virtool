@@ -166,7 +166,11 @@ async def update(req):
         "user_id": user_id
     }
 
-    task = await virtool.tasks.pg.register(req.app["postgres"], "update_remote_reference", context=context)
+    task = await virtool.tasks.pg.register(
+        req.app["postgres"],
+        req.app["task_runner"],
+        "update_remote_reference",
+        context=context)
 
     release, update_subdocument = await asyncio.shield(virtool.references.db.update(
         req,
@@ -338,8 +342,11 @@ async def create(req):
             "user_id": user_id
         }
 
-        task = await virtool.tasks.pg.register(req.app["postgres"], "clone_reference", context=context)
-        await req.app["task_runner"].add_task(task["id"])
+        task = await virtool.tasks.pg.register(
+            req.app["postgres"],
+            req.app["task_runner"],
+            "clone_reference",
+            context=context)
 
         document["task"] = {
             "id": task["id"]
@@ -367,8 +374,11 @@ async def create(req):
             "user_id": user_id
         }
 
-        task = await virtool.tasks.pg.register(req.app["postgres"], "import_reference", context=context)
-        await req.app["task_runner"].add_task(task["id"])
+        task = await virtool.tasks.pg.register(
+            req.app["postgres"],
+            req.app["task_runner"],
+            "import_reference",
+            context=context)
 
         document["task"] = {
             "id": task["id"]
@@ -408,8 +418,13 @@ async def create(req):
             "created_at": document["created_at"],
             "user_id": user_id
         }
-        task = await virtool.tasks.pg.register(req.app["postgres"], "remote_reference", context=context)
-        await req.app["task_runner"].add_task(task["id"])
+
+        task = await virtool.tasks.pg.register(
+            req.app["postgres"],
+            req.app["task_runner"],
+            "remote_reference",
+            context=context)
+
         document["task"] = {
             "id": task["id"]
         }
@@ -541,8 +556,12 @@ async def remove(req):
         "user_id": user_id
     }
 
-    task = await virtool.tasks.pg.register(req.app["postgres"], "delete_reference", context=context)
-    await req.app["task_runner"].add_task(task["id"])
+    task = await virtool.tasks.pg.register(
+        req.app["postgres"],
+        req.app["task_runner"],
+        "delete_reference",
+        context=context)
+
     await db.references.delete_one({
         "_id": ref_id
     })

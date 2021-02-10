@@ -1575,8 +1575,6 @@ async def update(req, created_at, task_id, ref_id, release, user_id):
         }
     })
 
-    await req.app["task_runner"].add_task(task_id)
-
     return release, update_subdocument
 
 
