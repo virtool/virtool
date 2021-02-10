@@ -57,7 +57,7 @@ async def create(req):
         size = await virtool.uploads.utils.naive_writer(req, file_path)
     except asyncio.CancelledError:
         logger.debug(f"Upload aborted: {upload_id}")
-        # need to remove from table
+        await virtool.uploads.db.delete(pg, upload_id)
 
         return aiohttp.web.Response(status=499)
 
@@ -65,7 +65,7 @@ async def create(req):
 
     if not upload:
         await req.app["run_in_thread"](os.remove, file_path)
-        # need to remove from table
+
         return not_found("Document not found in table after file upload")
 
     logger.debug(f"Upload succeeded: {upload_id}")
