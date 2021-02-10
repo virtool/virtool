@@ -137,23 +137,17 @@ async def delete(req):
     pg = req.app["postgres"]
     upload_id = int(req.match_info["id"])
 
-    async with AsyncSession(pg) as session:
-        result = (await session.execute(select(Upload).where(Upload.id == upload_id))).scalar()
+    upload = await virtool.uploads.db.delete(pg, upload_id)
 
-        if not result or result.removed:
-            return not_found()
+    if not upload:
+        return not_found()
 
-        try:
-            await req.app["run_in_thread"](
-                os.remove,
-                Path(req.app["settings"]["data_path"]) / "files" / result.name_on_disk
-            )
-        except FileNotFoundError:
-            pass
-
-        result.removed = True
-        result.removed_at = virtool.utils.timestamp()
-
-        await session.commit()
+    try:
+        await req.app["run_in_thread"](
+            os.remove,
+            Path(req.app["settings"]["data_path"]) / "files" / upload["name_on_disk"]
+        )
+    except FileNotFoundError:
+        pass
 
     return aiohttp.web.Response(status=204)
