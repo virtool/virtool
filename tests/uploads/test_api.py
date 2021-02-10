@@ -38,6 +38,10 @@ class TestUpload:
 
     @pytest.mark.parametrize("upload_type", UPLOAD_TYPES)
     async def test(self, files, upload_type, tmpdir, snapshot, spawn_client, static_time, pg_session):
+        """
+        Test `POST /api/uploads` to assure a file can be uploaded and that it properly updates the db.
+
+        """
         client = await spawn_client(authorize=True, permissions=["upload_file"])
 
         client.app["settings"]["data_path"] = str(tmpdir)
@@ -59,7 +63,11 @@ class TestUpload:
 
         assert os.listdir(tmpdir / "files") == ["1-Test.fq.gz"]
 
-    async def test_invalid_query(self, files, spawn_client, resp_is):
+    async def test_invalid_request(self, files, spawn_client, resp_is):
+        """
+        Test `POST /api/uploads` to assure it properly rejects an invalid request.
+
+        """
         client = await spawn_client(authorize=True, permissions=["upload_file"])
 
         resp = await client.post_form("/api/uploads", data=files)
@@ -69,6 +77,10 @@ class TestUpload:
         })
 
     async def test_bad_type(self, files, spawn_client, resp_is):
+        """
+        Test `POST /api/uploads` to assure it properly rejects an invalid upload type.
+
+        """
         client = await spawn_client(authorize=True, permissions=["upload_file"])
 
         resp = await client.post_form("/api/uploads?type=foobar&name=Test.fq.gz", data=files)
@@ -80,6 +92,10 @@ class TestFind:
     @pytest.mark.parametrize("type_", ["reads", "reference", None])
     @pytest.mark.parametrize("user", ["danny", "lester", "jake"])
     async def test(self, spawn_client, resp_is, snapshot, type_, user, prepare_db):
+        """
+        Test `GET /api/uploads` to assure that it returns the correct `upload` documents.
+
+        """
         client = await spawn_client(authorize=True, administrator=True)
 
         if type_:
@@ -95,6 +111,10 @@ class TestFind:
 class TestGet:
     @pytest.mark.parametrize("exists", [True, False])
     async def test(self, exists, files, resp_is, spawn_client, tmpdir):
+        """
+        Test `GET /api/uploads/:id` to assure that it lets you download a file.
+
+        """
         client = await spawn_client(authorize=True, administrator=True)
 
         client.app["settings"]["data_path"] = str(tmpdir)
@@ -111,6 +131,10 @@ class TestGet:
 
     @pytest.mark.parametrize("exists", [True, False])
     async def test_upload_removed(self, exists, resp_is, spawn_client, pg_session, tmpdir):
+        """
+        Test `GET /api/uploads/:id` to assure that it doesn't let you download a file that has been removed.
+
+        """
         client = await spawn_client(authorize=True, administrator=True)
 
         client.app["settings"]["data_path"] = str(tmpdir)
@@ -127,6 +151,10 @@ class TestGet:
 
 class TestDelete:
     async def test(self, files, spawn_client, snapshot, tmpdir):
+        """
+        Test `DELETE /api/uploads/:id to assure that it properly deletes an existing `upload` document and file.
+
+        """
         client = await spawn_client(authorize=True, administrator=True)
 
         client.app["settings"]["data_path"] = str(tmpdir)
@@ -141,6 +169,10 @@ class TestDelete:
 
     @pytest.mark.parametrize("exists", [True, False])
     async def test_already_removed(self, exists, spawn_client, tmpdir, pg_session):
+        """
+        Test `DELETE /api/uploads/:id to assure that it doesn't try to delete a file that has already been removed.
+
+        """
         client = await spawn_client(authorize=True, administrator=True)
 
         client.app["settings"]["data_path"] = str(tmpdir)
@@ -159,6 +191,11 @@ class TestDelete:
 
     @pytest.mark.parametrize("exists", [True, False])
     async def test_record_dne(self, exists, spawn_client, pg_session, tmpdir):
+        """
+        Test `DELETE /api/uploads/:id to assure that it doesn't try to delete a file that corresponds to a `upload`
+        record that does not exist.
+
+        """
         client = await spawn_client(authorize=True, administrator=True)
 
         client.app["settings"]["data_path"] = str(tmpdir)
