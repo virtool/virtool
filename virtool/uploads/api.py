@@ -4,8 +4,6 @@ import os
 from pathlib import Path
 
 import aiohttp.web
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.db.utils
 import virtool.files.db
@@ -33,7 +31,7 @@ routes = virtool.http.routes.Routes()
 @routes.post("/api/uploads", permission="upload_file")
 async def create(req):
     """
-    Upload a new file and add it to the `uploads` SQL table
+    Upload a new file and add it to the `uploads` SQL table.
 
     """
     pg = req.app["postgres"]
@@ -82,7 +80,7 @@ async def create(req):
 @routes.get("/api/uploads")
 async def find(req):
     """
-    Get a list of upload documents from the `uploads` SQL table
+    Get a list of upload documents from the `uploads` SQL table.
 
     """
     pg = req.app["postgres"]
