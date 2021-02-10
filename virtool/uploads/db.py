@@ -90,3 +90,13 @@ async def find(pg, filters):
         uploads.append(result.to_dict())
 
     return uploads
+
+
+async def get(pg, upload_id):
+    async with AsyncSession(pg) as session:
+        upload = (await session.execute(select(Upload).filter_by(id=upload_id))).scalar()
+
+        if not upload:
+            return None
+
+        return upload
