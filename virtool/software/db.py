@@ -20,6 +20,7 @@ VIRTOOL_RELEASES_URL = "https://www.virtool.ca/releases4"
 
 
 class SoftwareInstallTask(virtool.tasks.task.Task):
+    task_type = "update_software"
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)

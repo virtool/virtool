@@ -76,6 +76,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
     :param user_id: the id of the user making the request
 
     """
+    task_type = "install_hmms"
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)
