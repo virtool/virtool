@@ -99,7 +99,7 @@ async def find(pg, filters: list = None) -> list:
 
 async def get(pg, upload_id) -> Optional[Upload]:
     """
-    Retrieve in a row in the SQL `uploads` table by its associated `id`
+    Retrieve in a row in the SQL `uploads` table by its associated `id`.
 
     """
     async with AsyncSession(pg) as session:
