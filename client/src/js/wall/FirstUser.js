@@ -54,10 +54,7 @@ export const FirstUser = ({onSubmit}) => {
                                 </Button>
                                 <ErrorMessage name="password">
                                     {
-                                        errorMessage => {
-                                            console.log(errorMessage);
-                                            return <InputError>{errorMessage}</InputError>
-                                        }
+                                        errorMessage => { return <InputError>{errorMessage}</InputError> }
                                     }
                                 </ErrorMessage>
                             </WallDialogFooter>
@@ -70,8 +67,7 @@ export const FirstUser = ({onSubmit}) => {
 
 export const mapDispatchToProps = dispatch => ({
     onSubmit: (username, password) => {
-        // dispatch(createFirstUser(username, password));
-        console.log("Dispatching action: Username: " + username + " Password: " + password);
+        dispatch(createFirstUser(username, password));
     }
 });
 
