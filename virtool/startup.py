@@ -37,6 +37,8 @@ import virtool.tasks.utils
 import virtool.utils
 import virtool.version
 from virtool.tasks.runner import TaskRunner
+from virtool.subtractions.db import WriteSubtractionFASTATask
+from virtool.references.db import CreateIndexJSONTask, DeleteReferenceTask
 
 logger = logging.getLogger("startup")
 
@@ -371,10 +373,10 @@ async def init_tasks(app: aiohttp.web.Application):
         await virtool.tasks.pg.register(
             pg,
             app["task_runner"],
-            "write_subtraction_fasta",
+            WriteSubtractionFASTATask,
             context={"subtraction": subtraction})
 
     logger.info("Checking index JSON files")
-    await virtool.tasks.pg.register(pg, app["task_runner"], "create_index_json")
+    await virtool.tasks.pg.register(pg, app["task_runner"], CreateIndexJSONTask)
 
-    await virtool.tasks.pg.register(pg, app["task_runner"], "delete_reference", context={"user_id": "virtool"})
+    await virtool.tasks.pg.register(pg, app["task_runner"], DeleteReferenceTask, context={"user_id": "virtool"})

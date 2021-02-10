@@ -26,14 +26,14 @@ async def get(pg_engine, task_id):
     return document
 
 
-async def register(pg_engine, task_runner, task_type, context=None):
+async def register(pg_engine, task_runner, task_class, context=None):
     task = Task(
         complete=False,
         context=context or dict(),
         count=0,
         created_at=virtool.utils.timestamp(),
         progress=0,
-        type=task_type
+        type=task_class.task_type
     )
 
     async with AsyncSession(pg_engine) as session:

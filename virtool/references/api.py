@@ -20,6 +20,7 @@ import virtool.references.utils
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_gateway, bad_request, insufficient_rights, json_response, no_content, not_found
+from virtool.references.db import CloneReferenceTask, ImportReferenceTask, RemoteReferenceTask, DeleteReferenceTask, UpdateRemoteReferenceTask
 
 routes = virtool.http.routes.Routes()
 
@@ -169,7 +170,7 @@ async def update(req):
     task = await virtool.tasks.pg.register(
         req.app["postgres"],
         req.app["task_runner"],
-        "update_remote_reference",
+        UpdateRemoteReferenceTask,
         context=context)
 
     release, update_subdocument = await asyncio.shield(virtool.references.db.update(
@@ -345,7 +346,7 @@ async def create(req):
         task = await virtool.tasks.pg.register(
             req.app["postgres"],
             req.app["task_runner"],
-            "clone_reference",
+            CloneReferenceTask,
             context=context)
 
         document["task"] = {
@@ -377,7 +378,7 @@ async def create(req):
         task = await virtool.tasks.pg.register(
             req.app["postgres"],
             req.app["task_runner"],
-            "import_reference",
+            ImportReferenceTask,
             context=context)
 
         document["task"] = {
@@ -422,7 +423,7 @@ async def create(req):
         task = await virtool.tasks.pg.register(
             req.app["postgres"],
             req.app["task_runner"],
-            "remote_reference",
+            RemoteReferenceTask,
             context=context)
 
         document["task"] = {
@@ -559,7 +560,7 @@ async def remove(req):
     task = await virtool.tasks.pg.register(
         req.app["postgres"],
         req.app["task_runner"],
-        "delete_reference",
+        DeleteReferenceTask,
         context=context)
 
     await db.references.delete_one({
