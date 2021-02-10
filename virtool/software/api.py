@@ -10,6 +10,7 @@ import virtool.software.db
 import virtool.software.utils
 import virtool.utils
 from virtool.api.response import bad_gateway, json_response, not_found
+from virtool.software.db import SoftwareInstallTask
 
 routes = virtool.http.routes.Routes()
 
@@ -55,7 +56,7 @@ async def install(req):
     task = await virtool.tasks.pg.register(
         req.app["postgres"],
         req.app["task_runner"],
-        "update_software",
+        SoftwareInstallTask,
         context={
             "file_size": latest_release["size"],
             "release": latest_release

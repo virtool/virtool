@@ -15,6 +15,7 @@ import virtool.http.routes
 import virtool.tasks.pg
 import virtool.utils
 from virtool.api.response import bad_gateway, bad_request, conflict, json_response, no_content, not_found
+from virtool.hmm.db import HMMInstallTask
 
 routes = virtool.http.routes.Routes()
 
@@ -127,7 +128,7 @@ async def install(req):
     task = await virtool.tasks.pg.register(
         req.app["postgres"],
         req.app["task_runner"],
-        "install_hmms",
+        HMMInstallTask,
         context={
             "user_id": user_id,
             "release": release
