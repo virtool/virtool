@@ -18,7 +18,7 @@ import virtool.users.db
 import virtool.users.sessions
 import virtool.users.utils
 import virtool.utils
-from virtool.api.response import bad_request
+from virtool.api.response import bad_request, unauthorized
 from virtool.db.utils import get_one_field
 from virtool.http.client import JobClient, UserClient
 from virtool.jobs.utils import JobRights
@@ -87,7 +87,7 @@ async def authenticate_with_key(req: web.Request, handler: Callable):
     try:
         holder_id, key = decode_authorization(req.headers.get("AUTHORIZATION"))
     except virtool.errors.AuthError:
-        return bad_request("Malformed Authorization header")
+        return unauthorized("Malformed Authorization header")
 
     if holder_id.startswith("job-"):
         return await authenticate_with_job_key(req, handler, holder_id[4:], key)
@@ -104,7 +104,7 @@ async def authenticate_with_api_key(req, handler, user_id: str, key: str):
     }, AUTHORIZATION_PROJECTION)
 
     if not document:
-        return bad_request("Invalid Authorization header")
+        return unauthorized("Invalid authorization header")
 
     req["client"] = UserClient(
         db,
@@ -128,7 +128,7 @@ async def authenticate_with_job_key(req: web.Request, handler, job_id: str, key:
     })
 
     if not document:
-        return bad_request("Invalid Authorization header")
+        return unauthorized("Invalid authorization header")
 
     rights = await get_one_field(db.jobs, "rights", job_id)
 
