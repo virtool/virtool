@@ -2,9 +2,10 @@ import { noop } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import { BoxGroupHeader, BoxGroupSection, Button, Input, InputGroup, InputLabel, PasswordInput } from "../base";
+import { BoxGroupHeader, BoxGroupSection, Button, Input, InputGroup, InputLabel, InputError, PasswordInput } from "../base";
 import { createFirstUser } from "../users/actions";
 import { WallContainer, WallDialog, WallDialogFooter } from "./Container";
+
 
 export const FirstUser = ({onSubmit}) => {
 
@@ -51,7 +52,14 @@ export const FirstUser = ({onSubmit}) => {
                                 <Button type="submit" icon="user-plus" color="blue">
                                     Create User
                                 </Button>
-                                <ErrorMessage name="password"/>
+                                <ErrorMessage name="password">
+                                    {
+                                        errorMessage => {
+                                            console.log(errorMessage);
+                                            return <InputError>{errorMessage}</InputError>
+                                        }
+                                    }
+                                </ErrorMessage>
                             </WallDialogFooter>
                         </Form>
                     </Formik>
