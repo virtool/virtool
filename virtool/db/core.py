@@ -5,7 +5,7 @@ The purpose of these classes is to automatically dispatch database changes via
 :class:`Dispatcher` using the projections and processors appropriate for each collection.
 
 """
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, Awaitable, Callable, Dict, Optional, Sequence, Union
 
 import motor.motor_asyncio
 import pymongo
