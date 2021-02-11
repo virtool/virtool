@@ -28,7 +28,7 @@ class AbstractFetcher(ABC):
         Fetch all records with IDs matching the passed ``id_list`` and are allowed to be viewed
         by the ``connection``
         """
-        ...
+        pass
 
 
 class SimpleMongoFetcher(AbstractFetcher):

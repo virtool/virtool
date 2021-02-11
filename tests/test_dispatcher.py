@@ -1,7 +1,3 @@
-import asyncio
-
-import pytest
-
 import virtool.api.json
 from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.listener import RedisDispatcherListener
