@@ -5,12 +5,7 @@ import pytest
 def test_job(static_time):
     return {
         "_id": "4c530449",
-        "user": {
-            "id": "igboyes"
-        },
-        "proc": 10,
-        "mem": 16,
-        "task": "build_index",
+        "acquired": False,
         "args": {
             "name": None,
             "username": "igboyes",
@@ -19,6 +14,9 @@ def test_job(static_time):
             "workflow": "nuvs",
             "index_id": "465428b0"
         },
+        "key": "bar",
+        "mem": 16,
+        "proc": 10,
         "status": [
             {
                 "error": None,
@@ -48,5 +46,9 @@ def test_job(static_time):
                 "stage": "import_results",
                 "progress": 1.0
             }
-        ]
+        ],
+        "task": "build_index",
+        "user": {
+            "id": "igboyes"
+        }
     }

@@ -4,6 +4,7 @@ from asyncio import gather
 import virtool.db.utils
 import virtool.jobs.utils
 import virtool.jobs.db
+from virtool.jobs.db import PROJECTION
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ class JobInterface:
             "$set": {
                 "state": "cancelling"
             }
-        })
+        }, projection=PROJECTION)
 
         await self.redis.publish("channel:cancel", job_id)
 

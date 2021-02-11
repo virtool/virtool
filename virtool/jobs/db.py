@@ -145,7 +145,7 @@ async def acquire(db, job_id: str) -> Dict[str, Any]:
         "$set": {
             "acquired": True
         }
-    }, projection=PROJECTION)
+    })
 
     return base_processor(document)
 
