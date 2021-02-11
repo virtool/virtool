@@ -346,7 +346,7 @@ class DB:
 
         self.jobs = self.bind_collection(
             "jobs",
-            projection=virtool.jobs.db.PROJECTION,
+            projection=virtool.jobs.db.LIST_PROJECTION,
             processor=virtool.jobs.db.processor
         )
 
