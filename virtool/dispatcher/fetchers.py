@@ -12,7 +12,7 @@ import virtool.indexes.db
 import virtool.references.db
 import virtool.samples.db
 from virtool.samples.db import attach_labels
-from types import Projection
+from virtool.types import Projection
 from virtool.db.core import Collection, DB
 from virtool.dispatcher.connection import Connection
 from virtool.labels.db import attach_sample_count
@@ -37,7 +37,7 @@ class SimpleMongoFetcher(AbstractFetcher):
         self._collection = collection
         self._projection = projection
 
-    async def fetch(self, connections: List[Connection], id_list: Sequence[int, str]):
+    async def fetch(self, connections: List[Connection], id_list: Sequence[str]):
         """
         Fetch all documents with IDs matching the passed ``id_list`` and are allowed to be viewed
         by the ``connection``
@@ -57,7 +57,7 @@ class IndexesFetcher(AbstractFetcher):
     def __init__(self, db: DB):
         self._db = db
 
-    async def fetch(self, connections: List[Connection], id_list: Sequence[int]):
+    async def fetch(self, connections: List[Connection], id_list: Sequence[str]):
         documents = await self._db.indexes.find(
             {"_id": {"$in": id_list}},
             projection=virtool.indexes.db.PROJECTION
@@ -87,7 +87,7 @@ class ReferencesFetcher(AbstractFetcher):
     async def fetch(
             self,
             connections: List[Connection],
-            id_list: Sequence[int, str]
+            id_list: Sequence[str]
     ) -> List[Tuple[Connection, dict]]:
 
         documents = await self._db.references.find({
@@ -121,7 +121,7 @@ class SamplesFetcher(AbstractFetcher):
         self._pg = pg
         self._db = db
 
-    async def fetch(self, connections: List[Connection], id_list: Sequence[int, str]):
+    async def fetch(self, connections: List[Connection], id_list: Sequence[str]):
         documents = await self._db.samples.find(
             {"_id": {"$in": id_list}},
             projection=virtool.samples.db.PROJECTION
