@@ -13,6 +13,7 @@ class VTClient:
             db_connection_string,
             postgres_connection_string,
             db_name,
+            redis_connection_string,
             create_user
     ):
         self._test_client = test_client
@@ -20,6 +21,7 @@ class VTClient:
         self._db_connection_string = db_connection_string
         self._postgres_connection_string = postgres_connection_string
         self._db_name = db_name
+        self._redis_connection_string = redis_connection_string
         self._client = None
         self.settings = None
         self.server = None
@@ -39,6 +41,7 @@ class VTClient:
             "dev": dev,
             "postgres_connection_string": self._postgres_connection_string,
             "db_name": self._db_name,
+            "redis_connection_string": self._redis_connection_string,
             "enable_api": True,
             "force_version": "v0.0.0",
             "no_client": True,
@@ -113,6 +116,7 @@ def spawn_client(
         test_motor,
         test_db_connection_string,
         test_db_name,
+        test_redis_connection_string,
         pg_session,
         create_user
 ):
@@ -121,6 +125,7 @@ def spawn_client(
         test_db_connection_string,
         pg_connection_string,
         test_db_name,
+        test_redis_connection_string,
         create_user
     )
 
