@@ -6,7 +6,6 @@ import virtool.db.mongo
 import virtool.types
 from virtool.analyses.migrate import migrate_analyses
 from virtool.caches.migrate import migrate_caches
-from virtool.files.migrate import migrate_files
 from virtool.groups.migrate import migrate_groups
 from virtool.jobs.migrate import migrate_jobs
 from virtool.references.migrate import migrate_references
@@ -27,7 +26,6 @@ async def migrate(app: virtool.types.App):
     funcs = (
         migrate_analyses,
         migrate_caches,
-        migrate_files,
         migrate_groups,
         migrate_jobs,
         migrate_sessions,

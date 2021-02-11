@@ -1,7 +1,6 @@
 import os
 import shutil
 
-import virtool.files.db
 import virtool.jobs.fastqc
 import virtool.jobs.job
 import virtool.jobs.utils
