@@ -7,7 +7,7 @@ from virtool.api.response import json_response
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/api/settings")
+@routes.get("/api/settings", allow_jobs=True)
 async def get(req):
     settings = await virtool.settings.db.get(req.app["db"])
 

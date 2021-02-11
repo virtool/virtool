@@ -39,7 +39,7 @@ async def find(req):
     return json_response(data)
 
 
-@routes.get("/api/jobs/{job_id}")
+@routes.get("/api/jobs/{job_id}", allow_jobs=True)
 async def get(req):
     """
     Return the complete document for a given job.

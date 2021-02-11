@@ -6,7 +6,7 @@ API_URL_ROOT = "https://www.virtool.ca/docs/developer/api"
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/api")
+@routes.get("/api", allow_jobs=True)
 async def get(req):
     """
     Returns a generic message. Used during testing for acquiring a ``session_id``.

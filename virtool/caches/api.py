@@ -16,7 +16,7 @@ from virtool.api.response import json_response, not_found
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/api/caches/{cache_id}")
+@routes.get("/api/caches/{cache_id}", allow_jobs=True)
 async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Return the complete representation for the cache with the given `cache_id`.

@@ -116,7 +116,7 @@ async def download_isolate(req):
     })
 
 
-@routes.get("/download/otus/{otu_id}")
+@routes.get("/download/otus/{otu_id}", allow_jobs=True)
 async def download_otu(req):
     """
     Download a FASTA file containing the sequences for all isolates in a single Virtool otu.
@@ -145,7 +145,7 @@ async def download_otu(req):
     })
 
 
-@routes.get("/download/indexes/{index_id}")
+@routes.get("/download/indexes/{index_id}", allow_jobs=True)
 async def download_index_json(req):
     """
     Download a gzipped JSON file named ``reference.json.gz`` for a given index.
