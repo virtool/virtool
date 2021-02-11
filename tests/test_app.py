@@ -46,7 +46,7 @@ async def test_init_executors(loop):
     assert result == 14
 
 
-async def test_init_http_client(app):
+async def test_init_http_client(loop, app):
     await virtool.startup.init_http_client(app)
 
     assert app["version"] == "v1.2.3"
@@ -54,7 +54,7 @@ async def test_init_http_client(app):
     assert isinstance(app["client"], aiohttp.client.ClientSession)
 
 
-async def test_init_http_client_headers(mocker, app):
+async def test_init_http_client_headers(loop, mocker, app):
     m = mocker.patch("aiohttp.client.ClientSession")
 
     await virtool.startup.init_http_client(app)
