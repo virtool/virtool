@@ -128,7 +128,7 @@ async def find(req):
     )
 
     for i in range(len(data["documents"])):
-        data["documents"][i] = await virtool.samples.db.attach_labels(req.app["postgres"], data["documents"][i])
+        data["documents"][i] = await virtool.samples.db.attach_labels(req.app["pg"], data["documents"][i])
 
     return json_response(data)
 
@@ -171,7 +171,7 @@ async def get(req):
 
     await virtool.subtractions.db.attach_subtraction(db, document)
 
-    document = await virtool.samples.db.attach_labels(req.app["postgres"], document)
+    document = await virtool.samples.db.attach_labels(req.app["pg"], document)
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -227,7 +227,7 @@ async def get(req):
 })
 async def create(req):
     db = req.app["db"]
-    pg = req.app["postgres"]
+    pg = req.app["pg"]
     data = req["data"]
     user_id = req["client"].user_id
     settings = req.app["settings"]
@@ -366,7 +366,7 @@ async def edit(req):
 
     """
     db = req.app["db"]
-    pg = req.app["postgres"]
+    pg = req.app["pg"]
     data = req["data"]
 
     sample_id = req.match_info["sample_id"]
@@ -408,7 +408,7 @@ async def replace(req):
 
     document = await req.app["db"].samples.find_one(sample_id, virtool.samples.db.PROJECTION)
 
-    document = await virtool.samples.db.attach_labels(req.app["postgres"], document)
+    document = await virtool.samples.db.attach_labels(req.app["pg"], document)
 
     return json_response(virtool.utils.base_processor(document))
 
