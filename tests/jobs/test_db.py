@@ -10,35 +10,16 @@ status = {
 }
 
 
-async def test_processor(dbi, static_time, test_job):
+async def test_processor(snapshot, dbi, static_time, test_job):
     """
     Test that the dispatch processor properly formats a raw job document into a dispatchable format.
 
     """
-    assert await virtool.jobs.db.processor(dbi, test_job) == {
-        "id": "4c530449",
-        "created_at": static_time.datetime,
-        "args": {
-            "workflow": "nuvs",
-            "analysis_id": "e410429b",
-            "index_id": "465428b0",
-            "name": None,
-            "sample_id": "1e01a382",
-            "username": "igboyes"
-        },
-        "mem": 16,
-        "proc": 10,
-        "progress": 1.0,
-        "stage": "import_results",
-        "state": "complete",
-        "task": "build_index",
-        "user": {
-            "id": "igboyes"
-        }
-    }
+    processed = await virtool.jobs.db.processor(dbi, test_job)
+    snapshot.assert_match(processed)
 
 
-async def test_cancel(dbi, static_time):
+async def test_cancel(snapshot, dbi, static_time):
     await dbi.jobs.insert_one({
         "_id": "foo",
         "state": "waiting",
@@ -53,27 +34,7 @@ async def test_cancel(dbi, static_time):
 
     await virtool.jobs.db.cancel(dbi, "foo")
 
-    # Check that job document was updated.
-    assert await dbi.jobs.find_one() == {
-        "_id": "foo",
-        "state": "waiting",
-        "status": [
-            {
-                "state": "running",
-                "stage": "foo",
-                "error": None,
-                "progress": 0.33,
-                "timestamp": static_time.datetime
-            },
-            {
-                "state": "cancelled",
-                "stage": "foo",
-                "error": None,
-                "progress": 0.33,
-                "timestamp": static_time.datetime
-            }
-        ]
-    }
+    snapshot.assert_match(await dbi.jobs.find_one())
 
 
 @pytest.mark.parametrize("with_job_id", [False, True])

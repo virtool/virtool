@@ -62,16 +62,16 @@ async def get(req):
         "allowed": [True],
         "required": True
     }
-})
-async def update(req):
+}, allow_jobs=True)
+async def acquire(req):
     """
-    Sets the started field on the job document.
+    Sets the acquired field on the job document.
 
     This is used to let the server know that a job process has accepted the ID and needs to have
     the secure token returned to it.
 
     """
-    db = req["db"]
+    db = req.app["db"]
 
     job_id = req.match_info["job_id"]
 
