@@ -12,6 +12,7 @@ import virtool.jobs.build_index
 import virtool.utils
 from virtool.api.response import bad_request, conflict, insufficient_rights, json_response, \
     not_found
+from virtool.jobs.utils import JobRights
 
 routes = virtool.http.routes.Routes()
 
@@ -180,12 +181,17 @@ async def create(req):
         "manifest": manifest
     }
 
+    rights = JobRights()
+    rights.indexes.can_modify(index_id)
+    rights.references.can_read(ref_id)
+
     # Create job document.
     job = await virtool.jobs.db.create(
         db,
         "build_index",
         task_args,
         user_id,
+        rights,
         job_id=job_id
     )
 

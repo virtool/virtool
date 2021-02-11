@@ -10,6 +10,7 @@ import virtool.subtractions.utils
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, json_response, no_content, not_found
+from virtool.jobs.utils import JobRights
 
 routes = virtool.http.routes.Routes()
 
@@ -145,11 +146,19 @@ async def create(req):
         "file_id": file_id
     }
 
+    rights = JobRights()
+
+    rights.subtractions.can_read(subtraction_id)
+    rights.subtractions.can_modify(subtraction_id)
+    rights.subtractions.can_remove(subtraction_id)
+    rights.uploads.can_read(file_id)
+
     await virtool.jobs.db.create(
         db,
         "create_subtraction",
         task_args,
         user_id,
+        rights,
         job_id=job_id
     )
 

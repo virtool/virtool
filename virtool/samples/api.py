@@ -18,6 +18,7 @@ import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
     json_response, no_content, not_found
+from virtool.jobs.utils import JobRights
 from virtool.samples.utils import check_labels, bad_labels_response
 
 QUERY_SCHEMA = {
@@ -317,12 +318,20 @@ async def create(req):
         "files": files
     }
 
+    rights = JobRights()
+
+    rights.samples.can_read(sample_id)
+    rights.samples.can_modify(sample_id)
+    rights.samples.can_remove(sample_id)
+    rights.uploads.can_read(*data["files"])
+
     # Create job document.
     job = await virtool.jobs.db.create(
         db,
         "create_sample",
         task_args,
-        user_id
+        user_id,
+        rights
     )
 
     await req.app["jobs"].enqueue(job["_id"])

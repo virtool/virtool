@@ -1,6 +1,8 @@
 import pytest
 
 import virtool.jobs.db
+from virtool.jobs.db import acquire, create
+from virtool.jobs.utils import JobRights
 
 status = {
     "state": "running",
@@ -71,6 +73,37 @@ async def test_cancel(dbi, static_time):
                 "timestamp": static_time.datetime
             }
         ]
+    }
+
+
+@pytest.mark.parametrize("with_job_id", [False, True])
+async def test_create(with_job_id, mocker, snapshot, dbi, test_random_alphanumeric, static_time):
+    mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
+
+    rights = JobRights()
+    rights.samples.can_read("foo")
+    rights.samples.can_modify("foo")
+    rights.samples.can_remove("foo")
+
+    if with_job_id:
+        await create(dbi, "create_sample", {"sample_id": "foo"}, "bob", rights, job_id="bar")
+    else:
+        await create(dbi, "create_sample", {"sample_id": "foo"}, "bob", rights)
+
+    snapshot.assert_match(await dbi.jobs.find_one())
+
+
+async def test_acquire(dbi):
+    await dbi.jobs.insert_one({
+        "_id": "foo",
+        "acquired": False
+    })
+
+    await acquire(dbi, "foo")
+
+    assert await dbi.jobs.find_one() == {
+        "_id": "foo",
+        "acquired": True
     }
 
 
