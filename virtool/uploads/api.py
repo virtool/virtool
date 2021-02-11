@@ -6,7 +6,6 @@ from pathlib import Path
 import aiohttp.web
 
 import virtool.db.utils
-import virtool.files.db
 import virtool.http.routes
 import virtool.samples.db
 import virtool.uploads.db
