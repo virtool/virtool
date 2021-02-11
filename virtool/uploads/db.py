@@ -136,7 +136,6 @@ async def reserve(pg, upload_ids):
     """
     Reserve the uploads identified in `upload_ids` by setting the `reserved` field to `True`.
 
-
     """
     async with AsyncSession(pg) as session:
         await session.execute(update(Upload).

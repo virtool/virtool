@@ -1,12 +1,10 @@
 import asyncio
 import logging
-from copy import deepcopy
 from typing import Union
 
 import virtool.analyses.db
 import virtool.api
 import virtool.api.json
-import virtool.files.db
 import virtool.groups.db
 import virtool.history.db
 import virtool.hmm.db
