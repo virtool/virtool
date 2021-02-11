@@ -1,7 +1,6 @@
 import json
 
 import pytest
-from aiohttp import CookieJar
 
 import virtool.app
 import virtool.users.utils

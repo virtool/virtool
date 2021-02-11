@@ -1,5 +1,3 @@
-from pprint import pprint
-
 import pytest
 
 import virtool.users.utils

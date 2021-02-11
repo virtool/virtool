@@ -1,19 +1,8 @@
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from typing import Dict, Optional, Sequence
 
 from virtool.http.rights import MODIFY, READ, REMOVE, Right
 from virtool.jobs.utils import JobRights
-
-'''
-"cancel_job",
-"create_ref",
-"create_sample",
-"modify_hmm",
-"modify_subtraction",
-"remove_file",
-"remove_job",
-"upload_file"
-'''
 
 
 class AbstractClient(ABC):

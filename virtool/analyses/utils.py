@@ -1,5 +1,5 @@
 import os
-from typing import List, Tuple, Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import visvalingamwyatt as vw
 

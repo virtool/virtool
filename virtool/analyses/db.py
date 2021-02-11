@@ -4,7 +4,7 @@ Work with analyses in the database.
 """
 import asyncio
 import os
-from typing import Tuple, Optional, Any, Dict
+from typing import Any, Dict, Optional, Tuple
 
 import virtool.analyses.utils
 import virtool.bio
