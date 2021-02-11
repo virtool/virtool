@@ -16,6 +16,7 @@ import virtool.otus.utils
 import virtool.samples.db
 import virtool.types
 import virtool.utils
+from virtool.jobs.utils import JobRights
 
 PROJECTION = (
     "_id",
@@ -181,12 +182,23 @@ async def create(
 
     await db.analyses.insert_one(document)
 
+    rights = JobRights()
+
+    rights.analyses.can_read(analysis_id)
+    rights.analyses.can_modify(analysis_id)
+    rights.analyses.can_remove(analysis_id)
+    rights.samples.can_read(sample_id)
+    rights.indexes.can_read(index_id)
+    rights.references.can_read(ref_id)
+    rights.subtractions.can_read(subtraction_id)
+
     # Create job document.
     job = await virtool.jobs.db.create(
         db,
         document["workflow"],
         task_args,
-        user_id
+        user_id,
+        rights
     )
 
     await app["jobs"].enqueue(job["_id"])

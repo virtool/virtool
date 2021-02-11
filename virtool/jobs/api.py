@@ -5,7 +5,9 @@ import virtool.http.routes
 import virtool.jobs.db
 import virtool.users.db
 import virtool.utils
-from virtool.api.response import conflict, json_response, no_content, not_found
+from virtool.api.response import bad_request, conflict, json_response, no_content, not_found
+from virtool.db.utils import get_one_field
+from virtool.utils import base_processor
 
 routes = virtool.http.routes.Routes()
 
@@ -51,6 +53,33 @@ async def get(req):
         return not_found()
 
     return json_response(virtool.utils.base_processor(document))
+
+
+@routes.patch("/api/jobs/{job_id}", schema={
+    "acquired": {
+        "type": "boolean",
+        "allowed": [True],
+        "required": True
+    }
+})
+async def update(req):
+    """
+    Sets the started field on the job document.
+
+    This is used to let the server know that a job process has accepted the ID and needs to have
+    the secure token returned to it.
+
+    """
+    db = req["db"]
+
+    job_id = req.match_info["job_id"]
+
+    if await get_one_field(db.jobs, "acquired", job_id) is True:
+        return bad_request("Job already acquired")
+
+    document = await virtool.jobs.db.acquire(db, job_id)
+
+    return json_response(base_processor(document))
 
 
 @routes.put("/api/jobs/{job_id}/cancel", permission="cancel_job")
