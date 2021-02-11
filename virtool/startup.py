@@ -253,7 +253,7 @@ async def init_postgres(app: aiohttp.web_app.Application):
 
     logger.info("Connecting to PostgreSQL")
 
-    app["postgres"] = await virtool.postgres.connect(postgres_connection_string)
+    app["pg"] = await virtool.postgres.connect(postgres_connection_string)
 
 
 async def init_redis(app: typing.Union[dict, aiohttp.web_app.Application]):

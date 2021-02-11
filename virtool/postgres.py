@@ -23,12 +23,12 @@ async def connect(postgres_connection_string: str) -> AsyncEngine:
         sys.exit(1)
 
     try:
-        postgres = create_async_engine(postgres_connection_string)
+        pg = create_async_engine(postgres_connection_string)
 
-        await check_version(postgres)
-        await create_tables(postgres)
+        await check_version(pg)
+        await create_tables(pg)
 
-        return postgres
+        return pg
     except ConnectionRefusedError:
         logger.fatal("Could not connect to PostgreSQL: Connection refused")
         sys.exit(1)

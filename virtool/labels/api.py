@@ -21,7 +21,7 @@ async def find(req):
 
     """
     documents = list()
-    async with AsyncSession(req.app["postgres"]) as session:
+    async with AsyncSession(req.app["pg"]) as session:
         result = await session.execute(select(Label))
         labels = result.scalars().all()
         for label in labels:
@@ -38,7 +38,7 @@ async def get(req):
     Get a complete label document.
 
     """
-    async with AsyncSession(req.app["postgres"]) as session:
+    async with AsyncSession(req.app["pg"]) as session:
         result = await session.execute(select(Label).filter_by(id=int(req.match_info["label_id"])))
         label = result.scalar()
 
@@ -76,7 +76,7 @@ async def create(req):
     """
     data = req["data"]
 
-    async with AsyncSession(req.app["postgres"]) as session:
+    async with AsyncSession(req.app["pg"]) as session:
         label = Label(name=data["name"], color=data["color"], description=data["description"])
         session.add(label)
 
@@ -123,7 +123,7 @@ async def edit(req):
     if not data:
         return empty_request()
 
-    async with AsyncSession(req.app["postgres"]) as session:
+    async with AsyncSession(req.app["pg"]) as session:
         result = await session.execute(select(Label).filter_by(id=label_id))
         label = result.scalar()
 
@@ -152,7 +152,7 @@ async def remove(req):
     """
     label_id = int(req.match_info["label_id"])
 
-    async with AsyncSession(req.app["postgres"]) as session:
+    async with AsyncSession(req.app["pg"]) as session:
         result = await session.execute(select(Label).filter_by(id=label_id))
         label = result.scalar()
 
