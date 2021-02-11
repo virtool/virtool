@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 import virtool.db.utils
 import virtool.tasks.task
@@ -7,7 +7,14 @@ import virtool.utils
 from virtool.tasks.models import Task
 
 
-async def find(pg_engine):
+async def find(pg_engine: AsyncEngine) -> list:
+    """
+    Get a list of all task records from SQL database.
+
+    :param pg_engine: an AsyncEngine object
+    :return: a list of task records
+
+    """
     documents = list()
     async with AsyncSession(pg_engine) as session:
         tasks = (await session.execute(select(Task))).scalars().all()
@@ -16,7 +23,15 @@ async def find(pg_engine):
     return documents
 
 
-async def get(pg_engine, task_id):
+async def get(pg_engine: AsyncEngine, task_id: int) -> dict:
+    """
+    Get a task record based on the given `task_id` from SQL database.
+
+    :param pg_engine: an AsyncEngine object
+    :param task_id: ths ID of the task
+    :return: a task record
+
+    """
     document = dict()
     async with AsyncSession(pg_engine) as session:
         result = (await session.execute(select(Task).filter_by(id=task_id))).scalar()
@@ -26,7 +41,19 @@ async def get(pg_engine, task_id):
     return document
 
 
-async def register(pg_engine, task_runner, task_class, context=None):
+async def register(pg_engine, task_runner, task_class: dict, context: dict = None) -> dict:
+    """
+    Create a new task record and insert it into SQL databse.
+
+    Add the new task to TaskRunner.
+
+    :param pg_engine: an AsyncEngine object
+    :param task_runner: a :class:``virtool.tasks.runner.TaskRunner``
+    :param task_class: a dict for mapping task string name to task class
+    :param context: A dict containing data used by the task
+    :return: the new task record
+
+    """
     task = Task(
         complete=False,
         context=context or dict(),
@@ -47,7 +74,17 @@ async def register(pg_engine, task_runner, task_class, context=None):
     return document
 
 
-async def update(pg_engine, task_id, count=None, progress=None, step=None, context_update=None, error=None):
+async def update(pg_engine: AsyncEngine, task_id: int,
+                 count: int = None, progress: int = None,
+                 step: str = None, context_update: dict = None, error: str = None) -> dict:
+    """
+    Update a task record with given `task_id`.
+
+    :param pg_engine: an AsyncEngine object
+    :param task_id: ID of the task
+    :return: the task record
+
+    """
     async with AsyncSession(pg_engine) as session:
         result = await session.execute(select(Task).filter_by(id=task_id))
         task = result.scalar()
@@ -73,7 +110,16 @@ async def update(pg_engine, task_id, count=None, progress=None, step=None, conte
     return document
 
 
-async def complete(pg_engine, task_id):
+async def complete(pg_engine: AsyncEngine, task_id: int):
+    """
+    Update a task record as completed.
+
+    Set complete to True and progress to 100
+
+    :param pg_engine: an AsyncEngine object
+    :param task_id: ID of the task
+
+    """
     async with AsyncSession(pg_engine) as session:
         result = await session.execute(select(Task).filter_by(id=task_id))
         task = result.scalar()
@@ -82,7 +128,14 @@ async def complete(pg_engine, task_id):
         await session.commit()
 
 
-async def remove(pg_engine, task_id):
+async def remove(pg_engine: AsyncEngine, task_id: int):
+    """
+    Delete a task record.
+
+    :param pg_engine: an AsyncEngine object
+    :param task_id: ID of the task
+
+    """
     async with AsyncSession(pg_engine) as session:
         result = await session.execute(select(Task).filter_by(id=task_id))
         task = result.scalar()
