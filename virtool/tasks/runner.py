@@ -32,7 +32,13 @@ class TaskRunner:
         except asyncio.CancelledError:
             logging.info("Stopped task runner")
 
-    async def run_task(self, task_id):
+    async def run_task(self, task_id: int):
+        """
+        Run task with given `task_id`.
+
+        :param task_id: ID of the task
+
+        """
         async with AsyncSession(self.app["postgres"]) as session:
             result = await session.execute(select(Task).filter_by(id=task_id))
             document = result.scalar().to_dict()

@@ -54,7 +54,14 @@ class Task:
             await virtool.tasks.pg.complete(self.pg, self.id)
             self.temp_dir.cleanup()
 
-    async def update_context(self, update):
+    async def update_context(self, update: dict) -> dict:
+        """
+        Update the context field of the current task in SQL database.
+
+        :param update: d dict of data need to be updated
+        :return: the context field after updating
+
+        """
         async with AsyncSession(self.pg) as session:
             result = await session.execute(select(virtool.tasks.models.Task).filter_by(id=self.id))
             task = result.scalar()
@@ -67,7 +74,14 @@ class Task:
 
         return self.context
 
-    async def get_tracker(self, file_size=0):
+    async def get_tracker(self, file_size: int = 0):
+        """
+        Get a :class:``ProgressTracker`` for current step.
+
+        :param file_size: the size of a file that is processing in current step
+        :return: a :class:``ProgressTracker``
+
+        """
         async with AsyncSession(self.pg) as session:
             result = await session.execute(select(virtool.tasks.models.Task).filter_by(id=self.id))
             task = result.scalar().to_dict()
@@ -87,6 +101,13 @@ class Task:
         pass
 
     async def error(self, error: str):
+        """
+        Update the error field of the current task in SQL database
+        and execute a cleanup step.
+
+        :param error: the error message
+
+        """
         async with AsyncSession(self.pg) as session:
             result = await session.execute(select(virtool.tasks.models.Task).filter_by(id=self.id))
             task = result.scalar()
@@ -110,7 +131,15 @@ class ProgressTracker:
         self.progress = self.initial
         self.step_completed = self.initial + self.total
 
-    async def add(self, value):
+    async def add(self, value: int) -> int:
+        """
+        Add value to progress, the value will be automatically convert to progress based on the value and file size,
+        and update to the SQL database.
+
+        :param value: the value to be added to progress.
+        :return: the new progress after update.
+
+        """
         self.progress += (value / self.file_size) * self.total
 
         async with AsyncSession(self.pg) as session:
