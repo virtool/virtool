@@ -101,13 +101,11 @@ async def create(
     :param job_id: an optional ID to use for the new job
     
     """
-    key, hashed = virtool.utils.generate_key()
-
     document = {
         "acquired": False,
         "task": workflow_name,
         "args": job_args,
-        "key": hashed,
+        "key": None,
         "rights": rights.as_dict(),
         "state": "waiting",
         "status": [
@@ -141,11 +139,16 @@ async def acquire(db, job_id: str) -> Dict[str, Any]:
     :return: the complete job document
 
     """
+    key, hashed = virtool.utils.generate_key()
+
     document = await db.jobs.find_one_and_update({"_id": job_id}, {
         "$set": {
-            "acquired": True
+            "acquired": True,
+            "key": hashed
         }
-    })
+    }, projection=PROJECTION)
+
+    document["key"] = key
 
     return base_processor(document)
 

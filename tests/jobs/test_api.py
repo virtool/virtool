@@ -22,7 +22,9 @@ async def test_get(error, snapshot, spawn_client, test_job, resp_is):
 
 
 @pytest.mark.parametrize("error", [None, 404])
-async def test_acquire(error, snapshot, assert_resp_is, dbi, test_job, spawn_client):
+async def test_acquire(error, mocker, snapshot, assert_resp_is, dbi, test_job, spawn_client):
+    mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
+
     client = await spawn_client(authorize=True)
 
     if error == 404:
