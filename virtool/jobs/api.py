@@ -7,6 +7,7 @@ import virtool.users.db
 import virtool.utils
 from virtool.api.response import bad_request, conflict, json_response, no_content, not_found
 from virtool.db.utils import get_one_field
+from virtool.jobs.db import PROJECTION
 from virtool.utils import base_processor
 
 routes = virtool.http.routes.Routes()
@@ -31,7 +32,7 @@ async def find(req):
         db.jobs,
         db_query,
         req.query,
-        projection=virtool.jobs.db.PROJECTION
+        projection=virtool.jobs.db.LIST_PROJECTION
     )
 
     data["documents"].sort(key=lambda d: d["created_at"])
@@ -47,7 +48,7 @@ async def get(req):
     """
     job_id = req.match_info["job_id"]
 
-    document = await req.app["db"].jobs.find_one(job_id)
+    document = await req.app["db"].jobs.find_one(job_id, projection=PROJECTION)
 
     if not document:
         return not_found()

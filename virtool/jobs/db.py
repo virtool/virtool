@@ -18,8 +18,8 @@ OR_FAILED = [
     {"status.state": "cancelled"}
 ]
 
-#: The default MongoDB projection for job documents.
-PROJECTION = [
+#: A projection for minimal representations of jobs suitable for search results.
+LIST_PROJECTION = [
     "_id",
     "task",
     "status",
@@ -28,6 +28,11 @@ PROJECTION = [
     "rights",
     "user"
 ]
+
+#: A projection for full job details. Excludes the secure key field.
+PROJECTION = {
+    "key": False
+}
 
 
 async def cancel(db, job_id: str) -> dict:
@@ -140,7 +145,7 @@ async def acquire(db, job_id: str) -> Dict[str, Any]:
         "$set": {
             "acquired": True
         }
-    })
+    }, projection=PROJECTION)
 
     return base_processor(document)
 
