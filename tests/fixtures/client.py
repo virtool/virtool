@@ -108,7 +108,6 @@ class VTClient:
 
 @pytest.fixture
 def spawn_client(
-        loop,
         pg_connection_string,
         pg_engine,
         request,
