@@ -73,7 +73,7 @@ async def find(req):
     return json_response(ready_indexes)
 
 
-@routes.get("/api/indexes/{index_id}")
+@routes.get("/api/indexes/{index_id}", allow_jobs=True)
 async def get(req):
     """
     Get the complete document for a given index.

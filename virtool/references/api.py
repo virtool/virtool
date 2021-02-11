@@ -71,7 +71,7 @@ async def find(req):
     return json_response(data)
 
 
-@routes.get("/api/refs/{ref_id}")
+@routes.get("/api/refs/{ref_id}", allow_jobs=True)
 async def get(req):
     """
     Get the complete representation of a specific reference.

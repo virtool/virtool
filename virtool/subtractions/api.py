@@ -62,7 +62,7 @@ async def find(req):
     return json_response(data)
 
 
-@routes.get("/api/subtractions/{subtraction_id}")
+@routes.get("/api/subtractions/{subtraction_id}", allow_jobs=True)
 async def get(req):
     """
     Get a complete host document.
@@ -216,7 +216,10 @@ async def edit(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.delete("/api/subtractions/{subtraction_id}", permission="modify_subtraction")
+@routes.delete(
+    "/api/subtractions/{subtraction_id}",
+    allow_jobs=True, permission="modify_subtraction"
+)
 async def remove(req):
     db = req.app["db"]
     settings = req.app["settings"]

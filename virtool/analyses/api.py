@@ -27,7 +27,43 @@ from virtool.api.response import bad_request, conflict, insufficient_rights, \
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/api/analyses/{analysis_id}")
+@routes.get("/api/analyses")
+async def find(req: aiohttp.web.Request) -> aiohttp.web.Response:
+    """
+    Find and list all analyses.
+
+    """
+    db = req.app["db"]
+
+    db_query = dict()
+
+    data = await virtool.api.utils.paginate(
+        db.analyses,
+        db_query,
+        req.query,
+        projection=virtool.analyses.db.PROJECTION,
+        sort=[("created_at", -1)]
+    )
+
+    checked_documents = []
+    for document in data["documents"]:
+        if await virtool.samples.db.check_rights(
+                db,
+                document["sample"]["id"],
+                req["client"],
+                write=False
+        ):
+            checked_documents.append(document)
+
+    data["documents"] = checked_documents
+
+    await asyncio.tasks.gather(
+        *[virtool.subtractions.db.attach_subtraction(db, d) for d in data["documents"]])
+
+    return json_response(data)
+
+
+@routes.get("/api/analyses/{analysis_id}", allow_jobs=True)
 async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Get a complete analysis document.
@@ -78,43 +114,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(virtool.utils.base_processor(document), headers=headers)
 
 
-@routes.get("/api/analyses")
-async def find(req: aiohttp.web.Request) -> aiohttp.web.Response:
-    """
-    Find and list all analyses.
-
-    """
-    db = req.app["db"]
-
-    db_query = dict()
-
-    data = await virtool.api.utils.paginate(
-        db.analyses,
-        db_query,
-        req.query,
-        projection=virtool.analyses.db.PROJECTION,
-        sort=[("created_at", -1)]
-    )
-
-    checked_documents = []
-    for document in data["documents"]:
-        if await virtool.samples.db.check_rights(
-                db,
-                document["sample"]["id"],
-                req["client"],
-                write=False
-        ):
-            checked_documents.append(document)
-
-    data["documents"] = checked_documents
-
-    await asyncio.tasks.gather(
-        *[virtool.subtractions.db.attach_subtraction(db, d) for d in data["documents"]])
-
-    return json_response(data)
-
-
-@routes.delete("/api/analyses/{analysis_id}")
+@routes.delete("/api/analyses/{analysis_id}", allow_jobs=True)
 async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Remove an analysis document by its id.
