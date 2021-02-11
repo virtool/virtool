@@ -2,7 +2,7 @@ import datetime
 import logging
 from typing import Union, Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.uploads.utils
@@ -130,3 +130,16 @@ async def delete(pg, upload_id) -> Optional[dict]:
         await session.commit()
 
     return upload
+
+
+async def reserve(pg, upload_ids):
+    """
+    Reserve the uploads identified in `upload_ids` by setting the `reserved` field to `True`.
+
+
+    """
+    async with AsyncSession(pg) as session:
+        await session.execute(update(Upload).
+                              where(Upload.id.in_(upload_ids)).values(reserve=True).
+                              execution_options(synchronize_session="fetch")
+                              )
