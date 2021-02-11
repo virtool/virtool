@@ -3,7 +3,8 @@ import asyncio
 import pytest
 
 import virtool.api.json
-from virtool.dispatcher import Dispatcher
+from virtool.dispatcher.dispatcher import Dispatcher
+from virtool.dispatcher.listener import RedisDispatcherListener
 
 
 class TestConnection:
@@ -42,25 +43,25 @@ class TestConnection:
         assert test_ws_connection._ws.close.stub.called
 
 
-def test_add_connection(mocker, dbi):
-    dispatcher = Dispatcher(dbi, asyncio.Queue)
+def test_add_connection(mocker, dbi, pg_engine, test_channel):
+    dispatcher = Dispatcher(pg_engine, dbi, RedisDispatcherListener(test_channel))
 
     m = mocker.Mock()
 
     dispatcher.add_connection(m)
 
-    assert m in dispatcher.connections
+    assert m in dispatcher._connections
 
 
-def test_remove_connection(mocker, dbi):
-    dispatcher = Dispatcher(dbi, asyncio.Queue)
+def test_remove_connection(mocker, dbi, pg_engine, test_channel):
+    dispatcher = Dispatcher(pg_engine, dbi, RedisDispatcherListener(test_channel))
 
     m = mocker.Mock()
 
     dispatcher.add_connection(m)
 
-    assert m in dispatcher.connections
+    assert m in dispatcher._connections
 
     dispatcher.remove_connection(m)
 
-    assert dispatcher.connections == []
+    assert dispatcher._connections == []

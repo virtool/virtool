@@ -13,3 +13,9 @@ async def redis(request):
     await client.flushdb()
     client.close()
     await client.wait_closed()
+
+
+@pytest.fixture()
+async def test_channel(redis):
+    channel, = await redis.subscribe("channel:test")
+    return channel
