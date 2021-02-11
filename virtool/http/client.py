@@ -149,7 +149,7 @@ class UserClient(AbstractClient):
 class JobClient(AbstractClient):
 
     def __init__(self, ip: str, job_id, rights: JobRights):
-        self._ip = str
+        self._ip = ip
         self._rights = rights
 
         self.job_id = job_id
