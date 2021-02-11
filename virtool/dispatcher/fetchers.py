@@ -49,7 +49,14 @@ class SimpleMongoFetcher(AbstractFetcher):
         async for document in cursor:
             documents.append(base_processor(document))
 
-        return documents
+        dispatches = list()
+        for document in documents:
+            user = document.get("user", {}).get("id")
+            for connection in connections:
+                if user is None or user == connection.user_id:
+                    dispatches.append((connection, document))
+
+        return dispatches
 
 
 class IndexesFetcher(AbstractFetcher):
@@ -63,7 +70,17 @@ class IndexesFetcher(AbstractFetcher):
             projection=virtool.indexes.db.PROJECTION
         ).to_list(None)
 
-        return await gather(*[virtool.indexes.db.processor(self._db, d) for d in documents])
+        await gather(*[virtool.indexes.db.processor(self._db, d) for d in documents])
+
+        dispatches = list()
+
+        for document in documents:
+            user = document["user"]["id"]
+            for connection in connections:
+                if user == connection.user_id:
+                    dispatches.append((connection, document))
+
+        return dispatches
 
 
 class LabelsFetcher(AbstractFetcher):
@@ -76,7 +93,14 @@ class LabelsFetcher(AbstractFetcher):
         async with AsyncSession(self._pg) as session:
             records = await session.execute(select(Label).filter(Label.id.in_(id_list)))
 
-        return await gather(*[attach_sample_count(self._db, record) for record in records])
+        await gather(*[attach_sample_count(self._db, record) for record in records])
+        dispatches = list()
+
+        for record in records:
+            for connection in connections:
+                dispatches.append((connection, record))
+
+        return dispatches
 
 
 class ReferencesFetcher(AbstractFetcher):
@@ -99,14 +123,14 @@ class ReferencesFetcher(AbstractFetcher):
         ).to_list(None)
 
         documents = await gather(
-            *[await virtool.references.db.processor(self._db, d) for d in documents]
+            *[virtool.references.db.processor(self._db, d) for d in documents]
         )
 
         dispatches = list()
 
         for document in documents:
-            users = {user["id"] for user in documents for user in document["users"]}
-            groups = {group["id"] for group in documents for group in document["group"]}
+            users = {user["id"] for user in document["users"]}
+            groups = {group["id"] for group in document["groups"]}
 
             for connection in connections:
                 if connection.user_id in users or set(connection.groups).union(set(groups)):
@@ -127,4 +151,15 @@ class SamplesFetcher(AbstractFetcher):
             projection=virtool.samples.db.PROJECTION
         ).to_list(None)
 
-        return await gather(*[attach_labels(self._pg, d) for d in documents])
+        await gather(*[attach_labels(self._pg, d) for d in documents])
+
+        dispatches = list()
+
+        for document in documents:
+            user = document["user"]["id"]
+            group = document["group"]
+            for connection in connections:
+                if connection.user_id == user or group in connection.groups:
+                    dispatches.append((connection, document))
+
+        return dispatches
