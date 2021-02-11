@@ -7,7 +7,6 @@ import virtool.analyses.api
 import virtool.caches.api
 import virtool.dev.api
 import virtool.downloads.api
-import virtool.files.api
 import virtool.genbank.api
 import virtool.groups.api
 import virtool.history.api
@@ -49,7 +48,6 @@ ROUTES = (
     virtool.analyses.api.routes,
     virtool.caches.api.routes,
     virtool.downloads.api.routes,
-    virtool.files.api.routes,
     virtool.genbank.api.routes,
     virtool.groups.api.routes,
     virtool.history.api.routes,
