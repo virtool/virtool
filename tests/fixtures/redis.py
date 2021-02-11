@@ -3,10 +3,13 @@ import pytest
 
 
 @pytest.fixture
-async def redis(request):
-    redis_connection_string = request.config.getoption("redis_connection_string")
+def test_redis_connection_string(request):
+    return request.config.getoption("redis_connection_string")
 
-    client = await aioredis.create_redis_pool(redis_connection_string)
+
+@pytest.fixture
+async def redis(request, test_redis_connection_string):
+    client = await aioredis.create_redis_pool(test_redis_connection_string)
 
     yield client
 
