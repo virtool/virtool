@@ -54,18 +54,30 @@ async def test_create(with_job_id, mocker, snapshot, dbi, test_random_alphanumer
     snapshot.assert_match(await dbi.jobs.find_one())
 
 
-async def test_acquire(dbi):
+async def test_acquire(dbi, mocker):
+    mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
+
     await dbi.jobs.insert_one({
         "_id": "foo",
-        "acquired": False
+        "acquired": False,
+        "key": None
     })
 
-    await acquire(dbi, "foo")
+    result = await acquire(dbi, "foo")
 
     assert await dbi.jobs.find_one() == {
         "_id": "foo",
-        "acquired": True
+        "acquired": True,
+        "key": "hashed"
     }
+
+    assert result == {
+        "id": "foo",
+        "acquired": True,
+        "key": "key"
+    }
+
+
 
 
 async def test_delete_zombies(dbi):

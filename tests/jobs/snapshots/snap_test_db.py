@@ -7,13 +7,34 @@ from snapshottest import GenericRepr, Snapshot
 
 snapshots = Snapshot()
 
+snapshots['test_cancel[uvloop] 1'] = {
+    '_id': 'foo',
+    'state': 'waiting',
+    'status': [
+        {
+            'error': None,
+            'progress': 0.33,
+            'stage': 'foo',
+            'state': 'running',
+            'timestamp': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)')
+        },
+        {
+            'error': None,
+            'progress': 0.33,
+            'stage': 'foo',
+            'state': 'cancelled',
+            'timestamp': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)')
+        }
+    ]
+}
+
 snapshots['test_create[uvloop-False] 1'] = {
     '_id': '9pfsom1b',
     'acquired': False,
     'args': {
         'sample_id': 'foo'
     },
-    'key': 'hashed',
+    'key': None,
     'rights': {
         'samples': {
             'modify': [
@@ -49,7 +70,7 @@ snapshots['test_create[uvloop-True] 1'] = {
     'args': {
         'sample_id': 'foo'
     },
-    'key': 'hashed',
+    'key': None,
     'rights': {
         'samples': {
             'modify': [
@@ -77,27 +98,6 @@ snapshots['test_create[uvloop-True] 1'] = {
     'user': {
         'id': 'bob'
     }
-}
-
-snapshots['test_cancel[uvloop] 1'] = {
-    '_id': 'foo',
-    'state': 'waiting',
-    'status': [
-        {
-            'error': None,
-            'progress': 0.33,
-            'stage': 'foo',
-            'state': 'running',
-            'timestamp': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)')
-        },
-        {
-            'error': None,
-            'progress': 0.33,
-            'stage': 'foo',
-            'state': 'cancelled',
-            'timestamp': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)')
-        }
-    ]
 }
 
 snapshots['test_processor[uvloop] 1'] = {
