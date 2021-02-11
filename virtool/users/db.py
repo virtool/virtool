@@ -1,8 +1,8 @@
 from typing import Union
 
-import virtool.groups.db
 import virtool.db.utils
 import virtool.errors
+import virtool.groups.db
 import virtool.users.utils
 import virtool.utils
 

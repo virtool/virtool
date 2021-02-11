@@ -2,7 +2,6 @@ import hashlib
 
 import bcrypt
 
-
 from virtool.utils import hash_key
 
 #: A list of the permission strings used by Virtool.

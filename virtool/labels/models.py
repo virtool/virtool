@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Sequence, Integer
+from sqlalchemy import Column, Integer, String
 
 from virtool.postgres import Base
 

@@ -1,6 +1,7 @@
-import aiofiles
 import logging
 import os
+
+import aiofiles
 
 logger = logging.getLogger(__name__)
 

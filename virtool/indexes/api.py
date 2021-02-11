@@ -1,14 +1,14 @@
 import asyncio
 
 import virtool.api.utils
-import virtool.history.db
-import virtool.indexes.db
-import virtool.jobs.db
-import virtool.references.db
 import virtool.db.utils
+import virtool.history.db
 import virtool.history.utils
 import virtool.http.routes
+import virtool.indexes.db
 import virtool.jobs.build_index
+import virtool.jobs.db
+import virtool.references.db
 import virtool.utils
 from virtool.api.response import bad_request, conflict, insufficient_rights, json_response, \
     not_found

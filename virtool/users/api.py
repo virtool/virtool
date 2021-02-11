@@ -16,16 +16,16 @@ Schema:
 
 """
 import virtool.api.utils
-import virtool.http.utils
-import virtool.users.checks
-import virtool.hmm.db
-import virtool.users.sessions
-import virtool.users.db
 import virtool.db.utils
 import virtool.errors
 import virtool.groups.utils
+import virtool.hmm.db
 import virtool.http.auth
 import virtool.http.routes
+import virtool.http.utils
+import virtool.users.checks
+import virtool.users.db
+import virtool.users.sessions
 import virtool.users.utils
 import virtool.utils
 import virtool.validators

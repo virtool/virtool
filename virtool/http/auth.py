@@ -6,19 +6,16 @@ import aiofiles
 import jinja2
 from aiohttp import web
 
-import virtool.routes
-import virtool.http.utils
-import virtool.users.sessions
-import virtool.users.db
 import virtool.db.utils
 import virtool.errors
 import virtool.http.utils
+import virtool.routes
 import virtool.templates
 import virtool.users.db
 import virtool.users.sessions
 import virtool.users.utils
 import virtool.utils
-from virtool.api.response import bad_request, unauthorized
+from virtool.api.response import unauthorized
 from virtool.db.utils import get_one_field
 from virtool.http.client import JobClient, UserClient
 from virtool.jobs.utils import JobRights
