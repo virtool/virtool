@@ -53,18 +53,20 @@ async def check_mongo_version(db: AsyncIOMotorClient):
     :param db: the application database object
 
     """
-    server_version = await get_server_version(db)
+    mongo_version = await get_mongo_version(db)
 
-    if semver.compare(server_version, MINIMUM_MONGO_VERSION) == -1:
+    if semver.compare(mongo_version, MINIMUM_MONGO_VERSION) == -1:
         logger.critical(
-            f"Virtool requires MongoDB {MINIMUM_MONGO_VERSION}. Found {server_version}."
+            f"Virtool requires MongoDB {MINIMUM_MONGO_VERSION}. Found {mongo_version}."
         )
         sys.exit(1)
 
-    logger.info(f"Found MongoDB {server_version}")
+    logger.info(f"Found MongoDB {mongo_version}")
+
+    return mongo_version
 
 
-async def get_server_version(db: AsyncIOMotorClient) -> str:
+async def get_mongo_version(db: AsyncIOMotorClient) -> str:
     """
     Gets a server version string from the running MongoDB client.
 
