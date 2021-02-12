@@ -88,3 +88,49 @@ async def test_download_subtraction(error, tmpdir, spawn_client, resp_is):
         return
 
     assert resp.status == 200
+
+
+@pytest.mark.parametrize("error", [None, "404"])
+@pytest.mark.parametrize("paired", [True, False])
+async def test_download_cache_reads(error, paired, tmpdir, spawn_client, resp_is):
+    client = await spawn_client(authorize=True)
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    test_dir = tmpdir.mkdir("caches").mkdir("foo")
+    test_dir.join("reads_1.fq.gz").write("test_1")
+
+    cache = {
+        "_id": "foo",
+        "name": "Foo",
+        "files": [
+            {
+                "name": "reads_1.fq.gz",
+                "size": 64591205
+            }
+        ]
+    }
+
+    if paired:
+        test_dir.join("reads_2.fq.gz").write("test_2")
+        cache["files"].append(
+            {
+                "name": "reads_2.fq.gz",
+                "size": 53963680
+            }
+        )
+
+    if error == "404":
+        cache["files"] = None
+
+    await client.db.caches.insert_one(cache)
+
+    resp = await client.get("/download/caches/foo/reads_1.fq.gz")
+
+    if paired:
+        resp = await client.get("/download/caches/foo/reads_2.fq.gz")
+
+    if error == "404":
+        assert resp.status == 404
+        return
+
+    assert resp.status == 200
