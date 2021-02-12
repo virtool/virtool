@@ -101,7 +101,7 @@ async def find(req):
 @routes.get("/api/uploads/{id}")
 async def get(req):
     """
-    Download a file.
+    Downloads a file that corresponds to a row `id` in the `uploads` SQL table.
 
     """
     pg = req.app["postgres"]
@@ -128,7 +128,7 @@ async def get(req):
 @routes.delete("/api/uploads/{id}", permission="remove_file")
 async def delete(req):
     """
-    Delete an upload.
+    Set a row's `removed` and `removed_at` attribute in the `uploads` SQL table and delete its associated local file.
 
     """
     pg = req.app["postgres"]
