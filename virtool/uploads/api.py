@@ -116,8 +116,6 @@ async def get(req):
         return not_found()
 
     # check if the file has been removed as a result of a `DELETE` request
-    if upload.removed:
-        return not_found()
 
     upload_path = Path(req.app["settings"]["data_path"]) / "files" / upload.name_on_disk
 

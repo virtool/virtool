@@ -86,26 +86,20 @@ async def find(pg, user: str = None, upload_type: str = None) -> List[dict]:
     :param upload_type: Type of file that was uploaded
     :return: A list of dictionaries that represent each `Upload` document found
     """
-    filters = list()
+    filters = [Upload.removed == False]
     uploads = list()
 
     async with AsyncSession(pg) as session:
-        query = select(Upload)
-
         if user:
             filters.append(Upload.user == user)
 
         if upload_type:
             filters.append(Upload.type == upload_type)
 
-        if filters:
-            query.filter(*filters)
-
-        results = await session.execute(query)
+        results = await session.execute(select(Upload).filter(*filters))
 
     for result in results.scalars().all():
-        if not result.removed:
-            uploads.append(result.to_dict())
+        uploads.append(result.to_dict())
 
     return uploads
 
@@ -119,7 +113,7 @@ async def get(pg: AsyncEngine, upload_id: int) -> Optional[Upload]:
     :return: An row from the `uploads` table
     """
     async with AsyncSession(pg) as session:
-        upload = (await session.execute(select(Upload).filter_by(id=upload_id))).scalar()
+        upload = (await session.execute(select(Upload).filter_by(id=upload_id, removed=False))).scalar()
 
         if not upload:
             return None
