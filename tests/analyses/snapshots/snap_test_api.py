@@ -123,3 +123,14 @@ snapshots['test_find[uvloop] 1'] = {
     'per_page': 25,
     'total_count': 3
 }
+
+snapshots['test_upload_file[uvloop-None] 1'] = {
+    'analysis': 'foobar',
+    'description': None,
+    'format': 'fasta',
+    'id': 1,
+    'name': 'reference.fa',
+    'name_on_disk': '1-reference.fa',
+    'size': 20466,
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}

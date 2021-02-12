@@ -52,12 +52,12 @@ async def create(req):
 
         return aiohttp.web.Response(status=499)
 
-    upload = await virtool.uploads.db.finalize(pg, size, upload_id, virtool.utils.timestamp())
+    upload = await virtool.uploads.db.finalize(pg, size, upload_id, Upload)
 
     if not upload:
         await req.app["run_in_thread"](os.remove, file_path)
 
-        return not_found("Document not found in table after file upload")
+        return not_found("Row not found in table after file upload")
 
     logger.debug(f"Upload succeeded: {upload_id}")
 

@@ -28,6 +28,11 @@ async def naive_writer(req, file_path) -> int:
 
     size = 0
 
+    try:
+        file_path.parent.mkdir()
+    except FileExistsError:
+        pass
+
     async with aiofiles.open(file_path, "wb") as handle:
         while True:
             chunk = await file.read_chunk(CHUNK_SIZE)

@@ -3,7 +3,9 @@ Provides request handlers for managing and viewing analyses.
 
 """
 import asyncio
+import logging
 import os
+from pathlib import Path
 from typing import Any, Dict
 
 import aiohttp.web
@@ -21,12 +23,18 @@ import virtool.http.routes
 import virtool.samples.db
 import virtool.samples.utils
 import virtool.subtractions.db
+import virtool.uploads.db
+import virtool.uploads.utils
 import virtool.utils
+import virtool.validators
+from virtool.analyses.models import ANALYSIS_FORMATS, AnalysisFile
 from virtool.api.response import bad_request, conflict, insufficient_rights, \
-    json_response, no_content, not_found
+    invalid_query, json_response, no_content, not_found
 from virtool.db.core import Collection, DB
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.utils import base_processor
+
+logger = logging.getLogger("analyses")
 
 routes = virtool.http.routes.Routes()
 
@@ -172,6 +180,71 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
 
     return no_content()
+
+
+@routes.post("/api/analyses/{id}/files")
+async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
+    """
+    Upload a new analysis result file to the `analysis_files` SQL table and the `analyses` folder in the Virtool
+    data path.
+
+    """
+    db = req.app["db"]
+    pg = req.app["postgres"]
+    analysis_id = req.match_info["id"]
+    analysis_format = req.query.get("format")
+
+    document = await db.analyses.find_one(analysis_id)
+
+    if document is None:
+        return not_found()
+
+    errors = virtool.uploads.utils.naive_validator(req)
+
+    if errors:
+        return invalid_query(errors)
+
+    name = req.query.get("name")
+
+    if analysis_format not in ANALYSIS_FORMATS:
+        return bad_request("Unsupported analysis file format")
+
+    analysis_file = await virtool.analyses.db.create_row(pg, analysis_id, analysis_format, name)
+
+    name_on_disk = analysis_file["name_on_disk"]
+    files = document.get("files", [])
+
+    if name_on_disk in files:
+        return bad_request("File is already associated with analysis")
+
+    analysis_file_id = analysis_file["id"]
+    analysis_file_path = Path(req.app["settings"]["data_path"]) / "analyses" / name_on_disk
+
+    try:
+        size = await virtool.uploads.utils.naive_writer(req, analysis_file_path)
+    except asyncio.CancelledError:
+        logger.debug(f"Upload aborted: {analysis_file_id}")
+        await virtool.analyses.db.delete_row(pg, analysis_file_id)
+
+        return aiohttp.web.Response(status=499)
+
+    analysis_file = await virtool.uploads.db.finalize(pg, size, analysis_file_id, AnalysisFile)
+
+    if not analysis_file:
+        await req.app["run_in_thread"](os.remove, analysis_file_path)
+        return not_found("Row not found in table after file upload")
+
+    files.append(name_on_disk)
+
+    await db.analyses.update_one({"_id": analysis_id}, {
+        "$set": {"files": files}
+    })
+
+    headers = {
+        "Location": f"/api/analyses/{analysis_id}/files/{analysis_file_id}"
+    }
+
+    return json_response(analysis_file, status=201, headers=headers)
 
 
 @routes.put("/api/analyses/{analysis_id}/{sequence_index}/blast")
