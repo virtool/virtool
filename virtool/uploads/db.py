@@ -104,7 +104,8 @@ async def find(pg, user: str = None, upload_type: str = None) -> List[dict]:
         results = await session.execute(query)
 
     for result in results.scalars().all():
-        uploads.append(result.to_dict())
+        if not result.removed:
+            uploads.append(result.to_dict())
 
     return uploads
 
