@@ -2,7 +2,7 @@ import pytest
 from aiohttp import web
 
 from virtool.dispatcher.dispatcher import Connection
-from virtool.http.auth import Client
+from virtool.http.auth import UserClient
 
 
 class MockWS:
@@ -36,7 +36,7 @@ def create_test_connection(mocker):
 def test_ws_connection(mocker):
 
     ws = mocker.Mock(spec=web.WebSocketResponse)
-    client = mocker.Mock(spec=Client)
+    client = mocker.Mock(spec=UserClient)
 
     # Setup async stub for checking if send_json method was called.
     send_json_stub = mocker.stub(name="send_json")
