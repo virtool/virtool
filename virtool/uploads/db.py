@@ -67,6 +67,7 @@ async def finalize(pg: AsyncEngine, size: int, upload_id: int, uploaded_at: date
 
         upload.size = size
         upload.uploaded_at = uploaded_at
+        upload.ready = True
 
         upload = upload.to_dict()
 
