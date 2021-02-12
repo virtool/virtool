@@ -5,11 +5,9 @@
  */
 import { Request } from "../app/request";
 
-export const find = ({ fileType, page, perPage }) =>
-    Request.get("/api/files").query({
-        type: fileType,
-        per_page: perPage,
-        page
+export const find = ({ fileType }) =>
+    Request.get("/api/uploads").query({
+        type: fileType
     });
 
 /**
@@ -20,10 +18,9 @@ export const find = ({ fileType, page, perPage }) =>
  * @param page {number} the page of results to get
  * @returns {promise}
  */
-export const list = ({ fileType, page }) =>
-    Request.get("/api/files").query({
-        type: fileType,
-        page
+export const list = ({ fileType }) =>
+    Request.get("/api/uploads").query({
+        type: fileType
     });
 
 /**
@@ -33,7 +30,7 @@ export const list = ({ fileType, page }) =>
  * @param fileId {string} the fileId to handleRemove
  * @returns {promise}
  */
-export const remove = ({ fileId }) => Request.delete(`/api/files/${fileId}`);
+export const remove = ({ fileId }) => Request.delete(`/api/uploads/${fileId}`);
 
 /**
  * Upload a ``file`` with the given ``fileType``. Pass progress events to ``onProgress``.
@@ -47,8 +44,8 @@ export const remove = ({ fileId }) => Request.delete(`/api/files/${fileId}`);
  * @returns {promise}
  */
 export const upload = ({ file, fileType, onProgress, onSuccess, onFailure }) =>
-    Request.post(`/upload/${fileType}`)
-        .query({ name: file.name })
+    Request.post(`/api/uploads`)
+        .query({ name: file.name, type: fileType })
         .attach("file", file)
         .on("progress", onProgress)
         .then(onSuccess)
