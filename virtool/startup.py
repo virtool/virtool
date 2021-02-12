@@ -152,7 +152,7 @@ async def init_dispatcher(app: aiohttp.web_app.Application):
     channel, = await app["redis"].subscribe("channel:dispatch")
 
     app["dispatcher"] = Dispatcher(
-        app["postgres"],
+        app["pg"],
         app["db"],
         RedisDispatcherListener(channel)
     )
