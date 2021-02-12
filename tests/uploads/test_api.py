@@ -3,7 +3,6 @@ import sys
 from pathlib import Path
 
 import pytest
-from sqlalchemy import select
 
 from virtool.uploads.api import UPLOAD_TYPES
 from virtool.uploads.models import Upload
@@ -54,12 +53,6 @@ class TestUpload:
         assert resp.status == 201
 
         snapshot.assert_match(await resp.json())
-
-        # check if new `upload` was properly committed to db
-        async with pg_session as session:
-            upload = (await session.execute(select(Upload).filter(Upload.id == 1))).scalar()
-
-            assert upload is not None
 
         assert os.listdir(tmpdir / "files") == ["1-Test.fq.gz"]
 
