@@ -93,7 +93,7 @@ async def find(req):
     if upload_type:
         filters.append(Upload.type == upload_type)
 
-    uploads = await virtool.uploads.db.find(pg, filters)
+    uploads = await virtool.uploads.db.find(pg, user, upload_type)
 
     return json_response(uploads)
 

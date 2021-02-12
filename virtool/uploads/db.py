@@ -76,22 +76,30 @@ async def finalize(pg: AsyncEngine, size: int, upload_id: int, uploaded_at: date
         return upload
 
 
-async def find(pg, filters: List[bool] = None) -> List[dict]:
+async def find(pg, user: str = None, upload_type: str = None) -> List[dict]:
     """
     Retrieves a list of `Upload` documents in the `uploads` SQL table. Can be given a list of filters to narrow down
     results.
 
     :param pg: PostgreSQL AsyncEngine object
-    :param filters: List of optional queries to filter results through
+    :param user: User id that corresponds to the user that uploaded the file
+    :param upload_type: Type of file that was uploaded
     :return: A list of dictionaries that represent each `Upload` document found
     """
+    filters = list()
     uploads = list()
 
     async with AsyncSession(pg) as session:
         query = select(Upload)
 
+        if user:
+            filters.append(Upload.user == user)
+
+        if upload_type:
+            filters.append(Upload.type == upload_type)
+
         if filters:
-            query = query.filter(*filters)
+            query.filter(*filters)
 
         results = await session.execute(query)
 
