@@ -96,12 +96,26 @@ snapshots['test_get[uvloop-None] 1'] = {
 
 snapshots['TestCreate.test[True-uvloop] 1'] = {
     '_id': 'xjqvxigh',
+    'acquired': False,
     'args': {
         'index_id': 'u3cuwaoq',
         'index_version': 9,
         'manifest': 'manifest',
         'ref_id': 'foo',
         'user_id': 'test'
+    },
+    'key': 'bar',
+    'rights': {
+        'indexes': {
+            'modify': [
+                'u3cuwaoq'
+            ]
+        },
+        'references': {
+            'read': [
+                'foo'
+            ]
+        }
     },
     'state': 'waiting',
     'status': [

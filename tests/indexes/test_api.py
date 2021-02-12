@@ -220,6 +220,8 @@ async def test_get(error, mocker, snapshot, resp_is, spawn_client, static_time):
 class TestCreate:
 
     async def test(self, mocker, snapshot, spawn_client, static_time, test_random_alphanumeric, check_ref_right, resp_is):
+        mocker.patch("virtool.utils.generate_key", return_value=("foo", "bar"))
+
         client = await spawn_client(authorize=True)
 
         client.app["settings"].update({
