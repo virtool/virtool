@@ -86,6 +86,7 @@ async def find(req):
     filters = list()
     user = req.query.get("user")
     upload_type = req.query.get("type")
+    response = dict()
 
     if user:
         filters.append(Upload.user == user)
@@ -95,7 +96,9 @@ async def find(req):
 
     uploads = await virtool.uploads.db.find(pg, user, upload_type)
 
-    return json_response(uploads)
+    response["documents"] = uploads
+
+    return json_response(response)
 
 
 @routes.get("/api/uploads/{id}")
