@@ -13,23 +13,16 @@ const FileAttribution = styled.span`
     font-size: ${getFontSize("md")};
 `;
 
-const FileHeader = styled.div`
+const FileHeader = styled.h5`
     align-items: center;
     display: flex;
     font-size: ${getFontSize("lg")};
     font-weight: ${getFontWeight("thick")};
+    margin: 0 0 5px;
+`;
 
-    strong {
-        font-weight: ${getFontWeight("thick")};
-    }
-
-    span {
-        margin-left: auto;
-
-        span {
-            margin-right: 10px;
-        }
-    }
+const FileHeaderIcon = styled.div`
+    margin-left: auto;
 `;
 
 export const File = ({ canRemove, id, name, ready, size, uploadedAt, user, onRemove }) => {
@@ -46,7 +39,7 @@ export const File = ({ canRemove, id, name, ready, size, uploadedAt, user, onRem
     } else {
         attribution = (
             <FileAttribution>
-                Uploaded <RelativeTime time={uploadedAt} /> by {user.id}
+                Uploaded <RelativeTime time={uploadedAt} /> by {user}
             </FileAttribution>
         );
     }
@@ -55,7 +48,7 @@ export const File = ({ canRemove, id, name, ready, size, uploadedAt, user, onRem
 
     if (ready) {
         right = (
-            <div>
+            <FileHeaderIcon>
                 <span>{byteSize(size)}</span>
                 {canRemove && (
                     <Icon
@@ -65,23 +58,24 @@ export const File = ({ canRemove, id, name, ready, size, uploadedAt, user, onRem
                         onClick={handleRemove}
                     />
                 )}
-            </div>
+            </FileHeaderIcon>
         );
     } else {
         right = (
-            <span>
-                <Loader size="14px" /> <strong>Processing</strong>
-            </span>
+            <FileHeaderIcon>
+                <Loader size="14px" />
+            </FileHeaderIcon>
         );
     }
 
     return (
         <SpacedBox>
             <FileHeader>
-                <strong>{name}</strong>
-                {attribution}
+                <span>{name}</span>
+                {right}
             </FileHeader>
-            {right}
+
+            {attribution}
         </SpacedBox>
     );
 };
