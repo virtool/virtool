@@ -86,6 +86,7 @@ async def find(req):
     filters = list()
     user = req.query.get("user")
     upload_type = req.query.get("type")
+    response = dict()
 
     if user:
         filters.append(Upload.user == user)
@@ -93,9 +94,11 @@ async def find(req):
     if upload_type:
         filters.append(Upload.type == upload_type)
 
-    uploads = await virtool.uploads.db.find(pg, filters)
+    uploads = await virtool.uploads.db.find(pg, user, upload_type)
 
-    return json_response(uploads)
+    response["documents"] = uploads
+
+    return json_response(response)
 
 
 @routes.get("/api/uploads/{id}")
@@ -113,8 +116,6 @@ async def get(req):
         return not_found()
 
     # check if the file has been removed as a result of a `DELETE` request
-    if upload.removed:
-        return not_found()
 
     upload_path = Path(req.app["settings"]["data_path"]) / "files" / upload.name_on_disk
 
