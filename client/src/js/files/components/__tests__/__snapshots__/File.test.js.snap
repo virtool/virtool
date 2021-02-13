@@ -3,113 +3,109 @@
 exports[`<File /> should render 1`] = `
 <Box__SpacedBox>
   <File__FileHeader>
-    <strong>
+    <span>
       foo.fa
-    </strong>
-    <File__FileAttribution>
-      Uploaded 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
-      />
-       by 
-      bill
-    </File__FileAttribution>
-  </File__FileHeader>
-  <div>
-    <span />
-    <Icon
-      color="red"
-      faStyle="fas"
-      fixedWidth={false}
-      name="trash"
-      onClick={[Function]}
-      style={
-        Object {
-          "fontSize": "17px",
-          "marginLeft": "9px",
+    </span>
+    <File__FileHeaderIcon>
+      <span />
+      <Icon
+        color="red"
+        faStyle="fas"
+        fixedWidth={false}
+        name="trash"
+        onClick={[Function]}
+        style={
+          Object {
+            "fontSize": "17px",
+            "marginLeft": "9px",
+          }
         }
-      }
+      />
+    </File__FileHeaderIcon>
+  </File__FileHeader>
+  <File__FileAttribution>
+    Uploaded 
+    <RelativeTime
+      time="2018-02-14T17:12:00.000000Z"
     />
-  </div>
+     by 
+    <Component />
+  </File__FileAttribution>
 </Box__SpacedBox>
 `;
 
 exports[`<File /> should render when [canRemove=false] 1`] = `
 <Box__SpacedBox>
   <File__FileHeader>
-    <strong>
+    <span>
       foo.fa
-    </strong>
-    <File__FileAttribution>
-      Uploaded 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
-      />
-       by 
-      bill
-    </File__FileAttribution>
+    </span>
+    <File__FileHeaderIcon>
+      <span />
+    </File__FileHeaderIcon>
   </File__FileHeader>
-  <div>
-    <span />
-  </div>
+  <File__FileAttribution>
+    Uploaded 
+    <RelativeTime
+      time="2018-02-14T17:12:00.000000Z"
+    />
+     by 
+    <Component />
+  </File__FileAttribution>
 </Box__SpacedBox>
 `;
 
 exports[`<File /> should render when [ready=false] 1`] = `
 <Box__SpacedBox>
   <File__FileHeader>
-    <strong>
+    <span>
       foo.fa
-    </strong>
-    <File__FileAttribution>
-      Uploaded 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
+    </span>
+    <File__FileHeaderIcon>
+      <Loader
+        size="14px"
       />
-       by 
-      bill
-    </File__FileAttribution>
+    </File__FileHeaderIcon>
   </File__FileHeader>
-  <span>
-    <Loader
-      size="14px"
+  <File__FileAttribution>
+    Uploaded 
+    <RelativeTime
+      time="2018-02-14T17:12:00.000000Z"
     />
-     
-    <strong>
-      Processing
-    </strong>
-  </span>
+     by 
+    <Component />
+  </File__FileAttribution>
 </Box__SpacedBox>
 `;
 
 exports[`<File /> should render when [user=null] 1`] = `
 <Box__SpacedBox>
   <File__FileHeader>
-    <strong>
+    <span>
       foo.fa
-    </strong>
-    <File__FileAttribution>
-      Retrieved 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
-      />
-    </File__FileAttribution>
-  </File__FileHeader>
-  <div>
-    <span />
-    <Icon
-      color="red"
-      faStyle="fas"
-      fixedWidth={false}
-      name="trash"
-      onClick={[Function]}
-      style={
-        Object {
-          "fontSize": "17px",
-          "marginLeft": "9px",
+    </span>
+    <File__FileHeaderIcon>
+      <span />
+      <Icon
+        color="red"
+        faStyle="fas"
+        fixedWidth={false}
+        name="trash"
+        onClick={[Function]}
+        style={
+          Object {
+            "fontSize": "17px",
+            "marginLeft": "9px",
+          }
         }
-      }
+      />
+    </File__FileHeaderIcon>
+  </File__FileHeader>
+  <File__FileAttribution>
+    Retrieved 
+    <RelativeTime
+      time="2018-02-14T17:12:00.000000Z"
     />
-  </div>
+  </File__FileAttribution>
 </Box__SpacedBox>
 `;
