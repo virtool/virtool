@@ -6,11 +6,13 @@ import os
 
 from aiohttp import web
 
+import virtool.analyses.db
 import virtool.analyses.format
 import virtool.api.json
 import virtool.api.response
 import virtool.bio
-import virtool.analyses.db
+import virtool.caches.db
+import virtool.caches.utils
 import virtool.db.utils
 import virtool.downloads.db
 import virtool.downloads.utils
@@ -54,6 +56,38 @@ async def download_analysis(req):
     }
 
     return web.Response(text=formatted, headers=headers)
+
+
+@routes.get("/download/caches/{cache_id}/reads_{suffix}.fq.gz")
+async def download_cache_reads(req):
+    """
+    Download the cached trimmed data for the sample.
+
+    """
+    db = req.app["db"]
+
+    cache_id = req.match_info["cache_id"]
+    suffix = req.match_info["suffix"]
+
+    files = await virtool.db.utils.get_one_field(db.caches, "files", cache_id)
+
+    if not files:
+        return virtool.api.response.not_found()
+
+    cache_path = virtool.caches.utils.join_cache_path(req.app["settings"], cache_id)
+    file_path = virtool.samples.utils.join_read_path(cache_path, suffix)
+
+    if not os.path.isfile(file_path):
+        return virtool.api.response.not_found()
+
+    file_stats = virtool.utils.file_stats(file_path)
+
+    headers = {
+        "Content-Length": file_stats["size"],
+        "Content-Type": "application/gzip"
+    }
+
+    return web.FileResponse(file_path, chunk_size=1024*1024, headers=headers)
 
 
 @routes.get(r"/download/samples/{sample_id}/{prefix}_{suffix}.{extension:(fq|fastq|fq\.gz|fastq\.gz)}")
