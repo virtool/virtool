@@ -62,3 +62,45 @@ async def test_cancel(snapshot, dbi, test_job, spawn_client):
     body = await resp.json()
     snapshot.assert_match(body)
     assert "key" not in body
+
+
+@pytest.mark.parametrize("error", [
+    None,
+    404,
+    409
+])
+async def test_push_status(error, assert_resp_is, spawn_client, static_time, test_job):
+    client = await spawn_client(authorize=True)
+
+    if error != 409:
+        # Removes the last "completed" status entry, imitating a running job.
+        del test_job["status"][-1]
+
+    if error != 404:
+        await client.db.jobs.insert_one(test_job)
+
+    body = {
+        "state": "running",
+        "stage": "build",
+        "progress": 23
+    }
+
+    resp = await client.post(f"/api/jobs/{test_job.id}/status", body)
+
+    if error == 404:
+        assert resp.status == 404
+        return
+
+    if error == 409:
+        await assert_resp_is.conflict(resp, "Job is finished")
+        return
+
+    assert resp.status == 201
+
+    assert await resp.json() == {
+        "error": None,
+        "progress": 23,
+        "stage": "build",
+        "state": "running",
+        "timestamp": "2015-10-06T20:00:00Z"
+    }

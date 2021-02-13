@@ -5,7 +5,8 @@ import virtool.http.routes
 import virtool.jobs.db
 import virtool.users.db
 import virtool.utils
-from virtool.api.response import bad_request, conflict, json_response, no_content, not_found
+from virtool.api.response import bad_request, conflict, json_response, no_content, \
+    not_found
 from virtool.db.utils import get_one_field
 from virtool.jobs.db import PROJECTION
 from virtool.utils import base_processor
@@ -104,6 +105,66 @@ async def cancel(req):
     document = await req.app["jobs"].cancel(job_id)
 
     return json_response(virtool.utils.base_processor(document))
+
+
+@routes.post("/api/jobs/{job_id}/status", schema={
+    "state": {
+        "type": "string",
+        "allowed": [
+            "waiting",
+            "running",
+            "complete",
+            "cancelled",
+            "error"
+        ],
+        "required": True
+    },
+    "stage": {
+        "type": "string",
+        "required": True,
+    },
+    "progress": {
+        "type": "integer",
+        "required": True,
+        "min": 0,
+        "max": 100
+    },
+    "error": {
+        "type": "dict",
+        "default": None,
+        "nullable": True
+    }
+}, allow_jobs=True)
+async def push_status(req):
+    db = req.app["db"]
+    data = req["data"]
+
+    job_id = req.match_info["job_id"]
+
+    status = await get_one_field(db.jobs, "status", job_id)
+
+    if status is None:
+        return not_found()
+
+    if status[-1]["state"] in ("complete", "cancelled", "error"):
+        return conflict("Job is finished")
+
+    document = await db.jobs.find_one_and_update({"_id": job_id}, {
+        "$set": {
+            "state": data["state"]
+        },
+        "$push": {
+            "status": {
+                "state": data["state"],
+                "stage": data["stage"],
+                "error": data["error"],
+                "progress": data["progress"],
+                "timestamp": virtool.utils.timestamp()
+            }
+        }
+    })
+
+    return json_response(document["status"][-1], status=201)
 
 
 @routes.delete("/api/jobs", permission="remove_job")
