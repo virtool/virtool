@@ -33,7 +33,7 @@ async def create(req):
     Upload a new file and add it to the `uploads` SQL table.
 
     """
-    pg = req.app["postgres"]
+    pg = req.app["pg"]
     upload_type = req.query.get("type")
 
     errors = virtool.uploads.utils.naive_validator(req)
@@ -82,7 +82,7 @@ async def find(req):
     Get a list of upload documents from the `uploads` SQL table.
 
     """
-    pg = req.app["postgres"]
+    pg = req.app["pg"]
     filters = list()
     user = req.query.get("user")
     upload_type = req.query.get("type")
@@ -107,7 +107,7 @@ async def get(req):
     Downloads a file that corresponds to a row `id` in the `uploads` SQL table.
 
     """
-    pg = req.app["postgres"]
+    pg = req.app["pg"]
     upload_id = int(req.match_info["id"])
 
     upload = await virtool.uploads.db.get(pg, upload_id)
@@ -132,7 +132,7 @@ async def delete(req):
     Set a row's `removed` and `removed_at` attribute in the `uploads` SQL table and delete its associated local file.
 
     """
-    pg = req.app["postgres"]
+    pg = req.app["pg"]
     upload_id = int(req.match_info["id"])
 
     upload = await virtool.uploads.db.delete(pg, upload_id)
