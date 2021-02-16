@@ -61,6 +61,14 @@ def join_subtraction_index_path(settings: dict, subtraction_id: str) -> str:
 
 
 def prepare_files_field(path: str):
+    """
+    Prepare a list of documents to be added to 'files' field,
+    and attach name, size, and type to the document.
+
+    :param path: the subtraction path
+    :return: a list of files to be added to subtraction documents
+
+    """
     files = list()
     for file in os.listdir(path):
         if file in FILES:
@@ -81,6 +89,12 @@ def prepare_files_field(path: str):
 
 
 def rename_bowtie_files(path: str):
+    """
+    Rename all Bowtie2 index files from 'reference' to 'subtraction'.
+
+    :param path: the subtraction path
+
+    """
     for file in os.listdir(path):
         if file.endswith(".bt2"):
             file_path = os.path.join(path, file)

@@ -13,6 +13,8 @@ import virtool.tasks.db
 import virtool.tasks.task
 import virtool.utils
 
+from virtool.types import App
+
 PROJECTION = [
     "_id",
     "count",
@@ -28,7 +30,7 @@ PROJECTION = [
 
 class AddSubtractionFilesTask(virtool.tasks.task.Task):
 
-    def __init__(self, app, task_id):
+    def __init__(self, app: App, task_id: str):
         super().__init__(app, task_id)
 
         self.steps = [
@@ -37,6 +39,10 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         ]
 
     async def rename_index_files(self):
+        """
+        Change Bowtie2 index name from 'reference' to 'subtraction'
+
+        """
         settings = self.app["settings"]
 
         async for subtraction in self.db.subtraction.find({"deleted": False, "files": {"$exists": False}}):
@@ -44,6 +50,10 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
             await self.app["run_in_thread"](virtool.subtractions.utils.rename_bowtie_files, path)
 
     async def add_files_field(self):
+        """
+        Add a 'files' field to subtraction documents to list what files can be downloaded for that subtraction
+
+        """
         settings = self.app["settings"]
 
         async for subtraction in self.db.subtraction.find({"deleted": False, "files": {"$exists": False}}):
