@@ -6,8 +6,8 @@ import asyncio
 import os
 from typing import Any, Dict, Optional, Tuple
 
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.analyses.utils
 import virtool.bio
@@ -214,7 +214,7 @@ async def create(
     return document
 
 
-async def create_row(pg: AsyncEngine, analysis_id: int, analysis_format: str, name: str) -> Dict[str, any]:
+async def create_row(pg: AsyncEngine, analysis_id: str, analysis_format: str, name: str) -> Dict[str, any]:
     """
     Create a row in the `analysis_files` SQL table that represents an analysis result file.
 
@@ -262,7 +262,7 @@ async def delete_row(pg: AsyncEngine, file_id: int):
         await session.commit()
 
 
-async def get_row(pg: AsyncEngine, file_id: int):
+async def get_row(pg: AsyncEngine, file_id: int) -> Optional[AnalysisFile]:
     """
     Get a row that represents an analysis result file by its `id`
 
@@ -276,7 +276,7 @@ async def get_row(pg: AsyncEngine, file_id: int):
         if not upload:
             return None
 
-        return upload
+    return upload
 
 
 async def update_nuvs_blast(

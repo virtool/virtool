@@ -2,12 +2,35 @@ import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import visvalingamwyatt as vw
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.future import select
+
+from virtool.analyses.models import AnalysisFile
 
 WORKFLOW_NAMES = (
     "aodp",
     "nuvs",
     "pathoscope_bowtie"
 )
+
+
+async def attach_analysis_files(pg: AsyncEngine, analysis_id: str) -> List[Dict]:
+    """
+    Get analysis result file details for a specific analysis to attach to analysis `GET` response
+
+    :param pg: PostgreSQL AsyncEngine object
+    :param analysis_id: An id for a specific analysis
+    :return: List of file details for each file associated with an analysis
+    """
+    files = []
+
+    async with AsyncSession(pg) as session:
+        results = (await session.execute(select(AnalysisFile).filter_by(analysis=analysis_id))).scalars().all()
+
+        for result in results:
+            files.append(result.to_dict())
+
+    return files
 
 
 def find_nuvs_sequence_by_index(

@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
+import virtool.analyses.db
 from virtool.utils import base_processor
 
 
@@ -23,12 +24,13 @@ def files(tmpdir):
 
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("error", [None, "400", "403", "404"])
-async def test_get(ready, error, mocker, snapshot, spawn_client, static_time, resp_is):
+async def test_get(ready, files, error, mocker, snapshot, spawn_client, static_time, resp_is, pg_engine):
     client = await spawn_client(authorize=True)
 
     document = {
         "_id": "foobar",
         "created_at": static_time.datetime,
+        "files": ["1-reference.fa"],
         "ready": ready,
         "workflow": "pathoscope_bowtie",
         "results": {},
@@ -63,6 +65,8 @@ async def test_get(ready, error, mocker, snapshot, spawn_client, static_time, re
 
     if error != "404":
         await client.db.analyses.insert_one(document)
+
+        await virtool.analyses.db.create_row(pg_engine, "foobar", "fasta", "reference.fa")
 
     m_format_analysis = mocker.patch(
         "virtool.analyses.format.format_analysis",
@@ -308,6 +312,10 @@ async def test_upload_file(error, files, resp_is, spawn_client, static_time, sna
 
 @pytest.mark.parametrize("exists", [True, False])
 async def test_download_file(exists, files, spawn_client, tmpdir):
+    """
+    Test that you can properly download an analysis result file using details from the `analysis_files` SQL table
+
+    """
     client = await spawn_client(authorize=True, administrator=True)
 
     client.app["settings"]["data_path"] = str(tmpdir)

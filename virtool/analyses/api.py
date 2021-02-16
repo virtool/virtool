@@ -82,6 +82,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     """
     db = req.app["db"]
+    pg = req.app["pg"]
 
     analysis_id = req.match_info["analysis_id"]
 
@@ -99,6 +100,9 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     if if_modified_since and if_modified_since == iso:
         return virtool.api.response.not_modified()
+
+    if document.get("files"):
+        document["files"] = await virtool.analyses.utils.attach_analysis_files(pg, analysis_id)
 
     sample = await db.samples.find_one(
         {"_id": document["sample"]["id"]},
@@ -190,7 +194,7 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     """
     db = req.app["db"]
-    pg = req.app["postgres"]
+    pg = req.app["pg"]
     analysis_id = req.match_info["id"]
     analysis_format = req.query.get("format")
 
@@ -253,7 +257,7 @@ async def download(req: aiohttp.web.Request) -> Union[aiohttp.web.FileResponse, 
     Download an analysis result file.
 
     """
-    pg = req.app["postgres"]
+    pg = req.app["pg"]
     file_id = int(req.match_info["file_id"])
 
     analysis_file = await virtool.analyses.db.get_row(pg, file_id)

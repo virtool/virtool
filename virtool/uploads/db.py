@@ -1,5 +1,5 @@
 import logging
-from typing import Union, Optional, List, Dict
+from typing import Union, Optional, List, Dict, Type
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
