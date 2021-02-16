@@ -248,7 +248,7 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.patch("/api/analyses/{analysis_id}", schema={
-    "results": {"type": "dict", 'required': True}
+    "results": {"type": "dict", "required": True}
 })
 async def patch_analysis(req: aiohttp.web.Request):
     """Sets the result for an analysis and marks it as ready."""
@@ -264,16 +264,18 @@ async def patch_analysis(req: aiohttp.web.Request):
     if "ready" in analysis_document and analysis_document["ready"]:
         return conflict("There is already a result for this analysis.")
 
-    await analyses.update_one({"_id":analysis_id}, {
+    request_json = await req.json()
+
+    await analyses.update_one({"_id": analysis_id}, {
         "$set": {
-            "results": (await req.json())["results"],
+            "results": request_json["results"],
             "ready": True
         }
     })
 
     await recalculate_workflow_tags(db, analysis_document["sample"]["id"])
 
-    return json_response({"message": f"The result has been set for analysis {analysis_id}."})
+    return aiohttp.web.Response(status=200)
 
 
 
