@@ -380,6 +380,6 @@ async def test_patch_to_set_result(spawn_client, error, resp_is):
         document = await client.db.analyses.find_one({"_id": analysis_document["_id"]})
 
         assert document["results"] == patch_json["results"]
-        assert document["ready"]
+        assert document["ready"] is True
 
 
