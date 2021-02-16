@@ -49,7 +49,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
     async def rename_index_files(self):
         settings = self.app["settings"]
 
-        async for subtraction in self.db.subtraction.find({"deleted": False}):
+        async for subtraction in self.db.subtraction.find({"deleted": False, "files": {"$exists": False}}):
             path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
             for file in os.listdir(path):
                 if file.endswith(".bt2"):
@@ -59,7 +59,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
     async def add_files_field(self):
         settings = self.app["settings"]
 
-        async for subtraction in self.db.subtraction.find({"deleted": False}):
+        async for subtraction in self.db.subtraction.find({"deleted": False, "files": {"$exists": False}}):
             path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
             files = list()
 
