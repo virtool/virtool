@@ -14,6 +14,7 @@ import virtool.references.db
 import virtool.utils
 from virtool.api.response import bad_request, conflict, insufficient_rights, json_response, \
     not_found
+from virtool.db.core import Collection
 from virtool.jobs.utils import JobRights
 
 routes = virtool.http.routes.Routes()
@@ -244,4 +245,10 @@ async def find_history(req):
 def delete_index(req: aiohttp.web.Request):
     index_id = req.match_info["index_id"]
     db = req.app["db"]
-    indexes = db.indexes
+    indexes: Collection = db.indexes
+
+    delete_result = await indexes.delete_one({"_id": index_id})
+
+    if delete_result.deleted_count != 1:
+        # Document could not be deleted.
+        return not_found(f"There is no index with id: {index_id}.")
