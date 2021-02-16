@@ -8,7 +8,8 @@ from typing import Any, Dict
 
 import aiohttp.web
 import aiojobs.aiohttp
-from aiohttp.web_exceptions import HTTPConflict, HTTPBadRequest, HTTPInternalServerError, HTTPNotFound
+from aiohttp.web_exceptions import HTTPConflict, HTTPBadRequest, HTTPInternalServerError, HTTPNotFound, HTTPOk, \
+    HTTPForbidden
 from virtool_core.samples.db import recalculate_workflow_tags
 
 import virtool.analyses.db
@@ -248,7 +249,9 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(blast_data, headers=headers, status=201)
 
 
-@routes.patch("/api/analyses/{analysis_id}")
+@routes.patch("/api/analyses/{analysis_id}", schema={
+    "results": {"type": "dict", 'required': True}
+})
 async def patch_analysis(req: aiohttp.web.Request):
     """Sets the result for an analysis and marks it as ready."""
     db: DB = req.app["db"]
@@ -258,28 +261,23 @@ async def patch_analysis(req: aiohttp.web.Request):
     analysis_document: Dict[str, Any] = await analyses.find_one(dict(_id=analysis_id))
 
     if not analysis_document:
-        raise HTTPNotFound(reason=f"There is no analysis with id {analysis_id}")
+        return not_found(f"There is no analysis with id {analysis_id}")
 
     if "ready" in analysis_document and analysis_document["ready"]:
-        raise HTTPConflict(reason="There is already a result for this analysis.")
+        return conflict("There is already a result for this analysis.")
 
     request_json: Dict[str, Any] = await req.json()
 
-    if "results" not in request_json:
-        raise HTTPBadRequest(reason=f"Must provide results for the analysis.")
-
-    update_result = await analyses.update_one(dict(_id=analysis_id), {
+    await analyses.update_one(dict(_id=analysis_id), {
         "$set": {
             "results": request_json["results"],
             "ready": True
         }
     })
 
-    if not update_result.upserted_id:
-        # update was not successful
-        raise HTTPInternalServerError(reason="Could not update the analysis document.")
-
     await recalculate_workflow_tags(db, analysis_document["sample"]["id"])
+
+    return json_response(dict(message=f"The result has been set for analysis {analysis_id}."))
 
 
 
