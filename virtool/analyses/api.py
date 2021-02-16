@@ -7,6 +7,7 @@ import os
 
 import aiohttp.web
 import aiojobs.aiohttp
+from aiohttp.web_exceptions import HTTPConflict, HTTPBadRequest
 
 import virtool.analyses.db
 import virtool.analyses.format
@@ -23,6 +24,7 @@ import virtool.subtractions.db
 import virtool.utils
 from virtool.api.response import bad_request, conflict, insufficient_rights, \
     json_response, no_content, not_found
+from virtool.db.core import Collection
 
 routes = virtool.http.routes.Routes()
 
@@ -245,5 +247,17 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.patch("/api/analyses/{analysis_id}")
-def patch_analysis(analysis_id):
+async def patch_analysis(req: aiohttp.web.Request):
+    analysis_id = req.match_info["analysis_id"]
+    analyses: Collection = req.app["db"].analyses
+
+    analysis_document = await analyses.find_one(dict(_id=analysis_id))
+
+    if not analysis_document:
+        raise HTTPBadRequest(reason=f"There is no analysis with id {analysis_id}")
+
+    if "ready" in analysis_document and analysis_document["ready"]:
+        raise HTTPConflict(reason="There is already a result for this analysis.")
+
+
     ...
