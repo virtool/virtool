@@ -242,3 +242,8 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     }
 
     return json_response(blast_data, headers=headers, status=201)
+
+
+@routes.patch("/api/analyses/{analysis_id}")
+def patch_analysis(analysis_id):
+    ...
