@@ -25,6 +25,65 @@ PROJECTION = [
     "has_file"
 ]
 
+FILES = [
+    "subtraction.fa.gz",
+    "subtraction.1.bt2",
+    "subtraction.2.bt2",
+    "subtraction.3.bt2",
+    "subtraction.4.bt2",
+    "subtraction.rev.1.bt2",
+    "subtraction.rev.2.bt2"
+]
+
+
+class AddSubtractionFilesTask(virtool.tasks.task.Task):
+
+    def __init__(self, app, task_id):
+        super().__init__(app, task_id)
+
+        self.steps = [
+            self.rename_index_files,
+            self.add_files_field,
+        ]
+
+    async def rename_index_files(self):
+        settings = self.app["settings"]
+
+        async for subtraction in self.db.subtraction.find({"deleted": False}):
+            path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
+            for file in os.listdir(path):
+                if file.endswith(".bt2"):
+                    file_path = os.path.join(path, file)
+                    os.rename(file_path, file_path.replace("reference", "subtraction"))
+
+    async def add_files_field(self):
+        settings = self.app["settings"]
+
+        async for subtraction in self.db.subtraction.find({"deleted": False}):
+            path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
+            files = list()
+
+            for file in os.listdir(path):
+                if file in FILES:
+                    file_path = os.path.join(path, file)
+                    document = {
+                        "size": virtool.utils.file_stats(file_path)["size"],
+                        "name": file
+                    }
+
+                    if file.endswith(".fa.gz"):
+                        document["type"] = "fasta"
+                    if file.endswith(".bt2"):
+                        document["type"] = "reference"
+
+                    files.append(document)
+
+            await self.db.subtraction.update_one({"_id": subtraction["_id"]}, {
+                "$set": {
+                    "files": files
+                }
+            })
+
 
 class WriteSubtractionFASTATask(virtool.tasks.task.Task):
 
@@ -95,10 +154,10 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
             virtool.utils.rm(fasta_path)
 
             await self.db.subtraction.find_one_and_update({"_id": subtraction}, {
-                    "$set": {
-                        "has_file": True
-                    }
-                })
+                "$set": {
+                    "has_file": True
+                }
+            })
 
             await tracker.add(1)
 

@@ -7,5 +7,6 @@ FIRST_STEPS = {
     "update_software": "download",
     "install_hmms": "download",
     "write_subtraction_fasta": "check_subtraction_fasta_files",
-    "create_index_json": "create_index_json_files"
+    "create_index_json": "create_index_json_files",
+    "add_subtraction_files": "rename_index_files"
 }
