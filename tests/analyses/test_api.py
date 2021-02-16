@@ -382,4 +382,6 @@ async def test_patch_to_set_result(spawn_client, error, resp_is):
         assert document["results"] == patch_json["results"]
         assert document["ready"] is True
 
+        response_json = await response.json()
 
+        assert response_json == document

@@ -266,7 +266,7 @@ async def patch_analysis(req: aiohttp.web.Request):
 
     request_json = await req.json()
 
-    await analyses.update_one({"_id": analysis_id}, {
+    updated_analysis_document = await analyses.find_one_and_update({"_id": analysis_id}, {
         "$set": {
             "results": request_json["results"],
             "ready": True
@@ -275,9 +275,4 @@ async def patch_analysis(req: aiohttp.web.Request):
 
     await recalculate_workflow_tags(db, analysis_document["sample"]["id"])
 
-    return aiohttp.web.Response(status=200)
-
-
-
-
-
+    return json_response(updated_analysis_document)
