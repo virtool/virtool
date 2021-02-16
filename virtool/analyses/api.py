@@ -6,7 +6,7 @@ import asyncio
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 import aiohttp.web
 import aiojobs.aiohttp
@@ -217,18 +217,18 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if name_on_disk in files:
         return bad_request("File is already associated with analysis")
 
-    analysis_file_id = analysis_file["id"]
+    file_id = analysis_file["id"]
     analysis_file_path = Path(req.app["settings"]["data_path"]) / "analyses" / name_on_disk
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, analysis_file_path)
     except asyncio.CancelledError:
-        logger.debug(f"Upload aborted: {analysis_file_id}")
-        await virtool.analyses.db.delete_row(pg, analysis_file_id)
+        logger.debug(f"Upload aborted: {file_id}")
+        await virtool.analyses.db.delete_row(pg, file_id)
 
         return aiohttp.web.Response(status=499)
 
-    analysis_file = await virtool.uploads.db.finalize(pg, size, analysis_file_id, AnalysisFile)
+    analysis_file = await virtool.uploads.db.finalize(pg, size, file_id, AnalysisFile)
 
     if not analysis_file:
         await req.app["run_in_thread"](os.remove, analysis_file_path)
@@ -241,10 +241,32 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
     })
 
     headers = {
-        "Location": f"/api/analyses/{analysis_id}/files/{analysis_file_id}"
+        "Location": f"/api/analyses/{analysis_id}/files/{file_id}"
     }
 
     return json_response(analysis_file, status=201, headers=headers)
+
+
+@routes.get("/api/analyses/{analysis_id}/files/{file_id}")
+async def download(req: aiohttp.web.Request) -> Union[aiohttp.web.FileResponse, aiohttp.web.Response]:
+    """
+    Download an analysis result file.
+
+    """
+    pg = req.app["postgres"]
+    file_id = int(req.match_info["file_id"])
+
+    analysis_file = await virtool.analyses.db.get_row(pg, file_id)
+
+    if not analysis_file:
+        return not_found()
+
+    analysis_file_path = Path(req.app["settings"]["data_path"]) / "analyses" / analysis_file.name_on_disk
+
+    if not analysis_file_path.exists():
+        return not_found("Uploaded file not found at expected location")
+
+    return aiohttp.web.FileResponse(analysis_file_path)
 
 
 @routes.put("/api/analyses/{analysis_id}/{sequence_index}/blast")

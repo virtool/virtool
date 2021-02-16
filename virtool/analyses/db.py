@@ -244,15 +244,15 @@ async def create_row(pg: AsyncEngine, analysis_id: int, analysis_format: str, na
         return analysis_file
 
 
-async def delete_row(pg: AsyncEngine, analysis_file_id: int):
+async def delete_row(pg: AsyncEngine, file_id: int):
     """
     Deletes a row in the `analysis_files` SQL by its row `id`
 
     :param pg: PostgreSQL AsyncEngine object
-    :param analysis_file_id: Row `id` to delete
+    :param file_id: Row `id` to delete
     """
     async with AsyncSession(pg) as session:
-        analysis_file = (await session.execute(select(AnalysisFile).where(AnalysisFile.id == analysis_file_id))).scalar()
+        analysis_file = (await session.execute(select(AnalysisFile).where(AnalysisFile.id == file_id))).scalar()
 
         if not analysis_file:
             return None
@@ -260,6 +260,23 @@ async def delete_row(pg: AsyncEngine, analysis_file_id: int):
         await session.delete(analysis_file)
 
         await session.commit()
+
+
+async def get_row(pg: AsyncEngine, file_id: int):
+    """
+    Get a row that represents an analysis result file by its `id`
+
+    :param pg: PostgreSQL AsyncEngine object
+    :param file_id: Row `id` to get
+    :return:
+    """
+    async with AsyncSession(pg) as session:
+        upload = (await session.execute(select(AnalysisFile).filter_by(id=file_id))).scalar()
+
+        if not upload:
+            return None
+
+        return upload
 
 
 async def update_nuvs_blast(

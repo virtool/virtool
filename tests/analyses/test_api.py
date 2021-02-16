@@ -8,6 +8,19 @@ from aiohttp.test_utils import make_mocked_coro
 from virtool.utils import base_processor
 
 
+@pytest.fixture
+def files(tmpdir):
+    tmpdir.mkdir("files")
+
+    path = Path(sys.path[0]) / "tests" / "test_files" / "aodp" / "reference.fa"
+
+    data = {
+        "file": open(path, "rb")
+    }
+
+    return data
+
+
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("error", [None, "400", "403", "404"])
 async def test_get(ready, error, mocker, snapshot, spawn_client, static_time, resp_is):
@@ -239,31 +252,23 @@ async def test_remove(mocker, error, spawn_client, resp_is):
     assert m_remove.called_with("data/samples/baz/analyses/foobar", True)
 
 
-@pytest.mark.parametrize("error", [None, "400", "404", "422"])
-async def test_upload_file(error, resp_is, spawn_client, static_time, snapshot, tmpdir):
+@pytest.mark.parametrize("error", [None, 400, 404, 422])
+async def test_upload_file(error, files, resp_is, spawn_client, static_time, snapshot, tmpdir):
     """
     Test that an analysis result file is properly uploaded, a record is inserted into the `analysis_files` SQL table,
     and that the `list` field in a given analysis is updated to reflect the new file.
 
     """
-    tmpdir.mkdir("files")
-
-    path = Path(sys.path[0]) / "tests" / "test_files" / "aodp" / "reference.fa"
-
-    data = {
-        "file": open(path, "rb")
-    }
-
     client = await spawn_client(authorize=True, administrator=True)
 
     client.app["settings"]["data_path"] = str(tmpdir)
 
-    if error == "400":
+    if error == 400:
         format_ = "foo"
     else:
         format_ = "fasta"
 
-    if error != "404":
+    if error != 404:
         await client.db.analyses.insert_one({
             "_id": "foobar",
             "ready": True,
@@ -273,10 +278,10 @@ async def test_upload_file(error, resp_is, spawn_client, static_time, snapshot, 
             "files": []
         })
 
-    if error == "422":
-        resp = await client.post_form(f"/api/analyses/foobar/files?format=fasta", data=data)
+    if error == 422:
+        resp = await client.post_form(f"/api/analyses/foobar/files?format=fasta", data=files)
     else:
-        resp = await client.post_form(f"/api/analyses/foobar/files?name=reference.fa&format={format_}", data=data)
+        resp = await client.post_form(f"/api/analyses/foobar/files?name=reference.fa&format={format_}", data=files)
 
     if error is None:
         assert resp.status == 201
@@ -289,16 +294,39 @@ async def test_upload_file(error, resp_is, spawn_client, static_time, snapshot, 
 
         assert document["files"] == ["1-reference.fa"]
 
-    elif error == "400":
+    elif error == 400:
         assert await resp_is.bad_request(resp, "Unsupported analysis file format")
 
-    elif error == "404":
+    elif error == 404:
         assert resp.status == 404
 
-    elif error == "422":
+    elif error == 422:
         assert await resp_is.invalid_query(resp, {
             "name": ["required field"]
         })
+
+
+@pytest.mark.parametrize("exists", [True, False])
+async def test_download_file(exists, files, spawn_client, tmpdir):
+    client = await spawn_client(authorize=True, administrator=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    if not exists:
+        await client.db.analyses.insert_one({
+            "_id": "foobar",
+            "ready": True,
+            "job": {
+                "id": "hello"
+            },
+            "files": []
+        })
+
+    await client.post_form(f"/api/analyses/foobar/files?name=reference.fa&format=fasta", data=files)
+
+    resp = await client.get("/api/analyses/foobar/files/1")
+
+    assert resp.status == 200 if not exists else 404
 
 
 @pytest.mark.parametrize("error", [None, "400", "403", "404_analysis", "404_sequence", "409_workflow", "409_ready"])
