@@ -26,6 +26,7 @@ from virtool.api.response import bad_request, conflict, insufficient_rights, \
     json_response, no_content, not_found
 from virtool.db.core import Collection, DB
 from virtool.samples.db import recalculate_workflow_tags
+from virtool.utils import base_processor
 
 routes = virtool.http.routes.Routes()
 
@@ -275,4 +276,4 @@ async def patch_analysis(req: aiohttp.web.Request):
 
     await recalculate_workflow_tags(db, analysis_document["sample"]["id"])
 
-    return json_response(updated_analysis_document)
+    return json_response(base_processor(updated_analysis_document))
