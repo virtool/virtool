@@ -25,7 +25,7 @@ PROJECTION = [
     "has_file"
 ]
 
-FILES = [
+FILES = (
     "subtraction.fa.gz",
     "subtraction.1.bt2",
     "subtraction.2.bt2",
@@ -33,7 +33,7 @@ FILES = [
     "subtraction.4.bt2",
     "subtraction.rev.1.bt2",
     "subtraction.rev.2.bt2"
-]
+)
 
 
 class AddSubtractionFilesTask(virtool.tasks.task.Task):
