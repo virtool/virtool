@@ -1,6 +1,8 @@
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
+from virtool.utils import base_processor
+
 
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("error", [None, "400", "403", "404"])
@@ -384,4 +386,4 @@ async def test_patch_to_set_result(spawn_client, error, resp_is):
 
         response_json = await response.json()
 
-        assert response_json == document
+        assert response_json == base_processor(document)
