@@ -33,3 +33,14 @@ def test_prepare_files_field(tmpdir):
             'type': 'fasta'
         }
     ]
+
+
+def test_rename_bowtie_files(tmpdir):
+    test_dir = tmpdir.mkdir("subtractions")
+    test_dir.join("reference.1.bt2").write("Bowtie2 file")
+    test_dir.join("reference.2.bt2").write("Bowtie2 file")
+    test_dir.join("reference.3.bt2").write("Bowtie2 file")
+    path = os.path.join(tmpdir, "subtractions")
+
+    virtool.subtractions.utils.rename_bowtie_files(path)
+    assert os.listdir(path) == ['subtraction.1.bt2', 'subtraction.2.bt2', 'subtraction.3.bt2']
