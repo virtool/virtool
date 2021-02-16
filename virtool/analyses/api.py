@@ -266,11 +266,9 @@ async def patch_analysis(req: aiohttp.web.Request):
     if "ready" in analysis_document and analysis_document["ready"]:
         return conflict("There is already a result for this analysis.")
 
-    request_json: Dict[str, Any] = await req.json()
-
     await analyses.update_one(dict(_id=analysis_id), {
         "$set": {
-            "results": request_json["results"],
+            "results": (await req.json())["results"],
             "ready": True
         }
     })
