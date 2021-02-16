@@ -74,7 +74,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
                     if file.endswith(".fa.gz"):
                         document["type"] = "fasta"
                     if file.endswith(".bt2"):
-                        document["type"] = "reference"
+                        document["type"] = "bowtie2"
 
                     files.append(document)
 
