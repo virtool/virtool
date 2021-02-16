@@ -241,6 +241,29 @@ async def find_history(req):
     return json_response(data)
 
 
+def reset_history(history: Collection, index_id: str):
+    """
+    Set the index.id and index.version fields with the given index id to 'unbuilt'.
+
+    :param history: The history collection of the database.
+    :param index_id: The ID of the index which failed to build
+    """
+    query = {
+        "_id": {
+            "$in": await history.distinct("_id", {"index.id": index_id})
+        }
+    }
+
+    return await history.update_many(query, {
+        "$set": {
+            "index": {
+                "id": "unbuilt",
+                "version": "unbuilt"
+            }
+        }
+    })
+
+
 @routes.delete("/api/indexes/{index_id}", jobs_only=True)
 def delete_index(req: aiohttp.web.Request):
     index_id = req.match_info["index_id"]
