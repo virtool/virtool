@@ -3,6 +3,18 @@ import os
 
 import aiofiles
 
+import virtool.utils
+
+FILES = (
+    "subtraction.fa.gz",
+    "subtraction.1.bt2",
+    "subtraction.2.bt2",
+    "subtraction.3.bt2",
+    "subtraction.4.bt2",
+    "subtraction.rev.1.bt2",
+    "subtraction.rev.2.bt2"
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -46,3 +58,30 @@ def join_subtraction_index_path(settings: dict, subtraction_id: str) -> str:
         join_subtraction_path(settings, subtraction_id),
         "reference"
     )
+
+
+def prepare_files_field(path: str):
+    files = list()
+    for file in os.listdir(path):
+        if file in FILES:
+            file_path = os.path.join(path, file)
+            document = {
+                "size": virtool.utils.file_stats(file_path)["size"],
+                "name": file
+            }
+
+            if file.endswith(".fa.gz"):
+                document["type"] = "fasta"
+            if file.endswith(".bt2"):
+                document["type"] = "bowtie2"
+
+            files.append(document)
+
+    return files
+
+
+def rename_bowtie_files(path: str):
+    for file in os.listdir(path):
+        if file.endswith(".bt2"):
+            file_path = os.path.join(path, file)
+            os.rename(file_path, file_path.replace("reference", "subtraction"))

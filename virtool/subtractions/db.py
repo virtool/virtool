@@ -25,16 +25,6 @@ PROJECTION = [
     "has_file"
 ]
 
-FILES = (
-    "subtraction.fa.gz",
-    "subtraction.1.bt2",
-    "subtraction.2.bt2",
-    "subtraction.3.bt2",
-    "subtraction.4.bt2",
-    "subtraction.rev.1.bt2",
-    "subtraction.rev.2.bt2"
-)
-
 
 class AddSubtractionFilesTask(virtool.tasks.task.Task):
 
@@ -51,32 +41,14 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
 
         async for subtraction in self.db.subtraction.find({"deleted": False, "files": {"$exists": False}}):
             path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
-            for file in os.listdir(path):
-                if file.endswith(".bt2"):
-                    file_path = os.path.join(path, file)
-                    os.rename(file_path, file_path.replace("reference", "subtraction"))
+            await self.app["run_in_thread"](virtool.subtractions.utils.rename_bowtie_files, path)
 
     async def add_files_field(self):
         settings = self.app["settings"]
 
         async for subtraction in self.db.subtraction.find({"deleted": False, "files": {"$exists": False}}):
             path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
-            files = list()
-
-            for file in os.listdir(path):
-                if file in FILES:
-                    file_path = os.path.join(path, file)
-                    document = {
-                        "size": virtool.utils.file_stats(file_path)["size"],
-                        "name": file
-                    }
-
-                    if file.endswith(".fa.gz"):
-                        document["type"] = "fasta"
-                    if file.endswith(".bt2"):
-                        document["type"] = "bowtie2"
-
-                    files.append(document)
+            files = await self.app["run_in_thread"](virtool.subtractions.utils.prepare_files_field, path)
 
             await self.db.subtraction.update_one({"_id": subtraction["_id"]}, {
                 "$set": {
