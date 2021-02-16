@@ -344,3 +344,41 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
         5,
         "FOOBAR1337"
     )
+
+
+@pytest.mark.parametrize("error", [None, 400, 404, 409])
+async def test_patch_to_set_result(spawn_client, error, resp_is):
+    analysis_document = dict(
+        _id="analysis1",
+        sample=dict(id="sample1"),
+    )
+
+    patch_json = {
+        "results": {
+            "result": "TEST_RESULT"
+        }
+    }
+
+    client = await spawn_client(authorize=True)
+
+    if error != 404:
+        insert_result = await client.db.analyses.insert_one(analysis_document)
+        assert insert_result["_id"] == analysis_document["_id"]
+
+    if error == 409:
+        analysis_document["ready"] = True
+    elif error == 400:
+        del patch_json["results"]
+
+
+    response = await client.patch(f"/api/analyses/{analysis_document['_id']}", patch_json)
+
+    if error:
+        assert response.status == error
+    else:
+        assert response.status == 200
+        document = await client.db.analyses.find_one(dict(_id=analysis_document["_id"]))
+
+        assert document["results"] == patch_json["results"]
+        assert document["ready"]
+

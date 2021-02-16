@@ -4,10 +4,12 @@ Provides request handlers for managing and viewing analyses.
 """
 import asyncio
 import os
+from typing import Any, Dict
 
 import aiohttp.web
 import aiojobs.aiohttp
-from aiohttp.web_exceptions import HTTPConflict, HTTPBadRequest
+from aiohttp.web_exceptions import HTTPConflict, HTTPBadRequest, HTTPInternalServerError, HTTPNotFound
+from virtool_core.samples.db import recalculate_workflow_tags
 
 import virtool.analyses.db
 import virtool.analyses.format
@@ -24,7 +26,7 @@ import virtool.subtractions.db
 import virtool.utils
 from virtool.api.response import bad_request, conflict, insufficient_rights, \
     json_response, no_content, not_found
-from virtool.db.core import Collection
+from virtool.db.core import Collection, DB
 
 routes = virtool.http.routes.Routes()
 
@@ -248,16 +250,38 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 @routes.patch("/api/analyses/{analysis_id}")
 async def patch_analysis(req: aiohttp.web.Request):
-    analysis_id = req.match_info["analysis_id"]
-    analyses: Collection = req.app["db"].analyses
+    """Sets the result for an analysis and marks it as ready."""
+    db: DB = req.app["db"]
+    analyses: Collection = db.analyses
+    analysis_id: str = req.match_info["analysis_id"]
 
-    analysis_document = await analyses.find_one(dict(_id=analysis_id))
+    analysis_document: Dict[str, Any] = await analyses.find_one(dict(_id=analysis_id))
 
     if not analysis_document:
-        raise HTTPBadRequest(reason=f"There is no analysis with id {analysis_id}")
+        raise HTTPNotFound(reason=f"There is no analysis with id {analysis_id}")
 
     if "ready" in analysis_document and analysis_document["ready"]:
         raise HTTPConflict(reason="There is already a result for this analysis.")
 
+    request_json: Dict[str, Any] = await req.json()
 
-    ...
+    if "results" not in request_json:
+        raise HTTPBadRequest(reason=f"Must provide results for the analysis.")
+
+    update_result = await analyses.update_one(dict(_id=analysis_id), {
+        "$set": {
+            "results": request_json["results"],
+            "ready": True
+        }
+    })
+
+    if not update_result.upserted_id:
+        # update was not successful
+        raise HTTPInternalServerError(reason="Could not update the analysis document.")
+
+    await recalculate_workflow_tags(db, analysis_document["sample"]["id"])
+
+
+
+
+
