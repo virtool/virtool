@@ -1,5 +1,7 @@
 import asyncio
 
+import aiohttp
+
 import virtool.api.utils
 import virtool.db.utils
 import virtool.history.db
@@ -236,3 +238,10 @@ async def find_history(req):
     )
 
     return json_response(data)
+
+
+@routes.delete("/api/indexes/{index_id}", jobs_only=True)
+def delete_index(req: aiohttp.web.Request):
+    index_id = req.match_info["index_id"]
+    db = req.app["db"]
+    indexes = db.indexes
