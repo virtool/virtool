@@ -8,7 +8,6 @@ from typing import Any, Dict
 
 import aiohttp.web
 import aiojobs.aiohttp
-from virtool_core.samples.db import recalculate_workflow_tags
 
 import virtool.analyses.db
 import virtool.analyses.format
@@ -26,6 +25,7 @@ import virtool.utils
 from virtool.api.response import bad_request, conflict, insufficient_rights, \
     json_response, no_content, not_found
 from virtool.db.core import Collection, DB
+from virtool.samples.db import recalculate_workflow_tags
 
 routes = virtool.http.routes.Routes()
 
@@ -256,7 +256,7 @@ async def patch_analysis(req: aiohttp.web.Request):
     analyses: Collection = db.analyses
     analysis_id: str = req.match_info["analysis_id"]
 
-    analysis_document: Dict[str, Any] = await analyses.find_one(dict(_id=analysis_id))
+    analysis_document: Dict[str, Any] = await analyses.find_one({"_id": analysis_id})
 
     if not analysis_document:
         return not_found(f"There is no analysis with id {analysis_id}")
@@ -264,7 +264,7 @@ async def patch_analysis(req: aiohttp.web.Request):
     if "ready" in analysis_document and analysis_document["ready"]:
         return conflict("There is already a result for this analysis.")
 
-    await analyses.update_one(dict(_id=analysis_id), {
+    await analyses.update_one({"_id":analysis_id}, {
         "$set": {
             "results": (await req.json())["results"],
             "ready": True
@@ -273,7 +273,7 @@ async def patch_analysis(req: aiohttp.web.Request):
 
     await recalculate_workflow_tags(db, analysis_document["sample"]["id"])
 
-    return json_response(dict(message=f"The result has been set for analysis {analysis_id}."))
+    return json_response({"message": f"The result has been set for analysis {analysis_id}."})
 
 
 
