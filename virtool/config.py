@@ -247,3 +247,8 @@ def start_runner(ctx, job_list, mem, proc, temp_path):
 
     logger.info("Starting in runner mode")
     asyncio.get_event_loop().run_until_complete(virtool.jobs.run.run(config, virtool.jobs.runner.JobRunner))
+
+
+@cli.command("jobsAPI")
+def start_jobs_api():
+    ...
