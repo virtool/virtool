@@ -43,4 +43,4 @@ def test_rename_bowtie_files(tmpdir):
     path = os.path.join(tmpdir, "subtractions")
 
     virtool.subtractions.utils.rename_bowtie_files(path)
-    assert os.listdir(path) == ['subtraction.1.bt2', 'subtraction.2.bt2', 'subtraction.3.bt2']
+    assert set(os.listdir(path)) == {'subtraction.1.bt2', 'subtraction.2.bt2', 'subtraction.3.bt2'}
