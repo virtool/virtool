@@ -219,7 +219,8 @@ async def test_get(error, mocker, snapshot, resp_is, spawn_client, static_time):
 
 class TestCreate:
 
-    async def test(self, mocker, snapshot, spawn_client, static_time, test_random_alphanumeric, check_ref_right, resp_is):
+    async def test(self, mocker, snapshot, spawn_client, static_time, test_random_alphanumeric, check_ref_right,
+                   resp_is):
         mocker.patch("virtool.utils.generate_key", return_value=("foo", "bar"))
 
         client = await spawn_client(authorize=True)
@@ -417,3 +418,36 @@ async def test(error, snapshot, spawn_client, resp_is):
 
     assert resp.status == 200
     snapshot.assert_match(await resp.json())
+
+
+@pytest.mark.parametrize("error", [None, 404])
+async def test_delete_index(spawn_client, error):
+    index_id = "index1"
+    index_document = {
+        "_id": index_id,
+    }
+
+    mock_history_documents = [{
+        "_id": _id,
+        "index": {
+            "id": index_id,
+            "version": "test_version"
+        }
+    } for _id in ("history1", "history2", "history3")]
+
+    client = await spawn_client(authorize=True)
+    indexes = client.db.indexes
+    history = client.db.history
+
+    if error != 404:
+        await indexes.insert_one(index_document)
+        await history.insert_many(mock_history_documents)
+
+    response = await client.delete(f"/api/indexes/{index_id}")
+
+    if error is not None:
+        assert error == response.status
+    else:
+        assert 204 == response.status
+        async for doc in history.find({"index.id": index_id}):
+            assert doc["index"]["id"] == doc["index"]["version"] == "unbuilt"
