@@ -13,6 +13,8 @@ import virtool.tasks.db
 import virtool.tasks.task
 import virtool.utils
 
+from virtool.types import App
+
 PROJECTION = [
     "_id",
     "count",
@@ -24,6 +26,45 @@ PROJECTION = [
     "user",
     "has_file"
 ]
+
+
+class AddSubtractionFilesTask(virtool.tasks.task.Task):
+
+    def __init__(self, app: App, task_id: str):
+        super().__init__(app, task_id)
+
+        self.steps = [
+            self.rename_index_files,
+            self.add_files_field,
+        ]
+
+    async def rename_index_files(self):
+        """
+        Change Bowtie2 index name from 'reference' to 'subtraction'
+
+        """
+        settings = self.app["settings"]
+
+        async for subtraction in self.db.subtraction.find({"deleted": False, "files": {"$exists": False}}):
+            path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
+            await self.app["run_in_thread"](virtool.subtractions.utils.rename_bowtie_files, path)
+
+    async def add_files_field(self):
+        """
+        Add a 'files' field to subtraction documents to list what files can be downloaded for that subtraction
+
+        """
+        settings = self.app["settings"]
+
+        async for subtraction in self.db.subtraction.find({"deleted": False, "files": {"$exists": False}}):
+            path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
+            files = await self.app["run_in_thread"](virtool.subtractions.utils.prepare_files_field, path)
+
+            await self.db.subtraction.update_one({"_id": subtraction["_id"]}, {
+                "$set": {
+                    "files": files
+                }
+            })
 
 
 class WriteSubtractionFASTATask(virtool.tasks.task.Task):
@@ -95,10 +136,10 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
             virtool.utils.rm(fasta_path)
 
             await self.db.subtraction.find_one_and_update({"_id": subtraction}, {
-                    "$set": {
-                        "has_file": True
-                    }
-                })
+                "$set": {
+                    "has_file": True
+                }
+            })
 
             await tracker.add(1)
 
