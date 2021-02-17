@@ -144,12 +144,26 @@ def spawn_client(
 
 
 def job_authenticated(method, job_id, key):
+    """
+    Wraps the :func:`get`, :func:`post`, :func:`patch`, :func:`delete` methods of :class:`aiohttp.ClientSession`
+
+    Before calling the request method, an authentication header is added which will authenticate the request as if
+    it were being sent by a Virtool Job.
+
+    A document is also added to the database to authenticate against, using the `job_id` and `key` given.
+
+    :param: The ID of the test job which will be created.
+    :param: The key that will be used to authenticate that test job.
+    """
+
     async def _job_authenticated(*args, headers=None, **kwargs):
         if not headers:
             headers = {}
 
-        auth_header = base64.b64encode(bytes(f"job-{job_id}:{key}", "utf-8"))
-        headers["AUTHORIZATION"] = f"Basic {str(auth_header, 'utf-8')}"
+        auth_header = f"job-{job_id}:{key}".encode("utf-8")
+        base64header = base64.b64encode(auth_header).decode("utf-8")
+
+        headers["AUTHORIZATION"] = f"Basic {base64header}"
         return await method(*args, headers=headers, **kwargs)
 
     return _job_authenticated
@@ -163,6 +177,8 @@ def spawn_job_client(
         aiohttp_client,
         spawn_client,
 ):
+    """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
+
     async def _spawn_job_client(
             auth=None,
             authorize=False,
@@ -179,11 +195,16 @@ def spawn_job_client(
             "key": key,
         })
 
+        # Spawn a test client.
         test_client = await spawn_client(auth, authorize, administrator, dev, enable_api, groups, permissions)
         client = test_client._test_client
+        client.db = dbi
+
+        # Enable the API in the settings.
         client.settings = test_client.settings
         client.settings["enable_api"] = True
-        client.db = dbi
+
+        # Set the `AUTHORIZATION` header before each request.
         client.delete = job_authenticated(client.delete, job_id, key)
         client.get = job_authenticated(client.get, job_id, key)
         client.patch = job_authenticated(client.patch, job_id, key)
