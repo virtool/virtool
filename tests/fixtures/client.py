@@ -1,3 +1,4 @@
+import base64
 import json
 
 import pytest
@@ -55,29 +56,18 @@ class VirtoolTestClient:
 
 
 @pytest.fixture
-def spawn_client(
-        pg_connection_string,
-        pg_engine,
-        test_db_connection_string,
-        redis_connection_string,
-        request,
-        aiohttp_client,
-        test_motor,
+def create_app(
+        create_user,
         dbi,
+        pg_connection_string,
+        redis_connection_string,
+        test_db_connection_string,
         test_db_name,
-        pg_session,
-        create_user
 ):
-    async def func(
-            auth=None,
-            authorize=False,
-            administrator=False,
+    def _create_app(
             dev=False,
-            enable_api=False,
-            groups=None,
-            permissions=None
     ):
-        app = virtool.app.create_app({
+        return virtool.app.create_app({
             "dev": dev,
             "db_connection_string": test_db_connection_string,
             "redis_connection_string": redis_connection_string,
@@ -92,12 +82,32 @@ def spawn_client(
             "no_sentry": True
         })
 
-        cookies = {
-            "session_id": "dne"
-        }
+    return _create_app
+
+
+@pytest.fixture
+def spawn_client(
+        pg_engine,
+        request,
+        aiohttp_client,
+        test_motor,
+        dbi,
+        pg_session,
+        create_app,
+        create_user
+):
+    async def func(
+            auth=None,
+            authorize=False,
+            administrator=False,
+            dev=False,
+            enable_api=False,
+            groups=None,
+            permissions=None
+    ):
+        app = create_app(dev)
 
         user_document = create_user("test", administrator, groups, permissions)
-
         await dbi.users.insert_one(user_document)
 
         if authorize:
@@ -121,9 +131,65 @@ def spawn_client(
                 "session_id": "foobar",
                 "session_token": "bar"
             }
+        else:
+            cookies = {
+                "session_id": "dne"
+            }
 
         test_client = await aiohttp_client(app, auth=auth, cookies=cookies)
 
         return VirtoolTestClient(test_client)
 
     return func
+
+
+def job_authenticated(method, job_id, key):
+    async def _job_authenticated(*args, headers=None, **kwargs):
+        if not headers:
+            headers = {}
+
+        auth_header = base64.b64encode(bytes(f"job-{job_id}:{key}", "utf-8"))
+        headers["AUTHORIZATION"] = f"Basic {str(auth_header, 'utf-8')}"
+        return await method(*args, headers=headers, **kwargs)
+
+    return _job_authenticated
+
+
+@pytest.fixture
+def spawn_job_client(
+        dbi,
+        create_app,
+        create_user,
+        aiohttp_client,
+        spawn_client,
+):
+    async def _spawn_job_client(
+            auth=None,
+            authorize=False,
+            administrator=False,
+            dev=False,
+            enable_api=False,
+            groups=None,
+            permissions=None
+    ):
+        # Create a test job to use for authentication.
+        job_id, key = "test_job", "test_key"
+        await dbi.jobs.insert_one({
+            "_id": job_id,
+            "key": key,
+        })
+
+        test_client = await spawn_client(auth, authorize, administrator, dev, enable_api, groups, permissions)
+        client = test_client._test_client
+        client.settings = test_client.settings
+        client.settings["enable_api"] = True
+        client.db = dbi
+        client.delete = job_authenticated(client.delete, job_id, key)
+        client.get = job_authenticated(client.get, job_id, key)
+        client.patch = job_authenticated(client.patch, job_id, key)
+        client.post = job_authenticated(client.post, job_id, key)
+        client.put = job_authenticated(client.put, job_id, key)
+
+        return client
+
+    return _spawn_job_client
