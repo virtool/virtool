@@ -269,9 +269,8 @@ async def delete_index(req: aiohttp.web.Request):
     """Delete the index with the given id and reset history relating to that index."""
     index_id = req.match_info["index_id"]
     db = req.app["db"]
-    indexes: Collection = db.indexes
 
-    delete_result = await indexes.delete_one({"_id": index_id})
+    delete_result = await db.indexes.delete_one({"_id": index_id})
 
     if delete_result.deleted_count != 1:
         # Document could not be deleted.
