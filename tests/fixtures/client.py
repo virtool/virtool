@@ -192,7 +192,7 @@ def spawn_job_client(
         job_id, key = "test_job", "test_key"
         await dbi.jobs.insert_one({
             "_id": job_id,
-            "key": key,
+            "key": hash_key(key),
         })
 
         # Spawn a test client.
