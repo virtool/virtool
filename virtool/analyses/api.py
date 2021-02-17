@@ -219,7 +219,7 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
     files = document.get("files", [])
 
     if name_on_disk in files:
-        return bad_request("File is already associated with analysis")
+        return conflict("File is already associated with analysis")
 
     file_id = analysis_file["id"]
     analysis_file_path = Path(req.app["settings"]["data_path"]) / "analyses" / name_on_disk
