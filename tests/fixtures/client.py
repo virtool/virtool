@@ -1,6 +1,6 @@
-import base64
 import json
 
+import aiohttp
 import pytest
 
 import virtool.app
@@ -143,7 +143,7 @@ def spawn_client(
     return func
 
 
-def job_authenticated(method, job_id, key):
+def authenticated(method, basic_auth_header):
     """
     Wraps the :func:`get`, :func:`post`, :func:`patch`, :func:`delete` methods of :class:`aiohttp.ClientSession`
 
@@ -152,21 +152,18 @@ def job_authenticated(method, job_id, key):
 
     A document is also added to the database to authenticate against, using the `job_id` and `key` given.
 
-    :param: The ID of the test job which will be created.
-    :param: The key that will be used to authenticate that test job.
+    :param method: The ID of the test job which will be created.
+    :param basic_auth_header: The `Authorization` header to use for authentication.
     """
 
-    async def _job_authenticated(*args, headers=None, **kwargs):
+    async def _authenticated(*args, headers=None, **kwargs):
         if not headers:
             headers = {}
 
-        auth_header = f"job-{job_id}:{key}".encode("utf-8")
-        base64header = base64.b64encode(auth_header).decode("utf-8")
-
-        headers["AUTHORIZATION"] = f"Basic {base64header}"
+        headers["Authorization"] = basic_auth_header
         return await method(*args, headers=headers, **kwargs)
 
-    return _job_authenticated
+    return _authenticated
 
 
 @pytest.fixture
@@ -195,6 +192,10 @@ def spawn_job_client(
             "key": hash_key(key),
         })
 
+        # Create Basic Authentication header.
+        basic_auth = aiohttp.BasicAuth(login=f"job-{job_id}", password=key)
+        auth_header = basic_auth.encode()
+
         # Spawn a test client.
         test_client = await spawn_client(auth, authorize, administrator, dev, enable_api, groups, permissions)
         client = test_client._test_client
@@ -205,12 +206,11 @@ def spawn_job_client(
             client.settings = test_client.settings
             client.settings["enable_api"] = True
 
-        # Set the `AUTHORIZATION` header before each request.
-        client.delete = job_authenticated(client.delete, job_id, key)
-        client.get = job_authenticated(client.get, job_id, key)
-        client.patch = job_authenticated(client.patch, job_id, key)
-        client.post = job_authenticated(client.post, job_id, key)
-        client.put = job_authenticated(client.put, job_id, key)
+        client.delete = authenticated(client.delete, auth_header)
+        client.get = authenticated(client.get, auth_header)
+        client.patch = authenticated(client.patch, auth_header)
+        client.post = authenticated(client.post, auth_header)
+        client.put = authenticated(client.put, auth_header)
 
         return client
 

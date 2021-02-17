@@ -1,8 +1,8 @@
-import base64
 import os
 from typing import Callable, Tuple
 
 import aiofiles
+import aiohttp
 import jinja2
 from aiohttp import web
 
@@ -62,16 +62,12 @@ def decode_authorization(authorization: str) -> Tuple[str, str]:
     :return: a tuple containing the user id and API key parsed from the authorization header
 
     """
-    split = authorization.split(" ")
+    try:
+        auth: aiohttp.BasicAuth = aiohttp.BasicAuth.decode(authorization)
+    except ValueError as error:
+        raise virtool.errors.AuthError(error.message)
 
-    if len(split) != 2 or split[0] != "Basic":
-        raise virtool.errors.AuthError("Malformed authorization header")
-
-    decoded = base64.b64decode(split[1]).decode("utf-8")
-
-    user_id, key = decoded.split(":")
-
-    return user_id, key
+    return auth.login, auth.password
 
 
 async def authenticate_with_key(req: web.Request, handler: Callable):
