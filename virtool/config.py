@@ -8,6 +8,7 @@ import click
 import psutil
 import uvloop
 
+import jobs_api_process
 import virtool.app
 import virtool.db.mongo
 import virtool.db.utils
@@ -252,4 +253,5 @@ def start_runner(ctx, job_list, mem, proc, temp_path):
 @cli.command("jobsAPI")
 @click.pass_context
 def start_jobs_api(ctx):
-    ...
+    logger.info("Starting jobs API process")
+    asyncio.get_event_loop().run_until_complete(jobs_api_process.run(**ctx.obj))
