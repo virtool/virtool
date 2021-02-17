@@ -421,7 +421,7 @@ async def test(error, snapshot, spawn_client, resp_is):
 
 
 @pytest.mark.parametrize("error", [None, 404])
-async def test_delete_index(spawn_client, error):
+async def test_delete_index(spawn_job_client, error):
     index_id = "index1"
     index_document = {
         "_id": index_id,
@@ -435,7 +435,7 @@ async def test_delete_index(spawn_client, error):
         }
     } for _id in ("history1", "history2", "history3")]
 
-    client = await spawn_client(authorize=True)
+    client = await spawn_job_client(authorize=True, enable_api=True)
     indexes = client.db.indexes
     history = client.db.history
 
