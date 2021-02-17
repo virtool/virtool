@@ -19,6 +19,7 @@ from virtool.api.response import unauthorized
 from virtool.db.utils import get_one_field
 from virtool.http.client import JobClient, UserClient
 from virtool.jobs.utils import JobRights
+from virtool.utils import hash_key
 
 AUTHORIZATION_PROJECTION = [
     "user",
@@ -116,12 +117,21 @@ async def authenticate_with_api_key(req, handler, user_id: str, key: str):
     return await handler(req)
 
 
-async def authenticate_with_job_key(req: web.Request, handler, job_id: str, key: str):
+async def authenticate_with_job_key(req: web.Request, handler: Callable, job_id: str, key: str):
+    """
+    Authenticate the request with a job ID and secure key.
+
+    :param req: the request to authenticate
+    :param handler: the handler to call the request with when authentication succeeds
+    :param job_id: the job to authenticate against
+    :param key: the job key to authenticate with
+
+    """
     db = req.app["db"]
 
     document = await db.jobs.find_one({
         "_id": job_id,
-        "key": key
+        "key": hash_key(key)
     })
 
     if not document:
