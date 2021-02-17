@@ -14,7 +14,7 @@ import virtool.references.db
 import virtool.utils
 from virtool.api.response import bad_request, conflict, insufficient_rights, json_response, \
     not_found, no_content
-from virtool.db.core import Collection
+from virtool.db.core import DB
 from virtool.jobs.utils import JobRights
 
 routes = virtool.http.routes.Routes()
@@ -241,7 +241,7 @@ async def find_history(req):
     return json_response(data)
 
 
-async def reset_history(history: Collection, index_id: str):
+async def reset_history(db: DB, index_id: str):
     """
     Set the index.id and index.version fields with the given index id to 'unbuilt'.
 
@@ -250,11 +250,11 @@ async def reset_history(history: Collection, index_id: str):
     """
     query = {
         "_id": {
-            "$in": await history.distinct("_id", {"index.id": index_id})
+            "$in": await db.history.distinct("_id", {"index.id": index_id})
         }
     }
 
-    return await history.update_many(query, {
+    return await db.history.update_many(query, {
         "$set": {
             "index": {
                 "id": "unbuilt",
