@@ -22,14 +22,13 @@ class TestJobAuthentication:
 
         """
         key = "bar"
-        hashed_key = hash_key(key)
 
-        client = await spawn_client(auth=BasicAuth("job-foo", hashed_key))
+        client = await spawn_client(auth=BasicAuth("job-foo", key))
         client.settings["enable_api"] = True
 
         await dbi.jobs.insert_one({
             "_id": "foo",
-            "key": hashed_key
+            "key": hash_key(key)
         })
 
         resp = await client.get("/api")
@@ -42,14 +41,13 @@ class TestJobAuthentication:
 
         """
         key = "bar"
-        hashed_key = hash_key(key)
 
         client = await spawn_client(auth=BasicAuth("job-foo", "no_good"))
         client.settings["enable_api"] = True
 
         await dbi.jobs.insert_one({
             "_id": "foo",
-            "key": hashed_key
+            "key": hash_key(key)
         })
 
         resp = await client.get("/api")
@@ -63,14 +61,13 @@ class TestJobAuthentication:
 
         """
         key = "bar"
-        hashed_key = hash_key(key)
 
-        client = await spawn_client(auth=BasicAuth("job-foo", hashed_key))
+        client = await spawn_client(auth=BasicAuth("job-foo", key))
         client.settings["enable_api"] = True
 
         await dbi.jobs.insert_one({
             "_id": "foo",
-            "key": hashed_key
+            "key": hash_key(key)
         })
 
         resp = await client.get("/api/samples")
