@@ -13,7 +13,7 @@ import virtool.jobs.db
 import virtool.references.db
 import virtool.utils
 from virtool.api.response import bad_request, conflict, insufficient_rights, json_response, \
-    not_found
+    not_found, no_content
 from virtool.db.core import Collection
 from virtool.jobs.utils import JobRights
 
@@ -241,7 +241,7 @@ async def find_history(req):
     return json_response(data)
 
 
-def reset_history(history: Collection, index_id: str):
+async def reset_history(history: Collection, index_id: str):
     """
     Set the index.id and index.version fields with the given index id to 'unbuilt'.
 
@@ -265,7 +265,8 @@ def reset_history(history: Collection, index_id: str):
 
 
 @routes.delete("/api/indexes/{index_id}", jobs_only=True)
-def delete_index(req: aiohttp.web.Request):
+async def delete_index(req: aiohttp.web.Request):
+    """Delete the index with the given id and reset history relating to that index."""
     index_id = req.match_info["index_id"]
     db = req.app["db"]
     indexes: Collection = db.indexes
@@ -275,3 +276,7 @@ def delete_index(req: aiohttp.web.Request):
     if delete_result.deleted_count != 1:
         # Document could not be deleted.
         return not_found(f"There is no index with id: {index_id}.")
+
+    await reset_history(db.history, index_id)
+
+    return no_content()
