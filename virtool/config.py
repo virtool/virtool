@@ -250,5 +250,6 @@ def start_runner(ctx, job_list, mem, proc, temp_path):
 
 
 @cli.command("jobsAPI")
-def start_jobs_api():
+@click.pass_context
+def start_jobs_api(ctx):
     ...
