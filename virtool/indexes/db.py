@@ -10,7 +10,6 @@ import pymongo
 import virtool.api.utils
 import virtool.history.db
 import virtool.utils
-from virtool.db.core import DB
 
 PROJECTION = [
     "_id",
@@ -229,7 +228,7 @@ async def get_unbuilt_stats(db, ref_id: Union[str, None] = None) -> dict:
     }
 
 
-async def reset_history(db: DB, index_id: str):
+async def reset_history(db, index_id: str):
     """
     Set the index.id and index.version fields with the given index id to 'unbuilt'.
 
