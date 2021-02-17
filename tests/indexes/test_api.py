@@ -439,6 +439,10 @@ async def test_delete_index(spawn_job_client, error):
     indexes = client.db.indexes
     history = client.db.history
 
+    test_job = await client.db.jobs.find_one({"_id": "test_job"})
+    assert test_job["_id"] == "test_job"
+    assert test_job["key"] == "test_key"
+
     if error != 404:
         await indexes.insert_one(index_document)
         await history.insert_many(mock_history_documents)

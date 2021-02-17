@@ -201,8 +201,9 @@ def spawn_job_client(
         client.db = dbi
 
         # Enable the API in the settings.
-        client.settings = test_client.settings
-        client.settings["enable_api"] = True
+        if enable_api:
+            client.settings = test_client.settings
+            client.settings["enable_api"] = True
 
         # Set the `AUTHORIZATION` header before each request.
         client.delete = job_authenticated(client.delete, job_id, key)
