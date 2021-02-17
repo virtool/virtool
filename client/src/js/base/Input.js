@@ -132,7 +132,12 @@ export const PasswordInput = props => {
     return (
         <InputContainer align="right">
             <Input type={show ? "text" : "password"} {...props} />
-            <InputIcon name={show ? "eye-slash" : "eye"} onClick={() => {setShow(prevShow => !prevShow)}} />
+            <InputIcon
+                name={show ? "eye-slash" : "eye"}
+                onClick={() => {
+                    setShow(prevShow => !prevShow);
+                }}
+            />
         </InputContainer>
     );
 };
