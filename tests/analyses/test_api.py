@@ -283,7 +283,7 @@ async def test_upload_file(error, files, resp_is, spawn_client, static_time, sna
         })
 
     if error == 422:
-        resp = await client.post_form(f"/api/analyses/foobar/files?format=fasta", data=files)
+        resp = await client.post_form("/api/analyses/foobar/files?format=fasta", data=files)
     else:
         resp = await client.post_form(f"/api/analyses/foobar/files?name=reference.fa&format={format_}", data=files)
 
@@ -330,7 +330,7 @@ async def test_download_file(exists, files, spawn_client, tmpdir):
             "files": []
         })
 
-    await client.post_form(f"/api/analyses/foobar/files?name=reference.fa&format=fasta", data=files)
+    await client.post_form("/api/analyses/foobar/files?name=reference.fa&format=fasta", data=files)
 
     resp = await client.get("/api/analyses/foobar/files/1")
 
