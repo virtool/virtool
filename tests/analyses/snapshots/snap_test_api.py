@@ -158,3 +158,8 @@ snapshots['test_upload_file[uvloop-None] 1'] = {
     'size': 20466,
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
+
+snapshots['test_download_file[uvloop-False] 1'] = {
+    'id': 'not_found',
+    'message': 'Not found'
+}

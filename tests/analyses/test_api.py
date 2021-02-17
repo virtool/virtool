@@ -311,7 +311,7 @@ async def test_upload_file(error, files, resp_is, spawn_client, static_time, sna
 
 
 @pytest.mark.parametrize("exists", [True, False])
-async def test_download_file(exists, files, spawn_client, tmpdir):
+async def test_download_file(exists, files, spawn_client, snapshot, tmpdir):
     """
     Test that you can properly download an analysis result file using details from the `analysis_files` SQL table
 
@@ -320,7 +320,7 @@ async def test_download_file(exists, files, spawn_client, tmpdir):
 
     client.app["settings"]["data_path"] = str(tmpdir)
 
-    if not exists:
+    if exists:
         await client.db.analyses.insert_one({
             "_id": "foobar",
             "ready": True,
@@ -334,7 +334,10 @@ async def test_download_file(exists, files, spawn_client, tmpdir):
 
     resp = await client.get("/api/analyses/foobar/files/1")
 
-    assert resp.status == 200 if not exists else 404
+    assert resp.status == 200 if exists else 404
+
+    if not exists:
+        snapshot.assert_match(await resp.json())
 
 
 @pytest.mark.parametrize("error", [None, "400", "403", "404_analysis", "404_sequence", "409_workflow", "409_ready"])
