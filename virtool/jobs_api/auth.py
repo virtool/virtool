@@ -15,7 +15,14 @@ PUBLIC_ROUTES = [("PATCH", "/api/jobs")]
 
 @aiohttp.web.middleware
 def job_authentication(request: aiohttp.web.Request, handler: RouteHandler):
-    """Ensure that the request was sent as part of an active job."""
+    """
+    Ensure that the request was sent as part of an active job.
+
+    Sends status codes:
+
+    *401 NOT AUTHORIZED*
+        When the `Authorization` header is invalid, or missing.
+    """
     if (request.method, request.path) in PUBLIC_ROUTES:
         return await handler(request)
 
