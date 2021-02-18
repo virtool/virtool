@@ -26,12 +26,25 @@ async def test_public_routes_are_public(spawn_job_client):
     assert response.status == 200
 
 
-async def test_unauthorized_when_header_missing():
-    assert False
+async def test_unauthorized_when_header_missing(spawn_job_client):
+    client = await spawn_job_client(authorize=False, add_route_table=test_routes)
+
+    response = await client.get("/api/not_public")
+
+    assert response.status == 401
 
 
-async def test_unauthorized_when_header_invalid():
-    assert False
+async def test_unauthorized_when_header_invalid(spawn_job_client):
+    client = await spawn_job_client(authorize=False, add_route_table=test_routes)
+
+    response = await client.get("/api/not_public", headers={
+        "Authorization": "Basic job-not_a_job_id:not_a_key",
+        "content-type": "application/json",
+    })
+
+    print(response)
+    raise
+    assert response.status == 401
 
 
 async def test_authorized_when_header_is_valid():

@@ -5,11 +5,6 @@ import aiohttp.web
 import aiojobs.aiohttp
 
 import virtool.http.accept
-import virtool.http.auth
-import virtool.http.csp
-import virtool.http.errors
-import virtool.http.proxy
-import virtool.http.query
 import virtool.jobs_api.auth
 import virtool.logs
 import virtool.startup
@@ -19,6 +14,7 @@ from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_
 async def create_app(**config):
     """Crate the :class:`aiohttp.web.Application` for the jobs API process."""
     middlewares = [
+        virtool.http.accept.middleware,
         virtool.jobs_api.auth.middleware,
     ]
 

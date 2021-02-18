@@ -65,7 +65,7 @@ def decode_authorization(authorization: str) -> Tuple[str, str]:
     try:
         auth: aiohttp.BasicAuth = aiohttp.BasicAuth.decode(authorization)
     except ValueError as error:
-        raise virtool.errors.AuthError(error.message)
+        raise virtool.errors.AuthError(str(error))
 
     return auth.login, auth.password
 
