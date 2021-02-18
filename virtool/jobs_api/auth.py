@@ -18,6 +18,10 @@ def job_authentication(request: aiohttp.web.Request, handler: RouteHandler):
     """
     Ensure that the request was sent as part of an active job.
 
+    Uses HTTP basic access authentication, where the authorization header format is:
+
+        Authorization: Basic job-{job_id}:{key}
+
     Sends status codes:
 
     *401 NOT AUTHORIZED*
@@ -29,7 +33,7 @@ def job_authentication(request: aiohttp.web.Request, handler: RouteHandler):
     try:
         auth_header = request.headers["AUTHORIZATION"]
         holder_id, key = aiohttp.BasicAuth.decode(auth_header)
-       
+
         job_prefix, job_id = holder_id.split("-")
         if job_prefix != "job":
             raise ValueError()
