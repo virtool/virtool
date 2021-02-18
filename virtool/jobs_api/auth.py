@@ -28,16 +28,22 @@ def job_authentication(request: aiohttp.web.Request, handler: RouteHandler):
 
     try:
         auth_header = request.headers["AUTHORIZATION"]
-        job_id, key = aiohttp.BasicAuth.decode(auth_header)
+        holder_id, key = aiohttp.BasicAuth.decode(auth_header)
+       
+        job_prefix, job_id = holder_id.split("-")
+        if job_prefix != "job":
+            raise ValueError()
     except KeyError:
         return unauthorized("No authorization header.")
+    except ValueError:
+        return unauthorized("Invalid authorization header.")
 
     db = request.app["db"]
 
     job = await db.jobs.find_one({"_id": job_id, "key": hash_key(key)})
 
     if not job:
-        return unauthorized(f"Invalid authorization header.")
+        return unauthorized("Invalid authorization header.")
 
     try:
         rights = job["rights"]
