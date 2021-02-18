@@ -1,11 +1,9 @@
 import asyncio
 import concurrent.futures
-import json
 import logging
 import signal
 import sys
 import typing
-from typing import Sequence
 
 import aiohttp.client
 import aiohttp.web
@@ -37,7 +35,7 @@ import virtool.tasks.utils
 import virtool.utils
 import virtool.version
 from virtool.dispatcher.dispatcher import Dispatcher
-from virtool.dispatcher.events import DispatcherSQLListener
+from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.client import RedisDispatcherClient
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.types import App
@@ -148,7 +146,7 @@ async def init_dispatcher(app: aiohttp.web_app.Application):
 
     channel, = await app["redis"].subscribe("channel:dispatch")
 
-    event_watcher = DispatcherSQLListener(app["dispatcher_interface"].enqueue_change)
+    event_watcher = DispatcherSQLEvents(app["dispatcher_interface"].enqueue_change)
 
     app["dispatcher"] = Dispatcher(
         app["pg"],
