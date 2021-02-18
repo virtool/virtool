@@ -1,4 +1,5 @@
 import asyncio
+from typing import Tuple
 
 import aiohttp.web
 import aiojobs.aiohttp
@@ -14,7 +15,9 @@ import virtool.startup
 from virtool.app import create_app_runner, wait_for_restart, wait_for_shutdown
 
 
-async def start_aiohttp_server(host: str, port: int, **config):
+async def start_aiohttp_server(
+        host: str, port: int, **config
+) -> Tuple[aiohttp.web.Application, aiohttp.web.AppRunner]:
     """
     Start the aiohttp server
 
