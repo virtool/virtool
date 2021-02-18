@@ -57,7 +57,7 @@ class Fetchers:
 
 class Dispatcher:
 
-    def __init__(self, pg: AsyncEngine, db: DB, listener: AbstractDispatcherListener):
+    def __init__(self, pg: AsyncEngine, db: DB, listener: RedisDispatcherListener):
         #: A dict of all active connections.
         self.db = db
         self._listener = listener
