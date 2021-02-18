@@ -14,7 +14,7 @@ PUBLIC_ROUTES = [("PATCH", "/api/jobs")]
 
 
 @aiohttp.web.middleware
-def middleware(request: aiohttp.web.Request, handler: RouteHandler):
+async def middleware(request: aiohttp.web.Request, handler: RouteHandler):
     """
     Ensure that the request was sent as part of an active job.
 
