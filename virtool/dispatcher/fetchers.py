@@ -3,32 +3,73 @@ Fetchers provide a get() method
 """
 from abc import ABC, abstractmethod
 from asyncio import gather
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import List, Optional, Tuple
 
-from sqlalchemy import select
+from sqlalchemy import inspect, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.indexes.db
 import virtool.references.db
 import virtool.samples.db
-from virtool.samples.db import attach_labels
-from virtool.types import Projection
 from virtool.db.core import Collection, DB
+from virtool.dispatcher.change import Change
 from virtool.dispatcher.connection import Connection
+from virtool.dispatcher.operations import DELETE
 from virtool.labels.db import attach_sample_count
 from virtool.labels.models import Label
+from virtool.samples.db import attach_labels
+from virtool.types import Projection
+from virtool.uploads.models import Upload
 from virtool.utils import base_processor
+
+
+def object_as_dict(obj):
+    return {c.key: getattr(obj, c.key)
+            for c in inspect(obj).mapper.column_attrs}
 
 
 class AbstractFetcher(ABC):
 
     @abstractmethod
-    def fetch(self, connections: List[Connection], id_list: Sequence[Union[int, str]]):
+    async def prepare(self, change: Change, connections: List[Connection]):
         """
         Fetch all records with IDs matching the passed ``id_list`` and are allowed to be viewed
         by the ``connection``
         """
         pass
+
+    async def fetch(
+            self,
+            change: Change,
+            connections: List[Connection]
+    ):
+        """
+        Return connection-message pairs for the resources with IDs matching the passed ``id_list``
+        as prepared by :meth:``prepare``.
+
+        Returns deletion messages by default unless the attribute :attr:`auto_delete` is set to
+        `False`.
+
+        :param change: the change causing the dispatch
+        :param connections: the authenticated connections from the dispatcher
+        :return: connection-message pairs
+
+        """
+        if getattr(self, "auto_delete", True):
+            if change.operation == DELETE:
+                message = {
+                    "interface": change.interface,
+                    "operation": DELETE,
+                    "data": change.id_list
+                }
+
+                for connection in connections:
+                    yield connection, message
+
+                return
+
+        async for connection, message in self.prepare(change, connections):
+            yield connection, message
 
 
 class SimpleMongoFetcher(AbstractFetcher):
@@ -37,50 +78,50 @@ class SimpleMongoFetcher(AbstractFetcher):
         self._collection = collection
         self._projection = projection
 
-    async def fetch(self, connections: List[Connection], id_list: Sequence[str]):
-        """
-        Fetch all documents with IDs matching the passed ``id_list`` and are allowed to be viewed
-        by the ``connection``
-        """
-        documents = list()
+        self.auto_delete = True
 
-        cursor = self._collection.find({"_id": {"$in": id_list}}, projection=self._projection)
+    async def prepare(self, change: Change, connections: List[Connection]):
+        cursor = self._collection.find(
+            {"_id": {"$in": change.id_list}},
+            projection=self._projection
+        )
 
         async for document in cursor:
-            documents.append(base_processor(document))
-
-        dispatches = list()
-        for document in documents:
-            user = document.get("user", {}).get("id")
             for connection in connections:
-                if user is None or user == connection.user_id:
-                    dispatches.append((connection, document))
-
-        return dispatches
+                yield connection, {
+                    "interface": change.interface,
+                    "operation": change.operation,
+                    "data": base_processor(document)
+                }
 
 
 class IndexesFetcher(AbstractFetcher):
 
-    def __init__(self, db: DB):
+    def __init__(self, db):
         self._db = db
 
-    async def fetch(self, connections: List[Connection], id_list: Sequence[str]):
+    async def prepare(
+            self,
+            change: Change,
+            connections: List[Connection]
+    ):
         documents = await self._db.indexes.find(
-            {"_id": {"$in": id_list}},
+            {"_id": {"$in": change.id_list}},
             projection=virtool.indexes.db.PROJECTION
         ).to_list(None)
 
         await gather(*[virtool.indexes.db.processor(self._db, d) for d in documents])
 
-        dispatches = list()
-
         for document in documents:
             user = document["user"]["id"]
+
             for connection in connections:
                 if user == connection.user_id:
-                    dispatches.append((connection, document))
-
-        return dispatches
+                    yield connection, {
+                        "interface": change.interface,
+                        "operation": change.operation,
+                        "data": document
+                    }
 
 
 class LabelsFetcher(AbstractFetcher):
@@ -89,18 +130,30 @@ class LabelsFetcher(AbstractFetcher):
         self._pg = pg
         self._db = db
 
-    async def fetch(self, connections: List[Connection], id_list: Sequence[int]):
+    async def prepare(self, change: Change, connections: List[Connection]):
+        """
+        Prepare label connection-message pairs to dispatch by WebSocket.
+
+        Attach sample counts to the outgoing messages.
+
+        :param change: the change that is triggering the dispatch
+        :param connections: the connections to dispatch to
+
+        """
         async with AsyncSession(self._pg) as session:
-            records = await session.execute(select(Label).filter(Label.id.in_(id_list)))
+            result = await session.execute(select(Label).filter(Label.id.in_(change.id_list)))
+
+        records = [object_as_dict(record) for record in result.scalars().all()]
 
         await gather(*[attach_sample_count(self._db, record) for record in records])
-        dispatches = list()
 
         for record in records:
             for connection in connections:
-                dispatches.append((connection, record))
-
-        return dispatches
+                yield connection, {
+                    "interface": change.interface,
+                    "operation": change.operation,
+                    "data": record
+                }
 
 
 class ReferencesFetcher(AbstractFetcher):
@@ -108,15 +161,25 @@ class ReferencesFetcher(AbstractFetcher):
     def __init__(self, db: DB):
         self._db = db
 
-    async def fetch(
+    async def prepare(
             self,
-            connections: List[Connection],
-            id_list: Sequence[str]
-    ) -> List[Tuple[Connection, dict]]:
+            change: Change,
+            connections: List[Connection]
+    ):
+        """
+        Prepare reference connection-message pairs to dispatch by WebSocket.
 
+        Run the data through the reference processor, thereby attaching related data from other
+        collections. Only sends message on connections that have read rights on the associated
+        reference.
+
+        :param change: the change that is triggering the dispatch
+        :param connections: the connections to dispatch to
+
+        """
         documents = await self._db.references.find({
             "_id": {
-                "$in": id_list
+                "$in": change.id_list
             }
         },
             projection=virtool.references.db.PROJECTION
@@ -126,17 +189,17 @@ class ReferencesFetcher(AbstractFetcher):
             *[virtool.references.db.processor(self._db, d) for d in documents]
         )
 
-        dispatches = list()
-
         for document in documents:
-            users = {user["id"] for user in document["users"]}
-            groups = {group["id"] for group in document["groups"]}
+            user_ids = {user["id"] for user in document["users"]}
+            group_ids = {group["id"] for group in document["groups"]}
 
             for connection in connections:
-                if connection.user_id in users or set(connection.groups).union(set(groups)):
-                    dispatches.append((connection, document))
-
-        return dispatches
+                if connection.user_id in user_ids or set(connection.groups).union(set(group_ids)):
+                    yield connection, {
+                        "interface": change.interface,
+                        "operation": change.operation,
+                        "data": document
+                    }
 
 
 class SamplesFetcher(AbstractFetcher):
@@ -145,21 +208,50 @@ class SamplesFetcher(AbstractFetcher):
         self._pg = pg
         self._db = db
 
-    async def fetch(self, connections: List[Connection], id_list: Sequence[str]):
+    async def prepare(self, change: Change, connections: List[Connection]):
         documents = await self._db.samples.find(
-            {"_id": {"$in": id_list}},
+            {"_id": {"$in": change.id_list}},
             projection=virtool.samples.db.PROJECTION
         ).to_list(None)
 
         await gather(*[attach_labels(self._pg, d) for d in documents])
 
-        dispatches = list()
-
         for document in documents:
             user = document["user"]["id"]
             group = document["group"]
+
             for connection in connections:
                 if connection.user_id == user or group in connection.groups:
-                    dispatches.append((connection, document))
+                    yield connection, {
+                        "interface": change.interface,
+                        "operation": change.operation,
+                        "data": document
+                    }
 
-        return dispatches
+
+class UploadsFetcher(AbstractFetcher):
+
+    def __init__(self, pg: AsyncEngine):
+        self._pg = pg
+        self._interface = "uploads"
+
+    async def prepare(self, change: Change, connections: List[Connection]):
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(select(Upload).filter(Upload.id.in_(change.id_list)))
+
+        records = list(result.scalars())
+
+        for record in records:
+            for connection in connections:
+                if record.removed:
+                    yield connection, {
+                        "interface": change.interface,
+                        "operation": DELETE,
+                        "data": change.id_list
+                    }
+                else:
+                    yield connection, {
+                        "interface": change.interface,
+                        "operation": change.operation,
+                        "data": object_as_dict(record)
+                    }
