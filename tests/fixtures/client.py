@@ -182,7 +182,8 @@ def spawn_job_client(
             redis_connection_string=redis_connection_string,
         )
 
-        app.add_routes(add_route_table)
+        if add_route_table:
+            app.add_routes(add_route_table)
 
         client = await aiohttp_client(app, auth=auth)
         client.db = dbi

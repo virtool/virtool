@@ -33,14 +33,15 @@ async def middleware(request: aiohttp.web.Request, handler: RouteHandler):
 
     try:
         auth_header = request.headers["AUTHORIZATION"]
-        holder_id, key = aiohttp.BasicAuth.decode(auth_header)
+        basic_auth = aiohttp.BasicAuth.decode(auth_header)
+        holder_id, key = basic_auth.login, basic_auth.password
 
         job_prefix, job_id = holder_id.split("-")
         if job_prefix != "job":
             raise ValueError()
     except KeyError:
         return unauthorized("No authorization header.")
-    except ValueError:
+    except ValueError as value_error:
         return unauthorized("Invalid authorization header.")
 
     db = request.app["db"]
