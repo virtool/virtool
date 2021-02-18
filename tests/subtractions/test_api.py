@@ -41,7 +41,7 @@ async def test_upload(name_exists, tmpdir, spawn_client, resp_is):
         "_id": "foo",
         "name": "Foo"
     }
-    
+
     if name_exists:
         subtraction["files"] = [
             {
