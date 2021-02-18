@@ -1,5 +1,6 @@
 import aioredis
 import pytest
+from aioredis import Redis
 
 
 @pytest.fixture
@@ -8,7 +9,7 @@ async def redis_connection_string(request):
 
 
 @pytest.fixture
-async def redis(redis_connection_string):
+async def redis(redis_connection_string) -> Redis:
     client = await aioredis.create_redis_pool(redis_connection_string)
 
 

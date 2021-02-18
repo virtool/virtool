@@ -1,6 +1,14 @@
 """
 Constants for dispatcher operation types.
 """
-INSERT = "insert"
-UPDATE = "update"
-DELETE = "delete"
+from typing import Literal
+
+Operation = Literal[
+    "insert",
+    "update",
+    "delete"
+]
+
+INSERT: Operation = "insert"
+UPDATE: Operation = "update"
+DELETE: Operation = "delete"
