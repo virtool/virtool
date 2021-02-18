@@ -251,7 +251,24 @@ def start_runner(ctx, job_list, mem, proc, temp_path):
 
 
 @cli.command("jobsAPI")
+@click.option(
+    "--host",
+    default="localhost",
+    help="The host to listen on",
+    type=str
+)
+@click.option(
+    "--port",
+    default=9950,
+    help="The port to listen on",
+    type=int
+)
 @click.pass_context
-def start_jobs_api(ctx):
+def start_jobs_api(ctx, port, host):
+    """Start a Virtool Jobs API server"""
     logger.info("Starting jobs API process")
-    asyncio.get_event_loop().run_until_complete(virtool.jobs_api_process.run(**ctx.obj))
+    asyncio.get_event_loop().run_until_complete(
+        virtool.jobs_api_process.run(
+            **dict(host=host, port=port, **ctx.obj)
+        )
+    )

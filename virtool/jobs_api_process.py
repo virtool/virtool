@@ -1,8 +1,7 @@
 import asyncio
-import logging
 
-import aiohttp
-import aiojobs
+import aiohttp.web
+import aiojobs.aiohttp
 
 import virtool.http.accept
 import virtool.http.auth
@@ -10,13 +9,12 @@ import virtool.http.csp
 import virtool.http.errors
 import virtool.http.proxy
 import virtool.http.query
+import virtool.logs
 import virtool.startup
-from virtool.app import create_app_runner
-
-logger = logging.getLogger(__name__)
+from virtool.app import create_app_runner, wait_for_restart, wait_for_shutdown
 
 
-async def start_aiohttp_server(host: str, port: int, config: dict):
+async def start_aiohttp_server(host: str, port: int, **config):
     middlewares = [
         virtool.http.accept.middleware,
         virtool.http.auth.middleware,
@@ -36,6 +34,7 @@ async def start_aiohttp_server(host: str, port: int, config: dict):
         virtool.startup.init_settings,
         virtool.startup.init_postgres,
         virtool.startup.init_version,
+        virtool.startup.init_events,
     ])
 
     app["config"] = config
@@ -43,11 +42,18 @@ async def start_aiohttp_server(host: str, port: int, config: dict):
 
     runner = await create_app_runner(app, host, port)
 
-    return runner
+    return app, runner
 
 
-async def run(**kwargs):
-    logger.info("foo")
-    runner = await start_aiohttp_server("localhost", 5000, kwargs)
+async def run(dev: bool, verbose: bool, **config):
+    logger = virtool.logs.configure_jobs_api_server(dev, verbose)
+    app, runner = await start_aiohttp_server(**config)
 
-    await asyncio.sleep(10)
+    _, pending = await asyncio.wait(
+        [wait_for_restart(runner, app["events"]),
+         wait_for_shutdown(runner, app["events"])],
+        return_when=asyncio.FIRST_COMPLETED,
+    )
+
+    for task in pending:
+        task.cancel()
