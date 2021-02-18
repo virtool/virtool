@@ -3,7 +3,7 @@ Fetchers provide a get() method
 """
 from abc import ABC, abstractmethod
 from asyncio import gather
-from typing import List, Optional, Tuple
+from typing import AsyncIterable, Dict, List, Optional, Tuple
 
 from sqlalchemy import inspect, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -31,7 +31,11 @@ def object_as_dict(obj):
 class AbstractFetcher(ABC):
 
     @abstractmethod
-    async def prepare(self, change: Change, connections: List[Connection]):
+    async def prepare(
+            self,
+            change: Change,
+            connections: List[Connection]
+    ) -> AsyncIterable[Tuple[Connection, dict]]:
         """
         Fetch all records with IDs matching the passed ``id_list`` and are allowed to be viewed
         by the ``connection``
@@ -78,21 +82,28 @@ class SimpleMongoFetcher(AbstractFetcher):
         self._collection = collection
         self._projection = projection
 
-        self.auto_delete = True
-
     async def prepare(self, change: Change, connections: List[Connection]):
+        """
+        Prepare and yield websocket message-connection pairs based on ``change``.
+
+        This fetcher will allow the message to be distributed to all passed ``connections``. There
+        is no right or permission checking.
+
+        """
         cursor = self._collection.find(
             {"_id": {"$in": change.id_list}},
             projection=self._projection
         )
 
         async for document in cursor:
+            message = {
+                "interface": change.interface,
+                "operation": change.operation,
+                "data": base_processor(document)
+            }
+
             for connection in connections:
-                yield connection, {
-                    "interface": change.interface,
-                    "operation": change.operation,
-                    "data": base_processor(document)
-                }
+                yield connection, message
 
 
 class IndexesFetcher(AbstractFetcher):
@@ -105,23 +116,29 @@ class IndexesFetcher(AbstractFetcher):
             change: Change,
             connections: List[Connection]
     ):
+        """
+        Prepare index websocket message-connection pairs for dispatch.
+
+        Calls indexes processor to add additional fields to the outgoing message.
+
+        :param change: the change triggering the dispatch
+        :param connections: the current authenticated connections in the dispatcher
+
+        """
         documents = await self._db.indexes.find(
             {"_id": {"$in": change.id_list}},
             projection=virtool.indexes.db.PROJECTION
         ).to_list(None)
 
-        await gather(*[virtool.indexes.db.processor(self._db, d) for d in documents])
+        documents = await gather(*[virtool.indexes.db.processor(self._db, d) for d in documents])
 
         for document in documents:
-            user = document["user"]["id"]
-
             for connection in connections:
-                if user == connection.user_id:
-                    yield connection, {
-                        "interface": change.interface,
-                        "operation": change.operation,
-                        "data": document
-                    }
+                yield connection, {
+                    "interface": change.interface,
+                    "operation": change.operation,
+                    "data": document
+                }
 
 
 class LabelsFetcher(AbstractFetcher):
@@ -236,6 +253,17 @@ class UploadsFetcher(AbstractFetcher):
         self._interface = "uploads"
 
     async def prepare(self, change: Change, connections: List[Connection]):
+        """
+        Prepare reference connection-message pairs to dispatch by WebSocket.
+
+        Run the data through the reference processor, thereby attaching related data from other
+        collections. Only sends message on connections that have read rights on the associated
+        reference.
+
+        :param change: the change that is triggering the dispatch
+        :param connections: the connections to dispatch to
+
+        """
         async with AsyncSession(self._pg) as session:
             result = await session.execute(select(Upload).filter(Upload.id.in_(change.id_list)))
 
