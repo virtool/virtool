@@ -1,5 +1,8 @@
 import asyncio
-import os
+import logging
+from pathlib import Path
+
+import aiohttp.web
 
 import virtool.api.utils
 import virtool.db.utils
@@ -9,10 +12,13 @@ import virtool.samples.utils
 import virtool.subtractions.db
 import virtool.subtractions.utils
 import virtool.utils
+import virtool.uploads.utils
 import virtool.validators
-from virtool.api.response import bad_request, json_response, no_content, not_found
+from virtool.api.response import bad_request, invalid_query, json_response, no_content, not_found
 from virtool.jobs.utils import JobRights
 from virtool.subtractions.utils import FILES
+
+logger = logging.getLogger("subtractions")
 
 routes = virtool.http.routes.Routes()
 
@@ -173,20 +179,18 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 
 
-@routes.post("/api/subtractions/{subtraction_id}/files", permission="modify_subtraction", schema={
-    "name": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "empty": False,
-        "required": True
-    }
-})
+@routes.post("/api/subtractions/{subtraction_id}/files", permission="modify_subtraction")
 async def upload(req):
     db = req.app["db"]
-    data = req["data"]
 
     subtraction_id = req.match_info["subtraction_id"]
-    file_name = data["name"]
+
+    errors = virtool.uploads.utils.naive_validator(req)
+
+    if errors:
+        return invalid_query(errors)
+
+    file_name = req.query.get("name")
 
     if file_name not in FILES:
         return bad_request("Unaccepted subtraction file name")
@@ -194,11 +198,17 @@ async def upload(req):
     if await db.subtraction.count_documents({"_id": subtraction_id, "files.name": file_name}):
         return bad_request("File name already exists")
 
-    path = os.path.join(req.app["settings"]["data_path"], "subtractions", subtraction_id, file_name)
+    path = Path(req.app["settings"]["data_path"]) / "subtractions" / subtraction_id / file_name
+
+    try:
+        size = await virtool.uploads.utils.naive_writer(req, path)
+    except asyncio.CancelledError:
+        logger.debug(f"Subtraction file upload aborted: {file_name}")
+        return aiohttp.web.Response(status=499)
 
     file = {
         "name": file_name,
-        "size": virtool.utils.file_stats(path)["size"],
+        "size": size,
         "type": virtool.subtractions.utils.check_subtraction_file_type(file_name)
     }
 
@@ -208,7 +218,11 @@ async def upload(req):
         }
     })
 
-    return json_response(virtool.utils.base_processor(document))
+    headers = {
+        "Location": f"/api/subtractions/{subtraction_id}/files/{file_name}"
+    }
+
+    return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 
 
 @routes.patch("/api/subtractions/{subtraction_id}", permission="modify_subtraction", schema={
