@@ -2,6 +2,7 @@ import json
 
 import aiohttp
 import pytest
+from aiohttp.web_routedef import RouteTableDef
 
 import virtool.app
 import virtool.jobs_api.main
@@ -156,8 +157,9 @@ def spawn_job_client(
     """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
 
     async def _spawn_job_client(
-            authorize=False,
-            dev=False,
+            authorize: bool = False,
+            dev: bool = False,
+            add_route_table: RouteTableDef = None,
     ):
         # Create a test job to use for authentication.
         if authorize:
@@ -175,9 +177,12 @@ def spawn_job_client(
         app = await virtool.jobs_api.main.create_app(
             db_connection_string=test_db_connection_string,
             db_name=test_db_name,
+            dev=dev,
             postgres_connection_string=pg_connection_string,
             redis_connection_string=redis_connection_string,
         )
+
+        app.add_routes(add_route_table)
 
         client = await aiohttp_client(app, auth=auth)
         client.db = dbi
