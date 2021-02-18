@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 import virtool.api.utils
 import virtool.db.utils
@@ -11,6 +12,7 @@ import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, json_response, no_content, not_found
 from virtool.jobs.utils import JobRights
+from virtool.subtractions.utils import FILES
 
 routes = virtool.http.routes.Routes()
 
@@ -169,6 +171,44 @@ async def create(req):
     }
 
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
+
+
+@routes.post("/api/subtractions/{subtraction_id}/files", permission="modify_subtraction", schema={
+    "name": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+        "empty": False,
+        "required": True
+    }
+})
+async def upload(req):
+    db = req.app["db"]
+    data = req["data"]
+
+    subtraction_id = req.match_info["subtraction_id"]
+    file_name = data["name"]
+
+    if file_name not in FILES:
+        return bad_request("Unaccepted subtraction file name")
+
+    if await db.subtraction.count_documents({"_id": subtraction_id, "files.name": file_name}):
+        return bad_request("File name already exists")
+
+    path = os.path.join(req.app["settings"]["data_path"], "subtractions", subtraction_id, file_name)
+
+    file = {
+        "name": file_name,
+        "size": virtool.utils.file_stats(path)["size"],
+        "type": virtool.subtractions.utils.check_subtraction_file_type(file_name)
+    }
+
+    document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
+        "$push": {
+            "files": file
+        }
+    })
+
+    return json_response(virtool.utils.base_processor(document))
 
 
 @routes.patch("/api/subtractions/{subtraction_id}", permission="modify_subtraction", schema={
