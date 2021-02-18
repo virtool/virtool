@@ -1,5 +1,6 @@
 import json
 
+import aiohttp
 import pytest
 
 import virtool.app
@@ -55,29 +56,18 @@ class VirtoolTestClient:
 
 
 @pytest.fixture
-def spawn_client(
-        pg_connection_string,
-        pg_engine,
-        test_db_connection_string,
-        redis_connection_string,
-        request,
-        aiohttp_client,
-        test_motor,
+def create_app(
+        create_user,
         dbi,
+        pg_connection_string,
+        redis_connection_string,
+        test_db_connection_string,
         test_db_name,
-        pg_session,
-        create_user
 ):
-    async def func(
-            auth=None,
-            authorize=False,
-            administrator=False,
+    def _create_app(
             dev=False,
-            enable_api=False,
-            groups=None,
-            permissions=None
     ):
-        app = virtool.app.create_app({
+        return virtool.app.create_app({
             "dev": dev,
             "db_connection_string": test_db_connection_string,
             "redis_connection_string": redis_connection_string,
@@ -92,12 +82,32 @@ def spawn_client(
             "no_sentry": True
         })
 
-        cookies = {
-            "session_id": "dne"
-        }
+    return _create_app
+
+
+@pytest.fixture
+def spawn_client(
+        pg_engine,
+        request,
+        aiohttp_client,
+        test_motor,
+        dbi,
+        pg_session,
+        create_app,
+        create_user
+):
+    async def func(
+            auth=None,
+            authorize=False,
+            administrator=False,
+            dev=False,
+            enable_api=False,
+            groups=None,
+            permissions=None
+    ):
+        app = create_app(dev)
 
         user_document = create_user("test", administrator, groups, permissions)
-
         await dbi.users.insert_one(user_document)
 
         if authorize:
@@ -121,9 +131,87 @@ def spawn_client(
                 "session_id": "foobar",
                 "session_token": "bar"
             }
+        else:
+            cookies = {
+                "session_id": "dne"
+            }
 
         test_client = await aiohttp_client(app, auth=auth, cookies=cookies)
 
         return VirtoolTestClient(test_client)
 
     return func
+
+
+def authenticated(method, basic_auth_header):
+    """
+    Wraps the :func:`get`, :func:`post`, :func:`patch`, :func:`delete` methods of :class:`aiohttp.ClientSession`
+
+    Before calling the request method, an authentication header is added which will authenticate the request as if
+    it were being sent by a Virtool Job.
+
+    A document is also added to the database to authenticate against, using the `job_id` and `key` given.
+
+    :param method: The ID of the test job which will be created.
+    :param basic_auth_header: The `Authorization` header to use for authentication.
+    """
+
+    async def _authenticated(*args, headers=None, **kwargs):
+        if not headers:
+            headers = {}
+
+        headers["Authorization"] = basic_auth_header
+        return await method(*args, headers=headers, **kwargs)
+
+    return _authenticated
+
+
+@pytest.fixture
+def spawn_job_client(
+        dbi,
+        create_app,
+        create_user,
+        aiohttp_client,
+        spawn_client,
+):
+    """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
+
+    async def _spawn_job_client(
+            auth=None,
+            authorize=False,
+            administrator=False,
+            dev=False,
+            enable_api=False,
+            groups=None,
+            permissions=None
+    ):
+        # Create a test job to use for authentication.
+        job_id, key = "test_job", "test_key"
+        await dbi.jobs.insert_one({
+            "_id": job_id,
+            "key": hash_key(key),
+        })
+
+        # Create Basic Authentication header.
+        basic_auth = aiohttp.BasicAuth(login=f"job-{job_id}", password=key)
+        auth_header = basic_auth.encode()
+
+        # Spawn a test client.
+        test_client = await spawn_client(auth, authorize, administrator, dev, enable_api, groups, permissions)
+        client = test_client._test_client
+        client.db = dbi
+
+        # Enable the API in the settings.
+        if enable_api:
+            client.settings = test_client.settings
+            client.settings["enable_api"] = True
+
+        client.delete = authenticated(client.delete, auth_header)
+        client.get = authenticated(client.get, auth_header)
+        client.patch = authenticated(client.patch, auth_header)
+        client.post = authenticated(client.post, auth_header)
+        client.put = authenticated(client.put, auth_header)
+
+        return client
+
+    return _spawn_job_client
