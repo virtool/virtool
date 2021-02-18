@@ -35,7 +35,6 @@ async def create_app(**config):
         virtool.startup.init_redis,
         virtool.startup.init_settings,
         virtool.startup.init_postgres,
-        virtool.startup.init_version,
         virtool.startup.init_events,
     ])
 
