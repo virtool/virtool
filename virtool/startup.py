@@ -37,6 +37,8 @@ import virtool.tasks.utils
 import virtool.utils
 import virtool.version
 from virtool.dispatcher.dispatcher import Dispatcher
+from virtool.dispatcher.events import DispatcherSQLListener
+from virtool.dispatcher.client import RedisDispatcherClient
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.types import App
 
@@ -127,16 +129,11 @@ async def init_db(app: App):
     """
     logger.info("Connecting to MongoDB")
 
-    async def enqueue_change(interface: str, operation: str, id_list: Sequence[str]):
-        json_string = json.dumps({
-            "interface": interface,
-            "operation": operation,
-            "id_list": id_list
-        })
+    dispatcher_interface = RedisDispatcherClient(app["redis"])
+    await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
 
-        await app["redis"].publish("channel:dispatch", json_string)
-
-    app["db"] = await virtool.db.mongo.connect(app["config"], enqueue_change)
+    app["db"] = await virtool.db.mongo.connect(app["config"], dispatcher_interface.enqueue_change)
+    app["dispatcher_interface"] = dispatcher_interface
 
 
 async def init_dispatcher(app: aiohttp.web_app.Application):
@@ -150,6 +147,8 @@ async def init_dispatcher(app: aiohttp.web_app.Application):
     logger.info("Starting dispatcher")
 
     channel, = await app["redis"].subscribe("channel:dispatch")
+
+    event_watcher = DispatcherSQLListener(app["dispatcher_interface"].enqueue_change)
 
     app["dispatcher"] = Dispatcher(
         app["pg"],
