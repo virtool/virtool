@@ -91,3 +91,17 @@ def configure_runner(dev: bool, verbose: bool) -> Logger:
     logger.addHandler(handler)
 
     return logger
+
+
+def configure_jobs_api_server(dev: bool, verbose: bool):
+    logger = configure_base_logger(dev, verbose)
+
+    handler = logging.handlers.RotatingFileHandler(
+        "jobs_api_server.log", maxBytes=1000000, backupCount=3
+    )
+
+    handler.setFormatter(logging.Formatter(get_log_format(verbose), style="{"))
+
+    logger.addHandler(handler)
+
+    return logger
