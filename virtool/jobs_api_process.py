@@ -12,7 +12,7 @@ import virtool.http.proxy
 import virtool.http.query
 import virtool.logs
 import virtool.startup
-from virtool.app import create_app_runner, wait_for_restart, wait_for_shutdown
+from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
 
 
 async def start_aiohttp_server(
