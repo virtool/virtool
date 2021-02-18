@@ -3,8 +3,7 @@ Provides request handlers for file downloads.
 
 """
 import os
-
-from aiohttp import web
+from pathlib import Path
 
 import virtool.analyses.db
 import virtool.analyses.format
@@ -16,15 +15,16 @@ import virtool.caches.utils
 import virtool.db.utils
 import virtool.downloads.db
 import virtool.downloads.utils
-import virtool.history.db
-import virtool.otus.db
-import virtool.references.db
 import virtool.errors
+import virtool.history.db
 import virtool.http.routes
+import virtool.otus.db
 import virtool.otus.utils
-import virtool.utils
+import virtool.references.db
 import virtool.samples.utils
 import virtool.subtractions.utils
+import virtool.utils
+from aiohttp import web
 
 routes = virtool.http.routes.Routes()
 
@@ -56,6 +56,24 @@ async def download_analysis(req):
     }
 
     return web.Response(text=formatted, headers=headers)
+
+
+@routes.get("/download/hmms/profiles.hmm")
+async def download_hmm_profiles(req):
+    file_path = Path(req.app["settings"]["data_path"]) / "hmm" / "profiles.hmm"
+
+    if not file_path.parent.is_dir():
+        return virtool.api.response.not_found("HMM data could not be found")
+
+    if not file_path.is_file():
+        return virtool.api.response.not_found("Profiles file could not be found")
+
+    headers = {
+        "Content-Length": virtool.utils.file_stats(file_path)["size"],
+        "Content-Type": "application/gzip"
+    }
+
+    return web.FileResponse(file_path, chunk_size=1024*1024, headers=headers)
 
 
 @routes.get("/download/caches/{cache_id}/reads_{suffix}.fq.gz")
