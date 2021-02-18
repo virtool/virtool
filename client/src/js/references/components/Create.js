@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Alert, Button, ModalBody, ModalFooter } from "../../base";
+import { Alert, Button } from "../../base";
 import { clearError } from "../../errors/actions";
 import { getTargetChange } from "../../utils/utils";
 import { createReference } from "../actions";
@@ -55,27 +55,23 @@ export class CreateReference extends React.Component {
     render() {
         return (
             <form onSubmit={this.handleSubmit}>
-                <ModalBody>
-                    <Alert>
-                        <strong>Create an empty reference.</strong>
-                    </Alert>
-                    <ReferenceForm
-                        description={this.state.description}
-                        errorFile={this.state.errorFile}
-                        errorSelect={this.state.errorSelect}
-                        errorName={this.state.errorName}
-                        name={this.state.name}
-                        mode={this.state.mode}
-                        organism={this.state.organism}
-                        onChange={this.handleChange}
-                    />
-                    <DataTypeSelection onSelect={this.handleChangeDataType} dataType={this.state.dataType} />
-                </ModalBody>
-                <ModalFooter>
-                    <Button type="submit" icon="save" color="blue">
-                        Save
-                    </Button>
-                </ModalFooter>
+                <Alert>
+                    <strong>Create an empty reference.</strong>
+                </Alert>
+                <ReferenceForm
+                    description={this.state.description}
+                    errorFile={this.state.errorFile}
+                    errorSelect={this.state.errorSelect}
+                    errorName={this.state.errorName}
+                    name={this.state.name}
+                    mode={this.state.mode}
+                    organism={this.state.organism}
+                    onChange={this.handleChange}
+                />
+                <DataTypeSelection onSelect={this.handleChangeDataType} dataType={this.state.dataType} />
+                <Button type="submit" icon="save" color="blue">
+                    Save
+                </Button>
             </form>
         );
     }

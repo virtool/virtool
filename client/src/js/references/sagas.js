@@ -36,6 +36,7 @@ export function* createReference(action) {
         closeModal: put(push({ state: { createReference: false } }))
     };
     yield apiCall(referenceAPI.create, action, CREATE_REFERENCE, {}, extraFunc);
+    yield put(push("/refs"));
 }
 
 export function* editReference(action) {
@@ -52,6 +53,7 @@ export function* importReference(action) {
         closeModal: put(pushState({ importReference: false }))
     };
     yield setPending(apiCall(referenceAPI.importReference, action, IMPORT_REFERENCE, {}, extraFunc));
+    yield put(push("/refs"));
 }
 
 export function* cloneReference(action) {
@@ -59,6 +61,7 @@ export function* cloneReference(action) {
         closeModal: put(pushState({ cloneReference: false }))
     };
     yield setPending(apiCall(referenceAPI.cloneReference, action, CLONE_REFERENCE, {}, extraFunc));
+    yield put(push("/refs"));
 }
 
 export function* remoteReference() {
