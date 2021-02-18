@@ -1,3 +1,6 @@
+import aiohttp
+import aiojobs
+
 import virtool.http.accept
 import virtool.http.auth
 import virtool.http.csp
@@ -15,6 +18,10 @@ async def start_aiohttp_server():
         virtool.http.proxy.middleware,
         virtool.http.query.middleware
     ]
+
+    app = aiohttp.web.Application(middlewares=middlewares)
+
+    aiojobs.aiohttp.setup(app)
 
 
 async def run(**kwargs):
