@@ -94,6 +94,7 @@ def configure_runner(dev: bool, verbose: bool) -> Logger:
 
 
 def configure_jobs_api_server(dev: bool, verbose: bool):
+    """Configure logging for the jobs API server."""
     logger = configure_base_logger(dev, verbose)
 
     handler = logging.handlers.RotatingFileHandler(

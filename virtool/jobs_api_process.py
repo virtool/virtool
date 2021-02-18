@@ -15,6 +15,13 @@ from virtool.app import create_app_runner, wait_for_restart, wait_for_shutdown
 
 
 async def start_aiohttp_server(host: str, port: int, **config):
+    """
+    Start the aiohttp server
+
+    1. Add middlewares
+    2. Add `on_startup` functions
+    3. Start server asynchronously via :class:`aiohttp.AppRunner`
+    """
     middlewares = [
         virtool.http.accept.middleware,
         virtool.http.auth.middleware,
@@ -46,6 +53,13 @@ async def start_aiohttp_server(host: str, port: int, **config):
 
 
 async def run(dev: bool, verbose: bool, **config):
+    """
+    Run the jobs API server.
+
+    :param dev: If True, the log level will be set to DEBUG
+    :param verbose: Same effect as :obj:`dev`
+    :param config: Any other configuration options as keyword arguments
+    """
     logger = virtool.logs.configure_jobs_api_server(dev, verbose)
     app, runner = await start_aiohttp_server(**config)
 
