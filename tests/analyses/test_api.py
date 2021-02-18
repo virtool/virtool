@@ -310,8 +310,9 @@ async def test_upload_file(error, files, resp_is, spawn_client, static_time, sna
         })
 
 
-@pytest.mark.parametrize("exists", [True, False])
-async def test_download_file(exists, files, spawn_client, snapshot, tmpdir):
+@pytest.mark.parametrize("file_exists", [True, False])
+@pytest.mark.parametrize("row_exists", [True, False])
+async def test_download_file(file_exists, row_exists, files, spawn_client, snapshot, tmpdir):
     """
     Test that you can properly download an analysis result file using details from the `analysis_files` SQL table
 
@@ -320,24 +321,37 @@ async def test_download_file(exists, files, spawn_client, snapshot, tmpdir):
 
     client.app["settings"]["data_path"] = str(tmpdir)
 
-    if exists:
-        await client.db.analyses.insert_one({
-            "_id": "foobar",
-            "ready": True,
-            "job": {
-                "id": "hello"
-            },
-            "files": []
-        })
+    expected_path = Path(client.app["settings"]["data_path"]) / "analyses" / "1-reference.fa"
 
-    await client.post_form("/api/analyses/foobar/files?name=reference.fa&format=fasta", data=files)
+    await client.db.analyses.insert_one({
+        "_id": "foobar",
+        "ready": True,
+        "job": {
+            "id": "hello"
+        },
+        "files": []
+    })
+
+    if row_exists:
+        await client.post_form("/api/analyses/foobar/files?name=reference.fa&format=fasta", data=files)
+
+        assert expected_path.is_file()
+
+        file_size = expected_path.stat().st_size
+
+    if not file_exists and row_exists:
+        expected_path.unlink()
 
     resp = await client.get("/api/analyses/foobar/files/1")
 
-    assert resp.status == 200 if exists else 404
-
-    if not exists:
+    if file_exists and row_exists:
+        assert resp.status == 200
+        assert file_size == resp.content_length
+    else:
+        assert resp.status == 404
         snapshot.assert_match(await resp.json())
+
+    
 
 
 @pytest.mark.parametrize("error", [None, "400", "403", "404_analysis", "404_sequence", "409_workflow", "409_ready"])

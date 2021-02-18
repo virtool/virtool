@@ -163,3 +163,18 @@ snapshots['test_download_file[uvloop-False] 1'] = {
     'id': 'not_found',
     'message': 'Not found'
 }
+
+snapshots['test_download_file[uvloop-True-False] 1'] = {
+    'id': 'not_found',
+    'message': 'Uploaded file not found at expected location'
+}
+
+snapshots['test_download_file[uvloop-False-True] 1'] = {
+    'id': 'not_found',
+    'message': 'Not found'
+}
+
+snapshots['test_download_file[uvloop-False-False] 1'] = {
+    'id': 'not_found',
+    'message': 'Not found'
+}
