@@ -1,3 +1,4 @@
+import os
 from typing import Callable, Awaitable
 
 import aiohttp.web
@@ -27,7 +28,7 @@ async def middleware(request: aiohttp.web.Request, handler: RouteHandler):
     *401 NOT AUTHORIZED*
         When the `Authorization` header is invalid, or missing.
     """
-    if (request.method, request.path) in PUBLIC_ROUTES:
+    if (request.method, os.path.split(request.path)[0]) in PUBLIC_ROUTES:
         return await handler(request)
 
     try:
