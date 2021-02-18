@@ -1,17 +1,10 @@
 import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
-import { pushState } from "../../app/actions";
-import { Modal, ModalHeader, ModalTabs, TabLink } from "../../base";
+import { TabLink, ViewHeader, ViewHeaderTitle, Tabs } from "../../base";
 import { routerLocationHasState } from "../../utils/utils";
 import CloneReference from "./Clone";
 import CreateReference from "./Create";
-
 import ImportReference from "./Import";
-
-const AddReferenceHeader = styled(ModalHeader)`
-    border-bottom: none !important;
-`;
 
 export class AddReference extends React.Component {
     constructor(props) {
@@ -56,9 +49,11 @@ export class AddReference extends React.Component {
 
     render() {
         return (
-            <Modal label="Add Reference" show={this.props.show} onHide={this.handleHide}>
-                <AddReferenceHeader>Add Reference</AddReferenceHeader>
-                <ModalTabs>
+            <div>
+                <ViewHeader title="Add Reference">
+                    <ViewHeaderTitle>Add Reference</ViewHeaderTitle>
+                </ViewHeader>
+                <Tabs>
                     <TabLink
                         to={{ state: { newReference: true, createReference: true } }}
                         isActive={this.checkActive("isCreate")}
@@ -77,10 +72,10 @@ export class AddReference extends React.Component {
                     >
                         Clone
                     </TabLink>
-                </ModalTabs>
+                </Tabs>
 
                 {this.renderForm()}
-            </Modal>
+            </div>
         );
     }
 }
@@ -89,19 +84,11 @@ const mapStateToProps = state => {
     const isClone = routerLocationHasState(state, "cloneReference");
     const isCreate = routerLocationHasState(state, "createReference");
     const isImport = routerLocationHasState(state, "importReference");
-
     return {
-        show: routerLocationHasState(state, "newReference"),
         isCreate,
         isImport,
         isClone
     };
 };
 
-const mapDispatchToProps = dispatch => ({
-    onHide: () => {
-        dispatch(pushState({ newReference: false }));
-    }
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(AddReference);
+export default connect(mapStateToProps)(AddReference);

@@ -1,7 +1,7 @@
 import { find } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Alert, ModalBody, ModalFooter, SaveButton } from "../../base";
+import { Alert, SaveButton } from "../../base";
 import { clearError } from "../../errors/actions";
 import { getTargetChange } from "../../utils/utils";
 import { cloneReference } from "../actions";
@@ -94,30 +94,26 @@ export class CloneReference extends React.Component {
     render() {
         return (
             <form onSubmit={this.handleSubmit}>
-                <ModalBody>
-                    <Alert>
-                        <strong>Clone an existing reference.</strong>
-                    </Alert>
-                    <ReferenceSelector
-                        references={this.props.refDocuments}
-                        onSelect={this.handleSelect}
-                        selected={this.state.reference}
-                        error={this.state.errorSelect}
-                    />
-                    <ReferenceForm
-                        description={this.state.description}
-                        errorFile={this.state.errorFile}
-                        errorName={this.state.errorName}
-                        errorSelect={this.state.errorSelect}
-                        name={this.state.name}
-                        mode={this.state.mode}
-                        organism={this.state.organism}
-                        onChange={this.handleChange}
-                    />
-                </ModalBody>
-                <ModalFooter>
-                    <SaveButton disabled={!this.props.refDocuments.length} altText="Clone" />
-                </ModalFooter>
+                <Alert>
+                    <strong>Clone an existing reference.</strong>
+                </Alert>
+                <ReferenceSelector
+                    references={this.props.refDocuments}
+                    onSelect={this.handleSelect}
+                    selected={this.state.reference}
+                    error={this.state.errorSelect}
+                />
+                <ReferenceForm
+                    description={this.state.description}
+                    errorFile={this.state.errorFile}
+                    errorName={this.state.errorName}
+                    errorSelect={this.state.errorSelect}
+                    name={this.state.name}
+                    mode={this.state.mode}
+                    organism={this.state.organism}
+                    onChange={this.handleChange}
+                />
+                <SaveButton disabled={!this.props.refDocuments.length} altText="Clone" />
             </form>
         );
     }

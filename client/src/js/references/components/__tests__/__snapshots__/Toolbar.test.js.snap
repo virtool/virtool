@@ -21,14 +21,7 @@ exports[`<ReferenceToolbar /> should render creation button when [canCreate=true
     color="blue"
     tip="Create"
     tipPlacement="top"
-    to={
-      Object {
-        "state": Object {
-          "createReference": true,
-          "newReference": true,
-        },
-      }
-    }
+    to="/refs/add"
   >
     <Icon
       faStyle="fas"
@@ -50,14 +43,7 @@ exports[`<ReferenceToolbar /> should render when [term='foo'] 1`] = `
     color="blue"
     tip="Create"
     tipPlacement="top"
-    to={
-      Object {
-        "state": Object {
-          "createReference": true,
-          "newReference": true,
-        },
-      }
-    }
+    to="/refs/add"
   >
     <Icon
       faStyle="fas"

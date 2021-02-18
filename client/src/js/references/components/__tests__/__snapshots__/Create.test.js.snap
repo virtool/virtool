@@ -4,35 +4,31 @@ exports[`<CreateReference /> should render 1`] = `
 <form
   onSubmit={[Function]}
 >
-  <Modal__ModalBody>
-    <Alert>
-      <strong>
-        Create an empty reference.
-      </strong>
-    </Alert>
-    <ReferenceForm
-      description=""
-      errorName=""
-      mode="create"
-      name=""
-      onChange={[Function]}
-      organism=""
-    />
-    <DataTypeSelection
-      dataType="genome"
-      onSelect={[Function]}
-    />
-  </Modal__ModalBody>
-  <Modal__ModalFooter>
-    <Button
-      color="blue"
-      disabled={false}
-      icon="save"
-      tipPlacement="top"
-      type="submit"
-    >
-      Save
-    </Button>
-  </Modal__ModalFooter>
+  <Alert>
+    <strong>
+      Create an empty reference.
+    </strong>
+  </Alert>
+  <ReferenceForm
+    description=""
+    errorName=""
+    mode="create"
+    name=""
+    onChange={[Function]}
+    organism=""
+  />
+  <DataTypeSelection
+    dataType="genome"
+    onSelect={[Function]}
+  />
+  <Button
+    color="blue"
+    disabled={false}
+    icon="save"
+    tipPlacement="top"
+    type="submit"
+  >
+    Save
+  </Button>
 </form>
 `;
