@@ -15,7 +15,7 @@ import virtool.jobs.classes
 import virtool.jobs.job
 import virtool.jobs.run
 import virtool.jobs.runner
-import virtool.jobs_api_process
+import virtool.jobs_api.main
 import virtool.logs
 import virtool.redis
 import virtool.utils
@@ -268,7 +268,7 @@ def start_jobs_api(ctx, port, host):
     """Start a Virtool Jobs API server"""
     logger.info("Starting jobs API process")
     asyncio.get_event_loop().run_until_complete(
-        virtool.jobs_api_process.run(
+        virtool.jobs_api.main.run(
             **dict(host=host, port=port, **ctx.obj)
         )
     )
