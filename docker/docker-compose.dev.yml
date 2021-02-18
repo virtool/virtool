@@ -1,5 +1,6 @@
 version: "3.1"
 services:
+
   mongo:
     image: mongo:4.4
     ports:
@@ -8,6 +9,7 @@ services:
       - vt_mongo_data:/data/db
     logging:
       driver: none
+
   redis:
     image: redis:6.0
     ports:
@@ -16,6 +18,7 @@ services:
       - vt_redis_data:/data
     logging:
       driver: none
+
   postgres:
     image: postgres:13.1
     ports:
@@ -38,9 +41,6 @@ services:
       - vt_pgadmin4_data:/var/lib/pgadmin4/data
     depends_on: [ postgres ]
 
-  server:
-    image: vt_server
-    command: -x --db-connection-string=mongodb://mongo:27017 --redis-connection-string redis://redis:6379 --postgres-connection-string postgresql+asyncpg://virtool:virtool@postgres
 volumes:
   vt_mongo_data:
   vt_redis_data:
