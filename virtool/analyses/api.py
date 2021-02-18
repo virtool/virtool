@@ -227,7 +227,7 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
     try:
         size = await virtool.uploads.utils.naive_writer(req, analysis_file_path)
     except asyncio.CancelledError:
-        logger.debug(f"Upload aborted: {file_id}")
+        logger.debug(f"Analysis file upload aborted: {file_id}")
         await virtool.analyses.db.delete_row(pg, file_id)
 
         return aiohttp.web.Response(status=499)
