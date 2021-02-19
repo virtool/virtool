@@ -249,9 +249,10 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(blast_data, headers=headers, status=201)
 
 
-@job_routes.patch("/api/analyses/{analysis_id}", schema={
+@schema({
     "results": {"type": "dict", "required": True}
 })
+@job_routes.patch("/api/analyses/{analysis_id}")
 async def patch_analysis(req: aiohttp.web.Request):
     """Sets the result for an analysis and marks it as ready."""
     db: DB = req.app["db"]
