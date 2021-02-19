@@ -6,6 +6,7 @@ import aiojobs.aiohttp
 
 import virtool.http.accept
 import virtool.jobs_api.auth
+import virtool.jobs_api.routes
 import virtool.logs
 import virtool.startup
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
@@ -28,6 +29,7 @@ async def create_app(**config):
         virtool.startup.init_settings,
         virtool.startup.init_postgres,
         virtool.startup.init_events,
+        virtool.jobs_api.routes.init_routes,
     ])
 
     app["config"] = config

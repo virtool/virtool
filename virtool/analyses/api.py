@@ -29,6 +29,7 @@ from virtool.samples.db import recalculate_workflow_tags
 from virtool.utils import base_processor
 
 routes = virtool.http.routes.Routes()
+job_routes = aiohttp.web.RouteTableDef()
 
 
 @routes.get("/api/analyses")
@@ -248,7 +249,7 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(blast_data, headers=headers, status=201)
 
 
-@routes.patch("/api/analyses/{analysis_id}", schema={
+@job_routes.patch("/api/analyses/{analysis_id}", schema={
     "results": {"type": "dict", "required": True}
 })
 async def patch_analysis(req: aiohttp.web.Request):

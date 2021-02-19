@@ -1,5 +1,4 @@
 import os
-from typing import Callable, Awaitable
 
 import aiohttp.web
 
@@ -7,9 +6,8 @@ from virtool.api.response import unauthorized
 from virtool.http.auth import get_ip
 from virtool.http.client import JobClient
 from virtool.jobs.utils import JobRights
+from virtool.types import RouteHandler
 from virtool.utils import hash_key
-
-RouteHandler = Callable[[aiohttp.web.Request], Awaitable[aiohttp.web.Response]]
 
 PUBLIC_ROUTES = [("PATCH", "/api/jobs")]
 
