@@ -27,12 +27,12 @@ def schema(schema_dict: dict):
                 data = await request.json()
             except (json.decoder.JSONDecodeError, UnicodeDecodeError):
                 data = {}
-            finally:
-                request["data"] = validator.validated(data)
-                if not request["data"]:
-                    return invalid_input(validator.errors)
+               
+            request["data"] = validator.validated(data)
+            if not request["data"]:
+                return invalid_input(validator.errors)
 
-                return await handler(request)
+            return await handler(request)
 
         return _wrap_handler
 
