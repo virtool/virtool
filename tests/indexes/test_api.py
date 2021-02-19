@@ -435,7 +435,7 @@ async def test_delete_index(spawn_job_client, error):
         }
     } for _id in ("history1", "history2", "history3")]
 
-    client = await spawn_job_client(authorize=True, enable_api=True)
+    client = await spawn_job_client(authorize=True)
     indexes = client.db.indexes
     history = client.db.history
 

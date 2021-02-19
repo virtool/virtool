@@ -5,33 +5,18 @@ import aiohttp.web
 import aiojobs.aiohttp
 
 import virtool.http.accept
-import virtool.http.auth
-import virtool.http.csp
-import virtool.http.errors
-import virtool.http.proxy
-import virtool.http.query
+import virtool.jobs_api.auth
+import virtool.jobs_api.routes
 import virtool.logs
 import virtool.startup
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
 
 
-async def start_aiohttp_server(
-        host: str, port: int, **config
-) -> Tuple[aiohttp.web.Application, aiohttp.web.AppRunner]:
-    """
-    Start the aiohttp server
-
-    1. Add middlewares
-    2. Add `on_startup` functions
-    3. Start server asynchronously via :class:`aiohttp.AppRunner`
-    """
+async def create_app(**config):
+    """Crate the :class:`aiohttp.web.Application` for the jobs API process."""
     middlewares = [
         virtool.http.accept.middleware,
-        virtool.http.auth.middleware,
-        virtool.http.csp.middleware,
-        virtool.http.errors.middleware,
-        virtool.http.proxy.middleware,
-        virtool.http.query.middleware
+        virtool.jobs_api.auth.middleware,
     ]
 
     app: aiohttp.web.Application = aiohttp.web.Application(middlewares=middlewares)
@@ -43,13 +28,24 @@ async def start_aiohttp_server(
         virtool.startup.init_redis,
         virtool.startup.init_settings,
         virtool.startup.init_postgres,
-        virtool.startup.init_version,
         virtool.startup.init_events,
+        virtool.jobs_api.routes.init_routes,
     ])
 
     app["config"] = config
     app["mode"] = "jobs_api_server"
 
+    return app
+
+
+async def start_aiohttp_server(
+        host: str, port: int, **config
+) -> Tuple[aiohttp.web.Application, aiohttp.web.AppRunner]:
+    """
+    Create the :class:`aiohttp.web.Application` and start the aiohttp server
+    for the jobs API process.
+    """
+    app = await create_app(**config)
     runner = await create_app_runner(app, host, port)
 
     return app, runner

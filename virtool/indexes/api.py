@@ -18,6 +18,7 @@ from virtool.indexes.db import reset_history
 from virtool.jobs.utils import JobRights
 
 routes = virtool.http.routes.Routes()
+job_routes = aiohttp.web.RouteTableDef()
 
 
 @routes.get("/api/indexes")
@@ -241,7 +242,7 @@ async def find_history(req):
     return json_response(data)
 
 
-@routes.delete("/api/indexes/{index_id}", jobs_only=True)
+@job_routes.delete("/api/indexes/{index_id}")
 async def delete_index(req: aiohttp.web.Request):
     """Delete the index with the given id and reset history relating to that index."""
     index_id = req.match_info["index_id"]
