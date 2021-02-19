@@ -15,6 +15,7 @@ import virtool.references.utils
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, insufficient_rights, json_response, no_content, not_found
+from virtool.http.schema import schema
 
 SCHEMA_VALIDATOR = {
     "type": "list",
@@ -82,7 +83,8 @@ async def get(req):
     return json_response(complete)
 
 
-@routes.post("/api/refs/{ref_id}/otus", schema={
+@routes.post("/api/refs/{ref_id}/otus")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -139,7 +141,8 @@ async def create(req):
     return json_response(document, status=201, headers=headers)
 
 
-@routes.patch("/api/otus/{otu_id}", schema={
+@routes.patch("/api/otus/{otu_id}")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -269,7 +272,8 @@ async def get_isolate(req):
     return json_response(isolate)
 
 
-@routes.post("/api/otus/{otu_id}/isolates", schema={
+@routes.post("/api/otus/{otu_id}/isolates")
+@schema({
     "source_type": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -327,7 +331,8 @@ async def add_isolate(req):
     )
 
 
-@routes.patch("/api/otus/{otu_id}/isolates/{isolate_id}", schema={
+@routes.patch("/api/otus/{otu_id}/isolates/{isolate_id}")
+@schema({
     "source_type": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -479,7 +484,8 @@ async def get_sequence(req):
     return json_response(sequence)
 
 
-@routes.post("/api/otus/{otu_id}/isolates/{isolate_id}/sequences", schema={
+@routes.post("/api/otus/{otu_id}/isolates/{isolate_id}/sequences")
+@schema({
     "accession": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -559,7 +565,8 @@ async def create_sequence(req):
     return json_response(sequence_document, status=201, headers=headers)
 
 
-@routes.patch("/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}", schema={
+@routes.patch("/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
+@schema({
     "accession": {
         "type": "string",
         "coerce": virtool.validators.strip,

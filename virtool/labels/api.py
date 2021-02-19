@@ -4,11 +4,12 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import virtool.http.routes
-import virtool.validators
 import virtool.db.utils
+import virtool.http.routes
 import virtool.labels.db
+import virtool.validators
 from virtool.api.response import bad_request, empty_request, json_response, no_content, not_found
+from virtool.http.schema import schema
 from virtool.labels.models import Label
 
 routes = virtool.http.routes.Routes()
@@ -50,7 +51,8 @@ async def get(req):
     return json_response(document)
 
 
-@routes.post("/api/labels", schema={
+@routes.post("/api/labels")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -72,7 +74,6 @@ async def get(req):
 async def create(req):
     """
     Add a new label to the labels database.
-
     """
     data = req["data"]
 
@@ -96,7 +97,8 @@ async def create(req):
     return json_response(document, status=201, headers=headers)
 
 
-@routes.patch("/api/labels/{label_id}", schema={
+@routes.patch("/api/labels/{label_id}")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,

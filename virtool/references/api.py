@@ -5,21 +5,22 @@ import aiohttp
 import aiojobs.aiohttp
 
 import virtool.api.utils
-import virtool.history.db
-import virtool.indexes.db
-import virtool.otus.db
-import virtool.tasks.db
-import virtool.references.db
-import virtool.users.db
 import virtool.db.utils
 import virtool.errors
 import virtool.github
+import virtool.history.db
 import virtool.http.routes
+import virtool.indexes.db
+import virtool.otus.db
 import virtool.otus.utils
+import virtool.references.db
 import virtool.references.utils
+import virtool.tasks.db
+import virtool.users.db
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_gateway, bad_request, insufficient_rights, json_response, no_content, not_found
+from virtool.http.schema import schema
 
 routes = virtool.http.routes.Routes()
 
@@ -255,7 +256,8 @@ async def find_indexes(req):
     return json_response(data)
 
 
-@routes.post("/api/refs", permission="create_ref", schema={
+@routes.post("/api/refs", permission="create_ref")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -445,7 +447,8 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 
 
-@routes.patch("/api/refs/{ref_id}", schema={
+@routes.patch("/api/refs/{ref_id}")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -597,7 +600,8 @@ async def get_group(req):
                 return json_response(group)
 
 
-@routes.post("/api/refs/{ref_id}/groups", schema={
+@routes.post("/api/refs/{ref_id}/groups")
+@schema({
     **RIGHTS_SCHEMA, "group_id": {
         "type": "string",
         "required": True
@@ -634,7 +638,8 @@ async def add_group(req):
     return json_response(subdocument, headers=headers, status=201)
 
 
-@routes.post("/api/refs/{ref_id}/users", schema={
+@routes.post("/api/refs/{ref_id}/users")
+@schema({
     **RIGHTS_SCHEMA, "user_id": {
         "type": "string",
         "required": True
@@ -673,7 +678,8 @@ async def add_user(req):
     return json_response(subdocument, headers=headers, status=201)
 
 
-@routes.patch("/api/refs/{ref_id}/groups/{group_id}", schema=RIGHTS_SCHEMA)
+@routes.patch("/api/refs/{ref_id}/groups/{group_id}")
+@schema(RIGHTS_SCHEMA)
 async def edit_group(req):
     db = req.app["db"]
     data = req["data"]
@@ -693,7 +699,8 @@ async def edit_group(req):
     return json_response(subdocument)
 
 
-@routes.patch("/api/refs/{ref_id}/users/{user_id}", schema=RIGHTS_SCHEMA)
+@routes.patch("/api/refs/{ref_id}/users/{user_id}")
+@schema(RIGHTS_SCHEMA)
 async def edit_user(req):
     db = req.app["db"]
     data = req["data"]

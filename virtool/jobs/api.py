@@ -8,6 +8,7 @@ import virtool.utils
 from virtool.api.response import bad_request, conflict, json_response, no_content, \
     not_found
 from virtool.db.utils import get_one_field
+from virtool.http.schema import schema
 from virtool.jobs.db import PROJECTION
 from virtool.utils import base_processor
 
@@ -57,13 +58,14 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.patch("/api/jobs/{job_id}", schema={
+@routes.patch("/api/jobs/{job_id}", allow_jobs=True)
+@schema({
     "acquired": {
         "type": "boolean",
         "allowed": [True],
         "required": True
     }
-}, allow_jobs=True)
+})
 async def acquire(req):
     """
     Sets the acquired field on the job document.
@@ -107,7 +109,8 @@ async def cancel(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.post("/api/jobs/{job_id}/status", schema={
+@routes.post("/api/jobs/{job_id}/status", allow_jobs=True)
+@schema({
     "state": {
         "type": "string",
         "allowed": [
@@ -134,7 +137,7 @@ async def cancel(req):
         "default": None,
         "nullable": True
     }
-}, allow_jobs=True)
+})
 async def push_status(req):
     db = req.app["db"]
     data = req["data"]
