@@ -1,11 +1,12 @@
 from functools import wraps
-from functools import wraps
-from typing import Callable
+from typing import Callable, Any
 
 import aiohttp.web
+from aiohttp.web_routedef import RouteDef
 
 import virtool.users.utils
 from virtool.api.response import json_response, unauthorized
+from virtool.types import RouteHandler
 
 
 class Routes(aiohttp.web.RouteTableDef):
@@ -25,6 +26,29 @@ class Routes(aiohttp.web.RouteTableDef):
         self.delete = self._protected(self.delete)
         self.put = self._protected(self.put)
         self.patch = self._protected(self.patch)
+
+        self.job_routes = []
+
+    def route(self,
+              method: str,
+              path: str,
+              jobs_only: bool = False,
+              jobs_allowed: bool = True,
+              **kwargs: Any) -> Callable[[RouteHandler], RouteHandler]:
+
+        if jobs_only:
+            def _route_decorator(handler: RouteHandler):
+                self.job_routes.append(handler)
+                return handler
+        elif jobs_allowed:
+            def _route_decorator(handler: RouteHandler):
+                self.job_routes.append(RouteDef(method, path, handler, kwargs))
+                super(Routes, self).route(method, path, **kwargs)
+                return handler
+        else:
+            _route_decorator = super(Routes, self).route(method, path, **kwargs)
+
+        return _route_decorator
 
 
 def protect(
