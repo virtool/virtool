@@ -82,11 +82,10 @@ async def test_download_hmm_profiles(data_exists, file_exists, snapshot, spawn_c
     if data_exists:
         file_path.mkdir()
 
-    if data_exists and file_exists:
-        await client.app["run_in_thread"](shutil.copy, test_file_path, file_path)
-
-        file_path = file_path / "profiles.hmm"
-        assert file_path.exists()
+        if file_exists:
+            await client.app["run_in_thread"](shutil.copy, test_file_path, file_path)
+            file_path = file_path / "profiles.hmm"
+            assert file_path.exists()
 
     resp = await client.get("/download/hmms/profiles.hmm")
 
