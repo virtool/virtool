@@ -39,7 +39,7 @@ async def middleware(request: aiohttp.web.Request, handler: RouteHandler):
             raise ValueError()
     except KeyError:
         return unauthorized("No authorization header.")
-    except ValueError as value_error:
+    except ValueError:
         return unauthorized("Invalid authorization header.")
 
     db = request.app["db"]
