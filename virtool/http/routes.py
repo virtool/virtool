@@ -1,4 +1,5 @@
 import json.decoder
+from functools import wraps
 from typing import Any, Callable, Dict
 
 import aiohttp.web
@@ -11,20 +12,26 @@ from virtool.http.client import JobClient
 
 class Routes(aiohttp.web.RouteTableDef):
 
+    @staticmethod
+    def _protected(method):
+        @wraps(method)
+        def _method(*args, admin=False, permission=None, public=False, **kwargs):
+            return protect(method(*args, **kwargs), admin, permission, public)
+
+        return _method
+
     def __init__(self):
         super().__init__()
 
-    def get(self, *args, admin=False, allow_jobs=False, jobs_only=False, permission=None,
-            public=False, schema=None,
-            **kwargs):
+    def get(self, *args, admin=False, allow_jobs=False, permission=None,
+            public=False, **kwargs):
         route_decorator = super().get(*args, **kwargs)
-        return protect(route_decorator, admin, allow_jobs, jobs_only, permission, public, schema)
+        return protect(route_decorator, admin, permission, public)
 
-    def post(self, *args, admin=False, allow_jobs=False, jobs_only=False, permission=None,
-             public=False,
-             schema=None, **kwargs):
+    def post(self, *args, admin=False, permission=None,
+             public=False, **kwargs):
         route_decorator = super().post(*args, **kwargs)
-        return protect(route_decorator, admin, allow_jobs, jobs_only, permission, public, schema)
+        return protect(route_decorator, admin, permission, public)
 
     def patch(self, *args, admin=False, allow_jobs=False, jobs_only=False, permission=None,
               public=False,
