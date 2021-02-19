@@ -1,12 +1,13 @@
 import pymongo.errors
 
 import virtool.groups.db
-import virtool.users.db
 import virtool.http.routes
+import virtool.users.db
 import virtool.users.utils
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, json_response, no_content, not_found
+from virtool.http.schema import schema
 
 routes = virtool.http.routes.Routes()
 
@@ -21,7 +22,8 @@ async def find(req):
     return json_response([virtool.utils.base_processor(d) async for d in cursor])
 
 
-@routes.post("/api/groups", admin=True, schema={
+@routes.post("/api/groups", admin=True)
+@schema({
     "group_id": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -67,7 +69,8 @@ async def get(req):
     return not_found()
 
 
-@routes.patch("/api/groups/{group_id}", admin=True, schema={
+@routes.patch("/api/groups/{group_id}", admin=True)
+@schema({
     "permissions": {
         "type": "dict",
         "default": {},
