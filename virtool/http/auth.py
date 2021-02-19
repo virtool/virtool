@@ -83,9 +83,6 @@ async def authenticate_with_key(req: web.Request, handler: Callable):
     except virtool.errors.AuthError:
         return unauthorized("Malformed Authorization header")
 
-    if holder_id.startswith("job-"):
-        return await authenticate_with_job_key(req, handler, holder_id[4:], key)
-
     return await authenticate_with_api_key(req, handler, holder_id, key)
 
 
