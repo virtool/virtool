@@ -22,7 +22,7 @@ def schema(schema_dict: dict):
 
     def _validate_schema_against_json_body(handler: RouteHandler):
         @wraps(handler)
-        def _wrap_handler(request: aiohttp.web.Request):
+        async def _wrap_handler(request: aiohttp.web.Request):
             try:
                 data = await request.json()
             except (json.decoder.JSONDecodeError, UnicodeDecodeError):
