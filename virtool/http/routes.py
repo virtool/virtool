@@ -35,6 +35,21 @@ class Routes(aiohttp.web.RouteTableDef):
               jobs_only: bool = False,
               jobs_allowed: bool = True,
               **kwargs: Any) -> Callable[[RouteHandler], RouteHandler]:
+        """
+        Create a decorator which registers an aiohttp route.
+
+        This function is called by :class:`RouteTableDef`'s method functions, such as :func:`.get`. Any keyword
+        arguments passed to those functions will be forwarded here, allowing the `jobs_only` and `jobs_allowed`
+        flags to be handled.
+
+        :param method: The name of the method type. Constants for these names are contained in `aiohttp.hdrs` and
+            are prefixed with `METH_`.
+        :param path: The path of the route.
+        :param jobs_only: If True, the route will be added to the :obj:`.job_routes` attribute only.
+        :param jobs_allowed: If True,  the route will be added to the route table, and to :obj:`.job_routes`.
+        :param kwargs: Any keyword arguments are passed to the `RouteDef` object.
+        :return: A decorator which adds the :class:`RouteHandler` to the route table, and/or :obj:`.job_routes`
+        """
 
         if jobs_only:
             def _route_decorator(handler: RouteHandler):
