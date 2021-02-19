@@ -13,7 +13,7 @@ from virtool.uploads.models import Upload
 def files(tmpdir):
     tmpdir.mkdir("files")
 
-    path = Path(sys.path[0]) / "tests" / "test_files" / "test.fq.gz"
+    path = Path.cwd() / "tests" / "test_files" / "test.fq.gz"
 
     files = {
         "file": open(path, "rb")

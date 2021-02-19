@@ -77,7 +77,7 @@ async def test_download_hmm_profiles(data_exists, file_exists, snapshot, spawn_c
 
     client.app["settings"]["data_path"] = str(tmpdir)
     file_path = Path(client.app["settings"]["data_path"]) / "hmm"
-    test_file_path = Path(sys.path[0]) / "tests" / "test_files" / "profiles.hmm"
+    test_file_path = Path.cwd() / "tests" / "test_files" / "profiles.hmm"
 
     if data_exists:
         file_path.mkdir()
