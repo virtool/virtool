@@ -27,7 +27,7 @@ def schema(schema_dict: dict):
                 data = await request.json()
             except (json.decoder.JSONDecodeError, UnicodeDecodeError):
                 data = {}
-               
+
             request["data"] = validator.validated(data)
             if not request["data"]:
                 return invalid_input(validator.errors)
