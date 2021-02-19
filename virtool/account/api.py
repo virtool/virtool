@@ -20,9 +20,10 @@ import virtool.users.utils
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, json_response, no_content, not_found
-
 #: A MongoDB projection to use when returning API key documents to clients. The key should never be sent to client after
 #: its creation.
+from virtool.http.schema import schema
+
 API_KEY_PROJECTION = {
     "_id": False,
     "user": False
@@ -42,7 +43,8 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.patch("/api/account", schema={
+@routes.patch("/api/account")
+@schema({
     "email": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -110,7 +112,8 @@ async def get_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(account_settings)
 
 
-@routes.patch("/api/account/settings", schema={
+@routes.patch("/api/account/settings")
+@schema({
     "show_ids": {
         "type": "boolean",
         "required": False
@@ -182,7 +185,8 @@ async def get_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(document, status=200)
 
 
-@routes.post("/api/account/keys", schema={
+@routes.post("/api/account/keys")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -220,7 +224,8 @@ async def create_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(document, headers=headers, status=201)
 
 
-@routes.patch("/api/account/keys/{key_id}", schema={
+@routes.patch("/api/account/keys/{key_id}")
+@schema({
     "permissions": {
         "type": "dict",
         "validator": virtool.validators.is_permission_dict,
@@ -296,7 +301,8 @@ async def remove_all_api_keys(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return no_content()
 
 
-@routes.post("/api/account/login", public=True, schema={
+@routes.post("/api/account/login", public=True)
+@schema({
     "username": {
         "type": "string",
         "empty": False,
@@ -379,7 +385,8 @@ async def logout(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return resp
 
 
-@routes.post("/api/account/reset", public=True, schema={
+@routes.post("/api/account/reset", public=True)
+@schema({
     "password": {
         "type": "string",
         "required": True
