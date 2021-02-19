@@ -1,6 +1,6 @@
 import json.decoder
 from functools import wraps
-from typing import Any, Callable, Dict
+from typing import Callable
 
 import aiohttp.web
 from cerberus import Validator
@@ -32,11 +32,8 @@ class Routes(aiohttp.web.RouteTableDef):
 def protect(
         route_decorator: Callable,
         admin: bool,
-        allow_jobs: bool,
-        jobs_only: bool,
         permission: str,
         public: bool,
-        schema: Dict[str, Any]
 ):
     if permission and permission not in virtool.users.utils.PERMISSIONS:
         raise ValueError("Invalid permission: " + permission)
