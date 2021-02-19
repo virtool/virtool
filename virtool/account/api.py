@@ -20,10 +20,10 @@ import virtool.users.utils
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, json_response, no_content, not_found
-#: A MongoDB projection to use when returning API key documents to clients. The key should never be sent to client after
-#: its creation.
 from virtool.http.schema import schema
 
+#: A MongoDB projection to use when returning API key documents to clients. The key should never be sent to client after
+#: its creation.
 API_KEY_PROJECTION = {
     "_id": False,
     "user": False
