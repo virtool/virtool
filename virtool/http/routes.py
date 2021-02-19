@@ -1,13 +1,11 @@
-import json.decoder
+from functools import wraps
 from functools import wraps
 from typing import Callable
 
 import aiohttp.web
-from cerberus import Validator
 
 import virtool.users.utils
-from virtool.api.response import invalid_input, json_response, unauthorized
-from virtool.http.client import JobClient
+from virtool.api.response import json_response, unauthorized
 
 
 class Routes(aiohttp.web.RouteTableDef):
@@ -45,20 +43,6 @@ def protect(
             if not public and client is None:
                 return unauthorized("Requires authorization")
 
-            is_job_client = isinstance(client, JobClient)
-
-            if is_job_client and not allow_jobs and not jobs_only:
-                return json_response({
-                    "id": "no_jobs",
-                    "message": "Job access is forbidden"
-                }, status=403)
-
-            if not is_job_client and jobs_only:
-                return json_response({
-                    "id": "jobs_only",
-                    "message": "Only job access is allowed at this endpoint"
-                }, status=403)
-
             if client is None or not client.administrator:
                 if admin:
                     return json_response({
@@ -71,24 +55,6 @@ def protect(
                         "id": "not_permitted",
                         "message": "Not permitted"
                     }, status=403)
-
-            content_type = req.headers.get("Content-type", "")
-
-            if "multipart/form-data" not in content_type:
-                try:
-                    data = await req.json()
-                except (json.decoder.JSONDecodeError, UnicodeDecodeError):
-                    data = dict()
-
-                if schema:
-                    v = Validator(schema, purge_unknown=True)
-
-                    if not v.validate(data):
-                        return invalid_input(v.errors)
-
-                    data = v.document
-
-                req["data"] = data
 
             return await handler(req)
 
