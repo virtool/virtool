@@ -373,7 +373,7 @@ async def test_patch_to_set_result(spawn_job_client, error, resp_is):
         insert_result = await client.db.analyses.insert_one(analysis_document)
         assert insert_result["_id"] == analysis_document["_id"]
 
-    response = await client.patch(f"/api/analyses/{analysis_document['_id']}", patch_json)
+    response = await client.patch(f"/api/analyses/{analysis_document['_id']}", json=patch_json)
 
     if error:
         assert response.status == error
