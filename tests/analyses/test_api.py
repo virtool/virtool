@@ -349,7 +349,7 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
 
 
 @pytest.mark.parametrize("error", [None, 422, 404, 409])
-async def test_patch_to_set_result(spawn_client, error, resp_is):
+async def test_patch_to_set_result(spawn_job_client, error, resp_is):
     analysis_document = {
         "_id": "analysis1",
         "sample": {"id": "sample1"},
@@ -362,7 +362,7 @@ async def test_patch_to_set_result(spawn_client, error, resp_is):
         }
     }
 
-    client = await spawn_client(authorize=True)
+    client = await spawn_job_client(authorize=True)
 
     if error == 409:
         analysis_document["ready"] = True
