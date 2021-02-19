@@ -181,6 +181,10 @@ async def create(req):
 
 @routes.post("/api/subtractions/{subtraction_id}/files", permission="modify_subtraction")
 async def upload(req):
+    """
+    Upload a subtraction file to the `subtractions` folder.
+
+    """
     db = req.app["db"]
 
     subtraction_id = req.match_info["subtraction_id"]
