@@ -60,6 +60,10 @@ async def download_analysis(req):
 
 @routes.get("/download/hmms/profiles.hmm")
 async def download_hmm_profiles(req):
+    """
+    Download the HMM profiles file if HMM data is available.
+
+    """
     file_path = Path(req.app["settings"]["data_path"]) / "hmm" / "profiles.hmm"
 
     if not file_path.parent.is_dir():

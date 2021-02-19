@@ -69,6 +69,10 @@ async def test_all(get, missing, spawn_client):
 @pytest.mark.parametrize("data_exists", [True, False])
 @pytest.mark.parametrize("file_exists", [True, False])
 async def test_download_hmm_profiles(data_exists, file_exists, snapshot, spawn_client, tmpdir):
+    """
+    Test that HMM profiles can be properly downloaded once they are available.
+
+    """
     client = await spawn_client(authorize=True)
 
     client.app["settings"]["data_path"] = str(tmpdir)
