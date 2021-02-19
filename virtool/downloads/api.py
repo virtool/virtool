@@ -242,6 +242,36 @@ async def download_sequence(req):
     })
 
 
+@routes.get(r"/download/subtraction/{subtraction_id}/subtraction.{reverse:(rev.)*}{suffix}.bt2")
+async def download_bowtie2_files(req):
+    """
+    Download a Bowtie2 index file for the given subtraction.
+
+    """
+    db = req.app["db"]
+    subtraction_id = req.match_info["subtraction_id"]
+    reverse = req.match_info["reverse"]
+    suffix = req.match_info["suffix"]
+    file_name = f"subtraction.{reverse}{suffix}.bt2"
+
+    document = await db.subtraction.find_one(subtraction_id)
+
+    if document is None:
+        return virtool.api.response.not_found()
+
+    if not await db.subtraction.count_documents({"_id": subtraction_id, "files.name": file_name}):
+        return virtool.api.response.not_found("Bowtie2 file not found")
+
+    path = os.path.join(
+        virtool.subtractions.utils.join_subtraction_path(req.app["settings"], subtraction_id),
+        file_name
+    )
+
+    return web.FileResponse(path, headers={
+        "Content-Type": "application/gzip"
+    })
+
+
 @routes.get("/download/subtraction/{subtraction_id}")
 async def download_subtraction(req):
     """
