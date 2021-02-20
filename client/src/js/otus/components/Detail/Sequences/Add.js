@@ -32,7 +32,7 @@ class AddSequence extends React.Component {
         );
 
         return (
-            <Modal label="Add Sequence" show={this.props.show} onHide={this.props.onHide}>
+            <Modal label="Add Sequence" show={this.props.show} size="lg" onHide={this.props.onHide}>
                 <ModalHeader>Add Sequence</ModalHeader>
                 {targetComponent}
                 <SequenceForm dataType={this.props.dataType} error={this.props.error} onSubmit={this.handleSubmit} />
