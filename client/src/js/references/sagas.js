@@ -6,7 +6,7 @@ import {
     ADD_REFERENCE_USER,
     CHECK_REMOTE_UPDATES,
     CLONE_REFERENCE,
-    CREATE_REFERENCE,
+    EMPTY_REFERENCE,
     EDIT_REFERENCE,
     EDIT_REFERENCE_GROUP,
     EDIT_REFERENCE_USER,
@@ -31,11 +31,11 @@ export function* getReference(action) {
     yield apiCall(referenceAPI.get, action, GET_REFERENCE);
 }
 
-export function* createReference(action) {
+export function* emptyReference(action) {
     const extraFunc = {
-        closeModal: put(push({ state: { createReference: false } }))
+        closeModal: put(push({ state: { emptyReference: false } }))
     };
-    yield apiCall(referenceAPI.create, action, CREATE_REFERENCE, {}, extraFunc);
+    yield apiCall(referenceAPI.create, action, EMPTY_REFERENCE, {}, extraFunc);
     yield put(push("/refs"));
 }
 
@@ -109,7 +109,7 @@ export function* updateRemoteReference(action) {
 }
 
 export function* watchReferences() {
-    yield throttle(500, CREATE_REFERENCE.REQUESTED, createReference);
+    yield throttle(500, EMPTY_REFERENCE.REQUESTED, emptyReference);
     yield throttle(500, IMPORT_REFERENCE.REQUESTED, importReference);
     yield throttle(500, CLONE_REFERENCE.REQUESTED, cloneReference);
     yield throttle(500, REMOTE_REFERENCE.REQUESTED, remoteReference);

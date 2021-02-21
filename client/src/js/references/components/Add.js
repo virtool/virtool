@@ -1,9 +1,9 @@
 import React from "react";
 import { connect } from "react-redux";
-import { TabLink, ViewHeader, ViewHeaderTitle, Tabs } from "../../base";
+import { TabLink, ViewHeader, ViewHeaderTitle, Tabs, NarrowContainer } from "../../base";
 import { routerLocationHasState } from "../../utils/utils";
 import CloneReference from "./Clone";
-import CreateReference from "./Create";
+import EmptyReference from "./Empty";
 import ImportReference from "./Import";
 
 export class AddReference extends React.Component {
@@ -44,21 +44,21 @@ export class AddReference extends React.Component {
             return <CloneReference />;
         }
 
-        return <CreateReference />;
+        return <EmptyReference />;
     };
 
     render() {
         return (
-            <div>
-                <ViewHeader title="Add Reference">
-                    <ViewHeaderTitle>Add Reference</ViewHeaderTitle>
+            <NarrowContainer>
+                <ViewHeader title="Create Reference">
+                    <ViewHeaderTitle>Create Reference</ViewHeaderTitle>
                 </ViewHeader>
                 <Tabs>
                     <TabLink
-                        to={{ state: { newReference: true, createReference: true } }}
+                        to={{ state: { newReference: true, emptyReference: true } }}
                         isActive={this.checkActive("isCreate")}
                     >
-                        Create
+                        Empty
                     </TabLink>
                     <TabLink
                         to={{ state: { newReference: true, importReference: true } }}
@@ -75,14 +75,14 @@ export class AddReference extends React.Component {
                 </Tabs>
 
                 {this.renderForm()}
-            </div>
+            </NarrowContainer>
         );
     }
 }
 
 const mapStateToProps = state => {
     const isClone = routerLocationHasState(state, "cloneReference");
-    const isCreate = routerLocationHasState(state, "createReference");
+    const isCreate = routerLocationHasState(state, "emptyReference");
     const isImport = routerLocationHasState(state, "importReference");
     return {
         isCreate,

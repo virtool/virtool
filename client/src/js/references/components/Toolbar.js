@@ -9,7 +9,11 @@ export const ReferenceToolbar = ({ term, onFind, canCreate }) => {
 
     if (canCreate) {
         createButton = (
-            <LinkButton to="/refs/add" color="blue" tip="Create">
+            <LinkButton
+                to={{ pathname: "/refs/add", state: { newReference: true, emptyReference: true } }}
+                color="blue"
+                tip="Create"
+            >
                 <Icon name="plus-square fa-fw" />
             </LinkButton>
         );

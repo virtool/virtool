@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<CreateReference /> should render 1`] = `
+exports[`<EmptyReference /> should render 1`] = `
 <form
   onSubmit={[Function]}
 >
@@ -12,7 +12,7 @@ exports[`<CreateReference /> should render 1`] = `
   <ReferenceForm
     description=""
     errorName=""
-    mode="create"
+    mode="empty"
     name=""
     onChange={[Function]}
     organism=""

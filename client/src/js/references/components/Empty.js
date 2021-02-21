@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Alert, Button } from "../../base";
 import { clearError } from "../../errors/actions";
 import { getTargetChange } from "../../utils/utils";
-import { createReference } from "../actions";
+import { emptyReference } from "../actions";
 import { DataTypeSelection } from "./DataTypeSelection";
 import { ReferenceForm } from "./Form";
 
@@ -14,10 +14,10 @@ const getInitialState = () => ({
     organism: "",
     errorName: "",
     errorDataType: "",
-    mode: "create"
+    mode: "empty"
 });
 
-export class CreateReference extends React.Component {
+export class EmptyReference extends React.Component {
     constructor(props) {
         super(props);
         this.state = getInitialState();
@@ -79,7 +79,7 @@ export class CreateReference extends React.Component {
 
 export const mapDispatchToProps = dispatch => ({
     onSubmit: (name, description, dataType, organism) => {
-        dispatch(createReference(name, description, dataType, organism));
+        dispatch(emptyReference(name, description, dataType, organism));
     },
 
     onClearError: error => {
@@ -87,4 +87,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(null, mapDispatchToProps)(CreateReference);
+export default connect(null, mapDispatchToProps)(EmptyReference);
