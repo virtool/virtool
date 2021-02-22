@@ -27,10 +27,7 @@ async def attach_analysis_files(pg: AsyncEngine, analysis_id: str) -> List[Dict]
     async with AsyncSession(pg) as session:
         results = (await session.execute(select(AnalysisFile).filter_by(analysis=analysis_id))).scalars().all()
 
-        for result in results:
-            files.append(result.to_dict())
-
-    return files
+    return [result.to_dict() for result in results]
 
 
 def find_nuvs_sequence_by_index(
