@@ -338,8 +338,6 @@ async def test_download_file(file_exists, row_exists, files, spawn_client, snaps
 
         assert expected_path.is_file()
 
-        file_size = expected_path.stat().st_size
-
     if not file_exists and row_exists:
         expected_path.unlink()
 
@@ -347,7 +345,7 @@ async def test_download_file(file_exists, row_exists, files, spawn_client, snaps
 
     if file_exists and row_exists:
         assert resp.status == 200
-        assert file_size == resp.content_length
+        assert expected_path.read_bytes() == await resp.content.read()
     else:
         assert resp.status == 404
         snapshot.assert_match(await resp.json())
