@@ -1,5 +1,6 @@
 import aiofiles
 from cerberus import Validator
+import os
 
 CHUNK_SIZE = 4096
 
@@ -29,7 +30,7 @@ async def naive_writer(req, file_path) -> int:
     size = 0
 
     try:
-        file_path.parent.mkdir()
+        await req.app["run_in_thread"](os.mkdir, file_path.parent)
     except FileExistsError:
         pass
 
