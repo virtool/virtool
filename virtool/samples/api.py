@@ -18,6 +18,7 @@ import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
     json_response, no_content, not_found
+from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
 from virtool.samples.utils import bad_labels_response, check_labels
 
@@ -177,7 +178,8 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.post("/api/samples", permission="create_sample", schema={
+@routes.post("/api/samples", permission="create_sample")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -343,7 +345,8 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
 
 
-@routes.patch("/api/samples/{sample_id}", schema={
+@routes.patch("/api/samples/{sample_id}")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -422,7 +425,8 @@ async def replace(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.patch("/api/samples/{sample_id}/rights", schema={
+@routes.patch("/api/samples/{sample_id}/rights")
+@schema({
     "group": {
         "type": "string"
     },
@@ -546,7 +550,8 @@ async def find_analyses(req):
     return json_response(data)
 
 
-@routes.post("/api/samples/{sample_id}/analyses", schema={
+@routes.post("/api/samples/{sample_id}/analyses")
+@schema({
     "ref_id": {
         "type": "string",
         "required": True

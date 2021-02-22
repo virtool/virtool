@@ -25,6 +25,7 @@ import virtool.utils
 from virtool.api.response import bad_request, conflict, insufficient_rights, \
     json_response, no_content, not_found
 from virtool.db.core import Collection, DB
+from virtool.http.schema import schema
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.utils import base_processor
 
@@ -248,9 +249,8 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(blast_data, headers=headers, status=201)
 
 
-@routes.patch("/api/analyses/{analysis_id}", schema={
-    "results": {"type": "dict", "required": True}
-})
+@routes.patch("/api/analyses/{analysis_id}", jobs_only=True)
+@schema({"results": {"type": "dict", "required": True}})
 async def patch_analysis(req: aiohttp.web.Request):
     """Sets the result for an analysis and marks it as ready."""
     db: DB = req.app["db"]

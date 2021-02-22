@@ -1,8 +1,8 @@
-import base64
 import os
 from typing import Callable, Tuple
 
 import aiofiles
+import aiohttp
 import jinja2
 from aiohttp import web
 
@@ -16,10 +16,7 @@ import virtool.users.sessions
 import virtool.users.utils
 import virtool.utils
 from virtool.api.response import unauthorized
-from virtool.db.utils import get_one_field
-from virtool.http.client import JobClient, UserClient
-from virtool.jobs.utils import JobRights
-from virtool.utils import hash_key
+from virtool.http.client import UserClient
 
 AUTHORIZATION_PROJECTION = [
     "user",
@@ -62,16 +59,12 @@ def decode_authorization(authorization: str) -> Tuple[str, str]:
     :return: a tuple containing the user id and API key parsed from the authorization header
 
     """
-    split = authorization.split(" ")
+    try:
+        auth: aiohttp.BasicAuth = aiohttp.BasicAuth.decode(authorization)
+    except ValueError as error:
+        raise virtool.errors.AuthError(str(error))
 
-    if len(split) != 2 or split[0] != "Basic":
-        raise virtool.errors.AuthError("Malformed authorization header")
-
-    decoded = base64.b64decode(split[1]).decode("utf-8")
-
-    user_id, key = decoded.split(":")
-
-    return user_id, key
+    return auth.login, auth.password
 
 
 async def authenticate_with_key(req: web.Request, handler: Callable):
@@ -86,9 +79,6 @@ async def authenticate_with_key(req: web.Request, handler: Callable):
         holder_id, key = decode_authorization(req.headers.get("AUTHORIZATION"))
     except virtool.errors.AuthError:
         return unauthorized("Malformed Authorization header")
-
-    if holder_id.startswith("job-"):
-        return await authenticate_with_job_key(req, handler, holder_id[4:], key)
 
     return await authenticate_with_api_key(req, handler, holder_id, key)
 
@@ -112,37 +102,6 @@ async def authenticate_with_api_key(req, handler, user_id: str, key: str):
         document["groups"],
         document["permissions"],
         user_id
-    )
-
-    return await handler(req)
-
-
-async def authenticate_with_job_key(req: web.Request, handler: Callable, job_id: str, key: str):
-    """
-    Authenticate the request with a job ID and secure key.
-
-    :param req: the request to authenticate
-    :param handler: the handler to call the request with when authentication succeeds
-    :param job_id: the job to authenticate against
-    :param key: the job key to authenticate with
-
-    """
-    db = req.app["db"]
-
-    document = await db.jobs.find_one({
-        "_id": job_id,
-        "key": hash_key(key)
-    })
-
-    if not document:
-        return unauthorized("Invalid authorization header")
-
-    rights = await get_one_field(db.jobs, "rights", job_id)
-
-    req["client"] = JobClient(
-        get_ip(req),
-        job_id,
-        JobRights(rights)
     )
 
     return await handler(req)
