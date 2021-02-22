@@ -28,7 +28,7 @@ ANALYSIS_FORMATS = [*AnalysisFormat.to_list(), None]
 
 class AnalysisFile(Base):
     """
-    SQL table to store new analysis files
+    SQL model to store new analysis files
 
     """
     __tablename__ = "analysis_files"
