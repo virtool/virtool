@@ -30,7 +30,7 @@ async def naive_writer(req, file_path) -> int:
     size = 0
 
     try:
-        await req.app["run_in_thread"](os.mkdir, file_path.parent)
+        await req.app["run_in_thread"](os.makedirs, file_path.parent)
     except FileExistsError:
         pass
 
