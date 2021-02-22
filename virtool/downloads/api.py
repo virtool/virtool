@@ -5,6 +5,8 @@ Provides request handlers for file downloads.
 import os
 from pathlib import Path
 
+from aiohttp import web
+
 import virtool.analyses.db
 import virtool.analyses.format
 import virtool.api.json
@@ -17,6 +19,7 @@ import virtool.downloads.db
 import virtool.downloads.utils
 import virtool.errors
 import virtool.history.db
+from virtool.hmm.utils import hmm_data_exists
 import virtool.http.routes
 import virtool.otus.db
 import virtool.otus.utils
@@ -24,7 +27,6 @@ import virtool.references.db
 import virtool.samples.utils
 import virtool.subtractions.utils
 import virtool.utils
-from aiohttp import web
 
 routes = virtool.http.routes.Routes()
 
@@ -66,18 +68,14 @@ async def download_hmm_profiles(req):
     """
     file_path = Path(req.app["settings"]["data_path"]) / "hmm" / "profiles.hmm"
 
-    if not file_path.parent.is_dir():
-        return virtool.api.response.not_found("HMM data could not be found")
-
-    if not file_path.is_file():
+    if not await req.app["run_in_thread"](hmm_data_exists, file_path):
         return virtool.api.response.not_found("Profiles file could not be found")
 
     headers = {
-        "Content-Length": virtool.utils.file_stats(file_path)["size"],
         "Content-Type": "application/gzip"
     }
 
-    return web.FileResponse(file_path, chunk_size=1024*1024, headers=headers)
+    return web.FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
 
 
 @routes.get("/download/caches/{cache_id}/reads_{suffix}.fq.gz")
@@ -109,7 +107,7 @@ async def download_cache_reads(req):
         "Content-Type": "application/gzip"
     }
 
-    return web.FileResponse(file_path, chunk_size=1024*1024, headers=headers)
+    return web.FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
 
 
 @routes.get(r"/download/samples/{sample_id}/{prefix}_{suffix}.{extension:(fq|fastq|fq\.gz|fastq\.gz)}")
@@ -142,7 +140,7 @@ async def download_sample_reads(req):
         "Content-Type": "application/gzip"
     }
 
-    return web.FileResponse(path, chunk_size=1024*1024, headers=headers)
+    return web.FileResponse(path, chunk_size=1024 * 1024, headers=headers)
 
 
 @routes.get("/download/otus/{otu_id}/isolates/{isolate_id}")
@@ -214,7 +212,7 @@ async def download_index_json(req):
 
     if document is None:
         return virtool.api.response.not_found()
-    
+
     ref_id = document["reference"]["id"]
 
     if "has_json" not in document or document["has_json"] is False:

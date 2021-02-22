@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import semver
 import virtool.github
 
@@ -18,3 +20,10 @@ def format_hmm_release(updated, release, installed):
     )
 
     return formatted
+
+
+def hmm_data_exists(file_path: Path):
+    if not file_path.parent.is_dir() or not file_path.is_file():
+        return False
+
+    return True
