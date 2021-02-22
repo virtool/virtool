@@ -7,6 +7,7 @@ from virtool.postgres import Base
 class SubtractionType(str, enum.Enum):
     """
     Enumerated type for subtraction file types
+
     """
 
     @classmethod
@@ -20,13 +21,16 @@ class SubtractionType(str, enum.Enum):
 class SubtractionFile(Base):
     """
     SQL model to store new subtraction files
+
     """
     __tablename__ = "subtraction_files"
 
     id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+    subtraction = Column(String)
     type = Column(Enum(SubtractionType))
-    name = Column(String)
     size = Column(Integer)
 
     def __repr__(self):
-        return f"<SubtractionFile(id={self.id},type={self.type}, name={self.name}, size={self.size}"
+        return f"<SubtractionFile(id={self.id}, name={self.name}, subtraction={self.subtraction}, type={self.type}, " \
+               f"size={self.size} "
