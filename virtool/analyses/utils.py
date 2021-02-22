@@ -22,8 +22,6 @@ async def attach_analysis_files(pg: AsyncEngine, analysis_id: str) -> List[Dict]
     :param analysis_id: An id for a specific analysis
     :return: List of file details for each file associated with an analysis
     """
-    files = []
-
     async with AsyncSession(pg) as session:
         results = (await session.execute(select(AnalysisFile).filter_by(analysis=analysis_id))).scalars().all()
 

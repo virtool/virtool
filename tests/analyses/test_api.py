@@ -323,7 +323,6 @@ async def test_download_file(file_exists, row_exists, files, spawn_client, snaps
     client.app["settings"]["data_path"] = str(tmpdir)
 
     expected_path = Path(client.app["settings"]["data_path"]) / "analyses" / "1-reference.fa"
-    file_size = 0
 
     await client.db.analyses.insert_one({
         "_id": "foobar",

@@ -2,12 +2,13 @@ import pytest
 
 import virtool.analyses.db
 import virtool.analyses.utils
+import virtool.analyses.files
 
 
 @pytest.mark.parametrize("exists", [True, False])
 async def test_attach_analysis_files(exists, spawn_client, pg_engine):
     if exists:
-        await virtool.analyses.db.create_row(pg_engine, "foobar", "fasta", "reference-fa")
+        await virtool.analyses.files.create_analysis_file(pg_engine, "foobar", "fasta", "reference-fa")
 
     files = await virtool.analyses.utils.attach_analysis_files(pg_engine, "foobar")
 
