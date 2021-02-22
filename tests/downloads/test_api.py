@@ -90,6 +90,7 @@ async def test_download_hmm_profiles(data_exists, file_exists, snapshot, spawn_c
 
     if data_exists and file_exists:
         assert resp.status == 200
+        assert file_path.read_bytes() == await resp.content.read()
     else:
         assert resp.status == 404
 
