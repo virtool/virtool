@@ -5,8 +5,8 @@
 .pytest_cache
 client/node_modules
 client/dist
-tests
 data
 docker
 docs
 watch
+tests

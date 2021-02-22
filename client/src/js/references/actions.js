@@ -4,7 +4,7 @@ import {
     WS_REMOVE_REFERENCE,
     FIND_REFERENCES,
     GET_REFERENCE,
-    CREATE_REFERENCE,
+    EMPTY_REFERENCE,
     EDIT_REFERENCE,
     REMOVE_REFERENCE,
     IMPORT_REFERENCE,
@@ -46,8 +46,8 @@ export const getReference = refId => ({
     refId
 });
 
-export const createReference = (name, description, dataType, organism) => ({
-    type: CREATE_REFERENCE.REQUESTED,
+export const emptyReference = (name, description, dataType, organism) => ({
+    type: EMPTY_REFERENCE.REQUESTED,
     name,
     description,
     dataType,

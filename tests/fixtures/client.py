@@ -1,8 +1,11 @@
 import json
 
+import aiohttp
 import pytest
+from aiohttp.web_routedef import RouteTableDef
 
 import virtool.app
+import virtool.jobs_api.main
 import virtool.users.utils
 from virtool.utils import hash_key
 
@@ -55,29 +58,18 @@ class VirtoolTestClient:
 
 
 @pytest.fixture
-def spawn_client(
-        pg_connection_string,
-        pg_engine,
-        test_db_connection_string,
-        redis_connection_string,
-        request,
-        aiohttp_client,
-        test_motor,
+def create_app(
+        create_user,
         dbi,
+        pg_connection_string,
+        redis_connection_string,
+        test_db_connection_string,
         test_db_name,
-        pg_session,
-        create_user
 ):
-    async def func(
-            auth=None,
-            authorize=False,
-            administrator=False,
+    def _create_app(
             dev=False,
-            enable_api=False,
-            groups=None,
-            permissions=None
     ):
-        app = virtool.app.create_app({
+        return virtool.app.create_app({
             "dev": dev,
             "db_connection_string": test_db_connection_string,
             "redis_connection_string": redis_connection_string,
@@ -92,12 +84,32 @@ def spawn_client(
             "no_sentry": True
         })
 
-        cookies = {
-            "session_id": "dne"
-        }
+    return _create_app
+
+
+@pytest.fixture
+def spawn_client(
+        pg_engine,
+        request,
+        aiohttp_client,
+        test_motor,
+        dbi,
+        pg_session,
+        create_app,
+        create_user
+):
+    async def func(
+            auth=None,
+            authorize=False,
+            administrator=False,
+            dev=False,
+            enable_api=False,
+            groups=None,
+            permissions=None
+    ):
+        app = create_app(dev)
 
         user_document = create_user("test", administrator, groups, permissions)
-
         await dbi.users.insert_one(user_document)
 
         if authorize:
@@ -121,9 +133,62 @@ def spawn_client(
                 "session_id": "foobar",
                 "session_token": "bar"
             }
+        else:
+            cookies = {
+                "session_id": "dne"
+            }
 
         test_client = await aiohttp_client(app, auth=auth, cookies=cookies)
 
         return VirtoolTestClient(test_client)
 
     return func
+
+
+@pytest.fixture
+def spawn_job_client(
+        dbi,
+        aiohttp_client,
+        test_db_connection_string,
+        redis_connection_string,
+        pg_connection_string,
+        test_db_name
+):
+    """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
+
+    async def _spawn_job_client(
+            authorize: bool = False,
+            dev: bool = False,
+            add_route_table: RouteTableDef = None,
+    ):
+        # Create a test job to use for authentication.
+        if authorize:
+            job_id, key = "test_job", "test_key"
+            await dbi.jobs.insert_one({
+                "_id": job_id,
+                "key": hash_key(key),
+            })
+
+            # Create Basic Authentication header.
+            auth = aiohttp.BasicAuth(login=f"job-{job_id}", password=key)
+        else:
+            auth = None
+
+        app = await virtool.jobs_api.main.create_app(
+            db_connection_string=test_db_connection_string,
+            db_name=test_db_name,
+            dev=dev,
+            postgres_connection_string=pg_connection_string,
+            redis_connection_string=redis_connection_string,
+        )
+
+        if add_route_table:
+            app.add_routes(add_route_table)
+
+        client = await aiohttp_client(app, auth=auth)
+        client.db = dbi
+        client.settings = app["config"]
+
+        return client
+
+    return _spawn_job_client

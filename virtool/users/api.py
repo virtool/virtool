@@ -30,6 +30,7 @@ import virtool.users.utils
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, conflict, json_response, no_content, not_found
+from virtool.http.schema import schema
 
 routes = virtool.http.routes.Routes()
 
@@ -74,7 +75,8 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.post("/api/users", admin=True, schema={
+@routes.post("/api/users", admin=True)
+@schema({
     "user_id": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -130,7 +132,8 @@ async def create(req):
     )
 
 
-@routes.put("/api/users/first", public=True, schema={
+@routes.put("/api/users/first", public=True)
+@schema({
     "user_id": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -201,7 +204,8 @@ async def create_first(req):
     return resp
 
 
-@routes.patch("/api/users/{user_id}", admin=True, schema={
+@routes.patch("/api/users/{user_id}", admin=True)
+@schema({
     "administrator": {
         "type": "boolean"
     },

@@ -1,17 +1,10 @@
 import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
-import { pushState } from "../../app/actions";
-import { Modal, ModalHeader, ModalTabs, TabLink } from "../../base";
+import { TabLink, ViewHeader, ViewHeaderTitle, Tabs, NarrowContainer } from "../../base";
 import { routerLocationHasState } from "../../utils/utils";
 import CloneReference from "./Clone";
-import CreateReference from "./Create";
-
+import EmptyReference from "./Empty";
 import ImportReference from "./Import";
-
-const AddReferenceHeader = styled(ModalHeader)`
-    border-bottom: none !important;
-`;
 
 export class AddReference extends React.Component {
     constructor(props) {
@@ -51,19 +44,21 @@ export class AddReference extends React.Component {
             return <CloneReference />;
         }
 
-        return <CreateReference />;
+        return <EmptyReference />;
     };
 
     render() {
         return (
-            <Modal label="Add Reference" show={this.props.show} onHide={this.handleHide}>
-                <AddReferenceHeader>Add Reference</AddReferenceHeader>
-                <ModalTabs>
+            <NarrowContainer>
+                <ViewHeader title="Create Reference">
+                    <ViewHeaderTitle>Create Reference</ViewHeaderTitle>
+                </ViewHeader>
+                <Tabs>
                     <TabLink
-                        to={{ state: { newReference: true, createReference: true } }}
+                        to={{ state: { newReference: true, emptyReference: true } }}
                         isActive={this.checkActive("isCreate")}
                     >
-                        Create
+                        Empty
                     </TabLink>
                     <TabLink
                         to={{ state: { newReference: true, importReference: true } }}
@@ -77,31 +72,23 @@ export class AddReference extends React.Component {
                     >
                         Clone
                     </TabLink>
-                </ModalTabs>
+                </Tabs>
 
                 {this.renderForm()}
-            </Modal>
+            </NarrowContainer>
         );
     }
 }
 
 const mapStateToProps = state => {
     const isClone = routerLocationHasState(state, "cloneReference");
-    const isCreate = routerLocationHasState(state, "createReference");
+    const isCreate = routerLocationHasState(state, "emptyReference");
     const isImport = routerLocationHasState(state, "importReference");
-
     return {
-        show: routerLocationHasState(state, "newReference"),
         isCreate,
         isImport,
         isClone
     };
 };
 
-const mapDispatchToProps = dispatch => ({
-    onHide: () => {
-        dispatch(pushState({ newReference: false }));
-    }
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(AddReference);
+export default connect(mapStateToProps)(AddReference);

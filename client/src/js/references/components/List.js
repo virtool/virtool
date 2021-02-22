@@ -4,7 +4,6 @@ import { Badge, LoadingPlaceholder, NarrowContainer, ScrollList, ViewHeader, Vie
 import { routerLocationHasState } from "../../utils/utils";
 import { findReferences, remoteReference } from "../actions";
 import { getTerm } from "../selectors";
-import AddReference from "./Add";
 import ReferenceItem from "./Item/Item";
 import ReferenceOfficial from "./Official";
 import ReferenceToolbar from "./Toolbar";
@@ -39,8 +38,6 @@ class ReferenceList extends React.Component {
                     pageCount={this.props.pageCount}
                     renderRow={this.renderRow}
                 />
-
-                <AddReference />
             </NarrowContainer>
         );
     }

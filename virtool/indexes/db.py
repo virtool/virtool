@@ -226,3 +226,26 @@ async def get_unbuilt_stats(db, ref_id: Union[str, None] = None) -> dict:
         "change_count": await db.history.count_documents(history_query),
         "modified_otu_count": len(await db.history.distinct("otu.id", history_query))
     }
+
+
+async def reset_history(db, index_id: str):
+    """
+    Set the index.id and index.version fields with the given index id to 'unbuilt'.
+
+    :param db: The virtool database
+    :param index_id: The ID of the index which failed to build
+    """
+    query = {
+        "_id": {
+            "$in": await db.history.distinct("_id", {"index.id": index_id})
+        }
+    }
+
+    return await db.history.update_many(query, {
+        "$set": {
+            "index": {
+                "id": "unbuilt",
+                "version": "unbuilt"
+            }
+        }
+    })
