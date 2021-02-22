@@ -216,9 +216,8 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
     analysis_file = await virtool.analyses.db.create_row(pg, analysis_id, analysis_format, name)
 
     file_id = analysis_file["id"]
-    files = document.get("files", [])
 
-    if file_id in files:
+    if file_id in document.get("files", []):
         return conflict("File is already associated with analysis")
 
     analysis_file_path = Path(req.app["settings"]["data_path"]) / "analyses" / analysis_file["name_on_disk"]
@@ -233,10 +232,8 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     analysis_file = await virtool.uploads.db.finalize(pg, size, file_id, AnalysisFile)
 
-    files.append(file_id)
-
     await db.analyses.update_one({"_id": analysis_id}, {
-        "$set": {"files": files}
+        "$push": {"files": file_id}
     })
 
     headers = {
