@@ -3,10 +3,10 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { getFontSize } from "../../../../app/theme";
-import { Badge, BoxGroup, NoneFoundSection } from "../../../../base";
+import { Badge, BoxGroup, Icon, NoneFoundSection } from "../../../../base";
 import { checkRefRight, formatIsolateName } from "../../../../utils/utils";
 import { showAddSequence, showEditSequence, showRemoveSequence } from "../../../actions";
-import { getActiveIsolate, getSequences, getTargetName } from "../../../selectors";
+import { getActiveIsolate, getSequences, getTargetName, getUnreferencedTargets } from "../../../selectors";
 import AddSequence from "./Add";
 import EditSequence from "./Edit";
 import RemoveSequence from "./Remove";
@@ -22,8 +22,13 @@ const IsolateSequencesHeader = styled.label`
         padding-right: 5px;
     }
 
-    a {
+    a,
+    span:last-child {
         margin-left: auto;
+    }
+
+    span:last-child {
+        color: ${props => props.theme.color.green};
     }
 `;
 
@@ -45,16 +50,30 @@ export const IsolateSequences = props => {
         sequenceComponents = <NoneFoundSection noun="sequences" />;
     }
 
+    let addLink;
+
+    if (props.hasUnreferencedTargets) {
+        if (props.canModify) {
+            addLink = (
+                <a href="#" onClick={props.showAddSequence}>
+                    Add Sequence
+                </a>
+            );
+        }
+    } else {
+        addLink = (
+            <span>
+                <Icon name="check-double" /> All targets defined
+            </span>
+        );
+    }
+
     return (
         <React.Fragment>
             <IsolateSequencesHeader>
                 <strong>Sequences</strong>
                 <Badge>{props.sequences.length}</Badge>
-                {props.canModify ? (
-                    <a href="#" onClick={props.showAddSequence}>
-                        Add Sequence
-                    </a>
-                ) : null}
+                {addLink}
             </IsolateSequencesHeader>
 
             <BoxGroup>{sequenceComponents}</BoxGroup>
@@ -90,8 +109,10 @@ const mapStateToProps = state => {
     const sequencesWithSegment = filter(sequences, "segment");
     const segmentsInUse = map(sequencesWithSegment, "segment");
     const remainingSchema = differenceWith(originalSchema, segmentsInUse, isEqual);
+    const hasUnreferencedTargets = getUnreferencedTargets(state).length > 0;
 
     return {
+        hasUnreferencedTargets,
         remainingSchema,
         activeIsolateId,
         sequences,

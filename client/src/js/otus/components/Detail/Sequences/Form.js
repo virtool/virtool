@@ -2,8 +2,6 @@ import { some } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import {
-    ModalBody,
-    ModalFooter,
     Input,
     InputContainer,
     InputError,
@@ -11,17 +9,21 @@ import {
     InputIcon,
     InputLabel,
     Loader,
+    ModalBody,
     ModalBodyOverlay,
+    ModalFooter,
     SaveButton
 } from "../../../../base";
 import { getTargetChange } from "../../../../utils/utils";
 import { getGenbank } from "../../../api";
-import SequenceSegment from "./Segment";
 import SequenceField from "./Field";
+import SequenceSegment from "./Segment";
+import TargetsField from "./TargetsField";
 
 export class SequenceForm extends React.Component {
     constructor(props) {
         super(props);
+
         this.state = {
             accession: props.accession || "",
             definition: props.definition || "",
@@ -32,7 +34,7 @@ export class SequenceForm extends React.Component {
             pending: false,
             sequence: props.sequence || "",
             segment: props.segment || "",
-            targetName: props.targetName || ""
+            targetName: props.targetName
         };
     }
 
@@ -134,6 +136,13 @@ export class SequenceForm extends React.Component {
             <form onSubmit={this.handleSubmit}>
                 <ModalBody>
                     {overlay}
+
+                    {this.props.dataType === "barcode" && (
+                        <TargetsField
+                            value={this.state.targetName}
+                            onChange={value => this.setState({ targetName: value })}
+                        />
+                    )}
 
                     <InputGroup>
                         <InputLabel>Accession (ID)</InputLabel>
