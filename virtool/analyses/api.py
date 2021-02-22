@@ -233,10 +233,6 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     analysis_file = await virtool.uploads.db.finalize(pg, size, file_id, AnalysisFile)
 
-    if not analysis_file:
-        await req.app["run_in_thread"](os.remove, analysis_file_path)
-        return not_found("Row not found in table after file upload")
-
     files.append(file_id)
 
     await db.analyses.update_one({"_id": analysis_id}, {
