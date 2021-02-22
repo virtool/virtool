@@ -6,6 +6,7 @@ import { Container, LoadingPlaceholder, NarrowContainer, ViewHeader, ViewHeaderT
 import SourceTypes from "./SourceTypes";
 import ReferenceList from "./List";
 import ReferenceDetail from "./Detail/Detail";
+import AddReference from "./Add";
 
 export const ReferenceSettings = () => (
     <NarrowContainer>
@@ -27,6 +28,7 @@ export const References = ({ loading }) => {
                 <Route path="/refs" component={ReferenceList} exact />
                 <Redirect from="/refs/settings/*" to="/refs/settings" />
                 <Route path="/refs/settings" component={ReferenceSettings} />
+                <Route path="/refs/add" component={AddReference} />
                 <Route path="/refs/:refId" component={ReferenceDetail} />
             </Switch>
         </Container>

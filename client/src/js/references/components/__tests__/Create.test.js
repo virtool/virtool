@@ -1,6 +1,6 @@
-import { CreateReference, mapDispatchToProps } from "../Create";
+import { EmptyReference, mapDispatchToProps } from "../Empty";
 
-describe("<CreateReference />", () => {
+describe("<EmptyReference />", () => {
     const props = {
         onSubmit: jest.fn()
     };
@@ -24,16 +24,16 @@ describe("<CreateReference />", () => {
             organism: "",
             errorName: "",
             errorDataType: "",
-            mode: "create"
+            mode: "empty"
         };
     });
 
     it("should render", () => {
-        const wrapper = shallow(<CreateReference {...props} />);
+        const wrapper = shallow(<EmptyReference {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
     it("handleChange should update name and error", () => {
-        const wrapper = shallow(<CreateReference {...props} />);
+        const wrapper = shallow(<EmptyReference {...props} />);
         wrapper.find("ReferenceForm").simulate("change", e);
         expect(wrapper.state()).toEqual({
             ...state,
@@ -42,7 +42,7 @@ describe("<CreateReference />", () => {
     });
 
     it("handleSubmit() should update errorName in state when [this.state.name.length = 0]", () => {
-        const wrapper = shallow(<CreateReference {...props} />);
+        const wrapper = shallow(<EmptyReference {...props} />);
         wrapper.find("form").simulate("submit", e);
         wrapper.setState({ errorDataType: "foo" });
         expect(wrapper.state()).toEqual({
@@ -53,7 +53,7 @@ describe("<CreateReference />", () => {
     });
 
     it("handleSubmit() should update errorName in state when [this.state.dataType.length = 0]", () => {
-        const wrapper = shallow(<CreateReference {...props} />);
+        const wrapper = shallow(<EmptyReference {...props} />);
         wrapper.setState({
             ...state,
             name: "foo",
@@ -68,7 +68,7 @@ describe("<CreateReference />", () => {
         });
     });
     it("handleSubmit should call this.props.onSubmit when [this.state.name.length!=0] and [this.state.dataType.length!=0]", () => {
-        const wrapper = shallow(<CreateReference {...props} />);
+        const wrapper = shallow(<EmptyReference {...props} />);
         wrapper.setState({
             ...state,
             name: "foo",
@@ -90,7 +90,7 @@ describe("mapDispatchToProps()", () => {
             description: "bar",
             dataType: "fee",
             organism: "baz",
-            type: "CREATE_REFERENCE_REQUESTED"
+            type: "EMPTY_REFERENCE_REQUESTED"
         });
     });
     it("should return onClearError in props", () => {

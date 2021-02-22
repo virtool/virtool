@@ -23,8 +23,9 @@ exports[`<ReferenceToolbar /> should render creation button when [canCreate=true
     tipPlacement="top"
     to={
       Object {
+        "pathname": "/refs/add",
         "state": Object {
-          "createReference": true,
+          "emptyReference": true,
           "newReference": true,
         },
       }
@@ -52,8 +53,9 @@ exports[`<ReferenceToolbar /> should render when [term='foo'] 1`] = `
     tipPlacement="top"
     to={
       Object {
+        "pathname": "/refs/add",
         "state": Object {
-          "createReference": true,
+          "emptyReference": true,
           "newReference": true,
         },
       }
