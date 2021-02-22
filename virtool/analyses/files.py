@@ -60,7 +60,7 @@ async def get_analysis_file(pg: AsyncEngine, file_id: int) -> Optional[AnalysisF
 
     :param pg: PostgreSQL AsyncEngine object
     :param file_id: Row `id` to get
-    :return:
+    :return: Row from the `analysis_files` SQL table
     """
     async with AsyncSession(pg) as session:
         upload = (await session.execute(select(AnalysisFile).filter_by(id=file_id))).scalar()
