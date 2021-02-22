@@ -6,13 +6,6 @@ const getStateTerm = state => state.otus.term;
 
 export const getTerm = getTermSelectorFactory(getStateTerm);
 
-export const getTargetName = state => {
-    if (state.references.detail.targets) {
-        return state.references.detail.targets[0].name;
-    }
-    return null;
-};
-
 export const getSequences = state => {
     const activeIsolate = getActiveIsolate(state);
     const sequences = activeIsolate.sequences;
@@ -41,6 +34,15 @@ export const getAvailableSegmentNames = createSelector([getSchema, getSequences]
 
     return difference(segmentNames, usedSegments);
 });
+
+export const getTargets = state => state.references.detail.targets;
+
+export const getUnreferencedTargets = createSelector([getTargets, getSequences], (targets, sequences) => {
+    const referencedTargetNames = map(sequences, sequence => sequence.target);
+    return targets.filter(target => !referencedTargetNames.includes(target.name));
+});
+
+export const getTargetName = createSelector([getUnreferencedTargets], targets => get(targets, "0.name"), "");
 
 export const getOTUDetailId = state => get(state, "otus.detail.id");
 

@@ -1,14 +1,14 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Box, Modal, ModalBody, ModalHeader } from "../../../../base";
+import { Modal, ModalHeader } from "../../../../base";
 import { clearError } from "../../../../errors/actions";
 import { getError } from "../../../../errors/selectors";
 import { addSequence, hideOTUModal } from "../../../actions";
-import { TargetInfo } from "../Target";
+import { getTargetName } from "../../../selectors";
 import { SequenceForm } from "./Form";
 
 class AddSequence extends React.Component {
-    handleSubmit = ({ accession, definition, host, sequence, segment, target }) => {
+    handleSubmit = ({ accession, definition, host, sequence, segment, targetName }) => {
         this.props.onClearError();
         this.props.onSave(
             this.props.otuId,
@@ -18,42 +18,36 @@ class AddSequence extends React.Component {
             host,
             sequence,
             segment,
-            target
+            targetName
         );
     };
 
     render() {
-        const targetComponent = this.props.targets && (
-            <ModalBody>
-                <Box>
-                    <TargetInfo {...this.props} />
-                </Box>
-            </ModalBody>
-        );
-
         return (
             <Modal label="Add Sequence" show={this.props.show} size="lg" onHide={this.props.onHide}>
                 <ModalHeader>Add Sequence</ModalHeader>
-                {targetComponent}
-                <SequenceForm dataType={this.props.dataType} error={this.props.error} onSubmit={this.handleSubmit} />
+                <SequenceForm
+                    dataType={this.props.dataType}
+                    error={this.props.error}
+                    targetName={this.props.targetName}
+                    onSubmit={this.handleSubmit}
+                />
             </Modal>
         );
     }
 }
 
 export const mapStateToProps = state => {
-    const { activeIsolateId, sequences, addSequence, targetName } = state.otus;
-    const { dataType, targets } = state.references.detail;
+    const { activeIsolateId, sequences, addSequence } = state.otus;
 
     return {
         activeIsolateId,
-        dataType,
+        dataType: state.references.detail.data_type,
         sequences,
-        targetName,
-        targets,
         error: getError("ADD_SEQUENCE_ERROR"),
         otuId: state.otus.detail.id,
-        show: addSequence
+        show: addSequence,
+        targetName: getTargetName(state)
     };
 };
 
