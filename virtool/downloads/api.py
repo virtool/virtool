@@ -260,7 +260,7 @@ async def download_bowtie2_files(req):
         return virtool.api.response.not_found()
 
     if not await db.subtraction.count_documents({"_id": subtraction_id, "files.name": file_name}):
-        return virtool.api.response.not_found("Bowtie2 file not found")
+        return virtool.api.response.not_found()
 
     path = os.path.join(
         virtool.subtractions.utils.join_subtraction_path(req.app["settings"], subtraction_id),
