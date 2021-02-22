@@ -296,7 +296,7 @@ async def test_upload_file(error, files, resp_is, spawn_client, static_time, sna
 
         document = await client.db.analyses.find_one("foobar")
 
-        assert document["files"] == ["1-reference.fa"]
+        assert document["files"] == [1]
 
     elif error == 400:
         assert await resp_is.bad_request(resp, "Unsupported analysis file format")

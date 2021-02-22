@@ -215,14 +215,13 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     analysis_file = await virtool.analyses.db.create_row(pg, analysis_id, analysis_format, name)
 
-    name_on_disk = analysis_file["name_on_disk"]
+    file_id = analysis_file["id"]
     files = document.get("files", [])
 
-    if name_on_disk in files:
+    if file_id in files:
         return conflict("File is already associated with analysis")
 
-    file_id = analysis_file["id"]
-    analysis_file_path = Path(req.app["settings"]["data_path"]) / "analyses" / name_on_disk
+    analysis_file_path = Path(req.app["settings"]["data_path"]) / "analyses" / analysis_file["name_on_disk"]
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, analysis_file_path)
@@ -238,7 +237,7 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
         await req.app["run_in_thread"](os.remove, analysis_file_path)
         return not_found("Row not found in table after file upload")
 
-    files.append(name_on_disk)
+    files.append(file_id)
 
     await db.analyses.update_one({"_id": analysis_id}, {
         "$set": {"files": files}
