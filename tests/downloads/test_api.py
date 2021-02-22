@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 
@@ -162,10 +164,12 @@ async def test_download_bowtie2_files(error, tmpdir, spawn_client):
     await client.db.subtraction.insert_one(subtraction)
 
     resp = await client.get("/download/subtraction/foo/subtraction.1.bt2")
+    expected_path = Path(client.app["settings"]["data_path"]) / "subtractions" / "foo" / "subtraction.1.bt2"
 
     if error == "404":
         assert resp.status == 404
         return
 
     assert resp.status == 200
+    assert expected_path.read_bytes() == await resp.content.read()
 
