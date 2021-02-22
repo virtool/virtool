@@ -6,6 +6,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.analyses.db
+import virtool.analyses.files
 from virtool.utils import base_processor
 
 
@@ -66,7 +67,7 @@ async def test_get(ready, files, error, mocker, snapshot, spawn_client, static_t
     if error != "404":
         await client.db.analyses.insert_one(document)
 
-        await virtool.analyses.db.create_row(pg_engine, "foobar", "fasta", "reference.fa")
+        await virtool.analyses.files.create_analysis_file(pg_engine, "foobar", "fasta", "reference.fa")
 
     m_format_analysis = mocker.patch(
         "virtool.analyses.format.format_analysis",

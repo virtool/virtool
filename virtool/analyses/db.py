@@ -6,9 +6,6 @@ import asyncio
 import os
 from typing import Any, Dict, Optional, Tuple
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-
 import virtool.analyses.utils
 import virtool.bio
 import virtool.db.utils
@@ -19,7 +16,6 @@ import virtool.otus.utils
 import virtool.samples.db
 import virtool.types
 import virtool.utils
-from virtool.analyses.models import AnalysisFile
 from virtool.jobs.utils import JobRights
 
 PROJECTION = (
@@ -212,71 +208,6 @@ async def create(
     await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
 
     return document
-
-
-async def create_row(pg: AsyncEngine, analysis_id: str, analysis_format: str, name: str) -> Dict[str, any]:
-    """
-    Create a row in the `analysis_files` SQL table that represents an analysis result file.
-
-    :param pg: PostgreSQL AsyncEngine object
-    :param analysis_id: ID that corresponds to a parent analysis
-    :param analysis_format: Format of the analysis result file
-    :param name: Name of the analysis result file
-    :return: A dictionary representation of the newly created row
-    """
-    async with AsyncSession(pg) as session:
-        analysis_file = AnalysisFile(
-            name=name,
-            analysis=analysis_id,
-            format=analysis_format
-        )
-
-        session.add(analysis_file)
-
-        await session.flush()
-
-        analysis_file.name_on_disk = f"{analysis_file.id}-{analysis_file.name}"
-
-        analysis_file = analysis_file.to_dict()
-
-        await session.commit()
-
-        return analysis_file
-
-
-async def delete_row(pg: AsyncEngine, file_id: int):
-    """
-    Deletes a row in the `analysis_files` SQL by its row `id`
-
-    :param pg: PostgreSQL AsyncEngine object
-    :param file_id: Row `id` to delete
-    """
-    async with AsyncSession(pg) as session:
-        analysis_file = (await session.execute(select(AnalysisFile).where(AnalysisFile.id == file_id))).scalar()
-
-        if not analysis_file:
-            return None
-
-        await session.delete(analysis_file)
-
-        await session.commit()
-
-
-async def get_row(pg: AsyncEngine, file_id: int) -> Optional[AnalysisFile]:
-    """
-    Get a row that represents an analysis result file by its `id`
-
-    :param pg: PostgreSQL AsyncEngine object
-    :param file_id: Row `id` to get
-    :return:
-    """
-    async with AsyncSession(pg) as session:
-        upload = (await session.execute(select(AnalysisFile).filter_by(id=file_id))).scalar()
-
-        if not upload:
-            return None
-
-    return upload
 
 
 async def update_nuvs_blast(
