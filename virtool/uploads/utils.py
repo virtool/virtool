@@ -1,5 +1,3 @@
-import os
-
 import aiofiles
 from cerberus import Validator
 
@@ -29,8 +27,6 @@ async def naive_writer(req, file_path) -> int:
     file = await reader.next()
 
     size = 0
-
-    os.makedirs(file_path.parent, exist_ok=True)
 
     async with aiofiles.open(file_path, "wb") as handle:
         while True:
