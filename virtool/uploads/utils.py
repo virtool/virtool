@@ -1,5 +1,6 @@
 import aiofiles
 from cerberus import Validator
+import os
 
 CHUNK_SIZE = 4096
 
@@ -27,6 +28,11 @@ async def naive_writer(req, file_path) -> int:
     file = await reader.next()
 
     size = 0
+
+    try:
+        await req.app["run_in_thread"](os.mkdir, file_path.parent)
+    except FileExistsError:
+        pass
 
     async with aiofiles.open(file_path, "wb") as handle:
         while True:

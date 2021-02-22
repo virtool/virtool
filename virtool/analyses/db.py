@@ -24,6 +24,7 @@ PROJECTION = (
     "created_at",
     "index",
     "job",
+    "files",
     "ready",
     "reference",
     "sample",
@@ -152,6 +153,7 @@ async def create(
         "job": {
             "id": job_id
         },
+        "files": [],
         "workflow": workflow,
         "sample": {
             "id": sample_id
