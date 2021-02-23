@@ -1,6 +1,5 @@
-import datetime
 import logging
-from typing import Union, Optional, List, Dict
+from typing import Union, Optional, List, Dict, Type
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
@@ -49,18 +48,20 @@ async def create(pg: AsyncEngine, name: str, upload_type: str, reserved: bool = 
         return upload
 
 
-async def finalize(pg: AsyncEngine, size: int, upload_id: int, uploaded_at: datetime) -> Optional[dict]:
+async def finalize(pg, size: int, id_: int, table: Type[any]) -> Optional[dict]:
     """
-    Finalize `Upload` entry creation after the file has been uploaded locally.
+    Finalize row creation after the file has been uploaded locally.
 
     :param pg: PostgreSQL AsyncEngine object
     :param size: Size of the new file in bytes
-    :param upload_id: Row `id` corresponding to the recently created `upload` entry
-    :param uploaded_at: Timestamp from when the file was uploaded
+    :param id_: Row `id` corresponding to the recently created `upload` entry
+    :param table: SQL table to retrieve row from
     :return: Dictionary representation of new row in the `uploads` SQL table
     """
+    uploaded_at = virtool.utils.timestamp()
+
     async with AsyncSession(pg) as session:
-        upload = (await session.execute(select(Upload).filter(Upload.id == upload_id))).scalar()
+        upload = (await session.execute(select(table).filter_by(id=id_))).scalar()
 
         if not upload:
             return None
@@ -73,7 +74,7 @@ async def finalize(pg: AsyncEngine, size: int, upload_id: int, uploaded_at: date
 
         await session.commit()
 
-        return upload
+    return upload
 
 
 async def find(pg, user: str = None, upload_type: str = None) -> List[dict]:

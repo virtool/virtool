@@ -12,17 +12,9 @@ import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
 from virtool.api.response import invalid_query, json_response, bad_request, not_found
-from virtool.uploads.models import Upload
+from virtool.uploads.models import Upload, UPLOAD_TYPES
 
 logger = logging.getLogger("uploads")
-
-UPLOAD_TYPES = [
-    "hmm",
-    "reference",
-    "reads",
-    "subtraction",
-    None
-]
 
 routes = virtool.http.routes.Routes()
 
@@ -60,12 +52,12 @@ async def create(req):
 
         return aiohttp.web.Response(status=499)
 
-    upload = await virtool.uploads.db.finalize(pg, size, upload_id, virtool.utils.timestamp())
+    upload = await virtool.uploads.db.finalize(pg, size, upload_id, Upload)
 
     if not upload:
         await req.app["run_in_thread"](os.remove, file_path)
 
-        return not_found("Document not found in table after file upload")
+        return not_found("Row not found in table after file upload")
 
     logger.debug(f"Upload succeeded: {upload_id}")
 

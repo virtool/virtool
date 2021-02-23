@@ -18,7 +18,7 @@ def schema(schema_dict: dict):
     :return: A decorator which wraps a :class:`RouteHandler`, ensuring that the JSON body
         of the request matches the cerberus schema.
     """
-    validator = cerberus.Validator(schema_dict)
+    validator = cerberus.Validator(schema_dict, purge_unknown=True)
 
     def _validate_schema_against_json_body(handler: RouteHandler):
         @wraps(handler)

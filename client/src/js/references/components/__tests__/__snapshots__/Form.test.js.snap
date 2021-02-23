@@ -58,7 +58,7 @@ exports[`<ReferenceForm /> should render error when provided in props 1`] = `
 </Fragment>
 `;
 
-exports[`<ReferenceForm /> should render organism field when [mode=create] 1`] = `
+exports[`<ReferenceForm /> should render organism field when [mode=empty] 1`] = `
 <Fragment>
   <InputGroup>
     <Input__InputLabel>

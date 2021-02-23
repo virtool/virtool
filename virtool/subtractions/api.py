@@ -10,6 +10,7 @@ import virtool.subtractions.utils
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, json_response, no_content, not_found
+from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
 
 routes = virtool.http.routes.Routes()
@@ -82,7 +83,8 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.post("/api/subtractions", permission="modify_subtraction", schema={
+@routes.post("/api/subtractions", permission="modify_subtraction")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -106,7 +108,7 @@ async def create(req):
     """
     db = req.app["db"]
     data = req["data"]
-    
+
     file_id = data["file_id"]
 
     file = await db.files.find_one(file_id, ["name"])
@@ -171,7 +173,8 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 
 
-@routes.patch("/api/subtractions/{subtraction_id}", permission="modify_subtraction", schema={
+@routes.patch("/api/subtractions/{subtraction_id}", permission="modify_subtraction")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,

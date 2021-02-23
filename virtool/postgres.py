@@ -1,9 +1,10 @@
 import logging
 import sys
+from enum import Enum
 
 from sqlalchemy import text
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.declarative import declarative_base
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,13 @@ async def create_tables(engine):
 
 
 def to_dict(self):
-    return {c.name: getattr(self, c.name, None) for c in self.__table__.columns}
+    row = dict()
+    for c in self.__table__.columns:
+        column = getattr(self, c.name, None)
+
+        row[c.name] = column if not isinstance(column, Enum) else column.value
+
+    return row
 
 
 Base.to_dict = to_dict

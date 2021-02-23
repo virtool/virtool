@@ -45,6 +45,18 @@ exports[`<References /> should render when [loading=false] 1`] = `
           "$$typeof": Symbol(react.memo),
           "WrappedComponent": [Function],
           "compare": null,
+          "displayName": "Connect(AddReference)",
+          "type": [Function],
+        }
+      }
+      path="/refs/add"
+    />
+    <Route
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
           "displayName": "Connect(ReferenceDetail)",
           "type": [Function],
         }

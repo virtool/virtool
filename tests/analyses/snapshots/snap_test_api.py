@@ -10,6 +10,18 @@ snapshots = Snapshot()
 snapshots['test_get[uvloop-None-True] format_analysis'] = {
     '_id': 'foobar',
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'files': [
+        {
+            'analysis': 'foobar',
+            'description': None,
+            'format': 'fasta',
+            'id': 1,
+            'name': 'reference.fa',
+            'name_on_disk': '1-reference.fa',
+            'size': None,
+            'uploaded_at': None
+        }
+    ],
     'ready': True,
     'results': {
     },
@@ -31,6 +43,18 @@ snapshots['test_get[uvloop-None-True] 1'] = {
 
 snapshots['test_get[uvloop-None-False] 1'] = {
     'created_at': '2015-10-06T20:00:00Z',
+    'files': [
+        {
+            'analysis': 'foobar',
+            'description': None,
+            'format': 'fasta',
+            'id': 1,
+            'name': 'reference.fa',
+            'name_on_disk': '1-reference.fa',
+            'size': None,
+            'uploaded_at': None
+        }
+    ],
     'id': 'foobar',
     'ready': False,
     'results': {
@@ -122,4 +146,35 @@ snapshots['test_find[uvloop] 1'] = {
     'page_count': 1,
     'per_page': 25,
     'total_count': 3
+}
+
+snapshots['test_upload_file[uvloop-None] 1'] = {
+    'analysis': 'foobar',
+    'description': None,
+    'format': 'fasta',
+    'id': 1,
+    'name': 'reference.fa',
+    'name_on_disk': '1-reference.fa',
+    'size': 20466,
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
+snapshots['test_download_file[uvloop-False] 1'] = {
+    'id': 'not_found',
+    'message': 'Not found'
+}
+
+snapshots['test_download_file[uvloop-True-False] 1'] = {
+    'id': 'not_found',
+    'message': 'Uploaded file not found at expected location'
+}
+
+snapshots['test_download_file[uvloop-False-True] 1'] = {
+    'id': 'not_found',
+    'message': 'Not found'
+}
+
+snapshots['test_download_file[uvloop-False-False] 1'] = {
+    'id': 'not_found',
+    'message': 'Not found'
 }

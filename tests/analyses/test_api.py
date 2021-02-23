@@ -1,17 +1,37 @@
+import os
+import sys
+from pathlib import Path
+
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
+import virtool.analyses.db
+import virtool.analyses.files
 from virtool.utils import base_processor
+
+
+@pytest.fixture
+def files(tmpdir):
+    tmpdir.mkdir("files")
+
+    path = Path(sys.path[0]) / "tests" / "test_files" / "aodp" / "reference.fa"
+
+    data = {
+        "file": open(path, "rb")
+    }
+
+    return data
 
 
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("error", [None, "400", "403", "404"])
-async def test_get(ready, error, mocker, snapshot, spawn_client, static_time, resp_is):
+async def test_get(ready, files, error, mocker, snapshot, spawn_client, static_time, resp_is, pg_engine):
     client = await spawn_client(authorize=True)
 
     document = {
         "_id": "foobar",
         "created_at": static_time.datetime,
+        "files": ["1-reference.fa"],
         "ready": ready,
         "workflow": "pathoscope_bowtie",
         "results": {},
@@ -46,6 +66,8 @@ async def test_get(ready, error, mocker, snapshot, spawn_client, static_time, re
 
     if error != "404":
         await client.db.analyses.insert_one(document)
+
+        await virtool.analyses.files.create_analysis_file(pg_engine, "foobar", "fasta", "reference.fa")
 
     m_format_analysis = mocker.patch(
         "virtool.analyses.format.format_analysis",
@@ -233,6 +255,100 @@ async def test_remove(mocker, error, spawn_client, resp_is):
     assert await client.db.analyses.find_one() is None
 
     assert m_remove.called_with("data/samples/baz/analyses/foobar", True)
+
+
+@pytest.mark.parametrize("error", [None, 400, 404, 422])
+async def test_upload_file(error, files, resp_is, spawn_client, static_time, snapshot, tmpdir):
+    """
+    Test that an analysis result file is properly uploaded, a record is inserted into the `analysis_files` SQL table,
+    and that the `list` field in a given analysis is updated to reflect the new file.
+
+    """
+    client = await spawn_client(authorize=True, administrator=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    if error == 400:
+        format_ = "foo"
+    else:
+        format_ = "fasta"
+
+    if error != 404:
+        await client.db.analyses.insert_one({
+            "_id": "foobar",
+            "ready": True,
+            "job": {
+                "id": "hello"
+            },
+            "files": []
+        })
+
+    if error == 422:
+        resp = await client.post_form("/api/analyses/foobar/files?format=fasta", data=files)
+    else:
+        resp = await client.post_form(f"/api/analyses/foobar/files?name=reference.fa&format={format_}", data=files)
+
+    if error is None:
+        assert resp.status == 201
+
+        snapshot.assert_match(await resp.json())
+
+        assert os.listdir(tmpdir / "analyses") == ["1-reference.fa"]
+
+        document = await client.db.analyses.find_one("foobar")
+
+        assert document["files"] == [1]
+
+    elif error == 400:
+        assert await resp_is.bad_request(resp, "Unsupported analysis file format")
+
+    elif error == 404:
+        assert resp.status == 404
+
+    elif error == 422:
+        assert await resp_is.invalid_query(resp, {
+            "name": ["required field"]
+        })
+
+
+@pytest.mark.parametrize("file_exists", [True, False])
+@pytest.mark.parametrize("row_exists", [True, False])
+async def test_download_file(file_exists, row_exists, files, spawn_client, snapshot, tmpdir):
+    """
+    Test that you can properly download an analysis result file using details from the `analysis_files` SQL table
+
+    """
+    client = await spawn_client(authorize=True, administrator=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    expected_path = Path(client.app["settings"]["data_path"]) / "analyses" / "1-reference.fa"
+
+    await client.db.analyses.insert_one({
+        "_id": "foobar",
+        "ready": True,
+        "job": {
+            "id": "hello"
+        },
+        "files": []
+    })
+
+    if row_exists:
+        await client.post_form("/api/analyses/foobar/files?name=reference.fa&format=fasta", data=files)
+
+        assert expected_path.is_file()
+
+    if not file_exists and row_exists:
+        expected_path.unlink()
+
+    resp = await client.get("/api/analyses/foobar/files/1")
+
+    if file_exists and row_exists:
+        assert resp.status == 200
+        assert expected_path.read_bytes() == await resp.content.read()
+    else:
+        assert resp.status == 404
+        snapshot.assert_match(await resp.json())
 
 
 @pytest.mark.parametrize("error", [None, "400", "403", "404_analysis", "404_sequence", "409_workflow", "409_ready"])

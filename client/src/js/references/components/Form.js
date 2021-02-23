@@ -4,7 +4,7 @@ import { Input, InputError, InputGroup, InputLabel, TextArea } from "../../base"
 export const ReferenceForm = ({ description, organism, mode, name, errorName, onChange }) => {
     let organismComponent;
 
-    if (mode === "create") {
+    if (mode === "empty") {
         organismComponent = (
             <InputGroup>
                 <InputLabel>Organism</InputLabel>
