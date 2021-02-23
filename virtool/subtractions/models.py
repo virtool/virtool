@@ -26,7 +26,7 @@ class SubtractionFile(Base):
     __tablename__ = "subtraction_files"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True)
+    name = Column(String)
     subtraction = Column(String)
     type = Column(Enum(SubtractionType))
     size = Column(Integer)
