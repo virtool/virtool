@@ -146,15 +146,39 @@ async def delete(pg: AsyncEngine, upload_id: int) -> Optional[dict]:
     return upload
 
 
-async def reserve(pg, upload_ids):
+async def release(pg: AsyncEngine, upload_ids: Union[int, List[int]]):
     """
-    Reserve the uploads identified in `upload_ids` by setting the `reserved` field to `True`.
+    Release the uploads in `upload_ids` by setting the `reserved` field to `False`.
 
     :param pg: PostgreSQL AsyncEngine object
     :param upload_ids: List of row `id`s to set the attribute for
     """
+    if isinstance(upload_ids, int):
+        query = (Upload.id == upload_ids)
+    else:
+        query = (Upload.id.in_(upload_ids))
+
     async with AsyncSession(pg) as session:
         await session.execute(update(Upload).
-                              where(Upload.id.in_(upload_ids)).values(reserve=True).
+                              where(query).values(reserved=False).
+                              execution_options(synchronize_session="fetch")
+                              )
+
+
+async def reserve(pg: AsyncEngine, upload_ids: Union[int, List[int]]):
+    """
+    Reserve the uploads in `upload_ids` by setting the `reserved` field to `True`.
+
+    :param pg: PostgreSQL AsyncEngine object
+    :param upload_ids: List of row `id`s to set the attribute for
+    """
+    if isinstance(upload_ids, int):
+        query = Upload.id == upload_ids
+    else:
+        query = Upload.id.in_(upload_ids)
+
+    async with AsyncSession(pg) as session:
+        await session.execute(update(Upload).
+                              where(query).values(reserved=True).
                               execution_options(synchronize_session="fetch")
                               )
