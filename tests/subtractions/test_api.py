@@ -3,7 +3,6 @@ import os
 import aiohttp.test_utils
 import pytest
 
-from virtool.subtractions.models import SubtractionFile
 
 @pytest.mark.parametrize("data", [
     {"name": "Bar"},
