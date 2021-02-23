@@ -167,7 +167,7 @@ async def test_map_default_isolates(tmpdir, mock_job):
     ])
 
 
-async def test_map_isolates(snapshot, tmpdir, dbs, mock_job):
+async def test_map_isolates(snapshot, tmpdir, dbi, mock_job):
     shutil.copyfile(FASTQ_PATH, os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq"))
 
     sample_path = os.path.join(str(tmpdir), "samples", "foobar")
@@ -190,7 +190,7 @@ async def test_map_isolates(snapshot, tmpdir, dbs, mock_job):
         snapshot.assert_match(data, "isolates")
 
 
-async def test_map_subtraction(snapshot, dbs, mock_job):
+async def test_map_subtraction(snapshot, dbi, mock_job):
     mock_job.proc = 2
     mock_job.params["subtraction_path"] = HOST_PATH
 
@@ -203,7 +203,7 @@ async def test_map_subtraction(snapshot, dbs, mock_job):
     snapshot.assert_match(sorted_lines, "subtraction")
 
 
-async def test_subtract_mapping(dbs, mock_job):
+async def test_subtract_mapping(dbi, mock_job):
     with open(TO_SUBTRACTION_PATH, "r") as handle:
         mock_job.intermediate["to_subtraction"] = json.load(handle)
 

@@ -159,11 +159,6 @@ snapshots['test_upload_file[uvloop-None] 1'] = {
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
-snapshots['test_download_file[uvloop-False] 1'] = {
-    'id': 'not_found',
-    'message': 'Not found'
-}
-
 snapshots['test_download_file[uvloop-True-False] 1'] = {
     'id': 'not_found',
     'message': 'Uploaded file not found at expected location'
