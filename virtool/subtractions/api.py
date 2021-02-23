@@ -229,12 +229,6 @@ async def upload(req):
 
     subtraction_file = await virtool.uploads.db.finalize(pg, size, file_id, SubtractionFile)
 
-    file = {
-        "name": file_name,
-        "size": size,
-        "type": file_type
-    }
-
     await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
         "$push": {
             "files": file_id
