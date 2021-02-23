@@ -3,6 +3,7 @@ import os
 import aiohttp.test_utils
 import pytest
 
+from virtool.subtractions.models import SubtractionFile
 
 @pytest.mark.parametrize("data", [
     {"name": "Bar"},
@@ -29,10 +30,9 @@ async def test_edit(data, mocker, snapshot, spawn_client):
     snapshot.assert_match(await client.db.subtraction.find_one(), "db")
 
 
-@pytest.mark.parametrize("error", [None, "400_exists", "400_name", "422"])
-async def test_upload(error, tmpdir, spawn_client, resp_is):
+@pytest.mark.parametrize("error", [None, "400_exists", "400_name", "404", "422"])
+async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session):
     client = await spawn_client(authorize=True, permissions=["modify_subtraction"])
-
     test_dir = tmpdir.mkdir("files")
     test_dir.join("subtraction.1.bt2").write("Bowtie2 file")
     path = os.path.join(test_dir, "subtraction.1.bt2")
@@ -71,7 +71,7 @@ async def test_upload(error, tmpdir, spawn_client, resp_is):
     resp = await client.post_form(url, data=files)
 
     if error == "400_name":
-        assert await resp_is.bad_request(resp, "Unaccepted subtraction file name")
+        assert await resp_is.bad_request(resp, "Unsupported subtraction file name")
         return
 
     if error == "400_exists":
@@ -84,8 +84,10 @@ async def test_upload(error, tmpdir, spawn_client, resp_is):
 
     assert resp.status == 201
     assert os.listdir(tmpdir / "subtractions" / "foo") == ["subtraction.1.bt2"]
-    assert await resp.json() == {
-        'id': 'foo',
+    snapshot.assert_match(await resp.json())
+    document = await client.db.subtraction.find_one("foo")
+    assert document == {
+        '_id': 'foo',
         'name': 'Foo',
         'files': [
             {

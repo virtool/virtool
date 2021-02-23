@@ -58,3 +58,19 @@ snapshots['test_edit[uvloop-data3] db'] = {
     'name': 'Bar',
     'nickname': 'Bar Subtraction'
 }
+
+snapshots['test_upload[uvloop-None] 1'] = {
+    'id': 1,
+    'name': 'subtraction.1.bt2',
+    'size': 12,
+    'subtraction': 'foo',
+    'type': 'bowtie2'
+}
+
+snapshots['test_upload[uvloop-404] 1'] = {
+    'id': 1,
+    'name': 'subtraction.1.bt2',
+    'size': 12,
+    'subtraction': 'foo',
+    'type': 'bowtie2'
+}
