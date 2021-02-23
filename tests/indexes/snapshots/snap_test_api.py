@@ -243,3 +243,19 @@ snapshots['test_get[uvloop-None] 1'] = {
     },
     'version': 0
 }
+
+snapshots['test_upload[uvloop-None] 1'] = {
+    'id': 1,
+    'name': 'reference.1.bt2',
+    'reference': 'bar',
+    'size': 7205747,
+    'type': 'bowtie2'
+}
+
+snapshots['test_upload[uvloop-404] 1'] = {
+    'id': 1,
+    'name': 'reference.1.bt2',
+    'reference': 'bar',
+    'size': 7205747,
+    'type': 'bowtie2'
+}
