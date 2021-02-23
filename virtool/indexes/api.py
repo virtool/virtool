@@ -1,4 +1,6 @@
 import asyncio
+import logging
+from pathlib import Path
 
 import aiohttp.web
 
@@ -8,15 +10,21 @@ import virtool.history.db
 import virtool.history.utils
 import virtool.http.routes
 import virtool.indexes.db
+import virtool.indexes.files
+import virtool.indexes.utils
 import virtool.jobs.build_index
 import virtool.jobs.db
 import virtool.references.db
 import virtool.utils
-from virtool.api.response import bad_request, conflict, insufficient_rights, json_response, \
+import virtool.uploads.db
+import virtool.uploads.utils
+from virtool.api.response import bad_request, conflict, insufficient_rights, invalid_query, json_response, \
     not_found, no_content
-from virtool.indexes.db import reset_history
+from virtool.indexes.db import reset_history, FILES
+from virtool.indexes.models import IndexFile
 from virtool.jobs.utils import JobRights
 
+logger = logging.getLogger("indexes")
 routes = virtool.http.routes.Routes()
 
 
@@ -205,6 +213,64 @@ async def create(req):
     }
 
     return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
+
+
+@routes.post("/api/indexes/{index_id}/files")
+async def upload(req):
+    """
+    Upload a new index file to the `index_files` SQL table and the `references` folder in the Virtool
+    data path.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+    index_id = req.match_info["index_id"]
+
+    errors = virtool.uploads.utils.naive_validator(req)
+
+    if errors:
+        return invalid_query(errors)
+
+    document = await db.indexes.find_one(index_id)
+
+    if document is None:
+        return not_found()
+
+    file_name = req.query.get("name")
+
+    if file_name not in FILES:
+        return bad_request("Unsupported index file name")
+
+    reference_id = document["reference"]["id"]
+    file_type = virtool.indexes.utils.check_index_file_type(file_name)
+    index_file = await virtool.indexes.files.create_index_file(pg, reference_id, file_type, file_name)
+    file_id = index_file["id"]
+    path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id /file_name
+
+    if file_id in document.get("files", []):
+        return bad_request("File name already exists")
+
+    try:
+        size = await virtool.uploads.utils.naive_writer(req, path)
+    except asyncio.CancelledError:
+        logger.debug(f"Index file upload aborted: {file_id}")
+        await virtool.indexes.files.delete_index_file(pg, file_id)
+
+        return aiohttp.web.Response(status=499)
+
+    index_file = await virtool.uploads.db.finalize(pg, size, file_id, IndexFile)
+
+    await db.indexes.find_one_and_update({"_id": index_id}, {
+        "$push": {
+            "files": file_id
+        }
+    })
+
+    headers = {
+        "Location": f"/api/indexes/{index_id}/files/{file_name}"
+    }
+
+    return json_response(index_file, headers=headers, status=201)
 
 
 @routes.get("/api/indexes/{index_id}/history")
