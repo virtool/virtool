@@ -211,13 +211,13 @@ async def upload(req):
     if file_name not in FILES:
         return bad_request("Unsupported subtraction file name")
 
-    if await db.subtraction.count_documents({"_id": subtraction_id, "files.name": file_name}):
-        return bad_request("File name already exists")
-
     file_type = virtool.subtractions.utils.check_subtraction_file_type(file_name)
     subtraction_file = await virtool.subtractions.files.create_subtraction_file(pg, subtraction_id, file_type, file_name)
     file_id = subtraction_file["id"]
     path = Path(req.app["settings"]["data_path"]) / "subtractions" / subtraction_id / file_name
+
+    if file_id in document.get("files", []):
+        return bad_request("File name already exists")
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, path)
@@ -237,7 +237,7 @@ async def upload(req):
 
     await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
         "$push": {
-            "files": file
+            "files": file_id
         }
     })
 

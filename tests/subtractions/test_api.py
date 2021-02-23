@@ -48,13 +48,7 @@ async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session
     }
 
     if error == "400_exists":
-        subtraction["files"] = [
-            {
-                "name": "subtraction.1.bt2",
-                "size": 1234567,
-                "type": "bowtie2"
-            }
-        ]
+        subtraction["files"] = [1]
 
     await client.db.subtraction.insert_one(subtraction)
 
@@ -88,11 +82,5 @@ async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session
     assert document == {
         '_id': 'foo',
         'name': 'Foo',
-        'files': [
-            {
-                'size': os.stat(os.path.join(test_dir, "subtraction.1.bt2")).st_size,
-                'name': 'subtraction.1.bt2',
-                'type': 'bowtie2'
-            }
-        ]
+        'files': [1]
     }
