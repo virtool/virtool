@@ -45,6 +45,20 @@ async def calculate_fasta_gc(path):
     return {k: round(nucleotides[k] / nucleotides_sum, 3) for k in nucleotides}, count
 
 
+def check_subtraction_file_type(file_name: str) -> str:
+    """
+    Get the subtraction file type based on the extension of given `file_name`
+
+    :param file_name: subtraction file name
+    :return: file type
+
+    """
+    if file_name.endswith(".fa.gz"):
+        return "fasta"
+    else:
+        return "bowtie2"
+
+
 def join_subtraction_path(settings: dict, subtraction_id: str) -> str:
     return os.path.join(
         settings["data_path"],
@@ -75,13 +89,9 @@ def prepare_files_field(path: str):
             file_path = os.path.join(path, file)
             document = {
                 "size": virtool.utils.file_stats(file_path)["size"],
-                "name": file
+                "name": file,
+                "type": check_subtraction_file_type(file)
             }
-
-            if file.endswith(".fa.gz"):
-                document["type"] = "fasta"
-            if file.endswith(".bt2"):
-                document["type"] = "bowtie2"
 
             files.append(document)
 

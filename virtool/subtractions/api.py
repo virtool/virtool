@@ -1,4 +1,8 @@
 import asyncio
+import logging
+from pathlib import Path
+
+import aiohttp.web
 
 import virtool.api.utils
 import virtool.db.utils
@@ -6,12 +10,20 @@ import virtool.http.routes
 import virtool.jobs.db
 import virtool.samples.utils
 import virtool.subtractions.db
+import virtool.subtractions.files
 import virtool.subtractions.utils
 import virtool.utils
+import virtool.uploads.db
+import virtool.uploads.utils
 import virtool.validators
-from virtool.api.response import bad_request, json_response, no_content, not_found
+
+from virtool.api.response import bad_request, invalid_query, json_response, no_content, not_found
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
+from virtool.subtractions.models import SubtractionFile
+from virtool.subtractions.utils import FILES
+
+logger = logging.getLogger("subtractions")
 
 routes = virtool.http.routes.Routes()
 
@@ -171,6 +183,63 @@ async def create(req):
     }
 
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
+
+
+@routes.post("/api/subtractions/{subtraction_id}/files", permission="modify_subtraction")
+async def upload(req):
+    """
+    Upload a new subtraction file to the `subtraction_files` SQL table and the `subtractions` folder in the Virtool
+    data path.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+    subtraction_id = req.match_info["subtraction_id"]
+
+    errors = virtool.uploads.utils.naive_validator(req)
+
+    if errors:
+        return invalid_query(errors)
+
+    document = await db.subtraction.find_one(subtraction_id)
+
+    if document is None:
+        return not_found()
+
+    file_name = req.query.get("name")
+
+    if file_name not in FILES:
+        return bad_request("Unsupported subtraction file name")
+
+    file_type = virtool.subtractions.utils.check_subtraction_file_type(file_name)
+    subtraction_file = await virtool.subtractions.files.create_subtraction_file(pg, subtraction_id, file_type, file_name)
+    file_id = subtraction_file["id"]
+    path = Path(req.app["settings"]["data_path"]) / "subtractions" / subtraction_id / file_name
+
+    if file_id in document.get("files", []):
+        return bad_request("File name already exists")
+
+    try:
+        size = await virtool.uploads.utils.naive_writer(req, path)
+    except asyncio.CancelledError:
+        logger.debug(f"Subtraction file upload aborted: {file_id}")
+        await virtool.subtractions.files.delete_subtraction_file(pg, file_id)
+
+        return aiohttp.web.Response(status=499)
+
+    subtraction_file = await virtool.uploads.db.finalize(pg, size, file_id, SubtractionFile)
+
+    await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
+        "$push": {
+            "files": file_id
+        }
+    })
+
+    headers = {
+        "Location": f"/api/subtractions/{subtraction_id}/files/{file_name}"
+    }
+
+    return json_response(subtraction_file, headers=headers, status=201)
 
 
 @routes.patch("/api/subtractions/{subtraction_id}", permission="modify_subtraction")
