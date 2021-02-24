@@ -19,7 +19,6 @@ import virtool.downloads.db
 import virtool.downloads.utils
 import virtool.errors
 import virtool.history.db
-from virtool.hmm.utils import hmm_data_exists
 import virtool.http.routes
 import virtool.otus.db
 import virtool.otus.utils
@@ -27,6 +26,7 @@ import virtool.references.db
 import virtool.samples.utils
 import virtool.subtractions.utils
 import virtool.utils
+from virtool.hmm.utils import hmm_data_exists
 
 routes = virtool.http.routes.Routes()
 
@@ -170,7 +170,8 @@ async def download_isolate(req):
     })
 
 
-@routes.get("/download/otus/{otu_id}", allow_jobs=True)
+@routes.get("/download/otus/{otu_id}")
+@routes.jobs_api.get("/download/otus/{otu_id}")
 async def download_otu(req):
     """
     Download a FASTA file containing the sequences for all isolates in a single Virtool otu.
@@ -199,7 +200,8 @@ async def download_otu(req):
     })
 
 
-@routes.get("/download/indexes/{index_id}", allow_jobs=True)
+@routes.get("/download/indexes/{index_id}")
+@routes.jobs_api.get("/download/indexes/{index_id}")
 async def download_index_json(req):
     """
     Download a gzipped JSON file named ``reference.json.gz`` for a given index.
