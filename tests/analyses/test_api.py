@@ -25,7 +25,7 @@ def files(tmpdir):
 
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("error", [None, "400", "403", "404"])
-async def test_get(ready, files, error, mocker, snapshot, spawn_client, static_time, resp_is, pg_engine):
+async def test_get(ready, files, error, mocker, snapshot, spawn_client, static_time, resp_is, pg):
     client = await spawn_client(authorize=True)
 
     document = {
@@ -67,7 +67,7 @@ async def test_get(ready, files, error, mocker, snapshot, spawn_client, static_t
     if error != "404":
         await client.db.analyses.insert_one(document)
 
-        await virtool.analyses.files.create_analysis_file(pg_engine, "foobar", "fasta", "reference.fa")
+        await virtool.analyses.files.create_analysis_file(pg, "foobar", "fasta", "reference.fa")
 
     m_format_analysis = mocker.patch(
         "virtool.analyses.format.format_analysis",

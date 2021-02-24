@@ -1,3 +1,5 @@
+from asyncio import gather
+
 import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
@@ -40,7 +42,8 @@ def pg_connection_string(pg_base_connection_string: str, pg_db_name: str):
 
 
 @pytest.fixture
-async def pg_engine(
+async def pg(
+        loop,
         pg_db_name: str,
         pg_base_connection_string: str,
         pg_connection_string: str
@@ -60,11 +63,22 @@ async def pg_engine(
             if "DuplicateDatabaseError" not in str(exc):
                 raise
 
-    return create_async_engine(pg_connection_string)
+    await engine.dispose()
+
+    pg = create_async_engine(pg_connection_string)
+
+    async with pg.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(text("TRUNCATE labels"))
+        await conn.execute(text("TRUNCATE uploads"))
+        await conn.commit()
+
+    return pg
 
 
 @pytest.fixture
-async def pg_session(pg_engine: AsyncEngine) -> AsyncSession:
+async def pg_session(pg: AsyncEngine) -> AsyncSession:
     """
     Return an :class:`AsyncSession` object backed by a test database that can be used for testing
     calls to SQLAlchemy.
@@ -72,17 +86,11 @@ async def pg_session(pg_engine: AsyncEngine) -> AsyncSession:
     Empties tables using `TRUNCATE` between tests.
 
     """
-    async with pg_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
-
-        await conn.execute(text("TRUNCATE labels"))
-
-    session = AsyncSession(bind=pg_engine)
+    session = AsyncSession(bind=pg)
 
     yield session
 
-    async with pg_engine.begin() as conn:
+    async with pg.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
     await session.close()
