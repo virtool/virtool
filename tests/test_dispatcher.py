@@ -39,8 +39,8 @@ class TestConnection:
         assert test_ws_connection._ws.close.stub.called
 
 
-def test_add_connection(mocker, dbi, pg_engine, test_channel):
-    dispatcher = Dispatcher(pg_engine, dbi, RedisDispatcherListener(test_channel))
+def test_add_connection(mocker, dbi, pg, test_channel):
+    dispatcher = Dispatcher(pg, dbi, RedisDispatcherListener(test_channel))
 
     m = mocker.Mock()
 
@@ -49,8 +49,8 @@ def test_add_connection(mocker, dbi, pg_engine, test_channel):
     assert m in dispatcher._connections
 
 
-def test_remove_connection(mocker, dbi, pg_engine, test_channel):
-    dispatcher = Dispatcher(pg_engine, dbi, RedisDispatcherListener(test_channel))
+def test_remove_connection(mocker, dbi, pg, test_channel):
+    dispatcher = Dispatcher(pg, dbi, RedisDispatcherListener(test_channel))
 
     m = mocker.Mock()
 
