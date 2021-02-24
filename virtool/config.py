@@ -2,10 +2,10 @@ import asyncio
 import json
 import logging
 import os
-import sys
 
 import click
 import psutil
+import sys
 import uvloop
 
 import virtool.app
@@ -253,7 +253,7 @@ def start_runner(ctx, job_list, mem, proc, temp_path):
 @cli.command("jobsAPI")
 @click.option(
     "--host",
-    default="localhost",
+    default=None,
     help="The host to listen on",
     type=str
 )
