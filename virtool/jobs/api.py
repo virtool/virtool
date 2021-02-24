@@ -42,7 +42,8 @@ async def find(req):
     return json_response(data)
 
 
-@routes.get("/api/jobs/{job_id}", allow_jobs=True)
+@routes.get("/api/jobs/{job_id}")
+@routes.jobs_api.get("/api/jobs/{job_id}")
 async def get(req):
     """
     Return the complete document for a given job.
@@ -58,7 +59,8 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.patch("/api/jobs/{job_id}", allow_jobs=True)
+@routes.patch("/api/jobs/{job_id}")
+@routes.jobs_api.patch("/api/jobs/{job_id}")
 @schema({
     "acquired": {
         "type": "boolean",
@@ -109,7 +111,8 @@ async def cancel(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.post("/api/jobs/{job_id}/status", allow_jobs=True)
+@routes.post("/api/jobs/{job_id}/status")
+@routes.jobs_api.post("/api/jobs/{job_id}/status")
 @schema({
     "state": {
         "type": "string",
