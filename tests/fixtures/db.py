@@ -31,14 +31,6 @@ def test_motor(test_db_connection_string, test_db_name, loop, request):
 
 
 @pytest.fixture
-def dbs(test_db_connection_string, test_db_name, request):
-    client = pymongo.MongoClient(test_db_connection_string)
-    client.drop_database(test_db_name)
-    yield client[test_db_name]
-    client.drop_database(test_db_name)
-
-
-@pytest.fixture
 def dbi(test_motor):
     return virtool.db.core.DB(test_motor, make_mocked_coro())
 
