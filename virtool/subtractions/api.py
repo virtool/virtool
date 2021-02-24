@@ -304,3 +304,30 @@ async def remove(req):
         return not_found()
 
     return no_content()
+
+
+@routes.patch("/api/subtractions/{subtraction_id}", jobs_only=True)
+@schema({"gc": {"type": "dict", "required": True}})
+async def finalize_subtraction(req: aiohttp.web.Request):
+    """
+    Sets the gc field for an subtraction and marks it as ready.
+
+    """
+    db = req.app["db"]
+    data = await req.json()
+    subtraction_id = req.match_info["subtraction_id"]
+
+    document = await db.subtraction.find_one(subtraction_id)
+
+    if document is None:
+        return not_found()
+
+
+    updated_document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
+        "$set": {
+            "gc": data["gc"],
+            "ready": True
+        }
+    })
+
+    return json_response(virtool.utils.base_processor(updated_document))
