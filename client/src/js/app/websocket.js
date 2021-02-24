@@ -24,7 +24,6 @@ const inserters = {
             return wsInsertAnalysis(message.data);
         }
     },
-    files: actionCreatorWrapper(wsInsertFile),
     groups: actionCreatorWrapper(wsInsertGroup),
     history: actionCreatorWrapper(wsInsertHistory),
     indexes: actionCreatorWrapper(wsInsertIndex),
@@ -34,6 +33,7 @@ const inserters = {
     samples: actionCreatorWrapper(wsInsertSample),
     subtraction: actionCreatorWrapper(wsInsertSubtraction),
     tasks: actionCreatorWrapper(wsInsertTask),
+    uploads: actionCreatorWrapper(wsInsertFile),
     users: actionCreatorWrapper(wsInsertUser)
 };
 
@@ -45,7 +45,6 @@ const updaters = {
             return wsUpdateAnalysis(message.data);
         }
     },
-    files: actionCreatorWrapper(wsUpdateFile),
     groups: actionCreatorWrapper(wsUpdateGroup),
     indexes: actionCreatorWrapper(wsUpdateIndex),
     jobs: actionCreatorWrapper(wsUpdateJob),
@@ -55,18 +54,19 @@ const updaters = {
     status: actionCreatorWrapper(wsUpdateStatus),
     subtraction: actionCreatorWrapper(wsUpdateSubtraction),
     tasks: actionCreatorWrapper(wsUpdateTask),
+    uploads: actionCreatorWrapper(wsUpdateFile),
     users: actionCreatorWrapper(wsUpdateUser)
 };
 
 const removers = {
     analyses: actionCreatorWrapper(wsRemoveAnalysis),
-    files: actionCreatorWrapper(wsRemoveFile),
     groups: actionCreatorWrapper(wsRemoveGroup),
     jobs: actionCreatorWrapper(wsRemoveJob),
     otus: actionCreatorWrapper(wsRemoveOTU),
     references: actionCreatorWrapper(wsRemoveReference),
     samples: actionCreatorWrapper(wsRemoveSample),
     subtraction: actionCreatorWrapper(wsRemoveSubtraction),
+    uploads: actionCreatorWrapper(wsRemoveFile),
     users: actionCreatorWrapper(wsRemoveUser)
 };
 
