@@ -1,13 +1,13 @@
 from functools import wraps
 from typing import Callable
 
-import aiohttp.web
+from aiohttp.web_routedef import RouteTableDef
 
 import virtool.users.utils
 from virtool.api.response import json_response, unauthorized
 
 
-class Routes(aiohttp.web.RouteTableDef):
+class Routes(RouteTableDef):
 
     @staticmethod
     def _protected(method):
@@ -25,7 +25,7 @@ class Routes(aiohttp.web.RouteTableDef):
         self.put = self._protected(self.put)
         self.patch = self._protected(self.patch)
 
-        self.job_routes = []
+        self.jobs_api = RouteTableDef()
 
 
 def protect(
