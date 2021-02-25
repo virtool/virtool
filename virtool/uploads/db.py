@@ -164,6 +164,8 @@ async def release(pg: AsyncEngine, upload_ids: Union[int, List[int]]):
                               execution_options(synchronize_session="fetch")
                               )
 
+        await session.commit()
+
 
 async def reserve(pg: AsyncEngine, upload_ids: Union[int, List[int]]):
     """
@@ -182,3 +184,5 @@ async def reserve(pg: AsyncEngine, upload_ids: Union[int, List[int]]):
                               where(query).values(reserved=True).
                               execution_options(synchronize_session="fetch")
                               )
+
+        await session.commit()

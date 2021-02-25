@@ -4,7 +4,10 @@ from aiohttp.test_utils import make_mocked_coro
 
 import virtool.files.db
 import virtool.uploads.db
+import virtool.samples.db
+
 from virtool.labels.models import Label
+
 
 
 class MockJobInterface:
@@ -444,12 +447,13 @@ async def test_remove(delete_result, resp_is_attr, mocker, spawn_client, resp_is
 
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("exists", [True, False])
-async def test_job_remove(exists, ready, mocker, resp_is, static_time, spawn_job_client, pg_engine):
+async def test_job_remove(exists, ready, mocker, resp_is, static_time, spawn_job_client, pg_engine, tmpdir):
     """
     Test that a sample can be removed when called using the Jobs API.
 
     """
     client = await spawn_job_client(authorize=True)
+    client.app["settings"]["data_path"] = str(tmpdir)
 
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
@@ -464,12 +468,16 @@ async def test_job_remove(exists, ready, mocker, resp_is, static_time, spawn_job
             "ready": ready
         })
 
-    mocker.patch("virtool.samples.db.remove_samples", return_value=True)
+    mocker.patch("virtool.utils.rm", return_value=True)
 
     resp = await client.delete("/api/samples/test")
 
     if exists and not ready:
         assert resp.status == 204
+        assert not await virtool.samples.db.check_name(client.app["db"], client.app["settings"], "test", "test")
+
+        upload = await virtool.uploads.db.get(pg_engine, file["id"])
+        assert not upload.reserved
     elif exists:
         assert resp.status == 400
     else:
