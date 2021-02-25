@@ -47,7 +47,7 @@ async def delete_index_file(pg: AsyncEngine, file_id: int):
         if not index_file:
             return None
 
-        await session.delete(index_file)
+        session.delete(index_file)
 
         await session.commit()
 
