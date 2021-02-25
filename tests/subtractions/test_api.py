@@ -112,7 +112,7 @@ async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is):
     if error != "404":
         await client.db.subtraction.insert_one(subtraction)
 
-    resp = await client.patch(f"/api/subtractions/foo", json=data)
+    resp = await client.patch("/api/subtractions/foo", json=data)
 
     if error == "404":
         assert await resp_is.not_found(resp)
