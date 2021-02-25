@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
