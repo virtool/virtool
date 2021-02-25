@@ -1,21 +1,6 @@
-from pathlib import Path
-
 import pytest
 
 from virtool.uploads.models import Upload
-
-
-@pytest.fixture
-def files(tmpdir):
-    tmpdir.mkdir("files")
-
-    path = Path.cwd() / "tests" / "test_files" / "test.fq.gz"
-
-    files = {
-        "file": open(path, "rb")
-    }
-
-    return files
 
 
 @pytest.fixture

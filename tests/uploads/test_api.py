@@ -4,6 +4,20 @@ import pytest
 
 from virtool.uploads.api import UPLOAD_TYPES
 from virtool.uploads.models import Upload
+from pathlib import Path
+
+
+@pytest.fixture
+def files(tmpdir):
+    tmpdir.mkdir("files")
+
+    path = Path.cwd() / "tests" / "test_files" / "test.fq.gz"
+
+    files = {
+        "file": open(path, "rb")
+    }
+
+    return files
 
 
 class TestUpload:
