@@ -16,7 +16,7 @@ import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
 import virtool.validators
-from virtool.api.response import bad_request, invalid_query, json_response, no_content, not_found
+from virtool.api.response import bad_request, conflict, invalid_query, json_response, no_content, not_found
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
 from virtool.subtractions.models import SubtractionFile
@@ -320,6 +320,9 @@ async def finalize_subtraction(req: aiohttp.web.Request):
 
     if document is None:
         return not_found()
+
+    if "ready" in document and document["ready"]:
+        return conflict("Subtraction has already been finalized.")
 
     updated_document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
         "$set": {
