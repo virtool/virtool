@@ -51,19 +51,3 @@ async def delete_index_file(pg: AsyncEngine, file_id: int):
 
         await session.commit()
 
-
-async def get_index_file(pg: AsyncEngine, file_id: int) -> Optional[IndexFile]:
-    """
-    Get a row that represents an index file by its `id`
-
-    :param pg: PostgreSQL AsyncEngine object
-    :param file_id: Row `id` to get
-    :return: Row from the `index_files` SQL table
-    """
-    async with AsyncSession(pg) as session:
-        upload = (await session.execute(select(IndexFile).filter_by(id=file_id))).scalar()
-
-        if not upload:
-            return None
-
-    return upload
