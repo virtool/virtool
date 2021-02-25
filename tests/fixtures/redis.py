@@ -4,18 +4,17 @@ from aioredis import Redis
 
 
 @pytest.fixture
-async def redis_connection_string(request):
-    return request.config.getoption("redis_connection_string")
+async def redis_connection_string(request, worker_id):
+    base_connection_string = request.config.getoption("redis_connection_string")
+    number = 0 if worker_id == "master" else int(worker_id[2:])
+
+    return f"{base_connection_string}/{number}"
 
 
 @pytest.fixture
-async def redis(redis_connection_string) -> Redis:
+async def redis(request, redis_connection_string, worker_id):
     client = await aioredis.create_redis_pool(redis_connection_string)
-
-
-@pytest.fixture
-async def redis(request, redis_connection_string):
-    client = await aioredis.create_redis_pool(redis_connection_string)
+    await client.flushdb()
 
     yield client
 
