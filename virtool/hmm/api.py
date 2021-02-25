@@ -157,7 +157,8 @@ async def install(req):
     return json_response(update)
 
 
-@routes.get("/api/hmms/{hmm_id}", allow_jobs=True)
+@routes.get("/api/hmms/{hmm_id}")
+@routes.jobs_api.get("/api/hmms/{hmm_id}")
 async def get(req):
     """
     Get a complete individual HMM annotation document.

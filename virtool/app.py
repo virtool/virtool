@@ -57,8 +57,8 @@ def create_app(config):
     app.on_startup.extend([
         virtool.startup.init_version,
         virtool.startup.init_events,
-        virtool.startup.init_db,
         virtool.startup.init_redis,
+        virtool.startup.init_db,
         virtool.startup.init_postgres,
         virtool.startup.init_dispatcher,
         virtool.startup.init_settings,

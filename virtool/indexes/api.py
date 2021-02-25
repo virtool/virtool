@@ -84,7 +84,8 @@ async def find(req):
     return json_response(ready_indexes)
 
 
-@routes.get("/api/indexes/{index_id}", allow_jobs=True)
+@routes.get("/api/indexes/{index_id}")
+@routes.jobs_api.get("/api/indexes/{index_id}")
 async def get(req):
     """
     Get the complete document for a given index.
@@ -307,7 +308,7 @@ async def find_history(req):
     return json_response(data)
 
 
-@routes.delete("/api/indexes/{index_id}", jobs_only=True)
+@routes.jobs_api.delete("/api/indexes/{index_id}")
 async def delete_index(req: aiohttp.web.Request):
     """Delete the index with the given id and reset history relating to that index."""
     index_id = req.match_info["index_id"]

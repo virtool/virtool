@@ -31,24 +31,14 @@ def test_motor(test_db_connection_string, test_db_name, loop, request):
 
 
 @pytest.fixture
-def dbs(test_db_connection_string, test_db_name, request):
-    client = pymongo.MongoClient(test_db_connection_string)
-    client.drop_database(test_db_name)
-    yield client[test_db_name]
-    client.drop_database(test_db_name)
-
-
-@pytest.fixture
-def dbi(test_motor):
-    return virtool.db.core.DB(test_motor, make_mocked_coro())
+def dbi(test_motor, mocker):
+    return virtool.db.core.DB(test_motor, mocker.stub())
 
 
 @pytest.fixture(params=[True, False])
 def id_exists(mocker, request):
     mock = mocker.patch("virtool.db.utils.id_exists", make_mocked_coro(request.param))
-
     setattr(mock, "__bool__", lambda x: request.param)
-
     return mock
 
 

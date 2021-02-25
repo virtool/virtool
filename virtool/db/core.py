@@ -47,7 +47,7 @@ class Collection:
             self,
             name: str,
             collection: motor.motor_asyncio.AsyncIOMotorCollection,
-            enqueue_change: Callable[[str, str, Sequence[str]], Awaitable[None]],
+            enqueue_change: Callable[[str, str, Sequence[str]], None],
             processor: Callable[[Any, Dict[str, Any]], Awaitable[Dict[str, Any]]],
             projection: Optional[Projection],
             silent: bool = False
@@ -94,7 +94,7 @@ class Collection:
 
         return virtool.utils.base_processor(document)
 
-    async def enqueue_change(self, operation: str, *id_list: str):
+    def enqueue_change(self, operation: str, *id_list: str):
         """
         Dispatch updates if the collection is not `silent` and the `silent` parameter is `False`.
         Applies the collection projection and processor.
@@ -104,7 +104,7 @@ class Collection:
 
         """
         if not self.silent:
-            await self._enqueue_change(
+            self._enqueue_change(
                 self.name,
                 operation,
                 id_list
@@ -124,7 +124,7 @@ class Collection:
         delete_result = await self._collection.delete_many(query)
 
         if not silent and len(id_list):
-            await self.enqueue_change(DELETE, *id_list)
+            self.enqueue_change(DELETE, *id_list)
 
         return delete_result
 
@@ -141,7 +141,7 @@ class Collection:
         delete_result = await self._collection.delete_one(query)
 
         if not silent and delete_result.deleted_count:
-            await self.enqueue_change(
+            self.enqueue_change(
                 DELETE,
                 document_id
             )
@@ -178,7 +178,7 @@ class Collection:
             return None
 
         if not silent:
-            await self.enqueue_change(UPDATE, document["_id"])
+            self.enqueue_change(UPDATE, document["_id"])
 
         if projection:
             return virtool.db.utils.apply_projection(document, projection)
@@ -206,7 +206,7 @@ class Collection:
             await self._collection.insert_one(document)
 
             if not silent:
-                await self.enqueue_change(INSERT, document["_id"])
+                self.enqueue_change(INSERT, document["_id"])
 
             return document
         except pymongo.errors.DuplicateKeyError:
@@ -237,7 +237,7 @@ class Collection:
             upsert=upsert
         )
 
-        await self.enqueue_change(
+        self.enqueue_change(
             UPDATE,
             replacement["_id"]
         )
@@ -262,7 +262,7 @@ class Collection:
         update_result = await self._collection.update_many(query, update)
 
         if not silent:
-            await self.enqueue_change(
+            self.enqueue_change(
                 UPDATE,
                 *updated_ids
             )
@@ -289,7 +289,7 @@ class Collection:
         update_result = await self._collection.update_one(query, update, upsert=upsert)
 
         if not silent and document:
-            await self.enqueue_change(
+            self.enqueue_change(
                 UPDATE,
                 document["_id"]
             )
@@ -302,7 +302,7 @@ class DB:
     def __init__(
             self,
             motor_client: AsyncIOMotorClient,
-            enqueue_change: Callable[[str, str, Sequence[str]], Awaitable[None]]
+            enqueue_change: Callable[[str, str, Sequence[str]], None]
     ):
         self.motor_client = motor_client
         self.enqueue_change = enqueue_change

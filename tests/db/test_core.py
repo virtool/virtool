@@ -14,7 +14,7 @@ def create_test_collection(mocker, test_motor):
         return virtool.db.core.Collection(
             name,
             test_motor[name],
-            make_mocked_coro(),
+            mocker.stub(),
             processor,
             projection,
             silent
@@ -28,8 +28,9 @@ class TestCollection:
     @pytest.mark.parametrize("projection", [None, ["name"]], ids=["projection", "no projection"])
     def test_apply_projection(self, projection, create_test_collection):
         """
-        Test that :meth:`Collection.apply_projection` returns a projected version of the passed document when
-        :attr:`Collection.projection` is defined and returns the document untouched when no projection is defined.
+        Test that :meth:`Collection.apply_projection` returns a projected version of the passed
+        document when :attr:`Collection.projection` is defined and returns the document untouched
+        when no projection is defined.
 
         """
         collection = create_test_collection(projection=projection)
@@ -55,14 +56,15 @@ class TestCollection:
         assert projected == document
 
     @pytest.mark.parametrize("silent", [True, False])
-    async def test_enqueue_change(self, silent, mocker, create_test_collection):
+    async def test_enqueue_change(self, silent, create_test_collection):
         """
-        Test that `dispatch_conditionally` dispatches a message when not suppressed by the `silent` parameter.
+        Test that `dispatch_conditionally` dispatches a message when not suppressed by the `silent`
+        parameter.
 
         """
         collection = create_test_collection(silent=silent)
 
-        await collection.enqueue_change("update", "foo", "bar")
+        collection.enqueue_change("update", "foo", "bar")
 
         if silent:
             assert collection._enqueue_change.called is False
@@ -73,7 +75,13 @@ class TestCollection:
 
     @pytest.mark.parametrize("attr_silent", [True, False])
     @pytest.mark.parametrize("param_silent", [True, False])
-    async def test_delete_many(self, attr_silent, param_silent, test_motor, create_test_collection):
+    async def test_delete_many(
+            self,
+            attr_silent,
+            param_silent,
+            test_motor,
+            create_test_collection
+    ):
         collection = create_test_collection(silent=attr_silent)
 
         await test_motor.samples.insert_many([

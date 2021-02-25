@@ -14,7 +14,7 @@ def labels():
 
 
 @pytest.mark.parametrize("exists", [0, 1, 2])
-async def test_check_labels(exists, labels, spawn_client, pg_session, pg_engine):
+async def test_check_labels(exists, labels, spawn_client, pg_session, pg):
     ids = [label.id for label in labels]
 
     async with pg_session as session:
@@ -22,7 +22,7 @@ async def test_check_labels(exists, labels, spawn_client, pg_session, pg_engine)
 
         await session.commit()
 
-    bad_labels = await check_labels(pg_engine, ids)
+    bad_labels = await check_labels(pg, ids)
 
     assert len(bad_labels) == (2 - exists)
 

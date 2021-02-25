@@ -12,11 +12,10 @@ import virtool.samples.utils
 import virtool.subtractions.db
 import virtool.subtractions.files
 import virtool.subtractions.utils
-import virtool.utils
 import virtool.uploads.db
 import virtool.uploads.utils
+import virtool.utils
 import virtool.validators
-
 from virtool.api.response import bad_request, invalid_query, json_response, no_content, not_found
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
@@ -75,7 +74,8 @@ async def find(req):
     return json_response(data)
 
 
-@routes.get("/api/subtractions/{subtraction_id}", allow_jobs=True)
+@routes.get("/api/subtractions/{subtraction_id}")
+@routes.jobs_api.get("/api/subtractions/{subtraction_id}")
 async def get(req):
     """
     Get a complete host document.
@@ -212,7 +212,8 @@ async def upload(req):
         return bad_request("Unsupported subtraction file name")
 
     file_type = virtool.subtractions.utils.check_subtraction_file_type(file_name)
-    subtraction_file = await virtool.subtractions.files.create_subtraction_file(pg, subtraction_id, file_type, file_name)
+    subtraction_file = await virtool.subtractions.files.create_subtraction_file(pg, subtraction_id, file_type,
+                                                                                file_name)
     file_id = subtraction_file["id"]
     path = Path(req.app["settings"]["data_path"]) / "subtractions" / subtraction_id / file_name
 
@@ -288,10 +289,8 @@ async def edit(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.delete(
-    "/api/subtractions/{subtraction_id}",
-    allow_jobs=True, permission="modify_subtraction"
-)
+@routes.delete("/api/subtractions/{subtraction_id}", permission="modify_subtraction")
+@routes.jobs_api.delete("/api/subtractions/{subtraction_id}")
 async def remove(req):
     db = req.app["db"]
     settings = req.app["settings"]

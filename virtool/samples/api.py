@@ -135,7 +135,8 @@ async def find(req):
     return json_response(data)
 
 
-@routes.get("/api/samples/{sample_id}", allow_jobs=True)
+@routes.get("/api/samples/{sample_id}")
+@routes.jobs_api.get("/api/samples/{sample_id}")
 async def get(req):
     """
     Get a complete sample document.
@@ -478,7 +479,8 @@ async def set_rights(req):
     return json_response(document)
 
 
-@routes.delete("/api/samples/{sample_id}", allow_jobs=True)
+@routes.delete("/api/samples/{sample_id}")
+@routes.jobs_api.delete("/api/samples/{sample_id}")
 async def remove(req):
     """
     Remove a sample document and all associated analyses.

@@ -8,7 +8,8 @@ from virtool.http.schema import schema
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/api/settings", allow_jobs=True)
+@routes.get("/api/settings")
+@routes.jobs_api.get("/api/settings")
 async def get(req):
     settings = await virtool.settings.db.get(req.app["db"])
 
