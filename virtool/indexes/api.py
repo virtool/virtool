@@ -248,7 +248,7 @@ async def upload(req):
     path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id /file_name
 
     if file_id in document.get("files", []):
-        return bad_request("File name already exists")
+        return conflict("File name already exists")
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, path)
