@@ -305,7 +305,7 @@ async def remove(req):
     return no_content()
 
 
-@routes.patch("/api/subtractions/{subtraction_id}", jobs_only=True)
+@routes.jobs_api.patch("/api/subtractions/{subtraction_id}")
 @schema({"gc": {"type": "dict", "required": True}})
 async def finalize_subtraction(req: aiohttp.web.Request):
     """
@@ -320,7 +320,6 @@ async def finalize_subtraction(req: aiohttp.web.Request):
 
     if document is None:
         return not_found()
-
 
     updated_document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
         "$set": {
