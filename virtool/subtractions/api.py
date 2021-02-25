@@ -322,7 +322,7 @@ async def finalize_subtraction(req: aiohttp.web.Request):
         return not_found()
 
     if "ready" in document and document["ready"]:
-        return conflict("Subtraction has already been finalized.")
+        return conflict("Subtraction has already been finalized")
 
     updated_document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
         "$set": {

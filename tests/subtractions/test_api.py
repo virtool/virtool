@@ -86,7 +86,7 @@ async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session
     }
 
 
-@pytest.mark.parametrize("error", [None, "404", "422"])
+@pytest.mark.parametrize("error", [None, "404", "409", "422"])
 async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is):
     subtraction = {
         "_id": "foo",
@@ -106,6 +106,9 @@ async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is):
 
     client = await spawn_job_client(authorize=True)
 
+    if error == "409":
+        subtraction["ready"] = True
+
     if error == "422":
         data = {}
 
@@ -116,6 +119,10 @@ async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is):
 
     if error == "404":
         assert await resp_is.not_found(resp)
+        return
+
+    if error == "409":
+        assert await resp_is.conflict(resp, "Subtraction has already been finalized")
         return
 
     if error == "422":
