@@ -14,6 +14,7 @@ import virtool.jobs.db
 import virtool.samples.db
 import virtool.samples.utils
 import virtool.subtractions.db
+import virtool.uploads.db
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
@@ -480,24 +481,56 @@ async def set_rights(req):
 
 
 @routes.delete("/api/samples/{sample_id}")
-@routes.jobs_api.delete("/api/samples/{sample_id}")
 async def remove(req):
     """
     Remove a sample document and all associated analyses.
 
     """
     db = req.app["db"]
+    client = req["client"]
 
     sample_id = req.match_info["sample_id"]
 
     try:
-        if not await virtool.samples.db.check_rights(db, sample_id, req["client"]):
+        if not await virtool.samples.db.check_rights(db, sample_id, client):
             return insufficient_rights()
     except virtool.errors.DatabaseError as err:
         if "Sample does not exist" in str(err):
             return not_found()
 
         raise
+
+    await virtool.samples.db.remove_samples(
+        db,
+        req.app["settings"],
+        [sample_id]
+    )
+
+    return no_content()
+
+
+@routes.jobs_api.delete("/api/samples/{sample_id}")
+async def job_remove(req):
+    """
+    Remove a sample document and all associated analyses. Only usable in the Jobs API and when samples are unfinalized.
+
+    """
+    db = req.app["db"]
+
+    sample_id = req.match_info["sample_id"]
+
+    ready = await virtool.db.utils.get_one_field(db.samples, "ready", sample_id)
+
+    if ready is None:
+        return not_found()
+
+    if ready is True:
+        return bad_request("Only unfinalized samples can be deleted")
+
+    file_ids = await virtool.db.utils.get_one_field(db.samples, "files", sample_id)
+
+    if file_ids:
+        await virtool.uploads.db.release(req.app["pg"], file_ids)
 
     await virtool.samples.db.remove_samples(
         db,
