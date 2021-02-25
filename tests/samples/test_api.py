@@ -410,7 +410,7 @@ class TestCreate:
 
 
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
-async def test_finalize(spawn_client, spawn_job_client, field, resp_is):
+async def test_finalize(field, snapshot, spawn_client, spawn_job_client, resp_is):
     client = await spawn_job_client(authorize=True)
 
     data = {field: {}}
@@ -421,15 +421,12 @@ async def test_finalize(spawn_client, spawn_job_client, field, resp_is):
 
     resp = await client.patch("/api/samples/test", json=data)
 
-    document = await resp.json()
-
     if field == "quality":
         assert resp.status == 200
-        assert document["ready"] is True
-        assert document["quality"] == data
+        snapshot.assert_match(await resp.json())
     else:
         assert resp.status == 422
-        assert await resp_is.invalid_input(resp, document["errors"])
+        assert await resp_is.invalid_input(resp, {"quality": ['required field']})
 
 
 
