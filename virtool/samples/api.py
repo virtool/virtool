@@ -409,6 +409,36 @@ async def edit(req):
     return json_response(processed)
 
 
+@routes.jobs_api.patch("/api/samples/{sample_id}")
+@schema({
+    "quality": {
+        "type": "dict",
+        "required": True
+    }
+})
+async def finalize(req):
+    db = req.app["db"]
+    data = req["data"]
+
+    sample_id = req.match_info["sample_id"]
+
+    v = Validator({"quality": {"type": "dict"}})
+
+    if not v.validate(data):
+        return invalid_query(v.errors)
+
+    document = await db.samples.find_one_and_update({"_id": sample_id}, {
+        "$set": {
+            "quality": data,
+            "ready": True
+        }
+    })
+
+    processed = virtool.utils.base_processor(document)
+
+    return json_response(processed)
+
+
 @routes.put("/api/samples/{sample_id}/update_job")
 async def replace(req):
     sample_id = req.match_info["sample_id"]
