@@ -70,8 +70,10 @@ async def pg(
     async with pg.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(text("TRUNCATE analysis_files"))
         await conn.execute(text("TRUNCATE labels"))
         await conn.execute(text("TRUNCATE uploads"))
+        await conn.execute(text("TRUNCATE subtraction_files"))
         await conn.commit()
 
     return pg
