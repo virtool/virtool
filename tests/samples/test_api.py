@@ -412,6 +412,28 @@ class TestCreate:
             assert await resp_is.bad_request(resp, "Labels do not exist: 1")
 
 
+@pytest.mark.parametrize("field", ["quality", "not_quality"])
+async def test_finalize(field, snapshot, spawn_client, spawn_job_client, resp_is):
+    client = await spawn_job_client(authorize=True)
+
+    data = {field: {}}
+
+    await client.db.samples.insert_one({
+        "_id": "test",
+    })
+
+    resp = await client.patch("/api/samples/test", json=data)
+
+    if field == "quality":
+        assert resp.status == 200
+        snapshot.assert_match(await resp.json())
+    else:
+        assert resp.status == 422
+        assert await resp_is.invalid_input(resp, {"quality": ['required field']})
+
+
+
+
 @pytest.mark.parametrize("delete_result,resp_is_attr", [(1, "no_content"), (0, "not_found")])
 async def test_remove(delete_result, resp_is_attr, mocker, spawn_client, resp_is, create_delete_result):
     client = await spawn_client(authorize=True)
