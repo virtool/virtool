@@ -5,7 +5,7 @@ import asyncio
 
 
 @pytest.mark.parametrize("to_release", [1, [1, 2, 3]])
-async def test_release(spawn_client, pg, prepare_pg, to_release):
+async def test_release(spawn_client, pg, test_uploads, to_release):
     await virtool.uploads.db.release(pg, to_release)
 
     if isinstance(to_release, int):

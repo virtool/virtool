@@ -3,8 +3,9 @@ from aiohttp.test_utils import make_mocked_coro
 
 from virtool.dispatcher.change import Change
 from virtool.dispatcher.connection import Connection
-from virtool.dispatcher.fetchers import IndexesFetcher, SimpleMongoFetcher
+from virtool.dispatcher.fetchers import IndexesFetcher, SimpleMongoFetcher, LabelsFetcher, UploadsFetcher
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
+from virtool.uploads.models import UploadType
 
 
 @pytest.fixture
@@ -146,6 +147,131 @@ class TestIndexesFetcher:
                 "version": 1
             },
             "interface": "indexes",
+            "operation": operation
+        }
+
+        assert pairs == [
+            (ws, message),
+            (ws, message),
+            (ws, message)
+        ]
+
+
+class TestLabelsFetcher:
+
+    async def test_auto_delete(self, connections, dbi, pg, ws):
+        fetcher = LabelsFetcher(pg, dbi)
+
+        pairs = list()
+
+        message = {
+            "interface": "labels",
+            "operation": DELETE,
+            "data": [1]
+        }
+
+        async for pair in fetcher.fetch(Change("labels", DELETE, [1]), connections):
+            pairs.append(pair)
+
+        assert pairs == [
+            (ws, message),
+            (ws, message),
+            (ws, message)
+        ]
+
+    @pytest.mark.parametrize("operation", [INSERT, UPDATE])
+    async def test_insert_and_update(
+            self,
+            operation,
+            connections,
+            dbi,
+            pg,
+            reference,
+            static_time,
+            test_labels,
+            ws
+    ):
+        fetcher = LabelsFetcher(pg, dbi)
+
+        pairs = list()
+
+        async for pair in fetcher.fetch(Change("labels", operation, [1]), connections):
+            pairs.append(pair)
+
+        message = {
+            "data": {
+                "id": 1,
+                "name": "Legacy",
+                "color": None,
+                "description": None
+            },
+            "interface": "labels",
+            "operation": operation
+        }
+
+        assert pairs == [
+            (ws, message),
+            (ws, message),
+            (ws, message)
+        ]
+
+
+class TestUploadsFetcher:
+
+    async def test_auto_delete(self, connections, pg, ws):
+        fetcher = UploadsFetcher(pg)
+
+        pairs = list()
+
+        message = {
+            "interface": "uploads",
+            "operation": DELETE,
+            "data": [1]
+        }
+
+        async for pair in fetcher.fetch(Change("uploads", DELETE, [1]), connections):
+            pairs.append(pair)
+
+        assert pairs == [
+            (ws, message),
+            (ws, message),
+            (ws, message)
+        ]
+
+    @pytest.mark.parametrize("operation", [INSERT, UPDATE])
+    async def test_insert_and_update(
+            self,
+            operation,
+            connections,
+            pg,
+            reference,
+            static_time,
+            test_uploads,
+            ws
+    ):
+        fetcher = UploadsFetcher(pg)
+
+        pairs = list()
+
+        async for pair in fetcher.fetch(Change("uploads", operation, [1]), connections):
+            pairs.append(pair)
+
+        message = {
+            "data": {
+                "id": 1,
+                "created_at": None,
+                "name": "test.fq.gz",
+                "name_on_disk": None,
+                "ready": False,
+                "removed": False,
+                "removed_at": None,
+                'reserved': False,
+                "size": None,
+                "type": UploadType.reads,
+                "user": "danny",
+                "uploaded_at": None
+            },
+            "interface": "uploads",
             "operation": operation
         }
 
