@@ -1,8 +1,6 @@
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 
 from virtool.dispatcher.change import Change
-from virtool.dispatcher.connection import Connection
 from virtool.dispatcher.fetchers import IndexesFetcher, SimpleMongoFetcher, LabelsFetcher, UploadsFetcher
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
 from virtool.uploads.models import UploadType

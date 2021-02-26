@@ -1,10 +1,10 @@
 import os
+from pathlib import Path
 
 import pytest
 
 from virtool.uploads.api import UPLOAD_TYPES
 from virtool.uploads.models import Upload
-from pathlib import Path
 
 
 @pytest.fixture
