@@ -74,3 +74,17 @@ snapshots['test_upload[uvloop-404] 1'] = {
     'subtraction': 'foo',
     'type': 'bowtie2'
 }
+
+snapshots['test_finalize_subtraction[uvloop-None] 1'] = {
+    'gc': {
+        'a': 0.319,
+        'c': 0.18,
+        'g': 0.18,
+        'n': 0.002,
+        't': 0.319
+    },
+    'id': 'foo',
+    'name': 'Foo',
+    'nickname': 'Foo Subtraction',
+    'ready': True
+}

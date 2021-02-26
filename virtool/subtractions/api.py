@@ -16,7 +16,7 @@ import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
 import virtool.validators
-from virtool.api.response import bad_request, invalid_query, json_response, no_content, not_found
+from virtool.api.response import bad_request, conflict, invalid_query, json_response, no_content, not_found
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
 from virtool.subtractions.models import SubtractionFile
@@ -303,3 +303,32 @@ async def remove(req):
         return not_found()
 
     return no_content()
+
+
+@routes.jobs_api.patch("/api/subtractions/{subtraction_id}")
+@schema({"gc": {"type": "dict", "required": True}})
+async def finalize_subtraction(req: aiohttp.web.Request):
+    """
+    Sets the gc field for an subtraction and marks it as ready.
+
+    """
+    db = req.app["db"]
+    data = await req.json()
+    subtraction_id = req.match_info["subtraction_id"]
+
+    document = await db.subtraction.find_one(subtraction_id)
+
+    if document is None:
+        return not_found()
+
+    if "ready" in document and document["ready"]:
+        return conflict("Subtraction has already been finalized")
+
+    updated_document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
+        "$set": {
+            "gc": data["gc"],
+            "ready": True
+        }
+    })
+
+    return json_response(virtool.utils.base_processor(updated_document))

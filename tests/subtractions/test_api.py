@@ -84,3 +84,64 @@ async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session
         'name': 'Foo',
         'files': [1]
     }
+
+
+@pytest.mark.parametrize("error", [None, "404", "409", "422"])
+async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is):
+    subtraction = {
+        "_id": "foo",
+        "name": "Foo",
+        "nickname": "Foo Subtraction"
+    }
+
+    data = {
+        "gc": {
+            "a": 0.319,
+            "t": 0.319,
+            "g": 0.18,
+            "c": 0.18,
+            "n": 0.002
+        }
+    }
+
+    client = await spawn_job_client(authorize=True)
+
+    if error == "409":
+        subtraction["ready"] = True
+
+    if error == "422":
+        data = {}
+
+    if error != "404":
+        await client.db.subtraction.insert_one(subtraction)
+
+    resp = await client.patch("/api/subtractions/foo", json=data)
+
+    if error == "404":
+        assert await resp_is.not_found(resp)
+        return
+
+    if error == "409":
+        assert await resp_is.conflict(resp, "Subtraction has already been finalized")
+        return
+
+    if error == "422":
+        assert await resp_is.invalid_input(resp, {'gc': ['required field']})
+        return
+
+    assert resp.status == 200
+    snapshot.assert_match(await resp.json())
+    document = await client.db.subtraction.find_one("foo")
+    assert document == {
+        "_id": "foo",
+        "name": "Foo",
+        "nickname": "Foo Subtraction",
+        "gc": {
+            "a": 0.319,
+            "t": 0.319,
+            "g": 0.18,
+            "c": 0.18,
+            "n": 0.002
+        },
+        "ready": True
+    }
