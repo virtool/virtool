@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from virtool.analyses.models import AnalysisFile
 from virtool.dispatcher.operations import Operation
+from virtool.indexes.models import IndexFile
 from virtool.labels.models import Label
 from virtool.subtractions.models import SubtractionFile
 from virtool.uploads.models import Upload
@@ -33,6 +34,9 @@ def get_interface_from_model(obj) -> str:
 
     if isinstance(obj, SubtractionFile):
         return "subtraction_files"
+
+    if isinstance(obj, IndexFile):
+        return "index_files"
 
     raise TypeError("Not a transformable model: ", obj)
 
