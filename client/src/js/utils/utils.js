@@ -140,7 +140,7 @@ export const getFindTerm = (url = new window.URL(window.location)) => url.search
  */
 export const getTaskDisplayName = taskName => get(taskDisplayNames, taskName, startCase(taskName));
 
-export const reportAPIError = action => window.Raven.captureException(action.error);
+export const reportAPIError = action => window.captureException(action.error);
 
 export const routerLocationHasState = (state, key, value) =>
     !!state.router.location.state &&
