@@ -60,7 +60,7 @@ async def download_analysis(req):
     return web.Response(text=formatted, headers=headers)
 
 
-@routes.get("/download/hmms/profiles.hmm")
+@routes.jobs_api.get("/download/hmms/profiles.hmm")
 async def download_hmm_profiles(req):
     """
     Download the HMM profiles file if HMM data is available.

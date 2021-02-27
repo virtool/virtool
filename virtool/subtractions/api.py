@@ -185,7 +185,7 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 
 
-@routes.post("/api/subtractions/{subtraction_id}/files", permission="modify_subtraction")
+@routes.jobs_api.post("/api/subtractions/{subtraction_id}/files")
 async def upload(req):
     """
     Upload a new subtraction file to the `subtraction_files` SQL table and the `subtractions` folder in the Virtool
