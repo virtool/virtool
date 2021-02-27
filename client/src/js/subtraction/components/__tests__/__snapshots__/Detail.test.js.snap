@@ -81,6 +81,14 @@ exports[`<SubtractionDetail /> should render 1`] = `
           name="trash"
           onClick={[MockFunction]}
         />
+        <Icon
+          color="purple"
+          faStyle="fas"
+          fixedWidth={false}
+          name="download"
+          onClick={[Function]}
+          tip="Download"
+        />
       </ViewHeader__ViewHeaderIcons>
     </ViewHeader__ViewHeaderTitle>
   </ViewHeader>
@@ -155,6 +163,14 @@ exports[`<SubtractionDetail /> should render file id when name not defined 1`] =
           fixedWidth={false}
           name="trash"
           onClick={[MockFunction]}
+        />
+        <Icon
+          color="purple"
+          faStyle="fas"
+          fixedWidth={false}
+          name="download"
+          onClick={[Function]}
+          tip="Download"
         />
       </ViewHeader__ViewHeaderIcons>
     </ViewHeader__ViewHeaderTitle>

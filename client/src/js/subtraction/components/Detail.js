@@ -4,7 +4,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
 import { Icon, LoadingPlaceholder, NotFound, Table, ViewHeader, ViewHeaderIcons, ViewHeaderTitle } from "../../base";
-import { checkAdminOrPermission } from "../../utils/utils";
+import { checkAdminOrPermission, followDownload } from "../../utils/utils";
 import { getSubtraction } from "../actions";
 import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";
@@ -19,6 +19,10 @@ export class SubtractionDetail extends React.Component {
             showEdit: false
         };
     }
+
+    handleDownload = () => {
+        followDownload(`/download/subtraction/${this.props.detail.id}`);
+    };
 
     componentDidMount() {
         this.props.onGet(this.props.match.params.subtractionId);
@@ -56,6 +60,7 @@ export class SubtractionDetail extends React.Component {
                                     onClick={() => this.setState({ showEdit: true })}
                                 />
                                 <Icon name="trash" color="red" onClick={this.props.onShowRemove} />
+                                <Icon name="download" color="purple" tip="Download" onClick={this.handleDownload} />
                             </ViewHeaderIcons>
                         )}
                     </ViewHeaderTitle>
