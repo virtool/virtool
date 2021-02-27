@@ -30,8 +30,8 @@ async def test_edit(data, mocker, snapshot, spawn_client):
 
 
 @pytest.mark.parametrize("error", [None, "400_exists", "400_name", "404", "422"])
-async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session):
-    client = await spawn_client(authorize=True, permissions=["modify_subtraction"])
+async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_session):
+    client = await spawn_job_client(authorize=True)
     test_dir = tmpdir.mkdir("files")
     test_dir.join("subtraction.1.bt2").write("Bowtie2 file")
     path = os.path.join(test_dir, "subtraction.1.bt2")
@@ -61,7 +61,7 @@ async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session
     else:
         url += "?name=subtraction.1.bt2"
 
-    resp = await client.post_form(url, data=files)
+    resp = await client.post(url, data=files)
 
     if error == "400_name":
         assert await resp_is.bad_request(resp, "Unsupported subtraction file name")
