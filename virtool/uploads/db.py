@@ -50,13 +50,14 @@ async def create(pg: AsyncEngine, name: str, upload_type: str, reserved: bool = 
 
 async def finalize(pg, size: int, id_: int, table: Type[any]) -> Optional[dict]:
     """
-    Finalize row creation after the file has been uploaded locally.
+    Finalize row creation for tables that store uploaded files. Updates table with file information and sets `ready`
+    to `True`.
 
     :param pg: PostgreSQL AsyncEngine object
     :param size: Size of the new file in bytes
     :param id_: Row `id` corresponding to the recently created `upload` entry
     :param table: SQL table to retrieve row from
-    :return: Dictionary representation of new row in the `uploads` SQL table
+    :return: Dictionary representation of new row in `table`
     """
     uploaded_at = virtool.utils.timestamp()
 

@@ -1,10 +1,10 @@
 import os
+from pathlib import Path
 
 import pytest
 
 from virtool.uploads.api import UPLOAD_TYPES
 from virtool.uploads.models import Upload
-from pathlib import Path
 
 
 @pytest.fixture
@@ -71,7 +71,7 @@ class TestUpload:
 class TestFind:
     @pytest.mark.parametrize("type_", ["reads", "reference", None])
     @pytest.mark.parametrize("user", ["danny", "lester", "jake"])
-    async def test(self, spawn_client, resp_is, snapshot, type_, user, prepare_pg):
+    async def test(self, spawn_client, resp_is, snapshot, type_, user, test_uploads):
         """
         Test `GET /api/uploads` to assure that it returns the correct `upload` documents.
 
