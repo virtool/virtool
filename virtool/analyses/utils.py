@@ -28,6 +28,22 @@ async def attach_analysis_files(pg: AsyncEngine, analysis_id: str) -> List[Dict]
     return [result.to_dict() for result in results]
 
 
+def check_nuvs_file_type(file_name: str) -> str:
+    """
+    Get the NuVs analysis file type based on the extension of given `file_name`
+
+    :param file_name: NuVs analysis file name
+    :return: file type
+
+    """
+    if file_name.endswith(".tsv"):
+        return "tsv"
+    elif file_name.endswith(".fa"):
+        return "fasta"
+    else:
+        return "fastq"
+
+
 def find_nuvs_sequence_by_index(
         document: Dict[str, Any],
         sequence_index: int
