@@ -45,3 +45,18 @@ def test_get_json_path(name):
     """
     path = virtool.analyses.utils.join_analysis_json_path("/data", "bar", "foo")
     assert path == "/data/samples/foo/analysis/bar/results.json"
+
+
+@pytest.mark.parametrize("file_type", ["fasta", "fastq", "tsv"])
+async def test_check_nuvs_file_type(file_type):
+    if file_type == "fasta":
+        result = virtool.analyses.utils.check_nuvs_file_type("assembly.fa")
+        assert result == "fasta"
+
+    if file_type == "fastq":
+        result = virtool.analyses.utils.check_nuvs_file_type("unmapped_hosts.fq")
+        assert result == "fastq"
+
+    if file_type == "tsv":
+        result = virtool.analyses.utils.check_nuvs_file_type("hmm.tsv")
+        assert result == "tsv"
