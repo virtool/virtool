@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.analyses.models import AnalysisFile
 
 
-async def create_analysis_file(pg: AsyncEngine, analysis_id: str, analysis_format: str, name: str) -> Dict[str, any]:
+async def create_analysis_file(pg: AsyncEngine, analysis_id: str, analysis_format: str, name: str, size: int = None) \
+        -> Dict[str, any]:
     """
     Create a row in the `analysis_files` SQL table that represents an analysis result file.
 
@@ -14,13 +15,15 @@ async def create_analysis_file(pg: AsyncEngine, analysis_id: str, analysis_forma
     :param analysis_id: ID that corresponds to a parent analysis
     :param analysis_format: Format of the analysis result file
     :param name: Name of the analysis result file
+    :param size: Size of the analysis result file
     :return: A dictionary representation of the newly created row
     """
     async with AsyncSession(pg) as session:
         analysis_file = AnalysisFile(
             name=name,
             analysis=analysis_id,
-            format=analysis_format
+            format=analysis_format,
+            size=size
         )
 
         session.add(analysis_file)
