@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import { getFontWeight } from "../app/theme";
 import { Icon } from "./Icon";
+import { Loader } from "./Loader";
 
 const InputContext = React.createContext("");
 
@@ -119,6 +120,12 @@ export const InputIcon = styled(Icon)`
     bottom: 0;
     width: 40px;
 `;
+
+export const InputLoading = () => (
+    <InputIcon as="div">
+        <Loader size="14px" />
+    </InputIcon>
+);
 
 export const SearchInput = props => (
     <InputContainer align="left">
