@@ -4,9 +4,11 @@ Work with analyses in the database.
 """
 import asyncio
 import os
+import shutil
 from typing import Any, Dict, Optional, Tuple
 
 import virtool.analyses.utils
+import virtool.analyses.files
 import virtool.bio
 import virtool.db.utils
 import virtool.history.db
@@ -14,6 +16,7 @@ import virtool.indexes.db
 import virtool.jobs.db
 import virtool.otus.utils
 import virtool.samples.db
+import virtool.tasks.task
 import virtool.types
 import virtool.utils
 from virtool.jobs.utils import JobRights
@@ -32,6 +35,73 @@ PROJECTION = (
     "updated_at",
     "user"
 )
+
+
+class StoreNuvsFilesTask(virtool.tasks.task.Task):
+
+    def __init__(self, app, task_id):
+        super().__init__(app, task_id)
+
+        self.steps = [
+            self.make_analyses_directory,
+            self.store_nuvs_files,
+            self.remove_directory
+        ]
+
+        self.target_files = ("hmm.tsv", "assembly.fa", "orfs.fa", "unmapped_hosts.fq", "unmapped_otus.fq")
+        self.nuvs_directory = []
+
+    async def make_analyses_directory(self):
+        settings = self.app["settings"]
+        try:
+            await self.app["run_in_thread"](os.makedirs, os.path.join(settings["data_path"], "analyses"))
+        except FileExistsError:
+            pass
+
+    async def store_nuvs_files(self):
+        db = self.db
+        settings = self.app["settings"]
+
+        async for analysis in db.analyses.find({"workflow": "nuvs"}):
+            analysis_id = analysis["_id"]
+            sample_id = analysis["sample"]["id"]
+            path = virtool.analyses.utils.join_analysis_path(settings["data_path"], analysis_id, sample_id)
+            target_path = os.path.join(settings["data_path"], "analyses", analysis_id)
+
+            try:
+                await self.app["run_in_thread"](os.mkdir, target_path)
+            except FileExistsError:
+                pass
+
+            for file in os.listdir(path):
+                if file in self.target_files and not os.path.isfile(os.path.join(target_path, file)):
+                    if file == "hmm.tsv":
+                        await self.app["run_in_thread"](
+                            shutil.copy,
+                            os.path.join(path, "hmm.tsv"),
+                            os.path.join(target_path, "hmm.tsv")
+                        )
+                    else:
+                        await self.run_in_thread(virtool.utils.compress_file,
+                                                 os.path.join(path, file),
+                                                 os.path.join(target_path, f"{file}.gz"))
+                    size = virtool.utils.file_stats(os.path.join(path, file))["size"]
+                    file_type = virtool.analyses.utils.check_nuvs_file_type(file)
+                    await virtool.analyses.files.create_analysis_file(
+                        self.app["pg"],
+                        analysis_id,
+                        file_type,
+                        file,
+                        size=size)
+
+    async def remove_directory(self):
+        settings = self.app["settings"]
+        async for analysis in self.db.analyses.find({"workflow": "nuvs"}):
+            analysis_id = analysis["_id"]
+            sample_id = analysis["sample"]["id"]
+            path = virtool.analyses.utils.join_analysis_path(settings["data_path"], analysis_id, sample_id)
+            if os.path.isdir(os.path.join(settings["data_path"], "analyses", analysis_id)):
+                await self.app["run_in_thread"](shutil.rmtree, path, True)
 
 
 class BLAST:

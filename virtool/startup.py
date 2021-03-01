@@ -14,6 +14,7 @@ import aiojobs
 import aiojobs.aiohttp
 import pymongo.errors
 
+import virtool.analyses.db
 import virtool.config
 import virtool.db.core
 import virtool.db.migrate
@@ -362,4 +363,8 @@ async def init_tasks(app: aiohttp.web.Application):
     delete_reference_task = virtool.references.db.DeleteReferenceTask(app, reference_task["id"])
 
     await scheduler.spawn(virtool.tasks.utils.spawn_periodically(scheduler, delete_reference_task, 3600))
+
+    nuv_task = await virtool.tasks.db.register(db, "store_nuvs_file_task")
+    store_nuvs_task = virtool.analyses.db.StoreNuvsFilesTask(app, nuv_task["id"])
+    await scheduler.spawn(store_nuvs_task.run())
 
