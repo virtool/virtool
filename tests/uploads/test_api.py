@@ -1,5 +1,4 @@
 import os
-import sys
 from pathlib import Path
 
 import pytest
@@ -19,18 +18,6 @@ def files(tmpdir):
     }
 
     return files
-
-
-@pytest.fixture
-async def prepare_db(pg_session, static_time):
-    upload_1 = Upload(id=1, name="test.fq.gz", type="reads", user="danny")
-    upload_2 = Upload(id=2, name="test.fq.gz", type="reference", user="lester")
-    upload_3 = Upload(id=3, name="test.fq.gz", user="jake")
-
-    async with pg_session as session:
-        session.add_all([upload_1, upload_2, upload_3])
-
-        await session.commit()
 
 
 class TestUpload:
@@ -84,7 +71,7 @@ class TestUpload:
 class TestFind:
     @pytest.mark.parametrize("type_", ["reads", "reference", None])
     @pytest.mark.parametrize("user", ["danny", "lester", "jake"])
-    async def test(self, spawn_client, resp_is, snapshot, type_, user, prepare_db):
+    async def test(self, spawn_client, resp_is, snapshot, type_, user, test_uploads):
         """
         Test `GET /api/uploads` to assure that it returns the correct `upload` documents.
 

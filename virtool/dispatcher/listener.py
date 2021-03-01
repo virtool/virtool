@@ -1,33 +1,34 @@
-from abc import ABC, abstractmethod
-from typing import AsyncGenerator
+from typing import AsyncIterable
 
 from aioredis import Channel
 
-from virtool.dispatcher.message import Message
+from virtool.dispatcher.change import Change
 
 
-class AbstractDispatcherListener(ABC):
+class RedisDispatcherListener(AsyncIterable):
+    """
+    Asynchronously iterates through messages on a Redis Pub/Sub channel returning :class:`.Change`
+    objects.
 
-    @abstractmethod
-    async def get(self) -> AsyncGenerator[Message, None]:
-        """
-        Get the next message to dispatch.
-        """
-        pass
-
-
-class RedisDispatcherListener(AbstractDispatcherListener):
-
+    """
     def __init__(self, channel: Channel):
-        self.channel = channel
+        self._channel = channel
 
-    async def get(self) -> AsyncGenerator[Message, None]:
-        while True:
-            message = await self.channel.get_json()
+    def __aiter__(self):
+        return self
 
-            if message is not None:
-                yield Message(
-                    message["interface"],
-                    message["operation"],
-                    message["id_list"]
-                ) 
+    async def __anext__(self) -> Change:
+        """
+        Get the next JSON-encoded message from the channel and return it as a :class:`Change`
+        object.
+
+        :return: the change derived from the incoming JSON object
+
+        """
+        change = await self._channel.get_json()
+
+        return Change(
+            change["interface"],
+            change["operation"],
+            change["id_list"]
+        )

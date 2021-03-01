@@ -50,13 +50,14 @@ async def create(pg: AsyncEngine, name: str, upload_type: str, reserved: bool = 
 
 async def finalize(pg, size: int, id_: int, table: Type[any]) -> Optional[dict]:
     """
-    Finalize row creation after the file has been uploaded locally.
+    Finalize row creation for tables that store uploaded files. Updates table with file information and sets `ready`
+    to `True`.
 
     :param pg: PostgreSQL AsyncEngine object
     :param size: Size of the new file in bytes
     :param id_: Row `id` corresponding to the recently created `upload` entry
     :param table: SQL table to retrieve row from
-    :return: Dictionary representation of new row in the `uploads` SQL table
+    :return: Dictionary representation of new row in `table`
     """
     uploaded_at = virtool.utils.timestamp()
 
@@ -146,15 +147,43 @@ async def delete(pg: AsyncEngine, upload_id: int) -> Optional[dict]:
     return upload
 
 
-async def reserve(pg, upload_ids):
+async def release(pg: AsyncEngine, upload_ids: Union[int, List[int]]):
     """
-    Reserve the uploads identified in `upload_ids` by setting the `reserved` field to `True`.
+    Release the uploads in `upload_ids` by setting the `reserved` field to `False`.
 
     :param pg: PostgreSQL AsyncEngine object
     :param upload_ids: List of row `id`s to set the attribute for
     """
+    if isinstance(upload_ids, int):
+        query = (Upload.id == upload_ids)
+    else:
+        query = (Upload.id.in_(upload_ids))
+
     async with AsyncSession(pg) as session:
         await session.execute(update(Upload).
-                              where(Upload.id.in_(upload_ids)).values(reserve=True).
+                              where(query).values(reserved=False).
                               execution_options(synchronize_session="fetch")
                               )
+
+        await session.commit()
+
+
+async def reserve(pg: AsyncEngine, upload_ids: Union[int, List[int]]):
+    """
+    Reserve the uploads in `upload_ids` by setting the `reserved` field to `True`.
+
+    :param pg: PostgreSQL AsyncEngine object
+    :param upload_ids: List of row `id`s to set the attribute for
+    """
+    if isinstance(upload_ids, int):
+        query = Upload.id == upload_ids
+    else:
+        query = Upload.id.in_(upload_ids)
+
+    async with AsyncSession(pg) as session:
+        await session.execute(update(Upload).
+                              where(query).values(reserved=True).
+                              execution_options(synchronize_session="fetch")
+                              )
+
+        await session.commit()

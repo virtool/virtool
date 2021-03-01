@@ -14,6 +14,7 @@ import virtool.jobs.db
 import virtool.samples.db
 import virtool.samples.utils
 import virtool.subtractions.db
+import virtool.uploads.db
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
@@ -135,7 +136,8 @@ async def find(req):
     return json_response(data)
 
 
-@routes.get("/api/samples/{sample_id}", allow_jobs=True)
+@routes.get("/api/samples/{sample_id}")
+@routes.jobs_api.get("/api/samples/{sample_id}")
 async def get(req):
     """
     Get a complete sample document.
@@ -408,6 +410,36 @@ async def edit(req):
     return json_response(processed)
 
 
+@routes.jobs_api.patch("/api/samples/{sample_id}")
+@schema({
+    "quality": {
+        "type": "dict",
+        "required": True
+    }
+})
+async def finalize(req):
+    db = req.app["db"]
+    data = req["data"]
+
+    sample_id = req.match_info["sample_id"]
+
+    v = Validator({"quality": {"type": "dict"}})
+
+    if not v.validate(data):
+        return invalid_query(v.errors)
+
+    document = await db.samples.find_one_and_update({"_id": sample_id}, {
+        "$set": {
+            "quality": data,
+            "ready": True
+        }
+    })
+
+    processed = virtool.utils.base_processor(document)
+
+    return json_response(processed)
+
+
 @routes.put("/api/samples/{sample_id}/update_job")
 async def replace(req):
     sample_id = req.match_info["sample_id"]
@@ -478,24 +510,57 @@ async def set_rights(req):
     return json_response(document)
 
 
-@routes.delete("/api/samples/{sample_id}", allow_jobs=True)
+@routes.delete("/api/samples/{sample_id}")
 async def remove(req):
     """
     Remove a sample document and all associated analyses.
 
     """
     db = req.app["db"]
+    client = req["client"]
 
     sample_id = req.match_info["sample_id"]
 
     try:
-        if not await virtool.samples.db.check_rights(db, sample_id, req["client"]):
+        if not await virtool.samples.db.check_rights(db, sample_id, client):
             return insufficient_rights()
     except virtool.errors.DatabaseError as err:
         if "Sample does not exist" in str(err):
             return not_found()
 
         raise
+
+    await virtool.samples.db.remove_samples(
+        db,
+        req.app["settings"],
+        [sample_id]
+    )
+
+    return no_content()
+
+
+@routes.jobs_api.delete("/api/samples/{sample_id}")
+async def job_remove(req):
+    """
+    Remove a sample document and all associated analyses. Only usable in the Jobs API and when samples are unfinalized.
+
+    """
+    db = req.app["db"]
+
+    sample_id = req.match_info["sample_id"]
+
+    ready = await virtool.db.utils.get_one_field(db.samples, "ready", sample_id)
+
+    if ready is None:
+        return not_found()
+
+    if ready is True:
+        return bad_request("Only unfinalized samples can be deleted")
+
+    file_ids = await virtool.db.utils.get_one_field(db.samples, "files", sample_id)
+
+    if file_ids:
+        await virtool.uploads.db.release(req.app["pg"], file_ids)
 
     await virtool.samples.db.remove_samples(
         db,

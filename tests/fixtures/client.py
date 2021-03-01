@@ -89,7 +89,7 @@ def create_app(
 
 @pytest.fixture
 def spawn_client(
-        pg_engine,
+        pg,
         request,
         aiohttp_client,
         test_motor,

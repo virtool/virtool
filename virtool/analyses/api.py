@@ -77,7 +77,8 @@ async def find(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(data)
 
 
-@routes.get("/api/analyses/{analysis_id}", allow_jobs=True)
+@routes.get("/api/analyses/{analysis_id}")
+@routes.jobs_api.get("/api/analyses/{analysis_id}")
 async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Get a complete analysis document.
@@ -132,7 +133,8 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(virtool.utils.base_processor(document), headers=headers)
 
 
-@routes.delete("/api/analyses/{analysis_id}", allow_jobs=True)
+@routes.delete("/api/analyses/{analysis_id}")
+@routes.jobs_api.delete("/api/analyses/{analysis_id}")
 async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Remove an analysis document by its id.
@@ -341,7 +343,7 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(blast_data, headers=headers, status=201)
 
 
-@routes.patch("/api/analyses/{analysis_id}", jobs_only=True)
+@routes.jobs_api.patch("/api/analyses/{analysis_id}")
 @schema({"results": {"type": "dict", "required": True}})
 async def patch_analysis(req: aiohttp.web.Request):
     """Sets the result for an analysis and marks it as ready."""

@@ -4,7 +4,7 @@ The dispatcher
 from asyncio import CancelledError
 from dataclasses import dataclass
 from logging import getLogger
-from typing import List, Tuple
+from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -22,11 +22,11 @@ import virtool.subtractions.db
 import virtool.tasks.db
 import virtool.users.db
 from virtool.db.core import DB
+from virtool.dispatcher.change import Change
 from virtool.dispatcher.connection import Connection
-from virtool.dispatcher.fetchers import LabelsFetcher, SimpleMongoFetcher
-from virtool.dispatcher.fetchers import AbstractFetcher, IndexesFetcher, ReferencesFetcher, SamplesFetcher
-from virtool.dispatcher.listener import AbstractDispatcherListener
-from virtool.dispatcher.message import Message
+from virtool.dispatcher.fetchers import IndexesFetcher, LabelsFetcher, ReferencesFetcher, \
+    SamplesFetcher, SimpleMongoFetcher, UploadsFetcher
+from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
 
 logger = getLogger(__name__)
@@ -52,12 +52,13 @@ class Fetchers:
     software: SimpleMongoFetcher
     status: SimpleMongoFetcher
     subtraction: SimpleMongoFetcher
+    uploads: UploadsFetcher
     users: SimpleMongoFetcher
 
 
 class Dispatcher:
 
-    def __init__(self, pg: AsyncEngine, db: DB, listener: AbstractDispatcherListener):
+    def __init__(self, pg: AsyncEngine, db: DB, listener: RedisDispatcherListener):
         #: A dict of all active connections.
         self.db = db
         self._listener = listener
@@ -80,6 +81,7 @@ class Dispatcher:
             SimpleMongoFetcher(db.settings),
             SimpleMongoFetcher(db.status),
             SimpleMongoFetcher(db.subtraction, virtool.subtractions.db.PROJECTION),
+            UploadsFetcher(pg),
             SimpleMongoFetcher(db.users, virtool.users.db.PROJECTION)
         )
 
@@ -87,97 +89,85 @@ class Dispatcher:
         self._connections = list()
 
     async def run(self):
+        """
+        Start the dispatcher.
+
+        The dispatcher loops through available changes in the ``listener`` and dispatches them as
+        messages to connected websocket clients.
+
+        """
         logger.debug("Started dispatcher")
 
         try:
-            async for message in self._listener.get():
-                await self._dispatch(message)
-                logger.debug(f"Received change: {message}")
+            async for change in self._listener:
+                await self._dispatch(change)
+                logger.debug(f"Received change: {change.target}")
         except CancelledError:
             pass
 
         logger.debug("Stopped listening for changes")
 
-        for conn in self._connections:
-            await conn.close()
-
-        logger.debug("Stopped dispatcher")
+        await self.close()
 
     def add_connection(self, connection: Connection):
         """
         Add a connection to the dispatcher.
+
         :param connection: the connection to add
+
         """
         self._connections.append(connection)
-        logger.debug(f'Added connection to dispatcher: {connection.user_id}')
+        logger.debug(f"Added connection to dispatcher: {connection.user_id}")
 
     def remove_connection(self, connection: Connection):
         """
         Remove a connection from the dispatcher. Make sure it is closed first.
+
         :param connection: the connection to remove
+
         """
         try:
             self._connections.remove(connection)
-            logger.debug(f'Removed connection from dispatcher: {connection.user_id}')
+            logger.debug(f"Removed connection from dispatcher: {connection.user_id}")
         except ValueError:
             pass
 
     @property
-    async def authenticated_connections(self) -> List[Connection]:
+    def authenticated_connections(self) -> List[Connection]:
+        """
+        A list of the authenticated connections tracked by the dispatcher.
+
+        """
         return [conn for conn in self._connections if conn.user_id]
 
-    async def _dispatch(self, message: Message):
+    async def _dispatch(self, change: Change):
         """
-        Dispatch a ``message`` with a conserved format to all active connections.
-        :param message: the message to dispatch
+        Dispatch a ``message`` with a conserved format to authenticated connections.
+
+        :param change: the change to dispatch
+
         """
         try:
-            fetcher = getattr(self._fetchers, message.interface)
+            fetcher = getattr(self._fetchers, change.interface)
         except AttributeError:
-            raise ValueError(f'Unknown dispatch interface: {message.interface}')
+            raise ValueError(f"Unknown dispatch interface: {change.interface}")
 
-        if message.operation not in (DELETE, INSERT, UPDATE):
-            raise ValueError(f'Unknown dispatch operation: {message.operation}')
+        if change.operation not in (DELETE, INSERT, UPDATE):
+            raise ValueError(f"Unknown dispatch operation: {change.operation}")
 
-        for connection, dispatch in await self._prepare(fetcher, message):
+        async for connection, message in fetcher.fetch(change, self.authenticated_connections):
             try:
-                await connection.send(dispatch)
+                await connection.send(message)
             except RuntimeError as err:
                 if "RuntimeError: unable to perform operation on <TCPTransport" in str(err):
                     self.remove_connection(connection)
 
-        logger.debug(f"Dispatched {message}")
-
-    async def _prepare(
-            self,
-            fetcher: AbstractFetcher,
-            message: Message
-    ) -> List[Tuple[Connection, dict]]:
-        """
-        Prepare messages to be sent by the dispatcher.
-        Fetches the records in the appropriate shape for a dispatch given the ``id_list``. If
-        the dispatch described the removal of a record, a list of removed IDs is sent instead of
-        the actual records.
-        :param message: the message to prepare dispatches for
-        """
-        if message.operation == DELETE:
-            return [(connection, {
-                "interface": message.interface,
-                "operation": DELETE,
-                "data": message.id_list
-            }) for connection in self._connections]
-
-        to_dispatch = await fetcher.fetch(self._connections, message.id_list)
-
-        return [(connection, {
-            "interface": message.interface,
-            "operation": message.operation,
-            "data": data
-        }) for connection, data in to_dispatch]
+        logger.debug(f"Dispatcher sent messages for {change.target}")
 
     async def close(self):
         """
         Stop the dispatcher and close all connections.
+
         """
         logger.debug("Closing dispatcher")
 

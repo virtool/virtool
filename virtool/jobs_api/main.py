@@ -24,11 +24,12 @@ async def create_app(**config):
     aiojobs.aiohttp.setup(app)
 
     app.on_startup.extend([
-        virtool.startup.init_db,
         virtool.startup.init_redis,
+        virtool.startup.init_db,
         virtool.startup.init_settings,
         virtool.startup.init_postgres,
         virtool.startup.init_events,
+        virtool.startup.init_executors,
         virtool.jobs_api.routes.init_routes,
     ])
 

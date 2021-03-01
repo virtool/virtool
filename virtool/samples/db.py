@@ -37,21 +37,21 @@ Sample schema:
   - id (str) the user ID
 
 """
-import aiohttp.web
 import asyncio
 import logging
 import os
-import pymongo.results
 
+import aiohttp.web
+import pymongo.results
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
-import virtool.jobs.db
 import virtool.db.utils
 import virtool.errors
+import virtool.jobs.db
+import virtool.samples.utils
 import virtool.samples.utils
 import virtool.utils
-import virtool.samples.utils
 from virtool.labels.models import Label
 
 logger = logging.getLogger(__name__)

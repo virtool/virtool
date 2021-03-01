@@ -35,7 +35,7 @@ class Upload(Base):
     created_at = Column(DateTime)
     name = Column(String)
     name_on_disk = Column(String, unique=True)
-    ready = Column(Boolean)
+    ready = Column(Boolean, default=False, nullable=False)
     removed = Column(Boolean, default=False, nullable=False)
     removed_at = Column(DateTime)
     reserved = Column(Boolean, default=False, nullable=False)

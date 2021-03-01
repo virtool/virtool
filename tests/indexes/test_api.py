@@ -1,5 +1,12 @@
+import os
+import sys
+from pathlib import Path
+
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from sqlalchemy import select
+
+from virtool.indexes.models import IndexFile
 
 
 async def test_find(mocker, snapshot, spawn_client, static_time):
@@ -451,3 +458,69 @@ async def test_delete_index(spawn_job_client, error):
         assert 204 == response.status
         async for doc in history.find({"index.id": index_id}):
             assert doc["index"]["id"] == doc["index"]["version"] == "unbuilt"
+
+
+@pytest.mark.parametrize("error", [None, "409", "400", "404", "422"])
+async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session):
+    client = await spawn_client(authorize=True)
+    path = Path(sys.path[0]) / "tests" / "test_files" / "index" / "reference.1.bt2"
+
+    files = {
+        "file": open(path, "rb")
+    }
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    index = {
+        "_id": "foo",
+        "reference": {
+            "id": "bar"
+        },
+        "user": {
+            "id": "test"
+        }
+    }
+
+    if error == "409":
+        index["files"] = [1]
+
+    await client.db.indexes.insert_one(index)
+
+    url = "/api/indexes/foo/files"
+
+    if error == "422":
+        url += "?type=fasta"
+    elif error == "400":
+        url += "?name=reference.bt2"
+    else:
+        url += "?name=reference.1.bt2"
+
+    resp = await client.post_form(url, data=files)
+
+    if error == "400":
+        assert await resp_is.bad_request(resp, "Unsupported index file name")
+        return
+
+    if error == "409":
+        assert await resp_is.conflict(resp, "File name already exists")
+        return
+
+    if error == "422":
+        assert await resp_is.invalid_query(resp, {'name': ['required field']})
+        return
+
+    assert resp.status == 201
+    assert os.listdir(tmpdir / "references" / "bar" / "foo") == ["reference.1.bt2"]
+    snapshot.assert_match(await resp.json())
+    snapshot.assert_match(await client.db.indexes.find_one("foo"))
+
+    async with pg_session as session:
+        result = (await session.execute(select(IndexFile).filter_by(id=1))).scalar()
+
+    assert result.to_dict() == {
+        'id': 1,
+        'name': 'reference.1.bt2',
+        'reference': 'bar',
+        'type': 'bowtie2',
+        'size': os.stat(path).st_size
+    }

@@ -30,8 +30,8 @@ async def test_edit(data, mocker, snapshot, spawn_client):
 
 
 @pytest.mark.parametrize("error", [None, "400_exists", "400_name", "404", "422"])
-async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session):
-    client = await spawn_client(authorize=True, permissions=["modify_subtraction"])
+async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_session):
+    client = await spawn_job_client(authorize=True)
     test_dir = tmpdir.mkdir("files")
     test_dir.join("subtraction.1.bt2").write("Bowtie2 file")
     path = os.path.join(test_dir, "subtraction.1.bt2")
@@ -61,7 +61,7 @@ async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session
     else:
         url += "?name=subtraction.1.bt2"
 
-    resp = await client.post_form(url, data=files)
+    resp = await client.post(url, data=files)
 
     if error == "400_name":
         assert await resp_is.bad_request(resp, "Unsupported subtraction file name")
@@ -83,4 +83,65 @@ async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session
         '_id': 'foo',
         'name': 'Foo',
         'files': [1]
+    }
+
+
+@pytest.mark.parametrize("error", [None, "404", "409", "422"])
+async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is):
+    subtraction = {
+        "_id": "foo",
+        "name": "Foo",
+        "nickname": "Foo Subtraction"
+    }
+
+    data = {
+        "gc": {
+            "a": 0.319,
+            "t": 0.319,
+            "g": 0.18,
+            "c": 0.18,
+            "n": 0.002
+        }
+    }
+
+    client = await spawn_job_client(authorize=True)
+
+    if error == "409":
+        subtraction["ready"] = True
+
+    if error == "422":
+        data = {}
+
+    if error != "404":
+        await client.db.subtraction.insert_one(subtraction)
+
+    resp = await client.patch("/api/subtractions/foo", json=data)
+
+    if error == "404":
+        assert await resp_is.not_found(resp)
+        return
+
+    if error == "409":
+        assert await resp_is.conflict(resp, "Subtraction has already been finalized")
+        return
+
+    if error == "422":
+        assert await resp_is.invalid_input(resp, {'gc': ['required field']})
+        return
+
+    assert resp.status == 200
+    snapshot.assert_match(await resp.json())
+    document = await client.db.subtraction.find_one("foo")
+    assert document == {
+        "_id": "foo",
+        "name": "Foo",
+        "nickname": "Foo Subtraction",
+        "gc": {
+            "a": 0.319,
+            "t": 0.319,
+            "g": 0.18,
+            "c": 0.18,
+            "n": 0.002
+        },
+        "ready": True
     }
