@@ -84,7 +84,7 @@ def prepare_files_field(path: str):
 
     """
     files = list()
-    for file in os.listdir(path):
+    for file in sorted(os.listdir(path)):
         if file in FILES:
             file_path = os.path.join(path, file)
             document = {
