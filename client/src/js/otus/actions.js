@@ -16,10 +16,8 @@ import {
     SELECT_ISOLATE,
     SET_ISOLATE_AS_DEFAULT,
     SHOW_ADD_ISOLATE,
-    SHOW_ADD_SEQUENCE,
     SHOW_EDIT_ISOLATE,
     SHOW_EDIT_OTU,
-    SHOW_EDIT_SEQUENCE,
     SHOW_REMOVE_ISOLATE,
     SHOW_REMOVE_OTU,
     SHOW_REMOVE_SEQUENCE,
@@ -333,31 +331,6 @@ export const showEditIsolate = (otuId, isolateId, sourceType, sourceName) => ({
  * @returns {object}
  */
 export const showRemoveIsolate = simpleActionCreator(SHOW_REMOVE_ISOLATE);
-
-/**
- * Returns action for displaying the add sequence modal.
- *
- * @func
- * @returns {object}
- */
-export const showAddSequence = targetName => {
-    return {
-        type: SHOW_ADD_SEQUENCE,
-        targetName
-    };
-};
-
-/**
- * Returns action for displaying the edit sequence modal.
- *
- * @func
- * @param sequenceId {string} unique sequence id
- * @returns {object}
- */
-export const showEditSequence = sequenceId => ({
-    type: SHOW_EDIT_SEQUENCE,
-    sequenceId
-});
 
 /**
  * Returns action for displaying the remove sequence modal.
