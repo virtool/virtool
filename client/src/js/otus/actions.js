@@ -201,15 +201,15 @@ export const removeIsolate = (otuId, isolateId, nextIsolateId) => ({
  * @param target {string} the reference target associated with the sequence
  * @returns {object}
  */
-export const addSequence = (otuId, isolateId, accession, definition, host, sequence, segment, target) => ({
+export const addSequence = ({ otuId, isolateId, accession, definition, host, sequence, segment, target }) => ({
     type: ADD_SEQUENCE.REQUESTED,
-    otuId,
-    isolateId,
     accession,
     definition,
     host,
-    sequence,
+    isolateId,
+    otuId,
     segment,
+    sequence,
     target
 });
 
@@ -225,9 +225,20 @@ export const addSequence = (otuId, isolateId, accession, definition, host, seque
  * @param host {string} the host the sequence originated from
  * @param sequence {string} an abbreviation for the OTU
  * @param segment {string} the schema segment associated with the OTU
+ * @param target {string} the barcode target associated with the OTU
  * @returns {object}
  */
-export const editSequence = (otuId, isolateId, sequenceId, accession, definition, host, sequence, segment) => ({
+export const editSequence = ({
+    otuId,
+    isolateId,
+    sequenceId,
+    accession,
+    definition,
+    host,
+    sequence,
+    segment,
+    target
+}) => ({
     type: EDIT_SEQUENCE.REQUESTED,
     otuId,
     isolateId,
@@ -236,7 +247,8 @@ export const editSequence = (otuId, isolateId, sequenceId, accession, definition
     definition,
     host,
     sequence,
-    segment
+    segment,
+    target
 });
 
 /**
