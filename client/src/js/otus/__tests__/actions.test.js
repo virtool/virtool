@@ -51,8 +51,7 @@ import {
     showAddIsolate,
     showEditIsolate,
     showRemoveIsolate,
-    showAddSequence,
-    showEditSequence,
+    showRemoveOTU,
     showRemoveSequence,
     hideOTUModal
 } from "../actions";
@@ -239,15 +238,6 @@ describe("OTUs Action Creators", () => {
 
     it("showRemoveIsolate: returns action to display remove isolate modal", () => {
         expect(showRemoveIsolate()).toEqual({ type: SHOW_REMOVE_ISOLATE });
-    });
-
-    it("showAddSequence: returns action to display add sequence modal", () => {
-        expect(showAddSequence()).toEqual({ type: SHOW_ADD_SEQUENCE });
-    });
-
-    it("showEditSequence: returns action to display edit sequence modal", () => {
-        const result = showEditSequence(sequenceId);
-        expect(result).toEqual({ type: SHOW_EDIT_SEQUENCE, sequenceId });
     });
 
     it("showRemoveSequence: returns action to display remove sequence modal", () => {

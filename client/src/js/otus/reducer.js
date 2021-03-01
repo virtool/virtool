@@ -25,8 +25,7 @@ import {
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
     SHOW_REMOVE_ISOLATE,
-    SHOW_ADD_SEQUENCE,
-    SHOW_EDIT_SEQUENCE,
+    SHOW_REMOVE_OTU,
     SHOW_REMOVE_SEQUENCE,
     HIDE_OTU_MODAL,
     GET_OTU_HISTORY,
@@ -45,8 +44,6 @@ export const initialState = {
     addIsolate: false,
     editIsolate: false,
     removeIsolate: false,
-    addSequence: false,
-    editSequence: false,
     removeSequence: false,
     activeIsolateId: null,
     importData: null,
@@ -60,8 +57,6 @@ export const hideOTUModal = state => ({
     addIsolate: false,
     editIsolate: false,
     removeIsolate: false,
-    addSequence: false,
-    editSequence: false,
     removeSequence: false
 });
 
@@ -190,12 +185,6 @@ export default function OTUsReducer(state = initialState, action) {
 
         case SHOW_REMOVE_ISOLATE:
             return { ...state, removeIsolate: true };
-
-        case SHOW_ADD_SEQUENCE:
-            return { ...state, addSequence: true, targetName: action.targetName };
-
-        case SHOW_EDIT_SEQUENCE:
-            return { ...state, editSequence: action.sequenceId };
 
         case SHOW_REMOVE_SEQUENCE:
             return { ...state, removeSequence: action.sequenceId };
