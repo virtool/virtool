@@ -28,8 +28,9 @@ const IndexItemTop = styled.h3`
     margin: 0;
 
     > strong {
-        flex: 1 0 120px;
+        flex: 1 1 120px;
         font-weight: ${getFontWeight("thick")};
+        max-width: 400px;
     }
 
     > span {
@@ -39,6 +40,7 @@ const IndexItemTop = styled.h3`
 
     > div {
         flex: 1 0 auto;
+        max-width: 70px;
     }
 `;
 
