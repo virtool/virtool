@@ -1,8 +1,14 @@
+import os
+
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from sqlalchemy import select
 
 import virtool.analyses.db
 import virtool.analyses.format
+import virtool.tasks.db
+
+from virtool.analyses.models import AnalysisFile
 
 
 @pytest.fixture
@@ -171,3 +177,66 @@ async def test_remove_nuvs_blast(snapshot, dbi, static_time):
     )
 
     snapshot.assert_match(await dbi.analyses.find().to_list(None))
+
+
+async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg_session):
+    client = await spawn_client(authorize=True)
+
+    test_dir = tmpdir.mkdir("samples").mkdir("foo").mkdir("analysis").mkdir("bar")
+    test_dir.join("assembly.fa").write("FASTA file")
+    test_dir.join("hmm.tsv").write("HMM file")
+    test_dir.join("unmapped_otus.fq").write("FASTQ file")
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    await dbi.analyses.insert_one({
+        "_id": "bar",
+        "workflow": "nuvs",
+        "sample": {
+            "id": "foo"
+        }
+    })
+
+    nuv_task = await virtool.tasks.db.register(dbi, "store_nuvs_file_task")
+    store_nuvs_task = virtool.analyses.db.StoreNuvsFilesTask(client.app, nuv_task["id"])
+    await store_nuvs_task.run()
+
+    rows = list()
+    async with pg_session as session:
+        files = (await session.execute(select(AnalysisFile))).scalars().all()
+        for file in files:
+            rows.append(file.to_dict())
+    assert rows == [
+        {
+            'id': 1,
+            'analysis': 'bar',
+            'description': None,
+            'format': 'fastq',
+            'name': 'unmapped_otus.fq',
+            'name_on_disk': '1-unmapped_otus.fq',
+            'size': 10,
+            'uploaded_at': None
+        },
+        {
+            'id': 2,
+            'analysis': 'bar',
+            'description': None,
+            'format': 'fasta',
+            'name': 'assembly.fa',
+            'name_on_disk': '2-assembly.fa',
+            'size': 10,
+            'uploaded_at': None
+        },
+        {
+            'id': 3,
+            'analysis': 'bar',
+            'description': None,
+            'format': 'tsv',
+            'name': 'hmm.tsv',
+            'name_on_disk': '3-hmm.tsv',
+            'size': 8,
+            'uploaded_at': None
+        }
+    ]
+    assert set(os.listdir(tmpdir / "analyses" / "bar")) == {"assembly.fa.gz", "hmm.tsv", "unmapped_otus.fq.gz"}
+    assert not os.path.isdir(os.path.join(tmpdir, "samples", "foo", "analysis", "bar"))
