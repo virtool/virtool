@@ -1,11 +1,11 @@
-import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { Box, Icon, Label } from "../../../../base";
-import { checkRefRight, followDownload } from "../../../../utils/utils";
+import { getCanModifyReferenceOTU } from "../../../../references/selectors";
+import IsolateSequences from "../../../../sequences/components/Sequences";
+import { followDownload } from "../../../../utils/utils";
 import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../../actions";
-import IsolateSequences from "../Sequences/Sequences";
 import EditIsolate from "./Edit";
 import RemoveIsolate from "./Remove";
 
@@ -117,7 +117,7 @@ const mapStateToProps = state => ({
     editing: state.otus.editingIsolate,
     allowedSourceTypes: state.settings.data.allowed_source_types,
     restrictSourceTypes: state.settings.data.restrict_source_types,
-    canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu"),
+    canModify: getCanModifyReferenceOTU(state),
     dataType: state.references.detail.data_type
 });
 

@@ -13,9 +13,8 @@ import {
     Loader,
     RelativeTime
 } from "../../../base";
-import { checkRefRight } from "../../../utils/utils";
 import { checkUpdates, updateRemoteReference } from "../../actions";
-import { getProgress } from "../../selectors";
+import { checkReferenceRight, getProgress } from "../../selectors";
 
 const ReleaseButtonContainer = styled.div`
     margin: 0;
@@ -184,7 +183,7 @@ const Remote = ({ detail, onCheckUpdates, onUpdate, checking, progress }) => {
 const mapStateToProps = state => ({
     detail: state.references.detail,
     checking: state.references.checking,
-    canRemove: checkRefRight(state, "remove"),
+    canRemove: checkReferenceRight(state, "remove"),
     progress: getProgress(state)
 });
 

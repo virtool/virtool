@@ -1,9 +1,10 @@
-jest.mock("../../../../utils/utils");
+jest.mock("../../../selectors");
 
+import React from "react";
 import { REMOVE_REFERENCE } from "../../../../app/actionTypes";
 import { RemoveBanner } from "../../../../base";
-import { RemoveReference, mapDispatchToProps, mapStateToProps } from "../Remove";
-import { checkRefRight } from "../../../../utils/utils";
+import { checkReferenceRight } from "../../../selectors";
+import { mapDispatchToProps, mapStateToProps, RemoveReference } from "../Remove";
 
 describe("<RemoveReference />", () => {
     let props;
@@ -36,7 +37,7 @@ describe("<RemoveReference />", () => {
 
 describe("mapStateToProps()", () => {
     it.each([true, false])("should return props when checkRefRight returns %p", canRemove => {
-        checkRefRight.mockReturnValue(canRemove);
+        checkReferenceRight.mockReturnValue(canRemove);
 
         const state = {
             references: {
@@ -51,7 +52,7 @@ describe("mapStateToProps()", () => {
             canRemove
         });
 
-        expect(checkRefRight).toHaveBeenCalledWith(state, "remove");
+        expect(checkReferenceRight).toHaveBeenCalledWith(state, "remove");
     });
 });
 

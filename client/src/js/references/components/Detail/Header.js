@@ -3,7 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
 import { Icon, ViewHeader, ViewHeaderAttribution, ViewHeaderIcons, ViewHeaderTitle } from "../../../base";
-import { checkRefRight } from "../../../utils/utils";
+import { checkReferenceRight } from "../../selectors";
 
 export const ReferenceDetailHeaderIcon = ({ canModify, isRemote, onEdit }) => {
     if (isRemote) {
@@ -53,7 +53,7 @@ export const mapStateToProps = state => {
     const { name, remotes_from, created_at, user } = state.references.detail;
     return {
         name,
-        canModify: checkRefRight(state, "modify"),
+        canModify: checkReferenceRight(state, "modify"),
         createdAt: created_at,
         isRemote: !!remotes_from,
         showIcons: endsWith(state.router.location.pathname, "/manage"),
