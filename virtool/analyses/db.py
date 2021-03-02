@@ -19,7 +19,9 @@ import virtool.samples.db
 import virtool.tasks.task
 import virtool.types
 import virtool.utils
+
 from virtool.jobs.utils import JobRights
+from virtool.types import App
 
 PROJECTION = (
     "_id",
@@ -39,7 +41,7 @@ PROJECTION = (
 
 class StoreNuvsFilesTask(virtool.tasks.task.Task):
 
-    def __init__(self, app, task_id):
+    def __init__(self, app: App, task_id: str):
         super().__init__(app, task_id)
 
         self.steps = [
@@ -52,6 +54,10 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
         self.nuvs_directory = []
 
     async def make_analyses_directory(self):
+        """
+        Create a directory at `<data_path>`/analyses if it doesn't exist.
+
+        """
         settings = self.app["settings"]
         try:
             await self.app["run_in_thread"](os.makedirs, os.path.join(settings["data_path"], "analyses"))
@@ -59,6 +65,10 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
             pass
 
     async def store_nuvs_files(self):
+        """
+        Move existing NuVs analysis files to `<data_path>`/analyses/:id
+
+        """
         db = self.db
         settings = self.app["settings"]
 
@@ -95,6 +105,11 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
                         size=size)
 
     async def remove_directory(self):
+        """
+        Remove `<data_path>`/samples/:id/analysis/:id directory after files
+        have been preserved in `<data_path>`/analyses/:id>.
+
+        """
         settings = self.app["settings"]
         async for analysis in self.db.analyses.find({"workflow": "nuvs"}):
             analysis_id = analysis["_id"]
