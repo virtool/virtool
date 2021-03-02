@@ -1,4 +1,4 @@
-import { noop } from "lodash-es";
+import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { Formik, Form, Field, ErrorMessage } from "formik";
@@ -15,7 +15,7 @@ import {
 import { createFirstUser } from "../users/actions";
 import { WallContainer, WallDialog, WallDialogFooter } from "./Container";
 
-export const FirstUser = ({ onSubmit }) => {
+export const FirstUser = ({ onSubmit, responseErrors }) => {
     const initialValues = {
         username: "",
         password: ""
@@ -25,17 +25,6 @@ export const FirstUser = ({ onSubmit }) => {
         onSubmit(values.username, values.password);
     };
 
-    const validate = values => {
-        let errors = {};
-
-        const minimum_password_length = 8;
-
-        if (values.password.length < minimum_password_length)
-            errors.password = "password should be at least 8 characters long";
-
-        return errors;
-    };
-
     return (
         <WallContainer>
             <WallDialog size="lg">
@@ -43,7 +32,7 @@ export const FirstUser = ({ onSubmit }) => {
                     <h2>Setup User</h2>
                     <p>Create an initial administrative user to start using Virtool.</p>
                 </BoxGroupHeader>
-                <Formik initialValues={initialValues} validate={validate} onSubmit={handleSubmit}>
+                <Formik initialValues={initialValues} onSubmit={handleSubmit}>
                     <Form>
                         <BoxGroupSection>
                             <InputGroup>
@@ -59,9 +48,7 @@ export const FirstUser = ({ onSubmit }) => {
                             <Button type="submit" icon="user-plus" color="blue">
                                 Create User
                             </Button>
-                            <ErrorMessage name="password">
-                                {errorMessage => <InputError>{errorMessage}</InputError>}
-                            </ErrorMessage>
+                            <InputError>{responseErrors}</InputError>
                         </WallDialogFooter>
                     </Form>
                 </Formik>
@@ -76,4 +63,8 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(noop(), mapDispatchToProps)(FirstUser);
+export const mapStateToProps = state => ({
+    responseErrors: get(state, "errors.CREATE_FIRST_USER_ERROR.message", "")
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(FirstUser);
