@@ -11,8 +11,8 @@ import {
     editReferenceUser,
     removeReferenceGroup,
     removeReferenceUser
-} from "../../../references/actions";
-import { checkRefRight } from "../../../utils/utils";
+} from "../../actions";
+import { checkReferenceRight } from "../../selectors";
 import AddReferenceMember from "./AddMember";
 import EditReferenceMember from "./EditMember";
 import MemberItem from "./MemberItem";
@@ -133,7 +133,7 @@ const mapStateToProps = (state, ownProps) => {
     return {
         refId: state.references.detail.id,
         members: sortBy(noun === "user" ? state.references.detail.users : state.references.detail.groups, "id"),
-        canModify: checkRefRight(state, "modify")
+        canModify: checkReferenceRight(state, "modify")
     };
 };
 

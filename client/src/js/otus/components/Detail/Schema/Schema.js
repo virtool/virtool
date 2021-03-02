@@ -1,13 +1,13 @@
-import { get, map } from "lodash-es";
+import { map } from "lodash-es";
 import React from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { Button, NoneFoundBox } from "../../../../base";
-import { checkRefRight } from "../../../../utils/utils";
+import { getCanModifyReferenceOTU } from "../../../../references/selectors";
 import { editOTU } from "../../../actions";
-import EditSegment from "./Edit";
 import AddSegment from "./Add";
+import EditSegment from "./Edit";
 import RemoveSegment from "./Remove";
 import Segment from "./Segment";
 
@@ -171,7 +171,7 @@ const mapStateToProps = state => ({
     schema: state.otus.detail.schema,
     detail: state.otus.detail,
     otuId: state.otus.detail.id,
-    canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu")
+    canModify: getCanModifyReferenceOTU(state)
 });
 
 const mapDispatchToProps = dispatch => ({

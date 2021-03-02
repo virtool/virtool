@@ -4,6 +4,8 @@ import { connect } from "react-redux";
 import { Redirect, Route, Switch } from "react-router-dom";
 import styled from "styled-components";
 import {
+    Breadcrumb,
+    BreadcrumbItem,
     Icon,
     LoadingPlaceholder,
     NotFound,
@@ -13,11 +15,10 @@ import {
     ViewHeaderIcons,
     ViewHeaderTitle
 } from "../../../base";
-import { Breadcrumb, BreadcrumbItem } from "../../../base/Breadcrumb";
-import { checkRefRight } from "../../../utils/utils";
+import { getCanModifyReferenceOTU } from "../../../references/selectors";
 import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
-import IsolateEditor from "./Editor";
 import EditOTU from "./Edit";
+import IsolateEditor from "./Editor";
 import General from "./General";
 import History from "./History/History";
 import AddIsolate from "./Isolates/Add";
@@ -143,7 +144,7 @@ const mapStateToProps = state => {
         error: get(state, "errors.GET_OTU_ERROR", null),
         detail: state.otus.detail,
         refName: state.references.detail.name,
-        canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu"),
+        canModify: getCanModifyReferenceOTU(state),
         dataType: state.references.detail.data_type
     };
 };

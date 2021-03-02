@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { Alert, Icon } from "../../base";
-import { checkRefRight } from "../../utils/utils";
+import { checkReferenceRight } from "../../references/selectors";
 
 export const RebuildAlert = ({ refId, showCountAlert, showIndexAlert }) => {
     if (showCountAlert === 0) {
@@ -38,7 +38,7 @@ export const RebuildAlert = ({ refId, showCountAlert, showIndexAlert }) => {
 export const mapStateToProps = state => ({
     refId: state.references.detail.id,
     showIndexAlert: state.indexes.modified_otu_count || state.otus.modified_count,
-    showCountAlert: checkRefRight(state, "build") && (state.indexes.total_otu_count || state.otus.total_count)
+    showCountAlert: checkReferenceRight(state, "build") && (state.indexes.total_otu_count || state.otus.total_count)
 });
 
 export default connect(mapStateToProps)(RebuildAlert);
