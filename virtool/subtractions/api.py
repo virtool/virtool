@@ -290,7 +290,6 @@ async def edit(req):
 
 
 @routes.delete("/api/subtractions/{subtraction_id}", permission="modify_subtraction")
-@routes.jobs_api.delete("/api/subtractions/{subtraction_id}")
 async def remove(req):
     db = req.app["db"]
     settings = req.app["settings"]
@@ -332,3 +331,25 @@ async def finalize_subtraction(req: aiohttp.web.Request):
     })
 
     return json_response(virtool.utils.base_processor(updated_document))
+
+
+@routes.jobs_api.delete("/api/subtractions/{subtraction_id}")
+async def job_remove(req: aiohttp.web.Request):
+    """
+    Remove a subtraction document. Only usable in the Jobs API and when subtractions are unfinalized.
+
+    """
+    db = req.app["db"]
+    subtraction_id = req.match_info["subtraction_id"]
+
+    document = await db.subtraction.find_one(subtraction_id)
+
+    if document is None:
+        return not_found()
+
+    if "ready" in document and document["ready"]:
+        return conflict("Only unfinalized subtractions can be deleted")
+
+    await virtool.subtractions.db.delete(req.app, subtraction_id)
+
+    return no_content()

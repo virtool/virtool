@@ -88,3 +88,17 @@ snapshots['test_finalize_subtraction[uvloop-None] 1'] = {
     'nickname': 'Foo Subtraction',
     'ready': True
 }
+
+snapshots['test_job_remove[uvloop-True-False] 1'] = {
+    '_id': 'foo',
+    'deleted': True,
+    'name': 'Foo',
+    'nickname': 'Foo Subtraction',
+    'ready': False
+}
+
+snapshots['test_job_remove[uvloop-True-False] 2'] = {
+    '_id': 'test',
+    'name': 'Test',
+    'subtraction': None
+}
