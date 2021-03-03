@@ -348,7 +348,7 @@ async def job_remove(req: aiohttp.web.Request):
         return not_found()
 
     if "ready" in document and document["ready"]:
-        return bad_request("Only unfinalized subtractions can be deleted")
+        return conflict("Only unfinalized subtractions can be deleted")
 
     await virtool.subtractions.db.delete(req.app, subtraction_id)
 
