@@ -123,8 +123,9 @@ export default function errorsReducer(state = null, action) {
             case FIND_USERS.FAILED:
             case GET_USER.FAILED:
             case LOGIN.FAILED:
-            case CREATE_FIRST_USER.FAILED:
                 return { ...state, [errorName]: errorPayload };
+            case CREATE_FIRST_USER.FAILED:
+                return { ...state, [errorName]: action.error.response.body };
 
             default:
                 // Report uncaught errors to Sentry
