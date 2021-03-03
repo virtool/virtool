@@ -432,8 +432,6 @@ async def test_finalize(field, snapshot, spawn_client, spawn_job_client, resp_is
         assert await resp_is.invalid_input(resp, {"quality": ['required field']})
 
 
-
-
 @pytest.mark.parametrize("delete_result,resp_is_attr", [(1, "no_content"), (0, "not_found")])
 async def test_remove(delete_result, resp_is_attr, mocker, spawn_client, resp_is, create_delete_result):
     client = await spawn_client(authorize=True)

@@ -430,7 +430,7 @@ async def finalize(req):
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": {
-            "quality": data,
+            "quality": data["quality"],
             "ready": True
         }
     })
