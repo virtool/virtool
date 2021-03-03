@@ -177,7 +177,7 @@ async def test_job_remove(exists, ready, tmpdir, spawn_job_client, snapshot, res
         return
 
     if ready:
-        assert await resp_is.bad_request(resp, "Only unfinalized subtractions can be deleted")
+        assert await resp_is.conflict(resp, "Only unfinalized subtractions can be deleted")
         return
 
     assert await resp_is.no_content(resp)
