@@ -15,22 +15,14 @@ import {
 import { createFirstUser } from "../users/actions";
 import { WallContainer, WallDialog, WallDialogFooter } from "./Container";
 
-export const FirstUser = ({ onSubmit, errors, state, genericError }) => {
+export const FirstUser = ({ onSubmit, genericError, usernameErrors, passwordErrors }) => {
     const initialValues = {
         username: "",
         password: ""
     };
 
-    const passwordErrors = get(errors, "password", [""]);
-    const usernameErrors = get(errors, "user_id", [""]);
-
     const handleSubmit = values => {
         onSubmit(values.username, values.password);
-        console.log("state", state);
-        console.log("genericError", genericError);
-        console.log("usernameErrors", usernameErrors);
-        console.log("passwordErrors", passwordErrors);
-        console.log("errors", errors);
     };
 
     return (
@@ -46,12 +38,16 @@ export const FirstUser = ({ onSubmit, errors, state, genericError }) => {
                             <InputGroup>
                                 <InputLabel>Username</InputLabel>
                                 <Field type="text" name="username" as={Input} />
-                                <InputError>{usernameErrors[0]}</InputError>
+                                {usernameErrors.map(error => (
+                                    <InputError key={error}>{error}</InputError>
+                                ))}
                             </InputGroup>
                             <InputGroup>
                                 <InputLabel>Password</InputLabel>
                                 <Field name="password" as={PasswordInput} />
-                                <InputError>{passwordErrors[0]}</InputError>
+                                {passwordErrors.map(error => (
+                                    <InputError key={error}>{error}</InputError>
+                                ))}
                             </InputGroup>
                         </BoxGroupSection>
                         <WallDialogFooter>
@@ -75,10 +71,8 @@ export const mapDispatchToProps = dispatch => ({
 
 export const mapStateToProps = state => ({
     genericError: get(state, "errors.CREATE_FIRST_USER_ERROR.message", ""),
-    // usernameError: get(state, "errors.CREATE_FIRST_USER_ERROR.errors.user_id", ""),
-    // passwordError: get(state, "errors.CREATE_FIRST_USER_ERROR.errors.password", ""),
-    errors: get(state, "errors.CREATE_FIRST_USER_ERROR.errors", ""),
-    state: get(state, "errors.CREATE_FIRST_USER_ERROR", "")
+    usernameErrors: get(state, "errors.CREATE_FIRST_USER_ERROR.errors.user_id", [""]),
+    passwordErrors: get(state, "errors.CREATE_FIRST_USER_ERROR.errors.password", [""])
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(FirstUser);
