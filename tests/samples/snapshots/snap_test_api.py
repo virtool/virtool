@@ -744,8 +744,6 @@ snapshots['test_find[uvloop-fred-None-None-None-d_range6-meta6] 1'] = {
 snapshots['test_finalize[uvloop-quality] 1'] = {
     'id': 'test',
     'quality': {
-        'quality': {
-        }
     },
     'ready': True
 }

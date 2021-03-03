@@ -423,14 +423,9 @@ async def finalize(req):
 
     sample_id = req.match_info["sample_id"]
 
-    v = Validator({"quality": {"type": "dict"}})
-
-    if not v.validate(data):
-        return invalid_query(v.errors)
-
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": {
-            "quality": data,
+            "quality": data["quality"],
             "ready": True
         }
     })
