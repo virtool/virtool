@@ -15,7 +15,7 @@ import {
 import { createFirstUser } from "../users/actions";
 import { WallContainer, WallDialog, WallDialogFooter } from "./Container";
 
-export const FirstUser = ({ onSubmit, genericError, usernameErrors, passwordErrors }) => {
+export const FirstUser = ({ onSubmit, generalError, usernameErrors, passwordErrors }) => {
     const initialValues = {
         username: "",
         password: ""
@@ -54,7 +54,7 @@ export const FirstUser = ({ onSubmit, genericError, usernameErrors, passwordErro
                             <Button type="submit" icon="user-plus" color="blue">
                                 Create User
                             </Button>
-                            <InputError>{genericError}</InputError>
+                            <InputError>{generalError}</InputError>
                         </WallDialogFooter>
                     </Form>
                 </Formik>
@@ -70,7 +70,7 @@ export const mapDispatchToProps = dispatch => ({
 });
 
 export const mapStateToProps = state => ({
-    genericError: get(state, "errors.CREATE_FIRST_USER_ERROR.message", ""),
+    generalError: get(state, "errors.CREATE_FIRST_USER_ERROR.message", ""),
     usernameErrors: get(state, "errors.CREATE_FIRST_USER_ERROR.errors.user_id", [""]),
     passwordErrors: get(state, "errors.CREATE_FIRST_USER_ERROR.errors.password", [""])
 });
