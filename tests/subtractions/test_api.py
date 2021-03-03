@@ -145,3 +145,41 @@ async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is):
         },
         "ready": True
     }
+
+
+@pytest.mark.parametrize("ready", [True, False])
+@pytest.mark.parametrize("exists", [True, False])
+async def test_job_remove(exists, ready, tmpdir, spawn_job_client, snapshot, resp_is):
+    client = await spawn_job_client(authorize=True)
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    if exists:
+        await client.db.subtraction.insert_one({
+            "_id": "foo",
+            "name": "Foo",
+            "nickname": "Foo Subtraction",
+            "deleted": False,
+            "ready": ready
+        })
+
+        await client.db.samples.insert_one({
+            "_id": "test",
+            "name": "Test",
+            "subtraction": {
+                "id": "foo"
+            }
+        })
+
+    resp = await client.delete("/api/subtractions/foo")
+
+    if not exists:
+        assert resp.status == 404
+        return
+
+    if ready:
+        assert await resp_is.bad_request(resp, "Only unfinalized subtractions can be deleted")
+        return
+
+    assert await resp_is.no_content(resp)
+    snapshot.assert_match(await client.db.subtraction.find_one("foo"))
+    snapshot.assert_match(await client.db.samples.find_one("test"))
