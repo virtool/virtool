@@ -67,28 +67,29 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
             path = virtool.analyses.utils.join_analysis_path(settings["data_path"], analysis_id, sample_id)
             target_path = os.path.join(settings["data_path"], "analyses", analysis_id)
 
-            try:
-                await self.app["run_in_thread"](os.makedirs, target_path)
-            except FileExistsError:
-                pass
+            if os.path.isdir(path):
+                try:
+                    await self.app["run_in_thread"](os.makedirs, target_path)
+                except FileExistsError:
+                    pass
 
-            for filename in os.listdir(path):
-                if filename in self.target_files:
-                    await virtool.analyses.utils.move_nuvs_files(filename, self.run_in_thread, path, target_path)
+                for filename in os.listdir(path):
+                    if filename in self.target_files:
+                        await virtool.analyses.utils.move_nuvs_files(filename, self.run_in_thread, path, target_path)
 
-                    file_type = virtool.analyses.utils.check_nuvs_file_type(filename)
+                        file_type = virtool.analyses.utils.check_nuvs_file_type(filename)
 
-                    if not filename.endswith(".tsv"):
-                        filename += ".gz"
+                        if not filename.endswith(".tsv"):
+                            filename += ".gz"
 
-                    size = virtool.utils.file_stats(os.path.join(target_path, filename))["size"]
+                        size = virtool.utils.file_stats(os.path.join(target_path, filename))["size"]
 
-                    await virtool.analyses.files.create_analysis_file(
-                        self.app["pg"],
-                        analysis_id,
-                        file_type,
-                        filename,
-                        size=size)
+                        await virtool.analyses.files.create_analysis_file(
+                            self.app["pg"],
+                            analysis_id,
+                            file_type,
+                            filename,
+                            size=size)
 
     async def remove_directory(self):
         """
