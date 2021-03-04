@@ -3,8 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from virtool.uploads.api import UPLOAD_TYPES
-from virtool.uploads.models import Upload
+from virtool.uploads.models import Upload, UploadType
 
 
 @pytest.fixture
@@ -22,7 +21,7 @@ def files(tmpdir):
 
 class TestUpload:
 
-    @pytest.mark.parametrize("upload_type", UPLOAD_TYPES)
+    @pytest.mark.parametrize("upload_type", UploadType.to_list())
     async def test(self, files, upload_type, tmpdir, snapshot, spawn_client, static_time, pg_session):
         """
         Test `POST /api/uploads` to assure a file can be uploaded and that it properly updates the db.

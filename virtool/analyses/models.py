@@ -23,9 +23,6 @@ class AnalysisFormat(str, enum.Enum):
     json = "json"
 
 
-ANALYSIS_FORMATS = [*AnalysisFormat.to_list(), None]
-
-
 class AnalysisFile(Base):
     """
     SQL model to store new analysis files

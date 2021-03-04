@@ -21,9 +21,6 @@ class UploadType(str, enum.Enum):
     subtraction = "subtraction"
 
 
-UPLOAD_TYPES = [*UploadType.to_list(), None]
-
-
 class Upload(Base):
     """
     SQL table to store all new uploads
