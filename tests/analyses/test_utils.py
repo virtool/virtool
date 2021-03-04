@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 import virtool.analyses.db
@@ -60,3 +62,19 @@ async def test_check_nuvs_file_type(file_type):
     if file_type == "tsv":
         result = virtool.analyses.utils.check_nuvs_file_type("hmm.tsv")
         assert result == "tsv"
+
+
+async def test_move_nuvs_files(tmpdir, spawn_client):
+    client = await spawn_client(authorize=True)
+
+    file_path = tmpdir.mkdir("files")
+    file_path.join("hmm.tsv").write("HMM file")
+    file_path.join("assembly.fa").write("FASTA file")
+
+    target_path = tmpdir.mkdir("analyses")
+
+    await virtool.analyses.utils.move_nuvs_files("hmm.tsv", client.app["run_in_thread"], file_path, target_path)
+    assert set(os.listdir(target_path)) == {"hmm.tsv"}
+
+    await virtool.analyses.utils.move_nuvs_files("assembly.fa", client.app["run_in_thread"], file_path, target_path)
+    assert set(os.listdir(target_path)) == {"hmm.tsv", "assembly.fa.gz"}
