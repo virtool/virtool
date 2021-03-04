@@ -1,6 +1,7 @@
-import { Input, PasswordInput } from "../../base";
+import { Input, PasswordInput, WallDialogFooter } from "../../base";
 import { FirstUser, mapDispatchToProps } from "../FirstUser";
 import { waitFor, fireEvent, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 describe("<FirstUser />", () => {
     let props;
@@ -47,24 +48,19 @@ describe("<FirstUser />", () => {
             onSubmit: jest.fn(),
             ...errorMessages
         };
-        // const wrapper = shallow(<FirstUser {...props} />);
-        const { container } = render(<FirstUser {...props} />);
-        const submit = container.querySelector('button[type="submit"]');
-        // wrapper.setState({
-        //     username: "fee",
-        //     password: "baz"
-        // });
-        const e = {
-            preventDefault: jest.fn()
-        };
-        //wrapper.find("Formik").simulate("submit", e);
+        const usernameInput = "Username";
+        const passwordInput = "Password";
 
-        // Await must be used to allow the Formik component to call it's own onSubmit
-        await waitFor(() => {
-            fireEvent.click(submit); //screen.getByRole("button", { name: "button-name" }));
-        });
-        expect(e.preventDefault).toHaveBeenCalled();
-        expect(props.onSubmit).toHaveBeenCalledWith("", "");
+        renderWithProviders(<FirstUser {...props} />);
+
+        userEvent.type(screen.getByRole("textbox", /username/i), usernameInput);
+        userEvent.type(screen.getByRole("textbox", /password/i), passwordInput);
+        userEvent.click(screen.getByRole("button", { name: /Create User/i }));
+
+        // Await must be used to allow the Formik component to call onSubmit asynchronously
+        await waitFor(() =>
+            expect(props.onSubmit).toHaveBeenCalledWith(usernameInput + passwordInput, expect.anything())
+        );
     });
 });
 
