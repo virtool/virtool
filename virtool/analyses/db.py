@@ -45,24 +45,12 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
         super().__init__(app, task_id)
 
         self.steps = [
-            self.make_analyses_directory,
             self.store_nuvs_files,
             self.remove_directory
         ]
 
         self.target_files = ("hmm.tsv", "assembly.fa", "orfs.fa", "unmapped_hosts.fq", "unmapped_otus.fq")
         self.nuvs_directory = []
-
-    async def make_analyses_directory(self):
-        """
-        Create a directory at `<data_path>`/analyses if it doesn't exist.
-
-        """
-        settings = self.app["settings"]
-        try:
-            await self.app["run_in_thread"](os.makedirs, os.path.join(settings["data_path"], "analyses"))
-        except FileExistsError:
-            pass
 
     async def store_nuvs_files(self):
         """
@@ -79,7 +67,7 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
             target_path = os.path.join(settings["data_path"], "analyses", analysis_id)
 
             try:
-                await self.app["run_in_thread"](os.mkdir, target_path)
+                await self.app["run_in_thread"](os.makedirs, target_path)
             except FileExistsError:
                 pass
 

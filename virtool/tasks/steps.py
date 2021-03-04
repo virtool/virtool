@@ -9,5 +9,5 @@ FIRST_STEPS = {
     "write_subtraction_fasta": "check_subtraction_fasta_files",
     "create_index_json": "create_index_json_files",
     "add_subtraction_files": "rename_index_files",
-    "store_nuvs_file_task": "make_analyses_directory"
+    "store_nuvs_file_task": "store_nuvs_files"
 }
