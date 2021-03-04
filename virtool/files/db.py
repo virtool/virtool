@@ -19,12 +19,17 @@ import pathlib
 from typing import Union
 
 import arrow
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.db.core
 import virtool.db.utils
 import virtool.files.utils
+import virtool.tasks.task
 import virtool.types
 import virtool.utils
+
+from virtool.uploads.models import Upload
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +43,41 @@ PROJECTION = [
     "ready",
     "reserved"
 ]
+
+
+class MigrateFilesTask(virtool.tasks.task.Task):
+
+    def __init__(self, app: virtool.types.App, task_id: str):
+        super().__init__(app, task_id)
+
+        self.steps = [
+            self.transform_documents_to_rows
+        ]
+
+    async def transform_documents_to_rows(self):
+        """
+        Transforms documents in the `files` collection into rows in the `uploads` SQL table.
+
+        """
+        async for document in self.db.files.find():
+            async with AsyncSession(self.app["pg"]) as session:
+                exists = (await session.execute(select(Upload).filter_by(name_on_disk=document["_id"]))).scalar()
+                if not exists:
+                    upload = Upload(
+                        name=document["name"],
+                        name_on_disk=document["_id"],
+                        ready=document["ready"],
+                        removed=False,
+                        reserved=document["reserved"],
+                        size=document["size"],
+                        type=document["type"],
+                        user=document["user"]["id"],
+                        uploaded_at=document["uploaded_at"]
+                    )
+
+                    session.add(upload)
+                    await session.commit()
+                    await self.db.files.delete_one({"_id": document["_id"]})
 
 
 async def generate_file_id(db, filename: str) -> str:
