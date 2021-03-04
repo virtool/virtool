@@ -1,9 +1,13 @@
 import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from sqlalchemy import select
 
 import virtool.files.db
+import virtool.tasks.db
 import virtool.utils
+
+from virtool.uploads.models import Upload
 
 
 @pytest.fixture
@@ -170,3 +174,44 @@ async def test_reserve(dbi):
         files[2],
         files[0]
     ]
+
+
+async def test_migrate_files_task(dbi, spawn_client, static_time, pg_session):
+    client = await spawn_client(authorize=True)
+    await client.db.files.insert_one(
+        {
+            "_id": "07a7zbv6-17NR001b_S23_R1_001.fastq.gz",
+            "name": "17NR001b_S23_R1_001.fastq.gz",
+            "type": "reads",
+            "user": {
+                "id": "test"
+            },
+            "uploaded_at": static_time.datetime,
+            "reserved": False,
+            "ready": True,
+            "size": 1234567
+        }
+    )
+
+    files_task = await virtool.tasks.db.register(dbi, "migrate_files")
+    migrate_files_task = virtool.files.db.MigrateFilesTask(client.app, files_task["id"])
+    await migrate_files_task.run()
+
+    async with pg_session as session:
+        upload = (await session.execute(select(Upload).filter_by(id=1))).scalar().to_dict()
+
+    assert await dbi.files.find().to_list(None) == []
+    assert upload == {
+        'id': 1,
+        'created_at': None,
+        'name': '17NR001b_S23_R1_001.fastq.gz',
+        'name_on_disk': '07a7zbv6-17NR001b_S23_R1_001.fastq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': 1234567,
+        'type': 'reads',
+        'user': 'test',
+        'uploaded_at': static_time.datetime
+    }

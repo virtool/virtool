@@ -62,6 +62,7 @@ class MigrateFilesTask(virtool.tasks.task.Task):
         async for document in self.db.files.find():
             async with AsyncSession(self.app["pg"]) as session:
                 exists = (await session.execute(select(Upload).filter_by(name_on_disk=document["_id"]))).scalar()
+
                 if not exists:
                     upload = Upload(
                         name=document["name"],
@@ -77,6 +78,7 @@ class MigrateFilesTask(virtool.tasks.task.Task):
 
                     session.add(upload)
                     await session.commit()
+
                     await self.db.files.delete_one({"_id": document["_id"]})
 
 
