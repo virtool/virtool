@@ -38,10 +38,14 @@ def check_nuvs_file_type(file_name: str) -> str:
     """
     if file_name.endswith(".tsv"):
         return "tsv"
-    elif file_name.endswith(".fa"):
+
+    if file_name.endswith(".fa"):
         return "fasta"
-    else:
+
+    if file_name.endswith(".fq"):
         return "fastq"
+
+    raise ValueError("Filename has unrecognized extension")
 
 
 def find_nuvs_sequence_by_index(
