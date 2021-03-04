@@ -63,6 +63,7 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
         async for analysis in db.analyses.find({"workflow": "nuvs"}):
             analysis_id = analysis["_id"]
             sample_id = analysis["sample"]["id"]
+
             path = virtool.analyses.utils.join_analysis_path(settings["data_path"], analysis_id, sample_id)
             target_path = os.path.join(settings["data_path"], "analyses", analysis_id)
 
@@ -73,18 +74,11 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
 
             for filename in os.listdir(path):
                 if filename in self.target_files:
-                    if filename == "hmm.tsv":
-                        await self.app["run_in_thread"](
-                            shutil.copy,
-                            os.path.join(path, "hmm.tsv"),
-                            os.path.join(target_path, "hmm.tsv")
-                        )
-                    else:
-                        await self.run_in_thread(virtool.utils.compress_file,
-                                                 os.path.join(path, filename),
-                                                 os.path.join(target_path, f"{filename}.gz"))
+                    await virtool.analyses.utils.move_nuvs_files(filename, self.run_in_thread, path, target_path)
+
                     size = virtool.utils.file_stats(os.path.join(path, filename))["size"]
                     file_type = virtool.analyses.utils.check_nuvs_file_type(filename)
+
                     await virtool.analyses.files.create_analysis_file(
                         self.app["pg"],
                         analysis_id,
@@ -99,10 +93,13 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
 
         """
         settings = self.app["settings"]
+
         async for analysis in self.db.analyses.find({"workflow": "nuvs"}):
             analysis_id = analysis["_id"]
             sample_id = analysis["sample"]["id"]
+
             path = virtool.analyses.utils.join_analysis_path(settings["data_path"], analysis_id, sample_id)
+
             if os.path.isdir(os.path.join(settings["data_path"], "analyses", analysis_id)):
                 await self.app["run_in_thread"](shutil.rmtree, path, True)
 
