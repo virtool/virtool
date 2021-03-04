@@ -76,8 +76,12 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
                 if filename in self.target_files:
                     await virtool.analyses.utils.move_nuvs_files(filename, self.run_in_thread, path, target_path)
 
-                    size = virtool.utils.file_stats(os.path.join(path, filename))["size"]
                     file_type = virtool.analyses.utils.check_nuvs_file_type(filename)
+
+                    if not filename.endswith(".tsv"):
+                        filename += ".gz"
+
+                    size = virtool.utils.file_stats(os.path.join(target_path, filename))["size"]
 
                     await virtool.analyses.files.create_analysis_file(
                         self.app["pg"],
