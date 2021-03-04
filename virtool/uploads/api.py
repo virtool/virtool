@@ -12,7 +12,7 @@ import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
 from virtool.api.response import invalid_query, json_response, bad_request, not_found
-from virtool.uploads.models import Upload, UPLOAD_TYPES
+from virtool.uploads.models import Upload, UploadType
 
 logger = logging.getLogger("uploads")
 
@@ -35,7 +35,7 @@ async def create(req):
 
     name = req.query["name"]
 
-    if upload_type not in UPLOAD_TYPES:
+    if upload_type and upload_type not in UploadType.to_list():
         return bad_request("Unsupported upload type")
 
     upload = await virtool.uploads.db.create(pg, name, upload_type, user=req["client"].user_id)

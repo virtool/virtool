@@ -28,7 +28,7 @@ import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
 import virtool.validators
-from virtool.analyses.models import ANALYSIS_FORMATS, AnalysisFile
+from virtool.analyses.models import AnalysisFormat, AnalysisFile
 from virtool.api.response import bad_request, conflict, insufficient_rights, \
     invalid_query, json_response, no_content, not_found
 from virtool.db.core import Collection, DB
@@ -214,7 +214,7 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     name = req.query.get("name")
 
-    if analysis_format not in ANALYSIS_FORMATS:
+    if analysis_format and analysis_format not in AnalysisFormat.to_list():
         return bad_request("Unsupported analysis file format")
 
     analysis_file = await virtool.analyses.files.create_analysis_file(pg, analysis_id, analysis_format, name)
