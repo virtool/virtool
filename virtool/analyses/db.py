@@ -84,7 +84,7 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
                 pass
 
             for filename in os.listdir(path):
-                if filename in self.target_files and not os.path.isfile(os.path.join(target_path, filename)):
+                if filename in self.target_files:
                     if filename == "hmm.tsv":
                         await self.app["run_in_thread"](
                             shutil.copy,
