@@ -83,9 +83,9 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
             except FileExistsError:
                 pass
 
-            for file in os.listdir(path):
-                if file in self.target_files and not os.path.isfile(os.path.join(target_path, file)):
-                    if file == "hmm.tsv":
+            for filename in os.listdir(path):
+                if filename in self.target_files and not os.path.isfile(os.path.join(target_path, filename)):
+                    if filename == "hmm.tsv":
                         await self.app["run_in_thread"](
                             shutil.copy,
                             os.path.join(path, "hmm.tsv"),
@@ -93,21 +93,21 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
                         )
                     else:
                         await self.run_in_thread(virtool.utils.compress_file,
-                                                 os.path.join(path, file),
-                                                 os.path.join(target_path, f"{file}.gz"))
-                    size = virtool.utils.file_stats(os.path.join(path, file))["size"]
-                    file_type = virtool.analyses.utils.check_nuvs_file_type(file)
+                                                 os.path.join(path, filename),
+                                                 os.path.join(target_path, f"{filename}.gz"))
+                    size = virtool.utils.file_stats(os.path.join(path, filename))["size"]
+                    file_type = virtool.analyses.utils.check_nuvs_file_type(filename)
                     await virtool.analyses.files.create_analysis_file(
                         self.app["pg"],
                         analysis_id,
                         file_type,
-                        file,
+                        filename,
                         size=size)
 
     async def remove_directory(self):
         """
-        Remove `<data_path>`/samples/:id/analysis/:id directory after files
-        have been preserved in `<data_path>`/analyses/:id>.
+        Remove `<data_path>`/samples/:id/analysis/:id directory after files have been preserved in
+        `<data_path>`/analyses/:id>.
 
         """
         settings = self.app["settings"]
