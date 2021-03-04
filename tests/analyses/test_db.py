@@ -212,9 +212,9 @@ async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg_session):
             'analysis': 'bar',
             'description': None,
             'format': 'fasta',
-            'name': 'assembly.fa',
-            'name_on_disk': '1-assembly.fa',
-            'size': 10,
+            'name': 'assembly.fa.gz',
+            'name_on_disk': '1-assembly.fa.gz',
+            'size': os.stat(os.path.join(tmpdir, "analyses", "bar", "assembly.fa.gz")).st_size,
             'uploaded_at': None
         },
         {
@@ -222,9 +222,9 @@ async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg_session):
             'analysis': 'bar',
             'description': None,
             'format': 'fastq',
-            'name': 'unmapped_otus.fq',
-            'name_on_disk': '2-unmapped_otus.fq',
-            'size': 10,
+            'name': 'unmapped_otus.fq.gz',
+            'name_on_disk': '2-unmapped_otus.fq.gz',
+            'size': os.stat(os.path.join(tmpdir, "analyses", "bar", "unmapped_otus.fq.gz")).st_size,
             'uploaded_at': None
         },
         {
@@ -234,7 +234,7 @@ async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg_session):
             'format': 'tsv',
             'name': 'hmm.tsv',
             'name_on_disk': '3-hmm.tsv',
-            'size': 8,
+            'size': os.stat(os.path.join(tmpdir, "analyses", "bar", "hmm.tsv")).st_size,
             'uploaded_at': None
         }
     ]
