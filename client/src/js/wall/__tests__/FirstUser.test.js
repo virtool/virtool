@@ -1,6 +1,5 @@
-import { Input, PasswordInput, WallDialogFooter } from "../../base";
 import { FirstUser, mapDispatchToProps } from "../FirstUser";
-import { waitFor, fireEvent, screen } from "@testing-library/react";
+import { waitFor, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 describe("<FirstUser />", () => {
@@ -28,18 +27,11 @@ describe("<FirstUser />", () => {
     it.each(["username", "password"])("should render when %p changed", name => {
         const value = name === "username" ? "bob" : "password";
 
-        //const wrapper = shallow(<FirstUser {...props} />);
-        const { asFragment } = renderWithProviders(<FirstUser {...props} />);
-        //const firstRender = asFragment();
+        renderWithProviders(<FirstUser {...props} />);
 
         userEvent.type(screen.getByRole("textbox", name), value);
-
-        //console.log("********************The input contains: ", screen.getByRole("textbox", name).value);
-
         expect(screen.getByRole("textbox", name).value).toBe(value);
     });
-
-    // EVERYTHING BELOW IS FUNCTIONAL!!!
 
     it("should call onSubmit when form is submitted", async () => {
         props = {
