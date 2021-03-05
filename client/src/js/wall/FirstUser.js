@@ -1,62 +1,67 @@
-import { noop } from "lodash-es";
+import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { BoxGroupHeader, BoxGroupSection, Button, Input, InputGroup, InputLabel, PasswordInput } from "../base";
+import { Formik, Form, Field } from "formik";
+import {
+    BoxGroupHeader,
+    BoxGroupSection,
+    Button,
+    Input,
+    InputGroup,
+    InputLabel,
+    InputError,
+    PasswordInput
+} from "../base";
 import { createFirstUser } from "../users/actions";
 import { WallContainer, WallDialog, WallDialogFooter } from "./Container";
 
-export class FirstUser extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            username: "",
-            password: ""
-        };
-    }
+const initialValues = {
+    username: "",
+    password: ""
+};
 
-    handleChange = e => {
-        const { name, value } = e.target;
-        this.setState({
-            [name]: value
-        });
+export const FirstUser = ({ onSubmit, errors }) => {
+    const handleSubmit = values => {
+        onSubmit(values.username, values.password);
     };
 
-    handleSubmit = e => {
-        e.preventDefault();
-        this.props.onSubmit(this.state.username, this.state.password);
-    };
-
-    render() {
-        const { username, password } = this.state;
-        return (
-            <WallContainer>
-                <WallDialog size="lg">
-                    <BoxGroupHeader>
-                        <h2>Setup User</h2>
-                        <p>Create an initial administrative user to start using Virtool.</p>
-                    </BoxGroupHeader>
-                    <form onSubmit={this.handleSubmit}>
+    return (
+        <WallContainer>
+            <WallDialog size="lg">
+                <BoxGroupHeader>
+                    <h2>Setup User</h2>
+                    <p>Create an initial administrative user to start using Virtool.</p>
+                </BoxGroupHeader>
+                <Formik initialValues={initialValues} onSubmit={handleSubmit}>
+                    <Form>
                         <BoxGroupSection>
                             <InputGroup>
                                 <InputLabel>Username</InputLabel>
-                                <Input name="username" value={username} onChange={this.handleChange} />
+                                <Field type="text" name="username" as={Input} />
+                                {errors.usernameErrors.map(error => (
+                                    <InputError key={error}>{error}</InputError>
+                                ))}
                             </InputGroup>
                             <InputGroup>
                                 <InputLabel>Password</InputLabel>
-                                <PasswordInput name="password" value={password} onChange={this.handleChange} />
+                                <Field name="password" as={PasswordInput} />
+                                {errors.passwordErrors.map(error => (
+                                    <InputError key={error}>{error}</InputError>
+                                ))}
                             </InputGroup>
                         </BoxGroupSection>
                         <WallDialogFooter>
                             <Button type="submit" icon="user-plus" color="blue">
                                 Create User
                             </Button>
+                            <InputError>{errors.generalError}</InputError>
                         </WallDialogFooter>
-                    </form>
-                </WallDialog>
-            </WallContainer>
-        );
-    }
-}
+                    </Form>
+                </Formik>
+            </WallDialog>
+        </WallContainer>
+    );
+};
 
 export const mapDispatchToProps = dispatch => ({
     onSubmit: (username, password) => {
@@ -64,4 +69,12 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(noop(), mapDispatchToProps)(FirstUser);
+export const mapStateToProps = state => ({
+    errors: {
+        generalError: get(state, "errors.CREATE_FIRST_USER_ERROR.message", ""),
+        usernameErrors: get(state, "errors.CREATE_FIRST_USER_ERROR.errors.user_id", [""]),
+        passwordErrors: get(state, "errors.CREATE_FIRST_USER_ERROR.errors.password", [""])
+    }
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(FirstUser);

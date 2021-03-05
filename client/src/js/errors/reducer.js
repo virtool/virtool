@@ -15,6 +15,7 @@ import {
     CREATE_SAMPLE,
     CREATE_SUBTRACTION,
     CREATE_USER,
+    CREATE_FIRST_USER,
     EDIT_ISOLATE,
     EDIT_OTU,
     EDIT_SEQUENCE,
@@ -123,6 +124,8 @@ export default function errorsReducer(state = null, action) {
             case GET_USER.FAILED:
             case LOGIN.FAILED:
                 return { ...state, [errorName]: errorPayload };
+            case CREATE_FIRST_USER.FAILED:
+                return { ...state, [errorName]: action.error.response.body };
 
             default:
                 // Report uncaught errors to Sentry
