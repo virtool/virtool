@@ -5,8 +5,6 @@ from copy import deepcopy
 from pathlib import Path
 
 import aiohttp.web
-from cerberus import Validator
-
 import virtool.analyses.db
 import virtool.analyses.utils
 import virtool.api.utils
@@ -14,6 +12,7 @@ import virtool.db.utils
 import virtool.errors
 import virtool.http.routes
 import virtool.jobs.db
+import virtool.pg.utils
 import virtool.samples.db
 import virtool.samples.files
 import virtool.samples.utils
@@ -22,10 +21,13 @@ import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
 import virtool.validators
-from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
-    json_response, no_content, not_found
+from cerberus import Validator
+from virtool.api.response import (bad_request, insufficient_rights,
+                                  invalid_query, json_response, no_content,
+                                  not_found)
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
+from virtool.samples.models import ArtifactType, SampleArtifacts
 from virtool.samples.utils import bad_labels_response, check_labels
 
 logger = logging.getLogger("samples")
@@ -709,16 +711,16 @@ async def upload_reads(req):
     pg = req.app["pg"]
     sample_id = req.match_info["sample_id"]
 
-    sample_file_path = Path(req.app["settings"]["data_path"]) / "samples" / sample_id
+    reads_file_path = Path(req.app["settings"]["data_path"]) / "samples" / sample_id
 
     if not await db.samples.find_one(sample_id):
         return not_found()
 
     try:
-        files = await virtool.uploads.utils.naive_write_multiple(req, sample_file_path)
+        files = await virtool.uploads.utils.naive_write_multiple(req, reads_file_path)
     except asyncio.CancelledError:
         logger.debug(f"Reads file upload aborted for {sample_id}")
-        await req.app["run_in_thread"](shutil.rmtree, sample_file_path)
+        await req.app["run_in_thread"](shutil.rmtree, reads_file_path)
 
         return aiohttp.web.Response(status=499)
 
@@ -734,3 +736,46 @@ async def upload_reads(req):
     return json_response(reads, status=201, headers=headers)
 
 
+@routes.jobs_api.post("/api/samples/{sample_id}/artifacts")
+async def upload_artifacts(req):
+    db = req.app["db"]
+    pg = req.app["pg"]
+    sample_id = req.match_info["sample_id"]
+    artifact_type = req.query.get("type")
+
+    artifacts_file_path = Path(req.app["settings"]["data_path"]) / "samples" / sample_id
+
+    if not await db.samples.find_one(sample_id):
+        return not_found()
+
+    errors = virtool.uploads.utils.naive_validator(req)
+
+    if errors:
+        return invalid_query(errors)
+
+    name = req.query.get("name")
+
+    if artifact_type and artifact_type not in ArtifactType.to_list():
+        return bad_request("Unsupported sample artifact type")
+
+    artifacts_file = await virtool.samples.files.create_artifacts_file(pg, name, sample_id, artifact_type)
+
+    file_id = artifacts_file["id"]
+
+    artifacts_file_path = Path(req.app["settings"]["data_path"]) / "samples" / sample_id / artifacts_file["name_on_disk"]
+
+    try:
+        size = await virtool.uploads.utils.naive_writer(req, artifacts_file_path)
+    except asyncio.CancelledError:
+        logger.debug(f"Artifacts file upload aborted: {file_id}")
+        await virtool.pg.utils.delete_row(pg, file_id, SampleArtifacts)
+
+        return aiohttp.web.Response(status=499)
+
+    artifacts_file = await virtool.uploads.db.finalize(pg, size, file_id, SampleArtifacts)
+
+    headers = {
+        "Location": f"/api/samples/{sample_id}/artifacts"
+    }
+
+    return json_response(artifacts_file, status=201, headers=headers)
