@@ -21,27 +21,25 @@ describe("<FirstUser />", () => {
 
     it("should render", () => {
         const wrapper = shallow(<FirstUser {...props} />);
-        // wrapper.setState({
-        //     username: "bob",
-        //     password: "password"
-        // });
+
         expect(wrapper).toMatchSnapshot();
     });
 
     it.each(["username", "password"])("should render when %p changed", name => {
-        const e = {
-            target: {
-                name,
-                value: name === "username" ? "bob" : "password"
-            }
-        };
+        const value = name === "username" ? "bob" : "password";
 
-        const wrapper = shallow(<FirstUser {...props} />);
+        //const wrapper = shallow(<FirstUser {...props} />);
+        const { asFragment } = renderWithProviders(<FirstUser {...props} />);
+        //const firstRender = asFragment();
 
-        wrapper.find(name === "username" ? Input : PasswordInput).simulate("change", e);
+        userEvent.type(screen.getByRole("textbox", name), value);
 
-        expect(wrapper).toMatchSnapshot();
+        //console.log("********************The input contains: ", screen.getByRole("textbox", name).value);
+
+        expect(screen.getByRole("textbox", name).value).toBe(value);
     });
+
+    // EVERYTHING BELOW IS FUNCTIONAL!!!
 
     it("should call onSubmit when form is submitted", async () => {
         props = {
