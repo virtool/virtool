@@ -11,10 +11,6 @@ class UploadType(str, enum.Enum):
 
     """
 
-    @classmethod
-    def to_list(cls):
-        return [e.value for e in cls.__members__.values()]
-
     hmm = "hmm"
     reference = "reference"
     reads = "reads"

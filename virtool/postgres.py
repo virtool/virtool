@@ -65,5 +65,10 @@ def to_dict(self):
 
     return row
 
+@classmethod
+def to_list(cls):
+        return [e.value for e in cls.__members__.values()]
+
 
 Base.to_dict = to_dict
+Enum.to_list = to_list

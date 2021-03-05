@@ -10,10 +10,6 @@ class IndexType(str, enum.Enum):
 
     """
 
-    @classmethod
-    def to_list(cls):
-        return [e.value for e in cls.__members__.values()]
-
     json = "json"
     fasta = "fasta"
     bowtie2 = "bowtie2"
