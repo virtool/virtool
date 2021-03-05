@@ -1,5 +1,4 @@
 import os
-import sys
 from pathlib import Path
 
 import pytest
@@ -12,9 +11,7 @@ from virtool.utils import base_processor
 
 @pytest.fixture
 def files(tmpdir):
-    tmpdir.mkdir("files")
-
-    path = Path(sys.path[0]) / "tests" / "test_files" / "aodp" / "reference.fa"
+    path = Path.cwd() / "tests" / "test_files" / "aodp" / "reference.fa"
 
     data = {
         "file": open(path, "rb")

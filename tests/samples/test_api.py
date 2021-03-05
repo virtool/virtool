@@ -1,10 +1,15 @@
+import os
+from pathlib import Path
+
 import arrow
 import pytest
+import virtool.files.db
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.samples.db
 import virtool.uploads.db
+from aiohttp.test_utils import make_mocked_coro
 from virtool.labels.models import Label
 from virtool.uploads.models import Upload
 
@@ -430,7 +435,11 @@ class TestCreate:
 
 
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
-async def test_finalize(field, snapshot, spawn_client, spawn_job_client, resp_is):
+async def test_finalize(field, snapshot, spawn_job_client, resp_is):
+    """
+    Test that sample can be finalized using the Jobs API.
+
+    """
     client = await spawn_job_client(authorize=True)
 
     data = {field: {}}
@@ -714,3 +723,38 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
         "test",
         "pathoscope_bowtie"
     )
+
+@pytest.mark.parametrize("paired", [True, False])
+@pytest.mark.parametrize("compressed", [True, False])
+async def test_upload_reads(paired, compressed, snapshot, spawn_job_client, static_time, resp_is, tmpdir):
+    path = Path.cwd() / "tests" / "test_files"
+
+    data = {
+        "file": open(path / ("reads_1.fq.gz" if compressed else "fake_reads_1.fq.gz"), "rb")
+    }
+
+    if paired:
+        data["file_2"] = open(path / "reads_2.fq.gz", "rb")
+
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+    sample_file_path = Path(client.app["settings"]["data_path"]) / "samples" / "test"
+
+    await client.db.samples.insert_one({
+        "_id": "test",
+    })
+
+    resp = await client.post("/api/samples/test/reads", data=data)
+
+    if not compressed:
+        assert await resp_is.bad_request(resp, "One or more files are not compressed")
+    else:
+        assert resp.status == 201
+
+        if paired:
+            assert len(os.listdir(sample_file_path)) == 2
+        else:
+            assert len(os.listdir(sample_file_path)) == 1
+
+        snapshot.assert_match(await resp.json())

@@ -1,6 +1,10 @@
 import asyncio.tasks
+import logging
+import shutil
 from copy import deepcopy
+from pathlib import Path
 
+import aiohttp.web
 from cerberus import Validator
 
 import virtool.analyses.db
@@ -11,9 +15,11 @@ import virtool.errors
 import virtool.http.routes
 import virtool.jobs.db
 import virtool.samples.db
+import virtool.samples.files
 import virtool.samples.utils
 import virtool.subtractions.db
 import virtool.uploads.db
+import virtool.uploads.utils
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
@@ -21,6 +27,8 @@ from virtool.api.response import bad_request, insufficient_rights, invalid_query
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
 from virtool.samples.utils import bad_labels_response, check_labels
+
+logger = logging.getLogger("samples")
 
 QUERY_SCHEMA = {
     "find": {
@@ -427,6 +435,10 @@ async def edit(req):
     }
 })
 async def finalize(req):
+    """
+    Finalize a sample that is being created using the Jobs API by setting a sample's quality field and `ready` to `True`
+
+    """
     db = req.app["db"]
     data = req["data"]
 
@@ -689,3 +701,36 @@ async def analyze(req):
             "Location": f"/api/analyses/{analysis_id}"
         }
     )
+
+
+@routes.jobs_api.post("/api/samples/{sample_id}/reads")
+async def upload_reads(req):
+    db = req.app["db"]
+    pg = req.app["pg"]
+    sample_id = req.match_info["sample_id"]
+
+    sample_file_path = Path(req.app["settings"]["data_path"]) / "samples" / sample_id
+
+    if not await db.samples.find_one(sample_id):
+        return not_found()
+
+    try:
+        files = await virtool.uploads.utils.naive_write_multiple(req, sample_file_path)
+    except asyncio.CancelledError:
+        logger.debug(f"Reads file upload aborted for {sample_id}")
+        await req.app["run_in_thread"](shutil.rmtree, sample_file_path)
+
+        return aiohttp.web.Response(status=499)
+
+    if files is None:
+        return bad_request("One or more files are not compressed")
+
+    reads = await virtool.samples.files.create_reads_files(pg, sample_id, files)
+
+    headers = {
+        "Location": f"/api/samples/{sample_id}/reads"
+    }
+
+    return json_response(reads, status=201, headers=headers)
+
+
