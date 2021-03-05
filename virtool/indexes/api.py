@@ -330,9 +330,11 @@ async def download_index_file(req: aiohttp.web.Request):
     """Download files relating to a given index."""
     index_id = req.match_info["index_id"]
     filename = req.match_info["filename"]
-    db = req.app["db"]
 
-    index_document = await db.indexes.find_one(index_id)
+    if filename not in FILES:
+        return not_found(f"{filename} must be one of {FILES}")
+
+    index_document = await req.app["db"].indexes.find_one(index_id)
 
     if index_document is None:
         return not_found()
@@ -341,9 +343,7 @@ async def download_index_file(req: aiohttp.web.Request):
 
     path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id / filename
 
-    if path.exists():
-        return aiohttp.web.FileResponse(path)
+    if not path.exists():
+        return not_found("File not found")
 
-    if filename not in FILES:
-        return bad_request(f"{filename} must be one of {FILES}")
-    return not_found("File not found")
+    return aiohttp.web.FileResponse(path)

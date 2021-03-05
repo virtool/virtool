@@ -528,7 +528,7 @@ async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session
     }
 
 
-@pytest.mark.parametrize("status", [200, 404, 400])
+@pytest.mark.parametrize("status", [200, 404])
 async def test_download(status, spawn_job_client, tmpdir):
     client = await spawn_job_client(authorize=True)
 
@@ -554,8 +554,6 @@ async def test_download(status, spawn_job_client, tmpdir):
         files_url += "reference.1.bt2"
     elif status == 400:
         files_url += "foo.bar"
-    elif status == 404:
-        files_url += "reference.2.bt2"
 
     async with client.get(files_url) as response:
         assert response.status == status
