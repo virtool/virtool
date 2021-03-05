@@ -343,7 +343,7 @@ async def download_index_file(req: aiohttp.web.Request):
 
     if path.exists():
         return aiohttp.web.FileResponse(path)
-    
+
     if filename not in FILES:
         return bad_request(f"{filename} must be one of {FILES}")
     return not_found("File not found")
