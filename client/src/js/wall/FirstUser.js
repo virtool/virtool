@@ -15,12 +15,12 @@ import {
 import { createFirstUser } from "../users/actions";
 import { WallContainer, WallDialog, WallDialogFooter } from "./Container";
 
-export const FirstUser = ({ onSubmit, generalError, usernameErrors, passwordErrors }) => {
-    const initialValues = {
-        username: "",
-        password: ""
-    };
+const initialValues = {
+    username: "",
+    password: ""
+};
 
+export const FirstUser = ({ onSubmit, generalError, usernameErrors, passwordErrors }) => {
     const handleSubmit = values => {
         onSubmit(values.username, values.password);
     };
