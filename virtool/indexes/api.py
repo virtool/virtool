@@ -15,9 +15,9 @@ import virtool.indexes.utils
 import virtool.jobs.build_index
 import virtool.jobs.db
 import virtool.references.db
-import virtool.utils
 import virtool.uploads.db
 import virtool.uploads.utils
+import virtool.utils
 from virtool.api.response import bad_request, conflict, insufficient_rights, invalid_query, json_response, \
     not_found, no_content
 from virtool.indexes.db import reset_history, FILES
@@ -246,7 +246,7 @@ async def upload(req):
     file_type = virtool.indexes.utils.check_index_file_type(file_name)
     index_file = await virtool.indexes.files.create_index_file(pg, reference_id, file_type, file_name)
     file_id = index_file["id"]
-    path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id /file_name
+    path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id / file_name
 
     if file_id in document.get("files", []):
         return conflict("File name already exists")
@@ -323,3 +323,27 @@ async def delete_index(req: aiohttp.web.Request):
     await reset_history(db, index_id)
 
     return no_content()
+
+
+@routes.jobs_api.get("/api/indexes/{index_id}/files/{filename}")
+async def download_index_file(req: aiohttp.web.Request):
+    """Download files relating to a given index."""
+    index_id = req.match_info["index_id"]
+    filename = req.match_info["filename"]
+    db = req.app["db"]
+
+    index_document = await db.indexes.find_one(index_id)
+
+    if index_document is None:
+        return not_found()
+
+    reference_id = index_document["reference"]["id"]
+
+    path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id / filename
+
+    try:
+        return aiohttp.web.FileResponse(path)
+    except FileNotFoundError:
+        if filename not in FILES:
+            return bad_request(f"{filename} must be one of {FILES}")
+        return not_found("File not found")
