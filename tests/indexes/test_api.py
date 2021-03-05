@@ -1,4 +1,6 @@
+import filecmp
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -524,3 +526,41 @@ async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session
         'type': 'bowtie2',
         'size': os.stat(path).st_size
     }
+
+
+@pytest.mark.parametrize("status", [200, 404, 400])
+async def test_download(status, spawn_job_client, tmpdir):
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = tmpdir
+
+    await client.db.indexes.insert_one({
+        "_id": "test_index",
+        "reference": {
+            "id": "test_reference"
+        }
+    })
+
+    path = Path(sys.path[0]) / "tests" / "test_files" / "index" / "reference.1.bt2"
+    target_path = Path(tmpdir) / "references/test_reference/test_index"
+    target_path.mkdir(parents=True)
+    shutil.copyfile(path, target_path / "reference.1.bt2")
+
+    download_path = Path("reference.1.bt2")
+
+    files_url = "/api/indexes/test_index/files/"
+
+    if status == 200:
+        files_url += "reference.1.bt2"
+    elif status == 400:
+        files_url += "foo.bar"
+    elif status == 404:
+        files_url += "reference.2.bt2"
+
+    async with client.get(files_url) as response:
+        assert response.status == status
+        if response.status == 200:
+            with download_path.open("wb") as f:
+                f.write(await response.read())
+
+            assert filecmp.cmp(download_path, path)

@@ -341,9 +341,9 @@ async def download_index_file(req: aiohttp.web.Request):
 
     path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id / filename
 
-    try:
+    if path.exists():
         return aiohttp.web.FileResponse(path)
-    except FileNotFoundError:
-        if filename not in FILES:
-            return bad_request(f"{filename} must be one of {FILES}")
-        return not_found("File not found")
+    
+    if filename not in FILES:
+        return bad_request(f"{filename} must be one of {FILES}")
+    return not_found("File not found")
