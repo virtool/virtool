@@ -16,6 +16,8 @@ if (!window.virtool.dev) {
     window.Sentry = Sentry;
 }
 
+window.captureException = error => (window.virtool.dev ? console.error(error) : window.Sentry.captureException(error));
+
 const history = createBrowserHistory();
 
 window.store = createAppStore(history);

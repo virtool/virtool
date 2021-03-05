@@ -19,6 +19,7 @@ import virtool.db.migrate
 import virtool.db.mongo
 import virtool.db.utils
 import virtool.dispatcher
+import virtool.files.db
 import virtool.hmm.db
 import virtool.jobs.interface
 import virtool.jobs.runner
@@ -365,3 +366,6 @@ async def init_tasks(app: aiohttp.web.Application):
     store_nuvs_task = virtool.analyses.db.StoreNuvsFilesTask(app, nuv_task["id"])
     await scheduler.spawn(store_nuvs_task.run())
 
+    files_task = await virtool.tasks.db.register(db, "migrate_files")
+    migrate_files_task = virtool.files.db.MigrateFilesTask(app, files_task["id"])
+    await scheduler.spawn(virtool.tasks.utils.spawn_periodically(scheduler, migrate_files_task, 3600))

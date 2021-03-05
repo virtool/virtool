@@ -10,4 +10,5 @@ FIRST_STEPS = {
     "create_index_json": "create_index_json_files",
     "add_subtraction_files": "rename_index_files",
     "store_nuvs_file_task": "store_nuvs_files"
+    "migrate_files": "transform_documents_to_rows"
 }
