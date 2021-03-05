@@ -20,7 +20,7 @@ const initialValues = {
     password: ""
 };
 
-export const FirstUser = ({ onSubmit, generalError, usernameErrors, passwordErrors }) => {
+export const FirstUser = ({ onSubmit, errors }) => {
     const handleSubmit = values => {
         onSubmit(values.username, values.password);
     };
@@ -38,14 +38,14 @@ export const FirstUser = ({ onSubmit, generalError, usernameErrors, passwordErro
                             <InputGroup>
                                 <InputLabel>Username</InputLabel>
                                 <Field type="text" name="username" as={Input} />
-                                {usernameErrors.map(error => (
+                                {errors.usernameErrors.map(error => (
                                     <InputError key={error}>{error}</InputError>
                                 ))}
                             </InputGroup>
                             <InputGroup>
                                 <InputLabel>Password</InputLabel>
                                 <Field name="password" as={PasswordInput} />
-                                {passwordErrors.map(error => (
+                                {errors.passwordErrors.map(error => (
                                     <InputError key={error}>{error}</InputError>
                                 ))}
                             </InputGroup>
@@ -54,7 +54,7 @@ export const FirstUser = ({ onSubmit, generalError, usernameErrors, passwordErro
                             <Button type="submit" icon="user-plus" color="blue">
                                 Create User
                             </Button>
-                            <InputError>{generalError}</InputError>
+                            <InputError>{errors.generalError}</InputError>
                         </WallDialogFooter>
                     </Form>
                 </Formik>
@@ -70,9 +70,11 @@ export const mapDispatchToProps = dispatch => ({
 });
 
 export const mapStateToProps = state => ({
-    generalError: get(state, "errors.CREATE_FIRST_USER_ERROR.message", ""),
-    usernameErrors: get(state, "errors.CREATE_FIRST_USER_ERROR.errors.user_id", [""]),
-    passwordErrors: get(state, "errors.CREATE_FIRST_USER_ERROR.errors.password", [""])
+    errors: {
+        generalError: get(state, "errors.CREATE_FIRST_USER_ERROR.message", ""),
+        usernameErrors: get(state, "errors.CREATE_FIRST_USER_ERROR.errors.user_id", [""]),
+        passwordErrors: get(state, "errors.CREATE_FIRST_USER_ERROR.errors.password", [""])
+    }
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(FirstUser);

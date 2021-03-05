@@ -8,9 +8,11 @@ describe("<FirstUser />", () => {
 
     beforeEach(() => {
         errorMessages = {
-            generalError: "General Error",
-            usernameErrors: ["Password Error 1", "Password Error 2"],
-            passwordErrors: ["Username Error 1", "Username Error 2"]
+            errors: {
+                generalError: "General Error",
+                usernameErrors: ["Password Error 1", "Password Error 2"],
+                passwordErrors: ["Username Error 1", "Username Error 2"]
+            }
         };
         props = {
             onSubmit: jest.fn(),
