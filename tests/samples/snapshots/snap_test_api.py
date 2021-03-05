@@ -760,6 +760,16 @@ snapshots['TestCreate.test[uvloop-force_choice] 2'] = {
     }
 }
 
+snapshots['test_upload_artifacts[uvloop-fastq] 1'] = {
+    'id': 1,
+    'name': 'small.fq',
+    'name_on_disk': '1-small.fq',
+    'sample': 'test',
+    'size': 3130756,
+    'type': 'fastq',
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
 snapshots['test_upload_reads[uvloop-True-True] 1'] = [
     {
         'id': 1,

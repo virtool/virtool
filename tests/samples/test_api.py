@@ -508,7 +508,7 @@ async def test_job_remove(exists, ready, mocker, resp_is, static_time, spawn_job
             "_id": "test",
             "all_read": True,
             "all_write": True,
-            "files": file["id"],
+            "files": [file["id"]],
             "ready": ready
         })
 
@@ -724,10 +724,38 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
         "pathoscope_bowtie"
     )
 
+
+@pytest.mark.parametrize("artifact_type", ["fastq", "foo"])
+async def test_upload_artifacts(artifact_type, snapshot, spawn_job_client, static_time, resp_is, tmpdir):
+    path = Path.cwd() / "tests" / "test_files" / "nuvs" / "reads_1.fq"
+
+    data = {
+        "file": open(path, "rb")
+    }
+
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+    sample_file_path = Path(client.app["settings"]["data_path"]) / "samples" / "test"
+
+    await client.db.samples.insert_one({
+        "_id": "test",
+    })
+
+    resp = await client.post(f"/api/samples/test/artifacts?name=small.fq&type={artifact_type}", data=data)
+
+    if artifact_type == "fastq":
+        assert resp.status == 201
+        assert os.listdir(sample_file_path) == ["1-small.fq"]
+        snapshot.assert_match(await resp.json())
+    else:
+        assert await resp_is.bad_request(resp, "Unsupported sample artifact type")
+
+
 @pytest.mark.parametrize("paired", [True, False])
 @pytest.mark.parametrize("compressed", [True, False])
 async def test_upload_reads(paired, compressed, snapshot, spawn_job_client, static_time, resp_is, tmpdir):
-    path = Path.cwd() / "tests" / "test_files"
+    path = Path.cwd() / "tests" / "test_files" / "samples"
 
     data = {
         "file": open(path / ("reads_1.fq.gz" if compressed else "fake_reads_1.fq.gz"), "rb")
@@ -747,14 +775,14 @@ async def test_upload_reads(paired, compressed, snapshot, spawn_job_client, stat
 
     resp = await client.post("/api/samples/test/reads", data=data)
 
-    if not compressed:
-        assert await resp_is.bad_request(resp, "One or more files are not compressed")
-    else:
+    if compressed:
         assert resp.status == 201
 
         if paired:
-            assert len(os.listdir(sample_file_path)) == 2
+            assert os.listdir(sample_file_path) == ["reads_1.fq.gz", "reads_2.fq.gz"]
         else:
-            assert len(os.listdir(sample_file_path)) == 1
+            assert os.listdir(sample_file_path) == ["reads_1.fq.gz"]
 
         snapshot.assert_match(await resp.json())
+    else:
+        assert await resp_is.bad_request(resp, "One or more files are not compressed")

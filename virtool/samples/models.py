@@ -51,5 +51,5 @@ class SampleReadsFile(Base):
     uploaded_at = Column(DateTime)
 
     def __repr__(self):
-        return f"<SampleReadsFile(id={self.id}, sample={self.sample} name_on_disk={self.name_on_disk}, " \
+        return f"<SampleReadsFile(id={self.id}, sample={self.sample}, name_on_disk={self.name_on_disk}, " \
                f"paired={self.paired}, size={self.size}, uploaded_at={self.uploaded_at})>"

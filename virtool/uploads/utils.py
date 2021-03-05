@@ -34,10 +34,12 @@ def naive_validator(req) -> Validator.errors:
         return v.errors
 
 
-async def naive_writer(req, file_path) -> int:
+async def naive_writer(req: aiohttp.web.Request, file_path: pathlib.Path) -> int:
     """
     Write a new file from a HTTP multipart request.
 
+    :param req: aiohttp request object
+    :param file_path: Either a path to a folder or a complete path that includes the filename
     :return: size of the new file in bytes
     """
     reader = await req.multipart()
