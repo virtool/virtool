@@ -66,7 +66,7 @@ async def migrate_status(app: virtool.types.App):
         }
     })
 
-    mongo_version = await virtool.db.mongo.check_mongo_version(db)
+    mongo_version = await virtool.db.mongo.get_mongo_version(db)
 
     await db.status.update_many({}, {
         "$unset": {
