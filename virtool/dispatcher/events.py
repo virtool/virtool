@@ -1,16 +1,9 @@
 from collections import defaultdict
-from typing import Callable, Dict, List, Union
+from typing import Callable, List, Union
 
 from sqlalchemy import event, inspect
 from sqlalchemy.orm import Session
-
-from virtool.analyses.models import AnalysisFile
 from virtool.dispatcher.operations import Operation
-from virtool.indexes.models import IndexFile
-from virtool.labels.models import Label
-from virtool.subtractions.models import SubtractionFile
-from virtool.tasks.models import Task
-from virtool.uploads.models import Upload
 
 
 def get_interface_from_model(obj) -> str:
@@ -24,25 +17,10 @@ def get_interface_from_model(obj) -> str:
     :return: the interface string
 
     """
-    if isinstance(obj, Upload):
-        return "uploads"
-
-    if isinstance(obj, Label):
-        return "labels"
-
-    if isinstance(obj, AnalysisFile):
-        return "analysis_files"
-
-    if isinstance(obj, SubtractionFile):
-        return "subtraction_files"
-
-    if isinstance(obj, IndexFile):
-        return "index_files"
-
-    if isinstance(obj, Task):
-        return "tasks"
-
-    raise TypeError("Not a transformable model: ", obj)
+    try:
+        return obj.__tablename__
+    except AttributeError:
+        raise TypeError("Not a transformable model: ", obj)
 
 
 class DispatcherSQLEvents:
