@@ -7,6 +7,9 @@ import os
 import shutil
 from typing import Any, Dict, Optional, Tuple
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 import virtool.analyses.utils
 import virtool.analyses.files
 import virtool.bio
@@ -20,6 +23,7 @@ import virtool.tasks.task
 import virtool.types
 import virtool.utils
 
+from virtool.analyses.models import AnalysisFile
 from virtool.jobs.utils import JobRights
 from virtool.types import App
 
@@ -67,29 +71,29 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
             path = virtool.analyses.utils.join_analysis_path(settings["data_path"], analysis_id, sample_id)
             target_path = os.path.join(settings["data_path"], "analyses", analysis_id)
 
-            if os.path.isdir(path):
+            async with AsyncSession(self.app["pg"]) as session:
+                exists = (await session.execute(select(AnalysisFile).filter_by(analysis=analysis_id))).scalar()
+
+            if os.path.isdir(path) and not exists:
                 try:
                     await self.app["run_in_thread"](os.makedirs, target_path)
                 except FileExistsError:
                     pass
 
+                analysis_files = list()
+
                 for filename in os.listdir(path):
                     if filename in self.target_files:
+                        analysis_files.append(filename)
+
                         await virtool.analyses.utils.move_nuvs_files(filename, self.run_in_thread, path, target_path)
 
-                        file_type = virtool.analyses.utils.check_nuvs_file_type(filename)
-
-                        if not filename.endswith(".tsv"):
-                            filename += ".gz"
-
-                        size = virtool.utils.file_stats(os.path.join(target_path, filename))["size"]
-
-                        await virtool.analyses.files.create_analysis_file(
-                            self.app["pg"],
-                            analysis_id,
-                            file_type,
-                            filename,
-                            size=size)
+                await virtool.analyses.files.create_nuvs_analysis_files(
+                    self.app["pg"],
+                    analysis_id,
+                    analysis_files,
+                    target_path
+                )
 
     async def remove_directory(self):
         """

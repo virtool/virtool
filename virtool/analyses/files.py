@@ -1,7 +1,11 @@
+import os
 from typing import Dict, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
+import virtool.utils
+import virtool.analyses.utils
 
 from virtool.analyses.models import AnalysisFile
 
@@ -37,6 +41,43 @@ async def create_analysis_file(pg: AsyncEngine, analysis_id: str, analysis_forma
         await session.commit()
 
         return analysis_file
+
+
+async def create_nuvs_analysis_files(pg: AsyncEngine, analysis_id: str, files: list, file_path: str):
+    """
+    Create a row in the `analysis_files` SQL table that represents an NuVs analysis result file.
+
+    :param pg: PostgreSQL AsyncEngine object
+    :param analysis_id: ID that corresponds to a parent analysis
+    :param files: a list of analysis files
+    :param file_path: the path to the analysis files directory
+    """
+    analysis_files = list()
+
+    for filename in files:
+        file_type = virtool.analyses.utils.check_nuvs_file_type(filename)
+
+        if not filename.endswith(".tsv"):
+            filename += ".gz"
+
+        size = virtool.utils.file_stats(os.path.join(file_path, filename))["size"]
+
+        analysis_files.append(AnalysisFile(
+            name=filename,
+            analysis=analysis_id,
+            format=file_type,
+            size=size
+        ))
+
+    async with AsyncSession(pg) as session:
+        session.add_all(analysis_files)
+
+        await session.flush()
+
+        for analysis_file in analysis_files:
+            analysis_file.name_on_disk = f"{analysis_file.id}-{analysis_file.name}"
+
+        await session.commit()
 
 
 async def delete_analysis_file(pg: AsyncEngine, file_id: int):
