@@ -33,7 +33,6 @@ export const ReferenceDetailHeader = ({
         icons = (
             <ViewHeaderIcons>
                 <ReferenceDetailHeaderIcon canModify={canModify} isRemote={isRemote} onEdit={onEdit} />
-                <Icon color="purple" name="download" onClick={onExport} />
             </ViewHeaderIcons>
         );
     }
