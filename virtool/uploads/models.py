@@ -1,11 +1,9 @@
-import enum
+from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, String
 
-from sqlalchemy import Column, String, Boolean, Integer, DateTime, Enum
-
-from virtool.postgres import Base
+from virtool.pg.utils import Base, SQLEnum
 
 
-class UploadType(str, enum.Enum):
+class UploadType(str, SQLEnum):
     """
     Enumerated type for possible upload types
 
