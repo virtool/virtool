@@ -7,6 +7,14 @@ exports[`Group should render as active when [active=true] 1`] = `
   onClick={[MockFunction]}
 >
   foo
+  <Group__StyledGroupIcon>
+    <Icon
+      color="green"
+      faStyle="fas"
+      fixedWidth={false}
+      name="check"
+    />
+  </Group__StyledGroupIcon>
 </Group__StyledGroup>
 `;
 
@@ -17,5 +25,6 @@ exports[`Group should render correct with default props 1`] = `
   onClick={[MockFunction]}
 >
   foo
+  <Group__StyledGroupIcon />
 </Group__StyledGroup>
 `;
