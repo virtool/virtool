@@ -44,7 +44,6 @@ class SampleReadsFile(Base):
     id = Column(Integer, primary_key=True)
     sample = Column(String)
     name_on_disk = Column(String)
-    paired = Column(Integer)
     size = Column(Integer)
     uploaded_at = Column(DateTime)
 

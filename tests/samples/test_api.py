@@ -770,9 +770,6 @@ async def test_upload_reads(paired, compressed, snapshot, spawn_job_client, stat
         "file": open(path / ("reads_1.fq.gz" if compressed else "fake_reads_1.fq.gz"), "rb")
     }
 
-    if paired:
-        data["file_2"] = open(path / "reads_2.fq.gz", "rb")
-
     client = await spawn_job_client(authorize=True)
 
     client.app["settings"]["data_path"] = str(tmpdir)
@@ -784,14 +781,20 @@ async def test_upload_reads(paired, compressed, snapshot, spawn_job_client, stat
 
     resp = await client.post("/api/samples/test/reads", data=data)
 
+    if paired:
+        data["file"] = open(path / "reads_2.fq.gz", "rb")
+        resp_2 = await client.post("/api/samples/test/reads", data=data)
+
     if compressed:
         assert resp.status == 201
 
+        snapshot.assert_match(await resp.json())
+
         if paired:
+            assert resp_2.status == 201
+            snapshot.assert_match(await resp_2.json())
             assert set(os.listdir(sample_file_path)) == {"reads_1.fq.gz", "reads_2.fq.gz"}
         else:
             assert os.listdir(sample_file_path) == ["reads_1.fq.gz"]
-
-        snapshot.assert_match(await resp.json())
     else:
-        assert await resp_is.bad_request(resp, "One or more files are not compressed")
+        assert await resp_is.bad_request(resp, "File is not compressed")
