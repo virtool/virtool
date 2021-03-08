@@ -1,11 +1,9 @@
-import enum
+from sqlalchemy import Column, DateTime, Enum, Integer, String
 
-from sqlalchemy import Column, Integer, String, DateTime, Enum
-
-from virtool.postgres import Base
+from virtool.pg.utils import Base, SQLEnum
 
 
-class ArtifactType(str, enum.Enum):
+class ArtifactType(str, SQLEnum):
     """
     Enumerated type for possible artifact types
 

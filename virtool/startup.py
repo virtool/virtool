@@ -22,7 +22,7 @@ import virtool.dispatcher
 import virtool.hmm.db
 import virtool.jobs.interface
 import virtool.jobs.runner
-import virtool.postgres
+import virtool.pg
 import virtool.redis
 import virtool.references.db
 import virtool.routes
@@ -258,7 +258,7 @@ async def init_postgres(app: aiohttp.web_app.Application):
 
     logger.info("Connecting to PostgreSQL")
 
-    app["pg"] = await virtool.postgres.connect(postgres_connection_string)
+    app["pg"] = await virtool.pg.utils.connect(postgres_connection_string)
 
 
 async def init_redis(app: typing.Union[dict, aiohttp.web_app.Application]):

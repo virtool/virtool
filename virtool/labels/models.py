@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String
 
-from virtool.postgres import Base
+from virtool.pg.utils import Base
 
 
 class Label(Base):

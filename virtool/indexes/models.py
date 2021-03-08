@@ -1,10 +1,10 @@
 import enum
 from sqlalchemy import Column, Integer, String, Enum
 
-from virtool.postgres import Base
+from virtool.pg.utils import Base, SQLEnum
 
 
-class IndexType(str, enum.Enum):
+class IndexType(str, SQLEnum):
     """
     Enumerated type for index file types
 

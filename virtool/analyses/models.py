@@ -2,10 +2,10 @@ import enum
 
 from sqlalchemy import Column, Integer, String, DateTime, Enum
 
-from virtool.postgres import Base
+from virtool.pg.utils import Base, SQLEnum
 
 
-class AnalysisFormat(str, enum.Enum):
+class AnalysisFormat(str, SQLEnum):
     """
     Enumerated type for analysis file formats
 

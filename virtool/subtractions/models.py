@@ -1,10 +1,10 @@
 import enum
 from sqlalchemy import Column, Integer, String, Enum
 
-from virtool.postgres import Base
+from virtool.pg.utils import Base, SQLEnum
 
 
-class SubtractionType(str, enum.Enum):
+class SubtractionType(str, SQLEnum):
     """
     Enumerated type for subtraction file types
 
