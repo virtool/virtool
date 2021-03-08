@@ -1,6 +1,6 @@
 import asyncio.tasks
 import logging
-import shutil
+import os
 from copy import deepcopy
 from pathlib import Path
 
@@ -720,7 +720,8 @@ async def upload_reads(req):
         files = await virtool.uploads.utils.naive_write_multiple(req, reads_file_path)
     except asyncio.CancelledError:
         logger.debug(f"Reads file upload aborted for {sample_id}")
-        await req.app["run_in_thread"](shutil.rmtree, reads_file_path)
+        await req.app["run_in_thread"](os.remove, reads_file_path / "reads_1.fq.gz")
+        await req.app["run_in_thread"](os.remove, reads_file_path / "reads_2.fq.gz")
 
         return aiohttp.web.Response(status=499)
 
@@ -768,6 +769,7 @@ async def upload_artifacts(req):
         size = await virtool.uploads.utils.naive_writer(req, artifacts_file_path)
     except asyncio.CancelledError:
         logger.debug(f"Artifacts file upload aborted: {file_id}")
+        await req.app["run_in_thread"](os.remove, artifacts_file_path)
         await virtool.pg.utils.delete_row(pg, file_id, SampleArtifacts)
 
         return aiohttp.web.Response(status=499)
