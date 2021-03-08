@@ -1,9 +1,12 @@
 import os
+import shutil
 from typing import Any, Dict, List, Optional, Tuple
 
 import visvalingamwyatt as vw
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from sqlalchemy.future import select
+
+import virtool.utils
 
 from virtool.analyses.models import AnalysisFile
 
@@ -26,6 +29,26 @@ async def attach_analysis_files(pg: AsyncEngine, analysis_id: str) -> List[Dict]
         results = (await session.execute(select(AnalysisFile).filter_by(analysis=analysis_id))).scalars().all()
 
     return [result.to_dict() for result in results]
+
+
+def check_nuvs_file_type(file_name: str) -> str:
+    """
+    Get the NuVs analysis file type based on the extension of given `file_name`
+
+    :param file_name: NuVs analysis file name
+    :return: file type
+
+    """
+    if file_name.endswith(".tsv"):
+        return "tsv"
+
+    if file_name.endswith(".fa"):
+        return "fasta"
+
+    if file_name.endswith(".fq"):
+        return "fastq"
+
+    raise ValueError("Filename has unrecognized extension")
 
 
 def find_nuvs_sequence_by_index(
@@ -89,6 +112,28 @@ def join_analysis_json_path(data_path: str, analysis_id: str, sample_id: str) ->
         join_analysis_path(data_path, analysis_id, sample_id),
         "results.json"
     )
+
+
+async def move_nuvs_files(filename: str, run_in_thread: callable, file_path: str, target_path: str):
+    """
+    Move NuVs analysis files from `file_path` to `target_path`, compress FASTA files and FASTQ files.
+
+    :param filename: the name of the analysis file
+    :param run_in_thread: the application thread running function
+    :param file_path: the path to the original file
+    :param target_path: the path to the new directory
+
+    """
+    if filename == "hmm.tsv":
+        await run_in_thread(
+            shutil.copy,
+            os.path.join(file_path, "hmm.tsv"),
+            os.path.join(target_path, "hmm.tsv")
+        )
+    else:
+        await run_in_thread(virtool.utils.compress_file,
+                            os.path.join(file_path, filename),
+                            os.path.join(target_path, f"{filename}.gz"))
 
 
 def transform_coverage_to_coordinates(coverage_list: List[int]) -> List[Tuple[int, int]]:

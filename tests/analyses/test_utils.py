@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 import virtool.analyses.db
@@ -45,3 +47,34 @@ def test_get_json_path(name):
     """
     path = virtool.analyses.utils.join_analysis_json_path("/data", "bar", "foo")
     assert path == "/data/samples/foo/analysis/bar/results.json"
+
+
+@pytest.mark.parametrize("file_type", ["fasta", "fastq", "tsv"])
+async def test_check_nuvs_file_type(file_type):
+    if file_type == "fasta":
+        result = virtool.analyses.utils.check_nuvs_file_type("assembly.fa")
+        assert result == "fasta"
+
+    if file_type == "fastq":
+        result = virtool.analyses.utils.check_nuvs_file_type("unmapped_hosts.fq")
+        assert result == "fastq"
+
+    if file_type == "tsv":
+        result = virtool.analyses.utils.check_nuvs_file_type("hmm.tsv")
+        assert result == "tsv"
+
+
+async def test_move_nuvs_files(tmpdir, spawn_client):
+    client = await spawn_client(authorize=True)
+
+    file_path = tmpdir.mkdir("files")
+    file_path.join("hmm.tsv").write("HMM file")
+    file_path.join("assembly.fa").write("FASTA file")
+
+    target_path = tmpdir.mkdir("analyses")
+
+    await virtool.analyses.utils.move_nuvs_files("hmm.tsv", client.app["run_in_thread"], file_path, target_path)
+    assert set(os.listdir(target_path)) == {"hmm.tsv"}
+
+    await virtool.analyses.utils.move_nuvs_files("assembly.fa", client.app["run_in_thread"], file_path, target_path)
+    assert set(os.listdir(target_path)) == {"hmm.tsv", "assembly.fa.gz"}
