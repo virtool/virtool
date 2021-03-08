@@ -4,7 +4,15 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import { BoxGroup, BoxGroupHeader, LoadingPlaceholder, NarrowContainer, ViewHeader, ViewHeaderTitle } from "../../base";
+import {
+    BoxGroup,
+    BoxGroupHeader,
+    LoadingPlaceholder,
+    NarrowContainer,
+    NoneFoundSection,
+    ViewHeader,
+    ViewHeaderTitle
+} from "../../base";
 import { routerLocationHasState } from "../../utils/utils";
 import { listLabels } from "../actions";
 import { getLabels } from "../selectors";
@@ -32,17 +40,23 @@ export class Labels extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const labels = map(this.props.labels, label => (
-            <Item
-                key={label.id}
-                name={label.name}
-                color={label.color}
-                description={label.description}
-                id={label.id}
-                removeLabel={this.onRemove}
-                editLabel={this.onEdit}
-            />
-        ));
+        let labels;
+
+        if (this.props.labels.length) {
+            labels = map(this.props.labels, label => (
+                <Item
+                    key={label.id}
+                    name={label.name}
+                    color={label.color}
+                    description={label.description}
+                    id={label.id}
+                    removeLabel={this.onRemove}
+                    editLabel={this.onEdit}
+                />
+            ));
+        } else {
+            labels = <NoneFoundSection noun="labels" />;
+        }
 
         return (
             <NarrowContainer>
