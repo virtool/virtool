@@ -1,7 +1,6 @@
 import os
 from typing import Dict, Optional
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils

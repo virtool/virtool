@@ -1,6 +1,7 @@
 from typing import Dict
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
 from virtool.samples.models import SampleArtifacts, SampleReadsFile
 
 
@@ -11,6 +12,7 @@ async def create_artifacts_file(pg: AsyncEngine, name: str, sample_id: str, arti
     :param pg: PostgreSQL AsyncEngine object
     :param name: Name of the sample artifacts file
     :param sample_id: ID that corresponds to a parent sample
+    :param artifact_type: Type of artifact to be uploaded
     :return: A dictionary representation of the newly created row
     """
     async with AsyncSession(pg) as session:

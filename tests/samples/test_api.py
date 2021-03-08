@@ -3,13 +3,14 @@ from pathlib import Path
 
 import arrow
 import pytest
+from aiohttp.test_utils import make_mocked_coro
+
 import virtool.files.db
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.samples.db
 import virtool.uploads.db
-from aiohttp.test_utils import make_mocked_coro
 from virtool.labels.models import Label
 from virtool.uploads.models import Upload
 
@@ -727,6 +728,10 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
 
 @pytest.mark.parametrize("artifact_type", ["fastq", "foo"])
 async def test_upload_artifacts(artifact_type, snapshot, spawn_job_client, static_time, resp_is, tmpdir):
+    """
+    Test that new artifacts can be uploaded after sample creation using the Jobs API.
+
+    """
     path = Path.cwd() / "tests" / "test_files" / "nuvs" / "reads_1.fq"
 
     data = {
@@ -755,6 +760,10 @@ async def test_upload_artifacts(artifact_type, snapshot, spawn_job_client, stati
 @pytest.mark.parametrize("paired", [True, False])
 @pytest.mark.parametrize("compressed", [True, False])
 async def test_upload_reads(paired, compressed, snapshot, spawn_job_client, static_time, resp_is, tmpdir):
+    """
+    Test that new sample reads can be uploaded using the Jobs API.
+
+    """
     path = Path.cwd() / "tests" / "test_files" / "samples"
 
     data = {

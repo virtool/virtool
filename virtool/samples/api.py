@@ -5,6 +5,8 @@ from copy import deepcopy
 from pathlib import Path
 
 import aiohttp.web
+from cerberus import Validator
+
 import virtool.analyses.db
 import virtool.analyses.utils
 import virtool.api.utils
@@ -21,7 +23,6 @@ import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
 import virtool.validators
-from cerberus import Validator
 from virtool.api.response import (bad_request, insufficient_rights,
                                   invalid_query, json_response, no_content,
                                   not_found)
@@ -707,6 +708,10 @@ async def analyze(req):
 
 @routes.jobs_api.post("/api/samples/{sample_id}/reads")
 async def upload_reads(req):
+    """
+    Upload sample reads using the Jobs API.
+
+    """
     db = req.app["db"]
     pg = req.app["pg"]
     sample_id = req.match_info["sample_id"]
@@ -739,6 +744,10 @@ async def upload_reads(req):
 
 @routes.jobs_api.post("/api/samples/{sample_id}/artifacts")
 async def upload_artifacts(req):
+    """
+    Upload artifacts created during sample creation using the Jobs API.
+]
+    """
     db = req.app["db"]
     pg = req.app["pg"]
     sample_id = req.match_info["sample_id"]

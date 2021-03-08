@@ -1,4 +1,5 @@
 import enum
+
 from sqlalchemy import Column, Integer, String, DateTime, Enum
 
 from virtool.postgres import Base
