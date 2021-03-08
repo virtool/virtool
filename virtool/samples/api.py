@@ -28,7 +28,7 @@ from virtool.api.response import (bad_request, conflict, insufficient_rights,
                                   not_found)
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
-from virtool.samples.models import ArtifactType, SampleArtifacts
+from virtool.samples.models import ArtifactType, SampleArtifact
 from virtool.samples.utils import bad_labels_response, check_labels
 
 logger = logging.getLogger("samples")
@@ -782,11 +782,11 @@ async def upload_artifacts(req):
     except asyncio.CancelledError:
         logger.debug(f"Artifacts file upload aborted: {file_id}")
         await req.app["run_in_thread"](os.remove, artifacts_file_path)
-        await virtool.pg.utils.delete_row(pg, file_id, SampleArtifacts)
+        await virtool.pg.utils.delete_row(pg, file_id, SampleArtifact)
 
         return aiohttp.web.Response(status=499)
 
-    artifacts_file = await virtool.uploads.db.finalize(pg, size, file_id, SampleArtifacts)
+    artifacts_file = await virtool.uploads.db.finalize(pg, size, file_id, SampleArtifact)
 
     headers = {
         "Location": f"/api/samples/{sample_id}/artifacts/{file_id}"

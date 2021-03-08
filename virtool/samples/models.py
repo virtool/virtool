@@ -18,7 +18,7 @@ class ArtifactType(str, SQLEnum):
     json = "json"
 
 
-class SampleArtifacts(Base):
+class SampleArtifact(Base):
     """
     SQL model to store sample artifacts
 
@@ -26,11 +26,11 @@ class SampleArtifacts(Base):
     __tablename__ = "sample_artifacts"
 
     id = Column(Integer, primary_key=True)
-    sample = Column(String)
-    name = Column(String)
+    sample = Column(String, nullable=False)
+    name = Column(String, nullable=False)
     name_on_disk = Column(String)
     size = Column(Integer)
-    type = Column(Enum(ArtifactType))
+    type = Column(Enum(ArtifactType), nullable=False)
     uploaded_at = Column(DateTime)
 
 
@@ -42,8 +42,8 @@ class SampleReadsFile(Base):
     __tablename__ = "sample_reads_files"
 
     id = Column(Integer, primary_key=True)
-    sample = Column(String)
-    name_on_disk = Column(String)
+    sample = Column(String, nullable=False)
+    name_on_disk = Column(String, nullable=False)
     size = Column(Integer)
     uploaded_at = Column(DateTime)
 

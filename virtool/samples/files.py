@@ -2,7 +2,7 @@ from typing import Dict
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.samples.models import SampleArtifacts, SampleReadsFile
+from virtool.samples.models import SampleArtifact, SampleReadsFile
 
 
 async def create_artifacts_file(pg: AsyncEngine, name: str, sample_id: str, artifact_type: str):
@@ -16,7 +16,7 @@ async def create_artifacts_file(pg: AsyncEngine, name: str, sample_id: str, arti
     :return: A dictionary representation of the newly created row
     """
     async with AsyncSession(pg) as session:
-        artifacts_file = SampleArtifacts(
+        artifacts_file = SampleArtifact(
             sample=sample_id,
             name=name,
             type=artifact_type
@@ -45,7 +45,6 @@ async def create_reads_file(pg: AsyncEngine, sample_id: str, file: Dict[str, int
     """
 
     async with AsyncSession(pg) as session:
-
         reads_file = SampleReadsFile(
             sample=sample_id,
             name_on_disk=file["name_on_disk"],
@@ -54,6 +53,7 @@ async def create_reads_file(pg: AsyncEngine, sample_id: str, file: Dict[str, int
         )
 
         session.add(reads_file)
+
         await session.flush()
 
         reads = reads_file.to_dict()
