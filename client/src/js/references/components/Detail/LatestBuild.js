@@ -13,6 +13,7 @@ export const LatestBuild = ({ id, latestBuild }) => {
                 <span>
                     &nbsp;/ Created <RelativeTime time={latestBuild.created_at} /> by {latestBuild.user.id}
                 </span>
+                <span style={{ float: "right" }}>&nbsp; On the right</span>
             </BoxGroupSection>
         );
     }
