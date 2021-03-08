@@ -778,14 +778,6 @@ snapshots['test_upload_reads[uvloop-True-True] 1'] = {
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
-snapshots['test_upload_reads[uvloop-True-True] 2'] = {
-    'id': 2,
-    'name_on_disk': 'reads_2.fq.gz',
-    'sample': 'test',
-    'size': 9081,
-    'uploaded_at': '2015-10-06T20:00:00Z'
-}
-
 snapshots['test_upload_reads[uvloop-True-False] 1'] = {
     'id': 3,
     'name_on_disk': 'reads_1.fq.gz',
