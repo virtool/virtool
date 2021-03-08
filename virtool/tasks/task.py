@@ -18,7 +18,7 @@ class Task:
     def __init__(self, app, task_id):
         self.app = app
         self.db = app["db"]
-        self.pg = app["postgres"]
+        self.pg = app["pg"]
         self.run_in_thread = app["run_in_thread"]
         self.id = task_id
         self.step = None

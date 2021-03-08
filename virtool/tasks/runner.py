@@ -39,7 +39,7 @@ class TaskRunner:
         :param task_id: ID of the task
 
         """
-        async with AsyncSession(self.app["postgres"]) as session:
+        async with AsyncSession(self.app["pg"]) as session:
             result = await session.execute(select(Task).filter_by(id=task_id))
             document = result.scalar().to_dict()
 

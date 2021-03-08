@@ -177,7 +177,7 @@ async def update(req):
     }
 
     task = await virtool.tasks.pg.register(
-        req.app["postgres"],
+        req.app["pg"],
         req.app["task_runner"],
         UpdateRemoteReferenceTask,
         context=context)

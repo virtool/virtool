@@ -12,7 +12,7 @@ async def find(req):
     Get a list of all task documents in the database.
 
     """
-    documents = await virtool.tasks.pg.find(req.app["postgres"])
+    documents = await virtool.tasks.pg.find(req.app["pg"])
 
     return json_response(documents)
 
@@ -25,7 +25,7 @@ async def get(req):
     """
     task_id = req.match_info["task_id"]
 
-    document = await virtool.tasks.pg.get(req.app["postgres"], int(task_id))
+    document = await virtool.tasks.pg.get(req.app["pg"], int(task_id))
 
     if not document:
         return not_found()
