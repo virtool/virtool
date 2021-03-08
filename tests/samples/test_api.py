@@ -788,7 +788,7 @@ async def test_upload_reads(paired, compressed, snapshot, spawn_job_client, stat
         assert resp.status == 201
 
         if paired:
-            assert os.listdir(sample_file_path) == ["reads_1.fq.gz", "reads_2.fq.gz"]
+            assert set(os.listdir(sample_file_path)) == {"reads_1.fq.gz", "reads_2.fq.gz"}
         else:
             assert os.listdir(sample_file_path) == ["reads_1.fq.gz"]
 
