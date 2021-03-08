@@ -41,7 +41,7 @@ async def get(pg_engine: AsyncEngine, task_id: int) -> dict:
     return document
 
 
-async def register(pg_engine, task_runner, task_class: dict, context: dict = None) -> dict:
+async def register(pg_engine, task_runner, task_class: virtool.tasks.task.Task, context: dict = None) -> dict:
     """
     Create a new task record and insert it into SQL databse.
 
