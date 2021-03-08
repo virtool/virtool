@@ -1,22 +1,6 @@
 """
 Work with subtractions in the database.
 
-Schema:
-- _id (str) the unique ID for the subtraction
-- count (int) the number of sequences in the subtraction reference (ie. FASTA entry count)
-- deleted (bool) subtractions aren't truly deleted; this flag is set to true
-- file (Object) a description of the source file for the subtraction
-  - id (str) the unique ID for the file
-  - name (str) the name of the uploaded file
-- gc (float) the GC ratio of the subtraction
-- is_host (bool) true when the subtraction is a virus host - currently always true
-- job (str) the ID of the job associated with creation of the subtraction
-- name (str) the user-defined name
-- nickname (str) the user-defined nickname for the subtraction
-- ready (bool) true when the subtraction creation workflow is complete
-- user (Object) describes the creating user
-  - id (str) the ID of the user
-
 """
 import asyncio
 import glob
@@ -27,7 +11,11 @@ import virtool.db.utils
 import virtool.subtractions.utils
 import virtool.tasks.task
 import virtool.tasks.pg
+import virtool.tasks.db
+import virtool.tasks.task
 import virtool.utils
+
+from virtool.types import App
 
 PROJECTION = [
     "_id",
@@ -40,6 +28,45 @@ PROJECTION = [
     "user",
     "has_file"
 ]
+
+
+class AddSubtractionFilesTask(virtool.tasks.task.Task):
+
+    def __init__(self, app: App, task_id: str):
+        super().__init__(app, task_id)
+
+        self.steps = [
+            self.rename_index_files,
+            self.add_files_field,
+        ]
+
+    async def rename_index_files(self):
+        """
+        Change Bowtie2 index name from 'reference' to 'subtraction'
+
+        """
+        settings = self.app["settings"]
+
+        async for subtraction in self.db.subtraction.find({"deleted": False, "files": {"$exists": False}}):
+            path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
+            await self.app["run_in_thread"](virtool.subtractions.utils.rename_bowtie_files, path)
+
+    async def add_files_field(self):
+        """
+        Add a 'files' field to subtraction documents to list what files can be downloaded for that subtraction
+
+        """
+        settings = self.app["settings"]
+
+        async for subtraction in self.db.subtraction.find({"deleted": False, "files": {"$exists": False}}):
+            path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
+            files = await self.app["run_in_thread"](virtool.subtractions.utils.prepare_files_field, path)
+
+            await self.db.subtraction.update_one({"_id": subtraction["_id"]}, {
+                "$set": {
+                    "files": files
+                }
+            })
 
 
 class WriteSubtractionFASTATask(virtool.tasks.task.Task):

@@ -177,7 +177,7 @@ async def test_get_patched_otus(mocker, dbi):
 
 
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
-def test_get_sequences_from_patched_otus(data_type, mocker, snapshot, dbs, fake_otus):
+def test_get_sequences_from_patched_otus(data_type, mocker, snapshot, fake_otus):
     sequence_otu_dict = dict()
 
     sequences = virtool.jobs.build_index.get_sequences_from_patched_otus(

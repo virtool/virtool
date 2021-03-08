@@ -1,5 +1,14 @@
+import filecmp
+import os
+import shutil
+import sys
+from pathlib import Path
+
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from sqlalchemy import select
+
+from virtool.indexes.models import IndexFile
 
 
 async def test_find(mocker, snapshot, spawn_client, static_time):
@@ -219,7 +228,10 @@ async def test_get(error, mocker, snapshot, resp_is, spawn_client, static_time):
 
 class TestCreate:
 
-    async def test(self, mocker, snapshot, spawn_client, static_time, test_random_alphanumeric, check_ref_right, resp_is):
+    async def test(self, mocker, snapshot, spawn_client, static_time, test_random_alphanumeric, check_ref_right,
+                   resp_is):
+        mocker.patch("virtool.utils.generate_key", return_value=("foo", "bar"))
+
         client = await spawn_client(authorize=True)
 
         client.app["settings"].update({
@@ -415,3 +427,138 @@ async def test(error, snapshot, spawn_client, resp_is):
 
     assert resp.status == 200
     snapshot.assert_match(await resp.json())
+
+
+@pytest.mark.parametrize("error", [None, 404])
+async def test_delete_index(spawn_job_client, error):
+    index_id = "index1"
+    index_document = {
+        "_id": index_id,
+    }
+
+    mock_history_documents = [{
+        "_id": _id,
+        "index": {
+            "id": index_id,
+            "version": "test_version"
+        }
+    } for _id in ("history1", "history2", "history3")]
+
+    client = await spawn_job_client(authorize=True)
+    indexes = client.db.indexes
+    history = client.db.history
+
+    if error != 404:
+        await indexes.insert_one(index_document)
+        await history.insert_many(mock_history_documents)
+
+    response = await client.delete(f"/api/indexes/{index_id}")
+
+    if error is not None:
+        assert error == response.status
+    else:
+        assert 204 == response.status
+        async for doc in history.find({"index.id": index_id}):
+            assert doc["index"]["id"] == doc["index"]["version"] == "unbuilt"
+
+
+@pytest.mark.parametrize("error", [None, "409", "400", "404", "422"])
+async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session):
+    client = await spawn_client(authorize=True)
+    path = Path(sys.path[0]) / "tests" / "test_files" / "index" / "reference.1.bt2"
+
+    files = {
+        "file": open(path, "rb")
+    }
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    index = {
+        "_id": "foo",
+        "reference": {
+            "id": "bar"
+        },
+        "user": {
+            "id": "test"
+        }
+    }
+
+    if error == "409":
+        index["files"] = [1]
+
+    await client.db.indexes.insert_one(index)
+
+    url = "/api/indexes/foo/files"
+
+    if error == "422":
+        url += "?type=fasta"
+    elif error == "400":
+        url += "?name=reference.bt2"
+    else:
+        url += "?name=reference.1.bt2"
+
+    resp = await client.post_form(url, data=files)
+
+    if error == "400":
+        assert await resp_is.bad_request(resp, "Unsupported index file name")
+        return
+
+    if error == "409":
+        assert await resp_is.conflict(resp, "File name already exists")
+        return
+
+    if error == "422":
+        assert await resp_is.invalid_query(resp, {'name': ['required field']})
+        return
+
+    assert resp.status == 201
+    assert os.listdir(tmpdir / "references" / "bar" / "foo") == ["reference.1.bt2"]
+    snapshot.assert_match(await resp.json())
+    snapshot.assert_match(await client.db.indexes.find_one("foo"))
+
+    async with pg_session as session:
+        result = (await session.execute(select(IndexFile).filter_by(id=1))).scalar()
+
+    assert result.to_dict() == {
+        'id': 1,
+        'name': 'reference.1.bt2',
+        'reference': 'bar',
+        'type': 'bowtie2',
+        'size': os.stat(path).st_size
+    }
+
+
+@pytest.mark.parametrize("status", [200, 404])
+async def test_download(status, spawn_job_client, tmpdir):
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = tmpdir
+
+    await client.db.indexes.insert_one({
+        "_id": "test_index",
+        "reference": {
+            "id": "test_reference"
+        }
+    })
+
+    path = Path(sys.path[0]) / "tests" / "test_files" / "index" / "reference.1.bt2"
+    target_path = Path(tmpdir) / "references/test_reference/test_index"
+    target_path.mkdir(parents=True)
+    shutil.copyfile(path, target_path / "reference.1.bt2")
+
+    download_path = Path("reference.1.bt2")
+
+    files_url = "/api/indexes/test_index/files/"
+
+    if status == 200:
+        files_url += "reference.1.bt2"
+    elif status == 400:
+        files_url += "foo.bar"
+
+    async with client.get(files_url) as response:
+        assert response.status == status
+        if response.status == 200:
+            with download_path.open("wb") as f:
+                f.write(await response.read())
+
+            assert filecmp.cmp(download_path, path)

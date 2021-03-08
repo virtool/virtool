@@ -69,10 +69,10 @@ def bad_request(message: str = "Bad request") -> web.Response:
 
 def insufficient_rights(message: str = "Insufficient rights") -> web.Response:
     """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``401`` status and the
-    JSON body ``{"message": "Bad request"}``.
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``403`` status and the
+    JSON body ``{"message": "Insufficient rights"}``.
 
-    :param message: text to send instead of 'Bad request'
+    :param message: text to send instead of 'Insufficient rights'
     :return: the response
 
     """
@@ -80,6 +80,21 @@ def insufficient_rights(message: str = "Insufficient rights") -> web.Response:
         "id": "insufficient_rights",
         "message": message
     }, status=403)
+
+
+def unauthorized(message: str) -> web.Response:
+    """
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a `401` status and a JSON
+    body containing error details including the passed ``message``
+
+    :param message: text to send
+    :return: the response
+
+    """
+    return json_response({
+        "id": "unauthorized",
+        "message": message
+    }, status=401)
 
 
 def not_found(message: str = "Not found") -> web.Response:

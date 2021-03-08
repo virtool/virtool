@@ -2,7 +2,6 @@ import asyncio.tasks
 from copy import deepcopy
 
 from cerberus import Validator
-from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.analyses.db
 import virtool.analyses.utils
@@ -15,11 +14,14 @@ import virtool.jobs.db
 import virtool.samples.db
 import virtool.samples.utils
 import virtool.subtractions.db
+import virtool.uploads.db
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
     json_response, no_content, not_found
-from virtool.samples.utils import check_labels, bad_labels_response
+from virtool.http.schema import schema
+from virtool.jobs.utils import JobRights
+from virtool.samples.utils import bad_labels_response, check_labels
 
 QUERY_SCHEMA = {
     "find": {
@@ -129,12 +131,13 @@ async def find(req):
     )
 
     for i in range(len(data["documents"])):
-        data["documents"][i] = await virtool.samples.db.attach_labels(req.app, data["documents"][i])
+        data["documents"][i] = await virtool.samples.db.attach_labels(req.app["pg"], data["documents"][i])
 
     return json_response(data)
 
 
 @routes.get("/api/samples/{sample_id}")
+@routes.jobs_api.get("/api/samples/{sample_id}")
 async def get(req):
     """
     Get a complete sample document.
@@ -172,12 +175,13 @@ async def get(req):
 
     await virtool.subtractions.db.attach_subtraction(db, document)
 
-    document = await virtool.samples.db.attach_labels(req.app, document)
+    document = await virtool.samples.db.attach_labels(req.app["pg"], document)
 
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.post("/api/samples", permission="create_sample", schema={
+@routes.post("/api/samples", permission="create_sample")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -228,7 +232,7 @@ async def get(req):
 })
 async def create(req):
     db = req.app["db"]
-    pg = req.app["postgres"]
+    pg = req.app["pg"]
     data = req["data"]
     user_id = req["client"].user_id
     settings = req.app["settings"]
@@ -239,10 +243,14 @@ async def create(req):
         return bad_request(name_error_message)
 
     if "labels" in data:
-        non_existent_labels = await check_labels(AsyncSession(pg), data["labels"])
+        non_existent_labels = await check_labels(pg, data["labels"])
 
         if non_existent_labels:
             return bad_labels_response(non_existent_labels)
+
+        data = await virtool.samples.db.attach_labels(pg, data)
+    else:
+        data["labels"] = []
 
     # Make sure a subtraction host was submitted and it exists.
     if not await db.subtraction.count_documents({"_id": data["subtraction"], "is_host": True}):
@@ -296,7 +304,6 @@ async def create(req):
         "user": {
             "id": user_id
         },
-        "labels": data.get("labels", []),
         "paired": len(data["files"]) == 2
     })
 
@@ -315,12 +322,20 @@ async def create(req):
         "files": files
     }
 
+    rights = JobRights()
+
+    rights.samples.can_read(sample_id)
+    rights.samples.can_modify(sample_id)
+    rights.samples.can_remove(sample_id)
+    rights.uploads.can_read(*data["files"])
+
     # Create job document.
     job = await virtool.jobs.db.create(
         db,
         "create_sample",
         task_args,
-        user_id
+        user_id,
+        rights
     )
 
     await req.app["jobs"].enqueue(job["_id"])
@@ -332,7 +347,8 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
 
 
-@routes.patch("/api/samples/{sample_id}", schema={
+@routes.patch("/api/samples/{sample_id}")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -364,7 +380,7 @@ async def edit(req):
 
     """
     db = req.app["db"]
-    pg = req.app["postgres"]
+    pg = req.app["pg"]
     data = req["data"]
 
     sample_id = req.match_info["sample_id"]
@@ -378,7 +394,7 @@ async def edit(req):
             return bad_request(message)
 
     if "labels" in data:
-        non_existent_labels = await check_labels(AsyncSession(pg), data["labels"])
+        non_existent_labels = await check_labels(pg, data["labels"])
 
         if non_existent_labels:
             return bad_labels_response(non_existent_labels)
@@ -387,7 +403,32 @@ async def edit(req):
         "$set": data
     }, projection=virtool.samples.db.LIST_PROJECTION)
 
-    document = await virtool.samples.db.attach_labels(req.app, document)
+    document = await virtool.samples.db.attach_labels(pg, document)
+
+    processed = virtool.utils.base_processor(document)
+
+    return json_response(processed)
+
+
+@routes.jobs_api.patch("/api/samples/{sample_id}")
+@schema({
+    "quality": {
+        "type": "dict",
+        "required": True
+    }
+})
+async def finalize(req):
+    db = req.app["db"]
+    data = req["data"]
+
+    sample_id = req.match_info["sample_id"]
+
+    document = await db.samples.find_one_and_update({"_id": sample_id}, {
+        "$set": {
+            "quality": data["quality"],
+            "ready": True
+        }
+    })
 
     processed = virtool.utils.base_processor(document)
 
@@ -406,12 +447,13 @@ async def replace(req):
 
     document = await req.app["db"].samples.find_one(sample_id, virtool.samples.db.PROJECTION)
 
-    document = await virtool.samples.db.attach_labels(req.app, document)
+    document = await virtool.samples.db.attach_labels(req.app["pg"], document)
 
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.patch("/api/samples/{sample_id}/rights", schema={
+@routes.patch("/api/samples/{sample_id}/rights")
+@schema({
     "group": {
         "type": "string"
     },
@@ -470,17 +512,50 @@ async def remove(req):
 
     """
     db = req.app["db"]
+    client = req["client"]
 
     sample_id = req.match_info["sample_id"]
 
     try:
-        if not await virtool.samples.db.check_rights(db, sample_id, req["client"]):
+        if not await virtool.samples.db.check_rights(db, sample_id, client):
             return insufficient_rights()
     except virtool.errors.DatabaseError as err:
         if "Sample does not exist" in str(err):
             return not_found()
 
         raise
+
+    await virtool.samples.db.remove_samples(
+        db,
+        req.app["settings"],
+        [sample_id]
+    )
+
+    return no_content()
+
+
+@routes.jobs_api.delete("/api/samples/{sample_id}")
+async def job_remove(req):
+    """
+    Remove a sample document and all associated analyses. Only usable in the Jobs API and when samples are unfinalized.
+
+    """
+    db = req.app["db"]
+
+    sample_id = req.match_info["sample_id"]
+
+    ready = await virtool.db.utils.get_one_field(db.samples, "ready", sample_id)
+
+    if ready is None:
+        return not_found()
+
+    if ready is True:
+        return bad_request("Only unfinalized samples can be deleted")
+
+    file_ids = await virtool.db.utils.get_one_field(db.samples, "files", sample_id)
+
+    if file_ids:
+        await virtool.uploads.db.release(req.app["pg"], file_ids)
 
     await virtool.samples.db.remove_samples(
         db,
@@ -535,7 +610,8 @@ async def find_analyses(req):
     return json_response(data)
 
 
-@routes.post("/api/samples/{sample_id}/analyses", schema={
+@routes.post("/api/samples/{sample_id}/analyses")
+@schema({
     "ref_id": {
         "type": "string",
         "required": True

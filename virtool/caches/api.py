@@ -17,6 +17,7 @@ routes = virtool.http.routes.Routes()
 
 
 @routes.get("/api/caches/{cache_id}")
+@routes.jobs_api.get("/api/caches/{cache_id}")
 async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Return the complete representation for the cache with the given `cache_id`.

@@ -1,20 +1,6 @@
 """
 Work with indexes in the database.
 
-Schema:
-- _id (str) the instance-unique ID for the index
-- created_at (datetime) when the index record was created
-- has_files (bool) if there are index files on disk for this record
-- job (Object) describes the associated index build job
-  - id (str) the job ID
-- manifest (Object) describes the state of the reference when the index was created - OTU IDs are keys, versions are values
-- ready (bool) set to true when the Build Index workflow completes
-- reference (Object) describes the parent reference
-  - id (str) the reference ID
-- version (int) the version of the reference represented by the index
-- user (Object) describes the creating user
-  - id (str) the user ID
-
 """
 import asyncio
 from typing import Union
@@ -38,6 +24,17 @@ PROJECTION = [
     "reference",
     "version"
 ]
+
+FILES = (
+    "reference.json.gz",
+    "reference.fa.gz",
+    "reference.1.bt2",
+    "reference.2.bt2",
+    "reference.3.bt2",
+    "reference.4.bt2",
+    "reference.rev.1.bt2",
+    "reference.rev.2.bt2"
+)
 
 
 async def processor(db, document):
@@ -240,3 +237,26 @@ async def get_unbuilt_stats(db, ref_id: Union[str, None] = None) -> dict:
         "change_count": await db.history.count_documents(history_query),
         "modified_otu_count": len(await db.history.distinct("otu.id", history_query))
     }
+
+
+async def reset_history(db, index_id: str):
+    """
+    Set the index.id and index.version fields with the given index id to 'unbuilt'.
+
+    :param db: The virtool database
+    :param index_id: The ID of the index which failed to build
+    """
+    query = {
+        "_id": {
+            "$in": await db.history.distinct("_id", {"index.id": index_id})
+        }
+    }
+
+    return await db.history.update_many(query, {
+        "$set": {
+            "index": {
+                "id": "unbuilt",
+                "version": "unbuilt"
+            }
+        }
+    })

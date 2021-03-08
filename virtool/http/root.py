@@ -7,6 +7,7 @@ routes = virtool.http.routes.Routes()
 
 
 @routes.get("/api")
+@routes.jobs_api.get("/api")
 async def get(req):
     """
     Returns a generic message. Used during testing for acquiring a ``session_id``.

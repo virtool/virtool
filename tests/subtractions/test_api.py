@@ -1,3 +1,5 @@
+import os
+
 import aiohttp.test_utils
 import pytest
 
@@ -11,7 +13,7 @@ import pytest
 async def test_edit(data, mocker, snapshot, spawn_client):
     mocker.patch("virtool.subtractions.db.get_linked_samples", aiohttp.test_utils.make_mocked_coro(12))
 
-    client = client = await spawn_client(authorize=True, permissions=["modify_subtraction"])
+    client = await spawn_client(authorize=True, permissions=["modify_subtraction"])
 
     await client.db.subtraction.insert_one({
         "_id": "foo",
@@ -25,3 +27,159 @@ async def test_edit(data, mocker, snapshot, spawn_client):
 
     snapshot.assert_match(await resp.json(), "json")
     snapshot.assert_match(await client.db.subtraction.find_one(), "db")
+
+
+@pytest.mark.parametrize("error", [None, "400_exists", "400_name", "404", "422"])
+async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_session):
+    client = await spawn_job_client(authorize=True)
+    test_dir = tmpdir.mkdir("files")
+    test_dir.join("subtraction.1.bt2").write("Bowtie2 file")
+    path = os.path.join(test_dir, "subtraction.1.bt2")
+
+    files = {
+        "file": open(path, "rb")
+    }
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    subtraction = {
+        "_id": "foo",
+        "name": "Foo"
+    }
+
+    if error == "400_exists":
+        subtraction["files"] = [1]
+
+    await client.db.subtraction.insert_one(subtraction)
+
+    url = "/api/subtractions/foo/files"
+
+    if error == "422":
+        url += "?type=fasta"
+    elif error == "400_name":
+        url += "?name=reference.1.bt2"
+    else:
+        url += "?name=subtraction.1.bt2"
+
+    resp = await client.post(url, data=files)
+
+    if error == "400_name":
+        assert await resp_is.bad_request(resp, "Unsupported subtraction file name")
+        return
+
+    if error == "400_exists":
+        assert await resp_is.bad_request(resp, "File name already exists")
+        return
+
+    if error == "422":
+        assert await resp_is.invalid_query(resp, {'name': ['required field']})
+        return
+
+    assert resp.status == 201
+    assert os.listdir(tmpdir / "subtractions" / "foo") == ["subtraction.1.bt2"]
+    snapshot.assert_match(await resp.json())
+    document = await client.db.subtraction.find_one("foo")
+    assert document == {
+        '_id': 'foo',
+        'name': 'Foo',
+        'files': [1]
+    }
+
+
+@pytest.mark.parametrize("error", [None, "404", "409", "422"])
+async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is):
+    subtraction = {
+        "_id": "foo",
+        "name": "Foo",
+        "nickname": "Foo Subtraction"
+    }
+
+    data = {
+        "gc": {
+            "a": 0.319,
+            "t": 0.319,
+            "g": 0.18,
+            "c": 0.18,
+            "n": 0.002
+        }
+    }
+
+    client = await spawn_job_client(authorize=True)
+
+    if error == "409":
+        subtraction["ready"] = True
+
+    if error == "422":
+        data = {}
+
+    if error != "404":
+        await client.db.subtraction.insert_one(subtraction)
+
+    resp = await client.patch("/api/subtractions/foo", json=data)
+
+    if error == "404":
+        assert await resp_is.not_found(resp)
+        return
+
+    if error == "409":
+        assert await resp_is.conflict(resp, "Subtraction has already been finalized")
+        return
+
+    if error == "422":
+        assert await resp_is.invalid_input(resp, {'gc': ['required field']})
+        return
+
+    assert resp.status == 200
+    snapshot.assert_match(await resp.json())
+    document = await client.db.subtraction.find_one("foo")
+    assert document == {
+        "_id": "foo",
+        "name": "Foo",
+        "nickname": "Foo Subtraction",
+        "gc": {
+            "a": 0.319,
+            "t": 0.319,
+            "g": 0.18,
+            "c": 0.18,
+            "n": 0.002
+        },
+        "ready": True
+    }
+
+
+@pytest.mark.parametrize("ready", [True, False])
+@pytest.mark.parametrize("exists", [True, False])
+async def test_job_remove(exists, ready, tmpdir, spawn_job_client, snapshot, resp_is):
+    client = await spawn_job_client(authorize=True)
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    if exists:
+        await client.db.subtraction.insert_one({
+            "_id": "foo",
+            "name": "Foo",
+            "nickname": "Foo Subtraction",
+            "deleted": False,
+            "ready": ready
+        })
+
+        await client.db.samples.insert_one({
+            "_id": "test",
+            "name": "Test",
+            "subtraction": {
+                "id": "foo"
+            }
+        })
+
+    resp = await client.delete("/api/subtractions/foo")
+
+    if not exists:
+        assert resp.status == 404
+        return
+
+    if ready:
+        assert await resp_is.conflict(resp, "Only unfinalized subtractions can be deleted")
+        return
+
+    assert await resp_is.no_content(resp)
+    snapshot.assert_match(await client.db.subtraction.find_one("foo"))
+    snapshot.assert_match(await client.db.samples.find_one("test"))

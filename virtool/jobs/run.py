@@ -18,7 +18,6 @@ async def create_shallow_app(config) -> dict:
 
     """
     app_dict = {
-        "change_queue": asyncio.Queue(),
         "config": config,
         "mode": "runner",
         "scheduler": await aiojobs.create_scheduler()
@@ -26,15 +25,9 @@ async def create_shallow_app(config) -> dict:
 
     await virtool.startup.init_version(app_dict)
     await virtool.startup.init_redis(app_dict)
-
-    app_dict["db"] = await virtool.db.mongo.connect(
-        config,
-        virtool.redis.create_dispatch(app_dict["redis"])
-    )
-
+    await virtool.startup.init_db(app_dict)
     await virtool.startup.init_settings(app_dict)
     await virtool.startup.init_sentry(app_dict)
-    await virtool.startup.init_resources(app_dict)
 
     return app_dict
 
@@ -44,7 +37,7 @@ async def run(config: dict, cls):
     Run a job runner instance.
 
     :param config: the config values provided by the user
-    :param cls: the agent or runner class to use
+    :param cls: the runner class to use
 
     """
     app = await create_shallow_app(config)

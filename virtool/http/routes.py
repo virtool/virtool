@@ -1,53 +1,50 @@
-import json.decoder
+from functools import wraps
+from typing import Callable
 
-import aiohttp.web
-from cerberus import Validator
+from aiohttp.web_routedef import RouteTableDef
 
 import virtool.users.utils
-from virtool.api.response import invalid_input, json_response
+from virtool.api.response import json_response, unauthorized
 
 
-class Routes(aiohttp.web.RouteTableDef):
+class Routes(RouteTableDef):
+
+    @staticmethod
+    def _protected(method):
+        @wraps(method)
+        def _method(*args, admin=False, permission=None, public=False, **kwargs):
+            return protect(method(*args, **kwargs), admin, permission, public)
+
+        return _method
 
     def __init__(self):
         super().__init__()
+        self.get = self._protected(self.get)
+        self.post = self._protected(self.post)
+        self.delete = self._protected(self.delete)
+        self.put = self._protected(self.put)
+        self.patch = self._protected(self.patch)
 
-    def get(self, *args, admin=False, permission=None, public=False, schema=None, **kwargs):
-        route_decorator = super().get(*args, **kwargs)
-        return protect(route_decorator, admin, permission, public, schema)
-
-    def post(self, *args, admin=False, permission=None, public=False, schema=None, **kwargs):
-        route_decorator = super().post(*args, **kwargs)
-        return protect(route_decorator, admin, permission, public, schema)
-
-    def patch(self, *args, admin=False, permission=None, public=False, schema=None, **kwargs):
-        route_decorator = super().patch(*args, **kwargs)
-        return protect(route_decorator, admin, permission, public, schema)
-
-    def put(self, *args, admin=False, permission=None, public=False, schema=None, **kwargs):
-        route_decorator = super().put(*args, **kwargs)
-        return protect(route_decorator, admin, permission, public, schema)
-
-    def delete(self, *args, admin=False, permission=None, public=False, schema=None, **kwargs):
-        route_decorator = super().delete(*args, **kwargs)
-        return protect(route_decorator, admin, permission, public, schema)
+        self.jobs_api = RouteTableDef()
 
 
-def protect(route_decorator, admin, permission, public, schema):
+def protect(
+        route_decorator: Callable,
+        admin: bool,
+        permission: str,
+        public: bool,
+):
     if permission and permission not in virtool.users.utils.PERMISSIONS:
         raise ValueError("Invalid permission: " + permission)
 
     def decorator(handler):
-
         async def wrapped(req):
+            client = req["client"]
 
-            if not public and not req["client"].user_id:
-                return json_response({
-                    "id": "requires_authorization",
-                    "message": "Requires authorization"
-                }, status=401)
+            if not public and client is None:
+                return unauthorized("Requires authorization")
 
-            if not req["client"].administrator:
+            if client is None or not client.administrator:
                 if admin:
                     return json_response({
                         "id": "not_permitted",
@@ -59,24 +56,6 @@ def protect(route_decorator, admin, permission, public, schema):
                         "id": "not_permitted",
                         "message": "Not permitted"
                     }, status=403)
-
-            content_type = req.headers.get("Content-type", "")
-
-            if "multipart/form-data" not in content_type:
-                try:
-                    data = await req.json()
-                except (json.decoder.JSONDecodeError, UnicodeDecodeError):
-                    data = dict()
-
-                if schema:
-                    v = Validator(schema, purge_unknown=True)
-
-                    if not v.validate(data):
-                        return invalid_input(v.errors)
-
-                    data = v.document
-
-                req["data"] = data
 
             return await handler(req)
 

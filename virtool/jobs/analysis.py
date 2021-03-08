@@ -8,6 +8,7 @@ import logging
 import os
 import pathlib
 import shutil
+from asyncio import gather
 from typing import Union
 
 import pymongo.errors
@@ -112,9 +113,11 @@ async def make_analysis_dir(job):
     TODO: integrate into analysis working directory tree creation at start of all analysis workflows in virtool-workflow
 
     """
-    await job.run_in_executor(os.mkdir, job.params["temp_analysis_path"])
-    await job.run_in_executor(os.mkdir, job.params["raw_path"])
-    await job.run_in_executor(os.mkdir, job.params["reads_path"])
+    await gather(
+        job.run_in_executor(os.mkdir, job.params["temp_analysis_path"]),
+        job.run_in_executor(os.mkdir, job.params["raw_path"]),
+        job.run_in_executor(os.mkdir, job.params["reads_path"])
+    )
 
 
 async def prepare_reads(job: virtool.jobs.job.Job):

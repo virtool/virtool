@@ -1,24 +1,13 @@
 """
 Constants and utility functions for interacting with the jobs collection in the application database.
 
-Schema:
-- _id (str) the instance-unique job ID
-- args (Object) user- and application-defined args required by the workflow (eg. ref_id, sample_id)
-- mem (int) memory in GB allowed for the job
-- proc (int) CPU count allowed for the job
-- status (List[Object]) describes the state history of the job
-  - error (Object) describes an encountered error
-  - progress (float) the job progress between 0.0 - 1.0
-  - stage (str) the step the job is at (should be changed to step)
-  - state (Enum["running", "waiting", "complete", "error", "cancelled"]) the state the job is in
-  - timestamp (datetime) the time the status object was added
-- task (str) the workflow identifier (should be changed to workflow)
-- user (Object) describes the user that started the job
-  - id (str) the user ID
-
 """
+from typing import Any, Dict, Optional
+
 import virtool.jobs.runner
 import virtool.utils
+from virtool.jobs.utils import JobRights
+from virtool.utils import base_processor
 
 OR_COMPLETE = [
     {"status.state": "complete"}
@@ -29,15 +18,21 @@ OR_FAILED = [
     {"status.state": "cancelled"}
 ]
 
-#: The default MongoDB projection for job documents.
-PROJECTION = [
+#: A projection for minimal representations of jobs suitable for search results.
+LIST_PROJECTION = [
     "_id",
     "task",
     "status",
     "proc",
     "mem",
+    "rights",
     "user"
 ]
+
+#: A projection for full job details. Excludes the secure key field.
+PROJECTION = {
+    "key": False
+}
 
 
 async def cancel(db, job_id: str) -> dict:
@@ -87,13 +82,31 @@ async def clear(db, complete=False, failed=False):
     return removed
 
 
-async def create(db, task_name, task_args, user_id, job_id=None):
+async def create(
+        db,
+        workflow_name: str,
+        job_args: Dict[str, Any],
+        user_id: str,
+        rights: JobRights,
+        job_id: Optional[str] = None
+):
+    """
+    Create, insert, and return a job document.
+    
+    :param db: the application database object
+    :param workflow_name: the name of the workflow to run
+    :param job_args: the arguments required to run the job
+    :param user_id: the user that started the job
+    :param rights: the rights the job will have on Virtool resources
+    :param job_id: an optional ID to use for the new job
+    
+    """
     document = {
-        "task": task_name,
-        "args": task_args,
-        "user": {
-            "id": user_id
-        },
+        "acquired": False,
+        "task": workflow_name,
+        "args": job_args,
+        "key": None,
+        "rights": rights.as_dict(),
         "state": "waiting",
         "status": [
             {
@@ -103,13 +116,41 @@ async def create(db, task_name, task_args, user_id, job_id=None):
                 "progress": 0,
                 "timestamp": virtool.utils.timestamp()
             }
-        ]
+        ],
+        "user": {
+            "id": user_id
+        }
     }
 
     if job_id:
         document["_id"] = job_id
 
-    return await db.jobs.insert_one(document)
+    document = await db.jobs.insert_one(document)
+
+    return document
+
+
+async def acquire(db, job_id: str) -> Dict[str, Any]:
+    """
+    Set the `started` field on a job to `True` and return the complete document.
+
+    :param db: the application database object
+    :param job_id: the ID of the job to start
+    :return: the complete job document
+
+    """
+    key, hashed = virtool.utils.generate_key()
+
+    document = await db.jobs.find_one_and_update({"_id": job_id}, {
+        "$set": {
+            "acquired": True,
+            "key": hashed
+        }
+    }, projection=PROJECTION)
+
+    document["key"] = key
+
+    return base_processor(document)
 
 
 async def delete_zombies(db):

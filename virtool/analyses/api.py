@@ -3,12 +3,16 @@ Provides request handlers for managing and viewing analyses.
 
 """
 import asyncio
+import logging
 import os
+from pathlib import Path
+from typing import Any, Dict, Union
 
 import aiohttp.web
 import aiojobs.aiohttp
 
 import virtool.analyses.db
+import virtool.analyses.files
 import virtool.analyses.format
 import virtool.analyses.utils
 import virtool.api.json
@@ -20,62 +24,21 @@ import virtool.http.routes
 import virtool.samples.db
 import virtool.samples.utils
 import virtool.subtractions.db
+import virtool.uploads.db
+import virtool.uploads.utils
 import virtool.utils
+import virtool.validators
+from virtool.analyses.models import ANALYSIS_FORMATS, AnalysisFile
 from virtool.api.response import bad_request, conflict, insufficient_rights, \
-    json_response, no_content, not_found
+    invalid_query, json_response, no_content, not_found
+from virtool.db.core import Collection, DB
+from virtool.http.schema import schema
+from virtool.samples.db import recalculate_workflow_tags
+from virtool.utils import base_processor
+
+logger = logging.getLogger("analyses")
 
 routes = virtool.http.routes.Routes()
-
-
-@routes.get("/api/analyses/{analysis_id}")
-async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
-    """
-    Get a complete analysis document.
-
-    """
-    db = req.app["db"]
-
-    analysis_id = req.match_info["analysis_id"]
-
-    document = await db.analyses.find_one(analysis_id)
-
-    if document is None:
-        return not_found()
-
-    try:
-        iso = virtool.api.json.isoformat(document["updated_at"])
-    except KeyError:
-        iso = virtool.api.json.isoformat(document["created_at"])
-
-    if_modified_since = req.headers.get("If-Modified-Since")
-
-    if if_modified_since and if_modified_since == iso:
-        return virtool.api.response.not_modified()
-
-    sample = await db.samples.find_one(
-        {"_id": document["sample"]["id"]},
-        {"quality": False}
-    )
-
-    if not sample:
-        return bad_request("Parent sample does not exist")
-
-    read, _ = virtool.samples.utils.get_sample_rights(sample, req["client"])
-
-    if not read:
-        return insufficient_rights()
-
-    await virtool.subtractions.db.attach_subtraction(db, document)
-
-    if document["ready"]:
-        document = await virtool.analyses.format.format_analysis(req.app, document)
-
-    headers = {
-        "Cache-Control": "no-cache",
-        "Last-Modified": virtool.api.json.isoformat(document["created_at"])
-    }
-
-    return json_response(virtool.utils.base_processor(document), headers=headers)
 
 
 @routes.get("/api/analyses")
@@ -114,7 +77,64 @@ async def find(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(data)
 
 
+@routes.get("/api/analyses/{analysis_id}")
+@routes.jobs_api.get("/api/analyses/{analysis_id}")
+async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
+    """
+    Get a complete analysis document.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+
+    analysis_id = req.match_info["analysis_id"]
+
+    document = await db.analyses.find_one(analysis_id)
+
+    if document is None:
+        return not_found()
+
+    try:
+        iso = virtool.api.json.isoformat(document["updated_at"])
+    except KeyError:
+        iso = virtool.api.json.isoformat(document["created_at"])
+
+    if_modified_since = req.headers.get("If-Modified-Since")
+
+    if if_modified_since and if_modified_since == iso:
+        return virtool.api.response.not_modified()
+
+    if document.get("files"):
+        document["files"] = await virtool.analyses.utils.attach_analysis_files(pg, analysis_id)
+
+    sample = await db.samples.find_one(
+        {"_id": document["sample"]["id"]},
+        {"quality": False}
+    )
+
+    if not sample:
+        return bad_request("Parent sample does not exist")
+
+    read, _ = virtool.samples.utils.get_sample_rights(sample, req["client"])
+
+    if not read:
+        return insufficient_rights()
+
+    await virtool.subtractions.db.attach_subtraction(db, document)
+
+    if document["ready"]:
+        document = await virtool.analyses.format.format_analysis(req.app, document)
+
+    headers = {
+        "Cache-Control": "no-cache",
+        "Last-Modified": virtool.api.json.isoformat(document["created_at"])
+    }
+
+    return json_response(virtool.utils.base_processor(document), headers=headers)
+
+
 @routes.delete("/api/analyses/{analysis_id}")
+@routes.jobs_api.delete("/api/analyses/{analysis_id}")
 async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Remove an analysis document by its id.
@@ -168,6 +188,85 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
 
     return no_content()
+
+
+@routes.post("/api/analyses/{id}/files", permission="upload_file")
+async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
+    """
+    Upload a new analysis result file to the `analysis_files` SQL table and the `analyses` folder in the Virtool
+    data path.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+    analysis_id = req.match_info["id"]
+    analysis_format = req.query.get("format")
+
+    document = await db.analyses.find_one(analysis_id)
+
+    if document is None:
+        return not_found()
+
+    errors = virtool.uploads.utils.naive_validator(req)
+
+    if errors:
+        return invalid_query(errors)
+
+    name = req.query.get("name")
+
+    if analysis_format not in ANALYSIS_FORMATS:
+        return bad_request("Unsupported analysis file format")
+
+    analysis_file = await virtool.analyses.files.create_analysis_file(pg, analysis_id, analysis_format, name)
+
+    file_id = analysis_file["id"]
+
+    if file_id in document.get("files", []):
+        return conflict("File is already associated with analysis")
+
+    analysis_file_path = Path(req.app["settings"]["data_path"]) / "analyses" / analysis_file["name_on_disk"]
+
+    try:
+        size = await virtool.uploads.utils.naive_writer(req, analysis_file_path)
+    except asyncio.CancelledError:
+        logger.debug(f"Analysis file upload aborted: {file_id}")
+        await virtool.analyses.files.delete_analysis_file(pg, file_id)
+
+        return aiohttp.web.Response(status=499)
+
+    analysis_file = await virtool.uploads.db.finalize(pg, size, file_id, AnalysisFile)
+
+    await db.analyses.update_one({"_id": analysis_id}, {
+        "$push": {"files": file_id}
+    })
+
+    headers = {
+        "Location": f"/api/analyses/{analysis_id}/files/{file_id}"
+    }
+
+    return json_response(analysis_file, status=201, headers=headers)
+
+
+@routes.get("/api/analyses/{analysis_id}/files/{file_id}")
+async def download(req: aiohttp.web.Request) -> Union[aiohttp.web.FileResponse, aiohttp.web.Response]:
+    """
+    Download an analysis result file.
+
+    """
+    pg = req.app["pg"]
+    file_id = int(req.match_info["file_id"])
+
+    analysis_file = await virtool.analyses.files.get_analysis_file(pg, file_id)
+
+    if not analysis_file:
+        return not_found()
+
+    analysis_file_path = Path(req.app["settings"]["data_path"]) / "analyses" / analysis_file.name_on_disk
+
+    if not analysis_file_path.exists():
+        return not_found("Uploaded file not found at expected location")
+
+    return aiohttp.web.FileResponse(analysis_file_path)
 
 
 @routes.put("/api/analyses/{analysis_id}/{sequence_index}/blast")
@@ -242,3 +341,33 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     }
 
     return json_response(blast_data, headers=headers, status=201)
+
+
+@routes.jobs_api.patch("/api/analyses/{analysis_id}")
+@schema({"results": {"type": "dict", "required": True}})
+async def patch_analysis(req: aiohttp.web.Request):
+    """Sets the result for an analysis and marks it as ready."""
+    db: DB = req.app["db"]
+    analyses: Collection = db.analyses
+    analysis_id: str = req.match_info["analysis_id"]
+
+    analysis_document: Dict[str, Any] = await analyses.find_one({"_id": analysis_id})
+
+    if not analysis_document:
+        return not_found(f"There is no analysis with id {analysis_id}")
+
+    if "ready" in analysis_document and analysis_document["ready"]:
+        return conflict("There is already a result for this analysis.")
+
+    request_json = await req.json()
+
+    updated_analysis_document = await analyses.find_one_and_update({"_id": analysis_id}, {
+        "$set": {
+            "results": request_json["results"],
+            "ready": True
+        }
+    })
+
+    await recalculate_workflow_tags(db, analysis_document["sample"]["id"])
+
+    return json_response(base_processor(updated_analysis_document))

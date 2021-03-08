@@ -123,7 +123,6 @@ export const GET_LINKED_JOB = createRequestActionType("GET_LINKED_JOB");
 export const CANCEL_JOB = createRequestActionType("CANCEL_JOB");
 export const REMOVE_JOB = createRequestActionType("REMOVE_JOB");
 export const CLEAR_JOBS = createRequestActionType("CLEAR_JOBS");
-export const GET_RESOURCES = createRequestActionType("GET_RESOURCES");
 
 // OTU
 export const WS_INSERT_OTU = "WS_INSERT_OTU";
@@ -168,7 +167,7 @@ export const WS_UPDATE_REFERENCE = "WS_UPDATE_REFERENCE";
 export const WS_REMOVE_REFERENCE = "WS_REMOVE_REFERENCE";
 export const FIND_REFERENCES = createRequestActionType("FIND_REFERENCES");
 export const GET_REFERENCE = createRequestActionType("GET_REFERENCE");
-export const CREATE_REFERENCE = createRequestActionType("CREATE_REFERENCE");
+export const EMPTY_REFERENCE = createRequestActionType("EMPTY_REFERENCE");
 export const EDIT_REFERENCE = createRequestActionType("EDIT_REFERENCE");
 export const REMOVE_REFERENCE = createRequestActionType("REMOVE_REFERENCE");
 export const IMPORT_REFERENCE = createRequestActionType("IMPORT_REFERENCE");
@@ -227,3 +226,9 @@ export const REMOVE_USER = createRequestActionType("REMOVE_USER");
 export const WS_UPDATE_STATUS = "WS_UPDATE_STATUS";
 export const GET_SOFTWARE_UPDATES = createRequestActionType("GET_SOFTWARE_UPDATES");
 export const INSTALL_SOFTWARE_UPDATES = createRequestActionType("INSTALL_SOFTWARE_UPDATES");
+
+//Labels
+export const UPDATE_LABEL = createRequestActionType("UPDATE_LABEL");
+export const LIST_LABELS = createRequestActionType("LIST_LABELS");
+export const CREATE_LABEL = createRequestActionType("CREATE_LABEL");
+export const REMOVE_LABEL = createRequestActionType("REMOVE_LABEL");

@@ -1,44 +1,48 @@
 version: "3.1"
 services:
-    mongo: 
-        image: mongo:4.4
-        ports:
-            - "27017:27017"
-        volumes:
-            - vt_mongo_data:/data/db
-        logging:
-            driver: none
-    redis:
-        image: redis:6.0
-        ports:
-            - "6379:6379"
-        volumes:
-            - vt_redis_data:/data
-        logging:
-            driver: none
-    postgres:
-        image: postgres:13.1
-        ports:
-            - "5432:5432"
-        restart: always
-        environment:
-            POSTGRES_USER: virtool
-            POSTGRES_PASSWORD: virtool
-        volumes:
-            - vt_postgres_data:/var/lib/postgresql/data
-        logging:
-            driver: none
 
-    pgadmin4:
-        image: dpage/pgadmin4:4.29
-        environment:
-            PGADMIN_DEFAULT_EMAIL: dev@virtool.ca
-            PGADMIN_DEFAULT_PASSWORD: virtool
-        volumes:
-            - vt_pgadmin4_data:/var/lib/pgadmin4/data
-        depends_on: [postgres]
+  mongo:
+    image: mongo:4.4
+    ports:
+      - "27017:27017"
+    volumes:
+      - vt_mongo_data:/data/db
+    logging:
+      driver: none
+
+  redis:
+    image: redis:6.0
+    ports:
+      - "6379:6379"
+    volumes:
+      - vt_redis_data:/data
+    logging:
+      driver: none
+
+  postgres:
+    image: postgres:13.1
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      POSTGRES_USER: virtool
+      POSTGRES_PASSWORD: virtool
+    volumes:
+      - vt_postgres_data:/var/lib/postgresql/data
+    logging:
+      driver: none
+
+  pgadmin4:
+    image: dpage/pgadmin4:4.29
+    environment:
+      PGADMIN_DEFAULT_EMAIL: dev@virtool.ca
+      PGADMIN_DEFAULT_PASSWORD: virtool
+    volumes:
+      - vt_pgadmin4_data:/var/lib/pgadmin4/data
+    depends_on: [ postgres ]
+
 volumes:
-    vt_mongo_data:
-    vt_redis_data:
-    vt_postgres_data:
-    vt_pgadmin4_data:
+  vt_mongo_data:
+  vt_redis_data:
+  vt_postgres_data:
+  vt_pgadmin4_data:

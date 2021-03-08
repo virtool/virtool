@@ -13,151 +13,111 @@ exports[`<FirstUser /> should render 1`] = `
         Create an initial administrative user to start using Virtool.
       </p>
     </Box__BoxGroupHeader>
-    <form
+    <Formik
+      initialValues={
+        Object {
+          "password": "",
+          "username": "",
+        }
+      }
       onSubmit={[Function]}
     >
-      <Box__BoxGroupSection>
-        <InputGroup>
-          <Input__InputLabel>
-            Username
-          </Input__InputLabel>
-          <Input
-            name="username"
-            onChange={[Function]}
-            value="bob"
-          />
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Password
-          </Input__InputLabel>
-          <PasswordInput
-            name="password"
-            onChange={[Function]}
-            value="password"
-          />
-        </InputGroup>
-      </Box__BoxGroupSection>
-      <Container__WallDialogFooter>
-        <Button
-          color="blue"
-          disabled={false}
-          icon="user-plus"
-          tipPlacement="top"
-          type="submit"
-        >
-          Create User
-        </Button>
-      </Container__WallDialogFooter>
-    </form>
-  </Container__WallDialog>
-</Container__WallContainer>
-`;
-
-exports[`<FirstUser /> should render when "password" changed 1`] = `
-<Container__WallContainer>
-  <Container__WallDialog
-    size="lg"
-  >
-    <Box__BoxGroupHeader>
-      <h2>
-        Setup User
-      </h2>
-      <p>
-        Create an initial administrative user to start using Virtool.
-      </p>
-    </Box__BoxGroupHeader>
-    <form
-      onSubmit={[Function]}
-    >
-      <Box__BoxGroupSection>
-        <InputGroup>
-          <Input__InputLabel>
-            Username
-          </Input__InputLabel>
-          <Input
-            name="username"
-            onChange={[Function]}
-            value=""
-          />
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Password
-          </Input__InputLabel>
-          <PasswordInput
-            name="password"
-            onChange={[Function]}
-            value="password"
-          />
-        </InputGroup>
-      </Box__BoxGroupSection>
-      <Container__WallDialogFooter>
-        <Button
-          color="blue"
-          disabled={false}
-          icon="user-plus"
-          tipPlacement="top"
-          type="submit"
-        >
-          Create User
-        </Button>
-      </Container__WallDialogFooter>
-    </form>
-  </Container__WallDialog>
-</Container__WallContainer>
-`;
-
-exports[`<FirstUser /> should render when "username" changed 1`] = `
-<Container__WallContainer>
-  <Container__WallDialog
-    size="lg"
-  >
-    <Box__BoxGroupHeader>
-      <h2>
-        Setup User
-      </h2>
-      <p>
-        Create an initial administrative user to start using Virtool.
-      </p>
-    </Box__BoxGroupHeader>
-    <form
-      onSubmit={[Function]}
-    >
-      <Box__BoxGroupSection>
-        <InputGroup>
-          <Input__InputLabel>
-            Username
-          </Input__InputLabel>
-          <Input
-            name="username"
-            onChange={[Function]}
-            value="bob"
-          />
-        </InputGroup>
-        <InputGroup>
-          <Input__InputLabel>
-            Password
-          </Input__InputLabel>
-          <PasswordInput
-            name="password"
-            onChange={[Function]}
-            value=""
-          />
-        </InputGroup>
-      </Box__BoxGroupSection>
-      <Container__WallDialogFooter>
-        <Button
-          color="blue"
-          disabled={false}
-          icon="user-plus"
-          tipPlacement="top"
-          type="submit"
-        >
-          Create User
-        </Button>
-      </Container__WallDialogFooter>
-    </form>
+      <Form>
+        <Box__BoxGroupSection>
+          <InputGroup>
+            <Input__InputLabel>
+              Username
+            </Input__InputLabel>
+            <Field
+              as={
+                Object {
+                  "$$typeof": Symbol(react.forward_ref),
+                  "attrs": Array [],
+                  "componentStyle": e {
+                    "baseHash": 321885168,
+                    "baseStyle": undefined,
+                    "componentId": "Input-zhca9n-3",
+                    "isStatic": false,
+                    "rules": Array [
+                      "background-color:",
+                      [Function],
+                      ";border:1px solid ",
+                      [Function],
+                      ";border-radius:",
+                      [Function],
+                      ";box-shadow:inset 0 1px 1px rgba(0,0,0,0.075);display:block;font-size:",
+                      [Function],
+                      ";height:auto;outline:none;padding:8px 10px;position:relative;transition:border-color ease-in-out 150ms,box-shadow ease-in-out 150ms;width:100%;:focus{border-color:",
+                      [Function],
+                      ";box-shadow:0 0 0 2px ",
+                      [Function],
+                      ";}:not(select):read-only{background-color:",
+                      [Function],
+                      ";}",
+                    ],
+                    "staticRulesId": "",
+                  },
+                  "displayName": "Input",
+                  "foldedComponentIds": Array [],
+                  "render": [Function],
+                  "shouldForwardProp": undefined,
+                  "styledComponentId": "Input-zhca9n-3",
+                  "target": [Function],
+                  "toString": [Function],
+                  "warnTooManyClasses": [Function],
+                  "withComponent": [Function],
+                }
+              }
+              name="username"
+              type="text"
+            />
+            <Input__InputError
+              key="Password Error 1"
+            >
+              Password Error 1
+            </Input__InputError>
+            <Input__InputError
+              key="Password Error 2"
+            >
+              Password Error 2
+            </Input__InputError>
+          </InputGroup>
+          <InputGroup>
+            <Input__InputLabel>
+              Password
+            </Input__InputLabel>
+            <Field
+              as={[Function]}
+              name="password"
+            />
+            <Input__InputError
+              key="Username Error 1"
+            >
+              Username Error 1
+            </Input__InputError>
+            <Input__InputError
+              key="Username Error 2"
+            >
+              Username Error 2
+            </Input__InputError>
+          </InputGroup>
+        </Box__BoxGroupSection>
+        <Container__WallDialogFooter>
+          <Button
+            color="blue"
+            disabled={false}
+            icon="user-plus"
+            tipPlacement="top"
+            type="submit"
+          >
+            Create User
+          </Button>
+          <Input__InputError>
+            General Error
+          </Input__InputError>
+        </Container__WallDialogFooter>
+      </Form>
+    </Formik>
   </Container__WallDialog>
 </Container__WallContainer>
 `;

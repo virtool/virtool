@@ -14,6 +14,8 @@ from tests.fixtures.response import *
 from tests.fixtures.setup import *
 from tests.fixtures.users import *
 from tests.fixtures.otus import *
+from tests.fixtures.uploads import *
+from tests.fixtures.labels import *
 
 
 def pytest_addoption(parser):

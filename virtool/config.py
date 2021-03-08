@@ -15,6 +15,7 @@ import virtool.jobs.classes
 import virtool.jobs.job
 import virtool.jobs.run
 import virtool.jobs.runner
+import virtool.jobs_api.main
 import virtool.logs
 import virtool.redis
 import virtool.utils
@@ -249,65 +250,25 @@ def start_runner(ctx, job_list, mem, proc, temp_path):
     asyncio.get_event_loop().run_until_complete(virtool.jobs.run.run(config, virtool.jobs.runner.JobRunner))
 
 
-@cli.command("agent", help="Start an agent that runs multiple jobs")
+@cli.command("jobsAPI")
 @click.option(
-    "--job-list", "-l",
-    default=["jobs_lg", "jobs_sm"],
-    help="A Redis list key to pull job IDs from",
-    multiple=True
+    "--host",
+    default="localhost",
+    help="The host to listen on",
+    type=str
 )
 @click.option(
-    "--lg-mem",
-    default=1,
-    help="The maximum memory (GB) the runner may use"
-)
-@click.option(
-    "--lg-proc",
-    default=1,
-    help="The maximum memory (GB) the runner may use"
-)
-@click.option(
-    "--mem",
-    default=1,
-    help="The maximum memory (GB) the instance may use"
-)
-@click.option(
-    "--proc",
-    default=1,
-    help="The maximum number of processes the instance can use"
-)
-@click.option(
-    "--sm-mem",
-    default=1,
-    help="The maximum memory (GB) the runner may use"
-)
-@click.option(
-    "--sm-proc",
-    default=1,
-    help="The maximum memory (GB) the runner may use"
-)
-@click.option(
-    "--temp-path",
-    type=click.Path(),
-    help="The path to local directory for temporary files"
+    "--port",
+    default=9950,
+    help="The port to listen on",
+    type=int
 )
 @click.pass_context
-def start_agent(ctx, job_list, lg_mem, lg_proc, mem, proc, sm_mem, sm_proc, temp_path):
-    virtool.logs.configure_base_logger(ctx.obj["dev"], ctx.obj["verbose"])
-
-    config = {
-        **ctx.obj,
-        "job_list": job_list,
-        "lg_mem": lg_mem,
-        "lg_proc": lg_proc,
-        "mem": mem,
-        "proc": proc,
-        "sm_mem": sm_mem,
-        "sm_proc": sm_proc,
-        "temp_path": temp_path
-    }
-
-    validate_limits(config)
-
-    logger.info("Starting in agent mode")
-    asyncio.get_event_loop().run_until_complete(virtool.jobs.run.run(config, virtool.jobs.runner.JobAgent))
+def start_jobs_api(ctx, port, host):
+    """Start a Virtool Jobs API server"""
+    logger.info("Starting jobs API process")
+    asyncio.get_event_loop().run_until_complete(
+        virtool.jobs_api.main.run(
+            **dict(host=host, port=port, **ctx.obj)
+        )
+    )

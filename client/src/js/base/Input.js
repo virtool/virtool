@@ -60,6 +60,7 @@ export class UnstyledInput extends React.Component {
                 autoFocus={this.props.autoFocus}
                 children={this.props.children}
                 className={this.props.className}
+                id={this.props.id}
                 max={this.props.max}
                 min={this.props.min}
                 name={this.props.name}
@@ -131,7 +132,7 @@ export const PasswordInput = props => {
     return (
         <InputContainer align="right">
             <Input type={show ? "text" : "password"} {...props} />
-            <InputIcon name={show ? "eye-slash" : "eye"} onClick={() => setShow(!show)} />
+            <InputIcon name={show ? "eye-slash" : "eye"} onClick={() => setShow(prevShow => !prevShow)} />
         </InputContainer>
     );
 };

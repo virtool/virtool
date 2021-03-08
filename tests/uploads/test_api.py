@@ -1,68 +1,193 @@
 import os
+from pathlib import Path
+
 import pytest
-import sys
+
+from virtool.uploads.api import UPLOAD_TYPES
+from virtool.uploads.models import Upload
+
+
+@pytest.fixture
+def files(tmpdir):
+    tmpdir.mkdir("files")
+
+    path = Path.cwd() / "tests" / "test_files" / "test.fq.gz"
+
+    files = {
+        "file": open(path, "rb")
+    }
+
+    return files
 
 
 class TestUpload:
 
-    @pytest.mark.parametrize("file_type", ["reference", "reads", "hmm", "subtraction"])
-    async def test(self, file_type, tmpdir, spawn_client, static_time, test_random_alphanumeric):
+    @pytest.mark.parametrize("upload_type", UPLOAD_TYPES)
+    async def test(self, files, upload_type, tmpdir, snapshot, spawn_client, static_time, pg_session):
+        """
+        Test `POST /api/uploads` to assure a file can be uploaded and that it properly updates the db.
+
+        """
         client = await spawn_client(authorize=True, permissions=["upload_file"])
 
         client.app["settings"]["data_path"] = str(tmpdir)
 
-        # This is where the file should end up.
-        files_dir = tmpdir.mkdir("files")
-
-        # This is the path to the file to be uploaded.
-        path = os.path.join(sys.path[0], "tests", "test_files", "test.fq.gz")
-
-        files = {
-            "file": open(path, "rb")
-        }
-
-        resp = await client.post_form("/upload/{}?name=Test.fq.gz".format(file_type), data=files)
+        if upload_type:
+            resp = await client.post_form(f"/api/uploads?type={upload_type}&name=Test.fq.gz", data=files)
+        else:
+            resp = await client.post_form("/api/uploads?name=Test.fq.gz", data=files)
 
         assert resp.status == 201
 
-        assert os.listdir(str(files_dir)) == ["{}-Test.fq.gz".format(test_random_alphanumeric.last_choice)]
+        snapshot.assert_match(await resp.json())
 
-        assert await resp.json() == {
-            "name": "Test.fq.gz",
-            "type": file_type,
-            "ready": False,
-            "reserved": False,
-            "uploaded_at": static_time.iso,
-            "id": "{}-Test.fq.gz".format(test_random_alphanumeric.last_choice),
-            "user": {
-                "id": "test"
-            }
-        }
+        assert os.listdir(tmpdir / "files") == ["1-Test.fq.gz"]
 
-    async def test_invalid_query(self, spawn_client, resp_is):
+    async def test_invalid_request(self, files, spawn_client, resp_is):
+        """
+        Test `POST /api/uploads` to assure it properly rejects an invalid request.
+
+        """
         client = await spawn_client(authorize=True, permissions=["upload_file"])
 
-        path = os.path.join(sys.path[0], "tests", "test_files", "test.fq.gz")
-
-        files = {
-            "file": open(path, "rb")
-        }
-
-        resp = await client.post_form("/upload/reads", data=files)
+        resp = await client.post_form("/api/uploads", data=files)
 
         assert await resp_is.invalid_query(resp, {
             "name": ["required field"]
         })
 
-    async def test_not_found(self, spawn_client, resp_is):
+    async def test_bad_type(self, files, spawn_client, resp_is):
+        """
+        Test `POST /api/uploads` to assure it properly rejects an invalid upload type.
+
+        """
         client = await spawn_client(authorize=True, permissions=["upload_file"])
 
-        path = os.path.join(sys.path[0], "tests", "test_files", "test.fq.gz")
+        resp = await client.post_form("/api/uploads?type=foobar&name=Test.fq.gz", data=files)
 
-        files = {
-            "file": open(path, "rb")
-        }
+        assert await resp_is.bad_request(resp, message="Unsupported upload type")
 
-        resp = await client.post_form("/uploads/foobar", data=files)
+
+class TestFind:
+    @pytest.mark.parametrize("type_", ["reads", "reference", None])
+    @pytest.mark.parametrize("user", ["danny", "lester", "jake"])
+    async def test(self, spawn_client, resp_is, snapshot, type_, user, test_uploads):
+        """
+        Test `GET /api/uploads` to assure that it returns the correct `upload` documents.
+
+        """
+        client = await spawn_client(authorize=True, administrator=True)
+
+        if type_:
+            resp = await client.get(f"/api/uploads?type={type_}&user={user}")
+        else:
+            resp = await client.get(f"/api/uploads?user={user}")
+
+        assert resp.status == 200
+
+        snapshot.assert_match(await resp.json())
+
+
+class TestGet:
+    @pytest.mark.parametrize("exists", [True, False])
+    async def test(self, exists, files, resp_is, spawn_client, tmpdir):
+        """
+        Test `GET /api/uploads/:id` to assure that it lets you download a file.
+
+        """
+        client = await spawn_client(authorize=True, administrator=True)
+
+        client.app["settings"]["data_path"] = str(tmpdir)
+
+        if exists:
+            await client.post_form("/api/uploads?name=test.fq.gz", data=files)
+
+        resp = await client.get("/api/uploads/1")
+
+        if exists:
+            assert resp.status == 200
+        else:
+            assert resp.status == 404
+
+    @pytest.mark.parametrize("exists", [True, False])
+    async def test_upload_removed(self, exists, resp_is, spawn_client, pg_session, tmpdir):
+        """
+        Test `GET /api/uploads/:id` to assure that it doesn't let you download a file that has been removed.
+
+        """
+        client = await spawn_client(authorize=True, administrator=True)
+
+        client.app["settings"]["data_path"] = str(tmpdir)
+
+        async with pg_session as session:
+            session.add(Upload(name_on_disk="1-test.fq.gz", removed=exists))
+
+            await session.commit()
+
+        resp = await client.get("/api/uploads/1")
 
         assert resp.status == 404
+
+
+class TestDelete:
+    async def test(self, files, spawn_client, snapshot, tmpdir):
+        """
+        Test `DELETE /api/uploads/:id to assure that it properly deletes an existing `upload` document and file.
+
+        """
+        client = await spawn_client(authorize=True, administrator=True)
+
+        client.app["settings"]["data_path"] = str(tmpdir)
+
+        await client.post_form("/api/uploads?name=test.fq.gz", data=files)
+
+        resp = await client.delete("/api/uploads/1")
+        assert resp.status == 204
+
+        resp = await client.get("api/uploads/1")
+        assert resp.status == 404
+
+    @pytest.mark.parametrize("exists", [True, False])
+    async def test_already_removed(self, exists, spawn_client, tmpdir, pg_session):
+        """
+        Test `DELETE /api/uploads/:id to assure that it doesn't try to delete a file that has already been removed.
+
+        """
+        client = await spawn_client(authorize=True, administrator=True)
+
+        client.app["settings"]["data_path"] = str(tmpdir)
+
+        async with pg_session as session:
+            session.add(Upload(name_on_disk="1-test.fq.gz", removed=exists))
+
+            await session.commit()
+
+        resp = await client.delete("/api/uploads/1")
+
+        if exists:
+            assert resp.status == 404
+        else:
+            assert resp.status == 204
+
+    @pytest.mark.parametrize("exists", [True, False])
+    async def test_record_dne(self, exists, spawn_client, pg_session, tmpdir):
+        """
+        Test `DELETE /api/uploads/:id to assure that it doesn't try to delete a file that corresponds to a `upload`
+        record that does not exist.
+
+        """
+        client = await spawn_client(authorize=True, administrator=True)
+
+        client.app["settings"]["data_path"] = str(tmpdir)
+
+        if exists:
+            async with pg_session as session:
+                session.add(Upload(name_on_disk="1-test.fq.gz"))
+                await session.commit()
+
+        resp = await client.delete("/api/uploads/1")
+
+        if exists:
+            assert resp.status == 204
+        else:
+            assert resp.status == 404

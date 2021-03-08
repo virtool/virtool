@@ -4,9 +4,14 @@ Work with analyses in the database.
 """
 import asyncio
 import os
-from typing import Tuple, Optional, Any, Dict
+import shutil
+from typing import Any, Dict, Optional, Tuple
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.analyses.utils
+import virtool.analyses.files
 import virtool.bio
 import virtool.db.utils
 import virtool.history.db
@@ -14,8 +19,13 @@ import virtool.indexes.db
 import virtool.jobs.db
 import virtool.otus.utils
 import virtool.samples.db
+import virtool.tasks.task
 import virtool.types
 import virtool.utils
+
+from virtool.analyses.models import AnalysisFile
+from virtool.jobs.utils import JobRights
+from virtool.types import App
 
 PROJECTION = (
     "_id",
@@ -23,6 +33,7 @@ PROJECTION = (
     "created_at",
     "index",
     "job",
+    "files",
     "ready",
     "reference",
     "sample",
@@ -30,6 +41,76 @@ PROJECTION = (
     "updated_at",
     "user"
 )
+
+
+class StoreNuvsFilesTask(virtool.tasks.task.Task):
+
+    def __init__(self, app: App, task_id: str):
+        super().__init__(app, task_id)
+
+        self.steps = [
+            self.store_nuvs_files,
+            self.remove_directory
+        ]
+
+        self.target_files = ("hmm.tsv", "assembly.fa", "orfs.fa", "unmapped_hosts.fq", "unmapped_otus.fq")
+        self.nuvs_directory = []
+
+    async def store_nuvs_files(self):
+        """
+        Move existing NuVs analysis files to `<data_path>`/analyses/:id
+
+        """
+        db = self.db
+        settings = self.app["settings"]
+
+        async for analysis in db.analyses.find({"workflow": "nuvs"}):
+            analysis_id = analysis["_id"]
+            sample_id = analysis["sample"]["id"]
+
+            path = virtool.analyses.utils.join_analysis_path(settings["data_path"], analysis_id, sample_id)
+            target_path = os.path.join(settings["data_path"], "analyses", analysis_id)
+
+            async with AsyncSession(self.app["pg"]) as session:
+                exists = (await session.execute(select(AnalysisFile).filter_by(analysis=analysis_id))).scalar()
+
+            if os.path.isdir(path) and not exists:
+                try:
+                    await self.app["run_in_thread"](os.makedirs, target_path)
+                except FileExistsError:
+                    pass
+
+                analysis_files = list()
+
+                for filename in os.listdir(path):
+                    if filename in self.target_files:
+                        analysis_files.append(filename)
+
+                        await virtool.analyses.utils.move_nuvs_files(filename, self.run_in_thread, path, target_path)
+
+                await virtool.analyses.files.create_nuvs_analysis_files(
+                    self.app["pg"],
+                    analysis_id,
+                    analysis_files,
+                    target_path
+                )
+
+    async def remove_directory(self):
+        """
+        Remove `<data_path>`/samples/:id/analysis/:id directory after files have been preserved in
+        `<data_path>`/analyses/:id>.
+
+        """
+        settings = self.app["settings"]
+
+        async for analysis in self.db.analyses.find({"workflow": "nuvs"}):
+            analysis_id = analysis["_id"]
+            sample_id = analysis["sample"]["id"]
+
+            path = virtool.analyses.utils.join_analysis_path(settings["data_path"], analysis_id, sample_id)
+
+            if os.path.isdir(os.path.join(settings["data_path"], "analyses", analysis_id)):
+                await self.app["run_in_thread"](shutil.rmtree, path, True)
 
 
 class BLAST:
@@ -151,6 +232,7 @@ async def create(
         "job": {
             "id": job_id
         },
+        "files": [],
         "workflow": workflow,
         "sample": {
             "id": sample_id
@@ -181,12 +263,23 @@ async def create(
 
     await db.analyses.insert_one(document)
 
+    rights = JobRights()
+
+    rights.analyses.can_read(analysis_id)
+    rights.analyses.can_modify(analysis_id)
+    rights.analyses.can_remove(analysis_id)
+    rights.samples.can_read(sample_id)
+    rights.indexes.can_read(index_id)
+    rights.references.can_read(ref_id)
+    rights.subtractions.can_read(subtraction_id)
+
     # Create job document.
     job = await virtool.jobs.db.create(
         db,
         document["workflow"],
         task_args,
-        user_id
+        user_id,
+        rights
     )
 
     await app["jobs"].enqueue(job["_id"])

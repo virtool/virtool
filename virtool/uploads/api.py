@@ -1,111 +1,143 @@
 import asyncio
 import logging
 import os
+from pathlib import Path
 
-import aiofiles
 import aiohttp.web
-from cerberus import Validator
 
 import virtool.db.utils
-import virtool.files.db
 import virtool.http.routes
 import virtool.samples.db
+import virtool.uploads.db
+import virtool.uploads.utils
 import virtool.utils
-from virtool.api.response import invalid_query, json_response, not_found
+from virtool.api.response import invalid_query, json_response, bad_request, not_found
+from virtool.uploads.models import Upload, UPLOAD_TYPES
 
 logger = logging.getLogger("uploads")
-
-CHUNK_SIZE = 4096
-
-FILE_TYPES = [
-    "reference",
-    "reads",
-    "hmm",
-    "subtraction"
-]
-
 
 routes = virtool.http.routes.Routes()
 
 
-def naive_validator(req):
-    v = Validator({
-        "name": {"type": "string", "required": True}
-    }, allow_unknown=True)
+@routes.post("/api/uploads", permission="upload_file")
+async def create(req):
+    """
+    Upload a new file and add it to the `uploads` SQL table.
 
-    if not v.validate(dict(req.query)):
-        return v.errors
+    """
+    pg = req.app["pg"]
+    upload_type = req.query.get("type")
 
-
-async def naive_writer(req, file_id):
-    reader = await req.multipart()
-    file = await reader.next()
-
-    file_path = os.path.join(req.app["settings"]["data_path"], "files", file_id)
-
-    size = 0
-
-    async with aiofiles.open(file_path, "wb") as handle:
-        while True:
-            chunk = await file.read_chunk(CHUNK_SIZE)
-            if not chunk:
-                break
-            size += len(chunk)
-            await handle.write(chunk)
-
-    return size
-
-
-@routes.post("/upload/{file_type}", permission="upload_file")
-async def upload(req):
-    db = req.app["db"]
-
-    file_type = req.match_info["file_type"]
-
-    if file_type not in FILE_TYPES:
-        return not_found()
-
-    errors = naive_validator(req)
+    errors = virtool.uploads.utils.naive_validator(req)
 
     if errors:
         return invalid_query(errors)
 
-    filename = req.query["name"]
+    name = req.query["name"]
 
-    document = await virtool.files.db.create(
-        db,
-        filename,
-        file_type,
-        user_id=req["client"].user_id
-    )
+    if upload_type not in UPLOAD_TYPES:
+        return bad_request("Unsupported upload type")
 
-    file_id = document["id"]
+    upload = await virtool.uploads.db.create(pg, name, upload_type, user=req["client"].user_id)
+
+    upload_id = upload["id"]
+
+    file_path = Path(req.app["settings"]["data_path"]) / "files" / upload["name_on_disk"]
 
     try:
-        size = await naive_writer(req, file_id)
-
-        await db.files.update_one({"_id": file_id}, {
-            "$set": {
-                "size": size,
-                "ready": True
-            }
-        })
-
-        logger.debug(f"Upload succeeded: {file_id}")
-
-        headers = {
-            "Location": f"/api/files/{file_id}"
-        }
-
-        return json_response(document, status=201, headers=headers)
+        size = await virtool.uploads.utils.naive_writer(req, file_path)
     except asyncio.CancelledError:
-        logger.debug(f"Upload aborted: {file_id}")
-
-        await virtool.files.db.remove(
-            db,
-            req.app["settings"],
-            req.app["run_in_thread"],
-            file_id
-        )
+        logger.debug(f"Upload aborted: {upload_id}")
+        await virtool.uploads.db.delete(pg, upload_id)
 
         return aiohttp.web.Response(status=499)
+
+    upload = await virtool.uploads.db.finalize(pg, size, upload_id, Upload)
+
+    if not upload:
+        await req.app["run_in_thread"](os.remove, file_path)
+
+        return not_found("Row not found in table after file upload")
+
+    logger.debug(f"Upload succeeded: {upload_id}")
+
+    headers = {
+        "Location": f"/api/uploads/{upload_id}"
+    }
+
+    return json_response(upload, status=201, headers=headers)
+
+
+@routes.get("/api/uploads")
+async def find(req):
+    """
+    Get a list of upload documents from the `uploads` SQL table.
+
+    """
+    pg = req.app["pg"]
+    filters = list()
+    user = req.query.get("user")
+    upload_type = req.query.get("type")
+    response = dict()
+
+    if user:
+        filters.append(Upload.user == user)
+
+    if upload_type:
+        filters.append(Upload.type == upload_type)
+
+    uploads = await virtool.uploads.db.find(pg, user, upload_type)
+
+    response["documents"] = uploads
+
+    return json_response(response)
+
+
+@routes.get("/api/uploads/{id}")
+async def get(req):
+    """
+    Downloads a file that corresponds to a row `id` in the `uploads` SQL table.
+
+    """
+    pg = req.app["pg"]
+    upload_id = int(req.match_info["id"])
+
+    upload = await virtool.uploads.db.get(pg, upload_id)
+
+    if not upload:
+        return not_found()
+
+    # check if the file has been removed as a result of a `DELETE` request
+
+    upload_path = Path(req.app["settings"]["data_path"]) / "files" / upload.name_on_disk
+
+    # check if the file has been manually removed by the user
+    if not upload_path.exists():
+        return not_found("Uploaded file not found at expected location")
+
+    return aiohttp.web.FileResponse(upload_path)
+
+
+@routes.delete("/api/uploads/{id}", permission="remove_file")
+async def delete(req):
+    """
+    Set a row's `removed` and `removed_at` attribute in the `uploads` SQL table and delete its associated local file.
+
+    """
+    pg = req.app["pg"]
+    upload_id = int(req.match_info["id"])
+
+    upload = await virtool.uploads.db.delete(pg, upload_id)
+
+    if not upload:
+        return not_found()
+
+    try:
+        await req.app["run_in_thread"](
+            os.remove,
+            Path(req.app["settings"]["data_path"]) / "files" / upload["name_on_disk"]
+        )
+    except FileNotFoundError:
+        pass
+
+    return aiohttp.web.Response(status=204)

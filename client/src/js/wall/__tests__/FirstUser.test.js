@@ -1,54 +1,58 @@
-import { Input, PasswordInput } from "../../base";
 import { FirstUser, mapDispatchToProps } from "../FirstUser";
+import { waitFor, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 describe("<FirstUser />", () => {
     let props;
+    let errorMessages;
 
     beforeEach(() => {
+        errorMessages = {
+            errors: {
+                generalError: "General Error",
+                usernameErrors: ["Password Error 1", "Password Error 2"],
+                passwordErrors: ["Username Error 1", "Username Error 2"]
+            }
+        };
         props = {
-            onSubmit: jest.fn()
+            onSubmit: jest.fn(),
+            ...errorMessages
         };
     });
 
     it("should render", () => {
         const wrapper = shallow(<FirstUser {...props} />);
-        wrapper.setState({
-            username: "bob",
-            password: "password"
-        });
+
         expect(wrapper).toMatchSnapshot();
     });
 
     it.each(["username", "password"])("should render when %p changed", name => {
-        const e = {
-            target: {
-                name,
-                value: name === "username" ? "bob" : "password"
-            }
-        };
+        const value = name === "username" ? "bob" : "password";
 
-        const wrapper = shallow(<FirstUser {...props} />);
+        renderWithProviders(<FirstUser {...props} />);
 
-        wrapper.find(name === "username" ? Input : PasswordInput).simulate("change", e);
-
-        expect(wrapper).toMatchSnapshot();
+        userEvent.type(screen.getByRole("textbox", name), value);
+        expect(screen.getByRole("textbox", name).value).toBe(value);
     });
 
-    it("should call onSubmit when form is submitted", () => {
+    it("should call onSubmit when form is submitted", async () => {
         props = {
-            onSubmit: jest.fn()
+            onSubmit: jest.fn(),
+            ...errorMessages
         };
-        const wrapper = shallow(<FirstUser {...props} />);
-        wrapper.setState({
-            username: "fee",
-            password: "baz"
-        });
-        const e = {
-            preventDefault: jest.fn()
-        };
-        wrapper.find("form").simulate("submit", e);
-        expect(e.preventDefault).toHaveBeenCalled();
-        expect(props.onSubmit).toHaveBeenCalledWith("fee", "baz");
+        const usernameInput = "Username";
+        const passwordInput = "Password";
+
+        renderWithProviders(<FirstUser {...props} />);
+
+        userEvent.type(screen.getByRole("textbox", /username/i), usernameInput);
+        userEvent.type(screen.getByRole("textbox", /password/i), passwordInput);
+        userEvent.click(screen.getByRole("button", { name: /Create User/i }));
+
+        // Await must be used to allow the Formik component to call onSubmit asynchronously
+        await waitFor(() =>
+            expect(props.onSubmit).toHaveBeenCalledWith(usernameInput + passwordInput, expect.anything())
+        );
     });
 });
 

@@ -191,7 +191,7 @@ class TestCreateAPIKey:
         Test that creation of an API key functions properly. Check that different permission inputs work.
 
         """
-        mocker.patch("virtool.account.utils.generate_api_key", return_value=("raw_key", "hashed_key"))
+        mocker.patch("virtool.utils.generate_key", return_value=("raw_key", "hashed_key"))
 
         client = await spawn_client(authorize=True)
 
@@ -247,7 +247,7 @@ class TestCreateAPIKey:
         Test that uniqueness is ensured on the ``id`` field.
 
         """
-        mocker.patch("virtool.account.utils.generate_api_key", return_value=("raw_key", "hashed_key"))
+        mocker.patch("virtool.utils.generate_key", return_value=("raw_key", "hashed_key"))
 
         client = await spawn_client(authorize=True)
 
@@ -355,7 +355,7 @@ class TestUpdateAPIKey:
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_remove_api_key(error, spawn_client, resp_is):
+async def test_remove_api_key(error, spawn_client, assert_resp_is):
     client = await spawn_client(authorize=True)
 
     if not error:
@@ -371,14 +371,14 @@ async def test_remove_api_key(error, spawn_client, resp_is):
     resp = await client.delete("/api/account/keys/foobar_0")
 
     if error:
-        assert await resp_is.not_found(resp)
+        await assert_resp_is.not_found(resp)
         return
 
-    assert await resp_is.no_content(resp)
+    await assert_resp_is.no_content(resp)
     assert await client.db.keys.count_documents({}) == 0
 
 
-async def test_remove_all_api_keys(spawn_client, resp_is):
+async def test_remove_all_api_keys(spawn_client, assert_resp_is):
     client = await spawn_client(authorize=True)
 
     await client.db.keys.insert_many([
@@ -407,7 +407,7 @@ async def test_remove_all_api_keys(spawn_client, resp_is):
 
     resp = await client.delete("/api/account/keys")
 
-    assert await resp_is.no_content(resp)
+    assert resp.status == 204
 
     assert await client.db.keys.find().to_list(None) == [{
         "_id": "baz",
@@ -468,7 +468,7 @@ async def test_requires_authorization(method, path, spawn_client):
         resp = await client.delete(path)
 
     assert await resp.json() == {
-        "id": "requires_authorization",
+        "id": "unauthorized",
         "message": "Requires authorization"
     }
 

@@ -1,88 +1,40 @@
 import json
+
+import aiohttp
 import pytest
+from aiohttp.web_routedef import RouteTableDef
 
 import virtool.app
+import virtool.jobs_api.main
 import virtool.users.utils
+from virtool.utils import hash_key
 
 
-class VTClient:
+class VirtoolTestClient:
 
-    def __init__(
-            self,
-            test_client,
-            db_connection_string,
-            postgres_connection_string,
-            db_name,
-            create_user
-    ):
+    def __init__(self, test_client):
         self._test_client = test_client
-        self._create_user = create_user
-        self._db_connection_string = db_connection_string
-        self._postgres_connection_string = postgres_connection_string
-        self._db_name = db_name
-        self._client = None
-        self.settings = None
-        self.server = None
-        self.app = None
-        self.db = None
-        self.pg = None
 
-    async def connect(
-            self,
-            authorize=False,
-            administrator=False,
-            dev=False,
-            groups=None,
-            permissions=None
-    ):
-        app = virtool.app.create_app({
-            "db_connection_string": self._db_connection_string,
-            "dev": dev,
-            "postgres_connection_string": self._postgres_connection_string,
-            "db_name": self._db_name,
-            "enable_api": True,
-            "force_version": "v0.0.0",
-            "no_client": True,
-            "no_check_db": True,
-            "no_check_files": True,
-            "no_file_manager": True,
-            "no_fetching": True,
-            "no_job_interface": True,
-            "no_sentry": True
-        })
-
-        self._client = await self._test_client(app)
-
-        self._client.session.cookie_jar.update_cookies({
-            "session_id": "foobar"
-        })
-
-        self.server = self._client.server
+        self.server = self._test_client.server
         self.app = self.server.app
-        self.db = self.app.get("db")
-        self.pg = self.app.get("postgres")
+        self.settings = self.app["settings"]
+        self.db = self.app["db"]
 
-        if authorize:
-            user_document = self._create_user("test", administrator, groups, permissions)
+        self.auth = self._test_client.session.auth
+        self.cookie_jar = self._test_client.session.cookie_jar
 
-            await self.db.users.insert_one(user_document)
+    def get_cookie(self, key):
+        for cookie in self._test_client.session.cookie_jar:
+            if cookie.key == key:
+                return cookie.value
 
-            await self.db.sessions.insert_one({
-                "_id": "foobar",
-                "ip": "127.0.0.1",
-                "administrator": administrator,
-                "user_agent": "Python/3.6 aiohttp/3.4.4",
-                "user": {
-                    "id": "test"
-                },
-                "groups": user_document["groups"],
-                "permissions": user_document["permissions"]
-            })
+        return None
 
-        return self
+    def has_cookie(self, key, value):
+        return self.get_cookie(key) == value
 
     async def get(self, url, params=None):
-        return await self._client.get(url, params=params)
+        return await self._test_client.get(url, params=params)
 
     async def post(self, url, data=None):
         payload = None
@@ -90,40 +42,153 @@ class VTClient:
         if data:
             payload = json.dumps(data)
 
-        return await self._client.post(url, data=payload)
+        return await self._test_client.post(url, data=payload)
 
     async def post_form(self, url, data):
-        return await self._client.post(url, data=data)
+        return await self._test_client.post(url, data=data)
 
     async def patch(self, url, data):
-        return await self._client.patch(url, data=json.dumps(data))
+        return await self._test_client.patch(url, data=json.dumps(data))
 
     async def put(self, url, data):
-        return await self._client.put(url, data=json.dumps(data))
+        return await self._test_client.put(url, data=json.dumps(data))
 
     async def delete(self, url):
-        return await self._client.delete(url)
+        return await self._test_client.delete(url)
+
+
+@pytest.fixture
+def create_app(
+        create_user,
+        dbi,
+        pg_connection_string,
+        redis_connection_string,
+        test_db_connection_string,
+        test_db_name,
+):
+    def _create_app(
+            dev=False,
+    ):
+        return virtool.app.create_app({
+            "dev": dev,
+            "db_connection_string": test_db_connection_string,
+            "redis_connection_string": redis_connection_string,
+            "postgres_connection_string": pg_connection_string,
+            "db_name": test_db_name,
+            "force_version": "v0.0.0",
+            "no_client": True,
+            "no_check_db": True,
+            "no_check_files": True,
+            "no_fetching": True,
+            "no_job_interface": False,
+            "no_sentry": True
+        })
+
+    return _create_app
 
 
 @pytest.fixture
 def spawn_client(
-        loop,
-        pg_connection_string,
-        pg_engine,
+        pg,
         request,
         aiohttp_client,
         test_motor,
-        test_db_connection_string,
-        test_db_name,
+        dbi,
         pg_session,
+        create_app,
         create_user
 ):
-    client = VTClient(
+    async def func(
+            auth=None,
+            authorize=False,
+            administrator=False,
+            dev=False,
+            enable_api=False,
+            groups=None,
+            permissions=None
+    ):
+        app = create_app(dev)
+
+        user_document = create_user("test", administrator, groups, permissions)
+        await dbi.users.insert_one(user_document)
+
+        if authorize:
+            session_token = "bar"
+
+            await dbi.sessions.insert_one({
+                "_id": "foobar",
+                "ip": "127.0.0.1",
+                "administrator": administrator,
+                "force_reset": False,
+                "groups": user_document["groups"],
+                "permissions": user_document["permissions"],
+                "token": hash_key(session_token),
+                "user_agent": "Python/3.6 aiohttp/3.4.4",
+                "user": {
+                    "id": "test"
+                }
+            })
+
+            cookies = {
+                "session_id": "foobar",
+                "session_token": "bar"
+            }
+        else:
+            cookies = {
+                "session_id": "dne"
+            }
+
+        test_client = await aiohttp_client(app, auth=auth, cookies=cookies)
+
+        return VirtoolTestClient(test_client)
+
+    return func
+
+
+@pytest.fixture
+def spawn_job_client(
+        dbi,
         aiohttp_client,
         test_db_connection_string,
+        redis_connection_string,
         pg_connection_string,
-        test_db_name,
-        create_user
-    )
+        test_db_name
+):
+    """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
 
-    return client.connect
+    async def _spawn_job_client(
+            authorize: bool = False,
+            dev: bool = False,
+            add_route_table: RouteTableDef = None,
+    ):
+        # Create a test job to use for authentication.
+        if authorize:
+            job_id, key = "test_job", "test_key"
+            await dbi.jobs.insert_one({
+                "_id": job_id,
+                "key": hash_key(key),
+            })
+
+            # Create Basic Authentication header.
+            auth = aiohttp.BasicAuth(login=f"job-{job_id}", password=key)
+        else:
+            auth = None
+
+        app = await virtool.jobs_api.main.create_app(
+            db_connection_string=test_db_connection_string,
+            db_name=test_db_name,
+            dev=dev,
+            postgres_connection_string=pg_connection_string,
+            redis_connection_string=redis_connection_string,
+        )
+
+        if add_route_table:
+            app.add_routes(add_route_table)
+
+        client = await aiohttp_client(app, auth=auth)
+        client.db = dbi
+        client.settings = app["config"]
+
+        return client
+
+    return _spawn_job_client

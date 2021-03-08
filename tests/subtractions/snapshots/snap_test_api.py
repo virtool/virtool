@@ -58,3 +58,47 @@ snapshots['test_edit[uvloop-data3] db'] = {
     'name': 'Bar',
     'nickname': 'Bar Subtraction'
 }
+
+snapshots['test_upload[uvloop-None] 1'] = {
+    'id': 1,
+    'name': 'subtraction.1.bt2',
+    'size': 12,
+    'subtraction': 'foo',
+    'type': 'bowtie2'
+}
+
+snapshots['test_upload[uvloop-404] 1'] = {
+    'id': 1,
+    'name': 'subtraction.1.bt2',
+    'size': 12,
+    'subtraction': 'foo',
+    'type': 'bowtie2'
+}
+
+snapshots['test_finalize_subtraction[uvloop-None] 1'] = {
+    'gc': {
+        'a': 0.319,
+        'c': 0.18,
+        'g': 0.18,
+        'n': 0.002,
+        't': 0.319
+    },
+    'id': 'foo',
+    'name': 'Foo',
+    'nickname': 'Foo Subtraction',
+    'ready': True
+}
+
+snapshots['test_job_remove[uvloop-True-False] 1'] = {
+    '_id': 'foo',
+    'deleted': True,
+    'name': 'Foo',
+    'nickname': 'Foo Subtraction',
+    'ready': False
+}
+
+snapshots['test_job_remove[uvloop-True-False] 2'] = {
+    '_id': 'test',
+    'name': 'Test',
+    'subtraction': None
+}

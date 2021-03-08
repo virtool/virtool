@@ -1,4 +1,8 @@
 import asyncio
+import logging
+from pathlib import Path
+
+import aiohttp.web
 
 import virtool.api.utils
 import virtool.db.utils
@@ -6,10 +10,19 @@ import virtool.http.routes
 import virtool.jobs.db
 import virtool.samples.utils
 import virtool.subtractions.db
+import virtool.subtractions.files
 import virtool.subtractions.utils
+import virtool.uploads.db
+import virtool.uploads.utils
 import virtool.utils
 import virtool.validators
-from virtool.api.response import bad_request, json_response, no_content, not_found
+from virtool.api.response import bad_request, conflict, invalid_query, json_response, no_content, not_found
+from virtool.http.schema import schema
+from virtool.jobs.utils import JobRights
+from virtool.subtractions.models import SubtractionFile
+from virtool.subtractions.utils import FILES
+
+logger = logging.getLogger("subtractions")
 
 routes = virtool.http.routes.Routes()
 
@@ -62,6 +75,7 @@ async def find(req):
 
 
 @routes.get("/api/subtractions/{subtraction_id}")
+@routes.jobs_api.get("/api/subtractions/{subtraction_id}")
 async def get(req):
     """
     Get a complete host document.
@@ -81,7 +95,8 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.post("/api/subtractions", permission="modify_subtraction", schema={
+@routes.post("/api/subtractions", permission="modify_subtraction")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -105,7 +120,7 @@ async def create(req):
     """
     db = req.app["db"]
     data = req["data"]
-    
+
     file_id = data["file_id"]
 
     file = await db.files.find_one(file_id, ["name"])
@@ -145,11 +160,19 @@ async def create(req):
         "file_id": file_id
     }
 
+    rights = JobRights()
+
+    rights.subtractions.can_read(subtraction_id)
+    rights.subtractions.can_modify(subtraction_id)
+    rights.subtractions.can_remove(subtraction_id)
+    rights.uploads.can_read(file_id)
+
     await virtool.jobs.db.create(
         db,
         "create_subtraction",
         task_args,
         user_id,
+        rights,
         job_id=job_id
     )
 
@@ -162,7 +185,66 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 
 
-@routes.patch("/api/subtractions/{subtraction_id}", permission="modify_subtraction", schema={
+@routes.jobs_api.post("/api/subtractions/{subtraction_id}/files")
+async def upload(req):
+    """
+    Upload a new subtraction file to the `subtraction_files` SQL table and the `subtractions` folder in the Virtool
+    data path.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+    subtraction_id = req.match_info["subtraction_id"]
+
+    errors = virtool.uploads.utils.naive_validator(req)
+
+    if errors:
+        return invalid_query(errors)
+
+    document = await db.subtraction.find_one(subtraction_id)
+
+    if document is None:
+        return not_found()
+
+    file_name = req.query.get("name")
+
+    if file_name not in FILES:
+        return bad_request("Unsupported subtraction file name")
+
+    file_type = virtool.subtractions.utils.check_subtraction_file_type(file_name)
+    subtraction_file = await virtool.subtractions.files.create_subtraction_file(pg, subtraction_id, file_type,
+                                                                                file_name)
+    file_id = subtraction_file["id"]
+    path = Path(req.app["settings"]["data_path"]) / "subtractions" / subtraction_id / file_name
+
+    if file_id in document.get("files", []):
+        return bad_request("File name already exists")
+
+    try:
+        size = await virtool.uploads.utils.naive_writer(req, path)
+    except asyncio.CancelledError:
+        logger.debug(f"Subtraction file upload aborted: {file_id}")
+        await virtool.subtractions.files.delete_subtraction_file(pg, file_id)
+
+        return aiohttp.web.Response(status=499)
+
+    subtraction_file = await virtool.uploads.db.finalize(pg, size, file_id, SubtractionFile)
+
+    await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
+        "$push": {
+            "files": file_id
+        }
+    })
+
+    headers = {
+        "Location": f"/api/subtractions/{subtraction_id}/files/{file_name}"
+    }
+
+    return json_response(subtraction_file, headers=headers, status=201)
+
+
+@routes.patch("/api/subtractions/{subtraction_id}", permission="modify_subtraction")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -218,5 +300,56 @@ async def remove(req):
 
     if updated_count == 0:
         return not_found()
+
+    return no_content()
+
+
+@routes.jobs_api.patch("/api/subtractions/{subtraction_id}")
+@schema({"gc": {"type": "dict", "required": True}})
+async def finalize_subtraction(req: aiohttp.web.Request):
+    """
+    Sets the gc field for an subtraction and marks it as ready.
+
+    """
+    db = req.app["db"]
+    data = await req.json()
+    subtraction_id = req.match_info["subtraction_id"]
+
+    document = await db.subtraction.find_one(subtraction_id)
+
+    if document is None:
+        return not_found()
+
+    if "ready" in document and document["ready"]:
+        return conflict("Subtraction has already been finalized")
+
+    updated_document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
+        "$set": {
+            "gc": data["gc"],
+            "ready": True
+        }
+    })
+
+    return json_response(virtool.utils.base_processor(updated_document))
+
+
+@routes.jobs_api.delete("/api/subtractions/{subtraction_id}")
+async def job_remove(req: aiohttp.web.Request):
+    """
+    Remove a subtraction document. Only usable in the Jobs API and when subtractions are unfinalized.
+
+    """
+    db = req.app["db"]
+    subtraction_id = req.match_info["subtraction_id"]
+
+    document = await db.subtraction.find_one(subtraction_id)
+
+    if document is None:
+        return not_found()
+
+    if "ready" in document and document["ready"]:
+        return conflict("Only unfinalized subtractions can be deleted")
+
+    await virtool.subtractions.db.delete(req.app, subtraction_id)
 
     return no_content()

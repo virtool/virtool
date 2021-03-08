@@ -2,8 +2,7 @@ import { find } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { pushState } from "../../app/actions";
-import { AffixedProgressBar, Alert, Box, ModalBody, ModalFooter, InputError, SaveButton, UploadBar } from "../../base";
+import { AffixedProgressBar, Alert, Box, InputError, SaveButton, UploadBar } from "../../base";
 import { clearError } from "../../errors/actions";
 import { upload } from "../../files/actions";
 import { createRandomString, getTargetChange } from "../../utils/utils";
@@ -23,12 +22,6 @@ const getInitialState = () => ({
     mode: "import"
 });
 
-const ImportReferenceDialogBody = styled(ModalBody)`
-    ${InputError} {
-        margin: -10px 0 10px;
-    }
-`;
-
 const ImportReferenceUploadContainer = styled(Box)`
     border-radius: ${props => props.theme.borderRadius.sm};
     padding: 15px 15px 0;
@@ -40,7 +33,7 @@ class ImportReference extends React.Component {
         this.state = getInitialState();
     }
 
-    componentDidUpdate(prevProps, prevState) {
+    componentDidUpdate(prevState) {
         if (prevState.localId !== this.state.localId) {
             this.props.lock(true);
         }
@@ -105,38 +98,32 @@ class ImportReference extends React.Component {
 
         return (
             <form onSubmit={this.handleSubmit}>
-                <ImportReferenceDialogBody>
-                    <Alert>
-                        <strong>
-                            Create a reference from a file previously exported from another Virtool reference.
-                        </strong>
-                    </Alert>
+                <Alert>
+                    <strong> Create a reference from a file previously exported from another Virtool reference.</strong>
+                </Alert>
 
-                    <ImportReferenceUploadContainer>
-                        <AffixedProgressBar color={progress === 100 ? "green" : "orange"} now={progress} />
-                        <UploadBar message={message} onDrop={this.handleDrop} />
-                    </ImportReferenceUploadContainer>
+                <ImportReferenceUploadContainer>
+                    <AffixedProgressBar color={progress === 100 ? "green" : "orange"} now={progress} />
+                    <UploadBar message={message} onDrop={this.handleDrop} />
+                </ImportReferenceUploadContainer>
 
-                    <InputError>{this.state.errorFile}</InputError>
+                <InputError>{this.state.errorFile}</InputError>
 
-                    <ReferenceForm
-                        name={this.state.name}
-                        description={this.state.description}
-                        dataType={this.state.dataType}
-                        organism={this.state.organism}
-                        errorName={this.state.errorName}
-                        errorDataType={this.state.errorDataType}
-                        errorFile={this.state.errorFile}
-                        localId={this.state.localId}
-                        mode="import"
-                        onChange={this.handleChange}
-                        toggle={this.toggleCheck}
-                    />
-                </ImportReferenceDialogBody>
+                <ReferenceForm
+                    name={this.state.name}
+                    description={this.state.description}
+                    dataType={this.state.dataType}
+                    organism={this.state.organism}
+                    errorName={this.state.errorName}
+                    errorDataType={this.state.errorDataType}
+                    errorFile={this.state.errorFile}
+                    localId={this.state.localId}
+                    mode="import"
+                    onChange={this.handleChange}
+                    toggle={this.toggleCheck}
+                />
 
-                <ModalFooter>
-                    <SaveButton disabled={progress !== 100 && progress !== 0} altText="Import" />
-                </ModalFooter>
+                <SaveButton disabled={progress !== 100 && progress !== 0} altText="Import" />
             </form>
         );
     }
@@ -153,10 +140,6 @@ const mapDispatchToProps = dispatch => ({
 
     onDrop: (localId, file, fileType) => {
         dispatch(upload(localId, file, fileType));
-    },
-
-    onHide: () => {
-        dispatch(pushState({ importReference: false }));
     },
 
     onClearError: error => {

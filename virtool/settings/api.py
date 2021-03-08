@@ -1,14 +1,15 @@
-import virtool.settings.db
 import virtool.http.routes
-import virtool.resources
+import virtool.settings.db
 import virtool.settings.schema
 import virtool.utils
 from virtool.api.response import json_response
+from virtool.http.schema import schema
 
 routes = virtool.http.routes.Routes()
 
 
 @routes.get("/api/settings")
+@routes.jobs_api.get("/api/settings")
 async def get(req):
     settings = await virtool.settings.db.get(req.app["db"])
 
@@ -18,7 +19,8 @@ async def get(req):
     })
 
 
-@routes.patch("/api/settings", admin=True, schema=virtool.settings.schema.SCHEMA)
+@routes.patch("/api/settings", admin=True)
+@schema(virtool.settings.schema.SCHEMA)
 async def update(req):
     """
     Update application settings based on request data.

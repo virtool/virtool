@@ -10,8 +10,14 @@ import virtool.http.proxy
 import virtool.http.utils
 import virtool.tasks.pg
 import virtool.tasks.task
+import virtool.db.mongo
+import virtool.db.utils
+import virtool.http.proxy
+import virtool.http.utils
 import virtool.software.utils
 import virtool.software.utils
+import virtool.tasks.db
+import virtool.tasks.task
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -155,7 +161,7 @@ async def fetch_and_update_releases(app, ignore_errors=False):
     await db.status.update_one({"_id": "software"}, {
         "$set": {
             "errors": [],
-            "mongo_version": await virtool.db.utils.determine_mongo_version(db),
+            "mongo_version": await virtool.db.mongo.get_mongo_version(db),
             "releases": releases
         }
     })

@@ -99,8 +99,13 @@ async def mock_job(tmpdir, mocker, request, dbi):
     temp_dir.cleanup()
 
 
-async def test_make_analysis_dir(dbs, mock_job):
+async def test_make_analysis_dir(mock_job):
     await virtool.jobs.analysis.make_analysis_dir(mock_job)
+
+    # This tests fails sometimes if the directory list is taken immediately after running the job
+    # step. Sleep for 100 ms.
+    await asyncio.sleep(0.1)
+
     assert set(os.listdir(mock_job.temp_dir.name)) == {"raw", "baz", "reads"}
 
 

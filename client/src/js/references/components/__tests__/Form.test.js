@@ -26,14 +26,14 @@ describe("<ReferenceForm />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render organism field when [mode=create]", () => {
-        props.mode = "create";
+    it("should render organism field when [mode=empty]", () => {
+        props.mode = "empty";
         const wrapper = shallow(<ReferenceForm {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
     it.each(["name", "organism", "description"])("should call onChange() when %p input changes", name => {
-        props.mode = "create";
+        props.mode = "empty";
         const wrapper = shallow(<ReferenceForm {...props} />);
         const e = { target: { name, value: "Baz" } };
         wrapper

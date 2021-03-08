@@ -99,7 +99,9 @@ PROJECTION = [
     "unbuilt_count",
     "updates",
     "updating",
-    "user"
+    "user",
+    "users",
+    "groups"
 ]
 
 

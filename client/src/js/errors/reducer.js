@@ -4,38 +4,38 @@
  * @module errors/reducer
  */
 import { endsWith, replace } from "lodash-es";
-import { reportAPIError } from "../utils/utils";
 import {
-    CLEAR_ERROR,
-    CREATE_SAMPLE,
-    UPDATE_SAMPLE,
-    CREATE_OTU,
-    EDIT_OTU,
     ADD_ISOLATE,
-    EDIT_ISOLATE,
     ADD_SEQUENCE,
-    EDIT_SEQUENCE,
-    CREATE_INDEX,
-    CREATE_SUBTRACTION,
-    UPDATE_ACCOUNT,
     CHANGE_ACCOUNT_PASSWORD,
-    CREATE_USER,
-    EDIT_USER,
+    CLEAR_ERROR,
     CREATE_GROUP,
-    GET_JOB,
-    GET_SAMPLE,
+    CREATE_INDEX,
+    CREATE_OTU,
+    CREATE_SAMPLE,
+    CREATE_SUBTRACTION,
+    CREATE_USER,
+    CREATE_FIRST_USER,
+    EDIT_ISOLATE,
+    EDIT_OTU,
+    EDIT_SEQUENCE,
+    EDIT_USER,
+    FIND_USERS,
     GET_ANALYSIS,
-    GET_REFERENCE,
-    GET_OTU,
     GET_HMM,
     GET_INDEX,
+    GET_JOB,
+    GET_OTU,
+    GET_REFERENCE,
+    GET_SAMPLE,
     GET_SUBTRACTION,
-    GET_RESOURCES,
-    UPDATE_SETTINGS,
-    FIND_USERS,
     GET_USER,
-    LOGIN
+    LOGIN,
+    UPDATE_ACCOUNT,
+    UPDATE_SAMPLE,
+    UPDATE_SETTINGS
 } from "../app/actionTypes";
+import { reportAPIError } from "../utils/utils";
 
 /**
  * Checks whether supplied action is of failed action type,
@@ -112,7 +112,6 @@ export default function errorsReducer(state = null, action) {
             case EDIT_USER.FAILED:
             case CREATE_GROUP.FAILED:
             case GET_JOB.FAILED:
-            case GET_RESOURCES.FAILED:
             case GET_SAMPLE.FAILED:
             case GET_ANALYSIS.FAILED:
             case GET_REFERENCE.FAILED:
@@ -125,6 +124,8 @@ export default function errorsReducer(state = null, action) {
             case GET_USER.FAILED:
             case LOGIN.FAILED:
                 return { ...state, [errorName]: errorPayload };
+            case CREATE_FIRST_USER.FAILED:
+                return { ...state, [errorName]: action.error.response.body };
 
             default:
                 // Report uncaught errors to Sentry

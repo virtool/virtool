@@ -12,19 +12,20 @@ import aiojobs
 import aiojobs.aiohttp
 import pymongo.errors
 
+import virtool.analyses.db
 import virtool.config
 import virtool.db.core
 import virtool.db.migrate
 import virtool.db.mongo
 import virtool.db.utils
 import virtool.dispatcher
+import virtool.files.db
 import virtool.hmm.db
 import virtool.jobs.interface
 import virtool.jobs.runner
 import virtool.postgres
 import virtool.redis
 import virtool.references.db
-import virtool.resources
 import virtool.routes
 import virtool.sentry
 import virtool.settings.db
@@ -36,8 +37,16 @@ import virtool.tasks.pg
 import virtool.tasks.utils
 import virtool.utils
 import virtool.version
+
+from virtool.dispatcher.dispatcher import Dispatcher
+from virtool.dispatcher.events import DispatcherSQLEvents
+from virtool.dispatcher.client import RedisDispatcherClient
+from virtool.dispatcher.listener import RedisDispatcherListener
+from virtool.types import App
 from virtool.tasks.runner import TaskRunner
-from virtool.subtractions.db import WriteSubtractionFASTATask
+from virtool.analyses.db import StoreNuvsFilesTask
+from virtool.files.db import MigrateFilesTask
+from virtool.subtractions.db import AddSubtractionFilesTask, WriteSubtractionFASTATask
 from virtool.references.db import CreateIndexJSONTask, DeleteReferenceTask
 
 logger = logging.getLogger("startup")
@@ -45,7 +54,8 @@ logger = logging.getLogger("startup")
 
 def create_events() -> dict:
     """
-    Create and store :class:`asyncio.Event` objects for triggering an application restart or shutdown.
+    Create and store :class:`asyncio.Event` objects for triggering an application restart or
+    shutdown.
 
     :return: a `dict` containing :class:`~asyncio.Event` objects for restart and shutdown
 
@@ -114,10 +124,11 @@ async def init_client_path(app: aiohttp.web_app.Application):
         app.router.add_static("/static", app["client_path"])
 
 
-async def init_db(app: aiohttp.web_app.Application):
+async def init_db(app: App):
     """
-    An application ``on_startup`` callback that attaches an instance of :class:`~AsyncIOMotorClient` and the ``db_name``
-    to the Virtool ``app`` object. Also initializes collection indices.
+    An application ``on_startup`` callback that attaches an instance of
+    :class:`~AsyncIOMotorClient` and the ``db_name`` to the Virtool ``app`` object. Also
+    initializes collection indices.
 
     :param app: the app object
     :type app: :class:`aiohttp.aiohttp.web.Application`
@@ -125,28 +136,31 @@ async def init_db(app: aiohttp.web_app.Application):
     """
     logger.info("Connecting to MongoDB")
 
-    async def enqueue_change(interface, operation, id_list):
-        await app["change_queue"].put([
-            interface, operation, id_list
-        ])
+    dispatcher_interface = RedisDispatcherClient(app["redis"])
+    await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
 
-    app["db"] = await virtool.db.mongo.connect(app["config"], enqueue_change)
+    app["db"] = await virtool.db.mongo.connect(app["config"], dispatcher_interface.enqueue_change)
+    app["dispatcher_interface"] = dispatcher_interface
 
 
 async def init_dispatcher(app: aiohttp.web_app.Application):
     """
-    An application ``on_startup`` callback that initializes a Virtool :class:`~.Dispatcher` object and attaches it to
-    the ``app`` object.
+    An application ``on_startup`` callback that initializes a Virtool :class:`~.Dispatcher` object
+    and attaches it to the ``app`` object.
 
     :param app: the app object
-    :type app: :class:`aiohttp.aiohttp.web.Application`
 
     """
     logger.info("Starting dispatcher")
 
-    app["dispatcher"] = virtool.dispatcher.Dispatcher(
+    channel, = await app["redis"].subscribe("channel:dispatch")
+
+    event_watcher = DispatcherSQLEvents(app["dispatcher_interface"].enqueue_change)
+
+    app["dispatcher"] = Dispatcher(
+        app["pg"],
         app["db"],
-        app["change_queue"]
+        RedisDispatcherListener(channel)
     )
 
     await get_scheduler_from_app(app).spawn(app["dispatcher"].run())
@@ -165,8 +179,8 @@ async def init_events(app: aiohttp.web_app.Application):
 
 async def init_executors(app: aiohttp.web.Application):
     """
-    An application ``on_startup`` callback that initializes a :class:`~ThreadPoolExecutor` and attaches it to the
-    ``app`` object.
+    An application ``on_startup`` callback that initializes a :class:`~ThreadPoolExecutor` and
+    attaches it to the ``app`` object.
 
     :param app: the application object
 
@@ -245,23 +259,13 @@ async def init_postgres(app: aiohttp.web_app.Application):
 
     logger.info("Connecting to PostgreSQL")
 
-    app["postgres"] = await virtool.postgres.connect(postgres_connection_string)
+    app["pg"] = await virtool.postgres.connect(postgres_connection_string)
 
 
 async def init_redis(app: typing.Union[dict, aiohttp.web_app.Application]):
-    redis_connection_string = app["config"].get("redis_connection_string")
-
-    if not redis_connection_string:
-        logger.debug("Redis not configured")
-        return
-
+    redis_connection_string = app["config"]["redis_connection_string"]
     logger.info("Connecting to Redis")
     app["redis"] = await virtool.redis.connect(redis_connection_string)
-
-
-async def init_listen_for_changes(app: aiohttp.web_app.Application):
-    scheduler = get_scheduler_from_app(app)
-    await scheduler.spawn(virtool.redis.listen_for_changes(app))
 
 
 async def init_refresh(app: aiohttp.web.Application):
@@ -279,18 +283,6 @@ async def init_refresh(app: aiohttp.web.Application):
     await scheduler.spawn(virtool.references.db.refresh_remotes(app))
     await scheduler.spawn(virtool.hmm.db.refresh(app))
     await scheduler.spawn(virtool.software.db.refresh(app))
-
-
-async def init_resources(app: typing.Union[dict, aiohttp.web.Application]):
-    """
-    Set an initial value for the application resource values.
-
-    This value will be updated every time a client GETs `/api/jobs/resources`.
-
-    :param app: the application object
-
-    """
-    app["resources"] = virtool.resources.get()
 
 
 async def init_routes(app: aiohttp.web_app.Application):
@@ -365,7 +357,8 @@ async def init_tasks(app: aiohttp.web.Application):
     if app["config"].get("no_check_db"):
         return logger.info("Skipping subtraction FASTA files checks")
 
-    pg = app["postgres"]
+    pg = app["pg"]
+    scheduler = get_scheduler_from_app(app)
 
     logger.info("Checking subtraction FASTA files")
     subtractions_without_fasta = await virtool.subtractions.db.check_subtraction_fasta_files(app["db"], app["settings"])
@@ -380,3 +373,9 @@ async def init_tasks(app: aiohttp.web.Application):
     await virtool.tasks.pg.register(pg, app["task_runner"], CreateIndexJSONTask)
 
     await virtool.tasks.pg.register(pg, app["task_runner"], DeleteReferenceTask, context={"user_id": "virtool"})
+
+    await virtool.tasks.pg.register(pg, app["task_runner"], AddSubtractionFilesTask)
+
+    await virtool.tasks.pg.register(pg, app["task_runner"], StoreNuvsFilesTask)
+
+    await scheduler.spawn(virtool.tasks.utils.spawn_periodically(app, MigrateFilesTask, 3600))

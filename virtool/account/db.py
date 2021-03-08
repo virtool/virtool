@@ -2,9 +2,8 @@
 Work with the current user account and its API keys.
 
 """
-from typing import Dict, Any
+from typing import Any, Dict
 
-import virtool.account.utils
 import virtool.users.db
 import virtool.users.utils
 import virtool.utils
@@ -24,8 +23,8 @@ PROJECTION = (
 
 def compose_password_update(password: str) -> Dict[str, Any]:
     """
-    Compose an update dict for self-changing a users account password. This will disable forced reset and won't
-    invalidate current sessions, unlike a password change by an administrator.
+    Compose an update dict for self-changing a users account password. This will disable forced
+    reset and won't invalidate current sessions, unlike a password change by an administrator.
 
     :param password: the new password
     :return: a password update
@@ -56,8 +55,8 @@ async def get(db, user_id: str) -> Dict[str, Any]:
 
 async def get_alternate_id(db, name: str) -> str:
     """
-    Get an alternate id for an API key whose provided `name` is not unique. Appends an integer suffix to the end of the
-    `name`.
+    Get an alternate id for an API key whose provided `name` is not unique. Appends an integer
+    suffix to the end of the `name`.
 
     :param db: the application database object
     :param name: the API key name
@@ -77,12 +76,17 @@ async def get_alternate_id(db, name: str) -> str:
         suffix += 1
 
 
-async def create_api_key(db, name: str, permissions: Dict[str, bool], user_id: str) -> Dict[str, Any]:
+async def create_api_key(
+        db,
+        name: str,
+        permissions: Dict[str, bool],
+        user_id: str
+) -> Dict[str, Any]:
     """
     Create a new API key for the account with the given `user_id`.
 
-    API keys can only receive permissions possessed by the owner of the API key. If the owner is an administrator, their
-    key permissions will not be limited.
+    API keys can only receive permissions possessed by the owner of the API key. If the owner is an
+    administrator, their key permissions will not be limited.
 
     Actions that require administrator status cannot be performed using API key authentication.
 
@@ -101,9 +105,12 @@ async def create_api_key(db, name: str, permissions: Dict[str, bool], user_id: s
     }
 
     if not user["administrator"]:
-        key_permissions = virtool.users.utils.limit_permissions(key_permissions, user["permissions"])
+        key_permissions = virtool.users.utils.limit_permissions(
+            key_permissions,
+            user["permissions"]
+        )
 
-    raw, hashed = virtool.account.utils.generate_api_key()
+    raw, hashed = virtool.utils.generate_key()
 
     document = {
         "_id": hashed,

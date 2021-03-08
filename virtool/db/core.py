@@ -1,11 +1,23 @@
+"""
+Core database classes.
+
+The purpose of these classes is to automatically dispatch database changes via
+:class:`Dispatcher` using the projections and processors appropriate for each collection.
+
+"""
+from typing import Any, Awaitable, Callable, Dict, Optional, Sequence, Union
+
 import motor.motor_asyncio
 import pymongo
 import pymongo.errors
 import pymongo.results
-from typing import Union
+from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo.results import UpdateResult
 
 import virtool.analyses.db
 import virtool.caches.db
+import virtool.db.utils
+import virtool.errors
 import virtool.files.db
 import virtool.history.db
 import virtool.hmm.db
@@ -17,17 +29,17 @@ import virtool.samples.db
 import virtool.settings.db
 import virtool.subtractions.db
 import virtool.users.db
-import virtool.db.utils
-import virtool.errors
 import virtool.utils
+from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
+from virtool.types import Projection
 
 
 class Collection:
     """
     A wrapper for a Motor collection.
 
-    Wraps collection methods that modify the database and automatically dispatches websocket messages to inform clients
-    of the changes.
+    Wraps collection methods that modify the database and automatically dispatches websocket
+    messages to inform clients of the changes.
 
     """
 
@@ -35,9 +47,9 @@ class Collection:
             self,
             name: str,
             collection: motor.motor_asyncio.AsyncIOMotorCollection,
-            enqueue_change: callable,
-            processor: callable,
-            projection: Union[None, list, dict],
+            enqueue_change: Callable[[str, str, Sequence[str]], None],
+            processor: Callable[[Any, Dict[str, Any]], Awaitable[Dict[str, Any]]],
+            projection: Optional[Projection],
             silent: bool = False
     ):
         self.name = name
@@ -47,8 +59,8 @@ class Collection:
         self.projection = projection
         self.silent = silent
 
-        # No dispatches are necessary for these collection methods and they can be directly referenced instead of
-        # wrapped.
+        # No dispatches are necessary for these collection methods and they can be directly
+        # referenced instead of wrapped.
         self.aggregate = self._collection.aggregate
         self.bulk_write = self._collection.bulk_write
         self.count_documents = self._collection.count_documents
@@ -64,8 +76,8 @@ class Collection:
 
     def apply_projection(self, document: dict) -> dict:
         """
-        Apply the collection projection to the given document and return a new `dict`. If the collection `projection`
-        attribute is not defined, the document will be returned unaltered.
+        Apply the collection projection to the given document and return a new `dict`. If the
+        collection `projection` attribute is not defined, the document will be returned unaltered.
 
         :param document: the document to apply the projection to
         :return: the projected document
@@ -82,18 +94,17 @@ class Collection:
 
         return virtool.utils.base_processor(document)
 
-    async def enqueue_change(self, operation: str, *id_list):
+    def enqueue_change(self, operation: str, *id_list: str):
         """
-        Dispatch updates if the collection is not `silent` and the `silent` parameter is `False`. Applies the collection
-        projection and processor.
+        Dispatch updates if the collection is not `silent` and the `silent` parameter is `False`.
+        Applies the collection projection and processor.
 
-        :param document_id: the id of the changed document
         :param operation: the operation to label the dispatch with (insert, update, delete)
-        :param silent: don't perform the dispatch
+        :param id_list: the document IDs the queue changes for
 
         """
         if not self.silent:
-            await self._enqueue_change(
+            self._enqueue_change(
                 self.name,
                 operation,
                 id_list
@@ -113,7 +124,7 @@ class Collection:
         delete_result = await self._collection.delete_many(query)
 
         if not silent and len(id_list):
-            await self.enqueue_change("delete", *id_list)
+            self.enqueue_change(DELETE, *id_list)
 
         return delete_result
 
@@ -130,8 +141,8 @@ class Collection:
         delete_result = await self._collection.delete_one(query)
 
         if not silent and delete_result.deleted_count:
-            await self.enqueue_change(
-                "delete",
+            self.enqueue_change(
+                DELETE,
                 document_id
             )
 
@@ -141,10 +152,10 @@ class Collection:
             self,
             query: dict,
             update: dict,
-            projection: Union[None, dict, list] = None,
+            projection: Optional[Projection] = None,
             silent: bool = False,
             upsert: bool = False
-    ):
+    ) -> Optional[Dict[str, Any]]:
         """
         Update a document and return the updated result.
 
@@ -166,20 +177,25 @@ class Collection:
         if document is None:
             return None
 
-        await self.enqueue_change("update", document["_id"])
+        if not silent:
+            self.enqueue_change(UPDATE, document["_id"])
 
         if projection:
             return virtool.db.utils.apply_projection(document, projection)
 
         return document
 
-    async def insert_one(self, document, silent=False):
+    async def insert_one(self, document: Dict[str, Any], silent: bool = False) -> Dict[str, Any]:
         """
+        Insert the `document`.
 
+        If no `_id` is included in the `document`, one will be autogenerated. If a provided `_id`
+        already exists, a :class:`DuplicateKeyError` will be raised.
 
-        :param document:
-        :param silent:
-        :return:
+        :param document: the document to insert
+        :param silent: don't dispatch the change to connected clients
+        :return: the inserted document
+
         """
         generate_id = "_id" not in document
 
@@ -190,7 +206,7 @@ class Collection:
             await self._collection.insert_one(document)
 
             if not silent:
-                await self.enqueue_change("insert", document["_id"])
+                self.enqueue_change(INSERT, document["_id"])
 
             return document
         except pymongo.errors.DuplicateKeyError:
@@ -200,7 +216,20 @@ class Collection:
 
             raise
 
-    async def replace_one(self, query, replacement, upsert=False):
+    async def replace_one(
+            self,
+            query: Dict[str, Any],
+            replacement: Dict[str, Any],
+            upsert: bool = False
+    ):
+        """
+        Replace the document identified using `query` with the `replacement` document.
+
+        :param query: the query used to find a document to replace
+        :param replacement: the replacement document
+        :param upsert: insert a new document if nothing matches the query
+
+        """
         document = await self._collection.find_one_and_replace(
             query,
             replacement,
@@ -208,32 +237,60 @@ class Collection:
             upsert=upsert
         )
 
-        await self.enqueue_change(
-            "update",
+        self.enqueue_change(
+            UPDATE,
             replacement["_id"]
         )
 
         return document
 
-    async def update_many(self, query, update, silent=False):
+    async def update_many(
+            self,
+            query: Union[str, Dict],
+            update: Dict,
+            silent: bool = False
+    ) -> UpdateResult:
+        """
+        Update all documents that match `query` by applying the `update`.
+
+        :param query: the query to match
+        :param update: the update to apply to matching documents
+        :param silent: don't dispatch the change to connected clients
+
+        """
         updated_ids = await self._collection.distinct("_id", query)
         update_result = await self._collection.update_many(query, update)
 
         if not silent:
-            await self.enqueue_change(
-                "update",
+            self.enqueue_change(
+                UPDATE,
                 *updated_ids
             )
 
         return update_result
 
-    async def update_one(self, query, update, upsert=False, silent=False):
+    async def update_one(
+            self,
+            query: Union[str, Dict],
+            update: Dict,
+            upsert: bool = False,
+            silent: bool = False
+    ) -> UpdateResult:
+        """
+        Update one document matching the `query` by applying the `update`.
+
+        :param query: the query to match
+        :param update: the update to apply to matching document
+        :param upsert: insert a new document if there is no match for the query
+        :param silent: don't dispatch the change to connected clients
+
+        """
         document = await self.find_one(query, ["_id"])
         update_result = await self._collection.update_one(query, update, upsert=upsert)
 
         if not silent and document:
-            await self.enqueue_change(
-                "update",
+            self.enqueue_change(
+                UPDATE,
                 document["_id"]
             )
 
@@ -242,8 +299,12 @@ class Collection:
 
 class DB:
 
-    def __init__(self, client, enqueue_change):
-        self.motor_client = client
+    def __init__(
+            self,
+            motor_client: AsyncIOMotorClient,
+            enqueue_change: Callable[[str, str, Sequence[str]], None]
+    ):
+        self.motor_client = motor_client
         self.enqueue_change = enqueue_change
 
         self.analyses = self.bind_collection(
@@ -285,7 +346,7 @@ class DB:
 
         self.jobs = self.bind_collection(
             "jobs",
-            projection=virtool.jobs.db.PROJECTION,
+            projection=virtool.jobs.db.LIST_PROJECTION,
             processor=virtool.jobs.db.processor
         )
 
@@ -344,7 +405,7 @@ class DB:
             projection=virtool.users.db.PROJECTION
         )
 
-    def bind_collection(self, name, processor=None, projection=None, silent=False):
+    def bind_collection(self, name: str, processor=None, projection=None, silent=False):
         return Collection(
             name,
             self.motor_client[name],

@@ -1,9 +1,10 @@
 import logging
 import sys
+from enum import Enum
 
 from sqlalchemy import text
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.declarative import declarative_base
 
 import virtool.api.json
 
@@ -25,12 +26,12 @@ async def connect(postgres_connection_string: str) -> AsyncEngine:
         sys.exit(1)
 
     try:
-        postgres = create_async_engine(postgres_connection_string, json_serializer=virtool.api.json.dumps)
+        pg = create_async_engine(postgres_connection_string, json_serializer=virtool.api.json.dumps)
 
-        await check_version(postgres)
-        await create_tables(postgres)
+        await check_version(pg)
+        await create_tables(pg)
 
-        return postgres
+        return pg
     except ConnectionRefusedError:
         logger.fatal("Could not connect to PostgreSQL: Connection refused")
         sys.exit(1)
@@ -56,7 +57,13 @@ async def create_tables(engine):
 
 
 def to_dict(self):
-    return {c.name: getattr(self, c.name, None) for c in self.__table__.columns}
+    row = dict()
+    for c in self.__table__.columns:
+        column = getattr(self, c.name, None)
+
+        row[c.name] = column if not isinstance(column, Enum) else column.value
+
+    return row
 
 
 Base.to_dict = to_dict

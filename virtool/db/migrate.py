@@ -2,11 +2,10 @@ import logging
 
 import pymongo.errors
 
-import virtool.db.utils
+import virtool.db.mongo
 import virtool.types
 from virtool.analyses.migrate import migrate_analyses
 from virtool.caches.migrate import migrate_caches
-from virtool.files.migrate import migrate_files
 from virtool.groups.migrate import migrate_groups
 from virtool.jobs.migrate import migrate_jobs
 from virtool.references.migrate import migrate_references
@@ -16,12 +15,17 @@ logger = logging.getLogger(__name__)
 
 
 async def migrate(app: virtool.types.App):
-    db = app["db"]
+    """
+    Update all collections on application start.
 
+    Used for applying MongoDB schema and file storage changes.
+
+    :param app: the application object
+
+    """
     funcs = (
         migrate_analyses,
         migrate_caches,
-        migrate_files,
         migrate_groups,
         migrate_jobs,
         migrate_sessions,
@@ -47,6 +51,12 @@ async def migrate_sessions(app: virtool.types.App):
 
 
 async def migrate_status(app: virtool.types.App):
+    """
+    Automatically update the status collection.
+
+    :param app: the application object
+
+    """
     db = app["db"]
     server_version = app["version"]
 
@@ -56,7 +66,7 @@ async def migrate_status(app: virtool.types.App):
         }
     })
 
-    mongo_version = await virtool.db.utils.determine_mongo_version(db)
+    mongo_version = await virtool.db.mongo.get_mongo_version(db)
 
     await db.status.update_many({}, {
         "$unset": {

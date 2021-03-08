@@ -37,21 +37,21 @@ Sample schema:
   - id (str) the user ID
 
 """
-import aiohttp.web
 import asyncio
 import logging
 import os
+
+import aiohttp.web
 import pymongo.results
-
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
-import virtool.jobs.db
 import virtool.db.utils
 import virtool.errors
+import virtool.jobs.db
+import virtool.samples.utils
 import virtool.samples.utils
 import virtool.utils
-import virtool.samples.utils
 from virtool.labels.models import Label
 
 logger = logging.getLogger(__name__)
@@ -99,19 +99,65 @@ RIGHTS_PROJECTION = {
 }
 
 
-async def attach_labels(app, document):
+async def attach_labels(pg: AsyncEngine, document: dict) -> dict:
+    """
+    Finds label documents for each label ID given in a request body, then converts each document into a dictionary to
+    be placed in the list of dictionaries in the updated sample document
+
+
+    :param pg: PostgreSQL database connection object
+    :param document: sample document to be used for creating or editing a sample
+    :return: sample document with updated `labels` entry containing a list of label dictionaries
+    """
     labels = list()
     if document.get("labels"):
-        for label_id in document["labels"]:
-            async with AsyncSession(app["postgres"]) as session:
-                label = (await session.execute(select(Label).filter_by(id=label_id))).scalar()
+        async with AsyncSession(pg) as session:
+            results = await session.execute(select(Label).filter(Label.id.in_(document["labels"])))
 
+        for label in results.scalars():
             labels.append(label.to_dict())
 
     return {
         **document,
         "labels": labels
     }
+
+
+async def attempt_file_replacement(app, sample_id, user_id):
+    db = app["db"]
+
+    files = await refresh_replacements(db, sample_id)
+
+    if not all([file.get("replacement") for file in files]):
+        return None
+
+    update_job = await virtool.db.utils.get_one_field(db.samples, "update_job", sample_id)
+
+    if update_job and await virtool.db.utils.id_exists(db.jobs, update_job["id"]):
+        return
+
+    logger.info(f"Starting file replacement for sample {sample_id}")
+
+    task_args = {
+        "sample_id": sample_id
+    }
+
+    job = await virtool.jobs.db.create(
+        db,
+        "update_sample",
+        task_args,
+        user_id
+    )
+
+    await app["jobs"].enqueue(job["_id"])
+
+    await db.samples.update_one({"_id": sample_id}, {
+        "$set": {
+            "update_job": {
+                "id": job["_id"]
+            }
+        }
+    })
 
 
 async def check_name(db, settings, name, sample_id=None):

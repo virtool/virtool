@@ -14,6 +14,7 @@ import jobsReducer from "../jobs/reducer";
 import otusReducer from "../otus/reducer";
 import referencesReducer from "../references/reducer";
 import samplesReducer from "../samples/reducer";
+import labelsReducer from "../labels/reducer";
 import subtractionReducer from "../subtraction/reducer";
 import tasksReducer from "../tasks/reducer";
 import updatesReducer from "../updates/reducer";
@@ -113,6 +114,7 @@ export const createAppStore = history => {
             hmms: hmmsReducer,
             indexes: indexesReducer,
             jobs: jobsReducer,
+            labels: labelsReducer,
             otus: otusReducer,
             references: referencesReducer,
             router: connectRouter(history),

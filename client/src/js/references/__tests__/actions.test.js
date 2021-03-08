@@ -2,7 +2,7 @@ import {
     WS_INSERT_REFERENCE,
     WS_UPDATE_REFERENCE,
     WS_REMOVE_REFERENCE,
-    CREATE_REFERENCE,
+    EMPTY_REFERENCE,
     EDIT_REFERENCE,
     REMOVE_REFERENCE,
     IMPORT_REFERENCE,
@@ -22,7 +22,7 @@ import {
     wsInsertReference,
     wsUpdateReference,
     wsRemoveReference,
-    createReference,
+    emptyReference,
     editReference,
     importReference,
     cloneReference,
@@ -78,14 +78,14 @@ describe("References Action Creators:", () => {
         });
     });
 
-    it("createReference", () => {
+    it("emptyReference", () => {
         const name = "create";
         const description = "blank reference";
         const dataType = "genome";
         const organism = "virus";
-        const result = createReference(name, description, dataType, organism);
+        const result = emptyReference(name, description, dataType, organism);
         expect(result).toEqual({
-            type: CREATE_REFERENCE.REQUESTED,
+            type: EMPTY_REFERENCE.REQUESTED,
             name,
             description,
             dataType,

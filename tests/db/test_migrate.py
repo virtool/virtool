@@ -4,7 +4,6 @@ from aiohttp.test_utils import make_mocked_coro
 
 import virtool.db.migrate
 import virtool.db.utils
-import virtool.files.migrate
 import virtool.groups.migrate
 
 
@@ -24,7 +23,7 @@ async def test_migrate_status(has_software, has_software_update, has_version, mo
     if has_version:
         await dbi.status.insert_one({"_id": "version"})
 
-    mocker.patch("virtool.db.utils.determine_mongo_version", make_mocked_coro("3.6.3"))
+    mocker.patch("virtool.db.mongo.get_mongo_version", make_mocked_coro("3.6.3"))
 
     app = {
         "db": dbi,

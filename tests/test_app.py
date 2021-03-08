@@ -12,7 +12,7 @@ import virtool.jobs.runner
 
 
 @pytest.fixture
-async def app(loop):
+async def app():
     version = "v1.2.3"
 
     app = {
@@ -28,7 +28,7 @@ async def app(loop):
         pass
 
 
-async def test_init_executors(loop):
+async def test_init_executors():
     """
     Test that an instance of :class:`.ThreadPoolExecutor` is added to ``app`` state and that it works.
     """
@@ -41,12 +41,12 @@ async def test_init_executors(loop):
     def func(*args):
         return sum(args)
 
-    result = await loop.run_in_executor(None, func, 1, 5, 6, 2)
+    result = await app["run_in_thread"](func, 1, 5, 6, 2)
 
     assert result == 14
 
 
-async def test_init_http_client(app):
+async def test_init_http_client(loop, app):
     await virtool.startup.init_http_client(app)
 
     assert app["version"] == "v1.2.3"
@@ -54,7 +54,7 @@ async def test_init_http_client(app):
     assert isinstance(app["client"], aiohttp.client.ClientSession)
 
 
-async def test_init_http_client_headers(mocker, app):
+async def test_init_http_client_headers(loop, mocker, app):
     m = mocker.patch("aiohttp.client.ClientSession")
 
     await virtool.startup.init_http_client(app)

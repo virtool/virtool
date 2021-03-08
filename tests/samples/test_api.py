@@ -2,6 +2,9 @@ import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
+import virtool.files.db
+import virtool.samples.db
+import virtool.uploads.db
 from virtool.labels.models import Label
 
 
@@ -409,6 +412,26 @@ class TestCreate:
             assert await resp_is.bad_request(resp, "Labels do not exist: 1")
 
 
+@pytest.mark.parametrize("field", ["quality", "not_quality"])
+async def test_finalize(field, snapshot, spawn_client, spawn_job_client, resp_is):
+    client = await spawn_job_client(authorize=True)
+
+    data = {field: {}}
+
+    await client.db.samples.insert_one({
+        "_id": "test",
+    })
+
+    resp = await client.patch("/api/samples/test", json=data)
+
+    if field == "quality":
+        assert resp.status == 200
+        snapshot.assert_match(await resp.json())
+    else:
+        assert resp.status == 422
+        assert await resp_is.invalid_input(resp, {"quality": ['required field']})
+
+
 @pytest.mark.parametrize("delete_result,resp_is_attr", [(1, "no_content"), (0, "not_found")])
 async def test_remove(delete_result, resp_is_attr, mocker, spawn_client, resp_is, create_delete_result):
     client = await spawn_client(authorize=True)
@@ -438,6 +461,45 @@ async def test_remove(delete_result, resp_is_attr, mocker, spawn_client, resp_is
         m.assert_called_with(client.db, client.app["settings"], ["test"])
     else:
         assert not m.called
+
+
+@pytest.mark.parametrize("ready", [True, False])
+@pytest.mark.parametrize("exists", [True, False])
+async def test_job_remove(exists, ready, mocker, resp_is, static_time, spawn_job_client, pg, tmpdir):
+    """
+    Test that a sample can be removed when called using the Jobs API.
+
+    """
+    client = await spawn_job_client(authorize=True)
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
+
+    if exists:
+        file = await virtool.uploads.db.create(pg, "test", "reads", reserved=True)
+
+        await client.db.samples.insert_one({
+            "_id": "test",
+            "all_read": True,
+            "all_write": True,
+            "files": file["id"],
+            "ready": ready
+        })
+
+    mocker.patch("virtool.utils.rm", return_value=True)
+
+    resp = await client.delete("/api/samples/test")
+
+    if exists and not ready:
+        assert resp.status == 204
+        assert not await virtool.samples.db.check_name(client.app["db"], client.app["settings"], "test", "test")
+
+        upload = await virtool.uploads.db.get(pg, file["id"])
+        assert not upload.reserved
+    elif exists:
+        assert resp.status == 400
+    else:
+        assert resp.status == 404
 
 
 @pytest.mark.parametrize("error", [None, "404"])

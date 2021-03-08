@@ -4,11 +4,12 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import virtool.http.routes
-import virtool.validators
 import virtool.db.utils
+import virtool.http.routes
 import virtool.labels.db
+import virtool.validators
 from virtool.api.response import bad_request, empty_request, json_response, no_content, not_found
+from virtool.http.schema import schema
 from virtool.labels.models import Label
 
 routes = virtool.http.routes.Routes()
@@ -21,13 +22,13 @@ async def find(req):
 
     """
     documents = list()
-    async with AsyncSession(req.app["postgres"]) as session:
+    async with AsyncSession(req.app["pg"]) as session:
         result = await session.execute(select(Label))
         labels = result.scalars().all()
         for label in labels:
             documents.append(label.to_dict())
 
-    documents = await asyncio.gather(*[virtool.labels.db.attach_sample_count(req.app["db"], d, d["id"]) for d in documents])
+    documents = await asyncio.gather(*[virtool.labels.db.attach_sample_count(req.app["db"], d) for d in documents])
 
     return json_response(documents)
 
@@ -38,19 +39,20 @@ async def get(req):
     Get a complete label document.
 
     """
-    async with AsyncSession(req.app["postgres"]) as session:
+    async with AsyncSession(req.app["pg"]) as session:
         result = await session.execute(select(Label).filter_by(id=int(req.match_info["label_id"])))
         label = result.scalar()
 
         if label is None:
             return not_found()
 
-    document = await virtool.labels.db.attach_sample_count(req.app["db"], label.to_dict(), label.id)
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], label.to_dict())
 
     return json_response(document)
 
 
-@routes.post("/api/labels", schema={
+@routes.post("/api/labels")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -72,11 +74,10 @@ async def get(req):
 async def create(req):
     """
     Add a new label to the labels database.
-
     """
     data = req["data"]
 
-    async with AsyncSession(req.app["postgres"]) as session:
+    async with AsyncSession(req.app["pg"]) as session:
         label = Label(name=data["name"], color=data["color"], description=data["description"])
         session.add(label)
 
@@ -87,7 +88,7 @@ async def create(req):
         except IntegrityError:
             return bad_request("Label name already exists")
 
-    document = await virtool.labels.db.attach_sample_count(req.app["db"], document, document["id"])
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], document)
 
     headers = {
         "Location": f"/api/labels/{document['id']}"
@@ -96,7 +97,8 @@ async def create(req):
     return json_response(document, status=201, headers=headers)
 
 
-@routes.patch("/api/labels/{label_id}", schema={
+@routes.patch("/api/labels/{label_id}")
+@schema({
     "name": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -123,7 +125,7 @@ async def edit(req):
     if not data:
         return empty_request()
 
-    async with AsyncSession(req.app["postgres"]) as session:
+    async with AsyncSession(req.app["pg"]) as session:
         result = await session.execute(select(Label).filter_by(id=label_id))
         label = result.scalar()
 
@@ -139,7 +141,7 @@ async def edit(req):
         except IntegrityError:
             return bad_request("Label name already exists")
 
-    document = await virtool.labels.db.attach_sample_count(req.app["db"], document, label_id)
+    document = await virtool.labels.db.attach_sample_count(req.app["db"], document)
 
     return json_response(document)
 
@@ -152,7 +154,7 @@ async def remove(req):
     """
     label_id = int(req.match_info["label_id"])
 
-    async with AsyncSession(req.app["postgres"]) as session:
+    async with AsyncSession(req.app["pg"]) as session:
         result = await session.execute(select(Label).filter_by(id=label_id))
         label = result.scalar()
 
