@@ -31,8 +31,9 @@ PROJECTION = [
 
 
 class AddSubtractionFilesTask(virtool.tasks.task.Task):
+    task_type = "add_subtraction_files"
 
-    def __init__(self, app: App, task_id: str):
+    def __init__(self, app: App, task_id: int):
         super().__init__(app, task_id)
 
         self.steps = [

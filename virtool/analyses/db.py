@@ -44,8 +44,9 @@ PROJECTION = (
 
 
 class StoreNuvsFilesTask(virtool.tasks.task.Task):
+    task_type = "store_nuvs_file_task"
 
-    def __init__(self, app: App, task_id: str):
+    def __init__(self, app: App, task_id: int):
         super().__init__(app, task_id)
 
         self.steps = [
