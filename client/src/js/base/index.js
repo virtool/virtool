@@ -19,6 +19,7 @@ export * from "./Identicon";
 export * from "./Input";
 export * from "./Key";
 export * from "./Label";
+export * from "./Listbox";
 export * from "./Loader";
 export * from "./LoadingPlaceholder";
 export * from "./Logo";
