@@ -23,7 +23,7 @@ import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
 import virtool.validators
-from virtool.api.response import (bad_request, insufficient_rights,
+from virtool.api.response import (bad_request, conflict, insufficient_rights,
                                   invalid_query, json_response, no_content,
                                   not_found)
 from virtool.http.schema import schema
@@ -722,21 +722,24 @@ async def upload_reads(req):
         return not_found()
 
     try:
-        files = await virtool.uploads.utils.naive_write_multiple(req, reads_file_path)
+        if {"reads_1.fq.gz", "reads_2.fq.gz"}.issubset(set(os.listdir(reads_file_path))):
+            return conflict("Sample is already associated with two reads files")
+    except FileNotFoundError:
+        pass
+
+    try:
+        file = await virtool.uploads.utils.naive_write_compressed(req, reads_file_path)
     except asyncio.CancelledError:
         logger.debug(f"Reads file upload aborted for {sample_id}")
-        await req.app["run_in_thread"](os.remove, reads_file_path / "reads_1.fq.gz")
-        await req.app["run_in_thread"](os.remove, reads_file_path / "reads_2.fq.gz")
-
         return aiohttp.web.Response(status=499)
 
-    if files is None:
-        return bad_request("One or more files are not compressed")
+    if file is None:
+        return bad_request("File is not compressed")
 
-    reads = await virtool.samples.files.create_reads_files(pg, sample_id, files)
+    reads = await virtool.samples.files.create_reads_file(pg, sample_id, file)
 
     headers = {
-        "Location": f"/api/samples/{sample_id}/reads"
+        "Location": f"/api/samples/{sample_id}/reads/{reads['name_on_disk']}"
     }
 
     return json_response(reads, status=201, headers=headers)
@@ -746,7 +749,7 @@ async def upload_reads(req):
 async def upload_artifacts(req):
     """
     Upload artifacts created during sample creation using the Jobs API.
-]
+
     """
     db = req.app["db"]
     pg = req.app["pg"]
@@ -786,7 +789,7 @@ async def upload_artifacts(req):
     artifacts_file = await virtool.uploads.db.finalize(pg, size, file_id, SampleArtifacts)
 
     headers = {
-        "Location": f"/api/samples/{sample_id}/artifacts"
+        "Location": f"/api/samples/{sample_id}/artifacts/{file_id}"
     }
 
     return json_response(artifacts_file, status=201, headers=headers)

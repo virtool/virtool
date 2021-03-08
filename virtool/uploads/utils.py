@@ -63,43 +63,42 @@ async def naive_writer(req: aiohttp.web.Request, file_path: pathlib.Path) -> int
     return size
 
 
-async def naive_write_multiple(req: aiohttp.web.Request, file_path: pathlib.Path) -> Optional[Dict[str, int]]:
+async def naive_write_compressed(req: aiohttp.web.Request, file_path: pathlib.Path) -> Optional[Dict[str, int]]:
     """
-    Write multiple files from a HTTP multipart request. Files must be `gzip` compressed.
+    Write a file from a HTTP multipart request. File must be `gzip` compressed.
 
     :param req: aiohttp request object
-    :param file_path: Path to a folder where the new files should be written to
+    :param file_path: Path to a folder where the new file should be written to
     :return: A dictionary containing each new file's name on disk mapped to the file's size
     """
     reader = await req.multipart()
     file = await reader.next()
-    files = dict()
 
     try:
         await req.app["run_in_thread"](os.makedirs, file_path)
     except FileExistsError:
         pass
 
-    while file:
-        size = 0
-        filename = file.filename
-        new_file = dict()
+    size = 0
+    filename = file.filename
+    new_file = dict()
 
-        async with aiofiles.open(file_path / filename, "wb") as handle:
-            while True:
-                chunk = await file.read_chunk(CHUNK_SIZE)
-                if not chunk:
-                    break
+    async with aiofiles.open(file_path / filename, "wb") as handle:
+        while True:
+            chunk = await file.read_chunk(CHUNK_SIZE)
+            if not chunk:
+                break
 
-                if size == 0 and not is_gzip_compressed(chunk):
-                    return None
+            if size == 0 and not is_gzip_compressed(chunk):
+                return None
 
-                size += len(chunk)
-                await handle.write(chunk)
+            size += len(chunk)
+            await handle.write(chunk)
+    
+    new_file.update({
+            "name_on_disk": filename,
+            "size": size,
+            "uploaded_at": virtool.utils.timestamp()
+        })
 
-            new_file["size"], new_file["uploaded_at"] = size, virtool.utils.timestamp()
-
-            files[filename] = new_file
-            file = await reader.next()
-
-    return files
+    return new_file
