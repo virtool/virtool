@@ -107,14 +107,14 @@ async def test_update_context(task):
     }
 
 
-async def test_get_tracker(task, pg_engine):
+async def test_get_tracker(task, pg):
     task.step = task.steps[0]
     tracker_1 = await task.get_tracker()
     assert tracker_1.initial == 0
     assert tracker_1.step_completed == 50
 
     await virtool.tasks.pg.update(
-        pg_engine,
+        pg,
         task.id,
         progress=50,
     )

@@ -146,7 +146,7 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
         return
 
     m_register.assert_called_with(
-        client.pg,
+        client.app["pg"],
         client.app["task_runner"],
         UpdateRemoteReferenceTask,
         context={

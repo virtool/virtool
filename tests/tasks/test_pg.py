@@ -2,7 +2,7 @@ import virtool.tasks.pg
 from virtool.tasks.models import Task
 
 
-async def test_find(spawn_client, pg_engine, pg_session, snapshot, static_time):
+async def test_find(spawn_client, pg, pg_session, snapshot, static_time):
     task_1 = Task(
         id=1,
         complete=True,
@@ -34,7 +34,7 @@ async def test_find(spawn_client, pg_engine, pg_session, snapshot, static_time):
         session.add_all([task_1, task_2])
         await session.commit()
 
-    results = await virtool.tasks.pg.find(pg_engine)
+    results = await virtool.tasks.pg.find(pg)
 
     assert results == [
     {
@@ -68,7 +68,7 @@ async def test_find(spawn_client, pg_engine, pg_session, snapshot, static_time):
 ]
 
 
-async def test_get(spawn_client, pg_engine, pg_session, static_time, snapshot):
+async def test_get(spawn_client, pg, pg_session, static_time, snapshot):
     task = Task(
         id=1,
         complete=True,
@@ -86,7 +86,7 @@ async def test_get(spawn_client, pg_engine, pg_session, static_time, snapshot):
         session.add(task)
         await session.commit()
 
-    result = await virtool.tasks.pg.get(pg_engine, 1)
+    result = await virtool.tasks.pg.get(pg, 1)
     assert result == {
         'complete': True,
         'context': {
