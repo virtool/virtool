@@ -43,10 +43,8 @@ export const setIsolateAsDefault = ({ otuId, isolateId }) =>
 
 export const removeIsolate = ({ otuId, isolateId }) => Request.delete(`/api/otus/${otuId}/isolates/${isolateId}`);
 
-export const addSequence = ({ otuId, isolateId, accession, definition, host, sequence, segment, target }) => {
-    console.log("OTU:", otuId);
-
-    return Request.post(`/api/otus/${otuId}/isolates/${isolateId}/sequences`).send({
+export const addSequence = ({ otuId, isolateId, accession, definition, host, sequence, segment, target }) =>
+    Request.post(`/api/otus/${otuId}/isolates/${isolateId}/sequences`).send({
         accession,
         definition,
         host,
@@ -54,7 +52,6 @@ export const addSequence = ({ otuId, isolateId, accession, definition, host, seq
         segment,
         target
     });
-};
 
 export const editSequence = ({ otuId, isolateId, sequenceId, accession, definition, host, sequence, segment }) =>
     Request.patch(`/api/otus/${otuId}/isolates/${isolateId}/sequences/${sequenceId}`).send({

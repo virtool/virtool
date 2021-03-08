@@ -1,0 +1,63 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SequenceField /> should render 1`] = `
+<InputGroup>
+  <Input__InputLabel>
+    Sequence 
+    <Badge>
+      4
+    </Badge>
+  </Input__InputLabel>
+  <Input__InputContainer>
+    <Field__SequenceFieldTextArea
+      name="sequence"
+      onChange={[MockFunction]}
+      readOnly={false}
+      value="ACTG"
+    />
+    <Input__InputError />
+  </Input__InputContainer>
+</InputGroup>
+`;
+
+exports[`<SequenceField /> should render when [readOnly=true] 1`] = `
+<InputGroup>
+  <Input__InputLabel>
+    Sequence 
+    <Badge>
+      4
+    </Badge>
+  </Input__InputLabel>
+  <Input__InputContainer>
+    <Field__SequenceFieldTextArea
+      name="sequence"
+      onChange={[MockFunction]}
+      readOnly={true}
+      value="ACTG"
+    />
+    <Input__InputError />
+  </Input__InputContainer>
+</InputGroup>
+`;
+
+exports[`<SequenceField /> should render with error 1`] = `
+<InputGroup>
+  <Input__InputLabel>
+    Sequence 
+    <Badge>
+      4
+    </Badge>
+  </Input__InputLabel>
+  <Input__InputContainer>
+    <Field__SequenceFieldTextArea
+      name="sequence"
+      onChange={[MockFunction]}
+      readOnly={false}
+      value="ACTG"
+    />
+    <Input__InputError>
+      Invalid sequence
+    </Input__InputError>
+  </Input__InputContainer>
+</InputGroup>
+`;

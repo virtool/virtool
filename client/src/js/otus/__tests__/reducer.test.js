@@ -1,35 +1,33 @@
 import { forEach } from "lodash-es";
 import {
-    WS_INSERT_OTU,
-    WS_UPDATE_OTU,
-    WS_REMOVE_OTU,
-    WS_UPDATE_STATUS,
+    ADD_ISOLATE,
+    ADD_SEQUENCE,
+    EDIT_ISOLATE,
+    EDIT_OTU,
+    EDIT_SEQUENCE,
     FIND_OTUS,
     GET_OTU,
-    EDIT_OTU,
-    REMOVE_OTU,
-    ADD_ISOLATE,
-    EDIT_ISOLATE,
-    SET_ISOLATE_AS_DEFAULT,
+    GET_OTU_HISTORY,
+    HIDE_OTU_MODAL,
     REMOVE_ISOLATE,
-    ADD_SEQUENCE,
-    EDIT_SEQUENCE,
+    REMOVE_OTU,
     REMOVE_SEQUENCE,
     REVERT,
-    UPLOAD_IMPORT,
     SELECT_ISOLATE,
-    SHOW_EDIT_OTU,
-    SHOW_REMOVE_OTU,
+    SET_ISOLATE_AS_DEFAULT,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
+    SHOW_EDIT_OTU,
     SHOW_REMOVE_ISOLATE,
-    SHOW_ADD_SEQUENCE,
-    SHOW_EDIT_SEQUENCE,
+    SHOW_REMOVE_OTU,
     SHOW_REMOVE_SEQUENCE,
-    HIDE_OTU_MODAL,
-    GET_OTU_HISTORY
+    UPLOAD_IMPORT,
+    WS_INSERT_OTU,
+    WS_REMOVE_OTU,
+    WS_UPDATE_OTU,
+    WS_UPDATE_STATUS
 } from "../../app/actionTypes";
-import reducer, { initialState as reducerInitialState, hideOTUModal, getActiveIsolate, receiveOTU } from "../reducer";
+import reducer, { getActiveIsolate, hideOTUModal, initialState as reducerInitialState, receiveOTU } from "../reducer";
 
 describe("OTUs Reducer:", () => {
     it("should return the initial state on first pass", () => {
@@ -39,8 +37,9 @@ describe("OTUs Reducer:", () => {
 
     it("should return the given state on other action types", () => {
         const action = { type: "UNHANDLED_ACTION" };
-        const result = reducer(reducerInitialState, action);
-        expect(result).toEqual(reducerInitialState);
+        const state = { foo: true };
+        const result = reducer(state, action);
+        expect(result).toEqual(state);
     });
 
     describe("should handle WS_UPDATE_STATUS", () => {
@@ -303,18 +302,6 @@ describe("OTUs Reducer:", () => {
         expect(result).toEqual({ removeIsolate: true });
     });
 
-    it("should handle SHOW_ADD_SEQUENCE", () => {
-        const action = { type: SHOW_ADD_SEQUENCE };
-        const result = reducer({}, action);
-        expect(result).toEqual({ addSequence: true });
-    });
-
-    it("should handle SHOW_EDIT_SEQUENCE", () => {
-        const action = { type: SHOW_EDIT_SEQUENCE, sequenceId: "test-sequence" };
-        const result = reducer({}, action);
-        expect(result).toEqual({ editSequence: "test-sequence" });
-    });
-
     it("should handle SHOW_REMOVE_SEQUENCE", () => {
         const action = { type: SHOW_REMOVE_SEQUENCE, sequenceId: "test-sequence" };
         const result = reducer({}, action);
@@ -322,54 +309,68 @@ describe("OTUs Reducer:", () => {
     });
 
     it("should handle HIDE_OTU_MODAL", () => {
-        const state = {};
+        const state = {
+            addIsolate: true,
+            edit: true,
+            editIsolate: true,
+            remove: false,
+            removeIsolate: false,
+            removeSequence: "foo"
+        };
         const action = { type: HIDE_OTU_MODAL };
         const result = reducer(state, action);
-        expect(result).toEqual({ ...hideOTUModal(state) });
+        expect(result).toEqual({
+            addIsolate: false,
+            edit: false,
+            editIsolate: false,
+            remove: false,
+            removeIsolate: false,
+            removeSequence: false
+        });
     });
+});
 
-    describe("Helper functions:", () => {
-        describe("getActiveIsolate():", () => {
-            it("if isolates array is empty, return state with null activeIsolate values", () => {
-                const state = { detail: { isolates: [] } };
-                const result = getActiveIsolate(state);
-                expect(result).toEqual({
-                    ...state,
-                    activeIsolate: null,
-                    activeIsolateId: null
-                });
-            });
-
-            it("otherwise get current activeIsolateId that defaults to first isolate", () => {
-                const state = { detail: { isolates: [{ id: "isolate" }] } };
-                const result = getActiveIsolate(state);
-                expect(result).toEqual({
-                    ...state,
-                    activeIsolate: { id: "isolate" },
-                    activeIsolateId: "isolate"
-                });
+describe("Helper functions:", () => {
+    describe("getActiveIsolate():", () => {
+        it("if isolates array is empty, return state with null activeIsolate values", () => {
+            const state = { detail: { isolates: [] } };
+            const result = getActiveIsolate(state);
+            expect(result).toEqual({
+                ...state,
+                activeIsolate: null,
+                activeIsolateId: null
             });
         });
 
-        it("receiveOTU(): replace state.detail with action data and reformat isolates", () => {
-            const action = {
-                data: {
-                    isolates: [{ id: "123abc", sourceType: "isolate", sourceName: "tester" }]
-                }
-            };
-            const result = receiveOTU({}, action);
+        it("otherwise get current activeIsolateId that defaults to first isolate", () => {
+            const state = { detail: { isolates: [{ id: "isolate" }] } };
+            const result = getActiveIsolate(state);
             expect(result).toEqual({
-                activeIsolate: {
-                    id: "123abc",
-                    sourceType: "isolate",
-                    sourceName: "tester",
-                    name: "Isolate tester"
-                },
-                activeIsolateId: "123abc",
-                detail: {
-                    isolates: [{ ...action.data.isolates[0], name: "Isolate tester" }]
-                }
+                ...state,
+                activeIsolate: { id: "isolate" },
+                activeIsolateId: "isolate"
             });
+        });
+    });
+
+    it("receiveOTU(): replace state.detail with action data and reformat isolates", () => {
+        const action = {
+            data: {
+                isolates: [{ id: "123abc", sourceType: "isolate", sourceName: "tester" }]
+            }
+        };
+        const result = receiveOTU({}, action);
+        expect(result).toEqual({
+            activeIsolate: {
+                id: "123abc",
+                sourceType: "isolate",
+                sourceName: "tester",
+                name: "Isolate tester"
+            },
+            activeIsolateId: "123abc",
+            detail: {
+                isolates: [{ ...action.data.isolates[0], name: "Isolate tester" }]
+            }
         });
     });
 });
