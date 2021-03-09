@@ -1,7 +1,7 @@
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
 
-from virtool.postgres import Base
+from virtool.pg.utils import Base
 
 
 class Task(Base):
