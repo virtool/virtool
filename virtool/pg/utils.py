@@ -1,13 +1,11 @@
 import logging
 import sys
 from enum import Enum
-from typing import Optional, Type
+from typing import Optional
 
 from sqlalchemy import select, text
-from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
-                                    create_async_engine)
-
-from virtool.pg.base import Base
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from virtool.pg.Base import Base
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +42,7 @@ async def check_version(engine: AsyncEngine):
 
     """
     async with engine.connect() as conn:
-        info = await conn.execute(text('SHOW server_version'))
+        info = await conn.execute(text("SHOW server_version"))
 
     version = info.first()[0].split()[0]
     logger.info(f"Found PostgreSQL {version}")
@@ -55,7 +53,7 @@ async def create_models(engine):
         await conn.run_sync(Base.metadata.create_all)
 
 
-async def delete_row(pg: AsyncEngine, id_: int, model: Type[any]):
+async def delete_row(pg: AsyncEngine, id_: int, model: Base):
     """
     Deletes a row in the `model` SQL model by its row `id_`.
 
@@ -73,7 +71,7 @@ async def delete_row(pg: AsyncEngine, id_: int, model: Type[any]):
         await session.commit()
 
 
-async def get_row(pg: AsyncEngine, id_: int, model: Type[any]) -> Optional[Type[any]]:
+async def get_row(pg: AsyncEngine, id_: int, model: Base) -> Optional[Base]:
     """
     Get a row from the `model` SQL model by its `id`.
 
@@ -91,7 +89,6 @@ async def get_row(pg: AsyncEngine, id_: int, model: Type[any]) -> Optional[Type[
 
 
 class SQLEnum(Enum):
-
     @classmethod
     def to_list(cls):
-            return [e.value for e in cls]
+        return [e.value for e in cls]
