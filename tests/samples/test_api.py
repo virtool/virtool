@@ -789,7 +789,7 @@ async def test_upload_reads(paired, compressed, snapshot, spawn_job_client, stat
         assert resp.status == 201
 
         snapshot.assert_match(await resp.json())
-        
+
         if paired:
             assert resp_2.status == 201
             assert set(os.listdir(sample_file_path)) == {"reads_1.fq.gz", "reads_2.fq.gz"}

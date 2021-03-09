@@ -94,7 +94,7 @@ async def naive_write_compressed(req: aiohttp.web.Request, file_path: pathlib.Pa
 
             size += len(chunk)
             await handle.write(chunk)
-    
+
     new_file.update({
             "name_on_disk": filename,
             "size": size,
