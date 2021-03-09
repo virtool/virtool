@@ -770,7 +770,7 @@ snapshots['test_upload_artifacts[uvloop-fastq] 1'] = {
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
-snapshots['test_upload_reads[uvloop-True-True] 1'] = {
+snapshots['test_upload_reads[uvloop-True-True-False] 1'] = {
     'id': 1,
     'name_on_disk': 'reads_1.fq.gz',
     'sample': 'test',
@@ -778,8 +778,8 @@ snapshots['test_upload_reads[uvloop-True-True] 1'] = {
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
-snapshots['test_upload_reads[uvloop-True-False] 1'] = {
-    'id': 3,
+snapshots['test_upload_reads[uvloop-True-False-False] 1'] = {
+    'id': 5,
     'name_on_disk': 'reads_1.fq.gz',
     'sample': 'test',
     'size': 9081,

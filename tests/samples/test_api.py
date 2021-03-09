@@ -757,9 +757,9 @@ async def test_upload_artifacts(artifact_type, snapshot, spawn_job_client, stati
         assert await resp_is.bad_request(resp, "Unsupported sample artifact type")
 
 
-@pytest.mark.parametrize("paired", [True, False])
+@pytest.mark.parametrize("paired, conflict", [(True, False), (True, True), (False, False)])
 @pytest.mark.parametrize("compressed", [True, False])
-async def test_upload_reads(paired, compressed, snapshot, spawn_job_client, static_time, resp_is, tmpdir):
+async def test_upload_reads(paired, conflict, compressed, snapshot, spawn_job_client, static_time, resp_is, tmpdir):
     """
     Test that new sample reads can be uploaded using the Jobs API.
 
@@ -781,9 +781,16 @@ async def test_upload_reads(paired, compressed, snapshot, spawn_job_client, stat
 
     resp = await client.post("/api/samples/test/reads", data=data)
 
-    if paired:
+    if compressed and paired:
         data["file"] = open(path / "reads_2.fq.gz", "rb")
         resp_2 = await client.post("/api/samples/test/reads", data=data)
+
+        if conflict:
+            data["file"] = open(path / "reads_2.fq.gz", "rb")
+            resp_3 = await client.post("/api/samples/test/reads", data=data)
+
+            assert await resp_is.conflict(resp_3, "Sample is already associated with two reads files")
+            return
 
     if compressed:
         assert resp.status == 201
