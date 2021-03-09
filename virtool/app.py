@@ -67,6 +67,7 @@ def create_app(config):
         virtool.startup.init_paths,
         virtool.startup.init_routes,
         virtool.startup.init_executors,
+        virtool.startup.init_task_runner,
         virtool.startup.init_tasks,
         virtool.startup.init_sentry,
         virtool.startup.init_check_db,

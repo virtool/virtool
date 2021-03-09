@@ -33,14 +33,21 @@ import virtool.software.db
 import virtool.subtractions.db
 import virtool.subtractions.utils
 import virtool.tasks.db
+import virtool.tasks.pg
 import virtool.tasks.utils
 import virtool.utils
 import virtool.version
+
 from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.client import RedisDispatcherClient
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.types import App
+from virtool.tasks.runner import TaskRunner
+from virtool.analyses.db import StoreNuvsFilesTask
+from virtool.files.db import MigrateFilesTask
+from virtool.subtractions.db import AddSubtractionFilesTask, WriteSubtractionFASTATask
+from virtool.references.db import CreateIndexJSONTask, DeleteReferenceTask
 
 logger = logging.getLogger("startup")
 
@@ -333,39 +340,42 @@ async def init_version(app: typing.Union[dict, aiohttp.web.Application]):
     app["version"] = version
 
 
+async def init_task_runner(app: aiohttp.web.Application):
+    """
+    An application `on_startup` callback that initializes a Virtool :class:`virtool.tasks.runner.TaskRunner` object and
+    puts it in app state.
+
+    :param app: the app object
+
+    """
+    scheduler = get_scheduler_from_app(app)
+    app["task_runner"] = TaskRunner(app)
+    await scheduler.spawn(app["task_runner"].run())
+
+
 async def init_tasks(app: aiohttp.web.Application):
     if app["config"].get("no_check_db"):
         return logger.info("Skipping subtraction FASTA files checks")
 
-    db = app["db"]
+    pg = app["pg"]
     scheduler = get_scheduler_from_app(app)
 
     logger.info("Checking subtraction FASTA files")
-
-    subtraction_task = await virtool.tasks.db.register(db, "write_subtraction_fasta")
-    write_subtraction_fasta_task = virtool.subtractions.db.WriteSubtractionFASTATask(app, subtraction_task["id"])
-
-    await scheduler.spawn(write_subtraction_fasta_task.run())
-
-    add_files_task = await virtool.tasks.db.register(db, "add_subtraction_files")
-    add_subtraction_files_task = virtool.subtractions.db.AddSubtractionFilesTask(app, add_files_task["id"])
-    await scheduler.spawn(add_subtraction_files_task.run())
+    subtractions_without_fasta = await virtool.subtractions.db.check_subtraction_fasta_files(app["db"], app["settings"])
+    for subtraction in subtractions_without_fasta:
+        await virtool.tasks.pg.register(
+            pg,
+            app["task_runner"],
+            WriteSubtractionFASTATask,
+            context={"subtraction": subtraction})
 
     logger.info("Checking index JSON files")
-    index_task = await virtool.tasks.db.register(db, "create_index_json")
-    create_index_json_task = virtool.references.db.CreateIndexJSONTask(app, index_task["id"])
+    await virtool.tasks.pg.register(pg, app["task_runner"], CreateIndexJSONTask)
 
-    await scheduler.spawn(create_index_json_task.run())
+    await virtool.tasks.pg.register(pg, app["task_runner"], DeleteReferenceTask, context={"user_id": "virtool"})
 
-    reference_task = await virtool.tasks.db.register(db, "delete_reference", context={"user_id": "virtool"})
-    delete_reference_task = virtool.references.db.DeleteReferenceTask(app, reference_task["id"])
+    await virtool.tasks.pg.register(pg, app["task_runner"], AddSubtractionFilesTask)
 
-    await scheduler.spawn(virtool.tasks.utils.spawn_periodically(scheduler, delete_reference_task, 3600))
+    await virtool.tasks.pg.register(pg, app["task_runner"], StoreNuvsFilesTask)
 
-    nuv_task = await virtool.tasks.db.register(db, "store_nuvs_file_task")
-    store_nuvs_task = virtool.analyses.db.StoreNuvsFilesTask(app, nuv_task["id"])
-    await scheduler.spawn(store_nuvs_task.run())
-
-    files_task = await virtool.tasks.db.register(db, "migrate_files")
-    migrate_files_task = virtool.files.db.MigrateFilesTask(app, files_task["id"])
-    await scheduler.spawn(virtool.tasks.utils.spawn_periodically(scheduler, migrate_files_task, 3600))
+    await scheduler.spawn(virtool.tasks.utils.spawn_periodically(app, MigrateFilesTask, 3600))

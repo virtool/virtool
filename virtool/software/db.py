@@ -5,6 +5,11 @@ import os
 
 import aiohttp
 
+import virtool.db.utils
+import virtool.http.proxy
+import virtool.http.utils
+import virtool.tasks.pg
+import virtool.tasks.task
 import virtool.db.mongo
 import virtool.db.utils
 import virtool.http.proxy
@@ -21,6 +26,7 @@ VIRTOOL_RELEASES_URL = "https://www.virtool.ca/releases4"
 
 
 class SoftwareInstallTask(virtool.tasks.task.Task):
+    task_type = "update_software"
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)
@@ -35,38 +41,29 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
         self.temp_path = self.temp_dir.name
 
     async def download(self):
-        db = self.db
         release = self.context["release"]
 
         # Download the release from GitHub and write it to a temporary directory.
         compressed_path = os.path.join(self.temp_path, "release.tar.gz")
 
-        progress_tracker = virtool.tasks.task.ProgressTracker(
-            db,
-            self.id,
-            release["size"],
-            factor=0.5,
-            increment=0.03,
-            initial=0
-        )
+        tracker = await self.get_tracker(release["size"])
 
         try:
             await virtool.http.utils.download_file(
                 self.app,
                 release["download_url"],
                 compressed_path,
-                progress_handler=progress_tracker.add
+                progress_handler=tracker.add
             )
         except FileNotFoundError:
-            await virtool.tasks.db.update(db, self.id, errors=[
-                "Could not write to release download location"
-            ])
+            await virtool.tasks.pg.update(self.pg, self.id, error="Could not write to release download location")
 
     async def decompress(self):
-        await virtool.tasks.db.update(
-            self.db,
+        tracker = await self.get_tracker()
+        await virtool.tasks.pg.update(
+            self.pg,
             self.id,
-            progress=0.5,
+            progress=tracker.step_completed,
             step="unpack"
         )
 
@@ -79,10 +76,11 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
 
     async def check_tree(self):
         # Start check tree step, reporting this to the DB.
-        await virtool.tasks.db.update(
-            self.db,
+        tracker = await self.get_tracker()
+        await virtool.tasks.pg.update(
+            self.pg,
             self.id,
-            progress=0.7,
+            progress=tracker.step_completed,
             step="verify"
         )
 
@@ -92,16 +90,15 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
         good_tree = await self.run_in_thread(virtool.software.utils.check_software_files, decompressed_path)
 
         if not good_tree:
-            await virtool.tasks.db.update(self.db, self.id, errors=[
-                "Invalid unpacked installation tree"
-            ])
+            await virtool.tasks.pg.update(self.pg, self.id, error="Invalid unpacked installation tree")
 
     async def copy_files(self):
         # Copy the update files to the install directory.
-        await virtool.tasks.db.update(
-            self.db,
+        tracker = await self.get_tracker()
+        await virtool.tasks.pg.update(
+            self.pg,
             self.id,
-            progress=0.9,
+            progress=tracker.step_completed,
             step="install"
         )
 
@@ -109,12 +106,6 @@ class SoftwareInstallTask(virtool.tasks.task.Task):
             virtool.software.utils.copy_software_files,
             os.path.join(self.temp_path, "virtool"),
             virtool.software.utils.INSTALL_PATH
-        )
-
-        await virtool.tasks.db.update(
-            self.db,
-            self.id,
-            progress=1
         )
 
         await asyncio.sleep(1.5)

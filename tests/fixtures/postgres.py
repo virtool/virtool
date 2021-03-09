@@ -5,6 +5,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
+import virtool.api.json
 from virtool.postgres import Base
 
 
@@ -54,7 +55,7 @@ async def pg(
     Test database are specific to xdist workers.
 
     """
-    engine = create_async_engine(f"{pg_base_connection_string}", isolation_level="AUTOCOMMIT")
+    engine = create_async_engine(f"{pg_base_connection_string}", isolation_level="AUTOCOMMIT", json_serializer=virtool.api.json.dumps)
 
     async with engine.connect() as conn:
         try:

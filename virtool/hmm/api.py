@@ -5,7 +5,6 @@ API request handlers for managing and querying HMM data.
 import os
 
 import aiohttp
-import aiojobs.aiohttp
 
 import virtool.api.utils
 import virtool.db.utils
@@ -13,9 +12,10 @@ import virtool.errors
 import virtool.github
 import virtool.hmm.db
 import virtool.http.routes
-import virtool.tasks.db
+import virtool.tasks.pg
 import virtool.utils
 from virtool.api.response import bad_gateway, bad_request, conflict, json_response, no_content, not_found
+from virtool.hmm.db import HMMInstallTask
 
 routes = virtool.http.routes.Routes()
 
@@ -125,9 +125,10 @@ async def install(req):
     if release is None:
         return bad_request("Target release does not exist")
 
-    task = await virtool.tasks.db.register(
-        db,
-        "install_hmms",
+    task = await virtool.tasks.pg.register(
+        req.app["postgres"],
+        req.app["task_runner"],
+        HMMInstallTask,
         context={
             "user_id": user_id,
             "release": release
@@ -149,10 +150,6 @@ async def install(req):
             "updates": update
         }
     })
-
-    t = virtool.hmm.db.HMMInstallTask(req.app, task["id"])
-
-    await aiojobs.aiohttp.spawn(req, t.run())
 
     return json_response(update)
 

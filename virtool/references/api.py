@@ -2,9 +2,15 @@ import asyncio
 import os
 
 import aiohttp
-import aiojobs.aiohttp
 
 import virtool.api.utils
+import virtool.history.db
+import virtool.indexes.db
+import virtool.otus.db
+import virtool.tasks.db
+import virtool.tasks.pg
+import virtool.references.db
+import virtool.users.db
 import virtool.db.utils
 import virtool.errors
 import virtool.github
@@ -19,7 +25,9 @@ import virtool.tasks.db
 import virtool.users.db
 import virtool.utils
 import virtool.validators
+
 from virtool.api.response import bad_gateway, bad_request, insufficient_rights, json_response, no_content, not_found
+from virtool.references.db import CloneReferenceTask, ImportReferenceTask, RemoteReferenceTask, DeleteReferenceTask, UpdateRemoteReferenceTask
 from virtool.http.schema import schema
 
 routes = virtool.http.routes.Routes()
@@ -168,7 +176,11 @@ async def update(req):
         "user_id": user_id
     }
 
-    task = await virtool.tasks.db.register(db, "update_remote_reference", context=context)
+    task = await virtool.tasks.pg.register(
+        req.app["pg"],
+        req.app["task_runner"],
+        UpdateRemoteReferenceTask,
+        context=context)
 
     release, update_subdocument = await asyncio.shield(virtool.references.db.update(
         req,
@@ -341,15 +353,15 @@ async def create(req):
             "user_id": user_id
         }
 
-        task = await virtool.tasks.db.register(db, "clone_reference", context=context)
-
-        t = virtool.references.db.CloneReferenceTask(req.app, task["id"])
+        task = await virtool.tasks.pg.register(
+            req.app["postgres"],
+            req.app["task_runner"],
+            CloneReferenceTask,
+            context=context)
 
         document["task"] = {
-            "id": t.id
+            "id": task["id"]
         }
-
-        await aiojobs.aiohttp.spawn(req, t.run())
 
     elif import_from:
         if not await db.files.count_documents({"_id": import_from}):
@@ -373,15 +385,15 @@ async def create(req):
             "user_id": user_id
         }
 
-        task = await virtool.tasks.db.register(db, "import_reference", context=context)
-
-        t = virtool.references.db.ImportReferenceTask(req.app, task["id"])
+        task = await virtool.tasks.pg.register(
+            req.app["postgres"],
+            req.app["task_runner"],
+            ImportReferenceTask,
+            context=context)
 
         document["task"] = {
-            "id": t.id
+            "id": task["id"]
         }
-
-        await aiojobs.aiohttp.spawn(req, t.run())
 
     elif remote_from:
         try:
@@ -411,20 +423,22 @@ async def create(req):
             user_id
         )
 
-        task = await virtool.tasks.db.register(db, "remote_reference")
+        context = {
+            "release": release,
+            "ref_id": document["_id"],
+            "created_at": document["created_at"],
+            "user_id": user_id
+        }
+
+        task = await virtool.tasks.pg.register(
+            req.app["postgres"],
+            req.app["task_runner"],
+            RemoteReferenceTask,
+            context=context)
 
         document["task"] = {
             "id": task["id"]
         }
-
-        await aiojobs.aiohttp.spawn(req, virtool.references.db.finish_remote(
-            req.app,
-            release,
-            document["_id"],
-            document["created_at"],
-            task["id"],
-            user_id
-        ))
 
     else:
         document = await virtool.references.db.create_document(
@@ -554,15 +568,15 @@ async def remove(req):
         "user_id": user_id
     }
 
-    task = await virtool.tasks.db.register(db, "delete_reference", context=context)
+    task = await virtool.tasks.pg.register(
+        req.app["postgres"],
+        req.app["task_runner"],
+        DeleteReferenceTask,
+        context=context)
 
     await db.references.delete_one({
         "_id": ref_id
     })
-
-    t = virtool.references.db.DeleteReferenceTask(req.app, task["id"])
-
-    await aiojobs.aiohttp.spawn(req, t.run())
 
     headers = {
         "Content-Location": f"/api/tasks/{task['id']}"

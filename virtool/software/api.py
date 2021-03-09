@@ -1,15 +1,16 @@
 import aiohttp
-import aiojobs.aiohttp
 
 import virtool.db.utils
 import virtool.github
 import virtool.hmm.db
 import virtool.http.routes
 import virtool.tasks.db
+import virtool.tasks.pg
 import virtool.software.db
 import virtool.software.utils
 import virtool.utils
 from virtool.api.response import bad_gateway, json_response, not_found
+from virtool.software.db import SoftwareInstallTask
 
 routes = virtool.http.routes.Routes()
 
@@ -52,9 +53,10 @@ async def install(req):
     except IndexError:
         return not_found("Could not find latest uninstalled release")
 
-    task = await virtool.tasks.db.register(
-        db,
-        "update_software",
+    task = await virtool.tasks.pg.register(
+        req.app["postgres"],
+        req.app["task_runner"],
+        SoftwareInstallTask,
         context={
             "file_size": latest_release["size"],
             "release": latest_release
@@ -74,9 +76,5 @@ async def install(req):
         req["client"].user_id,
         virtool.utils.timestamp()
     )
-
-    t = virtool.software.db.SoftwareInstallTask(req.app, task["id"])
-
-    await aiojobs.aiohttp.spawn(req, t.run())
 
     return json_response(update)

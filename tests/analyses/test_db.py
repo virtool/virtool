@@ -6,9 +6,10 @@ from sqlalchemy import select
 
 import virtool.analyses.db
 import virtool.analyses.format
-import virtool.tasks.db
+import virtool.tasks.pg
 
 from virtool.analyses.models import AnalysisFile
+from virtool.tasks.models import Task
 
 
 @pytest.fixture
@@ -179,7 +180,7 @@ async def test_remove_nuvs_blast(snapshot, dbi, static_time):
     snapshot.assert_match(await dbi.analyses.find().to_list(None))
 
 
-async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg_session):
+async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg, pg_session):
     client = await spawn_client(authorize=True)
 
     test_dir = tmpdir.mkdir("samples").mkdir("foo").mkdir("analysis").mkdir("bar")
@@ -197,8 +198,20 @@ async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg_session):
         }
     })
 
-    nuv_task = await virtool.tasks.db.register(dbi, "store_nuvs_file_task")
-    store_nuvs_task = virtool.analyses.db.StoreNuvsFilesTask(client.app, nuv_task["id"])
+    task = Task(
+        id=1,
+        complete=False,
+        context={},
+        count=0,
+        progress=0,
+        step="store_nuvs_files",
+        type="store_nuvs_file_task"
+    )
+    async with pg_session as session:
+        session.add(task)
+        await session.commit()
+
+    store_nuvs_task = virtool.analyses.db.StoreNuvsFilesTask(client.app, 1)
     await store_nuvs_task.run()
 
     rows = list()

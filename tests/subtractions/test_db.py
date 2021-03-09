@@ -4,10 +4,11 @@ import pytest
 
 import virtool.subtractions.db
 import virtool.tasks.db
+from virtool.tasks.models import Task
 
 
 @pytest.mark.parametrize("ignore", [True, False])
-async def test_add_subtraction_files_task(ignore, mocker, tmpdir, spawn_client, dbi):
+async def test_add_subtraction_files_task(ignore, mocker, tmpdir, spawn_client, dbi, pg_session):
     client = await spawn_client(authorize=True)
 
     test_dir = tmpdir.mkdir("subtractions").mkdir("foo")
@@ -41,9 +42,21 @@ async def test_add_subtraction_files_task(ignore, mocker, tmpdir, spawn_client, 
     path = os.path.join(tmpdir, "subtractions", "foo")
     m_join_subtraction_path = mocker.patch('virtool.subtractions.utils.join_subtraction_path', return_value=path)
 
-    add_files_task = await virtool.tasks.db.register(dbi, "add_subtraction_files")
-    add_subtraction_files_task = virtool.subtractions.db.AddSubtractionFilesTask(client.app, add_files_task["id"])
-    await add_subtraction_files_task.run()
+    task = Task(
+        id=1,
+        complete=False,
+        context={},
+        count=0,
+        progress=0,
+        step="rename_index_files",
+        type="add_subtraction_files"
+    )
+    async with pg_session as session:
+        session.add(task)
+        await session.commit()
+
+    add_files_task = virtool.subtractions.db.AddSubtractionFilesTask(client.app, 1)
+    await add_files_task.run()
 
     if ignore:
         m_join_subtraction_path.assert_not_called()

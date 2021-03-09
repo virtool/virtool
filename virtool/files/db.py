@@ -46,8 +46,9 @@ PROJECTION = [
 
 
 class MigrateFilesTask(virtool.tasks.task.Task):
+    task_type = "migrate_files"
 
-    def __init__(self, app: virtool.types.App, task_id: str):
+    def __init__(self, app: virtool.types.App, task_id: int):
         super().__init__(app, task_id)
 
         self.steps = [

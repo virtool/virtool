@@ -6,6 +6,7 @@ from sqlalchemy import select
 import virtool.files.db
 import virtool.tasks.db
 import virtool.utils
+from virtool.tasks.models import Task
 
 from virtool.uploads.models import Upload
 
@@ -176,7 +177,7 @@ async def test_reserve(dbi):
     ]
 
 
-async def test_migrate_files_task(dbi, spawn_client, static_time, pg_session):
+async def test_migrate_files_task(dbi, spawn_client, static_time, pg, pg_session):
     client = await spawn_client(authorize=True)
     await client.db.files.insert_one(
         {
@@ -193,9 +194,21 @@ async def test_migrate_files_task(dbi, spawn_client, static_time, pg_session):
         }
     )
 
-    files_task = await virtool.tasks.db.register(dbi, "migrate_files")
-    migrate_files_task = virtool.files.db.MigrateFilesTask(client.app, files_task["id"])
-    await migrate_files_task.run()
+    task = Task(
+        id=1,
+        complete=False,
+        context={},
+        count=0,
+        progress=0,
+        step="transform_documents_to_rows",
+        type="migrate_files"
+    )
+    async with pg_session as session:
+        session.add(task)
+        await session.commit()
+
+    files_task = virtool.files.db.MigrateFilesTask(client.app, 1)
+    await files_task.run()
 
     async with pg_session as session:
         upload = (await session.execute(select(Upload).filter_by(id=1))).scalar().to_dict()
