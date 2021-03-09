@@ -1,7 +1,7 @@
 import pytest
 
 from virtool.dispatcher.change import Change
-from virtool.dispatcher.fetchers import IndexesFetcher, SimpleMongoFetcher, LabelsFetcher, UploadsFetcher
+from virtool.dispatcher.fetchers import IndexesFetcher, SimpleMongoFetcher, LabelsFetcher, UploadsFetcher, TasksFetcher
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
 from virtool.uploads.models import UploadType
 
@@ -271,6 +271,70 @@ class TestUploadsFetcher:
             },
             "interface": "uploads",
             "operation": operation
+        }
+
+        assert pairs == [
+            (ws, message),
+            (ws, message),
+            (ws, message)
+        ]
+
+
+class TestTasksFetcher:
+
+    async def test_auto_delete(self, connections, pg, ws):
+        fetcher = TasksFetcher(pg)
+
+        pairs = list()
+
+        message = {
+            "interface": "tasks",
+            "operation": DELETE,
+            "data": [1]
+        }
+
+        async for pair in fetcher.fetch(Change("tasks", DELETE, [1]), connections):
+            pairs.append(pair)
+
+        assert pairs == [
+            (ws, message),
+            (ws, message),
+            (ws, message)
+        ]
+
+    @pytest.mark.parametrize("operation", [INSERT, UPDATE])
+    async def test_insert_and_update(
+            self,
+            operation,
+            connections,
+            pg,
+            reference,
+            static_time,
+            test_tasks,
+            ws
+    ):
+        fetcher = TasksFetcher(pg)
+
+        pairs = list()
+
+        async for pair in fetcher.fetch(Change("tasks", operation, [1]), connections):
+            pairs.append(pair)
+
+        message = {
+            'interface': 'tasks',
+            'operation': operation,
+            'data': {
+                'id': 1,
+                'complete': True,
+                'context': None,
+                'count': None,
+                'created_at': None,
+                'error': None,
+                'file_size': None,
+                'progress': 100,
+                'step': 'download',
+                'type': 'clone_reference'
+            }
         }
 
         assert pairs == [
