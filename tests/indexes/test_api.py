@@ -541,12 +541,13 @@ async def test_download(status, spawn_job_client, tmpdir):
         }
     })
 
-    path = Path(sys.path[0]) / "tests" / "test_files" / "index" / "reference.1.bt2"
-    target_path = Path(tmpdir) / "references/test_reference/test_index"
+    path = Path.cwd() / "tests" / "test_files" / "index" / "reference.1.bt2"
+    target_path = Path(tmpdir) / "references" / "test_reference" / "test_index"
     target_path.mkdir(parents=True)
     shutil.copyfile(path, target_path / "reference.1.bt2")
 
-    download_path = Path("reference.1.bt2")
+    download_path = target_path / "downloads" / "reference.1.bt2"
+    download_path.parent.mkdir()
 
     files_url = "/api/indexes/test_index/files/"
 
