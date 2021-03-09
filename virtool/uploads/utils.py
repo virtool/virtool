@@ -26,79 +26,56 @@ def naive_validator(req) -> Validator.errors:
     Validate `name` given in a HTTP request using cerberus
 
     """
-    v = Validator({
-        "name": {"type": "string", "required": True}
-    }, allow_unknown=True)
+    v = Validator({"name": {"type": "string", "required": True}}, allow_unknown=True)
 
     if not v.validate(dict(req.query)):
         return v.errors
 
 
-async def naive_writer(req: aiohttp.web.Request, file_path: pathlib.Path) -> int:
+async def naive_writer(
+    req: aiohttp.web.Request, path: pathlib.Path, compressed: bool = False
+) -> Optional[Dict[str, any]]:
     """
     Write a new file from a HTTP multipart request.
 
     :param req: aiohttp request object
-    :param file_path: A complete file path that includes the filename
+    :param file_path: Either a path to a folder, or a complete path that includes a filename.
+    :param compressed: Whether or not to enforce gzip compression, defaults to False
     :return: size of the new file in bytes
     """
     reader = await req.multipart()
     file = await reader.next()
-
-    size = 0
-
-    try:
-        await req.app["run_in_thread"](os.makedirs, file_path.parent)
-    except FileExistsError:
-        pass
-
-    async with aiofiles.open(file_path, "wb") as handle:
-        while True:
-            chunk = await file.read_chunk(CHUNK_SIZE)
-            if not chunk:
-                break
-            size += len(chunk)
-            await handle.write(chunk)
-
-    return size
-
-
-async def naive_write_compressed(req: aiohttp.web.Request, file_path: pathlib.Path) -> Optional[Dict[str, int]]:
-    """
-    Write a file from a HTTP multipart request. File must be `gzip` compressed.
-
-    :param req: aiohttp request object
-    :param file_path: Path to a folder where the new file should be written to
-    :return: A dictionary containing each new file's name on disk mapped to the file's size
-    """
-    reader = await req.multipart()
-    file = await reader.next()
-
-    try:
-        await req.app["run_in_thread"](os.makedirs, file_path)
-    except FileExistsError:
-        pass
-
-    size = 0
-    filename = file.filename
     new_file = dict()
 
-    async with aiofiles.open(file_path / filename, "wb") as handle:
+    size = 0
+
+    if not path.suffix:
+        path = path / file.filename
+
+    try:
+        await req.app["run_in_thread"](os.makedirs, path.parent)
+    except FileExistsError:
+        pass
+
+    async with aiofiles.open(path, "wb") as handle:
         while True:
             chunk = await file.read_chunk(CHUNK_SIZE)
             if not chunk:
                 break
 
-            if size == 0 and not is_gzip_compressed(chunk):
-                return None
+            if size == 0 and compressed:
+                if not is_gzip_compressed(chunk):
+                    return None
 
             size += len(chunk)
             await handle.write(chunk)
 
-    new_file.update({
-            "name_on_disk": filename,
+    new_file.update(
+        {
+            "name_on_disk": path.name,
             "size": size,
-            "uploaded_at": virtool.utils.timestamp()
-        })
+            "uploaded_at": virtool.utils.timestamp(),
+        }
+    )
 
     return new_file
