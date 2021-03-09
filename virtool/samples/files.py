@@ -34,13 +34,13 @@ async def create_artifacts_file(pg: AsyncEngine, name: str, sample_id: str, arti
         return artifacts_file
 
 
-async def create_reads_file(pg: AsyncEngine, sample_id: str, file: Dict[str, int]):
+async def create_reads_file(pg: AsyncEngine, file: Dict[str, any], sample_id: str):
     """
     Create one or two rows in the `samples_reads_files` SQL table that represents uploaded sample reads files.
 
     :param pg: PostgreSQL AsyncEngine object
-    :param sample_id: ID that corresponds to a parent sample
     :param file: A dictionary containing info on an uploaded file
+    :param sample_id: ID that corresponds to a parent sample
     :return: List of dictionary representations of the newly created row(s)
     """
 

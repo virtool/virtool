@@ -252,14 +252,14 @@ async def upload(req):
         return conflict("File name already exists")
 
     try:
-        size = await virtool.uploads.utils.naive_writer(req, path)
+        file = await virtool.uploads.utils.naive_writer(req, path)
     except asyncio.CancelledError:
         logger.debug(f"Index file upload aborted: {file_id}")
         await virtool.indexes.files.delete_index_file(pg, file_id)
 
         return aiohttp.web.Response(status=499)
 
-    index_file = await virtool.uploads.db.finalize(pg, size, file_id, IndexFile)
+    index_file = await virtool.uploads.db.finalize(pg, file, file_id, IndexFile)
 
     await db.indexes.find_one_and_update({"_id": index_id}, {
         "$push": {

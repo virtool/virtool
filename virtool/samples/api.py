@@ -728,7 +728,7 @@ async def upload_reads(req):
         pass
 
     try:
-        file = await virtool.uploads.utils.naive_write_compressed(req, reads_file_path)
+        file = await virtool.uploads.utils.naive_writer(req, reads_file_path, compressed=True)
     except asyncio.CancelledError:
         logger.debug(f"Reads file upload aborted for {sample_id}")
         return aiohttp.web.Response(status=499)
@@ -736,7 +736,7 @@ async def upload_reads(req):
     if file is None:
         return bad_request("File is not compressed")
 
-    reads = await virtool.samples.files.create_reads_file(pg, sample_id, file)
+    reads = await virtool.samples.files.create_reads_file(pg, file, sample_id)
 
     headers = {
         "Location": f"/api/samples/{sample_id}/reads/{reads['name_on_disk']}"
@@ -778,7 +778,7 @@ async def upload_artifacts(req):
     artifacts_file_path = Path(req.app["settings"]["data_path"]) / "samples" / sample_id / artifacts_file["name_on_disk"]
 
     try:
-        size = await virtool.uploads.utils.naive_writer(req, artifacts_file_path)
+        file = await virtool.uploads.utils.naive_writer(req, artifacts_file_path)
     except asyncio.CancelledError:
         logger.debug(f"Artifacts file upload aborted: {file_id}")
         await req.app["run_in_thread"](os.remove, artifacts_file_path)
@@ -786,7 +786,7 @@ async def upload_artifacts(req):
 
         return aiohttp.web.Response(status=499)
 
-    artifacts_file = await virtool.uploads.db.finalize(pg, size, file_id, SampleArtifact)
+    artifacts_file = await virtool.uploads.db.finalize(pg, file, file_id, SampleArtifact)
 
     headers = {
         "Location": f"/api/samples/{sample_id}/artifacts/{file_id}"

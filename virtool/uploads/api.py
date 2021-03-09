@@ -45,14 +45,14 @@ async def create(req):
     file_path = Path(req.app["settings"]["data_path"]) / "files" / upload["name_on_disk"]
 
     try:
-        size = await virtool.uploads.utils.naive_writer(req, file_path)
+        file = await virtool.uploads.utils.naive_writer(req, file_path)
     except asyncio.CancelledError:
         logger.debug(f"Upload aborted: {upload_id}")
         await virtool.uploads.db.delete(pg, upload_id)
 
         return aiohttp.web.Response(status=499)
 
-    upload = await virtool.uploads.db.finalize(pg, size, upload_id, Upload)
+    upload = await virtool.uploads.db.finalize(pg, file, upload_id, Upload)
 
     if not upload:
         await req.app["run_in_thread"](os.remove, file_path)
