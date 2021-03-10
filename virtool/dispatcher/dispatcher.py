@@ -25,7 +25,7 @@ from virtool.db.core import DB
 from virtool.dispatcher.change import Change
 from virtool.dispatcher.connection import Connection
 from virtool.dispatcher.fetchers import IndexesFetcher, LabelsFetcher, ReferencesFetcher, \
-    SamplesFetcher, SimpleMongoFetcher, UploadsFetcher
+    SamplesFetcher, SimpleMongoFetcher, UploadsFetcher, TasksFetcher
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
 
@@ -44,7 +44,7 @@ class Fetchers:
     jobs: SimpleMongoFetcher
     labels: LabelsFetcher
     otus: SimpleMongoFetcher
-    tasks: SimpleMongoFetcher
+    tasks: TasksFetcher
     references: ReferencesFetcher
     samples: SamplesFetcher
     sequences: SimpleMongoFetcher
@@ -73,7 +73,7 @@ class Dispatcher:
             SimpleMongoFetcher(db.jobs, virtool.jobs.db.PROJECTION),
             LabelsFetcher(pg, db),
             SimpleMongoFetcher(db.otus, virtool.otus.db.PROJECTION),
-            SimpleMongoFetcher(db.tasks),
+            TasksFetcher(pg),
             ReferencesFetcher(db),
             SamplesFetcher(pg, db),
             SimpleMongoFetcher(db.sequences),
