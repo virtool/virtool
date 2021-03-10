@@ -1,10 +1,7 @@
-import asyncio
-import functools
 import json
 import os
 import shutil
 import sys
-from concurrent.futures.thread import ThreadPoolExecutor
 
 import pymongo.results
 import pytest
@@ -211,13 +208,9 @@ async def test_generate_annotations_json_file(dbi, tmpdir):
     await dbi.hmm.insert_one({"_id": "foo"})
     await dbi.hmm.insert_one({"_id": "bar"})
 
-    executor = ThreadPoolExecutor(1)
-    loop = asyncio.get_event_loop()
-
     path = await virtool.hmm.db.generate_annotations_json_file({
         "db": dbi,
         "settings": {"data_path": str(tmpdir)},
-        "run_in_executor": functools.partial(loop.run_in_executor, executor)
     })
 
     assert path.exists()
