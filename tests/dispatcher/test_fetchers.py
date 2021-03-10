@@ -321,19 +321,19 @@ class TestTasksFetcher:
             pairs.append(pair)
 
         message = {
-            'interface': 'tasks',
-            'operation': operation,
-            'data': {
-                'id': 1,
-                'complete': True,
-                'context': None,
-                'count': None,
-                'created_at': None,
-                'error': None,
-                'file_size': None,
-                'progress': 100,
-                'step': 'download',
-                'type': 'clone_reference'
+            "interface": "tasks",
+            "operation": operation,
+            "data": {
+                "id": 1,
+                "complete": True,
+                "context": None,
+                "count": None,
+                "created_at": None,
+                "error": None,
+                "file_size": None,
+                "progress": 100,
+                "step": "download",
+                "type": "clone_reference"
             }
         }
 
