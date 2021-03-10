@@ -24,6 +24,7 @@ import json
 import logging
 import os
 import shutil
+from typing import List
 
 import aiofiles
 import aiohttp.client_exceptions
@@ -401,3 +402,13 @@ async def refresh(app: virtool.types.App):
         pass
 
     logging.debug("Stopped HMM refresher")
+
+
+async def get_hmm_documents(db) -> List[dict]:
+    """
+    Get a list of all HMM documents currently available in the database.
+    :param db: The database object.
+    :return: A list of HMM documents.
+    """
+    all_documents = db.hmm.find({})
+    return [virtool.utils.base_processor(document) async for document in all_documents]
