@@ -21,3 +21,14 @@ snapshots['test_add_missing_field[uvloop] 1'] = [
         'missing': False
     }
 ]
+
+snapshots['test_rename_hash_field[uvloop] 1'] = [
+    {
+        '_id': 'foo',
+        'key': 'a97439e170adc4365c5b92bd2c148ed57d75e566'
+    },
+    {
+        '_id': 'bar',
+        'key': 'd7fh3ee170adc4365c5b92bd2c1f3fd5745te566'
+    }
+]
