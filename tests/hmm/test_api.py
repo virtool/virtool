@@ -158,11 +158,9 @@ async def test_get_hmm_annotations(spawn_job_client, tmpdir):
         async with aiofiles.open(compressed_hmm_annotations, "wb") as f:
             await f.write(await response.read())
 
-        print(compressed_hmm_annotations.read_text())
-
         virtool.utils.decompress_file(compressed_hmm_annotations, decompressed_hmm_annotations)
 
         async with aiofiles.open(decompressed_hmm_annotations, "r") as f:
             hmms = json.loads(await f.read())
 
-        print(hmms)
+        assert hmms == [{"id": "foo"}, {"id": "bar"}]

@@ -204,6 +204,7 @@ async def purge(req):
 
 @routes.jobs_api.get("/api/hmms/files/annotations.json.gz")
 async def get_hmm_annotations(request):
+    """Get a compressed json file containing the database documents for all HMMs."""
     data_path = Path(request.app["settings"]["data_path"])
     annotation_path = data_path / "hmm/annotations.json.gz"
 
@@ -211,4 +212,5 @@ async def get_hmm_annotations(request):
         json_path = await generate_annotations_json_file(request.app)
         await request.app["run_in_thread"](virtool.utils.compress_file_with_gzip,
                                            json_path, annotation_path)
+
     return FileResponse(annotation_path)
