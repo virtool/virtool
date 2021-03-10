@@ -16,6 +16,7 @@ async def migrate_caches(app: App):
 
     """
     await add_missing_field(app)
+    await rename_hash_field(app)
 
 
 async def add_missing_field(app: App):
@@ -41,5 +42,21 @@ async def add_missing_field(app: App):
     await db.caches.update_many({"_id": {"$nin": found_cache_ids}}, {
         "$set": {
             "missing": True
+        }
+    })
+
+
+async def rename_hash_field(app: App):
+    """
+    Rename `hash` field to `key` for all existing caches.
+
+    :param app: the application object
+
+    """
+    db = app["db"]
+
+    await db.caches.update_many({}, {
+        "$rename": {
+            "hash": "key"
         }
     })
