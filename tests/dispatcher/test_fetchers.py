@@ -328,7 +328,7 @@ class TestTasksFetcher:
                 "complete": True,
                 "context": None,
                 "count": 0,
-                "created_at": None,
+                "created_at": static_time.datetime,
                 "error": None,
                 "file_size": None,
                 "progress": 100,
