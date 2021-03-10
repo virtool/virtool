@@ -11,7 +11,7 @@ class Task(Base):
     complete = Column(Boolean, default=False)
     context = Column(JSONB)
     count = Column(Integer, default=0)
-    created_at = Column(DateTime)
+    created_at = Column(DateTime, nullable=False)
     error = Column(String)
     file_size = Column(Integer)
     progress = Column(Integer, default=0)
