@@ -190,7 +190,10 @@ async def create_first(req):
         user_id
     )
 
-    req["client"].authorize(session, is_api=False)
+    try:
+        req["client"].authorize(session, is_api=False)
+    except AttributeError:
+        pass
 
     resp = json_response(
         virtool.utils.base_processor({key: document[key] for key in virtool.users.db.PROJECTION}),

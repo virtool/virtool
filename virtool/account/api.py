@@ -402,7 +402,7 @@ async def reset(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     """
     db = req.app["db"]
-    session_id = req["client"].session_id
+    session_id = req.cookies.get("session_id")
 
     password = req["data"]["password"]
     reset_code = req["data"]["reset_code"]
@@ -433,7 +433,10 @@ async def reset(req: aiohttp.web.Request) -> aiohttp.web.Response:
         remember=session.get("reset_remember", False)
     )
 
-    req["client"].authorize(new_session, is_api=False)
+    try:
+        req["client"].authorize(new_session, is_api=False)
+    except AttributeError:
+        pass
 
     resp = json_response({
         "login": False,
