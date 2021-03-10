@@ -5,7 +5,6 @@ import { NoneFoundSection, RelativeTime } from "../../../base";
 import { DownloadLink } from "../Download Link/DownloadLink";
 
 export const LatestBuild = ({ id, latestBuild }) => {
-    console.log("LatestBuild = ", latestBuild);
     if (latestBuild) {
         return (
             <DownloadLink>

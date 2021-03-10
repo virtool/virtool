@@ -10,6 +10,7 @@ import {
     SubviewHeaderAttribution,
     SubviewHeaderTitle
 } from "../../base";
+import { DownloadLink } from "../../references/components/Download Link/DownloadLink";
 import { getIndex, getIndexHistory } from "../actions";
 import IndexGeneral from "./General";
 
@@ -34,9 +35,12 @@ export class IndexDetail extends React.Component {
             <div>
                 <SubviewHeader>
                     <SubviewHeaderTitle>Index {version}</SubviewHeaderTitle>
-                    <SubviewHeaderAttribution>
-                        {user.id} built <RelativeTime time={created_at} />
-                    </SubviewHeaderAttribution>
+                    <DownloadLink>
+                        <SubviewHeaderAttribution>
+                            {user.id} built <RelativeTime time={created_at} />
+                        </SubviewHeaderAttribution>
+                        <a>Download Index</a>
+                    </DownloadLink>
                 </SubviewHeader>
 
                 <NarrowContainer>
