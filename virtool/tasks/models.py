@@ -8,15 +8,15 @@ class Task(Base):
     __tablename__ = 'tasks'
 
     id = Column(Integer, primary_key=True)
-    complete = Column(Boolean)
+    complete = Column(Boolean, default=False)
     context = Column(JSONB)
-    count = Column(Integer)
+    count = Column(Integer, default=0)
     created_at = Column(DateTime)
     error = Column(String)
     file_size = Column(Integer)
-    progress = Column(Integer)
-    step = Column(String)
-    type = Column(String)
+    progress = Column(Integer, default=0)
+    step = Column(String, nullable=False)
+    type = Column(String, nullable=False)
 
     def __repr__(self):
         return f"<Task(id={self.id}, complete={self.complete}, context={self.context}, " \
