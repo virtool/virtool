@@ -29,7 +29,7 @@ export class IndexDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const { version, created_at, user } = this.props.detail;
+        const { version, created_at, user, id, has_json } = this.props.detail;
 
         return (
             <div>
@@ -39,7 +39,11 @@ export class IndexDetail extends React.Component {
                         <SubviewHeaderAttribution>
                             {user.id} built <RelativeTime time={created_at} />
                         </SubviewHeaderAttribution>
-                        <a>Download Index</a>
+                        {has_json && (
+                            <a href={`/download/indexes/${id}`} download>
+                                Download Index
+                            </a>
+                        )}
                     </DownloadLink>
                 </SubviewHeader>
 

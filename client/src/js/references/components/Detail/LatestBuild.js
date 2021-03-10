@@ -16,12 +16,11 @@ export const LatestBuild = ({ id, latestBuild }) => {
                         &nbsp;/ Created <RelativeTime time={latestBuild.created_at} /> by {latestBuild.user.id}
                     </span>
                 </div>
-                {
-                    //Uncomment line below once blocker is removed
-                    /*latestBuild.has_json && */ <a href={`/download/indexes/:${latestBuild.id}`} download>
+                {latestBuild.has_json && (
+                    <a href={`/download/indexes/${latestBuild.id}`} download>
                         Download Index
                     </a>
-                }
+                )}
             </DownloadLink>
         );
     }
