@@ -134,15 +134,3 @@ async def test_get(error, spawn_client, hmm_document, resp_is):
     expected.pop("_id")
 
     assert await resp.json() == expected
-
-
-async def test_get_hmm_documents(dbi):
-    await dbi.hmm.insert_one({"_id": "foo"})
-    await dbi.hmm.insert_one({"_id": "bar"})
-
-    documents = await virtool.hmm.db.get_hmm_documents(dbi)
-
-    ids = [document["id"] for document in documents]
-
-    assert "foo" in ids
-    assert "bar" in ids

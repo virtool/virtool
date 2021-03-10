@@ -1,13 +1,17 @@
+import asyncio
+import functools
+import json
 import os
 import shutil
 import sys
-import time
+from concurrent.futures.thread import ThreadPoolExecutor
+
 import pymongo.results
+import pytest
 from aiohttp.test_utils import make_mocked_coro
 
-import pytest
-
 import virtool.hmm.db
+import virtool.utils
 
 JSON_RESULT_PATH = os.path.join(sys.path[0], "tests", "test_files", "nuvs", "results.json")
 
@@ -189,3 +193,38 @@ async def test_purge(mocker, dbi):
         {"_id": "baz", "hidden": True},
         {"_id": "foo", "hidden": True}
     ]
+
+
+async def test_get_hmm_documents(dbi):
+    await dbi.hmm.insert_one({"_id": "foo"})
+    await dbi.hmm.insert_one({"_id": "bar"})
+
+    documents = await virtool.hmm.db.get_hmm_documents(dbi)
+
+    ids = [document["id"] for document in documents]
+
+    assert "foo" in ids
+    assert "bar" in ids
+
+
+async def test_generate_annotations_json_file(dbi, tmpdir):
+    await dbi.hmm.insert_one({"_id": "foo"})
+    await dbi.hmm.insert_one({"_id": "bar"})
+
+    executor = ThreadPoolExecutor(1)
+    loop = asyncio.get_event_loop()
+
+    path = await virtool.hmm.db.generate_annotations_json_file({
+        "db": dbi,
+        "settings": {"data_path": str(tmpdir)},
+        "run_in_executor": functools.partial(loop.run_in_executor, executor)
+    })
+
+    assert path.exists()
+
+    hmms = json.loads(path.read_text())
+
+    ids = [document["id"] for document in hmms]
+
+    assert "foo" in ids
+    assert "bar" in ids
