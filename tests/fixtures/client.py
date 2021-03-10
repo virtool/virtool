@@ -138,7 +138,7 @@ def spawn_client(
                 "session_id": "dne"
             }
 
-        test_client = await aiohttp_client(app, auth=auth, cookies=cookies)
+        test_client = await aiohttp_client(app, auth=auth, cookies=cookies, auto_decompress=False)
 
         return VirtoolTestClient(test_client)
 
@@ -185,9 +185,9 @@ def spawn_job_client(
         if add_route_table:
             app.add_routes(add_route_table)
 
-        client = await aiohttp_client(app, auth=auth)
+        client = await aiohttp_client(app, auth=auth, auto_decompress=False)
         client.db = dbi
-        client.settings = app["config"]
+        client.settings = app["settings"]
 
         return client
 

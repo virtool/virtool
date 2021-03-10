@@ -24,6 +24,8 @@ import json
 import logging
 import os
 import shutil
+from pathlib import Path
+from typing import List
 
 import aiofiles
 import aiohttp.client_exceptions
@@ -401,3 +403,33 @@ async def refresh(app: virtool.types.App):
         pass
 
     logging.debug("Stopped HMM refresher")
+
+
+async def get_hmm_documents(db) -> List[dict]:
+    """
+    Get a list of all HMM documents currently available in the database.
+    :param db: The database object.
+    :return: A list of HMM documents.
+    """
+    all_documents = db.hmm.find({})
+    return [virtool.utils.base_processor(document) async for document in all_documents]
+
+
+async def generate_annotations_json_file(app: virtool.types.App) -> Path:
+    """
+    Generate the HMMs annotation file at `settings["data_path"]/hmm/annotations.json.gz
+
+    :param app: The app object.
+    :return: The path to the compressed annotations json file.
+    """
+    settings, db = app["settings"], app["db"]
+
+    annotations_path = Path(settings["data_path"]) / "hmm/annotations.json"
+    annotations_path.parent.mkdir(parents=True, exist_ok=True)
+
+    hmm_documents = await get_hmm_documents(db)
+
+    async with aiofiles.open(annotations_path, "w") as f:
+        await f.write(json.dumps(hmm_documents))
+
+    return annotations_path

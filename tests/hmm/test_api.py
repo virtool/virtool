@@ -1,8 +1,13 @@
+import json
+from pathlib import Path
+
+import aiofiles
 import aiohttp
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.errors
+import virtool.utils
 
 
 async def test_find(mocker, spawn_client, hmm_document):
@@ -134,3 +139,28 @@ async def test_get(error, spawn_client, hmm_document, resp_is):
     expected.pop("_id")
 
     assert await resp.json() == expected
+
+
+async def test_get_hmm_annotations(spawn_job_client, tmpdir):
+    client = await spawn_job_client(authorize=True)
+    client.settings["data_path"] = Path(tmpdir)
+    db = client.app["db"]
+
+    await db.hmm.insert_one({"_id": "foo"})
+    await db.hmm.insert_one({"_id": "bar"})
+
+    compressed_hmm_annotations = Path(tmpdir) / "annotations.json.gz"
+    decompressed_hmm_annotations = Path(tmpdir) / "annotations.json"
+
+    async with client.get("/api/hmms/files/annotations.json.gz") as response:
+        assert response.status == 200
+
+        async with aiofiles.open(compressed_hmm_annotations, "wb") as f:
+            await f.write(await response.read())
+
+        virtool.utils.decompress_file(compressed_hmm_annotations, decompressed_hmm_annotations)
+
+        async with aiofiles.open(decompressed_hmm_annotations, "r") as f:
+            hmms = json.loads(await f.read())
+
+        assert hmms == [{"id": "foo"}, {"id": "bar"}]

@@ -2,9 +2,12 @@
 API request handlers for managing and querying HMM data.
 
 """
+import gzip
 import os
+from pathlib import Path
 
 import aiohttp
+from aiohttp.web_fileresponse import FileResponse
 
 import virtool.api.utils
 import virtool.db.utils
@@ -15,7 +18,7 @@ import virtool.http.routes
 import virtool.tasks.pg
 import virtool.utils
 from virtool.api.response import bad_gateway, bad_request, conflict, json_response, no_content, not_found
-from virtool.hmm.db import HMMInstallTask
+from virtool.hmm.db import HMMInstallTask, generate_annotations_json_file
 
 routes = virtool.http.routes.Routes()
 
@@ -197,3 +200,17 @@ async def purge(req):
     await virtool.hmm.db.fetch_and_update_release(req.app)
 
     return no_content()
+
+
+@routes.jobs_api.get("/api/hmms/files/annotations.json.gz")
+async def get_hmm_annotations(request):
+    """Get a compressed json file containing the database documents for all HMMs."""
+    data_path = Path(request.app["settings"]["data_path"])
+    annotation_path = data_path / "hmm/annotations.json.gz"
+
+    if not annotation_path.exists():
+        json_path = await generate_annotations_json_file(request.app)
+        await request.app["run_in_thread"](virtool.utils.compress_file_with_gzip,
+                                           json_path, annotation_path)
+
+    return FileResponse(annotation_path)
