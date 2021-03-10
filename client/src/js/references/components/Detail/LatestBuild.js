@@ -1,23 +1,14 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
-import { BoxGroupSection, Icon, NoneFoundSection, RelativeTime } from "../../../base";
-import styled from "styled-components";
-
-const StyledLatestBuild = styled(BoxGroupSection)`
-    align-items: center;
-    display: flex;
-
-    a {
-        margin-left: auto;
-    }
-`;
+import { NoneFoundSection, RelativeTime } from "../../../base";
+import { DownloadLink } from "../Download Link/DownloadLink";
 
 export const LatestBuild = ({ id, latestBuild }) => {
     console.log("LatestBuild = ", latestBuild);
     if (latestBuild) {
         return (
-            <StyledLatestBuild>
+            <DownloadLink>
                 <div>
                     <strong>
                         <Link to={`/refs/${id}/indexes/${latestBuild.id}`}>Index {latestBuild.version}</Link>
@@ -27,12 +18,12 @@ export const LatestBuild = ({ id, latestBuild }) => {
                     </span>
                 </div>
                 {
-                    //Uncomment line below once
+                    //Uncomment line below once blocker is removed
                     /*latestBuild.has_json && */ <a href={`/download/indexes/:${latestBuild.id}`} download>
                         Download Index
                     </a>
                 }
-            </StyledLatestBuild>
+            </DownloadLink>
         );
     }
 
