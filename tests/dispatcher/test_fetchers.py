@@ -327,7 +327,7 @@ class TestTasksFetcher:
                 "id": 1,
                 "complete": True,
                 "context": None,
-                "count": None,
+                "count": 0,
                 "created_at": None,
                 "error": None,
                 "file_size": None,
