@@ -201,7 +201,8 @@ async def test_migrate_files_task(dbi, spawn_client, static_time, pg, pg_session
         count=0,
         progress=0,
         step="transform_documents_to_rows",
-        type="migrate_files"
+        type="migrate_files",
+        created_at=static_time.datetime
     )
     async with pg_session as session:
         session.add(task)
