@@ -11,6 +11,7 @@ from cerberus import Validator
 import virtool.analyses.db
 import virtool.analyses.utils
 import virtool.api.utils
+import virtool.caches.db
 import virtool.db.utils
 import virtool.caches.db
 import virtool.errors
@@ -828,3 +829,32 @@ async def upload_artifact(req):
     }
 
     return json_response(artifact_file, status=201, headers=headers)
+
+
+@routes.jobs_api.post("/api/samples/{sample_id}/caches")
+@schema({
+    "key": {
+        "type": "string",
+        "required": True
+    }
+})
+async def create_cache(req):
+    db = req.app["db"]
+    data = req["data"]
+
+    sample_id = req.match_info["sample_id"]
+
+    sample = await db.samples.find_one(
+        {"_id": sample_id}, ["paired"]
+    )
+
+    if not sample:
+        return not_found("Sample does not exist")
+
+    document = await virtool.caches.db.create(db, sample_id, data["key"], sample["paired"], legacy=False)
+
+    headers = {
+        "Location": f"/api/samples/{sample_id}/caches/{document['id']}"
+    }
+
+    return json_response(document, status=201, headers=headers)

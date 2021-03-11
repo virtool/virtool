@@ -6,6 +6,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import virtool.caches.db
 import virtool.samples.db
 import virtool.uploads.db
 from virtool.labels.models import Label
@@ -835,3 +836,29 @@ async def test_upload_reads(paired, conflict, compressed, snapshot, spawn_job_cl
             assert os.listdir(sample_file_path) == ["reads_1.fq.gz"]
     else:
         assert await resp_is.bad_request(resp, "File is not compressed")
+
+
+@pytest.mark.parametrize("key", ["key", "not_key"])
+async def test_create_cache(key, dbi, mocker, resp_is, snapshot, static_time, spawn_job_client):
+    client = await spawn_job_client(authorize=True)
+
+
+    await client.db.samples.insert_one({
+        "_id": "test",
+        "paired": False,
+    })
+
+    data = {key: f"aodp-abcdefgh"}
+
+    mocker.patch("virtool.utils.random_alphanumeric", return_value="a1b2c3d4")
+
+    resp = await client.post("/api/samples/test/caches", json=data)
+
+    if key is "key":
+        assert resp.status == 201
+        document = await resp.json()
+
+        snapshot.assert_match(document)
+        assert await virtool.caches.db.get(dbi, document["id"])
+    else:
+        assert await resp_is.invalid_input(resp, {"key": ['required field']})
