@@ -787,3 +787,18 @@ snapshots['test_upload_reads[uvloop-True-False-False] 1'] = {
     'size': 9081,
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
+
+snapshots['test_create_cache[uvloop-key] 1'] = {
+    'created_at': '2015-10-06T20:00:00Z',
+    'files': [
+    ],
+    'id': 'a1b2c3d4',
+    'key': 'aodp-abcdefgh',
+    'legacy': False,
+    'missing': False,
+    'paired': False,
+    'ready': False,
+    'sample': {
+        'id': 'test'
+    }
+}
