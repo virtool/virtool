@@ -1,5 +1,5 @@
 import virtool.analyses.db
-import virtool.files.db
+import virtool.uploads.db
 import virtool.hmm.db
 import virtool.software.db
 import virtool.subtractions.db
@@ -17,5 +17,5 @@ TASK_CLASSES = {
     "create_index_json": virtool.references.db.CreateIndexJSONTask,
     "add_subtraction_files": virtool.subtractions.db.AddSubtractionFilesTask,
     "store_nuvs_file_task": virtool.analyses.db.StoreNuvsFilesTask,
-    "migrate_files": virtool.files.db.MigrateFilesTask
+    "migrate_files": virtool.uploads.db.MigrateFilesTask
 }

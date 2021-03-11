@@ -45,7 +45,7 @@ from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.types import App
 from virtool.tasks.runner import TaskRunner
 from virtool.analyses.db import StoreNuvsFilesTask
-from virtool.files.db import MigrateFilesTask
+from virtool.uploads.db import MigrateFilesTask
 from virtool.subtractions.db import AddSubtractionFilesTask, WriteSubtractionFASTATask
 from virtool.references.db import CreateIndexJSONTask, DeleteReferenceTask
 
