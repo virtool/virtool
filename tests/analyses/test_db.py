@@ -180,7 +180,7 @@ async def test_remove_nuvs_blast(snapshot, dbi, static_time):
     snapshot.assert_match(await dbi.analyses.find().to_list(None))
 
 
-async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg, pg_session):
+async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg, pg_session, static_time):
     client = await spawn_client(authorize=True)
 
     test_dir = tmpdir.mkdir("samples").mkdir("foo").mkdir("analysis").mkdir("bar")
@@ -205,7 +205,8 @@ async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg, pg_session):
         count=0,
         progress=0,
         step="store_nuvs_files",
-        type="store_nuvs_file_task"
+        type="store_nuvs_file_task",
+        created_at=static_time.datetime
     )
     async with pg_session as session:
         session.add(task)

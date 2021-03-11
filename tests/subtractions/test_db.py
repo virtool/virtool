@@ -8,7 +8,7 @@ from virtool.tasks.models import Task
 
 
 @pytest.mark.parametrize("ignore", [True, False])
-async def test_add_subtraction_files_task(ignore, mocker, tmpdir, spawn_client, dbi, pg_session):
+async def test_add_subtraction_files_task(ignore, mocker, tmpdir, spawn_client, dbi, pg_session, static_time):
     client = await spawn_client(authorize=True)
 
     test_dir = tmpdir.mkdir("subtractions").mkdir("foo")
@@ -49,7 +49,8 @@ async def test_add_subtraction_files_task(ignore, mocker, tmpdir, spawn_client, 
         count=0,
         progress=0,
         step="rename_index_files",
-        type="add_subtraction_files"
+        type="add_subtraction_files",
+        created_at=static_time.datetime
     )
     async with pg_session as session:
         session.add(task)
