@@ -1,15 +1,23 @@
 import React from "react";
 import PropTypes from "prop-types";
+import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { BoxGroupSection, NoneFoundSection, RelativeTime } from "../../../base";
-import { DownloadLink } from "../Download Link/DownloadLink";
+import { DownloadLink } from "./DownloadLink";
 
-const Holder = DownloadLink(BoxGroupSection);
+const StyledLatestBuild = styled(BoxGroupSection)`
+    align-items: center;
+    display: flex;
+
+    a {
+        margin-left: auto;
+    }
+`;
 
 export const LatestBuild = ({ id, latestBuild }) => {
     if (latestBuild) {
         return (
-            <Holder>
+            <StyledLatestBuild>
                 <div>
                     <strong>
                         <Link to={`/refs/${id}/indexes/${latestBuild.id}`}>Index {latestBuild.version}</Link>
@@ -18,12 +26,8 @@ export const LatestBuild = ({ id, latestBuild }) => {
                         &nbsp;/ Created <RelativeTime time={latestBuild.created_at} /> by {latestBuild.user.id}
                     </span>
                 </div>
-                {latestBuild.has_json && (
-                    <a href={`/download/indexes/${latestBuild.id}`} download>
-                        Download Index
-                    </a>
-                )}
-            </Holder>
+                {latestBuild.has_json && <DownloadLink id={latestBuild.id} />}
+            </StyledLatestBuild>
         );
     }
 

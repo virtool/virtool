@@ -11,19 +11,18 @@ import {
     SubviewHeaderAttribution,
     SubviewHeaderTitle
 } from "../../base";
-import { DownloadLink } from "../../references/components/Download Link/DownloadLink";
+import { DownloadLink } from "../../references/components/Detail/DownloadLink";
 import { getIndex, getIndexHistory } from "../actions";
 import IndexGeneral from "./General";
 
-const Holder = DownloadLink(SubviewHeaderAttribution);
-// const Holder = styled(SubviewHeaderAttribution)`
-//     align-items: center;
-//     display: flex;
+const IndexDetailSubtitle = styled.div`
+    align-items: center;
+    display: flex;
 
-//     a {
-//         margin-left: auto;
-//     }
-// `;
+    a {
+        margin-left: auto;
+    }
+`;
 
 export class IndexDetail extends React.Component {
     componentDidMount() {
@@ -43,25 +42,21 @@ export class IndexDetail extends React.Component {
         const { version, created_at, user, id, has_json } = this.props.detail;
 
         return (
-            <div>
+            <React.Fragment>
                 <SubviewHeader>
                     <SubviewHeaderTitle>Index {version}</SubviewHeaderTitle>
-                    <Holder>
+                    <IndexDetailSubtitle>
                         <SubviewHeaderAttribution>
                             {user.id} built <RelativeTime time={created_at} />
                         </SubviewHeaderAttribution>
-                        {has_json && (
-                            <a href={`/download/indexes/${id}`} download>
-                                Download Index
-                            </a>
-                        )}
-                    </Holder>
+                        {has_json && <DownloadLink id={id} />}
+                    </IndexDetailSubtitle>
                 </SubviewHeader>
 
                 <NarrowContainer>
                     <IndexGeneral />
                 </NarrowContainer>
-            </div>
+            </React.Fragment>
         );
     }
 }
