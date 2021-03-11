@@ -1,6 +1,7 @@
 import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import {
     LoadingPlaceholder,
     NarrowContainer,
@@ -13,6 +14,16 @@ import {
 import { DownloadLink } from "../../references/components/Download Link/DownloadLink";
 import { getIndex, getIndexHistory } from "../actions";
 import IndexGeneral from "./General";
+
+const Holder = DownloadLink(SubviewHeaderAttribution);
+// const Holder = styled(SubviewHeaderAttribution)`
+//     align-items: center;
+//     display: flex;
+
+//     a {
+//         margin-left: auto;
+//     }
+// `;
 
 export class IndexDetail extends React.Component {
     componentDidMount() {
@@ -35,7 +46,7 @@ export class IndexDetail extends React.Component {
             <div>
                 <SubviewHeader>
                     <SubviewHeaderTitle>Index {version}</SubviewHeaderTitle>
-                    <DownloadLink>
+                    <Holder>
                         <SubviewHeaderAttribution>
                             {user.id} built <RelativeTime time={created_at} />
                         </SubviewHeaderAttribution>
@@ -44,7 +55,7 @@ export class IndexDetail extends React.Component {
                                 Download Index
                             </a>
                         )}
-                    </DownloadLink>
+                    </Holder>
                 </SubviewHeader>
 
                 <NarrowContainer>

@@ -1,7 +1,9 @@
 import styled from "styled-components";
 import { BoxGroupSection } from "../../../base";
 
-export const DownloadLink = styled(BoxGroupSection)`
+//export const DownloadLink = styled(BoxGroupSection)`
+
+export const DownloadLink = component => styled(component)`
     align-items: center;
     display: flex;
 

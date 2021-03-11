@@ -1,13 +1,15 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
-import { NoneFoundSection, RelativeTime } from "../../../base";
+import { BoxGroupSection, NoneFoundSection, RelativeTime } from "../../../base";
 import { DownloadLink } from "../Download Link/DownloadLink";
+
+const Holder = DownloadLink(BoxGroupSection);
 
 export const LatestBuild = ({ id, latestBuild }) => {
     if (latestBuild) {
         return (
-            <DownloadLink>
+            <Holder>
                 <div>
                     <strong>
                         <Link to={`/refs/${id}/indexes/${latestBuild.id}`}>Index {latestBuild.version}</Link>
@@ -21,7 +23,7 @@ export const LatestBuild = ({ id, latestBuild }) => {
                         Download Index
                     </a>
                 )}
-            </DownloadLink>
+            </Holder>
         );
     }
 
