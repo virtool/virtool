@@ -19,22 +19,22 @@ PROJECTION = (
     "_id",
     "created_at",
     "files",
-    "hash",
+    "key",
     "program",
     "ready",
     "sample"
 )
 
 
-def calculate_cache_hash(parameters: Dict[str, Any]) -> str:
+def calculate_cache_key(parameters: Dict[str, Any]) -> str:
     """
-    Calculate a hash from the parameters `dict` for a cache.
+    Calculate a key from the parameters `dict` for a cache.
 
-    The parameters are arguments passed to a trimming program. Caches can be reused when the hash
+    The parameters are arguments passed to a trimming program. Caches can be reused when the key
     of the trim parameters for a a new analysis matches an existing cache.
 
     :param parameters: the trimming parameters
-    :return: the cache hash
+    :return: the cache key
 
     """
     string = json.dumps(parameters, sort_keys=True)
@@ -56,7 +56,7 @@ async def find(db, sample_id: str, program: str, parameters: Dict[str, Any]) -> 
 
     """
     document = await db.caches.find_one({
-        "hash": virtool.caches.db.calculate_cache_hash(parameters),
+        "key": virtool.caches.db.calculate_cache_key(parameters),
         "missing": False,
         "program": program,
         "sample.id": sample_id
@@ -136,7 +136,7 @@ async def create(
             "_id": cache_id,
             "created_at": virtool.utils.timestamp(),
             "files": list(),
-            "hash": calculate_cache_hash(parameters),
+            "key": calculate_cache_key(parameters),
             "legacy": legacy,
             "missing": False,
             "paired": paired,

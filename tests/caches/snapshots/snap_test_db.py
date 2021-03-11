@@ -11,8 +11,8 @@ snapshots['test_create[uvloop-paired] return'] = {
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
-    'hash': '68b60be51a667882d3aaa02a93259dd526e9c990',
     'id': '9pfsom1b',
+    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
     'legacy': False,
     'missing': False,
     'paired': True,
@@ -37,7 +37,7 @@ snapshots['test_create[uvloop-paired] db'] = {
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
-    'hash': '68b60be51a667882d3aaa02a93259dd526e9c990',
+    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
     'legacy': False,
     'missing': False,
     'paired': True,
@@ -61,8 +61,8 @@ snapshots['test_create[uvloop-unpaired] return'] = {
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
-    'hash': '68b60be51a667882d3aaa02a93259dd526e9c990',
     'id': '9pfsom1b',
+    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
     'legacy': False,
     'missing': False,
     'paired': False,
@@ -87,7 +87,7 @@ snapshots['test_create[uvloop-unpaired] db'] = {
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
-    'hash': '68b60be51a667882d3aaa02a93259dd526e9c990',
+    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
     'legacy': False,
     'missing': False,
     'paired': False,
@@ -111,8 +111,8 @@ snapshots['test_create_program[uvloop] return'] = {
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
-    'hash': '68b60be51a667882d3aaa02a93259dd526e9c990',
     'id': '9pfsom1b',
+    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
     'legacy': False,
     'missing': False,
     'paired': False,
@@ -137,7 +137,7 @@ snapshots['test_create_program[uvloop] db'] = {
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
-    'hash': '68b60be51a667882d3aaa02a93259dd526e9c990',
+    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
     'legacy': False,
     'missing': False,
     'paired': False,
@@ -161,8 +161,8 @@ snapshots['test_create_duplicate[uvloop] return'] = {
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
-    'hash': '68b60be51a667882d3aaa02a93259dd526e9c990',
     'id': 'u3cuwaoq',
+    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
     'legacy': False,
     'missing': False,
     'paired': False,
@@ -187,7 +187,7 @@ snapshots['test_create_duplicate[uvloop] db'] = {
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
-    'hash': '68b60be51a667882d3aaa02a93259dd526e9c990',
+    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
     'legacy': False,
     'missing': False,
     'paired': False,
@@ -211,8 +211,8 @@ snapshots['test_create_legacy[uvloop] return'] = {
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
-    'hash': '68b60be51a667882d3aaa02a93259dd526e9c990',
     'id': '9pfsom1b',
+    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
     'legacy': True,
     'missing': False,
     'paired': False,
@@ -237,7 +237,7 @@ snapshots['test_create_legacy[uvloop] db'] = {
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
-    'hash': '68b60be51a667882d3aaa02a93259dd526e9c990',
+    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
     'legacy': True,
     'missing': False,
     'paired': False,
