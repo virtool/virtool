@@ -8,7 +8,6 @@ import virtool.analyses.utils
 import virtool.api.utils
 import virtool.db.utils
 import virtool.errors
-import virtool.files.db
 import virtool.http.routes
 import virtool.jobs.db
 import virtool.samples.db
@@ -257,8 +256,11 @@ async def create(req):
         return bad_request("Subtraction does not exist")
 
     # Make sure all of the passed file ids exist.
-    if not await virtool.db.utils.ids_exist(db.files, data["files"]):
-        return bad_request("File does not exist")
+    for file in data["files"]:
+        upload = await virtool.uploads.db.get(pg, file)
+
+        if not upload:
+            return bad_request("File does not exist")
 
     sample_id = await virtool.db.utils.get_new_id(db.samples)
 
@@ -307,15 +309,22 @@ async def create(req):
         "paired": len(data["files"]) == 2
     })
 
-    files = [await db.files.find_one(file_id, ["_id", "name", "size"]) for file_id in data["files"]]
+    uploads = [(await virtool.uploads.db.get(pg, file_id)).to_dict() for file_id in data["files"]]
 
-    files = [virtool.utils.base_processor(file) for file in files]
+    files = list()
+    for upload in uploads:
+        file = {
+            "id": upload["id"],
+            "name": upload["name"],
+            "size": upload["size"]
+        }
+        files.append(file)
 
     document["files"] = files
 
     await db.samples.insert_one(document)
 
-    await virtool.files.db.reserve(db, data["files"])
+    await virtool.uploads.db.reserve(pg, data["files"])
 
     task_args = {
         "sample_id": sample_id,

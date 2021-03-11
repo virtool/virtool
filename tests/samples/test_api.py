@@ -1,10 +1,12 @@
 import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.samples.db
 import virtool.uploads.db
 from virtool.labels.models import Label
+from virtool.uploads.models import Upload
 
 
 class MockJobInterface:
@@ -203,7 +205,7 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
 class TestCreate:
 
     @pytest.mark.parametrize("group_setting", ["none", "users_primary_group", "force_choice"])
-    async def test(self, group_setting, snapshot, mocker, spawn_client, static_time, test_random_alphanumeric):
+    async def test(self, group_setting, snapshot, mocker, spawn_client, pg, static_time, test_random_alphanumeric):
 
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
@@ -217,9 +219,12 @@ class TestCreate:
             "is_host": True
         })
 
-        await client.db.files.insert_one({
-            "_id": "test.fq"
-        })
+        upload = Upload(id=1, name="test.fq.gz", size=123456)
+
+        async with AsyncSession(pg) as session:
+            session.add(upload)
+
+            await session.commit()
 
         await client.db.groups.insert_many([
             {"_id": "diagnostics"},
@@ -235,7 +240,7 @@ class TestCreate:
             "sample_unique_names": True
         })
 
-        m_reserve = mocker.patch("virtool.files.db.reserve", make_mocked_coro())
+        m_reserve = mocker.patch("virtool.uploads.db.reserve", make_mocked_coro())
 
         client.app["jobs"] = mocker.Mock()
 
@@ -243,7 +248,7 @@ class TestCreate:
 
         request_data = {
             "name": "Foobar",
-            "files": ["test.fq"],
+            "files": [1],
             "subtraction": "apple",
         }
 
@@ -262,8 +267,8 @@ class TestCreate:
 
         # Check call to file.reserve.
         m_reserve.assert_called_with(
-            client.db,
-            ["test.fq"]
+            client.app["pg"],
+            [1]
         )
 
         m_enqueue.assert_called_with(test_random_alphanumeric.history[1])
@@ -284,13 +289,13 @@ class TestCreate:
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
-            "files": ["test.fq"],
+            "files": [1],
             "subtraction": "apple"
         })
 
         assert await resp_is.bad_request(resp, "Sample name is already in use")
 
-    async def test_force_choice(self, mocker, spawn_client, resp_is):
+    async def test_force_choice(self, spawn_client, pg, resp_is):
         """
         Test that when ``force_choice`` is enabled, a request with no group field passed results in an error.
         response.
@@ -306,17 +311,22 @@ class TestCreate:
             "is_host": True
         })
 
-        mocker.patch("virtool.db.utils.ids_exist", make_mocked_coro(True))
+        upload = Upload(id=1, name="test.fq.gz", size=123456)
+
+        async with AsyncSession(pg) as session:
+            session.add(upload)
+
+            await session.commit()
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
-            "files": ["test.fq"],
+            "files": [1],
             "subtraction": "apple"
         })
 
         assert await resp_is.bad_request(resp, "Group value required for sample creation")
 
-    async def test_group_dne(self, mocker, spawn_client, resp_is):
+    async def test_group_dne(self, spawn_client, pg, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         client.app["settings"]["sample_group"] = "force_choice"
@@ -327,11 +337,16 @@ class TestCreate:
             "is_host": True
         })
 
-        mocker.patch("virtool.db.utils.ids_exist", make_mocked_coro(True))
+        upload = Upload(id=1, name="test.fq.gz", size=123456)
+
+        async with AsyncSession(pg) as session:
+            session.add(upload)
+
+            await session.commit()
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
-            "files": ["test.fq"],
+            "files": [1],
             "subtraction": "apple",
             "group": "foobar"
         })
@@ -346,7 +361,7 @@ class TestCreate:
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
-            "files": ["test.fq"],
+            "files": [1],
             "subtraction": "apple"
         })
 
@@ -359,7 +374,7 @@ class TestCreate:
         assert await resp_is.bad_request(resp, "Subtraction does not exist")
 
     @pytest.mark.parametrize("one_exists", [True, False])
-    async def test_file_dne(self, one_exists, spawn_client, resp_is):
+    async def test_file_dne(self, one_exists, spawn_client, pg, resp_is):
         """
         Test that a ``404`` is returned if one or more of the file ids passed in ``files`` does not exist.
 
@@ -374,13 +389,16 @@ class TestCreate:
         })
 
         if one_exists:
-            await client.db.files.insert_one({
-                "_id": "test.fq"
-            })
+            upload = Upload(id=1, name="test.fq.gz", size=123456)
+
+            async with AsyncSession(pg) as session:
+                session.add(upload)
+
+                await session.commit()
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
-            "files": ["test.fq", "baz.fq"],
+            "files": [1, 2],
             "subtraction": "apple"
         })
 
@@ -400,7 +418,7 @@ class TestCreate:
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
-            "files": ["test.fq"],
+            "files": [1],
             "subtraction": "apple",
             "labels": [1]
         })

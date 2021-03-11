@@ -324,7 +324,7 @@ class DB:
 
         self.files = self.bind_collection(
             "files",
-            projection=virtool.upl.db.PROJECTION
+            projection=virtool.uploads.db.PROJECTION
         )
 
         self.groups = self.bind_collection("groups")
