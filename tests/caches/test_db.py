@@ -18,8 +18,8 @@ def trim_parameters():
     }
 
 
-def test_calculate_cache_hash(trim_parameters):
-    hashed = virtool.caches.db.calculate_cache_hash(trim_parameters)
+def test_calculate_cache_key(trim_parameters):
+    hashed = virtool.caches.db.calculate_cache_key(trim_parameters)
     assert hashed == "68b60be51a667882d3aaa02a93259dd526e9c990"
 
 
@@ -37,18 +37,18 @@ async def test_find(exists, missing, returned_hash, mocker, dbi):
         await dbi.caches.insert_one({
             "_id": "bar",
             "program": "skewer-0.2.2",
-            "hash": "abc123",
+            "key": "abc123",
             "missing": missing,
             "sample": {
                 "id": "foo"
             }
         })
 
-    m_calculate_cache_hash = mocker.patch("virtool.caches.db.calculate_cache_hash", return_value=returned_hash)
+    m_calculate_cache_key = mocker.patch("virtool.caches.db.calculate_cache_key", return_value=returned_hash)
 
     result = await virtool.caches.db.find(dbi, "foo", "skewer-0.2.2", parameters)
 
-    m_calculate_cache_hash.assert_called_with(parameters)
+    m_calculate_cache_key.assert_called_with(parameters)
 
     if missing or not exists or returned_hash == "foobar":
         assert result is None
@@ -57,7 +57,7 @@ async def test_find(exists, missing, returned_hash, mocker, dbi):
     assert result == {
         "id": "bar",
         "program": "skewer-0.2.2",
-        "hash": "abc123",
+        "key": "abc123",
         "missing": False,
         "sample": {
             "id": "foo"
