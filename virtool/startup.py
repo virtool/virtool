@@ -19,7 +19,6 @@ import virtool.db.migrate
 import virtool.db.mongo
 import virtool.db.utils
 import virtool.dispatcher
-import virtool.files.db
 import virtool.hmm.db
 import virtool.jobs.interface
 import virtool.jobs.runner

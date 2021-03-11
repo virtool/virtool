@@ -2,7 +2,6 @@ import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
-import virtool.files.db
 import virtool.samples.db
 import virtool.uploads.db
 from virtool.labels.models import Label
