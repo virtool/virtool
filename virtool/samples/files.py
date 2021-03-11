@@ -5,33 +5,33 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.samples.models import SampleArtifact, SampleReadsFile
 
 
-async def create_artifacts_file(pg: AsyncEngine, name: str, sample_id: str, artifact_type: str):
+async def create_artifact_file(pg: AsyncEngine, name: str, sample_id: str, artifact_type: str):
     """
-    Create a row in the `sample_artifacts` SQL table that represents uploaded sample artifact files.
+    Create a row in the `sample_artifact` SQL table that represents uploaded sample artifact files.
 
     :param pg: PostgreSQL AsyncEngine object
-    :param name: Name of the sample artifacts file
+    :param name: Name of the sample artifact file
     :param sample_id: ID that corresponds to a parent sample
     :param artifact_type: Type of artifact to be uploaded
     :return: A dictionary representation of the newly created row
     """
     async with AsyncSession(pg) as session:
-        artifacts_file = SampleArtifact(
+        artifact_file = SampleArtifact(
             sample=sample_id,
             name=name,
             type=artifact_type
         )
 
-        session.add(artifacts_file)
+        session.add(artifact_file)
         await session.flush()
 
-        artifacts_file.name_on_disk = f"{artifacts_file.id}-{artifacts_file.name}"
+        artifact_file.name_on_disk = f"{artifact_file.id}-{artifact_file.name}"
 
-        artifacts_file = artifacts_file.to_dict()
+        artifact_file = artifact_file.to_dict()
 
         await session.commit()
 
-        return artifacts_file
+        return artifact_file
 
 
 async def create_reads_file(pg: AsyncEngine, file: Dict[str, any], sample_id: str):

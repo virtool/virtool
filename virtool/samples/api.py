@@ -746,9 +746,9 @@ async def upload_reads(req):
 
 
 @routes.jobs_api.post("/api/samples/{sample_id}/artifacts")
-async def upload_artifacts(req):
+async def upload_artifact(req):
     """
-    Upload artifacts created during sample creation using the Jobs API.
+    Upload artifact created during sample creation using the Jobs API.
 
     """
     db = req.app["db"]
@@ -756,7 +756,7 @@ async def upload_artifacts(req):
     sample_id = req.match_info["sample_id"]
     artifact_type = req.query.get("type")
 
-    artifacts_file_path = Path(req.app["settings"]["data_path"]) / "samples" / sample_id
+    artifact_file_path = Path(req.app["settings"]["data_path"]) / "samples" / sample_id
 
     if not await db.samples.find_one(sample_id):
         return not_found()
@@ -771,25 +771,25 @@ async def upload_artifacts(req):
     if artifact_type and artifact_type not in ArtifactType.to_list():
         return bad_request("Unsupported sample artifact type")
 
-    artifacts_file = await virtool.samples.files.create_artifacts_file(pg, name, sample_id, artifact_type)
+    artifact_file = await virtool.samples.files.create_artifact_file(pg, name, sample_id, artifact_type)
 
-    file_id = artifacts_file["id"]
+    file_id = artifact_file["id"]
 
-    artifacts_file_path = Path(req.app["settings"]["data_path"]) / "samples" / sample_id / artifacts_file["name_on_disk"]
+    artifact_file_path = Path(req.app["settings"]["data_path"]) / "samples" / sample_id / artifact_file["name_on_disk"]
 
     try:
-        file = await virtool.uploads.utils.naive_writer(req, artifacts_file_path)
+        file = await virtool.uploads.utils.naive_writer(req, artifact_file_path)
     except asyncio.CancelledError:
-        logger.debug(f"Artifacts file upload aborted: {file_id}")
-        await req.app["run_in_thread"](os.remove, artifacts_file_path)
+        logger.debug(f"Artifact file upload aborted: {file_id}")
+        await req.app["run_in_thread"](os.remove, artifact_file_path)
         await virtool.pg.utils.delete_row(pg, file_id, SampleArtifact)
 
         return aiohttp.web.Response(status=499)
 
-    artifacts_file = await virtool.uploads.db.finalize(pg, file, file_id, SampleArtifact)
+    artifact_file = await virtool.uploads.db.finalize(pg, file, file_id, SampleArtifact)
 
     headers = {
-        "Location": f"/api/samples/{sample_id}/artifacts/{file_id}"
+        "Location": f"/api/samples/{sample_id}/artifact/{file_id}"
     }
 
-    return json_response(artifacts_file, status=201, headers=headers)
+    return json_response(artifact_file, status=201, headers=headers)
