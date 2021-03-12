@@ -51,7 +51,7 @@ exports[`<Bar /> should render 1`] = `
     <NavBarItem
       rel="noopener noreferrer"
       target="_blank"
-      to="//virtool.ca/docs/manual"
+      to="//virtool.ca/docs/manual/start/installation/"
     >
       <Icon
         faStyle="fas"
