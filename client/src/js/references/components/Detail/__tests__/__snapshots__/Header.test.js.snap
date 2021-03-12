@@ -12,12 +12,6 @@ exports[`<ReferenceDetailHeader/> should render 1`] = `
         isRemote={true}
         onEdit={[MockFunction]}
       />
-      <Icon
-        color="purple"
-        faStyle="fas"
-        fixedWidth={false}
-        name="download"
-      />
     </ViewHeader__ViewHeaderIcons>
   </ViewHeader__ViewHeaderTitle>
   <ViewHeader__ViewHeaderAttribution
