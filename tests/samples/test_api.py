@@ -4,9 +4,6 @@ from pathlib import Path
 import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-
-import virtool.files.db
-from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.samples.db

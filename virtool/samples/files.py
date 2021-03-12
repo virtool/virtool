@@ -1,9 +1,15 @@
-from typing import Dict
-
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.samples.models import SampleArtifact, SampleReadsFile
 import virtool.utils
+from virtool.samples.models import SampleArtifact, SampleReadsFile
+
+
+async def get_existing_reads(pg: AsyncEngine, sample_id: str):
+    async with AsyncSession(pg) as session:
+        query = await session.execute(select(SampleReadsFile).filter_by(sample=sample_id))
+
+    return [result.name for result in query.scalars().all()]
 
 
 async def create_artifact_file(pg: AsyncEngine, name: str, sample_id: str, artifact_type: str):
