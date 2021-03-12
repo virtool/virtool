@@ -416,11 +416,10 @@ class CompressReadsProcess(Process):
         ]
 
     async def compress_samples(self):
-        query = {"files.raw": False}
-        count = await self.db.samples.count_documents(query)
+        count = await self.db.samples.count_documents({"is_legacy": True})
 
         tracker = self.get_tracker(count)
 
-        async for sample in self.db.samples.find(query):
+        async for sample in self.db.samples.find({"is_legacy": True}):
             await compress_reads(self.app, sample)
             await tracker.add(1)

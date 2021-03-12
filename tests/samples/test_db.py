@@ -429,36 +429,15 @@ async def test_compress_reads_process(mocker, dbi):
     await dbi.samples.insert_many([
         {
             "_id": "foo",
-            "files": [
-                {"raw": True},
-                {"raw": False}
-            ]
+            "is_legacy": True
         },
         {
             "_id": "fab",
-            "files": [
-                {"raw": False}
-            ]
+            "is_legacy": False
         },
         {
             "_id": "bar",
-            "files": [
-                {"raw": True}
-            ]
-        },
-        {
-            "_id": "baz",
-            "files": [
-                {"raw": True},
-                {"raw": True}
-            ]
-        },
-        {
-            "_id": "fob",
-            "files": [
-                {"raw": False},
-                {"raw": False}
-            ]
+            "is_legacy": True
         }
     ])
 
@@ -475,27 +454,15 @@ async def test_compress_reads_process(mocker, dbi):
 
     await process.run()
 
-    assert len(m_compress_reads.mock_calls) == 3
+    assert len(m_compress_reads.mock_calls) == 2
 
     m_compress_reads.assert_has_calls([
         call(app_dict, {
             "_id": "foo",
-            "files": [
-                {"raw": True},
-                {"raw": False}
-            ]
+            "is_legacy": True
         }),
         call(app_dict, {
-            "_id": "fab",
-            "files": [
-                {"raw": False}
-            ]
-        }),
-        call(app_dict, {
-            "_id": "fob",
-            "files": [
-                {"raw": False},
-                {"raw": False}
-            ]
+            "_id": "bar",
+            "is_legacy": True
         })
     ])
