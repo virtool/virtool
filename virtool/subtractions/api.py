@@ -221,14 +221,14 @@ async def upload(req):
         return bad_request("File name already exists")
 
     try:
-        file = await virtool.uploads.utils.naive_writer(req, path)
+        size = await virtool.uploads.utils.naive_writer(req, path)
     except asyncio.CancelledError:
         logger.debug(f"Subtraction file upload aborted: {file_id}")
         await virtool.subtractions.files.delete_subtraction_file(pg, file_id)
 
         return aiohttp.web.Response(status=499)
 
-    subtraction_file = await virtool.uploads.db.finalize(pg, file, file_id, SubtractionFile)
+    subtraction_file = await virtool.uploads.db.finalize(pg, size, file_id, SubtractionFile)
 
     await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
         "$push": {

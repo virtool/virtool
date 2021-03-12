@@ -3,6 +3,7 @@ from typing import Dict
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.samples.models import SampleArtifact, SampleReadsFile
+import virtool.utils
 
 
 async def create_artifact_file(pg: AsyncEngine, name: str, sample_id: str, artifact_type: str):
@@ -34,12 +35,13 @@ async def create_artifact_file(pg: AsyncEngine, name: str, sample_id: str, artif
         return artifact_file
 
 
-async def create_reads_file(pg: AsyncEngine, file: Dict[str, any], sample_id: str):
+async def create_reads_file(pg: AsyncEngine, size: int, name_on_disk: str, sample_id: str):
     """
     Create one or two rows in the `samples_reads_files` SQL table that represents uploaded sample reads files.
 
     :param pg: PostgreSQL AsyncEngine object
-    :param file: A dictionary containing info on an uploaded file
+    :param size: Size of a newly uploaded file in bytes
+    :param name_on_disk: Name of the newly uploaded file
     :param sample_id: ID that corresponds to a parent sample
     :return: List of dictionary representations of the newly created row(s)
     """
@@ -47,9 +49,9 @@ async def create_reads_file(pg: AsyncEngine, file: Dict[str, any], sample_id: st
     async with AsyncSession(pg) as session:
         reads_file = SampleReadsFile(
             sample=sample_id,
-            name_on_disk=file["name_on_disk"],
-            size=file["size"],
-            uploaded_at=file["uploaded_at"]
+            name_on_disk=name_on_disk,
+            size=size,
+            uploaded_at=virtool.utils.timestamp()
         )
 
         session.add(reads_file)
