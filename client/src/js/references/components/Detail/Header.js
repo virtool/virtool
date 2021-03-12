@@ -17,23 +17,13 @@ export const ReferenceDetailHeaderIcon = ({ canModify, isRemote, onEdit }) => {
     return null;
 };
 
-export const ReferenceDetailHeader = ({
-    canModify,
-    createdAt,
-    isRemote,
-    name,
-    showIcons,
-    userId,
-    onEdit,
-    onExport
-}) => {
+export const ReferenceDetailHeader = ({ canModify, createdAt, isRemote, name, showIcons, userId, onEdit }) => {
     let icons;
 
     if (showIcons) {
         icons = (
             <ViewHeaderIcons>
                 <ReferenceDetailHeaderIcon canModify={canModify} isRemote={isRemote} onEdit={onEdit} />
-                <Icon color="purple" name="download" onClick={onExport} />
             </ViewHeaderIcons>
         );
     }
@@ -64,10 +54,6 @@ export const mapStateToProps = state => {
 export const mapDispatchToProps = dispatch => ({
     onEdit: () => {
         dispatch(pushState({ editReference: true }));
-    },
-
-    onExport: () => {
-        dispatch(pushState({ exportReference: true }));
     }
 });
 

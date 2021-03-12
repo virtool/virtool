@@ -1,6 +1,7 @@
 import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import {
     LoadingPlaceholder,
     NarrowContainer,
@@ -10,8 +11,18 @@ import {
     SubviewHeaderAttribution,
     SubviewHeaderTitle
 } from "../../base";
+import { DownloadLink } from "../../references/components/Detail/DownloadLink";
 import { getIndex, getIndexHistory } from "../actions";
 import IndexGeneral from "./General";
+
+const IndexDetailSubtitle = styled.div`
+    align-items: center;
+    display: flex;
+
+    a {
+        margin-left: auto;
+    }
+`;
 
 export class IndexDetail extends React.Component {
     componentDidMount() {
@@ -28,21 +39,24 @@ export class IndexDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const { version, created_at, user } = this.props.detail;
+        const { version, created_at, user, id, has_json } = this.props.detail;
 
         return (
-            <div>
+            <React.Fragment>
                 <SubviewHeader>
                     <SubviewHeaderTitle>Index {version}</SubviewHeaderTitle>
-                    <SubviewHeaderAttribution>
-                        {user.id} built <RelativeTime time={created_at} />
-                    </SubviewHeaderAttribution>
+                    <IndexDetailSubtitle>
+                        <SubviewHeaderAttribution>
+                            {user.id} built <RelativeTime time={created_at} />
+                        </SubviewHeaderAttribution>
+                        {has_json && <DownloadLink id={id} />}
+                    </IndexDetailSubtitle>
                 </SubviewHeader>
 
                 <NarrowContainer>
                     <IndexGeneral />
                 </NarrowContainer>
-            </div>
+            </React.Fragment>
         );
     }
 }
