@@ -34,6 +34,7 @@ LIST_PROJECTION = [
 PROJECTION = [
     "_id",
     "created_at",
+    "is_legacy",
     "library_type",
     "name",
     "pathoscope",
