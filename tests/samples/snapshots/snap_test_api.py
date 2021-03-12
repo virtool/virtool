@@ -780,7 +780,7 @@ snapshots['test_upload_reads[uvloop-True-True-False] 1'] = {
 }
 
 snapshots['test_upload_reads[uvloop-True-False-False] 1'] = {
-    'id': 5,
+    'id': 1,
     'name': 'reads_1.fq.gz',
     'name_on_disk': 'reads_1.fq.gz',
     'sample': 'test',

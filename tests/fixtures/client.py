@@ -152,6 +152,7 @@ def spawn_job_client(
         test_db_connection_string,
         redis_connection_string,
         pg_connection_string,
+        pg_session,
         test_db_name
 ):
     """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
