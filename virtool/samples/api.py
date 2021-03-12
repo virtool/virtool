@@ -702,7 +702,7 @@ async def cache_job_remove(req: aiohttp.web.Request):
         return not_found()
 
     if "ready" in document and document["ready"]:
-        return conflict("Only unfinalized caches can be deleted")
+        return conflict("Jobs cannot delete finalized caches")
 
     await virtool.caches.db.remove(req.app, document["_id"])
 

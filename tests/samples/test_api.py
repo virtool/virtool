@@ -727,7 +727,7 @@ async def test_cache_job_remove(exists, ready, tmpdir, spawn_job_client, snapsho
         return
 
     if ready:
-        assert await resp_is.conflict(resp, "Only unfinalized caches can be deleted")
+        assert await resp_is.conflict(resp, "Jobs cannot delete finalized caches")
         return
 
     assert await resp_is.no_content(resp)
