@@ -721,11 +721,10 @@ async def upload_reads(req):
     if not await db.samples.find_one(sample_id):
         return not_found()
 
-    try:
-        if {"reads_1.fq.gz", "reads_2.fq.gz"}.issubset(set(os.listdir(reads_file_path))):
-            return conflict("Sample is already associated with two reads files")
-    except FileNotFoundError:
-        pass
+    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id)
+
+    if existing_reads == ["reads_1.fq.gz", "reads_2.fq.gz"]:
+        return conflict("Sample is already associated with two reads files")
 
     try:
         size, name_on_disk = await virtool.uploads.utils.naive_writer(req, reads_file_path, compressed=True)
@@ -742,6 +741,9 @@ async def upload_reads(req):
         name = "reads_2.fq.gz"
     else:
         return bad_request("File name is not an accepted reads file")
+
+    if name in existing_reads:
+        return conflict("Reads file is already associated with this sample")
 
     reads = await virtool.samples.files.create_reads_file(pg, size, name, name_on_disk, sample_id)
 
