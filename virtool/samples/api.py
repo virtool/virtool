@@ -1,4 +1,5 @@
 import asyncio.tasks
+import aiohttp.web
 from copy import deepcopy
 
 from cerberus import Validator
@@ -7,6 +8,7 @@ import virtool.analyses.db
 import virtool.analyses.utils
 import virtool.api.utils
 import virtool.db.utils
+import virtool.caches.db
 import virtool.errors
 import virtool.files.db
 import virtool.http.routes
@@ -17,7 +19,7 @@ import virtool.subtractions.db
 import virtool.uploads.db
 import virtool.utils
 import virtool.validators
-from virtool.api.response import bad_request, insufficient_rights, invalid_query, \
+from virtool.api.response import bad_request, conflict, insufficient_rights, invalid_query, \
     json_response, no_content, not_found
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
@@ -680,3 +682,28 @@ async def analyze(req):
             "Location": f"/api/analyses/{analysis_id}"
         }
     )
+
+
+@routes.jobs_api.delete("/api/samples/{sample_id}/caches/{cache_key}")
+async def cache_job_remove(req: aiohttp.web.Request):
+    """
+    Remove a cache document. Only usable in the Jobs API and when caches are unfinalized.
+
+    """
+    db = req.app["db"]
+
+    cache_key = req.match_info["cache_key"]
+
+    document = await db.caches.find_one({
+        "key": cache_key
+    })
+
+    if document is None:
+        return not_found()
+
+    if "ready" in document and document["ready"]:
+        return conflict("Only unfinalized caches can be deleted")
+
+    await virtool.caches.db.remove(req.app, document["_id"])
+
+    return no_content()
