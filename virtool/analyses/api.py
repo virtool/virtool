@@ -228,14 +228,14 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
     analysis_file_path = Path(req.app["settings"]["data_path"]) / "analyses" / analysis_file["name_on_disk"]
 
     try:
-        file = await virtool.uploads.utils.naive_writer(req, analysis_file_path)
+        size = await virtool.uploads.utils.naive_writer(req, analysis_file_path)
     except asyncio.CancelledError:
         logger.debug(f"Analysis file upload aborted: {file_id}")
         await virtool.pg.utils.delete_row(pg, file_id, AnalysisFile)
 
         return aiohttp.web.Response(status=499)
 
-    analysis_file = await virtool.uploads.db.finalize(pg, file, file_id, AnalysisFile)
+    analysis_file = await virtool.uploads.db.finalize(pg, size, file_id, AnalysisFile)
 
     await db.analyses.update_one({"_id": analysis_id}, {
         "$push": {"files": file_id}

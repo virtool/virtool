@@ -1,12 +1,11 @@
 import os
 import pathlib
-from typing import Optional, Dict
+from typing import Optional, Tuple, Union
 
 import aiofiles
 import aiohttp.web
 from cerberus import Validator
 
-import virtool.utils
 
 CHUNK_SIZE = 4096
 
@@ -32,9 +31,7 @@ def naive_validator(req) -> Validator.errors:
         return v.errors
 
 
-async def naive_writer(
-    req: aiohttp.web.Request, path: pathlib.Path, compressed: bool = False
-) -> Optional[Dict[str, any]]:
+async def naive_writer(req: aiohttp.web.Request, path: pathlib.Path, compressed: bool = False) -> Optional[Union[int, Tuple[int, str]]]:
     """
     Write a new file from a HTTP multipart request.
 
@@ -45,12 +42,13 @@ async def naive_writer(
     """
     reader = await req.multipart()
     file = await reader.next()
-    new_file = dict()
+    path_is_file = True
 
     size = 0
 
     if not path.suffix:
         path = path / file.filename
+        path_is_file = False
 
     try:
         await req.app["run_in_thread"](os.makedirs, path.parent)
@@ -65,17 +63,12 @@ async def naive_writer(
 
             if size == 0 and compressed:
                 if not is_gzip_compressed(chunk):
-                    return None
+                    return None, None
 
             size += len(chunk)
             await handle.write(chunk)
 
-    new_file.update(
-        {
-            "name_on_disk": path.name,
-            "size": size,
-            "uploaded_at": virtool.utils.timestamp(),
-        }
-    )
-
-    return new_file
+    if not path_is_file:
+        return size, path.name
+    
+    return size
