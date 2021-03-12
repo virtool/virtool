@@ -1,0 +1,10 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<DownloadLink /> should render 1`] = `
+<a
+  download={true}
+  href="/download/indexes/1"
+>
+  Download Index
+</a>
+`;
