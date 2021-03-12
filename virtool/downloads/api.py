@@ -26,7 +26,6 @@ import virtool.references.db
 import virtool.samples.utils
 import virtool.subtractions.utils
 import virtool.utils
-from virtool.hmm.utils import hmm_data_exists
 
 routes = virtool.http.routes.Routes()
 
@@ -58,24 +57,6 @@ async def download_analysis(req):
     }
 
     return web.Response(text=formatted, headers=headers)
-
-
-@routes.jobs_api.get("/download/hmms/profiles.hmm")
-async def download_hmm_profiles(req):
-    """
-    Download the HMM profiles file if HMM data is available.
-
-    """
-    file_path = Path(req.app["settings"]["data_path"]) / "hmm" / "profiles.hmm"
-
-    if not await req.app["run_in_thread"](hmm_data_exists, file_path):
-        return virtool.api.response.not_found("Profiles file could not be found")
-
-    headers = {
-        "Content-Type": "application/gzip"
-    }
-
-    return web.FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
 
 
 @routes.get("/download/caches/{cache_id}/reads_{suffix}.fq.gz")

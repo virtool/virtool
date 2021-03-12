@@ -1,4 +1,5 @@
 import json
+import shutil
 from pathlib import Path
 
 import aiofiles
@@ -164,3 +165,33 @@ async def test_get_hmm_annotations(spawn_job_client, tmpdir):
             hmms = json.loads(await f.read())
 
         assert hmms == [{"id": "foo"}, {"id": "bar"}]
+
+
+@pytest.mark.parametrize("data_exists", [True, False])
+@pytest.mark.parametrize("file_exists", [True, False])
+async def test_get_hmm_profiles(data_exists, file_exists, snapshot, spawn_client, spawn_job_client, tmpdir):
+    """
+    Test that HMM profiles can be properly downloaded once they are available.
+
+    """
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+    file_path = Path(client.app["settings"]["data_path"]) / "hmm"
+    test_file_path = Path.cwd() / "tests" / "test_files" / "profiles.hmm"
+
+    if data_exists:
+        file_path.mkdir()
+
+        if file_exists:
+            await client.app["run_in_thread"](shutil.copy, test_file_path, file_path)
+            file_path = file_path / "profiles.hmm"
+            assert file_path.exists()
+
+    resp = await client.get("/api/hmms/files/profiles.hmm")
+
+    if data_exists and file_exists:
+        assert resp.status == 200
+        assert file_path.read_bytes() == await resp.content.read()
+    else:
+        assert resp.status == 404

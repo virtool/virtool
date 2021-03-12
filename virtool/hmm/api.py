@@ -19,6 +19,7 @@ import virtool.tasks.pg
 import virtool.utils
 from virtool.api.response import bad_gateway, bad_request, conflict, json_response, no_content, not_found
 from virtool.hmm.db import HMMInstallTask, generate_annotations_json_file
+from virtool.hmm.utils import hmm_data_exists
 
 routes = virtool.http.routes.Routes()
 
@@ -214,3 +215,21 @@ async def get_hmm_annotations(request):
                                            json_path, annotation_path)
 
     return FileResponse(annotation_path)
+
+
+@routes.jobs_api.get("/api/hmms/files/profiles.hmm")
+async def get_hmm_profiles(req):
+    """
+    Download the HMM profiles file if HMM data is available.
+
+    """
+    file_path = Path(req.app["settings"]["data_path"]) / "hmm" / "profiles.hmm"
+
+    if not await req.app["run_in_thread"](hmm_data_exists, file_path):
+        return virtool.api.response.not_found("Profiles file could not be found")
+
+    headers = {
+        "Content-Type": "application/gzip"
+    }
+
+    return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
