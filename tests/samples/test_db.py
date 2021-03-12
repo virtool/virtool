@@ -1,11 +1,8 @@
-import filecmp
 import gzip
-import json
 import os
 import shutil
 import sys
 from pathlib import Path
-from pprint import pprint
 from unittest.mock import call
 
 import pytest
@@ -13,7 +10,6 @@ from aiohttp.test_utils import make_mocked_coro
 
 import virtool.samples.db
 import virtool.samples.utils
-import virtool.samples.db
 
 FASTQ_PATH = Path(sys.path[0]) / "tests/test_files/test.fq"
 
