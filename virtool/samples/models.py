@@ -43,10 +43,11 @@ class SampleReadsFile(Base):
 
     id = Column(Integer, primary_key=True)
     sample = Column(String, nullable=False)
+    name = Column(String(length=13), nullable=False)
     name_on_disk = Column(String, nullable=False)
     size = Column(Integer)
     uploaded_at = Column(DateTime)
 
     def __repr__(self):
-        return f"<SampleReadsFile(id={self.id}, sample={self.sample}, name_on_disk={self.name_on_disk}, " \
-               f"size={self.size}, uploaded_at={self.uploaded_at})>"
+        return f"<SampleReadsFile(id={self.id}, sample={self.sample}, name={self.name}, " \
+               f"name_on_disk={self.name_on_disk}, size={self.size}, uploaded_at={self.uploaded_at})>"

@@ -736,7 +736,14 @@ async def upload_reads(req):
     if size is None:
         return bad_request("File is not compressed")
 
-    reads = await virtool.samples.files.create_reads_file(pg, size, name_on_disk, sample_id)
+    if "1" in name_on_disk:
+        name = "reads_1.fq.gz"
+    elif "2" in name_on_disk:
+        name = "reads_2.fq.gz"
+    else:
+        return bad_request("File name is not an accepted reads file")
+
+    reads = await virtool.samples.files.create_reads_file(pg, size, name, name_on_disk, sample_id)
 
     headers = {
         "Location": f"/api/samples/{sample_id}/reads/{reads['name_on_disk']}"

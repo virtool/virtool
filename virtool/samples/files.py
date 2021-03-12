@@ -35,13 +35,14 @@ async def create_artifact_file(pg: AsyncEngine, name: str, sample_id: str, artif
         return artifact_file
 
 
-async def create_reads_file(pg: AsyncEngine, size: int, name_on_disk: str, sample_id: str):
+async def create_reads_file(pg: AsyncEngine, size: int, name: str, name_on_disk: str, sample_id: str):
     """
     Create one or two rows in the `samples_reads_files` SQL table that represents uploaded sample reads files.
 
     :param pg: PostgreSQL AsyncEngine object
     :param size: Size of a newly uploaded file in bytes
-    :param name_on_disk: Name of the newly uploaded file
+    :param name: Name of the file (either `reads_1.fq.gz` or `reads_2.fq.gz`)
+    :param name_on_disk: Name of the newly uploaded file on disk
     :param sample_id: ID that corresponds to a parent sample
     :return: List of dictionary representations of the newly created row(s)
     """
@@ -49,6 +50,7 @@ async def create_reads_file(pg: AsyncEngine, size: int, name_on_disk: str, sampl
     async with AsyncSession(pg) as session:
         reads_file = SampleReadsFile(
             sample=sample_id,
+            name=name,
             name_on_disk=name_on_disk,
             size=size,
             uploaded_at=virtool.utils.timestamp()
