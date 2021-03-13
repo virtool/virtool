@@ -424,3 +424,5 @@ class CompressReadsProcess(Process):
         async for sample in self.db.samples.find({"is_legacy": True}):
             await compress_reads(self.app, sample)
             await tracker.add(1)
+
+            logger.info(f"Compressed legacy sample {sample['_id']} ({tracker.count}/{tracker.total}")
