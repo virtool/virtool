@@ -18,7 +18,6 @@ import virtool.analyses.db
 import virtool.caches.db
 import virtool.db.utils
 import virtool.errors
-import virtool.files.db
 import virtool.history.db
 import virtool.hmm.db
 import virtool.indexes.db
@@ -29,6 +28,7 @@ import virtool.samples.db
 import virtool.settings.db
 import virtool.subtractions.db
 import virtool.users.db
+import virtool.uploads.db
 import virtool.utils
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
 from virtool.types import Projection
@@ -324,7 +324,7 @@ class DB:
 
         self.files = self.bind_collection(
             "files",
-            projection=virtool.files.db.PROJECTION
+            projection=virtool.uploads.db.PROJECTION
         )
 
         self.groups = self.bind_collection("groups")

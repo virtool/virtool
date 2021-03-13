@@ -6,7 +6,7 @@ from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
 import virtool.api.json
-from virtool.postgres import Base
+from virtool.pg.utils import Base
 
 
 @pytest.fixture

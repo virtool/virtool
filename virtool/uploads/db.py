@@ -4,11 +4,63 @@ from typing import Union, Optional, List, Dict, Type
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
+import virtool.tasks.task
 import virtool.uploads.utils
 import virtool.utils
+
+from virtool.types import App
 from virtool.uploads.models import Upload
 
 logger = logging.getLogger("uploads")
+
+PROJECTION = [
+    "_id",
+    "name",
+    "size",
+    "user",
+    "uploaded_at",
+    "type",
+    "ready",
+    "reserved"
+]
+
+
+class MigrateFilesTask(virtool.tasks.task.Task):
+    task_type = "migrate_files"
+
+    def __init__(self, app: App, task_id: int):
+        super().__init__(app, task_id)
+
+        self.steps = [
+            self.transform_documents_to_rows
+        ]
+
+    async def transform_documents_to_rows(self):
+        """
+        Transforms documents in the `files` collection into rows in the `uploads` SQL table.
+
+        """
+        async for document in self.db.files.find():
+            async with AsyncSession(self.app["pg"]) as session:
+                exists = (await session.execute(select(Upload).filter_by(name_on_disk=document["_id"]))).scalar()
+
+                if not exists:
+                    upload = Upload(
+                        name=document["name"],
+                        name_on_disk=document["_id"],
+                        ready=document["ready"],
+                        removed=False,
+                        reserved=document["reserved"],
+                        size=document["size"],
+                        type=document["type"],
+                        user=document["user"]["id"],
+                        uploaded_at=document["uploaded_at"]
+                    )
+
+                    session.add(upload)
+                    await session.commit()
+
+                    await self.db.files.delete_one({"_id": document["_id"]})
 
 
 async def create(pg: AsyncEngine, name: str, upload_type: str, reserved: bool = False,
@@ -54,13 +106,11 @@ async def finalize(pg, size: int, id_: int, table: Type[any]) -> Optional[dict]:
     to `True`.
 
     :param pg: PostgreSQL AsyncEngine object
-    :param size: Size of the new file in bytes
+    :param size: Size of a newly uploaded file in bytes
     :param id_: Row `id` corresponding to the recently created `upload` entry
     :param table: SQL table to retrieve row from
     :return: Dictionary representation of new row in `table`
     """
-    uploaded_at = virtool.utils.timestamp()
-
     async with AsyncSession(pg) as session:
         upload = (await session.execute(select(table).filter_by(id=id_))).scalar()
 
@@ -68,7 +118,7 @@ async def finalize(pg, size: int, id_: int, table: Type[any]) -> Optional[dict]:
             return None
 
         upload.size = size
-        upload.uploaded_at = uploaded_at
+        upload.uploaded_at = virtool.utils.timestamp()
         upload.ready = True
 
         upload = upload.to_dict()

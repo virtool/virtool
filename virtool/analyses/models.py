@@ -1,18 +1,15 @@
 import enum
+
 from sqlalchemy import Column, Integer, String, DateTime, Enum
 
-from virtool.postgres import Base
+from virtool.pg.utils import Base, SQLEnum
 
 
-class AnalysisFormat(str, enum.Enum):
+class AnalysisFormat(str, SQLEnum):
     """
     Enumerated type for analysis file formats
 
     """
-
-    @classmethod
-    def to_list(cls):
-        return [e.value for e in cls.__members__.values()]
 
     sam = "sam"
     bam = "bam"
@@ -21,9 +18,6 @@ class AnalysisFormat(str, enum.Enum):
     csv = "csv"
     tsv = "tsv"
     json = "json"
-
-
-ANALYSIS_FORMATS = [*AnalysisFormat.to_list(), None]
 
 
 class AnalysisFile(Base):

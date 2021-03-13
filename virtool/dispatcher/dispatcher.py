@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 import virtool.analyses.db
 import virtool.caches.db
-import virtool.files.db
 import virtool.history.db
 import virtool.hmm.db
 import virtool.indexes.db
@@ -36,7 +35,6 @@ logger = getLogger(__name__)
 class Fetchers:
     analyses: SimpleMongoFetcher
     caches: SimpleMongoFetcher
-    files: SimpleMongoFetcher
     groups: SimpleMongoFetcher
     history: SimpleMongoFetcher
     hmm: SimpleMongoFetcher
@@ -65,7 +63,6 @@ class Dispatcher:
         self._fetchers = Fetchers(
             SimpleMongoFetcher(db.analyses, virtool.analyses.db.PROJECTION),
             SimpleMongoFetcher(db.caches, virtool.caches.db.PROJECTION),
-            SimpleMongoFetcher(db.files, virtool.files.db.PROJECTION),
             SimpleMongoFetcher(db.groups),
             SimpleMongoFetcher(db.history, virtool.history.db.LIST_PROJECTION),
             SimpleMongoFetcher(db.hmm, virtool.hmm.db.PROJECTION),

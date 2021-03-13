@@ -1,7 +1,11 @@
 import asyncio.tasks
 import aiohttp.web
+import logging
+import os
 from copy import deepcopy
+from pathlib import Path
 
+import aiohttp.web
 from cerberus import Validator
 
 import virtool.analyses.db
@@ -10,20 +14,25 @@ import virtool.api.utils
 import virtool.db.utils
 import virtool.caches.db
 import virtool.errors
-import virtool.files.db
 import virtool.http.routes
 import virtool.jobs.db
+import virtool.pg.utils
 import virtool.samples.db
+import virtool.samples.files
 import virtool.samples.utils
 import virtool.subtractions.db
 import virtool.uploads.db
+import virtool.uploads.utils
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, conflict, insufficient_rights, invalid_query, \
     json_response, no_content, not_found
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
+from virtool.samples.models import ArtifactType, SampleArtifact
 from virtool.samples.utils import bad_labels_response, check_labels
+
+logger = logging.getLogger("samples")
 
 QUERY_SCHEMA = {
     "find": {
@@ -259,8 +268,11 @@ async def create(req):
         return bad_request("Subtraction does not exist")
 
     # Make sure all of the passed file ids exist.
-    if not await virtool.db.utils.ids_exist(db.files, data["files"]):
-        return bad_request("File does not exist")
+    for file in data["files"]:
+        upload = await virtool.uploads.db.get(pg, file)
+
+        if not upload:
+            return bad_request("File does not exist")
 
     sample_id = await virtool.db.utils.get_new_id(db.samples)
 
@@ -309,15 +321,22 @@ async def create(req):
         "paired": len(data["files"]) == 2
     })
 
-    files = [await db.files.find_one(file_id, ["_id", "name", "size"]) for file_id in data["files"]]
+    uploads = [(await virtool.uploads.db.get(pg, file_id)).to_dict() for file_id in data["files"]]
 
-    files = [virtool.utils.base_processor(file) for file in files]
+    files = list()
+    for upload in uploads:
+        file = {
+            "id": upload["id"],
+            "name": upload["name"],
+            "size": upload["size"]
+        }
+        files.append(file)
 
     document["files"] = files
 
     await db.samples.insert_one(document)
 
-    await virtool.files.db.reserve(db, data["files"])
+    await virtool.uploads.db.reserve(pg, data["files"])
 
     task_args = {
         "sample_id": sample_id,
@@ -420,6 +439,10 @@ async def edit(req):
     }
 })
 async def finalize(req):
+    """
+    Finalize a sample that is being created using the Jobs API by setting a sample's quality field and `ready` to `True`
+
+    """
     db = req.app["db"]
     data = req["data"]
 
@@ -707,3 +730,101 @@ async def cache_job_remove(req: aiohttp.web.Request):
     await virtool.caches.db.remove(req.app, document["_id"])
 
     return no_content()
+
+  
+@routes.jobs_api.post("/api/samples/{sample_id}/reads")
+async def upload_reads(req):
+    """
+    Upload sample reads using the Jobs API.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+    sample_id = req.match_info["sample_id"]
+
+    reads_file_path = Path(req.app["settings"]["data_path"]) / "samples" / sample_id
+
+    if not await db.samples.find_one(sample_id):
+        return not_found()
+
+    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id)
+
+    if existing_reads == ["reads_1.fq.gz", "reads_2.fq.gz"]:
+        return conflict("Sample is already associated with two reads files")
+
+    try:
+        size, name_on_disk = await virtool.uploads.utils.naive_writer(req, reads_file_path, compressed=True)
+    except asyncio.CancelledError:
+        logger.debug(f"Reads file upload aborted for {sample_id}")
+        return aiohttp.web.Response(status=499)
+
+    if size is None:
+        return bad_request("File is not compressed")
+
+    if "1" in name_on_disk:
+        name = "reads_1.fq.gz"
+    elif "2" in name_on_disk:
+        name = "reads_2.fq.gz"
+    else:
+        return bad_request("File name is not an accepted reads file")
+
+    if name in existing_reads:
+        return conflict("Reads file is already associated with this sample")
+
+    reads = await virtool.samples.files.create_reads_file(pg, size, name, name_on_disk, sample_id)
+
+    headers = {
+        "Location": f"/api/samples/{sample_id}/reads/{reads['name_on_disk']}"
+    }
+
+    return json_response(reads, status=201, headers=headers)
+
+
+@routes.jobs_api.post("/api/samples/{sample_id}/artifacts")
+async def upload_artifact(req):
+    """
+    Upload artifact created during sample creation using the Jobs API.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+    sample_id = req.match_info["sample_id"]
+    artifact_type = req.query.get("type")
+
+    artifact_file_path = Path(req.app["settings"]["data_path"]) / "samples" / sample_id
+
+    if not await db.samples.find_one(sample_id):
+        return not_found()
+
+    errors = virtool.uploads.utils.naive_validator(req)
+
+    if errors:
+        return invalid_query(errors)
+
+    name = req.query.get("name")
+
+    if artifact_type and artifact_type not in ArtifactType.to_list():
+        return bad_request("Unsupported sample artifact type")
+
+    artifact_file = await virtool.samples.files.create_artifact_file(pg, name, sample_id, artifact_type)
+
+    file_id = artifact_file["id"]
+
+    artifact_file_path = Path(req.app["settings"]["data_path"]) / "samples" / sample_id / artifact_file["name_on_disk"]
+
+    try:
+        size = await virtool.uploads.utils.naive_writer(req, artifact_file_path)
+    except asyncio.CancelledError:
+        logger.debug(f"Artifact file upload aborted: {file_id}")
+        await req.app["run_in_thread"](os.remove, artifact_file_path)
+        await virtool.pg.utils.delete_row(pg, file_id, SampleArtifact)
+
+        return aiohttp.web.Response(status=499)
+
+    artifact_file = await virtool.uploads.db.finalize(pg, size, file_id, SampleArtifact)
+
+    headers = {
+        "Location": f"/api/samples/{sample_id}/artifact/{file_id}"
+    }
+
+    return json_response(artifact_file, status=201, headers=headers)

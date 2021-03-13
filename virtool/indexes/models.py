@@ -1,18 +1,14 @@
 import enum
 from sqlalchemy import Column, Integer, String, Enum
 
-from virtool.postgres import Base
+from virtool.pg.utils import Base, SQLEnum
 
 
-class IndexType(str, enum.Enum):
+class IndexType(str, SQLEnum):
     """
     Enumerated type for index file types
 
     """
-
-    @classmethod
-    def to_list(cls):
-        return [e.value for e in cls.__members__.values()]
 
     json = "json"
     fasta = "fasta"

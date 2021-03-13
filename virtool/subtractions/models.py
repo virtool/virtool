@@ -1,18 +1,14 @@
 import enum
 from sqlalchemy import Column, Integer, String, Enum
 
-from virtool.postgres import Base
+from virtool.pg.utils import Base, SQLEnum
 
 
-class SubtractionType(str, enum.Enum):
+class SubtractionType(str, SQLEnum):
     """
     Enumerated type for subtraction file types
 
     """
-
-    @classmethod
-    def to_list(cls):
-        return [e.value for e in cls.__members__.values()]
 
     fasta = "fasta"
     bowtie2 = "bowtie2"

@@ -21,6 +21,7 @@ import virtool.api.utils
 import virtool.bio
 import virtool.errors
 import virtool.http.routes
+import virtool.pg.utils
 import virtool.samples.db
 import virtool.samples.utils
 import virtool.subtractions.db
@@ -28,7 +29,7 @@ import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
 import virtool.validators
-from virtool.analyses.models import ANALYSIS_FORMATS, AnalysisFile
+from virtool.analyses.models import AnalysisFormat, AnalysisFile
 from virtool.api.response import bad_request, conflict, insufficient_rights, \
     invalid_query, json_response, no_content, not_found
 from virtool.db.core import Collection, DB
@@ -214,7 +215,7 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     name = req.query.get("name")
 
-    if analysis_format not in ANALYSIS_FORMATS:
+    if analysis_format and analysis_format not in AnalysisFormat.to_list():
         return bad_request("Unsupported analysis file format")
 
     analysis_file = await virtool.analyses.files.create_analysis_file(pg, analysis_id, analysis_format, name)
@@ -230,7 +231,7 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
         size = await virtool.uploads.utils.naive_writer(req, analysis_file_path)
     except asyncio.CancelledError:
         logger.debug(f"Analysis file upload aborted: {file_id}")
-        await virtool.analyses.files.delete_analysis_file(pg, file_id)
+        await virtool.pg.utils.delete_row(pg, file_id, AnalysisFile)
 
         return aiohttp.web.Response(status=499)
 
@@ -256,7 +257,7 @@ async def download(req: aiohttp.web.Request) -> Union[aiohttp.web.FileResponse, 
     pg = req.app["pg"]
     file_id = int(req.match_info["file_id"])
 
-    analysis_file = await virtool.analyses.files.get_analysis_file(pg, file_id)
+    analysis_file = await virtool.pg.utils.get_row(pg, file_id, AnalysisFile)
 
     if not analysis_file:
         return not_found()

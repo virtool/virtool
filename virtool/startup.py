@@ -19,11 +19,10 @@ import virtool.db.migrate
 import virtool.db.mongo
 import virtool.db.utils
 import virtool.dispatcher
-import virtool.files.db
 import virtool.hmm.db
 import virtool.jobs.interface
 import virtool.jobs.runner
-import virtool.postgres
+import virtool.pg
 import virtool.redis
 import virtool.references.db
 import virtool.routes
@@ -45,7 +44,7 @@ from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.types import App
 from virtool.tasks.runner import TaskRunner
 from virtool.analyses.db import StoreNuvsFilesTask
-from virtool.files.db import MigrateFilesTask
+from virtool.uploads.db import MigrateFilesTask
 from virtool.subtractions.db import AddSubtractionFilesTask, WriteSubtractionFASTATask
 from virtool.references.db import CreateIndexJSONTask, DeleteReferenceTask
 
@@ -259,7 +258,7 @@ async def init_postgres(app: aiohttp.web_app.Application):
 
     logger.info("Connecting to PostgreSQL")
 
-    app["pg"] = await virtool.postgres.connect(postgres_connection_string)
+    app["pg"] = await virtool.pg.utils.connect(postgres_connection_string)
 
 
 async def init_redis(app: typing.Union[dict, aiohttp.web_app.Application]):
