@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 import aiohttp.web
 import asyncio
 import logging
@@ -10,6 +12,9 @@ import virtool.errors
 import virtool.samples.utils
 import virtool.utils
 import virtool.samples.utils
+from virtool.processes.process import Process
+from virtool.samples.utils import join_legacy_read_paths
+from virtool.utils import compress_file, file_stats
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +34,7 @@ LIST_PROJECTION = [
 PROJECTION = [
     "_id",
     "created_at",
+    "is_legacy",
     "library_type",
     "name",
     "pathoscope",
@@ -334,3 +340,87 @@ async def validate_force_choice_group(db, data):
         return "Group value required for sample creation"
 
     return None
+
+
+def check_is_legacy(sample: Dict[str, Any]) -> bool:
+    """
+    Check if a sample has legacy read files.
+
+    :param sample: the sample document
+    :return: legacy boolean
+    """
+    files = sample["files"]
+
+    return (
+        # All files have the `raw` flag set false indicating they are legacy data.
+        all(file.get("raw", False) is False for file in files) and
+
+        # File naming matches expectations.
+        files[0]["name"] == "reads_1.fastq" and
+        (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
+    )
+
+
+async def compress_reads(app, sample: Dict[str, Any]):
+    """
+    Compress the reads for one legacy samples.
+
+    :param app: the application object
+    :param sample: the sample document
+
+    """
+    if not check_is_legacy(sample):
+        return
+
+    paths = join_legacy_read_paths(app["settings"], sample)
+
+    data_path = app["settings"]["data_path"]
+    sample_id = sample["_id"]
+
+    files = list()
+
+    for i, path in enumerate(paths):
+        target_filename = "reads_1.fq.gz" if "reads_1.fastq" in path else "reads_2.fq.gz"
+        target_path = os.path.join(data_path, "samples", sample_id, target_filename)
+
+        await app["run_in_thread"](compress_file, path, target_path, 1)
+
+        stats = await app["run_in_thread"](file_stats, target_path)
+
+        assert os.path.isfile(target_path)
+
+        files.append({
+            "name": target_filename,
+            "download_url": f"/download/samples/{sample_id}/{target_filename}",
+            "size": stats["size"],
+            "raw": False,
+            "from": sample["files"][i]["from"]
+        })
+
+    await app["db"].samples.update_one({"_id": sample_id}, {
+        "$set": {
+            "files": files
+        }
+    })
+
+    for path in paths:
+        await app["run_in_thread"](os.remove, path)
+
+
+class CompressReadsProcess(Process):
+
+    def __init__(self, app, process_id):
+        super().__init__(app, process_id)
+
+        self.steps = [
+            self.compress_samples
+        ]
+
+    async def compress_samples(self):
+        count = await self.db.samples.count_documents({"is_legacy": True})
+
+        tracker = self.get_tracker(count)
+
+        async for sample in self.db.samples.find({"is_legacy": True}):
+            await compress_reads(self.app, sample)
+            await tracker.add(1)

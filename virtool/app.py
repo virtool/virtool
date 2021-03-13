@@ -37,6 +37,8 @@ import virtool.setup.setup
 import virtool.software.db
 import virtool.utils
 import virtool.version
+from virtool.processes.db import register
+from virtool.samples.db import CompressReadsProcess
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +79,10 @@ async def init_refresh(app: web.Application):
     await scheduler.spawn(virtool.references.db.refresh_remotes(app))
     await scheduler.spawn(virtool.hmm.db.refresh(app))
     await scheduler.spawn(virtool.software.db.refresh(app))
+
+    process = await register(app["db"], "compress_reads")
+    p = CompressReadsProcess(app, process["id"])
+    await scheduler.spawn(p.run())
 
 
 async def init_version(app: web.Application):

@@ -241,6 +241,7 @@ async def create(req):
         "nuvs": False,
         "pathoscope": False,
         "created_at": virtool.utils.timestamp(),
+        "is_legacy": False,
         "format": "fastq",
         "ready": False,
         "quality": None,
