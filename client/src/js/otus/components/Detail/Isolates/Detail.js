@@ -4,7 +4,6 @@ import styled from "styled-components";
 import { Box, Icon, Label } from "../../../../base";
 import { getCanModifyReferenceOTU } from "../../../../references/selectors";
 import IsolateSequences from "../../../../sequences/components/Sequences";
-import { followDownload } from "../../../../utils/utils";
 import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../../actions";
 import EditIsolate from "./Edit";
 import RemoveIsolate from "./Remove";
@@ -32,10 +31,6 @@ const StyledIsolateDetail = styled.div`
 `;
 
 export class Detail extends React.Component {
-    handleDownload = () => {
-        followDownload(`/download/otus/${this.props.otuId}/isolates/${this.props.activeIsolate.id}`);
-    };
-
     handleSetDefaultIsolate = () => {
         this.props.setIsolateAsDefault(this.props.otuId, this.props.activeIsolate.id);
     };
@@ -98,7 +93,9 @@ export class Detail extends React.Component {
                     <div>
                         {defaultIsolateLabel}
                         {modifyIcons}
-                        <Icon name="download" tip="Download FASTA" tipPlacement="left" onClick={this.handleDownload} />
+                        <a href={`/download/otus/${this.props.otuId}/isolates/${this.props.activeIsolate.id}`} download>
+                            <Icon name="download" tip="Download FASTA" tipPlacement="left" />
+                        </a>
                     </div>
                 </IsolateDetailHeader>
 
