@@ -67,6 +67,11 @@ exports[`<SubtractionDetail /> should render 1`] = `
     <ViewHeader__ViewHeaderTitle>
       Foo
       <ViewHeader__ViewHeaderIcons>
+        <a
+          href="/download/subtraction/foo"
+        >
+           Download FASTA 
+        </a>
         <Icon
           color="orange"
           faStyle="fas"
@@ -81,17 +86,6 @@ exports[`<SubtractionDetail /> should render 1`] = `
           name="trash"
           onClick={[MockFunction]}
         />
-        <a
-          href="/download/subtraction/foo"
-        >
-          <Icon
-            color="purple"
-            faStyle="fas"
-            fixedWidth={false}
-            name="download"
-            tip="Download"
-          />
-        </a>
       </ViewHeader__ViewHeaderIcons>
     </ViewHeader__ViewHeaderTitle>
   </ViewHeader>
@@ -153,6 +147,11 @@ exports[`<SubtractionDetail /> should render file id when name not defined 1`] =
     <ViewHeader__ViewHeaderTitle>
       Foo
       <ViewHeader__ViewHeaderIcons>
+        <a
+          href="/download/subtraction/foo"
+        >
+           Download FASTA 
+        </a>
         <Icon
           color="orange"
           faStyle="fas"
@@ -167,17 +166,6 @@ exports[`<SubtractionDetail /> should render file id when name not defined 1`] =
           name="trash"
           onClick={[MockFunction]}
         />
-        <a
-          href="/download/subtraction/foo"
-        >
-          <Icon
-            color="purple"
-            faStyle="fas"
-            fixedWidth={false}
-            name="download"
-            tip="Download"
-          />
-        </a>
       </ViewHeader__ViewHeaderIcons>
     </ViewHeader__ViewHeaderTitle>
   </ViewHeader>
