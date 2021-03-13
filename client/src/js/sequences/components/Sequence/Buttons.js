@@ -34,7 +34,9 @@ export const SequenceButtons = ({ canModify, id, onCollapse, onRemoveSequence })
                 <LinkIcon name="pencil-alt" color="orange" tip="Edit Sequence" to={{ state: { editSequence: id } }} />
             )}
             {canModify && <Icon name="trash" color="red" tip="Remove Sequence" onClick={removeSequence} />}
-            <LinkIcon name="download" tip="Download FASTA" to={`/download/sequences/${id}`} />
+            <a href={`/download/sequences/${id}`} download>
+                <Icon name="download" tip="Download FASTA" tipPlacement="left" />
+            </a>
             <CloseButton onClick={onCollapse} />
         </SequenceHeaderButtons>
     );
