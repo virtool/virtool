@@ -1,5 +1,7 @@
+import aiohttp.test_utils
 import pytest
 
+import virtool.indexes
 import virtool.indexes.db
 import virtool.errors
 import virtool.jobs.build_index
@@ -131,3 +133,40 @@ async def test_tag_unbuilt_changes(dbi, create_mock_history):
 
     assert await dbi.history.count_documents({"reference.id": "foobar", "index.id": "unbuilt"}) == 4
     assert await dbi.history.count_documents({"reference.id": "hxn167", "index.id": "foo", "index.version": 5}) == 4
+
+
+async def test_get_patched_otus(mocker, dbi):
+    m = mocker.patch("virtool.history.db.patch_to_version", aiohttp.test_utils.make_mocked_coro((None, {"_id": "foo"}, None)))
+
+    manifest = {
+        "foo": 2,
+        "bar": 10,
+        "baz": 4
+    }
+
+    settings = {
+        "data_path": "foo"
+    }
+
+    patched_otus = await virtool.indexes.db.get_patched_otus(
+        dbi,
+        settings,
+        manifest
+    )
+
+    assert list(patched_otus) == [
+        {"_id": "foo"},
+        {"_id": "foo"},
+        {"_id": "foo"}
+    ]
+
+    app_dict = {
+        "db": dbi,
+        "settings": settings
+    }
+
+    m.assert_has_calls([
+        mocker.call(app_dict, "foo", 2),
+        mocker.call(app_dict, "bar", 10),
+        mocker.call(app_dict, "baz", 4)
+    ])

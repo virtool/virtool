@@ -16,6 +16,7 @@ import virtool.otus.db
 import virtool.otus.utils
 import virtool.references.db
 import virtool.utils
+from virtool.indexes.db import get_patched_otus
 
 
 async def check_db(job):
@@ -243,32 +244,6 @@ async def reset_history(job: virtool.jobs.job.Job):
             }
         }
     })
-
-
-async def get_patched_otus(db, settings: dict, manifest: dict) -> typing.List[dict]:
-    """
-    Get joined OTUs patched to a specific version based on a manifest of OTU ids and versions.
-
-    :param db: the job database client
-    :param settings: the application settings
-    :param manifest: the manifest
-
-    """
-    app_dict = {
-        "db": db,
-        "settings": settings
-    }
-
-    coros = list()
-
-    for patch_id, patch_version in manifest.items():
-        coros.append(virtool.history.db.patch_to_version(
-            app_dict,
-            patch_id,
-            patch_version
-        ))
-
-    return [j[1] for j in await asyncio.tasks.gather(*coros)]
 
 
 def get_sequences_from_patched_otus(
