@@ -7,6 +7,7 @@ from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.caches.db
+import virtool.caches.utils
 import virtool.samples.db
 import virtool.uploads.db
 from virtool.labels.models import Label
@@ -840,6 +841,10 @@ async def test_upload_reads(paired, conflict, compressed, snapshot, spawn_job_cl
 
 @pytest.mark.parametrize("key", ["key", "not_key"])
 async def test_create_cache(key, dbi, mocker, resp_is, snapshot, static_time, spawn_job_client):
+    """
+    Test that a new cache document can be created in the `caches` db using the Jobs API.
+
+    """
     client = await spawn_job_client(authorize=True)
 
 
@@ -848,13 +853,13 @@ async def test_create_cache(key, dbi, mocker, resp_is, snapshot, static_time, sp
         "paired": False,
     })
 
-    data = {key: f"aodp-abcdefgh"}
+    data = {key: "aodp-abcdefgh"}
 
     mocker.patch("virtool.utils.random_alphanumeric", return_value="a1b2c3d4")
 
     resp = await client.post("/api/samples/test/caches", json=data)
 
-    if key is "key":
+    if key == "key":
         assert resp.status == 201
         document = await resp.json()
 
@@ -862,3 +867,40 @@ async def test_create_cache(key, dbi, mocker, resp_is, snapshot, static_time, sp
         assert await virtool.caches.db.get(dbi, document["id"])
     else:
         assert await resp_is.invalid_input(resp, {"key": ['required field']})
+
+
+@pytest.mark.parametrize("artifact_type", ["fastq", "foo"])
+async def test_upload_artifact_cache(artifact_type, resp_is, spawn_job_client, tmpdir):
+    """
+    Test that a new artifact cache can be uploaded after sample creation using the Jobs API.
+
+    """
+    path = Path.cwd() / "tests" / "test_files" / "nuvs" / "reads_1.fq"
+
+    data = {
+        "file": open(path, "rb")
+    }
+
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+    
+    cache_path = Path(virtool.caches.utils.join_cache_path(client.app["settings"], "aodp-abcdefgh"))
+
+    await client.db.samples.insert_one({
+        "_id": "test",
+    })
+
+    await client.db.caches.insert_one({
+        "_id": "test",
+        "sample_id": "test",
+        "key": "aodp-abcdefgh",
+    })
+
+    resp = await client.post(f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}", data=data)
+
+    if artifact_type == "fastq":
+        assert resp.status == 201
+        assert os.listdir(cache_path) == ["1-small.fq"]
+    else:
+        assert await resp_is.bad_request(resp, "Unsupported sample artifact type")
