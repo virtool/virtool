@@ -864,14 +864,14 @@ async def create_cache(req):
 @routes.jobs_api.post("/api/samples/{sample_id}/caches/{key}/artifacts")
 async def upload_cache_artifacts(req):
     """
-    Upload cache artifacts created during sample creation using the Jobs API.
+    Upload sample artifacts to cache using the Jobs API.
 
     """
     db = req.app["db"]
     pg = req.app["pg"]
     sample_id = req.match_info["sample_id"]
-    artifact_type = req.query.get("type")
     key = req.match_info["key"]
+    artifact_type = req.query.get("type")
 
     cache_path = Path(virtool.caches.utils.join_cache_path(req.app["settings"], key))
 
@@ -913,4 +913,48 @@ async def upload_cache_artifacts(req):
 
 @routes.jobs_api.post("/api/samples/{sample_id}/caches/{key}/reads")
 async def upload_reads_cache(req):
-    pass
+    """
+    Upload reads files to cache using the Jobs API.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+    sample_id = req.match_info["sample_id"]
+    key = req.match_info["key"]
+
+    cache_path = Path(virtool.caches.utils.join_cache_path(req.app["settings"], key))
+
+    if not await db.samples.find_one(sample_id):
+        return not_found()
+
+    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id, cache=True)
+
+    if existing_reads == ["reads_1.fq.gz", "reads_2.fq.gz"]:
+        return conflict("Sample is already associated with two reads files")
+
+    try:
+        size, name_on_disk = await virtool.uploads.utils.naive_writer(req, cache_path, compressed=True)
+    except asyncio.CancelledError:
+        logger.debug(f"Reads cache file upload aborted for {key}")
+        return aiohttp.web.Response(status=499)
+
+    if size is None:
+        return bad_request("File is not compressed")
+
+    if "1" in name_on_disk:
+        name = "reads_1.fq.gz"
+    elif "2" in name_on_disk:
+        name = "reads_2.fq.gz"
+    else:
+        return bad_request("File name is not an accepted reads file")
+
+    if name in existing_reads:
+        return conflict("Reads file is already associated with this sample")
+
+    reads = await virtool.samples.files.create_reads_file(pg, size, name, name_on_disk, sample_id)
+
+    headers = {
+        "Location": f"/api/samples/{sample_id}/caches/{key}/reads/{reads['id']}"
+    }
+
+    return json_response(reads, status=201, headers=headers)

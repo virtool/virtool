@@ -893,8 +893,10 @@ async def test_upload_artifact_cache(artifact_type, resp_is, spawn_job_client, t
 
     await client.db.caches.insert_one({
         "_id": "test",
-        "sample_id": "test",
         "key": "aodp-abcdefgh",
+        "sample": {
+            "id": "test"
+        },
     })
 
     resp = await client.post(f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}", data=data)
@@ -904,3 +906,45 @@ async def test_upload_artifact_cache(artifact_type, resp_is, spawn_job_client, t
         assert os.listdir(cache_path) == ["1-small.fq"]
     else:
         assert await resp_is.bad_request(resp, "Unsupported sample artifact type")
+
+
+@pytest.mark.parametrize("paired", [True, False])
+async def test_upload_reads_cache(paired, spawn_job_client, tmpdir):
+    """
+    Test that sample reads' files cache can be uploaded using the Jobs API.
+
+    """
+    path = Path.cwd() / "tests" / "test_files" / "samples"
+
+    data = {
+        "file": open(path / "reads_1.fq.gz", "rb")
+    }
+
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+    cache_path = Path(virtool.caches.utils.join_cache_path(client.app["settings"], "aodp-abcdefgh"))
+
+    await client.db.samples.insert_one({
+        "_id": "test",
+    })
+
+    await client.db.caches.insert_one({
+        "id": "test",
+        "key": "aodp-abcdefgh",
+        "sample": {
+            "id": "test"
+        }
+    })
+
+    resp = await client.post("/api/samples/test/caches/aodp-abcdefgh/reads", data=data)
+
+    if paired:
+        data["file"] = open(path / "reads_2.fq.gz", "rb")
+        resp_2 = await client.post("/api/samples/test/caches/aodp-abcdefgh/reads", data=data)
+
+        assert resp.status, resp_2.status == 201
+        assert set(os.listdir(cache_path)) == {"reads_1.fq.gz", "reads_2.fq.gz"}
+    else:
+        assert resp.status == 201
+        assert os.listdir(cache_path) == ["reads_1.fq.gz"]

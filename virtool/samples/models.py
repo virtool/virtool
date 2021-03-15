@@ -20,10 +20,10 @@ class ArtifactType(str, SQLEnum):
 
 class SampleArtifact(Base):
     """
-    SQL model to store a sample artifact
+    SQL model to store sample artifacts
 
     """
-    __tablename__ = "sample_artifact"
+    __tablename__ = "sample_artifacts"
 
     id = Column(Integer, primary_key=True)
     sample = Column(String, nullable=False)
@@ -63,7 +63,7 @@ class SampleArtifactCache(Base):
     SQL model to store a cached sample artifact
 
     """
-    __tablename__ = "sample_artifact_cache"
+    __tablename__ = "sample_artifacts_cache"
 
     id = Column(Integer, primary_key=True)
     sample = Column(String, nullable=False)
