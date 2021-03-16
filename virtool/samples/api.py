@@ -879,7 +879,10 @@ async def upload_artifacts_cache(req):
     cache_path = Path(virtool.caches.utils.join_cache_path(req.app["settings"], key))
 
     if not await db.samples.find_one(sample_id):
-        return not_found()
+        return not_found("Sample does not exist")
+
+    if not await db.caches.find_one({"key": key,"sample.id": sample_id}):
+        return not_found("Cache doesn't exist with given key")
 
     errors = virtool.uploads.utils.naive_validator(req)
 
@@ -928,7 +931,10 @@ async def upload_reads_cache(req):
     cache_path = Path(virtool.caches.utils.join_cache_path(req.app["settings"], key))
 
     if not await db.samples.find_one(sample_id):
-        return not_found()
+        return not_found("Sample does not exist")
+
+    if not await db.caches.find_one({"key": key,"sample.id": sample_id}):
+        return not_found("Cache doesn't exist with given key")
 
     existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id, cache=True)
 
