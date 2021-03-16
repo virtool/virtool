@@ -215,11 +215,10 @@ async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg, pg_session, 
     store_nuvs_task = virtool.analyses.db.StoreNuvsFilesTask(client.app, 1)
     await store_nuvs_task.run()
 
-    rows = list()
     async with pg_session as session:
         files = (await session.execute(select(AnalysisFile))).scalars().all()
-        for file in files:
-            rows.append(file.to_dict())
+        rows = [file.to_dict() for file in files]
+
     assert rows == [
         {
             'id': 1,
@@ -235,20 +234,20 @@ async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg, pg_session, 
             'id': 2,
             'analysis': 'bar',
             'description': None,
-            'format': 'fastq',
-            'name': 'unmapped_otus.fq.gz',
-            'name_on_disk': '2-unmapped_otus.fq.gz',
-            'size': os.stat(os.path.join(tmpdir, "analyses", "bar", "unmapped_otus.fq.gz")).st_size,
+            'format': 'tsv',
+            'name': 'hmm.tsv',
+            'name_on_disk': '2-hmm.tsv',
+            'size': os.stat(os.path.join(tmpdir, "analyses", "bar", "hmm.tsv")).st_size,
             'uploaded_at': None
         },
         {
             'id': 3,
             'analysis': 'bar',
             'description': None,
-            'format': 'tsv',
-            'name': 'hmm.tsv',
-            'name_on_disk': '3-hmm.tsv',
-            'size': os.stat(os.path.join(tmpdir, "analyses", "bar", "hmm.tsv")).st_size,
+            'format': 'fastq',
+            'name': 'unmapped_otus.fq.gz',
+            'name_on_disk': '3-unmapped_otus.fq.gz',
+            'size': os.stat(os.path.join(tmpdir, "analyses", "bar", "unmapped_otus.fq.gz")).st_size,
             'uploaded_at': None
         }
     ]
