@@ -841,7 +841,7 @@ async def upload_reads(req):
 })
 async def create_cache(req):
     db = req.app["db"]
-    data = req["data"]
+    key = req["data"]["key"]
 
     sample_id = req.match_info["sample_id"]
 
@@ -852,7 +852,10 @@ async def create_cache(req):
     if not sample:
         return not_found("Sample does not exist")
 
-    document = await virtool.caches.db.create(db, sample_id, data["key"], sample["paired"], legacy=False)
+    if await db.caches.find_one({"key": key,"sample.id": sample_id}):
+        return conflict("Cache already exists for given key")
+
+    document = await virtool.caches.db.create(db, sample_id, key, sample["paired"], legacy=False)
 
     headers = {
         "Location": f"/api/samples/{sample_id}/caches/{document['id']}"
