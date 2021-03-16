@@ -723,6 +723,40 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
     )
 
 
+@pytest.mark.parametrize("ready", [True, False])
+@pytest.mark.parametrize("exists", [True, False])
+async def test_cache_job_remove(exists, ready, tmpdir, spawn_job_client, snapshot, resp_is):
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    tmpdir.mkdir("caches").mkdir("foo").join("reads_1.fq.gz").write("Cache file")
+
+    if exists:
+        await client.db.caches.insert_one({
+            "_id": "foo",
+            "key": "abc123",
+            "sample": {
+                "id": "bar"
+            },
+            "ready": ready
+        })
+
+    resp = await client.delete("/api/samples/bar/caches/abc123")
+
+    if not exists:
+        assert resp.status == 404
+        return
+
+    if ready:
+        assert await resp_is.conflict(resp, "Jobs cannot delete finalized caches")
+        return
+
+    assert await resp_is.no_content(resp)
+    assert await client.db.caches.find_one("foo") is None
+    assert not os.path.isdir(tmpdir / "caches" / "foo")
+
+    
 @pytest.mark.parametrize("artifact_type", ["fastq", "foo"])
 async def test_upload_artifacts(artifact_type, snapshot, spawn_job_client, static_time, resp_is, tmpdir):
     """
