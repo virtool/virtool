@@ -803,6 +803,34 @@ snapshots['test_create_cache[uvloop-key] 1'] = {
     }
 }
 
+snapshots['test_upload_artifact_cache[uvloop-fastq] 1'] = {
+    'id': 1,
+    'name': 'small.fq',
+    'name_on_disk': '1-small.fq',
+    'sample': 'test',
+    'size': 3130756,
+    'type': 'fastq',
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
+snapshots['test_upload_reads_cache[uvloop-True] 1'] = {
+    'id': 2,
+    'name': 'reads_2.fq.gz',
+    'name_on_disk': 'reads_2.fq.gz',
+    'sample': 'test',
+    'size': 9081,
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
+snapshots['test_upload_reads_cache[uvloop-False] 1'] = {
+    'id': 1,
+    'name': 'reads_1.fq.gz',
+    'name_on_disk': 'reads_1.fq.gz',
+    'sample': 'test',
+    'size': 9081,
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
 snapshots['test_finalize_cache[uvloop-quality] 1'] = {
     'id': 'test',
     'key': 'aodp-abcdefgh',
