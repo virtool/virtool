@@ -948,3 +948,31 @@ async def test_upload_reads_cache(paired, spawn_job_client, tmpdir):
     else:
         assert resp.status == 201
         assert os.listdir(cache_path) == ["reads_1.fq.gz"]
+
+
+@pytest.mark.parametrize("field", ["quality", "not_quality"])
+async def test_finalize_cache(field, resp_is, snapshot, spawn_job_client):
+    client = await spawn_job_client(authorize=True)
+
+    data = {field: {}}
+
+    await client.db.samples.insert_one({
+        "_id": "test",
+    })
+
+    await client.db.caches.insert_one({
+        "_id": "test",
+        "key": "aodp-abcdefgh",
+        "sample": {
+            "id": "test"
+        }
+    })
+
+    resp = await client.patch("/api/samples/test/caches/aodp-abcdefgh", json=data)
+
+    if field == "quality":
+        assert resp.status == 200
+        snapshot.assert_match(await resp.json())
+    else:
+        assert resp.status == 422
+        assert await resp_is.invalid_input(resp, {"quality": ["required field"]})
