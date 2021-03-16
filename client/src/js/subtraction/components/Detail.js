@@ -50,6 +50,7 @@ export class SubtractionDetail extends React.Component {
                         {detail.name}
                         {this.props.canModify && (
                             <ViewHeaderIcons>
+                                <a href={`/download/subtraction/${this.props.detail.id}`}> Download FASTA </a>
                                 <Icon
                                     name="pencil-alt"
                                     color="orange"

@@ -67,6 +67,11 @@ exports[`<SubtractionDetail /> should render 1`] = `
     <ViewHeader__ViewHeaderTitle>
       Foo
       <ViewHeader__ViewHeaderIcons>
+        <a
+          href="/download/subtraction/foo"
+        >
+           Download FASTA 
+        </a>
         <Icon
           color="orange"
           faStyle="fas"
@@ -142,6 +147,11 @@ exports[`<SubtractionDetail /> should render file id when name not defined 1`] =
     <ViewHeader__ViewHeaderTitle>
       Foo
       <ViewHeader__ViewHeaderIcons>
+        <a
+          href="/download/subtraction/foo"
+        >
+           Download FASTA 
+        </a>
         <Icon
           color="orange"
           faStyle="fas"
