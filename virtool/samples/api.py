@@ -862,7 +862,7 @@ async def create_cache(req):
 
 
 @routes.jobs_api.post("/api/samples/{sample_id}/caches/{key}/artifacts")
-async def upload_cache_artifacts(req):
+async def upload_artifacts_cache(req):
     """
     Upload sample artifacts to cache using the Jobs API.
 
@@ -970,7 +970,6 @@ async def upload_reads_cache(req):
 async def finalize_cache(req):
     db = req.app["db"]
     data = req["data"]
-    sample_id = req.match_info["sample_id"]
     key = req.match_info["key"]
 
     document = await db.caches.find_one_and_update({"key": key}, {

@@ -847,7 +847,6 @@ async def test_create_cache(key, dbi, mocker, resp_is, snapshot, static_time, sp
     """
     client = await spawn_job_client(authorize=True)
 
-
     await client.db.samples.insert_one({
         "_id": "test",
         "paired": False,
@@ -870,7 +869,7 @@ async def test_create_cache(key, dbi, mocker, resp_is, snapshot, static_time, sp
 
 
 @pytest.mark.parametrize("artifact_type", ["fastq", "foo"])
-async def test_upload_artifact_cache(artifact_type, resp_is, spawn_job_client, tmpdir):
+async def test_upload_artifact_cache(artifact_type, resp_is, snapshot, static_time, spawn_job_client, tmpdir):
     """
     Test that a new artifact cache can be uploaded after sample creation using the Jobs API.
 
@@ -884,7 +883,7 @@ async def test_upload_artifact_cache(artifact_type, resp_is, spawn_job_client, t
     client = await spawn_job_client(authorize=True)
 
     client.app["settings"]["data_path"] = str(tmpdir)
-    
+
     cache_path = Path(virtool.caches.utils.join_cache_path(client.app["settings"], "aodp-abcdefgh"))
 
     await client.db.samples.insert_one({
@@ -899,17 +898,19 @@ async def test_upload_artifact_cache(artifact_type, resp_is, spawn_job_client, t
         },
     })
 
-    resp = await client.post(f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}", data=data)
+    resp = await client.post(f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}",
+                             data=data)
 
     if artifact_type == "fastq":
         assert resp.status == 201
+        snapshot.assert_match(await resp.json())
         assert os.listdir(cache_path) == ["1-small.fq"]
     else:
         assert await resp_is.bad_request(resp, "Unsupported sample artifact type")
 
 
 @pytest.mark.parametrize("paired", [True, False])
-async def test_upload_reads_cache(paired, spawn_job_client, tmpdir):
+async def test_upload_reads_cache(paired, snapshot, static_time, spawn_job_client, tmpdir):
     """
     Test that sample reads' files cache can be uploaded using the Jobs API.
 
@@ -930,7 +931,7 @@ async def test_upload_reads_cache(paired, spawn_job_client, tmpdir):
     })
 
     await client.db.caches.insert_one({
-        "id": "test",
+        "_id": "test",
         "key": "aodp-abcdefgh",
         "sample": {
             "id": "test"
@@ -939,14 +940,17 @@ async def test_upload_reads_cache(paired, spawn_job_client, tmpdir):
 
     resp = await client.post("/api/samples/test/caches/aodp-abcdefgh/reads", data=data)
 
+    assert resp.status == 201
+
     if paired:
         data["file"] = open(path / "reads_2.fq.gz", "rb")
         resp_2 = await client.post("/api/samples/test/caches/aodp-abcdefgh/reads", data=data)
 
         assert resp.status, resp_2.status == 201
+        snapshot.assert_match(await resp_2.json())
         assert set(os.listdir(cache_path)) == {"reads_1.fq.gz", "reads_2.fq.gz"}
     else:
-        assert resp.status == 201
+        snapshot.assert_match(await resp.json())
         assert os.listdir(cache_path) == ["reads_1.fq.gz"]
 
 

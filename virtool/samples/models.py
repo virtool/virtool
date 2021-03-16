@@ -78,7 +78,7 @@ class SampleArtifactCache(Base):
                f"name_on_disk={self.name_on_disk}, size={self.size}, type={self.type}, " \
                f"uploaded_at={self.uploaded_at}"
 
-    
+
 class SampleReadsFileCache(Base):
     """
     SQL model to store cached sample reads files
