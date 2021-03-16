@@ -958,3 +958,28 @@ async def upload_reads_cache(req):
     }
 
     return json_response(reads, status=201, headers=headers)
+
+
+@routes.jobs_api.patch("/api/samples/{sample_id}/caches/{key}")
+@schema({
+    "quality": {
+        "type": "dict",
+        "required": True
+    }
+})
+async def finalize_cache(req):
+    db = req.app["db"]
+    data = req["data"]
+    sample_id = req.match_info["sample_id"]
+    key = req.match_info["key"]
+
+    document = await db.caches.find_one_and_update({"key": key}, {
+        "$set": {
+            "quality": data["quality"],
+            "ready": True
+        }
+    })
+
+    processed = virtool.utils.base_processor(document)
+
+    return json_response(processed)

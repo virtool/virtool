@@ -802,3 +802,14 @@ snapshots['test_create_cache[uvloop-key] 1'] = {
         'id': 'test'
     }
 }
+
+snapshots['test_finalize_cache[uvloop-quality] 1'] = {
+    'id': 'test',
+    'key': 'aodp-abcdefgh',
+    'quality': {
+    },
+    'ready': True,
+    'sample': {
+        'id': 'test'
+    }
+}
