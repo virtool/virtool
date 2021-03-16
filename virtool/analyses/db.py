@@ -83,7 +83,7 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
 
                 analysis_files = list()
 
-                for filename in os.listdir(path):
+                for filename in sorted(os.listdir(path)):
                     if filename in self.target_files:
                         analysis_files.append(filename)
 
