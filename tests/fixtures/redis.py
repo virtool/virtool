@@ -12,18 +12,17 @@ async def redis_connection_string(request, worker_id):
 
 
 @pytest.fixture
-async def redis(request, redis_connection_string, worker_id):
+async def redis(redis_connection_string, worker_id):
     client = await aioredis.create_redis_pool(redis_connection_string)
     await client.flushdb()
 
     yield client
-
     await client.flushdb()
     client.close()
     await client.wait_closed()
 
 
 @pytest.fixture()
-async def test_channel(redis: Redis):
+async def channel(redis: Redis):
     channel, = await redis.subscribe("channel:test")
     return channel
