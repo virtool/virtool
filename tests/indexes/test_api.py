@@ -1,7 +1,10 @@
 import filecmp
+import gzip
+import json
 import os
 import shutil
 import sys
+from io import BytesIO
 from pathlib import Path
 
 import pytest
@@ -9,6 +12,8 @@ from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy import select
 
 from virtool.indexes.models import IndexFile
+
+OTUS_JSON_PATH = Path(sys.path[0]) / "tests/test_files/index/otus.json.gz"
 
 
 async def test_find(mocker, snapshot, spawn_client, static_time):
@@ -224,6 +229,50 @@ async def test_get(error, mocker, snapshot, resp_is, spawn_client, static_time):
 
     assert resp.status == 200
     snapshot.assert_match(await resp.json())
+
+
+@pytest.mark.parametrize("file_exists", [True, False])
+async def test_download_otus_json(file_exists, mocker, tmpdir, dbi, spawn_job_client):
+    with gzip.open(OTUS_JSON_PATH, "rt") as f:
+        expected = json.load(f)
+
+    m_get_patched_otus = mocker.patch(
+        "virtool.indexes.db.get_patched_otus",
+        make_mocked_coro(expected)
+    )
+
+    client = await spawn_job_client(authorize=True)
+
+    client.settings["data_path"] = Path(tmpdir)
+
+    index_dir = tmpdir.mkdir("references").mkdir("foo").mkdir("bar")
+
+    if file_exists:
+        shutil.copy(OTUS_JSON_PATH, index_dir / "otus.json.gz")
+
+    manifest = {
+        "foo": 2,
+        "bar": 1,
+        "bad": 5
+    }
+
+    await dbi.indexes.insert_one({
+        "_id": "bar",
+        "manifest": manifest,
+        "reference": {
+            "id": "foo"
+        }
+    })
+
+    async with await client.get("/api/indexes/bar/files/otus.json.gz") as resp:
+        with gzip.open(BytesIO(await resp.read())) as f:
+            result = json.load(f)
+
+    assert resp.status == 200
+    assert expected == result
+
+    if not file_exists:
+        m_get_patched_otus.assert_called_with(client.app["db"], client.settings, manifest)
 
 
 class TestCreate:
