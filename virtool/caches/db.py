@@ -112,21 +112,17 @@ async def get(db, cache_id: str) -> Dict[str, Any]:
 async def create(
         db,
         sample_id: str,
-        parameters: Dict[str, Any],
+        key: str,
         paired: bool,
-        legacy: bool = False,
-        program: str = "skewer-0.2.2"
 ):
     """
-    Create and insert a new cache database document. Return the generated unique cache id.
+    Create and insert a new cache database document. Return the generated cache document.
 
     :param db: the application database client
     :param sample_id: the id of the sample the cache is derived from
-    :param parameters: the trim parameters
+    :param key: Unique key for a cache
     :param paired: boolean indicating if the sample contains paired data
-    :param legacy: boolean indicating if the cache is derived from a trimmed legacy sample
-    :param program: the trimming program used
-    :return: the new cache id
+    :return: The new cache document as a dictionary.
 
     """
     try:
@@ -136,12 +132,10 @@ async def create(
             "_id": cache_id,
             "created_at": virtool.utils.timestamp(),
             "files": list(),
-            "key": calculate_cache_key(parameters),
-            "legacy": legacy,
+            "key": key,
+            "legacy": False,
             "missing": False,
             "paired": paired,
-            "parameters": parameters,
-            "program": program,
             "ready": False,
             "sample": {
                 "id": sample_id
@@ -154,7 +148,7 @@ async def create(
 
     except pymongo.errors.DuplicateKeyError:
         # Keep trying to add the cache with new ids if the generated id is not unique.
-        return await create(db, sample_id, parameters, paired, legacy=legacy, program=program)
+        return await create(db, sample_id, key, paired)
 
 
 async def remove(app: App, cache_id: str):

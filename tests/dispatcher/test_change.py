@@ -18,7 +18,7 @@ def test_change():
     assert change.id_list == ["foo", "bar"]
 
     assert str(change) == (
-        '<Change interface="jobs" operation="update id_list="[\'foo\', \'bar\']">'
+        '<Change interface="jobs" operation="update" id_list="[\'foo\', \'bar\']">'
     )
 
     assert change.target == "jobs.update"

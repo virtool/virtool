@@ -3,11 +3,14 @@ Work with indexes in the database.
 
 """
 import asyncio
+import asyncio.tasks
+import typing
 from typing import Union
 
 import pymongo
 
 import virtool.api.utils
+import virtool.history
 import virtool.history.db
 import virtool.utils
 
@@ -260,3 +263,29 @@ async def reset_history(db, index_id: str):
             }
         }
     })
+
+
+async def get_patched_otus(db, settings: dict, manifest: dict) -> typing.List[dict]:
+    """
+    Get joined OTUs patched to a specific version based on a manifest of OTU ids and versions.
+
+    :param db: the job database client
+    :param settings: the application settings
+    :param manifest: the manifest
+
+    """
+    app_dict = {
+        "db": db,
+        "settings": settings
+    }
+
+    coros = list()
+
+    for patch_id, patch_version in manifest.items():
+        coros.append(virtool.history.db.patch_to_version(
+            app_dict,
+            patch_id,
+            patch_version
+        ))
+
+    return [j[1] for j in await asyncio.tasks.gather(*coros)]

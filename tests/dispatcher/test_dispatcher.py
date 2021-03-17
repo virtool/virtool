@@ -5,8 +5,8 @@ from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.listener import RedisDispatcherListener
 
 
-def test_add_and_remove_connection(mocker, dbi, pg: AsyncEngine, test_channel: Channel):
-    dispatcher = Dispatcher(pg, dbi, RedisDispatcherListener(test_channel))
+def test_add_and_remove_connection(mocker, dbi, pg: AsyncEngine, channel):
+    dispatcher = Dispatcher(pg, dbi, RedisDispatcherListener(channel))
 
     m = mocker.Mock()
 
