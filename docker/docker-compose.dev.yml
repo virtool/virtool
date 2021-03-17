@@ -37,6 +37,10 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: dev@virtool.ca
       PGADMIN_DEFAULT_PASSWORD: virtool
+      PGADMIN_LISTEN_ADDRESS: "0.0.0.0"
+      PGADMIN_LISTEN_PORT: 5050
+    ports:
+      - "5050:5050"
     volumes:
       - vt_pgadmin4_data:/var/lib/pgadmin4/data
     depends_on: [ postgres ]
