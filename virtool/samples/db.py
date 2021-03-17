@@ -361,6 +361,32 @@ def check_is_legacy(sample: Dict[str, Any]) -> bool:
     )
 
 
+async def update_is_compressed(db, sample: Dict[str, Any]):
+    """
+    Update the ``is_compressed`` field for the passed ``sample`` in the database if all of its
+    files are compressed.
+
+    :param db: the application database
+    :param sample: the sample document
+
+    """
+    files = sample["files"]
+
+    names = [file["name"] for file in files]
+
+    is_compressed = (
+        names == ["reads_1.fq.gz"] or
+        names == ["reads_1.fq.gz", "reads_2.fq.gz"]
+    )
+
+    if is_compressed:
+        await db.samples.update_one({"_id": sample["_id"]}, {
+            "$set": {
+                "is_compressed": True
+            }
+        })
+
+
 async def compress_reads(app, sample: Dict[str, Any]):
     """
     Compress the reads for one legacy samples.
@@ -369,6 +395,8 @@ async def compress_reads(app, sample: Dict[str, Any]):
     :param sample: the sample document
 
     """
+    await update_is_compressed(app["db"], sample)
+
     if not check_is_legacy(sample):
         return
 
@@ -417,12 +445,26 @@ class CompressReadsProcess(Process):
         ]
 
     async def compress_samples(self):
-        count = await self.db.samples.count_documents({"is_legacy": True})
+        query = {
+            "is_legacy": True,
+            "is_compressed": {
+                "$exists": False
+            }
+        }
+
+        count = await self.db.samples.count_documents(query)
 
         tracker = self.get_tracker(count)
 
-        async for sample in self.db.samples.find({"is_legacy": True}):
+        while True:
+            sample = await self.db.samples.find_one(query)
+
+            if sample is None:
+                break
+
             await compress_reads(self.app, sample)
             await tracker.add(1)
 
-            logger.info(f"Compressed legacy sample {sample['_id']} ({tracker.count}/{tracker.total}")
+            logger.info(
+                f"Compressed legacy sample {sample['_id']} ({tracker.count}/{tracker.total}"
+            )

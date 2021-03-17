@@ -341,8 +341,70 @@ class TestCheckIsLegacy:
         assert virtool.samples.db.check_is_legacy(sample) is False
 
 
+async def test_update_is_compressed(dbi):
+    """
+    Test that samples with both files gzipped are flagged with ``is_compressed``.
+
+    """
+    samples = [
+        {
+            "_id": "foo",
+            "files": [
+                {"name": "reads_1.fq.gz"},
+                {"name": "reads_2.fq.gz"},
+            ]
+        },
+        {
+            "_id": "baz",
+            "files": [
+                {"name": "reads_1.fastq"}
+            ]
+        },
+        {
+            "_id": "bar",
+            "files": [
+                {"name": "reads_1.fq.gz"}
+            ]
+        }
+    ]
+
+    await dbi.samples.insert_many(samples)
+
+    for sample in samples:
+        await virtool.samples.db.update_is_compressed(dbi, sample)
+
+    assert await dbi.samples.find().to_list(None) == [
+        {
+            "_id": "foo",
+            "is_compressed": True,
+            "files": [
+                {"name": "reads_1.fq.gz"},
+                {"name": "reads_2.fq.gz"},
+            ]
+        },
+        {
+            "_id": "baz",
+            "files": [
+                {"name": "reads_1.fastq"}
+            ]
+        },
+        {
+            "_id": "bar",
+            "is_compressed": True,
+            "files": [
+                {"name": "reads_1.fq.gz"}
+            ]
+        }
+    ]
+
+
 @pytest.mark.parametrize("paired", [True, False])
-async def test_compress_reads(paired, dbi, snapshot, tmpdir):
+async def test_compress_reads(paired, mocker, dbi, snapshot, tmpdir):
+    m_update_is_compressed = mocker.patch(
+        "virtool.samples.db.update_is_compressed",
+        make_mocked_coro()
+    )
+
     async def run_in_thread(func, *args):
         return func(*args)
 
@@ -410,6 +472,8 @@ async def test_compress_reads(paired, dbi, snapshot, tmpdir):
 
     snapshot.assert_match(await dbi.samples.find_one())
 
+    m_update_is_compressed.assert_called_with(app_dict["db"], sample)
+
 
 async def test_compress_reads_process(mocker, dbi):
     """
@@ -444,20 +508,30 @@ async def test_compress_reads_process(mocker, dbi):
         }
     })
 
-    m_compress_reads = mocker.patch("virtool.samples.db.compress_reads", make_mocked_coro())
+    calls = list()
+
+    async def compress_reads(app, sample):
+        calls.append((app, sample))
+
+        # Set is_compressed on the sample as would be expected after a successful compression
+        await app["db"].samples.update_one({"_id": sample["_id"]}, {
+            "$set": {
+                "is_compressed": True
+            }
+        })
+
+    mocker.patch("virtool.samples.db.compress_reads", compress_reads)
 
     process = virtool.samples.db.CompressReadsProcess(app_dict, "foo")
 
     await process.run()
 
-    assert len(m_compress_reads.mock_calls) == 2
-
-    m_compress_reads.assert_has_calls([
-        call(app_dict, {
+    assert calls == ([
+        (app_dict, {
             "_id": "foo",
             "is_legacy": True
         }),
-        call(app_dict, {
+        (app_dict, {
             "_id": "bar",
             "is_legacy": True
         })
