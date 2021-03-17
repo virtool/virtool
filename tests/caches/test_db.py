@@ -77,17 +77,6 @@ async def test_create(paired, snapshot, dbi, static_time, test_random_alphanumer
     snapshot.assert_match(await dbi.caches.find_one(), "db")
 
 
-async def test_create_legacy(snapshot, dbi, static_time, test_random_alphanumeric, trim_parameters):
-    """
-    Test that the function works when the `legacy` keyword argument is `True` instead of the default `False`.
-
-    """
-    cache = await virtool.caches.db.create(dbi, "foo", "aodp-abcdefgh", False, legacy=True)
-
-    snapshot.assert_match(cache, "return")
-    snapshot.assert_match(await dbi.caches.find_one(), "db")
-
-
 async def test_create_duplicate(snapshot, dbi, static_time, test_random_alphanumeric, trim_parameters):
     """
     Test that the function handles duplicate document ids smoothly. The function should retry with a new id.

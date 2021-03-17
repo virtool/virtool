@@ -114,7 +114,6 @@ async def create(
         sample_id: str,
         key: str,
         paired: bool,
-        legacy: bool = False,
 ):
     """
     Create and insert a new cache database document. Return the generated cache document.
@@ -123,7 +122,6 @@ async def create(
     :param sample_id: the id of the sample the cache is derived from
     :param key: Unique key for a cache
     :param paired: boolean indicating if the sample contains paired data
-    :param legacy: boolean indicating if the cache is derived from a trimmed legacy sample
     :return: The new cache document as a dictionary.
 
     """
@@ -135,7 +133,7 @@ async def create(
             "created_at": virtool.utils.timestamp(),
             "files": list(),
             "key": key,
-            "legacy": legacy,
+            "legacy": False,
             "missing": False,
             "paired": paired,
             "ready": False,
@@ -150,7 +148,7 @@ async def create(
 
     except pymongo.errors.DuplicateKeyError:
         # Keep trying to add the cache with new ids if the generated id is not unique.
-        return await create(db, sample_id, key, paired, legacy=legacy)
+        return await create(db, sample_id, key, paired)
 
 
 async def remove(app: App, cache_id: str):
