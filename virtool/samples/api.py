@@ -6,6 +6,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import aiohttp.web
+from aiohttp.web_fileresponse import FileResponse
 from cerberus import Validator
 
 import virtool.analyses.db
@@ -828,3 +829,40 @@ async def upload_artifact(req):
     }
 
     return json_response(artifact_file, status=201, headers=headers)
+
+
+@routes.jobs_api.get("/api/samples/{sample_id}/reads/{suffix}")
+async def download_reads(req):
+    """
+    Download the sample reads file.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+
+    sample_id = req.match_info["sample_id"]
+    suffix = req.match_info["suffix"]
+
+    file_name = f"reads_{suffix}.fq.gz"
+
+    if not await db.samples.find_one(sample_id):
+        return not_found()
+
+    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id)
+
+    if file_name not in existing_reads:
+        return not_found()
+
+    file_path = os.path.join(req.app["settings"]["data_path"], "samples", sample_id, file_name)
+
+    if not os.path.isfile(file_path):
+        return virtool.api.response.not_found()
+
+    file_stats = virtool.utils.file_stats(file_path)
+
+    headers = {
+        "Content-Length": file_stats["size"],
+        "Content-Type": "application/gzip"
+    }
+
+    return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
