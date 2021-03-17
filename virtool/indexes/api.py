@@ -17,6 +17,7 @@ import virtool.indexes.files
 import virtool.indexes.utils
 import virtool.jobs.build_index
 import virtool.jobs.db
+import virtool.pg.utils
 import virtool.references.db
 import virtool.uploads.db
 import virtool.uploads.utils
@@ -329,7 +330,7 @@ async def upload(req):
         size = await virtool.uploads.utils.naive_writer(req, path)
     except asyncio.CancelledError:
         logger.debug(f"Index file upload aborted: {upload_id}")
-        await virtool.indexes.files.delete_index_file(pg, upload_id)
+        await virtool.pg.utils.delete_row(pg, upload_id, IndexFile)
 
         return aiohttp.web.Response(status=499)
 

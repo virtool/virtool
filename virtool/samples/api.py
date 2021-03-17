@@ -901,14 +901,14 @@ async def upload_artifacts_cache(req):
         size = await virtool.uploads.utils.naive_writer(req, cache_path)
     except asyncio.CancelledError:
         logger.debug(f"Artifact file upload aborted: {upload_id}")
-        await req.app["run_in_thread"](os.remove, artifact_file_path)
-        await virtool.pg.utils.delete_row(pg, upload_id, SampleArtifact)
+        await req.app["run_in_thread"](os.remove, cache_path)
+        await virtool.pg.utils.delete_row(pg, upload_id, SampleArtifactCache)
         return aiohttp.web.Response(status=499)
 
-    artifact = await virtool.uploads.db.finalize(pg, size, file_id, SampleArtifactCache)
+    artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SampleArtifactCache)
 
     headers = {
-        "Location": f"/api/samples/{sample_id}/caches/{key}/{file_id}"
+        "Location": f"/api/samples/{sample_id}/caches/{key}/{upload_id}"
     }
 
     return json_response(artifact, status=201, headers=headers)

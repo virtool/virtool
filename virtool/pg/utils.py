@@ -66,7 +66,7 @@ async def delete_row(pg: AsyncEngine, id_: int, model: Base):
         if not row:
             return None
 
-        await session.delete(row)
+        session.delete(row)
 
         await session.commit()
 
