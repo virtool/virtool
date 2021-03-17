@@ -852,9 +852,6 @@ async def create_cache(req):
     if not sample:
         return not_found("Sample does not exist")
 
-    if await db.caches.find_one({"key": key,"sample.id": sample_id}):
-        return conflict("Cache already exists for given key")
-
     document = await virtool.caches.db.create(db, sample_id, key, sample["paired"], legacy=False)
 
     headers = {
