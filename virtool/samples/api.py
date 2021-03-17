@@ -852,7 +852,7 @@ async def create_cache(req):
     if not sample:
         return not_found("Sample does not exist")
 
-    document = await virtool.caches.db.create(db, sample_id, key, sample["paired"], legacy=False)
+    document = await virtool.caches.db.create(db, sample_id, key, sample["paired"])
 
     headers = {
         "Location": f"/api/samples/{sample_id}/caches/{document['id']}"
