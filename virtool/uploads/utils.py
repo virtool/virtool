@@ -57,6 +57,8 @@ async def naive_writer(
         pass
 
     async with aiofiles.open(path, "wb") as handle:
+        name = path.name
+
         while True:
             chunk = await file.read_chunk(CHUNK_SIZE)
             if not chunk:
@@ -64,12 +66,13 @@ async def naive_writer(
 
             if size == 0 and compressed:
                 if not is_gzip_compressed(chunk):
-                    return None, None
+                    size, name = None, None
+                    break
 
             size += len(chunk)
             await handle.write(chunk)
 
     if not path_is_file:
-        return size, path.name
+        return size, name
 
     return size
