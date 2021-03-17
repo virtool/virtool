@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Optional
+from typing import Dict
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -77,38 +77,3 @@ async def create_nuvs_analysis_files(pg: AsyncEngine, analysis_id: str, files: l
             analysis_file.name_on_disk = f"{analysis_file.id}-{analysis_file.name}"
 
         await session.commit()
-
-
-async def delete_analysis_file(pg: AsyncEngine, file_id: int):
-    """
-    Deletes a row in the `analysis_files` SQL by its row `id`
-
-    :param pg: PostgreSQL AsyncEngine object
-    :param file_id: Row `id` to delete
-    """
-    async with AsyncSession(pg) as session:
-        analysis_file = (await session.execute(select(AnalysisFile).where(AnalysisFile.id == file_id))).scalar()
-
-        if not analysis_file:
-            return None
-
-        await session.delete(analysis_file)
-
-        await session.commit()
-
-
-async def get_analysis_file(pg: AsyncEngine, file_id: int) -> Optional[AnalysisFile]:
-    """
-    Get a row that represents an analysis result file by its `id`
-
-    :param pg: PostgreSQL AsyncEngine object
-    :param file_id: Row `id` to get
-    :return: Row from the `analysis_files` SQL table
-    """
-    async with AsyncSession(pg) as session:
-        upload = (await session.execute(select(AnalysisFile).filter_by(id=file_id))).scalar()
-
-        if not upload:
-            return None
-
-    return upload
