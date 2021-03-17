@@ -898,7 +898,7 @@ async def test_download_artifact(error, tmpdir, spawn_job_client, pg):
 
             await session.commit()
 
-    resp = await client.get(f"/api/samples/foo/artifacts/fastqc.txt")
+    resp = await client.get("/api/samples/foo/artifacts/fastqc.txt")
 
     expected_path = Path(client.app["settings"]["data_path"]) / "samples" / "foo" / "1-fastqc.txt"
 
