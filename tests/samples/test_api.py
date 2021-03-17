@@ -11,6 +11,7 @@ import virtool.caches.utils
 import virtool.samples.db
 import virtool.uploads.db
 from virtool.labels.models import Label
+from virtool.samples.models import SampleReadsFile, SampleArtifact
 from virtool.uploads.models import Upload
 
 
@@ -839,6 +840,78 @@ async def test_upload_reads(paired, conflict, compressed, snapshot, spawn_job_cl
         assert await resp_is.bad_request(resp, "File is not compressed")
 
 
+@pytest.mark.parametrize("suffix", ["1", "2"])
+@pytest.mark.parametrize("error", [None, "404_sample", "404_reads", "404_file"])
+async def test_download_reads(suffix, error, tmpdir, spawn_job_client, pg):
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    file_name = f"reads_{suffix}.fq.gz"
+
+    if error != "404_file":
+        tmpdir.mkdir("samples").mkdir("foo").join(file_name).write("test")
+
+    if error != "404_sample":
+        await client.db.samples.insert_one({
+            "_id": "foo",
+        })
+
+    sample_reads = SampleReadsFile(id=1, sample="foo", name=file_name, name_on_disk=file_name)
+
+    if error != "404_reads":
+        async with AsyncSession(pg) as session:
+            session.add(sample_reads)
+
+            await session.commit()
+
+
+    resp = await client.get(f"/api/samples/foo/reads/{file_name}")
+
+    expected_path = Path(client.app["settings"]["data_path"]) / "samples" / "foo" / file_name
+
+    if error:
+        assert resp.status == 404
+        return
+
+    assert resp.status == 200
+    assert expected_path.read_bytes() == await resp.content.read()
+
+
+@pytest.mark.parametrize("error", [None, "404_sample", "404_artifact", "404_file"])
+async def test_download_artifact(error, tmpdir, spawn_job_client, pg):
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    if error != "404_file":
+        tmpdir.mkdir("samples").mkdir("foo").join("1-fastqc.txt").write("test")
+
+    if error != "404_sample":
+        await client.db.samples.insert_one({
+            "_id": "foo",
+        })
+
+    if error != "404_artifact":
+        sample_artfact = SampleArtifact(id=1, sample="foo", name="fastqc.txt", name_on_disk="1-fastqc.txt", type="fastq")
+
+        async with AsyncSession(pg) as session:
+            session.add(sample_artfact)
+
+            await session.commit()
+
+    resp = await client.get("/api/samples/foo/artifacts/fastqc.txt")
+
+    expected_path = Path(client.app["settings"]["data_path"]) / "samples" / "foo" / "1-fastqc.txt"
+
+    if error:
+        assert resp.status == 404
+        return
+
+    assert resp.status == 200
+    assert expected_path.read_bytes() == await resp.content.read()
+
+
 @pytest.mark.parametrize("key", ["key", "not_key"])
 async def test_create_cache(key, dbi, mocker, resp_is, snapshot, static_time, spawn_job_client):
     """
@@ -980,3 +1053,4 @@ async def test_finalize_cache(field, resp_is, snapshot, spawn_job_client):
     else:
         assert resp.status == 422
         assert await resp_is.invalid_input(resp, {"quality": ["required field"]})
+
