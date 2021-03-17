@@ -1,5 +1,5 @@
-import { DownloadLink } from "../Detail/DownloadLink";
 import { screen } from "@testing-library/react";
+import { DownloadLink } from "../DownloadLink";
 
 describe("<DownloadLink />", () => {
     const props = {

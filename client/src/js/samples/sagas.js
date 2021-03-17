@@ -1,6 +1,6 @@
 import { push } from "connected-react-router";
 import { includes } from "lodash-es";
-import { call, put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 import {
     CREATE_SAMPLE,
     FIND_READ_FILES,
@@ -9,11 +9,9 @@ import {
     REMOVE_SAMPLE,
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
-    UPLOAD_SAMPLE_FILE,
     WS_UPDATE_SAMPLE
 } from "../app/actionTypes";
 import * as filesAPI from "../files/api";
-import { createUploadChannel, watchUploadChannel } from "../files/sagas";
 import { apiCall, putGenericError, setPending } from "../utils/sagas";
 import * as samplesAPI from "./api";
 import { getSampleDetailId } from "./selectors";
@@ -26,7 +24,6 @@ export function* watchSamples() {
     yield throttle(500, CREATE_SAMPLE.REQUESTED, createSample);
     yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
     yield takeEvery(UPDATE_SAMPLE_RIGHTS.REQUESTED, updateSampleRights);
-    yield takeEvery(UPLOAD_SAMPLE_FILE.REQUESTED, uploadSampleFile);
     yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
     yield takeEvery(WS_UPDATE_SAMPLE, wsUpdateSample);
 }
@@ -93,13 +90,6 @@ export function* updateSample(action) {
 
 export function* updateSampleRights(action) {
     yield setPending(apiCall(samplesAPI.updateRights, action, UPDATE_SAMPLE_RIGHTS));
-}
-
-export function* uploadSampleFile(action) {
-    const { localId, sampleId } = action;
-    const channel = yield call(createUploadChannel, action, samplesAPI.uploadSampleFile);
-    yield watchUploadChannel(channel, UPLOAD_SAMPLE_FILE, localId);
-    yield samplesAPI.get({ sampleId });
 }
 
 export function* removeSample(action) {

@@ -1,4 +1,4 @@
-import { prettyDOM, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PUSH_STATE } from "../../../app/actionTypes";
 import { CreateLabel, mapDispatchToProps } from "../Create";

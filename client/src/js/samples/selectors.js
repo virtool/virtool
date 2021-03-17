@@ -5,11 +5,9 @@ import { getAccountAdministrator, getAccountId } from "../account/selectors";
 import { getTermSelectorFactory } from "../utils/selectors";
 
 export const getSampleGroups = state => state.account.groups;
-export const getSampleName = state => get(state, "samples.detail.name");
 export const getSampleDetail = state => state.samples.detail;
 export const getSampleDetailId = state => get(state, "samples.detail.id");
 export const getSampleLibraryType = state => get(state, "samples.detail.library_type");
-export const getSampleNotes = state => get(state, "samples.detail.notes");
 export const getSampleDocuments = state => state.samples.documents;
 export const getSelectedSampleIds = state => state.samples.selected;
 
@@ -45,14 +43,7 @@ export const getMaxReadLength = state => state.samples.detail.quality.length[1];
 
 export const getSampleFiles = state => state.samples.detail.files;
 
-export const getSampleUpdateJobId = state => get(state, "samples.detail.update_job.id");
-
 export const getHasRawFilesOnly = createSelector([getSampleFiles], files => every(files, "raw"));
-
-export const getIsReadyToReplace = createSelector(
-    [getSampleFiles, getSampleUpdateJobId],
-    (files, jobId) => every(files, "replacement.id") && !jobId
-);
 
 export const getTerm = getTermSelectorFactory(state => state.samples.term);
 

@@ -7,12 +7,10 @@ import {
     GET_SAMPLE,
     HIDE_SAMPLE_MODAL,
     REMOVE_SAMPLE,
-    REPLACE_LEGACY_FILES,
     SELECT_SAMPLE,
     SHOW_REMOVE_SAMPLE,
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
-    UPLOAD_SAMPLE_FILE,
     WS_INSERT_SAMPLE,
     WS_REMOVE_SAMPLE,
     WS_UPDATE_SAMPLE
@@ -121,23 +119,6 @@ export const updateSampleRights = (sampleId, update) => ({
     type: UPDATE_SAMPLE_RIGHTS.REQUESTED,
     sampleId,
     update
-});
-
-export const uploadSampleFile = (localId, sampleId, suffix, file) => ({
-    type: UPLOAD_SAMPLE_FILE.REQUESTED,
-    file,
-    localId,
-    sampleId,
-    suffix,
-    context: {
-        sampleId,
-        suffix
-    }
-});
-
-export const replaceLegacyFiles = sampleId => ({
-    type: REPLACE_LEGACY_FILES.REQUESTED,
-    sampleId
 });
 
 /**
