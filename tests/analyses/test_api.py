@@ -215,7 +215,6 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
         return
 
     if error == "409_workflow":
-        print(await resp.json())
         assert await resp_is.conflict(resp, "Not a NuVs analysis")
         return
 
