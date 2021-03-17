@@ -20,11 +20,11 @@ import Cache from "../../caches/components/Detail";
 import { getError } from "../../errors/selectors";
 import { getSample } from "../actions";
 import { getCanModify } from "../selectors";
-import Files from "./Files/Files";
 import General from "./General";
 import Quality from "./Quality";
 import RemoveSample from "./Remove";
 import Rights from "./Rights";
+import { SampleDetailFiles } from "./Files/Files";
 
 const SampleDetail = ({ canModify, detail, error, history, match, onGetSample }) => {
     const sampleId = match.params.sampleId;
@@ -97,7 +97,7 @@ const SampleDetail = ({ canModify, detail, error, history, match, onGetSample })
             <Switch>
                 <Redirect from="/samples/:sampleId" to={`/samples/${sampleId}/general`} exact />
                 <Route path="/samples/:sampleId/general" component={General} />
-                <Route path="/samples/:sampleId/files" component={Files} exact />
+                <Route path="/samples/:sampleId/files" component={SampleDetailFiles} exact />
                 <Route path="/samples/:sampleId/files/:cacheId" component={Cache} />
                 <Route path="/samples/:sampleId/quality" component={Quality} />
                 <Route path="/samples/:sampleId/analyses" component={Analyses} />

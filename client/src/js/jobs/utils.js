@@ -181,33 +181,13 @@ const nuvsDescriptions = {
     import_results: importResultsDescription
 };
 
-const updateSampleDescriptions = {
-    copy_files: {
-        title: "Copy Files",
-        description: "Copy and compress replacement FASTQ files."
-    },
-    fastqc: {
-        title: "FastQC",
-        description: "Run FastQC on the replacement FASTQ files."
-    },
-    parse_fastqc: {
-        title: "Parse FastQC",
-        description: "Parse FastQC output and store in database."
-    },
-    create_cache: {
-        title: "Create Cache",
-        description: "Create a trim cache from the original trimmed files."
-    }
-};
-
 export const stepDescriptions = {
     aodp: aodpDescriptions,
     build_index: buildIndexDescriptions,
     create_sample: createSampleDescriptions,
     create_subtraction: createSubtractionDescriptions,
     pathoscope_bowtie: pathoscopeBowtieDescriptions,
-    nuvs: nuvsDescriptions,
-    update_sample: updateSampleDescriptions
+    nuvs: nuvsDescriptions
 };
 
 export const getStepDescription = (stage, state, task) => {

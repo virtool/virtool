@@ -1,6 +1,6 @@
-import { FirstUser, mapDispatchToProps } from "../FirstUser";
-import { waitFor, screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { FirstUser, mapDispatchToProps } from "../FirstUser";
 
 describe("<FirstUser />", () => {
     let props;
