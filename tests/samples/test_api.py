@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import virtool.samples.db
 import virtool.uploads.db
 from virtool.labels.models import Label
+from virtool.samples.models import SampleReadsFile
 from virtool.uploads.models import Upload
 
 
@@ -835,3 +836,41 @@ async def test_upload_reads(paired, conflict, compressed, snapshot, spawn_job_cl
             assert os.listdir(sample_file_path) == ["reads_1.fq.gz"]
     else:
         assert await resp_is.bad_request(resp, "File is not compressed")
+
+
+@pytest.mark.parametrize("suffix", ["1", "2"])
+@pytest.mark.parametrize("error", [None, "404_sample", "404_reads", "404_file"])
+async def test_download_reads(suffix, error, tmpdir, spawn_job_client, pg):
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    file_name = f"reads_{suffix}.fq.gz"
+
+    if error != "404_file":
+        tmpdir.mkdir("samples").mkdir("foo").join(file_name).write("test")
+
+    if error != "404_sample":
+        await client.db.samples.insert_one({
+            "_id": "foo",
+        })
+
+    sample_reads = SampleReadsFile(id=1, sample="foo", name=file_name, name_on_disk=file_name)
+
+    if error != "404_reads":
+        async with AsyncSession(pg) as session:
+            session.add(sample_reads)
+
+            await session.commit()
+
+
+    resp = await client.get(f"/api/samples/foo/reads/{suffix}")
+
+    expected_path = Path(client.app["settings"]["data_path"]) / "samples" / "foo" / file_name
+
+    if error:
+        assert resp.status == 404
+        return
+
+    assert resp.status == 200
+    assert expected_path.read_bytes() == await resp.content.read()
