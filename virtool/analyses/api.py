@@ -220,9 +220,9 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     analysis_file = await virtool.analyses.files.create_analysis_file(pg, analysis_id, analysis_format, name)
 
-    file_id = analysis_file["id"]
+    upload_id = analysis_file["id"]
 
-    if file_id in document.get("files", []):
+    if upload_id in document.get("files", []):
         return conflict("File is already associated with analysis")
 
     analysis_file_path = Path(req.app["settings"]["data_path"]) / "analyses" / analysis_file["name_on_disk"]
@@ -230,34 +230,34 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
     try:
         size = await virtool.uploads.utils.naive_writer(req, analysis_file_path)
     except asyncio.CancelledError:
-        logger.debug(f"Analysis file upload aborted: {file_id}")
-        await virtool.pg.utils.delete_row(pg, file_id, AnalysisFile)
+        logger.debug(f"Analysis file upload aborted: {upload_id}")
+        await virtool.pg.utils.delete_row(pg, upload_id, AnalysisFile)
 
         return aiohttp.web.Response(status=499)
 
-    analysis_file = await virtool.uploads.db.finalize(pg, size, file_id, AnalysisFile)
+    analysis_file = await virtool.uploads.db.finalize(pg, size, upload_id, AnalysisFile)
 
     await db.analyses.update_one({"_id": analysis_id}, {
-        "$push": {"files": file_id}
+        "$push": {"files": upload_id}
     })
 
     headers = {
-        "Location": f"/api/analyses/{analysis_id}/files/{file_id}"
+        "Location": f"/api/analyses/{analysis_id}/files/{upload_id}"
     }
 
     return json_response(analysis_file, status=201, headers=headers)
 
 
-@routes.get("/api/analyses/{analysis_id}/files/{file_id}")
+@routes.get("/api/analyses/{analysis_id}/files/{upload_id}")
 async def download(req: aiohttp.web.Request) -> Union[aiohttp.web.FileResponse, aiohttp.web.Response]:
     """
     Download an analysis result file.
 
     """
     pg = req.app["pg"]
-    file_id = int(req.match_info["file_id"])
+    upload_id = int(req.match_info["upload_id"])
 
-    analysis_file = await virtool.pg.utils.get_row(pg, file_id, AnalysisFile)
+    analysis_file = await virtool.pg.utils.get_row(pg, upload_id, AnalysisFile)
 
     if not analysis_file:
         return not_found()
