@@ -866,7 +866,7 @@ async def test_download_reads(suffix, error, tmpdir, spawn_job_client, pg):
             await session.commit()
 
 
-    resp = await client.get(f"/api/samples/foo/reads/{suffix}")
+    resp = await client.get(f"/api/samples/foo/reads/{file_name}")
 
     expected_path = Path(client.app["settings"]["data_path"]) / "samples" / "foo" / file_name
 

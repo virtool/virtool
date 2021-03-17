@@ -987,7 +987,7 @@ async def finalize_cache(req):
     return json_response(processed)
 
 
-@routes.jobs_api.get("/api/samples/{sample_id}/reads/{suffix}")
+@routes.jobs_api.get("/api/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
 async def download_reads(req: aiohttp.web.Request):
     """
     Download the sample reads file.
