@@ -1,9 +1,12 @@
 import asyncio
+import json
 import logging
 from pathlib import Path
 
 import aiohttp.web
+from aiohttp.web_fileresponse import FileResponse
 
+import virtool.api.json
 import virtool.api.utils
 import virtool.db.utils
 import virtool.history.db
@@ -14,15 +17,17 @@ import virtool.indexes.files
 import virtool.indexes.utils
 import virtool.jobs.build_index
 import virtool.jobs.db
+import virtool.pg.utils
 import virtool.references.db
 import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
-from virtool.api.response import bad_request, conflict, insufficient_rights, invalid_query, json_response, \
-    not_found, no_content
-from virtool.indexes.db import reset_history, FILES
+from virtool.api.response import bad_request, conflict, insufficient_rights, invalid_query, \
+    json_response, no_content, not_found
+from virtool.indexes.db import FILES, reset_history
 from virtool.indexes.models import IndexFile
 from virtool.jobs.utils import JobRights
+from virtool.utils import compress_json_with_gzip
 
 logger = logging.getLogger("indexes")
 routes = virtool.http.routes.Routes()
@@ -116,11 +121,74 @@ async def get(req):
     return json_response(document)
 
 
+@routes.jobs_api.get("/api/indexes/{index_id}/files/otus.json.gz")
+async def download_otus_json(req):
+    """
+    Download a complete compressed JSON representation of the index OTUs.
+
+    """
+    db = req.app["db"]
+    index_id = req.match_info["index_id"]
+
+    index = await db.indexes.find_one(index_id)
+
+    if index is None:
+        return not_found()
+
+    ref_id = index["reference"]["id"]
+
+    data_path = Path(req.app["settings"]["data_path"])
+    json_path = data_path / f"references/{ref_id}/{index_id}/otus.json.gz"
+
+    if not json_path.exists():
+        patched_otus = await virtool.indexes.db.get_patched_otus(
+            db,
+            req.app["settings"],
+            index["manifest"]
+        )
+        
+        json_string = json.dumps(patched_otus, cls=virtool.api.json.CustomEncoder)
+
+        await req.app["run_in_thread"](compress_json_with_gzip, json_string, json_path)
+
+    headers = {
+        "Content-Disposition": "attachment; filename=otus.json.gz",
+        "Content-Type": "application/gzip"
+    }
+
+    return FileResponse(json_path, headers=headers)
+
+
+@routes.jobs_api.get("/api/indexes/{index_id}/files/{filename}")
+async def download_index_file(req: aiohttp.web.Request):
+    """Download files relating to a given index."""
+    index_id = req.match_info["index_id"]
+    filename = req.match_info["filename"]
+
+    if filename not in FILES:
+        return not_found()
+
+    index_document = await req.app["db"].indexes.find_one(index_id)
+
+    if index_document is None:
+        return not_found()
+
+    reference_id = index_document["reference"]["id"]
+
+    path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id / filename
+
+    if not path.exists():
+        return not_found("File not found")
+
+    return aiohttp.web.FileResponse(path)
+
+
 @routes.post("/api/refs/{ref_id}/indexes")
 async def create(req):
     """
-    Starts a job to rebuild the otus Bowtie2 index on disk. Does a check to make sure there are no unverified
-    otus in the collection and updates otu history to show the version and id of the new index.
+    Starts a job to rebuild the otus Bowtie2 index on disk. Does a check to make sure there are no
+    unverified OTUs in the collection and updates otu history to show the version and id of the new
+    index.
 
     """
     db = req.app["db"]
@@ -219,8 +287,8 @@ async def create(req):
 @routes.post("/api/indexes/{index_id}/files")
 async def upload(req):
     """
-    Upload a new index file to the `index_files` SQL table and the `references` folder in the Virtool
-    data path.
+    Upload a new index file to the `index_files` SQL table and the `references` folder in the
+    Virtool data path.
 
     """
     db = req.app["db"]
@@ -244,26 +312,33 @@ async def upload(req):
 
     reference_id = document["reference"]["id"]
     file_type = virtool.indexes.utils.check_index_file_type(file_name)
-    index_file = await virtool.indexes.files.create_index_file(pg, reference_id, file_type, file_name)
-    file_id = index_file["id"]
+
+    index_file = await virtool.indexes.files.create_index_file(
+        pg,
+        reference_id,
+        file_type,
+        file_name
+    )
+
+    upload_id = index_file["id"]
     path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id / file_name
 
-    if file_id in document.get("files", []):
+    if upload_id in document.get("files", []):
         return conflict("File name already exists")
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, path)
     except asyncio.CancelledError:
-        logger.debug(f"Index file upload aborted: {file_id}")
-        await virtool.indexes.files.delete_index_file(pg, file_id)
+        logger.debug(f"Index file upload aborted: {upload_id}")
+        await virtool.pg.utils.delete_row(pg, upload_id, IndexFile)
 
         return aiohttp.web.Response(status=499)
 
-    index_file = await virtool.uploads.db.finalize(pg, size, file_id, IndexFile)
+    index_file = await virtool.uploads.db.finalize(pg, size, upload_id, IndexFile)
 
     await db.indexes.find_one_and_update({"_id": index_id}, {
         "$push": {
-            "files": file_id
+            "files": upload_id
         }
     })
 
@@ -325,25 +400,4 @@ async def delete_index(req: aiohttp.web.Request):
     return no_content()
 
 
-@routes.jobs_api.get("/api/indexes/{index_id}/files/{filename}")
-async def download_index_file(req: aiohttp.web.Request):
-    """Download files relating to a given index."""
-    index_id = req.match_info["index_id"]
-    filename = req.match_info["filename"]
 
-    if filename not in FILES:
-        return not_found(f"{filename} must be one of {FILES}")
-
-    index_document = await req.app["db"].indexes.find_one(index_id)
-
-    if index_document is None:
-        return not_found()
-
-    reference_id = index_document["reference"]["id"]
-
-    path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id / filename
-
-    if not path.exists():
-        return not_found("File not found")
-
-    return aiohttp.web.FileResponse(path)

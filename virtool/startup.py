@@ -92,6 +92,7 @@ async def init_check_db(app: aiohttp.web_app.Application):
     logger.info("Checking database indexes")
     await db.analyses.create_index("sample.id")
     await db.analyses.create_index([("created_at", -1)])
+    await db.caches.create_index([("sample.id", 1),("key", 1)], unique=True)
     await db.history.create_index("otu.id")
     await db.history.create_index("index.id")
     await db.history.create_index("created_at")

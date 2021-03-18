@@ -6,11 +6,16 @@ from copy import deepcopy
 from pathlib import Path
 
 import aiohttp.web
+from aiohttp.web_fileresponse import FileResponse
 from cerberus import Validator
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.analyses.db
 import virtool.analyses.utils
 import virtool.api.utils
+import virtool.caches.db
+import virtool.caches.utils
 import virtool.db.utils
 import virtool.caches.db
 import virtool.errors
@@ -29,7 +34,7 @@ from virtool.api.response import bad_request, conflict, insufficient_rights, inv
     json_response, no_content, not_found
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
-from virtool.samples.models import ArtifactType, SampleArtifact
+from virtool.samples.models import ArtifactType, SampleArtifact, SampleArtifactCache
 from virtool.samples.utils import bad_labels_response, check_labels
 
 logger = logging.getLogger("samples")
@@ -343,7 +348,7 @@ async def create(req):
         "paired": len(data["files"]) == 2
     })
 
-    uploads = [(await virtool.uploads.db.get(pg, file_id)).to_dict() for file_id in data["files"]]
+    uploads = [(await virtool.uploads.db.get(pg, upload_id)).to_dict() for upload_id in data["files"]]
 
     files = list()
     for upload in uploads:
@@ -599,10 +604,10 @@ async def job_remove(req):
     if ready is True:
         return bad_request("Only unfinalized samples can be deleted")
 
-    file_ids = await virtool.db.utils.get_one_field(db.samples, "files", sample_id)
+    upload_ids = await virtool.db.utils.get_one_field(db.samples, "files", sample_id)
 
-    if file_ids:
-        await virtool.uploads.db.release(req.app["pg"], file_ids)
+    if upload_ids:
+        await virtool.uploads.db.release(req.app["pg"], upload_ids)
 
     await virtool.samples.db.remove_samples(
         db,
@@ -754,6 +759,56 @@ async def cache_job_remove(req: aiohttp.web.Request):
     return no_content()
 
   
+@routes.jobs_api.post("/api/samples/{sample_id}/artifacts")
+async def upload_artifact(req):
+    """
+    Upload artifact created during sample creation using the Jobs API.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+    sample_id = req.match_info["sample_id"]
+    artifact_type = req.query.get("type")
+
+    artifact_file_path = Path(virtool.samples.utils.join_sample_path(req.app["settings"], sample_id))
+
+    if not await db.samples.find_one(sample_id):
+        return not_found()
+
+    errors = virtool.uploads.utils.naive_validator(req)
+
+    if errors:
+        return invalid_query(errors)
+
+    name = req.query.get("name")
+
+    if artifact_type and artifact_type not in ArtifactType.to_list():
+        return bad_request("Unsupported sample artifact type")
+
+    artifact = await virtool.samples.files.create_artifact_file(pg, name, sample_id, artifact_type)
+
+    file_id = artifact["id"]
+
+    artifact_file_path = artifact_file_path / artifact["name_on_disk"]
+
+    try:
+        size = await virtool.uploads.utils.naive_writer(req, artifact_file_path)
+    except asyncio.CancelledError:
+        logger.debug(f"Artifact file upload aborted: {file_id}")
+        await req.app["run_in_thread"](os.remove, artifact_file_path)
+        await virtool.pg.utils.delete_row(pg, file_id, SampleArtifact)
+
+        return aiohttp.web.Response(status=499)
+
+    artifact = await virtool.uploads.db.finalize(pg, size, file_id, SampleArtifact)
+
+    headers = {
+        "Location": f"/api/samples/{sample_id}/artifact/{file_id}"
+    }
+
+    return json_response(artifact, status=201, headers=headers)
+
+
 @routes.jobs_api.post("/api/samples/{sample_id}/reads")
 async def upload_reads(req):
     """
@@ -764,7 +819,7 @@ async def upload_reads(req):
     pg = req.app["pg"]
     sample_id = req.match_info["sample_id"]
 
-    reads_file_path = Path(req.app["settings"]["data_path"]) / "samples" / sample_id
+    reads_file_path = Path(virtool.samples.utils.join_sample_path(req.app["settings"], sample_id))
 
     if not await db.samples.find_one(sample_id):
         return not_found()
@@ -802,20 +857,50 @@ async def upload_reads(req):
     return json_response(reads, status=201, headers=headers)
 
 
-@routes.jobs_api.post("/api/samples/{sample_id}/artifacts")
-async def upload_artifact(req):
+@routes.jobs_api.post("/api/samples/{sample_id}/caches")
+@schema({
+    "key": {
+        "type": "string",
+        "required": True
+    }
+})
+async def create_cache(req):
+    db = req.app["db"]
+    key = req["data"]["key"]
+
+    sample_id = req.match_info["sample_id"]
+
+    sample = await db.samples.find_one(
+        {"_id": sample_id}, ["paired"]
+    )
+
+    if not sample:
+        return not_found("Sample does not exist")
+
+    document = await virtool.caches.db.create(db, sample_id, key, sample["paired"])
+
+    headers = {
+        "Location": f"/api/samples/{sample_id}/caches/{document['id']}"
+    }
+
+    return json_response(document, status=201, headers=headers)
+
+
+@routes.jobs_api.post("/api/samples/{sample_id}/caches/{key}/artifacts")
+async def upload_artifacts_cache(req):
     """
-    Upload artifact created during sample creation using the Jobs API.
+    Upload sample artifacts to cache using the Jobs API.
 
     """
     db = req.app["db"]
     pg = req.app["pg"]
     sample_id = req.match_info["sample_id"]
+    key = req.match_info["key"]
     artifact_type = req.query.get("type")
 
-    artifact_file_path = Path(req.app["settings"]["data_path"]) / "samples" / sample_id
+    cache_path = Path(virtool.caches.utils.join_cache_path(req.app["settings"], key))
 
-    if not await db.samples.find_one(sample_id):
+    if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
         return not_found()
 
     errors = virtool.uploads.utils.naive_validator(req)
@@ -828,25 +913,172 @@ async def upload_artifact(req):
     if artifact_type and artifact_type not in ArtifactType.to_list():
         return bad_request("Unsupported sample artifact type")
 
-    artifact_file = await virtool.samples.files.create_artifact_file(pg, name, sample_id, artifact_type)
+    artifact = await virtool.samples.files.create_artifact_file(pg, name, sample_id, artifact_type, cache=True)
 
-    file_id = artifact_file["id"]
+    upload_id = artifact["id"]
 
-    artifact_file_path = Path(req.app["settings"]["data_path"]) / "samples" / sample_id / artifact_file["name_on_disk"]
+    cache_path = cache_path / artifact["name_on_disk"]
 
     try:
-        size = await virtool.uploads.utils.naive_writer(req, artifact_file_path)
+        size = await virtool.uploads.utils.naive_writer(req, cache_path)
     except asyncio.CancelledError:
-        logger.debug(f"Artifact file upload aborted: {file_id}")
-        await req.app["run_in_thread"](os.remove, artifact_file_path)
-        await virtool.pg.utils.delete_row(pg, file_id, SampleArtifact)
-
+        logger.debug(f"Artifact file upload aborted: {upload_id}")
+        await req.app["run_in_thread"](os.remove, cache_path)
+        await virtool.pg.utils.delete_row(pg, upload_id, SampleArtifactCache)
         return aiohttp.web.Response(status=499)
 
-    artifact_file = await virtool.uploads.db.finalize(pg, size, file_id, SampleArtifact)
+    artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SampleArtifactCache)
 
     headers = {
-        "Location": f"/api/samples/{sample_id}/artifact/{file_id}"
+        "Location": f"/api/samples/{sample_id}/caches/{key}/{upload_id}"
     }
 
-    return json_response(artifact_file, status=201, headers=headers)
+    return json_response(artifact, status=201, headers=headers)
+
+
+@routes.jobs_api.post("/api/samples/{sample_id}/caches/{key}/reads")
+async def upload_reads_cache(req):
+    """
+    Upload reads files to cache using the Jobs API.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+    sample_id = req.match_info["sample_id"]
+    key = req.match_info["key"]
+
+    cache_path = Path(virtool.caches.utils.join_cache_path(req.app["settings"], key))
+
+    if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
+        return not_found("Cache doesn't exist with given key")
+
+    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id, cache=True)
+
+    if existing_reads == ["reads_1.fq.gz", "reads_2.fq.gz"]:
+        return conflict("Sample is already associated with two reads files")
+
+    try:
+        size, name_on_disk = await virtool.uploads.utils.naive_writer(req, cache_path, compressed=True)
+    except asyncio.CancelledError:
+        logger.debug(f"Reads cache file upload aborted for {key}")
+        return aiohttp.web.Response(status=499)
+
+    if size is None:
+        return bad_request("File is not compressed")
+
+    if "1" in name_on_disk:
+        name = "reads_1.fq.gz"
+    elif "2" in name_on_disk:
+        name = "reads_2.fq.gz"
+    else:
+        return bad_request("File name is not an accepted reads file")
+
+    if name in existing_reads:
+        return conflict("Reads file is already associated with this sample")
+
+    reads = await virtool.samples.files.create_reads_file(pg, size, name, name_on_disk, sample_id)
+
+    headers = {
+        "Location": f"/api/samples/{sample_id}/caches/{key}/reads/{reads['id']}"
+    }
+
+    return json_response(reads, status=201, headers=headers)
+
+
+@routes.jobs_api.patch("/api/samples/{sample_id}/caches/{key}")
+@schema({
+    "quality": {
+        "type": "dict",
+        "required": True
+    }
+})
+async def finalize_cache(req):
+    db = req.app["db"]
+    data = req["data"]
+    key = req.match_info["key"]
+
+    document = await db.caches.find_one_and_update({"key": key}, {
+        "$set": {
+            "quality": data["quality"],
+            "ready": True
+        }
+    })
+
+    processed = virtool.utils.base_processor(document)
+
+    return json_response(processed)
+
+
+@routes.jobs_api.get("/api/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
+async def download_reads(req: aiohttp.web.Request):
+    """
+    Download the sample reads file.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+
+    sample_id = req.match_info["sample_id"]
+    suffix = req.match_info["suffix"]
+
+    file_name = f"reads_{suffix}.fq.gz"
+
+    if not await db.samples.find_one(sample_id):
+        return not_found()
+
+    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id)
+
+    if file_name not in existing_reads:
+        return not_found()
+
+    file_path = os.path.join(req.app["settings"]["data_path"], "samples", sample_id, file_name)
+
+    if not os.path.isfile(file_path):
+        return virtool.api.response.not_found()
+
+    file_stats = virtool.utils.file_stats(file_path)
+
+    headers = {
+        "Content-Length": file_stats["size"],
+        "Content-Type": "application/gzip"
+    }
+
+    return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
+
+
+@routes.jobs_api.get("/api/samples/{sample_id}/artifacts/{filename}")
+async def download_artifact(req: aiohttp.web.Request):
+    """
+    Download the sample artifact.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+
+    sample_id = req.match_info["sample_id"]
+    filename = req.match_info["filename"]
+
+    if not await db.samples.find_one(sample_id):
+        return not_found()
+
+    async with AsyncSession(pg) as session:
+        result = (await session.execute(select(SampleArtifact).filter_by(sample=sample_id, name=filename))).scalar()
+
+    if not result:
+        return not_found()
+
+    artifact = result.to_dict()
+
+    file_path = os.path.join(req.app["settings"]["data_path"], "samples", sample_id, artifact["name_on_disk"])
+
+    if not os.path.isfile(file_path):
+        return virtool.api.response.not_found()
+
+    file_stats = virtool.utils.file_stats(file_path)
+
+    headers = {
+        "Content-Length": file_stats["size"],
+        "Content-Type": "application/gzip"
+    }
+
+    return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)

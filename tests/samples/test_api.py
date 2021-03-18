@@ -6,9 +6,12 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import virtool.caches.db
+import virtool.caches.utils
 import virtool.samples.db
 import virtool.uploads.db
 from virtool.labels.models import Label
+from virtool.samples.models import SampleReadsFile, SampleArtifact
 from virtool.uploads.models import Upload
 
 
@@ -864,3 +867,218 @@ async def test_get_cache(error, snapshot, spawn_job_client, resp_is, static_time
     assert resp.status == 200
 
     snapshot.assert_match(await resp.json())
+
+@pytest.mark.parametrize("suffix", ["1", "2"])
+@pytest.mark.parametrize("error", [None, "404_sample", "404_reads", "404_file"])
+async def test_download_reads(suffix, error, tmpdir, spawn_job_client, pg):
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    file_name = f"reads_{suffix}.fq.gz"
+
+    if error != "404_file":
+        tmpdir.mkdir("samples").mkdir("foo").join(file_name).write("test")
+
+    if error != "404_sample":
+        await client.db.samples.insert_one({
+            "_id": "foo",
+        })
+
+    sample_reads = SampleReadsFile(id=1, sample="foo", name=file_name, name_on_disk=file_name)
+
+    if error != "404_reads":
+        async with AsyncSession(pg) as session:
+            session.add(sample_reads)
+
+            await session.commit()
+
+
+    resp = await client.get(f"/api/samples/foo/reads/{file_name}")
+
+    expected_path = Path(client.app["settings"]["data_path"]) / "samples" / "foo" / file_name
+
+    if error:
+        assert resp.status == 404
+        return
+
+    assert resp.status == 200
+    assert expected_path.read_bytes() == await resp.content.read()
+
+
+@pytest.mark.parametrize("error", [None, "404_sample", "404_artifact", "404_file"])
+async def test_download_artifact(error, tmpdir, spawn_job_client, pg):
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    if error != "404_file":
+        tmpdir.mkdir("samples").mkdir("foo").join("1-fastqc.txt").write("test")
+
+    if error != "404_sample":
+        await client.db.samples.insert_one({
+            "_id": "foo",
+        })
+
+    if error != "404_artifact":
+        sample_artfact = SampleArtifact(id=1, sample="foo", name="fastqc.txt", name_on_disk="1-fastqc.txt", type="fastq")
+
+        async with AsyncSession(pg) as session:
+            session.add(sample_artfact)
+
+            await session.commit()
+
+    resp = await client.get("/api/samples/foo/artifacts/fastqc.txt")
+
+    expected_path = Path(client.app["settings"]["data_path"]) / "samples" / "foo" / "1-fastqc.txt"
+
+    if error:
+        assert resp.status == 404
+        return
+
+    assert resp.status == 200
+    assert expected_path.read_bytes() == await resp.content.read()
+
+
+@pytest.mark.parametrize("key", ["key", "not_key"])
+async def test_create_cache(key, dbi, mocker, resp_is, snapshot, static_time, spawn_job_client):
+    """
+    Test that a new cache document can be created in the `caches` db using the Jobs API.
+
+    """
+    client = await spawn_job_client(authorize=True)
+
+    await client.db.samples.insert_one({
+        "_id": "test",
+        "paired": False,
+    })
+
+    data = {key: "aodp-abcdefgh"}
+
+    mocker.patch("virtool.utils.random_alphanumeric", return_value="a1b2c3d4")
+
+    resp = await client.post("/api/samples/test/caches", json=data)
+
+    if key == "key":
+        assert resp.status == 201
+        document = await resp.json()
+
+        snapshot.assert_match(document)
+        assert await virtool.caches.db.get(dbi, document["id"])
+    else:
+        assert await resp_is.invalid_input(resp, {"key": ['required field']})
+
+
+@pytest.mark.parametrize("artifact_type", ["fastq", "foo"])
+async def test_upload_artifact_cache(artifact_type, resp_is, snapshot, static_time, spawn_job_client, tmpdir):
+    """
+    Test that a new artifact cache can be uploaded after sample creation using the Jobs API.
+
+    """
+    path = Path.cwd() / "tests" / "test_files" / "nuvs" / "reads_1.fq"
+
+    data = {
+        "file": open(path, "rb")
+    }
+
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    cache_path = Path(virtool.caches.utils.join_cache_path(client.app["settings"], "aodp-abcdefgh"))
+
+    await client.db.samples.insert_one({
+        "_id": "test",
+    })
+
+    await client.db.caches.insert_one({
+        "_id": "test",
+        "key": "aodp-abcdefgh",
+        "sample": {
+            "id": "test"
+        },
+    })
+
+    resp = await client.post(f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}",
+                             data=data)
+
+    if artifact_type == "fastq":
+        assert resp.status == 201
+        snapshot.assert_match(await resp.json())
+        assert os.listdir(cache_path) == ["1-small.fq"]
+    else:
+        assert await resp_is.bad_request(resp, "Unsupported sample artifact type")
+
+
+@pytest.mark.parametrize("paired", [True, False])
+async def test_upload_reads_cache(paired, snapshot, static_time, spawn_job_client, tmpdir):
+    """
+    Test that sample reads' files cache can be uploaded using the Jobs API.
+
+    """
+    path = Path.cwd() / "tests" / "test_files" / "samples"
+
+    data = {
+        "file": open(path / "reads_1.fq.gz", "rb")
+    }
+
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+    cache_path = Path(virtool.caches.utils.join_cache_path(client.app["settings"], "aodp-abcdefgh"))
+
+    await client.db.samples.insert_one({
+        "_id": "test",
+    })
+
+    await client.db.caches.insert_one({
+        "_id": "test",
+        "key": "aodp-abcdefgh",
+        "sample": {
+            "id": "test"
+        }
+    })
+
+    resp = await client.post("/api/samples/test/caches/aodp-abcdefgh/reads", data=data)
+
+    assert resp.status == 201
+
+    if paired:
+        data["file"] = open(path / "reads_2.fq.gz", "rb")
+        resp_2 = await client.post("/api/samples/test/caches/aodp-abcdefgh/reads", data=data)
+
+        assert resp.status, resp_2.status == 201
+        snapshot.assert_match(await resp_2.json())
+        assert set(os.listdir(cache_path)) == {"reads_1.fq.gz", "reads_2.fq.gz"}
+    else:
+        snapshot.assert_match(await resp.json())
+        assert os.listdir(cache_path) == ["reads_1.fq.gz"]
+
+
+@pytest.mark.parametrize("field", ["quality", "not_quality"])
+async def test_finalize_cache(field, resp_is, snapshot, spawn_job_client):
+    client = await spawn_job_client(authorize=True)
+
+    data = {field: {}}
+
+    await client.db.samples.insert_one({
+        "_id": "test",
+    })
+
+    await client.db.caches.insert_one({
+        "_id": "test",
+        "key": "aodp-abcdefgh",
+        "sample": {
+            "id": "test"
+        }
+    })
+
+    resp = await client.patch("/api/samples/test/caches/aodp-abcdefgh", json=data)
+
+    if field == "quality":
+        assert resp.status == 200
+        snapshot.assert_match(await resp.json())
+    else:
+        assert resp.status == 422
+        assert await resp_is.invalid_input(resp, {"quality": ["required field"]})
+

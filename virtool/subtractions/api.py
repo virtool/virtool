@@ -108,8 +108,8 @@ async def get(req):
         "coerce": virtool.validators.strip,
         "default": ""
     },
-    "file_id": {
-        "type": "string",
+    "upload_id": {
+        "type": "integer",
         "required": True
     }
 })
@@ -121,9 +121,9 @@ async def create(req):
     db = req.app["db"]
     data = req["data"]
 
-    file_id = data["file_id"]
+    upload_id = data["upload_id"]
 
-    file = await db.files.find_one(file_id, ["name"])
+    file = await db.files.find_one(upload_id, ["name"])
 
     if file is None:
         return bad_request("File does not exist")
@@ -141,7 +141,7 @@ async def create(req):
         "ready": False,
         "is_host": True,
         "file": {
-            "id": file_id,
+            "id": upload_id,
             "name": file["name"]
         },
         "user": {
@@ -150,14 +150,13 @@ async def create(req):
         "job": {
             "id": job_id
         },
-        "deleted": False
     }
 
     await db.subtraction.insert_one(document)
 
     task_args = {
         "subtraction_id": subtraction_id,
-        "file_id": file_id
+        "upload_id": upload_id
     }
 
     rights = JobRights()
@@ -165,7 +164,7 @@ async def create(req):
     rights.subtractions.can_read(subtraction_id)
     rights.subtractions.can_modify(subtraction_id)
     rights.subtractions.can_remove(subtraction_id)
-    rights.uploads.can_read(file_id)
+    rights.uploads.can_read(upload_id)
 
     await virtool.jobs.db.create(
         db,
@@ -214,25 +213,25 @@ async def upload(req):
     file_type = virtool.subtractions.utils.check_subtraction_file_type(file_name)
     subtraction_file = await virtool.subtractions.files.create_subtraction_file(pg, subtraction_id, file_type,
                                                                                 file_name)
-    file_id = subtraction_file["id"]
+    upload_id = subtraction_file["id"]
     path = Path(req.app["settings"]["data_path"]) / "subtractions" / subtraction_id / file_name
 
-    if file_id in document.get("files", []):
+    if upload_id in document.get("files", []):
         return bad_request("File name already exists")
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, path)
     except asyncio.CancelledError:
-        logger.debug(f"Subtraction file upload aborted: {file_id}")
-        await virtool.subtractions.files.delete_subtraction_file(pg, file_id)
+        logger.debug(f"Subtraction file upload aborted: {upload_id}")
+        await virtool.subtractions.files.delete_subtraction_file(pg, upload_id)
 
         return aiohttp.web.Response(status=499)
 
-    subtraction_file = await virtool.uploads.db.finalize(pg, size, file_id, SubtractionFile)
+    subtraction_file = await virtool.uploads.db.finalize(pg, size, upload_id, SubtractionFile)
 
     await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
         "$push": {
-            "files": file_id
+            "files": upload_id
         }
     })
 

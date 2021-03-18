@@ -12,20 +12,10 @@ snapshots['test_create[uvloop-paired] return'] = {
     'files': [
     ],
     'id': '9pfsom1b',
-    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
+    'key': 'aodp-abcdefgh',
     'legacy': False,
     'missing': False,
     'paired': True,
-    'parameters': {
-        'end_quality': '20',
-        'max_error_rate': '0.1',
-        'max_indel_rate': '0.03',
-        'max_length': None,
-        'mean_quality': '25',
-        'min_length': '20',
-        'mode': 'pe'
-    },
-    'program': 'skewer-0.2.2',
     'ready': False,
     'sample': {
         'id': 'foo'
@@ -37,20 +27,10 @@ snapshots['test_create[uvloop-paired] db'] = {
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
-    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
+    'key': 'aodp-abcdefgh',
     'legacy': False,
     'missing': False,
     'paired': True,
-    'parameters': {
-        'end_quality': '20',
-        'max_error_rate': '0.1',
-        'max_indel_rate': '0.03',
-        'max_length': None,
-        'mean_quality': '25',
-        'min_length': '20',
-        'mode': 'pe'
-    },
-    'program': 'skewer-0.2.2',
     'ready': False,
     'sample': {
         'id': 'foo'
@@ -62,20 +42,10 @@ snapshots['test_create[uvloop-unpaired] return'] = {
     'files': [
     ],
     'id': '9pfsom1b',
-    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
+    'key': 'aodp-abcdefgh',
     'legacy': False,
     'missing': False,
     'paired': False,
-    'parameters': {
-        'end_quality': '20',
-        'max_error_rate': '0.1',
-        'max_indel_rate': '0.03',
-        'max_length': None,
-        'mean_quality': '25',
-        'min_length': '20',
-        'mode': 'pe'
-    },
-    'program': 'skewer-0.2.2',
     'ready': False,
     'sample': {
         'id': 'foo'
@@ -87,70 +57,10 @@ snapshots['test_create[uvloop-unpaired] db'] = {
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
-    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
+    'key': 'aodp-abcdefgh',
     'legacy': False,
     'missing': False,
     'paired': False,
-    'parameters': {
-        'end_quality': '20',
-        'max_error_rate': '0.1',
-        'max_indel_rate': '0.03',
-        'max_length': None,
-        'mean_quality': '25',
-        'min_length': '20',
-        'mode': 'pe'
-    },
-    'program': 'skewer-0.2.2',
-    'ready': False,
-    'sample': {
-        'id': 'foo'
-    }
-}
-
-snapshots['test_create_program[uvloop] return'] = {
-    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-    ],
-    'id': '9pfsom1b',
-    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
-    'legacy': False,
-    'missing': False,
-    'paired': False,
-    'parameters': {
-        'end_quality': '20',
-        'max_error_rate': '0.1',
-        'max_indel_rate': '0.03',
-        'max_length': None,
-        'mean_quality': '25',
-        'min_length': '20',
-        'mode': 'pe'
-    },
-    'program': 'trimmomatic-0.2.3',
-    'ready': False,
-    'sample': {
-        'id': 'foo'
-    }
-}
-
-snapshots['test_create_program[uvloop] db'] = {
-    '_id': '9pfsom1b',
-    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-    ],
-    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
-    'legacy': False,
-    'missing': False,
-    'paired': False,
-    'parameters': {
-        'end_quality': '20',
-        'max_error_rate': '0.1',
-        'max_indel_rate': '0.03',
-        'max_length': None,
-        'mean_quality': '25',
-        'min_length': '20',
-        'mode': 'pe'
-    },
-    'program': 'trimmomatic-0.2.3',
     'ready': False,
     'sample': {
         'id': 'foo'
@@ -162,20 +72,10 @@ snapshots['test_create_duplicate[uvloop] return'] = {
     'files': [
     ],
     'id': 'u3cuwaoq',
-    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
+    'key': 'aodp-abcdefgh',
     'legacy': False,
     'missing': False,
     'paired': False,
-    'parameters': {
-        'end_quality': '20',
-        'max_error_rate': '0.1',
-        'max_indel_rate': '0.03',
-        'max_length': None,
-        'mean_quality': '25',
-        'min_length': '20',
-        'mode': 'pe'
-    },
-    'program': 'skewer-0.2.2',
     'ready': False,
     'sample': {
         'id': 'foo'
@@ -187,20 +87,10 @@ snapshots['test_create_duplicate[uvloop] db'] = {
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
-    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
+    'key': 'aodp-abcdefgh',
     'legacy': False,
     'missing': False,
     'paired': False,
-    'parameters': {
-        'end_quality': '20',
-        'max_error_rate': '0.1',
-        'max_indel_rate': '0.03',
-        'max_length': None,
-        'mean_quality': '25',
-        'min_length': '20',
-        'mode': 'pe'
-    },
-    'program': 'skewer-0.2.2',
     'ready': False,
     'sample': {
         'id': 'foo'
@@ -212,20 +102,10 @@ snapshots['test_create_legacy[uvloop] return'] = {
     'files': [
     ],
     'id': '9pfsom1b',
-    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
+    'key': 'aodp-abcdefgh',
     'legacy': True,
     'missing': False,
     'paired': False,
-    'parameters': {
-        'end_quality': '20',
-        'max_error_rate': '0.1',
-        'max_indel_rate': '0.03',
-        'max_length': None,
-        'mean_quality': '25',
-        'min_length': '20',
-        'mode': 'pe'
-    },
-    'program': 'skewer-0.2.2',
     'ready': False,
     'sample': {
         'id': 'foo'
@@ -237,20 +117,10 @@ snapshots['test_create_legacy[uvloop] db'] = {
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
-    'key': '68b60be51a667882d3aaa02a93259dd526e9c990',
+    'key': 'aodp-abcdefgh',
     'legacy': True,
     'missing': False,
     'paired': False,
-    'parameters': {
-        'end_quality': '20',
-        'max_error_rate': '0.1',
-        'max_indel_rate': '0.03',
-        'max_length': None,
-        'mean_quality': '25',
-        'min_length': '20',
-        'mode': 'pe'
-    },
-    'program': 'skewer-0.2.2',
     'ready': False,
     'sample': {
         'id': 'foo'

@@ -71,33 +71,10 @@ async def test_create(paired, snapshot, dbi, static_time, test_random_alphanumer
     Test that the function works with default keyword arguments and when `paired` is either `True` or `False`.
 
     """
-    cache = await virtool.caches.db.create(dbi, "foo", trim_parameters, paired)
+    cache = await virtool.caches.db.create(dbi, "foo", "aodp-abcdefgh", paired)
 
     snapshot.assert_match(cache, "return")
     snapshot.assert_match(await dbi.caches.find_one(), "db")
-
-
-async def test_create_legacy(snapshot, dbi, static_time, test_random_alphanumeric, trim_parameters):
-    """
-    Test that the function works when the `legacy` keyword argument is `True` instead of the default `False`.
-
-    """
-    cache = await virtool.caches.db.create(dbi, "foo", trim_parameters, False, legacy=True)
-
-    snapshot.assert_match(cache, "return")
-    snapshot.assert_match(await dbi.caches.find_one(), "db")
-
-
-async def test_create_program(snapshot, dbi, static_time, test_random_alphanumeric, trim_parameters):
-    """
-    Test that the function works with a non-default trimming program keyword argument
-    (trimmomatic-0.2.3 instead of skewer-0.2.2).
-
-    """
-    cache = await virtool.caches.db.create(dbi, "foo", trim_parameters, False, program="trimmomatic-0.2.3")
-
-    snapshot.assert_match(cache, "return")
-    snapshot.assert_match(await dbi.caches.find_one({"_id": test_random_alphanumeric.last_choice}), "db")
 
 
 async def test_create_duplicate(snapshot, dbi, static_time, test_random_alphanumeric, trim_parameters):
@@ -107,7 +84,7 @@ async def test_create_duplicate(snapshot, dbi, static_time, test_random_alphanum
     """
     await dbi.caches.insert_one({"_id": test_random_alphanumeric.next_choice[:8].lower()})
 
-    cache = await virtool.caches.db.create(dbi, "foo", trim_parameters, False)
+    cache = await virtool.caches.db.create(dbi, "foo", "aodp-abcdefgh", False)
 
     snapshot.assert_match(cache, "return")
     snapshot.assert_match(await dbi.caches.find_one({"_id": test_random_alphanumeric.last_choice}), "db")
