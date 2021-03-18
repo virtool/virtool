@@ -13,7 +13,7 @@ async def test_settings(dbi):
         "enable_api": True,
         "enable_sentry": True,
         "hmm_slug": "virtool/virtool-hmm",
-        "minimum_password_length": 18,
+        "minimum_password_length": 8,
         "sample_all_read": True,
         "sample_all_write": False,
         "sample_group": "none",
