@@ -11,6 +11,10 @@ routes = virtool.http.routes.Routes()
 @routes.get("/api/settings")
 @routes.jobs_api.get("/api/settings")
 async def get(req):
+    """
+    Get a complete document of the application settings.
+
+    """
     settings = await virtool.settings.db.get(req.app["db"])
 
     return json_response(settings)

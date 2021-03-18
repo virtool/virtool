@@ -10,6 +10,14 @@ PROJECTION = {
 
 
 async def ensure(db):
+    """
+    Ensure the settings document is updated and filled with default values.
+
+    :param db: the application database client
+
+    :return: a dictionary with settings data
+
+    """
     existing = await db.settings.find_one({"_id": "settings"}, {"_id": False}) or dict()
     defaults = virtool.settings.schema.get_defaults()
 
@@ -26,6 +34,14 @@ async def ensure(db):
 
 
 async def get(db):
+    """
+    Get the complete document of settings with id `settings`.
+
+    :param db: the application database client
+
+    :return: the settings document or an empty dictionary
+
+    """
     settings = await db.settings.find_one("settings", projection=PROJECTION)
 
     if settings:
@@ -34,7 +50,16 @@ async def get(db):
     return dict()
 
 
-async def update(db, updates):
+async def update(db, updates: dict):
+    """
+    Update settings document with id `settings`.
+
+    :param db: the application database client
+    :param updates: a dictionary with updated data
+
+    :return: the settings document after updating
+
+    """
     return await db.settings.find_one_and_update({"_id": "settings"}, {
         "$set": updates
     })

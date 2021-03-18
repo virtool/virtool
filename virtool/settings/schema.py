@@ -77,4 +77,10 @@ SCHEMA = {
 
 
 def get_defaults():
+    """
+    Create a dictionary with key and default values from `SCHEMA` object.
+
+    :return: a dictionary with key and default values from `SCHEMA` object
+
+    """
     return {key: SCHEMA[key]["default"] for key in SCHEMA}
