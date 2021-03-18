@@ -13,10 +13,7 @@ routes = virtool.http.routes.Routes()
 async def get(req):
     settings = await virtool.settings.db.get(req.app["db"])
 
-    return json_response({
-        **settings,
-        **{key: req.app["settings"].get(key) for key in virtool.settings.db.CONFIG_PROJECTION}
-    })
+    return json_response(settings)
 
 
 @routes.patch("/api/settings", admin=True)
@@ -34,7 +31,4 @@ async def update(req):
 
     req.app["settings"].update(settings)
 
-    return json_response({
-        **settings,
-        **{key: req.app["settings"][key] for key in virtool.settings.db.CONFIG_PROJECTION}
-    })
+    return json_response(settings)

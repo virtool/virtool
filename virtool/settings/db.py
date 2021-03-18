@@ -8,16 +8,6 @@ PROJECTION = {
     "_id": False
 }
 
-CONFIG_PROJECTION = (
-    "data_path",
-    "proc",
-    "mem",
-    "lg_proc",
-    "lg_mem",
-    "sm_proc",
-    "sm_mem"
-)
-
 
 async def ensure(db):
     existing = await db.settings.find_one({"_id": "settings"}, {"_id": False}) or dict()
