@@ -17,6 +17,7 @@ import virtool.indexes.files
 import virtool.indexes.utils
 import virtool.jobs.build_index
 import virtool.jobs.db
+import virtool.pg.utils
 import virtool.references.db
 import virtool.uploads.db
 import virtool.uploads.utils
@@ -319,25 +320,25 @@ async def upload(req):
         file_name
     )
 
-    file_id = index_file["id"]
+    upload_id = index_file["id"]
     path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id / file_name
 
-    if file_id in document.get("files", []):
+    if upload_id in document.get("files", []):
         return conflict("File name already exists")
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, path)
     except asyncio.CancelledError:
-        logger.debug(f"Index file upload aborted: {file_id}")
-        await virtool.indexes.files.delete_index_file(pg, file_id)
+        logger.debug(f"Index file upload aborted: {upload_id}")
+        await virtool.pg.utils.delete_row(pg, upload_id, IndexFile)
 
         return aiohttp.web.Response(status=499)
 
-    index_file = await virtool.uploads.db.finalize(pg, size, file_id, IndexFile)
+    index_file = await virtool.uploads.db.finalize(pg, size, upload_id, IndexFile)
 
     await db.indexes.find_one_and_update({"_id": index_id}, {
         "$push": {
-            "files": file_id
+            "files": upload_id
         }
     })
 

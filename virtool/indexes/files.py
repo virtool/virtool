@@ -32,22 +32,3 @@ async def create_index_file(pg: AsyncEngine, reference_id: str, file_type: str, 
         await session.commit()
 
         return index_file
-
-
-async def delete_index_file(pg: AsyncEngine, file_id: int):
-    """
-    Deletes a row in the `index_files` SQL by its row `id`
-
-    :param pg: PostgreSQL AsyncEngine object
-    :param file_id: Row `id` to delete
-    """
-    async with AsyncSession(pg) as session:
-        index_file = (await session.execute(select(IndexFile).where(IndexFile.id == file_id))).scalar()
-
-        if not index_file:
-            return None
-
-        session.delete(index_file)
-
-        await session.commit()
-
