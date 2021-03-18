@@ -842,10 +842,12 @@ async def test_upload_reads(paired, conflict, compressed, snapshot, spawn_job_cl
 
 @pytest.mark.parametrize("suffix", ["1", "2"])
 @pytest.mark.parametrize("error", [None, "404_sample", "404_reads", "404_file"])
-async def test_download_reads(suffix, error, tmpdir, spawn_job_client, pg):
-    client = await spawn_job_client(authorize=True)
+async def test_download_reads(suffix, error, tmpdir, spawn_client, spawn_job_client, pg):
+    client = await spawn_client(authorize=True)
+    job_client = await spawn_job_client(authorize=True)
 
     client.app["settings"]["data_path"] = str(tmpdir)
+    job_client.app["settings"]["data_path"] = str(tmpdir)
 
     file_name = f"reads_{suffix}.fq.gz"
 
@@ -865,17 +867,17 @@ async def test_download_reads(suffix, error, tmpdir, spawn_job_client, pg):
 
             await session.commit()
 
-
     resp = await client.get(f"/api/samples/foo/reads/{file_name}")
+    job_resp = await job_client.get(f"/api/samples/foo/reads/{file_name}")
 
     expected_path = Path(client.app["settings"]["data_path"]) / "samples" / "foo" / file_name
 
     if error:
-        assert resp.status == 404
+        assert resp.status == job_resp.status == 404
         return
 
-    assert resp.status == 200
-    assert expected_path.read_bytes() == await resp.content.read()
+    assert resp.status == job_resp.status == 200
+    assert expected_path.read_bytes() == await resp.content.read() == await job_resp.content.read()
 
 
 @pytest.mark.parametrize("error", [None, "404_sample", "404_artifact", "404_file"])
