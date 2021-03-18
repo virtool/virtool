@@ -17,6 +17,7 @@ from tests.fixtures.otus import *
 from tests.fixtures.uploads import *
 from tests.fixtures.labels import *
 from tests.fixtures.tasks import *
+from tests.fixtures.settings import *
 
 
 def pytest_addoption(parser):
