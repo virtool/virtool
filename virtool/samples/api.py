@@ -799,9 +799,7 @@ async def upload_reads(req):
     name = req.match_info["name"]
     sample_id = req.match_info["sample_id"]
 
-    possible_reads = ["reads_1.fq.gz", "reads_2.fq.gz"]
-
-    if name not in possible_reads:
+    if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         return bad_request("File name is not an accepted reads file")
 
     reads_path = Path(virtool.samples.utils.join_sample_path(req.app["settings"], sample_id)) / name
@@ -923,9 +921,7 @@ async def upload_reads_cache(req):
     sample_id = req.match_info["sample_id"]
     key = req.match_info["key"]
 
-    possible_reads = ["reads_1.fq.gz", "reads_2.fq.gz"]
-
-    if name not in possible_reads:
+    if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         return bad_request("File name is not an accepted reads file")
 
     cache_path = Path(virtool.caches.utils.join_cache_path(req.app["settings"], key)) / name

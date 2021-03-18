@@ -1,6 +1,6 @@
 import os
 import pathlib
-from typing import Callable, Optional, Tuple, Union
+from typing import Callable, Optional
 
 import aiofiles
 import aiohttp.web
