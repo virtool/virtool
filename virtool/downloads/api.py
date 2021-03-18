@@ -91,39 +91,6 @@ async def download_cache_reads(req):
     return web.FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
 
 
-@routes.get(r"/download/samples/{sample_id}/{prefix}_{suffix}.{extension:(fq|fastq|fq\.gz|fastq\.gz)}")
-async def download_sample_reads(req):
-    db = req.app["db"]
-
-    sample_id = req.match_info["sample_id"]
-    extension = req.match_info["extension"]
-
-    files = await virtool.db.utils.get_one_field(db.samples, "files", sample_id)
-
-    if not files:
-        return virtool.api.response.not_found()
-
-    suffix = req.match_info["suffix"]
-    sample_path = virtool.samples.utils.join_sample_path(req.app["settings"], sample_id)
-
-    if extension == "fastq" or extension == "fq":
-        path = virtool.samples.utils.join_legacy_read_path(sample_path, suffix)
-    else:
-        path = virtool.samples.utils.join_read_path(sample_path, suffix)
-
-    if not os.path.isfile(path):
-        return virtool.api.response.not_found()
-
-    file_stats = virtool.utils.file_stats(path)
-
-    headers = {
-        "Content-Length": file_stats["size"],
-        "Content-Type": "application/gzip"
-    }
-
-    return web.FileResponse(path, chunk_size=1024 * 1024, headers=headers)
-
-
 @routes.get("/download/otus/{otu_id}/isolates/{isolate_id}")
 async def download_isolate(req):
     """
