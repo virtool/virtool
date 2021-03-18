@@ -13,12 +13,32 @@ async def migrate_samples(app: virtool.types.App):
     Recalculate all sample workflow tags and delete unready samples.
 
     :param app: the application object
-
     """
     db = app["db"]
 
     await recalculate_all_workflow_tags(db)
     await virtool.db.utils.delete_unready(db.samples)
+    await add_is_legacy(db)
+
+
+async def add_is_legacy(db):
+    """
+    As `is_legacy` field to samples to make it more obvious that they are legacy samples.
+
+    :param db: the application object
+
+    """
+    await db.samples.update_many({"files.raw": False}, {
+        "$set": {
+            "is_legacy": True
+        }
+    })
+
+    await db.samples.update_many({"files.raw": True}, {
+        "$set": {
+            "is_legacy": False
+        }
+    })
 
 
 async def recalculate_all_workflow_tags(db):

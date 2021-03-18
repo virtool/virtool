@@ -2,7 +2,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 import virtool.db.utils
-import virtool.tasks.task
 import virtool.utils
 from virtool.tasks.models import Task
 
@@ -41,7 +40,7 @@ async def get(pg_engine: AsyncEngine, task_id: int) -> dict:
     return document
 
 
-async def register(pg_engine, task_runner, task_class: virtool.tasks.task.Task, context: dict = None) -> dict:
+async def register(pg_engine, task_runner, task_class, context: dict = None) -> dict:
     """
     Create a new task record and insert it into SQL databse.
 
@@ -74,9 +73,15 @@ async def register(pg_engine, task_runner, task_class: virtool.tasks.task.Task, 
     return document
 
 
-async def update(pg_engine: AsyncEngine, task_id: int,
-                 count: int = None, progress: int = None,
-                 step: str = None, context_update: dict = None, error: str = None) -> dict:
+async def update(
+        pg_engine: AsyncEngine,
+        task_id: int,
+        count: int = None,
+        progress: int = None,
+        step: str = None,
+        context_update: dict = None,
+        error: str = None
+) -> dict:
     """
     Update a task record with given `task_id`.
 

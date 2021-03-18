@@ -1,21 +1,24 @@
-import virtool.analyses.db
-import virtool.uploads.db
-import virtool.hmm.db
-import virtool.software.db
-import virtool.subtractions.db
-import virtool.references.db
+from virtool.analyses.db import StoreNuvsFilesTask
+from virtool.hmm.db import HMMInstallTask
+from virtool.references.db import CloneReferenceTask, CreateIndexJSONTask, DeleteReferenceTask, \
+    ImportReferenceTask, RemoteReferenceTask, UpdateRemoteReferenceTask
+from virtool.samples.db import CompressSamplesTask
+from virtool.software.db import SoftwareInstallTask
+from virtool.subtractions.db import AddSubtractionFilesTask, WriteSubtractionFASTATask
+from virtool.uploads.db import MigrateFilesTask
 
 TASK_CLASSES = {
-    "delete_reference": virtool.references.db.DeleteReferenceTask,
-    "clone_reference": virtool.references.db.CloneReferenceTask,
-    "import_reference": virtool.references.db.ImportReferenceTask,
-    "remote_reference": virtool.references.db.RemoteReferenceTask,
-    "update_remote_reference": virtool.references.db.UpdateRemoteReferenceTask,
-    "update_software": virtool.software.db.SoftwareInstallTask,
-    "install_hmms": virtool.hmm.db.HMMInstallTask,
-    "write_subtraction_fasta": virtool.subtractions.db.WriteSubtractionFASTATask,
-    "create_index_json": virtool.references.db.CreateIndexJSONTask,
-    "add_subtraction_files": virtool.subtractions.db.AddSubtractionFilesTask,
-    "store_nuvs_file_task": virtool.analyses.db.StoreNuvsFilesTask,
-    "migrate_files": virtool.uploads.db.MigrateFilesTask
+    "add_subtraction_files": AddSubtractionFilesTask,
+    "clone_reference": CloneReferenceTask,
+    "compress_samples": CompressSamplesTask,
+    "create_index_json": CreateIndexJSONTask,
+    "delete_reference": DeleteReferenceTask,
+    "import_reference": ImportReferenceTask,
+    "install_hmms": HMMInstallTask,
+    "migrate_files": MigrateFilesTask,
+    "remote_reference": RemoteReferenceTask,
+    "store_nuvs_file_task": StoreNuvsFilesTask,
+    "update_remote_reference": UpdateRemoteReferenceTask,
+    "update_software": SoftwareInstallTask,
+    "write_subtraction_fasta": WriteSubtractionFASTATask
 }

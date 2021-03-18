@@ -32,6 +32,42 @@ snapshots['test_get[uvloop-True-None] 1'] = {
     'ready': True
 }
 
+snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
+    'all_read': True,
+    'all_write': True,
+    'created_at': '2015-10-06T20:00:00Z',
+    'files': [
+        {
+            'id': 1,
+            'name': 'test.fq.gz',
+            'size': 123456
+        }
+    ],
+    'format': 'fastq',
+    'group': 'technician',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'id': '9pfsom1b',
+    'is_legacy': False,
+    'labels': [
+    ],
+    'library_type': 'normal',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'subtraction': {
+        'id': 'apple'
+    },
+    'user': {
+        'id': 'test'
+    }
+}
+
 snapshots['test_get[uvloop-False-None] 1'] = {
     'caches': [
     ],
@@ -54,6 +90,42 @@ snapshots['test_get[uvloop-False-None] 1'] = {
     ],
     'name': 'Test',
     'ready': False
+}
+
+snapshots['TestCreate.test[uvloop-none] 2'] = {
+    '_id': '9pfsom1b',
+    'all_read': True,
+    'all_write': True,
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'files': [
+        {
+            'id': 1,
+            'name': 'test.fq.gz',
+            'size': 123456
+        }
+    ],
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'is_legacy': False,
+    'labels': [
+    ],
+    'library_type': 'normal',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'subtraction': {
+        'id': 'apple'
+    },
+    'user': {
+        'id': 'test'
+    }
 }
 
 snapshots['test_find_analyses[uvloop-None-None] 1'] = {
@@ -567,76 +639,7 @@ snapshots['TestCreate.test[uvloop-none] 1'] = {
     'group_write': True,
     'hold': True,
     'id': '9pfsom1b',
-    'labels': [
-    ],
-    'library_type': 'normal',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'subtraction': {
-        'id': 'apple'
-    },
-    'user': {
-        'id': 'test'
-    }
-}
-
-snapshots['TestCreate.test[uvloop-none] 2'] = {
-    '_id': '9pfsom1b',
-    'all_read': True,
-    'all_write': True,
-    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-        {
-            'id': 1,
-            'name': 'test.fq.gz',
-            'size': 123456
-        }
-    ],
-    'format': 'fastq',
-    'group': 'none',
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'labels': [
-    ],
-    'library_type': 'normal',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'subtraction': {
-        'id': 'apple'
-    },
-    'user': {
-        'id': 'test'
-    }
-}
-
-snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
-    'all_read': True,
-    'all_write': True,
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': [
-        {
-            'id': 1,
-            'name': 'test.fq.gz',
-            'size': 123456
-        }
-    ],
-    'format': 'fastq',
-    'group': 'technician',
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'id': '9pfsom1b',
+    'is_legacy': False,
     'labels': [
     ],
     'library_type': 'normal',
@@ -672,6 +675,7 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 2'] = {
     'group_read': True,
     'group_write': True,
     'hold': True,
+    'is_legacy': False,
     'labels': [
     ],
     'library_type': 'normal',
@@ -707,6 +711,7 @@ snapshots['TestCreate.test[uvloop-force_choice] 1'] = {
     'group_write': True,
     'hold': True,
     'id': '9pfsom1b',
+    'is_legacy': False,
     'labels': [
     ],
     'library_type': 'normal',
@@ -742,6 +747,7 @@ snapshots['TestCreate.test[uvloop-force_choice] 2'] = {
     'group_read': True,
     'group_write': True,
     'hold': True,
+    'is_legacy': False,
     'labels': [
     ],
     'library_type': 'normal',
