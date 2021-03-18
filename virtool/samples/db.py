@@ -1,50 +1,15 @@
 """
 Code for working with samples in the database and filesystem.
 
-Sample schema:
-- _id (str) a sample identifier unique to the instance
-- all_read (bool) true when all instance users can read the sample
-- all_write (bool) true when all instance users can modify or delete the sample
-- created_at (datetime) the creation timestamp
-- files (Array[Object]) objects describing uploaded files
-  - download_url (str) the URL path at which the file can be downloaded
-  - from (Object) describes where the file came from
-     - id (str) unique ID of the file - random string prepended to uploaded file name
-     - name (str) the original name of the uploaded file
-     - size (str) the size of the original file
-     - uploaded_at (datetime) when the upload was initiated
-  - name (str) the file name on disk
-  - raw (str) true if the file is raw data - this is only false for legacy samples that were trimmed on import
-  - size (int) the size of the file in bytes
-  - size (int) the size of the file in bytes
-- group (str) the ID of the owner group
-- group_read (bool) true when the owner group can read the sample
-- group_write (bool) true when the owner group can modify or delete the sample
-- host (str) user-entered host
-- isolate (str) user-entered isolate
-- labels (List[str]) list of label IDs attached to the sample
-- library_type (Allowed["normal", "srna", "amplicon"]) the type of sequencing library
-- local (str) user-entered locale - replicated field from many plant virus Genbank records
-- paired (bool) true when the sample is paired
-- pathoscope (bool) true when at least one pathoscope analysis has been completed for the sample
-- name (str) user-entered name
-- notes (str) user-entered notes
-- nuvs (bool) true when at least one nuvs analysis has been completed for the sample
-- quality (JSON) quality data imported from FastQC
-- ready (bool) true when the sample creation workflow is complete
-- subtraction (str) the default subtraction ID
-- user (dict) the creating user
-  - id (str) the user ID
-
 """
 import asyncio
 import logging
 import os
+from typing import Any, Dict, List, Optional
 
-import aiohttp.web
-import pymongo.results
+from pymongo.results import DeleteResult
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.db.utils
 import virtool.errors
@@ -53,6 +18,10 @@ import virtool.samples.utils
 import virtool.samples.utils
 import virtool.utils
 from virtool.labels.models import Label
+from virtool.samples.utils import join_legacy_read_paths
+from virtool.tasks.task import Task
+from virtool.types import App
+from virtool.utils import compress_file, file_stats
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +44,7 @@ PROJECTION = [
     "_id",
     "created_at",
     "labels",
+    "is_legacy",
     "library_type",
     "name",
     "pathoscope",
@@ -101,9 +71,8 @@ RIGHTS_PROJECTION = {
 
 async def attach_labels(pg: AsyncEngine, document: dict) -> dict:
     """
-    Finds label documents for each label ID given in a request body, then converts each document into a dictionary to
-    be placed in the list of dictionaries in the updated sample document
-
+    Finds label documents for each label ID given in a request body, then converts each document
+    into a dictionary to be placed in the list of dictionaries in the updated sample document.
 
     :param pg: PostgreSQL database connection object
     :param document: sample document to be used for creating or editing a sample
@@ -238,16 +207,12 @@ def compose_analysis_query(url_query):
     return pathoscope or nuvs or None
 
 
-async def get_sample_owner(db, sample_id: str):
+async def get_sample_owner(db, sample_id: str) -> Optional[str]:
     """
     A Shortcut function for getting the owner user id of a sample given its ``sample_id``.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param sample_id: the id of the sample to get the owner for
-    :type sample_id: str
-
     :return: the id of the owner user
 
     """
@@ -259,7 +224,7 @@ async def get_sample_owner(db, sample_id: str):
     return None
 
 
-async def periodically_prune_old_files(app: aiohttp.web.Application):
+async def periodically_prune_old_files(app: App):
     """
     Removes old, not-in-use sample files when the sample flag `prune` is set to `True`.
 
@@ -350,7 +315,7 @@ async def refresh_replacements(db, sample_id: str) -> list:
     return document["files"]
 
 
-async def remove_samples(db, settings: dict, id_list: list) -> pymongo.results.DeleteResult:
+async def remove_samples(db, settings: Dict[str, Any], id_list: List[str]) -> DeleteResult:
     """
     Complete removes the samples identified by the document ids in ``id_list``. In order, it:
 
@@ -359,16 +324,9 @@ async def remove_samples(db, settings: dict, id_list: list) -> pymongo.results.D
     - removes the sample directory from the file system
 
     :param db: a Motor client
-    :type db: :class:`.motor.motor_asyncio.AsyncIOMotorClient``
-
     :param settings: the application settings object
-    :type settings: :class:`virtool.app_settings.Settings`
-
     :param id_list: a list sample ids to remove
-    :type id_list: list
-
     :return: the result from the samples collection remove operation
-    :rtype: Coroutine[dict]
 
     """
     if not isinstance(id_list, list):
@@ -403,3 +361,136 @@ async def validate_force_choice_group(db, data):
         return "Group value required for sample creation"
 
     return None
+
+
+def check_is_legacy(sample: Dict[str, Any]) -> bool:
+    """
+    Check if a sample has legacy read files.
+
+    :param sample: the sample document
+    :return: legacy boolean
+    """
+    files = sample["files"]
+
+    return (
+        # All files have the `raw` flag set false indicating they are legacy data.
+        all(file.get("raw", False) is False for file in files) and
+
+        # File naming matches expectations.
+        files[0]["name"] == "reads_1.fastq" and
+        (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
+    )
+
+
+async def update_is_compressed(db, sample: Dict[str, Any]):
+    """
+    Update the ``is_compressed`` field for the passed ``sample`` in the database if all of its
+    files are compressed.
+
+    :param db: the application database
+    :param sample: the sample document
+
+    """
+    files = sample["files"]
+
+    names = [file["name"] for file in files]
+
+    is_compressed = (
+        names == ["reads_1.fq.gz"] or
+        names == ["reads_1.fq.gz", "reads_2.fq.gz"]
+    )
+
+    if is_compressed:
+        await db.samples.update_one({"_id": sample["_id"]}, {
+            "$set": {
+                "is_compressed": True
+            }
+        })
+
+
+async def compress_sample_reads(app: App, sample: Dict[str, Any]):
+    """
+    Compress the reads for one legacy samples.
+
+    :param app: the application object
+    :param sample: the sample document
+
+    """
+    await update_is_compressed(app["db"], sample)
+
+    if not check_is_legacy(sample):
+        return
+
+    paths = join_legacy_read_paths(app["settings"], sample)
+
+    data_path = app["settings"]["data_path"]
+    sample_id = sample["_id"]
+
+    files = list()
+
+    for i, path in enumerate(paths):
+        target_filename = "reads_1.fq.gz" if "reads_1.fastq" in path else "reads_2.fq.gz"
+        target_path = os.path.join(data_path, "samples", sample_id, target_filename)
+
+        await app["run_in_thread"](compress_file, path, target_path, 1)
+
+        stats = await app["run_in_thread"](file_stats, target_path)
+
+        assert os.path.isfile(target_path)
+
+        files.append({
+            "name": target_filename,
+            "download_url": f"/download/samples/{sample_id}/{target_filename}",
+            "size": stats["size"],
+            "raw": False,
+            "from": sample["files"][i]["from"]
+        })
+
+    await app["db"].samples.update_one({"_id": sample_id}, {
+        "$set": {
+            "files": files
+        }
+    })
+
+    for path in paths:
+        await app["run_in_thread"](os.remove, path)
+
+
+class CompressSamplesTask(Task):
+    """
+    Compress the legacy FASTQ file for all uncompressed samples.
+
+    """
+    task_type = "compress_samples"
+
+    def __init__(self, app, process_id):
+        super().__init__(app, process_id)
+
+        self.steps = [
+            self.compress_samples
+        ]
+
+    async def compress_samples(self):
+        query = {
+            "is_legacy": True,
+            "is_compressed": {
+                "$exists": False
+            }
+        }
+
+        count = await self.db.samples.count_documents(query)
+
+        tracker = await self.get_tracker(count)
+
+        while True:
+            sample = await self.db.samples.find_one(query)
+
+            if sample is None:
+                break
+
+            await compress_sample_reads(self.app, sample)
+            await tracker.add(1)
+
+            logger.info(
+                f"Compressed legacy sample {sample['_id']} ({tracker.progress}%)"
+            )

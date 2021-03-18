@@ -78,3 +78,26 @@ snapshots['test_update_pairedness[uvloop] 1'] = [
         'paired': False
     }
 ]
+
+snapshots['test_add_is_legacy[uvloop] 1'] = [
+    {
+        '_id': 'foo',
+        'files': [
+            {
+                'id': 1,
+                'raw': False
+            }
+        ],
+        'is_legacy': True
+    },
+    {
+        '_id': 'bar',
+        'files': [
+            {
+                'id': 1,
+                'raw': True
+            }
+        ],
+        'is_legacy': False
+    }
+]

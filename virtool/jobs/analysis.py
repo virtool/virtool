@@ -155,12 +155,11 @@ async def prepare_reads(job: virtool.jobs.job.Job):
         return await fetch_cache(job, cache)
 
     sample = await job.db.samples.find_one(job.params["sample_id"])
-    paths = virtool.samples.utils.join_legacy_read_paths(job.settings, sample)
 
-    if paths:
+    if sample["is_legacy"]:
         logger.debug("Found legacy sample")
         logger.debug("Fetching legacy sample data")
-        return await fetch_legacy(job, paths)
+        return await fetch_legacy(job)
 
     logger.debug("Creating new cache for sample")
     return await create_cache(job, parameters)
@@ -232,7 +231,7 @@ async def fetch_cache(job, cache: dict):
     await set_cache_id(job, cache["id"])
 
 
-async def fetch_legacy(job: virtool.jobs.job.Job, legacy_read_paths: list):
+async def fetch_legacy(job: virtool.jobs.job.Job):
     """
     Copy the read data from a legacy sample and to the analysis job read paths.
 
@@ -242,7 +241,7 @@ async def fetch_legacy(job: virtool.jobs.job.Job, legacy_read_paths: list):
     """
     coros = list()
 
-    for path in legacy_read_paths:
+    for path in job.params["read_paths"]:
         local_path = os.path.join(
             job.params["reads_path"],
             pathlib.Path(path).name

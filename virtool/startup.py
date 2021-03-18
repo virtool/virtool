@@ -22,7 +22,7 @@ import virtool.dispatcher
 import virtool.hmm.db
 import virtool.jobs.interface
 import virtool.jobs.runner
-import virtool.pg
+import virtool.pg.utils
 import virtool.redis
 import virtool.references.db
 import virtool.routes
@@ -41,6 +41,7 @@ from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.client import RedisDispatcherClient
 from virtool.dispatcher.listener import RedisDispatcherListener
+from virtool.samples.db import CompressSamplesTask
 from virtool.types import App
 from virtool.tasks.runner import TaskRunner
 from virtool.analyses.db import StoreNuvsFilesTask
@@ -370,12 +371,12 @@ async def init_tasks(app: aiohttp.web.Application):
             context={"subtraction": subtraction})
 
     logger.info("Checking index JSON files")
+
     await virtool.tasks.pg.register(pg, app["task_runner"], CreateIndexJSONTask)
-
     await virtool.tasks.pg.register(pg, app["task_runner"], DeleteReferenceTask, context={"user_id": "virtool"})
-
     await virtool.tasks.pg.register(pg, app["task_runner"], AddSubtractionFilesTask)
-
     await virtool.tasks.pg.register(pg, app["task_runner"], StoreNuvsFilesTask)
+    await virtool.tasks.pg.register(pg, app["task_runner"], StoreNuvsFilesTask)
+    await virtool.tasks.pg.register(pg, app["task_runner"], CompressSamplesTask)
 
     await scheduler.spawn(virtool.tasks.utils.spawn_periodically(app, MigrateFilesTask, 3600))
