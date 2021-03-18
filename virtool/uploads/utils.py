@@ -1,6 +1,6 @@
 import os
 import pathlib
-from typing import Optional, Tuple, Union
+from typing import Callable, Optional, Tuple, Union
 
 import aiofiles
 import aiohttp.web
@@ -31,25 +31,19 @@ def naive_validator(req) -> Validator.errors:
 
 
 async def naive_writer(
-    req: aiohttp.web.Request, path: pathlib.Path, compressed: bool = False
-) -> Optional[Union[int, Tuple[int, str]]]:
+        req: aiohttp.web.Request, path: pathlib.Path, compressed: Optional[Callable] = None) -> Optional[int]:
     """
     Write a new file from a HTTP multipart request.
 
     :param req: aiohttp request object
-    :param path: Either a path to a folder, or a complete path that includes a filename.
-    :param compressed: Whether or not to enforce gzip compression, defaults to False
+    :param path: A complete path (including filename) to where the file should be written
+    :param compressed: An optional callable to check for gzip compression
     :return: size of the new file in bytes
     """
     reader = await req.multipart()
     file = await reader.next()
-    path_is_file = True
 
     size = 0
-
-    if not path.suffix:
-        path = path / file.filename
-        path_is_file = False
 
     try:
         await req.app["run_in_thread"](os.makedirs, path.parent)
@@ -63,13 +57,10 @@ async def naive_writer(
                 break
 
             if size == 0 and compressed:
-                if not is_gzip_compressed(chunk):
-                    return None, None
+                if not compressed(chunk):
+                    return None
 
             size += len(chunk)
             await handle.write(chunk)
-
-    if not path_is_file:
-        return size, path.name
 
     return size
