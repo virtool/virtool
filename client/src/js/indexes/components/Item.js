@@ -40,13 +40,13 @@ const IndexItemTop = styled.h3`
 
     > div {
         flex: 1 0 auto;
-        max-width: 70px;
     }
 `;
 
 const StyledIndexItemIcon = styled.div`
     margin-left: auto;
     text-align: right;
+    max-width: 80px;
 `;
 
 export const IndexItemIcon = ({ activeId, id, ready }) => {
