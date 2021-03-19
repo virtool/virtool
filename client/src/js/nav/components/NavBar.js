@@ -80,7 +80,11 @@ export class Bar extends React.Component {
                         <Icon name="comments" />
                     </NavBarItem>
 
-                    <NavBarItem target="_blank" to="//virtool.ca/docs/manual" rel="noopener noreferrer">
+                    <NavBarItem
+                        target="_blank"
+                        to="//virtool.ca/docs/manual/start/installation/"
+                        rel="noopener noreferrer"
+                    >
                         <Icon name="book" />
                     </NavBarItem>
 
