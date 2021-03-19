@@ -42,8 +42,6 @@ export const getAvailableSegmentNames = createSelector([getSchema, getSequences]
     return difference(segmentNames, usedSegments);
 });
 
-export const getOTUDetailId = state => get(state, "otus.detail.id");
-
 export const getActiveIsolateId = state => state.otus.activeIsolateId;
 
 export const getIsolates = state => get(state, "otus.detail.isolates");

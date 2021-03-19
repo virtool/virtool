@@ -123,15 +123,6 @@ export const formatIsolateName = isolate => {
 };
 
 /**
- * Get the find term from the current browser URL or a passed URL object.
- *
- * @func
- * @param url {URL} an optional url to get a find term from
- * @returns {string | undefined}
- */
-export const getFindTerm = (url = new window.URL(window.location)) => url.searchParams.get("find") || "";
-
-/**
  * Transforms a plain taskName (eg. pathoscope_bowtie) to a human-readable name (eg. PathoscopeBowtie).
  *
  * @func
