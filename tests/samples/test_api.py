@@ -840,6 +840,34 @@ async def test_upload_reads(paired, conflict, compressed, snapshot, spawn_job_cl
         assert await resp_is.bad_request(resp, "File is not compressed")
 
 
+@pytest.mark.parametrize("error", [None, "404"])
+async def test_get_cache(error, snapshot, spawn_job_client, resp_is, static_time):
+    client = await spawn_job_client(authorize=True)
+
+    cache = {
+        "_id": "bar",
+        "program": "skewer-0.2.2",
+        "key": "abc123",
+        "sample": {
+            "id": "foo"
+        }
+    }
+
+    if error == "404":
+        cache["key"] = "test"
+
+    await client.db.caches.insert_one(cache)
+
+    resp = await client.get("api/samples/foo/caches/abc123")
+
+    if error == "404":
+        assert await resp_is.not_found(resp)
+        return
+
+    assert resp.status == 200
+
+    snapshot.assert_match(await resp.json())
+
 @pytest.mark.parametrize("suffix", ["1", "2"])
 @pytest.mark.parametrize("error", [None, "404_sample", "404_reads", "404_file"])
 async def test_download_reads(suffix, error, tmpdir, spawn_client, spawn_job_client, pg):

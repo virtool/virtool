@@ -197,6 +197,28 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
+@routes.jobs_api.get("/api/samples/{sample_id}/caches/{cache_key}")
+async def get_cache(req):
+    """
+    Get a cache document by key using the Jobs API.
+
+    """
+    db = req.app["db"]
+
+    sample_id = req.match_info["sample_id"]
+    cache_key = req.match_info["cache_key"]
+
+    document = await db.caches.find_one({
+        "key": cache_key,
+        "sample.id": sample_id
+    })
+
+    if document is None:
+        return not_found()
+
+    return json_response(virtool.utils.base_processor(document))
+
+
 @routes.post("/api/samples", permission="create_sample")
 @schema({
     "name": {

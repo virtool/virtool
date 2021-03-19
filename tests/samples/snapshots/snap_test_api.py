@@ -788,6 +788,17 @@ snapshots['test_upload_reads[uvloop-True-False-False] 1'] = {
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
+
+snapshots['test_get_cache[uvloop-None] 1'] = {
+    'id': 'bar',
+    'key': 'abc123',
+    'program': 'skewer-0.2.2',
+    'sample': {
+        'id': 'foo'
+    }
+}
+
+
 snapshots['test_create_cache[uvloop-key] 1'] = {
     'created_at': '2015-10-06T20:00:00Z',
     'files': [
