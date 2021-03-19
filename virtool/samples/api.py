@@ -36,6 +36,7 @@ from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
 from virtool.samples.models import ArtifactType, SampleArtifact, SampleArtifactCache
 from virtool.samples.utils import bad_labels_response, check_labels
+from virtool.uploads.utils import is_gzip_compressed
 
 logger = logging.getLogger("samples")
 
@@ -787,7 +788,7 @@ async def upload_artifact(req):
     return json_response(artifact, status=201, headers=headers)
 
 
-@routes.jobs_api.post("/api/samples/{sample_id}/reads")
+@routes.jobs_api.put("/api/samples/{sample_id}/reads/{name}")
 async def upload_reads(req):
     """
     Upload sample reads using the Jobs API.
@@ -795,38 +796,31 @@ async def upload_reads(req):
     """
     db = req.app["db"]
     pg = req.app["pg"]
+    name = req.match_info["name"]
     sample_id = req.match_info["sample_id"]
 
-    reads_file_path = Path(virtool.samples.utils.join_sample_path(req.app["settings"], sample_id))
+    if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
+        return bad_request("File name is not an accepted reads file")
+
+    reads_path = Path(virtool.samples.utils.join_sample_path(req.app["settings"], sample_id)) / name
 
     if not await db.samples.find_one(sample_id):
         return not_found()
 
     existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id)
 
-    if existing_reads == ["reads_1.fq.gz", "reads_2.fq.gz"]:
-        return conflict("Sample is already associated with two reads files")
+    if name in existing_reads:
+        return conflict("Reads file is already associated with this sample")
 
     try:
-        size, name_on_disk = await virtool.uploads.utils.naive_writer(req, reads_file_path, compressed=True)
+        size = await virtool.uploads.utils.naive_writer(req, reads_path, is_gzip_compressed)
+    except OSError:
+        return bad_request("File is not compressed")
     except asyncio.CancelledError:
         logger.debug(f"Reads file upload aborted for {sample_id}")
         return aiohttp.web.Response(status=499)
 
-    if size is None:
-        return bad_request("File is not compressed")
-
-    if "1" in name_on_disk:
-        name = "reads_1.fq.gz"
-    elif "2" in name_on_disk:
-        name = "reads_2.fq.gz"
-    else:
-        return bad_request("File name is not an accepted reads file")
-
-    if name in existing_reads:
-        return conflict("Reads file is already associated with this sample")
-
-    reads = await virtool.samples.files.create_reads_file(pg, size, name, name_on_disk, sample_id)
+    reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id)
 
     headers = {
         "Location": f"/api/samples/{sample_id}/reads/{reads['name_on_disk']}"
@@ -914,7 +908,7 @@ async def upload_artifacts_cache(req):
     return json_response(artifact, status=201, headers=headers)
 
 
-@routes.jobs_api.post("/api/samples/{sample_id}/caches/{key}/reads")
+@routes.jobs_api.put("/api/samples/{sample_id}/caches/{key}/reads/{name}")
 async def upload_reads_cache(req):
     """
     Upload reads files to cache using the Jobs API.
@@ -922,39 +916,32 @@ async def upload_reads_cache(req):
     """
     db = req.app["db"]
     pg = req.app["pg"]
+    name = req.match_info["name"]
     sample_id = req.match_info["sample_id"]
     key = req.match_info["key"]
 
-    cache_path = Path(virtool.caches.utils.join_cache_path(req.app["settings"], key))
+    if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
+        return bad_request("File name is not an accepted reads file")
+
+    cache_path = Path(virtool.caches.utils.join_cache_path(req.app["settings"], key)) / name
 
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
         return not_found("Cache doesn't exist with given key")
 
     existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id, cache=True)
 
-    if existing_reads == ["reads_1.fq.gz", "reads_2.fq.gz"]:
-        return conflict("Sample is already associated with two reads files")
+    if name in existing_reads:
+        return conflict("Reads file is already associated with this sample")
 
     try:
-        size, name_on_disk = await virtool.uploads.utils.naive_writer(req, cache_path, compressed=True)
+        size = await virtool.uploads.utils.naive_writer(req, cache_path, is_gzip_compressed)
+    except OSError:
+        return bad_request("File is not compressed")
     except asyncio.CancelledError:
         logger.debug(f"Reads cache file upload aborted for {key}")
         return aiohttp.web.Response(status=499)
 
-    if size is None:
-        return bad_request("File is not compressed")
-
-    if "1" in name_on_disk:
-        name = "reads_1.fq.gz"
-    elif "2" in name_on_disk:
-        name = "reads_2.fq.gz"
-    else:
-        return bad_request("File name is not an accepted reads file")
-
-    if name in existing_reads:
-        return conflict("Reads file is already associated with this sample")
-
-    reads = await virtool.samples.files.create_reads_file(pg, size, name, name_on_disk, sample_id)
+    reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id)
 
     headers = {
         "Location": f"/api/samples/{sample_id}/caches/{key}/reads/{reads['id']}"

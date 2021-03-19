@@ -1,6 +1,6 @@
 import os
 import pathlib
-from typing import Optional, Tuple, Union
+from typing import Callable, Optional
 
 import aiofiles
 import aiohttp.web
@@ -16,7 +16,8 @@ def is_gzip_compressed(chunk: bytes) -> bool:
     :param chunk: First byte chunk from a file being uploaded
     :return: A boolean indicating whether the file is gzip compressed or not
     """
-    return chunk[:2] == b"\x1f\x8b"
+    if not chunk[:2] == b"\x1f\x8b":
+        raise OSError("Not a gzipped file")
 
 
 def naive_validator(req) -> Validator.errors:
@@ -31,25 +32,19 @@ def naive_validator(req) -> Validator.errors:
 
 
 async def naive_writer(
-    req: aiohttp.web.Request, path: pathlib.Path, compressed: bool = False
-) -> Optional[Union[int, Tuple[int, str]]]:
+        req: aiohttp.web.Request, path: pathlib.Path, on_first_chunk: Optional[Callable] = None) -> Optional[int]:
     """
     Write a new file from a HTTP multipart request.
 
     :param req: aiohttp request object
-    :param path: Either a path to a folder, or a complete path that includes a filename.
-    :param compressed: Whether or not to enforce gzip compression, defaults to False
+    :param path: A complete path (including filename) to where the file should be written
+    :param compressed: An optional callable to check for gzip compression
     :return: size of the new file in bytes
     """
     reader = await req.multipart()
     file = await reader.next()
-    path_is_file = True
 
     size = 0
-
-    if not path.suffix:
-        path = path / file.filename
-        path_is_file = False
 
     try:
         await req.app["run_in_thread"](os.makedirs, path.parent)
@@ -62,14 +57,10 @@ async def naive_writer(
             if not chunk:
                 break
 
-            if size == 0 and compressed:
-                if not is_gzip_compressed(chunk):
-                    return None, None
+            if size == 0 and on_first_chunk:
+                on_first_chunk(chunk)
 
             size += len(chunk)
             await handle.write(chunk)
-
-    if not path_is_file:
-        return size, path.name
 
     return size

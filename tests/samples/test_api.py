@@ -813,17 +813,17 @@ async def test_upload_reads(paired, conflict, compressed, snapshot, spawn_job_cl
         "_id": "test",
     })
 
-    resp = await client.post("/api/samples/test/reads", data=data)
+    resp = await client.put("/api/samples/test/reads/reads_1.fq.gz", data=data)
 
     if compressed and paired:
         data["file"] = open(path / "reads_2.fq.gz", "rb")
-        resp_2 = await client.post("/api/samples/test/reads", data=data)
+        resp_2 = await client.put("/api/samples/test/reads/reads_2.fq.gz", data=data)
 
         if conflict:
             data["file"] = open(path / "reads_2.fq.gz", "rb")
-            resp_3 = await client.post("/api/samples/test/reads", data=data)
+            resp_3 = await client.put("/api/samples/test/reads/reads_2.fq.gz", data=data)
 
-            assert await resp_is.conflict(resp_3, "Sample is already associated with two reads files")
+            assert await resp_is.conflict(resp_3, "Reads file is already associated with this sample")
             return
 
     if compressed:
@@ -1013,13 +1013,13 @@ async def test_upload_reads_cache(paired, snapshot, static_time, spawn_job_clien
         }
     })
 
-    resp = await client.post("/api/samples/test/caches/aodp-abcdefgh/reads", data=data)
+    resp = await client.put("/api/samples/test/caches/aodp-abcdefgh/reads/reads_1.fq.gz", data=data)
 
     assert resp.status == 201
 
     if paired:
         data["file"] = open(path / "reads_2.fq.gz", "rb")
-        resp_2 = await client.post("/api/samples/test/caches/aodp-abcdefgh/reads", data=data)
+        resp_2 = await client.put("/api/samples/test/caches/aodp-abcdefgh/reads/reads_2.fq.gz", data=data)
 
         assert resp.status, resp_2.status == 201
         snapshot.assert_match(await resp_2.json())
