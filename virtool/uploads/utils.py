@@ -16,7 +16,8 @@ def is_gzip_compressed(chunk: bytes) -> bool:
     :param chunk: First byte chunk from a file being uploaded
     :return: A boolean indicating whether the file is gzip compressed or not
     """
-    return chunk[:2] == b"\x1f\x8b"
+    if not chunk[:2] == b"\x1f\x8b":
+        raise OSError("Not a gzipped file")
 
 
 def naive_validator(req) -> Validator.errors:
@@ -31,7 +32,7 @@ def naive_validator(req) -> Validator.errors:
 
 
 async def naive_writer(
-        req: aiohttp.web.Request, path: pathlib.Path, compressed: Optional[Callable] = None) -> Optional[int]:
+        req: aiohttp.web.Request, path: pathlib.Path, on_first_chunk: Optional[Callable] = None) -> Optional[int]:
     """
     Write a new file from a HTTP multipart request.
 
@@ -56,9 +57,8 @@ async def naive_writer(
             if not chunk:
                 break
 
-            if size == 0 and compressed:
-                if not compressed(chunk):
-                    return None
+            if size == 0 and on_first_chunk:
+                on_first_chunk(chunk)
 
             size += len(chunk)
             await handle.write(chunk)

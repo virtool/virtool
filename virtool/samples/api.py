@@ -814,12 +814,11 @@ async def upload_reads(req):
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, reads_path, is_gzip_compressed)
+    except OSError:
+        return bad_request("File is not compressed")
     except asyncio.CancelledError:
         logger.debug(f"Reads file upload aborted for {sample_id}")
         return aiohttp.web.Response(status=499)
-
-    if size is None:
-        return bad_request("File is not compressed")
 
     reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id)
 
@@ -936,12 +935,11 @@ async def upload_reads_cache(req):
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, cache_path, is_gzip_compressed)
+    except OSError:
+        return bad_request("File is not compressed")
     except asyncio.CancelledError:
         logger.debug(f"Reads cache file upload aborted for {key}")
         return aiohttp.web.Response(status=499)
-
-    if size is None:
-        return bad_request("File is not compressed")
 
     reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id)
 
