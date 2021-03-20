@@ -87,6 +87,12 @@ async def update(
 
     :param pg: an AsyncEngine object
     :param task_id: ID of the task
+    :param count: a counter that can be used to calculate progress
+    :param progress: task progress for the current step
+    :param step: the step of the current task
+    :param context_update: a dict containing data to be updated for context
+    :param error: the error for the current task
+
     :return: the task record
 
     """
