@@ -7,7 +7,6 @@ import virtool.api.utils
 import virtool.history.db
 import virtool.indexes.db
 import virtool.otus.db
-import virtool.tasks.db
 import virtool.tasks.pg
 import virtool.references.db
 import virtool.users.db
@@ -21,7 +20,6 @@ import virtool.otus.db
 import virtool.otus.utils
 import virtool.references.db
 import virtool.references.utils
-import virtool.tasks.db
 import virtool.users.db
 import virtool.utils
 import virtool.validators

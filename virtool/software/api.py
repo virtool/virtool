@@ -4,7 +4,6 @@ import virtool.db.utils
 import virtool.github
 import virtool.hmm.db
 import virtool.http.routes
-import virtool.tasks.db
 import virtool.tasks.pg
 import virtool.software.db
 import virtool.software.utils

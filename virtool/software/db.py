@@ -16,7 +16,6 @@ import virtool.http.proxy
 import virtool.http.utils
 import virtool.software.utils
 import virtool.software.utils
-import virtool.tasks.db
 import virtool.tasks.task
 import virtool.utils
 

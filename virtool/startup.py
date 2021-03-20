@@ -31,7 +31,6 @@ import virtool.settings.db
 import virtool.software.db
 import virtool.subtractions.db
 import virtool.subtractions.utils
-import virtool.tasks.db
 import virtool.tasks.pg
 import virtool.tasks.utils
 import virtool.utils

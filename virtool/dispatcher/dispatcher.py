@@ -18,7 +18,6 @@ import virtool.otus.db
 import virtool.references.db
 import virtool.samples.db
 import virtool.subtractions.db
-import virtool.tasks.db
 import virtool.users.db
 from virtool.db.core import DB
 from virtool.dispatcher.change import Change
