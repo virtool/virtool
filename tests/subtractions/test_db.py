@@ -3,7 +3,7 @@ import os
 import pytest
 
 import virtool.subtractions.db
-import virtool.tasks.db
+
 from virtool.tasks.models import Task
 
 

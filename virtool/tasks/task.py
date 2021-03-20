@@ -4,7 +4,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.db.utils
-import virtool.tasks.db
 import virtool.tasks.pg
 import virtool.utils
 
