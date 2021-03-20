@@ -1,5 +1,7 @@
 import logging
 
+from typing import Any, Dict
+
 import virtool.settings.schema
 
 logger = logging.getLogger(__name__)
@@ -9,7 +11,7 @@ PROJECTION = {
 }
 
 
-async def ensure(db):
+async def ensure(db) -> Dict[str, Any]:
     """
     Ensure the settings document is updated and filled with default values.
 
@@ -33,7 +35,7 @@ async def ensure(db):
     return ensure_update
 
 
-async def get(db):
+async def get(db) -> Dict[str, Any]:
     """
     Get the complete document of settings with id `settings`.
 
@@ -50,7 +52,7 @@ async def get(db):
     return dict()
 
 
-async def update(db, updates: dict):
+async def update(db, updates: dict) -> Dict[str, Any]:
     """
     Update settings document with id `settings`.
 
