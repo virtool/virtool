@@ -21,7 +21,6 @@ import virtool.otus.utils
 import virtool.references.db
 import virtool.references.utils
 import virtool.pg.utils
-import virtool.tasks.db
 import virtool.users.db
 import virtool.utils
 import virtool.validators
