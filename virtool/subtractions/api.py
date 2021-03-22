@@ -3,11 +3,11 @@ import logging
 from pathlib import Path
 
 import aiohttp.web
-
 import virtool.api.utils
 import virtool.db.utils
 import virtool.http.routes
 import virtool.jobs.db
+import virtool.pg.utils
 import virtool.samples.utils
 import virtool.subtractions.db
 import virtool.subtractions.files
@@ -16,11 +16,13 @@ import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
 import virtool.validators
-from virtool.api.response import bad_request, conflict, invalid_query, json_response, no_content, not_found
+from virtool.api.response import (bad_request, conflict, invalid_query,
+                                  json_response, no_content, not_found)
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
 from virtool.subtractions.models import SubtractionFile
 from virtool.subtractions.utils import FILES
+from virtool.uploads.models import Upload
 
 logger = logging.getLogger("subtractions")
 
@@ -119,11 +121,12 @@ async def create(req):
 
     """
     db = req.app["db"]
+    pg = req.app["pg"]
     data = req["data"]
 
     upload_id = data["upload_id"]
 
-    file = await db.files.find_one(upload_id, ["name"])
+    file = await virtool.pg.utils.get_row(pg, upload_id, Upload)
 
     if file is None:
         return bad_request("File does not exist")
@@ -142,7 +145,7 @@ async def create(req):
         "is_host": True,
         "file": {
             "id": upload_id,
-            "name": file["name"]
+            "name": file.to_dict().get("name")
         },
         "user": {
             "id": user_id
