@@ -64,6 +64,7 @@ from typing import List, Union
 import aiohttp
 import pymongo
 import semver
+from sqlalchemy.ext.asyncio.engine import AsyncEngine
 
 import virtool.api
 import virtool.api.json
@@ -1280,11 +1281,12 @@ async def create_document(
     return document
 
 
-async def create_import(pg, settings: dict, name: str, description: str, import_from: str, user_id: str) -> dict:
+async def create_import(db, pg: AsyncEngine, settings: dict, name: str, description: str, import_from: str, user_id: str) -> dict:
     """
     Import a previously exported Virtool reference.
 
     :param db: the application database client
+    :param pg: PostgreSQL database object
     :param settings: the application settings object
     :param name: the name for the new reference
     :param description: a description for the new reference
