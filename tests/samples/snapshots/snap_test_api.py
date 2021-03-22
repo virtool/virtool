@@ -876,3 +876,18 @@ snapshots['TestCreate.test[uvloop-force_choice] 2'] = {
         'id': 'test'
     }
 }
+
+snapshots['TestCreateCache.test[uvloop-key] 1'] = {
+    'created_at': '2015-10-06T20:00:00Z',
+    'files': [
+    ],
+    'id': 'a1b2c3d4',
+    'key': 'aodp-abcdefgh',
+    'legacy': False,
+    'missing': False,
+    'paired': False,
+    'ready': False,
+    'sample': {
+        'id': 'test'
+    }
+}

@@ -4,6 +4,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.db.core
+import virtool.db.mongo
 
 
 class MockDeleteResult:
@@ -23,11 +24,13 @@ def test_db_name(worker_id):
 
 
 @pytest.fixture
-def test_motor(test_db_connection_string, test_db_name, loop, request):
+async def test_motor(test_db_connection_string, test_db_name, loop, request):
     client = motor.motor_asyncio.AsyncIOMotorClient(test_db_connection_string)
-    loop.run_until_complete(client.drop_database(test_db_name))
-    yield client[test_db_name]
-    loop.run_until_complete(client.drop_database(test_db_name))
+    await client.drop_database(test_db_name)
+    db = client[test_db_name]
+    await virtool.db.mongo.init_check_db(db)
+    yield db
+    await client.drop_database(test_db_name)
 
 
 @pytest.fixture
