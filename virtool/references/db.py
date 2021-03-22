@@ -1306,7 +1306,7 @@ async def create_import(pg, settings: dict, name: str, description: str, import_
         user_id=user_id
     )
 
-    upload = await virtool.pg.utils.get_row(pg, import_from, Upload, filter="name_on_disk")
+    upload = await virtool.pg.utils.get_row(pg, import_from, Upload, filter_="name_on_disk")
 
     document["imported_from"] = upload.to_dict()
 
