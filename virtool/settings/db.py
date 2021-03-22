@@ -1,5 +1,7 @@
 import logging
 
+from typing import Any, Dict
+
 import virtool.settings.schema
 
 logger = logging.getLogger(__name__)
@@ -8,18 +10,16 @@ PROJECTION = {
     "_id": False
 }
 
-CONFIG_PROJECTION = (
-    "data_path",
-    "proc",
-    "mem",
-    "lg_proc",
-    "lg_mem",
-    "sm_proc",
-    "sm_mem"
-)
 
+async def ensure(db) -> Dict[str, Any]:
+    """
+    Ensure the settings document is updated and filled with default values.
 
-async def ensure(db):
+    :param db: the application database client
+
+    :return: a dictionary with settings data
+
+    """
     existing = await db.settings.find_one({"_id": "settings"}, {"_id": False}) or dict()
     defaults = virtool.settings.schema.get_defaults()
 
@@ -35,7 +35,15 @@ async def ensure(db):
     return ensure_update
 
 
-async def get(db):
+async def get(db) -> Dict[str, Any]:
+    """
+    Get the complete document of settings with id `settings`.
+
+    :param db: the application database client
+
+    :return: the settings document or an empty dictionary
+
+    """
     settings = await db.settings.find_one("settings", projection=PROJECTION)
 
     if settings:
@@ -44,7 +52,16 @@ async def get(db):
     return dict()
 
 
-async def update(db, updates):
+async def update(db, updates: dict) -> Dict[str, Any]:
+    """
+    Update settings document with id `settings`.
+
+    :param db: the application database client
+    :param updates: a dictionary with updated data
+
+    :return: the settings document after updating
+
+    """
     return await db.settings.find_one_and_update({"_id": "settings"}, {
         "$set": updates
     })
