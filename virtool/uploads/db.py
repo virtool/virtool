@@ -210,10 +210,12 @@ async def release(pg: AsyncEngine, upload_ids: Union[int, List[int]]):
         query = (Upload.id.in_(upload_ids))
 
     async with AsyncSession(pg) as session:
-        await session.execute(update(Upload).
-                              where(query).values(reserved=False).
-                              execution_options(synchronize_session="fetch")
-                              )
+        await session.execute(
+            update(Upload)
+                .where(query)
+                .values(reserved=False)
+                .execution_options(synchronize_session="fetch")
+        )
 
         await session.commit()
 

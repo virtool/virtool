@@ -499,23 +499,6 @@ async def finalize(req):
     return json_response(processed)
 
 
-@routes.put("/api/samples/{sample_id}/update_job")
-async def replace(req):
-    sample_id = req.match_info["sample_id"]
-
-    await virtool.samples.db.attempt_file_replacement(
-        req.app,
-        sample_id,
-        req["client"].user_id
-    )
-
-    document = await req.app["db"].samples.find_one(sample_id, virtool.samples.db.PROJECTION)
-
-    document = await virtool.samples.db.attach_labels(req.app["pg"], document)
-
-    return json_response(virtool.utils.base_processor(document))
-
-
 @routes.patch("/api/samples/{sample_id}/rights")
 @schema({
     "group": {
