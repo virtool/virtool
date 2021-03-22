@@ -371,7 +371,7 @@ async def create(req):
         path = os.path.join(req.app["settings"]["data_path"], "files", import_from)
 
         document = await virtool.references.db.create_import(
-            pg,
+            db,
             settings,
             data["name"],
             data["description"],
