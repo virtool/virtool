@@ -48,7 +48,6 @@ async def delete_subtraction_file(pg: AsyncEngine, file_id: int):
             return None
 
         await session.delete(subtraction_file)
-
         await session.commit()
 
 
