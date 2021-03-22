@@ -4,6 +4,7 @@ import logging
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import virtool.tasks.task
 from virtool.tasks.models import Task
 from virtool.tasks.classes import TASK_CLASSES
 
@@ -44,7 +45,11 @@ class TaskRunner:
             document = result.scalar().to_dict()
 
         loop = asyncio.get_event_loop()
-        task_class = TASK_CLASSES[document["type"]](self.app, task_id)
-        task = loop.create_task(task_class.run())
+
+        for task_class in virtool.tasks.task.Task.__subclasses__():
+            if document["type"] == task_class.task_type:
+                current_task = task_class(self.app, task_id)
+
+        task = loop.create_task(current_task.run())
 
         await task
