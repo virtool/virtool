@@ -79,7 +79,6 @@ exports[`<CreateSample> should display error when form submitted with no name 1`
             Sub Bar
           </option>
         </Select>
-        <Input__InputError />
       </InputGroup>
       <InputGroup>
         <Input__InputLabel>
@@ -113,113 +112,6 @@ exports[`<CreateSample> should display error when form submitted with no name 1`
         Array [
           "abc123-Foo.fq.gz",
           "789xyz-Bar.fq.gz",
-        ]
-      }
-    />
-    <SaveButton />
-  </form>
-</div>
-`;
-
-exports[`<CreateSample> should display error when form submitted with no subtractions available 1`] = `
-<div>
-  <ViewHeader
-    title="Create Sample"
-  >
-    <ViewHeader__ViewHeaderTitle>
-      Create Sample
-    </ViewHeader__ViewHeaderTitle>
-  </ViewHeader>
-  <form
-    onSubmit={[Function]}
-  >
-    <Create__CreateSampleFields>
-      <InputGroup>
-        <Input__InputLabel>
-          Sample Name
-        </Input__InputLabel>
-        <Input__InputContainer
-          align="right"
-        >
-          <Input
-            autocomplete={false}
-            error=""
-            name="name"
-            onChange={[Function]}
-            value="Sample 1"
-          />
-          <Input__InputIcon
-            disabled={false}
-            name="magic"
-            onClick={[Function]}
-          />
-        </Input__InputContainer>
-        <Input__InputError />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Locale
-        </Input__InputLabel>
-        <Input
-          name="locale"
-          onChange={[Function]}
-          value="Timbuktu"
-        />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Isolate
-        </Input__InputLabel>
-        <Input
-          name="isolate"
-          onChange={[Function]}
-          value="Isolate"
-        />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Default Subtraction
-        </Input__InputLabel>
-        <Select
-          name="subtractionId"
-          onChange={[Function]}
-          value="sub_bar"
-        />
-        <Input__InputError>
-          At least one subtraction must be added to Virtool before samples can be analyzed.
-        </Input__InputError>
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Host
-        </Input__InputLabel>
-        <Input
-          name="host"
-          onChange={[Function]}
-          value="Host"
-        />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Pairedness
-        </Input__InputLabel>
-        <Input
-          readOnly={true}
-          value="Unpaired"
-        />
-      </InputGroup>
-    </Create__CreateSampleFields>
-    <LibraryTypeSelector
-      libraryType="normal"
-      onSelect={[Function]}
-    />
-    <ReadSelector
-      error=""
-      files={Array []}
-      onSelect={[Function]}
-      selected={
-        Array [
-          "foo",
         ]
       }
     />
@@ -305,7 +197,6 @@ exports[`<CreateSample> should render 1`] = `
             Sub Bar
           </option>
         </Select>
-        <Input__InputError />
       </InputGroup>
       <InputGroup>
         <Input__InputLabel>
