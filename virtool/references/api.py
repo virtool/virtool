@@ -365,7 +365,7 @@ async def create(req):
         }
 
     elif import_from:
-        if not await virtool.pg.utils.get_row(pg, import_from, Upload, filter="name_on_disk"):
+        if not await virtool.pg.utils.get_row(pg, import_from, Upload, filter_="name_on_disk"):
             return not_found("File not found")
 
         path = os.path.join(req.app["settings"]["data_path"], "files", import_from)
