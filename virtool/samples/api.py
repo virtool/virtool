@@ -761,7 +761,7 @@ async def cache_job_remove(req: aiohttp.web.Request):
 
     return no_content()
 
-  
+
 @routes.jobs_api.post("/api/samples/{sample_id}/artifacts")
 async def upload_artifact(req):
     """
@@ -861,6 +861,12 @@ async def upload_reads(req):
     }
 })
 async def create_cache(req):
+    """
+    Create a new cache document using the Jobs API.
+
+    :param req:
+    :return:
+    """
     db = req.app["db"]
     key = req["data"]["key"]
 
@@ -874,6 +880,9 @@ async def create_cache(req):
         return not_found("Sample does not exist")
 
     document = await virtool.caches.db.create(db, sample_id, key, sample["paired"])
+
+    if not document:
+        return bad_request()
 
     headers = {
         "Location": f"/api/samples/{sample_id}/caches/{document['id']}"

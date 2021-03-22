@@ -818,7 +818,7 @@ async def test_cache_job_remove(exists, ready, tmpdir, spawn_job_client, snapsho
     assert await client.db.caches.find_one("foo") is None
     assert not os.path.isdir(tmpdir / "caches" / "foo")
 
-    
+
 @pytest.mark.parametrize("artifact_type", ["fastq", "foo"])
 async def test_upload_artifacts(
         artifact_type,
@@ -1023,33 +1023,61 @@ async def test_download_artifact(error, tmpdir, spawn_job_client, pg):
     assert expected_path.read_bytes() == await resp.content.read()
 
 
-@pytest.mark.parametrize("key", ["key", "not_key"])
-async def test_create_cache(key, dbi, mocker, resp_is, snapshot, static_time, spawn_job_client):
-    """
-    Test that a new cache document can be created in the `caches` db using the Jobs API.
+class TestCreateCache:
 
-    """
-    client = await spawn_job_client(authorize=True)
+    @pytest.mark.parametrize("key", ["key", "not_key"])
+    async def test(self, key, dbi, mocker, resp_is, snapshot, static_time, spawn_job_client):
+        """
+        Test that a new cache document can be created in the `caches` db using the Jobs API.
 
-    await client.db.samples.insert_one({
-        "_id": "test",
-        "paired": False,
-    })
+        """
+        client = await spawn_job_client(authorize=True)
 
-    data = {key: "aodp-abcdefgh"}
+        await client.db.samples.insert_one({
+            "_id": "test",
+            "paired": False,
+        })
 
-    mocker.patch("virtool.utils.random_alphanumeric", return_value="a1b2c3d4")
+        data = {key: "aodp-abcdefgh"}
 
-    resp = await client.post("/api/samples/test/caches", json=data)
+        mocker.patch("virtool.utils.random_alphanumeric", return_value="a1b2c3d4")
 
-    if key == "key":
-        assert resp.status == 201
-        document = await resp.json()
+        resp = await client.post("/api/samples/test/caches", json=data)
 
-        snapshot.assert_match(document)
-        assert await virtool.caches.db.get(dbi, document["id"])
-    else:
-        assert await resp_is.invalid_input(resp, {"key": ['required field']})
+        if key == "key":
+            assert resp.status == 201
+            document = await resp.json()
+
+            snapshot.assert_match(document)
+            assert await virtool.caches.db.get(dbi, document["id"])
+        else:
+            assert await resp_is.invalid_input(resp, {"key": ['required field']})
+
+    async def test_duplicate_cache(self, dbi, spawn_job_client, static_time):
+        """
+        Test that uniqueness is enforced on `key`-`sample.id` pairs for `caches`
+
+        """
+        client = await spawn_job_client(authorize=True)
+
+        await client.db.samples.insert_one({
+            "_id": "test",
+            "paired": False,
+        })
+
+        await client.db.caches.insert_one({
+            "key": "aodp-abcdefgh",
+            "sample": {
+                "id": "test"
+            }
+        })
+
+        data = {"key": "aodp-abcdefgh"}
+
+        resp = await client.post("/api/samples/test/caches", json=data)
+
+        assert resp.status == 400
+        assert await dbi.caches.count_documents({}) == 1
 
 
 @pytest.mark.parametrize("artifact_type", ["fastq", "foo"])
