@@ -1,10 +1,11 @@
 import logging
 import sys
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+
 from virtool.pg.Base import Base
 
 logger = logging.getLogger(__name__)
@@ -59,9 +60,10 @@ async def delete_row(pg: AsyncEngine, id_: int, model: Base):
 
     :param pg: PostgreSQL AsyncEngine object
     :param id_: Row `id` to delete from the given SQL model
+    :param model: Table to delete row from
     """
     async with AsyncSession(pg) as session:
-        row = (await session.execute(select(model).where(model.id == id_))).scalar()
+        row = (await session.execute(select(model).filter(model.id == id_))).scalar()
 
         if not row:
             return None
@@ -71,16 +73,18 @@ async def delete_row(pg: AsyncEngine, id_: int, model: Base):
         await session.commit()
 
 
-async def get_row(pg: AsyncEngine, id_: int, model: Base) -> Optional[Base]:
+async def get_row(pg: AsyncEngine, query: Union[str, int], model: Base, filter_: str = "id") -> Optional[Base]:
     """
-    Get a row from the `model` SQL model by its `id`.
+    Get a row from the `model` SQL model by its `filter_`. By default, a row will be fetched by its `id`.
 
     :param pg: PostgreSQL AsyncEngine object
-    :param id_: Row `id` to get
+    :param query: A query to filter by
+    :param model: A model to retrieve a row from
+    :param filter_: A table column to search for a given `query`
     :return: Row from the given SQL model
     """
     async with AsyncSession(pg) as session:
-        row = (await session.execute(select(model).filter_by(id=id_))).scalar()
+        row = (await session.execute(select(model).filter(getattr(model, filter_) == query))).scalar()
 
         if not row:
             return None

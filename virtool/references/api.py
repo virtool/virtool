@@ -20,11 +20,14 @@ import virtool.otus.db
 import virtool.otus.utils
 import virtool.references.db
 import virtool.references.utils
+import virtool.pg.utils
+import virtool.tasks.db
 import virtool.users.db
 import virtool.utils
 import virtool.validators
 
 from virtool.api.response import bad_gateway, bad_request, insufficient_rights, json_response, no_content, not_found
+from virtool.uploads.models import Upload
 from virtool.references.db import CloneReferenceTask, ImportReferenceTask, RemoteReferenceTask, DeleteReferenceTask, UpdateRemoteReferenceTask
 from virtool.http.schema import schema
 
@@ -319,6 +322,7 @@ async def find_indexes(req):
 })
 async def create(req):
     db = req.app["db"]
+    pg = req.app["pg"]
     data = req["data"]
     settings = req.app["settings"]
 
@@ -362,13 +366,13 @@ async def create(req):
         }
 
     elif import_from:
-        if not await db.files.count_documents({"_id": import_from}):
+        if not await virtool.pg.utils.get_row(pg, import_from, Upload, filter="name_on_disk"):
             return not_found("File not found")
 
         path = os.path.join(req.app["settings"]["data_path"], "files", import_from)
 
         document = await virtool.references.db.create_import(
-            db,
+            pg,
             settings,
             data["name"],
             data["description"],
