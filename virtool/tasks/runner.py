@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.tasks.task
 from virtool.tasks.models import Task
-from virtool.tasks.classes import TASK_CLASSES
 
 
 class TaskRunner:
