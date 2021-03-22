@@ -75,11 +75,14 @@ import virtool.history.utils
 import virtool.http.utils
 import virtool.otus.db
 import virtool.otus.utils
+import virtool.pg.utils
 import virtool.references.utils
 import virtool.tasks.pg
 import virtool.tasks.task
 import virtool.users.db
 import virtool.utils
+
+from virtool.uploads.models import Upload
 
 PROJECTION = [
     "_id",
@@ -1277,7 +1280,7 @@ async def create_document(
     return document
 
 
-async def create_import(db, settings: dict, name: str, description: str, import_from: str, user_id: str) -> dict:
+async def create_import(pg, settings: dict, name: str, description: str, import_from: str, user_id: str) -> dict:
     """
     Import a previously exported Virtool reference.
 
@@ -1293,7 +1296,7 @@ async def create_import(db, settings: dict, name: str, description: str, import_
     created_at = virtool.utils.timestamp()
 
     document = await create_document(
-        db,
+        pg,
         settings,
         name or "Unnamed Import",
         None,
@@ -1303,9 +1306,9 @@ async def create_import(db, settings: dict, name: str, description: str, import_
         user_id=user_id
     )
 
-    file_document = await db.files.find_one(import_from, ["name", "created_at", "user"])
+    upload = await virtool.pg.utils.get_row(pg, import_from, Upload, filter="name_on_disk")
 
-    document["imported_from"] = virtool.utils.base_processor(file_document)
+    document["imported_from"] = upload.to_dict()
 
     return document
 
