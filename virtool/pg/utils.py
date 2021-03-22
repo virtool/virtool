@@ -11,6 +11,12 @@ from virtool.pg.Base import Base
 logger = logging.getLogger(__name__)
 
 
+class SQLEnum(Enum):
+    @classmethod
+    def to_list(cls):
+        return [e.value for e in cls]
+
+
 async def connect(postgres_connection_string: str) -> AsyncEngine:
     """
     Create a connection of Postgres.
@@ -73,7 +79,12 @@ async def delete_row(pg: AsyncEngine, id_: int, model: Base):
         await session.commit()
 
 
-async def get_row(pg: AsyncEngine, query: Union[str, int], model: Base, filter_: str = "id") -> Optional[Base]:
+async def get_row(
+    pg: AsyncEngine,
+    query: Union[str, int, bool, SQLEnum],
+    model: Base,
+    filter_: str = "id",
+) -> Optional[Base]:
     """
     Get a row from the `model` SQL model by its `filter_`. By default, a row will be fetched by its `id`.
 
@@ -84,15 +95,13 @@ async def get_row(pg: AsyncEngine, query: Union[str, int], model: Base, filter_:
     :return: Row from the given SQL model
     """
     async with AsyncSession(pg) as session:
-        row = (await session.execute(select(model).filter(getattr(model, filter_) == query))).scalar()
+        row = (
+            await session.execute(
+                select(model).filter(getattr(model, filter_) == query)
+            )
+        ).scalar()
 
         if not row:
             return None
 
     return row
-
-
-class SQLEnum(Enum):
-    @classmethod
-    def to_list(cls):
-        return [e.value for e in cls]
