@@ -16,12 +16,14 @@ import virtool.errors
 import virtool.jobs.db
 import virtool.samples.utils
 import virtool.samples.utils
+import virtool.pg.utils
 import virtool.utils
 from virtool.labels.models import Label
 from virtool.samples.utils import join_legacy_read_paths
 from virtool.tasks.task import Task
 from virtool.types import App
 from virtool.utils import compress_file, file_stats
+from virtool.uploads.models import Upload
 
 logger = logging.getLogger(__name__)
 
@@ -94,11 +96,9 @@ async def attach_labels(pg: AsyncEngine, document: dict) -> dict:
 
 async def attempt_file_replacement(app, sample_id, user_id):
     db = app["db"]
+    pg = app["pg"]
 
-    files = await refresh_replacements(db, sample_id)
-
-    if not all([file.get("replacement") for file in files]):
-        return None
+    await refresh_files(db, pg, sample_id)
 
     update_job = await virtool.db.utils.get_one_field(db.samples, "update_job", sample_id)
 
@@ -289,9 +289,9 @@ async def recalculate_workflow_tags(db, sample_id: str) -> dict:
     return document
 
 
-async def refresh_replacements(db, sample_id: str) -> list:
+async def refresh_files(db, pg: AsyncEngine, sample_id: str) -> list:
     """
-    Remove sample file `replacement` fields if the linked files have been deleted.
+    Remove upload IDs from the sample `files` field if the linked files have been deleted.
 
     :param db: the application database client
     :param sample_id: the id of the sample to refresh
@@ -300,11 +300,7 @@ async def refresh_replacements(db, sample_id: str) -> list:
     """
     files = await virtool.db.utils.get_one_field(db.samples, "files", sample_id)
 
-    for file in files:
-        replacement = file.get("replacement")
-
-        if replacement and not await db.files.count_documents({"_id": replacement["id"]}):
-            file["replacement"] = None
+    files = [upload_id for upload_id in files if await virtool.pg.utils.get_row(pg, upload_id, Upload)]
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": {
