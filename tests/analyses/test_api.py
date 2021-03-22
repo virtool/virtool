@@ -57,9 +57,7 @@ async def test_get(ready, files, error, mocker, snapshot, spawn_client, static_t
             "group": "tech",
             "group_read": True,
             "group_write": True,
-            "subtraction": {
-                "id": "Apple"
-            },
+            "subtractions": ["apple", "plum"],
             "user": {
                 "id": "fred"
             }

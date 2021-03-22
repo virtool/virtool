@@ -11,6 +11,7 @@ from virtool.tasks.models import Task
 @pytest.mark.parametrize("ignore", [True, False])
 async def test_add_subtraction_files_task(ignore, mocker, tmpdir, spawn_client, dbi, pg_session, static_time):
     client = await spawn_client(authorize=True)
+    client.app["settings"]["data_path"] = str(tmpdir)
 
     test_dir = tmpdir.mkdir("subtractions").mkdir("foo")
     test_dir.join("subtraction.fa.gz").write("FASTA file")
@@ -26,22 +27,23 @@ async def test_add_subtraction_files_task(ignore, mocker, tmpdir, spawn_client, 
     if ignore:
         subtraction["files"] = [
             {
-                'size': 12,
-                'name': 'subtraction.1.bt2',
-                'type': 'bowtie2'
+                "size": 12,
+                "name": "subtraction.1.bt2",
+                "type": "bowtie2"
             },
             {
-                'size': 10,
-                'name': 'subtraction.fa.gz',
-                'type': 'fasta'
+                "size": 10,
+                "name": "subtraction.fa.gz",
+                "type": "fasta"
             }
         ]
 
     await client.db.subtraction.insert_one(subtraction)
 
-    client.app["settings"]["data_path"] = str(tmpdir)
-    path = os.path.join(tmpdir, "subtractions", "foo")
-    m_join_subtraction_path = mocker.patch('virtool.subtractions.utils.join_subtraction_path', return_value=path)
+    m_join_subtraction_path = mocker.patch(
+        "virtool.subtractions.utils.join_subtraction_path",
+        return_value=os.path.join(tmpdir, "subtractions", "foo")
+    )
 
     task = Task(
         id=1,
@@ -53,11 +55,13 @@ async def test_add_subtraction_files_task(ignore, mocker, tmpdir, spawn_client, 
         type="add_subtraction_files",
         created_at=static_time.datetime
     )
+
     async with pg_session as session:
         session.add(task)
         await session.commit()
 
     add_files_task = virtool.subtractions.db.AddSubtractionFilesTask(client.app, 1)
+
     await add_files_task.run()
 
     if ignore:
@@ -65,21 +69,22 @@ async def test_add_subtraction_files_task(ignore, mocker, tmpdir, spawn_client, 
         return
 
     document = await dbi.subtraction.find_one("foo")
+
     assert document == {
-        '_id': 'foo',
-        'name': 'Foo',
-        'nickname': 'Foo Subtraction',
-        'deleted': False,
-        'files': [
+        "_id": "foo",
+        "name": "Foo",
+        "nickname": "Foo Subtraction",
+        "deleted": False,
+        "files": [
             {
-                'size': os.stat(os.path.join(test_dir, "subtraction.1.bt2")).st_size,
-                'name': 'subtraction.1.bt2',
-                'type': 'bowtie2'
+                "size": os.stat(os.path.join(test_dir, "subtraction.1.bt2")).st_size,
+                "name": "subtraction.1.bt2",
+                "type": "bowtie2"
             },
             {
-                'size': os.stat(os.path.join(test_dir, "subtraction.fa.gz")).st_size,
-                'name': 'subtraction.fa.gz',
-                'type': 'fasta'
+                "size": os.stat(os.path.join(test_dir, "subtraction.fa.gz")).st_size,
+                "name": "subtraction.fa.gz",
+                "type": "fasta"
             }
         ]
     }
@@ -102,9 +107,9 @@ async def test_attach_subtractions(dbi):
         "subtractions": ["foo", "bar"]
     }
 
-    await virtool.subtractions.db.attach_subtractions(dbi, document)
+    result = await virtool.subtractions.db.attach_subtractions(dbi, document)
 
-    assert document == {
+    assert result == {
         "_id": "foobar",
         "subtractions": [
             {

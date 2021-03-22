@@ -78,8 +78,6 @@ async def test_acquire(dbi, mocker):
     }
 
 
-
-
 async def test_delete_zombies(dbi):
     documents = [
         {

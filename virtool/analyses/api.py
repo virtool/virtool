@@ -70,10 +70,8 @@ async def find(req: aiohttp.web.Request) -> aiohttp.web.Response:
         ):
             checked_documents.append(document)
 
-    data["documents"] = checked_documents
-
-    await asyncio.tasks.gather(
-        *[virtool.subtractions.db.attach_subtraction(db, d) for d in data["documents"]])
+    data["documents"] = await asyncio.tasks.gather(
+        *[virtool.subtractions.db.attach_subtractions(db, d) for d in checked_documents])
 
     return json_response(data)
 
@@ -121,7 +119,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if not read:
         return insufficient_rights()
 
-    await virtool.subtractions.db.attach_subtractions(db, document)
+    document = await virtool.subtractions.db.attach_subtractions(db, document)
 
     if document["ready"]:
         document = await virtool.analyses.format.format_analysis(req.app, document)

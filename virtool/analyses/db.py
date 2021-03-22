@@ -5,13 +5,13 @@ Work with analyses in the database.
 import asyncio
 import os
 import shutil
-from typing import Any, Dict, Optional, Tuple
+from typing import List, Optional, Tuple
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import virtool.analyses.utils
 import virtool.analyses.files
+import virtool.analyses.utils
 import virtool.bio
 import virtool.db.utils
 import virtool.history.db
@@ -22,7 +22,6 @@ import virtool.samples.db
 import virtool.tasks.task
 import virtool.types
 import virtool.utils
-
 from virtool.analyses.models import AnalysisFile
 from virtool.jobs.utils import JobRights
 from virtool.types import App
@@ -42,6 +41,14 @@ PROJECTION = (
     "user"
 )
 
+TARGET_FILES = (
+    "hmm.tsv",
+    "assembly.fa",
+    "orfs.fa",
+    "unmapped_hosts.fq",
+    "unmapped_otus.fq"
+)
+
 
 class StoreNuvsFilesTask(virtool.tasks.task.Task):
     task_type = "store_nuvs_file_task"
@@ -54,7 +61,6 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
             self.remove_directory
         ]
 
-        self.target_files = ("hmm.tsv", "assembly.fa", "orfs.fa", "unmapped_hosts.fq", "unmapped_otus.fq")
         self.nuvs_directory = []
 
     async def store_nuvs_files(self):
@@ -69,11 +75,18 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
             analysis_id = analysis["_id"]
             sample_id = analysis["sample"]["id"]
 
-            path = virtool.analyses.utils.join_analysis_path(settings["data_path"], analysis_id, sample_id)
+            path = virtool.analyses.utils.join_analysis_path(
+                settings["data_path"],
+                analysis_id,
+                sample_id
+            )
+
             target_path = os.path.join(settings["data_path"], "analyses", analysis_id)
 
             async with AsyncSession(self.app["pg"]) as session:
-                exists = (await session.execute(select(AnalysisFile).filter_by(analysis=analysis_id))).scalar()
+                exists = (
+                    await session.execute(select(AnalysisFile).filter_by(analysis=analysis_id))
+                ).scalar()
 
             if os.path.isdir(path) and not exists:
                 try:
@@ -84,10 +97,15 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
                 analysis_files = list()
 
                 for filename in sorted(os.listdir(path)):
-                    if filename in self.target_files:
+                    if filename in TARGET_FILES:
                         analysis_files.append(filename)
 
-                        await virtool.analyses.utils.move_nuvs_files(filename, self.run_in_thread, path, target_path)
+                        await virtool.analyses.utils.move_nuvs_files(
+                            filename,
+                            self.run_in_thread,
+                            path,
+                            target_path
+                        )
 
                 await virtool.analyses.files.create_nuvs_analysis_files(
                     self.app["pg"],
@@ -108,7 +126,11 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
             analysis_id = analysis["_id"]
             sample_id = analysis["sample"]["id"]
 
-            path = virtool.analyses.utils.join_analysis_path(settings["data_path"], analysis_id, sample_id)
+            path = virtool.analyses.utils.join_analysis_path(
+                settings["data_path"],
+                analysis_id,
+                sample_id
+            )
 
             if os.path.isdir(os.path.join(settings["data_path"], "analyses", analysis_id)):
                 await self.app["run_in_thread"](shutil.rmtree, path, True)
@@ -199,8 +221,11 @@ async def create(
     workflow: str
 ) -> dict:
     """
-    Creates a new analysis. Ensures that a valid subtraction host was the submitted. Configures read and write
-    permissions on the sample document and assigns it a creator username based on the requesting connection.
+    Creates a new analysis.
+
+    Ensures that a valid subtraction host was the submitted. Configures
+    read and write permissions on the sample document and assigns it a creator username based on
+    the requesting connection.
 
     :param app: the application object
     :param sample_id: the ID of the sample to create an analysis for
@@ -270,7 +295,7 @@ async def create(
     rights.samples.can_read(sample_id)
     rights.indexes.can_read(index_id)
     rights.references.can_read(ref_id)
-    rights.subtractions.can_read(subtraction_id)
+    rights.subtractions.can_read(*subtractions)
 
     # Create job document.
     job = await virtool.jobs.db.create(

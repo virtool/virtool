@@ -29,43 +29,17 @@ snapshots['test_get[uvloop-True-None] 1'] = {
         }
     ],
     'name': 'Test',
-    'ready': True
-    'subtractions': ['apple']
-    'subtractions': ['apple'],
-}
-
-snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
-    'all_read': True,
-    'all_write': True,
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': [
+    'ready': True,
+    'subtractions': [
         {
-            'id': 1,
-            'name': 'test.fq.gz',
-            'size': 123456
+            'id': 'foo',
+            'name': 'Foo'
+        },
+        {
+            'id': 'bar',
+            'name': 'Bar'
         }
-    ],
-    'format': 'fastq',
-    'group': 'technician',
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'id': '9pfsom1b',
-    'is_legacy': False,
-    'labels': [
-    ],
-    'library_type': 'normal',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'subtractions': ['apple'],
-    'user': {
-        'id': 'test'
-    }
+    ]
 }
 
 snapshots['test_get[uvloop-False-None] 1'] = {
@@ -89,42 +63,17 @@ snapshots['test_get[uvloop-False-None] 1'] = {
         }
     ],
     'name': 'Test',
-    'ready': False
-}
-
-snapshots['TestCreate.test[uvloop-none] 2'] = {
-    '_id': '9pfsom1b',
-    'all_read': True,
-    'all_write': True,
-    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-        {
-            'id': 1,
-            'name': 'test.fq.gz',
-            'size': 123456
-        }
-    ],
-    'format': 'fastq',
-    'group': 'none',
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'is_legacy': False,
-    'labels': [
-    'subtractions': ['apple'],
-    ],
-    'library_type': 'normal',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
     'ready': False,
-    'subtractions': ['apple'],
-    'user': {
-        'id': 'test'
-    }
+    'subtractions': [
+        {
+            'id': 'foo',
+            'name': 'Foo'
+        },
+        {
+            'id': 'bar',
+            'name': 'Bar'
+        }
+    ]
 }
 
 snapshots['test_find_analyses[uvloop-None-None] 1'] = {
@@ -621,150 +570,6 @@ snapshots['test_finalize[uvloop-quality] 1'] = {
     'ready': True
 }
 
-snapshots['TestCreate.test[uvloop-none] 1'] = {
-    'all_read': True,
-    'all_write': True,
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': [
-        {
-            'id': 1,
-            'name': 'test.fq.gz',
-            'size': 123456
-        }
-    ],
-    'format': 'fastq',
-    'group': 'none',
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'id': '9pfsom1b',
-    'is_legacy': False,
-    'labels': [
-    ],
-    'library_type': 'normal',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'subtraction': {
-        'id': 'apple'
-    },
-    'user': {
-        'id': 'test'
-    }
-}
-
-snapshots['TestCreate.test[uvloop-users_primary_group] 2'] = {
-    '_id': '9pfsom1b',
-    'all_read': True,
-    'all_write': True,
-    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-        {
-            'id': 1,
-            'name': 'test.fq.gz',
-            'size': 123456
-        }
-    ],
-    'format': 'fastq',
-    'group': 'technician',
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'is_legacy': False,
-    'labels': [
-    ],
-    'library_type': 'normal',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'subtraction': {
-        'id': 'apple'
-    },
-    'user': {
-        'id': 'test'
-    }
-}
-
-snapshots['TestCreate.test[uvloop-force_choice] 1'] = {
-    'all_read': True,
-    'all_write': True,
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': [
-        {
-            'id': 1,
-            'name': 'test.fq.gz',
-            'size': 123456
-        }
-    ],
-    'format': 'fastq',
-    'group': 'diagnostics',
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'id': '9pfsom1b',
-    'is_legacy': False,
-    'labels': [
-    ],
-    'library_type': 'normal',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'subtraction': {
-        'id': 'apple'
-    },
-    'user': {
-        'id': 'test'
-    }
-}
-
-snapshots['TestCreate.test[uvloop-force_choice] 2'] = {
-    '_id': '9pfsom1b',
-    'all_read': True,
-    'all_write': True,
-    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-        {
-            'id': 1,
-            'name': 'test.fq.gz',
-            'size': 123456
-        }
-    ],
-    'format': 'fastq',
-    'group': 'diagnostics',
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'is_legacy': False,
-    'labels': [
-    ],
-    'library_type': 'normal',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'subtraction': {
-        'id': 'apple'
-    },
-    'user': {
-        'id': 'test'
-    }
-}
-
 snapshots['test_upload_artifacts[uvloop-fastq] 1'] = {
     'id': 1,
     'name': 'small.fq',
@@ -793,7 +598,6 @@ snapshots['test_upload_reads[uvloop-True-False-False] 1'] = {
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
-
 snapshots['test_get_cache[uvloop-None] 1'] = {
     'id': 'bar',
     'key': 'abc123',
@@ -802,7 +606,6 @@ snapshots['test_get_cache[uvloop-None] 1'] = {
         'id': 'foo'
     }
 }
-
 
 snapshots['test_create_cache[uvloop-key] 1'] = {
     'created_at': '2015-10-06T20:00:00Z',
@@ -854,6 +657,222 @@ snapshots['test_finalize_cache[uvloop-quality] 1'] = {
     },
     'ready': True,
     'sample': {
+        'id': 'test'
+    }
+}
+
+snapshots['TestCreate.test[uvloop-none] 1'] = {
+    'all_read': True,
+    'all_write': True,
+    'created_at': '2015-10-06T20:00:00Z',
+    'files': [
+        {
+            'id': 1,
+            'name': 'test.fq.gz',
+            'size': 123456
+        }
+    ],
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'id': '9pfsom1b',
+    'is_legacy': False,
+    'labels': [
+    ],
+    'library_type': 'normal',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'subtractions': [
+        'apple'
+    ],
+    'user': {
+        'id': 'test'
+    }
+}
+
+snapshots['TestCreate.test[uvloop-none] 2'] = {
+    '_id': '9pfsom1b',
+    'all_read': True,
+    'all_write': True,
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'files': [
+        {
+            'id': 1,
+            'name': 'test.fq.gz',
+            'size': 123456
+        }
+    ],
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'is_legacy': False,
+    'labels': [
+    ],
+    'library_type': 'normal',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'subtractions': [
+        'apple'
+    ],
+    'user': {
+        'id': 'test'
+    }
+}
+
+snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
+    'all_read': True,
+    'all_write': True,
+    'created_at': '2015-10-06T20:00:00Z',
+    'files': [
+        {
+            'id': 1,
+            'name': 'test.fq.gz',
+            'size': 123456
+        }
+    ],
+    'format': 'fastq',
+    'group': 'technician',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'id': '9pfsom1b',
+    'is_legacy': False,
+    'labels': [
+    ],
+    'library_type': 'normal',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'subtractions': [
+        'apple'
+    ],
+    'user': {
+        'id': 'test'
+    }
+}
+
+snapshots['TestCreate.test[uvloop-users_primary_group] 2'] = {
+    '_id': '9pfsom1b',
+    'all_read': True,
+    'all_write': True,
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'files': [
+        {
+            'id': 1,
+            'name': 'test.fq.gz',
+            'size': 123456
+        }
+    ],
+    'format': 'fastq',
+    'group': 'technician',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'is_legacy': False,
+    'labels': [
+    ],
+    'library_type': 'normal',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'subtractions': [
+        'apple'
+    ],
+    'user': {
+        'id': 'test'
+    }
+}
+
+snapshots['TestCreate.test[uvloop-force_choice] 1'] = {
+    'all_read': True,
+    'all_write': True,
+    'created_at': '2015-10-06T20:00:00Z',
+    'files': [
+        {
+            'id': 1,
+            'name': 'test.fq.gz',
+            'size': 123456
+        }
+    ],
+    'format': 'fastq',
+    'group': 'diagnostics',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'id': '9pfsom1b',
+    'is_legacy': False,
+    'labels': [
+    ],
+    'library_type': 'normal',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'subtractions': [
+        'apple'
+    ],
+    'user': {
+        'id': 'test'
+    }
+}
+
+snapshots['TestCreate.test[uvloop-force_choice] 2'] = {
+    '_id': '9pfsom1b',
+    'all_read': True,
+    'all_write': True,
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'files': [
+        {
+            'id': 1,
+            'name': 'test.fq.gz',
+            'size': 123456
+        }
+    ],
+    'format': 'fastq',
+    'group': 'diagnostics',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'is_legacy': False,
+    'labels': [
+    ],
+    'library_type': 'normal',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'subtractions': [
+        'apple'
+    ],
+    'user': {
         'id': 'test'
     }
 }

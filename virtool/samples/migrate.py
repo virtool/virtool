@@ -5,6 +5,7 @@ import virtool.db.utils
 import virtool.samples.db
 import virtool.types
 import virtool.utils
+from virtool.db.migrate_shared import add_subtractions_field
 
 
 async def migrate_samples(app: virtool.types.App):
@@ -17,9 +18,9 @@ async def migrate_samples(app: virtool.types.App):
     """
     db = app["db"]
 
-    await recalculate_all_workflow_tags(db)
     await virtool.db.utils.delete_unready(db.samples)
-    await change_to_subtractions_list(db)
+    await recalculate_all_workflow_tags(db)
+    await add_subtractions_field(db.samples)
     await add_is_legacy(db)
 
 

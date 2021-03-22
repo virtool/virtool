@@ -1,7 +1,6 @@
 import logging
 
 import pymongo.errors
-from motor.motor_asyncio import AsyncIOMotorCollection
 
 import virtool.db.mongo
 import virtool.types
@@ -110,30 +109,3 @@ async def migrate_status(app: virtool.types.App):
                     "installed": None
                 }
             })
-
-
-async def migrate_subtractions_list(collection: AsyncIOMotorCollection):
-    """
-    Transform `subtraction` field to a list and rename it as `subtractions`.
-
-    """
-    updates = list()
-
-    async for document in collection.find({"subtraction": {"$exists": True}}):
-        try:
-            subtractions = [document["subtraction"]["id"]]
-        except TypeError:
-            subtractions = list()
-
-        update = pymongo.UpdateOne({"_id": document["_id"]}, {
-            "$set": {
-                "subtractions": subtractions
-            },
-            "$unset": {
-                "subtraction": ""
-            }
-        })
-
-        updates.append(update)
-
-    await collection.bulk_write(updates)
