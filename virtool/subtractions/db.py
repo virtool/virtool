@@ -6,6 +6,7 @@ import asyncio
 import glob
 import os
 import shutil
+from typing import Any, Dict
 
 import virtool.db.utils
 import virtool.subtractions.utils
@@ -28,6 +29,11 @@ PROJECTION = [
     "has_file"
 ]
 
+ADD_SUBTRACTION_FILES_QUERY = {
+    "deleted": False,
+    "files": {"$exists": False}
+}
+
 
 class AddSubtractionFilesTask(virtool.tasks.task.Task):
     task_type = "add_subtraction_files"
@@ -47,7 +53,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         """
         settings = self.app["settings"]
 
-        async for subtraction in db.subtraction.find({"deleted": False}):
+        async for subtraction in self.db.subtraction.find(ADD_SUBTRACTION_FILES_QUERY):
             path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
             await self.app["run_in_thread"](virtool.subtractions.utils.rename_bowtie_files, path)
 
@@ -58,7 +64,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         """
         settings = self.app["settings"]
 
-        async for subtraction in self.db.subtraction.find({"deleted": False, "files": {"$exists": False}}):
+        async for subtraction in self.db.subtraction.find(ADD_SUBTRACTION_FILES_QUERY):
             path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
             files = await self.app["run_in_thread"](virtool.subtractions.utils.prepare_files_field, path)
 
@@ -123,6 +129,38 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
         )
 
 
+async def attach_subtractions(db, document: Dict[str, Any]):
+    """
+    Attach more subtraction detail to a document with a field `subtractions` that contains a list
+    of subtraction IDs.
+
+    :param db: the application database client
+    :param document: the document to attach data to
+    :return: the updated document
+    """
+    if document.get("subtractions"):
+        subtractions = list()
+
+        for subtraction_id in document["subtractions"]:
+            subtraction_name = await virtool.db.utils.get_one_field(
+                db.subtraction,
+                "name",
+                subtraction_id
+            )
+
+            subtractions.append({
+                "id": subtraction_id,
+                "name": subtraction_name
+            })
+
+        return {
+            **document,
+            "subtractions": subtractions
+        }
+
+    return document
+
+
 async def check_subtraction_fasta_files(db, settings: dict) -> list:
     """
     Check subtraction directories for files and set 'has_file' to boolean based on whether .fa.gz exists.
@@ -151,43 +189,6 @@ async def check_subtraction_fasta_files(db, settings: dict) -> list:
     return subtractions_without_fasta
 
 
-async def attach_subtraction(db, document: dict):
-    if document.get("subtraction"):
-        document["subtraction"]["name"] = await virtool.db.utils.get_one_field(
-            db.subtraction,
-            "name",
-            document["subtraction"]["id"]
-        )
-
-
-async def attach_subtractions(db, document: dict):
-    if document.get("subtractions"):
-        for index, subtraction_id in enumerate(document["subtractions"]):
-            subtraction_name = await virtool.db.utils.get_one_field(
-                db.subtraction,
-                "name",
-                subtraction_id
-            )
-
-            document["subtractions"][index] = {
-                "id": subtraction_id,
-                "name": subtraction_name
-            }
-
-
-async def get_linked_samples(db, subtraction_id):
-    cursor = db.samples.find({"subtraction.id": subtraction_id}, ["name"])
-    return [virtool.utils.base_processor(d) async for d in cursor]
-
-
-async def unlink_default_subtractions(db, subtraction_id):
-    await db.samples.update_many({"subtractions": subtraction_id}, {
-        "$pull": {
-            "subtractions": subtraction_id
-        }
-    })
-
-
 async def delete(app, subtraction_id):
     db = app["db"]
     settings = app["settings"]
@@ -205,3 +206,18 @@ async def delete(app, subtraction_id):
         await app["run_in_thread"](shutil.rmtree, path, True)
 
     return update_result.modified_count
+
+
+async def get_linked_samples(db, subtraction_id):
+    cursor = db.samples.find({"subtraction.id": subtraction_id}, ["name"])
+    return [virtool.utils.base_processor(d) async for d in cursor]
+
+
+async def unlink_default_subtractions(db, subtraction_id):
+    await db.samples.update_many({"subtractions": subtraction_id}, {
+        "$pull": {
+            "subtractions": subtraction_id
+        }
+    })
+
+

@@ -4,6 +4,8 @@ Utilities for working with MongoDB.
 """
 from typing import Any, Dict, List, Optional, Sequence, Union
 
+from motor.motor_asyncio import AsyncIOMotorCollection
+
 import virtool.utils
 from virtool.types import Projection
 
@@ -49,7 +51,7 @@ async def delete_unready(collection):
 
 
 async def check_missing_ids(
-        collection: motor.motor_asyncio.AsyncIOMotorCollection,
+        collection: AsyncIOMotorCollection,
         id_list: list,
         query: dict = None):
     """

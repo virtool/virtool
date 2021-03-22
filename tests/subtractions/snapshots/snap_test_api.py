@@ -100,5 +100,6 @@ snapshots['test_job_remove[uvloop-True-False] 1'] = {
 snapshots['test_job_remove[uvloop-True-False] 2'] = {
     '_id': 'test',
     'name': 'Test',
-    'subtraction': None
+    'subtractions': [
+    ]
 }

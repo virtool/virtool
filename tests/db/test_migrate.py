@@ -3,6 +3,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.db.migrate
+import virtool.db.migrate_shared
 import virtool.db.utils
 import virtool.groups.migrate
 
@@ -35,41 +36,3 @@ async def test_migrate_status(has_software, has_software_update, has_version, mo
     status = await dbi.status.find({}, sort=[("_id", pymongo.ASCENDING)]).to_list(None)
 
     snapshot.assert_match(status)
-
-
-async def test_migrate_subtractions_list(dbi):
-    await dbi.samples.insert_many([
-        {
-            "_id": "foo",
-            "subtraction": {
-                "id": "prunus"
-            }
-        },
-        {
-            "_id": "bar",
-            "subtraction": {
-                "id": "malus"
-            }
-        },
-        {
-            "_id": "baz",
-            "subtraction": None
-        }
-    ])
-
-    await virtool.db.migrate.migrate_subtractions_list(dbi.samples)
-
-    assert await dbi.samples.find().to_list(None) == [
-        {
-            "_id": "foo",
-            "subtractions": ["prunus"]
-        },
-        {
-            "_id": "bar",
-            "subtractions": ["malus"]
-        },
-        {
-            "_id": "baz",
-            "subtractions": []
-        }
-    ]
