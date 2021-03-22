@@ -102,6 +102,7 @@ export class CreateSample extends React.Component {
                 errorSubtraction: "At least one subtraction must be added to Virtool before samples can be analyzed."
             });
         }
+
         if (!this.state.selected.length) {
             hasError = true;
             this.setState({
@@ -156,7 +157,7 @@ export class CreateSample extends React.Component {
 
         const pairedness = this.state.selected.length === 2 ? "Paired" : "Unpaired";
 
-        const { errorName, errorSubtraction, errorFile } = this.state;
+        const { errorName, errorFile } = this.state;
 
         const subtractionId = this.state.subtractionId || get(this.props.subtractions, [0, "id"]);
         return (
@@ -197,7 +198,6 @@ export class CreateSample extends React.Component {
                             <Select name="subtractionId" value={subtractionId} onChange={this.handleChange}>
                                 {subtractionComponents}
                             </Select>
-                            <InputError>{errorSubtraction}</InputError>
                         </InputGroup>
 
                         <InputGroup>
