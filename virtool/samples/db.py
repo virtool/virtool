@@ -17,12 +17,14 @@ import virtool.jobs.db
 import virtool.samples.utils
 import virtool.samples.utils
 import virtool.tasks.pg
+import virtool.pg.utils
 import virtool.utils
 from virtool.labels.models import Label
 from virtool.samples.utils import join_legacy_read_paths
 from virtool.tasks.task import Task
 from virtool.types import App
 from virtool.utils import compress_file, file_stats
+from virtool.uploads.models import Upload
 
 logger = logging.getLogger(__name__)
 
@@ -91,43 +93,6 @@ async def attach_labels(pg: AsyncEngine, document: dict) -> dict:
         **document,
         "labels": labels
     }
-
-
-async def attempt_file_replacement(app, sample_id, user_id):
-    db = app["db"]
-
-    files = await refresh_replacements(db, sample_id)
-
-    if not all([file.get("replacement") for file in files]):
-        return None
-
-    update_job = await virtool.db.utils.get_one_field(db.samples, "update_job", sample_id)
-
-    if update_job and await virtool.db.utils.id_exists(db.jobs, update_job["id"]):
-        return
-
-    logger.info(f"Starting file replacement for sample {sample_id}")
-
-    task_args = {
-        "sample_id": sample_id
-    }
-
-    job = await virtool.jobs.db.create(
-        db,
-        "update_sample",
-        task_args,
-        user_id
-    )
-
-    await app["jobs"].enqueue(job["_id"])
-
-    await db.samples.update_one({"_id": sample_id}, {
-        "$set": {
-            "update_job": {
-                "id": job["_id"]
-            }
-        }
-    })
 
 
 async def check_name(db, settings, name, sample_id=None):
@@ -225,51 +190,6 @@ async def get_sample_owner(db, sample_id: str) -> Optional[str]:
     return None
 
 
-async def periodically_prune_old_files(app: App):
-    """
-    Removes old, not-in-use sample files when the sample flag `prune` is set to `True`.
-
-    :param app: the application object
-
-    """
-    db = app["db"]
-
-    logger.info("Running scheduled sample file pruning.")
-
-    async for sample in db.samples.find({"prune": True}, ["files"]):
-        sample_id = sample["_id"]
-
-        # Count running analyses that are still using the old non-cache trimmed files.
-        count = await db.analyses.count_documents({
-            "sample.id": sample_id,
-            "ready": False,
-            "cache": {
-                "$exists": False
-            }
-        })
-
-        # If there are no analyses using the files, delete them and unset the prune field on the sample.
-        if not count:
-            logger.info(f"Pruning files for sample {sample_id}.")
-
-            aws = list()
-
-            sample_path = virtool.samples.utils.join_sample_path(app["settings"], sample_id)
-
-            for suffix in [1, 2]:
-                path = os.path.join(sample_path, f"reads_{suffix}.fastq")
-                app["run_in_thread"](virtool.utils.rm, path)
-                aws.append(aws)
-
-            await asyncio.gather(*aws)
-
-            await db.samples.update_one({"_id": sample_id}, {
-                "$unset": {
-                    "prune": ""
-                }
-            })
-
-
 async def recalculate_workflow_tags(db, sample_id: str) -> dict:
     """
     Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
@@ -288,32 +208,6 @@ async def recalculate_workflow_tags(db, sample_id: str) -> dict:
     }, projection=LIST_PROJECTION)
 
     return document
-
-
-async def refresh_replacements(db, sample_id: str) -> list:
-    """
-    Remove sample file `replacement` fields if the linked files have been deleted.
-
-    :param db: the application database client
-    :param sample_id: the id of the sample to refresh
-    :return: the updated files list
-
-    """
-    files = await virtool.db.utils.get_one_field(db.samples, "files", sample_id)
-
-    for file in files:
-        replacement = file.get("replacement")
-
-        if replacement and not await db.files.count_documents({"_id": replacement["id"]}):
-            file["replacement"] = None
-
-    document = await db.samples.find_one_and_update({"_id": sample_id}, {
-        "$set": {
-            "files": files
-        }
-    })
-
-    return document["files"]
 
 
 async def remove_samples(db, settings: Dict[str, Any], id_list: List[str]) -> DeleteResult:

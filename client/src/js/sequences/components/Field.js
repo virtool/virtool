@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import styled from "styled-components";
-import { Badge, InputContainer, InputError, InputGroup, InputLabel, TextArea } from "../../../../base";
+import { Badge, InputContainer, InputError, InputGroup, InputLabel, TextArea } from "../../base";
 
 export const SequenceFieldTextArea = styled(TextArea)`
     font-family: "Roboto Mono", monospace;

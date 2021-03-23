@@ -3,6 +3,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.db.migrate
+import virtool.db.migrate_shared
 import virtool.db.utils
 import virtool.groups.migrate
 

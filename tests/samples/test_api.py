@@ -4,7 +4,7 @@ from pathlib import Path
 import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.caches.db
 import virtool.caches.utils
@@ -76,8 +76,18 @@ class MockJobInterface:
         "total_count": 3
     })
 ])
-async def test_find(find, per_page, page, label_filter, d_range, meta, snapshot, spawn_client, static_time,
-                    pg_session):
+async def test_find(
+        find,
+        per_page,
+        page,
+        label_filter,
+        d_range,
+        meta,
+        snapshot,
+        spawn_client,
+        static_time,
+        pg_session
+):
     client = await spawn_client(authorize=True)
 
     time_1 = arrow.get(static_time.datetime).datetime
@@ -182,6 +192,17 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
         await session.commit()
 
     if not error:
+        await client.db.subtraction.insert_many([
+            {
+                "_id": "foo",
+                "name": "Foo"
+            },
+            {
+                "_id": "bar",
+                "name": "Bar"
+            }
+        ])
+
         await client.db.samples.insert_one({
             "_id": "test",
             "name": "Test",
@@ -194,7 +215,8 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
                     "download_url": "/download/samples/files/file_1.fq.gz"
                 }
             ],
-            "labels": [1]
+            "labels": [1],
+            "subtractions": ["foo", "bar"]
         })
 
     resp = await client.get("api/samples/test")
@@ -211,8 +233,16 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
 class TestCreate:
 
     @pytest.mark.parametrize("group_setting", ["none", "users_primary_group", "force_choice"])
-    async def test(self, group_setting, snapshot, mocker, spawn_client, pg, static_time, test_random_alphanumeric):
-
+    async def test(
+            self,
+            group_setting,
+            snapshot,
+            mocker,
+            spawn_client,
+            pg: AsyncEngine,
+            static_time,
+            test_random_alphanumeric
+    ):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         client.app["settings"].update({
@@ -221,15 +251,13 @@ class TestCreate:
         })
 
         await client.db.subtraction.insert_one({
-            "_id": "apple",
-            "is_host": True
+            "_id": "apple"
         })
 
         upload = Upload(id=1, name="test.fq.gz", size=123456)
 
         async with AsyncSession(pg) as session:
             session.add(upload)
-
             await session.commit()
 
         await client.db.groups.insert_many([
@@ -255,7 +283,7 @@ class TestCreate:
         request_data = {
             "name": "Foobar",
             "files": [1],
-            "subtraction": "apple",
+            "subtractions": ["apple"],
         }
 
         if group_setting == "force_choice":
@@ -296,15 +324,15 @@ class TestCreate:
         resp = await client.post("/api/samples", {
             "name": "Foobar",
             "files": [1],
-            "subtraction": "apple"
+            "subtractions": ["apple"]
         })
 
         assert await resp_is.bad_request(resp, "Sample name is already in use")
 
-    async def test_force_choice(self, spawn_client, pg, resp_is):
+    async def test_force_choice(self, spawn_client, pg: AsyncEngine, resp_is):
         """
-        Test that when ``force_choice`` is enabled, a request with no group field passed results in an error.
-        response.
+        Test that when ``force_choice`` is enabled, a request with no group field passed results in
+        an error response.
 
         """
         client = await spawn_client(authorize=True, permissions=["create_sample"])
@@ -321,68 +349,63 @@ class TestCreate:
 
         async with AsyncSession(pg) as session:
             session.add(upload)
-
             await session.commit()
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
             "files": [1],
-            "subtraction": "apple"
+            "subtractions": ["apple"]
         })
 
         assert await resp_is.bad_request(resp, "Group value required for sample creation")
 
-    async def test_group_dne(self, spawn_client, pg, resp_is):
+    async def test_group_dne(self, spawn_client, pg: AsyncEngine, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         client.app["settings"]["sample_group"] = "force_choice"
         client.app["settings"]["sample_unique_names"] = True
 
         await client.db.subtraction.insert_one({
-            "_id": "apple",
-            "is_host": True
+            "_id": "apple"
         })
 
         upload = Upload(id=1, name="test.fq.gz", size=123456)
 
         async with AsyncSession(pg) as session:
             session.add(upload)
-
             await session.commit()
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
             "files": [1],
-            "subtraction": "apple",
+            "subtractions": ["apple"],
             "group": "foobar"
         })
 
         assert await resp_is.bad_request(resp, "Group does not exist")
 
-    @pytest.mark.parametrize("in_db", [True, False])
-    async def test_subtraction_dne(self, in_db, spawn_client, resp_is):
+    async def test_subtraction_dne(self, pg: AsyncEngine, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
-        client.app["settings"]["sample_unique_names"] = True
+        upload = Upload(id=1, name="test.fq.gz", size=123456)
+
+        async with AsyncSession(pg) as session:
+            session.add(upload)
+            await session.commit()
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
             "files": [1],
-            "subtraction": "apple"
+            "subtractions": ["apple"]
         })
 
-        if in_db:
-            await client.db.subtraction.insert_one({
-                "_id": "apple",
-                "is_host": False
-            })
-
-        assert await resp_is.bad_request(resp, "Subtraction does not exist")
+        assert await resp_is.bad_request(resp, "Subtractions do not exist: apple")
 
     @pytest.mark.parametrize("one_exists", [True, False])
-    async def test_file_dne(self, one_exists, spawn_client, pg, resp_is):
+    async def test_file_dne(self, one_exists, spawn_client, pg: AsyncEngine, resp_is):
         """
-        Test that a ``404`` is returned if one or more of the file ids passed in ``files`` does not exist.
+        Test that a ``404`` is returned if one or more of the file ids passed in ``files`` does not
+        exist.
 
         """
         client = await spawn_client(authorize=True, permissions=["create_sample"])
@@ -405,7 +428,7 @@ class TestCreate:
         resp = await client.post("/api/samples", {
             "name": "Foobar",
             "files": [1, 2],
-            "subtraction": "apple"
+            "subtractions": ["apple"]
         })
 
         assert await resp_is.bad_request(resp, "File does not exist")
@@ -425,7 +448,6 @@ class TestCreate:
         resp = await client.post("/api/samples", {
             "name": "Foobar",
             "files": [1],
-            "subtraction": "apple",
             "labels": [1]
         })
 
@@ -460,7 +482,14 @@ async def test_finalize(field, snapshot, spawn_job_client, resp_is):
 
 
 @pytest.mark.parametrize("delete_result,resp_is_attr", [(1, "no_content"), (0, "not_found")])
-async def test_remove(delete_result, resp_is_attr, mocker, spawn_client, resp_is, create_delete_result):
+async def test_remove(
+        delete_result,
+        resp_is_attr,
+        mocker,
+        spawn_client,
+        resp_is,
+        create_delete_result
+):
     client = await spawn_client(authorize=True)
 
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
@@ -492,7 +521,16 @@ async def test_remove(delete_result, resp_is_attr, mocker, spawn_client, resp_is
 
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("exists", [True, False])
-async def test_job_remove(exists, ready, mocker, resp_is, static_time, spawn_job_client, pg, tmpdir):
+async def test_job_remove(
+        exists,
+        ready,
+        mocker,
+        resp_is,
+        static_time,
+        spawn_job_client,
+        pg,
+        tmpdir
+):
     """
     Test that a sample can be removed when called using the Jobs API.
 
@@ -519,7 +557,12 @@ async def test_job_remove(exists, ready, mocker, resp_is, static_time, spawn_job
 
     if exists and not ready:
         assert resp.status == 204
-        assert not await virtool.samples.db.check_name(client.app["db"], client.app["settings"], "test", "test")
+        assert not await virtool.samples.db.check_name(
+            client.app["db"],
+            client.app["settings"],
+            "test",
+            "test"
+        )
 
         upload = await virtool.uploads.db.get(pg, file["id"])
         assert not upload.reserved
@@ -635,7 +678,14 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
     snapshot.assert_match(await resp.json())
 
 
-@pytest.mark.parametrize("error", [None, "400_reference", "400_index", "400_ready_index", "404"])
+@pytest.mark.parametrize("error", [
+    None,
+    "400_reference",
+    "400_index",
+    "400_ready_index",
+    "400_subtraction",
+    "404"
+])
 async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
@@ -680,6 +730,11 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
             "ready": error != "400_ready_index"
         })
 
+    if error != "400_subtraction":
+        await client.db.subtraction.insert_one({
+            "_id": "bar"
+        })
+
     if error != "404":
         await client.db.samples.insert_one({
             "_id": "test",
@@ -693,7 +748,7 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
     resp = await client.post("/api/samples/test/analyses", data={
         "workflow": "pathoscope_bowtie",
         "ref_id": "foo",
-        "subtraction_id": "bar"
+        "subtractions": ["bar"]
     })
 
     if error == "400_reference":
@@ -702,6 +757,10 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
 
     if error == "400_index" or error == "400_ready_index":
         assert await resp_is.bad_request(resp, "No ready index")
+        return
+
+    if error == "400_subtraction":
+        assert await resp_is.bad_request(resp, "Subtractions do not exist: bar")
         return
 
     if error == "404":
@@ -720,7 +779,7 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
         client.app,
         "test",
         "foo",
-        "bar",
+        ["bar"],
         "test",
         "pathoscope_bowtie"
     )
@@ -759,9 +818,16 @@ async def test_cache_job_remove(exists, ready, tmpdir, spawn_job_client, snapsho
     assert await client.db.caches.find_one("foo") is None
     assert not os.path.isdir(tmpdir / "caches" / "foo")
 
-    
+
 @pytest.mark.parametrize("artifact_type", ["fastq", "foo"])
-async def test_upload_artifacts(artifact_type, snapshot, spawn_job_client, static_time, resp_is, tmpdir):
+async def test_upload_artifacts(
+        artifact_type,
+        snapshot,
+        spawn_job_client,
+        static_time,
+        resp_is,
+        tmpdir
+):
     """
     Test that new artifacts can be uploaded after sample creation using the Jobs API.
 
@@ -793,7 +859,16 @@ async def test_upload_artifacts(artifact_type, snapshot, spawn_job_client, stati
 
 @pytest.mark.parametrize("paired, conflict", [(True, False), (True, True), (False, False)])
 @pytest.mark.parametrize("compressed", [True, False])
-async def test_upload_reads(paired, conflict, compressed, snapshot, spawn_job_client, static_time, resp_is, tmpdir):
+async def test_upload_reads(
+        paired,
+        conflict,
+        compressed,
+        snapshot,
+        spawn_job_client,
+        static_time,
+        resp_is,
+        tmpdir
+):
     """
     Test that new sample reads can be uploaded using the Jobs API.
 
@@ -923,7 +998,13 @@ async def test_download_artifact(error, tmpdir, spawn_job_client, pg):
         })
 
     if error != "404_artifact":
-        sample_artfact = SampleArtifact(id=1, sample="foo", name="fastqc.txt", name_on_disk="1-fastqc.txt", type="fastq")
+        sample_artfact = SampleArtifact(
+            id=1,
+            sample="foo",
+            name="fastqc.txt",
+            name_on_disk="1-fastqc.txt",
+            type="fastq"
+        )
 
         async with AsyncSession(pg) as session:
             session.add(sample_artfact)
@@ -942,37 +1023,72 @@ async def test_download_artifact(error, tmpdir, spawn_job_client, pg):
     assert expected_path.read_bytes() == await resp.content.read()
 
 
-@pytest.mark.parametrize("key", ["key", "not_key"])
-async def test_create_cache(key, dbi, mocker, resp_is, snapshot, static_time, spawn_job_client):
-    """
-    Test that a new cache document can be created in the `caches` db using the Jobs API.
+class TestCreateCache:
 
-    """
-    client = await spawn_job_client(authorize=True)
+    @pytest.mark.parametrize("key", ["key", "not_key"])
+    async def test(self, key, dbi, mocker, resp_is, snapshot, static_time, spawn_job_client):
+        """
+        Test that a new cache document can be created in the `caches` db using the Jobs API.
 
-    await client.db.samples.insert_one({
-        "_id": "test",
-        "paired": False,
-    })
+        """
+        client = await spawn_job_client(authorize=True)
 
-    data = {key: "aodp-abcdefgh"}
+        await client.db.samples.insert_one({
+            "_id": "test",
+            "paired": False,
+        })
 
-    mocker.patch("virtool.utils.random_alphanumeric", return_value="a1b2c3d4")
+        data = {key: "aodp-abcdefgh"}
 
-    resp = await client.post("/api/samples/test/caches", json=data)
+        mocker.patch("virtool.utils.random_alphanumeric", return_value="a1b2c3d4")
 
-    if key == "key":
-        assert resp.status == 201
-        document = await resp.json()
+        resp = await client.post("/api/samples/test/caches", json=data)
 
-        snapshot.assert_match(document)
-        assert await virtool.caches.db.get(dbi, document["id"])
-    else:
-        assert await resp_is.invalid_input(resp, {"key": ['required field']})
+        if key == "key":
+            assert resp.status == 201
+            document = await resp.json()
+
+            snapshot.assert_match(document)
+            assert await virtool.caches.db.get(dbi, document["id"])
+        else:
+            assert await resp_is.invalid_input(resp, {"key": ['required field']})
+
+    async def test_duplicate_cache(self, dbi, spawn_job_client, static_time):
+        """
+        Test that uniqueness is enforced on `key`-`sample.id` pairs for `caches`
+
+        """
+        client = await spawn_job_client(authorize=True)
+
+        await client.db.samples.insert_one({
+            "_id": "test",
+            "paired": False,
+        })
+
+        await client.db.caches.insert_one({
+            "key": "aodp-abcdefgh",
+            "sample": {
+                "id": "test"
+            }
+        })
+
+        data = {"key": "aodp-abcdefgh"}
+
+        resp = await client.post("/api/samples/test/caches", json=data)
+
+        assert resp.status == 409
+        assert await dbi.caches.count_documents({}) == 1
 
 
 @pytest.mark.parametrize("artifact_type", ["fastq", "foo"])
-async def test_upload_artifact_cache(artifact_type, resp_is, snapshot, static_time, spawn_job_client, tmpdir):
+async def test_upload_artifact_cache(
+        artifact_type,
+        resp_is,
+        snapshot,
+        static_time,
+        spawn_job_client,
+        tmpdir
+):
     """
     Test that a new artifact cache can be uploaded after sample creation using the Jobs API.
 
@@ -1001,7 +1117,8 @@ async def test_upload_artifact_cache(artifact_type, resp_is, snapshot, static_ti
         },
     })
 
-    resp = await client.post(f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}",
+    resp = await client.post(
+        f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}",
                              data=data)
 
     if artifact_type == "fastq":
@@ -1041,13 +1158,20 @@ async def test_upload_reads_cache(paired, snapshot, static_time, spawn_job_clien
         }
     })
 
-    resp = await client.put("/api/samples/test/caches/aodp-abcdefgh/reads/reads_1.fq.gz", data=data)
+    resp = await client.put(
+        "/api/samples/test/caches/aodp-abcdefgh/reads/reads_1.fq.gz",
+        data=data
+    )
 
     assert resp.status == 201
 
     if paired:
         data["file"] = open(path / "reads_2.fq.gz", "rb")
-        resp_2 = await client.put("/api/samples/test/caches/aodp-abcdefgh/reads/reads_2.fq.gz", data=data)
+
+        resp_2 = await client.put(
+            "/api/samples/test/caches/aodp-abcdefgh/reads/reads_2.fq.gz",
+            data=data
+        )
 
         assert resp.status, resp_2.status == 201
         snapshot.assert_match(await resp_2.json())
@@ -1083,4 +1207,3 @@ async def test_finalize_cache(field, resp_is, snapshot, spawn_job_client):
     else:
         assert resp.status == 422
         assert await resp_is.invalid_input(resp, {"quality": ["required field"]})
-

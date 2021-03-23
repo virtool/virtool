@@ -13,14 +13,6 @@ PATHOSCOPE_TASK_NAMES = [
     "pathoscope_barracuda"
 ]
 
-LEGACY_TRIM_PARAMETERS = {
-    "program": "skewer",
-    "m": "pe",
-    "l": "20",
-    "q": "20",
-    "Q": "25"
-}
-
 TRIM_PARAMETERS = {
     "end_quality": "20",
     "mode": "pe",

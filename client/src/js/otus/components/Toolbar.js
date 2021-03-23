@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Button, Icon, LinkButton, SearchInput, Toolbar } from "../../base";
-import { checkRefRight } from "../../utils/utils";
+import { getCanModifyReferenceOTU } from "../../references/selectors";
 import { findOTUs } from "../actions";
 
 export class OTUToolbar extends React.Component {
@@ -41,7 +41,7 @@ export class OTUToolbar extends React.Component {
 const mapStateToProps = state => {
     const { page, term, verified } = state.otus;
     return {
-        canModify: !state.references.detail.remotes_from && checkRefRight(state, "modify_otu"),
+        canModify: getCanModifyReferenceOTU(state),
         refId: state.references.detail.id,
         page,
         term,

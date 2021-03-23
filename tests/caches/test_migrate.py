@@ -34,13 +34,25 @@ async def test_add_missing_field(snapshot, tmpdir, dbi):
 
     await dbi.caches.insert_many([
         {
-            "_id": "foo"
+            "_id": "foo",
+            "key": "1",
+            "sample": {
+                "id": "abc"
+            }
         },
         {
-            "_id": "bar"
+            "_id": "bar",
+            "key": "2",
+            "sample": {
+                "id": "dfg"
+            }
         },
         {
-            "_id": "baz"
+            "_id": "baz",
+            "key": "3",
+            "sample": {
+                "id": "zxc"
+            }
         }
     ])
 
@@ -57,11 +69,17 @@ async def test_rename_hash_field(snapshot, dbi):
     await dbi.caches.insert_many([
         {
             "_id": "foo",
-            "hash": "a97439e170adc4365c5b92bd2c148ed57d75e566"
+            "hash": "a97439e170adc4365c5b92bd2c148ed57d75e566",
+            "sample": {
+                "id": "abc"
+            }
         },
         {
             "_id": "bar",
-            "hash": "d7fh3ee170adc4365c5b92bd2c1f3fd5745te566"
+            "hash": "d7fh3ee170adc4365c5b92bd2c1f3fd5745te566",
+            "sample": {
+                "id": "dfg"
+            }
         }
     ])
 

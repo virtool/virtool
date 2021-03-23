@@ -1,0 +1,41 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SequenceForm /> should render 1`] = `
+<Fragment>
+  <Accession
+    accession="test-accession"
+    error=""
+    onAutofill={[Function]}
+    onChange={[Function]}
+  />
+  <InputGroup>
+    <Input__InputLabel>
+      Host
+    </Input__InputLabel>
+    <Input
+      name="host"
+      onChange={[Function]}
+      value="test-host"
+    />
+  </InputGroup>
+  <InputGroup>
+    <Input__InputLabel>
+      Definition
+    </Input__InputLabel>
+    <Input__InputContainer>
+      <Input
+        name="definition"
+        onChange={[Function]}
+        value="test-definition"
+      />
+      <Input__InputError />
+    </Input__InputContainer>
+  </InputGroup>
+  <SequenceField
+    error=""
+    name="sequence"
+    onChange={[Function]}
+    sequence="test-sequence"
+  />
+</Fragment>
+`;

@@ -1,6 +1,6 @@
 import logging
 import sys
-from typing import Any, Awaitable, Callable, Dict, List
+from typing import Any, Callable, Dict, List
 
 import pymongo.errors
 import semver
@@ -74,3 +74,32 @@ async def get_mongo_version(db: AsyncIOMotorClient) -> str:
     :return: MongoDB server version in string format
     """
     return (await db.motor_client.client.server_info())["version"]
+
+
+async def create_indexes(db):
+    """
+    Create all MongoDB indexes.
+
+    :param db: the application database object
+    """
+    await db.analyses.create_index("sample.id")
+    await db.analyses.create_index([("created_at", pymongo.DESCENDING)])
+    await db.caches.create_index([("key", pymongo.ASCENDING), ("sample.id", pymongo.ASCENDING)], unique=True)
+    await db.history.create_index("otu.id")
+    await db.history.create_index("index.id")
+    await db.history.create_index("created_at")
+    await db.history.create_index([("otu.name", pymongo.ASCENDING)])
+    await db.history.create_index([("otu.version", pymongo.DESCENDING)])
+    await db.indexes.create_index([("version", pymongo.ASCENDING), ("reference.id", pymongo.ASCENDING)], unique=True)
+    await db.keys.create_index("id", unique=True)
+    await db.keys.create_index("user.id")
+    await db.otus.create_index([
+        ("_id", pymongo.ASCENDING),
+        ("isolate.id", pymongo.ASCENDING)
+    ])
+    await db.otus.create_index("name")
+    await db.otus.create_index("nickname")
+    await db.otus.create_index("abbreviation")
+    await db.samples.create_index([("created_at", pymongo.DESCENDING)])
+    await db.sequences.create_index("otu_id")
+    await db.sequences.create_index("name")

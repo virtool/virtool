@@ -1,6 +1,7 @@
-jest.mock("../../../../../utils/utils");
+jest.mock("../../../../selectors");
 
-import { checkRefRight } from "../../../../../utils/utils";
+import React from "react";
+import { checkReferenceRight } from "../../../../selectors";
 import { TargetItem } from "../Item";
 import { mapDispatchToProps, mapStateToProps, Targets } from "../Targets";
 
@@ -84,7 +85,7 @@ describe("mapStateToProps()", () => {
     };
 
     it("should return props when user can modify ref", () => {
-        checkRefRight.mockReturnValue(true);
+        checkReferenceRight.mockReturnValue(true);
 
         const result = mapStateToProps(state);
 
@@ -98,8 +99,8 @@ describe("mapStateToProps()", () => {
         });
     });
 
-    it("should return props when user cannnot modify ref", () => {
-        checkRefRight.mockReturnValue(false);
+    it("should return props when user cannot modify ref", () => {
+        checkReferenceRight.mockReturnValue(false);
 
         const result = mapStateToProps(state);
 

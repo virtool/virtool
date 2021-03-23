@@ -64,6 +64,7 @@ from typing import List, Union
 import aiohttp
 import pymongo
 import semver
+from sqlalchemy.ext.asyncio.engine import AsyncEngine
 
 import virtool.api
 import virtool.api.json
@@ -75,11 +76,14 @@ import virtool.history.utils
 import virtool.http.utils
 import virtool.otus.db
 import virtool.otus.utils
+import virtool.pg.utils
 import virtool.references.utils
 import virtool.tasks.pg
 import virtool.tasks.task
 import virtool.users.db
 import virtool.utils
+
+from virtool.uploads.models import Upload
 
 PROJECTION = [
     "_id",
@@ -1331,11 +1335,12 @@ async def create_document(
     return document
 
 
-async def create_import(db, settings: dict, name: str, description: str, import_from: str, user_id: str) -> dict:
+async def create_import(db, pg: AsyncEngine, settings: dict, name: str, description: str, import_from: str, user_id: str) -> dict:
     """
     Import a previously exported Virtool reference.
 
     :param db: the application database client
+    :param pg: PostgreSQL database object
     :param settings: the application settings object
     :param name: the name for the new reference
     :param description: a description for the new reference
@@ -1347,7 +1352,7 @@ async def create_import(db, settings: dict, name: str, description: str, import_
     created_at = virtool.utils.timestamp()
 
     document = await create_document(
-        db,
+        pg,
         settings,
         name or "Unnamed Import",
         None,
@@ -1357,9 +1362,9 @@ async def create_import(db, settings: dict, name: str, description: str, import_
         user_id=user_id
     )
 
-    file_document = await db.files.find_one(import_from, ["name", "created_at", "user"])
+    upload = await virtool.pg.utils.get_row(pg, import_from, Upload, filter_="name_on_disk")
 
-    document["imported_from"] = virtool.utils.base_processor(file_document)
+    document["imported_from"] = upload.to_dict()
 
     return document
 

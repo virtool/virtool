@@ -1,8 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { removeSequence, hideOTUModal } from "../../../actions";
-import { RemoveModal } from "../../../../base";
+import { removeSequence, hideOTUModal } from "../../otus/actions";
+import { RemoveModal } from "../../base";
+import { getActiveIsolateId, getOTUDetailId } from "../../otus/selectors";
 
 export class RemoveSequence extends React.Component {
     handleConfirm = () => {
@@ -41,6 +42,8 @@ RemoveSequence.propTypes = {
 };
 
 const mapStateToProps = state => ({
+    isolateId: getActiveIsolateId(state),
+    otuId: getOTUDetailId(state),
     sequenceId: state.otus.removeSequence
 });
 

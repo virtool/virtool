@@ -1,4 +1,4 @@
-import { RemoveModal } from "../../../../../base";
+import { RemoveModal } from "../../../base";
 import { RemoveSequence } from "../Remove";
 
 describe("<RemoveSequence />", () => {

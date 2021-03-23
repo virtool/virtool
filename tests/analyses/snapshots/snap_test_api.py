@@ -28,10 +28,16 @@ snapshots['test_get[uvloop-None-True] format_analysis'] = {
     'sample': {
         'id': 'baz'
     },
-    'subtraction': {
-        'id': 'plum',
-        'name': 'Plum'
-    },
+    'subtractions': [
+        {
+            'id': 'plum',
+            'name': 'Plum'
+        },
+        {
+            'id': 'apple',
+            'name': 'Apple'
+        }
+    ],
     'workflow': 'pathoscope_bowtie'
 }
 
@@ -62,10 +68,16 @@ snapshots['test_get[uvloop-None-False] 1'] = {
     'sample': {
         'id': 'baz'
     },
-    'subtraction': {
-        'id': 'plum',
-        'name': 'Plum'
-    },
+    'subtractions': [
+        {
+            'id': 'plum',
+            'name': 'Plum'
+        },
+        {
+            'id': 'apple',
+            'name': 'Apple'
+        }
+    ],
     'workflow': 'pathoscope_bowtie'
 }
 

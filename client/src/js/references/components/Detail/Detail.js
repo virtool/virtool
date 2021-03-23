@@ -7,8 +7,8 @@ import IndexDetail from "../../../indexes/components/Detail";
 import Indexes from "../../../indexes/components/Indexes";
 import OTUDetail from "../../../otus/components/Detail/Detail";
 import OTUList from "../../../otus/components/List";
-import { checkRefRight } from "../../../utils/utils";
 import { getReference } from "../../actions";
+import { checkReferenceRight } from "../../selectors";
 import EditReference from "./Edit";
 import ReferenceDetailHeader from "./Header";
 import ReferenceManage from "./Manage";
@@ -56,7 +56,7 @@ const ReferenceDetail = ({ error, id, match, onGetReference }) => {
 };
 
 const mapStateToProps = state => ({
-    canModify: checkRefRight(state, "modify"),
+    canModify: checkReferenceRight(state, "modify"),
     error: get(state, "errors.GET_REFERENCE_ERROR", null),
     id: get(state, "references.detail.id"),
     pathname: state.router.location.pathname

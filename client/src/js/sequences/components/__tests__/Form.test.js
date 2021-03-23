@@ -5,16 +5,15 @@ describe("<SequenceForm />", () => {
 
     beforeEach(() => {
         props = {
+            accession: "test-accession",
             host: "test-host",
             definition: "test-definition",
-            segment: "test-segment",
-            targetName: "test-target-name",
+            errors: {
+                accession: "",
+                sequence: ""
+            },
             sequence: "test-sequence",
-            handleChange: jest.fn(),
-            handleSubmit: jest.fn(),
-            errorSegment: "",
-            errorDefinition: "",
-            errorSequence: ""
+            onChange: jest.fn()
         };
     });
 

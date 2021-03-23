@@ -6,6 +6,8 @@ from aiohttp.test_utils import make_mocked_coro
 
 import virtool.analyses.db
 import virtool.analyses.files
+import virtool.pg.utils
+from virtool.analyses.models import AnalysisFile
 from virtool.utils import base_processor
 
 
@@ -28,22 +30,25 @@ async def test_get(ready, files, error, mocker, snapshot, spawn_client, static_t
     document = {
         "_id": "foobar",
         "created_at": static_time.datetime,
-        "files": ["1-reference.fa"],
         "ready": ready,
         "workflow": "pathoscope_bowtie",
         "results": {},
         "sample": {
             "id": "baz"
         },
-        "subtraction": {
-            "id": "plum"
-        }
+        "subtractions": ["plum", "apple"]
     }
 
-    await client.db.subtraction.insert_one({
-        "_id": "plum",
-        "name": "Plum"
-    })
+    await client.db.subtraction.insert_many([
+        {
+            "_id": "plum",
+            "name": "Plum"
+        },
+        {
+            "_id": "apple",
+            "name": "Apple"
+        }
+    ])
 
     if error != "400":
         await client.db.samples.insert_one({
@@ -53,9 +58,7 @@ async def test_get(ready, files, error, mocker, snapshot, spawn_client, static_t
             "group": "tech",
             "group_read": True,
             "group_write": True,
-            "subtraction": {
-                "id": "Apple"
-            },
+            "subtractions": ["apple", "plum"],
             "user": {
                 "id": "fred"
             }
@@ -255,10 +258,9 @@ async def test_remove(mocker, error, spawn_client, resp_is):
 
 
 @pytest.mark.parametrize("error", [None, 400, 404, 422])
-async def test_upload_file(error, files, resp_is, spawn_client, static_time, snapshot, tmpdir):
+async def test_upload_file(error, files, resp_is, spawn_client, static_time, snapshot, pg, tmpdir):
     """
-    Test that an analysis result file is properly uploaded, a record is inserted into the `analysis_files` SQL table,
-    and that the `list` field in a given analysis is updated to reflect the new file.
+    Test that an analysis result file is properly uploaded and a row is inserted into the `analysis_files` SQL table.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
@@ -277,7 +279,6 @@ async def test_upload_file(error, files, resp_is, spawn_client, static_time, sna
             "job": {
                 "id": "hello"
             },
-            "files": []
         })
 
     if error == 422:
@@ -292,9 +293,7 @@ async def test_upload_file(error, files, resp_is, spawn_client, static_time, sna
 
         assert os.listdir(tmpdir / "analyses") == ["1-reference.fa"]
 
-        document = await client.db.analyses.find_one("foobar")
-
-        assert document["files"] == [1]
+        assert await virtool.pg.utils.get_row(pg, 1, AnalysisFile)
 
     elif error == 400:
         assert await resp_is.bad_request(resp, "Unsupported analysis file format")
@@ -327,7 +326,6 @@ async def test_download_file(file_exists, row_exists, files, spawn_client, snaps
         "job": {
             "id": "hello"
         },
-        "files": []
     })
 
     if row_exists:

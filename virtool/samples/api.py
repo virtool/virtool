@@ -6,6 +6,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import aiohttp.web
+import pymongo
 from aiohttp.web_fileresponse import FileResponse
 from cerberus import Validator
 from sqlalchemy import select
@@ -190,8 +191,7 @@ async def get(req):
                 "replace_url": f"/upload/samples/{sample_id}/files/{index + 1}"
             })
 
-    await virtool.subtractions.db.attach_subtraction(db, document)
-
+    document = await virtool.subtractions.db.attach_subtractions(db, document)
     document = await virtool.samples.db.attach_labels(req.app["pg"], document)
 
     return json_response(virtool.utils.base_processor(document))
@@ -251,9 +251,8 @@ async def get_cache(req):
         ],
         "default": "normal"
     },
-    "subtraction": {
-        "type": "string",
-        "required": True
+    "subtractions": {
+        "type": "list"
     },
     "files": {
         "type": "list",
@@ -281,6 +280,17 @@ async def create(req):
     if name_error_message:
         return bad_request(name_error_message)
 
+    subtractions = data.get("subtractions", list())
+
+    # Make sure each subtraction host was submitted and it exists.
+    non_existent_subtractions = await virtool.db.utils.check_missing_ids(
+        db.subtraction,
+        subtractions
+    )
+
+    if non_existent_subtractions:
+        return bad_request(f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
+        
     if "labels" in data:
         non_existent_labels = await check_labels(pg, data["labels"])
 
@@ -290,10 +300,6 @@ async def create(req):
         data = await virtool.samples.db.attach_labels(pg, data)
     else:
         data["labels"] = []
-
-    # Make sure a subtraction host was submitted and it exists.
-    if not await db.subtraction.count_documents({"_id": data["subtraction"], "is_host": True}):
-        return bad_request("Subtraction does not exist")
 
     # Make sure all of the passed file ids exist.
     for file in data["files"]:
@@ -318,7 +324,8 @@ async def create(req):
 
             return bad_request(force_choice_error_message)
 
-    # Assign the user"s primary group as the sample owner group if the setting is ``users_primary_group``.
+    # Assign the user"s primary group as the sample owner group if the setting is
+    # ``users_primary_group``.
     elif sample_group_setting == "users_primary_group":
         document["group"] = await virtool.db.utils.get_one_field(db.users, "primary_group", user_id)
 
@@ -341,9 +348,7 @@ async def create(req):
         "all_read": settings["sample_all_read"],
         "all_write": settings["sample_all_write"],
         "library_type": data["library_type"],
-        "subtraction": {
-            "id": data["subtraction"]
-        },
+        "subtractions": subtractions,
         "user": {
             "id": user_id
         },
@@ -439,7 +444,13 @@ async def edit(req):
         return insufficient_rights()
 
     if "name" in data:
-        message = await virtool.samples.db.check_name(db, req.app["settings"], data["name"], sample_id=sample_id)
+        message = await virtool.samples.db.check_name(
+            db,
+            req.app["settings"],
+            data["name"],
+            sample_id=sample_id
+        )
+
         if message:
             return bad_request(message)
 
@@ -487,23 +498,6 @@ async def finalize(req):
     processed = virtool.utils.base_processor(document)
 
     return json_response(processed)
-
-
-@routes.put("/api/samples/{sample_id}/update_job")
-async def replace(req):
-    sample_id = req.match_info["sample_id"]
-
-    await virtool.samples.db.attempt_file_replacement(
-        req.app,
-        sample_id,
-        req["client"].user_id
-    )
-
-    document = await req.app["db"].samples.find_one(sample_id, virtool.samples.db.PROJECTION)
-
-    document = await virtool.samples.db.attach_labels(req.app["pg"], document)
-
-    return json_response(virtool.utils.base_processor(document))
 
 
 @routes.patch("/api/samples/{sample_id}/rights")
@@ -659,7 +653,9 @@ async def find_analyses(req):
         sort=[("created_at", -1)]
     )
 
-    await asyncio.tasks.gather(*[virtool.subtractions.db.attach_subtraction(db, d) for d in data["documents"]])
+    data["documents"] = await asyncio.tasks.gather(
+        *[virtool.subtractions.db.attach_subtractions(db, d) for d in data["documents"]]
+    )
 
     return json_response(data)
 
@@ -670,14 +666,14 @@ async def find_analyses(req):
         "type": "string",
         "required": True
     },
-    "subtraction_id": {
-        "type": "string"
+    "subtractions": {
+        "type": "list"
     },
     "workflow": {
         "type": "string",
         "required": True,
         "allowed": virtool.analyses.utils.WORKFLOW_NAMES
-    },
+    }
 })
 async def analyze(req):
     """
@@ -705,18 +701,24 @@ async def analyze(req):
     if not await db.indexes.count_documents({"reference.id": ref_id, "ready": True}):
         return bad_request("No ready index")
 
-    subtraction_id = data.get("subtraction_id")
+    subtractions = data.get("subtractions")
 
-    if subtraction_id is None:
-        subtraction = await virtool.db.utils.get_one_field(db.samples, "subtraction", sample_id)
-        subtraction_id = subtraction["id"]
+    if subtractions is None:
+        subtractions = []
+    else:
+        non_existent_subtractions = await virtool.db.utils.check_missing_ids(
+            db.subtraction, subtractions
+        )
+
+        if non_existent_subtractions:
+            return bad_request(f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
 
     # Generate a unique _id for the analysis entry
     document = await virtool.analyses.db.create(
         req.app,
         sample_id,
         ref_id,
-        subtraction_id,
+        subtractions,
         req["client"].user_id,
         data["workflow"]
     )
@@ -760,7 +762,7 @@ async def cache_job_remove(req: aiohttp.web.Request):
 
     return no_content()
 
-  
+
 @routes.jobs_api.post("/api/samples/{sample_id}/artifacts")
 async def upload_artifact(req):
     """
@@ -860,6 +862,10 @@ async def upload_reads(req):
     }
 })
 async def create_cache(req):
+    """
+    Create a new cache document using the Jobs API.
+
+    """
     db = req.app["db"]
     key = req["data"]["key"]
 
@@ -872,7 +878,10 @@ async def create_cache(req):
     if not sample:
         return not_found("Sample does not exist")
 
-    document = await virtool.caches.db.create(db, sample_id, key, sample["paired"])
+    try:
+        document = await virtool.caches.db.create(db, sample_id, key, sample["paired"])
+    except pymongo.errors.DuplicateKeyError:
+        return conflict(f"Cache with key {key} already exists for this sample")
 
     headers = {
         "Location": f"/api/samples/{sample_id}/caches/{document['id']}"

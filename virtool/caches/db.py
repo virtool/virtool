@@ -146,9 +146,13 @@ async def create(
 
         return virtool.utils.base_processor(document)
 
-    except pymongo.errors.DuplicateKeyError:
+    except pymongo.errors.DuplicateKeyError as e:
+        # Check if key-sample.id uniqueness was enforced
         # Keep trying to add the cache with new ids if the generated id is not unique.
-        return await create(db, sample_id, key, paired)
+        if "_id" in e.details["keyPattern"]:
+            return await create(db, sample_id, key, paired)
+
+        raise
 
 
 async def remove(app: App, cache_id: str):

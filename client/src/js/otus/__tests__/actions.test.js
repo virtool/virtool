@@ -1,60 +1,56 @@
 import {
-    WS_INSERT_OTU,
-    WS_UPDATE_OTU,
-    WS_REMOVE_OTU,
+    ADD_ISOLATE,
+    ADD_SEQUENCE,
+    CREATE_OTU,
+    EDIT_ISOLATE,
+    EDIT_OTU,
+    EDIT_SEQUENCE,
     FIND_OTUS,
     GET_OTU,
     GET_OTU_HISTORY,
-    CREATE_OTU,
-    EDIT_OTU,
-    REMOVE_OTU,
-    ADD_ISOLATE,
-    EDIT_ISOLATE,
-    SET_ISOLATE_AS_DEFAULT,
+    HIDE_OTU_MODAL,
     REMOVE_ISOLATE,
-    ADD_SEQUENCE,
-    EDIT_SEQUENCE,
+    REMOVE_OTU,
     REMOVE_SEQUENCE,
     REVERT,
     SELECT_ISOLATE,
-    SHOW_EDIT_OTU,
-    SHOW_REMOVE_OTU,
+    SET_ISOLATE_AS_DEFAULT,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
+    SHOW_EDIT_OTU,
     SHOW_REMOVE_ISOLATE,
-    SHOW_ADD_SEQUENCE,
-    SHOW_EDIT_SEQUENCE,
+    SHOW_REMOVE_OTU,
     SHOW_REMOVE_SEQUENCE,
-    HIDE_OTU_MODAL
+    WS_INSERT_OTU,
+    WS_REMOVE_OTU,
+    WS_UPDATE_OTU
 } from "../../app/actionTypes";
 import {
-    wsInsertOTU,
-    wsUpdateOTU,
-    wsRemoveOTU,
+    addIsolate,
+    addSequence,
+    createOTU,
+    editIsolate,
+    editOTU,
+    editSequence,
     findOTUs,
     getOTU,
     getOTUHistory,
-    createOTU,
-    editOTU,
-    removeOTU,
-    addIsolate,
-    setIsolateAsDefault,
-    editIsolate,
+    hideOTUModal,
     removeIsolate,
-    addSequence,
-    editSequence,
+    removeOTU,
     removeSequence,
     revert,
     selectIsolate,
-    showEditOTU,
-    showRemoveOTU,
+    setIsolateAsDefault,
     showAddIsolate,
     showEditIsolate,
+    showEditOTU,
     showRemoveIsolate,
-    showAddSequence,
-    showEditSequence,
+    showRemoveOTU,
     showRemoveSequence,
-    hideOTUModal
+    wsInsertOTU,
+    wsRemoveOTU,
+    wsUpdateOTU
 } from "../actions";
 
 describe("OTUs Action Creators", () => {
@@ -163,7 +159,7 @@ describe("OTUs Action Creators", () => {
     });
 
     it("addSequence: returns action to add a new sequence to an isolate", () => {
-        const result = addSequence(otuId, isolateId, accession, definition, host, sequence, segment, target);
+        const result = addSequence({ otuId, isolateId, accession, definition, host, sequence, segment, target });
         expect(result).toEqual({
             type: ADD_SEQUENCE.REQUESTED,
             otuId,
@@ -178,7 +174,17 @@ describe("OTUs Action Creators", () => {
     });
 
     it("editSequence: returns action to edit a specific sequence", () => {
-        const result = editSequence(otuId, isolateId, sequenceId, accession, definition, host, sequence, segment);
+        const result = editSequence({
+            otuId,
+            isolateId,
+            sequenceId,
+            accession,
+            definition,
+            host,
+            sequence,
+            segment,
+            target
+        });
         expect(result).toEqual({
             type: EDIT_SEQUENCE.REQUESTED,
             otuId,
@@ -188,7 +194,8 @@ describe("OTUs Action Creators", () => {
             definition,
             host,
             sequence,
-            segment
+            segment,
+            target
         });
     });
 
@@ -239,15 +246,6 @@ describe("OTUs Action Creators", () => {
 
     it("showRemoveIsolate: returns action to display remove isolate modal", () => {
         expect(showRemoveIsolate()).toEqual({ type: SHOW_REMOVE_ISOLATE });
-    });
-
-    it("showAddSequence: returns action to display add sequence modal", () => {
-        expect(showAddSequence()).toEqual({ type: SHOW_ADD_SEQUENCE });
-    });
-
-    it("showEditSequence: returns action to display edit sequence modal", () => {
-        const result = showEditSequence(sequenceId);
-        expect(result).toEqual({ type: SHOW_EDIT_SEQUENCE, sequenceId });
     });
 
     it("showRemoveSequence: returns action to display remove sequence modal", () => {

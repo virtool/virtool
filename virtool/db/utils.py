@@ -4,6 +4,8 @@ Utilities for working with MongoDB.
 """
 from typing import Any, Dict, List, Optional, Sequence, Union
 
+from motor.motor_asyncio import AsyncIOMotorCollection
+
 import virtool.utils
 from virtool.types import Projection
 
@@ -46,6 +48,23 @@ async def delete_unready(collection):
 
     """
     await collection.delete_many({"ready": False})
+
+
+async def check_missing_ids(
+        collection: AsyncIOMotorCollection,
+        id_list: list,
+        query: dict = None):
+    """
+    Check if all IDs in the ``id_list`` exist in the database.
+
+    :param collection: the Mongo collection to check ``id_list`` against
+    :param id_list: the IDs to check for
+    :param query: a MongoDB query
+    :return: all non-existent IDs
+
+    """
+    existent_ids = await collection.distinct("_id", query)
+    return set(id_list) - set(existent_ids)
 
 
 async def get_new_id(collection, excluded: Optional[Sequence[str]] = None) -> str:

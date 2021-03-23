@@ -165,9 +165,7 @@ async def test_job_remove(exists, ready, tmpdir, spawn_job_client, snapshot, res
         await client.db.samples.insert_one({
             "_id": "test",
             "name": "Test",
-            "subtraction": {
-                "id": "foo"
-            }
+            "subtractions": ["foo"]
         })
 
     resp = await client.delete("/api/subtractions/foo")
@@ -181,5 +179,6 @@ async def test_job_remove(exists, ready, tmpdir, spawn_job_client, snapshot, res
         return
 
     assert await resp_is.no_content(resp)
+
     snapshot.assert_match(await client.db.subtraction.find_one("foo"))
     snapshot.assert_match(await client.db.samples.find_one("test"))

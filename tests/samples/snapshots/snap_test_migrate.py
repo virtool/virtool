@@ -101,3 +101,24 @@ snapshots['test_add_is_legacy[uvloop] 1'] = [
         'is_legacy': False
     }
 ]
+
+snapshots['test_change_to_subtractions_list[uvloop] 1'] = [
+    {
+        '_id': 'foo',
+        'subtractions': [
+            'prunus'
+        ]
+    },
+    {
+        '_id': 'bar',
+        'subtractions': [
+            'malus'
+        ]
+    },
+    {
+        '_id': 'baz',
+        'subtractions': [
+            'malus'
+        ]
+    }
+]
