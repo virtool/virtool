@@ -1076,7 +1076,7 @@ class TestCreateCache:
 
         resp = await client.post("/api/samples/test/caches", json=data)
 
-        assert resp.status == 400
+        assert resp.status == 409
         assert await dbi.caches.count_documents({}) == 1
 
 
