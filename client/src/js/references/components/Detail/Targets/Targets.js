@@ -3,8 +3,8 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { BoxGroup, BoxGroupHeader, NoneFoundSection } from "../../../../base";
-import { checkRefRight } from "../../../../utils/utils";
 import { editReference } from "../../../actions";
+import { checkReferenceRight } from "../../../selectors";
 import AddTarget from "./Add";
 import EditTarget from "./Edit";
 import { TargetItem } from "./Item";
@@ -107,7 +107,7 @@ export class Targets extends React.Component {
 }
 
 export const mapStateToProps = state => ({
-    canModify: checkRefRight(state, "modify"),
+    canModify: checkReferenceRight(state, "modify"),
     dataType: state.references.detail.data_type,
     refId: state.references.detail.id,
     targets: state.references.detail.targets

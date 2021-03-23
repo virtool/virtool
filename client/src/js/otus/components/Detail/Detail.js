@@ -5,6 +5,8 @@ import { Link, Redirect, Route, Switch } from "react-router-dom";
 import styled from "styled-components";
 import { getFontWeight } from "../../../app/theme";
 import {
+    Breadcrumb,
+    BreadcrumbItem,
     Icon,
     LoadingPlaceholder,
     NotFound,
@@ -14,7 +16,7 @@ import {
     ViewHeaderIcons,
     ViewHeaderTitle
 } from "../../../base";
-import { checkRefRight } from "../../../utils/utils";
+import { getCanModifyReferenceOTU } from "../../../references/selectors";
 import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
 import EditOTU from "./Edit";
 import IsolateEditor from "./Editor";
@@ -149,7 +151,7 @@ const mapStateToProps = state => {
         error: get(state, "errors.GET_OTU_ERROR", null),
         detail: state.otus.detail,
         refName: state.references.detail.name,
-        canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu"),
+        canModify: getCanModifyReferenceOTU(state),
         dataType: state.references.detail.data_type
     };
 };

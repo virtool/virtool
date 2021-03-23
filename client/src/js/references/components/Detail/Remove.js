@@ -1,8 +1,8 @@
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import { RemoveBanner } from "../../../base";
-import { checkRefRight } from "../../../utils/utils";
 import { removeReference } from "../../actions";
+import { checkReferenceRight } from "../../selectors";
 
 export const RemoveReference = ({ canRemove, id, onConfirm }) => {
     const handleClick = useCallback(() => onConfirm(id), ["id"]);
@@ -16,7 +16,7 @@ export const RemoveReference = ({ canRemove, id, onConfirm }) => {
 
 export const mapStateToProps = state => ({
     id: state.references.detail.id,
-    canRemove: checkRefRight(state, "remove")
+    canRemove: checkReferenceRight(state, "remove")
 });
 
 export const mapDispatchToProps = dispatch => ({
