@@ -1,4 +1,5 @@
-import { find, get } from "lodash-es";
+import { filter, find, get, includes, some } from "lodash-es";
+import createCachedSelector from "re-reselect";
 import { createSelector } from "reselect";
 import { getAccount } from "../account/selectors";
 import { getTermSelectorFactory } from "../utils/selectors";
@@ -6,8 +7,10 @@ import { getTermSelectorFactory } from "../utils/selectors";
 const getStateTerm = state => state.references.term;
 
 export const getTerm = getTermSelectorFactory(getStateTerm);
+export const getReferenceDetail = state => get(state, "references.detail");
+export const getReferenceDetailId = state => get(state, "references.detail.id");
+export const getDataType = state => get(state, "references.detail.data_type");
 
-const getTaskId = state => get(state, "references.detail.task.id");
 
 const getTasks = state => get(state, "tasks.documents", []);
 

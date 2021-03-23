@@ -29,8 +29,17 @@ describe("checkReferenceRight()", () => {
     });
 
     it.each(rights)("should return false when account does not have %p right", right => {
+        state.references.detail.users.push({
+            id: "bob",
+            build: true,
+            modify: true,
+            modify_otu: true,
+            remove: true,
+            [right]: false
+        });
+
         rights.forEach(rightToCheck => {
-            expect(checkReferenceRight(state, rightToCheck)).toBe(false);
+            expect(checkReferenceRight(state, rightToCheck)).toBe(right !== rightToCheck);
         });
     });
 

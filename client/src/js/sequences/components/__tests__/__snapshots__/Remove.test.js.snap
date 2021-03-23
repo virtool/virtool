@@ -1,0 +1,41 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<RemoveSequence /> renders correctly 1`] = `
+<Modal
+  color="red"
+  label="Remove"
+  onHide={[MockFunction]}
+  show={true}
+>
+  <ModalHeader>
+    Remove Sequence
+  </ModalHeader>
+  <RemoveModal__RemoveModalBody>
+    <span>
+      Are you sure you want to remove the sequence
+      <strong>
+         
+        test
+      </strong>
+       from
+      <strong>
+         
+        baz
+      </strong>
+      ?
+    </span>
+  </RemoveModal__RemoveModalBody>
+  <Modal__ModalFooter>
+    <Button
+      color="red"
+      disabled={false}
+      icon="check"
+      onClick={[Function]}
+      tipPlacement="top"
+      type="button"
+    >
+      Confirm
+    </Button>
+  </Modal__ModalFooter>
+</Modal>
+`;

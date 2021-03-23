@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 
+export const useStateWithReset = initialValue => {
+    const [state, setState] = useState(initialValue);
+
+    useEffect(() => {
+        setState(initialValue);
+    }, [initialValue]);
+
+    return [state, setState];
+};
+
 const getSize = ref => ({
     height: ref.current ? ref.current.offsetHeight : 0,
     width: ref.current ? ref.current.offsetWidth : 0
