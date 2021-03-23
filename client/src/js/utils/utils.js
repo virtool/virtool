@@ -1,23 +1,9 @@
 /**
  * General utility constants and functions.
  *
- * @module utils
- * @author igboyes
  */
+import { capitalize, get, replace, sampleSize, split, startCase, upperFirst } from "lodash-es";
 import numbro from "numbro";
-import {
-    capitalize,
-    get,
-    includes,
-    replace,
-    sampleSize,
-    some,
-    split,
-    startCase,
-    filter,
-    find,
-    upperFirst
-} from "lodash-es";
 import { getAccountAdministrator } from "../account/selectors";
 
 /**
@@ -46,8 +32,7 @@ export const byteSize = bytes => {
  * Create a URL object given a find term or a page number. Both parameters are optional.
  *
  * @func
- * @param find {string} a search string to place in the URL
- * @param page {(number|string)} a page number to place in the URL
+ * @param term {string} a search string to place in the URL
  * @returns {URL}
  */
 export const createFindURL = term => {
@@ -190,31 +175,3 @@ export const toScientificNotation = number => {
 
 export const checkAdminOrPermission = (state, permission) =>
     getAccountAdministrator(state) || state.account.permissions[permission];
-
-export const checkRefRight = (state, permission) => {
-    if (state.references.detail === null) {
-        return;
-    }
-
-    if (getAccountAdministrator(state)) {
-        return true;
-    }
-
-    const user = find(state.references.detail.users, { id: state.account.id });
-
-    if (user && user[permission]) {
-        return true;
-    }
-
-    // Groups user is a member of.
-    const memberGroups = state.account.groups;
-
-    // Groups in common between the user and the registered ref groups.
-    const groups = filter(state.references.detail.groups, group => includes(memberGroups, group.id));
-
-    if (!groups) {
-        return false;
-    }
-
-    return some(groups, { [permission]: true });
-};

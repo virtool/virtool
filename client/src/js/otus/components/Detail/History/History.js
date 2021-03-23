@@ -1,9 +1,9 @@
-import { get, groupBy, map, reverse, sortBy } from "lodash-es";
+import { groupBy, map, reverse, sortBy } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import { connect } from "react-redux";
 import { Badge, BoxGroup, BoxGroupHeader, LoadingPlaceholder } from "../../../../base";
-import { checkRefRight } from "../../../../utils/utils";
+import { getCanModifyReferenceOTU } from "../../../../references/selectors";
 import { getOTUHistory, revert } from "../../../actions";
 import { Change } from "./Change.js";
 
@@ -87,9 +87,9 @@ class OTUHistory extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    otuId: state.otus.detail.id,
+    canModify: getCanModifyReferenceOTU(state),
     history: state.otus.detailHistory,
-    canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu")
+    otuId: state.otus.detail.id
 });
 
 const mapDispatchToProps = dispatch => ({

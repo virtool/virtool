@@ -2,13 +2,15 @@ import { find, get, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { BoxGroup } from "../../../base";
-import { checkRefRight, formatIsolateName } from "../../../utils/utils";
+import { getCanModifyReferenceOTU } from "../../../references/selectors";
+import AddSequence from "../../../sequences/components/Add";
+import EditSequence from "../../../sequences/components/Edit";
+import RemoveSequence from "../../../sequences/components/Remove";
+import Sequence from "../../../sequences/components/Sequence";
+import { getSequences } from "../../../sequences/selectors";
+import { formatIsolateName } from "../../../utils/utils";
 import { showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
-import { getActiveIsolate, getSequences } from "../../selectors";
-import AddSequence from "./Sequences/Add";
-import EditSequence from "./Sequences/Edit";
-import RemoveSequence from "./Sequences/Remove";
-import Sequence from "./Sequences/Sequence";
+import { getActiveIsolate } from "../../selectors";
 import { Target } from "./Target";
 
 export const IsolateTargets = props => {
@@ -79,7 +81,7 @@ const mapStateToProps = state => {
         otuId: state.otus.detail.id,
         editing: state.otus.editSequence,
         isolateName: formatIsolateName(activeIsolate),
-        canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu"),
+        canModify: getCanModifyReferenceOTU(state),
         error: get(state, "errors.EDIT_SEQUENCE_ERROR.message", ""),
         targets: state.references.detail.targets
     };

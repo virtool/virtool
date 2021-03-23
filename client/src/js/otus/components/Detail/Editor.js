@@ -1,10 +1,10 @@
-import { get, map } from "lodash-es";
+import { map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { getFontSize, getFontWeight } from "../../../app/theme";
 import { Badge, Box, BoxGroup, NoneFoundBox, SubviewHeader, SubviewHeaderTitle } from "../../../base";
-import { checkRefRight } from "../../../utils/utils";
+import { getCanModifyReferenceOTU } from "../../../references/selectors";
 import { selectIsolate, showAddIsolate } from "../../actions";
 import IsolateDetail from "./Isolates/Detail";
 import IsolateItem from "./Isolates/Item";
@@ -98,7 +98,7 @@ const mapStateToProps = state => ({
     isolates: state.otus.detail.isolates,
     activeIsolateId: state.otus.activeIsolateId,
     isRemote: state.references.detail.remotes_from,
-    canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu")
+    canModify: getCanModifyReferenceOTU(state)
 });
 
 const mapDispatchToProps = dispatch => ({
