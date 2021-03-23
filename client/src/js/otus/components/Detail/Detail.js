@@ -5,8 +5,6 @@ import { Link, Redirect, Route, Switch } from "react-router-dom";
 import styled from "styled-components";
 import { getFontWeight } from "../../../app/theme";
 import {
-    Breadcrumb,
-    BreadcrumbItem,
     Icon,
     LoadingPlaceholder,
     NotFound,
