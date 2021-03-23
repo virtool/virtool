@@ -176,7 +176,7 @@ async def update(req):
 
     task = await virtool.tasks.pg.register(
         req.app["pg"],
-        req.app["task_runner"],
+        req.app["tasks"],
         UpdateRemoteReferenceTask,
         context=context)
 
@@ -353,7 +353,7 @@ async def create(req):
 
         task = await virtool.tasks.pg.register(
             req.app["postgres"],
-            req.app["task_runner"],
+            req.app["tasks"],
             CloneReferenceTask,
             context=context)
 
@@ -385,7 +385,7 @@ async def create(req):
 
         task = await virtool.tasks.pg.register(
             req.app["postgres"],
-            req.app["task_runner"],
+            req.app["tasks"],
             ImportReferenceTask,
             context=context)
 
@@ -430,7 +430,7 @@ async def create(req):
 
         task = await virtool.tasks.pg.register(
             req.app["postgres"],
-            req.app["task_runner"],
+            req.app["tasks"],
             RemoteReferenceTask,
             context=context)
 
@@ -568,7 +568,7 @@ async def remove(req):
 
     task = await virtool.tasks.pg.register(
         req.app["postgres"],
-        req.app["task_runner"],
+        req.app["tasks"],
         DeleteReferenceTask,
         context=context)
 

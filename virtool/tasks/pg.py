@@ -3,7 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 import virtool.db.utils
 import virtool.utils
+
 from virtool.tasks.models import Task
+from virtool.tasks.client import TasksClient
 
 
 async def find(pg: AsyncEngine) -> list:
@@ -40,16 +42,17 @@ async def get(pg: AsyncEngine, task_id: int) -> dict:
     return document
 
 
-async def register(pg, task_runner, task_class, context: dict = None) -> dict:
+async def register(pg, task_client: TasksClient, task_class, context: dict = None, interval: int = None) -> dict:
     """
     Create a new task record and insert it into SQL databse.
 
     Add the new task to TaskRunner.
 
     :param pg: an AsyncEngine object
-    :param task_runner: a :class:``virtool.tasks.runner.TaskRunner``
+    :param task_client: a :class:``virtool.tasks.client.TasksClient``
     :param task_class: a dict for mapping task string name to task class
     :param context: A dict containing data used by the task
+    :param interval: Register the task regularly if `interval` is given
     :return: the new task record
 
     """
@@ -68,7 +71,10 @@ async def register(pg, task_runner, task_class, context: dict = None) -> dict:
         document = task.to_dict()
         await session.commit()
 
-    await task_runner.q.put(document["id"])
+    if interval:
+        await task_client.add_periodic(document["id"], interval)
+    else:
+        await task_client.add(document["id"])
 
     return document
 

@@ -131,7 +131,7 @@ async def install(req):
 
     task = await virtool.tasks.pg.register(
         req.app["postgres"],
-        req.app["task_runner"],
+        req.app["tasks"],
         HMMInstallTask,
         context={
             "user_id": user_id,

@@ -54,7 +54,7 @@ async def install(req):
 
     task = await virtool.tasks.pg.register(
         req.app["postgres"],
-        req.app["task_runner"],
+        req.app["tasks"],
         SoftwareInstallTask,
         context={
             "file_size": latest_release["size"],
