@@ -882,7 +882,7 @@ async def create_cache(req):
     document = await virtool.caches.db.create(db, sample_id, key, sample["paired"])
 
     if not document:
-        return bad_request()
+        return conflict()
 
     headers = {
         "Location": f"/api/samples/{sample_id}/caches/{document['id']}"
