@@ -865,8 +865,6 @@ async def create_cache(req):
     """
     Create a new cache document using the Jobs API.
 
-    :param req:
-    :return:
     """
     db = req.app["db"]
     key = req["data"]["key"]
