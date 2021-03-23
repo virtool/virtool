@@ -28,7 +28,7 @@ async def test_motor(test_db_connection_string, test_db_name, loop, request):
     client = motor.motor_asyncio.AsyncIOMotorClient(test_db_connection_string)
     await client.drop_database(test_db_name)
     db = client[test_db_name]
-    await virtool.db.mongo.init_check_db(db)
+    await virtool.db.mongo.create_indexes(db)
     yield db
     await client.drop_database(test_db_name)
 
