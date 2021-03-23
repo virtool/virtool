@@ -11,7 +11,7 @@ export const getReferenceDetail = state => get(state, "references.detail");
 export const getReferenceDetailId = state => get(state, "references.detail.id");
 export const getDataType = state => get(state, "references.detail.data_type");
 
-
+const getTaskId = state => get(state, "references.detail.task.id");
 const getTasks = state => get(state, "tasks.documents", []);
 
 export const getProgress = createSelector([getTaskId, getTasks], (taskId, tasks) => {
