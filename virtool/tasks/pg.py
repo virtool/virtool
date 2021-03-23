@@ -5,7 +5,6 @@ import virtool.db.utils
 import virtool.utils
 
 from virtool.tasks.models import Task
-from virtool.tasks.client import TasksClient
 
 
 async def find(pg: AsyncEngine) -> list:
@@ -42,17 +41,16 @@ async def get(pg: AsyncEngine, task_id: int) -> dict:
     return document
 
 
-async def register(pg, task_client: TasksClient, task_class, context: dict = None, interval: int = None) -> dict:
+async def register(pg, task_class, context: dict = None) -> dict:
     """
     Create a new task record and insert it into SQL databse.
 
     Add the new task to TaskRunner.
 
     :param pg: an AsyncEngine object
-    :param task_client: a :class:``virtool.tasks.client.TasksClient``
-    :param task_class: a dict for mapping task string name to task class
+    :param task_class: a subclass of a Virtool :class:`~virtool.tasks.task.Task`
     :param context: A dict containing data used by the task
-    :param interval: Register the task regularly if `interval` is given
+
     :return: the new task record
 
     """
@@ -70,11 +68,6 @@ async def register(pg, task_client: TasksClient, task_class, context: dict = Non
         await session.flush()
         document = task.to_dict()
         await session.commit()
-
-    if interval:
-        await task_client.add_periodic(document["id"], interval)
-    else:
-        await task_client.add(document["id"])
 
     return document
 

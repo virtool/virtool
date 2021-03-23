@@ -52,9 +52,7 @@ async def install(req):
     except IndexError:
         return not_found("Could not find latest uninstalled release")
 
-    task = await virtool.tasks.pg.register(
-        req.app["postgres"],
-        req.app["tasks"],
+    task = await req.app["tasks"].add(
         SoftwareInstallTask,
         context={
             "file_size": latest_release["size"],
