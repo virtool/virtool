@@ -45,8 +45,6 @@ async def register(pg, task_class, context: dict = None) -> dict:
     """
     Create a new task record and insert it into SQL databse.
 
-    Add the new task to TaskRunner.
-
     :param pg: an AsyncEngine object
     :param task_class: a subclass of a Virtool :class:`~virtool.tasks.task.Task`
     :param context: A dict containing data used by the task
