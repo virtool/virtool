@@ -90,27 +90,7 @@ async def init_check_db(app: aiohttp.web_app.Application):
         pass
 
     logger.info("Checking database indexes")
-    await db.analyses.create_index("sample.id")
-    await db.analyses.create_index([("created_at", -1)])
-    await db.caches.create_index([("key", 1), ("sample.id", 1)], unique=True)
-    await db.history.create_index("otu.id")
-    await db.history.create_index("index.id")
-    await db.history.create_index("created_at")
-    await db.history.create_index([("otu.name", 1)])
-    await db.history.create_index([("otu.version", -1)])
-    await db.indexes.create_index([("version", 1), ("reference.id", 1)], unique=True)
-    await db.keys.create_index("id", unique=True)
-    await db.keys.create_index("user.id")
-    await db.otus.create_index([
-        ("_id", pymongo.ASCENDING),
-        ("isolate.id", pymongo.ASCENDING)
-    ])
-    await db.otus.create_index("name")
-    await db.otus.create_index("nickname")
-    await db.otus.create_index("abbreviation")
-    await db.samples.create_index([("created_at", pymongo.DESCENDING)])
-    await db.sequences.create_index("otu_id")
-    await db.sequences.create_index("name")
+    await virtool.db.mongo.create_indexes(db)
 
 
 async def init_client_path(app: aiohttp.web_app.Application):

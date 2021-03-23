@@ -1,6 +1,6 @@
 import logging
 import sys
-from typing import Any, Awaitable, Callable, Dict, List
+from typing import Any, Callable, Dict, List
 
 import pymongo.errors
 import semver
@@ -76,8 +76,12 @@ async def get_mongo_version(db: AsyncIOMotorClient) -> str:
     return (await db.motor_client.client.server_info())["version"]
 
 
-async def init_check_db(db):
+async def create_indexes(db):
+    """
+    Create all MongoDB indexes.
 
+    :param db: the application database object
+    """
     await db.analyses.create_index("sample.id")
     await db.analyses.create_index([("created_at", -1)])
     await db.caches.create_index([("key", 1), ("sample.id", 1)], unique=True)
