@@ -83,14 +83,14 @@ async def create_indexes(db):
     :param db: the application database object
     """
     await db.analyses.create_index("sample.id")
-    await db.analyses.create_index([("created_at", -1)])
-    await db.caches.create_index([("key", 1), ("sample.id", 1)], unique=True)
+    await db.analyses.create_index([("created_at", pymongo.DESCENDING)])
+    await db.caches.create_index([("key", pymongo.ASCENDING), ("sample.id", pymongo.ASCENDING)], unique=True)
     await db.history.create_index("otu.id")
     await db.history.create_index("index.id")
     await db.history.create_index("created_at")
-    await db.history.create_index([("otu.name", 1)])
-    await db.history.create_index([("otu.version", -1)])
-    await db.indexes.create_index([("version", 1), ("reference.id", 1)], unique=True)
+    await db.history.create_index([("otu.name", pymongo.ASCENDING)])
+    await db.history.create_index([("otu.version", pymongo.DESCENDING)])
+    await db.indexes.create_index([("version", pymongo.ASCENDING), ("reference.id", pymongo.ASCENDING)], unique=True)
     await db.keys.create_index("id", unique=True)
     await db.keys.create_index("user.id")
     await db.otus.create_index([
