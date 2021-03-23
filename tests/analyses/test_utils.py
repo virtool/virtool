@@ -8,16 +8,22 @@ import virtool.analyses.files
 
 
 @pytest.mark.parametrize("exists", [True, False])
-async def test_attach_analysis_files(exists, spawn_client, pg):
+async def test_attach_analysis_files(exists, dbi, spawn_client, snapshot, pg):
+    client = await spawn_client(authorize=True)
+
+    await client.db.analyses.insert_one({
+        "_id": "foobar",
+        "ready": True,
+    })
+
     if exists:
         await virtool.analyses.files.create_analysis_file(pg, "foobar", "fasta", "reference-fa")
 
-    files = await virtool.analyses.utils.attach_analysis_files(pg, "foobar")
+    document = await dbi.analyses.find_one("foobar")
 
-    if exists:
-        assert files != []
-    else:
-        assert files == []
+    document = await virtool.analyses.utils.attach_analysis_files(pg, "foobar", document)
+
+    snapshot.assert_match(document)
 
 
 @pytest.mark.parametrize("coverage,expected", [
