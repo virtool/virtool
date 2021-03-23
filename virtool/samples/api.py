@@ -6,6 +6,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import aiohttp.web
+import pymongo
 from aiohttp.web_fileresponse import FileResponse
 from cerberus import Validator
 from sqlalchemy import select
@@ -879,10 +880,10 @@ async def create_cache(req):
     if not sample:
         return not_found("Sample does not exist")
 
-    document = await virtool.caches.db.create(db, sample_id, key, sample["paired"])
-
-    if not document:
-        return conflict()
+    try:
+        document = await virtool.caches.db.create(db, sample_id, key, sample["paired"])
+    except pymongo.errors.DuplicateKeyError:
+        return conflict(f"Cache with key {key} already exists for this sample")
 
     headers = {
         "Location": f"/api/samples/{sample_id}/caches/{document['id']}"
