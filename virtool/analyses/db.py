@@ -36,7 +36,7 @@ PROJECTION = (
     "ready",
     "reference",
     "sample",
-    "subtraction",
+    "subtractions",
     "updated_at",
     "user"
 )
