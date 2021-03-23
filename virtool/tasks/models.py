@@ -15,7 +15,7 @@ class Task(Base):
     error = Column(String)
     file_size = Column(Integer)
     progress = Column(Integer, default=0)
-    step = Column(String, nullable=False)
+    step = Column(String)
     type = Column(String, nullable=False)
 
     def __repr__(self):
