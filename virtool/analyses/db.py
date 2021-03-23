@@ -32,7 +32,6 @@ PROJECTION = (
     "created_at",
     "index",
     "job",
-    "files",
     "ready",
     "reference",
     "sample",

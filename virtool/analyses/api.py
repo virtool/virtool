@@ -103,8 +103,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if if_modified_since and if_modified_since == iso:
         return virtool.api.response.not_modified()
 
-    if document.get("files"):
-        document["files"] = await virtool.analyses.utils.attach_analysis_files(pg, analysis_id)
+    document = await virtool.analyses.utils.attach_analysis_files(pg, analysis_id, document)
 
     sample = await db.samples.find_one(
         {"_id": document["sample"]["id"]},
@@ -220,9 +219,6 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     upload_id = analysis_file["id"]
 
-    if upload_id in document.get("files", []):
-        return conflict("File is already associated with analysis")
-
     analysis_file_path = Path(req.app["settings"]["data_path"]) / "analyses" / analysis_file["name_on_disk"]
 
     try:
@@ -234,10 +230,6 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
         return aiohttp.web.Response(status=499)
 
     analysis_file = await virtool.uploads.db.finalize(pg, size, upload_id, AnalysisFile)
-
-    await db.analyses.update_one({"_id": analysis_id}, {
-        "$push": {"files": upload_id}
-    })
 
     headers = {
         "Location": f"/api/analyses/{analysis_id}/files/{upload_id}"

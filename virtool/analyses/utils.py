@@ -17,7 +17,7 @@ WORKFLOW_NAMES = (
 )
 
 
-async def attach_analysis_files(pg: AsyncEngine, analysis_id: str) -> List[Dict]:
+async def attach_analysis_files(pg: AsyncEngine, analysis_id: str, document: Dict[str, any]) -> Dict[str, any]:
     """
     Get analysis result file details for a specific analysis to attach to analysis `GET` response
 
@@ -28,7 +28,10 @@ async def attach_analysis_files(pg: AsyncEngine, analysis_id: str) -> List[Dict]
     async with AsyncSession(pg) as session:
         results = (await session.execute(select(AnalysisFile).filter_by(analysis=analysis_id))).scalars().all()
 
-    return [result.to_dict() for result in results]
+    return {
+        **document,
+        "files": [result.to_dict() for result in results]
+    }
 
 
 def check_nuvs_file_type(file_name: str) -> str:
