@@ -7,9 +7,9 @@ import virtool.pg.utils
 import virtool.utils
 from virtool.samples.models import (
     SampleArtifact,
-    SampleReadsFile,
+    SampleReads,
     SampleArtifactCache,
-    SampleReadsFileCache,
+    SampleReadsCache,
 )
 from virtool.uploads.models import Upload
 
@@ -27,7 +27,7 @@ async def get_existing_reads(
     """
     async with AsyncSession(pg) as session:
         query = await session.execute(
-            select(SampleReadsFile if not cache else SampleReadsFileCache).filter_by(
+            select(SampleReads if not cache else SampleReadsCache).filter_by(
                 sample=sample
             )
         )
@@ -89,7 +89,7 @@ async def create_reads_file(
     """
 
     async with AsyncSession(pg) as session:
-        reads = SampleReadsFile() if not cache else SampleReadsFileCache()
+        reads = SampleReads() if not cache else SampleReadsCache()
 
         reads.sample, reads.name, reads.name_on_disk, reads.size, reads.uploaded_at = (
             sample_id,

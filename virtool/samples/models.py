@@ -40,12 +40,12 @@ class SampleArtifact(Base):
                f"uploaded_at={self.uploaded_at}"
 
 
-class SampleReadsFile(Base):
+class SampleReads(Base):
     """
     SQL model to store new sample reads files
 
     """
-    __tablename__ = "sample_reads_files"
+    __tablename__ = "sample_reads"
 
     id = Column(Integer, primary_key=True)
     sample = Column(String, nullable=False)
@@ -56,7 +56,7 @@ class SampleReadsFile(Base):
     uploaded_at = Column(DateTime)
 
     def __repr__(self):
-        return f"<SampleReadsFile(id={self.id}, sample={self.sample}, name={self.name}, " \
+        return f"<SampleReads(id={self.id}, sample={self.sample}, name={self.name}, " \
                f"name_on_disk={self.name_on_disk}, size={self.size}, uploaded_at={self.uploaded_at})>"
 
 
@@ -81,12 +81,12 @@ class SampleArtifactCache(Base):
                f"uploaded_at={self.uploaded_at}"
 
 
-class SampleReadsFileCache(Base):
+class SampleReadsCache(Base):
     """
     SQL model to store cached sample reads files
 
     """
-    __tablename__ = "sample_reads_files_cache"
+    __tablename__ = "sample_reads_cache"
 
     id = Column(Integer, primary_key=True)
     sample = Column(String, nullable=False)
@@ -96,5 +96,5 @@ class SampleReadsFileCache(Base):
     uploaded_at = Column(DateTime)
 
     def __repr__(self):
-        return f"<SampleReadsFileCache(id={self.id}, sample={self.sample}, name={self.name}, " \
+        return f"<SampleReadsCache(id={self.id}, sample={self.sample}, name={self.name}, " \
                f"name_on_disk={self.name_on_disk}, size={self.size}, uploaded_at={self.uploaded_at})>"

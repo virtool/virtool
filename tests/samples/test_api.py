@@ -11,7 +11,7 @@ import virtool.caches.utils
 import virtool.samples.db
 import virtool.uploads.db
 from virtool.labels.models import Label
-from virtool.samples.models import SampleReadsFile, SampleArtifact
+from virtool.samples.models import SampleReads, SampleArtifact
 from virtool.uploads.models import Upload
 
 
@@ -976,7 +976,7 @@ async def test_download_reads(suffix, error, tmpdir, spawn_client, spawn_job_cli
             "_id": "foo",
         })
 
-    sample_reads = SampleReadsFile(id=1, sample="foo", name=file_name, name_on_disk=file_name)
+    sample_reads = SampleReads(id=1, sample="foo", name=file_name, name_on_disk=file_name)
 
     if error != "404_reads":
         async with AsyncSession(pg) as session:
