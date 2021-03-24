@@ -13,18 +13,26 @@ describe("<AnalysisItem />", () => {
             created_at: "2018-02-14T17:12:00.000000Z",
             id: "baz",
             index: {
+                id: "ind",
                 version: 3
             },
             placeholder: false,
             ready: false,
             reference: {
+                id: "foo",
                 name: "Foo"
             },
             sampleId: "bar",
-            subtraction: {
-                id: "baz",
-                name: "Prunus persica"
-            },
+            subtractions: [
+                {
+                    id: "pru",
+                    name: "Prunus persica"
+                },
+                {
+                    id: "ara",
+                    name: "Arabidopsis thaliana"
+                }
+            ],
             user: {
                 id: "bob"
             },

@@ -18,40 +18,62 @@ exports[`<AnalysisItem /> should render 1`] = `
     time="2018-02-14T17:12:00.000000Z"
     user="bob"
   />
-  <Item__AnalysisItemContent>
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="equals"
-    />
-    <SlashList>
-      <li>
-        <Link
-          to="/refs/undefined"
-        >
-          Foo
-        </Link>
-      </li>
-      <li>
-        <Link
-          to="/refs/undefined/indexes/undefined"
-        >
-          Index 
-          3
-        </Link>
-      </li>
-    </SlashList>
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="not-equal"
-    />
-    <Link
-      to="/subtraction/baz"
+  <Item__AnalysisItemTags>
+    <Item__AnalysisItemTag
+      key="reference"
     >
-      Prunus persica
-    </Link>
-  </Item__AnalysisItemContent>
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="equals"
+      />
+      <SlashList>
+        <li>
+          <Link
+            to="/refs/foo"
+          >
+            Foo
+          </Link>
+        </li>
+        <li>
+          <Link
+            to="/refs/foo/indexes/ind"
+          >
+            Index 
+            3
+          </Link>
+        </li>
+      </SlashList>
+    </Item__AnalysisItemTag>
+    <Item__AnalysisItemTag
+      key="pru"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="not-equal"
+      />
+      <Link
+        to="/subtraction/pru"
+      >
+        Prunus persica
+      </Link>
+    </Item__AnalysisItemTag>
+    <Item__AnalysisItemTag
+      key="ara"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="not-equal"
+      />
+      <Link
+        to="/subtraction/ara"
+      >
+        Arabidopsis thaliana
+      </Link>
+    </Item__AnalysisItemTag>
+  </Item__AnalysisItemTags>
 </Item__StyledAnalysisItem>
 `;
 
@@ -73,40 +95,62 @@ exports[`<AnalysisItem /> should render when [placeholder=true] 1`] = `
     time="2018-02-14T17:12:00.000000Z"
     user="bob"
   />
-  <Item__AnalysisItemContent>
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="equals"
-    />
-    <SlashList>
-      <li>
-        <Link
-          to="/refs/undefined"
-        >
-          Foo
-        </Link>
-      </li>
-      <li>
-        <Link
-          to="/refs/undefined/indexes/undefined"
-        >
-          Index 
-          3
-        </Link>
-      </li>
-    </SlashList>
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="not-equal"
-    />
-    <Link
-      to="/subtraction/baz"
+  <Item__AnalysisItemTags>
+    <Item__AnalysisItemTag
+      key="reference"
     >
-      Prunus persica
-    </Link>
-  </Item__AnalysisItemContent>
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="equals"
+      />
+      <SlashList>
+        <li>
+          <Link
+            to="/refs/foo"
+          >
+            Foo
+          </Link>
+        </li>
+        <li>
+          <Link
+            to="/refs/foo/indexes/ind"
+          >
+            Index 
+            3
+          </Link>
+        </li>
+      </SlashList>
+    </Item__AnalysisItemTag>
+    <Item__AnalysisItemTag
+      key="pru"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="not-equal"
+      />
+      <Link
+        to="/subtraction/pru"
+      >
+        Prunus persica
+      </Link>
+    </Item__AnalysisItemTag>
+    <Item__AnalysisItemTag
+      key="ara"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="not-equal"
+      />
+      <Link
+        to="/subtraction/ara"
+      >
+        Arabidopsis thaliana
+      </Link>
+    </Item__AnalysisItemTag>
+  </Item__AnalysisItemTags>
 </Item__StyledAnalysisItem>
 `;
 
@@ -128,39 +172,61 @@ exports[`<AnalysisItem /> should render when [ready=false] 1`] = `
     time="2018-02-14T17:12:00.000000Z"
     user="bob"
   />
-  <Item__AnalysisItemContent>
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="equals"
-    />
-    <SlashList>
-      <li>
-        <Link
-          to="/refs/undefined"
-        >
-          Foo
-        </Link>
-      </li>
-      <li>
-        <Link
-          to="/refs/undefined/indexes/undefined"
-        >
-          Index 
-          3
-        </Link>
-      </li>
-    </SlashList>
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="not-equal"
-    />
-    <Link
-      to="/subtraction/baz"
+  <Item__AnalysisItemTags>
+    <Item__AnalysisItemTag
+      key="reference"
     >
-      Prunus persica
-    </Link>
-  </Item__AnalysisItemContent>
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="equals"
+      />
+      <SlashList>
+        <li>
+          <Link
+            to="/refs/foo"
+          >
+            Foo
+          </Link>
+        </li>
+        <li>
+          <Link
+            to="/refs/foo/indexes/ind"
+          >
+            Index 
+            3
+          </Link>
+        </li>
+      </SlashList>
+    </Item__AnalysisItemTag>
+    <Item__AnalysisItemTag
+      key="pru"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="not-equal"
+      />
+      <Link
+        to="/subtraction/pru"
+      >
+        Prunus persica
+      </Link>
+    </Item__AnalysisItemTag>
+    <Item__AnalysisItemTag
+      key="ara"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="not-equal"
+      />
+      <Link
+        to="/subtraction/ara"
+      >
+        Arabidopsis thaliana
+      </Link>
+    </Item__AnalysisItemTag>
+  </Item__AnalysisItemTags>
 </Item__StyledAnalysisItem>
 `;
