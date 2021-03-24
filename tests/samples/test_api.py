@@ -857,40 +857,61 @@ async def test_upload_artifacts(
         assert await resp_is.bad_request(resp, "Unsupported sample artifact type")
 
 
-@pytest.mark.parametrize("paired, conflict", [(True, False), (True, True), (False, False)])
-@pytest.mark.parametrize("compressed", [True, False])
-async def test_upload_reads(
-        paired,
-        conflict,
-        compressed,
-        snapshot,
-        spawn_job_client,
-        static_time,
-        resp_is,
-        tmpdir
-):
-    """
-    Test that new sample reads can be uploaded using the Jobs API.
+class TestUploadReads:
+    @pytest.mark.parametrize("compressed", [True, False])
+    async def test_upload_reads(self, compressed, mocker, snapshot, spawn_job_client, static_time, resp_is, tmpdir):
+        """
+        Test that new sample reads can be uploaded using the Jobs API.
 
-    """
-    path = Path.cwd() / "tests" / "test_files" / "samples"
+        """
+        path = Path.cwd() / "tests" / "test_files" / "samples"
 
-    data = {
-        "file": open(path / ("reads_1.fq.gz" if compressed else "fake_reads_1.fq.gz"), "rb")
-    }
+        data = {
+            "file": open(path / ("reads_1.fq.gz"), "rb")
+        }
 
-    client = await spawn_job_client(authorize=True)
+        client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = str(tmpdir)
-    sample_file_path = Path(client.app["settings"]["data_path"]) / "samples" / "test"
+        client.app["settings"]["data_path"] = str(tmpdir)
 
-    await client.db.samples.insert_one({
-        "_id": "test",
-    })
+        await client.db.samples.insert_one({
+            "_id": "test",
+        })
 
-    resp = await client.put("/api/samples/test/reads/reads_1.fq.gz", data=data)
+        if not compressed:
+            mocker.patch("virtool.uploads.utils.naive_writer", side_effect=OSError("Not a gzipped file"))
 
-    if compressed and paired:
+        resp = await client.put("/api/samples/test/reads/reads_1.fq.gz", data=data)
+
+        if compressed:
+            assert resp.status == 201
+            snapshot.assert_match(await resp.json())
+        else:
+            assert await resp_is.bad_request(resp, "File is not compressed")
+
+    @pytest.mark.parametrize("conflict", [True, False])
+    async def test_upload_paired_reads(self, conflict, resp_is, spawn_job_client, tmpdir):
+        """
+        Test that paired sample reads can be uploaded using the Jobs API and that conflicts are properly handled.
+
+        """
+        path = Path.cwd() / "tests" / "test_files" / "samples"
+
+        data = {
+            "file": open(path / "reads_1.fq.gz", "rb")
+        }
+
+        client = await spawn_job_client(authorize=True)
+
+        client.app["settings"]["data_path"] = str(tmpdir)
+        sample_file_path = Path(client.app["settings"]["data_path"]) / "samples" / "test"
+
+        await client.db.samples.insert_one({
+            "_id": "test",
+        })
+
+        resp = await client.put("/api/samples/test/reads/reads_1.fq.gz", data=data)
+
         data["file"] = open(path / "reads_2.fq.gz", "rb")
         resp_2 = await client.put("/api/samples/test/reads/reads_2.fq.gz", data=data)
 
@@ -899,20 +920,11 @@ async def test_upload_reads(
             resp_3 = await client.put("/api/samples/test/reads/reads_2.fq.gz", data=data)
 
             assert await resp_is.conflict(resp_3, "Reads file is already associated with this sample")
-            return
 
-    if compressed:
         assert resp.status == 201
+        assert resp_2.status == 201
+        assert set(os.listdir(sample_file_path)) == {"reads_1.fq.gz", "reads_2.fq.gz"}
 
-        snapshot.assert_match(await resp.json())
-
-        if paired:
-            assert resp_2.status == 201
-            assert set(os.listdir(sample_file_path)) == {"reads_1.fq.gz", "reads_2.fq.gz"}
-        else:
-            assert os.listdir(sample_file_path) == ["reads_1.fq.gz"]
-    else:
-        assert await resp_is.bad_request(resp, "File is not compressed")
 
 
 @pytest.mark.parametrize("error", [None, "404"])
