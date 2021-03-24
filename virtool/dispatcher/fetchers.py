@@ -268,7 +268,7 @@ class UploadsFetcher(AbstractFetcher):
         async with AsyncSession(self._pg) as session:
             result = await session.execute(select(Upload).filter(Upload.id.in_(change.id_list)))
 
-        records = list(result.scalars())
+        records = list(result.unique().scalars())
 
         for record in records:
             for connection in connections:
