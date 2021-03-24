@@ -6,7 +6,7 @@ from typing import Optional, Union
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
-from virtool.pg.Base import Base
+from virtool.pg.base import Base
 
 logger = logging.getLogger(__name__)
 
