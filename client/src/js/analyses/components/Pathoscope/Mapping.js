@@ -73,13 +73,13 @@ export const AnalysisMapping = ({ index, reference, subtraction, toReference, to
     );
 };
 
-const mapStateToProps = state => {
-    const { index, read_count, reference, subtractedCount, subtraction } = state.analyses.detail;
+export const mapStateToProps = state => {
+    const { index, read_count, reference, subtractedCount, subtractions } = state.analyses.detail;
 
     return {
         index,
         reference,
-        subtraction,
+        subtraction: subtractions[0],
         toReference: read_count,
         toSubtraction: subtractedCount,
         total: state.samples.detail.quality.count
