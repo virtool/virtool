@@ -64,7 +64,7 @@ class MigrateFilesTask(virtool.tasks.task.Task):
 
 
 async def create(pg: AsyncEngine, name: str, upload_type: str, reserved: bool = False,
-                 user: Union[None, str] = None) -> Dict[str, any]:
+                 user: Optional[str] = None) -> Dict[str, any]:
     """
     Creates a new row in the `uploads` SQL table. Returns a dictionary representation
     of the new row.

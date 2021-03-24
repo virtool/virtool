@@ -1,4 +1,5 @@
 from sqlalchemy import Column, DateTime, Enum, Integer, String
+from sqlalchemy.sql.schema import ForeignKey
 
 from virtool.pg.utils import Base, SQLEnum
 
@@ -51,6 +52,7 @@ class SampleReadsFile(Base):
     name = Column(String(length=13), nullable=False)
     name_on_disk = Column(String, nullable=False)
     size = Column(Integer)
+    upload = Column(Integer, ForeignKey('uploads.id'))
     uploaded_at = Column(DateTime)
 
     def __repr__(self):
