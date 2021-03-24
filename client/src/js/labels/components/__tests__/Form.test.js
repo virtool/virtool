@@ -25,15 +25,13 @@ describe("<LabelForm />", () => {
         expect(screen.getByLabelText("Name")).toHaveValue(props.name);
     });
 
-    it("should call onChange() when name field changed", () => {
+    it("should call onChange() when fields change", () => {
         renderWithProviders(<LabelForm {...props} />);
+
         const nameInput = screen.getByLabelText("Name");
         userEvent.type(nameInput, "B");
         expect(props.onChange).toHaveBeenCalledWith("name", "FooB");
-    });
 
-    it("should call onChange() when description field changed", () => {
-        renderWithProviders(<LabelForm {...props} />);
         const descriptionInput = screen.getByLabelText("Description");
         userEvent.type(descriptionInput, "A");
         expect(props.onChange).toHaveBeenCalledWith("description", "This is a test labelA");
