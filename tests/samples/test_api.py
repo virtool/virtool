@@ -11,7 +11,7 @@ import virtool.caches.utils
 import virtool.samples.db
 import virtool.uploads.db
 from virtool.labels.models import Label
-from virtool.samples.models import SampleReads, SampleArtifact
+from virtool.samples.models import SampleReads, SampleReadsCache, SampleArtifact
 from virtool.uploads.models import Upload
 
 
@@ -1193,6 +1193,52 @@ async def test_upload_reads_cache(paired, snapshot, static_time, spawn_job_clien
     else:
         snapshot.assert_match(await resp.json())
         assert os.listdir(cache_path) == ["reads_1.fq.gz"]
+
+
+@pytest.mark.parametrize("error", [None, "404_sample", "404_reads", "404_file", "404_cache"])
+async def test_download_reads_cache(error, spawn_job_client, pg, tmpdir):
+    """
+    Test that a sample reads cache can be downloaded using the Jobs API.
+
+    """
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    file_name = "reads_1.fq.gz"
+
+    if error != "404_file":
+        tmpdir.mkdir("caches").mkdir("aodp-abcdefgh").join(file_name).write("test")
+
+    if error != "404_sample":
+        await client.db.samples.insert_one({
+                "_id": "foo",
+            })
+
+    if error != "404_cache":
+        await client.db.caches.insert_one({
+            "key": "aodp-abcdefgh",
+            "sample": {
+                "id": "test"
+            }
+        })
+
+    sample_reads_cache = SampleReadsCache(id=1, sample="foo", name=file_name, name_on_disk=file_name)
+
+    if error != "404_reads":
+        async with AsyncSession(pg) as session:
+                session.add(sample_reads_cache)
+                await session.commit()
+
+    resp = await client.get("/api/samples/foo/caches/aodp-abcdefgh/reads_1.fq.gz")
+
+    expected_path = Path(client.app["settings"]["data_path"]) / "caches" / "aodp-abcdefgh" / file_name
+
+    if error:
+        assert resp.status == 404
+    else:
+        assert resp.status == 200
+        assert expected_path.read_bytes() == await resp.content.read()
 
 
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
