@@ -1,6 +1,6 @@
 import React from "react";
-import { Button, Input, InputError, InputGroup, InputLabel, ModalBody, ModalFooter } from "../../base";
-import { ColorSelector } from "./ColorSelector";
+import styled from "styled-components";
+import { Box, Button, Color, Input, InputError, InputGroup, InputLabel, ModalBody, ModalFooter } from "../../base";
 
 export const LabelForm = ({ color, description, errorColor, errorName, name, onChange, onColorChange, onSubmit }) => {
     const handleSubmit = e => {
@@ -22,7 +22,10 @@ export const LabelForm = ({ color, description, errorColor, errorName, name, onC
                     <InputLabel htmlFor="label-description">Description</InputLabel>
                     <Input id="label-description" name="description" value={description} onChange={handleChange} />
                 </InputGroup>
-                <ColorSelector color={color} errorColor={errorColor} onColorChange={onColorChange} />
+                <InputGroup>
+                    <InputLabel>Color</InputLabel>
+                    <Color value={color} onChange={onColorChange} />
+                </InputGroup>
             </ModalBody>
             <ModalFooter>
                 <Button type="submit" color="blue" icon="save" name="save">
