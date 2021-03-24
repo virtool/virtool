@@ -20,6 +20,7 @@ import virtool.jobs.db
 import virtool.otus.utils
 import virtool.samples.db
 import virtool.tasks.task
+import virtool.tasks.pg
 import virtool.types
 import virtool.utils
 from virtool.analyses.models import AnalysisFile
@@ -113,6 +114,12 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
                     target_path
                 )
 
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            step="store_nuvs_files"
+        )
+
     async def remove_directory(self):
         """
         Remove `<data_path>`/samples/:id/analysis/:id directory after files have been preserved in
@@ -133,6 +140,12 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
 
             if os.path.isdir(os.path.join(settings["data_path"], "analyses", analysis_id)):
                 await self.app["run_in_thread"](shutil.rmtree, path, True)
+
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            step="remove_directory"
+        )
 
 
 class BLAST:

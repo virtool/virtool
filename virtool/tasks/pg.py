@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 import virtool.db.utils
 import virtool.utils
+
 from virtool.tasks.models import Task
 
 
@@ -40,16 +41,14 @@ async def get(pg: AsyncEngine, task_id: int) -> dict:
     return document
 
 
-async def register(pg, task_runner, task_class, context: dict = None) -> dict:
+async def register(pg, task_class, context: dict = None) -> dict:
     """
     Create a new task record and insert it into SQL databse.
 
-    Add the new task to TaskRunner.
-
     :param pg: an AsyncEngine object
-    :param task_runner: a :class:``virtool.tasks.runner.TaskRunner``
-    :param task_class: a dict for mapping task string name to task class
+    :param task_class: a subclass of a Virtool :class:`~virtool.tasks.task.Task`
     :param context: A dict containing data used by the task
+
     :return: the new task record
 
     """
@@ -67,8 +66,6 @@ async def register(pg, task_runner, task_class, context: dict = None) -> dict:
         await session.flush()
         document = task.to_dict()
         await session.commit()
-
-    await task_runner.q.put(document["id"])
 
     return document
 

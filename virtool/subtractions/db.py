@@ -53,6 +53,12 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         """
         settings = self.app["settings"]
 
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            step="rename_index_files"
+        )
+
         async for subtraction in self.db.subtraction.find(ADD_SUBTRACTION_FILES_QUERY):
             path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
             await self.app["run_in_thread"](virtool.subtractions.utils.rename_bowtie_files, path)
@@ -63,6 +69,12 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
 
         """
         settings = self.app["settings"]
+
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            step="add_files_field"
+        )
 
         async for subtraction in self.db.subtraction.find(ADD_SUBTRACTION_FILES_QUERY):
             path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])

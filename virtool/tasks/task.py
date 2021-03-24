@@ -14,6 +14,8 @@ logger = logging.getLogger("task")
 
 class Task:
 
+    task_type = None
+
     def __init__(self, app, task_id):
         self.app = app
         self.db = app["db"]

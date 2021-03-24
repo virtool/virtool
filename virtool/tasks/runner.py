@@ -4,13 +4,13 @@ import logging
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import virtool.tasks.task
 from virtool.tasks.models import Task
-from virtool.tasks.classes import TASK_CLASSES
 
 
 class TaskRunner:
-    def __init__(self, app):
-        self.q = asyncio.Queue()
+    def __init__(self, channel, app):
+        self._channel = channel
         self.app = app
 
     async def run(self):
@@ -20,13 +20,12 @@ class TaskRunner:
             while True:
                 logging.info("Waiting for next task")
                 await asyncio.sleep(0.3)
-                task_id = await self.q.get()
 
+                task_id = await self._channel.get_json()
                 logging.info(f"Task starting: {task_id}")
 
                 await self.run_task(task_id)
 
-                self.q.task_done()
                 logging.info(f"Task finished: {task_id}")
 
         except asyncio.CancelledError:
@@ -44,7 +43,11 @@ class TaskRunner:
             document = result.scalar().to_dict()
 
         loop = asyncio.get_event_loop()
-        task_class = TASK_CLASSES[document["type"]](self.app, task_id)
-        task = loop.create_task(task_class.run())
+
+        for task_class in virtool.tasks.task.Task.__subclasses__():
+            if document["type"] == task_class.task_type:
+                current_task = task_class(self.app, task_id)
+
+        task = loop.create_task(current_task.run())
 
         await task

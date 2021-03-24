@@ -104,8 +104,8 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
 
     mocker.patch("virtool.references.db.UpdateRemoteReferenceTask")
 
-    m_register = mocker.patch(
-        "virtool.tasks.pg.register",
+    m_add_task = mocker.patch(
+        "virtool.tasks.client.TasksClient.add",
         make_mocked_coro({
             "id": "task"
         })
@@ -145,9 +145,7 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
         assert await resp_is.bad_request(resp, "Target release does not exist")
         return
 
-    m_register.assert_called_with(
-        client.app["pg"],
-        client.app["task_runner"],
+    m_add_task.assert_called_with(
         UpdateRemoteReferenceTask,
         context={
             "created_at": static_time.datetime,

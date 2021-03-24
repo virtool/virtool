@@ -5,6 +5,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 import virtool.tasks.task
+import virtool.tasks.pg
 import virtool.uploads.utils
 import virtool.utils
 
@@ -61,6 +62,12 @@ class MigrateFilesTask(virtool.tasks.task.Task):
                     await session.commit()
 
                     await self.db.files.delete_one({"_id": document["_id"]})
+
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            step="transform_documents_to_rows"
+        )
 
 
 async def create(pg: AsyncEngine, name: str, upload_type: str, reserved: bool = False,

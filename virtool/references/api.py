@@ -176,11 +176,7 @@ async def update(req):
         "user_id": user_id
     }
 
-    task = await virtool.tasks.pg.register(
-        req.app["pg"],
-        req.app["task_runner"],
-        UpdateRemoteReferenceTask,
-        context=context)
+    task = await req.app["tasks"].add(UpdateRemoteReferenceTask, context=context)
 
     release, update_subdocument = await asyncio.shield(virtool.references.db.update(
         req,
@@ -354,11 +350,7 @@ async def create(req):
             "user_id": user_id
         }
 
-        task = await virtool.tasks.pg.register(
-            req.app["postgres"],
-            req.app["task_runner"],
-            CloneReferenceTask,
-            context=context)
+        task = await req.app["tasks"].add(CloneReferenceTask, context=context)
 
         document["task"] = {
             "id": task["id"]
@@ -386,11 +378,7 @@ async def create(req):
             "user_id": user_id
         }
 
-        task = await virtool.tasks.pg.register(
-            req.app["postgres"],
-            req.app["task_runner"],
-            ImportReferenceTask,
-            context=context)
+        task = await req.app["tasks"].add(ImportReferenceTask, context=context)
 
         document["task"] = {
             "id": task["id"]
@@ -431,11 +419,7 @@ async def create(req):
             "user_id": user_id
         }
 
-        task = await virtool.tasks.pg.register(
-            req.app["postgres"],
-            req.app["task_runner"],
-            RemoteReferenceTask,
-            context=context)
+        task = await req.app["tasks"].add(RemoteReferenceTask, context=context)
 
         document["task"] = {
             "id": task["id"]
@@ -569,11 +553,7 @@ async def remove(req):
         "user_id": user_id
     }
 
-    task = await virtool.tasks.pg.register(
-        req.app["postgres"],
-        req.app["task_runner"],
-        DeleteReferenceTask,
-        context=context)
+    task = await req.app["tasks"].add(DeleteReferenceTask, context=context)
 
     await db.references.delete_one({
         "_id": ref_id

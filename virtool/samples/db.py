@@ -16,6 +16,7 @@ import virtool.errors
 import virtool.jobs.db
 import virtool.samples.utils
 import virtool.samples.utils
+import virtool.tasks.pg
 import virtool.pg.utils
 import virtool.utils
 from virtool.labels.models import Label
@@ -388,3 +389,10 @@ class CompressSamplesTask(Task):
             logger.info(
                 f"Compressed legacy sample {sample['_id']} ({tracker.progress}%)"
             )
+
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            step="compress_samples"
+        )
+
