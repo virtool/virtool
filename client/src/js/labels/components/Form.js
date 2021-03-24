@@ -1,6 +1,11 @@
 import React from "react";
 import styled from "styled-components";
 import { Box, Button, Color, Input, InputError, InputGroup, InputLabel, ModalBody, ModalFooter } from "../../base";
+import { SampleLabel } from "../../samples/components/Label";
+
+const LabelFormPreview = styled(Box)`
+    padding: 10px;
+`;
 
 export const LabelForm = ({ color, description, errorColor, errorName, name, onChange, onColorChange, onSubmit }) => {
     const handleSubmit = e => {
@@ -26,6 +31,10 @@ export const LabelForm = ({ color, description, errorColor, errorName, name, onC
                     <InputLabel>Color</InputLabel>
                     <Color value={color} onChange={onColorChange} />
                 </InputGroup>
+                <label>Preview</label>
+                <LabelFormPreview>
+                    <SampleLabel color={color} name={name || "Preview"} />
+                </LabelFormPreview>
             </ModalBody>
             <ModalFooter>
                 <Button type="submit" color="blue" icon="save" name="save">
