@@ -2,8 +2,10 @@ import logging
 import os
 
 import aiofiles
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-import virtool.utils
+from virtool.subtractions.models import SubtractionFile
 
 FILES = (
     "subtraction.fa.gz",
@@ -74,28 +76,20 @@ def join_subtraction_index_path(settings: dict, subtraction_id: str) -> str:
     )
 
 
-def prepare_files_field(path: str):
+async def prepare_files_field(pg: AsyncEngine, subtraction: str):
     """
-    Prepare a list of documents to be added to 'files' field,
-    and attach name, size, and type to the document.
+    Prepare a list of files from 'SubtractionFile' table to be added to 'files' field.
 
-    :param path: the subtraction path
+    :param pg: PostgreSQL AsyncEngine object
+    :param subtraction: the ID of the subtraction
+
     :return: a list of files to be added to subtraction documents
 
     """
-    files = list()
-    for file in sorted(os.listdir(path)):
-        if file in FILES:
-            file_path = os.path.join(path, file)
-            document = {
-                "size": virtool.utils.file_stats(file_path)["size"],
-                "name": file,
-                "type": check_subtraction_file_type(file)
-            }
+    async with AsyncSession(pg) as session:
+        files = (await session.execute(select(SubtractionFile).filter_by(subtraction=subtraction))).scalars().all()
 
-            files.append(document)
-
-    return files
+    return [file.to_dict() for file in files]
 
 
 def rename_bowtie_files(path: str):
