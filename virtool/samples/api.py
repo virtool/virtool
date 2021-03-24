@@ -15,7 +15,6 @@ import virtool.analyses.db
 import virtool.analyses.utils
 import virtool.api.utils
 import virtool.caches.db
-import virtool.caches.db
 import virtool.caches.utils
 import virtool.db.utils
 import virtool.errors
