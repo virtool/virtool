@@ -859,7 +859,7 @@ async def test_upload_artifacts(
 
 class TestUploadReads:
     @pytest.mark.parametrize("compressed", [True, False])
-    async def test_upload_reads(self, compressed, mocker, snapshot, spawn_job_client, static_time, resp_is, tmpdir):
+    async def test_upload_reads(self, compressed, mocker, snapshot, spawn_job_client, static_time, resp_is, pg, tmpdir):
         """
         Test that new sample reads can be uploaded using the Jobs API.
 
@@ -867,7 +867,7 @@ class TestUploadReads:
         path = Path.cwd() / "tests" / "test_files" / "samples"
 
         data = {
-            "file": open(path / ("reads_1.fq.gz"), "rb")
+            "file": open(path / "reads_1.fq.gz", "rb")
         }
 
         client = await spawn_job_client(authorize=True)
@@ -878,10 +878,12 @@ class TestUploadReads:
             "_id": "test",
         })
 
+        await virtool.uploads.db.create(pg, "test", "reads")
+
         if not compressed:
             mocker.patch("virtool.uploads.utils.naive_writer", side_effect=OSError("Not a gzipped file"))
 
-        resp = await client.put("/api/samples/test/reads/reads_1.fq.gz", data=data)
+        resp = await client.put("/api/samples/test/reads/reads_1.fq.gz?upload=1", data=data)
 
         if compressed:
             assert resp.status == 201
@@ -926,7 +928,6 @@ class TestUploadReads:
         assert set(os.listdir(sample_file_path)) == {"reads_1.fq.gz", "reads_2.fq.gz"}
 
 
-
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get_cache(error, snapshot, spawn_job_client, resp_is, static_time):
     client = await spawn_job_client(authorize=True)
@@ -954,6 +955,7 @@ async def test_get_cache(error, snapshot, spawn_job_client, resp_is, static_time
     assert resp.status == 200
 
     snapshot.assert_match(await resp.json())
+
 
 @pytest.mark.parametrize("suffix", ["1", "2"])
 @pytest.mark.parametrize("error", [None, "404_sample", "404_reads", "404_file"])
@@ -1131,7 +1133,7 @@ async def test_upload_artifact_cache(
 
     resp = await client.post(
         f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}",
-                             data=data)
+        data=data)
 
     if artifact_type == "fastq":
         assert resp.status == 201
