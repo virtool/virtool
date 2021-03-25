@@ -127,35 +127,7 @@ async def upload(job):
         }
     })
 
-    # Find OTUs with changes.
-    pipeline = [
-        {"$project": {
-            "reference": True,
-            "version": True,
-            "last_indexed_version": True,
-            "comp": {"$cmp": ["$version", "$last_indexed_version"]}
-        }},
-        {"$match": {
-            "reference.id": job.params["ref_id"],
-            "comp": {"$ne": 0}
-        }},
-        {"$group": {
-            "_id": "$version",
-            "id_list": {
-                "$addToSet": "$_id"
-            }
-        }}
-    ]
-
-    id_version_key = {agg["_id"]: agg["id_list"] async for agg in job.db.otus.aggregate(pipeline)}
-
-    # For each version number
-    for version, id_list in id_version_key.items():
-        await job.db.otus.update_many({"_id": {"$in": id_list}}, {
-            "$set": {
-                "last_indexed_version": version
-            }
-        })
+    await virtool.indexes.db.update_last_indexed_versions(job.db, job.params["ref_id"])
 
 
 async def build_json(job):
