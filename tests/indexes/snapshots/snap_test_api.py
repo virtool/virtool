@@ -285,3 +285,19 @@ snapshots['test_upload[uvloop-404] 2'] = {
         'id': 'test'
     }
 }
+
+snapshots['test_finalize[uvloop-None-genome] 1'] = {
+    'id': 'test_index',
+    'ready': True,
+    'reference': {
+        'id': 'hxn167'
+    }
+}
+
+snapshots['test_finalize[uvloop-None-None] 1'] = {
+    'id': 'test_index',
+    'ready': True,
+    'reference': {
+        'id': 'hxn167'
+    }
+}

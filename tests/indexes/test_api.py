@@ -1,3 +1,4 @@
+import asyncio
 import filecmp
 import gzip
 import json
@@ -11,7 +12,10 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy import select
 
+import virtool.indexes.files
+from virtool.indexes.db import FILES
 from virtool.indexes.models import IndexFile
+from virtool.indexes.utils import check_index_file_type
 
 OTUS_JSON_PATH = Path(sys.path[0]) / "tests/test_files/index/otus.json.gz"
 
@@ -575,6 +579,55 @@ async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session
         'type': 'bowtie2',
         'size': os.stat(path).st_size
     }
+
+
+@pytest.mark.parametrize("error, data_type",
+                         [("409_genome", "genome"), (None, "genome"), ("409_fasta", None), (None, None)])
+async def test_finalize(error, data_type, snapshot, spawn_job_client, test_otu, pg):
+    """
+    Test that an index can be finalized using the Jobs API.
+
+    """
+    client = await spawn_job_client(authorize=True)
+
+    files = ["reference.json.gz"] if error else FILES
+    if error == "409_genome":
+        files = ["reference.fa.gz"]
+    elif error == "409_fasta":
+        files = ["reference.json.gz"]
+    else:
+        files = FILES
+
+    await client.db.references.insert_one({
+        "_id": "hxn167",
+        "data_type": data_type,
+    })
+
+    await client.db.indexes.insert_one({
+        "_id": "test_index",
+        "reference": {
+            "id": "hxn167"
+        }
+    })
+
+    # change `version` that should be reflected in `last_indexed_version` after calling
+    test_otu["version"] = 1
+    await client.db.otus.insert_one(test_otu)
+
+    await asyncio.gather(
+        *[virtool.indexes.files.create_index_file(pg, "hxn167", check_index_file_type(file_name), file_name) for
+          file_name in files])
+
+    resp = await client.patch("/api/indexes/test_index")
+
+    if error:
+        assert resp.status == 409
+    else:
+        assert resp.status == 200
+        snapshot.assert_match(await resp.json())
+
+        otu = await client.db.otus.find_one("6116cba1", ["version", "last_indexed_version"])
+        assert otu["version"] == otu["last_indexed_version"]
 
 
 @pytest.mark.parametrize("status", [200, 404])

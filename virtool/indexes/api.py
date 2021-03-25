@@ -5,6 +5,8 @@ from pathlib import Path
 
 import aiohttp.web
 from aiohttp.web_fileresponse import FileResponse
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.api.json
 import virtool.api.utils
@@ -25,7 +27,7 @@ import virtool.utils
 from virtool.api.response import bad_request, conflict, insufficient_rights, invalid_query, \
     json_response, no_content, not_found
 from virtool.indexes.db import FILES, reset_history
-from virtool.indexes.models import IndexFile
+from virtool.indexes.models import IndexFile, IndexType
 from virtool.jobs.utils import JobRights
 from virtool.utils import compress_json_with_gzip
 
@@ -146,7 +148,7 @@ async def download_otus_json(req):
             req.app["settings"],
             index["manifest"]
         )
-        
+
         json_string = json.dumps(patched_otus, cls=virtool.api.json.CustomEncoder)
 
         await req.app["run_in_thread"](compress_json_with_gzip, json_string, json_path)
@@ -349,6 +351,61 @@ async def upload(req):
     return json_response(index_file, headers=headers, status=201)
 
 
+@routes.jobs_api.patch("/api/indexes/{index_id}")
+async def finalize(req):
+    """
+    Finalize an index by setting `ready` to `True` and update its `last_index_version` field.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+
+    index_id = req.match_info["index_id"]
+
+    index = await db.indexes.find_one(index_id)
+
+    if index is None:
+        return not_found("Index does not exist")
+
+    try:
+        ref_id = index["reference"]["id"]
+    except KeyError:
+        return bad_request("Index is not associated with a reference")
+
+    reference = await db.references.find_one(ref_id)
+
+    if reference is None:
+        return not_found("Reference associated with index does not exist")
+
+    if not await db.otus.find_one({"reference.id": ref_id}):
+        return not_found("OTU associated with reference does not exist")
+
+    async with AsyncSession(pg) as session:
+        query = await session.execute(
+            select(IndexFile).filter_by(reference=ref_id))
+
+    results = {f.name: f.type for f in query.scalars()}
+
+    if IndexType.fasta not in results.values():
+        return conflict("A FASTA file must be uploaded in order to finalize index")
+
+    if reference.get("data_type") == "genome":
+        required_files = [f for f in FILES if f != "reference.json.gz"]
+
+        if missing_files := [f for f in required_files if f not in results]:
+            return conflict(
+                f"Reference requires that all Bowtie2 index files have been uploaded. "
+                f"Missing files: {', '.join(missing_files)}")
+
+    await virtool.indexes.db.update_last_indexed_versions(db, ref_id)
+
+    document = await db.indexes.find_one_and_update({"_id": index_id}, {
+        "$set": {"ready": True}
+    })
+
+    return json_response(virtool.utils.base_processor(document))
+
+
 @routes.get("/api/indexes/{index_id}/history")
 async def find_history(req):
     """
@@ -398,6 +455,3 @@ async def delete_index(req: aiohttp.web.Request):
     await reset_history(db, index_id)
 
     return no_content()
-
-
-

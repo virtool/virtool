@@ -290,7 +290,14 @@ async def get_patched_otus(db, settings: dict, manifest: dict) -> typing.List[di
 
     return [j[1] for j in await asyncio.tasks.gather(*coros)]
 
+
 async def update_last_indexed_versions(db, ref_id):
+    """
+    Update the `last_indexed_version` field for OTUs associated with `ref_id`
+
+    :param db: Application database client
+    :param ref_id: An ID that corresponds to an entry in the `references` db
+    """
     # Find OTUs with changes.
     pipeline = [
         {"$project": {
