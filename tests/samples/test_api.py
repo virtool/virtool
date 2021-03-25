@@ -11,7 +11,7 @@ import virtool.caches.utils
 import virtool.samples.db
 import virtool.uploads.db
 from virtool.labels.models import Label
-from virtool.samples.models import SampleReads, SampleReadsCache, SampleArtifact
+from virtool.samples.models import SampleReads, SampleReadsCache, SampleArtifact, SampleArtifactCache
 from virtool.uploads.models import Upload
 
 
@@ -1205,34 +1205,83 @@ async def test_download_reads_cache(error, spawn_job_client, pg, tmpdir):
 
     client.app["settings"]["data_path"] = str(tmpdir)
 
-    file_name = "reads_1.fq.gz"
+    filename = "reads_1.fq.gz"
+    key = "aodp-abcdefgh"
 
     if error != "404_file":
-        tmpdir.mkdir("caches").mkdir("aodp-abcdefgh").join(file_name).write("test")
+        tmpdir.mkdir("caches").mkdir(key).join(filename).write("test")
 
     if error != "404_sample":
         await client.db.samples.insert_one({
-                "_id": "foo",
-            })
+            "_id": "foo",
+        })
 
     if error != "404_cache":
         await client.db.caches.insert_one({
-            "key": "aodp-abcdefgh",
+            "key": key,
+            "sample": {
+                "id": "test"
+            }
+        })
+    if error != "404_reads":
+        sample_reads_cache = SampleReadsCache(id=1, sample="foo", name=filename, name_on_disk=filename)
+
+        async with AsyncSession(pg) as session:
+            session.add(sample_reads_cache)
+            await session.commit()
+
+    resp = await client.get(f"/api/samples/foo/caches/{key}/reads/{filename}")
+
+    expected_path = Path(client.app["settings"]["data_path"]) / "caches" / key / filename
+
+    if error:
+        assert resp.status == 404
+    else:
+        assert resp.status == 200
+        assert expected_path.read_bytes() == await resp.content.read()
+
+
+@pytest.mark.parametrize("error", [None, "404_sample", "404_artifact", "404_file", "404_cache"])
+async def test_download_artifact_cache(error, spawn_job_client, pg, tmpdir):
+    """
+    Test that a sample artifact cache can be downloaded using the Jobs API.
+
+    """
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    key = "aodp-abcdefgh"
+    name = "fastqc.txt"
+    name_on_disk = "1-fastqc.txt"
+
+    if error != "404_file":
+        tmpdir.mkdir("caches").mkdir(key).join(name_on_disk).write("test")
+
+    if error != "404_sample":
+        await client.db.samples.insert_one({
+            "_id": "foo",
+        })
+
+    if error != "404_artifact":
+        sample_artfact_cache = SampleArtifactCache(id=1, sample="foo", name=name, name_on_disk=name_on_disk, type="fastq")
+
+        async with AsyncSession(pg) as session:
+            session.add(sample_artfact_cache)
+
+            await session.commit()
+
+    if error != "404_cache":
+        await client.db.caches.insert_one({
+            "key": key,
             "sample": {
                 "id": "test"
             }
         })
 
-    sample_reads_cache = SampleReadsCache(id=1, sample="foo", name=file_name, name_on_disk=file_name)
+    resp = await client.get(f"/api/samples/foo/caches/{key}/artifacts/{name}")
 
-    if error != "404_reads":
-        async with AsyncSession(pg) as session:
-                session.add(sample_reads_cache)
-                await session.commit()
-
-    resp = await client.get("/api/samples/foo/caches/aodp-abcdefgh/reads_1.fq.gz")
-
-    expected_path = Path(client.app["settings"]["data_path"]) / "caches" / "aodp-abcdefgh" / file_name
+    expected_path = Path(client.app["settings"]["data_path"]) / "caches" / key / name_on_disk
 
     if error:
         assert resp.status == 404
