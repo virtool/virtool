@@ -36,6 +36,12 @@ ADD_SUBTRACTION_FILES_QUERY = {
 
 
 class AddSubtractionFilesTask(virtool.tasks.task.Task):
+    """
+    Rename Bowtie2 index name from 'reference' to 'subtraction'.
+
+    Add a 'files' field to subtraction documents to list what files can be downloaded for that subtraction.
+
+    """
     task_type = "add_subtraction_files"
 
     def __init__(self, app: App, task_id: int):
@@ -77,9 +83,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         )
 
         async for subtraction in self.db.subtraction.find(ADD_SUBTRACTION_FILES_QUERY):
-            path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
-            files = await self.app["run_in_thread"](virtool.subtractions.utils.prepare_files_field, path)
-
+            files = await virtool.subtractions.utils.prepare_files_field(self.pg, subtraction["_id"])
             await self.db.subtraction.update_one({"_id": subtraction["_id"]}, {
                 "$set": {
                     "files": files

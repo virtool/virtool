@@ -9,7 +9,8 @@ from virtool.tasks.models import Task
 
 
 @pytest.mark.parametrize("ignore", [True, False])
-async def test_add_subtraction_files_task(ignore, mocker, tmpdir, spawn_client, dbi, pg_session, static_time):
+async def test_add_subtraction_files_task(ignore, mocker, tmpdir, spawn_client, dbi, pg_session,
+                                          static_time, test_subtraction_files):
     client = await spawn_client(authorize=True)
     client.app["settings"]["data_path"] = str(tmpdir)
 
@@ -71,20 +72,31 @@ async def test_add_subtraction_files_task(ignore, mocker, tmpdir, spawn_client, 
     document = await dbi.subtraction.find_one("foo")
 
     assert document == {
-        "_id": "foo",
-        "name": "Foo",
-        "nickname": "Foo Subtraction",
-        "deleted": False,
-        "files": [
+        '_id': 'foo',
+        'name': 'Foo',
+        'nickname': 'Foo Subtraction',
+        'deleted': False,
+        'files': [
             {
-                "size": os.stat(os.path.join(test_dir, "subtraction.1.bt2")).st_size,
-                "name": "subtraction.1.bt2",
-                "type": "bowtie2"
+                'id': 1,
+                'name': 'subtraction.fq.gz',
+                'subtraction': 'foo',
+                'type': 'fasta',
+                'size': 12345
             },
             {
-                "size": os.stat(os.path.join(test_dir, "subtraction.fa.gz")).st_size,
-                "name": "subtraction.fa.gz",
-                "type": "fasta"
+                'id': 2,
+                'name': 'subtraction.1.bt2',
+                'subtraction': 'foo',
+                'type': 'bowtie2',
+                'size': 56437
+            },
+            {
+                'id': 3,
+                'name': 'subtraction.2.bt2',
+                'subtraction': 'foo',
+                'type': 'bowtie2',
+                'size': 93845
             }
         ]
     }

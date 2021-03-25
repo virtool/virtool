@@ -15,26 +15,32 @@ def test_join_subtraction_path():
     assert path == "/foo/subtractions/bar"
 
 
-def test_prepare_files_field(tmpdir):
-    test_dir = tmpdir.mkdir("subtractions")
-    test_dir.join("subtraction.fa.gz").write("FASTA file")
-    test_dir.join("subtraction.1.bt2").write("Bowtie2 file")
-    path = os.path.join(tmpdir, "subtractions")
-
-    files = virtool.subtractions.utils.prepare_files_field(path)
+async def test_prepare_files_field(pg, test_subtraction_files):
+    files = await virtool.subtractions.utils.prepare_files_field(pg, "foo")
 
     assert files == [
-        {
-            'size': os.stat(os.path.join(path, "subtraction.1.bt2")).st_size,
-            'name': 'subtraction.1.bt2',
-            'type': 'bowtie2'
-        },
-        {
-            'size': os.stat(os.path.join(path, "subtraction.fa.gz")).st_size,
-            'name': 'subtraction.fa.gz',
-            'type': 'fasta'
-        }
-    ]
+            {
+                'id': 1,
+                'name': 'subtraction.fq.gz',
+                'subtraction': 'foo',
+                'type': 'fasta',
+                'size': 12345
+            },
+            {
+                'id': 2,
+                'name': 'subtraction.1.bt2',
+                'subtraction': 'foo',
+                'type': 'bowtie2',
+                'size': 56437
+            },
+            {
+                'id': 3,
+                'name': 'subtraction.2.bt2',
+                'subtraction': 'foo',
+                'type': 'bowtie2',
+                'size': 93845
+            }
+        ]
 
 
 def test_rename_bowtie_files(tmpdir):

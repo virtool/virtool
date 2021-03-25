@@ -18,6 +18,7 @@ from tests.fixtures.uploads import *
 from tests.fixtures.labels import *
 from tests.fixtures.tasks import *
 from tests.fixtures.settings import *
+from tests.fixtures.subtractions import *
 
 
 def pytest_addoption(parser):
