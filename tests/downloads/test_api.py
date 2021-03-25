@@ -66,34 +66,6 @@ async def test_all(get, missing, spawn_client):
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_download_subtraction(error, tmpdir, spawn_client, resp_is):
-    client = await spawn_client(authorize=True)
-
-    client.app["settings"]["data_path"] = str(tmpdir)
-
-    tmpdir.mkdir("subtractions").mkdir("foo").join("subtraction.fa.gz").write("test")
-
-    subtraction = {
-        "_id": "foo",
-        "name": "Foo",
-        "has_file": True
-    }
-
-    if error == "404":
-        subtraction["has_file"] = False
-
-    await client.db.subtraction.insert_one(subtraction)
-
-    resp = await client.get("/download/subtraction/foo")
-
-    if error == "404":
-        assert resp.status == 404
-        return
-
-    assert resp.status == 200
-
-
-@pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("paired", [True, False])
 async def test_download_cache_reads(error, paired, tmpdir, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
@@ -137,40 +109,4 @@ async def test_download_cache_reads(error, paired, tmpdir, spawn_client, resp_is
         return
 
     assert resp.status == 200
-
-
-@pytest.mark.parametrize("error", [None, "404"])
-async def test_download_bowtie2_files(error, tmpdir, spawn_client):
-    client = await spawn_client(authorize=True)
-
-    client.app["settings"]["data_path"] = str(tmpdir)
-
-    tmpdir.mkdir("subtractions").mkdir("foo").join("subtraction.1.bt2").write("test")
-
-    subtraction = {
-        "_id": "foo",
-        "name": "Foo",
-        "files": [
-            {
-                "name": "subtraction.1.bt2",
-                "size": 1234567,
-                "type": "bowtie2"
-            }
-        ]
-    }
-
-    if error == "404":
-        subtraction["files"] = []
-
-    await client.db.subtraction.insert_one(subtraction)
-
-    resp = await client.get("/download/subtraction/foo/subtraction.1.bt2")
-    expected_path = Path(client.app["settings"]["data_path"]) / "subtractions" / "foo" / "subtraction.1.bt2"
-
-    if error == "404":
-        assert resp.status == 404
-        return
-
-    assert resp.status == 200
-    assert expected_path.read_bytes() == await resp.content.read()
 
