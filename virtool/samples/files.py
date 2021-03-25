@@ -3,13 +3,15 @@ from typing import Dict, List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+import virtool.pg.utils
 import virtool.utils
 from virtool.samples.models import (
     SampleArtifact,
-    SampleReadsFile,
+    SampleReads,
     SampleArtifactCache,
-    SampleReadsFileCache,
+    SampleReadsCache,
 )
+from virtool.uploads.models import Upload
 
 
 async def get_existing_reads(
@@ -25,7 +27,7 @@ async def get_existing_reads(
     """
     async with AsyncSession(pg) as session:
         query = await session.execute(
-            select(SampleReadsFile if not cache else SampleReadsFileCache).filter_by(
+            select(SampleReads if not cache else SampleReadsCache).filter_by(
                 sample=sample
             )
         )
@@ -71,6 +73,7 @@ async def create_reads_file(
     name_on_disk: str,
     sample_id: str,
     cache: bool = False,
+    upload_id: int = None,
 ) -> Dict[str, any]:
     """
     Create a row in a SQL table that represents uploaded sample reads files.
@@ -81,11 +84,12 @@ async def create_reads_file(
     :param name_on_disk: Name of the newly uploaded file on disk
     :param sample_id: ID that corresponds to a parent sample
     :param cache: Whether the row should be created in the `sample_reads_files` or `sample_reads_files_cache` table
+    :param upload_id: ID for a row in the `uploads` table to pair with
     :return: List of dictionary representations of the newly created row(s)
     """
 
     async with AsyncSession(pg) as session:
-        reads = SampleReadsFile() if not cache else SampleReadsFileCache()
+        reads = SampleReads() if not cache else SampleReadsCache()
 
         reads.sample, reads.name, reads.name_on_disk, reads.size, reads.uploaded_at = (
             sample_id,
@@ -94,6 +98,9 @@ async def create_reads_file(
             size,
             virtool.utils.timestamp(),
         )
+
+        if upload_id and (upload := (await session.execute(select(Upload).filter_by(id=upload_id))).scalar()):
+            upload.reads.append(reads)
 
         session.add(reads)
 

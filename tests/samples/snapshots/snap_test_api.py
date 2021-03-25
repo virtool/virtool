@@ -580,45 +580,12 @@ snapshots['test_upload_artifacts[uvloop-fastq] 1'] = {
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
-snapshots['test_upload_reads[uvloop-True-True-False] 1'] = {
-    'id': 1,
-    'name': 'reads_1.fq.gz',
-    'name_on_disk': 'reads_1.fq.gz',
-    'sample': 'test',
-    'size': 9081,
-    'uploaded_at': '2015-10-06T20:00:00Z'
-}
-
-snapshots['test_upload_reads[uvloop-True-False-False] 1'] = {
-    'id': 1,
-    'name': 'reads_1.fq.gz',
-    'name_on_disk': 'reads_1.fq.gz',
-    'sample': 'test',
-    'size': 9081,
-    'uploaded_at': '2015-10-06T20:00:00Z'
-}
-
 snapshots['test_get_cache[uvloop-None] 1'] = {
     'id': 'bar',
     'key': 'abc123',
     'program': 'skewer-0.2.2',
     'sample': {
         'id': 'foo'
-    }
-}
-
-snapshots['test_create_cache[uvloop-key] 1'] = {
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': [
-    ],
-    'id': 'a1b2c3d4',
-    'key': 'aodp-abcdefgh',
-    'legacy': False,
-    'missing': False,
-    'paired': False,
-    'ready': False,
-    'sample': {
-        'id': 'test'
     }
 }
 
@@ -638,6 +605,7 @@ snapshots['test_upload_reads_cache[uvloop-True] 1'] = {
     'name_on_disk': 'reads_2.fq.gz',
     'sample': 'test',
     'size': 9081,
+    'upload': None,
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
@@ -647,6 +615,7 @@ snapshots['test_upload_reads_cache[uvloop-False] 1'] = {
     'name_on_disk': 'reads_1.fq.gz',
     'sample': 'test',
     'size': 9081,
+    'upload': None,
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
@@ -890,4 +859,14 @@ snapshots['TestCreateCache.test[uvloop-key] 1'] = {
     'sample': {
         'id': 'test'
     }
+}
+
+snapshots['TestUploadReads.test_upload_reads[uvloop-True] 1'] = {
+    'id': 1,
+    'name': 'reads_1.fq.gz',
+    'name_on_disk': 'reads_1.fq.gz',
+    'sample': 'test',
+    'size': 9081,
+    'upload': 1,
+    'uploaded_at': '2015-10-06T20:00:00Z'
 }

@@ -17,21 +17,18 @@ describe("<CreateLabel>", () => {
     it("should call onSubmit when successfully submitted", () => {
         renderWithProviders(<CreateLabel {...props} />);
 
-        const colorInput = screen.getByLabelText("Color");
         const nameInput = screen.getByLabelText("Name");
         const descriptionInput = screen.getByLabelText("Description");
 
-        userEvent.type(colorInput, "#1DAD57");
         userEvent.type(descriptionInput, "This is a description");
         userEvent.type(nameInput, "Foo");
 
-        expect(colorInput).toHaveValue("#1DAD57");
         expect(descriptionInput).toHaveValue("This is a description");
         expect(nameInput).toHaveValue("Foo");
 
         userEvent.click(screen.getByRole("button", { name: "Save" }));
 
-        expect(props.onSubmit).toHaveBeenCalledWith("Foo", "This is a description", "#1DAD57");
+        expect(props.onSubmit).toHaveBeenCalledWith("Foo", "This is a description", "#3C8786");
     });
 
     it("should render error when submitted without color", () => {
@@ -41,6 +38,7 @@ describe("<CreateLabel>", () => {
 
         userEvent.type(screen.getByLabelText("Name"), "Foo");
         userEvent.type(screen.getByLabelText("Description"), "This is a description");
+        userEvent.clear(screen.getByLabelText("Color"));
 
         userEvent.click(screen.getByRole("button", { name: "Save" }));
 

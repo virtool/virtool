@@ -1,14 +1,7 @@
 import React from "react";
 import styled from "styled-components";
-import { BoxGroupSection, Label, LinkIcon } from "../../base";
-
-const getContrastColor = props => {
-    const red = parseInt(props.color.substr(1, 2), 16);
-    const green = parseInt(props.color.substr(3, 2), 16);
-    const blue = parseInt(props.color.substr(5, 2), 16);
-    const yiq = (red * 299 + green * 587 + blue * 114) / 1000;
-    return yiq >= 128 ? "black" : "white";
-};
+import { BoxGroupSection, LinkIcon } from "../../base";
+import { SampleLabel } from "../../samples/components/Label";
 
 const LabelItemContainer = styled.div`
     position: relative;
@@ -21,12 +14,6 @@ const LabelItemBox = styled(BoxGroupSection)`
 
 const LabelItemExampleContainer = styled.div`
     min-width: 30%;
-`;
-
-const LabelItemExample = styled(Label)`
-    font-size: ${props => props.theme.fontSize.lg};
-    background-color: ${props => props.color};
-    color: ${getContrastColor};
 `;
 
 const LabelItemIcons = styled.div`
@@ -50,7 +37,7 @@ export const Item = ({ name, color, description, id }) => (
     <LabelItemContainer>
         <LabelItemBox>
             <LabelItemExampleContainer>
-                <LabelItemExample color={color}>{name}</LabelItemExample>
+                <SampleLabel name={name} color={color} />
             </LabelItemExampleContainer>
             {description}
         </LabelItemBox>

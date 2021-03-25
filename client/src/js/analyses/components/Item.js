@@ -17,10 +17,10 @@ const StyledAnalysisItem = styled(SpacedBox)`
     }
 `;
 
-const AnalysisItemContent = styled.div`
+const AnalysisItemTag = styled.span`
     align-items: center;
-    display: flex;
-    margin-top: 10px;
+    display: inline-flex;
+    margin-right: 15px;
 
     ${SlashList} {
         margin: 0;
@@ -28,11 +28,13 @@ const AnalysisItemContent = styled.div`
 
     i {
         margin-right: 5px;
-
-        &:last-of-type {
-            margin-left: 20px;
-        }
     }
+`;
+
+const AnalysisItemTags = styled.div`
+    align-items: center;
+    display: flex;
+    margin-top: 10px;
 `;
 
 const AnalysisItemTop = styled.div`
@@ -56,11 +58,18 @@ export const AnalysisItem = props => {
         ready,
         reference,
         sampleId,
-        subtraction,
+        subtractions,
         user,
         workflow,
         onRemove
     } = props;
+
+    const subtractionComponents = subtractions.map(subtraction => (
+        <AnalysisItemTag key={subtraction.id}>
+            <Icon name="not-equal" />
+            <Link to={`/subtraction/${subtraction.id}`}>{subtraction.name}</Link>
+        </AnalysisItemTag>
+    ));
 
     return (
         <StyledAnalysisItem>
@@ -69,19 +78,20 @@ export const AnalysisItem = props => {
                 <AnalysisItemRightIcon canModify={canModify} onRemove={onRemove} ready={ready} />
             </AnalysisItemTop>
             <Attribution user={user.id} time={created_at} />
-            <AnalysisItemContent>
-                <Icon name="equals" />
-                <SlashList>
-                    <li>
-                        <Link to={`/refs/${reference.id}`}>{reference.name}</Link>
-                    </li>
-                    <li>
-                        <Link to={`/refs/${reference.id}/indexes/${index.id}`}>Index {index.version}</Link>
-                    </li>
-                </SlashList>
-                <Icon name="not-equal" />
-                <Link to={`/subtraction/${subtraction.id}`}>{subtraction.name}</Link>
-            </AnalysisItemContent>
+            <AnalysisItemTags>
+                <AnalysisItemTag key="reference">
+                    <Icon name="equals" />
+                    <SlashList>
+                        <li>
+                            <Link to={`/refs/${reference.id}`}>{reference.name}</Link>
+                        </li>
+                        <li>
+                            <Link to={`/refs/${reference.id}/indexes/${index.id}`}>Index {index.version}</Link>
+                        </li>
+                    </SlashList>
+                </AnalysisItemTag>
+                {subtractionComponents}
+            </AnalysisItemTags>
         </StyledAnalysisItem>
     );
 };

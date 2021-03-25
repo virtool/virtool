@@ -1,5 +1,4 @@
 import asyncio.tasks
-import aiohttp.web
 import logging
 import os
 from copy import deepcopy
@@ -18,7 +17,6 @@ import virtool.api.utils
 import virtool.caches.db
 import virtool.caches.utils
 import virtool.db.utils
-import virtool.caches.db
 import virtool.errors
 import virtool.http.routes
 import virtool.jobs.db
@@ -290,7 +288,7 @@ async def create(req):
 
     if non_existent_subtractions:
         return bad_request(f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
-        
+
     if "labels" in data:
         non_existent_labels = await check_labels(pg, data["labels"])
 
@@ -824,6 +822,11 @@ async def upload_reads(req):
     name = req.match_info["name"]
     sample_id = req.match_info["sample_id"]
 
+    try:
+        upload = int(req.query.get("upload"))
+    except TypeError:
+        upload = None
+
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         return bad_request("File name is not an accepted reads file")
 
@@ -845,7 +848,7 @@ async def upload_reads(req):
         logger.debug(f"Reads file upload aborted for {sample_id}")
         return aiohttp.web.Response(status=499)
 
-    reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id)
+    reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id, upload_id=upload)
 
     headers = {
         "Location": f"/api/samples/{sample_id}/reads/{reads['name_on_disk']}"

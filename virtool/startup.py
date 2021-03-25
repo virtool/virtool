@@ -32,7 +32,6 @@ import virtool.software.db
 import virtool.subtractions.db
 import virtool.subtractions.utils
 import virtool.tasks.pg
-import virtool.tasks.utils
 import virtool.utils
 import virtool.version
 
@@ -43,6 +42,7 @@ from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.samples.db import CompressSamplesTask
 from virtool.types import App
 from virtool.tasks.runner import TaskRunner
+from virtool.tasks.client import TasksClient
 from virtool.analyses.db import StoreNuvsFilesTask
 from virtool.uploads.db import MigrateFilesTask
 from virtool.subtractions.db import AddSubtractionFilesTask, WriteSubtractionFASTATask
@@ -329,33 +329,30 @@ async def init_task_runner(app: aiohttp.web.Application):
 
     """
     scheduler = get_scheduler_from_app(app)
-    app["task_runner"] = TaskRunner(app)
-    await scheduler.spawn(app["task_runner"].run())
+    channel, = await app["redis"].subscribe("channel:tasks")
+
+    app["tasks"] = TasksClient(app["redis"], app["pg"])
+
+    await scheduler.spawn(TaskRunner(channel, app).run())
 
 
 async def init_tasks(app: aiohttp.web.Application):
     if app["config"].get("no_check_db"):
         return logger.info("Skipping subtraction FASTA files checks")
 
-    pg = app["pg"]
     scheduler = get_scheduler_from_app(app)
 
     logger.info("Checking subtraction FASTA files")
     subtractions_without_fasta = await virtool.subtractions.db.check_subtraction_fasta_files(app["db"], app["settings"])
     for subtraction in subtractions_without_fasta:
-        await virtool.tasks.pg.register(
-            pg,
-            app["task_runner"],
-            WriteSubtractionFASTATask,
-            context={"subtraction": subtraction})
+        await app["tasks"].add(WriteSubtractionFASTATask, context={"subtraction": subtraction})
 
     logger.info("Checking index JSON files")
 
-    await virtool.tasks.pg.register(pg, app["task_runner"], CreateIndexJSONTask)
-    await virtool.tasks.pg.register(pg, app["task_runner"], DeleteReferenceTask, context={"user_id": "virtool"})
-    await virtool.tasks.pg.register(pg, app["task_runner"], AddSubtractionFilesTask)
-    await virtool.tasks.pg.register(pg, app["task_runner"], StoreNuvsFilesTask)
-    await virtool.tasks.pg.register(pg, app["task_runner"], StoreNuvsFilesTask)
-    await virtool.tasks.pg.register(pg, app["task_runner"], CompressSamplesTask)
+    await app["tasks"].add(CreateIndexJSONTask)
+    await app["tasks"].add(DeleteReferenceTask, context={"user_id": "virtool"})
+    await app["tasks"].add(AddSubtractionFilesTask)
+    await app["tasks"].add(StoreNuvsFilesTask)
+    await app["tasks"].add(CompressSamplesTask)
 
-    await scheduler.spawn(virtool.tasks.utils.spawn_periodically(app, MigrateFilesTask, 3600))
+    await scheduler.spawn(app["tasks"].add_periodic(MigrateFilesTask, 3600))

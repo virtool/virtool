@@ -129,9 +129,7 @@ async def install(req):
     if release is None:
         return bad_request("Target release does not exist")
 
-    task = await virtool.tasks.pg.register(
-        req.app["postgres"],
-        req.app["task_runner"],
+    task = await req.app["tasks"].add(
         HMMInstallTask,
         context={
             "user_id": user_id,

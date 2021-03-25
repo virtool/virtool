@@ -12,7 +12,7 @@ export class CreateLabel extends React.Component {
         super(props);
         this.state = {
             name: "",
-            color: "",
+            color: "#3C8786",
             description: "",
             errorName: "",
             errorColor: ""

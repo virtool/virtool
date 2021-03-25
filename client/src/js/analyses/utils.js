@@ -160,7 +160,19 @@ export const formatPathoscopeData = detail => {
         return detail;
     }
 
-    const { cache, created_at, results, id, index, read_count, ready, reference, subtraction, user, workflow } = detail;
+    const {
+        cache,
+        created_at,
+        results,
+        id,
+        index,
+        read_count,
+        ready,
+        reference,
+        subtractions,
+        user,
+        workflow
+    } = detail;
 
     const formatted = map(results, otu => {
         const isolateNames = [];
@@ -221,7 +233,7 @@ export const formatPathoscopeData = detail => {
         results: formatted,
         read_count,
         ready,
-        subtraction,
+        subtractions,
         subtractedCount: detail.subtracted_count,
         user,
         workflow

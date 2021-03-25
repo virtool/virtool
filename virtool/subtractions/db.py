@@ -6,7 +6,7 @@ import asyncio
 import glob
 import os
 import shutil
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import virtool.db.utils
 import virtool.subtractions.utils
@@ -59,6 +59,12 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         """
         settings = self.app["settings"]
 
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            step="rename_index_files"
+        )
+
         async for subtraction in self.db.subtraction.find(ADD_SUBTRACTION_FILES_QUERY):
             path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
             await self.app["run_in_thread"](virtool.subtractions.utils.rename_bowtie_files, path)
@@ -68,6 +74,14 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         Add a 'files' field to subtraction documents to list what files can be downloaded for that subtraction
 
         """
+        settings = self.app["settings"]
+
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            step="add_files_field"
+        )
+
         async for subtraction in self.db.subtraction.find(ADD_SUBTRACTION_FILES_QUERY):
             files = await virtool.subtractions.utils.prepare_files_field(self.pg, subtraction["_id"])
             await self.db.subtraction.update_one({"_id": subtraction["_id"]}, {
@@ -210,8 +224,16 @@ async def delete(app, subtraction_id):
     return update_result.modified_count
 
 
-async def get_linked_samples(db, subtraction_id):
-    cursor = db.samples.find({"subtraction.id": subtraction_id}, ["name"])
+async def get_linked_samples(db, subtraction_id: str) -> List[dict]:
+    """
+    Find all samples containing given 'subtraction_id' in 'subtractions' field.
+
+    :param db: the application database client
+    :param subtraction_id: the ID of the subtraction
+
+    :return: a list of dicts containing linked samples with 'id' and 'name' field.
+    """
+    cursor = db.samples.find({"subtractions": subtraction_id}, ["_id", "name"])
     return [virtool.utils.base_processor(d) async for d in cursor]
 
 
