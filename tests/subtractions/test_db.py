@@ -124,6 +124,27 @@ async def test_attach_subtractions(dbi):
     }
 
 
+async def test_get_linked_samples(dbi):
+    await dbi.samples.insert_many([
+        {"_id": "foo", "name": "Foo", "subtractions": ["1", "5", "3"]},
+        {"_id": "bar", "name": "Bar", "subtractions": ["2", "5", "8"]},
+        {"_id": "baz", "name": "Baz", "subtractions": ["2"]}
+    ])
+
+    samples = await virtool.subtractions.db.get_linked_samples(dbi, "5")
+
+    assert samples == [
+        {
+            "id": "foo",
+            "name": "Foo"
+        },
+        {
+            "id": "bar",
+            "name": "Bar"
+        }
+    ]
+
+
 async def test_unlink_default_subtractions(dbi):
     await dbi.samples.insert_many([
         {"_id": "foo", "subtractions": ["1", "2", "3"]},
@@ -132,8 +153,6 @@ async def test_unlink_default_subtractions(dbi):
     ])
 
     await unlink_default_subtractions(dbi, "2")
-
-
 
     assert await dbi.samples.find().to_list(None) == [
         {"_id": "foo", "subtractions": ["1", "3"]},

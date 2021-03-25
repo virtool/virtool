@@ -6,7 +6,7 @@ import asyncio
 import glob
 import os
 import shutil
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import virtool.db.utils
 import virtool.subtractions.utils
@@ -220,8 +220,16 @@ async def delete(app, subtraction_id):
     return update_result.modified_count
 
 
-async def get_linked_samples(db, subtraction_id):
-    cursor = db.samples.find({"subtraction.id": subtraction_id}, ["name"])
+async def get_linked_samples(db, subtraction_id: str) -> List[dict]:
+    """
+    Find all samples containing given 'subtraction_id' in 'subtractions' field.
+
+    :param db: the application database client
+    :param subtraction_id: the ID of the subtraction
+
+    :return: a list of dicts containing linked samples with 'id' and 'name' field.
+    """
+    cursor = db.samples.find({"subtractions": subtraction_id}, ["_id", "name"])
     return [virtool.utils.base_processor(d) async for d in cursor]
 
 
