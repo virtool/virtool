@@ -1,7 +1,7 @@
 import { capitalize, includes, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { getAccountAdministrator, getAccountId } from "../../account/selectors";
+import { getAccountAdministrator, getAccountId } from "../../../account/selectors";
 
 import {
     Box,
@@ -13,10 +13,10 @@ import {
     LoadingPlaceholder,
     NarrowContainer,
     Select
-} from "../../base";
-import { listGroups } from "../../groups/actions";
-import { updateSampleRights } from "../actions";
-import { getCanModifyRights } from "../selectors";
+} from "../../../base";
+import { listGroups } from "../../../groups/actions";
+import { updateSampleRights } from "../../actions";
+import { getCanModifyRights } from "../../selectors";
 
 export class SampleRights extends React.Component {
     componentDidMount() {

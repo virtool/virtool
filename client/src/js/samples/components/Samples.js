@@ -4,7 +4,7 @@ import { NarrowContainer, Container } from "../../base";
 
 import FileManager from "../../files/components/Manager";
 import Labels from "../../labels/components/Labels";
-import SampleDetail from "./Detail";
+import SampleDetail from "./Detail/Detail";
 import SamplesList from "./List";
 import SamplesSettings from "./Settings";
 import CreateSample from "./Create/Create";

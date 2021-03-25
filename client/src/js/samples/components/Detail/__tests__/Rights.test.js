@@ -1,7 +1,7 @@
-import { Select } from "../../../base";
+import { Select } from "../../../../base";
 import { SampleRights, mapStateToProps, mapDispatchToProps } from "../Rights";
-import { getCanModifyRights } from "../../selectors";
-jest.mock("../../selectors");
+import { getCanModifyRights } from "../../../selectors";
+jest.mock("../../../selectors");
 
 describe("<SampleRights />", () => {
     let props;
