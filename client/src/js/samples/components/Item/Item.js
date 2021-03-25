@@ -1,14 +1,15 @@
 import { find } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { pushState } from "../../../app/actions";
 import { getFontSize, getFontWeight } from "../../../app/theme";
-import { Attribution, Checkbox, Icon, LinkBox, Loader } from "../../../base";
+import { Attribution, Box, Checkbox, Icon, Loader } from "../../../base";
 import { selectSample } from "../../actions";
 import { getIsSelected } from "../../selectors";
-import { getLibraryTypeDisplayName } from "../../utils";
-import { SampleItemLabels } from "./Labels";
+import { SampleLibraryTypeLabel, SmallSampleLabel } from "../Label";
+import { SampleItemWorkflowTags } from "./Tags";
 
 const SampleIconContainer = styled.div`
     align-items: center;
@@ -16,11 +17,6 @@ const SampleIconContainer = styled.div`
     bottom: 0;
     display: flex;
     justify-content: center;
-    padding: 0 15px;
-    position: absolute;
-    right: 0;
-    top: 0;
-    z-index: 10;
 
     > div {
         align-items: center;
@@ -33,51 +29,51 @@ const SampleIconContainer = styled.div`
 `;
 
 const SampleItemCheckboxContainer = styled.div`
-    bottom: 0;
     cursor: pointer;
     display: flex;
-    justify-content: center;
-    left: 0;
-    padding-top: 12px;
-    top: 0;
-    position: absolute;
-    width: 45px;
-    z-index: 10;
+    padding-right: 15px;
 `;
 
-const SampleItemContainer = styled.div`
-    position: relative;
-`;
+const SampleItemLabels = styled.div`
+    margin-top: 10px;
 
-const SampleItemLibraryType = styled.div`
-    align-items: center;
-    color: ${props => props.theme.color.greyDark};
-    display: flex;
-    flex: 1;
-    font-size: ${getFontSize("lg")};
-    font-weight: ${getFontWeight("thick")};
-
-    i:first-child {
-        margin-right: 10px;
+    & > *:not(:last-child) {
+        margin-right: 5px;
     }
 `;
 
-const SampleItemLinkBox = styled(LinkBox)`
+const SampleItemData = styled.div`
+    display: flex;
+    flex: 3;
+    flex-direction: column;
+`;
+
+const SampleItemMain = styled.div`
     align-items: center;
     display: flex;
-    padding: 10px 45px 10px 45px;
     position: relative;
 `;
 
-const SampleItemTitle = styled.div`
-    flex: 3;
-    position: relative;
+const SampleItemWorkflows = styled.div`
+    display: flex;
+    flex: 2;
+`;
 
-    h5 {
+const SampleItemTitle = styled.div`
+    display: flex;
+    flex-direction: column;
+    flex: 3;
+
+    a {
         font-size: ${getFontSize("lg")};
         font-weight: ${getFontWeight("thick")};
         margin: 0;
     }
+`;
+
+const StyledSampleItem = styled(Box)`
+    align-items: stretch;
+    display: flex;
 `;
 
 class SampleItem extends React.Component {
@@ -117,25 +113,34 @@ class SampleItem extends React.Component {
         }
 
         return (
-            <SampleItemContainer>
+            <StyledSampleItem>
                 <SampleItemCheckboxContainer onClick={this.handleCheck}>
                     <Checkbox checked={this.props.checked} />
                 </SampleItemCheckboxContainer>
 
-                <SampleItemLinkBox to={`/samples/${this.props.id}`}>
-                    <SampleItemTitle>
-                        <h5>{this.props.name}</h5>
-                        <Attribution time={this.props.created_at} user={this.props.user.id} />
-                    </SampleItemTitle>
-                    <SampleItemLibraryType>
-                        <Icon name={this.props.library_type === "amplicon" ? "barcode" : "dna"} fixedWidth />
-                        <span> {getLibraryTypeDisplayName(this.props.library_type)}</span>
-                    </SampleItemLibraryType>
-                    <SampleItemLabels nuvs={this.props.nuvs} pathoscope={this.props.pathoscope} />
-                </SampleItemLinkBox>
-
+                <SampleItemData>
+                    <SampleItemMain>
+                        <SampleItemTitle>
+                            <Link to={`/samples/${this.props.id}`}>{this.props.name}</Link>
+                            <Attribution time={this.props.created_at} user={this.props.user.id} />
+                        </SampleItemTitle>
+                    </SampleItemMain>
+                    <SampleItemLabels>
+                        <SampleLibraryTypeLabel libraryType={this.props.library_type} />
+                        {this.props.labels.map(label => (
+                            <SmallSampleLabel key={label.id} {...label} />
+                        ))}
+                    </SampleItemLabels>
+                </SampleItemData>
+                <SampleItemWorkflows>
+                    <SampleItemWorkflowTags
+                        id={this.props.id}
+                        nuvs={this.props.nuvs}
+                        pathoscope={this.props.pathoscope}
+                    />
+                </SampleItemWorkflows>
                 {endIcon}
-            </SampleItemContainer>
+            </StyledSampleItem>
         );
     }
 }

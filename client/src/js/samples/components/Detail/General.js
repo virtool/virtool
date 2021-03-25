@@ -3,9 +3,9 @@ import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { BoxGroup, BoxGroupHeader, Table, Markdown, NarrowContainer } from "../../base";
-import { getLibraryTypeDisplayName } from "../utils";
-import EditSample from "./Edit/Edit";
+import { BoxGroup, BoxGroupHeader, Table, Markdown, NarrowContainer } from "../../../base";
+import { getLibraryTypeDisplayName } from "../../utils";
+import EditSample from "../Edit/Edit";
 import SampleFileSizeWarning from "./FileSizeWarning.js";
 
 const StyledSampleDetailGeneral = styled(NarrowContainer)`

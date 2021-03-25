@@ -3,7 +3,7 @@ import { includes, map, xor } from "lodash-es";
 import React from "react";
 import { Checkbox, Flex, FlexItem } from "../../base";
 import { findSamples } from "../actions";
-import { SampleItemLabel } from "./Item/Labels";
+import { SampleItemWorkflowTag } from "./Item/Tags";
 
 const statuses = [true, "ip", false];
 
@@ -12,7 +12,7 @@ const WorkflowStatus = ({ checked, status, workflow, onClick }) => (
         <Flex alignItems="center" style={{ cursor: "pointer", padding: "3px" }}>
             <Checkbox checked={checked} />
             <FlexItem pad={5}>
-                <SampleItemLabel icon="chart-area" label={workflow} ready={status} />
+                <SampleItemWorkflowTag icon="chart-area" label={workflow} ready={status} />
             </FlexItem>
         </Flex>
     </div>

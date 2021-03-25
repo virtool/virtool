@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { Link, Redirect, Route, Switch } from "react-router-dom";
 
-import Analyses from "../../analyses/components/Analyses";
+import Analyses from "../../../analyses/components/Analyses";
 import {
     Icon,
     LinkIcon,
@@ -15,16 +15,17 @@ import {
     ViewHeaderAttribution,
     ViewHeaderIcons,
     ViewHeaderTitle
-} from "../../base";
-import Cache from "../../caches/components/Detail";
-import { getError } from "../../errors/selectors";
-import { getSample } from "../actions";
-import { getCanModify } from "../selectors";
-import General from "./General";
-import Quality from "./Quality";
+} from "../../../base";
+import Cache from "../../../caches/components/Detail";
+import { getError } from "../../../errors/selectors";
+import { getSample } from "../../actions";
+import { getCanModify } from "../../selectors";
+import { SampleDetailFiles } from "../Files/Files";
+import Quality from "../Quality";
 import RemoveSample from "./Remove";
 import Rights from "./Rights";
-import { SampleDetailFiles } from "./Files/Files";
+import General from "./General";
+import SampleDetailLabels from "./Labels";
 
 const SampleDetail = ({ canModify, detail, error, history, match, onGetSample }) => {
     const sampleId = match.params.sampleId;
@@ -84,6 +85,7 @@ const SampleDetail = ({ canModify, detail, error, history, match, onGetSample })
                     </ViewHeaderIcons>
                 </ViewHeaderTitle>
                 <ViewHeaderAttribution time={created_at} user={user.id} />
+                <SampleDetailLabels />
             </ViewHeader>
 
             <Tabs bsStyle="tabs">
