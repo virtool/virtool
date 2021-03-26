@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, String, BigInteger
 from sqlalchemy.orm import relationship
 
 from virtool.pg.utils import Base, SQLEnum
@@ -32,7 +32,7 @@ class Upload(Base):
     removed = Column(Boolean, default=False, nullable=False)
     removed_at = Column(DateTime)
     reserved = Column(Boolean, default=False, nullable=False)
-    size = Column(Integer)
+    size = Column(BigInteger)
     type = Column(Enum(UploadType))
     user = Column(String)
     uploaded_at = Column(DateTime)

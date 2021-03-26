@@ -20,6 +20,7 @@ import virtool.tasks.pg
 import virtool.pg.utils
 import virtool.utils
 from virtool.labels.models import Label
+from virtool.samples.models import SampleReads
 from virtool.samples.utils import join_legacy_read_paths
 from virtool.tasks.task import Task
 from virtool.types import App
@@ -394,5 +395,83 @@ class CompressSamplesTask(Task):
             self.pg,
             self.id,
             step="compress_samples"
+        )
+
+
+async def move_sample_files_to_pg(app: App, sample: Dict[str, any]):
+    """
+    Creates a row in the `sample_reads` table for each file in a sample's `files` array, and
+    creates a row in the `uploads` table for information stored in a file's `from` field. The rows
+    are then linked via a SQL relationship.
+
+    :param app: the application object
+    :param sample: the sample document
+    """
+    files = sample.get("files")
+    sample_id = sample["_id"]
+
+    async with AsyncSession(app["pg"]) as session:
+        for file_ in files:
+            from_ = file_.get("from")
+
+            upload = Upload(
+                name=from_["name"], name_on_disk=from_["id"], size=from_["size"], uploaded_at=from_.get("uploaded_at"))
+
+            reads = SampleReads(name=file_["name"], name_on_disk=file_["name"], size=file_["size"], sample=sample_id)
+
+            upload.reads.append(reads)
+
+            session.add_all([upload, reads])
+
+        await session.commit()
+
+        await app["db"].samples.update_one({"_id": sample_id}, {
+            "$unset": {
+                "files": ""
+            }
+        })
+
+
+class MoveSampleFilesTask(Task):
+    """
+    Move pre-SQL samples' file information to new `sample_reads` and `uploads` tables.
+
+    """
+    task_type = "migrate_files"
+
+    def __init__(self, app, process_id):
+        super().__init__(app, process_id)
+
+        self.steps = [
+            self.move_sample_files
+        ]
+
+    async def move_sample_files(self):
+        query = {
+            "files": {"$exists": True, "$ne": ""},
+            "$or": [{"is_legacy": False}, {"is_legacy": True, "is_compressed": True}]
+        }
+
+        count = await self.db.samples.count_documents(query)
+
+        tracker = await self.get_tracker(count)
+
+        while True:
+            sample = await self.db.samples.find_one(query)
+
+            if sample is None:
+                break
+
+            await move_sample_files_to_pg(self.app, sample)
+            await tracker.add(1)
+
+            logger.info(
+                f"Moved files in sample {sample['_id']} to SQL ({tracker.progress}%)"
+            )
+
+        await virtool.tasks.pg.update(
+            self.pg,
+            self.id,
+            step="move_sample_files"
         )
 

@@ -53,3 +53,35 @@ snapshots['test_compress_sample_reads[uvloop-False] 1'] = {
     ],
     'paired': False
 }
+
+snapshots['test_move_sample_files_task[uvloop-False-False] 1'] = {
+    '_id': 'foo',
+    'is_compressed': False,
+    'is_legacy': False
+}
+
+snapshots['test_move_sample_files_task[uvloop-True-True] 1'] = {
+    '_id': 'foo',
+    'is_compressed': True,
+    'is_legacy': True
+}
+
+snapshots['test_move_sample_files_task[uvloop-True-False] 1'] = {
+    '_id': 'foo',
+    'files': [
+        {
+            'download_url': '/download/samples/oictwh/reads_1.fq.gz',
+            'from': {
+                'id': 'vorbsrmz-17TFP120_S21_R1_001.fastq.gz',
+                'name': 'vorbsrmz-17TFP120_S21_R1_001.fastq.gz',
+                'size': 239801249712,
+                'uploaded_at': None
+            },
+            'name': 'reads_1.fq.gz',
+            'raw': True,
+            'size': 213889231
+        }
+    ],
+    'is_compressed': False,
+    'is_legacy': True
+}
