@@ -23,8 +23,8 @@ class IndexFile(Base):
     __tablename__ = "index_files"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String)
-    index = Column(String)
+    name = Column(String, nullable=False)
+    index = Column(String, nullable=False)
     type = Column(Enum(IndexType))
     size = Column(Integer)
 
