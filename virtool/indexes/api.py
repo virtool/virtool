@@ -367,18 +367,12 @@ async def finalize(req):
     if index is None:
         return not_found("Index does not exist")
 
-    try:
-        ref_id = index["reference"]["id"]
-    except KeyError:
-        return bad_request("Index is not associated with a reference")
+    ref_id = index["reference"]["id"]
 
     reference = await db.references.find_one(ref_id)
 
     if reference is None:
         return not_found("Reference associated with index does not exist")
-
-    if not await db.otus.find_one({"reference.id": ref_id}):
-        return not_found("OTU associated with reference does not exist")
 
     async with AsyncSession(pg) as session:
         query = await session.execute(
