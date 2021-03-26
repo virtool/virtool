@@ -383,7 +383,7 @@ async def finalize(req):
     if IndexType.fasta not in results.values():
         return conflict("A FASTA file must be uploaded in order to finalize index")
 
-    if reference.get("data_type") == "genome":
+    if reference["data_type"] == "genome":
         required_files = [f for f in FILES if f != "reference.json.gz"]
 
         if missing_files := [f for f in required_files if f not in results]:

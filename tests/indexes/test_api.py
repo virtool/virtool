@@ -581,16 +581,14 @@ async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session
     }
 
 
-@pytest.mark.parametrize("error, data_type",
-                         [("409_genome", "genome"), (None, "genome"), ("409_fasta", None), (None, None)])
-async def test_finalize(error, data_type, snapshot, spawn_job_client, test_otu, pg):
+@pytest.mark.parametrize("error", [None, "409_genome", "409_fasta", "404_reference"])
+async def test_finalize(error, snapshot, spawn_job_client, test_otu, pg):
     """
     Test that an index can be finalized using the Jobs API.
 
     """
     client = await spawn_job_client(authorize=True)
 
-    files = ["reference.json.gz"] if error else FILES
     if error == "409_genome":
         files = ["reference.fa.gz"]
     elif error == "409_fasta":
@@ -598,10 +596,11 @@ async def test_finalize(error, data_type, snapshot, spawn_job_client, test_otu, 
     else:
         files = FILES
 
-    await client.db.references.insert_one({
-        "_id": "hxn167",
-        "data_type": data_type,
-    })
+    if error != "404_reference":
+        await client.db.references.insert_one({
+            "_id": "hxn167",
+            "data_type": "genome"
+        })
 
     await client.db.indexes.insert_one({
         "_id": "test_index",
@@ -620,11 +619,10 @@ async def test_finalize(error, data_type, snapshot, spawn_job_client, test_otu, 
 
     resp = await client.patch("/api/indexes/test_index")
 
-    if error:
-        assert resp.status == 409
-    else:
+    snapshot.assert_match(await resp.json())
+
+    if not error:
         assert resp.status == 200
-        snapshot.assert_match(await resp.json())
 
         otu = await client.db.otus.find_one("6116cba1", ["version", "last_indexed_version"])
         assert otu["version"] == otu["last_indexed_version"]
