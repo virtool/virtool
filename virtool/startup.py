@@ -195,9 +195,6 @@ async def init_job_interface(app: aiohttp.web_app.Application):
     :type app: :class:`aiohttp.aiohttp.web.Application`
 
     """
-    if app["settings"].get("no_job_interface"):
-        return logger.info("Running without job interface")
-
     app["jobs"] = virtool.jobs.interface.JobInterface(app)
 
 

@@ -80,7 +80,6 @@ def create_app(
             "no_check_db": True,
             "no_check_files": True,
             "no_fetching": True,
-            "no_job_interface": False,
             "no_sentry": True
         })
 
