@@ -9,7 +9,7 @@ async def test_delete_row(pg, pg_session):
         index_file = IndexFile(
             id=1,
             name="reference.1.bt2",
-            reference="foo",
+            index="foo",
             type="bowtie2",
             size=1234567
         )
