@@ -354,7 +354,7 @@ async def upload(req):
 @routes.jobs_api.patch("/api/indexes/{index_id}")
 async def finalize(req):
     """
-    Finalize an index by setting `ready` to `True` and update its `last_index_version` field.
+    Finalize an index by setting `ready` to `True` and update associated OTU's `last_indexed_version` field.
 
     """
     db = req.app["db"]
