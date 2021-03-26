@@ -24,10 +24,10 @@ class IndexFile(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    reference = Column(String)
+    index = Column(String)
     type = Column(Enum(IndexType))
     size = Column(Integer)
 
     def __repr__(self):
-        return f"<IndexFile(id={self.id}, name={self.name}, reference={self.reference}, type={self.type}, " \
+        return f"<IndexFile(id={self.id}, name={self.name}, index={self.index}, type={self.type}, " \
                f"size={self.size} "
