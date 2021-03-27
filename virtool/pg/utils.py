@@ -105,3 +105,31 @@ async def get_row(
             return None
 
     return row
+
+
+async def get_rows(
+    pg: AsyncEngine,
+    query: Union[str, int, bool, SQLEnum],
+    model: Base,
+    filter_: str = "name",
+) -> Optional[Base]:
+    """
+    Get one or more rows from the `model` SQL model by its `filter_`. By default, rows will be fetched by their `name`.
+
+    :param pg: PostgreSQL AsyncEngine object
+    :param query: A query to filter by
+    :param model: A model to retrieve a row from
+    :param filter_: A table column to search for a given `query`
+    :return: Row from the given SQL model
+    """
+    async with AsyncSession(pg) as session:
+        rows = (
+            await session.execute(
+                select(model).filter(getattr(model, filter_) == query)
+            )
+        ).scalars()
+
+        if not rows:
+            return None
+
+        return rows

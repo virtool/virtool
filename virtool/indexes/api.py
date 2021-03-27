@@ -5,8 +5,6 @@ from pathlib import Path
 
 import aiohttp.web
 from aiohttp.web_fileresponse import FileResponse
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.api.json
 import virtool.api.utils
@@ -374,11 +372,9 @@ async def finalize(req):
     if reference is None:
         return not_found("Reference associated with index does not exist")
 
-    async with AsyncSession(pg) as session:
-        query = await session.execute(
-            select(IndexFile).filter_by(reference=ref_id))
+    rows = await virtool.pg.utils.get_rows(pg, ref_id, IndexFile, "reference")
 
-    results = {f.name: f.type for f in query.scalars()}
+    results = {f.name: f.type for f in rows}
 
     if IndexType.fasta not in results.values():
         return conflict("A FASTA file must be uploaded in order to finalize index")
