@@ -1,7 +1,10 @@
 import os
+from pathlib import Path
 
 import aiohttp.test_utils
 import pytest
+
+from virtool.subtractions.models import SubtractionFile
 
 
 @pytest.mark.parametrize("data", [
@@ -182,3 +185,58 @@ async def test_job_remove(exists, ready, tmpdir, spawn_job_client, snapshot, res
 
     snapshot.assert_match(await client.db.subtraction.find_one("foo"))
     snapshot.assert_match(await client.db.samples.find_one("test"))
+
+
+@pytest.mark.parametrize("error", [None, "400_subtraction", "400_file", "400_path"])
+async def test_download_subtraction_files(error, tmpdir, spawn_job_client, pg_session):
+    client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = str(tmpdir)
+
+    test_dir = tmpdir.mkdir("subtractions").mkdir("foo")
+
+    if error != "400_path":
+        test_dir.join("subtraction.fa.gz").write("FASTA file")
+        test_dir.join("subtraction.1.bt2").write("Bowtie2 file")
+
+    subtraction = {
+        "_id": "foo",
+        "name": "Foo"
+    }
+
+    if error != "400_subtraction":
+        await client.db.subtraction.insert_one(subtraction)
+
+    file_1 = SubtractionFile(
+        id=1,
+        name="subtraction.fa.gz",
+        subtraction="foo",
+        type="fasta"
+    )
+
+    file_2 = SubtractionFile(
+        id=2,
+        name="subtraction.1.bt2",
+        subtraction="foo",
+        type="bowtie2"
+    )
+
+    if error != "400_file":
+        async with pg_session as session:
+            session.add_all([file_1, file_2])
+            await session.commit()
+
+    fasta_resp = await client.get("/api/subtractions/foo/files/subtraction.fa.gz")
+    bowtie_resp = await client.get("/api/subtractions/foo/files/subtraction.1.bt2")
+
+    if not error:
+        assert fasta_resp.status == bowtie_resp.status == 200
+    else:
+        assert fasta_resp.status == bowtie_resp.status == 404
+        return
+
+    fasta_expected_path = Path(client.app["settings"]["data_path"]) / "subtractions" / "foo" / "subtraction.fa.gz"
+    bowtie_expected_path = Path(client.app["settings"]["data_path"]) / "subtractions" / "foo" / "subtraction.1.bt2"
+
+    assert fasta_expected_path.read_bytes() == await fasta_resp.content.read()
+    assert bowtie_expected_path.read_bytes() == await bowtie_resp.content.read()

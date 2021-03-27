@@ -1,8 +1,13 @@
 import asyncio
 import logging
+import os
 from pathlib import Path
 
 import aiohttp.web
+from aiohttp.web_fileresponse import FileResponse
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 import virtool.api.utils
 import virtool.db.utils
 import virtool.http.routes
@@ -355,3 +360,46 @@ async def job_remove(req: aiohttp.web.Request):
     await virtool.subtractions.db.delete(req.app, subtraction_id)
 
     return no_content()
+
+
+@routes.jobs_api.get("/api/subtractions/{subtraction_id}/files/{filename}")
+async def download_subtraction_files(req: aiohttp.web.Request):
+    """
+    Download a Bowtie2 index file or a FASTA file for the given subtraction.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+    subtraction_id = req.match_info["subtraction_id"]
+    filename = req.match_info["filename"]
+
+    document = await db.subtraction.find_one(subtraction_id)
+
+    if document is None:
+        return virtool.api.response.not_found()
+
+    if filename not in FILES:
+        return bad_request("Unsupported subtraction file name")
+
+    async with AsyncSession(pg) as session:
+        result = (await session.execute(
+            select(SubtractionFile).filter_by(subtraction=subtraction_id, name=filename)
+        )).scalar()
+
+    if not result:
+        return not_found()
+
+    file = result.to_dict()
+
+    file_path = os.path.join(
+        virtool.subtractions.utils.join_subtraction_path(req.app["settings"], subtraction_id),
+        filename
+    )
+
+    if not os.path.isfile(file_path):
+        return virtool.api.response.not_found()
+
+    return FileResponse(file_path, headers={
+        "Content-Length": file["size"],
+        "Content-Type": "application/gzip"
+    })

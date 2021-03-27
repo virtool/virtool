@@ -13,7 +13,7 @@ async def test_create_index_file(spawn_client, pg, pg_session):
     assert index_file == result.to_dict() == {
         'id': 1,
         'name': 'reference.1.bt2',
-        'reference': 'foo',
+        'index': 'foo',
         'type': 'bowtie2',
         'size': None
     }

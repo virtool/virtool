@@ -575,7 +575,7 @@ async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session
     assert result.to_dict() == {
         'id': 1,
         'name': 'reference.1.bt2',
-        'reference': 'bar',
+        'index': 'foo',
         'type': 'bowtie2',
         'size': os.stat(path).st_size
     }

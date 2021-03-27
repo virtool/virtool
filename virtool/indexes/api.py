@@ -315,7 +315,7 @@ async def upload(req):
 
     index_file = await virtool.indexes.files.create_index_file(
         pg,
-        reference_id,
+        index_id,
         file_type,
         file_name
     )
