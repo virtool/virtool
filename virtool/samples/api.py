@@ -425,6 +425,9 @@ async def create(req):
     },
     "labels": {
         "type": "list"
+    },
+    "subtractions": {
+        "type": "list"
     }
 })
 async def edit(req):
@@ -457,6 +460,15 @@ async def edit(req):
 
         if non_existent_labels:
             return bad_labels_response(non_existent_labels)
+
+    if "subtractions" in data:
+        non_existent_subtractions = await virtool.db.utils.check_missing_ids(
+            db.subtraction,
+            data["subtractions"]
+        )
+
+        if non_existent_subtractions:
+            return bad_request(f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": data
