@@ -26,14 +26,14 @@ async def test_delete_row(pg, pg_session):
 
 
 async def test_get_rows(pg, pg_session):
-    index_1 = IndexFile(id=1, name="reference.1.bt2", reference="foo", type="bowtie2", size=1234567)
-    index_2 = IndexFile(id=2, name="reference.2.bt2", reference="foo", type="bowtie2", size=1234567)
-    index_3 = IndexFile(id=3, name="reference.3.bt2", reference="foo", type="bowtie2", size=1234567)
+    index_1 = IndexFile(id=1, name="reference.1.bt2", index="foo", type="bowtie2", size=1234567)
+    index_2 = IndexFile(id=2, name="reference.2.bt2", index="foo", type="bowtie2", size=1234567)
+    index_3 = IndexFile(id=3, name="reference.3.bt2", index="foo", type="bowtie2", size=1234567)
 
     async with pg_session as session:
         session.add_all([index_1, index_2, index_3])
         await session.commit()
 
-    results = await virtool.pg.utils.get_rows(pg, "foo", IndexFile, "reference")
+    results = await virtool.pg.utils.get_rows(pg, "foo", IndexFile, "index")
 
     assert len(results.all()) == 3

@@ -372,7 +372,7 @@ async def finalize(req):
     if reference is None:
         return not_found("Reference associated with index does not exist")
 
-    rows = await virtool.pg.utils.get_rows(pg, ref_id, IndexFile, "reference")
+    rows = await virtool.pg.utils.get_rows(pg, index_id, IndexFile, "index")
 
     results = {f.name: f.type for f in rows}
 
