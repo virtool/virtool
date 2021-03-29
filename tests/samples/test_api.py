@@ -457,6 +457,49 @@ class TestCreate:
             assert await resp_is.bad_request(resp, "Labels do not exist: 1")
 
 
+@pytest.mark.parametrize("error", [None, "400"])
+async def test_edit(error, snapshot, spawn_client, resp_is):
+    client = await spawn_client(authorize=True, administrator=True)
+
+    await client.db.samples.insert_one({
+        "_id": "test",
+        "name": "Test",
+        "all_read": True,
+        "all_write": True,
+        "subtractions": ["apple"]
+    })
+
+    subtractions = [
+        {
+            "_id": "foo",
+            "name": "Foo"
+        }
+    ]
+
+    if error != "400":
+        subtractions.append(
+            {
+                "_id": "bar",
+                "name": "Bar"
+            }
+        )
+
+    await client.db.subtraction.insert_many(subtractions)
+
+    data = {
+        "subtractions": ["foo", "bar"]
+    }
+
+    resp = await client.patch("/api/samples/test", data)
+
+    if error == "400":
+        assert await resp_is.bad_request(resp, "Subtractions do not exist: bar")
+        return
+
+    assert resp.status == 200
+    snapshot.assert_match(await resp.json())
+
+
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
 async def test_finalize(field, snapshot, spawn_job_client, resp_is):
     """
@@ -1264,7 +1307,8 @@ async def test_download_artifact_cache(error, spawn_job_client, pg, tmpdir):
         })
 
     if error != "404_artifact":
-        sample_artfact_cache = SampleArtifactCache(id=1, sample="foo", name=name, name_on_disk=name_on_disk, type="fastq")
+        sample_artfact_cache = SampleArtifactCache(id=1, sample="foo", name=name, name_on_disk=name_on_disk,
+                                                   type="fastq")
 
         async with AsyncSession(pg) as session:
             session.add(sample_artfact_cache)

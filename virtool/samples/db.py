@@ -41,6 +41,7 @@ LIST_PROJECTION = [
     "user",
     "notes",
     "labels",
+    "subtractions"
 ]
 
 PROJECTION = [

@@ -870,3 +870,14 @@ snapshots['TestUploadReads.test_upload_reads[uvloop-True] 1'] = {
     'upload': 1,
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
+
+snapshots['test_edit[uvloop-None] 1'] = {
+    'id': 'test',
+    'labels': [
+    ],
+    'name': 'Test',
+    'subtractions': [
+        'foo',
+        'bar'
+    ]
+}
