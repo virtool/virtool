@@ -457,47 +457,166 @@ class TestCreate:
             assert await resp_is.bad_request(resp, "Labels do not exist: 1")
 
 
-@pytest.mark.parametrize("error", [None, "400"])
-async def test_edit(error, snapshot, spawn_client, resp_is):
-    client = await spawn_client(authorize=True, administrator=True)
+class TestEdit:
+    async def test(self, snapshot, spawn_client, pg: AsyncEngine, pg_session):
+        """
+        Test that an existing sample can be edited correctly.
 
-    await client.db.samples.insert_one({
-        "_id": "test",
-        "name": "Test",
-        "all_read": True,
-        "all_write": True,
-        "subtractions": ["apple"]
-    })
+        """
+        client = await spawn_client(authorize=True, administrator=True)
 
-    subtractions = [
-        {
+        await client.db.samples.insert_one({
+            "_id": "test",
+            "name": "Test",
+            "all_read": True,
+            "all_write": True,
+            "lables": [2, 3],
+            "subtractions": ["apple"]
+        })
+
+        await client.db.subtraction.insert_one({
             "_id": "foo",
             "name": "Foo"
-        }
-    ]
+        })
 
-    if error != "400":
-        subtractions.append(
+        label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+        async with pg_session as session:
+            session.add(label)
+            await session.commit()
+
+        data = {
+            "name": "test_sample",
+            "subtractions": ["foo"],
+            "labels": [1],
+            "notes": "This is a test."
+        }
+
+        resp = await client.patch("/api/samples/test", data)
+
+        assert resp.status == 200
+        snapshot.assert_match(await resp.json())
+
+    @pytest.mark.parametrize("exists", [True, False])
+    async def test_name_exists(self, exists, snapshot, spawn_client, resp_is):
+        """
+        Test that a ``bad_request`` is returned if the sample name passed in ``name`` does not exist.
+
+        """
+        client = await spawn_client(authorize=True, administrator=True)
+
+        samples = [
             {
-                "_id": "bar",
-                "name": "Bar"
+                "_id": "foo",
+                "name": "Foo",
+                "all_read": True,
+                "all_write": True,
+            }
+        ]
+
+        if exists:
+            samples.append(
+                {
+                    "_id": "bar",
+                    "name": "Bar"
+                }
+            )
+
+        await client.db.samples.insert_many(samples)
+
+        data = {
+            "name": "Bar"
+        }
+
+        resp = await client.patch("/api/samples/foo", data)
+
+        if exists:
+            assert await resp_is.bad_request(resp, "Sample name is already in use")
+            return
+
+        assert resp.status == 200
+        snapshot.assert_match(await resp.json())
+
+    @pytest.mark.parametrize("exists", [True, False])
+    async def test_label_exist(self, exists, snapshot, spawn_client, resp_is, pg_session):
+        """
+        Test that a ``bad_request`` is returned if the label passed in ``labels`` does not exist.
+
+        """
+        client = await spawn_client(authorize=True, administrator=True)
+
+        await client.db.samples.insert_one(
+            {
+                "_id": "foo",
+                "name": "Foo",
+                "all_read": True,
+                "all_write": True,
+                "labels": [2, 3]
             }
         )
+        if exists:
+            label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+            async with pg_session as session:
+                session.add(label)
+                await session.commit()
 
-    await client.db.subtraction.insert_many(subtractions)
+        data = {
+            "labels": [1]
+        }
 
-    data = {
-        "subtractions": ["foo", "bar"]
-    }
+        resp = await client.patch("/api/samples/foo", data)
 
-    resp = await client.patch("/api/samples/test", data)
+        if not exists:
+            assert await resp_is.bad_request(resp, "Labels do not exist: 1")
+            return
 
-    if error == "400":
-        assert await resp_is.bad_request(resp, "Subtractions do not exist: bar")
-        return
+        assert resp.status == 200
+        snapshot.assert_match(await resp.json())
 
-    assert resp.status == 200
-    snapshot.assert_match(await resp.json())
+    @pytest.mark.parametrize("exists", [True, False])
+    async def test_subtraction_exists(self, exists, snapshot, spawn_client, resp_is):
+        """
+        Test that a ``bad_request`` is returned if the subtraction passed in ``subtractions`` does not exist.
+
+        """
+        client = await spawn_client(authorize=True, administrator=True)
+
+        await client.db.samples.insert_one({
+            "_id": "test",
+            "name": "Test",
+            "all_read": True,
+            "all_write": True,
+            "subtractions": ["apple"]
+        })
+
+        subtractions = [
+            {
+                "_id": "foo",
+                "name": "Foo"
+            }
+        ]
+
+        if exists:
+            subtractions.append(
+                {
+                    "_id": "bar",
+                    "name": "Bar"
+                }
+            )
+
+        await client.db.subtraction.insert_many(subtractions)
+
+        data = {
+            "subtractions": ["foo", "bar"]
+        }
+
+        resp = await client.patch("/api/samples/test", data)
+
+        if not exists:
+            assert await resp_is.bad_request(resp, "Subtractions do not exist: bar")
+            return
+
+        assert resp.status == 200
+        snapshot.assert_match(await resp.json())
 
 
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
