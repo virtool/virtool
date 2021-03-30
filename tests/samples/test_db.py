@@ -577,8 +577,10 @@ async def test_compress_samples_task(mocker, dbi, pg: AsyncEngine, pg_session, s
     ])
 
 
-@pytest.mark.parametrize("legacy, compressed", [(False, False), (True, True), (True, False)])
-async def test_move_sample_files_task(legacy, compressed, dbi, pg, pg_session, snapshot, static_time):
+@pytest.mark.parametrize("legacy", [True, False])
+@pytest.mark.parametrize("compressed", [True, False])
+@pytest.mark.parametrize("paired", [True, False])
+async def test_move_sample_files_task(legacy, compressed, paired, dbi, pg, pg_session, snapshot, static_time):
     app_dict = {
         "db": dbi,
         "pg": pg,
@@ -603,8 +605,24 @@ async def test_move_sample_files_task(legacy, compressed, dbi, pg, pg_session, s
                     "uploaded_at": None,
                 },
             }
-        ]
+        ],
     }
+
+    if paired:
+        sample["files"].append(
+            {
+                "download_url": "/download/samples/oictwh/reads_2.fq.gz",
+                "name": "reads_2.fq.gz",
+                "raw": True,
+                "size": 213889231,
+                "from": {
+                    "id": "vorbsrmz-17TFP120_S21_R1_002.fastq.gz",
+                    "name": "vorbsrmz-17TFP120_S21_R1_002.fastq.gz",
+                    "size": 239801249712,
+                    "uploaded_at": None,
+                },
+            }
+        )
 
     await dbi.samples.insert_one(sample)
 
@@ -631,7 +649,7 @@ async def test_move_sample_files_task(legacy, compressed, dbi, pg, pg_session, s
 
     snapshot.assert_match(document)
 
-    if legacy == compressed:
+    if not legacy or (legacy and compressed):
         async with pg_session as session:
             sample_reads = (await session.execute(select(SampleReads).filter_by(id=1))).scalar()
             upload = (await session.execute(select(Upload).filter_by(id=1))).scalar()

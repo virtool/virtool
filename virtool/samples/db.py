@@ -448,7 +448,7 @@ class MoveSampleFilesTask(Task):
 
     async def move_sample_files(self):
         query = {
-            "files": {"$exists": True, "$ne": ""},
+            "files": {"$exists": True},
             "$or": [{"is_legacy": False}, {"is_legacy": True, "is_compressed": True}]
         }
 
