@@ -289,3 +289,41 @@ async def get_patched_otus(db, settings: dict, manifest: dict) -> typing.List[di
         ))
 
     return [j[1] for j in await asyncio.tasks.gather(*coros)]
+
+
+async def update_last_indexed_versions(db, ref_id):
+    """
+    Update the `last_indexed_version` field for OTUs associated with `ref_id`
+
+    :param db: Application database client
+    :param ref_id: An ID that corresponds to an entry in the `references` db
+    """
+    # Find OTUs with changes.
+    pipeline = [
+        {"$project": {
+            "reference": True,
+            "version": True,
+            "last_indexed_version": True,
+            "comp": {"$cmp": ["$version", "$last_indexed_version"]}
+        }},
+        {"$match": {
+            "reference.id": ref_id,
+            "comp": {"$ne": 0}
+        }},
+        {"$group": {
+            "_id": "$version",
+            "id_list": {
+                "$addToSet": "$_id"
+            }
+        }}
+    ]
+
+    id_version_key = {agg["_id"]: agg["id_list"] async for agg in db.otus.aggregate(pipeline)}
+
+    # For each version number
+    for version, id_list in id_version_key.items():
+        await db.otus.update_many({"_id": {"$in": id_list}}, {
+            "$set": {
+                "last_indexed_version": version
+            }
+        })

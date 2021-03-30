@@ -170,3 +170,16 @@ async def test_get_patched_otus(mocker, dbi):
         mocker.call(app_dict, "bar", 10),
         mocker.call(app_dict, "baz", 4)
     ])
+
+
+async def test_update_last_indexed_versions(dbi, test_otu, spawn_client):
+    client = await spawn_client(authorize=True)
+    test_otu["version"] = 1
+
+    await client.db.otus.insert_one(test_otu)
+
+    await virtool.indexes.db.update_last_indexed_versions(dbi, "hxn167")
+
+    document = await client.db.otus.find_one({"reference.id": "hxn167"})
+
+    assert document["last_indexed_version"] == document["version"]

@@ -285,3 +285,26 @@ snapshots['test_upload[uvloop-404] 2'] = {
         'id': 'test'
     }
 }
+
+snapshots['test_finalize[uvloop-None] 1'] = {
+    'id': 'test_index',
+    'ready': True,
+    'reference': {
+        'id': 'hxn167'
+    }
+}
+
+snapshots['test_finalize[uvloop-409_genome] 1'] = {
+    'id': 'conflict',
+    'message': 'Reference requires that all Bowtie2 index files have been uploaded. Missing files: reference.1.bt2, reference.2.bt2, reference.3.bt2, reference.4.bt2, reference.rev.1.bt2, reference.rev.2.bt2'
+}
+
+snapshots['test_finalize[uvloop-409_fasta] 1'] = {
+    'id': 'conflict',
+    'message': 'A FASTA file must be uploaded in order to finalize index'
+}
+
+snapshots['test_finalize[uvloop-404_reference] 1'] = {
+    'id': 'not_found',
+    'message': 'Reference associated with index does not exist'
+}

@@ -29,5 +29,5 @@ class IndexFile(Base):
     size = Column(Integer)
 
     def __repr__(self):
-        return f"<IndexFile(id={self.id}, name={self.name}, index={self.index}, type={self.type}, " \
-               f"size={self.size} "
+        return f"<IndexFile(id={self.id}, name={self.name}, reference={self.reference}, type={self.type}, " \
+               f"size={self.size}"
