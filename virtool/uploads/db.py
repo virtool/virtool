@@ -212,6 +212,7 @@ async def delete_row(pg: AsyncEngine, upload_id: int) -> Optional[dict]:
         if not upload or upload.removed:
             return None
 
+        upload.reads.clear()
         upload.removed = True
         upload.removed_at = virtool.utils.timestamp()
 

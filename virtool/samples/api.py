@@ -5,7 +5,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import aiohttp.web
-import pymongo
+import pymongo.errors
 from aiohttp.web_fileresponse import FileResponse
 from cerberus import Validator
 from sqlalchemy import select
@@ -33,7 +33,7 @@ from virtool.api.response import bad_request, conflict, insufficient_rights, inv
     json_response, no_content, not_found
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
-from virtool.samples.models import ArtifactType, SampleArtifact, SampleArtifactCache
+from virtool.samples.models import ArtifactType, SampleArtifact, SampleArtifactCache, SampleReads
 from virtool.samples.utils import bad_labels_response, check_labels
 from virtool.uploads.utils import is_gzip_compressed
 
@@ -493,6 +493,7 @@ async def finalize(req):
     Finalize a sample that is being created using the Jobs API by setting a sample's quality field and `ready` to `True`
 
     """
+    pg = req.app["pg"]
     db = req.app["db"]
     data = req["data"]
 
@@ -504,6 +505,15 @@ async def finalize(req):
             "ready": True
         }
     })
+
+    async with AsyncSession(pg) as session:
+        rows = (await session.execute(
+            select(SampleReads).filter(SampleReads.sample == sample_id, SampleReads.upload.isnot(None)))).scalars()
+
+    if rows:
+        uploads = {row.upload for row in rows}
+
+        await asyncio.gather(*[virtool.uploads.db.delete(req, pg, upload) for upload in uploads])
 
     processed = virtool.utils.base_processor(document)
 
@@ -1156,7 +1166,8 @@ async def download_artifact_cache(req):
         return not_found()
 
     async with AsyncSession(pg) as session:
-        result = (await session.execute(select(SampleArtifactCache).filter_by(sample=sample_id, name=filename))).scalar()
+        result = (
+            await session.execute(select(SampleArtifactCache).filter_by(sample=sample_id, name=filename))).scalar()
 
     if not result:
         return not_found()
