@@ -297,9 +297,9 @@ snapshots['test_finalize[uvloop-None] 1'] = {
         {
             'id': 1,
             'index': 'test_index',
-            'name': 'reference.2.bt2',
+            'name': 'reference.json.gz',
             'size': None,
-            'type': 'bowtie2'
+            'type': 'json'
         },
         {
             'id': 2,
@@ -311,42 +311,42 @@ snapshots['test_finalize[uvloop-None] 1'] = {
         {
             'id': 3,
             'index': 'test_index',
-            'name': 'reference.rev.1.bt2',
+            'name': 'reference.1.bt2',
             'size': None,
             'type': 'bowtie2'
         },
         {
             'id': 4,
             'index': 'test_index',
-            'name': 'reference.rev.2.bt2',
+            'name': 'reference.2.bt2',
             'size': None,
             'type': 'bowtie2'
         },
         {
             'id': 5,
             'index': 'test_index',
-            'name': 'reference.json.gz',
+            'name': 'reference.3.bt2',
             'size': None,
-            'type': 'json'
+            'type': 'bowtie2'
         },
         {
             'id': 6,
             'index': 'test_index',
-            'name': 'reference.1.bt2',
+            'name': 'reference.4.bt2',
             'size': None,
             'type': 'bowtie2'
         },
         {
             'id': 7,
             'index': 'test_index',
-            'name': 'reference.3.bt2',
+            'name': 'reference.rev.1.bt2',
             'size': None,
             'type': 'bowtie2'
         },
         {
             'id': 8,
             'index': 'test_index',
-            'name': 'reference.4.bt2',
+            'name': 'reference.rev.2.bt2',
             'size': None,
             'type': 'bowtie2'
         }
