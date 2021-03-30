@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from typing import Union, Optional, List, Dict, Type
 
 from sqlalchemy import select, update
@@ -180,7 +181,24 @@ async def get(pg: AsyncEngine, upload_id: int) -> Optional[Upload]:
         return upload
 
 
-async def delete(pg: AsyncEngine, upload_id: int) -> Optional[dict]:
+async def delete(req, pg: AsyncEngine, upload_id: int):
+    upload = await delete_row(pg, upload_id)
+
+    if not upload:
+        return None
+
+    try:
+        await req.app["run_in_thread"](
+            virtool.utils.rm,
+            Path(req.app["settings"]["data_path"]) / "files" / upload["name_on_disk"]
+        )
+    except FileNotFoundError:
+        pass
+
+    return upload
+
+
+async def delete_row(pg: AsyncEngine, upload_id: int) -> Optional[dict]:
     """
     Set the `removed` and `removed_at` attributes in the given row. Returns a dictionary representation of that row.
 

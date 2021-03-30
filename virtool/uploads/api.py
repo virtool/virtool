@@ -48,7 +48,7 @@ async def create(req):
         size = await virtool.uploads.utils.naive_writer(req, file_path)
     except asyncio.CancelledError:
         logger.debug(f"Upload aborted: {upload_id}")
-        await virtool.uploads.db.delete(pg, upload_id)
+        await virtool.uploads.db.delete_row(pg, upload_id)
 
         return aiohttp.web.Response(status=499)
 
@@ -127,17 +127,9 @@ async def delete(req):
     pg = req.app["pg"]
     upload_id = int(req.match_info["id"])
 
-    upload = await virtool.uploads.db.delete(pg, upload_id)
+    upload = await virtool.uploads.db.delete(req, pg, upload_id)
 
     if not upload:
         return not_found()
-
-    try:
-        await req.app["run_in_thread"](
-            os.remove,
-            Path(req.app["settings"]["data_path"]) / "files" / upload["name_on_disk"]
-        )
-    except FileNotFoundError:
-        pass
 
     return aiohttp.web.Response(status=204)
