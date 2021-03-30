@@ -90,7 +90,7 @@ async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_ses
 
 
 @pytest.mark.parametrize("error", [None, "404", "409", "422"])
-async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is):
+async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is, test_subtraction_files):
     subtraction = {
         "_id": "foo",
         "name": "Foo",
@@ -134,6 +134,7 @@ async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is):
 
     assert resp.status == 200
     snapshot.assert_match(await resp.json())
+
     document = await client.db.subtraction.find_one("foo")
     assert document == {
         "_id": "foo",
@@ -146,7 +147,30 @@ async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is):
             "c": 0.18,
             "n": 0.002
         },
-        "ready": True
+        "ready": True,
+        "files": [
+            {
+                "id": 1,
+                "name": "subtraction.fq.gz",
+                "size": 12345,
+                "subtraction": "foo",
+                "type": "fasta"
+            },
+            {
+                "id": 2,
+                "name": "subtraction.1.bt2",
+                "size": 56437,
+                "subtraction": "foo",
+                "type": "bowtie2"
+            },
+            {
+                "id": 3,
+                "name": "subtraction.2.bt2",
+                "size": 93845,
+                "subtraction": "foo",
+                "type": "bowtie2"
+            }
+        ]
     }
 
 
