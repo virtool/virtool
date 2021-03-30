@@ -8,11 +8,14 @@ import typing
 from typing import Union
 
 import pymongo
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 import virtool.api.utils
 import virtool.history
 import virtool.history.db
+import virtool.pg.utils
 import virtool.utils
+from virtool.indexes.models import IndexFile
 
 PROJECTION = [
     "_id",
@@ -327,3 +330,22 @@ async def update_last_indexed_versions(db, ref_id):
                 "last_indexed_version": version
             }
         })
+
+
+async def attach_files(pg: AsyncEngine, document: dict) -> dict:
+    """
+    Attach a list of index files under `files` field.
+
+    :param pg: PostgreSQL database connection object
+    :param document: An index document
+    :return: Index document with updated `files` entry containing a list of index files.
+
+    """
+    rows = await virtool.pg.utils.get_rows(pg, document["_id"], IndexFile, "index")
+
+    files = [row.to_dict() for row in rows]
+
+    return {
+        **document,
+        "files": files
+    }
