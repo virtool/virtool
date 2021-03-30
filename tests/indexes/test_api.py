@@ -613,9 +613,8 @@ async def test_finalize(error, snapshot, spawn_job_client, test_otu, pg):
     test_otu["version"] = 1
     await client.db.otus.insert_one(test_otu)
 
-    await asyncio.gather(
-        *[virtool.indexes.files.create_index_file(pg, "test_index", check_index_file_type(file_name), file_name) for
-          file_name in files])
+    for file_name in files:
+        await virtool.indexes.files.create_index_file(pg, "test_index", check_index_file_type(file_name), file_name)
 
     resp = await client.patch("/api/indexes/test_index")
 
