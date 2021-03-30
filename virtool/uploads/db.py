@@ -182,6 +182,14 @@ async def get(pg: AsyncEngine, upload_id: int) -> Optional[Upload]:
 
 
 async def delete(req, pg: AsyncEngine, upload_id: int):
+    """
+    "Delete" a row in the `uploads` table and remove it from the local disk.
+
+    :param req: HTTP request object
+    :param pg: PostgreSQL AsyncEngine object
+    :param upload_id: Row `id` to "delete"
+    :return: A dictionary representation of the deleted row
+    """
     upload = await delete_row(pg, upload_id)
 
     if not upload:
@@ -204,7 +212,7 @@ async def delete_row(pg: AsyncEngine, upload_id: int) -> Optional[dict]:
 
     :param pg: PostgreSQL AsyncEngine object
     :param upload_id: Row `id` to set attributes for
-    :return: A dictionary representation of the updated row
+    :return: A dictionary representation of the deleted row
     """
     async with AsyncSession(pg) as session:
         upload = (await session.execute(select(Upload).where(Upload.id == upload_id))).scalar()
