@@ -97,6 +97,7 @@ async def get(req):
 
     """
     db = req.app["db"]
+    pg = req.app["pg"]
 
     index_id = req.match_info["index_id"]
 
@@ -115,6 +116,8 @@ async def get(req):
         "contributors": contributors,
         "otus": otus,
     })
+
+    document = await virtool.indexes.db.attach_files(pg, document)
 
     document = await virtool.indexes.db.processor(db, document)
 
@@ -238,7 +241,8 @@ async def create(req):
         },
         "user": {
             "id": user_id
-        }
+        },
+        "files": []
     }
 
     await db.indexes.insert_one(document)
@@ -392,6 +396,8 @@ async def finalize(req):
     document = await db.indexes.find_one_and_update({"_id": index_id}, {
         "$set": {"ready": True}
     })
+
+    document = await virtool.indexes.db.attach_files(pg, document)
 
     return json_response(virtool.utils.base_processor(document))
 
