@@ -161,7 +161,7 @@ async def remove(req):
         if label is None:
             return not_found()
 
-        session.delete(label)
+        await session.delete(label)
         await session.commit()
 
     return no_content()
