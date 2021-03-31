@@ -608,9 +608,31 @@ snapshots['test_find[uvloop-fred-None-None-None-d_range6-meta6] 1'] = {
 }
 
 snapshots['test_finalize[uvloop-quality] 1'] = {
+    'artifacts': [
+        {
+            'id': 1,
+            'name': 'reference.fa.gz',
+            'name_on_disk': None,
+            'sample': 'test',
+            'size': None,
+            'type': 'fasta',
+            'uploaded_at': None
+        }
+    ],
     'id': 'test',
     'quality': {
     },
+    'reads': [
+        {
+            'id': 1,
+            'name': 'reads_1.fq.gz',
+            'name_on_disk': 'reads_1.fq.gz',
+            'sample': 'test',
+            'size': None,
+            'upload': None,
+            'uploaded_at': None
+        }
+    ],
     'ready': True
 }
 

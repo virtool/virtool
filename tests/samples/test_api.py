@@ -640,10 +640,11 @@ async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_sessi
 
     async with pg_session as session:
         upload = Upload(name="test", name_on_disk="test.fq.gz")
+        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta")
         reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
 
         upload.reads.append(reads)
-        session.add_all([upload, reads])
+        session.add_all([upload, artifact, reads])
 
         await session.commit()
 

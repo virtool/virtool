@@ -530,6 +530,8 @@ async def finalize(req):
 
         await session.commit()
 
+    document = await virtool.samples.db.attach_artifacts_and_reads(pg, document)
+
     processed = virtool.utils.base_processor(document)
 
     return json_response(processed)
