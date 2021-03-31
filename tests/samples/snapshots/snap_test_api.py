@@ -659,6 +659,8 @@ snapshots['test_finalize_cache[uvloop-quality] 1'] = {
 snapshots['TestCreate.test[uvloop-none] 1'] = {
     'all_read': True,
     'all_write': True,
+    'artifacts': [
+    ],
     'created_at': '2015-10-06T20:00:00Z',
     'files': [
         {
@@ -683,6 +685,8 @@ snapshots['TestCreate.test[uvloop-none] 1'] = {
     'paired': False,
     'pathoscope': False,
     'quality': None,
+    'reads': [
+    ],
     'ready': False,
     'subtractions': [
         'apple'
@@ -696,6 +700,8 @@ snapshots['TestCreate.test[uvloop-none] 2'] = {
     '_id': '9pfsom1b',
     'all_read': True,
     'all_write': True,
+    'artifacts': [
+    ],
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
         {
@@ -719,6 +725,8 @@ snapshots['TestCreate.test[uvloop-none] 2'] = {
     'paired': False,
     'pathoscope': False,
     'quality': None,
+    'reads': [
+    ],
     'ready': False,
     'subtractions': [
         'apple'
@@ -731,6 +739,8 @@ snapshots['TestCreate.test[uvloop-none] 2'] = {
 snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
     'all_read': True,
     'all_write': True,
+    'artifacts': [
+    ],
     'created_at': '2015-10-06T20:00:00Z',
     'files': [
         {
@@ -755,6 +765,8 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
     'paired': False,
     'pathoscope': False,
     'quality': None,
+    'reads': [
+    ],
     'ready': False,
     'subtractions': [
         'apple'
@@ -768,6 +780,8 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 2'] = {
     '_id': '9pfsom1b',
     'all_read': True,
     'all_write': True,
+    'artifacts': [
+    ],
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
         {
@@ -791,6 +805,8 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 2'] = {
     'paired': False,
     'pathoscope': False,
     'quality': None,
+    'reads': [
+    ],
     'ready': False,
     'subtractions': [
         'apple'
@@ -803,6 +819,8 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 2'] = {
 snapshots['TestCreate.test[uvloop-force_choice] 1'] = {
     'all_read': True,
     'all_write': True,
+    'artifacts': [
+    ],
     'created_at': '2015-10-06T20:00:00Z',
     'files': [
         {
@@ -827,6 +845,8 @@ snapshots['TestCreate.test[uvloop-force_choice] 1'] = {
     'paired': False,
     'pathoscope': False,
     'quality': None,
+    'reads': [
+    ],
     'ready': False,
     'subtractions': [
         'apple'
@@ -840,6 +860,8 @@ snapshots['TestCreate.test[uvloop-force_choice] 2'] = {
     '_id': '9pfsom1b',
     'all_read': True,
     'all_write': True,
+    'artifacts': [
+    ],
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
         {
@@ -863,6 +885,8 @@ snapshots['TestCreate.test[uvloop-force_choice] 2'] = {
     'paired': False,
     'pathoscope': False,
     'quality': None,
+    'reads': [
+    ],
     'ready': False,
     'subtractions': [
         'apple'
