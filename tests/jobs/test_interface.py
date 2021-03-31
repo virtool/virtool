@@ -4,27 +4,27 @@ import virtool.jobs.interface
 
 
 @pytest.fixture
-def job_interface(dbi, redis):
+def jobs_client(dbi, redis):
     app = {
         "db": dbi,
         "redis": redis
     }
 
-    return virtool.jobs.interface.JobInterface(app)
+    return virtool.jobs.interface.JobsClient(app)
 
 
-async def test_init(dbi, redis, job_interface):
-    assert job_interface.redis == redis
+async def test_init(dbi, redis, jobs_client):
+    assert jobs_client.redis == redis
 
 
 @pytest.mark.parametrize("size", ["lg", "sm"])
-async def test_enqueue(size, dbi, redis, job_interface):
+async def test_enqueue(size, dbi, redis, jobs_client):
     await dbi.jobs.insert_one({
         "_id": "foo",
         "task": "nuvs" if size == "lg" else "create_sample"
     })
 
-    await job_interface.enqueue("foo")
+    await jobs_client.enqueue("foo")
 
     key = f"jobs_{size}"
 
@@ -33,7 +33,7 @@ async def test_enqueue(size, dbi, redis, job_interface):
 
 
 @pytest.mark.parametrize("size", ["lg", "sm"])
-async def test_cancel_waiting(size, dbi, redis, job_interface, static_time):
+async def test_cancel_waiting(size, dbi, redis, jobs_client, static_time):
     await redis.rpush(f"jobs_{size}", "foo")
 
     list_keys = ["jobs_lg", "jobs_sm"]
@@ -53,7 +53,7 @@ async def test_cancel_waiting(size, dbi, redis, job_interface, static_time):
         }]
     })
 
-    await job_interface.cancel("foo")
+    await jobs_client.cancel("foo")
 
     # Check that job ID was removed from lists.
     for key in list_keys:
@@ -82,7 +82,7 @@ async def test_cancel_waiting(size, dbi, redis, job_interface, static_time):
     }
 
 
-async def test_cancel_running(dbi, redis, job_interface):
+async def test_cancel_running(dbi, redis, jobs_client):
     channel, = await redis.subscribe("channel:cancel")
 
     await dbi.jobs.insert_one({
@@ -90,7 +90,7 @@ async def test_cancel_running(dbi, redis, job_interface):
         "state": "running"
     })
 
-    await job_interface.cancel("foo")
+    await jobs_client.cancel("foo")
 
     # Check that cancelling state is set of job document.
     assert await dbi.jobs.find_one() == {
