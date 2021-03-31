@@ -37,7 +37,7 @@ import virtool.version
 
 from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.events import DispatcherSQLEvents
-from virtool.dispatcher.client import RedisDispatcherClient
+from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.samples.db import CompressSamplesTask
 from virtool.types import App
@@ -116,7 +116,7 @@ async def init_db(app: App):
     """
     logger.info("Connecting to MongoDB")
 
-    dispatcher_interface = RedisDispatcherClient(app["redis"])
+    dispatcher_interface = DispatcherClient(app["redis"])
     await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
 
     app["db"] = await virtool.db.mongo.connect(app["config"], dispatcher_interface.enqueue_change)

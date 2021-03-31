@@ -8,7 +8,7 @@ from aioredis import Redis
 from virtool.dispatcher.operations import Operation
 
 
-class RedisDispatcherClient:
+class DispatcherClient:
 
     def __init__(self, redis: Redis):
         self._redis = redis
