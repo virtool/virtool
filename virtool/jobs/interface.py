@@ -9,7 +9,7 @@ from virtool.jobs.db import PROJECTION
 logger = logging.getLogger(__name__)
 
 
-class JobInterface:
+class JobsClient:
 
     def __init__(self, app):
         self.db = app["db"]

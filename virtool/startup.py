@@ -186,7 +186,7 @@ async def init_executors(app: aiohttp.web.Application):
     app["process_executor"] = process_executor
 
 
-async def init_job_interface(app: aiohttp.web_app.Application):
+async def init_jobs_client(app: aiohttp.web_app.Application):
     """
     An application `on_startup` callback that initializes a Virtool :class:`virtool.job_manager.Manager` object and
     puts it in app state.
@@ -195,7 +195,7 @@ async def init_job_interface(app: aiohttp.web_app.Application):
     :type app: :class:`aiohttp.aiohttp.web.Application`
 
     """
-    app["jobs"] = virtool.jobs.interface.JobInterface(app)
+    app["jobs"] = virtool.jobs.interface.JobsClient(app)
 
 
 async def init_http_client(app: aiohttp.web.Application):

@@ -71,7 +71,7 @@ def create_app(config):
         virtool.startup.init_tasks,
         virtool.startup.init_sentry,
         virtool.startup.init_check_db,
-        virtool.startup.init_job_interface,
+        virtool.startup.init_jobs_client,
         virtool.startup.init_refresh
     ])
 
