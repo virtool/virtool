@@ -206,27 +206,27 @@ async def test_attach_files(pg, pg_session):
 
     document = await virtool.indexes.db.attach_files(pg, document)
     assert document == {
-        '_id': 'foo',
-        'reference': {
-            'id': 'bar'
+        "_id": "foo",
+        "reference": {
+            "id": "bar"
         },
-        'user': {
-            'id': 'test'
+        "user": {
+            "id": "test"
         },
-        'files': [
+        "files": [
             {
-                'id': 1,
-                'name': 'reference.1.bt2',
-                'index': 'foo',
-                'type': 'bowtie2',
-                'size': 1234567
+                "id": 1,
+                "name": "reference.1.bt2",
+                "index": "foo",
+                "type": "bowtie2",
+                "size": 1234567
             },
             {
-                'id': 2,
-                'name': 'reference.2.bt2',
-                'index': 'foo',
-                'type': 'bowtie2',
-                'size': 1234567
+                "id": 2,
+                "name": "reference.2.bt2",
+                "index": "foo",
+                "type": "bowtie2",
+                "size": 1234567
             }
         ]
     }
