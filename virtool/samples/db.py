@@ -20,7 +20,7 @@ import virtool.tasks.pg
 import virtool.pg.utils
 import virtool.utils
 from virtool.labels.models import Label
-from virtool.samples.models import SampleReads
+from virtool.samples.models import SampleReads, SampleArtifact
 from virtool.samples.utils import join_legacy_read_paths
 from virtool.tasks.task import Task
 from virtool.types import App
@@ -72,6 +72,25 @@ RIGHTS_PROJECTION = {
     "all_write": True,
     "user": True
 }
+
+
+async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
+    """
+    Attaches associated sample artifacts and reads to a sample document for response.
+
+    :param pg: PostgreSQL AsyncEngine object
+    :param document: A document that represents a sample
+    :return: Updated document with associated sample artifacts
+    """
+    async with AsyncSession(pg) as session:
+        artifacts = (await session.execute(select(SampleArtifact).filter_by(sample=document["_id"]))).scalars()
+        reads_files = (await session.execute(select(SampleReads).filter_by(sample=document["_id"]))).scalars()
+
+    return {
+        **document,
+        "artifacts": [artifact.to_dict() for artifact in artifacts],
+        "reads": [reads_file.to_dict() for reads_file in reads_files]
+    }
 
 
 async def attach_labels(pg: AsyncEngine, document: dict) -> dict:

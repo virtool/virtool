@@ -161,6 +161,7 @@ async def get(req):
 
     """
     db = req.app["db"]
+    pg = req.app["pg"]
 
     sample_id = req.match_info["sample_id"]
 
@@ -191,7 +192,8 @@ async def get(req):
             })
 
     document = await virtool.subtractions.db.attach_subtractions(db, document)
-    document = await virtool.samples.db.attach_labels(req.app["pg"], document)
+    document = await virtool.samples.db.attach_labels(pg, document)
+    document = await virtool.samples.db.attach_artifacts_and_reads(pg, document)
 
     return json_response(virtool.utils.base_processor(document))
 

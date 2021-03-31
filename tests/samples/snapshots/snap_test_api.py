@@ -8,6 +8,17 @@ from snapshottest import GenericRepr, Snapshot
 snapshots = Snapshot()
 
 snapshots['test_get[uvloop-True-None] 1'] = {
+    'artifacts': [
+        {
+            'id': 1,
+            'name': 'reference.fa.gz',
+            'name_on_disk': None,
+            'sample': 'test',
+            'size': None,
+            'type': 'fasta',
+            'uploaded_at': None
+        }
+    ],
     'caches': [
     ],
     'created_at': '2015-10-06T20:00:00Z',
@@ -29,6 +40,17 @@ snapshots['test_get[uvloop-True-None] 1'] = {
         }
     ],
     'name': 'Test',
+    'reads': [
+        {
+            'id': 1,
+            'name': 'reads_1.fq.gz',
+            'name_on_disk': 'reads_1.fq.gz',
+            'sample': 'test',
+            'size': None,
+            'upload': None,
+            'uploaded_at': None
+        }
+    ],
     'ready': True,
     'subtractions': [
         {
@@ -43,6 +65,17 @@ snapshots['test_get[uvloop-True-None] 1'] = {
 }
 
 snapshots['test_get[uvloop-False-None] 1'] = {
+    'artifacts': [
+        {
+            'id': 1,
+            'name': 'reference.fa.gz',
+            'name_on_disk': None,
+            'sample': 'test',
+            'size': None,
+            'type': 'fasta',
+            'uploaded_at': None
+        }
+    ],
     'caches': [
     ],
     'created_at': '2015-10-06T20:00:00Z',
@@ -63,6 +96,17 @@ snapshots['test_get[uvloop-False-None] 1'] = {
         }
     ],
     'name': 'Test',
+    'reads': [
+        {
+            'id': 1,
+            'name': 'reads_1.fq.gz',
+            'name_on_disk': 'reads_1.fq.gz',
+            'sample': 'test',
+            'size': None,
+            'upload': None,
+            'uploaded_at': None
+        }
+    ],
     'ready': False,
     'subtractions': [
         {
