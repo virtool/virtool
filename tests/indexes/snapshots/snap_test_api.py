@@ -49,6 +49,8 @@ snapshots['TestCreate.test[True-uvloop] 1'] = {
 snapshots['TestCreate.test[True-uvloop] 2'] = {
     '_id': 'u3cuwaoq',
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'files': [
+    ],
     'has_files': True,
     'has_json': False,
     'job': {
@@ -67,6 +69,8 @@ snapshots['TestCreate.test[True-uvloop] 2'] = {
 
 snapshots['TestCreate.test[True-uvloop] 3'] = {
     'created_at': '2015-10-06T20:00:00Z',
+    'files': [
+    ],
     'has_files': True,
     'has_json': False,
     'id': 'u3cuwaoq',
@@ -219,6 +223,8 @@ snapshots['test_get[uvloop-None] 1'] = {
         }
     ],
     'created_at': '2015-10-06T20:00:00Z',
+    'files': [
+    ],
     'has_files': True,
     'id': 'foobar',
     'job': {
@@ -287,6 +293,64 @@ snapshots['test_upload[uvloop-404] 2'] = {
 }
 
 snapshots['test_finalize[uvloop-None] 1'] = {
+    'files': [
+        {
+            'id': 1,
+            'index': 'test_index',
+            'name': 'reference.json.gz',
+            'size': None,
+            'type': 'json'
+        },
+        {
+            'id': 2,
+            'index': 'test_index',
+            'name': 'reference.fa.gz',
+            'size': None,
+            'type': 'fasta'
+        },
+        {
+            'id': 3,
+            'index': 'test_index',
+            'name': 'reference.1.bt2',
+            'size': None,
+            'type': 'bowtie2'
+        },
+        {
+            'id': 4,
+            'index': 'test_index',
+            'name': 'reference.2.bt2',
+            'size': None,
+            'type': 'bowtie2'
+        },
+        {
+            'id': 5,
+            'index': 'test_index',
+            'name': 'reference.3.bt2',
+            'size': None,
+            'type': 'bowtie2'
+        },
+        {
+            'id': 6,
+            'index': 'test_index',
+            'name': 'reference.4.bt2',
+            'size': None,
+            'type': 'bowtie2'
+        },
+        {
+            'id': 7,
+            'index': 'test_index',
+            'name': 'reference.rev.1.bt2',
+            'size': None,
+            'type': 'bowtie2'
+        },
+        {
+            'id': 8,
+            'index': 'test_index',
+            'name': 'reference.rev.2.bt2',
+            'size': None,
+            'type': 'bowtie2'
+        }
+    ],
     'id': 'test_index',
     'ready': True,
     'reference': {
