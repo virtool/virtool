@@ -353,7 +353,10 @@ async def create(req):
         "user": {
             "id": user_id
         },
-        "paired": len(data["files"]) == 2
+        "paired": len(data["files"]) == 2,
+        # Associated artifacts and reads should not yet exist
+        "artifacts": [],
+        "reads": []
     })
 
     uploads = [(await virtool.uploads.db.get(pg, upload_id)).to_dict() for upload_id in data["files"]]
