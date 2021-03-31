@@ -470,7 +470,7 @@ class TestEdit:
             "name": "Test",
             "all_read": True,
             "all_write": True,
-            "lables": [2, 3],
+            "labels": [2, 3],
             "subtractions": ["apple"]
         })
 
@@ -499,7 +499,7 @@ class TestEdit:
     @pytest.mark.parametrize("exists", [True, False])
     async def test_name_exists(self, exists, snapshot, spawn_client, resp_is):
         """
-        Test that a ``bad_request`` is returned if the sample name passed in ``name`` does not exist.
+        Test that a ``bad_request`` is returned if the sample name passed in ``name`` already exists.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
@@ -537,7 +537,7 @@ class TestEdit:
         snapshot.assert_match(await resp.json())
 
     @pytest.mark.parametrize("exists", [True, False])
-    async def test_label_exist(self, exists, snapshot, spawn_client, resp_is, pg_session):
+    async def test_label_exists(self, exists, snapshot, spawn_client, resp_is, pg_session):
         """
         Test that a ``bad_request`` is returned if the label passed in ``labels`` does not exist.
 
