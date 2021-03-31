@@ -8,6 +8,8 @@ from snapshottest import Snapshot
 snapshots = Snapshot()
 
 snapshots['test_edit[uvloop-data0] json'] = {
+    'files': [
+    ],
     'id': 'foo',
     'linked_samples': 12,
     'name': 'Bar',
@@ -21,6 +23,8 @@ snapshots['test_edit[uvloop-data0] db'] = {
 }
 
 snapshots['test_edit[uvloop-data1] json'] = {
+    'files': [
+    ],
     'id': 'foo',
     'linked_samples': 12,
     'name': 'Foo',
@@ -34,6 +38,8 @@ snapshots['test_edit[uvloop-data1] db'] = {
 }
 
 snapshots['test_edit[uvloop-data2] json'] = {
+    'files': [
+    ],
     'id': 'foo',
     'linked_samples': 12,
     'name': 'Foo',
@@ -47,6 +53,8 @@ snapshots['test_edit[uvloop-data2] db'] = {
 }
 
 snapshots['test_edit[uvloop-data3] json'] = {
+    'files': [
+    ],
     'id': 'foo',
     'linked_samples': 12,
     'name': 'Bar',
@@ -76,6 +84,29 @@ snapshots['test_upload[uvloop-404] 1'] = {
 }
 
 snapshots['test_finalize_subtraction[uvloop-None] 1'] = {
+    'files': [
+        {
+            'id': 1,
+            'name': 'subtraction.fq.gz',
+            'size': 12345,
+            'subtraction': 'foo',
+            'type': 'fasta'
+        },
+        {
+            'id': 2,
+            'name': 'subtraction.1.bt2',
+            'size': 56437,
+            'subtraction': 'foo',
+            'type': 'bowtie2'
+        },
+        {
+            'id': 3,
+            'name': 'subtraction.2.bt2',
+            'size': 93845,
+            'subtraction': 'foo',
+            'type': 'bowtie2'
+        }
+    ],
     'gc': {
         'a': 0.319,
         'c': 0.18,
