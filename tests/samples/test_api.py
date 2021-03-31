@@ -187,11 +187,6 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
 
     client = await spawn_client(authorize=True)
 
-    label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
-    async with pg_session as session:
-        session.add(label_1)
-        await session.commit()
-
     if not error:
         await client.db.subtraction.insert_many([
             {
@@ -219,6 +214,13 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
             "labels": [1],
             "subtractions": ["foo", "bar"]
         })
+
+        label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta")
+        reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
+        async with pg_session as session:
+            session.add_all([label_1, artifact, reads])
+            await session.commit()
 
     resp = await client.get("api/samples/test")
 
