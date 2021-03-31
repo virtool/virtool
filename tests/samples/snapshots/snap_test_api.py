@@ -838,19 +838,6 @@ snapshots['TestEdit.test[uvloop] 1'] = {
     ]
 }
 
-snapshots['TestEdit.test_label_exist[uvloop-True] 1'] = {
-    'id': 'foo',
-    'labels': [
-        {
-            'color': '#a83432',
-            'description': 'This is a bug',
-            'id': 1,
-            'name': 'Bug'
-        }
-    ],
-    'name': 'Foo'
-}
-
 snapshots['TestEdit.test_subtraction_exists[uvloop-True] 1'] = {
     'id': 'test',
     'labels': [
@@ -917,4 +904,17 @@ snapshots['test_upload_reads_cache[uvloop-False] 1'] = {
     'size': 9081,
     'upload': None,
     'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
+snapshots['TestEdit.test_label_exists[uvloop-True] 1'] = {
+    'id': 'foo',
+    'labels': [
+        {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug'
+        }
+    ],
+    'name': 'Foo'
 }
