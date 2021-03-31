@@ -3,7 +3,7 @@ from asyncio import wait_for
 from aiojobs import create_scheduler
 from aioredis import Redis
 
-from virtool.dispatcher.client import RedisDispatcherClient
+from virtool.dispatcher.client import DispatcherClient
 
 
 async def test_client(loop, redis: Redis):
@@ -13,7 +13,7 @@ async def test_client(loop, redis: Redis):
     """
     channel, = await redis.subscribe("channel:dispatch")
 
-    interface = RedisDispatcherClient(redis)
+    interface = DispatcherClient(redis)
     scheduler = await create_scheduler()
     await scheduler.spawn(interface.run())
 
