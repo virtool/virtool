@@ -25,6 +25,7 @@ import virtool.sentry
 import virtool.settings.db
 import virtool.settings.schema
 import virtool.software.db
+import virtool.shutdown
 import virtool.startup
 import virtool.utils
 import virtool.version
@@ -76,7 +77,15 @@ def create_app(config):
     ])
 
     app.on_response_prepare.append(virtool.http.csp.on_prepare)
-    app.on_shutdown.append(on_shutdown)
+
+    app.on_shutdown.extend([
+        virtool.shutdown.exit_client,
+        virtool.shutdown.exit_dispatcher,
+        virtool.shutdown.exit_executor,
+        virtool.shutdown.exit_process_executor,
+        virtool.shutdown.exit_scheduler,
+        virtool.shutdown.exit_redis
+    ])
 
     return app
 
@@ -97,43 +106,3 @@ async def run_app(config):
 
     for task in pending:
         task.cancel()
-
-
-async def on_shutdown(app: aiohttp.web.Application):
-    """
-    A function called when the app is shutting down.
-
-    :param app: the app object
-    :type app: :class:`aiohttp.web.Application`
-
-    """
-    logger.debug("Shutting down")
-
-    try:
-        await app["client"].close()
-    except KeyError:
-        pass
-
-    try:
-        await app["dispatcher"].close()
-    except KeyError:
-        pass
-
-    try:
-        app["executor"].shutdown(wait=True)
-    except KeyError:
-        pass
-
-    try:
-        app["process_executor"].shutdown(wait=True)
-    except KeyError:
-        pass
-
-    scheduler = virtool.startup.get_scheduler_from_app(app)
-    await scheduler.close()
-
-    try:
-        app["redis"].close()
-        await app["redis"].wait_closed()
-    except KeyError:
-        pass
