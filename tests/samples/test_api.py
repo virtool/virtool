@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.caches.db
 import virtool.caches.utils
 import virtool.samples.db
+import virtool.pg.utils
 import virtool.uploads.db
 from virtool.labels.models import Label
 from virtool.samples.models import SampleReads, SampleReadsCache, SampleArtifact, SampleArtifactCache
@@ -620,12 +621,14 @@ class TestEdit:
 
 
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
-async def test_finalize(field, snapshot, spawn_job_client, resp_is):
+async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_session):
     """
     Test that sample can be finalized using the Jobs API.
 
     """
     client = await spawn_job_client(authorize=True)
+
+    client.app["settings"]["data_path"] = ""
 
     data = {field: {}}
 
@@ -633,11 +636,22 @@ async def test_finalize(field, snapshot, spawn_job_client, resp_is):
         "_id": "test",
     })
 
+    async with pg_session as session:
+        upload = Upload(name="test", name_on_disk="test.fq.gz")
+        reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
+
+        upload.reads.append(reads)
+        session.add_all([upload, reads])
+
+        await session.commit()
+
     resp = await client.patch("/api/samples/test", json=data)
 
     if field == "quality":
         assert resp.status == 200
         snapshot.assert_match(await resp.json())
+        assert not await virtool.uploads.db.get(pg, 1)
+        assert not (await virtool.pg.utils.get_row(pg, 1, SampleReads)).upload
     else:
         assert resp.status == 422
         assert await resp_is.invalid_input(resp, {"quality": ['required field']})

@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from typing import Union, Optional, List, Dict, Type
 
 from sqlalchemy import select, update
@@ -180,13 +181,38 @@ async def get(pg: AsyncEngine, upload_id: int) -> Optional[Upload]:
         return upload
 
 
-async def delete(pg: AsyncEngine, upload_id: int) -> Optional[dict]:
+async def delete(req, pg: AsyncEngine, upload_id: int):
+    """
+    "Delete" a row in the `uploads` table and remove it from the local disk.
+
+    :param req: HTTP request object
+    :param pg: PostgreSQL AsyncEngine object
+    :param upload_id: Row `id` to "delete"
+    :return: A dictionary representation of the deleted row
+    """
+    upload = await delete_row(pg, upload_id)
+
+    if not upload:
+        return None
+
+    try:
+        await req.app["run_in_thread"](
+            virtool.utils.rm,
+            Path(req.app["settings"]["data_path"]) / "files" / upload["name_on_disk"]
+        )
+    except FileNotFoundError:
+        pass
+
+    return upload
+
+
+async def delete_row(pg: AsyncEngine, upload_id: int) -> Optional[dict]:
     """
     Set the `removed` and `removed_at` attributes in the given row. Returns a dictionary representation of that row.
 
     :param pg: PostgreSQL AsyncEngine object
     :param upload_id: Row `id` to set attributes for
-    :return: A dictionary representation of the updated row
+    :return: A dictionary representation of the deleted row
     """
     async with AsyncSession(pg) as session:
         upload = (await session.execute(select(Upload).where(Upload.id == upload_id))).scalar()
@@ -194,6 +220,7 @@ async def delete(pg: AsyncEngine, upload_id: int) -> Optional[dict]:
         if not upload or upload.removed:
             return None
 
+        upload.reads.clear()
         upload.removed = True
         upload.removed_at = virtool.utils.timestamp()
 

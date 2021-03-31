@@ -5,7 +5,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import aiohttp.web
-import pymongo
+import pymongo.errors
 from aiohttp.web_fileresponse import FileResponse
 from cerberus import Validator
 from sqlalchemy import select
@@ -33,8 +33,9 @@ from virtool.api.response import bad_request, conflict, insufficient_rights, inv
     json_response, no_content, not_found
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
-from virtool.samples.models import ArtifactType, SampleArtifact, SampleArtifactCache
+from virtool.samples.models import ArtifactType, SampleArtifact, SampleArtifactCache, SampleReads
 from virtool.samples.utils import bad_labels_response, check_labels
+from virtool.uploads.models import Upload
 from virtool.uploads.utils import is_gzip_compressed
 
 logger = logging.getLogger("samples")
@@ -493,6 +494,7 @@ async def finalize(req):
     Finalize a sample that is being created using the Jobs API by setting a sample's quality field and `ready` to `True`
 
     """
+    pg = req.app["pg"]
     db = req.app["db"]
     data = req["data"]
 
@@ -504,6 +506,27 @@ async def finalize(req):
             "ready": True
         }
     })
+
+    async with AsyncSession(pg) as session:
+        rows = (await session.execute(
+            select(Upload).filter(SampleReads.sample == sample_id).join_from(SampleReads, Upload))).unique().scalars()
+
+        for row in rows:
+            row.reads.clear()
+            row.removed = True
+            row.removed_at = virtool.utils.timestamp()
+
+            try:
+                await req.app["run_in_thread"](
+                    virtool.utils.rm,
+                    Path(req.app["settings"]["data_path"]) / "files" / row.name_on_disk
+                )
+            except FileNotFoundError:
+                pass
+
+            session.add(row)
+
+        await session.commit()
 
     processed = virtool.utils.base_processor(document)
 
@@ -1156,7 +1179,8 @@ async def download_artifact_cache(req):
         return not_found()
 
     async with AsyncSession(pg) as session:
-        result = (await session.execute(select(SampleArtifactCache).filter_by(sample=sample_id, name=filename))).scalar()
+        result = (
+            await session.execute(select(SampleArtifactCache).filter_by(sample=sample_id, name=filename))).scalar()
 
     if not result:
         return not_found()
