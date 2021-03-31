@@ -35,6 +35,7 @@ from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
 from virtool.samples.models import ArtifactType, SampleArtifact, SampleArtifactCache, SampleReads
 from virtool.samples.utils import bad_labels_response, check_labels
+from virtool.uploads.models import Upload
 from virtool.uploads.utils import is_gzip_compressed
 
 logger = logging.getLogger("samples")
@@ -508,12 +509,24 @@ async def finalize(req):
 
     async with AsyncSession(pg) as session:
         rows = (await session.execute(
-            select(SampleReads).filter(SampleReads.sample == sample_id, SampleReads.upload.isnot(None)))).scalars()
+            select(Upload).filter(SampleReads.sample == sample_id).join_from(SampleReads, Upload))).unique().scalars()
 
-    if rows:
-        uploads = {row.upload for row in rows}
+        for row in rows:
+            row.reads.clear()
+            row.removed = True
+            row.removed_at = virtool.utils.timestamp()
 
-        await asyncio.gather(*[virtool.uploads.db.delete(req, pg, upload) for upload in uploads])
+            try:
+                await req.app["run_in_thread"](
+                    virtool.utils.rm,
+                    Path(req.app["settings"]["data_path"]) / "files" / row.name_on_disk
+                )
+            except FileNotFoundError:
+                pass
+
+            session.add(row)
+
+        await session.commit()
 
     processed = virtool.utils.base_processor(document)
 
