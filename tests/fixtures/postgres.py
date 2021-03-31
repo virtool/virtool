@@ -1,11 +1,7 @@
-from asyncio import gather
-
 import pytest
-from sqlalchemy import text
-from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
-import virtool.api.json
+from virtool.pg.testing import create_test_database
 from virtool.pg.utils import Base
 
 
@@ -55,16 +51,7 @@ async def pg(
     Test database are specific to xdist workers.
 
     """
-    engine = create_async_engine(f"{pg_base_connection_string}", isolation_level="AUTOCOMMIT", json_serializer=virtool.api.json.dumps)
-
-    async with engine.connect() as conn:
-        try:
-            await conn.execute(text(f"CREATE DATABASE {pg_db_name}"))
-        except ProgrammingError as exc:
-            if "DuplicateDatabaseError" not in str(exc):
-                raise
-
-    await engine.dispose()
+    await create_test_database(pg_base_connection_string, pg_db_name)
 
     pg = create_async_engine(pg_connection_string)
 
