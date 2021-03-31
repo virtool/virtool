@@ -570,16 +570,6 @@ snapshots['test_finalize[uvloop-quality] 1'] = {
     'ready': True
 }
 
-snapshots['test_upload_artifacts[uvloop-fastq] 1'] = {
-    'id': 1,
-    'name': 'small.fq',
-    'name_on_disk': '1-small.fq',
-    'sample': 'test',
-    'size': 3130756,
-    'type': 'fastq',
-    'uploaded_at': '2015-10-06T20:00:00Z'
-}
-
 snapshots['test_get_cache[uvloop-None] 1'] = {
     'id': 'bar',
     'key': 'abc123',
@@ -587,36 +577,6 @@ snapshots['test_get_cache[uvloop-None] 1'] = {
     'sample': {
         'id': 'foo'
     }
-}
-
-snapshots['test_upload_artifact_cache[uvloop-fastq] 1'] = {
-    'id': 1,
-    'name': 'small.fq',
-    'name_on_disk': '1-small.fq',
-    'sample': 'test',
-    'size': 3130756,
-    'type': 'fastq',
-    'uploaded_at': '2015-10-06T20:00:00Z'
-}
-
-snapshots['test_upload_reads_cache[uvloop-True] 1'] = {
-    'id': 2,
-    'name': 'reads_2.fq.gz',
-    'name_on_disk': 'reads_2.fq.gz',
-    'sample': 'test',
-    'size': 9081,
-    'upload': None,
-    'uploaded_at': '2015-10-06T20:00:00Z'
-}
-
-snapshots['test_upload_reads_cache[uvloop-False] 1'] = {
-    'id': 1,
-    'name': 'reads_1.fq.gz',
-    'name_on_disk': 'reads_1.fq.gz',
-    'sample': 'test',
-    'size': 9081,
-    'upload': None,
-    'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
 snapshots['test_finalize_cache[uvloop-quality] 1'] = {
@@ -861,6 +821,51 @@ snapshots['TestCreateCache.test[uvloop-key] 1'] = {
     }
 }
 
+snapshots['TestEdit.test[uvloop] 1'] = {
+    'id': 'test',
+    'labels': [
+        {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug'
+        }
+    ],
+    'name': 'test_sample',
+    'notes': 'This is a test.',
+    'subtractions': [
+        'foo'
+    ]
+}
+
+snapshots['TestEdit.test_subtraction_exists[uvloop-True] 1'] = {
+    'id': 'test',
+    'labels': [
+    ],
+    'name': 'Test',
+    'subtractions': [
+        'foo',
+        'bar'
+    ]
+}
+
+snapshots['TestEdit.test_name_exists[uvloop-False] 1'] = {
+    'id': 'foo',
+    'labels': [
+    ],
+    'name': 'Bar'
+}
+
+snapshots['test_upload_artifacts[uvloop-fastq] 1'] = {
+    'id': 1,
+    'name': 'small.fq',
+    'name_on_disk': '1-small.fq',
+    'sample': 'test',
+    'size': 3130756,
+    'type': 'fastq',
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
 snapshots['TestUploadReads.test_upload_reads[uvloop-True] 1'] = {
     'id': 1,
     'name': 'reads_1.fq.gz',
@@ -871,13 +876,45 @@ snapshots['TestUploadReads.test_upload_reads[uvloop-True] 1'] = {
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
-snapshots['test_edit[uvloop-None] 1'] = {
-    'id': 'test',
+snapshots['test_upload_artifact_cache[uvloop-fastq] 1'] = {
+    'id': 1,
+    'name': 'small.fq',
+    'name_on_disk': '1-small.fq',
+    'sample': 'test',
+    'size': 3130756,
+    'type': 'fastq',
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
+snapshots['test_upload_reads_cache[uvloop-True] 1'] = {
+    'id': 2,
+    'name': 'reads_2.fq.gz',
+    'name_on_disk': 'reads_2.fq.gz',
+    'sample': 'test',
+    'size': 9081,
+    'upload': None,
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
+snapshots['test_upload_reads_cache[uvloop-False] 1'] = {
+    'id': 1,
+    'name': 'reads_1.fq.gz',
+    'name_on_disk': 'reads_1.fq.gz',
+    'sample': 'test',
+    'size': 9081,
+    'upload': None,
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
+snapshots['TestEdit.test_label_exists[uvloop-True] 1'] = {
+    'id': 'foo',
     'labels': [
+        {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug'
+        }
     ],
-    'name': 'Test',
-    'subtractions': [
-        'foo',
-        'bar'
-    ]
+    'name': 'Foo'
 }
