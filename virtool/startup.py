@@ -15,10 +15,8 @@ import pymongo.errors
 
 import virtool.analyses.db
 import virtool.config
-import virtool.db.core
 import virtool.db.migrate
 import virtool.db.mongo
-import virtool.db.utils
 import virtool.dev.fake
 import virtool.dispatcher
 import virtool.hmm.db
@@ -233,8 +231,8 @@ async def init_fake_config(app: App):
 
 async def init_jobs_client(app: aiohttp.web_app.Application):
     """
-    An application `on_startup` callback that initializes a Virtool :class:`virtool.job_manager.Manager` object and
-    puts it in app state.
+    An application `on_startup` callback that initializes a Virtool
+    :class:`virtool.job_manager.Manager` object and puts it in app state.
 
     :param app: the app object
     :type app: :class:`aiohttp.aiohttp.web.Application`
@@ -313,7 +311,9 @@ async def init_routes(app: aiohttp.web_app.Application):
 
 
 async def init_sentry(app: typing.Union[dict, aiohttp.web_app.Application]):
-    if not app["settings"]["no_sentry"] and app["settings"].get("enable_sentry", True) and not app["settings"]["dev"]:
+    if (not app["settings"]["no_sentry"]
+            and app["settings"].get("enable_sentry", True)
+            and not app["settings"]["dev"]):
         logger.info("Configuring Sentry")
         virtool.sentry.setup(app["version"])
 
@@ -342,8 +342,8 @@ async def init_version(app: typing.Union[dict, aiohttp.web.Application]):
     """
     Bind the application version to the application state `dict`.
 
-    The value will come by checking `--force-version`, the `VERSION` file, or the current Git tag if the containing
-    folder is a Git repository.
+    The value will come by checking `--force-version`, the `VERSION` file, or the current Git tag
+    if the containing folder is a Git repository.
 
     :param app: the application object
 
@@ -364,8 +364,8 @@ async def init_version(app: typing.Union[dict, aiohttp.web.Application]):
 
 async def init_task_runner(app: aiohttp.web.Application):
     """
-    An application `on_startup` callback that initializes a Virtool :class:`virtool.tasks.runner.TaskRunner` object and
-    puts it in app state.
+    An application `on_startup` callback that initializes a Virtool
+    :class:`virtool.tasks.runner.TaskRunner` object and puts it in app state.
 
     :param app: the app object
 
@@ -385,7 +385,8 @@ async def init_tasks(app: aiohttp.web.Application):
     scheduler = get_scheduler_from_app(app)
 
     logger.info("Checking subtraction FASTA files")
-    subtractions_without_fasta = await virtool.subtractions.db.check_subtraction_fasta_files(app["db"], app["settings"])
+    subtractions_without_fasta = await virtool.subtractions.db.check_subtraction_fasta_files(
+        app["db"], app["settings"])
     for subtraction in subtractions_without_fasta:
         await app["tasks"].add(WriteSubtractionFASTATask, context={"subtraction": subtraction})
 
@@ -396,5 +397,6 @@ async def init_tasks(app: aiohttp.web.Application):
     await app["tasks"].add(AddSubtractionFilesTask)
     await app["tasks"].add(StoreNuvsFilesTask)
     await app["tasks"].add(CompressSamplesTask)
+    await app["tasks"].add(MoveSampleFilesTask)
 
     await scheduler.spawn(app["tasks"].add_periodic(MigrateFilesTask, 3600))

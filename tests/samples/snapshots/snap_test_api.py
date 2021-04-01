@@ -26,8 +26,7 @@ snapshots['test_get[uvloop-True-None] 1'] = {
         {
             'download_url': '/download/samples/files/file_1.fq.gz',
             'id': 'foo',
-            'name': 'Bar.fq.gz',
-            'replace_url': '/upload/samples/test/files/1'
+            'name': 'Bar.fq.gz'
         }
     ],
     'id': 'test',
@@ -42,6 +41,7 @@ snapshots['test_get[uvloop-True-None] 1'] = {
     'name': 'Test',
     'reads': [
         {
+            'download_url': '/api/samples/test/reads/reads_1.fq.gz',
             'id': 1,
             'name': 'reads_1.fq.gz',
             'name_on_disk': 'reads_1.fq.gz',
