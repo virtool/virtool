@@ -457,10 +457,10 @@ class MoveSampleFilesTask(Task):
     Move pre-SQL samples' file information to new `sample_reads` and `uploads` tables.
 
     """
-    task_type = "migrate_files"
+    task_type = "move_sample_files"
 
-    def __init__(self, app, process_id):
-        super().__init__(app, process_id)
+    def __init__(self, app, task_id):
+        super().__init__(app, task_id)
 
         self.steps = [
             self.move_sample_files
