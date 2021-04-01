@@ -148,6 +148,28 @@ async def find(db, req_query, ref_id=None):
     return data
 
 
+async def finalize(db, pg, ref_id, index_id):
+    """
+    Finalize an index document by setting `ready` to `True` and attach files.
+
+    :param db: the application database client
+    :param pg: the PostgreSQL AsyncEngine object
+    :param ref_id: the ID of the reference
+    :param index_id: the ID of the index to be finalized for
+    :return: the index document after finalization
+
+    """
+    await update_last_indexed_versions(db, ref_id)
+
+    document = await db.indexes.find_one_and_update({"_id": index_id}, {
+        "$set": {"ready": True}
+    })
+
+    document = await attach_files(pg, document)
+
+    return document
+
+
 async def get_contributors(db, index_id):
     """
     Return an list of contributors and their contribution count for a specific index.

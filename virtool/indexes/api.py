@@ -354,13 +354,7 @@ async def finalize(req):
                 f"Reference requires that all Bowtie2 index files have been uploaded. "
                 f"Missing files: {', '.join(missing_files)}")
 
-    await virtool.indexes.db.update_last_indexed_versions(db, ref_id)
-
-    document = await db.indexes.find_one_and_update({"_id": index_id}, {
-        "$set": {"ready": True}
-    })
-
-    document = await virtool.indexes.db.attach_files(pg, document)
+    document = await virtool.indexes.db.finalize(db, pg, ref_id, index_id)
 
     return json_response(virtool.utils.base_processor(document))
 
