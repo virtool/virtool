@@ -13,6 +13,8 @@ async def exit_client(app: aiohttp.web.Application):
 
     :param app: The application object
     """
+    logger.info("Stopping HTTP client")
+
     try:
         await app["client"].close()
     except KeyError:
@@ -25,6 +27,8 @@ async def exit_dispatcher(app: aiohttp.web.Application):
 
     :param app: The application object
     """
+    logger.info("Stopping dispatcher")
+
     try:
         await app["dispatcher"].close()
     except KeyError:
@@ -71,6 +75,8 @@ async def exit_redis(app: aiohttp.web.Application):
 
     :param app: The application object
     """
+    logger.info("Closing Redis connection")
+
     try:
         app["redis"].close()
         await app["redis"].wait_closed()

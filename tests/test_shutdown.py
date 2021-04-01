@@ -75,7 +75,6 @@ async def test_exit_scheduler(spawn_client):
 async def test_exit_redis(spawn_client):
     client = await spawn_client(authorize=True)
     app = client.app
-    jobs = app["tasks"]
 
     await virtool.shutdown.exit_redis(app)
 
