@@ -81,8 +81,7 @@ def create_app(config):
     app.on_shutdown.extend([
         virtool.shutdown.exit_client,
         virtool.shutdown.exit_dispatcher,
-        virtool.shutdown.exit_executor,
-        virtool.shutdown.exit_process_executor,
+        virtool.shutdown.exit_executors,
         virtool.shutdown.exit_scheduler,
         virtool.shutdown.exit_redis
     ])

@@ -35,24 +35,17 @@ async def exit_dispatcher(app: aiohttp.web.Application):
         pass
 
 
-async def exit_executor(app: aiohttp.web.Application):
+async def exit_executors(app: aiohttp.web.Application):
     """
-    Attempt to close the app's `ThreadPoolExecutor`.
+    Attempt to close the `ThreadPoolExecutor` and `ProcessPoolExecutor`.
 
-    :param app: The application object
+    :param app: the application object
     """
     try:
         app["executor"].shutdown(wait=True)
     except KeyError:
         pass
 
-
-async def exit_process_executor(app: aiohttp.web.Application):
-    """
-    Attempt to close the app's `ProcessPoolExecutor`.
-
-    :param app: The application object
-    """
     try:
         app["process_executor"].shutdown(wait=True)
     except KeyError:

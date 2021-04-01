@@ -29,7 +29,7 @@ async def test_exit_dispatcher(mocker, spawn_client):
     assert mock.called
 
 
-async def test_exit_executor(spawn_client):
+async def test_exit_executors(mocker, spawn_client):
     """
     Test that the app's `ThreadPoolExecutor` is properly closed on shutdown.
 
@@ -37,23 +37,11 @@ async def test_exit_executor(spawn_client):
     client = await spawn_client(authorize=True)
     app = client.app
 
-    await virtool.shutdown.exit_executor(app)
-
-    assert app["executor"]._shutdown
-
-
-async def test_exit_process_executor(mocker, spawn_client):
-    """
-    Test that the app's `ProcessPoolExecutor` is properly closed on shutdown.
-
-    """
-    client = await spawn_client(authorize=True)
-    app = client.app
-
     mock = mocker.patch('concurrent.futures.process.ProcessPoolExecutor.shutdown')
 
-    await virtool.shutdown.exit_process_executor(app)
+    await virtool.shutdown.exit_executors(app)
 
+    assert app["executor"]._shutdown
     assert mock.called
 
 
