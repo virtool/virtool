@@ -282,3 +282,44 @@ async def test_attach_files(pg, pg_session):
             }
         ]
     }
+
+
+async def test_finalize(dbi, pg, pg_session):
+    await dbi.indexes.insert_one({
+        "_id": "foo",
+        "reference": {
+            "id": "bar"
+        }
+    })
+
+    index_1 = IndexFile(id=1, name="reference.1.bt2", index="foo", type="bowtie2", size=1234567)
+    index_2 = IndexFile(id=2, name="reference.2.bt2", index="foo", type="bowtie2", size=1234567)
+
+    async with pg_session as session:
+        session.add_all([index_1, index_2])
+        await session.commit()
+
+    document = await virtool.indexes.db.finalize(dbi, pg, "bar", "foo")
+    assert document == {
+        '_id': 'foo',
+        "reference": {
+            "id": "bar"
+        },
+        'ready': True,
+        'files': [
+            {
+                'id': 1,
+                'name': 'reference.1.bt2',
+                'index': 'foo',
+                'type': 'bowtie2',
+                'size': 1234567
+            },
+            {
+                'id': 2,
+                'name': 'reference.2.bt2',
+                'index': 'foo',
+                'type': 'bowtie2',
+                'size': 1234567
+            }
+        ]
+    }
