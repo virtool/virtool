@@ -14,11 +14,9 @@ import virtool.api.utils
 import virtool.db.utils
 import virtool.history
 import virtool.history.db
-import virtool.jobs.db
 import virtool.pg.utils
 import virtool.references.db
 import virtool.utils
-from virtool.jobs.utils import JobRights
 from virtool.indexes.models import IndexFile
 
 PROJECTION = [
@@ -58,7 +56,7 @@ async def create(db, ref_id: str, user_id: str) -> dict:
     """
     index_id = await virtool.db.utils.get_new_id(db.indexes)
 
-    index_version = await virtool.indexes.db.get_next_version(db, ref_id)
+    index_version = await get_next_version(db, ref_id)
 
     job_id = await virtool.db.utils.get_new_id(db.jobs)
 
