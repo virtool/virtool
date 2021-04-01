@@ -218,8 +218,11 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
         label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
         artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta")
         reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
+        upload = Upload(name="test")
         async with pg_session as session:
-            session.add_all([label_1, artifact, reads])
+            upload.reads.append(reads)
+
+            session.add_all([label_1, artifact, reads, upload])
             await session.commit()
 
     resp = await client.get("api/samples/test")
