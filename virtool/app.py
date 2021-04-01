@@ -28,7 +28,7 @@ import virtool.software.db
 import virtool.startup
 import virtool.utils
 import virtool.version
-from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown, logger
+from virtool.process_utils import create_app_runner, logger, wait_for_restart, wait_for_shutdown
 
 logger = logging.getLogger(__name__)
 

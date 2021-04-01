@@ -75,6 +75,7 @@ def create_app(
             "redis_connection_string": redis_connection_string,
             "postgres_connection_string": pg_connection_string,
             "db_name": test_db_name,
+            "fake": False,
             "force_version": "v0.0.0",
             "no_client": True,
             "no_check_db": True,
@@ -178,6 +179,7 @@ def spawn_job_client(
             db_connection_string=test_db_connection_string,
             db_name=test_db_name,
             dev=dev,
+            fake=False,
             postgres_connection_string=pg_connection_string,
             redis_connection_string=redis_connection_string,
         )
