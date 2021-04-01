@@ -185,7 +185,7 @@ async def get(req):
     document = await virtool.samples.db.attach_artifacts_and_reads(pg, document)
 
     if document["ready"]:
-        for index, file in enumerate(document["reads"]):
+        for file in document["reads"]:
             file.update({
                 "download_url": f"/api/samples/{sample_id}/reads/{file['name']}"
             })
