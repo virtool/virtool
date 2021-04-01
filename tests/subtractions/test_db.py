@@ -1,16 +1,14 @@
-import os
-
-import pytest
+from sqlalchemy import select
 
 import virtool.subtractions.db
 from virtool.subtractions.db import unlink_default_subtractions
+from virtool.subtractions.models import SubtractionFile
 
 from virtool.tasks.models import Task
 
 
-@pytest.mark.parametrize("ignore", [True, False])
-async def test_add_subtraction_files_task(ignore, mocker, tmpdir, spawn_client, dbi, pg_session,
-                                          static_time, test_subtraction_files):
+async def test_add_subtraction_files_task(tmpdir, spawn_client, dbi, pg_session,
+                                          static_time):
     client = await spawn_client(authorize=True)
     client.app["settings"]["data_path"] = str(tmpdir)
 
@@ -25,26 +23,7 @@ async def test_add_subtraction_files_task(ignore, mocker, tmpdir, spawn_client, 
         "deleted": False
     }
 
-    if ignore:
-        subtraction["files"] = [
-            {
-                "size": 12,
-                "name": "subtraction.1.bt2",
-                "type": "bowtie2"
-            },
-            {
-                "size": 10,
-                "name": "subtraction.fa.gz",
-                "type": "fasta"
-            }
-        ]
-
     await client.db.subtraction.insert_one(subtraction)
-
-    m_join_subtraction_path = mocker.patch(
-        "virtool.subtractions.utils.join_subtraction_path",
-        return_value=os.path.join(tmpdir, "subtractions", "foo")
-    )
 
     task = Task(
         id=1,
@@ -65,41 +44,28 @@ async def test_add_subtraction_files_task(ignore, mocker, tmpdir, spawn_client, 
 
     await add_files_task.run()
 
-    if ignore:
-        m_join_subtraction_path.assert_not_called()
-        return
+    rows = list()
+    async with pg_session as session:
+        files = (await session.execute(select(SubtractionFile))).scalars().all()
+        for file in files:
+            rows.append(file.to_dict())
 
-    document = await dbi.subtraction.find_one("foo")
-
-    assert document == {
-        '_id': 'foo',
-        'name': 'Foo',
-        'nickname': 'Foo Subtraction',
-        'deleted': False,
-        'files': [
-            {
-                'id': 1,
-                'name': 'subtraction.fq.gz',
-                'subtraction': 'foo',
-                'type': 'fasta',
-                'size': 12345
-            },
-            {
-                'id': 2,
-                'name': 'subtraction.1.bt2',
-                'subtraction': 'foo',
-                'type': 'bowtie2',
-                'size': 56437
-            },
-            {
-                'id': 3,
-                'name': 'subtraction.2.bt2',
-                'subtraction': 'foo',
-                'type': 'bowtie2',
-                'size': 93845
-            }
-        ]
-    }
+    assert rows == [
+        {
+            'id': 1,
+            'name': 'subtraction.1.bt2',
+            'subtraction': 'foo',
+            'type': 'bowtie2',
+            'size': 12
+        },
+        {
+            'id': 2,
+            'name': 'subtraction.fa.gz',
+            'subtraction': 'foo',
+            'type': 'fasta',
+            'size': 10
+        }
+    ]
 
 
 async def test_attach_subtractions(dbi):

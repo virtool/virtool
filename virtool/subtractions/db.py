@@ -8,13 +8,19 @@ import os
 import shutil
 from typing import Any, Dict, List
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 import virtool.db.utils
+import virtool.subtractions.files
 import virtool.subtractions.utils
 import virtool.tasks.task
 import virtool.tasks.pg
 import virtool.tasks.task
 import virtool.utils
 
+from virtool.subtractions.utils import FILES
+from virtool.subtractions.models import SubtractionFile
 from virtool.types import App
 
 PROJECTION = [
@@ -49,7 +55,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
 
         self.steps = [
             self.rename_index_files,
-            self.add_files_field,
+            self.store_subtraction_files,
         ]
 
     async def rename_index_files(self):
@@ -69,7 +75,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
             path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
             await self.app["run_in_thread"](virtool.subtractions.utils.rename_bowtie_files, path)
 
-    async def add_files_field(self):
+    async def store_subtraction_files(self):
         """
         Add a 'files' field to subtraction documents to list what files can be downloaded for that subtraction
 
@@ -79,16 +85,29 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
-            step="add_files_field"
+            step="store_subtraction_files"
         )
 
         async for subtraction in self.db.subtraction.find(ADD_SUBTRACTION_FILES_QUERY):
-            files = await virtool.subtractions.utils.prepare_files_field(self.pg, subtraction["_id"])
-            await self.db.subtraction.update_one({"_id": subtraction["_id"]}, {
-                "$set": {
-                    "files": files
-                }
-            })
+            path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
+            subtraction_files = list()
+
+            for filename in sorted(os.listdir(path)):
+                if filename in FILES:
+                    async with AsyncSession(self.app["pg"]) as session:
+                        exists = (await session.execute(
+                            select(SubtractionFile).filter_by(subtraction=subtraction["_id"], name=filename)
+                        )).scalar()
+
+                    if not exists:
+                        subtraction_files.append(filename)
+
+            await virtool.subtractions.files.create_subtraction_files(
+                self.app["pg"],
+                subtraction["_id"],
+                subtraction_files,
+                path
+            )
 
 
 class WriteSubtractionFASTATask(virtool.tasks.task.Task):
