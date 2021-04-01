@@ -39,7 +39,7 @@ async def create_subtraction_file(pg: AsyncEngine, subtraction_id: str, file_typ
 
 async def create_subtraction_files(pg: AsyncEngine, subtraction_id: str, files: List[str], path: str):
     """
-    Create multiple rows in th`subtraction_files` SQL table in a single transaction.
+    Create multiple rows in the `subtraction_files` SQL table in a single transaction.
 
     :param pg: PostgreSQL AsyncEngine object
     :param subtraction_id: ID that corresponds to a parent subtraction
