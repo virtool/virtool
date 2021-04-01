@@ -9,7 +9,9 @@ import virtool.jobs_api.auth
 import virtool.jobs_api.routes
 import virtool.logs
 import virtool.startup
+from virtool.dev.fake import drop_fake_mongo, remove_fake_data_path
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
+from virtool.types import App
 
 
 async def create_app(**config):
@@ -21,22 +23,38 @@ async def create_app(**config):
 
     app: aiohttp.web.Application = aiohttp.web.Application(middlewares=middlewares)
 
+    app["config"] = config
+    app["mode"] = "jobs_api_server"
+
     aiojobs.aiohttp.setup(app)
 
     app.on_startup.extend([
+        virtool.startup.init_fake_config,
         virtool.startup.init_redis,
         virtool.startup.init_db,
-        virtool.startup.init_settings,
         virtool.startup.init_postgres,
+        virtool.startup.init_settings,
+        virtool.startup.init_fake,
         virtool.startup.init_events,
         virtool.startup.init_executors,
         virtool.jobs_api.routes.init_routes,
     ])
 
-    app["config"] = config
-    app["mode"] = "jobs_api_server"
+    app.on_shutdown.extend([
+        shutdown,
+        drop_fake_mongo,
+        remove_fake_data_path
+    ])
 
     return app
+
+
+async def shutdown(app: App):
+    try:
+        app["redis"].close()
+        await app["redis"].wait_closed()
+    except KeyError:
+        pass
 
 
 async def start_aiohttp_server(

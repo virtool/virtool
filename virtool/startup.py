@@ -4,6 +4,7 @@ import logging
 import signal
 import sys
 import typing
+from urllib.parse import urlparse, urlunparse
 
 import aiohttp.client
 import aiohttp.web
@@ -18,6 +19,7 @@ import virtool.db.core
 import virtool.db.migrate
 import virtool.db.mongo
 import virtool.db.utils
+import virtool.dev.fake
 import virtool.dispatcher
 import virtool.hmm.db
 import virtool.jobs.interface
@@ -34,19 +36,21 @@ import virtool.subtractions.utils
 import virtool.tasks.pg
 import virtool.utils
 import virtool.version
-
+from virtool.analyses.db import StoreNuvsFilesTask
+from virtool.dev.fake import create_fake_data_path
+from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.events import DispatcherSQLEvents
-from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.listener import RedisDispatcherListener
-from virtool.samples.db import CompressSamplesTask
-from virtool.types import App
-from virtool.tasks.runner import TaskRunner
-from virtool.tasks.client import TasksClient
-from virtool.analyses.db import StoreNuvsFilesTask
-from virtool.uploads.db import MigrateFilesTask
-from virtool.subtractions.db import AddSubtractionFilesTask, WriteSubtractionFASTATask
+from virtool.pg.testing import create_test_database
 from virtool.references.db import CreateIndexJSONTask, DeleteReferenceTask
+from virtool.samples.db import CompressSamplesTask, MoveSampleFilesTask
+from virtool.subtractions.db import AddSubtractionFilesTask, WriteSubtractionFASTATask
+from virtool.tasks.client import TasksClient
+from virtool.tasks.runner import TaskRunner
+from virtool.types import App
+from virtool.uploads.db import MigrateFilesTask
+from virtool.utils import random_alphanumeric
 
 logger = logging.getLogger("startup")
 
@@ -184,6 +188,47 @@ async def init_executors(app: aiohttp.web.Application):
 
     app["run_in_process"] = run_in_process
     app["process_executor"] = process_executor
+
+
+async def init_fake(app: aiohttp.web_app.Application):
+    if app["config"]["fake"]:
+        await virtool.dev.fake.populate(app)
+
+
+async def init_fake_config(app: App):
+    """
+    If the ``fake`` config flag is set, patch the config so that the MongoDB and Postgres databases
+    and the data directory are faked.
+
+    :param app:
+
+    """
+    suffix = random_alphanumeric()
+
+    if app["config"]["fake"]:
+        url = urlparse(app["config"]["postgres_connection_string"])
+
+        base_connection_string = urlunparse((
+            url.scheme,
+            url.netloc,
+            "",
+            "",
+            "",
+            ""
+        ))
+
+        name = f"fake_{suffix}"
+
+        await create_test_database(
+            base_connection_string,
+            name
+        )
+
+        app["config"].update({
+            "db_name": f"fake-{suffix}",
+            "data_path": create_fake_data_path(),
+            "postgres_connection_string": f"{base_connection_string}/{name}"
+        })
 
 
 async def init_jobs_client(app: aiohttp.web_app.Application):
