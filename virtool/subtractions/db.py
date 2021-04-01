@@ -109,12 +109,6 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
                 path
             )
 
-            await self.db.subtraction.update_one({"_id": subtraction["_id"]}, {
-                "$unset": {
-                    "files": ""
-                }
-            })
-
 
 class WriteSubtractionFASTATask(virtool.tasks.task.Task):
     task_type = "write_subtraction_fasta"
