@@ -47,7 +47,20 @@ snapshots['test_get[uvloop-True-None] 1'] = {
             'name_on_disk': 'reads_1.fq.gz',
             'sample': 'test',
             'size': None,
-            'upload': None,
+            'upload': {
+                'created_at': None,
+                'id': 1,
+                'name': 'test',
+                'name_on_disk': None,
+                'ready': False,
+                'removed': False,
+                'removed_at': None,
+                'reserved': False,
+                'size': None,
+                'type': None,
+                'uploaded_at': None,
+                'user': None
+            },
             'uploaded_at': None
         }
     ],
@@ -103,7 +116,20 @@ snapshots['test_get[uvloop-False-None] 1'] = {
             'name_on_disk': 'reads_1.fq.gz',
             'sample': 'test',
             'size': None,
-            'upload': None,
+            'upload': {
+                'created_at': None,
+                'id': 1,
+                'name': 'test',
+                'name_on_disk': None,
+                'ready': False,
+                'removed': False,
+                'removed_at': None,
+                'reserved': False,
+                'size': None,
+                'type': None,
+                'uploaded_at': None,
+                'user': None
+            },
             'uploaded_at': None
         }
     ],
