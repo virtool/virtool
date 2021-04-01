@@ -148,7 +148,7 @@ async def find(db, req_query, ref_id=None):
     return data
 
 
-async def finalize(db, pg, ref_id, index_id):
+async def finalize(db, pg: AsyncEngine, ref_id: str, index_id: str) -> dict:
     """
     Finalize an index document by setting `ready` to `True` and attach files.
 
