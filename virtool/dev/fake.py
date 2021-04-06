@@ -13,7 +13,9 @@ from tempfile import mkdtemp
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.analyses.db
+import virtool.analyses.files
 import virtool.users.db
+import virtool.utils
 from virtool.types import App
 from virtool.uploads.models import Upload
 from virtool.utils import ensure_data_dir, random_alphanumeric
@@ -26,6 +28,7 @@ USER_ID = "bob"
 async def populate(app: App):
     await create_fake_user(app)
     await create_fake_subtractions(app)
+    await create_fake_analysis(app)
 
 
 async def remove_fake_data_path(app: App):
@@ -160,9 +163,12 @@ async def create_fake_subtractions(app: App):
     logger.debug("Created fake subtractions")
 
 
-async def analysis(app: App):
+async def create_fake_analysis(app: App):
     """
-    Create a complete fake analysis in the database.
+    Create fake analyses in the database.
+
+    Two analyses are ready for use. One has ``ready`` set to ``False`` and
+    another one has ``ready`` set to ``True`` with a ``files`` field.
 
     :param app: the application object
 
@@ -174,11 +180,55 @@ async def analysis(app: App):
         "subtraction_2",
     ]
 
-    await virtool.analyses.db.create(
-        app,
-        sample_id,
-        ref_id,
-        subtractions,
-        USER_ID,
-        "pathoscope"
-    )
+    file = await virtool.analyses.files.create_analysis_file(app["pg"], "analysis_1", "fasta", "result.fa", 123456)
+    await app["db"].analyses.insert_many([
+        {
+            "_id": "analysis_1",
+            "workflow": "pathoscope",
+            "created_at": virtool.utils.timestamp(),
+            "ready": False,
+            "job": {
+                "id": "job_1"
+            },
+            "index": {
+                "version": 2,
+                "id": "foo"
+            },
+            "user": {
+                "id": USER_ID
+            },
+            "sample": {
+                "id": sample_id
+            },
+            "reference": {
+                "id": ref_id
+            },
+            "subtractions": subtractions
+        },
+        {
+            "_id": "analysis_2",
+            "workflow": "pathoscope",
+            "created_at": virtool.utils.timestamp(),
+            "ready": True,
+            "job": {
+                "id": "job_2"
+            },
+            "index": {
+                "version": 2,
+                "id": "foo"
+            },
+            "user": {
+                "id": USER_ID
+            },
+            "sample": {
+                "id": sample_id
+            },
+            "reference": {
+                "id": ref_id
+            },
+            "subtractions": subtractions,
+            "files": [file]
+        }
+    ])
+
+    logger.debug("Created fake analyses")
