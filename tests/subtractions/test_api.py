@@ -81,12 +81,6 @@ async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_ses
     assert resp.status == 201
     assert os.listdir(tmpdir / "subtractions" / "foo") == ["subtraction.1.bt2"]
     snapshot.assert_match(await resp.json())
-    document = await client.db.subtraction.find_one("foo")
-    assert document == {
-        '_id': 'foo',
-        'name': 'Foo',
-        'files': [1]
-    }
 
 
 @pytest.mark.parametrize("error", [None, "404", "409", "422"])
