@@ -21,3 +21,4 @@ settings.json
 .cache
 .pytest_cache
 env
+tags

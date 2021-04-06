@@ -34,3 +34,30 @@ snapshots['test_create_fake_user[uvloop] 1'] = {
         'skip_quick_analyze_dialog': True
     }
 }
+
+snapshots['test_create_fake_job[uvloop] 1'] = {
+    '_id': 'integration_test_job',
+    'acquired': False,
+    'args': {
+        'ref_id': 'reference_1',
+        'sample_id': 'sample_1',
+        'subtraction_id': 'subtraction_1'
+    },
+    'key': None,
+    'rights': {
+    },
+    'state': 'waiting',
+    'status': [
+        {
+            'error': None,
+            'progress': 0,
+            'stage': None,
+            'state': 'waiting',
+            'timestamp': None
+        }
+    ],
+    'task': 'integration_test_workflow',
+    'user': {
+        'id': 'bob'
+    }
+}
