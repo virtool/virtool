@@ -69,7 +69,7 @@ ReadSelectorItem.defaultProps = {
 };
 
 ReadSelectorItem.propTypes = {
-    id: PropTypes.string.isRequired,
+    id: PropTypes.number.isRequired,
     name: PropTypes.string.isRequired,
     index: PropTypes.number.isRequired,
     size: PropTypes.number.isRequired,
