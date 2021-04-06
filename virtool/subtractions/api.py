@@ -138,31 +138,13 @@ async def create(req):
     if file is None:
         return bad_request("File does not exist")
 
-    job_id = await virtool.db.utils.get_new_id(db.jobs)
-    subtraction_id = await virtool.db.utils.get_new_id(db.subtraction)
+    filename = file.to_dict().get("name")
 
     user_id = req["client"].user_id
 
-    document = {
-        "_id": subtraction_id,
-        "name": data["name"],
-        "nickname": data["nickname"],
-        "deleted": False,
-        "ready": False,
-        "is_host": True,
-        "file": {
-            "id": upload_id,
-            "name": file.to_dict().get("name")
-        },
-        "user": {
-            "id": user_id
-        },
-        "job": {
-            "id": job_id
-        },
-    }
+    document = await virtool.subtractions.db.create(db, user_id, filename, data)
 
-    await db.subtraction.insert_one(document)
+    subtraction_id = document["_id"]
 
     task_args = {
         "subtraction_id": subtraction_id,
@@ -182,10 +164,10 @@ async def create(req):
         task_args,
         user_id,
         rights,
-        job_id=job_id
+        job_id=document["job"]["id"]
     )
 
-    await req.app["jobs"].enqueue(job_id)
+    await req.app["jobs"].enqueue(document["job"]["id"])
 
     headers = {
         "Location": f"/api/subtraction/{subtraction_id}"

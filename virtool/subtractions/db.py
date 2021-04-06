@@ -224,6 +224,45 @@ async def check_subtraction_fasta_files(db, settings: dict) -> list:
     return subtractions_without_fasta
 
 
+async def create(db, user_id: str, filename: str, data: dict) -> dict:
+    """
+    Create a new subtraction document.
+
+    :param db: the application database client
+    :param user_id: the id of the current user
+    :param filename: the name of the `subtraction_file`
+    :param data: a dict contains `name`, `nickname`, and `upload_id`
+
+    :return: the new document
+
+    """
+    job_id = await virtool.db.utils.get_new_id(db.jobs)
+    subtraction_id = await virtool.db.utils.get_new_id(db.subtraction)
+
+    document = {
+        "_id": subtraction_id,
+        "name": data["name"],
+        "nickname": data["nickname"],
+        "deleted": False,
+        "ready": False,
+        "is_host": True,
+        "file": {
+            "id": data["upload_id"],
+            "name": filename
+        },
+        "user": {
+            "id": user_id
+        },
+        "job": {
+            "id": job_id
+        }
+    }
+
+    await db.subtraction.insert_one(document)
+
+    return document
+
+
 async def delete(app, subtraction_id):
     db = app["db"]
     settings = app["settings"]
