@@ -284,9 +284,9 @@ async def delete(app, subtraction_id):
     return update_result.modified_count
 
 
-async def finalize(db, pg: AsyncEngine, subtraction_id: str, gc: dict) -> dict:
+async def finalize(db, pg: AsyncEngine, subtraction_id: str, gc: Dict[str, float]) -> dict:
     """
-    Finalize a subtraction by setting `ready` to True and update `gc` and `files` field.
+    Finalize a subtraction by setting `ready` to True and updating the `gc` and `files` fields.
 
     :param db: the application database client
     :param pg: the PostgreSQL AsyncEngine object
