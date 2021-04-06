@@ -76,7 +76,7 @@ def join_subtraction_index_path(settings: dict, subtraction_id: str) -> str:
     )
 
 
-async def prepare_files_field(pg: AsyncEngine, subtraction: str):
+async def get_subtraction_files(pg: AsyncEngine, subtraction: str):
     """
     Prepare a list of files from 'SubtractionFile' table to be added to 'files' field.
 

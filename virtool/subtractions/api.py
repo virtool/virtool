@@ -99,7 +99,7 @@ async def get(req):
         return not_found()
 
     document["linked_samples"] = await virtool.subtractions.db.get_linked_samples(db, subtraction_id)
-    document["files"] = await virtool.subtractions.utils.prepare_files_field(pg, subtraction_id)
+    document["files"] = await virtool.subtractions.utils.get_subtraction_files(pg, subtraction_id)
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -240,8 +240,8 @@ async def upload(req):
     subtraction_file = await virtool.uploads.db.finalize(pg, size, upload_id, SubtractionFile)
 
     await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
-        "$push": {
-            "files": upload_id
+        "$set": {
+            "files": [row for row in await virtool.subtractions.utils.get_subtraction_files(pg, subtraction_id)]
         }
     })
 
@@ -296,7 +296,7 @@ async def edit(req):
         return not_found()
 
     document["linked_samples"] = await virtool.subtractions.db.get_linked_samples(db, subtraction_id)
-    document["files"] = await virtool.subtractions.utils.prepare_files_field(pg, subtraction_id)
+    document["files"] = await virtool.subtractions.utils.get_subtraction_files(pg, subtraction_id)
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -341,7 +341,7 @@ async def finalize_subtraction(req: aiohttp.web.Request):
         "$set": {
             "gc": data["gc"],
             "ready": True,
-            "files": await virtool.subtractions.utils.prepare_files_field(pg, subtraction_id)
+            "files": await virtool.subtractions.utils.get_subtraction_files(pg, subtraction_id)
         }
     })
 

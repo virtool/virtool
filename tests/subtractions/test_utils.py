@@ -15,8 +15,8 @@ def test_join_subtraction_path():
     assert path == "/foo/subtractions/bar"
 
 
-async def test_prepare_files_field(pg, test_subtraction_files):
-    files = await virtool.subtractions.utils.prepare_files_field(pg, "foo")
+async def test_get_subtraction_files(pg, test_subtraction_files):
+    files = await virtool.subtractions.utils.get_subtraction_files(pg, "foo")
 
     assert files == [
             {
