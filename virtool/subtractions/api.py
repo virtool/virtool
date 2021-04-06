@@ -131,6 +131,8 @@ async def create(req):
     pg = req.app["pg"]
     data = req["data"]
 
+    name = data["name"]
+    nickname = data["nickname"]
     upload_id = data["upload_id"]
 
     file = await virtool.pg.utils.get_row(pg, upload_id, Upload)
@@ -142,7 +144,7 @@ async def create(req):
 
     user_id = req["client"].user_id
 
-    document = await virtool.subtractions.db.create(db, user_id, filename, data)
+    document = await virtool.subtractions.db.create(db, user_id, filename, name, nickname, upload_id)
 
     subtraction_id = document["_id"]
 

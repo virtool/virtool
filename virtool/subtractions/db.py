@@ -224,14 +224,16 @@ async def check_subtraction_fasta_files(db, settings: dict) -> list:
     return subtractions_without_fasta
 
 
-async def create(db, user_id: str, filename: str, data: dict) -> dict:
+async def create(db, user_id: str, filename: str, name: str, nickname: str, upload_id: int) -> dict:
     """
     Create a new subtraction document.
 
     :param db: the application database client
     :param user_id: the id of the current user
     :param filename: the name of the `subtraction_file`
-    :param data: a dict contains `name`, `nickname`, and `upload_id`
+    :param name: the name of the subtraction
+    :param nickname: the nickname of the subtraction
+    :param upload_id: the id of the `subtraction_file`
 
     :return: the new document
 
@@ -241,13 +243,13 @@ async def create(db, user_id: str, filename: str, data: dict) -> dict:
 
     document = {
         "_id": subtraction_id,
-        "name": data["name"],
-        "nickname": data["nickname"],
+        "name": name,
+        "nickname": nickname,
         "deleted": False,
         "ready": False,
         "is_host": True,
         "file": {
-            "id": data["upload_id"],
+            "id": upload_id,
             "name": filename
         },
         "user": {
