@@ -289,8 +289,13 @@ async def edit(req):
     if document is None:
         return not_found()
 
-    document["linked_samples"] = await virtool.subtractions.db.get_linked_samples(db, subtraction_id)
-    document["files"] = await virtool.subtractions.utils.get_subtraction_files(pg, subtraction_id)
+    files, linked_samples = await asyncio.gather(*[virtool.subtractions.utils.get_subtraction_files(pg, subtraction_id),
+                                                   virtool.subtractions.db.get_linked_samples(db, subtraction_id)])
+
+    document.update({
+        "files": files,
+        "linked_samples": linked_samples
+    })
 
     return json_response(virtool.utils.base_processor(document))
 

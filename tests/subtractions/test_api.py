@@ -129,43 +129,7 @@ async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is, 
     assert resp.status == 200
     snapshot.assert_match(await resp.json())
 
-    document = await client.db.subtraction.find_one("foo")
-    assert document == {
-        "_id": "foo",
-        "name": "Foo",
-        "nickname": "Foo Subtraction",
-        "gc": {
-            "a": 0.319,
-            "t": 0.319,
-            "g": 0.18,
-            "c": 0.18,
-            "n": 0.002
-        },
-        "ready": True,
-        "files": [
-            {
-                "id": 1,
-                "name": "subtraction.fq.gz",
-                "size": 12345,
-                "subtraction": "foo",
-                "type": "fasta"
-            },
-            {
-                "id": 2,
-                "name": "subtraction.1.bt2",
-                "size": 56437,
-                "subtraction": "foo",
-                "type": "bowtie2"
-            },
-            {
-                "id": 3,
-                "name": "subtraction.2.bt2",
-                "size": 93845,
-                "subtraction": "foo",
-                "type": "bowtie2"
-            }
-        ]
-    }
+    snapshot.assert_match(await client.db.subtraction.find_one("foo"))
 
 
 @pytest.mark.parametrize("ready", [True, False])
