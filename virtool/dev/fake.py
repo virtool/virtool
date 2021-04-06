@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import virtool.analyses.db
 import virtool.jobs.db
 import virtool.users.db
-from virtool.jobs.utils import JOB_RIGHTS_NAMES, JobRights
+from virtool.jobs.utils import JobRights
 from virtool.types import App
 from virtool.uploads.models import Upload
 from virtool.utils import ensure_data_dir, random_alphanumeric
