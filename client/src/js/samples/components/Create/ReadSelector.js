@@ -51,7 +51,7 @@ export default class ReadSelector extends React.PureComponent {
     static propTypes = {
         files: PropTypes.arrayOf(PropTypes.object),
         error: PropTypes.string,
-        selected: PropTypes.arrayOf(PropTypes.string),
+        selected: PropTypes.arrayOf(PropTypes.number),
         onSelect: PropTypes.func,
         handleSelect: PropTypes.func
     };

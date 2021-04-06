@@ -16,6 +16,9 @@ import virtool.analyses.db
 import virtool.analyses.files
 import virtool.users.db
 import virtool.utils
+import virtool.jobs.db
+import virtool.users.db
+from virtool.jobs.utils import JobRights
 from virtool.types import App
 from virtool.uploads.models import Upload
 from virtool.utils import ensure_data_dir, random_alphanumeric
@@ -29,6 +32,7 @@ async def populate(app: App):
     await create_fake_user(app)
     await create_fake_subtractions(app)
     await create_fake_analysis(app)
+    await create_fake_jobs(app)
 
 
 async def remove_fake_data_path(app: App):
@@ -81,19 +85,9 @@ async def create_fake_user(app: App):
     :param app: the application object
 
     """
-    await virtool.users.db.create(
-        app["db"],
-        USER_ID,
-        "hello_world",
-        True
-    )
+    await virtool.users.db.create(app["db"], USER_ID, "hello_world", True)
 
-    await virtool.users.db.edit(
-        app["db"],
-        "bob",
-        administrator=True,
-        force_reset=False
-    )
+    await virtool.users.db.edit(app["db"], "bob", administrator=True, force_reset=False)
 
     logger.debug("Created fake user")
 
@@ -119,46 +113,39 @@ async def create_fake_subtractions(app: App):
 
         await session.commit()
 
-    upload = {
-        "id": upload_id,
-        "name": upload_name
-    }
+    upload = {"id": upload_id, "name": upload_name}
 
-    await app["db"].subtraction.insert_many([
-        {
-            "_id": "subtraction_1",
-            "name": "Subtraction 1",
-            "nickname": "",
-            "deleted": False,
-            "ready": True,
-            "file": upload,
-            "user": {
-                "id": USER_ID
-            }
-        },
-        {
-            "_id": "subtraction_2",
-            "name": "Subtraction 2",
-            "nickname": "",
-            "deleted": False,
-            "ready": True,
-            "file": upload,
-            "user": {
-                "id": USER_ID
-            }
-        },
-        {
-            "_id": "subtraction_unready",
-            "name": "Subtraction Unready",
-            "nickname": "",
-            "deleted": False,
-            "ready": False,
-            "file": upload,
-            "user": {
-                "id": USER_ID
-            }
-        }
-    ])
+    await app["db"].subtraction.insert_many(
+        [
+            {
+                "_id": "subtraction_1",
+                "name": "Subtraction 1",
+                "nickname": "",
+                "deleted": False,
+                "ready": True,
+                "file": upload,
+                "user": {"id": USER_ID},
+            },
+            {
+                "_id": "subtraction_2",
+                "name": "Subtraction 2",
+                "nickname": "",
+                "deleted": False,
+                "ready": True,
+                "file": upload,
+                "user": {"id": USER_ID},
+            },
+            {
+                "_id": "subtraction_unready",
+                "name": "Subtraction Unready",
+                "nickname": "",
+                "deleted": False,
+                "ready": False,
+                "file": upload,
+                "user": {"id": USER_ID},
+            },
+        ]
+    )
 
     logger.debug("Created fake subtractions")
 
@@ -232,3 +219,26 @@ async def create_fake_analysis(app: App):
     ])
 
     logger.debug("Created fake analyses")
+
+
+async def create_integration_test_job(app: App):
+    name = "integration_test_workflow"
+    rights = JobRights()
+
+    return await virtool.jobs.db.create(
+        db=app["db"],
+        workflow_name=name,
+        job_args={
+            "sample_id": "sample_1",
+            "subtraction_id": "subtraction_1",
+            "ref_id": "reference_1",
+        },
+        user_id=USER_ID,
+        rights=rights,
+        job_id="integration_test_job",
+    )
+
+
+async def create_fake_jobs(app: App):
+    await create_integration_test_job(app)
+
