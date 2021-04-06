@@ -9,7 +9,7 @@ import shutil
 from typing import Any, Dict, List
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 import virtool.db.utils
 import virtool.subtractions.files
@@ -280,6 +280,28 @@ async def delete(app, subtraction_id):
         await app["run_in_thread"](shutil.rmtree, path, True)
 
     return update_result.modified_count
+
+
+async def finalize(db, pg: AsyncEngine, subtraction_id: str, gc: dict) -> dict:
+    """
+    Finalize a subtraction by setting `ready` to True and update `gc` and `files` field.
+
+    :param db: the application database client
+    :param pg: the PostgreSQL AsyncEngine object
+    :param subtraction_id: the id of the subtraction
+    :param gc: a dict contains gc data
+
+    :return: the updated subtraction document
+    """
+    updated_document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
+        "$set": {
+            "gc": gc,
+            "ready": True,
+            "files": await virtool.subtractions.utils.prepare_files_field(pg, subtraction_id)
+        }
+    })
+
+    return updated_document
 
 
 async def get_linked_samples(db, subtraction_id: str) -> List[dict]:

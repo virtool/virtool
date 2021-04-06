@@ -319,13 +319,7 @@ async def finalize_subtraction(req: aiohttp.web.Request):
     if "ready" in document and document["ready"]:
         return conflict("Subtraction has already been finalized")
 
-    updated_document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
-        "$set": {
-            "gc": data["gc"],
-            "ready": True,
-            "files": await virtool.subtractions.utils.prepare_files_field(pg, subtraction_id)
-        }
-    })
+    updated_document = await virtool.subtractions.db.finalize(db, pg, subtraction_id, data["gc"])
 
     return json_response(virtool.utils.base_processor(updated_document))
 
