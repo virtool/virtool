@@ -137,3 +137,34 @@ async def test_unlink_default_subtractions(dbi):
         {"_id": "bar", "subtractions": ["5", "8"]},
         {"_id": "baz", "subtractions": []}
     ]
+
+
+async def test_create(dbi, test_random_alphanumeric):
+    data = {
+        "name": "Foo",
+        "nickname": "foo",
+        "upload_id": 1
+    }
+    user_id = "test"
+    filename = "subtraction.fa.gz"
+
+    document = await virtool.subtractions.db.create(dbi, user_id, filename, data)
+
+    assert document == {
+        '_id': test_random_alphanumeric.history[1],
+        'name': 'Foo',
+        'nickname': 'foo',
+        'deleted': False,
+        'ready': False,
+        'is_host': True,
+        'file': {
+            'id': 1,
+            'name': 'subtraction.fa.gz'
+        },
+        'user': {
+            'id': 'test'
+        },
+        'job': {
+            'id': test_random_alphanumeric.history[0]
+        }
+    }
