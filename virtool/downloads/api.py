@@ -30,35 +30,6 @@ import virtool.utils
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/download/analyses/{analysis_id}.{extension}")
-async def download_analysis(req):
-    db = req.app["db"]
-
-    analysis_id = req.match_info["analysis_id"]
-    extension = req.match_info["extension"]
-
-    document = await db.analyses.find_one(analysis_id)
-
-    if extension == "xlsx":
-        formatted = await virtool.analyses.format.format_analysis_to_excel(req.app, document)
-
-        headers = {
-            "Content-Disposition": f"attachment; filename={analysis_id}.xlsx",
-            "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        }
-
-        return web.Response(body=formatted, headers=headers)
-
-    formatted = await virtool.analyses.format.format_analysis_to_csv(req.app, document)
-
-    headers = {
-        "Content-Disposition": f"attachment; filename={analysis_id}.csv",
-        "Content-Type": "text/csv"
-    }
-
-    return web.Response(text=formatted, headers=headers)
-
-
 @routes.get("/download/caches/{cache_id}/reads_{suffix}.fq.gz")
 async def download_cache_reads(req):
     """

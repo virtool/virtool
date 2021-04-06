@@ -239,7 +239,7 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.get("/api/analyses/{analysis_id}/files/{upload_id}")
-async def download(req: aiohttp.web.Request) -> Union[aiohttp.web.FileResponse, aiohttp.web.Response]:
+async def download_analysis_result(req: aiohttp.web.Request) -> Union[aiohttp.web.FileResponse, aiohttp.web.Response]:
     """
     Download an analysis result file.
 
@@ -258,6 +258,34 @@ async def download(req: aiohttp.web.Request) -> Union[aiohttp.web.FileResponse, 
         return not_found("Uploaded file not found at expected location")
 
     return aiohttp.web.FileResponse(analysis_file_path)
+
+
+@routes.get("/api/analyses/documents/{analysis_id}.{extension}")
+async def download_analysis_document(req: aiohttp.web.Request) -> aiohttp.web.Response:
+    """
+    Download an analysis document.
+
+    """
+    db = req.app["db"]
+
+    analysis_id = req.match_info["analysis_id"]
+    extension = req.match_info["extension"]
+
+    document = await db.analyses.find_one(analysis_id)
+
+    if extension == "xlsx":
+        formatted = await virtool.analyses.format.format_analysis_to_excel(req.app, document)
+        content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    else:
+        formatted = await virtool.analyses.format.format_analysis_to_csv(req.app, document)
+        content_type = "text/csv"
+
+    headers = {
+        "Content-Disposition": f"attachment; filename={analysis_id}.{extension}",
+        "Content-Type": content_type
+    }
+
+    return aiohttp.web.Response(text=formatted, headers=headers)
 
 
 @routes.put("/api/analyses/{analysis_id}/{sequence_index}/blast")
