@@ -1,3 +1,4 @@
+import io
 import os
 from pathlib import Path
 
@@ -344,6 +345,23 @@ async def test_download_file(file_exists, row_exists, files, spawn_client, snaps
     else:
         assert resp.status == 404
         snapshot.assert_match(await resp.json())
+
+
+@pytest.mark.parametrize("extension", ["csv", "xlsx"])
+async def test_download(extension, mocker, spawn_client):
+    client = await spawn_client(authorize=True)
+
+    await client.db.analyses.insert_one({
+        "_id": "foobar",
+        "ready": True,
+    })
+
+    mocker.patch(f"virtool.analyses.format.format_analysis_to_{'excel' if extension is 'xlsx' else 'csv'}",
+                 return_value=io.StringIO().getvalue())
+
+    resp = await client.get(f"/api/analyses/documents/foobar.{extension}")
+
+    assert resp.status == 200
 
 
 @pytest.mark.parametrize("error", [None, "400", "403", "404_analysis", "404_sequence", "409_workflow", "409_ready"])
