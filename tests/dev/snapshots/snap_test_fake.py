@@ -34,3 +34,70 @@ snapshots['test_create_fake_user[uvloop] 1'] = {
         'skip_quick_analyze_dialog': True
     }
 }
+
+snapshots['test_create_fake_analysis[uvloop] 1'] = [
+    {
+        '_id': 'analysis_1',
+        'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+        'index': {
+            'id': 'foo',
+            'version': 2
+        },
+        'job': {
+            'id': 'job_1'
+        },
+        'ready': False,
+        'reference': {
+            'id': 'reference_1'
+        },
+        'sample': {
+            'id': 'sample_1'
+        },
+        'subtractions': [
+            'subtraction_1',
+            'subtraction_2'
+        ],
+        'user': {
+            'id': 'bob'
+        },
+        'workflow': 'pathoscope'
+    },
+    {
+        '_id': 'analysis_2',
+        'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+        'files': [
+            {
+                'analysis': 'analysis_1',
+                'description': None,
+                'format': 'fasta',
+                'id': 1,
+                'name': 'result.fa',
+                'name_on_disk': '1-result.fa',
+                'size': 123456,
+                'uploaded_at': None
+            }
+        ],
+        'index': {
+            'id': 'foo',
+            'version': 2
+        },
+        'job': {
+            'id': 'job_2'
+        },
+        'ready': True,
+        'reference': {
+            'id': 'reference_1'
+        },
+        'sample': {
+            'id': 'sample_1'
+        },
+        'subtractions': [
+            'subtraction_1',
+            'subtraction_2'
+        ],
+        'user': {
+            'id': 'bob'
+        },
+        'workflow': 'pathoscope'
+    }
+]
