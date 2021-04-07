@@ -322,7 +322,10 @@ async def finalize_subtraction(req: aiohttp.web.Request):
 
     updated_document = await virtool.subtractions.db.finalize(db, pg, subtraction_id, data["gc"])
 
-    updated_document["files"] = await virtool.subtractions.utils.get_subtraction_files(pg, subtraction_id)
+    updated_document["files"] = await virtool.subtractions.utils.get_subtraction_files(
+        pg,
+        subtraction_id
+    )
 
     return json_response(virtool.utils.base_processor(updated_document))
 

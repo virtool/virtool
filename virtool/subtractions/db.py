@@ -9,18 +9,17 @@ import shutil
 from typing import Any, Dict, List
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.db.utils
 import virtool.subtractions.files
 import virtool.subtractions.utils
-import virtool.tasks.task
 import virtool.tasks.pg
 import virtool.tasks.task
+import virtool.tasks.task
 import virtool.utils
-
-from virtool.subtractions.utils import FILES
 from virtool.subtractions.models import SubtractionFile
+from virtool.subtractions.utils import FILES
 from virtool.types import App
 
 PROJECTION = [
@@ -298,8 +297,7 @@ async def finalize(db, pg: AsyncEngine, subtraction_id: str, gc: Dict[str, float
     updated_document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
         "$set": {
             "gc": gc,
-            "ready": True,
-            "files": await virtool.subtractions.utils.prepare_files_field(pg, subtraction_id)
+            "ready": True
         }
     })
 
