@@ -11,9 +11,11 @@ import pymongo
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 import virtool.api.utils
+import virtool.db.utils
 import virtool.history
 import virtool.history.db
 import virtool.pg.utils
+import virtool.references.db
 import virtool.utils
 from virtool.indexes.models import IndexFile
 
@@ -41,6 +43,57 @@ FILES = (
     "reference.rev.1.bt2",
     "reference.rev.2.bt2"
 )
+
+
+async def create(db, ref_id: str, user_id: str) -> dict:
+    """
+    Create a new index and update history to show the version and id of the new index.
+
+    :param db: the application database client
+    :param ref_id: the ID of the reference to create index for
+    :param user_id: the ID of the current user
+    :return: the new index document
+    """
+    index_id = await virtool.db.utils.get_new_id(db.indexes)
+
+    index_version = await get_next_version(db, ref_id)
+
+    job_id = await virtool.db.utils.get_new_id(db.jobs)
+
+    manifest = await virtool.references.db.get_manifest(db, ref_id)
+
+    document = {
+        "_id": index_id,
+        "version": index_version,
+        "created_at": virtool.utils.timestamp(),
+        "manifest": manifest,
+        "ready": False,
+        "has_files": True,
+        "has_json": False,
+        "job": {
+            "id": job_id
+        },
+        "reference": {
+            "id": ref_id
+        },
+        "user": {
+            "id": user_id
+        },
+        "files": []
+    }
+
+    await db.indexes.insert_one(document)
+
+    await db.history.update_many({"index.id": "unbuilt", "reference.id": ref_id}, {
+        "$set": {
+            "index": {
+                "id": index_id,
+                "version": index_version
+            }
+        }
+    })
+
+    return document
 
 
 async def processor(db, document):
@@ -93,6 +146,26 @@ async def find(db, req_query, ref_id=None):
     data.update(await get_unbuilt_stats(db, ref_id))
 
     return data
+
+
+async def finalize(db, pg: AsyncEngine, ref_id: str, index_id: str) -> dict:
+    """
+    Finalize an index document by setting `ready` to `True` and attach files.
+
+    :param db: the application database client
+    :param pg: the PostgreSQL AsyncEngine object
+    :param ref_id: the ID of the reference
+    :param index_id: the ID of the index to be finalized for
+    :return: the index document after finalization
+
+    """
+    await update_last_indexed_versions(db, ref_id)
+
+    document = await db.indexes.find_one_and_update({"_id": index_id}, {
+        "$set": {"ready": True}
+    })
+
+    return await attach_files(pg, document)
 
 
 async def get_contributors(db, index_id):

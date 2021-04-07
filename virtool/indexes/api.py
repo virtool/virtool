@@ -215,58 +215,21 @@ async def create(req):
     if not await db.history.count_documents({"reference.id": ref_id, "index.id": "unbuilt"}):
         return bad_request("There are no unbuilt changes")
 
-    index_id = await virtool.db.utils.get_new_id(db.indexes)
-
-    index_version = await virtool.indexes.db.get_next_version(db, ref_id)
-
-    job_id = await virtool.db.utils.get_new_id(db.jobs)
-
-    manifest = await virtool.references.db.get_manifest(db, ref_id)
-
     user_id = req["client"].user_id
 
-    document = {
-        "_id": index_id,
-        "version": index_version,
-        "created_at": virtool.utils.timestamp(),
-        "manifest": manifest,
-        "ready": False,
-        "has_files": True,
-        "has_json": False,
-        "job": {
-            "id": job_id
-        },
-        "reference": {
-            "id": ref_id
-        },
-        "user": {
-            "id": user_id
-        },
-        "files": []
-    }
-
-    await db.indexes.insert_one(document)
-
-    await db.history.update_many({"index.id": "unbuilt", "reference.id": ref_id}, {
-        "$set": {
-            "index": {
-                "id": index_id,
-                "version": index_version
-            }
-        }
-    })
+    document = await virtool.indexes.db.create(db, ref_id, user_id)
 
     # A dict of task_args for the rebuild job.
     task_args = {
         "ref_id": ref_id,
         "user_id": user_id,
-        "index_id": index_id,
-        "index_version": index_version,
-        "manifest": manifest
+        "index_id": document["_id"],
+        "index_version": document["version"],
+        "manifest": document["manifest"]
     }
 
     rights = JobRights()
-    rights.indexes.can_modify(index_id)
+    rights.indexes.can_modify(document["_id"])
     rights.references.can_read(ref_id)
 
     # Create job document.
@@ -276,13 +239,13 @@ async def create(req):
         task_args,
         user_id,
         rights,
-        job_id=job_id
+        job_id=document["job"]["id"]
     )
 
     await req.app["jobs"].enqueue(job["_id"])
 
     headers = {
-        "Location": "/api/indexes/" + index_id
+        "Location": "/api/indexes/" + document["_id"]
     }
 
     return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
@@ -391,13 +354,7 @@ async def finalize(req):
                 f"Reference requires that all Bowtie2 index files have been uploaded. "
                 f"Missing files: {', '.join(missing_files)}")
 
-    await virtool.indexes.db.update_last_indexed_versions(db, ref_id)
-
-    document = await db.indexes.find_one_and_update({"_id": index_id}, {
-        "$set": {"ready": True}
-    })
-
-    document = await virtool.indexes.db.attach_files(pg, document)
+    document = await virtool.indexes.db.finalize(db, pg, ref_id, index_id)
 
     return json_response(virtool.utils.base_processor(document))
 

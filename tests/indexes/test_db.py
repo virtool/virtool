@@ -1,11 +1,63 @@
-import aiohttp.test_utils
 import pytest
+from aiohttp.test_utils import make_mocked_coro
 
 import virtool.indexes
 import virtool.indexes.db
 import virtool.errors
 import virtool.jobs.build_index
 from virtool.indexes.models import IndexFile
+
+
+async def test_create(mocker, dbi, test_random_alphanumeric, static_time):
+    await dbi.references.insert_one({
+        "_id": "foo"
+    })
+
+    await dbi.history.insert_one({
+        "_id": "abc",
+        "index": {
+            "id": "unbuilt",
+            "version": "unbuilt"
+        },
+        "reference": {
+            "id": "foo"
+        }
+    })
+
+    mocker.patch("virtool.references.db.get_manifest", new=make_mocked_coro("manifest"))
+
+    document = await virtool.indexes.db.create(dbi, "foo", "test")
+    assert document == {
+        "_id": test_random_alphanumeric.history[0],
+        "version": 0,
+        "created_at": static_time.datetime,
+        "manifest": "manifest",
+        "ready": False,
+        "has_files": True,
+        "has_json": False,
+        "job": {
+            "id": test_random_alphanumeric.history[1]
+        },
+        "reference": {
+            "id": "foo"
+        },
+        "user": {
+            "id": "test"
+        },
+        "files": []
+    }
+
+    history = await dbi.history.find_one("abc")
+    assert history == {
+        "_id": "abc",
+        "index": {
+            "id": test_random_alphanumeric.history[0],
+            "version": 0
+        },
+        "reference": {
+            "id": "foo"
+        }
+    }
 
 
 @pytest.mark.parametrize("exists", [True, False])
@@ -137,7 +189,7 @@ async def test_tag_unbuilt_changes(dbi, create_mock_history):
 
 
 async def test_get_patched_otus(mocker, dbi):
-    m = mocker.patch("virtool.history.db.patch_to_version", aiohttp.test_utils.make_mocked_coro((None, {"_id": "foo"}, None)))
+    m = mocker.patch("virtool.history.db.patch_to_version", make_mocked_coro((None, {"_id": "foo"}, None)))
 
     manifest = {
         "foo": 2,
@@ -227,6 +279,47 @@ async def test_attach_files(pg, pg_session):
                 "index": "foo",
                 "type": "bowtie2",
                 "size": 1234567
+            }
+        ]
+    }
+
+
+async def test_finalize(dbi, pg, pg_session):
+    await dbi.indexes.insert_one({
+        "_id": "foo",
+        "reference": {
+            "id": "bar"
+        }
+    })
+
+    index_1 = IndexFile(id=1, name="reference.1.bt2", index="foo", type="bowtie2", size=1234567)
+    index_2 = IndexFile(id=2, name="reference.2.bt2", index="foo", type="bowtie2", size=1234567)
+
+    async with pg_session as session:
+        session.add_all([index_1, index_2])
+        await session.commit()
+
+    document = await virtool.indexes.db.finalize(dbi, pg, "bar", "foo")
+    assert document == {
+        '_id': 'foo',
+        "reference": {
+            "id": "bar"
+        },
+        'ready': True,
+        'files': [
+            {
+                'id': 1,
+                'name': 'reference.1.bt2',
+                'index': 'foo',
+                'type': 'bowtie2',
+                'size': 1234567
+            },
+            {
+                'id': 2,
+                'name': 'reference.2.bt2',
+                'index': 'foo',
+                'type': 'bowtie2',
+                'size': 1234567
             }
         ]
     }
