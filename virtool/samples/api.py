@@ -33,9 +33,8 @@ from virtool.api.response import bad_request, conflict, insufficient_rights, inv
     json_response, no_content, not_found
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
-from virtool.samples.models import ArtifactType, SampleArtifact, SampleArtifactCache, SampleReads
+from virtool.samples.models import ArtifactType, SampleArtifact, SampleArtifactCache
 from virtool.samples.utils import bad_labels_response, check_labels
-from virtool.uploads.models import Upload
 from virtool.uploads.utils import is_gzip_compressed
 
 logger = logging.getLogger("samples")
@@ -494,45 +493,19 @@ async def finalize(req):
     Finalize a sample that is being created using the Jobs API by setting a sample's quality field and `ready` to `True`
 
     """
-    pg = req.app["pg"]
-    db = req.app["db"]
     data = req["data"]
 
     sample_id = req.match_info["sample_id"]
 
-    document = await db.samples.find_one_and_update({"_id": sample_id}, {
-        "$set": {
-            "quality": data["quality"],
-            "ready": True
-        }
-    })
+    document = await virtool.samples.db.finalize(
+        req.app["db"],
+        req.app["pg"],
+        sample_id,
+        data["quality"],
+        req.app["run_in_thread"],
+        req.app["settings"]["data_path"])
 
-    async with AsyncSession(pg) as session:
-        rows = (await session.execute(
-            select(Upload).filter(SampleReads.sample == sample_id).join_from(SampleReads, Upload))).unique().scalars()
-
-        for row in rows:
-            row.reads.clear()
-            row.removed = True
-            row.removed_at = virtool.utils.timestamp()
-
-            try:
-                await req.app["run_in_thread"](
-                    virtool.utils.rm,
-                    Path(req.app["settings"]["data_path"]) / "files" / row.name_on_disk
-                )
-            except FileNotFoundError:
-                pass
-
-            session.add(row)
-
-        await session.commit()
-
-    document = await virtool.samples.db.attach_artifacts_and_reads(pg, document)
-
-    processed = virtool.utils.base_processor(document)
-
-    return json_response(processed)
+    return json_response(virtool.utils.base_processor(document))
 
 
 @routes.patch("/api/samples/{sample_id}/rights")
