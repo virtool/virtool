@@ -9,18 +9,17 @@ import shutil
 from typing import Any, Dict, List
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.db.utils
 import virtool.subtractions.files
 import virtool.subtractions.utils
-import virtool.tasks.task
 import virtool.tasks.pg
 import virtool.tasks.task
+import virtool.tasks.task
 import virtool.utils
-
-from virtool.subtractions.utils import FILES
 from virtool.subtractions.models import SubtractionFile
+from virtool.subtractions.utils import FILES
 from virtool.types import App
 
 PROJECTION = [
@@ -224,6 +223,47 @@ async def check_subtraction_fasta_files(db, settings: dict) -> list:
     return subtractions_without_fasta
 
 
+async def create(db, user_id: str, filename: str, name: str, nickname: str, upload_id: int) -> dict:
+    """
+    Create a new subtraction document.
+
+    :param db: the application database client
+    :param user_id: the id of the current user
+    :param filename: the name of the `subtraction_file`
+    :param name: the name of the subtraction
+    :param nickname: the nickname of the subtraction
+    :param upload_id: the id of the `subtraction_file`
+
+    :return: the new document
+
+    """
+    job_id = await virtool.db.utils.get_new_id(db.jobs)
+    subtraction_id = await virtool.db.utils.get_new_id(db.subtraction)
+
+    document = {
+        "_id": subtraction_id,
+        "name": name,
+        "nickname": nickname,
+        "deleted": False,
+        "ready": False,
+        "is_host": True,
+        "file": {
+            "id": upload_id,
+            "name": filename
+        },
+        "user": {
+            "id": user_id
+        },
+        "job": {
+            "id": job_id
+        }
+    }
+
+    await db.subtraction.insert_one(document)
+
+    return document
+
+
 async def delete(app, subtraction_id):
     db = app["db"]
     settings = app["settings"]
@@ -241,6 +281,27 @@ async def delete(app, subtraction_id):
         await app["run_in_thread"](shutil.rmtree, path, True)
 
     return update_result.modified_count
+
+
+async def finalize(db, pg: AsyncEngine, subtraction_id: str, gc: Dict[str, float]) -> dict:
+    """
+    Finalize a subtraction by setting `ready` to True and updating the `gc` and `files` fields.
+
+    :param db: the application database client
+    :param pg: the PostgreSQL AsyncEngine object
+    :param subtraction_id: the id of the subtraction
+    :param gc: a dict contains gc data
+
+    :return: the updated subtraction document
+    """
+    updated_document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
+        "$set": {
+            "gc": gc,
+            "ready": True
+        }
+    })
+
+    return updated_document
 
 
 async def get_linked_samples(db, subtraction_id: str) -> List[dict]:

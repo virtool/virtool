@@ -137,3 +137,58 @@ async def test_unlink_default_subtractions(dbi):
         {"_id": "bar", "subtractions": ["5", "8"]},
         {"_id": "baz", "subtractions": []}
     ]
+
+
+async def test_create(dbi, test_random_alphanumeric):
+    user_id = "test"
+    filename = "subtraction.fa.gz"
+
+    document = await virtool.subtractions.db.create(dbi, user_id, filename, "Foo", "foo", 1)
+
+    assert document == {
+        "_id": test_random_alphanumeric.history[1],
+        "name": "Foo",
+        "nickname": "foo",
+        "deleted": False,
+        "ready": False,
+        "is_host": True,
+        "file": {
+            "id": 1,
+            "name": "subtraction.fa.gz"
+        },
+        "user": {
+            "id": "test"
+        },
+        "job": {
+            "id": test_random_alphanumeric.history[0]
+        }
+    }
+
+
+async def test_finalize(dbi, pg):
+    await dbi.subtraction.insert_one({
+        "_id": "foo",
+        "name": "Foo",
+    })
+
+    gc = {
+        "a": 0.319,
+        "t": 0.319,
+        "g": 0.18,
+        "c": 0.18,
+        "n": 0.002
+    }
+
+    document = await virtool.subtractions.db.finalize(dbi, pg, "foo", gc)
+    assert document == {
+        "_id": "foo",
+        "name": "Foo",
+        "gc": {
+            "a": 0.319,
+            "t": 0.319,
+            "g": 0.18,
+            "c": 0.18,
+            "n": 0.002
+        },
+        "ready": True
+    }

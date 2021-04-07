@@ -16,7 +16,6 @@ import virtool.pg.utils
 import virtool.samples.utils
 import virtool.subtractions.db
 import virtool.subtractions.files
-import virtool.subtractions.utils
 import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
@@ -98,8 +97,15 @@ async def get(req):
     if not document:
         return not_found()
 
-    document["linked_samples"] = await virtool.subtractions.db.get_linked_samples(db, subtraction_id)
-    document["files"] = await virtool.subtractions.utils.get_subtraction_files(pg, subtraction_id)
+    files, linked_samples = await asyncio.gather(
+        virtool.subtractions.utils.get_subtraction_files(pg, subtraction_id),
+        virtool.subtractions.db.get_linked_samples(db, subtraction_id)
+    )
+
+    document.update({
+        "files": files,
+        "linked_samples": linked_samples
+    })
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -131,6 +137,8 @@ async def create(req):
     pg = req.app["pg"]
     data = req["data"]
 
+    name = data["name"]
+    nickname = data["nickname"]
     upload_id = data["upload_id"]
 
     file = await virtool.pg.utils.get_row(pg, upload_id, Upload)
@@ -138,31 +146,20 @@ async def create(req):
     if file is None:
         return bad_request("File does not exist")
 
-    job_id = await virtool.db.utils.get_new_id(db.jobs)
-    subtraction_id = await virtool.db.utils.get_new_id(db.subtraction)
+    filename = file.to_dict().get("name")
 
     user_id = req["client"].user_id
 
-    document = {
-        "_id": subtraction_id,
-        "name": data["name"],
-        "nickname": data["nickname"],
-        "deleted": False,
-        "ready": False,
-        "is_host": True,
-        "file": {
-            "id": upload_id,
-            "name": file.to_dict().get("name")
-        },
-        "user": {
-            "id": user_id
-        },
-        "job": {
-            "id": job_id
-        },
-    }
+    document = await virtool.subtractions.db.create(
+        db,
+        user_id,
+        filename,
+        name,
+        nickname,
+        upload_id
+    )
 
-    await db.subtraction.insert_one(document)
+    subtraction_id = document["_id"]
 
     task_args = {
         "subtraction_id": subtraction_id,
@@ -182,10 +179,10 @@ async def create(req):
         task_args,
         user_id,
         rights,
-        job_id=job_id
+        job_id=document["job"]["id"]
     )
 
-    await req.app["jobs"].enqueue(job_id)
+    await req.app["jobs"].enqueue(document["job"]["id"])
 
     headers = {
         "Location": f"/api/subtraction/{subtraction_id}"
@@ -197,8 +194,8 @@ async def create(req):
 @routes.jobs_api.post("/api/subtractions/{subtraction_id}/files")
 async def upload(req):
     """
-    Upload a new subtraction file to the `subtraction_files` SQL table and the `subtractions` folder in the Virtool
-    data path.
+    Upload a new subtraction file to the `subtraction_files` SQL table and the `subtractions`
+    folder in the Virtool data path.
 
     """
     db = req.app["db"]
@@ -221,8 +218,13 @@ async def upload(req):
         return bad_request("Unsupported subtraction file name")
 
     file_type = virtool.subtractions.utils.check_subtraction_file_type(file_name)
-    subtraction_file = await virtool.subtractions.files.create_subtraction_file(pg, subtraction_id, file_type,
-                                                                                file_name)
+
+    subtraction_file = await virtool.subtractions.files.create_subtraction_file(
+        pg,
+        subtraction_id,
+        file_type,
+        file_name
+    )
     upload_id = subtraction_file["id"]
     path = Path(req.app["settings"]["data_path"]) / "subtractions" / subtraction_id / file_name
 
@@ -289,8 +291,10 @@ async def edit(req):
     if document is None:
         return not_found()
 
-    files, linked_samples = await asyncio.gather(*[virtool.subtractions.utils.get_subtraction_files(pg, subtraction_id),
-                                                   virtool.subtractions.db.get_linked_samples(db, subtraction_id)])
+    files, linked_samples = await asyncio.gather(
+        virtool.subtractions.utils.get_subtraction_files(pg, subtraction_id),
+        virtool.subtractions.db.get_linked_samples(db, subtraction_id)
+    )
 
     document.update({
         "files": files,
@@ -336,14 +340,17 @@ async def finalize_subtraction(req: aiohttp.web.Request):
     if "ready" in document and document["ready"]:
         return conflict("Subtraction has already been finalized")
 
-    updated_document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
-        "$set": {
-            "gc": data["gc"],
-            "ready": True
-        }
-    })
+    updated_document = await virtool.subtractions.db.finalize(db, pg, subtraction_id, data["gc"])
 
-    updated_document["files"] = await virtool.subtractions.utils.get_subtraction_files(pg, subtraction_id)
+    files, linked_samples = await asyncio.gather(
+        virtool.subtractions.utils.get_subtraction_files(pg, subtraction_id),
+        virtool.subtractions.db.get_linked_samples(db, subtraction_id)
+    )
+
+    updated_document.update({
+        "files": files,
+        "linked_samples": linked_samples
+    })
 
     return json_response(virtool.utils.base_processor(updated_document))
 
