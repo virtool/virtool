@@ -18,6 +18,7 @@ import virtool.users.db
 import virtool.utils
 import virtool.jobs.db
 import virtool.users.db
+import virtool.references.db
 from virtool.jobs.utils import JobRights
 from virtool.types import App
 from virtool.uploads.models import Upload
@@ -242,3 +243,24 @@ async def create_integration_test_job(app: App):
 async def create_fake_jobs(app: App):
     await create_integration_test_job(app)
 
+
+async def create_fake_references(app: App):
+    """
+    Create a fake reference with ``genome`` data type.
+
+    :param app: the application object
+    """
+    document = await virtool.references.db.create_document(
+        app["db"],
+        app["settings"],
+        "Reference 1",
+        "virus",
+        "A fake reference",
+        "genome",
+        ref_id="reference_1",
+        user_id=USER_ID
+    )
+
+    await app["db"].references.insert_one(document)
+
+    logger.debug("Created fake reference")
