@@ -165,9 +165,7 @@ async def finalize(db, pg: AsyncEngine, ref_id: str, index_id: str) -> dict:
         "$set": {"ready": True}
     })
 
-    document = await attach_files(pg, document)
-
-    return document
+    return await attach_files(pg, document)
 
 
 async def get_contributors(db, index_id):
