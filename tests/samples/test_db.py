@@ -11,6 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 import virtool.samples.db
 import virtool.samples.utils
+import virtool.uploads.db
+import virtool.pg.utils
 from virtool.labels.models import Label
 from virtool.samples.models import SampleReads
 from virtool.tasks.models import Task
@@ -656,3 +658,49 @@ async def test_move_sample_files_task(legacy, compressed, paired, dbi, pg, pg_se
 
         assert sample_reads in upload.reads
         assert sample_reads.upload == upload.id
+
+
+async def test_finalize(tmpdir, dbi, pg, pg_session):
+    quality = {
+        "count": 10000000,
+        "gc": 43
+    }
+
+    await dbi.samples.insert_one({
+        "_id": "test",
+    })
+
+    async with pg_session as session:
+        upload = Upload(name="test", name_on_disk="test.fq.gz")
+        reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
+
+        upload.reads.append(reads)
+        session.add_all([upload, reads])
+
+        await session.commit()
+
+    m_run_in_thread = make_mocked_coro()
+
+    document = await virtool.samples.db.finalize(dbi, pg, "test", quality, m_run_in_thread, tmpdir)
+    assert document == {
+        "_id": "test",
+        "quality": {
+            "count": 10000000,
+            "gc": 43
+        },
+        "ready": True,
+        "artifacts": [],
+        "reads": [
+            {
+                "id": 1,
+                "sample": "test",
+                "name": "reads_1.fq.gz",
+                "name_on_disk": "reads_1.fq.gz",
+                "size": None,
+                "upload": None,
+                "uploaded_at": None
+            }
+        ]
+    }
+    assert not await virtool.uploads.db.get(pg, 1)
+    assert not (await virtool.pg.utils.get_row(pg, 1, SampleReads)).upload
