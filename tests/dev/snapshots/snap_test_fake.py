@@ -67,7 +67,7 @@ snapshots['test_create_fake_analysis[uvloop] 1'] = [
         'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
         'files': [
             {
-                'analysis': 'analysis_1',
+                'analysis': 'analysis_2',
                 'description': None,
                 'format': 'fasta',
                 'id': 1,
@@ -128,4 +128,3 @@ snapshots['test_create_fake_job[uvloop] 1'] = {
         'id': 'bob'
     }
 }
-
