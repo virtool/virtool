@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.caches.db
 import virtool.caches.utils
-import virtool.samples.db
 import virtool.pg.utils
+import virtool.samples.db
 import virtool.uploads.db
 from virtool.labels.models import Label
 from virtool.samples.models import SampleReads, SampleReadsCache, SampleArtifact, SampleArtifactCache

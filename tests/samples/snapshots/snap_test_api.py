@@ -700,8 +700,10 @@ snapshots['TestCreate.test[uvloop-none] 1'] = {
     'group_read': True,
     'group_write': True,
     'hold': True,
+    'host': None,
     'id': '9pfsom1b',
     'is_legacy': False,
+    'isolate': None,
     'labels': [
     ],
     'library_type': 'normal',
@@ -741,7 +743,9 @@ snapshots['TestCreate.test[uvloop-none] 2'] = {
     'group_read': True,
     'group_write': True,
     'hold': True,
+    'host': None,
     'is_legacy': False,
+    'isolate': None,
     'labels': [
     ],
     'library_type': 'normal',
@@ -780,8 +784,10 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
     'group_read': True,
     'group_write': True,
     'hold': True,
+    'host': None,
     'id': '9pfsom1b',
     'is_legacy': False,
+    'isolate': None,
     'labels': [
     ],
     'library_type': 'normal',
@@ -821,7 +827,9 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 2'] = {
     'group_read': True,
     'group_write': True,
     'hold': True,
+    'host': None,
     'is_legacy': False,
+    'isolate': None,
     'labels': [
     ],
     'library_type': 'normal',
@@ -860,8 +868,10 @@ snapshots['TestCreate.test[uvloop-force_choice] 1'] = {
     'group_read': True,
     'group_write': True,
     'hold': True,
+    'host': None,
     'id': '9pfsom1b',
     'is_legacy': False,
+    'isolate': None,
     'labels': [
     ],
     'library_type': 'normal',
@@ -901,7 +911,9 @@ snapshots['TestCreate.test[uvloop-force_choice] 2'] = {
     'group_read': True,
     'group_write': True,
     'hold': True,
+    'host': None,
     'is_legacy': False,
+    'isolate': None,
     'labels': [
     ],
     'library_type': 'normal',

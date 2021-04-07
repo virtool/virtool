@@ -1,7 +1,6 @@
 import asyncio.tasks
 import logging
 import os
-from copy import deepcopy
 from pathlib import Path
 
 import aiohttp.web
@@ -292,9 +291,7 @@ async def create(req):
         if non_existent_labels:
             return bad_labels_response(non_existent_labels)
 
-        data = await virtool.samples.db.attach_labels(pg, data)
-    else:
-        data["labels"] = []
+    data = await virtool.samples.db.attach_labels(pg, data)
 
     # Make sure all of the passed file ids exist.
     for file in data["files"]:
@@ -302,10 +299,6 @@ async def create(req):
 
         if not upload:
             return bad_request("File does not exist")
-
-    sample_id = await virtool.db.utils.get_new_id(db.samples)
-
-    document = deepcopy(data)
 
     sample_group_setting = settings["sample_group"]
 
@@ -322,36 +315,11 @@ async def create(req):
     # Assign the user"s primary group as the sample owner group if the setting is
     # ``users_primary_group``.
     elif sample_group_setting == "users_primary_group":
-        document["group"] = await virtool.db.utils.get_one_field(db.users, "primary_group", user_id)
+        data["group"] = await virtool.db.utils.get_one_field(db.users, "primary_group", user_id)
 
     # Make the owner group none if the setting is none.
     elif sample_group_setting == "none":
-        document["group"] = "none"
-
-    document.update({
-        "_id": sample_id,
-        "nuvs": False,
-        "pathoscope": False,
-        "created_at": virtool.utils.timestamp(),
-        "is_legacy": False,
-        "format": "fastq",
-        "ready": False,
-        "quality": None,
-        "hold": True,
-        "group_read": settings["sample_group_read"],
-        "group_write": settings["sample_group_write"],
-        "all_read": settings["sample_all_read"],
-        "all_write": settings["sample_all_write"],
-        "library_type": data["library_type"],
-        "subtractions": subtractions,
-        "user": {
-            "id": user_id
-        },
-        "paired": len(data["files"]) == 2,
-        # Associated artifacts and reads should not yet exist
-        "artifacts": [],
-        "reads": []
-    })
+        data["group"] = "none"
 
     uploads = [(await virtool.uploads.db.get(pg, upload_id)).to_dict() for upload_id in data["files"]]
 
@@ -364,9 +332,12 @@ async def create(req):
         }
         files.append(file)
 
-    document["files"] = files
+    document = await virtool.samples.db.create_sample(db, data["name"], user_id, group=data["group"], notes=data["notes"],
+                                                      library_type=data["library_type"], files=files,
+                                                      labels=data["labels"],
+                                                      subtractions=subtractions, settings=settings)
 
-    await db.samples.insert_one(document)
+    sample_id = document["_id"]
 
     await virtool.uploads.db.reserve(pg, data["files"])
 
