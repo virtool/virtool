@@ -183,7 +183,6 @@ async def test_finalize(dbi, pg):
     assert document == {
         "_id": "foo",
         "name": "Foo",
-        "files": [],
         "gc": {
             "a": 0.319,
             "t": 0.319,
