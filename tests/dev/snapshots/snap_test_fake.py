@@ -128,3 +128,32 @@ snapshots['test_create_fake_job[uvloop] 1'] = {
         'id': 'bob'
     }
 }
+
+snapshots['test_create_fake_references[uvloop] 1'] = {
+    '_id': 'reference_1',
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'data_type': 'genome',
+    'description': 'A fake reference',
+    'groups': [
+    ],
+    'internal_control': None,
+    'name': 'Reference 1',
+    'organism': 'virus',
+    'restrict_source_types': False,
+    'source_types': [
+        'isolate',
+        'strain'
+    ],
+    'user': {
+        'id': 'bob'
+    },
+    'users': [
+        {
+            'build': True,
+            'id': 'bob',
+            'modify': True,
+            'modify_otu': True,
+            'remove': True
+        }
+    ]
+}
