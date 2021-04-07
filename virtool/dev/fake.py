@@ -167,7 +167,7 @@ async def create_fake_analysis(app: App):
         "subtraction_2",
     ]
 
-    file = await virtool.analyses.files.create_analysis_file(app["pg"], "analysis_1", "fasta", "result.fa", 123456)
+    file = await virtool.analyses.files.create_analysis_file(app["pg"], "analysis_2", "fasta", "result.fa", 123456)
     await app["db"].analyses.insert_many([
         {
             "_id": "analysis_1",
