@@ -86,10 +86,16 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
         artifacts = (await session.execute(select(SampleArtifact).filter_by(sample=document["_id"]))).scalars()
         reads_files = (await session.execute(select(SampleReads).filter_by(sample=document["_id"]))).scalars()
 
+        reads = [reads_file.to_dict() for reads_file in reads_files]
+
+        for reads_file in reads:
+            if upload:= reads_file.get("upload"):
+                reads_file["upload"] = ((await session.execute(select(Upload).filter_by(id=upload))).scalar()).to_dict()
+
     return {
         **document,
         "artifacts": [artifact.to_dict() for artifact in artifacts],
-        "reads": [reads_file.to_dict() for reads_file in reads_files]
+        "reads": reads
     }
 
 
