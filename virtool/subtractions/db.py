@@ -35,16 +35,41 @@ PROJECTION = [
 ]
 
 ADD_SUBTRACTION_FILES_QUERY = {
-    "deleted": False,
-    "files": {"$exists": False}
+    "deleted": False
 }
+
+
+async def attach_computed(app: App, subtraction: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Attach the ``linked_samples`` and ``files`` fields to the passed subtraction document.
+
+    Queries MongoDB and SQL to find the required data. Returns a new document dictionary.
+
+    :param app: the application object
+    :param subtraction: the subtraction document to attach to
+    :return: a new subtraction document with new fields attached
+
+    """
+    subtraction_id = subtraction["_id"]
+
+    files, linked_samples = await asyncio.gather(
+        virtool.subtractions.utils.get_subtraction_files(app["pg"], subtraction_id),
+        virtool.subtractions.db.get_linked_samples(app["db"], subtraction_id)
+    )
+
+    return {
+        **subtraction,
+        "files": files,
+        "linked_samples": linked_samples
+    }
 
 
 class AddSubtractionFilesTask(virtool.tasks.task.Task):
     """
     Rename Bowtie2 index name from 'reference' to 'subtraction'.
 
-    Add a 'files' field to subtraction documents to list what files can be downloaded for that subtraction.
+    Add a 'files' field to subtraction documents to list what files can be downloaded for that
+    subtraction.
 
     """
     task_type = "add_subtraction_files"
@@ -76,7 +101,8 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
 
     async def store_subtraction_files(self):
         """
-        Add a 'files' field to subtraction documents to list what files can be downloaded for that subtraction
+        Add a 'files' field to subtraction documents to list what files can be downloaded for that
+        subtraction
 
         """
         settings = self.app["settings"]
@@ -95,7 +121,10 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
                 if filename in FILES:
                     async with AsyncSession(self.app["pg"]) as session:
                         exists = (await session.execute(
-                            select(SubtractionFile).filter_by(subtraction=subtraction["_id"], name=filename)
+                            select(SubtractionFile).filter_by(
+                                subtraction=subtraction["_id"],
+                                name=filename
+                            )
                         )).scalar()
 
                     if not exists:
@@ -197,7 +226,8 @@ async def attach_subtractions(db, document: Dict[str, Any]):
 
 async def check_subtraction_fasta_files(db, settings: dict) -> list:
     """
-    Check subtraction directories for files and set 'has_file' to boolean based on whether .fa.gz exists.
+    Check subtraction directories for files and set 'has_file' to boolean based on whether .fa.gz
+    exists.
 
     :param db: the application database client
     :param settings: the application settings
@@ -223,7 +253,14 @@ async def check_subtraction_fasta_files(db, settings: dict) -> list:
     return subtractions_without_fasta
 
 
-async def create(db, user_id: str, filename: str, name: str, nickname: str, upload_id: int) -> dict:
+async def create(
+        db,
+        user_id: str,
+        filename: str,
+        name: str,
+        nickname: str,
+        upload_id: int
+) -> dict:
     """
     Create a new subtraction document.
 
@@ -291,8 +328,8 @@ async def finalize(db, pg: AsyncEngine, subtraction_id: str, gc: Dict[str, float
     :param pg: the PostgreSQL AsyncEngine object
     :param subtraction_id: the id of the subtraction
     :param gc: a dict contains gc data
-
     :return: the updated subtraction document
+
     """
     updated_document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
         "$set": {
@@ -310,8 +347,8 @@ async def get_linked_samples(db, subtraction_id: str) -> List[dict]:
 
     :param db: the application database client
     :param subtraction_id: the ID of the subtraction
-
     :return: a list of dicts containing linked samples with 'id' and 'name' field.
+
     """
     cursor = db.samples.find({"subtractions": subtraction_id}, ["_id", "name"])
     return [virtool.utils.base_processor(d) async for d in cursor]
@@ -323,5 +360,3 @@ async def unlink_default_subtractions(db, subtraction_id):
             "subtractions": subtraction_id
         }
     })
-
-

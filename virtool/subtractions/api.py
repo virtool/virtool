@@ -24,6 +24,7 @@ from virtool.api.response import (bad_request, conflict, invalid_query,
                                   json_response, no_content, not_found)
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
+from virtool.subtractions.db import attach_computed
 from virtool.subtractions.models import SubtractionFile
 from virtool.subtractions.utils import FILES
 from virtool.uploads.models import Upload
@@ -88,7 +89,6 @@ async def get(req):
 
     """
     db = req.app["db"]
-    pg = req.app["pg"]
 
     subtraction_id = req.match_info["subtraction_id"]
 
@@ -97,17 +97,9 @@ async def get(req):
     if not document:
         return not_found()
 
-    files, linked_samples = await asyncio.gather(
-        virtool.subtractions.utils.get_subtraction_files(pg, subtraction_id),
-        virtool.subtractions.db.get_linked_samples(db, subtraction_id)
-    )
+    with_computed = await attach_computed(req.app, document)
 
-    document.update({
-        "files": files,
-        "linked_samples": linked_samples
-    })
-
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(virtool.utils.base_processor(with_computed))
 
 
 @routes.post("/api/subtractions", permission="modify_subtraction")
@@ -188,7 +180,9 @@ async def create(req):
         "Location": f"/api/subtraction/{subtraction_id}"
     }
 
-    return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
+    with_computed = await attach_computed(req.app, document)
+
+    return json_response(virtool.utils.base_processor(with_computed), headers=headers, status=201)
 
 
 @routes.jobs_api.post("/api/subtractions/{subtraction_id}/files")
@@ -266,8 +260,6 @@ async def edit(req):
 
     """
     db = req.app["db"]
-    pg = req.app["pg"]
-
     data = req["data"]
 
     subtraction_id = req.match_info["subtraction_id"]
@@ -291,24 +283,13 @@ async def edit(req):
     if document is None:
         return not_found()
 
-    files, linked_samples = await asyncio.gather(
-        virtool.subtractions.utils.get_subtraction_files(pg, subtraction_id),
-        virtool.subtractions.db.get_linked_samples(db, subtraction_id)
-    )
+    with_computed = await attach_computed(req.app, document)
 
-    document.update({
-        "files": files,
-        "linked_samples": linked_samples
-    })
-
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(virtool.utils.base_processor(with_computed))
 
 
 @routes.delete("/api/subtractions/{subtraction_id}", permission="modify_subtraction")
 async def remove(req):
-    db = req.app["db"]
-    settings = req.app["settings"]
-
     subtraction_id = req.match_info["subtraction_id"]
 
     updated_count = await asyncio.shield(virtool.subtractions.db.delete(req.app, subtraction_id))
@@ -340,25 +321,17 @@ async def finalize_subtraction(req: aiohttp.web.Request):
     if "ready" in document and document["ready"]:
         return conflict("Subtraction has already been finalized")
 
-    updated_document = await virtool.subtractions.db.finalize(db, pg, subtraction_id, data["gc"])
+    finalized = await virtool.subtractions.db.finalize(db, pg, subtraction_id, data["gc"])
+    with_computed = await attach_computed(req.app, finalized)
 
-    files, linked_samples = await asyncio.gather(
-        virtool.subtractions.utils.get_subtraction_files(pg, subtraction_id),
-        virtool.subtractions.db.get_linked_samples(db, subtraction_id)
-    )
-
-    updated_document.update({
-        "files": files,
-        "linked_samples": linked_samples
-    })
-
-    return json_response(virtool.utils.base_processor(updated_document))
+    return json_response(virtool.utils.base_processor(with_computed))
 
 
 @routes.jobs_api.delete("/api/subtractions/{subtraction_id}")
 async def job_remove(req: aiohttp.web.Request):
     """
-    Remove a subtraction document. Only usable in the Jobs API and when subtractions are unfinalized.
+    Remove a subtraction document. Only usable in the Jobs API and when subtractions are
+    unfinalized.
 
     """
     db = req.app["db"]
@@ -377,6 +350,7 @@ async def job_remove(req: aiohttp.web.Request):
     return no_content()
 
 
+@routes.get("/api/subtractions/{subtraction_id}/files/{filename}")
 @routes.jobs_api.get("/api/subtractions/{subtraction_id}/files/{filename}")
 async def download_subtraction_files(req: aiohttp.web.Request):
     """

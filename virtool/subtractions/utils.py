@@ -87,7 +87,9 @@ async def get_subtraction_files(pg: AsyncEngine, subtraction: str):
 
     """
     async with AsyncSession(pg) as session:
-        files = (await session.execute(select(SubtractionFile).filter_by(subtraction=subtraction))).scalars().all()
+        files = (
+            await session.execute(select(SubtractionFile).filter_by(subtraction=subtraction))
+        ).scalars().all()
 
     return [file.to_dict() for file in files]
 
