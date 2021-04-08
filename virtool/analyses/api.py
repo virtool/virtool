@@ -273,6 +273,9 @@ async def download_analysis_document(req: aiohttp.web.Request) -> aiohttp.web.Re
 
     document = await db.analyses.find_one(analysis_id)
 
+    if not document:
+        return not_found()
+
     if extension == "xlsx":
         formatted = await virtool.analyses.format.format_analysis_to_excel(req.app, document)
         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

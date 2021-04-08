@@ -310,7 +310,7 @@ async def test_upload_file(error, files, resp_is, spawn_client, static_time, sna
 
 @pytest.mark.parametrize("file_exists", [True, False])
 @pytest.mark.parametrize("row_exists", [True, False])
-async def test_download_file(file_exists, row_exists, files, spawn_client, snapshot, tmpdir):
+async def test_download_analysis_result(file_exists, row_exists, files, spawn_client, snapshot, tmpdir):
     """
     Test that you can properly download an analysis result file using details from the `analysis_files` SQL table
 
@@ -348,20 +348,25 @@ async def test_download_file(file_exists, row_exists, files, spawn_client, snaps
 
 
 @pytest.mark.parametrize("extension", ["csv", "xlsx"])
-async def test_download(extension, mocker, spawn_client):
+@pytest.mark.parametrize("exists", [True, False])
+async def test_download_analysis_document(extension, exists, mocker, spawn_client):
     client = await spawn_client(authorize=True)
 
-    await client.db.analyses.insert_one({
-        "_id": "foobar",
-        "ready": True,
-    })
+    if exists:
+        await client.db.analyses.insert_one({
+            "_id": "foobar",
+            "ready": True,
+        })
 
     mocker.patch(f"virtool.analyses.format.format_analysis_to_{'excel' if extension is 'xlsx' else 'csv'}",
                  return_value=io.StringIO().getvalue())
 
     resp = await client.get(f"/api/analyses/documents/foobar.{extension}")
 
-    assert resp.status == 200
+    if exists:
+        assert resp.status == 200
+    else:
+        assert resp.status == 404
 
 
 @pytest.mark.parametrize("error", [None, "400", "403", "404_analysis", "404_sequence", "409_workflow", "409_ready"])
