@@ -5,6 +5,7 @@ Code for working with samples in the database and filesystem.
 import asyncio
 import logging
 import os
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from pymongo.results import DeleteResult
@@ -501,3 +502,54 @@ class MoveSampleFilesTask(Task):
             step="move_sample_files"
         )
 
+
+async def finalize(
+        db,
+        pg: AsyncEngine,
+        sample_id: str,
+        quality: Dict[str, Any],
+        run_in_thread: callable,
+        data_path: str
+) -> Dict[str, Any]:
+    """
+    Finalize a sample document by setting a ``quality`` field and ``ready`` to ``True``
+
+    :param db: the application database object
+    :param pg: the PostgreSQL AsyncEngine object
+    :param sample_id: the id of the sample
+    :param quality: a dict contains quality data
+    :param run_in_thread: the application thread running function
+    :param data_path: the application data path settings
+
+    :return: the sample document after finalizing
+
+    """
+    document = await db.samples.find_one_and_update({"_id": sample_id}, {
+        "$set": {
+            "quality": quality,
+            "ready": True
+        }
+    })
+
+    async with AsyncSession(pg) as session:
+        rows = (await session.execute(
+            select(Upload).filter(SampleReads.sample == sample_id).join_from(SampleReads, Upload))).unique().scalars()
+
+        for row in rows:
+            row.reads.clear()
+            row.removed = True
+            row.removed_at = virtool.utils.timestamp()
+
+            try:
+                await run_in_thread(
+                    virtool.utils.rm,
+                    Path(data_path) / "files" / row.name_on_disk
+                )
+            except FileNotFoundError:
+                pass
+
+            session.add(row)
+
+        await session.commit()
+
+    return await virtool.samples.db.attach_artifacts_and_reads(pg, document)
