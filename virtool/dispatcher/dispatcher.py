@@ -143,22 +143,23 @@ class Dispatcher:
         :param change: the change to dispatch
 
         """
-        fetcher = getattr(self._fetchers, change.interface, None)
+        try:
+            fetcher = getattr(self._fetchers, change.interface)
+        except AttributeError:
+            logger.warning(f"Unknown dispatch interface: {change.interface}")
+            return
 
         if change.operation not in (DELETE, INSERT, UPDATE):
             raise ValueError(f"Unknown dispatch operation: {change.operation}")
 
-        if fetcher:
-            async for connection, message in fetcher.fetch(change, self.authenticated_connections):
-                try:
-                    await connection.send(message)
-                except RuntimeError as err:
-                    if "RuntimeError: unable to perform operation on <TCPTransport" in str(err):
-                        self.remove_connection(connection)
+        async for connection, message in fetcher.fetch(change, self.authenticated_connections):
+            try:
+                await connection.send(message)
+            except RuntimeError as err:
+                if "RuntimeError: unable to perform operation on <TCPTransport" in str(err):
+                    self.remove_connection(connection)
 
-            logger.debug(f"Dispatcher sent messages for {change.target}")
-        else:
-            logger.warning(f"Unknown dispatch interface: {change.interface}")
+        logger.debug(f"Dispatcher sent messages for {change.target}")
 
     async def close(self):
         """
