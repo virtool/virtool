@@ -19,6 +19,7 @@ import virtool.db.migrate
 import virtool.db.mongo
 import virtool.dev.fake
 import virtool.dispatcher
+import virtool.faker
 import virtool.hmm.db
 import virtool.jobs.interface
 import virtool.jobs.runner
@@ -191,6 +192,10 @@ async def init_executors(app: aiohttp.web.Application):
 async def init_fake(app: aiohttp.web_app.Application):
     if app["config"]["fake"]:
         await virtool.dev.fake.populate(app)
+
+
+async def init_faker(app: aiohttp.web_app.Application):
+    app["faker"] = virtool.faker.VirtoolFaker()
 
 
 async def init_fake_config(app: App):
