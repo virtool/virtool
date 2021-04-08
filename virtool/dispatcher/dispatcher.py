@@ -147,6 +147,7 @@ class Dispatcher:
             fetcher = getattr(self._fetchers, change.interface)
         except AttributeError:
             logger.warning(f"Unknown dispatch interface: {change.interface}")
+            return
 
         if change.operation not in (DELETE, INSERT, UPDATE):
             raise ValueError(f"Unknown dispatch operation: {change.operation}")
