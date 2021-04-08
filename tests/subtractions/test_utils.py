@@ -21,7 +21,7 @@ async def test_get_subtraction_files(pg, test_subtraction_files):
     assert files == [
             {
                 'id': 1,
-                'name': 'subtraction.fq.gz',
+                'name': 'subtraction.fa.gz',
                 'subtraction': 'foo',
                 'type': 'fasta',
                 'size': 12345

@@ -87,7 +87,7 @@ snapshots['test_finalize_subtraction[uvloop-None] 1'] = {
     'files': [
         {
             'id': 1,
-            'name': 'subtraction.fq.gz',
+            'name': 'subtraction.fa.gz',
             'size': 12345,
             'subtraction': 'foo',
             'type': 'fasta'
