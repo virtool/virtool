@@ -6,7 +6,7 @@ import asyncio
 import glob
 import os
 import shutil
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -259,7 +259,8 @@ async def create(
         filename: str,
         name: str,
         nickname: str,
-        upload_id: int
+        upload_id: int,
+        subtraction_id: Optional[str] = None,
 ) -> dict:
     """
     Create a new subtraction document.
@@ -270,14 +271,13 @@ async def create(
     :param name: the name of the subtraction
     :param nickname: the nickname of the subtraction
     :param upload_id: the id of the `subtraction_file`
+    :param subtraction_id: the id of the subtraction
 
     :return: the new document
 
     """
-    subtraction_id = await virtool.db.utils.get_new_id(db.subtraction)
-
     document = {
-        "_id": subtraction_id,
+        "_id": subtraction_id or await virtool.db.utils.get_new_id(db.subtraction),
         "name": name,
         "nickname": nickname,
         "deleted": False,
