@@ -1,7 +1,8 @@
 import pytest
 
 from virtool.dispatcher.change import Change
-from virtool.dispatcher.fetchers import IndexesFetcher, SimpleMongoFetcher, LabelsFetcher, UploadsFetcher, TasksFetcher
+from virtool.dispatcher.fetchers import IndexesFetcher, SimpleMongoFetcher, SubtractionFilesFetcher, LabelsFetcher, \
+    UploadsFetcher, TasksFetcher
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
 from virtool.uploads.models import UploadType
 
@@ -335,6 +336,63 @@ class TestTasksFetcher:
                 "step": "download",
                 "type": "clone_reference"
             }
+        }
+
+        assert pairs == [
+            (ws, message),
+            (ws, message),
+            (ws, message)
+        ]
+
+
+class TestSubtractionFilesFetcher:
+    async def test_auto_delete(self, connections, pg, ws):
+        fetcher = SubtractionFilesFetcher(pg)
+
+        pairs = list()
+
+        message = {
+            "interface": "subtraction_files",
+            "operation": DELETE,
+            "data": [1]
+        }
+
+        async for pair in fetcher.fetch(Change("subtraction_files", DELETE, [1]), connections):
+            pairs.append(pair)
+
+        assert pairs == [
+            (ws, message),
+            (ws, message),
+            (ws, message)
+        ]
+
+    @pytest.mark.parametrize("operation", [INSERT, UPDATE])
+    async def test_insert_and_update(
+            self,
+            operation,
+            connections,
+            pg,
+            static_time,
+            test_subtraction_files,
+            ws
+    ):
+        fetcher = SubtractionFilesFetcher(pg)
+
+        pairs = list()
+
+        async for pair in fetcher.fetch(Change("subtraction_files", operation, [1]), connections):
+            pairs.append(pair)
+
+        message = {
+            "data": {
+                'id': 1,
+                'name': 'subtraction.fa.gz',
+                'subtraction': 'foo',
+                'type': 'fasta',
+                'size': 12345
+            },
+            "interface": "subtraction_files",
+            "operation": operation
         }
 
         assert pairs == [
