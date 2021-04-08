@@ -18,6 +18,7 @@ from virtool.dispatcher.operations import DELETE
 from virtool.labels.db import attach_sample_count
 from virtool.labels.models import Label
 from virtool.samples.db import attach_labels
+from virtool.subtractions.models import SubtractionFile
 from virtool.tasks.models import Task
 from virtool.types import Projection
 from virtool.uploads.models import Upload
@@ -304,6 +305,34 @@ class TasksFetcher(AbstractFetcher):
             result = await session.execute(select(Task).filter(Task.id.in_(change.id_list)))
 
         records = list(result.scalars())
+
+        for record in records:
+            for connection in connections:
+                yield connection, {
+                    "interface": change.interface,
+                    "operation": change.operation,
+                    "data": object_as_dict(record)
+                }
+
+
+class SubtractionFilesFetcher(AbstractFetcher):
+
+    def __init__(self, pg: AsyncEngine):
+        self._pg = pg
+        self._interface = "subtraction_files"
+
+    async def prepare(self, change: Change, connections: List[Connection]):
+        """
+        Prepare subtraction files connection-message pairs to dispatch by WebSocket.
+
+        :param change: the change that is triggering the dispatch
+        :param connections: the connections to dispatch to
+
+        """
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(select(SubtractionFile).filter(SubtractionFile.id.in_(change.id_list)))
+
+        records = list(result.unique().scalars())
 
         for record in records:
             for connection in connections:

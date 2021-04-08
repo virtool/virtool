@@ -23,7 +23,7 @@ from virtool.db.core import DB
 from virtool.dispatcher.change import Change
 from virtool.dispatcher.connection import Connection
 from virtool.dispatcher.fetchers import IndexesFetcher, LabelsFetcher, ReferencesFetcher, \
-    SamplesFetcher, SimpleMongoFetcher, UploadsFetcher, TasksFetcher
+    SamplesFetcher, SimpleMongoFetcher, SubtractionFilesFetcher, UploadsFetcher, TasksFetcher
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
 
@@ -49,6 +49,7 @@ class Fetchers:
     software: SimpleMongoFetcher
     status: SimpleMongoFetcher
     subtraction: SimpleMongoFetcher
+    subtraction_files: SubtractionFilesFetcher
     uploads: UploadsFetcher
     users: SimpleMongoFetcher
 
@@ -77,6 +78,7 @@ class Dispatcher:
             SimpleMongoFetcher(db.settings),
             SimpleMongoFetcher(db.status),
             SimpleMongoFetcher(db.subtraction, virtool.subtractions.db.PROJECTION),
+            SubtractionFilesFetcher(pg),
             UploadsFetcher(pg),
             SimpleMongoFetcher(db.users, virtool.users.db.PROJECTION)
         )
