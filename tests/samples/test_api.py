@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.caches.db
 import virtool.caches.utils
-import virtool.samples.db
 import virtool.pg.utils
+import virtool.samples.db
 import virtool.uploads.db
 from virtool.labels.models import Label
 from virtool.samples.models import SampleReads, SampleReadsCache, SampleArtifact, SampleArtifactCache
@@ -261,9 +261,10 @@ class TestCreate:
         })
 
         upload = Upload(id=1, name="test.fq.gz", size=123456)
+        label = Label(id=1, name="bug", color="#FF0000")
 
         async with AsyncSession(pg) as session:
-            session.add(upload)
+            session.add_all([upload, label])
             await session.commit()
 
         await client.db.groups.insert_many([
@@ -289,6 +290,7 @@ class TestCreate:
         request_data = {
             "name": "Foobar",
             "files": [1],
+            "labels": [1],
             "subtractions": ["apple"],
         }
 

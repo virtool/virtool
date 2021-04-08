@@ -15,18 +15,18 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.db.utils
 import virtool.errors
 import virtool.jobs.db
+import virtool.pg.utils
 import virtool.samples.utils
 import virtool.samples.utils
 import virtool.tasks.pg
-import virtool.pg.utils
 import virtool.utils
 from virtool.labels.models import Label
 from virtool.samples.models import SampleReads, SampleArtifact
 from virtool.samples.utils import join_legacy_read_paths
 from virtool.tasks.task import Task
 from virtool.types import App
-from virtool.utils import compress_file, file_stats
 from virtool.uploads.models import Upload
+from virtool.utils import compress_file, file_stats
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +90,7 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
         reads = [reads_file.to_dict() for reads_file in reads_files]
 
         for reads_file in reads:
-            if upload:= reads_file.get("upload"):
+            if upload := reads_file.get("upload"):
                 reads_file["upload"] = ((await session.execute(select(Upload).filter_by(id=upload))).scalar()).to_dict()
 
     return {
@@ -201,6 +201,74 @@ def compose_analysis_query(url_query):
     return pathoscope or nuvs or None
 
 
+async def create_sample(
+    db,
+    name: str,
+    host: str,
+    isolate: str,
+    group: str,
+    locale: str,
+    library_type: str,
+    subtractions: List[str],
+    files: List[Dict[str, any]],
+    notes: str,
+    labels: List[int],
+    user_id: str,
+    settings: Dict[str, any]
+) -> Dict[str, any]:
+    """
+    Create, insert, and return a new sample document.
+
+    :param db: application database client
+    :param name: the sample name
+    :param host: user-defined host for the sample
+    :param isolate: user-defined isolate for the sample
+    :param group: the owner group for the sample
+    :param locale: user-defined locale for the sample
+    :param library_type: Type of library for a sample, defaults to None
+    :param subtractions: IDs of default subtractions for the sample
+    :param files: list of upload IDs to associate with a sample
+    :param notes: user-defined notes for the sample
+    :param labels: IDs of labels associated with the sample
+    :param user_id: the ID of the user that is creating the sample
+    :param settings: the application settings
+    :return: the newly inserted sample document
+    """
+    document = {
+        "_id": await virtool.db.utils.get_new_id(db.samples),
+        "name": name,
+        "host": host,
+        "isolate": isolate,
+        "nuvs": False,
+        "pathoscope": False,
+        "created_at": virtool.utils.timestamp(),
+        "is_legacy": False,
+        "format": "fastq",
+        "ready": False,
+        "quality": None,
+        "hold": True,
+        "group_read": settings.get("sample_group_read"),
+        "group_write": settings.get("sample_group_write"),
+        "all_read": settings.get("sample_all_read"),
+        "all_write": settings.get("sample_all_write"),
+        "files": files,
+        "labels": labels,
+        "library_type": library_type,
+        "subtractions": subtractions,
+        "notes": notes,
+        "user": {
+            "id": user_id
+        },
+        "group": group,
+        "locale": locale,
+        "paired": len(files) == 2
+    }
+
+    await db.samples.insert_one(document)
+
+    return document
+
+
 async def get_sample_owner(db, sample_id: str) -> Optional[str]:
     """
     A Shortcut function for getting the owner user id of a sample given its ``sample_id``.
@@ -297,11 +365,11 @@ def check_is_legacy(sample: Dict[str, Any]) -> bool:
 
     return (
         # All files have the `raw` flag set false indicating they are legacy data.
-        all(file.get("raw", False) is False for file in files) and
+            all(file.get("raw", False) is False for file in files) and
 
-        # File naming matches expectations.
-        files[0]["name"] == "reads_1.fastq" and
-        (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
+            # File naming matches expectations.
+            files[0]["name"] == "reads_1.fastq" and
+            (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
     )
 
 
@@ -319,8 +387,8 @@ async def update_is_compressed(db, sample: Dict[str, Any]):
     names = [file["name"] for file in files]
 
     is_compressed = (
-        names == ["reads_1.fq.gz"] or
-        names == ["reads_1.fq.gz", "reads_2.fq.gz"]
+            names == ["reads_1.fq.gz"] or
+            names == ["reads_1.fq.gz", "reads_2.fq.gz"]
     )
 
     if is_compressed:

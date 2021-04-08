@@ -320,6 +320,20 @@ async def test_attach_labels(spawn_client, pg_session, pg: AsyncEngine):
     }
 
 
+async def test_create_sample(dbi, mocker, snapshot, static_time, spawn_client):
+    """
+    Test that a sample can be properly created.
+
+    """
+    client = await spawn_client(authorize=True, administrator=True)
+
+    mocker.patch("virtool.db.utils.get_new_id", return_value="a2oj3gfd")
+
+    document = await virtool.samples.db.create_sample(dbi, "foo", "", "", "", "", "", [], [], "test", [], "bob", client.app["settings"])
+
+    snapshot.assert_match(document)
+
+
 class TestCheckIsLegacy:
 
     @pytest.mark.parametrize("is_legacy,files", [

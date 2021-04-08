@@ -2,7 +2,7 @@
 # snapshottest: v1 - https://goo.gl/zC4yUc
 from __future__ import unicode_literals
 
-from snapshottest import Snapshot
+from snapshottest import GenericRepr, Snapshot
 
 
 snapshots = Snapshot()
@@ -140,4 +140,37 @@ snapshots['test_move_sample_files_task[uvloop-False-False-False] 1'] = {
     '_id': 'foo',
     'is_compressed': False,
     'is_legacy': False
+}
+
+snapshots['test_create_sample[uvloop] 1'] = {
+    '_id': 'a2oj3gfd',
+    'all_read': True,
+    'all_write': False,
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'files': [
+    ],
+    'format': 'fastq',
+    'group': '',
+    'group_read': True,
+    'group_write': False,
+    'hold': True,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'labels': [
+    ],
+    'library_type': '',
+    'locale': '',
+    'name': 'foo',
+    'notes': 'test',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'subtractions': [
+    ],
+    'user': {
+        'id': 'bob'
+    }
 }
