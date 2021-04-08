@@ -224,10 +224,12 @@ async def get_cache(req):
     "host": {
         "type": "string",
         "coerce": virtool.validators.strip,
+        "default": ''
     },
     "isolate": {
         "type": "string",
         "coerce": virtool.validators.strip,
+        "default": ''
     },
     "group": {
         "type": "string"
@@ -235,6 +237,7 @@ async def get_cache(req):
     "locale": {
         "type": "string",
         "coerce": virtool.validators.strip,
+        "default": ''
     },
     "library_type": {
         "type": "string",
@@ -246,7 +249,8 @@ async def get_cache(req):
         "default": "normal"
     },
     "subtractions": {
-        "type": "list"
+        "type": "list",
+        "default": []
     },
     "files": {
         "type": "list",
@@ -259,7 +263,8 @@ async def get_cache(req):
         "default": ''
     },
     "labels": {
-        "type": "list"
+        "type": "list",
+        "default": []
     }
 })
 async def create(req):
@@ -291,8 +296,6 @@ async def create(req):
         if non_existent_labels:
             return bad_labels_response(non_existent_labels)
 
-    data = await virtool.samples.db.attach_labels(pg, data)
-
     # Make sure all of the passed file ids exist.
     for file in data["files"]:
         upload = await virtool.uploads.db.get(pg, file)
@@ -312,14 +315,16 @@ async def create(req):
 
             return bad_request(force_choice_error_message)
 
+        group = data["group"]
+
     # Assign the user"s primary group as the sample owner group if the setting is
     # ``users_primary_group``.
     elif sample_group_setting == "users_primary_group":
-        data["group"] = await virtool.db.utils.get_one_field(db.users, "primary_group", user_id)
+        group = await virtool.db.utils.get_one_field(db.users, "primary_group", user_id)
 
     # Make the owner group none if the setting is none.
     elif sample_group_setting == "none":
-        data["group"] = "none"
+        group = "none"
 
     uploads = [(await virtool.uploads.db.get(pg, upload_id)).to_dict() for upload_id in data["files"]]
 
@@ -332,14 +337,15 @@ async def create(req):
         }
         files.append(file)
 
-    document = await virtool.samples.db.create_sample(db, data["name"], user_id, group=data["group"], notes=data["notes"],
-                                                      library_type=data["library_type"], files=files,
-                                                      labels=data["labels"],
-                                                      subtractions=subtractions, settings=settings)
+    document = await virtool.samples.db.create_sample(db, data["name"], data["host"], data["isolate"], group,
+                                                      data["locale"], data["library_type"], data["subtractions"],
+                                                      files, data["notes"], data["labels"], user_id, settings)
 
     sample_id = document["_id"]
 
     await virtool.uploads.db.reserve(pg, data["files"])
+
+    document = await virtool.samples.db.attach_labels(pg, document)
 
     task_args = {
         "sample_id": sample_id,

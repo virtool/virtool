@@ -144,32 +144,29 @@ snapshots['test_move_sample_files_task[uvloop-False-False-False] 1'] = {
 
 snapshots['test_create_sample[uvloop] 1'] = {
     '_id': 'a2oj3gfd',
-    'all_read': None,
-    'all_write': None,
-    'artifacts': [
-    ],
+    'all_read': True,
+    'all_write': False,
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
     'format': 'fastq',
-    'group': None,
-    'group_read': None,
-    'group_write': None,
+    'group': '',
+    'group_read': True,
+    'group_write': False,
     'hold': True,
-    'host': None,
+    'host': '',
     'is_legacy': False,
-    'isolate': None,
+    'isolate': '',
     'labels': [
     ],
-    'library_type': None,
+    'library_type': '',
+    'locale': '',
     'name': 'foo',
-    'notes': '',
+    'notes': 'test',
     'nuvs': False,
-    'paired': None,
+    'paired': False,
     'pathoscope': False,
     'quality': None,
-    'reads': [
-    ],
     'ready': False,
     'subtractions': [
     ],

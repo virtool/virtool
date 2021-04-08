@@ -204,37 +204,36 @@ def compose_analysis_query(url_query):
 async def create_sample(
     db,
     name: str,
+    host: str,
+    isolate: str,
+    group: str,
+    locale: str,
+    library_type: str,
+    subtractions: List[str],
+    files: List[Dict[str, any]],
+    notes: str,
+    labels: List[int],
     user_id: str,
-    host: str = None,
-    isolate: str = None,
-    group: str = None,
-    library_type: str = None,
-    subtractions: List[str] = None,
-    files: List[Dict[str, any]] = None,
-    notes: str = "",
-    labels: List[Dict[str, any]] = None,
-    settings: Dict[str, any] = None,
+    settings: Dict[str, any]
 ) -> Dict[str, any]:
     """
-    Create a new sample.
+    Create, insert, and return a new sample document.
 
-    :param db: Application database client
-    :param name: Name to give to a sample
-    :param user_id: ID that corresponds to a user
-    :param host: Host of a given sample
-    :param isolate: Isolate of a given sample
-    :param group: A user's primary group
+    :param db: application database client
+    :param name: the sample name
+    :param host: user-defined host for the sample
+    :param isolate: user-defined isolate for the sample
+    :param group: the owner group for the sample
+    :param locale: user-defined locale for the sample
     :param library_type: Type of library for a sample, defaults to None
-    :param subtractions: List of subtraction IDs to associate with a sample
-    :param files: List of upload IDs to associate with a sample
-    :param notes: Notes for a sample
-    :param labels: Labels to attach to a sample
-    :param settings: Dictionary of applications settings and permissions
-    :return: The newly inserted sample document
+    :param subtractions: IDs of default subtractions for the sample
+    :param files: list of upload IDs to associate with a sample
+    :param notes: user-defined notes for the sample
+    :param labels: IDs of labels associated with the sample
+    :param user_id: the ID of the user that is creating the sample
+    :param settings: the application settings
+    :return: the newly inserted sample document
     """
-    if not settings:
-        settings = {}
-
     document = {
         "_id": await virtool.db.utils.get_new_id(db.samples),
         "name": name,
@@ -252,19 +251,17 @@ async def create_sample(
         "group_write": settings.get("sample_group_write"),
         "all_read": settings.get("sample_all_read"),
         "all_write": settings.get("sample_all_write"),
-        "files": files if files is not None else [],
-        "labels": labels if labels is not None else [],
+        "files": files,
+        "labels": labels,
         "library_type": library_type,
-        "subtractions": subtractions if subtractions is not None else [],
+        "subtractions": subtractions,
         "notes": notes,
         "user": {
             "id": user_id
         },
         "group": group,
-        "paired": len(files) == 2 if files else None,
-        # Associated artifacts and reads should not yet exist
-        "artifacts": [],
-        "reads": []
+        "locale": locale,
+        "paired": len(files) == 2
     }
 
     await db.samples.insert_one(document)
