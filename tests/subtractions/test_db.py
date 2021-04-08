@@ -1,3 +1,4 @@
+import pytest
 from sqlalchemy import select
 
 import virtool.subtractions.db
@@ -139,14 +140,24 @@ async def test_unlink_default_subtractions(dbi):
     ]
 
 
-async def test_create(dbi, test_random_alphanumeric):
+@pytest.mark.parametrize("subtraction_id", [None, "abc"])
+async def test_create(subtraction_id, dbi, test_random_alphanumeric):
     user_id = "test"
     filename = "subtraction.fa.gz"
 
-    document = await virtool.subtractions.db.create(dbi, user_id, filename, "Foo", "foo", 1)
+    document = await virtool.subtractions.db.create(
+        dbi,
+        user_id,
+        filename,
+        "Foo",
+        "foo",
+        1,
+        subtraction_id=subtraction_id)
+
+    expected_subtraction_id = test_random_alphanumeric.history[0] if subtraction_id is None else "abc"
 
     assert document == {
-        "_id": test_random_alphanumeric.history[1],
+        "_id": expected_subtraction_id,
         "name": "Foo",
         "nickname": "foo",
         "deleted": False,
@@ -158,9 +169,6 @@ async def test_create(dbi, test_random_alphanumeric):
         },
         "user": {
             "id": "test"
-        },
-        "job": {
-            "id": test_random_alphanumeric.history[0]
         }
     }
 
