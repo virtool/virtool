@@ -165,16 +165,19 @@ async def create(req):
     rights.subtractions.can_remove(subtraction_id)
     rights.uploads.can_read(upload_id)
 
+    job_id = await virtool.db.utils.get_new_id(db.jobs)
+    document["job"]["id"] = job_id
+
     await virtool.jobs.db.create(
         db,
         "create_subtraction",
         task_args,
         user_id,
         rights,
-        job_id=document["job"]["id"]
+        job_id=job_id
     )
 
-    await req.app["jobs"].enqueue(document["job"]["id"])
+    await req.app["jobs"].enqueue(job_id)
 
     headers = {
         "Location": f"/api/subtraction/{subtraction_id}"

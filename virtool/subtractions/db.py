@@ -274,7 +274,6 @@ async def create(
     :return: the new document
 
     """
-    job_id = await virtool.db.utils.get_new_id(db.jobs)
     subtraction_id = await virtool.db.utils.get_new_id(db.subtraction)
 
     document = {
@@ -290,9 +289,6 @@ async def create(
         },
         "user": {
             "id": user_id
-        },
-        "job": {
-            "id": job_id
         }
     }
 
