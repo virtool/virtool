@@ -4,12 +4,17 @@ from typing import Dict, List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.utils import file_stats
-from virtool.subtractions.utils import check_subtraction_file_type
 from virtool.subtractions.models import SubtractionFile
+from virtool.subtractions.utils import check_subtraction_file_type
+from virtool.utils import file_stats
 
 
-async def create_subtraction_file(pg: AsyncEngine, subtraction_id: str, file_type: str, name: str) -> Dict[str, any]:
+async def create_subtraction_file(
+        pg: AsyncEngine,
+        subtraction_id: str,
+        file_type: str,
+        name: str
+) -> Dict[str, any]:
     """
     Create a row in the `subtraction_files` SQL table that represents an subtraction file.
 
@@ -37,7 +42,12 @@ async def create_subtraction_file(pg: AsyncEngine, subtraction_id: str, file_typ
         return subtraction_file
 
 
-async def create_subtraction_files(pg: AsyncEngine, subtraction_id: str, files: List[str], path: str):
+async def create_subtraction_files(
+        pg: AsyncEngine,
+        subtraction_id: str,
+        files: List[str],
+        path: str
+):
     """
     Create multiple rows in the `subtraction_files` SQL table in a single transaction.
 
@@ -71,7 +81,9 @@ async def delete_subtraction_file(pg: AsyncEngine, file_id: int):
     :param file_id: Row `id` to delete
     """
     async with AsyncSession(pg) as session:
-        subtraction_file = (await session.execute(select(SubtractionFile).where(SubtractionFile.id == file_id))).scalar()
+        subtraction_file = (
+            await session.execute(select(SubtractionFile).where(SubtractionFile.id == file_id))
+        ).scalar()
 
         if not subtraction_file:
             return None
