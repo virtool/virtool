@@ -30,6 +30,7 @@ dictdiffer==0.8.1
 dnspython==2.0.0
 et-xmlfile==1.0.1
 execnet==1.7.1
+faker==8.0.0
 fastdiff==0.2.0
 greenlet==1.0.0
 hiredis==1.0.1

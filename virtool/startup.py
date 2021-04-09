@@ -40,6 +40,7 @@ from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.listener import RedisDispatcherListener
+from virtool.faker.wrapper import FakerWrapper
 from virtool.pg.testing import create_test_database
 from virtool.references.db import CreateIndexJSONTask, DeleteReferenceTask
 from virtool.samples.db import CompressSamplesTask, MoveSampleFilesTask
@@ -191,6 +192,10 @@ async def init_executors(app: aiohttp.web.Application):
 async def init_fake(app: aiohttp.web_app.Application):
     if app["config"]["fake"]:
         await virtool.dev.fake.populate(app)
+
+
+async def init_faker(app: aiohttp.web_app.Application):
+    app["faker"] = FakerWrapper()
 
 
 async def init_fake_config(app: App):
