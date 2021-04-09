@@ -1,4 +1,4 @@
-from faker import Faker
+from virtool.faker.wrapper import FakerWrapper
 
 import virtool.startup
 
@@ -12,5 +12,5 @@ async def test_init_faker(snapshot, spawn_client):
 
     faker = app["faker"]
 
-    assert isinstance(faker, Faker)
+    assert isinstance(faker, FakerWrapper)
     snapshot.assert_match([faker.get_mongo_id() for _ in range(5)])
