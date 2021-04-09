@@ -253,3 +253,60 @@ async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg, pg_session, 
     ]
     assert set(os.listdir(tmpdir / "analyses" / "bar")) == {"assembly.fa.gz", "hmm.tsv", "unmapped_otus.fq.gz"}
     assert not os.path.isdir(os.path.join(tmpdir, "samples", "foo", "analysis", "bar"))
+
+
+@pytest.mark.parametrize("analysis_id", [None, "test_analysis"])
+async def test_create(analysis_id, dbi, static_time, test_random_alphanumeric):
+    subtractions = ["subtraction_1", "subtraction_2"]
+
+    await dbi.indexes.insert_one(
+        {
+            "_id": "test_index",
+            "version": 11,
+            "ready": True,
+            "reference": {
+                "id": "test_ref"
+            }
+        }
+    )
+
+    document = await virtool.analyses.db.create(
+        dbi,
+        "test_sample",
+        "test_ref",
+        subtractions,
+        "test_user",
+        "nuvs",
+        "test_job",
+        analysis_id=analysis_id
+    )
+
+    expected_analysis_id = test_random_alphanumeric.history[0] if analysis_id is None else "test_analysis"
+
+    assert document == {
+        "_id": expected_analysis_id,
+        "ready": False,
+        "created_at": static_time.datetime,
+        "updated_at": static_time.datetime,
+        "job": {
+            "id": "test_job"
+        },
+        "files": [],
+        "workflow": "nuvs",
+        "sample": {
+            "id": "test_sample"
+        },
+        "index": {
+            "id": "test_index",
+            "version": 11
+        },
+        "reference": {
+            "id": "test_ref",
+            "name": None
+        },
+        "subtractions": ["subtraction_1", "subtraction_2"],
+        "user": {
+            "id": "test_user"
+        }
+    }
+
