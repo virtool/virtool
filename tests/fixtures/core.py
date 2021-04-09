@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import arrow
 import os
 import pytest
@@ -123,3 +125,8 @@ def get_sam_lines():
 @pytest.fixture(params=get_sam_lines(), ids=lambda x: x.split("\t")[0])
 def sam_line(request):
     return request.param.split("\t")
+
+
+@pytest.fixture
+def example_path():
+    return Path(__file__).parent.parent.parent / "example"
