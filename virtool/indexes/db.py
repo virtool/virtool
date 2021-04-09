@@ -45,13 +45,14 @@ FILES = (
 )
 
 
-async def create(db, ref_id: str, user_id: str, index_id: Optional[str] = None) -> dict:
+async def create(db, ref_id: str, user_id: str, job_id: str, index_id: Optional[str] = None) -> dict:
     """
     Create a new index and update history to show the version and id of the new index.
 
     :param db: the application database client
     :param ref_id: the ID of the reference to create index for
     :param user_id: the ID of the current user
+    :param job_id: the ID of the job
     :param index_id: the ID of the index
 
     :return: the new index document
@@ -72,6 +73,9 @@ async def create(db, ref_id: str, user_id: str, index_id: Optional[str] = None) 
         "has_json": False,
         "reference": {
             "id": ref_id
+        },
+        "job": {
+            "id": job_id
         },
         "user": {
             "id": user_id

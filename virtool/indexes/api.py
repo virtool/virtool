@@ -216,8 +216,9 @@ async def create(req):
         return bad_request("There are no unbuilt changes")
 
     user_id = req["client"].user_id
+    job_id = await virtool.db.utils.get_new_id(db.jobs)
 
-    document = await virtool.indexes.db.create(db, ref_id, user_id)
+    document = await virtool.indexes.db.create(db, ref_id, user_id, job_id)
 
     # A dict of task_args for the rebuild job.
     task_args = {
@@ -232,7 +233,6 @@ async def create(req):
     rights.indexes.can_modify(document["_id"])
     rights.references.can_read(ref_id)
 
-    job_id = await virtool.db.utils.get_new_id(db.jobs)
     document["job"] = {
         "id": job_id
     }
