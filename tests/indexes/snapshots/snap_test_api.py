@@ -53,9 +53,6 @@ snapshots['TestCreate.test[True-uvloop] 2'] = {
     ],
     'has_files': True,
     'has_json': False,
-    'job': {
-        'id': 'xjqvxigh'
-    },
     'manifest': 'manifest',
     'ready': False,
     'reference': {

@@ -233,7 +233,9 @@ async def create(req):
     rights.references.can_read(ref_id)
 
     job_id = await virtool.db.utils.get_new_id(db.jobs)
-    document["job"]["id"] = job_id
+    document["job"] = {
+        "id": job_id
+    }
 
     # Create job document.
     job = await virtool.jobs.db.create(

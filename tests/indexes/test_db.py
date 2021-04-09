@@ -8,7 +8,8 @@ import virtool.jobs.build_index
 from virtool.indexes.models import IndexFile
 
 
-async def test_create(mocker, dbi, test_random_alphanumeric, static_time):
+@pytest.mark.parametrize("index_id", [None, "abc"])
+async def test_create(index_id, mocker, dbi, test_random_alphanumeric, static_time):
     await dbi.references.insert_one({
         "_id": "foo"
     })
@@ -26,18 +27,18 @@ async def test_create(mocker, dbi, test_random_alphanumeric, static_time):
 
     mocker.patch("virtool.references.db.get_manifest", new=make_mocked_coro("manifest"))
 
-    document = await virtool.indexes.db.create(dbi, "foo", "test")
+    document = await virtool.indexes.db.create(dbi, "foo", "test", index_id=index_id)
+
+    expected_index_id = test_random_alphanumeric.history[0] if index_id is None else "abc"
+
     assert document == {
-        "_id": test_random_alphanumeric.history[0],
+        "_id": expected_index_id,
         "version": 0,
         "created_at": static_time.datetime,
         "manifest": "manifest",
         "ready": False,
         "has_files": True,
         "has_json": False,
-        "job": {
-            "id": test_random_alphanumeric.history[1]
-        },
         "reference": {
             "id": "foo"
         },
@@ -51,7 +52,7 @@ async def test_create(mocker, dbi, test_random_alphanumeric, static_time):
     assert history == {
         "_id": "abc",
         "index": {
-            "id": test_random_alphanumeric.history[0],
+            "id": expected_index_id,
             "version": 0
         },
         "reference": {
