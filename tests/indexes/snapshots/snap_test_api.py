@@ -8,10 +8,10 @@ from snapshottest import GenericRepr, Snapshot
 snapshots = Snapshot()
 
 snapshots['TestCreate.test[True-uvloop] 1'] = {
-    '_id': 'xjqvxigh',
+    '_id': 'u3cuwaoq',
     'acquired': False,
     'args': {
-        'index_id': 'u3cuwaoq',
+        'index_id': 'xjqvxigh',
         'index_version': 9,
         'manifest': 'manifest',
         'ref_id': 'foo',
@@ -21,7 +21,7 @@ snapshots['TestCreate.test[True-uvloop] 1'] = {
     'rights': {
         'indexes': {
             'modify': [
-                'u3cuwaoq'
+                'xjqvxigh'
             ]
         },
         'references': {
@@ -47,12 +47,15 @@ snapshots['TestCreate.test[True-uvloop] 1'] = {
 }
 
 snapshots['TestCreate.test[True-uvloop] 2'] = {
-    '_id': 'u3cuwaoq',
+    '_id': 'xjqvxigh',
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
     'has_files': True,
     'has_json': False,
+    'job': {
+        'id': 'u3cuwaoq'
+    },
     'manifest': 'manifest',
     'ready': False,
     'reference': {
@@ -70,9 +73,9 @@ snapshots['TestCreate.test[True-uvloop] 3'] = {
     ],
     'has_files': True,
     'has_json': False,
-    'id': 'u3cuwaoq',
+    'id': 'xjqvxigh',
     'job': {
-        'id': 'xjqvxigh'
+        'id': 'u3cuwaoq'
     },
     'manifest': 'manifest',
     'ready': False,

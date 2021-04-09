@@ -27,7 +27,7 @@ async def test_create(index_id, mocker, dbi, test_random_alphanumeric, static_ti
 
     mocker.patch("virtool.references.db.get_manifest", new=make_mocked_coro("manifest"))
 
-    document = await virtool.indexes.db.create(dbi, "foo", "test", index_id=index_id)
+    document = await virtool.indexes.db.create(dbi, "foo", "test", "bar", index_id=index_id)
 
     expected_index_id = test_random_alphanumeric.history[0] if index_id is None else "abc"
 
@@ -41,6 +41,9 @@ async def test_create(index_id, mocker, dbi, test_random_alphanumeric, static_ti
         "has_json": False,
         "reference": {
             "id": "foo"
+        },
+        "job": {
+            "id": "bar"
         },
         "user": {
             "id": "test"
