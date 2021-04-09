@@ -711,7 +711,7 @@ async def analyze(req):
         job_id
     )
 
-    analysis_id = document["id"]
+    analysis_id = document["_id"]
     sample = await db.samples.find_one(sample_id, ["name"])
 
     task_args = {
