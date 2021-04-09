@@ -230,7 +230,9 @@ async def create(
     ref_id: str,
     subtractions: List[str],
     user_id: str,
-    workflow: str
+    workflow: str,
+    job_id: str,
+    analysis_id: Optional[str] = None
 ) -> dict:
     """
     Creates a new analysis.
@@ -245,20 +247,18 @@ async def create(
     :param subtractions: the list of the subtraction IDs to remove from the analysis
     :param user_id: the ID of the user starting the job
     :param workflow: the analysis workflow to run
+    :param job_id: the ID of the job
+    :param analysis_id: the ID of the analysis
+
     :return: the analysis document
 
     """
     db = app["db"]
-    settings = app["settings"]
 
     # Get the current id and version of the otu index currently being used for analysis.
     index_id, index_version = await virtool.indexes.db.get_current_id_and_version(db, ref_id)
 
-    sample = await db.samples.find_one(sample_id, ["name"])
-
-    analysis_id = await virtool.db.utils.get_new_id(db.analyses)
-
-    job_id = await virtool.db.utils.get_new_id(db.jobs)
+    analysis_id = analysis_id or await virtool.db.utils.get_new_id(db.analyses)
 
     created_at = virtool.utils.timestamp()
 
@@ -289,38 +289,7 @@ async def create(
         }
     }
 
-    task_args = {
-        "analysis_id": analysis_id,
-        "ref_id": ref_id,
-        "sample_id": sample_id,
-        "sample_name": sample["name"],
-        "index_id": index_id
-    }
-
     await db.analyses.insert_one(document)
-
-    rights = JobRights()
-
-    rights.analyses.can_read(analysis_id)
-    rights.analyses.can_modify(analysis_id)
-    rights.analyses.can_remove(analysis_id)
-    rights.samples.can_read(sample_id)
-    rights.indexes.can_read(index_id)
-    rights.references.can_read(ref_id)
-    rights.subtractions.can_read(*subtractions)
-
-    # Create job document.
-    job = await virtool.jobs.db.create(
-        db,
-        document["workflow"],
-        task_args,
-        user_id,
-        rights
-    )
-
-    await app["jobs"].enqueue(job["_id"])
-
-    await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
 
     return document
 

@@ -698,6 +698,8 @@ async def analyze(req):
         if non_existent_subtractions:
             return bad_request(f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
 
+    job_id = await virtool.db.utils.get_new_id(db.jobs)
+
     # Generate a unique _id for the analysis entry
     document = await virtool.analyses.db.create(
         req.app,
@@ -705,17 +707,46 @@ async def analyze(req):
         ref_id,
         subtractions,
         req["client"].user_id,
-        data["workflow"]
+        data["workflow"],
+        job_id
     )
 
-    document = virtool.utils.base_processor(document)
-
-    sample = await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
-
     analysis_id = document["id"]
+    sample = await db.samples.find_one(sample_id, ["name"])
+
+    task_args = {
+        "analysis_id": analysis_id,
+        "ref_id": ref_id,
+        "sample_id": sample_id,
+        "sample_name": sample["name"],
+        "index_id": document["index"]["id"]
+    }
+
+    rights = JobRights()
+
+    rights.analyses.can_read(analysis_id)
+    rights.analyses.can_modify(analysis_id)
+    rights.analyses.can_remove(analysis_id)
+    rights.samples.can_read(sample_id)
+    rights.indexes.can_read(document["index"]["id"])
+    rights.references.can_read(ref_id)
+    rights.subtractions.can_read(*subtractions)
+
+    # Create job document.
+    job = await virtool.jobs.db.create(
+        db,
+        document["workflow"],
+        task_args,
+        document["user"]["id"],
+        rights
+    )
+
+    await req.app["jobs"].enqueue(job["_id"])
+
+    await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
 
     return json_response(
-        document,
+        virtool.utils.base_processor(document),
         status=201,
         headers={
             "Location": f"/api/analyses/{analysis_id}"
