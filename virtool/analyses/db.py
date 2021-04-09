@@ -225,7 +225,7 @@ class BLAST:
 
 
 async def create(
-    app: virtool.types.App,
+    db,
     sample_id: str,
     ref_id: str,
     subtractions: List[str],
@@ -241,7 +241,7 @@ async def create(
     read and write permissions on the sample document and assigns it a creator username based on
     the requesting connection.
 
-    :param app: the application object
+    :param db: the application database object
     :param sample_id: the ID of the sample to create an analysis for
     :param ref_id: the ID of the reference to analyze against
     :param subtractions: the list of the subtraction IDs to remove from the analysis
@@ -253,8 +253,6 @@ async def create(
     :return: the analysis document
 
     """
-    db = app["db"]
-
     # Get the current id and version of the otu index currently being used for analysis.
     index_id, index_version = await virtool.indexes.db.get_current_id_and_version(db, ref_id)
 
