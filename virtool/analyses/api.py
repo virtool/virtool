@@ -188,7 +188,7 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return no_content()
 
 
-@routes.post("/api/analyses/{id}/files", permission="upload_file")
+@routes.jobs_api.post("/api/analyses/{id}/files")
 async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Upload a new analysis result file to the `analysis_files` SQL table and the `analyses` folder in the Virtool

@@ -259,12 +259,12 @@ async def test_remove(mocker, error, spawn_client, resp_is):
 
 
 @pytest.mark.parametrize("error", [None, 400, 404, 422])
-async def test_upload_file(error, files, resp_is, spawn_client, static_time, snapshot, pg, tmpdir):
+async def test_upload_file(error, files, resp_is, spawn_job_client, static_time, snapshot, pg, tmpdir):
     """
     Test that an analysis result file is properly uploaded and a row is inserted into the `analysis_files` SQL table.
 
     """
-    client = await spawn_client(authorize=True, administrator=True)
+    client = await spawn_job_client(authorize=True)
 
     client.app["settings"]["data_path"] = str(tmpdir)
 
@@ -283,9 +283,9 @@ async def test_upload_file(error, files, resp_is, spawn_client, static_time, sna
         })
 
     if error == 422:
-        resp = await client.post_form("/api/analyses/foobar/files?format=fasta", data=files)
+        resp = await client.post("/api/analyses/foobar/files?format=fasta", data=files)
     else:
-        resp = await client.post_form(f"/api/analyses/foobar/files?name=reference.fa&format={format_}", data=files)
+        resp = await client.post(f"/api/analyses/foobar/files?name=reference.fa&format={format_}", data=files)
 
     if error is None:
         assert resp.status == 201
@@ -310,14 +310,16 @@ async def test_upload_file(error, files, resp_is, spawn_client, static_time, sna
 
 @pytest.mark.parametrize("file_exists", [True, False])
 @pytest.mark.parametrize("row_exists", [True, False])
-async def test_download_analysis_result(file_exists, row_exists, files, spawn_client, snapshot, tmpdir):
+async def test_download_analysis_result(file_exists, row_exists, files, spawn_client, spawn_job_client, snapshot, tmpdir):
     """
     Test that you can properly download an analysis result file using details from the `analysis_files` SQL table
 
     """
     client = await spawn_client(authorize=True, administrator=True)
+    job_client = await spawn_job_client(authorize=True)
 
     client.app["settings"]["data_path"] = str(tmpdir)
+    job_client.app["settings"]["data_path"] = str(tmpdir)
 
     expected_path = Path(client.app["settings"]["data_path"]) / "analyses" / "1-reference.fa"
 
@@ -330,7 +332,7 @@ async def test_download_analysis_result(file_exists, row_exists, files, spawn_cl
     })
 
     if row_exists:
-        await client.post_form("/api/analyses/foobar/files?name=reference.fa&format=fasta", data=files)
+        await job_client.post("/api/analyses/foobar/files?name=reference.fa&format=fasta", data=files)
 
         assert expected_path.is_file()
 
