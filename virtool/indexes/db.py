@@ -58,8 +58,6 @@ async def create(db, ref_id: str, user_id: str) -> dict:
 
     index_version = await get_next_version(db, ref_id)
 
-    job_id = await virtool.db.utils.get_new_id(db.jobs)
-
     manifest = await virtool.references.db.get_manifest(db, ref_id)
 
     document = {
@@ -70,9 +68,6 @@ async def create(db, ref_id: str, user_id: str) -> dict:
         "ready": False,
         "has_files": True,
         "has_json": False,
-        "job": {
-            "id": job_id
-        },
         "reference": {
             "id": ref_id
         },

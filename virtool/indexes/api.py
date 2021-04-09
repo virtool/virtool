@@ -232,6 +232,9 @@ async def create(req):
     rights.indexes.can_modify(document["_id"])
     rights.references.can_read(ref_id)
 
+    job_id = await virtool.db.utils.get_new_id(db.jobs)
+    document["job"]["id"] = job_id
+
     # Create job document.
     job = await virtool.jobs.db.create(
         db,
@@ -239,7 +242,7 @@ async def create(req):
         task_args,
         user_id,
         rights,
-        job_id=document["job"]["id"]
+        job_id=job_id
     )
 
     await req.app["jobs"].enqueue(job["_id"])
