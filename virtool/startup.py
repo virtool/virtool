@@ -19,7 +19,6 @@ import virtool.db.migrate
 import virtool.db.mongo
 import virtool.dev.fake
 import virtool.dispatcher
-import virtool.faker
 import virtool.hmm.db
 import virtool.jobs.interface
 import virtool.jobs.runner
@@ -41,6 +40,7 @@ from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.listener import RedisDispatcherListener
+from virtool.faker.wrapper import FakerWrapper
 from virtool.pg.testing import create_test_database
 from virtool.references.db import CreateIndexJSONTask, DeleteReferenceTask
 from virtool.samples.db import CompressSamplesTask, MoveSampleFilesTask
@@ -195,7 +195,7 @@ async def init_fake(app: aiohttp.web_app.Application):
 
 
 async def init_faker(app: aiohttp.web_app.Application):
-    app["faker"] = virtool.faker.VirtoolFaker()
+    app["faker"] = FakerWrapper()
 
 
 async def init_fake_config(app: App):

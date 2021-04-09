@@ -1,7 +1,7 @@
 from faker import Faker
 from faker.providers import misc
 
-class VirtoolFaker(Faker):
+class FakerWrapper(Faker):
     fake = Faker()
     Faker.seed(0)
     fake.add_provider(misc)
