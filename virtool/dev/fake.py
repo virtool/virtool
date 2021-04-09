@@ -5,7 +5,6 @@ TODO: Add more fake data and files
 TODO: Port over to the normal API
 
 """
-
 from logging import getLogger
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -14,11 +13,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.analyses.db
 import virtool.analyses.files
+import virtool.jobs.db
+import virtool.references.db
+import virtool.subtractions.db
+import virtool.users.db
 import virtool.users.db
 import virtool.utils
-import virtool.jobs.db
-import virtool.users.db
-import virtool.references.db
+from virtool.hmm.fake import create_fake_hmms
 from virtool.jobs.utils import JobRights
 from virtool.types import App
 from virtool.uploads.models import Upload
@@ -34,6 +35,7 @@ async def populate(app: App):
     await create_fake_subtractions(app)
     await create_fake_analysis(app)
     await create_fake_jobs(app)
+    await create_fake_hmms(app)
 
 
 async def remove_fake_data_path(app: App):
