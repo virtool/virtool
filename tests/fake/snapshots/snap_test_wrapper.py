@@ -7,7 +7,7 @@ from snapshottest import Snapshot
 
 snapshots = Snapshot()
 
-snapshots['test_init_faker[uvloop] 1'] = [
+snapshots['test_get_mongo_id 1'] = [
     '2x6YnyMt',
     'c2uyoYJd',
     '5NxTrGkY',

@@ -2,8 +2,8 @@ from os.path import isdir
 
 import pytest
 
-from virtool.dev.fake import create_fake_data_path, create_fake_user, create_fake_jobs, create_fake_analysis, \
-    create_fake_references
+from virtool.dev.fake import create_fake_analysis, create_fake_data_path, create_fake_jobs, \
+    create_fake_references, create_fake_user
 
 
 @pytest.fixture
