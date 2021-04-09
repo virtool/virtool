@@ -325,8 +325,8 @@ class TestCreate:
 
         assert resp.status == 201
 
-        expected_id = test_random_alphanumeric.history[1]
-        expected_job_id = test_random_alphanumeric.history[2]
+        expected_job_id = test_random_alphanumeric.history[1]
+        expected_id = test_random_alphanumeric.history[2]
 
         assert resp.headers["Location"] == "/api/indexes/{}".format(expected_id)
 
