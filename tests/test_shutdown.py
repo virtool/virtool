@@ -1,5 +1,12 @@
+import asyncio
+
+from sqlalchemy import text
+
 import virtool.shutdown
 import virtool.dispatcher
+
+from virtool.pg.base import Base
+
 
 async def test_exit_client(spawn_client):
     """
@@ -68,3 +75,15 @@ async def test_exit_redis(spawn_client):
 
     assert app["redis"].closed
 
+
+async def test_drop_fake_postgres(spawn_client):
+    client = await spawn_client(authorize=True)
+    app = client.app
+    app["config"]["fake"] = True
+
+    await virtool.shutdown.drop_fake_postgres(app)
+
+    async with app["pg"].begin() as conn:
+        result = await conn.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema='public'"))
+
+    assert result.all() == []
