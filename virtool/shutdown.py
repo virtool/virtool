@@ -3,6 +3,7 @@ import logging
 import aiohttp.web
 
 import virtool.startup
+from virtool.pg.base import Base
 
 logger = logging.getLogger(__name__)
 
@@ -75,3 +76,16 @@ async def exit_redis(app: aiohttp.web.Application):
         await app["redis"].wait_closed()
     except KeyError:
         pass
+
+
+async def drop_fake_postgres(app: aiohttp.web.Application):
+    """
+    Drop a fake PostgreSQL database if the instance was run with the ``--fake`` option.
+
+    :param app: the application object
+
+    """
+    if app["config"]["fake"]:
+        async with app["pg"].begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+            logger.debug(f"Dropped fake PostgreSQL database.")
