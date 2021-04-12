@@ -1,11 +1,7 @@
-import asyncio
-
 from sqlalchemy import text
 
 import virtool.shutdown
 import virtool.dispatcher
-
-from virtool.pg.base import Base
 
 
 async def test_exit_client(spawn_client):
