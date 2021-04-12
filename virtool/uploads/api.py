@@ -75,16 +75,9 @@ async def find(req):
 
     """
     pg = req.app["pg"]
-    filters = list()
     user = req.query.get("user")
     upload_type = req.query.get("type")
     response = dict()
-
-    if user:
-        filters.append(Upload.user == user)
-
-    if upload_type:
-        filters.append(Upload.type == upload_type)
 
     uploads = await virtool.uploads.db.find(pg, user, upload_type)
 
