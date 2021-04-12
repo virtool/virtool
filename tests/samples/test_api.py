@@ -19,7 +19,7 @@ from virtool.uploads.models import Upload
 class MockJobInterface:
 
     def __init__(self):
-        self.enqueue_job = make_mocked_coro()
+        self.enqueue = make_mocked_coro()
 
 
 @pytest.mark.parametrize("find,per_page,page,label_filter,d_range,meta", [
@@ -870,7 +870,7 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
     "400_subtraction",
     "404"
 ])
-async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
+async def test_analyze(error, mocker, spawn_client, static_time, resp_is, test_random_alphanumeric):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
     client = await spawn_client(authorize=True)
@@ -922,6 +922,7 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
     if error != "404":
         await client.db.samples.insert_one({
             "_id": "test",
+            "name": "Test",
             "created_at": static_time.datetime,
             "all_read": True,
             "all_write": True
@@ -965,7 +966,8 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
         "foo",
         ["bar"],
         "test",
-        "pathoscope_bowtie"
+        "pathoscope_bowtie",
+        test_random_alphanumeric.history[0]
     )
 
 
