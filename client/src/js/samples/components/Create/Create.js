@@ -10,6 +10,7 @@ import {
     InputIcon,
     InputLabel,
     LoadingPlaceholder,
+    NarrowContainer,
     SaveButton,
     Select,
     ViewHeader,
@@ -161,7 +162,7 @@ export class CreateSample extends React.Component {
 
         const subtractionId = this.state.subtractionId || get(this.props.subtractions, [0, "id"]);
         return (
-            <div>
+            <NarrowContainer>
                 <ViewHeader title="Create Sample">
                     <ViewHeaderTitle>Create Sample</ViewHeaderTitle>
                 </ViewHeader>
@@ -223,7 +224,7 @@ export class CreateSample extends React.Component {
                     />
                     <SaveButton />
                 </form>
-            </div>
+            </NarrowContainer>
         );
     }
 }
