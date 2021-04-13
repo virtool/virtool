@@ -1,5 +1,4 @@
 import pytest
-from pprint import pprint
 from virtool.samples.fake import create_fake_sample, create_fake_samples
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import LIST_PROJECTION
@@ -43,7 +42,7 @@ async def test_create_fake_unpaired(paired, finalized, app, snapshot):
     snapshot.assert_match(clean_sample_document_for_snapshot(fake_sample))
 
 
-async def test_create_fake_samples(app, snapshot):
+async def test_create_fake_samples(app, snapshot, dbi):
     samples = await create_fake_samples(app)
 
     assert len(samples) == 3
