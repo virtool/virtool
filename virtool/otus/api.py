@@ -126,7 +126,7 @@ async def create(req):
     if message:
         return bad_request(message)
 
-    document = await asyncio.shield(virtool.otus.db.create(
+    document = await asyncio.shield(virtool.otus.db.create_otu(
         req.app,
         ref_id,
         name,

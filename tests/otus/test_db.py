@@ -1,5 +1,6 @@
-import pytest
 from copy import deepcopy
+
+import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.otus.db
@@ -23,8 +24,18 @@ async def test_check_name_and_abbreviation(name, abbreviation, return_value, dbi
     assert result == return_value
 
 
-@pytest.mark.parametrize("abbreviation", ["", "TMV"])
-async def test_create(abbreviation, mocker, snapshot, dbi, test_random_alphanumeric, static_time):
+@pytest.mark.parametrize("abbreviation,otu_id", [
+    ("", "TMV"),
+    (None, "otu")
+])
+async def test_create_otu(
+        abbreviation,
+        otu_id,
+        snapshot,
+        dbi,
+        test_random_alphanumeric,
+        static_time
+):
     app = {
         "db": dbi,
         "settings": {
@@ -32,16 +43,26 @@ async def test_create(abbreviation, mocker, snapshot, dbi, test_random_alphanume
         }
     }
 
-    await virtool.otus.db.create(
-        app,
-        "foo",
-        "Bar",
-        abbreviation,
-        "bob"
-    )
+    if otu_id:
+        await virtool.otus.db.create_otu(
+            app,
+            "foo",
+            "Bar",
+            abbreviation,
+            "bob",
+            otu_id
+        )
+    else:
+        await virtool.otus.db.create_otu(
+            app,
+            "foo",
+            "Bar",
+            abbreviation,
+            "bob"
+        )
 
-    snapshot.assert_match(await dbi.otus.find_one())
-    snapshot.assert_match(await dbi.history.find_one())
+    snapshot.assert_match(await dbi.otus.find_one(), "otu")
+    snapshot.assert_match(await dbi.history.find_one(), "history")
 
 
 @pytest.mark.parametrize("abbreviation", [None, "", "TMV"])
@@ -120,4 +141,3 @@ async def test_update_last_indexed_version(dbi, test_otu):
 
     assert otu_2["version"] == 5
     assert otu_2["last_indexed_version"] == 5
-
