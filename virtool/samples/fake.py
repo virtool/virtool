@@ -1,5 +1,5 @@
 from virtool.fake.identifiers import USER_ID
-from virtool.samples.db import create_sample
+from virtool.samples.db import create_sample, finalize
 from virtool.types import App
 from virtool.samples.files import create_reads_file
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -16,7 +16,7 @@ async def create_fake_samples(app: App):
 
 async def create_fake_read_file(
     pg: AsyncEngine, path: Path, sample_id: str, name: str = None
-):
+) -> dict:
     name = name or path.name
     size = path.stat().st_size
     return await create_reads_file(
@@ -24,7 +24,11 @@ async def create_fake_read_file(
     )
 
 
-async def create_fake_sample(app: App, paired=False):
+async def create_fake_quality() -> dict:
+    return {}
+
+
+async def create_fake_sample(app: App, paired=False, finalized=False):
     fake = app["fake"]
     db = app["db"]
     pg = app["pg"]
@@ -35,23 +39,27 @@ async def create_fake_sample(app: App, paired=False):
 
     files = []
 
-    if paired:
-        files.extend(
-            [
-                await create_fake_read_file(
-                    pg, READ_FILES_PATH / f"paired_{n}.fq.gz", sample_id, name=f"read_{n}.fq.gz"
-                )
-                for n in (1, 2)
-            ]
-        )
-    else:
-        files.append(
-            await create_fake_read_file(
-                pg, READ_FILES_PATH / "single.fq.gz", sample_id, name="reads.fq.gz"
+    if finalized is True:
+        if paired:
+            files.extend(
+                [
+                    await create_fake_read_file(
+                        pg,
+                        READ_FILES_PATH / f"paired_{n}.fq.gz",
+                        sample_id,
+                        name=f"read_{n}.fq.gz",
+                    )
+                    for n in (1, 2)
+                ]
             )
-        )
+        else:
+            files.append(
+                await create_fake_read_file(
+                    pg, READ_FILES_PATH / "single.fq.gz", sample_id, name="reads.fq.gz"
+                )
+            )
 
-    return await create_sample(
+    sample = await create_sample(
         _id=sample_id,
         db=db,
         name=" ".join(fake.words(2)),
@@ -74,3 +82,15 @@ async def create_fake_sample(app: App, paired=False):
             "sample_all_write": True,
         },
     )
+
+    if finalized is True:
+        sample = await finalize(
+            db=db,
+            pg=pg,
+            sample_id=sample_id,
+            quality=await create_fake_quality(),
+            run_in_thread=app["run_in_thread"],
+            data_path=app["data_path"],
+        )
+
+    return sample
