@@ -7,61 +7,6 @@ from snapshottest import GenericRepr, Snapshot
 
 snapshots = Snapshot()
 
-snapshots['test_create[uvloop-TMV] 1'] = {
-    '_id': '9pfsom1b',
-    'abbreviation': 'TMV',
-    'isolates': [
-    ],
-    'last_indexed_version': None,
-    'lower_name': 'bar',
-    'name': 'Bar',
-    'reference': {
-        'id': 'foo'
-    },
-    'schema': [
-    ],
-    'verified': False,
-    'version': 0
-}
-
-snapshots['test_create[uvloop-TMV] 2'] = {
-    '_id': '9pfsom1b.0',
-    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'description': 'Created Bar (TMV)',
-    'diff': {
-        '_id': '9pfsom1b',
-        'abbreviation': 'TMV',
-        'isolates': [
-        ],
-        'last_indexed_version': None,
-        'lower_name': 'bar',
-        'name': 'Bar',
-        'reference': {
-            'id': 'foo'
-        },
-        'schema': [
-        ],
-        'verified': False,
-        'version': 0
-    },
-    'index': {
-        'id': 'unbuilt',
-        'version': 'unbuilt'
-    },
-    'method_name': 'create',
-    'otu': {
-        'id': '9pfsom1b',
-        'name': 'Bar',
-        'version': 0
-    },
-    'reference': {
-        'id': 'foo'
-    },
-    'user': {
-        'id': 'bob'
-    }
-}
-
 snapshots['test_edit[uvloop-None] history'] = {
     '_id': '6116cba1.1',
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
@@ -214,61 +159,6 @@ snapshots['test_edit[uvloop-TMV] otu'] = {
     'version': 1
 }
 
-snapshots['test_create[uvloop-] 1'] = {
-    '_id': '9pfsom1b',
-    'abbreviation': '',
-    'isolates': [
-    ],
-    'last_indexed_version': None,
-    'lower_name': 'bar',
-    'name': 'Bar',
-    'reference': {
-        'id': 'foo'
-    },
-    'schema': [
-    ],
-    'verified': False,
-    'version': 0
-}
-
-snapshots['test_create[uvloop-] 2'] = {
-    '_id': '9pfsom1b.0',
-    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'description': 'Created Bar',
-    'diff': {
-        '_id': '9pfsom1b',
-        'abbreviation': '',
-        'isolates': [
-        ],
-        'last_indexed_version': None,
-        'lower_name': 'bar',
-        'name': 'Bar',
-        'reference': {
-            'id': 'foo'
-        },
-        'schema': [
-        ],
-        'verified': False,
-        'version': 0
-    },
-    'index': {
-        'id': 'unbuilt',
-        'version': 'unbuilt'
-    },
-    'method_name': 'create',
-    'otu': {
-        'id': '9pfsom1b',
-        'name': 'Bar',
-        'version': 0
-    },
-    'reference': {
-        'id': 'foo'
-    },
-    'user': {
-        'id': 'bob'
-    }
-}
-
 snapshots['test_edit[uvloop-] otu'] = {
     '_id': '6116cba1',
     'abbreviation': '',
@@ -343,6 +233,116 @@ snapshots['test_edit[uvloop-] history'] = {
     },
     'reference': {
         'id': 'hxn167'
+    },
+    'user': {
+        'id': 'bob'
+    }
+}
+
+snapshots['test_create_otu[uvloop--TMV] otu'] = {
+    '_id': 'TMV',
+    'abbreviation': '',
+    'isolates': [
+    ],
+    'last_indexed_version': None,
+    'lower_name': 'bar',
+    'name': 'Bar',
+    'reference': {
+        'id': 'foo'
+    },
+    'schema': [
+    ],
+    'verified': False,
+    'version': 0
+}
+
+snapshots['test_create_otu[uvloop--TMV] history'] = {
+    '_id': 'TMV.0',
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'description': 'Created Bar',
+    'diff': {
+        '_id': 'TMV',
+        'abbreviation': '',
+        'isolates': [
+        ],
+        'last_indexed_version': None,
+        'lower_name': 'bar',
+        'name': 'Bar',
+        'reference': {
+            'id': 'foo'
+        },
+        'schema': [
+        ],
+        'verified': False,
+        'version': 0
+    },
+    'index': {
+        'id': 'unbuilt',
+        'version': 'unbuilt'
+    },
+    'method_name': 'create',
+    'otu': {
+        'id': 'TMV',
+        'name': 'Bar',
+        'version': 0
+    },
+    'reference': {
+        'id': 'foo'
+    },
+    'user': {
+        'id': 'bob'
+    }
+}
+
+snapshots['test_create_otu[uvloop-None-otu] otu'] = {
+    '_id': 'otu',
+    'abbreviation': None,
+    'isolates': [
+    ],
+    'last_indexed_version': None,
+    'lower_name': 'bar',
+    'name': 'Bar',
+    'reference': {
+        'id': 'foo'
+    },
+    'schema': [
+    ],
+    'verified': False,
+    'version': 0
+}
+
+snapshots['test_create_otu[uvloop-None-otu] history'] = {
+    '_id': 'otu.0',
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'description': 'Created Bar',
+    'diff': {
+        '_id': 'otu',
+        'abbreviation': None,
+        'isolates': [
+        ],
+        'last_indexed_version': None,
+        'lower_name': 'bar',
+        'name': 'Bar',
+        'reference': {
+            'id': 'foo'
+        },
+        'schema': [
+        ],
+        'verified': False,
+        'version': 0
+    },
+    'index': {
+        'id': 'unbuilt',
+        'version': 'unbuilt'
+    },
+    'method_name': 'create',
+    'otu': {
+        'id': 'otu',
+        'name': 'Bar',
+        'version': 0
+    },
+    'reference': {
+        'id': 'foo'
     },
     'user': {
         'id': 'bob'

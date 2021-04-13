@@ -1,34 +1,8 @@
 """
 Work with OTUs in the database.
 
-Schema:
-- _id (str) the unique ID for the OTU
-- abbreviation (str) the virus abbreviation
-- created_at (datetime) timestamp for creation of the OTU
-- imported (bool) true when the sample creation workflow has completed
-- isolates (List[Object]) a list of child isolates
-  - default (bool) set to true of the isolate is the default isolate for the OTU - ie. used as representative of species
-  - id (str) the instance-unique ID for the isolate
-  - source_type (str) the first part of the isolate name (eg. Isolate, Strain)
-  - source_ name (str) the last part of the isolate name (eg. A, China-1)
-- last_indexed_version (int) the last version of the OTU that was included in an index
-- lower_name (str) the OTU name transformed to lower case
-- name (str) the user-defined name for the OTU
-- reference (Object) describes the parent reference
-  - id (str) the reference ID
-- remote (Object)
-  - id (str) the foreign ID if the OTU was imported or remoted
-- schema (Array[Object]) ordered objects describing the virus genome
-  - molecule (str) the virus genome type (eg. ssDNA, dsRNA)
-  - name (str) the name of the segment (eg. RNA1, DNA-A)
-  - required (bool) true if the segment must be defined for an isolate to be created
-- user (Object) describes the creating user
-  - id (str) the user ID
-- verified (bool) true if OTU meets validation requirements
-- version (int) the version of the OTU - increments everytime the OTU or a child isolate or sequence changes
-
 """
-from typing import Union
+from typing import Optional, Union
 
 import pymongo.results
 
@@ -107,7 +81,7 @@ async def check_name_and_abbreviation(
     return False
 
 
-async def create(app, ref_id, name, abbreviation, user_id):
+async def create_otu(app, ref_id, name, abbreviation, user_id, otu_id: Optional[str] = None):
     """
     Create a new OTU.
 
@@ -116,12 +90,13 @@ async def create(app, ref_id, name, abbreviation, user_id):
     :param name: a name for the new OTU
     :param abbreviation: an abbreviation for the new OTU
     :param user_id: the ID of the requesting user
+    :param otu_id: an optional OTU ID to use
     :return: the joined OTU document
 
     """
     db = app["db"]
 
-    otu_id = await virtool.db.utils.get_new_id(db.otus)
+    otu_id = otu_id or await virtool.db.utils.get_new_id(db.otus)
 
     # Start building a otu document.
     document = {
