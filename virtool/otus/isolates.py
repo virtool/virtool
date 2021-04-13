@@ -1,13 +1,14 @@
 import copy
+from typing import Optional
 
 import virtool.db.utils
 import virtool.history.db
-import virtool.otus.utils
 import virtool.otus.db
+import virtool.otus.utils
 import virtool.utils
 
 
-async def add(app, otu_id: str, data: dict, user_id: str) -> dict:
+async def add(app, otu_id: str, data: dict, user_id: str, isolate_id: Optional[str] = None) -> dict:
     """
     Add an isolate to an existing OTU.
 
@@ -15,6 +16,7 @@ async def add(app, otu_id: str, data: dict, user_id: str) -> dict:
     :param otu_id: the id of the OTU
     :param data: the isolate data
     :param user_id: the user making the change
+    :param isolate_id: an optional ID to force for the isolate
     :return: the isolate sub-document
 
     """
@@ -32,13 +34,34 @@ async def add(app, otu_id: str, data: dict, user_id: str) -> dict:
         for isolate in isolates:
             isolate["default"] = False
 
-    # Set the isolate as the default isolate if it is the first one.
-    data["default"] = will_be_default
-
     # Get the complete, joined entry before the update.
     old = await virtool.otus.db.join(db, otu_id, document)
 
-    isolate_id = await append(db, otu_id, isolates, data)
+    existing_ids = [isolate["id"] for isolate in isolates]
+
+    if isolate_id is None:
+        isolate_id = virtool.utils.random_alphanumeric(length=3, excluded=existing_ids)
+
+    if isolate_id in existing_ids:
+        raise ValueError(f"Isolate ID already exists: {isolate_id}")
+
+    isolate = {
+        "id": isolate_id,
+        "default": will_be_default,
+        "source_type": data["source_type"],
+        "source_name": data["source_name"]
+    }
+
+    # Push the new isolate to the database.
+    await db.otus.update_one({"_id": otu_id}, {
+        "$set": {
+            "isolates": [*isolates, isolate],
+            "verified": False
+        },
+        "$inc": {
+            "version": 1
+        }
+    })
 
     # Get the joined entry now that it has been updated.
     new = await virtool.otus.db.join(db, otu_id)
@@ -61,29 +84,7 @@ async def add(app, otu_id: str, data: dict, user_id: str) -> dict:
         user_id
     )
 
-    return dict(data, id=isolate_id, sequences=[])
-
-
-async def append(db, otu_id, isolates, isolate):
-    isolate_ids = [isolate["id"] for isolate in isolates]
-
-    isolate_id = None
-
-    while isolate_id is None or isolate_id in isolate_ids:
-        isolate_id = virtool.utils.random_alphanumeric(length=3)
-
-    # Push the new isolate to the database.
-    await db.otus.update_one({"_id": otu_id}, {
-        "$set": {
-            "isolates": [*isolates, dict(isolate, id=isolate_id)],
-            "verified": False
-        },
-        "$inc": {
-            "version": 1
-        }
-    })
-
-    return isolate_id
+    return {**isolate, "sequences": []}
 
 
 async def edit(app, otu_id, isolate_id, data, user_id):

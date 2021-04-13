@@ -1,11 +1,23 @@
 import pytest
+
 import virtool.otus.isolates
 
 
 @pytest.mark.parametrize("default", [True, False])
 @pytest.mark.parametrize("empty", [True, False], ids=["empty", "not_empty"])
 @pytest.mark.parametrize("existing_default", [True, False])
-async def test_add(default, empty, existing_default, dbi, snapshot, test_otu, static_time, test_random_alphanumeric):
+@pytest.mark.parametrize("isolate_id", [None, "isolate"])
+async def test_add(
+        default,
+        empty,
+        existing_default,
+        isolate_id,
+        dbi,
+        snapshot,
+        test_otu,
+        static_time,
+        test_random_alphanumeric
+):
     """
     Test that adding an isolate works correctly. Parametrize to make sure that setting the default isolate works
     correctly in all cases
@@ -33,35 +45,13 @@ async def test_add(default, empty, existing_default, dbi, snapshot, test_otu, st
             "source_name": "B",
             "default": default
         },
-        "bob"
+        "bob",
+        isolate_id=isolate_id
     )
 
     snapshot.assert_match(await dbi.otus.find_one(), "otu")
     snapshot.assert_match(await dbi.history.find_one(), "history")
     snapshot.assert_match(return_value, "return_value")
-
-
-@pytest.mark.parametrize("conflict", [True, False])
-async def test_append(conflict, snapshot, dbi, test_otu, test_random_alphanumeric):
-    # Introduce isolate id conflict.
-    if conflict:
-        test_otu["isolates"][0]["id"] = "9pf"
-
-    await dbi.otus.insert_one(test_otu)
-
-    isolates = test_otu["isolates"]
-
-    await virtool.otus.isolates.append(
-        dbi,
-        "6116cba1",
-        isolates,
-        {
-            "source_type": "variant",
-            "source_name": "1"
-        }
-    )
-
-    snapshot.assert_match(await dbi.otus.find_one(), "otu")
 
 
 async def test_edit(dbi, snapshot, test_otu, static_time):
