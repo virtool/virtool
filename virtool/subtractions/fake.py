@@ -44,8 +44,10 @@ async def create_fake_subtractions(app: App):
 
         await session.commit()
 
-    subtraction_1 = await virtool.subtractions.db.create(db, USER_ID, upload_name, "subtraction_1", "", upload_id,
-                                                         fake.get_mongo_id())
+    subtraction_1 = await db.subtraction.insert_one(
+        {"_id": fake.get_mongo_id(), "name": "subtraction_1", "nickname": "", "deleted": False, "is_host": True,
+         "ready": True,
+         "file": {"id": upload_id, "name": upload_name}, "user": {"id": USER_ID}})
     await virtool.subtractions.db.create(db, USER_ID, upload_name, "subtraction_2", "", upload_id,
                                          fake.get_mongo_id())
     await virtool.subtractions.db.create(db, USER_ID, upload_name, "subtraction_unready", "", upload_id,
