@@ -3,15 +3,19 @@ from virtool.samples.db import create_sample, finalize
 from virtool.types import App
 from virtool.samples.files import create_reads_file
 from sqlalchemy.ext.asyncio import AsyncEngine
+from typing import List
 from pathlib import Path
 
 EXAMPLE_FILES_PATH = Path(__file__).parent.parent.parent / "example"
 READ_FILES_PATH = EXAMPLE_FILES_PATH / "reads"
 
 
-async def create_fake_samples(app: App):
-    await create_fake_sample(app, paired=True)
-    await create_fake_sample(app, paired=False)
+async def create_fake_samples(app: App) -> List[dict]:
+    samples = []
+    samples.append(await create_fake_sample(app, paired=True, finalized=True))
+    samples.append(await create_fake_sample(app, paired=False, finalized=True))
+    samples.append(await create_fake_sample(app, finalized=False))
+    return samples
 
 
 async def create_fake_read_file(
@@ -28,7 +32,7 @@ async def create_fake_quality() -> dict:
     return {}
 
 
-async def create_fake_sample(app: App, paired=False, finalized=False):
+async def create_fake_sample(app: App, paired=False, finalized=False) -> dict:
     fake = app["fake"]
     db = app["db"]
     pg = app["pg"]
