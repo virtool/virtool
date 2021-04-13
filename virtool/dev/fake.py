@@ -19,6 +19,7 @@ import virtool.subtractions.db
 import virtool.users.db
 import virtool.users.db
 import virtool.utils
+from virtool.dev.utils import USER_ID
 from virtool.hmm.fake import create_fake_hmms
 from virtool.jobs.utils import JobRights
 from virtool.types import App
@@ -26,8 +27,6 @@ from virtool.uploads.models import Upload
 from virtool.utils import ensure_data_dir, random_alphanumeric
 
 logger = getLogger(__name__)
-
-USER_ID = "bob"
 
 
 async def populate(app: App):
