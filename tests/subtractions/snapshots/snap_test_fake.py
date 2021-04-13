@@ -18,7 +18,7 @@ snapshots['test_create_fake_subtractions[uvloop] 1'] = [
         'is_host': True,
         'name': 'subtraction_1',
         'nickname': '',
-        'ready': False,
+        'ready': True,
         'user': {
             'id': 'bob'
         }
