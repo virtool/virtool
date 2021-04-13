@@ -43,7 +43,7 @@ LIST_PROJECTION = [
     "user",
     "notes",
     "labels",
-    "subtractions"
+    "subtractions",
 ]
 
 PROJECTION = [
@@ -71,7 +71,7 @@ RIGHTS_PROJECTION = {
     "group_write": True,
     "all_read": True,
     "all_write": True,
-    "user": True
+    "user": True,
 }
 
 
@@ -84,19 +84,29 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
     :return: Updated document with associated sample artifacts
     """
     async with AsyncSession(pg) as session:
-        artifacts = (await session.execute(select(SampleArtifact).filter_by(sample=document["_id"]))).scalars()
-        reads_files = (await session.execute(select(SampleReads).filter_by(sample=document["_id"]))).scalars()
+        artifacts = (
+            await session.execute(
+                select(SampleArtifact).filter_by(sample=document["_id"])
+            )
+        ).scalars()
+        reads_files = (
+            await session.execute(select(SampleReads).filter_by(sample=document["_id"]))
+        ).scalars()
 
         reads = [reads_file.to_dict() for reads_file in reads_files]
 
         for reads_file in reads:
             if upload := reads_file.get("upload"):
-                reads_file["upload"] = ((await session.execute(select(Upload).filter_by(id=upload))).scalar()).to_dict()
+                reads_file["upload"] = (
+                    (
+                        await session.execute(select(Upload).filter_by(id=upload))
+                    ).scalar()
+                ).to_dict()
 
     return {
         **document,
         "artifacts": [artifact.to_dict() for artifact in artifacts],
-        "reads": reads
+        "reads": reads,
     }
 
 
@@ -112,27 +122,22 @@ async def attach_labels(pg: AsyncEngine, document: dict) -> dict:
     labels = list()
     if document.get("labels"):
         async with AsyncSession(pg) as session:
-            results = await session.execute(select(Label).filter(Label.id.in_(document["labels"])))
+            results = await session.execute(
+                select(Label).filter(Label.id.in_(document["labels"]))
+            )
 
         for label in results.scalars():
             labels.append(label.to_dict())
 
-    return {
-        **document,
-        "labels": labels
-    }
+    return {**document, "labels": labels}
 
 
 async def check_name(db, settings, name, sample_id=None):
     if settings["sample_unique_names"]:
-        query = {
-            "name": name
-        }
+        query = {"name": name}
 
         if sample_id:
-            query["_id"] = {
-                "$ne": sample_id
-            }
+            query["_id"] = {"$ne": sample_id}
 
         if await db.samples.count_documents(query):
             return "Sample name is already in use"
@@ -173,15 +178,9 @@ def compose_workflow_conditions(workflow, url_query):
 
     if conditions:
         if len(conditions) == 1:
-            return {
-                workflow: conditions[0]
-            }
+            return {workflow: conditions[0]}
 
-        return {
-            workflow: {
-                "$in": conditions
-            }
-        }
+        return {workflow: {"$in": conditions}}
 
     return None
 
@@ -191,12 +190,7 @@ def compose_analysis_query(url_query):
     nuvs = compose_workflow_conditions("nuvs", url_query)
 
     if pathoscope and nuvs:
-        return {
-            "$or": [
-                pathoscope,
-                nuvs
-            ]
-        }
+        return {"$or": [pathoscope, nuvs]}
 
     return pathoscope or nuvs or None
 
@@ -214,7 +208,8 @@ async def create_sample(
     notes: str,
     labels: List[int],
     user_id: str,
-    settings: Dict[str, any]
+    settings: Dict[str, any],
+    _id=None,
 ) -> Dict[str, any]:
     """
     Create, insert, and return a new sample document.
@@ -234,8 +229,11 @@ async def create_sample(
     :param settings: the application settings
     :return: the newly inserted sample document
     """
+    if _id is None:
+        _id = await virtool.db.utils.get_new_id(db.samples)
+
     document = {
-        "_id": await virtool.db.utils.get_new_id(db.samples),
+        "_id": _id,
         "name": name,
         "host": host,
         "isolate": isolate,
@@ -256,12 +254,10 @@ async def create_sample(
         "library_type": library_type,
         "subtractions": subtractions,
         "notes": notes,
-        "user": {
-            "id": user_id
-        },
+        "user": {"id": user_id},
         "group": group,
         "locale": locale,
-        "paired": len(files) == 2
+        "paired": len(files) == 2,
     }
 
     await db.samples.insert_one(document)
@@ -295,18 +291,22 @@ async def recalculate_workflow_tags(db, sample_id: str) -> dict:
     :return: the updated sample document
 
     """
-    analyses = await asyncio.shield(db.analyses.find({"sample.id": sample_id}, ["ready", "workflow"]).to_list(None))
+    analyses = await asyncio.shield(
+        db.analyses.find({"sample.id": sample_id}, ["ready", "workflow"]).to_list(None)
+    )
 
     update = virtool.samples.utils.calculate_workflow_tags(analyses)
 
-    document = await db.samples.find_one_and_update({"_id": sample_id}, {
-        "$set": update
-    }, projection=LIST_PROJECTION)
+    document = await db.samples.find_one_and_update(
+        {"_id": sample_id}, {"$set": update}, projection=LIST_PROJECTION
+    )
 
     return document
 
 
-async def remove_samples(db, settings: Dict[str, Any], id_list: List[str]) -> DeleteResult:
+async def remove_samples(
+    db, settings: Dict[str, Any], id_list: List[str]
+) -> DeleteResult:
     """
     Complete removes the samples identified by the document ids in ``id_list``. In order, it:
 
@@ -324,14 +324,10 @@ async def remove_samples(db, settings: Dict[str, Any], id_list: List[str]) -> De
         raise TypeError("id_list must be a list")
 
     # Remove all analysis documents associated with the sample.
-    await db.analyses.delete_many({"sample.id": {
-        "$in": id_list
-    }})
+    await db.analyses.delete_many({"sample.id": {"$in": id_list}})
 
     # Remove the samples described by id_list from the database.
-    result = await db.samples.delete_many({"_id": {
-        "$in": id_list
-    }})
+    result = await db.samples.delete_many({"_id": {"$in": id_list}})
 
     for sample_id in id_list:
         try:
@@ -365,11 +361,11 @@ def check_is_legacy(sample: Dict[str, Any]) -> bool:
 
     return (
         # All files have the `raw` flag set false indicating they are legacy data.
-            all(file.get("raw", False) is False for file in files) and
-
-            # File naming matches expectations.
-            files[0]["name"] == "reads_1.fastq" and
-            (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
+        all(file.get("raw", False) is False for file in files)
+        and
+        # File naming matches expectations.
+        files[0]["name"] == "reads_1.fastq"
+        and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
     )
 
 
@@ -386,17 +382,15 @@ async def update_is_compressed(db, sample: Dict[str, Any]):
 
     names = [file["name"] for file in files]
 
-    is_compressed = (
-            names == ["reads_1.fq.gz"] or
-            names == ["reads_1.fq.gz", "reads_2.fq.gz"]
-    )
+    is_compressed = names == ["reads_1.fq.gz"] or names == [
+        "reads_1.fq.gz",
+        "reads_2.fq.gz",
+    ]
 
     if is_compressed:
-        await db.samples.update_one({"_id": sample["_id"]}, {
-            "$set": {
-                "is_compressed": True
-            }
-        })
+        await db.samples.update_one(
+            {"_id": sample["_id"]}, {"$set": {"is_compressed": True}}
+        )
 
 
 async def compress_sample_reads(app: App, sample: Dict[str, Any]):
@@ -420,7 +414,9 @@ async def compress_sample_reads(app: App, sample: Dict[str, Any]):
     files = list()
 
     for i, path in enumerate(paths):
-        target_filename = "reads_1.fq.gz" if "reads_1.fastq" in path else "reads_2.fq.gz"
+        target_filename = (
+            "reads_1.fq.gz" if "reads_1.fastq" in path else "reads_2.fq.gz"
+        )
         target_path = os.path.join(data_path, "samples", sample_id, target_filename)
 
         await app["run_in_thread"](compress_file, path, target_path, 1)
@@ -429,19 +425,17 @@ async def compress_sample_reads(app: App, sample: Dict[str, Any]):
 
         assert os.path.isfile(target_path)
 
-        files.append({
-            "name": target_filename,
-            "download_url": f"/download/samples/{sample_id}/{target_filename}",
-            "size": stats["size"],
-            "raw": False,
-            "from": sample["files"][i]["from"]
-        })
+        files.append(
+            {
+                "name": target_filename,
+                "download_url": f"/download/samples/{sample_id}/{target_filename}",
+                "size": stats["size"],
+                "raw": False,
+                "from": sample["files"][i]["from"],
+            }
+        )
 
-    await app["db"].samples.update_one({"_id": sample_id}, {
-        "$set": {
-            "files": files
-        }
-    })
+    await app["db"].samples.update_one({"_id": sample_id}, {"$set": {"files": files}})
 
     for path in paths:
         await app["run_in_thread"](os.remove, path)
@@ -452,22 +446,16 @@ class CompressSamplesTask(Task):
     Compress the legacy FASTQ file for all uncompressed samples.
 
     """
+
     task_type = "compress_samples"
 
     def __init__(self, app, process_id):
         super().__init__(app, process_id)
 
-        self.steps = [
-            self.compress_samples
-        ]
+        self.steps = [self.compress_samples]
 
     async def compress_samples(self):
-        query = {
-            "is_legacy": True,
-            "is_compressed": {
-                "$exists": False
-            }
-        }
+        query = {"is_legacy": True, "is_compressed": {"$exists": False}}
 
         count = await self.db.samples.count_documents(query)
 
@@ -486,11 +474,7 @@ class CompressSamplesTask(Task):
                 f"Compressed legacy sample {sample['_id']} ({tracker.progress}%)"
             )
 
-        await virtool.tasks.pg.update(
-            self.pg,
-            self.id,
-            step="compress_samples"
-        )
+        await virtool.tasks.pg.update(self.pg, self.id, step="compress_samples")
 
 
 async def move_sample_files_to_pg(app: App, sample: Dict[str, any]):
@@ -510,9 +494,18 @@ async def move_sample_files_to_pg(app: App, sample: Dict[str, any]):
             from_ = file_.get("from")
 
             upload = Upload(
-                name=from_["name"], name_on_disk=from_["id"], size=from_["size"], uploaded_at=from_.get("uploaded_at"))
+                name=from_["name"],
+                name_on_disk=from_["id"],
+                size=from_["size"],
+                uploaded_at=from_.get("uploaded_at"),
+            )
 
-            reads = SampleReads(name=file_["name"], name_on_disk=file_["name"], size=file_["size"], sample=sample_id)
+            reads = SampleReads(
+                name=file_["name"],
+                name_on_disk=file_["name"],
+                size=file_["size"],
+                sample=sample_id,
+            )
 
             upload.reads.append(reads)
 
@@ -520,11 +513,9 @@ async def move_sample_files_to_pg(app: App, sample: Dict[str, any]):
 
         await session.commit()
 
-        await app["db"].samples.update_one({"_id": sample_id}, {
-            "$unset": {
-                "files": ""
-            }
-        })
+        await app["db"].samples.update_one(
+            {"_id": sample_id}, {"$unset": {"files": ""}}
+        )
 
 
 class MoveSampleFilesTask(Task):
@@ -532,19 +523,18 @@ class MoveSampleFilesTask(Task):
     Move pre-SQL samples' file information to new `sample_reads` and `uploads` tables.
 
     """
+
     task_type = "move_sample_files"
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)
 
-        self.steps = [
-            self.move_sample_files
-        ]
+        self.steps = [self.move_sample_files]
 
     async def move_sample_files(self):
         query = {
             "files": {"$exists": True},
-            "$or": [{"is_legacy": False}, {"is_legacy": True, "is_compressed": True}]
+            "$or": [{"is_legacy": False}, {"is_legacy": True, "is_compressed": True}],
         }
 
         count = await self.db.samples.count_documents(query)
@@ -564,20 +554,16 @@ class MoveSampleFilesTask(Task):
                 f"Moved files in sample {sample['_id']} to SQL ({tracker.progress}%)"
             )
 
-        await virtool.tasks.pg.update(
-            self.pg,
-            self.id,
-            step="move_sample_files"
-        )
+        await virtool.tasks.pg.update(self.pg, self.id, step="move_sample_files")
 
 
 async def finalize(
-        db,
-        pg: AsyncEngine,
-        sample_id: str,
-        quality: Dict[str, Any],
-        run_in_thread: callable,
-        data_path: str
+    db,
+    pg: AsyncEngine,
+    sample_id: str,
+    quality: Dict[str, Any],
+    run_in_thread: callable,
+    data_path: str,
 ) -> Dict[str, Any]:
     """
     Finalize a sample document by setting a ``quality`` field and ``ready`` to ``True``
@@ -592,16 +578,22 @@ async def finalize(
     :return: the sample document after finalizing
 
     """
-    document = await db.samples.find_one_and_update({"_id": sample_id}, {
-        "$set": {
-            "quality": quality,
-            "ready": True
-        }
-    })
+    document = await db.samples.find_one_and_update(
+        {"_id": sample_id}, {"$set": {"quality": quality, "ready": True}}
+    )
 
     async with AsyncSession(pg) as session:
-        rows = (await session.execute(
-            select(Upload).filter(SampleReads.sample == sample_id).join_from(SampleReads, Upload))).unique().scalars()
+        rows = (
+            (
+                await session.execute(
+                    select(Upload)
+                    .filter(SampleReads.sample == sample_id)
+                    .join_from(SampleReads, Upload)
+                )
+            )
+            .unique()
+            .scalars()
+        )
 
         for row in rows:
             row.reads.clear()
@@ -610,8 +602,7 @@ async def finalize(
 
             try:
                 await run_in_thread(
-                    virtool.utils.rm,
-                    Path(data_path) / "files" / row.name_on_disk
+                    virtool.utils.rm, Path(data_path) / "files" / row.name_on_disk
                 )
             except FileNotFoundError:
                 pass
