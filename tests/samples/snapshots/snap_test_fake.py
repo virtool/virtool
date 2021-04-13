@@ -14,7 +14,7 @@ snapshots['test_create_fake_unpaired[uvloop-False-True] 1'] = {
     'files': [
     ],
     'format': 'fastq',
-    'group': 'four',
+    'group': 'while',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -22,9 +22,9 @@ snapshots['test_create_fake_unpaired[uvloop-False-True] 1'] = {
     'is_legacy': False,
     'isolate': 'Isolate A1',
     'labels': [
-        'blood',
-        'health',
-        'leader'
+        'beyond',
+        'its',
+        'particularly'
     ],
     'library_type': 'normal',
     'locale': '',
@@ -49,7 +49,7 @@ snapshots['test_create_fake_unpaired[uvloop-False-False] 1'] = {
     'files': [
     ],
     'format': 'fastq',
-    'group': 'four',
+    'group': 'while',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -57,9 +57,9 @@ snapshots['test_create_fake_unpaired[uvloop-False-False] 1'] = {
     'is_legacy': False,
     'isolate': 'Isolate A1',
     'labels': [
-        'blood',
-        'health',
-        'leader'
+        'beyond',
+        'its',
+        'particularly'
     ],
     'library_type': 'normal',
     'locale': '',
@@ -102,7 +102,7 @@ snapshots['test_create_fake_unpaired[uvloop-True-True] 1'] = {
         }
     ],
     'format': 'fastq',
-    'group': 'four',
+    'group': 'while',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -110,9 +110,9 @@ snapshots['test_create_fake_unpaired[uvloop-True-True] 1'] = {
     'is_legacy': False,
     'isolate': 'Isolate A1',
     'labels': [
-        'blood',
-        'health',
-        'leader'
+        'beyond',
+        'its',
+        'particularly'
     ],
     'library_type': 'normal',
     'locale': '',
@@ -123,63 +123,45 @@ snapshots['test_create_fake_unpaired[uvloop-True-True] 1'] = {
     'pathoscope': False,
     'quality': {
         'all_read': False,
-        'all_write': False,
+        'all_write': True,
         'bases': [
             [
-                32,
                 31,
                 31,
-                31,
-                32
-            ],
-            [
                 31,
                 32,
-                32,
-                31,
-                32
-            ],
-            [
-                31,
-                31,
-                31,
-                31,
                 31
             ],
             [
                 32,
-                31,
+                32,
                 31,
                 32,
+                31
+            ],
+            [
+                31,
+                31,
+                31,
+                31,
                 32
             ],
             [
                 31,
+                31,
+                32,
+                32,
+                31
+            ],
+            [
                 32,
                 32,
                 31,
-                32
+                32,
+                31
             ]
         ],
         'composition': [
-            [
-                3,
-                25,
-                24,
-                92
-            ],
-            [
-                16,
-                62,
-                27,
-                1
-            ],
-            [
-                94,
-                8,
-                1,
-                1
-            ],
             [
                 87,
                 3,
@@ -203,28 +185,21 @@ snapshots['test_create_fake_unpaired[uvloop-True-True] 1'] = {
                 83,
                 39,
                 1
-            ],
-            [
-                45,
-                56,
-                1,
-                1
             ]
         ],
-        'count': 3921362636,
+        'count': 6668048404,
         'encoding': '''Sanger / Illumina 1.9
 ''',
-        'gc': 56,
-        'group_read': False,
-        'group_write': True,
-        'hold': False,
+        'gc': 33,
+        'group_read': True,
+        'group_write': False,
+        'hold': True,
         'length': [
-            80,
-            71
+            66,
+            76
         ],
-        'paired': True,
+        'paired': False,
         'sequences': [
-            9882,
             7290,
             9769,
             5194,
@@ -255,7 +230,10 @@ snapshots['test_create_fake_unpaired[uvloop-True-True] 1'] = {
             3088,
             6409,
             6064,
-            596
+            596,
+            3188,
+            2029,
+            3450
         ]
     },
     'reads': [
@@ -301,7 +279,7 @@ snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
         }
     ],
     'format': 'fastq',
-    'group': 'four',
+    'group': 'while',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -309,9 +287,9 @@ snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
     'is_legacy': False,
     'isolate': 'Isolate A1',
     'labels': [
-        'blood',
-        'health',
-        'leader'
+        'beyond',
+        'its',
+        'particularly'
     ],
     'library_type': 'normal',
     'locale': '',
@@ -322,63 +300,45 @@ snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
     'pathoscope': False,
     'quality': {
         'all_read': False,
-        'all_write': False,
+        'all_write': True,
         'bases': [
             [
-                32,
                 31,
                 31,
-                31,
-                32
-            ],
-            [
                 31,
                 32,
-                32,
-                31,
-                32
-            ],
-            [
-                31,
-                31,
-                31,
-                31,
                 31
             ],
             [
                 32,
-                31,
+                32,
                 31,
                 32,
+                31
+            ],
+            [
+                31,
+                31,
+                31,
+                31,
                 32
             ],
             [
                 31,
+                31,
+                32,
+                32,
+                31
+            ],
+            [
                 32,
                 32,
                 31,
-                32
+                32,
+                31
             ]
         ],
         'composition': [
-            [
-                3,
-                25,
-                24,
-                92
-            ],
-            [
-                16,
-                62,
-                27,
-                1
-            ],
-            [
-                94,
-                8,
-                1,
-                1
-            ],
             [
                 87,
                 3,
@@ -402,28 +362,21 @@ snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
                 83,
                 39,
                 1
-            ],
-            [
-                45,
-                56,
-                1,
-                1
             ]
         ],
-        'count': 3921362636,
+        'count': 6668048404,
         'encoding': '''Sanger / Illumina 1.9
 ''',
-        'gc': 56,
-        'group_read': False,
-        'group_write': True,
-        'hold': False,
+        'gc': 33,
+        'group_read': True,
+        'group_write': False,
+        'hold': True,
         'length': [
-            80,
-            71
+            66,
+            76
         ],
-        'paired': True,
+        'paired': False,
         'sequences': [
-            9882,
             7290,
             9769,
             5194,
@@ -454,7 +407,10 @@ snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
             3088,
             6409,
             6064,
-            596
+            596,
+            3188,
+            2029,
+            3450
         ]
     },
     'reads': [
@@ -500,7 +456,7 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
         }
     ],
     'format': 'fastq',
-    'group': 'four',
+    'group': 'while',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -508,9 +464,9 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
     'is_legacy': False,
     'isolate': 'Isolate A1',
     'labels': [
-        'blood',
-        'health',
-        'leader'
+        'beyond',
+        'its',
+        'particularly'
     ],
     'library_type': 'normal',
     'locale': '',
@@ -521,63 +477,45 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
     'pathoscope': False,
     'quality': {
         'all_read': False,
-        'all_write': False,
+        'all_write': True,
         'bases': [
             [
-                32,
                 31,
                 31,
-                31,
-                32
-            ],
-            [
                 31,
                 32,
-                32,
-                31,
-                32
-            ],
-            [
-                31,
-                31,
-                31,
-                31,
                 31
             ],
             [
                 32,
-                31,
+                32,
                 31,
                 32,
+                31
+            ],
+            [
+                31,
+                31,
+                31,
+                31,
                 32
             ],
             [
                 31,
+                31,
+                32,
+                32,
+                31
+            ],
+            [
                 32,
                 32,
                 31,
-                32
+                32,
+                31
             ]
         ],
         'composition': [
-            [
-                3,
-                25,
-                24,
-                92
-            ],
-            [
-                16,
-                62,
-                27,
-                1
-            ],
-            [
-                94,
-                8,
-                1,
-                1
-            ],
             [
                 87,
                 3,
@@ -601,28 +539,21 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
                 83,
                 39,
                 1
-            ],
-            [
-                45,
-                56,
-                1,
-                1
             ]
         ],
-        'count': 3921362636,
+        'count': 6668048404,
         'encoding': '''Sanger / Illumina 1.9
 ''',
-        'gc': 56,
-        'group_read': False,
-        'group_write': True,
-        'hold': False,
+        'gc': 33,
+        'group_read': True,
+        'group_write': False,
+        'hold': True,
         'length': [
-            80,
-            71
+            66,
+            76
         ],
-        'paired': True,
+        'paired': False,
         'sequences': [
-            9882,
             7290,
             9769,
             5194,
@@ -653,7 +584,10 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
             3088,
             6409,
             6064,
-            596
+            596,
+            3188,
+            2029,
+            3450
         ]
     },
     'reads': [
@@ -683,7 +617,7 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
 }
 
 snapshots['test_create_fake_samples[uvloop] 2'] = {
-    '_id': 'uT3ZIllm',
+    '_id': '9CDjpwAf',
     'all_read': True,
     'all_write': True,
     'artifacts': [
@@ -693,13 +627,13 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
             'id': 3,
             'name': 'reads.fq.gz',
             'name_on_disk': 'single.fq.gz',
-            'sample': 'uT3ZIllm',
+            'sample': '9CDjpwAf',
             'size': 16700094,
             'upload': None
         }
     ],
     'format': 'fastq',
-    'group': 'government',
+    'group': 'sound',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -707,14 +641,14 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
     'is_legacy': False,
     'isolate': 'Isolate A1',
     'labels': [
-        'lot',
-        'site',
-        'bar'
+        'school',
+        'name',
+        'care'
     ],
     'library_type': 'normal',
     'locale': '',
-    'name': 'bring TV',
-    'notes': 'Actually race tonight themselves.',
+    'name': 'morning bring',
+    'notes': 'Program actually race tonight themselves true.',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
@@ -723,8 +657,22 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
         'all_write': False,
         'bases': [
             [
+                32,
                 31,
                 32,
+                32,
+                32
+            ],
+            [
+                31,
+                31,
+                31,
+                32,
+                31
+            ],
+            [
+                31,
+                31,
                 32,
                 32,
                 32
@@ -733,72 +681,68 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
                 31,
                 32,
                 32,
-                32,
-                31
-            ],
-            [
-                31,
-                31,
-                32,
                 31,
                 31
             ],
             [
-                31,
-                32,
-                32,
-                32,
-                31
-            ],
-            [
-                32,
                 32,
                 31,
+                32,
                 31,
                 32
             ]
         ],
         'composition': [
             [
-                61,
-                51,
-                1,
-                1
-            ],
-            [
-                81,
-                11,
-                3,
-                36
-            ],
-            [
-                58,
-                15,
-                33,
-                1
-            ],
-            [
+                2,
                 18,
-                84,
+                20,
+                35
+            ],
+            [
+                43,
+                44,
+                48,
+                1
+            ],
+            [
+                92,
+                12,
                 1,
+                1
+            ],
+            [
+                44,
+                80,
+                1,
+                1
+            ],
+            [
+                5,
+                6,
+                35,
+                21
+            ],
+            [
+                20,
+                75,
+                38,
                 1
             ]
         ],
-        'count': 3174060074,
+        'count': 8388636647,
         'encoding': '''Sanger / Illumina 1.9
 ''',
-        'gc': 17,
-        'group_read': False,
+        'gc': 36,
+        'group_read': True,
         'group_write': False,
         'hold': True,
         'length': [
-            79,
-            45
+            55,
+            88
         ],
-        'paired': False,
+        'paired': True,
         'sequences': [
-            2583,
-            8643,
             9198,
             637,
             5340,
@@ -813,7 +757,23 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
             3120,
             9967,
             4954,
-            2985
+            2985,
+            7792,
+            1332,
+            4500,
+            1896,
+            2185,
+            1885,
+            4561,
+            693,
+            3370,
+            9148,
+            6011,
+            9954,
+            7514,
+            6102,
+            3405,
+            9619
         ]
     },
     'reads': [
@@ -821,7 +781,7 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
             'id': 3,
             'name': 'reads.fq.gz',
             'name_on_disk': 'single.fq.gz',
-            'sample': 'uT3ZIllm',
+            'sample': '9CDjpwAf',
             'size': 16700094,
             'upload': None
         }
@@ -835,13 +795,13 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
 }
 
 snapshots['test_create_fake_samples[uvloop] 3'] = {
-    '_id': 'GJMZq0Gv',
+    '_id': 'B34OKB6j',
     'all_read': True,
     'all_write': True,
     'files': [
     ],
     'format': 'fastq',
-    'group': 'building',
+    'group': 'list',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -849,14 +809,14 @@ snapshots['test_create_fake_samples[uvloop] 3'] = {
     'is_legacy': False,
     'isolate': 'Isolate A1',
     'labels': [
-        'official',
-        'carry',
-        'finally'
+        'account',
+        'hour',
+        'million'
     ],
     'library_type': 'normal',
     'locale': '',
-    'name': 'the condition',
-    'notes': 'Onto across character four smile responsibility.',
+    'name': 'look record',
+    'notes': 'Also friend reach choose coach north.',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
