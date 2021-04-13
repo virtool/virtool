@@ -1,4 +1,5 @@
 import pytest
+
 import virtool.otus.sequences
 
 
@@ -80,7 +81,8 @@ async def test_check_segment_or_target(data_type, defined, missing, used, sequen
 
 @pytest.mark.parametrize("host", [True, False])
 @pytest.mark.parametrize("segment", [True, False])
-async def test_create(host, segment, mocker, snapshot, dbi, static_time, test_random_alphanumeric):
+@pytest.mark.parametrize("sequence_id", ["foobar", None])
+async def test_create(host, segment, sequence_id, snapshot, dbi, static_time, test_random_alphanumeric):
     """
 
     """
@@ -127,17 +129,13 @@ async def test_create(host, segment, mocker, snapshot, dbi, static_time, test_ra
         "bar",
         "baz",
         data,
-        "bob"
+        "bob",
+        sequence_id
     )
 
-    otu = await dbi.otus.find_one()
-    snapshot.assert_match(otu)
-
-    sequence = await dbi.sequences.find_one()
-    snapshot.assert_match(sequence)
-
-    history = await dbi.history.find_one()
-    snapshot.assert_match(history)
+    snapshot.assert_match(await dbi.otus.find_one(), "otus")
+    snapshot.assert_match(await dbi.sequences.find_one(), "sequences")
+    snapshot.assert_match(await dbi.history.find_one(), "history")
 
 
 @pytest.mark.parametrize("sequence", [True, False])
