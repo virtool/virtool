@@ -85,7 +85,7 @@ async def drop_fake_postgres(app: aiohttp.web.Application):
     :param app: the application object
 
     """
-    if app["config"]["fake"]:
+    if app["config"]["fake"] and "fake_" in app["config"]["postgres_connection_string"]:
         async with app["pg"].begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
             logger.debug(f"Dropped fake PostgreSQL database.")
