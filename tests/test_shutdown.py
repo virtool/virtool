@@ -72,10 +72,11 @@ async def test_exit_redis(spawn_client):
     assert app["redis"].closed
 
 
-async def test_drop_fake_postgres(spawn_client):
+async def test_drop_fake_postgres(spawn_client, pg_base_connection_string, pg_db_name):
     client = await spawn_client(authorize=True)
     app = client.app
     app["config"]["fake"] = True
+    app["config"]["postgres_connection_string"] = f"{pg_base_connection_string}/fake_{pg_db_name}"
 
     await virtool.shutdown.drop_fake_postgres(app)
 
