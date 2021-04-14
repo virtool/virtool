@@ -19,12 +19,14 @@ import virtool.users.db
 import virtool.utils
 from virtool.hmm.fake import create_fake_hmms
 from virtool.jobs.utils import JobRights
+from virtool.otus.fake import create_fake_otus
 from virtool.subtractions.fake import create_fake_subtractions
 from virtool.types import App
 from virtool.utils import ensure_data_dir, random_alphanumeric
 
 logger = getLogger(__name__)
 
+REF_ID = "reference_1"
 USER_ID = "bob"
 
 
@@ -34,6 +36,7 @@ async def populate(app: App):
     await create_fake_analysis(app)
     await create_fake_jobs(app)
     await create_fake_hmms(app)
+    await create_fake_otus(app, REF_ID, USER_ID)
 
 
 async def remove_fake_data_path(app: App):
@@ -87,9 +90,7 @@ async def create_fake_user(app: App):
 
     """
     await virtool.users.db.create(app["db"], USER_ID, "hello_world", True)
-
     await virtool.users.db.edit(app["db"], "bob", administrator=True, force_reset=False)
-
     logger.debug("Created fake user")
 
 
@@ -110,7 +111,14 @@ async def create_fake_analysis(app: App):
         "subtraction_2",
     ]
 
-    file = await virtool.analyses.files.create_analysis_file(app["pg"], "analysis_2", "fasta", "result.fa", 123456)
+    file = await virtool.analyses.files.create_analysis_file(
+        app["pg"],
+        "analysis_2",
+        "fasta",
+        "result.fa",
+        123456
+    )
+
     await app["db"].analyses.insert_many([
         {
             "_id": "analysis_1",
@@ -199,10 +207,9 @@ async def create_fake_references(app: App):
         "virus",
         "A fake reference",
         "genome",
-        ref_id="reference_1",
+        ref_id=REF_ID,
         user_id=USER_ID
     )
 
     await app["db"].references.insert_one(document)
-
     logger.debug("Created fake reference")

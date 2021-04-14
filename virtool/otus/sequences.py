@@ -1,21 +1,8 @@
 """
 Database functions and utilities for sequences.
 
-Sequence Document Schema:
-- _id (str) unique ID for the sequence
-- definition (str) a wordy definition for the sequence - same as definitiion field from Genbank
-- host (str) a user-defined host - same as host feature field from Genbank
-- sequence (str) the nucleotide sequence
-- isolate_id (str) the ID of the parent isolate
-- accession (str) the user-defined accession for the sequence - should be a Genbank accession when possible
-- otu_id (str) the ID of the parent OTU
-- reference (Object) described the parent reference
-  - id (str) the reference ID
-- segment (str) the ID of the schema segment for this sequence
-- remote (str) the remote ID for the sequence if it was imported or remoted
-
 """
-from typing import Union
+from typing import Optional, Union
 
 import virtool.db.utils
 import virtool.history
@@ -24,6 +11,7 @@ import virtool.otus
 import virtool.otus.db
 import virtool.otus.utils
 import virtool.utils
+from virtool.types import App
 
 
 async def check_segment_or_target(
@@ -87,7 +75,15 @@ async def check_segment_or_target(
     return None
 
 
-async def create(app, ref_id: str, otu_id: str, isolate_id: str, data: dict, user_id: str):
+async def create(
+        app: App,
+        ref_id: str,
+        otu_id: str,
+        isolate_id: str,
+        data: dict,
+        user_id: str,
+        sequence_id: Optional[str] = None
+):
     """
     Create a new sequence document. Update the
 
@@ -97,6 +93,7 @@ async def create(app, ref_id: str, otu_id: str, isolate_id: str, data: dict, use
     :param isolate_id: the ID of the parent isolate
     :param data: source data for the new sequence
     :param user_id: the ID of the requesting user
+    :param sequence_id: optionally force a sequence ID
     :return: the new sequence
 
     """
@@ -118,6 +115,9 @@ async def create(app, ref_id: str, otu_id: str, isolate_id: str, data: dict, use
     }
 
     old = await virtool.otus.db.join(db, otu_id)
+
+    if sequence_id:
+        to_insert["_id"] = sequence_id
 
     sequence_document = await db.sequences.insert_one(to_insert)
 

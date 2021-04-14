@@ -7,362 +7,6 @@ from snapshottest import GenericRepr, Snapshot
 
 snapshots = Snapshot()
 
-snapshots['test_create[uvloop-False-False] 1'] = {
-    '_id': 'bar',
-    'isolates': [
-        {
-            'id': 'baz',
-            'source_name': 'A',
-            'source_type': 'isolate'
-        }
-    ],
-    'name': 'Bar Virus',
-    'reference': {
-        'id': 'foo'
-    },
-    'verified': True,
-    'version': 4
-}
-
-snapshots['test_create[uvloop-False-False] 2'] = {
-    '_id': '9pfsom1b',
-    'accession': 'abc123',
-    'definition': 'A made up sequence',
-    'host': 'Plant',
-    'isolate_id': 'baz',
-    'otu_id': 'bar',
-    'reference': {
-        'id': 'foo'
-    },
-    'segment': None,
-    'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
-}
-
-snapshots['test_create[uvloop-False-False] 3'] = {
-    '_id': 'bar.4',
-    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'description': 'Created new sequence abc123 in Isolate A',
-    'diff': [
-        [
-            'add',
-            [
-                'isolates',
-                0,
-                'sequences'
-            ],
-            [
-                [
-                    0,
-                    {
-                        '_id': '9pfsom1b',
-                        'accession': 'abc123',
-                        'definition': 'A made up sequence',
-                        'host': 'Plant',
-                        'isolate_id': 'baz',
-                        'otu_id': 'bar',
-                        'reference': {
-                            'id': 'foo'
-                        },
-                        'segment': None,
-                        'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
-                    }
-                ]
-            ]
-        ],
-        [
-            'change',
-            'version',
-            [
-                3,
-                4
-            ]
-        ]
-    ],
-    'index': {
-        'id': 'unbuilt',
-        'version': 'unbuilt'
-    },
-    'method_name': 'create_sequence',
-    'otu': {
-        'id': 'bar',
-        'name': 'Bar Virus',
-        'version': 4
-    },
-    'reference': {
-        'id': 'foo'
-    },
-    'user': {
-        'id': 'bob'
-    }
-}
-
-snapshots['test_create[uvloop-False-True] 1'] = {
-    '_id': 'bar',
-    'isolates': [
-        {
-            'id': 'baz',
-            'source_name': 'A',
-            'source_type': 'isolate'
-        }
-    ],
-    'name': 'Bar Virus',
-    'reference': {
-        'id': 'foo'
-    },
-    'verified': True,
-    'version': 4
-}
-
-snapshots['test_create[uvloop-False-True] 2'] = {
-    '_id': '9pfsom1b',
-    'accession': 'abc123',
-    'definition': 'A made up sequence',
-    'host': 'host',
-    'isolate_id': 'baz',
-    'otu_id': 'bar',
-    'reference': {
-        'id': 'foo'
-    },
-    'segment': None,
-    'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
-}
-
-snapshots['test_create[uvloop-False-True] 3'] = {
-    '_id': 'bar.4',
-    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'description': 'Created new sequence abc123 in Isolate A',
-    'diff': [
-        [
-            'add',
-            [
-                'isolates',
-                0,
-                'sequences'
-            ],
-            [
-                [
-                    0,
-                    {
-                        '_id': '9pfsom1b',
-                        'accession': 'abc123',
-                        'definition': 'A made up sequence',
-                        'host': 'host',
-                        'isolate_id': 'baz',
-                        'otu_id': 'bar',
-                        'reference': {
-                            'id': 'foo'
-                        },
-                        'segment': None,
-                        'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
-                    }
-                ]
-            ]
-        ],
-        [
-            'change',
-            'version',
-            [
-                3,
-                4
-            ]
-        ]
-    ],
-    'index': {
-        'id': 'unbuilt',
-        'version': 'unbuilt'
-    },
-    'method_name': 'create_sequence',
-    'otu': {
-        'id': 'bar',
-        'name': 'Bar Virus',
-        'version': 4
-    },
-    'reference': {
-        'id': 'foo'
-    },
-    'user': {
-        'id': 'bob'
-    }
-}
-
-snapshots['test_create[uvloop-True-False] 1'] = {
-    '_id': 'bar',
-    'isolates': [
-        {
-            'id': 'baz',
-            'source_name': 'A',
-            'source_type': 'isolate'
-        }
-    ],
-    'name': 'Bar Virus',
-    'reference': {
-        'id': 'foo'
-    },
-    'verified': True,
-    'version': 4
-}
-
-snapshots['test_create[uvloop-True-False] 2'] = {
-    '_id': '9pfsom1b',
-    'accession': 'abc123',
-    'definition': 'A made up sequence',
-    'host': 'Plant',
-    'isolate_id': 'baz',
-    'otu_id': 'bar',
-    'reference': {
-        'id': 'foo'
-    },
-    'segment': 'seg',
-    'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
-}
-
-snapshots['test_create[uvloop-True-False] 3'] = {
-    '_id': 'bar.4',
-    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'description': 'Created new sequence abc123 in Isolate A',
-    'diff': [
-        [
-            'add',
-            [
-                'isolates',
-                0,
-                'sequences'
-            ],
-            [
-                [
-                    0,
-                    {
-                        '_id': '9pfsom1b',
-                        'accession': 'abc123',
-                        'definition': 'A made up sequence',
-                        'host': 'Plant',
-                        'isolate_id': 'baz',
-                        'otu_id': 'bar',
-                        'reference': {
-                            'id': 'foo'
-                        },
-                        'segment': 'seg',
-                        'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
-                    }
-                ]
-            ]
-        ],
-        [
-            'change',
-            'version',
-            [
-                3,
-                4
-            ]
-        ]
-    ],
-    'index': {
-        'id': 'unbuilt',
-        'version': 'unbuilt'
-    },
-    'method_name': 'create_sequence',
-    'otu': {
-        'id': 'bar',
-        'name': 'Bar Virus',
-        'version': 4
-    },
-    'reference': {
-        'id': 'foo'
-    },
-    'user': {
-        'id': 'bob'
-    }
-}
-
-snapshots['test_create[uvloop-True-True] 1'] = {
-    '_id': 'bar',
-    'isolates': [
-        {
-            'id': 'baz',
-            'source_name': 'A',
-            'source_type': 'isolate'
-        }
-    ],
-    'name': 'Bar Virus',
-    'reference': {
-        'id': 'foo'
-    },
-    'verified': True,
-    'version': 4
-}
-
-snapshots['test_create[uvloop-True-True] 2'] = {
-    '_id': '9pfsom1b',
-    'accession': 'abc123',
-    'definition': 'A made up sequence',
-    'host': 'host',
-    'isolate_id': 'baz',
-    'otu_id': 'bar',
-    'reference': {
-        'id': 'foo'
-    },
-    'segment': 'seg',
-    'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
-}
-
-snapshots['test_create[uvloop-True-True] 3'] = {
-    '_id': 'bar.4',
-    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'description': 'Created new sequence abc123 in Isolate A',
-    'diff': [
-        [
-            'add',
-            [
-                'isolates',
-                0,
-                'sequences'
-            ],
-            [
-                [
-                    0,
-                    {
-                        '_id': '9pfsom1b',
-                        'accession': 'abc123',
-                        'definition': 'A made up sequence',
-                        'host': 'host',
-                        'isolate_id': 'baz',
-                        'otu_id': 'bar',
-                        'reference': {
-                            'id': 'foo'
-                        },
-                        'segment': 'seg',
-                        'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
-                    }
-                ]
-            ]
-        ],
-        [
-            'change',
-            'version',
-            [
-                3,
-                4
-            ]
-        ]
-    ],
-    'index': {
-        'id': 'unbuilt',
-        'version': 'unbuilt'
-    },
-    'method_name': 'create_sequence',
-    'otu': {
-        'id': 'bar',
-        'name': 'Bar Virus',
-        'version': 4
-    },
-    'reference': {
-        'id': 'foo'
-    },
-    'user': {
-        'id': 'bob'
-    }
-}
-
 snapshots['test_edit[uvloop-False] 1'] = {
     '_id': 'foo',
     'isolates': [
@@ -701,6 +345,718 @@ snapshots['test_remove[uvloop] 2'] = {
     },
     'reference': {
         'id': 'hxn167'
+    },
+    'user': {
+        'id': 'bob'
+    }
+}
+
+snapshots['test_create[uvloop-foobar-True-True] otus'] = {
+    '_id': 'bar',
+    'isolates': [
+        {
+            'id': 'baz',
+            'source_name': 'A',
+            'source_type': 'isolate'
+        }
+    ],
+    'name': 'Bar Virus',
+    'reference': {
+        'id': 'foo'
+    },
+    'verified': True,
+    'version': 4
+}
+
+snapshots['test_create[uvloop-foobar-True-True] sequences'] = {
+    '_id': 'foobar',
+    'accession': 'abc123',
+    'definition': 'A made up sequence',
+    'host': 'host',
+    'isolate_id': 'baz',
+    'otu_id': 'bar',
+    'reference': {
+        'id': 'foo'
+    },
+    'segment': 'seg',
+    'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
+}
+
+snapshots['test_create[uvloop-foobar-True-True] history'] = {
+    '_id': 'bar.4',
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'description': 'Created new sequence abc123 in Isolate A',
+    'diff': [
+        [
+            'add',
+            [
+                'isolates',
+                0,
+                'sequences'
+            ],
+            [
+                [
+                    0,
+                    {
+                        '_id': 'foobar',
+                        'accession': 'abc123',
+                        'definition': 'A made up sequence',
+                        'host': 'host',
+                        'isolate_id': 'baz',
+                        'otu_id': 'bar',
+                        'reference': {
+                            'id': 'foo'
+                        },
+                        'segment': 'seg',
+                        'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
+                    }
+                ]
+            ]
+        ],
+        [
+            'change',
+            'version',
+            [
+                3,
+                4
+            ]
+        ]
+    ],
+    'index': {
+        'id': 'unbuilt',
+        'version': 'unbuilt'
+    },
+    'method_name': 'create_sequence',
+    'otu': {
+        'id': 'bar',
+        'name': 'Bar Virus',
+        'version': 4
+    },
+    'reference': {
+        'id': 'foo'
+    },
+    'user': {
+        'id': 'bob'
+    }
+}
+
+snapshots['test_create[uvloop-foobar-True-False] otus'] = {
+    '_id': 'bar',
+    'isolates': [
+        {
+            'id': 'baz',
+            'source_name': 'A',
+            'source_type': 'isolate'
+        }
+    ],
+    'name': 'Bar Virus',
+    'reference': {
+        'id': 'foo'
+    },
+    'verified': True,
+    'version': 4
+}
+
+snapshots['test_create[uvloop-foobar-True-False] sequences'] = {
+    '_id': 'foobar',
+    'accession': 'abc123',
+    'definition': 'A made up sequence',
+    'host': 'Plant',
+    'isolate_id': 'baz',
+    'otu_id': 'bar',
+    'reference': {
+        'id': 'foo'
+    },
+    'segment': 'seg',
+    'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
+}
+
+snapshots['test_create[uvloop-foobar-True-False] history'] = {
+    '_id': 'bar.4',
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'description': 'Created new sequence abc123 in Isolate A',
+    'diff': [
+        [
+            'add',
+            [
+                'isolates',
+                0,
+                'sequences'
+            ],
+            [
+                [
+                    0,
+                    {
+                        '_id': 'foobar',
+                        'accession': 'abc123',
+                        'definition': 'A made up sequence',
+                        'host': 'Plant',
+                        'isolate_id': 'baz',
+                        'otu_id': 'bar',
+                        'reference': {
+                            'id': 'foo'
+                        },
+                        'segment': 'seg',
+                        'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
+                    }
+                ]
+            ]
+        ],
+        [
+            'change',
+            'version',
+            [
+                3,
+                4
+            ]
+        ]
+    ],
+    'index': {
+        'id': 'unbuilt',
+        'version': 'unbuilt'
+    },
+    'method_name': 'create_sequence',
+    'otu': {
+        'id': 'bar',
+        'name': 'Bar Virus',
+        'version': 4
+    },
+    'reference': {
+        'id': 'foo'
+    },
+    'user': {
+        'id': 'bob'
+    }
+}
+
+snapshots['test_create[uvloop-foobar-False-True] otus'] = {
+    '_id': 'bar',
+    'isolates': [
+        {
+            'id': 'baz',
+            'source_name': 'A',
+            'source_type': 'isolate'
+        }
+    ],
+    'name': 'Bar Virus',
+    'reference': {
+        'id': 'foo'
+    },
+    'verified': True,
+    'version': 4
+}
+
+snapshots['test_create[uvloop-foobar-False-True] sequences'] = {
+    '_id': 'foobar',
+    'accession': 'abc123',
+    'definition': 'A made up sequence',
+    'host': 'host',
+    'isolate_id': 'baz',
+    'otu_id': 'bar',
+    'reference': {
+        'id': 'foo'
+    },
+    'segment': None,
+    'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
+}
+
+snapshots['test_create[uvloop-foobar-False-True] history'] = {
+    '_id': 'bar.4',
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'description': 'Created new sequence abc123 in Isolate A',
+    'diff': [
+        [
+            'add',
+            [
+                'isolates',
+                0,
+                'sequences'
+            ],
+            [
+                [
+                    0,
+                    {
+                        '_id': 'foobar',
+                        'accession': 'abc123',
+                        'definition': 'A made up sequence',
+                        'host': 'host',
+                        'isolate_id': 'baz',
+                        'otu_id': 'bar',
+                        'reference': {
+                            'id': 'foo'
+                        },
+                        'segment': None,
+                        'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
+                    }
+                ]
+            ]
+        ],
+        [
+            'change',
+            'version',
+            [
+                3,
+                4
+            ]
+        ]
+    ],
+    'index': {
+        'id': 'unbuilt',
+        'version': 'unbuilt'
+    },
+    'method_name': 'create_sequence',
+    'otu': {
+        'id': 'bar',
+        'name': 'Bar Virus',
+        'version': 4
+    },
+    'reference': {
+        'id': 'foo'
+    },
+    'user': {
+        'id': 'bob'
+    }
+}
+
+snapshots['test_create[uvloop-foobar-False-False] otus'] = {
+    '_id': 'bar',
+    'isolates': [
+        {
+            'id': 'baz',
+            'source_name': 'A',
+            'source_type': 'isolate'
+        }
+    ],
+    'name': 'Bar Virus',
+    'reference': {
+        'id': 'foo'
+    },
+    'verified': True,
+    'version': 4
+}
+
+snapshots['test_create[uvloop-foobar-False-False] sequences'] = {
+    '_id': 'foobar',
+    'accession': 'abc123',
+    'definition': 'A made up sequence',
+    'host': 'Plant',
+    'isolate_id': 'baz',
+    'otu_id': 'bar',
+    'reference': {
+        'id': 'foo'
+    },
+    'segment': None,
+    'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
+}
+
+snapshots['test_create[uvloop-foobar-False-False] history'] = {
+    '_id': 'bar.4',
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'description': 'Created new sequence abc123 in Isolate A',
+    'diff': [
+        [
+            'add',
+            [
+                'isolates',
+                0,
+                'sequences'
+            ],
+            [
+                [
+                    0,
+                    {
+                        '_id': 'foobar',
+                        'accession': 'abc123',
+                        'definition': 'A made up sequence',
+                        'host': 'Plant',
+                        'isolate_id': 'baz',
+                        'otu_id': 'bar',
+                        'reference': {
+                            'id': 'foo'
+                        },
+                        'segment': None,
+                        'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
+                    }
+                ]
+            ]
+        ],
+        [
+            'change',
+            'version',
+            [
+                3,
+                4
+            ]
+        ]
+    ],
+    'index': {
+        'id': 'unbuilt',
+        'version': 'unbuilt'
+    },
+    'method_name': 'create_sequence',
+    'otu': {
+        'id': 'bar',
+        'name': 'Bar Virus',
+        'version': 4
+    },
+    'reference': {
+        'id': 'foo'
+    },
+    'user': {
+        'id': 'bob'
+    }
+}
+
+snapshots['test_create[uvloop-None-True-True] otus'] = {
+    '_id': 'bar',
+    'isolates': [
+        {
+            'id': 'baz',
+            'source_name': 'A',
+            'source_type': 'isolate'
+        }
+    ],
+    'name': 'Bar Virus',
+    'reference': {
+        'id': 'foo'
+    },
+    'verified': True,
+    'version': 4
+}
+
+snapshots['test_create[uvloop-None-True-True] sequences'] = {
+    '_id': '9pfsom1b',
+    'accession': 'abc123',
+    'definition': 'A made up sequence',
+    'host': 'host',
+    'isolate_id': 'baz',
+    'otu_id': 'bar',
+    'reference': {
+        'id': 'foo'
+    },
+    'segment': 'seg',
+    'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
+}
+
+snapshots['test_create[uvloop-None-True-True] history'] = {
+    '_id': 'bar.4',
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'description': 'Created new sequence abc123 in Isolate A',
+    'diff': [
+        [
+            'add',
+            [
+                'isolates',
+                0,
+                'sequences'
+            ],
+            [
+                [
+                    0,
+                    {
+                        '_id': '9pfsom1b',
+                        'accession': 'abc123',
+                        'definition': 'A made up sequence',
+                        'host': 'host',
+                        'isolate_id': 'baz',
+                        'otu_id': 'bar',
+                        'reference': {
+                            'id': 'foo'
+                        },
+                        'segment': 'seg',
+                        'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
+                    }
+                ]
+            ]
+        ],
+        [
+            'change',
+            'version',
+            [
+                3,
+                4
+            ]
+        ]
+    ],
+    'index': {
+        'id': 'unbuilt',
+        'version': 'unbuilt'
+    },
+    'method_name': 'create_sequence',
+    'otu': {
+        'id': 'bar',
+        'name': 'Bar Virus',
+        'version': 4
+    },
+    'reference': {
+        'id': 'foo'
+    },
+    'user': {
+        'id': 'bob'
+    }
+}
+
+snapshots['test_create[uvloop-None-True-False] otus'] = {
+    '_id': 'bar',
+    'isolates': [
+        {
+            'id': 'baz',
+            'source_name': 'A',
+            'source_type': 'isolate'
+        }
+    ],
+    'name': 'Bar Virus',
+    'reference': {
+        'id': 'foo'
+    },
+    'verified': True,
+    'version': 4
+}
+
+snapshots['test_create[uvloop-None-True-False] sequences'] = {
+    '_id': '9pfsom1b',
+    'accession': 'abc123',
+    'definition': 'A made up sequence',
+    'host': 'Plant',
+    'isolate_id': 'baz',
+    'otu_id': 'bar',
+    'reference': {
+        'id': 'foo'
+    },
+    'segment': 'seg',
+    'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
+}
+
+snapshots['test_create[uvloop-None-True-False] history'] = {
+    '_id': 'bar.4',
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'description': 'Created new sequence abc123 in Isolate A',
+    'diff': [
+        [
+            'add',
+            [
+                'isolates',
+                0,
+                'sequences'
+            ],
+            [
+                [
+                    0,
+                    {
+                        '_id': '9pfsom1b',
+                        'accession': 'abc123',
+                        'definition': 'A made up sequence',
+                        'host': 'Plant',
+                        'isolate_id': 'baz',
+                        'otu_id': 'bar',
+                        'reference': {
+                            'id': 'foo'
+                        },
+                        'segment': 'seg',
+                        'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
+                    }
+                ]
+            ]
+        ],
+        [
+            'change',
+            'version',
+            [
+                3,
+                4
+            ]
+        ]
+    ],
+    'index': {
+        'id': 'unbuilt',
+        'version': 'unbuilt'
+    },
+    'method_name': 'create_sequence',
+    'otu': {
+        'id': 'bar',
+        'name': 'Bar Virus',
+        'version': 4
+    },
+    'reference': {
+        'id': 'foo'
+    },
+    'user': {
+        'id': 'bob'
+    }
+}
+
+snapshots['test_create[uvloop-None-False-True] otus'] = {
+    '_id': 'bar',
+    'isolates': [
+        {
+            'id': 'baz',
+            'source_name': 'A',
+            'source_type': 'isolate'
+        }
+    ],
+    'name': 'Bar Virus',
+    'reference': {
+        'id': 'foo'
+    },
+    'verified': True,
+    'version': 4
+}
+
+snapshots['test_create[uvloop-None-False-True] sequences'] = {
+    '_id': '9pfsom1b',
+    'accession': 'abc123',
+    'definition': 'A made up sequence',
+    'host': 'host',
+    'isolate_id': 'baz',
+    'otu_id': 'bar',
+    'reference': {
+        'id': 'foo'
+    },
+    'segment': None,
+    'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
+}
+
+snapshots['test_create[uvloop-None-False-True] history'] = {
+    '_id': 'bar.4',
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'description': 'Created new sequence abc123 in Isolate A',
+    'diff': [
+        [
+            'add',
+            [
+                'isolates',
+                0,
+                'sequences'
+            ],
+            [
+                [
+                    0,
+                    {
+                        '_id': '9pfsom1b',
+                        'accession': 'abc123',
+                        'definition': 'A made up sequence',
+                        'host': 'host',
+                        'isolate_id': 'baz',
+                        'otu_id': 'bar',
+                        'reference': {
+                            'id': 'foo'
+                        },
+                        'segment': None,
+                        'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
+                    }
+                ]
+            ]
+        ],
+        [
+            'change',
+            'version',
+            [
+                3,
+                4
+            ]
+        ]
+    ],
+    'index': {
+        'id': 'unbuilt',
+        'version': 'unbuilt'
+    },
+    'method_name': 'create_sequence',
+    'otu': {
+        'id': 'bar',
+        'name': 'Bar Virus',
+        'version': 4
+    },
+    'reference': {
+        'id': 'foo'
+    },
+    'user': {
+        'id': 'bob'
+    }
+}
+
+snapshots['test_create[uvloop-None-False-False] otus'] = {
+    '_id': 'bar',
+    'isolates': [
+        {
+            'id': 'baz',
+            'source_name': 'A',
+            'source_type': 'isolate'
+        }
+    ],
+    'name': 'Bar Virus',
+    'reference': {
+        'id': 'foo'
+    },
+    'verified': True,
+    'version': 4
+}
+
+snapshots['test_create[uvloop-None-False-False] sequences'] = {
+    '_id': '9pfsom1b',
+    'accession': 'abc123',
+    'definition': 'A made up sequence',
+    'host': 'Plant',
+    'isolate_id': 'baz',
+    'otu_id': 'bar',
+    'reference': {
+        'id': 'foo'
+    },
+    'segment': None,
+    'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
+}
+
+snapshots['test_create[uvloop-None-False-False] history'] = {
+    '_id': 'bar.4',
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'description': 'Created new sequence abc123 in Isolate A',
+    'diff': [
+        [
+            'add',
+            [
+                'isolates',
+                0,
+                'sequences'
+            ],
+            [
+                [
+                    0,
+                    {
+                        '_id': '9pfsom1b',
+                        'accession': 'abc123',
+                        'definition': 'A made up sequence',
+                        'host': 'Plant',
+                        'isolate_id': 'baz',
+                        'otu_id': 'bar',
+                        'reference': {
+                            'id': 'foo'
+                        },
+                        'segment': None,
+                        'sequence': 'ATGCGTGTACTGAGAGTATATTTATACCACAC'
+                    }
+                ]
+            ]
+        ],
+        [
+            'change',
+            'version',
+            [
+                3,
+                4
+            ]
+        ]
+    ],
+    'index': {
+        'id': 'unbuilt',
+        'version': 'unbuilt'
+    },
+    'method_name': 'create_sequence',
+    'otu': {
+        'id': 'bar',
+        'name': 'Bar Virus',
+        'version': 4
+    },
+    'reference': {
+        'id': 'foo'
     },
     'user': {
         'id': 'bob'
