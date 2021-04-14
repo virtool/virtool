@@ -11,6 +11,7 @@ import virtool.logs
 import virtool.startup
 from virtool.dev.fake import drop_fake_mongo, remove_fake_data_path
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
+import virtool.shutdown
 from virtool.types import App
 
 
@@ -43,7 +44,8 @@ async def create_app(**config):
     app.on_shutdown.extend([
         shutdown,
         drop_fake_mongo,
-        remove_fake_data_path
+        virtool.shutdown.drop_fake_postgres,
+        remove_fake_data_path,
     ])
 
     return app
