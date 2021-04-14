@@ -17,7 +17,6 @@ import virtool.subtractions.db
 import virtool.users.db
 import virtool.users.db
 import virtool.utils
-from virtool.dev.utils import USER_ID
 from virtool.hmm.fake import create_fake_hmms
 from virtool.jobs.utils import JobRights
 from virtool.subtractions.fake import create_fake_subtractions
@@ -26,10 +25,12 @@ from virtool.utils import ensure_data_dir, random_alphanumeric
 
 logger = getLogger(__name__)
 
+USER_ID = "bob"
+
 
 async def populate(app: App):
     await create_fake_user(app)
-    await create_fake_subtractions(app)
+    await create_fake_subtractions(app, USER_ID)
     await create_fake_analysis(app)
     await create_fake_jobs(app)
     await create_fake_hmms(app)

@@ -5,7 +5,6 @@ from shutil import copytree
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.subtractions.db
-from virtool.dev.utils import USER_ID
 from virtool.subtractions.files import create_subtraction_files
 from virtool.subtractions.utils import FILES
 from virtool.types import App
@@ -14,7 +13,7 @@ from virtool.uploads.models import Upload
 logger = getLogger(__name__)
 
 
-async def create_fake_subtractions(app: App):
+async def create_fake_subtractions(app: App, user_id: str):
     """
     Create fake subtractions and their associated uploads and subtraction files.
 
@@ -34,7 +33,7 @@ async def create_fake_subtractions(app: App):
     copytree(example_path, subtractions_path / "subtraction_1", dirs_exist_ok=True)
 
     async with AsyncSession(pg) as session:
-        upload = Upload(name="test.fa.gz", type="subtraction", user=USER_ID)
+        upload = Upload(name="test.fa.gz", type="subtraction", user=user_id)
 
         session.add(upload)
         await session.flush()
@@ -47,10 +46,10 @@ async def create_fake_subtractions(app: App):
     subtraction_1 = await db.subtraction.insert_one(
         {"_id": fake.get_mongo_id(), "name": "subtraction_1", "nickname": "", "deleted": False, "is_host": True,
          "ready": True,
-         "file": {"id": upload_id, "name": upload_name}, "user": {"id": USER_ID}})
-    await virtool.subtractions.db.create(db, USER_ID, upload_name, "subtraction_2", "", upload_id,
+         "file": {"id": upload_id, "name": upload_name}, "user": {"id": user_id}})
+    await virtool.subtractions.db.create(db, user_id, upload_name, "subtraction_2", "", upload_id,
                                          fake.get_mongo_id())
-    await virtool.subtractions.db.create(db, USER_ID, upload_name, "subtraction_unready", "", upload_id,
+    await virtool.subtractions.db.create(db, user_id, upload_name, "subtraction_unready", "", upload_id,
                                          fake.get_mongo_id())
 
     await create_subtraction_files(pg, subtraction_1["_id"], FILES, subtractions_path / "subtraction_1")
