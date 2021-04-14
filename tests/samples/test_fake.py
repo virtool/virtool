@@ -11,7 +11,7 @@ def app(dbi, pg, run_in_thread, tmpdir):
         "fake": FakerWrapper(),
         "pg": pg,
         "run_in_thread": run_in_thread,
-        "data_path": str(tmpdir),
+        "settings": {"data_path": str(tmpdir)},
     }
 
 
@@ -30,7 +30,9 @@ def clean_sample_document_for_snapshot(fake_sample):
 @pytest.mark.parametrize("paired", [True, False])
 @pytest.mark.parametrize("finalized", [True, False])
 async def test_create_fake_unpaired(paired, finalized, app, snapshot):
-    fake_sample = await create_fake_sample(app, paired=paired, finalized=finalized)
+    fake_sample = await create_fake_sample(app,
+                                           paired=paired,
+                                           finalized=finalized)
 
     for key in LIST_PROJECTION:
         assert key in fake_sample

@@ -19,13 +19,18 @@ async def create_fake_samples(app: App) -> List[dict]:
     return samples
 
 
-async def create_fake_read_file(
-    pg: AsyncEngine, path: Path, sample_id: str, name: str = None
-) -> dict:
+async def create_fake_read_file(pg: AsyncEngine,
+                                path: Path,
+                                sample_id: str,
+                                name: str = None) -> dict:
     name = name or path.name
     size = path.stat().st_size
     return await create_reads_file(
-        pg, name=name, size=size, name_on_disk=path.name, sample_id=sample_id,
+        pg,
+        name=name,
+        size=size,
+        name_on_disk=path.name,
+        sample_id=sample_id,
     )
 
 
@@ -45,21 +50,35 @@ def _create_fake_composition(fake: FakerWrapper):
 
 async def create_fake_quality(fake: FakerWrapper) -> dict:
     return {
-        "count": fake.integer(min_value=10000, max_value=10000000000),
-        "encoding": "Sanger / Illumina 1.9\n",
-        "length": [fake.integer(10, 100), fake.integer(10, 100),],
-        "gc": fake.integer(0, 100),
-        "bases": [[fake.integer(31, 32) for _ in range(5)] for _ in range(5)],
-        "sequences": fake.list(25, value_types=[int]),
-        "composition": [
-            list(_create_fake_composition(fake)) for _ in range(fake.integer(4, 8))
+        "count":
+        fake.integer(min_value=10000, max_value=10000000000),
+        "encoding":
+        "Sanger / Illumina 1.9\n",
+        "length": [
+            fake.integer(10, 100),
+            fake.integer(10, 100),
         ],
-        "hold": fake.boolean(),
-        "group_read": fake.boolean(),
-        "group_write": fake.boolean(),
-        "all_read": fake.boolean(),
-        "all_write": fake.boolean(),
-        "paired": fake.boolean(),
+        "gc":
+        fake.integer(0, 100),
+        "bases": [[fake.integer(31, 32) for _ in range(5)] for _ in range(5)],
+        "sequences":
+        fake.list(25, value_types=[int]),
+        "composition": [
+            list(_create_fake_composition(fake))
+            for _ in range(fake.integer(4, 8))
+        ],
+        "hold":
+        fake.boolean(),
+        "group_read":
+        fake.boolean(),
+        "group_write":
+        fake.boolean(),
+        "all_read":
+        fake.boolean(),
+        "all_write":
+        fake.boolean(),
+        "paired":
+        fake.boolean(),
     }
 
 
@@ -76,23 +95,20 @@ async def create_fake_sample(app: App, paired=False, finalized=False) -> dict:
 
     if finalized is True:
         if paired:
-            files.extend(
-                [
-                    await create_fake_read_file(
-                        pg,
-                        READ_FILES_PATH / f"paired_{n}.fq.gz",
-                        sample_id,
-                        name=f"read_{n}.fq.gz",
-                    )
-                    for n in (1, 2)
-                ]
-            )
-        else:
-            files.append(
+            files.extend([
                 await create_fake_read_file(
-                    pg, READ_FILES_PATH / "single.fq.gz", sample_id, name="reads.fq.gz"
-                )
-            )
+                    pg,
+                    READ_FILES_PATH / f"paired_{n}.fq.gz",
+                    sample_id,
+                    name=f"read_{n}.fq.gz",
+                ) for n in (1, 2)
+            ])
+        else:
+            files.append(await create_fake_read_file(pg,
+                                                     READ_FILES_PATH /
+                                                     "single.fq.gz",
+                                                     sample_id,
+                                                     name="reads.fq.gz"))
 
     sample = await create_sample(
         _id=sample_id,
@@ -125,7 +141,7 @@ async def create_fake_sample(app: App, paired=False, finalized=False) -> dict:
             sample_id=sample_id,
             quality=await create_fake_quality(fake),
             run_in_thread=app["run_in_thread"],
-            data_path=app["data_path"],
+            data_path=app["settings"]["data_path"],
         )
 
     return sample

@@ -15,7 +15,6 @@ import virtool.jobs.db
 import virtool.references.db
 import virtool.subtractions.db
 import virtool.users.db
-import virtool.users.db
 import virtool.utils
 from virtool.hmm.fake import create_fake_hmms
 from virtool.samples.fake import create_fake_samples
@@ -31,18 +30,15 @@ logger = getLogger(__name__)
 REF_ID = "reference_1"
 USER_ID = "bob"
 
-||||||| parent of b6aee3028... Create fake samples when in --fake mode.
-USER_ID = "bob"
-
 
 async def populate(app: App):
     await create_fake_user(app)
     await create_fake_subtractions(app, USER_ID)
     await create_fake_analysis(app)
-    await create_fake_jobs(app)
     await create_fake_hmms(app)
     await create_fake_otus(app, REF_ID, USER_ID)
-||||||| parent of b6aee3028... Create fake samples when in --fake mode.
+    await create_fake_samples(app)
+    await create_fake_jobs(app)
 
 
 async def remove_fake_data_path(app: App):
@@ -96,8 +92,71 @@ async def create_fake_user(app: App):
 
     """
     await virtool.users.db.create(app["db"], USER_ID, "hello_world", True)
-    await virtool.users.db.edit(app["db"], "bob", administrator=True, force_reset=False)
+
+    await virtool.users.db.edit(app["db"],
+                                "bob",
+                                administrator=True,
+                                force_reset=False)
+
     logger.debug("Created fake user")
+
+
+async def create_fake_subtractions(app: App):
+    """
+    Create fake subtractions and their associated uploads and subtraction files.
+
+    Two subtractions are ready for use. One has ``ready`` set to ``False`` and can be used for
+    testing subtraction finalization.
+
+    :param app: the application object
+
+    """
+    async with AsyncSession(app["pg"]) as session:
+        upload = Upload(name="test.fa.gz", type="subtraction", user=USER_ID)
+
+        session.add(upload)
+        await session.flush()
+
+        upload_id = upload.id
+        upload_name = upload.name
+
+        await session.commit()
+
+    upload = {"id": upload_id, "name": upload_name}
+
+    await app["db"].subtraction.insert_many(
+        [
+            {
+                "_id": "subtraction_1",
+                "name": "Subtraction 1",
+                "nickname": "",
+                "deleted": False,
+                "ready": True,
+                "file": upload,
+                "user": {"id": USER_ID},
+            },
+            {
+                "_id": "subtraction_2",
+                "name": "Subtraction 2",
+                "nickname": "",
+                "deleted": False,
+                "ready": True,
+                "file": upload,
+                "user": {"id": USER_ID},
+            },
+            {
+                "_id": "subtraction_unready",
+                "name": "Subtraction Unready",
+                "nickname": "",
+                "deleted": False,
+                "ready": False,
+                "file": upload,
+                "user": {"id": USER_ID},
+            },
+        ]
+    )
+
+    logger.debug("Created fake subtractions")
 
 
 async def create_fake_analysis(app: App):
@@ -117,114 +176,61 @@ async def create_fake_analysis(app: App):
         "subtraction_2",
     ]
 
-    file = await virtool.analyses.files.create_analysis_file(
-        app["pg"],
-        "analysis_2",
-        "fasta",
-        "result.fa",
-        123456
-    )
-
-    await app["db"].analyses.insert_many([
-        {
-            "_id": "analysis_1",
-            "workflow": "pathoscope",
-            "created_at": virtool.utils.timestamp(),
-            "ready": False,
-            "job": {
-                "id": "job_1"
-            },
-            "index": {
-                "version": 2,
-                "id": "foo"
-            },
-            "user": {
-                "id": USER_ID
-            },
-            "sample": {
-                "id": sample_id
-            },
-            "reference": {
-                "id": ref_id
-            },
-            "subtractions": subtractions
-        },
-        {
-            "_id": "analysis_2",
-            "workflow": "pathoscope",
-            "created_at": virtool.utils.timestamp(),
-            "ready": True,
-            "job": {
-                "id": "job_2"
-            },
-            "index": {
-                "version": 2,
-                "id": "foo"
-            },
-            "user": {
-                "id": USER_ID
-            },
-            "sample": {
-                "id": sample_id
-||||||| parent of b6aee3028... Create fake samples when in --fake mode.
     file = await virtool.analyses.files.create_analysis_file(app["pg"], "analysis_2", "fasta", "result.fa", 123456)
-    await app["db"].analyses.insert_many([
-        {
-            "_id": "analysis_1",
-            "workflow": "pathoscope",
-            "created_at": virtool.utils.timestamp(),
-            "ready": False,
-            "job": {
-                "id": "job_1"
-            },
-            "index": {
-                "version": 2,
-                "id": "foo"
-            },
-            "user": {
-                "id": USER_ID
-            },
-            "sample": {
-                "id": sample_id
-            },
-            "reference": {
-                "id": ref_id
-            },
-            "subtractions": subtractions
-        },
-        {
-            "_id": "analysis_2",
-            "workflow": "pathoscope",
-            "created_at": virtool.utils.timestamp(),
-            "ready": True,
-            "job": {
-                "id": "job_2"
-            },
-            "index": {
-                "version": 2,
-                "id": "foo"
-            },
-            "user": {
-                "id": USER_ID
-            },
-            "sample": {
-                "id": sample_id
-            },
+    await app["db"].analyses.insert_many(
+        [
             {
-                "_id": "analysis_2",
+                "_id": "analysis_1",
                 "workflow": "pathoscope",
                 "created_at": virtool.utils.timestamp(),
-                "ready": True,
-                "job": {"id": "job_2"},
+                "ready": False,
+                "job": {"id": "job_1"},
                 "index": {"version": 2, "id": "foo"},
                 "user": {"id": USER_ID},
                 "sample": {"id": sample_id},
                 "reference": {"id": ref_id},
                 "subtractions": subtractions,
-                "files": [file],
             },
-        ]
-    )
+            "index": {
+                "version": 2,
+                "id": "foo"
+            },
+            "user": {
+                "id": USER_ID
+            },
+            "sample": {
+                "id": sample_id
+            },
+            "reference": {
+                "id": ref_id
+            },
+            "subtractions": subtractions,
+        },
+        {
+            "_id": "analysis_2",
+            "workflow": "pathoscope",
+            "created_at": virtool.utils.timestamp(),
+            "ready": True,
+            "job": {
+                "id": "job_2"
+            },
+            "index": {
+                "version": 2,
+                "id": "foo"
+            },
+            "user": {
+                "id": USER_ID
+            },
+            "sample": {
+                "id": sample_id
+            },
+            "reference": {
+                "id": ref_id
+            },
+            "subtractions": subtractions,
+            "files": [file],
+        },
+    ])
 
     logger.debug("Created fake analyses")
 
@@ -265,9 +271,6 @@ async def create_fake_references(app: App):
         "A fake reference",
         "genome",
         ref_id=REF_ID,
-        user_id=USER_ID
-||||||| parent of b6aee3028... Create fake samples when in --fake mode.
-        ref_id="reference_1",
         user_id=USER_ID
     )
 
