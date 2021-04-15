@@ -11,8 +11,6 @@ snapshots['test_create_fake_indexes[uvloop] indexes'] = [
     {
         '_id': '2x6YnyMt',
         'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-        'files': [
-        ],
         'has_files': True,
         'has_json': False,
         'job': {
