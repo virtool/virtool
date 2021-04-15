@@ -21,7 +21,7 @@ async def get_existing_reads(
     Get reads files in either `sample_reads_files` or `sample_reads_files_cache` depending on value of `cache`.
 
     :param pg: PostgreSQL AsyncEngine object
-    :param sample_id: ID that corresponds to a parent sample
+    :param sample: ID that corresponds to a parent sample
     :param cache: Whether it should check the `sample_reads_files` or `sample_reads_files_cache` SQL table
     :return: List of reads file names that are in a given table
     """
