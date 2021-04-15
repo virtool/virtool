@@ -30,7 +30,6 @@ logger = getLogger(__name__)
 REF_ID = "reference_1"
 USER_ID = "bob"
 
-
 async def populate(app: App):
     await create_fake_user(app)
     await create_fake_subtractions(app, USER_ID)
@@ -39,6 +38,7 @@ async def populate(app: App):
     await create_fake_otus(app, REF_ID, USER_ID)
     await create_fake_samples(app)
     await create_fake_jobs(app)
+    await create_fake_otus(app, REF_ID, USER_ID)
 
 
 async def remove_fake_data_path(app: App):
