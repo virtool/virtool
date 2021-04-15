@@ -47,8 +47,7 @@ async def test_create(index_id, mocker, dbi, test_random_alphanumeric, static_ti
         },
         "user": {
             "id": "test"
-        },
-        "files": []
+        }
     }
 
     history = await dbi.history.find_one("abc")
