@@ -15,7 +15,6 @@ import virtool.jobs.db
 import virtool.references.db
 import virtool.subtractions.db
 import virtool.users.db
-import virtool.users.db
 import virtool.utils
 from virtool.hmm.fake import create_fake_hmms
 from virtool.indexes.fake import create_fake_indexes
