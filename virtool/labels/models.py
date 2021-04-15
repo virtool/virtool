@@ -10,7 +10,3 @@ class Label(Base):
     name = Column(String, unique=True)
     color = Column(String(length=7))
     description = Column(String)
-
-    def __repr__(self):
-        return "<Label(id= '%s', name='%s', color='%s', description='%s')>" % (
-            self.id, self.name, self.color, self.description)

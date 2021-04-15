@@ -26,7 +26,3 @@ class IndexFile(Base):
     index = Column(String, nullable=False)
     type = Column(Enum(IndexType))
     size = Column(Integer)
-
-    def __repr__(self):
-        return f"<IndexFile(id={self.id}, name={self.name}, index={self.index}, type={self.type}, " \
-               f"size={self.size}"

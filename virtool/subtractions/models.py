@@ -25,7 +25,3 @@ class SubtractionFile(Base):
     subtraction = Column(String)
     type = Column(Enum(SubtractionType))
     size = Column(Integer)
-
-    def __repr__(self):
-        return f"<SubtractionFile(id={self.id}, name={self.name}, subtraction={self.subtraction}, type={self.type}, " \
-               f"size={self.size} "
