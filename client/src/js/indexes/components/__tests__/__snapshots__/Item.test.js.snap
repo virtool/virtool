@@ -5,11 +5,11 @@ exports[`<IndexItem /> should render 1`] = `
   to="/refs/foo/indexes/bar"
 >
   <Item__IndexItemTop>
-    <strong>
+    <Item__IndexItemVersion>
       Version 
       0
-    </strong>
-    <IndexItemChangeDescription
+    </Item__IndexItemVersion>
+    <IndexItemDescription
       changeCount={3}
       modifiedCount={5}
     />
@@ -30,18 +30,18 @@ exports[`<IndexItemChangeDescription /> should render 'No Changes' when changeCo
 exports[`<IndexItemChangeDescription /> should render empty when changeCount is null 1`] = `""`;
 
 exports[`<IndexItemChangeDescription /> should render valid description when changeCount is 1 1`] = `
-<span>
+<Item__StyledIndexItemDescription>
   1
    change
    made in 
   3
    OTU
   s
-</span>
+</Item__StyledIndexItemDescription>
 `;
 
 exports[`<IndexItemChangeDescription /> should render valid description when changeCount is 13 1`] = `
-<span>
+<Item__StyledIndexItemDescription>
   13
    change
   s
@@ -49,18 +49,18 @@ exports[`<IndexItemChangeDescription /> should render valid description when cha
   3
    OTU
   s
-</span>
+</Item__StyledIndexItemDescription>
 `;
 
 exports[`<IndexItemChangeDescription /> should render valid description when modifiedCount is 1 1`] = `
-<span>
+<Item__StyledIndexItemDescription>
   13
    change
   s
    made in 
   1
    OTU
-</span>
+</Item__StyledIndexItemDescription>
 `;
 
 exports[`<IndexItemIcon /> should render checkmark when active 1`] = `
@@ -72,9 +72,9 @@ exports[`<IndexItemIcon /> should render checkmark when active 1`] = `
     name="check"
   />
    
-  <strong>
+  <span>
     Active
-  </strong>
+  </span>
 </Item__StyledIndexItemIcon>
 `;
 
@@ -86,8 +86,8 @@ exports[`<IndexItemIcon /> should render spinner when not ready 1`] = `
     color="primary"
     size="14px"
   />
-  <strong>
+  <span>
      Building
-  </strong>
+  </span>
 </Item__StyledIndexItemIcon>
 `;

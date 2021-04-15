@@ -1,4 +1,4 @@
-import { IndexItemChangeDescription, IndexItem, IndexItemIcon, mapStateToProps } from "../Item";
+import { IndexItemDescription, IndexItem, IndexItemIcon, mapStateToProps } from "../Item";
 import { getActiveIndexId } from "../../selectors";
 
 jest.mock("../../selectors");
@@ -41,30 +41,30 @@ describe("<IndexItemChangeDescription />", () => {
 
     it("should render empty when changeCount is null", () => {
         props.changeCount = null;
-        const wrapper = shallow(<IndexItemChangeDescription {...props} />);
+        const wrapper = shallow(<IndexItemDescription {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("should render 'No Changes' when changeCount is 0", () => {
         props.changeCount = 0;
-        const wrapper = shallow(<IndexItemChangeDescription {...props} />);
+        const wrapper = shallow(<IndexItemDescription {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("should render valid description when modifiedCount is 1", () => {
         props.modifiedCount = 1;
-        const wrapper = shallow(<IndexItemChangeDescription {...props} />);
+        const wrapper = shallow(<IndexItemDescription {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("should render valid description when changeCount is 1", () => {
         props.changeCount = 1;
-        const wrapper = shallow(<IndexItemChangeDescription {...props} />);
+        const wrapper = shallow(<IndexItemDescription {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("should render valid description when changeCount is 13", () => {
-        const wrapper = shallow(<IndexItemChangeDescription {...props} />);
+        const wrapper = shallow(<IndexItemDescription {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 });
