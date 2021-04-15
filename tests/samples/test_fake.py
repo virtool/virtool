@@ -11,25 +11,16 @@ def app(dbi, pg, run_in_thread, tmpdir):
         "fake": FakerWrapper(),
         "pg": pg,
         "run_in_thread": run_in_thread,
-        "settings": {"data_path": str(tmpdir)},
+        "settings": {
+            "data_path": str(tmpdir)
+        },
     }
-
-
-def clean_sample_document_for_snapshot(fake_sample):
-    del fake_sample["created_at"]
-    for f in fake_sample["files"]:
-        del f["uploaded_at"]
-
-    if "reads" in fake_sample:
-        for f in fake_sample["reads"]:
-            del f["uploaded_at"]
-
-    return fake_sample
 
 
 @pytest.mark.parametrize("paired", [True, False])
 @pytest.mark.parametrize("finalized", [True, False])
-async def test_create_fake_unpaired(paired, finalized, app, snapshot):
+async def test_create_fake_unpaired(paired, finalized, app, snapshot,
+                                    static_time):
     fake_sample = await create_fake_sample(app,
                                            paired=paired,
                                            finalized=finalized)
@@ -38,16 +29,16 @@ async def test_create_fake_unpaired(paired, finalized, app, snapshot):
         assert key in fake_sample
 
     if finalized is True:
-        assert len(fake_sample["files"]) == (2 if paired else 1)
+        assert len(fake_sample["reads"]) == (2 if paired else 1)
         assert fake_sample["ready"] is True
 
-    snapshot.assert_match(clean_sample_document_for_snapshot(fake_sample))
+    snapshot.assert_match(fake_sample)
 
 
-async def test_create_fake_samples(app, snapshot, dbi):
+async def test_create_fake_samples(app, snapshot, dbi, static_time):
     samples = await create_fake_samples(app)
 
     assert len(samples) == 3
 
     for sample in samples:
-        snapshot.assert_match(clean_sample_document_for_snapshot(sample))
+        snapshot.assert_match(sample)
