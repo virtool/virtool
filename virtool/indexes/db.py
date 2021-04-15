@@ -79,8 +79,7 @@ async def create(db, ref_id: str, user_id: str, job_id: str, index_id: Optional[
         },
         "user": {
             "id": user_id
-        },
-        "files": []
+        }
     }
 
     await db.indexes.insert_one(document)

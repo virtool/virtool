@@ -304,12 +304,6 @@ async def upload(req):
 
     index_file = await virtool.uploads.db.finalize(pg, size, upload_id, IndexFile)
 
-    await db.indexes.find_one_and_update({"_id": index_id}, {
-        "$push": {
-            "files": upload_id
-        }
-    })
-
     headers = {
         "Location": f"/api/indexes/{index_id}/files/{file_name}"
     }
