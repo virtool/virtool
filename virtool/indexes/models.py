@@ -1,5 +1,4 @@
-import enum
-from sqlalchemy import Column, Integer, String, Enum
+from sqlalchemy import Column, Enum, Integer, String
 
 from virtool.pg.utils import Base, SQLEnum
 
@@ -29,5 +28,5 @@ class IndexFile(Base):
     size = Column(Integer)
 
     def __repr__(self):
-        return f"<IndexFile(id={self.id}, name={self.name}, reference={self.reference}, type={self.type}, " \
+        return f"<IndexFile(id={self.id}, name={self.name}, index={self.index}, type={self.type}, " \
                f"size={self.size}"

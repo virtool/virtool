@@ -6,13 +6,14 @@ import pytest
 import shutil
 import sys
 import multidict
+import functools
+from concurrent.futures import ThreadPoolExecutor
 
 SAM_PATH = os.path.join(sys.path[0], "tests", "test_files", "test_al.sam")
 SAM_50_PATH = os.path.join(sys.path[0], "tests", "test_files", "sam_50.sam")
 
 
 class MockRequest:
-
     def __init__(self):
         self.app = dict()
         self._state = dict()
@@ -52,7 +53,6 @@ def test_files_path():
 @pytest.fixture
 def test_random_alphanumeric(mocker):
     class RandomAlphanumericTester:
-
         def __init__(self):
             self.choices = [
                 "aB67nm89jL56hj34AL90",
@@ -64,7 +64,7 @@ def test_random_alphanumeric(mocker):
                 "KfVw9vD27KGMly2qf45K",
                 "xjQVxIGHKsTQrVisJiKo",
                 "U3cuWAoQ3TDsy0wU7z0l",
-                "9PfsOM1B99KfaMz2Wu3C"
+                "9PfsOM1B99KfaMz2Wu3C",
             ]
 
             self.history = list()
@@ -91,12 +91,14 @@ def test_random_alphanumeric(mocker):
         def next_choice(self):
             return self.choices[-1]
 
-    return mocker.patch("virtool.utils.random_alphanumeric", new=RandomAlphanumericTester())
+    return mocker.patch("virtool.utils.random_alphanumeric",
+                        new=RandomAlphanumericTester())
 
 
 @pytest.fixture
 def static_nonce(mocker):
-    mocker.patch("virtool.http.csp.generate_nonce", return_value="foo1bar2baz3")
+    mocker.patch("virtool.http.csp.generate_nonce",
+                 return_value="foo1bar2baz3")
 
 
 @pytest.fixture(scope="session")
@@ -106,7 +108,8 @@ def static_time_obj():
 
 @pytest.fixture
 def static_time(mocker, static_time_obj):
-    mocker.patch("virtool.utils.timestamp", return_value=static_time_obj.datetime)
+    mocker.patch("virtool.utils.timestamp",
+                 return_value=static_time_obj.datetime)
     return static_time_obj
 
 
@@ -130,3 +133,18 @@ def sam_line(request):
 @pytest.fixture
 def example_path():
     return Path(__file__).parent.parent.parent / "example"
+
+
+@pytest.fixture
+def thread_pool_executor():
+    return ThreadPoolExecutor(thread_name_prefix="vt_pytest_")
+
+
+@pytest.fixture
+def run_in_thread(loop, thread_pool_executor):
+    async def _run_in_thread(func, *args, **kwargs):
+        bound_func = functools.partial(func, *args, **kwargs)
+        return await loop.run_in_executor(thread_pool_executor, bound_func)
+
+    return _run_in_thread
+

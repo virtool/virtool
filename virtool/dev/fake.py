@@ -9,21 +9,19 @@ from logging import getLogger
 from shutil import rmtree
 from tempfile import mkdtemp
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 import virtool.analyses.db
 import virtool.analyses.files
 import virtool.jobs.db
 import virtool.references.db
 import virtool.subtractions.db
 import virtool.users.db
-import virtool.users.db
 import virtool.utils
 from virtool.hmm.fake import create_fake_hmms
+from virtool.indexes.fake import create_fake_indexes
 from virtool.jobs.utils import JobRights
 from virtool.otus.fake import create_fake_otus
+from virtool.subtractions.fake import create_fake_subtractions
 from virtool.types import App
-from virtool.uploads.models import Upload
 from virtool.utils import ensure_data_dir, random_alphanumeric
 
 logger = getLogger(__name__)
@@ -34,11 +32,12 @@ USER_ID = "bob"
 
 async def populate(app: App):
     await create_fake_user(app)
-    await create_fake_subtractions(app)
+    await create_fake_subtractions(app, USER_ID)
     await create_fake_analysis(app)
     await create_fake_jobs(app)
     await create_fake_hmms(app)
     await create_fake_otus(app, REF_ID, USER_ID)
+    await create_fake_indexes(app, REF_ID, USER_ID)
 
 
 async def remove_fake_data_path(app: App):
@@ -94,64 +93,6 @@ async def create_fake_user(app: App):
     await virtool.users.db.create(app["db"], USER_ID, "hello_world", True)
     await virtool.users.db.edit(app["db"], "bob", administrator=True, force_reset=False)
     logger.debug("Created fake user")
-
-
-async def create_fake_subtractions(app: App):
-    """
-    Create fake subtractions and their associated uploads and subtraction files.
-
-    Two subtractions are ready for use. One has ``ready`` set to ``False`` and can be used for
-    testing subtraction finalization.
-
-    :param app: the application object
-
-    """
-    async with AsyncSession(app["pg"]) as session:
-        upload = Upload(name="test.fa.gz", type="subtraction", user=USER_ID)
-
-        session.add(upload)
-        await session.flush()
-
-        upload_id = upload.id
-        upload_name = upload.name
-
-        await session.commit()
-
-    upload = {"id": upload_id, "name": upload_name}
-
-    await app["db"].subtraction.insert_many(
-        [
-            {
-                "_id": "subtraction_1",
-                "name": "Subtraction 1",
-                "nickname": "",
-                "deleted": False,
-                "ready": True,
-                "file": upload,
-                "user": {"id": USER_ID},
-            },
-            {
-                "_id": "subtraction_2",
-                "name": "Subtraction 2",
-                "nickname": "",
-                "deleted": False,
-                "ready": True,
-                "file": upload,
-                "user": {"id": USER_ID},
-            },
-            {
-                "_id": "subtraction_unready",
-                "name": "Subtraction Unready",
-                "nickname": "",
-                "deleted": False,
-                "ready": False,
-                "file": upload,
-                "user": {"id": USER_ID},
-            },
-        ]
-    )
-
-    logger.debug("Created fake subtractions")
 
 
 async def create_fake_analysis(app: App):
