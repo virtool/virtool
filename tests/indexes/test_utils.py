@@ -19,18 +19,18 @@ async def test_check_index_file_type(file_type):
         assert result == "bowtie2"
 
 
-@pytest.mark.parametrize("exits", [True, False])
-async def test_check_file_exists(exits, pg, pg_session):
+@pytest.mark.parametrize("exists", [True, False])
+async def test_check_file_exists(exists, pg, pg_session):
     index_file = IndexFile(id=1, name="reference.1.bt2", index="foo", type="bowtie2", size=1234567)
 
-    if exits:
+    if exists:
         async with pg_session as session:
             session.add(index_file)
             await session.commit()
 
     result = await virtool.indexes.utils.check_file_exists(pg, "reference.1.bt2", "foo")
 
-    if exits:
+    if exists:
         assert result.name == "reference.1.bt2"
     else:
         assert result is None
