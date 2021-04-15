@@ -28,7 +28,7 @@ async def check_file_exists(pg: AsyncEngine, filename: str, index: str) -> bool:
     :param filename: the name of the index file
     :param index: the id of the index
 
-    :return: `True` is file already exists, otherwise return `False`
+    :return: `True` if file already exists, otherwise return `False`
 
     """
     async with AsyncSession(pg) as session:
@@ -36,4 +36,4 @@ async def check_file_exists(pg: AsyncEngine, filename: str, index: str) -> bool:
             select(IndexFile).filter_by(name=filename, index=index)
         )).scalar()
 
-    return False if exists is None else True
+    return exists is not None
