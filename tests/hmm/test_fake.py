@@ -1,19 +1,8 @@
-from virtool.fake.wrapper import FakerWrapper
 from virtool.hmm.fake import create_fake_hmms
 
 
-async def test_fake_hmms(snapshot, tmpdir, dbi, example_path, pg):
-    data_path = str(tmpdir)
+async def test_fake_hmms(app, snapshot, tmpdir, dbi, example_path, pg):
     hmm_dir = tmpdir.mkdir("hmm")
-
-    app = {
-        "db": dbi,
-        "fake": FakerWrapper(),
-        "pg": pg,
-        "settings": {
-            "data_path": data_path
-        }
-    }
 
     await create_fake_hmms(app)
 

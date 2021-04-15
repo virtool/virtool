@@ -1,5 +1,6 @@
 import os
-from typing import Dict, List, Optional
+from pathlib import Path
+from typing import Dict, List, Optional, Union
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -46,7 +47,7 @@ async def create_subtraction_files(
         pg: AsyncEngine,
         subtraction_id: str,
         files: List[str],
-        path: str
+        path: Union[str, Path]
 ):
     """
     Create multiple rows in the `subtraction_files` SQL table in a single transaction.
