@@ -35,8 +35,3 @@ class AnalysisFile(Base):
     name_on_disk = Column(String, unique=True)
     size = Column(Integer)
     uploaded_at = Column(DateTime)
-
-    def __repr__(self):
-        return f"<AnalysisFile(id={self.id}, analysis={self.analysis}, description={self.description}, " \
-               f"format={self.format}, name={self.name}, name_on_disk={self.name_on_disk}, size={self.size}, " \
-               f"uploaded_at={self.uploaded_at})>"

@@ -34,11 +34,6 @@ class SampleArtifact(Base):
     type = Column(Enum(ArtifactType), nullable=False)
     uploaded_at = Column(DateTime)
 
-    def __repr__(self):
-        return f"<SampleArtifact(id={self.id}, sample={self.sample}, name={self.name}, " \
-               f"name_on_disk={self.name_on_disk}, size={self.size}, type={self.type}, " \
-               f"uploaded_at={self.uploaded_at}"
-
 
 class SampleReads(Base):
     """
@@ -54,10 +49,6 @@ class SampleReads(Base):
     size = Column(Integer)
     upload = Column(Integer, ForeignKey('uploads.id'))
     uploaded_at = Column(DateTime)
-
-    def __repr__(self):
-        return f"<SampleReads(id={self.id}, sample={self.sample}, name={self.name}, " \
-               f"name_on_disk={self.name_on_disk}, size={self.size}, uploaded_at={self.uploaded_at})>"
 
 
 class SampleArtifactCache(Base):
@@ -75,11 +66,6 @@ class SampleArtifactCache(Base):
     type = Column(Enum(ArtifactType), nullable=False)
     uploaded_at = Column(DateTime)
 
-    def __repr__(self):
-        return f"<SampleArtifactCache(id={self.id}, sample={self.sample}, name={self.name}, " \
-               f"name_on_disk={self.name_on_disk}, size={self.size}, type={self.type}, " \
-               f"uploaded_at={self.uploaded_at}"
-
 
 class SampleReadsCache(Base):
     """
@@ -94,7 +80,3 @@ class SampleReadsCache(Base):
     name_on_disk = Column(String, nullable=False)
     size = Column(Integer)
     uploaded_at = Column(DateTime)
-
-    def __repr__(self):
-        return f"<SampleReadsCache(id={self.id}, sample={self.sample}, name={self.name}, " \
-               f"name_on_disk={self.name_on_disk}, size={self.size}, uploaded_at={self.uploaded_at})>"

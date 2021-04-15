@@ -17,8 +17,3 @@ class Task(Base):
     progress = Column(Integer, default=0)
     step = Column(String)
     type = Column(String, nullable=False)
-
-    def __repr__(self):
-        return f"<Task(id={self.id}, complete={self.complete}, context={self.context}, " \
-               f"count={self.count}, created_at={self.created_at}, error={self.error}, " \
-               f"file_size={self.file_size}, progress={self.progress}, step={self.step}, type={self.type})>"
