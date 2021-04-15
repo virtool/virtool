@@ -17,13 +17,12 @@ import virtool.subtractions.db
 import virtool.users.db
 import virtool.utils
 from virtool.hmm.fake import create_fake_hmms
-from virtool.samples.fake import create_fake_samples
 from virtool.jobs.utils import JobRights
 from virtool.otus.fake import create_fake_otus
 from virtool.subtractions.fake import create_fake_subtractions
+from virtool.samples.fake import create_fake_samples
 from virtool.types import App
 from virtool.utils import ensure_data_dir, random_alphanumeric
-from virtool.fake.identifiers import USER_ID
 
 logger = getLogger(__name__)
 
@@ -38,7 +37,6 @@ async def populate(app: App):
     await create_fake_otus(app, REF_ID, USER_ID)
     await create_fake_samples(app)
     await create_fake_jobs(app)
-    await create_fake_otus(app, REF_ID, USER_ID)
 
 
 async def remove_fake_data_path(app: App):
@@ -92,12 +90,7 @@ async def create_fake_user(app: App):
 
     """
     await virtool.users.db.create(app["db"], USER_ID, "hello_world", True)
-
-    await virtool.users.db.edit(app["db"],
-                                "bob",
-                                administrator=True,
-                                force_reset=False)
-
+    await virtool.users.db.edit(app["db"], "bob", administrator=True, force_reset=False)
     logger.debug("Created fake user")
 
 
@@ -177,19 +170,14 @@ async def create_fake_analysis(app: App):
     ]
 
     file = await virtool.analyses.files.create_analysis_file(app["pg"], "analysis_2", "fasta", "result.fa", 123456)
-    await app["db"].analyses.insert_many(
-        [
-            {
-                "_id": "analysis_1",
-                "workflow": "pathoscope",
-                "created_at": virtool.utils.timestamp(),
-                "ready": False,
-                "job": {"id": "job_1"},
-                "index": {"version": 2, "id": "foo"},
-                "user": {"id": USER_ID},
-                "sample": {"id": sample_id},
-                "reference": {"id": ref_id},
-                "subtractions": subtractions,
+    await app["db"].analyses.insert_many([
+        {
+            "_id": "analysis_1",
+            "workflow": "pathoscope",
+            "created_at": virtool.utils.timestamp(),
+            "ready": False,
+            "job": {
+                "id": "job_1"
             },
             "index": {
                 "version": 2,
@@ -204,7 +192,59 @@ async def create_fake_analysis(app: App):
             "reference": {
                 "id": ref_id
             },
-            "subtractions": subtractions,
+            "subtractions": subtractions
+        },
+        {
+            "_id": "analysis_2",
+            "workflow": "pathoscope",
+            "created_at": virtool.utils.timestamp(),
+            "ready": True,
+            "job": {
+                "id": "job_2"
+            },
+            "index": {
+                "version": 2,
+                "id": "foo"
+            },
+            "user": {
+                "id": USER_ID
+            },
+            "sample": {
+                "id": sample_id
+            }
+        }])
+
+    file = await virtool.analyses.files.create_analysis_file(
+        app["pg"],
+        "analysis_2",
+        "fasta",
+        "result.fa",
+        123456
+    )
+
+    await app["db"].analyses.insert_many([
+        {
+            "_id": "analysis_1",
+            "workflow": "pathoscope",
+            "created_at": virtool.utils.timestamp(),
+            "ready": False,
+            "job": {
+                "id": "job_1"
+            },
+            "index": {
+                "version": 2,
+                "id": "foo"
+            },
+            "user": {
+                "id": USER_ID
+            },
+            "sample": {
+                "id": sample_id
+            },
+            "reference": {
+                "id": ref_id
+            },
+            "subtractions": subtractions
         },
         {
             "_id": "analysis_2",
@@ -228,8 +268,8 @@ async def create_fake_analysis(app: App):
                 "id": ref_id
             },
             "subtractions": subtractions,
-            "files": [file],
-        },
+            "files": [file]
+        }
     ])
 
     logger.debug("Created fake analyses")

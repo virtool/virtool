@@ -2,7 +2,7 @@
 # snapshottest: v1 - https://goo.gl/zC4yUc
 from __future__ import unicode_literals
 
-from snapshottest import Snapshot
+from snapshottest import GenericRepr, Snapshot
 
 
 snapshots = Snapshot()
@@ -11,10 +11,11 @@ snapshots['test_create_fake_unpaired[uvloop-False-True] 1'] = {
     '_id': '2x6YnyMt',
     'all_read': True,
     'all_write': True,
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
     'format': 'fastq',
-    'group': 'while',
+    'group': 'blood',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -22,9 +23,6 @@ snapshots['test_create_fake_unpaired[uvloop-False-True] 1'] = {
     'is_legacy': False,
     'isolate': 'Isolate A1',
     'labels': [
-        'beyond',
-        'its',
-        'particularly'
     ],
     'library_type': 'normal',
     'locale': '',
@@ -46,10 +44,11 @@ snapshots['test_create_fake_unpaired[uvloop-False-False] 1'] = {
     '_id': '2x6YnyMt',
     'all_read': True,
     'all_write': True,
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
     'format': 'fastq',
-    'group': 'while',
+    'group': 'blood',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -57,9 +56,6 @@ snapshots['test_create_fake_unpaired[uvloop-False-False] 1'] = {
     'is_legacy': False,
     'isolate': 'Isolate A1',
     'labels': [
-        'beyond',
-        'its',
-        'particularly'
     ],
     'library_type': 'normal',
     'locale': '',
@@ -77,32 +73,17 @@ snapshots['test_create_fake_unpaired[uvloop-False-False] 1'] = {
     }
 }
 
-snapshots['test_create_fake_unpaired[uvloop-True-True] 1'] = {
+snapshots['test_create_fake_samples[uvloop] 1'] = {
     '_id': '2x6YnyMt',
     'all_read': True,
     'all_write': True,
     'artifacts': [
     ],
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
-        {
-            'id': 1,
-            'name': 'read_1.fq.gz',
-            'name_on_disk': 'paired_1.fq.gz',
-            'sample': '2x6YnyMt',
-            'size': 35441105,
-            'upload': None
-        },
-        {
-            'id': 2,
-            'name': 'read_2.fq.gz',
-            'name_on_disk': 'paired_2.fq.gz',
-            'sample': '2x6YnyMt',
-            'size': 41550519,
-            'upload': None
-        }
     ],
     'format': 'fastq',
-    'group': 'while',
+    'group': 'blood',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -110,186 +91,6 @@ snapshots['test_create_fake_unpaired[uvloop-True-True] 1'] = {
     'is_legacy': False,
     'isolate': 'Isolate A1',
     'labels': [
-        'beyond',
-        'its',
-        'particularly'
-    ],
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'cause believe',
-    'notes': 'Would mouth relate own chair.',
-    'nuvs': False,
-    'paired': True,
-    'pathoscope': False,
-    'quality': {
-        'all_read': False,
-        'all_write': True,
-        'bases': [
-            [
-                31,
-                31,
-                31,
-                32,
-                31
-            ],
-            [
-                32,
-                32,
-                31,
-                32,
-                31
-            ],
-            [
-                31,
-                31,
-                31,
-                31,
-                32
-            ],
-            [
-                31,
-                31,
-                32,
-                32,
-                31
-            ],
-            [
-                32,
-                32,
-                31,
-                32,
-                31
-            ]
-        ],
-        'composition': [
-            [
-                87,
-                3,
-                70,
-                1
-            ],
-            [
-                55,
-                80,
-                1,
-                1
-            ],
-            [
-                13,
-                34,
-                9,
-                29
-            ],
-            [
-                10,
-                83,
-                39,
-                1
-            ]
-        ],
-        'count': 6668048404,
-        'encoding': '''Sanger / Illumina 1.9
-''',
-        'gc': 33,
-        'group_read': True,
-        'group_write': False,
-        'hold': True,
-        'length': [
-            66,
-            76
-        ],
-        'paired': False,
-        'sequences': [
-            7290,
-            9769,
-            5194,
-            4756,
-            3102,
-            540,
-            7807,
-            1471,
-            2450,
-            1314,
-            8594,
-            8549,
-            3525,
-            9497,
-            7382,
-            5855,
-            5313,
-            7969,
-            3119,
-            265,
-            1919,
-            6095,
-            5448,
-            1018,
-            2397,
-            741,
-            437,
-            3088,
-            6409,
-            6064,
-            596,
-            3188,
-            2029,
-            3450
-        ]
-    },
-    'reads': [
-        {
-            'id': 1,
-            'name': 'read_1.fq.gz',
-            'name_on_disk': 'paired_1.fq.gz',
-            'sample': '2x6YnyMt',
-            'size': 35441105,
-            'upload': None
-        },
-        {
-            'id': 2,
-            'name': 'read_2.fq.gz',
-            'name_on_disk': 'paired_2.fq.gz',
-            'sample': '2x6YnyMt',
-            'size': 41550519,
-            'upload': None
-        }
-    ],
-    'ready': True,
-    'subtractions': [
-    ],
-    'user': {
-        'id': 'bob'
-    }
-}
-
-snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
-    '_id': '2x6YnyMt',
-    'all_read': True,
-    'all_write': True,
-    'artifacts': [
-    ],
-    'files': [
-        {
-            'id': 1,
-            'name': 'reads.fq.gz',
-            'name_on_disk': 'single.fq.gz',
-            'sample': '2x6YnyMt',
-            'size': 16700094,
-            'upload': None
-        }
-    ],
-    'format': 'fastq',
-    'group': 'while',
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'host': 'Vine',
-    'is_legacy': False,
-    'isolate': 'Isolate A1',
-    'labels': [
-        'beyond',
-        'its',
-        'particularly'
     ],
     'library_type': 'normal',
     'locale': '',
@@ -299,84 +100,87 @@ snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
     'paired': False,
     'pathoscope': False,
     'quality': {
-        'all_read': False,
-        'all_write': True,
+        'all_read': True,
+        'all_write': False,
         'bases': [
             [
                 31,
-                31,
-                31,
-                32,
-                31
-            ],
-            [
                 32,
                 32,
-                31,
                 32,
                 31
             ],
             [
                 31,
                 31,
-                31,
+                32,
                 31,
                 32
             ],
             [
-                31,
+                32,
                 31,
                 32,
+                31,
+                31
+            ],
+            [
+                31,
+                31,
+                31,
                 32,
                 31
             ],
             [
+                31,
                 32,
                 32,
                 31,
-                32,
-                31
+                32
             ]
         ],
         'composition': [
             [
-                87,
+                48,
+                15,
+                5,
+                78
+            ],
+            [
                 3,
-                70,
+                25,
+                24,
+                92
+            ],
+            [
+                16,
+                62,
+                27,
                 1
             ],
             [
-                55,
-                80,
+                94,
+                8,
                 1,
-                1
-            ],
-            [
-                13,
-                34,
-                9,
-                29
-            ],
-            [
-                10,
-                83,
-                39,
                 1
             ]
         ],
-        'count': 6668048404,
+        'count': 5814499479,
         'encoding': '''Sanger / Illumina 1.9
 ''',
-        'gc': 33,
+        'gc': 81,
         'group_read': True,
         'group_write': False,
-        'hold': True,
+        'hold': False,
         'length': [
-            66,
-            76
+            50,
+            88
         ],
         'paired': False,
         'sequences': [
+            2044,
+            8852,
+            9882,
             7290,
             9769,
             5194,
@@ -405,189 +209,7 @@ snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
             741,
             437,
             3088,
-            6409,
-            6064,
-            596,
-            3188,
-            2029,
-            3450
-        ]
-    },
-    'reads': [
-        {
-            'id': 1,
-            'name': 'reads.fq.gz',
-            'name_on_disk': 'single.fq.gz',
-            'sample': '2x6YnyMt',
-            'size': 16700094,
-            'upload': None
-        }
-    ],
-    'ready': True,
-    'subtractions': [
-    ],
-    'user': {
-        'id': 'bob'
-    }
-}
-
-snapshots['test_create_fake_samples[uvloop] 1'] = {
-    '_id': '2x6YnyMt',
-    'all_read': True,
-    'all_write': True,
-    'artifacts': [
-    ],
-    'files': [
-        {
-            'id': 1,
-            'name': 'read_1.fq.gz',
-            'name_on_disk': 'paired_1.fq.gz',
-            'sample': '2x6YnyMt',
-            'size': 35441105,
-            'upload': None
-        },
-        {
-            'id': 2,
-            'name': 'read_2.fq.gz',
-            'name_on_disk': 'paired_2.fq.gz',
-            'sample': '2x6YnyMt',
-            'size': 41550519,
-            'upload': None
-        }
-    ],
-    'format': 'fastq',
-    'group': 'while',
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'host': 'Vine',
-    'is_legacy': False,
-    'isolate': 'Isolate A1',
-    'labels': [
-        'beyond',
-        'its',
-        'particularly'
-    ],
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'cause believe',
-    'notes': 'Would mouth relate own chair.',
-    'nuvs': False,
-    'paired': True,
-    'pathoscope': False,
-    'quality': {
-        'all_read': False,
-        'all_write': True,
-        'bases': [
-            [
-                31,
-                31,
-                31,
-                32,
-                31
-            ],
-            [
-                32,
-                32,
-                31,
-                32,
-                31
-            ],
-            [
-                31,
-                31,
-                31,
-                31,
-                32
-            ],
-            [
-                31,
-                31,
-                32,
-                32,
-                31
-            ],
-            [
-                32,
-                32,
-                31,
-                32,
-                31
-            ]
-        ],
-        'composition': [
-            [
-                87,
-                3,
-                70,
-                1
-            ],
-            [
-                55,
-                80,
-                1,
-                1
-            ],
-            [
-                13,
-                34,
-                9,
-                29
-            ],
-            [
-                10,
-                83,
-                39,
-                1
-            ]
-        ],
-        'count': 6668048404,
-        'encoding': '''Sanger / Illumina 1.9
-''',
-        'gc': 33,
-        'group_read': True,
-        'group_write': False,
-        'hold': True,
-        'length': [
-            66,
-            76
-        ],
-        'paired': False,
-        'sequences': [
-            7290,
-            9769,
-            5194,
-            4756,
-            3102,
-            540,
-            7807,
-            1471,
-            2450,
-            1314,
-            8594,
-            8549,
-            3525,
-            9497,
-            7382,
-            5855,
-            5313,
-            7969,
-            3119,
-            265,
-            1919,
-            6095,
-            5448,
-            1018,
-            2397,
-            741,
-            437,
-            3088,
-            6409,
-            6064,
-            596,
-            3188,
-            2029,
-            3450
+            6409
         ]
     },
     'reads': [
@@ -597,7 +219,8 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
             'name_on_disk': 'paired_1.fq.gz',
             'sample': '2x6YnyMt',
             'size': 35441105,
-            'upload': None
+            'upload': None,
+            'uploaded_at': None
         },
         {
             'id': 2,
@@ -605,7 +228,8 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
             'name_on_disk': 'paired_2.fq.gz',
             'sample': '2x6YnyMt',
             'size': 41550519,
-            'upload': None
+            'upload': None,
+            'uploaded_at': None
         }
     ],
     'ready': True,
@@ -617,23 +241,16 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
 }
 
 snapshots['test_create_fake_samples[uvloop] 2'] = {
-    '_id': '9CDjpwAf',
+    '_id': 'LB1U6zCj',
     'all_read': True,
     'all_write': True,
     'artifacts': [
     ],
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
-        {
-            'id': 3,
-            'name': 'reads.fq.gz',
-            'name_on_disk': 'single.fq.gz',
-            'sample': '9CDjpwAf',
-            'size': 16700094,
-            'upload': None
-        }
     ],
     'format': 'fastq',
-    'group': 'sound',
+    'group': 'range',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -641,26 +258,44 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
     'is_legacy': False,
     'isolate': 'Isolate A1',
     'labels': [
-        'school',
-        'name',
-        'care'
     ],
     'library_type': 'normal',
     'locale': '',
-    'name': 'morning bring',
-    'notes': 'Program actually race tonight themselves true.',
+    'name': 'whom around',
+    'notes': 'Suddenly garden economy others.',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
     'quality': {
-        'all_read': True,
+        'all_read': False,
         'all_write': False,
         'bases': [
             [
+                31,
                 32,
                 31,
                 32,
+                31
+            ],
+            [
                 32,
+                31,
+                31,
+                32,
+                32
+            ],
+            [
+                32,
+                32,
+                31,
+                32,
+                32
+            ],
+            [
+                32,
+                31,
+                31,
+                31,
                 32
             ],
             [
@@ -668,81 +303,72 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
                 31,
                 31,
                 32,
-                31
-            ],
-            [
-                31,
-                31,
-                32,
-                32,
-                32
-            ],
-            [
-                31,
-                32,
-                32,
-                31,
-                31
-            ],
-            [
-                32,
-                31,
-                32,
-                31,
                 32
             ]
         ],
         'composition': [
             [
+                92,
+                83,
+                1,
+                1
+            ],
+            [
+                59,
+                82,
+                1,
+                1
+            ],
+            [
+                56,
+                48,
+                1,
+                1
+            ],
+            [
+                69,
+                23,
+                27,
+                1
+            ],
+            [
+                49,
+                76,
+                1,
+                1
+            ],
+            [
+                38,
                 2,
                 18,
-                20,
-                35
+                20
             ],
             [
+                35,
                 43,
                 44,
-                48,
-                1
-            ],
-            [
-                92,
-                12,
-                1,
-                1
-            ],
-            [
-                44,
-                80,
-                1,
-                1
-            ],
-            [
-                5,
-                6,
-                35,
-                21
-            ],
-            [
-                20,
-                75,
-                38,
                 1
             ]
         ],
-        'count': 8388636647,
+        'count': 5828932087,
         'encoding': '''Sanger / Illumina 1.9
 ''',
-        'gc': 36,
-        'group_read': True,
-        'group_write': False,
+        'gc': 19,
+        'group_read': False,
+        'group_write': True,
         'hold': True,
         'length': [
-            55,
-            88
+            94,
+            42
         ],
         'paired': True,
         'sequences': [
+            516,
+            9297,
+            766,
+            7296,
+            4247,
+            7313,
             9198,
             637,
             5340,
@@ -769,11 +395,7 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
             3370,
             9148,
             6011,
-            9954,
-            7514,
-            6102,
-            3405,
-            9619
+            9954
         ]
     },
     'reads': [
@@ -781,9 +403,10 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
             'id': 3,
             'name': 'reads.fq.gz',
             'name_on_disk': 'single.fq.gz',
-            'sample': '9CDjpwAf',
+            'sample': 'LB1U6zCj',
             'size': 16700094,
-            'upload': None
+            'upload': None,
+            'uploaded_at': None
         }
     ],
     'ready': True,
@@ -795,13 +418,14 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
 }
 
 snapshots['test_create_fake_samples[uvloop] 3'] = {
-    '_id': 'B34OKB6j',
+    '_id': 'H2YIEEsB',
     'all_read': True,
     'all_write': True,
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'files': [
     ],
     'format': 'fastq',
-    'group': 'list',
+    'group': 'clearly',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -809,19 +433,341 @@ snapshots['test_create_fake_samples[uvloop] 3'] = {
     'is_legacy': False,
     'isolate': 'Isolate A1',
     'labels': [
-        'account',
-        'hour',
-        'million'
     ],
     'library_type': 'normal',
     'locale': '',
-    'name': 'look record',
-    'notes': 'Also friend reach choose coach north.',
+    'name': 'structure federal',
+    'notes': 'Between training listen subject.',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
     'quality': None,
     'ready': False,
+    'subtractions': [
+    ],
+    'user': {
+        'id': 'bob'
+    }
+}
+
+snapshots['test_create_fake_unpaired[uvloop-True-True] 1'] = {
+    '_id': '2x6YnyMt',
+    'all_read': True,
+    'all_write': True,
+    'artifacts': [
+    ],
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'files': [
+    ],
+    'format': 'fastq',
+    'group': 'blood',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': 'Vine',
+    'is_legacy': False,
+    'isolate': 'Isolate A1',
+    'labels': [
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'cause believe',
+    'notes': 'Would mouth relate own chair.',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': {
+        'all_read': True,
+        'all_write': False,
+        'bases': [
+            [
+                31,
+                32,
+                32,
+                32,
+                31
+            ],
+            [
+                31,
+                31,
+                32,
+                31,
+                32
+            ],
+            [
+                32,
+                31,
+                32,
+                31,
+                31
+            ],
+            [
+                31,
+                31,
+                31,
+                32,
+                31
+            ],
+            [
+                31,
+                32,
+                32,
+                31,
+                32
+            ]
+        ],
+        'composition': [
+            [
+                48,
+                15,
+                5,
+                78
+            ],
+            [
+                3,
+                25,
+                24,
+                92
+            ],
+            [
+                16,
+                62,
+                27,
+                1
+            ],
+            [
+                94,
+                8,
+                1,
+                1
+            ]
+        ],
+        'count': 5814499479,
+        'encoding': '''Sanger / Illumina 1.9
+''',
+        'gc': 81,
+        'group_read': True,
+        'group_write': False,
+        'hold': False,
+        'length': [
+            50,
+            88
+        ],
+        'paired': False,
+        'sequences': [
+            2044,
+            8852,
+            9882,
+            7290,
+            9769,
+            5194,
+            4756,
+            3102,
+            540,
+            7807,
+            1471,
+            2450,
+            1314,
+            8594,
+            8549,
+            3525,
+            9497,
+            7382,
+            5855,
+            5313,
+            7969,
+            3119,
+            265,
+            1919,
+            6095,
+            5448,
+            1018,
+            2397,
+            741,
+            437,
+            3088,
+            6409
+        ]
+    },
+    'reads': [
+        {
+            'id': 1,
+            'name': 'read_1.fq.gz',
+            'name_on_disk': 'paired_1.fq.gz',
+            'sample': '2x6YnyMt',
+            'size': 35441105,
+            'upload': None,
+            'uploaded_at': None
+        },
+        {
+            'id': 2,
+            'name': 'read_2.fq.gz',
+            'name_on_disk': 'paired_2.fq.gz',
+            'sample': '2x6YnyMt',
+            'size': 41550519,
+            'upload': None,
+            'uploaded_at': None
+        }
+    ],
+    'ready': True,
+    'subtractions': [
+    ],
+    'user': {
+        'id': 'bob'
+    }
+}
+
+snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
+    '_id': '2x6YnyMt',
+    'all_read': True,
+    'all_write': True,
+    'artifacts': [
+    ],
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'files': [
+    ],
+    'format': 'fastq',
+    'group': 'blood',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': 'Vine',
+    'is_legacy': False,
+    'isolate': 'Isolate A1',
+    'labels': [
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'cause believe',
+    'notes': 'Would mouth relate own chair.',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': {
+        'all_read': True,
+        'all_write': False,
+        'bases': [
+            [
+                31,
+                32,
+                32,
+                32,
+                31
+            ],
+            [
+                31,
+                31,
+                32,
+                31,
+                32
+            ],
+            [
+                32,
+                31,
+                32,
+                31,
+                31
+            ],
+            [
+                31,
+                31,
+                31,
+                32,
+                31
+            ],
+            [
+                31,
+                32,
+                32,
+                31,
+                32
+            ]
+        ],
+        'composition': [
+            [
+                48,
+                15,
+                5,
+                78
+            ],
+            [
+                3,
+                25,
+                24,
+                92
+            ],
+            [
+                16,
+                62,
+                27,
+                1
+            ],
+            [
+                94,
+                8,
+                1,
+                1
+            ]
+        ],
+        'count': 5814499479,
+        'encoding': '''Sanger / Illumina 1.9
+''',
+        'gc': 81,
+        'group_read': True,
+        'group_write': False,
+        'hold': False,
+        'length': [
+            50,
+            88
+        ],
+        'paired': False,
+        'sequences': [
+            2044,
+            8852,
+            9882,
+            7290,
+            9769,
+            5194,
+            4756,
+            3102,
+            540,
+            7807,
+            1471,
+            2450,
+            1314,
+            8594,
+            8549,
+            3525,
+            9497,
+            7382,
+            5855,
+            5313,
+            7969,
+            3119,
+            265,
+            1919,
+            6095,
+            5448,
+            1018,
+            2397,
+            741,
+            437,
+            3088,
+            6409
+        ]
+    },
+    'reads': [
+        {
+            'id': 1,
+            'name': 'reads.fq.gz',
+            'name_on_disk': 'single.fq.gz',
+            'sample': '2x6YnyMt',
+            'size': 16700094,
+            'upload': None,
+            'uploaded_at': None
+        }
+    ],
+    'ready': True,
     'subtractions': [
     ],
     'user': {
