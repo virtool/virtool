@@ -278,6 +278,10 @@ async def upload(req):
     if file_name not in FILES:
         return bad_request("Unsupported index file name")
 
+    exists = await virtool.indexes.utils.check_file_exists(pg, file_name, index_id)
+    if exists is not None:
+        return conflict("File name already exists")
+
     reference_id = document["reference"]["id"]
     file_type = virtool.indexes.utils.check_index_file_type(file_name)
 
@@ -290,9 +294,6 @@ async def upload(req):
 
     upload_id = index_file["id"]
     path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id / file_name
-
-    if upload_id in document.get("files", []):
-        return conflict("File name already exists")
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, path)
