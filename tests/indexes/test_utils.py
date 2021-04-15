@@ -31,6 +31,6 @@ async def test_check_file_exists(exists, pg, pg_session):
     result = await virtool.indexes.utils.check_file_exists(pg, "reference.1.bt2", "foo")
 
     if exists:
-        assert result.name == "reference.1.bt2"
+        assert result is True
     else:
-        assert result is None
+        assert result is False
