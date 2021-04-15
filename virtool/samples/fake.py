@@ -2,7 +2,6 @@ from virtool.fake.identifiers import USER_ID
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import create_sample, finalize
 from virtool.types import App
-from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool.samples.db import create_sample_reads_record
 from typing import List
 from pathlib import Path
