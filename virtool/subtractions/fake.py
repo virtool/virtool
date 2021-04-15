@@ -28,7 +28,10 @@ async def create_fake_subtractions(app: App, user_id: str):
     pg = app["pg"]
 
     subtractions_path = Path(app["settings"]["data_path"]) / "subtractions"
-    example_path = Path(__file__).parent.parent.parent / "example/subtractions/arabidopsis_thaliana"
+    example_path = (
+        Path(__file__).parent.parent.parent
+        / "example/subtractions/arabidopsis_thaliana"
+    )
 
     copytree(example_path, subtractions_path / "subtraction_1", dirs_exist_ok=True)
 
@@ -44,14 +47,34 @@ async def create_fake_subtractions(app: App, user_id: str):
         await session.commit()
 
     subtraction_1 = await db.subtraction.insert_one(
-        {"_id": fake.get_mongo_id(), "name": "subtraction_1", "nickname": "", "deleted": False, "is_host": True,
-         "ready": True,
-         "file": {"id": upload_id, "name": upload_name}, "user": {"id": user_id}})
-    await virtool.subtractions.db.create(db, user_id, upload_name, "subtraction_2", "", upload_id,
-                                         fake.get_mongo_id())
-    await virtool.subtractions.db.create(db, user_id, upload_name, "subtraction_unready", "", upload_id,
-                                         fake.get_mongo_id())
+        {
+            "_id": fake.get_mongo_id(),
+            "name": "subtraction_1",
+            "nickname": "",
+            "deleted": False,
+            "is_host": True,
+            "ready": True,
+            "file": {"id": upload_id, "name": upload_name},
+            "user": {"id": user_id},
+        }
+    )
 
-    await create_subtraction_files(pg, subtraction_1["_id"], FILES, subtractions_path / "subtraction_1")
+    await virtool.subtractions.db.create(
+        db, user_id, upload_name, "subtraction_2", "", upload_id, fake.get_mongo_id()
+    )
+
+    await virtool.subtractions.db.create(
+        db,
+        user_id,
+        upload_name,
+        "subtraction_unready",
+        "",
+        upload_id,
+        fake.get_mongo_id(),
+    )
+
+    await create_subtraction_files(
+        pg, subtraction_1["_id"], FILES, subtractions_path / "subtraction_1"
+    )
 
     logger.debug("Created fake subtractions")
