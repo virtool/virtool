@@ -19,7 +19,7 @@ async def create_fake_samples(app: App) -> List[dict]:
     return samples
 
 
-def _create_fake_composition(fake: FakerWrapper):
+def create_fake_composition(fake: FakerWrapper):
     left = 100
     sent = 0
     while left > 0 and sent < 4:
@@ -49,7 +49,7 @@ async def create_fake_quality(fake: FakerWrapper) -> dict:
         "sequences":
         fake.list(25, value_types=[int]),
         "composition": [
-            list(_create_fake_composition(fake))
+            list(create_fake_composition(fake))
             for _ in range(fake.integer(4, 8))
         ],
         "hold":
