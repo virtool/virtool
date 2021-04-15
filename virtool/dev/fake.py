@@ -20,7 +20,6 @@ from virtool.hmm.fake import create_fake_hmms
 from virtool.jobs.utils import JobRights
 from virtool.otus.fake import create_fake_otus
 from virtool.subtractions.fake import create_fake_subtractions
-from virtool.samples.fake import create_fake_samples
 from virtool.types import App
 from virtool.utils import ensure_data_dir, random_alphanumeric
 
@@ -29,14 +28,14 @@ logger = getLogger(__name__)
 REF_ID = "reference_1"
 USER_ID = "bob"
 
+
 async def populate(app: App):
     await create_fake_user(app)
     await create_fake_subtractions(app, USER_ID)
     await create_fake_analysis(app)
+    await create_fake_jobs(app)
     await create_fake_hmms(app)
     await create_fake_otus(app, REF_ID, USER_ID)
-    await create_fake_samples(app)
-    await create_fake_jobs(app)
 
 
 async def remove_fake_data_path(app: App):
@@ -94,64 +93,6 @@ async def create_fake_user(app: App):
     logger.debug("Created fake user")
 
 
-async def create_fake_subtractions(app: App):
-    """
-    Create fake subtractions and their associated uploads and subtraction files.
-
-    Two subtractions are ready for use. One has ``ready`` set to ``False`` and can be used for
-    testing subtraction finalization.
-
-    :param app: the application object
-
-    """
-    async with AsyncSession(app["pg"]) as session:
-        upload = Upload(name="test.fa.gz", type="subtraction", user=USER_ID)
-
-        session.add(upload)
-        await session.flush()
-
-        upload_id = upload.id
-        upload_name = upload.name
-
-        await session.commit()
-
-    upload = {"id": upload_id, "name": upload_name}
-
-    await app["db"].subtraction.insert_many(
-        [
-            {
-                "_id": "subtraction_1",
-                "name": "Subtraction 1",
-                "nickname": "",
-                "deleted": False,
-                "ready": True,
-                "file": upload,
-                "user": {"id": USER_ID},
-            },
-            {
-                "_id": "subtraction_2",
-                "name": "Subtraction 2",
-                "nickname": "",
-                "deleted": False,
-                "ready": True,
-                "file": upload,
-                "user": {"id": USER_ID},
-            },
-            {
-                "_id": "subtraction_unready",
-                "name": "Subtraction Unready",
-                "nickname": "",
-                "deleted": False,
-                "ready": False,
-                "file": upload,
-                "user": {"id": USER_ID},
-            },
-        ]
-    )
-
-    logger.debug("Created fake subtractions")
-
-
 async def create_fake_analysis(app: App):
     """
     Create fake analyses in the database.
@@ -168,51 +109,6 @@ async def create_fake_analysis(app: App):
         "subtraction_1",
         "subtraction_2",
     ]
-
-    file = await virtool.analyses.files.create_analysis_file(app["pg"], "analysis_2", "fasta", "result.fa", 123456)
-    await app["db"].analyses.insert_many([
-        {
-            "_id": "analysis_1",
-            "workflow": "pathoscope",
-            "created_at": virtool.utils.timestamp(),
-            "ready": False,
-            "job": {
-                "id": "job_1"
-            },
-            "index": {
-                "version": 2,
-                "id": "foo"
-            },
-            "user": {
-                "id": USER_ID
-            },
-            "sample": {
-                "id": sample_id
-            },
-            "reference": {
-                "id": ref_id
-            },
-            "subtractions": subtractions
-        },
-        {
-            "_id": "analysis_2",
-            "workflow": "pathoscope",
-            "created_at": virtool.utils.timestamp(),
-            "ready": True,
-            "job": {
-                "id": "job_2"
-            },
-            "index": {
-                "version": 2,
-                "id": "foo"
-            },
-            "user": {
-                "id": USER_ID
-            },
-            "sample": {
-                "id": sample_id
-            }
-        }])
 
     file = await virtool.analyses.files.create_analysis_file(
         app["pg"],
