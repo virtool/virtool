@@ -17,7 +17,6 @@ import virtool.errors
 import virtool.jobs.db
 import virtool.pg.utils
 import virtool.samples.utils
-import virtool.samples.utils
 import virtool.tasks.pg
 import virtool.utils
 from virtool.labels.models import Label
@@ -151,7 +150,8 @@ async def check_rights(db, sample_id, client, write=True):
     if not sample_rights:
         raise virtool.errors.DatabaseError("Sample does not exist")
 
-    has_read, has_write = virtool.samples.utils.get_sample_rights(sample_rights, client)
+    has_read, has_write = virtool.samples.utils.get_sample_rights(
+        sample_rights, client)
 
     return has_read and (write is False or has_write)
 
@@ -292,7 +292,8 @@ async def recalculate_workflow_tags(db, sample_id: str) -> dict:
 
     """
     analyses = await asyncio.shield(
-        db.analyses.find({"sample.id": sample_id}, ["ready", "workflow"]).to_list(None)
+        db.analyses.find({"sample.id": sample_id}, [
+                         "ready", "workflow"]).to_list(None)
     )
 
     update = virtool.samples.utils.calculate_workflow_tags(analyses)
@@ -417,7 +418,8 @@ async def compress_sample_reads(app: App, sample: Dict[str, Any]):
         target_filename = (
             "reads_1.fq.gz" if "reads_1.fastq" in path else "reads_2.fq.gz"
         )
-        target_path = os.path.join(data_path, "samples", sample_id, target_filename)
+        target_path = os.path.join(
+            data_path, "samples", sample_id, target_filename)
 
         await app["run_in_thread"](compress_file, path, target_path, 1)
 
@@ -475,6 +477,21 @@ class CompressSamplesTask(Task):
             )
 
         await virtool.tasks.pg.update(self.pg, self.id, step="compress_samples")
+
+
+async def create_sample_reads_record(app: App, sample_id: str,
+                                  path: Path, name: str = None):
+    async with AsyncSession(app["pg"]) as session:
+        reads = SampleReads(
+            name=name or path.name,
+            name_on_disk=path.name,
+            size=path.stat().st_size,
+            sample=sample_id,
+        )
+
+        session.add(reads)
+
+        await session.commit()
 
 
 async def move_sample_files_to_pg(app: App, sample: Dict[str, any]):
@@ -602,7 +619,8 @@ async def finalize(
 
             try:
                 await run_in_thread(
-                    virtool.utils.rm, Path(data_path) / "files" / row.name_on_disk
+                    virtool.utils.rm, Path(data_path) /
+                    "files" / row.name_on_disk
                 )
             except FileNotFoundError:
                 pass

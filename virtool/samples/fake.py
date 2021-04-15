@@ -2,8 +2,8 @@ from virtool.fake.identifiers import USER_ID
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import create_sample, finalize
 from virtool.types import App
-from virtool.samples.files import create_reads_file
 from sqlalchemy.ext.asyncio import AsyncEngine
+from virtool.samples.db import create_sample_reads_record
 from typing import List
 from pathlib import Path
 
@@ -17,21 +17,6 @@ async def create_fake_samples(app: App) -> List[dict]:
     samples.append(await create_fake_sample(app, paired=False, finalized=True))
     samples.append(await create_fake_sample(app, finalized=False))
     return samples
-
-
-async def create_fake_read_file(pg: AsyncEngine,
-                                path: Path,
-                                sample_id: str,
-                                name: str = None) -> dict:
-    name = name or path.name
-    size = path.stat().st_size
-    return await create_reads_file(
-        pg,
-        name=name,
-        size=size,
-        name_on_disk=path.name,
-        sample_id=sample_id,
-    )
 
 
 def _create_fake_composition(fake: FakerWrapper):
@@ -91,24 +76,22 @@ async def create_fake_sample(app: App, paired=False, finalized=False) -> dict:
 
     sample_id = fake.get_mongo_id()
 
-    files = []
-
     if finalized is True:
         if paired:
-            files.extend([
-                await create_fake_read_file(
-                    pg,
-                    READ_FILES_PATH / f"paired_{n}.fq.gz",
-                    sample_id,
+            for n in (1, 2):
+                await create_sample_reads_record(
+                    app,
+                    sample_id=sample_id,
                     name=f"read_{n}.fq.gz",
-                ) for n in (1, 2)
-            ])
+                    path=READ_FILES_PATH / f"paired_{n}.fq.gz",
+                )
         else:
-            files.append(await create_fake_read_file(pg,
-                                                     READ_FILES_PATH /
-                                                     "single.fq.gz",
-                                                     sample_id,
-                                                     name="reads.fq.gz"))
+            await create_sample_reads_record(
+                app,
+                sample_id=sample_id,
+                name="reads.fq.gz",
+                path=READ_FILES_PATH / "single.fq.gz",
+            )
 
     sample = await create_sample(
         _id=sample_id,
@@ -118,10 +101,10 @@ async def create_fake_sample(app: App, paired=False, finalized=False) -> dict:
         isolate="Isolate A1",
         locale="",
         subtractions=subtraction_ids,
-        files=files,
+        files=[],
         notes=fake.text(50),
         library_type="normal",
-        labels=fake.words(3),
+        labels=[],
         user_id=USER_ID,
         group=fake.words(1)[0],
         settings={
