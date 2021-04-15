@@ -278,8 +278,7 @@ async def upload(req):
     if file_name not in FILES:
         return bad_request("Unsupported index file name")
 
-    exists = await virtool.indexes.utils.check_file_exists(pg, file_name, index_id)
-    if exists is not None:
+    if await virtool.indexes.utils.check_file_exists(pg, file_name, index_id):
         return conflict("File name already exists")
 
     reference_id = document["reference"]["id"]

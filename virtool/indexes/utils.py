@@ -1,10 +1,7 @@
-from typing import Optional
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 from virtool.indexes.models import IndexFile
-from virtool.pg.base import Base
 
 
 def check_index_file_type(file_name: str) -> str:
@@ -23,7 +20,7 @@ def check_index_file_type(file_name: str) -> str:
         return "bowtie2"
 
 
-async def check_file_exists(pg: AsyncEngine, filename: str, index: str) -> Optional[Base]:
+async def check_file_exists(pg: AsyncEngine, filename: str, index: str) -> bool:
     """
     Check if a index file already exists in `IndexFile` SQL table.
 
@@ -31,7 +28,7 @@ async def check_file_exists(pg: AsyncEngine, filename: str, index: str) -> Optio
     :param filename: the name of the index file
     :param index: the id of the index
 
-    :return: `None` or a row from `IndexFile` table
+    :return: `True` is file already exists, otherwise return `False`
 
     """
     async with AsyncSession(pg) as session:
@@ -39,4 +36,4 @@ async def check_file_exists(pg: AsyncEngine, filename: str, index: str) -> Optio
             select(IndexFile).filter_by(name=filename, index=index)
         )).scalar()
 
-    return exists
+    return False if exists is None else True
