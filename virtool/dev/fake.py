@@ -18,6 +18,7 @@ import virtool.users.db
 import virtool.users.db
 import virtool.utils
 from virtool.hmm.fake import create_fake_hmms
+from virtool.indexes.fake import create_fake_indexes
 from virtool.jobs.utils import JobRights
 from virtool.otus.fake import create_fake_otus
 from virtool.subtractions.fake import create_fake_subtractions
@@ -37,6 +38,7 @@ async def populate(app: App):
     await create_fake_jobs(app)
     await create_fake_hmms(app)
     await create_fake_otus(app, REF_ID, USER_ID)
+    await create_fake_indexes(app, REF_ID, USER_ID)
 
 
 async def remove_fake_data_path(app: App):
