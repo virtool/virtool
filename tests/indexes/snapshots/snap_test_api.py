@@ -49,8 +49,6 @@ snapshots['TestCreate.test[True-uvloop] 1'] = {
 snapshots['TestCreate.test[True-uvloop] 2'] = {
     '_id': 'xjqvxigh',
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-    ],
     'has_files': True,
     'has_json': False,
     'job': {
@@ -69,8 +67,6 @@ snapshots['TestCreate.test[True-uvloop] 2'] = {
 
 snapshots['TestCreate.test[True-uvloop] 3'] = {
     'created_at': '2015-10-06T20:00:00Z',
-    'files': [
-    ],
     'has_files': True,
     'has_json': False,
     'id': 'xjqvxigh',
@@ -268,9 +264,6 @@ snapshots['test_upload[uvloop-404] 1'] = {
 
 snapshots['test_upload[uvloop-None] 2'] = {
     '_id': 'foo',
-    'files': [
-        1
-    ],
     'reference': {
         'id': 'bar'
     },
@@ -281,9 +274,6 @@ snapshots['test_upload[uvloop-None] 2'] = {
 
 snapshots['test_upload[uvloop-404] 2'] = {
     '_id': 'foo',
-    'files': [
-        1
-    ],
     'reference': {
         'id': 'bar'
     },

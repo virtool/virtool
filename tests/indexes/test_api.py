@@ -537,7 +537,12 @@ async def test_upload(error, tmpdir, spawn_client, snapshot, resp_is, pg_session
     }
 
     if error == "409":
-        index["files"] = [1]
+        index_file = IndexFile(name="reference.1.bt2", index="foo")
+
+        async with pg_session as session:
+            session.add(index_file)
+
+            await session.commit()
 
     await client.db.indexes.insert_one(index)
 

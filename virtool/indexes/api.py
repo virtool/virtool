@@ -278,6 +278,9 @@ async def upload(req):
     if file_name not in FILES:
         return bad_request("Unsupported index file name")
 
+    if await virtool.indexes.utils.check_file_exists(pg, file_name, index_id):
+        return conflict("File name already exists")
+
     reference_id = document["reference"]["id"]
     file_type = virtool.indexes.utils.check_index_file_type(file_name)
 
@@ -291,9 +294,6 @@ async def upload(req):
     upload_id = index_file["id"]
     path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id / file_name
 
-    if upload_id in document.get("files", []):
-        return conflict("File name already exists")
-
     try:
         size = await virtool.uploads.utils.naive_writer(req, path)
     except asyncio.CancelledError:
@@ -303,12 +303,6 @@ async def upload(req):
         return aiohttp.web.Response(status=499)
 
     index_file = await virtool.uploads.db.finalize(pg, size, upload_id, IndexFile)
-
-    await db.indexes.find_one_and_update({"_id": index_id}, {
-        "$push": {
-            "files": upload_id
-        }
-    })
 
     headers = {
         "Location": f"/api/indexes/{index_id}/files/{file_name}"
