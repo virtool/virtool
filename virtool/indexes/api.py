@@ -5,6 +5,7 @@ from pathlib import Path
 
 import aiohttp.web
 from aiohttp.web_fileresponse import FileResponse
+from sqlalchemy import exc
 
 import virtool.api.json
 import virtool.api.utils
@@ -272,18 +273,18 @@ async def upload(req):
     if document is None:
         return not_found()
 
-    if await virtool.indexes.utils.check_file_exists(pg, name, index_id):
-        return conflict("File name already exists")
-
     reference_id = document["reference"]["id"]
     file_type = virtool.indexes.utils.check_index_file_type(name)
 
-    index_file = await virtool.indexes.files.create_index_file(
-        pg,
-        index_id,
-        file_type,
-        name
-    )
+    try:
+        index_file = await virtool.indexes.files.create_index_file(
+            pg,
+            index_id,
+            file_type,
+            name
+        )
+    except exc.IntegrityError:
+        return conflict("File name already exists")
 
     upload_id = index_file["id"]
     path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id / name
