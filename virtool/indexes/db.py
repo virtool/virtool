@@ -4,7 +4,7 @@ Work with indexes in the database.
 """
 import asyncio
 import asyncio.tasks
-from typing import Optional, Union, List, Tuple
+from typing import Optional, Union, List, Tuple, Dict
 
 import pymongo
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -334,7 +334,7 @@ async def reset_history(db, index_id: str):
     })
 
 
-async def get_patched_otus(db, settings: dict, manifest: dict) -> List[dict]:
+async def get_patched_otus(db, settings: dict, manifest: Dict[str, int]) -> List[dict]:
     """
     Get joined OTUs patched to a specific version based on a manifest of OTU ids and versions.
 
