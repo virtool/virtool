@@ -4,9 +4,7 @@ import { connect } from "react-redux";
 import styled from "styled-components";
 import { logout } from "../../account/actions";
 import { Dropdown, DropdownMenuItem, DropdownMenuLink, DropdownMenuList, Icon, VTLogo } from "../../base";
-import { getSoftwareUpdates } from "../../updates/actions";
 import { NavBarItem } from "./NavBarItem";
-import Update from "./Update";
 
 const NavBarLeft = styled.div`
     display: flex;
@@ -55,71 +53,55 @@ const StyledNavBar = styled.div`
     z-index: 90;
 `;
 
-export class Bar extends React.Component {
-    componentDidMount() {
-        this.props.onGet();
-    }
+export const Bar = ({ administrator, dev, userId, onLogout }) => (
+    <StyledNavBar>
+        <NavBarLeft>
+            <NavBarLogo />
+            <NavBarItem to="/home">Home</NavBarItem>
+            <NavBarItem to="/jobs">Jobs</NavBarItem>
+            <NavBarItem to="/samples">Samples</NavBarItem>
+            <NavBarItem to="/refs">References</NavBarItem>
+            <NavBarItem to="/hmm">HMM</NavBarItem>
+            <NavBarItem to="/subtraction">Subtraction</NavBarItem>
+        </NavBarLeft>
 
-    render() {
-        return (
-            <StyledNavBar>
-                <NavBarLeft>
-                    <NavBarLogo />
-                    <NavBarItem to="/home">Home</NavBarItem>
-                    <NavBarItem to="/jobs">Jobs</NavBarItem>
-                    <NavBarItem to="/samples">Samples</NavBarItem>
-                    <NavBarItem to="/refs">References</NavBarItem>
-                    <NavBarItem to="/hmm">HMM</NavBarItem>
-                    <NavBarItem to="/subtraction">Subtraction</NavBarItem>
-                </NavBarLeft>
+        <NavBarRight>
+            <NavBarItem target="_blank" to="//gitter.im/virtool/virtool" rel="noopener noreferrer">
+                <Icon name="comments" />
+            </NavBarItem>
 
-                <NavBarRight>
-                    <Update />
+            <NavBarItem target="_blank" to="//virtool.ca/docs/manual/start/installation/" rel="noopener noreferrer">
+                <Icon name="book" />
+            </NavBarItem>
 
-                    <NavBarItem target="_blank" to="//gitter.im/virtool/virtool" rel="noopener noreferrer">
-                        <Icon name="comments" />
-                    </NavBarItem>
+            {dev && (
+                <NavBarItem to={{ state: { devCommands: true } }}>
+                    <Icon color="red" name="bug" />
+                </NavBarItem>
+            )}
 
-                    <NavBarItem
+            <Dropdown>
+                <NavDropdownButton>
+                    <Icon name="user" />
+                    <span>{userId}</span>
+                    <Icon name="caret-down" />
+                </NavDropdownButton>
+                <DropdownMenuList>
+                    <DropdownMenuLink to="/account">Account</DropdownMenuLink>
+                    {administrator && <DropdownMenuLink to="/administration">Administration </DropdownMenuLink>}
+                    <DropdownMenuLink
+                        to="//gitreports.com/issue/virtool/virtool"
                         target="_blank"
-                        to="//virtool.ca/docs/manual/start/installation/"
                         rel="noopener noreferrer"
                     >
-                        <Icon name="book" />
-                    </NavBarItem>
-
-                    {this.props.dev && (
-                        <NavBarItem to={{ state: { devCommands: true } }}>
-                            <Icon color="red" name="bug" />
-                        </NavBarItem>
-                    )}
-
-                    <Dropdown>
-                        <NavDropdownButton>
-                            <Icon name="user" />
-                            <span>{this.props.userId}</span>
-                            <Icon name="caret-down" />
-                        </NavDropdownButton>
-                        <DropdownMenuList>
-                            <DropdownMenuLink to="/account">Account</DropdownMenuLink>
-                            {this.props.administrator && (
-                                <DropdownMenuLink to="/administration">Administration </DropdownMenuLink>
-                            )}
-                            <DropdownMenuLink
-                                to="//gitreports.com/issue/virtool/virtool"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Report Issue
-                            </DropdownMenuLink>
-                            <DropdownMenuItem onSelect={this.props.logout}>Logout</DropdownMenuItem>
-                        </DropdownMenuList>
-                    </Dropdown>
-                </NavBarRight>
-            </StyledNavBar>
-        );
-    }
-}
+                        Report Issue
+                    </DropdownMenuLink>
+                    <DropdownMenuItem onSelect={onLogout}>Logout</DropdownMenuItem>
+                </DropdownMenuList>
+            </Dropdown>
+        </NavBarRight>
+    </StyledNavBar>
+);
 
 export const mapStateToProps = state => ({
     ...state.account,
@@ -128,12 +110,8 @@ export const mapStateToProps = state => ({
 });
 
 export const mapDispatchToProps = dispatch => ({
-    logout: () => {
+    onLogout: () => {
         dispatch(logout());
-    },
-
-    onGet: () => {
-        dispatch(getSoftwareUpdates());
     }
 });
 

@@ -10,7 +10,6 @@ import {
     ViewHeaderTitle,
     WideContainer
 } from "../../base";
-import Updates from "../../updates/components/Viewer";
 
 import UserDetail from "../../users/components/Detail";
 import Users from "../../users/components/Users";
@@ -28,7 +27,6 @@ export const Settings = ({ loading }) => {
                 <Redirect from="/administration" to="/administration/settings" exact />
                 <Route path="/administration/settings" component={ServerSettings} />
                 <Route path="/administration/users" component={Users} exact />
-                <Route path="/administration/updates" component={Updates} />
                 <Route path="/administration/users/:userId" component={UserDetail} />
             </Switch>
         );
@@ -43,7 +41,6 @@ export const Settings = ({ loading }) => {
             <Tabs bsStyle="tabs">
                 <TabLink to="/administration/settings">Settings</TabLink>
                 <TabLink to="/administration/users">Users</TabLink>
-                <TabLink to="/administration/updates">Updates</TabLink>
             </Tabs>
 
             <NarrowContainer>{content}</NarrowContainer>
