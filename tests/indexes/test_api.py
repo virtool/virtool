@@ -515,7 +515,7 @@ async def test_delete_index(spawn_job_client, error):
             assert doc["index"]["id"] == doc["index"]["version"] == "unbuilt"
 
 
-@pytest.mark.parametrize("error", [None, "409", "400", "404"])
+@pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])
 async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_session):
     client = await spawn_job_client(authorize=True)
     path = Path(sys.path[0]) / "tests" / "test_files" / "index" / "reference.1.bt2"
@@ -544,19 +544,24 @@ async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_ses
 
             await session.commit()
 
-    await client.db.indexes.insert_one(index)
+    if not error == "404_index":
+        await client.db.indexes.insert_one(index)
 
     url = "/api/indexes/foo/files"
 
-    if error == "400":
+    if error == "404_file":
         url += "/reference.bt2"
     else:
         url += "/reference.1.bt2"
 
     resp = await client.put(url, data=files)
 
-    if error == "400":
-        assert await resp_is.bad_request(resp, "Unsupported index file name")
+    if error == "404_file":
+        assert await resp_is.not_found(resp, "Index file not found")
+        return
+
+    if error == "404_index":
+        assert await resp_is.not_found(resp, "Not found")
         return
 
     if error == "409":
