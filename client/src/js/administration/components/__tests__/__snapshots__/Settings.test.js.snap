@@ -22,11 +22,6 @@ exports[`<Settings /> should render when [props.loading=false] 1`] = `
     >
       Users
     </Tabs__TabLink>
-    <Tabs__TabLink
-      to="/administration/updates"
-    >
-      Updates
-    </Tabs__TabLink>
   </Tabs>
   <Container__NarrowContainer>
     <Switch>
@@ -51,18 +46,6 @@ exports[`<Settings /> should render when [props.loading=false] 1`] = `
         }
         exact={true}
         path="/administration/users"
-      />
-      <Route
-        component={
-          Object {
-            "$$typeof": Symbol(react.memo),
-            "WrappedComponent": [Function],
-            "compare": null,
-            "displayName": "Connect(SoftwareUpdateViewer)",
-            "type": [Function],
-          }
-        }
-        path="/administration/updates"
       />
       <Route
         component={
@@ -102,11 +85,6 @@ exports[`<Settings /> should render when [props.loading=true] 1`] = `
       to="/administration/users"
     >
       Users
-    </Tabs__TabLink>
-    <Tabs__TabLink
-      to="/administration/updates"
-    >
-      Updates
     </Tabs__TabLink>
   </Tabs>
   <Container__NarrowContainer>

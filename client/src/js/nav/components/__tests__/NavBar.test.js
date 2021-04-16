@@ -2,11 +2,10 @@ import { Bar, mapStateToProps, mapDispatchToProps } from "../NavBar";
 
 describe("<Bar />", () => {
     const props = {
-        onGet: jest.fn(),
-        id: "foo",
         administrator: true,
-        logout: jest.fn(),
-        pending: false
+        id: "foo",
+        pending: false,
+        onLogout: jest.fn()
     };
     it("should render", () => {
         const wrapper = shallow(<Bar {...props} />);
@@ -33,15 +32,9 @@ describe("mapStateToProps", () => {
 describe("mapDispatchToProps", () => {
     const dispatch = jest.fn();
 
-    it("should return logout in props", () => {
+    it("should return onLogout in props", () => {
         const props = mapDispatchToProps(dispatch);
-        props.logout();
-        expect(dispatch).toHaveBeenCalled();
-    });
-
-    it("should return onGet in props", () => {
-        const props = mapDispatchToProps(dispatch);
-        props.onGet();
+        props.onLogout();
         expect(dispatch).toHaveBeenCalled();
     });
 });

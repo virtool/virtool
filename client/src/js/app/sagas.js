@@ -16,7 +16,6 @@ import { watchSamples } from "../samples/sagas";
 import { watchLabels } from "../labels/sagas";
 import { watchSubtraction } from "../subtraction/sagas";
 import { watchTasks } from "../tasks/sagas";
-import { watchUpdates } from "../updates/sagas";
 import { watchUsers } from "../users/sagas";
 import { PUSH_STATE } from "./actionTypes";
 
@@ -54,7 +53,6 @@ function* rootSaga() {
         watchSamples(),
         watchSettings(),
         watchGroups(),
-        watchUpdates(),
         watchUsers(),
         watchReferences()
     ]);

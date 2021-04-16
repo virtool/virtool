@@ -36,7 +36,6 @@ exports[`<Bar /> should render 1`] = `
     </NavBarItem>
   </NavBar__NavBarLeft>
   <NavBar__NavBarRight>
-    <Connect(NotificationIcon) />
     <NavBarItem
       rel="noopener noreferrer"
       target="_blank"

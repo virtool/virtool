@@ -219,13 +219,11 @@ export const CREATE_FIRST_USER = createRequestActionType("CREATE_FIRST_USER");
 export const EDIT_USER = createRequestActionType("EDIT_USER");
 export const REMOVE_USER = createRequestActionType("REMOVE_USER");
 
-// Updates
-export const WS_UPDATE_STATUS = "WS_UPDATE_STATUS";
-export const GET_SOFTWARE_UPDATES = createRequestActionType("GET_SOFTWARE_UPDATES");
-export const INSTALL_SOFTWARE_UPDATES = createRequestActionType("INSTALL_SOFTWARE_UPDATES");
-
 //Labels
 export const UPDATE_LABEL = createRequestActionType("UPDATE_LABEL");
 export const LIST_LABELS = createRequestActionType("LIST_LABELS");
 export const CREATE_LABEL = createRequestActionType("CREATE_LABEL");
 export const REMOVE_LABEL = createRequestActionType("REMOVE_LABEL");
+
+// Status
+export const WS_UPDATE_STATUS = "WS_UPDATE_STATUS";

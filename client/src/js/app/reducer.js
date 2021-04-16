@@ -17,7 +17,6 @@ import samplesReducer from "../samples/reducer";
 import labelsReducer from "../labels/reducer";
 import subtractionReducer from "../subtraction/reducer";
 import tasksReducer from "../tasks/reducer";
-import updatesReducer from "../updates/reducer";
 import usersReducer from "../users/reducer";
 import { CREATE_FIRST_USER, LOGIN, LOGOUT, RESET_PASSWORD, SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
 import rootSaga from "./sagas";
@@ -122,7 +121,6 @@ export const createAppStore = history => {
             settings: settingsReducer,
             subtraction: subtractionReducer,
             tasks: tasksReducer,
-            updates: updatesReducer,
             users: usersReducer
         }),
         applyMiddleware(sagaMiddleware, routerMiddleware(history))
