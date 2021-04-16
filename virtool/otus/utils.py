@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import List, Union
+from typing import List, Union, Optional
 
 import virtool.errors
 import virtool.history.utils
@@ -96,8 +96,8 @@ def find_isolate(isolates: List[dict], isolate_id: str) -> dict:
     return next((isolate for isolate in isolates if isolate["id"] == isolate_id), None)
 
 
-def format_otu(joined: Union[dict, None], issues: Union[dict, None, bool] = False,
-               most_recent_change: Union[dict, None] = None) -> dict:
+def format_otu(joined: Optional[dict], issues: Union[dict, None, bool] = False,
+               most_recent_change: Optional[dict] = None) -> dict:
     """
     Join the otu identified by the passed ``otu_id`` or use the ``joined`` otu document if available. Then,
     format the joined otu into a format that can be directly returned to API clients.

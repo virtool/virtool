@@ -1,5 +1,5 @@
 import arrow
-from typing import Tuple, Union, List
+from typing import Tuple, Union, List, Optional
 import datetime
 import os
 import json
@@ -41,10 +41,10 @@ def compose_create_description(document: dict) -> str:
 
 
 def compose_edit_description(
-        name: Union[str, None],
-        abbreviation: Union[str, None],
-        old_abbreviation: Union[str, None],
-        schema: Union[dict, None]
+        name: Optional[str],
+        abbreviation: Optional[str],
+        old_abbreviation: Optional[str],
+        schema: Optional[dict]
 ):
     """
     Compose a change description for an edit on an existing OTU.
@@ -107,7 +107,7 @@ def compose_remove_description(document: dict) -> str:
     return description
 
 
-def derive_otu_information(old: Union[dict, None], new: Union[dict, None]) -> Tuple[str, str, Union[int, str], str]:
+def derive_otu_information(old: Optional[dict], new: Optional[dict]) -> Tuple[str, str, Union[int, str], str]:
     """
     Derive OTU information for a new change document from the old and new joined OTU documents.
 

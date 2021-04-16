@@ -4,7 +4,7 @@ Work with indexes in the database.
 """
 import asyncio
 import asyncio.tasks
-from typing import Optional, Union, List, Tuple, Dict
+from typing import Optional, List, Tuple, Dict
 
 import pymongo
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -279,7 +279,7 @@ async def tag_unbuilt_changes(db, ref_id: str, index_id: str, index_version: int
     })
 
 
-async def get_unbuilt_stats(db, ref_id: Union[str, None] = None) -> dict:
+async def get_unbuilt_stats(db, ref_id: Optional[str] = None) -> dict:
     """
     Get the number of unbuilt changes and number of OTUs affected by those changes. Used to populate the metadata for a
     index find request.

@@ -11,7 +11,7 @@ import tarfile
 import tempfile
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Tuple, Optional
 
 import aiofiles
 import arrow
@@ -40,7 +40,7 @@ def average_list(list1, list2):
     return [(value + list2[i]) / 2 for i, value in enumerate(list1)]
 
 
-def base_processor(document: Union[dict, None]) -> Union[dict, None]:
+def base_processor(document: Optional[dict]) -> Optional[dict]:
     """
     Converts a document `dict` returned from MongoDB into a `dict` that can be passed into a JSON response. Removes the
     '_id' key and reassigns it to `id`.
@@ -258,7 +258,7 @@ def is_gzipped(path):
     return True
 
 
-def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Union[None, Iterable[str]] = None) -> str:
+def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Optional[Iterable[str]] = None) -> str:
     """
     Generates a random string composed of letters and numbers.
 

@@ -59,7 +59,7 @@ import json.decoder
 import logging
 import os
 import shutil
-from typing import List, Union
+from typing import List, Optional
 
 import aiohttp
 import pymongo
@@ -969,7 +969,7 @@ def compose_base_find_query(user_id: str, administrator: bool, groups: list):
     }
 
 
-async def delete_group_or_user(db, ref_id: str, subdocument_id: str, field: str) -> Union[str, None]:
+async def delete_group_or_user(db, ref_id: str, subdocument_id: str, field: str) -> Optional[str]:
     """
     Delete an existing group or user as decided by the `field` argument.
 
@@ -1000,7 +1000,7 @@ async def delete_group_or_user(db, ref_id: str, subdocument_id: str, field: str)
     return subdocument_id
 
 
-async def edit_group_or_user(db, ref_id: str, subdocument_id: str, field: str, data: dict) -> Union[dict, None]:
+async def edit_group_or_user(db, ref_id: str, subdocument_id: str, field: str, data: dict) -> Optional[dict]:
     """
     Edit an existing group or user as decided by the `field` argument. Returns `None` if the reference, group, or user
     does not exist.
@@ -1147,7 +1147,7 @@ async def attach_computed(db, document: dict) -> dict:
     }
 
 
-async def get_contributors(db, ref_id: str) -> Union[None, List[dict]]:
+async def get_contributors(db, ref_id: str) -> Optional[List[dict]]:
     """
     Return an list of contributors and their contribution count for a specific ref.
 
@@ -1159,7 +1159,7 @@ async def get_contributors(db, ref_id: str) -> Union[None, List[dict]]:
     return await virtool.history.db.get_contributors(db, {"reference.id": ref_id})
 
 
-async def get_internal_control(db, internal_control_id: Union[None, str], ref_id: str) -> Union[None, dict]:
+async def get_internal_control(db, internal_control_id: Optional[str], ref_id: str) -> Optional[dict]:
     """
     Return a minimal dict describing the ref internal control given a `otu_id`.
 
@@ -1186,7 +1186,7 @@ async def get_internal_control(db, internal_control_id: Union[None, str], ref_id
     }
 
 
-async def get_latest_build(db, ref_id: str) -> Union[dict, None]:
+async def get_latest_build(db, ref_id: str) -> Optional[dict]:
     """
     Return the latest index build for the ref.
 
@@ -1291,12 +1291,12 @@ async def create_document(
         db,
         settings: dict,
         name: str,
-        organism: Union[str, None],
+        organism: Optional[str],
         description: str,
-        data_type: Union[str, None],
+        data_type: Optional[str],
         created_at=None,
-        ref_id: Union[str, None] = None,
-        user_id: Union[str, None] = None,
+        ref_id: Optional[str] = None,
+        user_id: Optional[str] = None,
         users=None
 ):
     if ref_id and await db.references.count_documents({"_id": ref_id}):
@@ -1499,7 +1499,7 @@ async def export(app, ref_id):
     return virtool.references.utils.clean_export_list(otu_list)
 
 
-async def insert_change(app, otu_id: str, verb: str, user_id: str, old: Union[None, dict] = None):
+async def insert_change(app, otu_id: str, verb: str, user_id: str, old: Optional[dict] = None):
     """
     Insert a history document for the OTU identified by `otu_id` and the passed `verb`.
 
