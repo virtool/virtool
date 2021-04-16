@@ -254,25 +254,7 @@ snapshots['test_upload[uvloop-None] 1'] = {
     'type': 'bowtie2'
 }
 
-snapshots['test_upload[uvloop-404] 1'] = {
-    'id': 1,
-    'index': 'foo',
-    'name': 'reference.1.bt2',
-    'size': 7205747,
-    'type': 'bowtie2'
-}
-
 snapshots['test_upload[uvloop-None] 2'] = {
-    '_id': 'foo',
-    'reference': {
-        'id': 'bar'
-    },
-    'user': {
-        'id': 'test'
-    }
-}
-
-snapshots['test_upload[uvloop-404] 2'] = {
     '_id': 'foo',
     'reference': {
         'id': 'bar'

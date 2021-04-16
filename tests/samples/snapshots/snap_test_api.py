@@ -686,13 +686,6 @@ snapshots['TestCreate.test[uvloop-none] 1'] = {
     'all_read': True,
     'all_write': True,
     'created_at': '2015-10-06T20:00:00Z',
-    'files': [
-        {
-            'id': 1,
-            'name': 'test.fq.gz',
-            'size': 123456
-        }
-    ],
     'format': 'fastq',
     'group': 'none',
     'group_read': True,
@@ -732,13 +725,6 @@ snapshots['TestCreate.test[uvloop-none] 2'] = {
     'all_read': True,
     'all_write': True,
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-        {
-            'id': 1,
-            'name': 'test.fq.gz',
-            'size': 123456
-        }
-    ],
     'format': 'fastq',
     'group': 'none',
     'group_read': True,
@@ -771,13 +757,6 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
     'all_read': True,
     'all_write': True,
     'created_at': '2015-10-06T20:00:00Z',
-    'files': [
-        {
-            'id': 1,
-            'name': 'test.fq.gz',
-            'size': 123456
-        }
-    ],
     'format': 'fastq',
     'group': 'technician',
     'group_read': True,
@@ -817,13 +796,6 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 2'] = {
     'all_read': True,
     'all_write': True,
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-        {
-            'id': 1,
-            'name': 'test.fq.gz',
-            'size': 123456
-        }
-    ],
     'format': 'fastq',
     'group': 'technician',
     'group_read': True,
@@ -856,13 +828,6 @@ snapshots['TestCreate.test[uvloop-force_choice] 1'] = {
     'all_read': True,
     'all_write': True,
     'created_at': '2015-10-06T20:00:00Z',
-    'files': [
-        {
-            'id': 1,
-            'name': 'test.fq.gz',
-            'size': 123456
-        }
-    ],
     'format': 'fastq',
     'group': 'diagnostics',
     'group_read': True,
@@ -902,13 +867,6 @@ snapshots['TestCreate.test[uvloop-force_choice] 2'] = {
     'all_read': True,
     'all_write': True,
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-        {
-            'id': 1,
-            'name': 'test.fq.gz',
-            'size': 123456
-        }
-    ],
     'format': 'fastq',
     'group': 'diagnostics',
     'group_read': True,

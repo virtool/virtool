@@ -100,7 +100,6 @@ async def create_fake_sample(app: App, paired=False, finalized=False) -> dict:
         isolate="Isolate A1",
         locale="",
         subtractions=subtraction_ids,
-        files=[],
         notes=fake.text(50),
         library_type="normal",
         labels=[],

@@ -329,7 +329,7 @@ async def test_create_sample(dbi, mocker, snapshot, static_time, spawn_client):
 
     mocker.patch("virtool.db.utils.get_new_id", return_value="a2oj3gfd")
 
-    document = await virtool.samples.db.create_sample(dbi, "foo", "", "", "", "", "", [], [], "test", [], "bob", client.app["settings"])
+    document = await virtool.samples.db.create_sample(dbi, "foo", "", "", "", "", "", [], "test", [], "bob", client.app["settings"])
 
     snapshot.assert_match(document)
 

@@ -204,11 +204,11 @@ async def create_sample(
     locale: str,
     library_type: str,
     subtractions: List[str],
-    files: List[Dict[str, any]],
     notes: str,
     labels: List[int],
     user_id: str,
     settings: Dict[str, any],
+    paired=False,
     _id=None,
 ) -> Dict[str, any]:
     """
@@ -222,11 +222,12 @@ async def create_sample(
     :param locale: user-defined locale for the sample
     :param library_type: Type of library for a sample, defaults to None
     :param subtractions: IDs of default subtractions for the sample
-    :param files: list of upload IDs to associate with a sample
     :param notes: user-defined notes for the sample
     :param labels: IDs of labels associated with the sample
     :param user_id: the ID of the user that is creating the sample
     :param settings: the application settings
+    :param paired: Whether a sample is paired or not, defaults to False
+    :param _id: An id to assign to a sample instead of it being automatically generated
     :return: the newly inserted sample document
     """
     if _id is None:
@@ -249,7 +250,6 @@ async def create_sample(
         "group_write": settings.get("sample_group_write"),
         "all_read": settings.get("sample_all_read"),
         "all_write": settings.get("sample_all_write"),
-        "files": files,
         "labels": labels,
         "library_type": library_type,
         "subtractions": subtractions,
@@ -257,7 +257,7 @@ async def create_sample(
         "user": {"id": user_id},
         "group": group,
         "locale": locale,
-        "paired": len(files) == 2,
+        "paired": paired,
     }
 
     await db.samples.insert_one(document)

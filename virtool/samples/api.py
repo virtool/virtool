@@ -296,12 +296,10 @@ async def create(req):
         if non_existent_labels:
             return bad_labels_response(non_existent_labels)
 
-    # Make sure all of the passed file ids exist.
-    for file in data["files"]:
-        upload = await virtool.uploads.db.get(pg, file)
-
-        if not upload:
-            return bad_request("File does not exist")
+    try:
+        uploads = [(await virtool.uploads.db.get(pg, file_)).to_dict() for file_ in data["files"]]
+    except AttributeError:
+        return bad_request("File does not exist")
 
     sample_group_setting = settings["sample_group"]
 
@@ -326,20 +324,26 @@ async def create(req):
     elif sample_group_setting == "none":
         group = "none"
 
-    uploads = [(await virtool.uploads.db.get(pg, upload_id)).to_dict() for upload_id in data["files"]]
+    files = [
+        {"id": upload["id"], "name": upload["name"], "size": upload["size"]}
+        for upload in uploads
+    ]
 
-    files = list()
-    for upload in uploads:
-        file = {
-            "id": upload["id"],
-            "name": upload["name"],
-            "size": upload["size"]
-        }
-        files.append(file)
-
-    document = await virtool.samples.db.create_sample(db, data["name"], data["host"], data["isolate"], group,
-                                                      data["locale"], data["library_type"], data["subtractions"],
-                                                      files, data["notes"], data["labels"], user_id, settings)
+    document = await virtool.samples.db.create_sample(
+        db,
+        data["name"],
+        data["host"],
+        data["isolate"],
+        group,
+        data["locale"],
+        data["library_type"],
+        data["subtractions"],
+        data["notes"],
+        data["labels"],
+        user_id,
+        settings,
+        paired=len(files) == 2,
+    )
 
     sample_id = document["_id"]
 
