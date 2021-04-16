@@ -252,7 +252,7 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
 
 
-@routes.post("/api/indexes/{index_id}/files")
+@routes.jobs_api.put("/api/indexes/{index_id}/files/{name}")
 async def upload(req):
     """
     Upload a new index file to the `index_files` SQL table and the `references` folder in the
@@ -262,37 +262,31 @@ async def upload(req):
     db = req.app["db"]
     pg = req.app["pg"]
     index_id = req.match_info["index_id"]
+    name = req.match_info["name"]
 
-    errors = virtool.uploads.utils.naive_validator(req)
-
-    if errors:
-        return invalid_query(errors)
+    if name not in FILES:
+        return bad_request("Unsupported index file name")
 
     document = await db.indexes.find_one(index_id)
 
     if document is None:
         return not_found()
 
-    file_name = req.query.get("name")
-
-    if file_name not in FILES:
-        return bad_request("Unsupported index file name")
-
-    if await virtool.indexes.utils.check_file_exists(pg, file_name, index_id):
+    if await virtool.indexes.utils.check_file_exists(pg, name, index_id):
         return conflict("File name already exists")
 
     reference_id = document["reference"]["id"]
-    file_type = virtool.indexes.utils.check_index_file_type(file_name)
+    file_type = virtool.indexes.utils.check_index_file_type(name)
 
     index_file = await virtool.indexes.files.create_index_file(
         pg,
         index_id,
         file_type,
-        file_name
+        name
     )
 
     upload_id = index_file["id"]
-    path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id / file_name
+    path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id / name
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, path)
@@ -305,7 +299,7 @@ async def upload(req):
     index_file = await virtool.uploads.db.finalize(pg, size, upload_id, IndexFile)
 
     headers = {
-        "Location": f"/api/indexes/{index_id}/files/{file_name}"
+        "Location": f"/api/indexes/{index_id}/files/{name}"
     }
 
     return json_response(index_file, headers=headers, status=201)
