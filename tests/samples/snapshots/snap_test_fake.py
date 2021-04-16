@@ -12,8 +12,6 @@ snapshots['test_create_fake_unpaired[uvloop-False-True] 1'] = {
     'all_read': True,
     'all_write': True,
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-    ],
     'format': 'fastq',
     'group': 'blood',
     'group_read': True,
@@ -45,8 +43,6 @@ snapshots['test_create_fake_unpaired[uvloop-False-False] 1'] = {
     'all_read': True,
     'all_write': True,
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-    ],
     'format': 'fastq',
     'group': 'blood',
     'group_read': True,
@@ -80,8 +76,6 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
     'artifacts': [
     ],
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-    ],
     'format': 'fastq',
     'group': 'blood',
     'group_read': True,
@@ -247,8 +241,6 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
     'artifacts': [
     ],
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-    ],
     'format': 'fastq',
     'group': 'range',
     'group_read': True,
@@ -422,8 +414,6 @@ snapshots['test_create_fake_samples[uvloop] 3'] = {
     'all_read': True,
     'all_write': True,
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-    ],
     'format': 'fastq',
     'group': 'clearly',
     'group_read': True,
@@ -457,8 +447,6 @@ snapshots['test_create_fake_unpaired[uvloop-True-True] 1'] = {
     'artifacts': [
     ],
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-    ],
     'format': 'fastq',
     'group': 'blood',
     'group_read': True,
@@ -624,8 +612,6 @@ snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
     'artifacts': [
     ],
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-    ],
     'format': 'fastq',
     'group': 'blood',
     'group_read': True,

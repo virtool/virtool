@@ -147,8 +147,6 @@ snapshots['test_create_sample[uvloop] 1'] = {
     'all_read': True,
     'all_write': False,
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'files': [
-    ],
     'format': 'fastq',
     'group': '',
     'group_read': True,
