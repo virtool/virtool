@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Enum, Integer, String
+from sqlalchemy import Column, Enum, Integer, String, UniqueConstraint
 
 from virtool.pg.utils import Base, SQLEnum
 
@@ -20,6 +20,7 @@ class IndexFile(Base):
 
     """
     __tablename__ = "index_files"
+    __table_args__ = (UniqueConstraint("index", "name"),)
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
