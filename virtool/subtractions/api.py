@@ -20,7 +20,7 @@ import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
 import virtool.validators
-from virtool.api.response import (bad_request, conflict, invalid_query,
+from virtool.api.response import (bad_request, conflict,
                                   json_response, no_content, not_found)
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
@@ -188,7 +188,7 @@ async def create(req):
     return json_response(virtool.utils.base_processor(with_computed), headers=headers, status=201)
 
 
-@routes.jobs_api.post("/api/subtractions/{subtraction_id}/files")
+@routes.jobs_api.put("/api/subtractions/{subtraction_id}/files/{filename}")
 async def upload(req):
     """
     Upload a new subtraction file to the `subtraction_files` SQL table and the `subtractions`
@@ -197,33 +197,29 @@ async def upload(req):
     """
     db = req.app["db"]
     pg = req.app["pg"]
+
     subtraction_id = req.match_info["subtraction_id"]
-
-    errors = virtool.uploads.utils.naive_validator(req)
-
-    if errors:
-        return invalid_query(errors)
+    filename = req.match_info["filename"]
 
     document = await db.subtraction.find_one(subtraction_id)
 
     if document is None:
         return not_found()
 
-    file_name = req.query.get("name")
+    if filename not in FILES:
+        return not_found("Unsupported subtraction file name")
 
-    if file_name not in FILES:
-        return bad_request("Unsupported subtraction file name")
-
-    file_type = virtool.subtractions.utils.check_subtraction_file_type(file_name)
+    file_type = virtool.subtractions.utils.check_subtraction_file_type(filename)
 
     subtraction_file = await virtool.subtractions.files.create_subtraction_file(
         pg,
         subtraction_id,
         file_type,
-        file_name
+        filename
     )
+
     upload_id = subtraction_file["id"]
-    path = Path(req.app["settings"]["data_path"]) / "subtractions" / subtraction_id / file_name
+    path = Path(req.app["settings"]["data_path"]) / "subtractions" / subtraction_id / filename
 
     if upload_id in document.get("files", []):
         return bad_request("File name already exists")
@@ -239,7 +235,7 @@ async def upload(req):
     subtraction_file = await virtool.uploads.db.finalize(pg, size, upload_id, SubtractionFile)
 
     headers = {
-        "Location": f"/api/subtractions/{subtraction_id}/files/{file_name}"
+        "Location": f"/api/subtractions/{subtraction_id}/files/{filename}"
     }
 
     return json_response(subtraction_file, headers=headers, status=201)

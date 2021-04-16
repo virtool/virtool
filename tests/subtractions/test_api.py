@@ -32,7 +32,7 @@ async def test_edit(data, mocker, snapshot, spawn_client):
     snapshot.assert_match(await client.db.subtraction.find_one(), "db")
 
 
-@pytest.mark.parametrize("error", [None, "400_exists", "400_name", "404", "422"])
+@pytest.mark.parametrize("error", [None, "400_exists", "404_name", "404"])
 async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_session):
     client = await spawn_job_client(authorize=True)
     test_dir = tmpdir.mkdir("files")
@@ -57,25 +57,19 @@ async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_ses
 
     url = "/api/subtractions/foo/files"
 
-    if error == "422":
-        url += "?type=fasta"
-    elif error == "400_name":
-        url += "?name=reference.1.bt2"
+    if error == "404_name":
+        url += "/reference.1.bt2"
     else:
-        url += "?name=subtraction.1.bt2"
+        url += "/subtraction.1.bt2"
 
-    resp = await client.post(url, data=files)
+    resp = await client.put(url, data=files)
 
-    if error == "400_name":
-        assert await resp_is.bad_request(resp, "Unsupported subtraction file name")
+    if error == "404_name":
+        assert await resp_is.not_found(resp, "Unsupported subtraction file name")
         return
 
     if error == "400_exists":
         assert await resp_is.bad_request(resp, "File name already exists")
-        return
-
-    if error == "422":
-        assert await resp_is.invalid_query(resp, {'name': ['required field']})
         return
 
     assert resp.status == 201
