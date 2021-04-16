@@ -4,8 +4,7 @@ Work with indexes in the database.
 """
 import asyncio
 import asyncio.tasks
-import typing
-from typing import Optional, Union
+from typing import Optional, Union, List, Tuple, Dict
 
 import pymongo
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -96,7 +95,7 @@ async def create(db, ref_id: str, user_id: str, job_id: str, index_id: Optional[
     return document
 
 
-async def processor(db, document):
+async def processor(db, document: dict) -> dict:
     """
     A processor for index documents. Adds computed data about the index.
 
@@ -123,7 +122,16 @@ async def processor(db, document):
     }
 
 
-async def find(db, req_query, ref_id=None):
+async def find(db, req_query: dict, ref_id:  Optional[str] = None) -> dict:
+    """
+    Find an index document matching the `req_query`
+
+    :param db: the application database client
+    :param req_query: the request object
+    :param ref_id: the id of the reference
+    :return: the index document
+
+    """
     base_query = None
 
     if ref_id:
@@ -168,35 +176,27 @@ async def finalize(db, pg: AsyncEngine, ref_id: str, index_id: str) -> dict:
     return await attach_files(pg, document)
 
 
-async def get_contributors(db, index_id):
+async def get_contributors(db, index_id: str) -> List[dict]:
     """
     Return an list of contributors and their contribution count for a specific index.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param index_id: the id of the index to get contributors for
-    :type index_id: str
 
     :return: a list of contributors to the index
-    :rtype: List[dict]
 
     """
     return await virtool.history.db.get_contributors(db, {"index.id": index_id})
 
 
-async def get_current_id_and_version(db, ref_id):
+async def get_current_id_and_version(db, ref_id: str) -> Tuple[str, int]:
     """
     Return the current index id and version number.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param ref_id: the id of the reference to get the current index for
-    :type ref_id: str
 
     :return: the index and version of the current index
-    :rtype: Tuple[str, int]
 
     """
     document = await db.indexes.find_one(
@@ -211,18 +211,14 @@ async def get_current_id_and_version(db, ref_id):
     return document["_id"], document["version"]
 
 
-async def get_otus(db, index_id):
+async def get_otus(db, index_id: str) -> List[dict]:
     """
     Return a list of otus and number of changes for a specific index.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param index_id: the id of the index to get otus for
-    :type index_id: str
 
     :return: a list of otus modified in the index
-    :rtype: List[dict]
 
     """
     cursor = db.history.aggregate([
@@ -255,28 +251,22 @@ async def get_next_version(db, ref_id: str) -> int:
 
     :param db: the application database client
     :param ref_id: the id of the reference to get the next version for
+
     :return: the next version number
 
     """
     return await db.indexes.count_documents({"reference.id": ref_id, "ready": True})
 
 
-async def tag_unbuilt_changes(db, ref_id, index_id, index_version):
+async def tag_unbuilt_changes(db, ref_id: str, index_id: str, index_version: int):
     """
     Update the ``index`` field for all unbuilt history changes for a specific ref to be included in the index described
     the passed ``index_id`` and ``index_version``.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param ref_id: the ref id to tag changes for
-    :type ref_id: str
-
     :param index_id: the index id to tag changes unbuilt with
-    :type index_id: str
-
     :param index_version: the index version to tag unbuilt changes with
-    :type index_version: int
 
     """
     await db.history.update_many({"reference.id": ref_id, "index.id": "unbuilt"}, {
@@ -298,6 +288,7 @@ async def get_unbuilt_stats(db, ref_id: Union[str, None] = None) -> dict:
 
     :param db: the application database client
     :param ref_id: the ref id to search unbuilt changes for
+
     :return: the change count and modified OTU count
 
     """
@@ -324,6 +315,7 @@ async def reset_history(db, index_id: str):
 
     :param db: The virtool database
     :param index_id: The ID of the index which failed to build
+
     """
     query = {
         "_id": {
@@ -341,7 +333,7 @@ async def reset_history(db, index_id: str):
     })
 
 
-async def get_patched_otus(db, settings: dict, manifest: dict) -> typing.List[dict]:
+async def get_patched_otus(db, settings: dict, manifest: Dict[str, int]) -> List[dict]:
     """
     Get joined OTUs patched to a specific version based on a manifest of OTU ids and versions.
 
@@ -367,12 +359,13 @@ async def get_patched_otus(db, settings: dict, manifest: dict) -> typing.List[di
     return [j[1] for j in await asyncio.tasks.gather(*coros)]
 
 
-async def update_last_indexed_versions(db, ref_id):
+async def update_last_indexed_versions(db, ref_id: str):
     """
     Update the `last_indexed_version` field for OTUs associated with `ref_id`
 
     :param db: Application database client
     :param ref_id: An ID that corresponds to an entry in the `references` db
+
     """
     # Find OTUs with changes.
     pipeline = [
@@ -411,6 +404,7 @@ async def attach_files(pg: AsyncEngine, document: dict) -> dict:
 
     :param pg: PostgreSQL database connection object
     :param document: An index document
+
     :return: Index document with updated `files` entry containing a list of index files.
 
     """
