@@ -123,7 +123,7 @@ async def processor(db, document: dict) -> dict:
     }
 
 
-async def find(db, req_query: dict, ref_id: str = None) -> dict:
+async def find(db, req_query: dict, ref_id:  Optional[str] = None) -> dict:
     """
     Find an index document matching the `req_query`
 
