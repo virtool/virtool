@@ -22,7 +22,6 @@ import virtool.tasks.api
 import virtool.references.api
 import virtool.samples.api
 import virtool.settings.api
-import virtool.software.api
 import virtool.subtractions.api
 import virtool.uploads.api
 import virtool.users.api
@@ -61,7 +60,6 @@ ROUTES = (
     virtool.http.root.routes,
     virtool.samples.api.routes,
     virtool.settings.api.routes,
-    virtool.software.api.routes,
     virtool.subtractions.api.routes,
     virtool.uploads.api.routes,
     virtool.users.api.routes

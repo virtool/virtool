@@ -28,7 +28,6 @@ import virtool.references.db
 import virtool.routes
 import virtool.sentry
 import virtool.settings.db
-import virtool.software.db
 import virtool.subtractions.db
 import virtool.subtractions.utils
 import virtool.tasks.pg
@@ -304,7 +303,6 @@ async def init_refresh(app: aiohttp.web.Application):
 
     await scheduler.spawn(virtool.references.db.refresh_remotes(app))
     await scheduler.spawn(virtool.hmm.db.refresh(app))
-    await scheduler.spawn(virtool.software.db.refresh(app))
 
 
 async def init_routes(app: aiohttp.web_app.Application):
