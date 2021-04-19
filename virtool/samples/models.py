@@ -1,5 +1,5 @@
 from sqlalchemy import Column, DateTime, Enum, Integer, String
-from sqlalchemy.sql.schema import ForeignKey
+from sqlalchemy.sql.schema import ForeignKey, UniqueConstraint
 
 from virtool.pg.utils import Base, SQLEnum
 
@@ -73,6 +73,7 @@ class SampleReadsCache(Base):
 
     """
     __tablename__ = "sample_reads_cache"
+    __tableargs__ = (UniqueConstraint("sample", "name"),)
 
     id = Column(Integer, primary_key=True)
     sample = Column(String, nullable=False)

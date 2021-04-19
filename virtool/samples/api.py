@@ -7,7 +7,7 @@ import aiohttp.web
 import pymongo.errors
 from aiohttp.web_fileresponse import FileResponse
 from cerberus import Validator
-from sqlalchemy import select
+from sqlalchemy import select, exc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.analyses.db
@@ -985,15 +985,12 @@ async def upload_reads_cache(req):
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
         return not_found("Cache doesn't exist with given key")
 
-    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id, cache=True)
-
-    if name in existing_reads:
-        return conflict("Reads file is already associated with this sample")
-
     try:
         size = await virtool.uploads.utils.naive_writer(req, cache_path, is_gzip_compressed)
     except OSError:
         return bad_request("File is not compressed")
+    except exc.IntegrityError:
+        return conflict("Reads file is already associated with this sample")
     except asyncio.CancelledError:
         logger.debug(f"Reads cache file upload aborted for {key}")
         return aiohttp.web.Response(status=499)
