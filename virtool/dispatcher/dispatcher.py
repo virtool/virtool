@@ -46,7 +46,6 @@ class Fetchers:
     samples: SamplesFetcher
     sequences: SimpleMongoFetcher
     settings: SimpleMongoFetcher
-    software: SimpleMongoFetcher
     status: SimpleMongoFetcher
     subtraction: SimpleMongoFetcher
     uploads: UploadsFetcher
@@ -73,7 +72,6 @@ class Dispatcher:
             ReferencesFetcher(db),
             SamplesFetcher(pg, db),
             SimpleMongoFetcher(db.sequences),
-            SimpleMongoFetcher(db.settings),
             SimpleMongoFetcher(db.settings),
             SimpleMongoFetcher(db.status),
             SimpleMongoFetcher(db.subtraction, virtool.subtractions.db.PROJECTION),

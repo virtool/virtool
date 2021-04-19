@@ -24,7 +24,6 @@ import virtool.routes
 import virtool.sentry
 import virtool.settings.db
 import virtool.settings.schema
-import virtool.software.db
 import virtool.shutdown
 import virtool.startup
 import virtool.utils
