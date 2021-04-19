@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Enum, Integer, String
+from sqlalchemy import Column, Enum, Integer, String, UniqueConstraint
 
 from virtool.pg.utils import Base, SQLEnum
 
@@ -19,6 +19,7 @@ class SubtractionFile(Base):
 
     """
     __tablename__ = "subtraction_files"
+    __table_args__ = (UniqueConstraint("subtraction", "name"),)
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
