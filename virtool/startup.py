@@ -291,7 +291,7 @@ async def init_redis(app: typing.Union[dict, aiohttp.web_app.Application]):
 
 async def init_refresh(app: aiohttp.web.Application):
     """
-    Start async jobs for checking for new remote reference, HMM, and software releases.
+    Start async jobs for checking for new remote reference and HMM releases.
 
     :param app: the application object
 
