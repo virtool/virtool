@@ -183,12 +183,6 @@ async def get(req):
     document = await virtool.samples.db.attach_labels(pg, document)
     document = await virtool.samples.db.attach_artifacts_and_reads(pg, document)
 
-    if document["ready"]:
-        for file in document["reads"]:
-            file.update({
-                "download_url": f"/api/samples/{sample_id}/reads/{file['name']}"
-            })
-
     return json_response(virtool.utils.base_processor(document))
 
 

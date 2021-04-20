@@ -10,9 +10,10 @@ snapshots = Snapshot()
 snapshots['test_get[uvloop-True-None] 1'] = {
     'artifacts': [
         {
+            'download_url': '/api/samples/test/artifacts/1-reference.fa.gz',
             'id': 1,
             'name': 'reference.fa.gz',
-            'name_on_disk': None,
+            'name_on_disk': '1-reference.fa.gz',
             'sample': 'test',
             'size': None,
             'type': 'fasta',
@@ -82,7 +83,7 @@ snapshots['test_get[uvloop-False-None] 1'] = {
         {
             'id': 1,
             'name': 'reference.fa.gz',
-            'name_on_disk': None,
+            'name_on_disk': '1-reference.fa.gz',
             'sample': 'test',
             'size': None,
             'type': 'fasta',
@@ -636,9 +637,10 @@ snapshots['test_find[uvloop-fred-None-None-None-d_range6-meta6] 1'] = {
 snapshots['test_finalize[uvloop-quality] 1'] = {
     'artifacts': [
         {
+            'download_url': '/api/samples/test/artifacts/1-reference.fa.gz',
             'id': 1,
             'name': 'reference.fa.gz',
-            'name_on_disk': None,
+            'name_on_disk': '1-reference.fa.gz',
             'sample': 'test',
             'size': None,
             'type': 'fasta',
@@ -650,6 +652,7 @@ snapshots['test_finalize[uvloop-quality] 1'] = {
     },
     'reads': [
         {
+            'download_url': '/api/samples/test/reads/reads_1.fq.gz',
             'id': 1,
             'name': 'reads_1.fq.gz',
             'name_on_disk': 'reads_1.fq.gz',
