@@ -1107,7 +1107,7 @@ class TestUploadReads:
             data["file"] = open(path / "reads_2.fq.gz", "rb")
             resp_3 = await client.put("/api/samples/test/reads/reads_2.fq.gz", data=data)
 
-            assert await resp_is.conflict(resp_3, "Reads file is already associated with this sample")
+            assert await resp_is.conflict(resp_3, "Reads file name is already uploaded for this sample")
 
         assert resp.status == 201
         assert resp_2.status == 201

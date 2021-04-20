@@ -859,11 +859,6 @@ async def upload_reads(req):
     if not await db.samples.find_one(sample_id):
         return not_found()
 
-    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id)
-
-    if name in existing_reads:
-        return conflict("Reads file is already associated with this sample")
-
     try:
         size = await virtool.uploads.utils.naive_writer(req, reads_path, is_gzip_compressed)
     except OSError:
@@ -871,8 +866,10 @@ async def upload_reads(req):
     except asyncio.CancelledError:
         logger.debug(f"Reads file upload aborted for {sample_id}")
         return aiohttp.web.Response(status=499)
-
-    reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id, upload_id=upload)
+    try:
+        reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id, upload_id=upload)
+    except exc.IntegrityError:
+        return conflict("Reads file name is already uploaded for this sample")
 
     headers = {
         "Location": f"/api/samples/{sample_id}/reads/{reads['name_on_disk']}"
