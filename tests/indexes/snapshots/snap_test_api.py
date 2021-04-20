@@ -267,6 +267,7 @@ snapshots['test_upload[uvloop-None] 2'] = {
 snapshots['test_finalize[uvloop-None] 1'] = {
     'files': [
         {
+            'download_url': '/api/indexes/test_index/files/reference.json.gz',
             'id': 1,
             'index': 'test_index',
             'name': 'reference.json.gz',
@@ -274,6 +275,7 @@ snapshots['test_finalize[uvloop-None] 1'] = {
             'type': 'json'
         },
         {
+            'download_url': '/api/indexes/test_index/files/reference.fa.gz',
             'id': 2,
             'index': 'test_index',
             'name': 'reference.fa.gz',
@@ -281,6 +283,7 @@ snapshots['test_finalize[uvloop-None] 1'] = {
             'type': 'fasta'
         },
         {
+            'download_url': '/api/indexes/test_index/files/reference.1.bt2',
             'id': 3,
             'index': 'test_index',
             'name': 'reference.1.bt2',
@@ -288,6 +291,7 @@ snapshots['test_finalize[uvloop-None] 1'] = {
             'type': 'bowtie2'
         },
         {
+            'download_url': '/api/indexes/test_index/files/reference.2.bt2',
             'id': 4,
             'index': 'test_index',
             'name': 'reference.2.bt2',
@@ -295,6 +299,7 @@ snapshots['test_finalize[uvloop-None] 1'] = {
             'type': 'bowtie2'
         },
         {
+            'download_url': '/api/indexes/test_index/files/reference.3.bt2',
             'id': 5,
             'index': 'test_index',
             'name': 'reference.3.bt2',
@@ -302,6 +307,7 @@ snapshots['test_finalize[uvloop-None] 1'] = {
             'type': 'bowtie2'
         },
         {
+            'download_url': '/api/indexes/test_index/files/reference.4.bt2',
             'id': 6,
             'index': 'test_index',
             'name': 'reference.4.bt2',
@@ -309,6 +315,7 @@ snapshots['test_finalize[uvloop-None] 1'] = {
             'type': 'bowtie2'
         },
         {
+            'download_url': '/api/indexes/test_index/files/reference.rev.1.bt2',
             'id': 7,
             'index': 'test_index',
             'name': 'reference.rev.1.bt2',
@@ -316,6 +323,7 @@ snapshots['test_finalize[uvloop-None] 1'] = {
             'type': 'bowtie2'
         },
         {
+            'download_url': '/api/indexes/test_index/files/reference.rev.2.bt2',
             'id': 8,
             'index': 'test_index',
             'name': 'reference.rev.2.bt2',

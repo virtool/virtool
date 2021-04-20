@@ -274,14 +274,16 @@ async def test_attach_files(pg, pg_session):
                 "name": "reference.1.bt2",
                 "index": "foo",
                 "type": "bowtie2",
-                "size": 1234567
+                "size": 1234567,
+                'download_url': '/api/indexes/foo/files/reference.1.bt2'
             },
             {
                 "id": 2,
                 "name": "reference.2.bt2",
                 "index": "foo",
                 "type": "bowtie2",
-                "size": 1234567
+                "size": 1234567,
+                'download_url': '/api/indexes/foo/files/reference.2.bt2'
             }
         ]
     }
@@ -315,14 +317,16 @@ async def test_finalize(dbi, pg, pg_session):
                 'name': 'reference.1.bt2',
                 'index': 'foo',
                 'type': 'bowtie2',
-                'size': 1234567
+                'size': 1234567,
+                'download_url': '/api/indexes/foo/files/reference.1.bt2'
             },
             {
                 'id': 2,
                 'name': 'reference.2.bt2',
                 'index': 'foo',
                 'type': 'bowtie2',
-                'size': 1234567
+                'size': 1234567,
+                'download_url': '/api/indexes/foo/files/reference.2.bt2'
             }
         ]
     }
