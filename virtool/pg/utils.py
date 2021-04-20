@@ -6,6 +6,7 @@ from typing import Optional, Union
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
+from virtool.api.json import pretty_dumps
 from virtool.pg.base import Base
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ async def connect(postgres_connection_string: str) -> AsyncEngine:
         sys.exit(1)
 
     try:
-        pg = create_async_engine(postgres_connection_string)
+        pg = create_async_engine(postgres_connection_string, json_serializer=pretty_dumps)
 
         await check_version(pg)
         await create_models(pg)
