@@ -865,7 +865,7 @@ async def upload_reads(req):
     try:
         reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id, upload_id=upload)
     except exc.IntegrityError:
-        return conflict("Reads file is already associated with this sample")
+        return conflict("Reads file name is already uploaded for this sample")
 
     headers = {
         "Location": f"/api/samples/{sample_id}/reads/{reads['name_on_disk']}"
