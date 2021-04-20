@@ -706,6 +706,7 @@ async def test_finalize(tmpdir, dbi, pg, pg_session):
         "artifacts": [],
         "reads": [
             {
+                "download_url": '/api/samples/test/reads/reads_1.fq.gz',
                 "id": 1,
                 "sample": "test",
                 "name": "reads_1.fq.gz",
