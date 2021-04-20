@@ -41,7 +41,7 @@ class SampleReads(Base):
 
     """
     __tablename__ = "sample_reads"
-    __table_args__ = (UniqueConstraint('sample', 'name'),)
+    __table_args__ = (UniqueConstraint("sample", "name"),)
 
     id = Column(Integer, primary_key=True)
     sample = Column(String, nullable=False)
