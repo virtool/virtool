@@ -23,6 +23,7 @@ async def attach_analysis_files(pg: AsyncEngine, analysis_id: str, document: Dic
 
     :param pg: PostgreSQL AsyncEngine object
     :param analysis_id: An id for a specific analysis
+    :param document: The analysis document
     :return: List of file details for each file associated with an analysis
     """
     async with AsyncSession(pg) as session:

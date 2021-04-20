@@ -1,25 +1,26 @@
+from typing import Callable, Union
+
 import aiofiles
 import aiohttp.web_response
 
 import virtool.errors
 import virtool.http.proxy
+from virtool.types import App
 
 
-async def download_file(app, url, target_path, progress_handler=None):
+async def download_file(
+        app: App,
+        url: str,
+        target_path: str,
+        progress_handler: Callable[[Union[float, int]], int] = None
+):
     """
     Download the GitHub release at ``url`` to the location specified by ``target_path``.
 
     :param app: the app object
-    :type app: :class:`aiohttp.web.Application`
-
     :param url: the download URL for the release
-    :type url str
-
     :param target_path: the path to write the downloaded file to.
-    :type target_path: str
-
     :param progress_handler: a callable that will be called with the current progress when it changes.
-    :type progress_handler: Callable[[Union[float, int]]]
 
     """
     async with virtool.http.proxy.ProxyRequest(app["settings"], app["client"].get, url) as resp:

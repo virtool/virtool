@@ -60,7 +60,7 @@ async def cancel(db, job_id: str) -> dict:
     }, projection=virtool.jobs.db.PROJECTION)
 
 
-async def clear(db, complete=False, failed=False):
+async def clear(db, complete: bool = False, failed: bool = False):
     or_list = list()
 
     if complete:
@@ -89,7 +89,7 @@ async def create(
         user_id: str,
         rights: JobRights,
         job_id: Optional[str] = None
-):
+) -> Dict[str, Any]:
     """
     Create, insert, and return a job document.
     

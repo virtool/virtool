@@ -1,12 +1,12 @@
 from copy import deepcopy
-from typing import List, Union
+from typing import List, Union, Optional
 
 import virtool.errors
 import virtool.history.utils
 import virtool.utils
 
 
-def evaluate_changes(data, document):
+def evaluate_changes(data: dict, document: dict) -> tuple:
     name = data.get("name")
     abbreviation = data.get("abbreviation")
     schema = data.get("schema")
@@ -48,22 +48,19 @@ def extract_default_sequences(joined: dict) -> List[dict]:
             return isolate["sequences"]
 
 
-def extract_sequences(otu):
+def extract_sequences(otu: dict):
     for isolate in otu["isolates"]:
         for sequence in isolate["sequences"]:
             yield sequence
 
 
-def extract_sequence_ids(otu):
+def extract_sequence_ids(otu: dict) -> list:
     """
     Extract all sequence ids from a merged otu.
 
     :param otu: the merged otu
-    :type otu: dict
 
     :return: the sequence ids belonging to ``otu``
-    :rtype: list
-
     """
     sequence_ids = list()
 
@@ -133,16 +130,13 @@ def format_otu(joined: Union[dict, None], issues: Union[dict, None, bool] = Fals
     return formatted
 
 
-def format_isolate_name(isolate):
+def format_isolate_name(isolate: dict) -> str:
     """
     Take a complete or partial isolate ``dict`` and return a readable isolate name.
 
     :param isolate: a complete or partial isolate ``dict`` containing ``source_type`` and ``source_name`` fields.
-    :type isolate: dict
 
     :return: an isolate name
-    :rtype: str
-
     """
     if not isolate["source_type"] or not isolate["source_name"]:
         return "Unnamed Isolate"
@@ -150,19 +144,15 @@ def format_isolate_name(isolate):
     return " ".join((isolate["source_type"].capitalize(), isolate["source_name"]))
 
 
-def merge_otu(otu, sequences):
+def merge_otu(otu: dict, sequences: list) -> dict:
     """
     Merge the given sequences in the given otu document. The otu will gain a ``sequences`` field containing a
     list of its associated sequence documents.
 
     :param otu: a otu document.
-    :type otu: dict
-
     :param sequences: the sequence documents to merge into the otu.
-    :type sequences: list
 
     :return: the merged otu.
-    :rtype: dict
 
     """
     merged = deepcopy(otu)
@@ -174,17 +164,14 @@ def merge_otu(otu, sequences):
     return merged
 
 
-def split(merged):
+def split(merged: dict) -> tuple:
     """
     Split a merged otu document into a list of sequence documents associated with the otu and a regular otu
     document containing no sequence sub-documents.
 
     :param merged: the merged otu to split
-    :type merged: dict
 
     :return: a tuple containing the new otu document and a list of sequence documents
-    :type: tuple
-
     """
     sequences = list()
 
@@ -196,7 +183,7 @@ def split(merged):
     return otu, sequences
 
 
-def verify(joined):
+def verify(joined: dict) -> Optional[dict]:
     """
     Checks that the passed otu and sequences constitute valid Virtool records and can be included in a otu
     index. Error fields are:

@@ -46,12 +46,12 @@ async def connect(
     )
 
 
-async def check_mongo_version(db: AsyncIOMotorClient):
+async def check_mongo_version(db: AsyncIOMotorClient) -> str:
     """
     Check the MongoDB version. Log a critical error and exit if it is too old.
 
     :param db: the application database object
-
+    :return: the MongoDB version
     """
     mongo_version = await get_mongo_version(db)
 

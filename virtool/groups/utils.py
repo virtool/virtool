@@ -1,7 +1,9 @@
+from typing import List
+
 import virtool.users.utils
 
 
-def merge_group_permissions(groups):
+def merge_group_permissions(groups: List[dict]) -> dict:
     """
     Return a :class:`dict` of permissions that will be inherited by a user belonging to all the passed ``groups``.
 

@@ -9,6 +9,7 @@ import logging
 import os
 import pathlib
 import shutil
+from typing import List
 
 import virtool.caches.db
 import virtool.jobs.fastqc
@@ -81,7 +82,7 @@ async def create_cache(job: virtool.jobs.job.Job, parameters: dict):
     await use_cache(job)
 
 
-async def fetch_raw(job: virtool.jobs.job.Job):
+async def fetch_raw(job: virtool.jobs.job.Job) -> List[str]:
     """
     Fetch the sample read files required to create the cache associated with `job`. This will only be called if no
     existing cache matches the parameters required for the analysis `job`.

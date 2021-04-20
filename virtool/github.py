@@ -1,5 +1,8 @@
+import datetime
 import logging
-from typing import Union
+from typing import Union, Optional
+
+import aiohttp
 
 import virtool.errors
 import virtool.http.proxy
@@ -21,7 +24,12 @@ HEADERS = {
 }
 
 
-def create_update_subdocument(release, ready, user_id, created_at=None):
+def create_update_subdocument(
+        release: list,
+        ready: bool,
+        user_id: str,
+        created_at: Optional[datetime.datetime] = None
+) -> dict:
     update = {k: release[k] for k in release if k not in EXCLUDED_UPDATE_FIELDS}
 
     return {
@@ -72,28 +80,23 @@ def get_etag(release: Union[None, dict]) -> Union[None, str]:
         return None
 
 
-async def get_release(settings, session, slug, etag=None, release_id="latest"):
+async def get_release(
+        settings: dict,
+        session: aiohttp.ClientSession,
+        slug: str,
+        etag: Optional[str] = None,
+        release_id: Optional[str] = "latest"
+) -> Optional[dict]:
     """
     GET data from a GitHub API url.
 
     :param settings: the application settings object
-    :type settings: :class:`virtool.app_settings.Settings`
-
     :param session: the application HTTP client session
-    :type session: :class:`aiohttp.ClientSession`
-
     :param slug: the slug for the GitHub repo
-    :type slug: str
-
     :param etag: an ETag for the resource to be used with the `If-None-Match` header
-    :type etag: Union[None, str]
-
     :param release_id: the id of the GitHub release to get
-    :type release_id: Union[int,str]
 
     :return: the latest release
-    :rtype: Coroutine[dict]
-
     """
     url = f"{BASE_URL}/{slug}/releases/{release_id}"
 

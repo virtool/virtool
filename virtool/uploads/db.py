@@ -181,7 +181,7 @@ async def get(pg: AsyncEngine, upload_id: int) -> Optional[Upload]:
         return upload
 
 
-async def delete(req, pg: AsyncEngine, upload_id: int):
+async def delete(req, pg: AsyncEngine, upload_id: int) -> Optional[dict]:
     """
     "Delete" a row in the `uploads` table and remove it from the local disk.
 

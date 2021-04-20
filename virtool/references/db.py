@@ -55,15 +55,17 @@ Schema:
 
 """
 import asyncio
+import datetime
 import json.decoder
 import logging
 import os
 import shutil
-from typing import List, Union
+from typing import List, Union, Optional
 
 import aiohttp
 import pymongo
 import semver
+from aiohttp import web
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 
 import virtool.api
@@ -82,6 +84,7 @@ import virtool.tasks.pg
 import virtool.tasks.task
 import virtool.users.db
 import virtool.utils
+from virtool.types import App
 
 from virtool.uploads.models import Upload
 
@@ -838,7 +841,7 @@ async def processor(db, document: dict) -> dict:
     return document
 
 
-async def add_group_or_user(db, ref_id, field, data):
+async def add_group_or_user(db, ref_id: str, field: str, data: dict) -> Optional[dict]:
     document = await db.references.find_one({"_id": ref_id}, [field])
 
     if not document:
@@ -872,7 +875,7 @@ async def add_group_or_user(db, ref_id, field, data):
     return subdocument
 
 
-async def check_right(req, reference, right):
+async def check_right(req: web.Request, reference: dict, right: str) -> bool:
     """
     pass
 
@@ -933,7 +936,7 @@ async def check_source_type(db, ref_id: str, source_type: str) -> bool:
     return True
 
 
-def compose_base_find_query(user_id: str, administrator: bool, groups: list):
+def compose_base_find_query(user_id: str, administrator: bool, groups: list) -> dict:
     """
     Compose a query for filtering reference search results based on user read rights.
 
@@ -1369,7 +1372,7 @@ async def create_import(db, pg: AsyncEngine, settings: dict, name: str, descript
     return document
 
 
-async def create_remote(db, settings: dict, release: dict, remote_from: str, user_id: str):
+async def create_remote(db, settings: dict, release: dict, remote_from: str, user_id: str) -> dict:
     """
     Create a remote reference document in the database.
 
@@ -1475,7 +1478,7 @@ async def edit(db, ref_id: str, data: dict) -> dict:
     return virtool.utils.base_processor(document)
 
 
-async def export(app, ref_id):
+async def export(app: App, ref_id: str) -> list:
     db = app["db"]
 
     otu_list = list()
@@ -1499,7 +1502,7 @@ async def export(app, ref_id):
     return virtool.references.utils.clean_export_list(otu_list)
 
 
-async def insert_change(app, otu_id: str, verb: str, user_id: str, old: Union[None, dict] = None):
+async def insert_change(app: App, otu_id: str, verb: str, user_id: str, old: Union[None, dict] = None):
     """
     Insert a history document for the OTU identified by `otu_id` and the passed `verb`.
 
@@ -1539,7 +1542,14 @@ async def insert_change(app, otu_id: str, verb: str, user_id: str, old: Union[No
     )
 
 
-async def insert_joined_otu(db, otu, created_at, ref_id, user_id, remote=False):
+async def insert_joined_otu(
+        db,
+        otu: dict,
+        created_at: datetime.datetime,
+        ref_id: str,
+        user_id: str,
+        remote: bool = False
+) -> str:
     all_sequences = list()
 
     issues = virtool.otus.utils.verify(otu)
@@ -1599,7 +1609,7 @@ async def insert_joined_otu(db, otu, created_at, ref_id, user_id, remote=False):
     return document["_id"]
 
 
-async def refresh_remotes(app):
+async def refresh_remotes(app: App):
     db = app["db"]
 
     try:
@@ -1620,7 +1630,14 @@ async def refresh_remotes(app):
     logging.debug("Stopped reference refresher")
 
 
-async def update(req, created_at, task_id, ref_id, release, user_id):
+async def update(
+        req: web.Request,
+        created_at: datetime.datetime,
+        task_id: int,
+        ref_id: str,
+        release: dict,
+        user_id: str
+) -> tuple:
     db = req.app["db"]
 
     update_subdocument = virtool.github.create_update_subdocument(
@@ -1645,7 +1662,13 @@ async def update(req, created_at, task_id, ref_id, release, user_id):
     return release, update_subdocument
 
 
-async def update_joined_otu(db, otu, created_at, ref_id, user_id):
+async def update_joined_otu(
+        db,
+        otu: dict,
+        created_at: datetime.datetime,
+        ref_id: str,
+        user_id: str
+) -> Union[dict, str, None]:
     remote_id = otu["_id"]
 
     old = await virtool.otus.db.join(db, {"reference.id": ref_id, "remote.id": remote_id})

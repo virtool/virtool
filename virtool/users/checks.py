@@ -1,7 +1,7 @@
 import aiohttp.web
 
 
-async def check_password_length(req: aiohttp.web.Request):
+async def check_password_length(req: aiohttp.web.Request) -> str:
     """
     Return error text if the password in the request does not meet application length requirements.
 

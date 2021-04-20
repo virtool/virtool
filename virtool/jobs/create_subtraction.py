@@ -11,7 +11,7 @@ import virtool.utils
 logger = logging.getLogger(__name__)
 
 
-async def check_db(job):
+async def check_db(job: virtool.jobs.job.Job):
     job.params = dict(job.task_args)
 
     subtraction_path = virtool.subtractions.utils.join_subtraction_path(
@@ -47,7 +47,7 @@ async def check_db(job):
     })
 
 
-async def make_subtraction_dir(job):
+async def make_subtraction_dir(job: virtool.jobs.job.Job):
     """
     Make a directory for the host index files at ``<vt_data_path>/reference/hosts/<host_id>``.
 
@@ -58,7 +58,7 @@ async def make_subtraction_dir(job):
     )
 
 
-async def unpack(job):
+async def unpack(job: virtool.jobs.job.Job):
     """
     Unpack the FASTA file if it is gzipped.
 
@@ -71,7 +71,7 @@ async def unpack(job):
     )
 
 
-async def set_stats(job):
+async def set_stats(job: virtool.jobs.job.Job):
     """
     Generate some stats for the FASTA file associated with this job. These numbers include nucleotide distribution,
     length distribution, and sequence count.
@@ -87,7 +87,7 @@ async def set_stats(job):
     })
 
 
-async def bowtie_build(job):
+async def bowtie_build(job: virtool.jobs.job.Job):
     """
     Call *bowtie2-build* using :meth:`~.Job.run_process` to build a Bowtie2 index for the host.
 
@@ -109,7 +109,7 @@ async def bowtie_build(job):
     })
 
 
-async def compress(job):
+async def compress(job: virtool.jobs.job.Job):
     """
     Compress the subtraction FASTA file for long-term storage and download.
 
@@ -133,7 +133,7 @@ async def compress(job):
     )
 
 
-async def delete_subtraction(job):
+async def delete_subtraction(job: virtool.jobs.job.Job):
     """
     Clean up if the job process encounters an error or is cancelled. Removes the host document from the database
     and deletes any index files.
@@ -151,7 +151,7 @@ async def delete_subtraction(job):
     await job.db.subtraction.delete_one({"_id": job.params["subtraction_id"]})
 
 
-def create():
+def create() -> virtool.jobs.job.Job:
     job = virtool.jobs.job.Job()
 
     job.on_startup = [

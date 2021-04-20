@@ -145,7 +145,7 @@ async def load_results(settings: Dict[str, Any], document: Dict[str, Any]) -> di
     return document
 
 
-async def format_aodp(app: virtool.types.App, document: Dict[str, Any]):
+async def format_aodp(app: virtool.types.App, document: Dict[str, Any]) -> Dict[str, Any]:
     """
     Format an AODP analysis document by retrieving the detected OTUs and incorporating them into
     the returned document.

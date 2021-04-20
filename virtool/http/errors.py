@@ -1,3 +1,5 @@
+from typing import Callable
+
 from aiohttp import web
 
 import virtool.templates
@@ -6,7 +8,7 @@ from virtool.api.response import not_found
 
 
 @web.middleware
-async def middleware(req, handler):
+async def middleware(req: web.Request, handler: Callable):
     is_api_call = req.path.startswith("/api")
 
     try:
@@ -27,7 +29,7 @@ async def middleware(req, handler):
         raise
 
 
-def handle_404(req):
+def handle_404(req: web.Request):
     template = virtool.templates.setup_template_env.get_template("error_404.html")
 
     static_hash = virtool.utils.get_static_hash(req)

@@ -1,10 +1,12 @@
+from typing import Callable
+
 import aiohttp.web
 
 import virtool.api.json
 
 
 @aiohttp.web.middleware
-async def middleware(req, handler):
+async def middleware(req: aiohttp.web.Request, handler: Callable):
     """
     Formats JSON if 'application/json' content type was not in request 'Accept' header.
 

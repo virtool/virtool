@@ -4,9 +4,10 @@ from typing import Callable, List, Union
 from sqlalchemy import event, inspect
 from sqlalchemy.orm import Session
 from virtool.dispatcher.operations import Operation
+from virtool.pg.base import Base
 
 
-def get_interface_from_model(obj) -> str:
+def get_interface_from_model(obj: Base) -> str:
     """
     Transform the passed model object into an dispatcher interface name.
 

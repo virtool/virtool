@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from aiohttp import web
 from pymongo.results import DeleteResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -131,7 +132,7 @@ async def attach_labels(pg: AsyncEngine, document: dict) -> dict:
     return {**document, "labels": labels}
 
 
-async def check_name(db, settings, name, sample_id=None):
+async def check_name(db, settings: dict, name: str, sample_id: str = None) -> Optional[str]:
     if settings["sample_unique_names"]:
         query = {"name": name}
 
@@ -144,7 +145,7 @@ async def check_name(db, settings, name, sample_id=None):
     return None
 
 
-async def check_rights(db, sample_id, client, write=True):
+async def check_rights(db, sample_id: str, client, write: bool = True) -> bool:
     sample_rights = await db.samples.find_one({"_id": sample_id}, RIGHTS_PROJECTION)
 
     if not sample_rights:
@@ -156,7 +157,7 @@ async def check_rights(db, sample_id, client, write=True):
     return has_read and (write is False or has_write)
 
 
-def compose_workflow_conditions(workflow, url_query):
+def compose_workflow_conditions(workflow: str, url_query: web.Request.query) -> Optional[dict]:
     values = url_query.getall(workflow, None)
 
     if values is None:
@@ -185,7 +186,7 @@ def compose_workflow_conditions(workflow, url_query):
     return None
 
 
-def compose_analysis_query(url_query):
+def compose_analysis_query(url_query: web.Request.query) -> Optional[dict]:
     pathoscope = compose_workflow_conditions("pathoscope", url_query)
     nuvs = compose_workflow_conditions("nuvs", url_query)
 
@@ -340,7 +341,7 @@ async def remove_samples(
     return result
 
 
-async def validate_force_choice_group(db, data):
+async def validate_force_choice_group(db, data: dict) -> Optional[str]:
     try:
         if not await db.groups.count_documents({"_id": data["group"]}):
             return "Group does not exist"

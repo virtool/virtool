@@ -5,9 +5,10 @@ from shutil import copy
 import aiofiles
 
 from virtool.fake.wrapper import FakerWrapper
+from virtool.types import App
 
 
-async def create_fake_hmms(app):
+async def create_fake_hmms(app: App):
     fake: FakerWrapper = app["fake"]
 
     data_path = Path(app["settings"]["data_path"])
@@ -23,4 +24,3 @@ async def create_fake_hmms(app):
                 **annotation,
                 "_id": fake.get_mongo_id()
             })
-    

@@ -7,7 +7,7 @@ import virtool.dispatcher.dispatcher
 logger = logging.getLogger(__name__)
 
 
-async def root(req):
+async def root(req: web.Request) -> web.WebSocketResponse:
     """
     Handles requests for WebSocket connections.
 

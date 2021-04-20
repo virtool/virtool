@@ -145,7 +145,7 @@ class JobRights:
         return rights_dict
 
 
-def copy_files_to_sample(paths, sample_path, proc):
+def copy_files_to_sample(paths: list, sample_path: str, proc: int) -> list:
     sizes = list()
 
     for index, path in enumerate(paths):

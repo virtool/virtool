@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Tuple, List
 
 import aiofiles
 from sqlalchemy import select
@@ -20,7 +21,7 @@ FILES = (
 logger = logging.getLogger(__name__)
 
 
-async def calculate_fasta_gc(path):
+async def calculate_fasta_gc(path: str) -> Tuple[dict, int]:
     nucleotides = {
         "a": 0,
         "t": 0,
@@ -76,7 +77,7 @@ def join_subtraction_index_path(settings: dict, subtraction_id: str) -> str:
     )
 
 
-async def get_subtraction_files(pg: AsyncEngine, subtraction: str):
+async def get_subtraction_files(pg: AsyncEngine, subtraction: str) -> List[dict]:
     """
     Prepare a list of files from 'SubtractionFile' table to be added to 'files' field.
 

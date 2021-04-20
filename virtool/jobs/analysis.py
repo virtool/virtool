@@ -106,7 +106,7 @@ async def check_db(job: virtool.jobs.job.Job):
     job.params["read_paths"] = read_paths
 
 
-async def make_analysis_dir(job):
+async def make_analysis_dir(job: virtool.jobs.job.Job):
     """
     Make a directory for the analysis in the sample/analysis directory.
 
