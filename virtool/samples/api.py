@@ -990,7 +990,7 @@ async def upload_reads_cache(req):
     except OSError:
         return bad_request("File is not compressed")
     except exc.IntegrityError:
-        return conflict("Reads file is already associated with this sample")
+        return conflict("File name is already uploaded for this cache")
     except asyncio.CancelledError:
         logger.debug(f"Reads cache file upload aborted for {key}")
         return aiohttp.web.Response(status=499)
