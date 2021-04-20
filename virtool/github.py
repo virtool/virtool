@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Union, Optional
+from typing import Optional
 
 import aiohttp
 
@@ -66,7 +66,7 @@ def format_release(release: dict) -> dict:
     }
 
 
-def get_etag(release: Union[None, dict]) -> Union[None, str]:
+def get_etag(release: Optional[dict]) -> Optional[str]:
     """
     Get the ETag from a release dict. Return `None` when the key is missing or the input is not a `dict`.
 

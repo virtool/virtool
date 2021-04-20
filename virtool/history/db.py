@@ -21,7 +21,7 @@ Schema:
 
 """
 from copy import deepcopy
-from typing import Union, List
+from typing import Union, List, Optional
 
 import dictdiffer
 import pymongo.errors
@@ -61,8 +61,8 @@ PROJECTION = LIST_PROJECTION + [
 async def add(
         app,
         method_name: str,
-        old: Union[None, dict],
-        new: Union[None, dict],
+        old: Optional[dict],
+        new: Optional[dict],
         description: str,
         user_id: str,
         silent: bool = False
@@ -204,7 +204,7 @@ async def get_most_recent_change(db, otu_id: str) -> dict:
     }, MOST_RECENT_PROJECTION, sort=[("otu.version", -1)])
 
 
-async def patch_to_verified(app, otu_id: str) -> Union[dict, None]:
+async def patch_to_verified(app, otu_id: str) -> Optional[dict]:
     """
     Patch the OTU identified by `otu_id` to the last verified version.
 

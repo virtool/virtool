@@ -18,10 +18,10 @@ async def check_segment_or_target(
         db,
         otu_id: str,
         isolate_id: str,
-        sequence_id: Union[str, None],
+        sequence_id: Optional[str],
         ref_id: str,
         data: dict
-) -> Union[str, None]:
+) -> Optional[str]:
     """
     Returns an error message string if the segment or target provided in `data` is not compatible with the parent
     reference (target) or OTU (segment).
@@ -190,7 +190,7 @@ async def edit(app, otu_id: str, isolate_id: str, sequence_id: str, data: dict, 
     return virtool.utils.base_processor(sequence_document)
 
 
-async def get(db, otu_id: str, isolate_id: str, sequence_id: str) -> Union[dict, None]:
+async def get(db, otu_id: str, isolate_id: str, sequence_id: str) -> Optional[dict]:
     """
     Get a sequence document given a `otu_id`, `isolate_id`, and `sequence_id`. Returns `None` if the OTU, isolate, or
     sequence do not exist.

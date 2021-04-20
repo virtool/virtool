@@ -5,12 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.pg.utils
 import virtool.utils
-from virtool.samples.models import (
-    SampleArtifact,
-    SampleReads,
-    SampleArtifactCache,
-    SampleReadsCache,
-)
+from virtool.caches.models import SampleArtifactCache, SampleReadsCache
+from virtool.samples.models import SampleArtifact, SampleReads
 from virtool.uploads.models import Upload
 
 

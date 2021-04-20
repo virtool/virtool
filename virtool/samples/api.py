@@ -7,7 +7,7 @@ import aiohttp.web
 import pymongo.errors
 from aiohttp.web_fileresponse import FileResponse
 from cerberus import Validator
-from sqlalchemy import select
+from sqlalchemy import select, exc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.analyses.db
@@ -30,9 +30,10 @@ import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, conflict, insufficient_rights, invalid_query, \
     json_response, no_content, not_found
+from virtool.caches.models import SampleArtifactCache
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
-from virtool.samples.models import ArtifactType, SampleArtifact, SampleArtifactCache
+from virtool.samples.models import ArtifactType, SampleArtifact
 from virtool.samples.utils import bad_labels_response, check_labels
 from virtool.uploads.utils import is_gzip_compressed
 
@@ -859,11 +860,6 @@ async def upload_reads(req):
     if not await db.samples.find_one(sample_id):
         return not_found()
 
-    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id)
-
-    if name in existing_reads:
-        return conflict("Reads file is already associated with this sample")
-
     try:
         size = await virtool.uploads.utils.naive_writer(req, reads_path, is_gzip_compressed)
     except OSError:
@@ -871,8 +867,10 @@ async def upload_reads(req):
     except asyncio.CancelledError:
         logger.debug(f"Reads file upload aborted for {sample_id}")
         return aiohttp.web.Response(status=499)
-
-    reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id, upload_id=upload)
+    try:
+        reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id, upload_id=upload)
+    except exc.IntegrityError:
+        return conflict("Reads file name is already uploaded for this sample")
 
     headers = {
         "Location": f"/api/samples/{sample_id}/reads/{reads['name_on_disk']}"
@@ -989,15 +987,12 @@ async def upload_reads_cache(req):
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
         return not_found("Cache doesn't exist with given key")
 
-    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id, cache=True)
-
-    if name in existing_reads:
-        return conflict("Reads file is already associated with this sample")
-
     try:
         size = await virtool.uploads.utils.naive_writer(req, cache_path, is_gzip_compressed)
     except OSError:
         return bad_request("File is not compressed")
+    except exc.IntegrityError:
+        return conflict("File name is already uploaded for this cache")
     except asyncio.CancelledError:
         logger.debug(f"Reads cache file upload aborted for {key}")
         return aiohttp.web.Response(status=499)

@@ -38,8 +38,8 @@ SEQUENCE_PROJECTION = [
 async def check_name_and_abbreviation(
         db,
         ref_id: str,
-        name: Union[None, str] = None,
-        abbreviation: Union[None, str] = None
+        name: Optional[str] = None,
+        abbreviation: Optional[str] = None
 ) -> Union[bool, str]:
     """
     Check is a otu name and abbreviation are already in use in the reference identified by `ref_id`. Returns a message
@@ -141,9 +141,9 @@ async def create_otu(
 
 async def edit(
         app: App,
-        otu_id: Union[str, None],
-        name: Union[str, None],
-        abbreviation: Union[str, None],
+        otu_id: Optional[str],
+        name: Optional[str],
+        abbreviation: Optional[str],
         schema: Union[str, list],
         user_id: str
 ) -> Dict[str, Any]:
@@ -285,9 +285,9 @@ async def join(db, query: Union[dict, str], document: Dict[str, Any] = None) -> 
 
 async def join_and_format(
         db, otu_id: str,
-        joined: Union[dict, None] = None,
+        joined: Optional[dict] = None,
         issues: Union[dict, None, bool] = False
-) -> Union[dict, None]:
+) -> Optional[dict]:
     """
     Join the otu identified by the passed ``otu_id`` or use the ``joined`` otu document if available. Then,
     format the joined otu into a format that can be directly returned to API clients.
@@ -316,9 +316,9 @@ async def remove(
         app,
         otu_id: str,
         user_id: str,
-        document: Union[dict, None] = None,
+        document: Optional[dict] = None,
         silent: bool = False
-) -> Union[None, bool]:
+) -> Optional[bool]:
     """
     Remove and OTU given its `otu_id`. Create a history document to record the change.
 
