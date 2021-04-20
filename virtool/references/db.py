@@ -1410,7 +1410,7 @@ async def create_remote(db, settings: dict, release: dict, remote_from: str, use
 
 
 async def download_and_parse_release(app, url: str, task_id: str, progress_handler: callable):
-    pg = app["postgres"]
+    pg = app["pg"]
 
     with virtool.utils.get_temp_dir() as tempdir:
         temp_path = str(tempdir)
