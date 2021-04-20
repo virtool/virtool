@@ -5,7 +5,7 @@ from pathlib import Path
 
 import aiohttp.web
 from aiohttp.web_fileresponse import FileResponse
-from sqlalchemy import select
+from sqlalchemy import select, exc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.api.utils
@@ -211,18 +211,18 @@ async def upload(req):
 
     file_type = virtool.subtractions.utils.check_subtraction_file_type(filename)
 
-    subtraction_file = await virtool.subtractions.files.create_subtraction_file(
-        pg,
-        subtraction_id,
-        file_type,
-        filename
-    )
+    try:
+        subtraction_file = await virtool.subtractions.files.create_subtraction_file(
+            pg,
+            subtraction_id,
+            file_type,
+            filename
+        )
+    except exc.IntegrityError:
+        return conflict("File name already exists")
 
     upload_id = subtraction_file["id"]
     path = Path(req.app["settings"]["data_path"]) / "subtractions" / subtraction_id / filename
-
-    if upload_id in document.get("files", []):
-        return bad_request("File name already exists")
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, path)

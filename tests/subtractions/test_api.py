@@ -32,7 +32,7 @@ async def test_edit(data, mocker, snapshot, spawn_client):
     snapshot.assert_match(await client.db.subtraction.find_one(), "db")
 
 
-@pytest.mark.parametrize("error", [None, "400_exists", "404_name", "404"])
+@pytest.mark.parametrize("error", [None, "404_name", "404", "409"])
 async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_session):
     client = await spawn_job_client(authorize=True)
     test_dir = tmpdir.mkdir("files")
@@ -50,8 +50,13 @@ async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_ses
         "name": "Foo"
     }
 
-    if error == "400_exists":
-        subtraction["files"] = [1]
+    if error == "409":
+        subtraction_file = SubtractionFile(name="subtraction.1.bt2", subtraction="foo")
+
+        async with pg_session as session:
+            session.add(subtraction_file)
+
+            await session.commit()
 
     await client.db.subtraction.insert_one(subtraction)
 
@@ -68,8 +73,8 @@ async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_ses
         assert await resp_is.not_found(resp, "Unsupported subtraction file name")
         return
 
-    if error == "400_exists":
-        assert await resp_is.bad_request(resp, "File name already exists")
+    if error == "409":
+        assert await resp_is.conflict(resp, "File name already exists")
         return
 
     assert resp.status == 201
