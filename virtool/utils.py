@@ -11,7 +11,7 @@ import tarfile
 import tempfile
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Iterable, Tuple, Union, Any, Optional
+from typing import Iterable, Tuple, Any, Optional
 
 import aiofiles
 import arrow
