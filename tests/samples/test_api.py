@@ -11,8 +11,9 @@ import virtool.caches.utils
 import virtool.pg.utils
 import virtool.samples.db
 import virtool.uploads.db
+from virtool.caches.models import SampleArtifactCache, SampleReadsCache
 from virtool.labels.models import Label
-from virtool.samples.models import SampleReads, SampleReadsCache, SampleArtifact, SampleArtifactCache
+from virtool.samples.models import SampleReads, SampleArtifact
 from virtool.uploads.models import Upload
 
 
