@@ -30,9 +30,10 @@ import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_request, conflict, insufficient_rights, invalid_query, \
     json_response, no_content, not_found
+from virtool.caches.models import SampleArtifactCache
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
-from virtool.samples.models import ArtifactType, SampleArtifact, SampleArtifactCache
+from virtool.samples.models import ArtifactType, SampleArtifact
 from virtool.samples.utils import bad_labels_response, check_labels
 from virtool.uploads.utils import is_gzip_compressed
 
