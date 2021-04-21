@@ -16,12 +16,14 @@ import virtool.references.db
 import virtool.subtractions.db
 import virtool.users.db
 import virtool.utils
+from virtool.fake.identifiers import USER_ID
 from virtool.hmm.fake import create_fake_hmms
 from virtool.indexes.fake import create_fake_indexes
 from virtool.jobs.utils import JobRights
 from virtool.otus.fake import create_fake_otus
 from virtool.subtractions.fake import create_fake_subtractions
 from virtool.types import App
+from virtool.users.fake import create_fake_bob_user
 from virtool.utils import ensure_data_dir, random_alphanumeric
 
 logger = getLogger(__name__)
@@ -31,7 +33,7 @@ REF_ID = "reference_1"
 
 async def populate(app: App):
     await create_fake_bob_user(app)
-    await create_fake_subtractions(app, USER_ID)
+    await create_fake_subtractions(app)
     await create_fake_analysis(app)
     await create_fake_jobs(app)
     await create_fake_hmms(app)

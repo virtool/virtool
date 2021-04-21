@@ -1,6 +1,8 @@
+import filecmp
+import gzip
 import os
+from pathlib import Path
 
-from virtool.dev.fake import USER_ID
 from virtool.pg.utils import get_row
 from virtool.subtractions.fake import create_fake_subtractions
 from virtool.subtractions.models import SubtractionFile
@@ -9,17 +11,27 @@ from virtool.subtractions.utils import FILES
 
 async def test_create_fake_subtractions(app, example_path, snapshot, static_time, tmpdir):
     example_path = example_path / "subtractions/arabidopsis_thaliana"
-    subtractions_path = tmpdir.mkdir("subtractions").mkdir("subtraction_1")
+    subtraction_path = Path(tmpdir.mkdir("subtractions").mkdir("2x6YnyMt"))
 
-    await create_fake_subtractions(app, USER_ID)
+    await create_fake_subtractions(app)
 
-    assert len(os.listdir(subtractions_path)) == 7
+    assert len(os.listdir(subtraction_path)) == 7
 
     snapshot.assert_match(await app["db"].subtraction.find().to_list(None))
 
-    for file_ in FILES:
-        assert await get_row(app["pg"], file_, SubtractionFile, "name")
+    for file_name in FILES:
+        assert await get_row(app["pg"], file_name, SubtractionFile, "name")
 
-        with open(subtractions_path / file_, "r") as f_result:
-            with open(example_path / file_, "r") as f_expected:
-                assert f_result.read() == f_expected.read()
+        is_fasta = "fa.gz" in file_name
+
+        if is_fasta:
+            with gzip.open(subtraction_path / file_name, "rt") as f_result:
+                with gzip.open(example_path / file_name, "rt") as f_expected:
+                    assert f_result.read() == f_expected.read()
+
+        else:
+            assert filecmp.cmp(
+                example_path / file_name,
+                subtraction_path / file_name,
+                shallow=False
+            )
