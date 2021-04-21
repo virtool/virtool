@@ -208,6 +208,7 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
     },
     'reads': [
         {
+            'download_url': '/api/samples/2x6YnyMt/reads/read_1.fq.gz',
             'id': 1,
             'name': 'read_1.fq.gz',
             'name_on_disk': 'paired_1.fq.gz',
@@ -217,6 +218,7 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
             'uploaded_at': None
         },
         {
+            'download_url': '/api/samples/2x6YnyMt/reads/read_2.fq.gz',
             'id': 2,
             'name': 'read_2.fq.gz',
             'name_on_disk': 'paired_2.fq.gz',
@@ -392,6 +394,7 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
     },
     'reads': [
         {
+            'download_url': '/api/samples/LB1U6zCj/reads/reads.fq.gz',
             'id': 3,
             'name': 'reads.fq.gz',
             'name_on_disk': 'single.fq.gz',
@@ -579,6 +582,7 @@ snapshots['test_create_fake_unpaired[uvloop-True-True] 1'] = {
     },
     'reads': [
         {
+            'download_url': '/api/samples/2x6YnyMt/reads/read_1.fq.gz',
             'id': 1,
             'name': 'read_1.fq.gz',
             'name_on_disk': 'paired_1.fq.gz',
@@ -588,6 +592,7 @@ snapshots['test_create_fake_unpaired[uvloop-True-True] 1'] = {
             'uploaded_at': None
         },
         {
+            'download_url': '/api/samples/2x6YnyMt/reads/read_2.fq.gz',
             'id': 2,
             'name': 'read_2.fq.gz',
             'name_on_disk': 'paired_2.fq.gz',
@@ -744,6 +749,7 @@ snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
     },
     'reads': [
         {
+            'download_url': '/api/samples/2x6YnyMt/reads/reads.fq.gz',
             'id': 1,
             'name': 'reads.fq.gz',
             'name_on_disk': 'single.fq.gz',
