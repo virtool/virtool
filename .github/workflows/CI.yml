@@ -1,4 +1,4 @@
-name: Virtool CI
+name: ci
 
 on:
   push:
@@ -33,12 +33,18 @@ jobs:
       image: virtool/external-tools:0.2.0
 
     steps:
-      - uses: actions/checkout@v2
-      - name: test
+      - name: Install LFS
+        run: |
+          apt-get update
+          apt-get install -y git-lfs
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          lfs: 'true'
+      - name: Test
         run: |
           pip install -qr requirements.txt
           pytest  -x --db-connection-string mongodb://mongo:27017 --redis-connection-string redis://redis:6379 --postgres-connection-string postgresql+asyncpg://virtool:virtool@postgres --cov --cov-report xml
-
       - name: Run codacy-coverage-reporter
         if: ${{ github.event_name == 'push' }}
         uses: codacy/codacy-coverage-reporter-action@master
@@ -50,11 +56,13 @@ jobs:
   client:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup NodeJS
+        uses: actions/setup-node@v1
         with:
           node-version: '14'
-      - name: test
+      - name: Test
         run: |
           cd client
           npm i
@@ -65,8 +73,9 @@ jobs:
     container:
       image: node:14-stretch
     steps:
-      - uses: actions/checkout@v2
-      - name: client
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Test
         run: |
           cd client
           npm i
