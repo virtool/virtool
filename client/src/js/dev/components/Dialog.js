@@ -40,6 +40,17 @@ export const DeveloperDialog = ({ show, onCommand, onHide }) => (
                 </Button>
             </DeveloperCommandControl>
         </DeveloperCommand>
+        <DeveloperCommand>
+            <DeveloperCommandLabel>
+                <h3>Create Subtraction</h3>
+                <p>Creates a subtraction that is ready for use.</p>
+            </DeveloperCommandLabel>
+            <DeveloperCommandControl>
+                <Button color="red" onClick={() => onCommand("create_subtraction")}>
+                    Create Subtraction
+                </Button>
+            </DeveloperCommandControl>
+        </DeveloperCommand>
     </Modal>
 );
 
