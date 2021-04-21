@@ -217,7 +217,7 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
         })
 
         label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
-        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta")
+        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta", name_on_disk="1-reference.fa.gz")
         reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
         upload = Upload(name="test")
         async with pg_session as session:
@@ -646,7 +646,7 @@ async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_sessi
 
     async with pg_session as session:
         upload = Upload(name="test", name_on_disk="test.fq.gz")
-        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta")
+        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta", name_on_disk="1-reference.fa.gz")
         reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
 
         upload.reads.append(reads)

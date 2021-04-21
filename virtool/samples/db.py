@@ -82,17 +82,26 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
     :param document: A document that represents a sample
     :return: Updated document with associated sample artifacts
     """
+    ready = document["ready"]
+    sample_id = document["_id"]
+
     async with AsyncSession(pg) as session:
         artifacts = (
             await session.execute(
-                select(SampleArtifact).filter_by(sample=document["_id"])
+                select(SampleArtifact).filter_by(sample=sample_id)
             )
         ).scalars()
+
         reads_files = (
-            await session.execute(select(SampleReads).filter_by(sample=document["_id"]))
+            await session.execute(select(SampleReads).filter_by(sample=sample_id))
         ).scalars()
 
+        artifacts = [artifact.to_dict() for artifact in artifacts]
         reads = [reads_file.to_dict() for reads_file in reads_files]
+
+        if ready:
+            for artifact in artifacts:
+                artifact["download_url"] = f"/api/samples/{sample_id}/artifacts/{artifact['name_on_disk']}"
 
         for reads_file in reads:
             if upload := reads_file.get("upload"):
@@ -102,9 +111,12 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
                     ).scalar()
                 ).to_dict()
 
+            if ready:
+                reads_file["download_url"] = f"/api/samples/{sample_id}/reads/{reads_file['name']}"
+
     return {
         **document,
-        "artifacts": [artifact.to_dict() for artifact in artifacts],
+        "artifacts": artifacts,
         "reads": reads,
     }
 
