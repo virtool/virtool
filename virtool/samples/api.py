@@ -57,10 +57,6 @@ QUERY_SCHEMA = {
         "default": 15,
         "min": 1,
         "max": 100
-    },
-    "filter": {
-        "type": "string",
-        "default": ""
     }
 }
 
