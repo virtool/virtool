@@ -80,10 +80,10 @@ async def find(req):
 
     query = v.document
 
-    filter_query = dict()
-    if "filter" in req.query:
-        filter_query = {
-            "labels": {"$in": req.query.getall("filter")}
+    label_query = dict()
+    if "label" in req.query:
+        label_query = {
+            "labels": {"$in": req.query.getall("label")}
         }
 
     rights_filter = [
@@ -124,11 +124,11 @@ async def find(req):
         else:
             db_query = workflow_query
 
-    if filter_query:
+    if label_query:
         db_query = {
             "$and": [
                 db_query,
-                filter_query
+                label_query
             ]
         }
 
