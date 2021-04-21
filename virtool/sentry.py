@@ -16,5 +16,6 @@ def setup(server_version):
     sentry_sdk.init(
         dsn=DSN,
         integrations=[sentry_sdk.integrations.aiohttp.AioHttpIntegration(), sentry_logging],
-        release=server_version
+        release=server_version,
+        traces_sample_rate=0.2
     )
