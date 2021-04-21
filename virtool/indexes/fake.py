@@ -43,29 +43,29 @@ async def create_fake_indexes(app: App, ref_id: str, user_id: str):
 
     manifest = dict()
 
-    index_id = fake.get_mongo_id()
+    finalized_index_id = fake.get_mongo_id()
 
     await create(
         db,
         ref_id,
         user_id,
         "foo",
-        index_id
+        finalized_index_id
     )
 
     data_path = Path(settings["data_path"])
 
-    path = data_path / "references" / ref_id / index_id
+    path = data_path / "references" / ref_id / finalized_index_id
     path.mkdir(parents=True)
 
     example_path = Path(__file__).parent.parent.parent / "example/indexes"
 
-    for index_file  in INDEX_FILES:
+    for index_file in INDEX_FILES:
         copy(example_path / index_file, path)
 
         await create_index_file(
             pg,
-            index_id,
+            finalized_index_id,
             "fasta" if index_file == "reference.fa.gz" else "bowtie2",
             index_file
         )
@@ -74,7 +74,16 @@ async def create_fake_indexes(app: App, ref_id: str, user_id: str):
         db,
         pg,
         ref_id,
-        index_id
+        finalized_index_id
     )
+    
+    unfinalized_index_id = fake.get_mongo_id()
 
+    await create(
+        db,
+        "reference_2",
+        user_id,
+        "bar",
+        unfinalized_index_id
+    )
     logger.debug("Created fake indexes")
