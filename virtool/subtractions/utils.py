@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 from typing import Tuple, List
 
 import aiofiles
@@ -62,19 +63,12 @@ def check_subtraction_file_type(file_name: str) -> str:
         return "bowtie2"
 
 
-def join_subtraction_path(settings: dict, subtraction_id: str) -> str:
-    return os.path.join(
-        settings["data_path"],
-        "subtractions",
-        subtraction_id.replace(" ", "_").lower()
-    )
+def join_subtraction_path(settings: dict, subtraction_id: str) -> Path:
+    return settings["data_path"] / "subtractions" / subtraction_id.replace(" ", "_").lower()
 
 
-def join_subtraction_index_path(settings: dict, subtraction_id: str) -> str:
-    return os.path.join(
-        join_subtraction_path(settings, subtraction_id),
-        "reference"
-    )
+def join_subtraction_index_path(settings: dict, subtraction_id: str) -> Path:
+    return join_subtraction_path(settings, subtraction_id) / "reference"
 
 
 async def get_subtraction_files(pg: AsyncEngine, subtraction: str) -> List[dict]:
@@ -109,5 +103,5 @@ def rename_bowtie_files(path: str):
     """
     for file in os.listdir(path):
         if file.endswith(".bt2"):
-            file_path = os.path.join(path, file)
-            os.rename(file_path, file_path.replace("reference", "subtraction"))
+            file_path = path / file
+            os.rename(file_path, str(file_path).replace("reference", "subtraction"))

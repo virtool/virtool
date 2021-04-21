@@ -2,10 +2,10 @@ from virtool.fake.wrapper import FakerWrapper
 from virtool.otus.fake import create_fake_otus
 
 
-async def test_create_fake_otus(dbi, snapshot):
+async def test_create_fake_otus(dbi, snapshot, tmp_path):
     app = {
         "db": dbi,
-        "data_path": "/foo",
+        "data_path": tmp_path,
         "fake": FakerWrapper()
     }
 

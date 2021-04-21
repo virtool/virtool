@@ -34,12 +34,13 @@ async def test_create_otu(
         snapshot,
         dbi,
         test_random_alphanumeric,
-        static_time
+        static_time,
+        tmp_path
 ):
     app = {
         "db": dbi,
         "settings": {
-            "data_path": "/foo"
+            "data_path": tmp_path
         }
     }
 
@@ -66,11 +67,11 @@ async def test_create_otu(
 
 
 @pytest.mark.parametrize("abbreviation", [None, "", "TMV"])
-async def test_edit(abbreviation, snapshot, dbi, test_otu, static_time, test_random_alphanumeric):
+async def test_edit(abbreviation, snapshot, dbi, test_otu, static_time, test_random_alphanumeric, tmp_path):
     app = {
         "db": dbi,
         "settings": {
-            "data_path": "/foo"
+            "data_path": tmp_path
         }
     }
 

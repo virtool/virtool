@@ -1,6 +1,6 @@
 import asyncio
-import signal
 import logging
+import signal
 
 import aiojobs
 

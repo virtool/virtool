@@ -6,13 +6,13 @@ from virtool.indexes.models import IndexFile
 from virtool.pg.utils import get_rows
 
 
-async def test_create_fake_indexes(dbi, pg, snapshot, tmpdir, static_time):
+async def test_create_fake_indexes(dbi, pg, snapshot, tmp_path, static_time):
     app = {
         "db": dbi,
         "fake": FakerWrapper(),
         "pg": pg,
         "settings": {
-            "data_path": str(tmpdir),
+            "data_path": tmp_path,
         }
     }
 
@@ -23,7 +23,7 @@ async def test_create_fake_indexes(dbi, pg, snapshot, tmpdir, static_time):
     snapshot.assert_match(rows, "index_files")
     snapshot.assert_match(await dbi.indexes.find().to_list(None), "indexes")
 
-    assert set(os.listdir(tmpdir / "references" / "reference_1" / "2x6YnyMt")) == {
+    assert set(os.listdir(tmp_path / "references" / "reference_1" / "2x6YnyMt")) == {
         "reference.fa.gz",
         "reference.1.bt2",
         "reference.2.bt2",

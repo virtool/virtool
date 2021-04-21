@@ -1,6 +1,5 @@
 from typing import Dict
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.indexes.models import IndexFile

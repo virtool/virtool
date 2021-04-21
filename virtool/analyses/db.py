@@ -19,12 +19,11 @@ import virtool.indexes.db
 import virtool.jobs.db
 import virtool.otus.utils
 import virtool.samples.db
-import virtool.tasks.task
 import virtool.tasks.pg
+import virtool.tasks.task
 import virtool.types
 import virtool.utils
 from virtool.analyses.models import AnalysisFile
-from virtool.jobs.utils import JobRights
 from virtool.types import App
 
 PROJECTION = (
@@ -81,14 +80,14 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
                 sample_id
             )
 
-            target_path = os.path.join(settings["data_path"], "analyses", analysis_id)
+            target_path = settings["data_path"] / "analyses" / analysis_id
 
             async with AsyncSession(self.app["pg"]) as session:
                 exists = (
                     await session.execute(select(AnalysisFile).filter_by(analysis=analysis_id))
                 ).scalar()
 
-            if os.path.isdir(path) and not exists:
+            if path.is_dir() and not exists:
                 try:
                     await self.app["run_in_thread"](os.makedirs, target_path)
                 except FileExistsError:
@@ -138,7 +137,7 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
                 sample_id
             )
 
-            if os.path.isdir(os.path.join(settings["data_path"], "analyses", analysis_id)):
+            if (settings["data_path"] / "analyses" / analysis_id).is_dir():
                 await self.app["run_in_thread"](shutil.rmtree, path, True)
 
         await virtool.tasks.pg.update(
@@ -366,17 +365,17 @@ async def remove_orphaned_directories(app: virtool.types.App):
     """
     db = app["db"]
 
-    samples_path = os.path.join(app["settings"]["data_path"], "samples")
+    samples_path = app["settings"]["data_path"] / "samples"
 
     existing_ids = set(await db.analyses.distinct("_id"))
 
     for sample_id in os.listdir(samples_path):
-        analyses_path = os.path.join(samples_path, sample_id, "analysis")
+        analyses_path = samples_path / sample_id / "analysis"
 
         to_delete = set(os.listdir(analyses_path)) - existing_ids
 
         for analysis_id in to_delete:
-            analysis_path = os.path.join(analyses_path, analysis_id)
+            analysis_path = analyses_path / analysis_id
             try:
                 await app["run_in_thread"](virtool.utils.rm, analysis_path, True)
             except FileNotFoundError:

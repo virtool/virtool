@@ -236,7 +236,7 @@ async def test_get(error, mocker, snapshot, resp_is, spawn_client, static_time):
 
 
 @pytest.mark.parametrize("file_exists", [True, False])
-async def test_download_otus_json(file_exists, mocker, tmpdir, dbi, spawn_job_client):
+async def test_download_otus_json(file_exists, mocker, tmp_path, dbi, spawn_job_client):
     with gzip.open(OTUS_JSON_PATH, "rt") as f:
         expected = json.load(f)
 
@@ -247,9 +247,10 @@ async def test_download_otus_json(file_exists, mocker, tmpdir, dbi, spawn_job_cl
 
     client = await spawn_job_client(authorize=True)
 
-    client.settings["data_path"] = Path(tmpdir)
+    client.settings["data_path"] = tmp_path
 
-    index_dir = tmpdir.mkdir("references").mkdir("foo").mkdir("bar")
+    index_dir = tmp_path / "references" / "foo" / "bar"
+    index_dir.mkdir(parents=True)
 
     if file_exists:
         shutil.copy(OTUS_JSON_PATH, index_dir / "otus.json.gz")
@@ -516,7 +517,7 @@ async def test_delete_index(spawn_job_client, error):
 
 
 @pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])
-async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_session):
+async def test_upload(error, tmp_path, spawn_job_client, snapshot, resp_is, pg_session):
     client = await spawn_job_client(authorize=True)
     path = Path(sys.path[0]) / "tests" / "test_files" / "index" / "reference.1.bt2"
 
@@ -524,7 +525,7 @@ async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_ses
         "file": open(path, "rb")
     }
 
-    client.app["settings"]["data_path"] = str(tmpdir)
+    client.app["settings"]["data_path"] = tmp_path
 
     index = {
         "_id": "foo",
@@ -569,7 +570,7 @@ async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_ses
         return
 
     assert resp.status == 201
-    assert os.listdir(tmpdir / "references" / "bar" / "foo") == ["reference.1.bt2"]
+    assert os.listdir(tmp_path / "references" / "bar" / "foo") == ["reference.1.bt2"]
     snapshot.assert_match(await resp.json())
     snapshot.assert_match(await client.db.indexes.find_one("foo"))
 
@@ -632,10 +633,10 @@ async def test_finalize(error, snapshot, spawn_job_client, test_otu, pg):
 
 
 @pytest.mark.parametrize("status", [200, 404])
-async def test_download(status, spawn_job_client, tmpdir):
+async def test_download(status, spawn_job_client, tmp_path):
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = tmpdir
+    client.app["settings"]["data_path"] = tmp_path
 
     await client.db.indexes.insert_one({
         "_id": "test_index",
@@ -645,7 +646,7 @@ async def test_download(status, spawn_job_client, tmpdir):
     })
 
     path = Path.cwd() / "tests" / "test_files" / "index" / "reference.1.bt2"
-    target_path = Path(tmpdir) / "references" / "test_reference" / "test_index"
+    target_path = tmp_path / "references" / "test_reference" / "test_index"
     target_path.mkdir(parents=True)
     shutil.copyfile(path, target_path / "reference.1.bt2")
 

@@ -1,7 +1,6 @@
 import json
-import os
 import shutil
-import sys
+from pathlib import Path
 
 import pymongo.results
 import pytest
@@ -10,20 +9,20 @@ from aiohttp.test_utils import make_mocked_coro
 import virtool.hmm.db
 import virtool.utils
 
-JSON_RESULT_PATH = os.path.join(sys.path[0], "tests", "test_files", "nuvs", "results.json")
+JSON_RESULT_PATH = Path.cwd() / "tests" / "test_files" / "nuvs" / "results.json"
 
 
-async def test_get_hmms_referenced_in_files(mocker, tmpdir, dbi):
-    a = tmpdir.mkdir("samples").mkdir("foo").mkdir("analysis").mkdir("bar")
+async def test_get_hmms_referenced_in_files(dbi, mocker, tmp_path):
+    path = tmp_path / "samples" / "foo" / "analysis" / "bar"
+    path.mkdir(parents=True)
 
-    path = os.path.join(str(a), "results.json")
-
+    path = path / "results.json"
     shutil.copy(JSON_RESULT_PATH, path)
 
     m_join = mocker.patch("virtool.analyses.utils.join_analysis_json_path", return_value=path)
 
     settings = {
-        "data_path": str(tmpdir)
+        "data_path": tmp_path
     }
 
     await dbi.analyses.insert_one({
@@ -113,7 +112,7 @@ async def test_get_hmms_referenced_in_db(dbi):
     assert results == {"a", "b", "y", "z", "w", "d", "e"}
 
 
-async def test_delete_unreferenced_hmms(mocker, dbi):
+async def test_delete_unreferenced_hmms(mocker, dbi, tmp_path):
     mocker.patch(
         "virtool.hmm.db.get_hmms_referenced_in_db",
         make_mocked_coro({"a", "b", "d", "f"})
@@ -127,7 +126,7 @@ async def test_delete_unreferenced_hmms(mocker, dbi):
     await dbi.hmm.insert_many([{"_id": hmm_id} for hmm_id in ["a", "b", "c", "d", "e", "f", "g"]])
 
     settings = {
-        "data_path": "/foo"
+        "data_path": tmp_path
     }
 
     result = await virtool.hmm.db.delete_unreferenced_hmms(dbi, settings)
@@ -166,7 +165,7 @@ async def test_get_status(updating, dbi):
     }
 
 
-async def test_purge(mocker, dbi):
+async def test_purge(mocker, dbi, tmp_path):
     """
     Test that the function calls `delete_unreferenced_hmms()` and hides all remaining HMM documents.
 
@@ -174,7 +173,7 @@ async def test_purge(mocker, dbi):
     m_delete_unreferenced_hmms = mocker.patch("virtool.hmm.db.delete_unreferenced_hmms", make_mocked_coro())
 
     settings = {
-        "data_path": "/foo"
+        "data_path": tmp_path
     }
 
     await dbi.hmm.insert_many([
@@ -204,13 +203,13 @@ async def test_get_hmm_documents(dbi):
     assert "bar" in ids
 
 
-async def test_generate_annotations_json_file(dbi, tmpdir):
+async def test_generate_annotations_json_file(dbi, tmp_path):
     await dbi.hmm.insert_one({"_id": "foo"})
     await dbi.hmm.insert_one({"_id": "bar"})
 
     path = await virtool.hmm.db.generate_annotations_json_file({
         "db": dbi,
-        "settings": {"data_path": str(tmpdir)},
+        "settings": {"data_path": tmp_path},
     })
 
     assert path.exists()

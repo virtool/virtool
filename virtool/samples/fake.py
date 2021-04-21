@@ -1,10 +1,11 @@
+from pathlib import Path
+from typing import List
+
 from virtool.fake.identifiers import USER_ID
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import create_sample, finalize
-from virtool.types import App
 from virtool.samples.db import create_sample_reads_record
-from typing import List
-from pathlib import Path
+from virtool.types import App
 
 EXAMPLE_FILES_PATH = Path(__file__).parent.parent.parent / "example"
 READ_FILES_PATH = EXAMPLE_FILES_PATH / "reads"

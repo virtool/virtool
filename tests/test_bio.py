@@ -4,16 +4,17 @@ import pickle
 import pytest
 import sys
 from aiohttp import web
+from pathlib import Path
 
 import virtool.bio
 
-TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
-TEST_BIO_PATH = os.path.join(TEST_FILES_PATH, "bio")
+TEST_FILES_PATH = Path.cwd() / "tests" / "test_files"
+TEST_BIO_PATH = TEST_FILES_PATH / "bio"
 
 
 @pytest.fixture
 def orf_containing():
-    data = virtool.bio.read_fasta(os.path.join(TEST_BIO_PATH, "has_orfs.fa"))
+    data = virtool.bio.read_fasta(TEST_BIO_PATH / "has_orfs.fa")
     return data[0][1]
 
 
@@ -25,7 +26,7 @@ def mock_blast_server(monkeypatch, loop, aiohttp_server):
         format_object = params.get("FORMAT_OBJECT", None)
 
         if format_object == "SearchInfo":
-            with open(os.path.join(TEST_BIO_PATH, "check_rid.html"), "r") as f:
+            with open(TEST_BIO_PATH / "check_rid.html", "r") as f:
                 html = f.read()
 
             assert params["CMD"] == "Get"
@@ -44,7 +45,7 @@ def mock_blast_server(monkeypatch, loop, aiohttp_server):
                 "FORMAT_OBJECT": "Alignment"
             }
 
-            with open(os.path.join(TEST_BIO_PATH, "blast.zip"), "rb") as f:
+            with open(TEST_BIO_PATH / "blast.zip", "rb") as f:
                 return web.Response(body=f.read(), status=200)
 
         return web.Response(status=404)
@@ -66,7 +67,7 @@ def mock_blast_server(monkeypatch, loop, aiohttp_server):
             "QUERY": "ATGTACAGGATCAGCATCGAGCTACGAT",
         }
 
-        with open(os.path.join(TEST_BIO_PATH, "initialize_blast.html"), "r") as f:
+        with open(TEST_BIO_PATH / "initialize_blast.html", "r") as f:
             return web.Response(text=f.read(), status=200)
 
     app = web.Application()
@@ -82,8 +83,8 @@ def mock_blast_server(monkeypatch, loop, aiohttp_server):
 
 
 @pytest.mark.parametrize("illegal", [False, True])
-def test_read_fasta(illegal, tmpdir):
-    tmpfile = tmpdir.join("test.fa")
+def test_read_fasta(illegal, tmp_path):
+    tmpfile = tmp_path / "test.fa"
 
     content = (
         ">test_1\n"
@@ -95,7 +96,7 @@ def test_read_fasta(illegal, tmpdir):
     if illegal:
         content = "ATTAGATAC\n" + content
 
-    tmpfile.write(content)
+    tmpfile.write_text(content)
 
     if illegal:
         with pytest.raises(IOError) as excinfo:
@@ -110,16 +111,16 @@ def test_read_fasta(illegal, tmpdir):
         ]
 
 
-async def test_read_fastq_from_path(tmpdir):
-    tmpfile = tmpdir.join("test.fa")
+async def test_read_fastq_from_path(tmp_path):
+    tmpfile = tmp_path / "test.fa"
 
-    with open(os.path.join(TEST_FILES_PATH, "test.fq"), "r") as f:
+    with open(TEST_FILES_PATH / "test.fq", "r") as f:
         lines = list()
 
         while len(lines) < 16:
             lines.append(f.readline())
 
-    tmpfile.write("".join(lines))
+    tmpfile.write_text("".join(lines))
 
     result = list()
 
@@ -150,16 +151,16 @@ async def test_read_fastq_from_path(tmpdir):
     ]
 
 
-async def test_read_fastq_headers(tmpdir):
-    tmpfile = tmpdir.join("test.fa")
+async def test_read_fastq_headers(tmp_path):
+    tmpfile = tmp_path / "test.fa"
 
-    with open(os.path.join(TEST_FILES_PATH, "test.fq"), "r") as f:
+    with open(TEST_FILES_PATH / "test.fq", "r") as f:
         lines = list()
 
         while len(lines) < 16:
             lines.append(f.readline())
 
-    tmpfile.write("".join(lines))
+    tmpfile.write_text("".join(lines))
 
     results = list()
 
@@ -196,7 +197,7 @@ def test_translate(sequence, expected):
 def test_find_orfs(orf_containing):
     result = virtool.bio.find_orfs(orf_containing)
 
-    with open(os.path.join(TEST_BIO_PATH, "orfs"), "rb") as f:
+    with open(TEST_BIO_PATH / "orfs", "rb") as f:
         assert pickle.load(f) == result
 
 
@@ -262,7 +263,7 @@ def test_extract_blast_info():
     Test that the function returns the correct RID and RTOE from the stored test HTML file.
 
     """
-    with open(os.path.join(TEST_BIO_PATH, "initialize_blast.html"), "r") as f: \
+    with open(TEST_BIO_PATH / "initialize_blast.html", "r") as f: \
             assert virtool.bio.extract_blast_info(f.read()) == ("YA40WNN5014", 19)
 
 
@@ -282,6 +283,6 @@ async def test_get_ncbi_blast_result(mock_blast_server):
     async def run_in_process(func, *args):
         return func(*args)
 
-    with open(os.path.join(TEST_BIO_PATH, "unformatted_blast.json"), "r") as f:
+    with open(TEST_BIO_PATH / "unformatted_blast.json", "r") as f:
         result = await virtool.bio.get_ncbi_blast_result({"proxy": ""}, run_in_process, "YA6M9135015")
         assert result == json.load(f)

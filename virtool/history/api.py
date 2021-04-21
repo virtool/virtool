@@ -1,9 +1,9 @@
-import virtool.history.db
-import virtool.references.db
 import virtool.errors
+import virtool.history.db
 import virtool.history.utils
 import virtool.http.routes
 import virtool.otus.utils
+import virtool.references.db
 import virtool.utils
 from virtool.api.response import conflict, insufficient_rights, json_response, no_content, not_found
 

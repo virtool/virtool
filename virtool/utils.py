@@ -6,10 +6,10 @@ import re
 import secrets
 import shutil
 import subprocess
-import sys
 import tarfile
 import tempfile
 from numbers import Number
+from pathlib import Path
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Iterable, Tuple, Any, Optional, List
@@ -70,7 +70,7 @@ def chunk_list(lst: list, n: int):
         yield lst[i:i + n]
 
 
-def compress_file(path: str, target: str, processes: int = 1):
+def compress_file(path: Path, target: Path, processes: int = 1):
     """
     Compress the file at `path` to a gzipped file at `target`.
 
@@ -81,13 +81,13 @@ def compress_file(path: str, target: str, processes: int = 1):
         compress_file_with_gzip(path, target)
 
 
-def compress_file_with_gzip(path: str, target: str):
+def compress_file_with_gzip(path: Path, target: Path):
     with open(path, "rb") as f_in:
         with gzip.open(target, "wb", compresslevel=6) as f_out:
             shutil.copyfileobj(f_in, f_out)
 
 
-def compress_file_with_pigz(path: str, target: str, processes: int):
+def compress_file_with_pigz(path: Path, target: Path, processes: int):
     command = [
         "pigz",
         "-p", str(processes),
@@ -121,7 +121,7 @@ def coerce_list(obj: Any) -> list:
     return [obj] if not isinstance(obj, list) else obj
 
 
-def decompress_file(path: str, target: str, processes: Optional[int] = 1):
+def decompress_file(path: Path, target: Path, processes: Optional[int] = 1):
     """
     Decompress the gzip-compressed file at `path` to a `target` file.
 
@@ -136,13 +136,13 @@ def decompress_file(path: str, target: str, processes: Optional[int] = 1):
         decompress_file_with_gzip(path, target)
 
 
-def decompress_file_with_gzip(path: str, target: str):
+def decompress_file_with_gzip(path: Path, target: Path):
     with gzip.open(path, "rb") as f_in:
         with open(target, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
 
 
-def decompress_file_with_pigz(path: str, target: str, processes: int):
+def decompress_file_with_pigz(path: Path, target: Path, processes: int):
     command = [
         "pigz",
         "-p", str(processes),
@@ -156,7 +156,7 @@ def decompress_file_with_pigz(path: str, target: str, processes: int):
         subprocess.call(command, stdout=f)
 
 
-def decompress_tgz(path: str, target: str):
+def decompress_tgz(path: Path, target: Path):
     """
     Decompress the tar.gz file at ``path`` to the directory ``target``.
 
@@ -168,7 +168,7 @@ def decompress_tgz(path: str, target: str):
         tar.extractall(target)
 
 
-def ensure_data_dir(data_path: str):
+def ensure_data_dir(data_path: Path):
     """
     Ensure the application data structure is correct. Fix it if it is broken.
 
@@ -176,10 +176,10 @@ def ensure_data_dir(data_path: str):
 
     """
     for subdir in SUB_DIRS:
-        os.makedirs(os.path.join(data_path, subdir), exist_ok=True)
+        os.makedirs(data_path / subdir, exist_ok=True)
 
 
-async def file_length(path: str):
+async def file_length(path: Path):
     length = 0
 
     async with aiofiles.open(path) as f:
@@ -189,7 +189,7 @@ async def file_length(path: str):
     return length
 
 
-def file_stats(path: str) -> dict:
+def file_stats(path: Path) -> dict:
     """
     Return the size and last modification date for the file at `path`.
 
@@ -197,7 +197,7 @@ def file_stats(path: str) -> dict:
     :return: the file size and modification datetime
 
     """
-    stats = os.stat(path)
+    stats = path.stat()
 
     # Append file entry to reply list
     return {
@@ -215,14 +215,14 @@ def hash_key(key: str) -> str:
     return hashlib.sha256(key.encode()).hexdigest()
 
 
-async def get_client_path() -> str:
+async def get_client_path() -> Path:
     """
     Return the Virtool client path. The path is different between production and development instances of Virtool.
 
-    :return: str
+    :return: Path
     """
-    for path in [os.path.join(sys.path[0], "client"), os.path.join(sys.path[0], "client", "dist")]:
-        if os.path.exists(os.path.join(path, "index.html")):
+    for path in [Path.cwd() / "client", Path.cwd() / "client" / "dist"]:
+        if (path / "index.html").exists():
             return path
 
 
@@ -246,7 +246,7 @@ def get_temp_dir():
     return tempfile.TemporaryDirectory()
 
 
-def is_gzipped(path: str):
+def is_gzipped(path: Path):
     try:
         with gzip.open(path, "rb") as f:
             f.peek(1)
@@ -286,7 +286,7 @@ def random_alphanumeric(
     return random_alphanumeric(length=length, excluded=excluded)
 
 
-def rm(path: str, recursive=False) -> bool:
+def rm(path: Path, recursive=False) -> bool:
     """
     A function that removes files or directories in a separate thread. Wraps :func:`os.remove` and func:`shutil.rmtree`.
 

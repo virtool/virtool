@@ -3,7 +3,7 @@ Fetchers provide a get() method
 """
 from abc import ABC, abstractmethod
 from asyncio import gather
-from typing import AsyncIterable, Dict, List, Optional, Tuple
+from typing import AsyncIterable, List, Optional, Tuple
 
 from sqlalchemy import inspect, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession

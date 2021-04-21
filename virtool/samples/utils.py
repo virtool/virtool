@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import List
 
 from requests import Response
@@ -102,7 +103,7 @@ def join_legacy_read_path(sample_path: str, suffix: int) -> str:
     :return: the read path
 
     """
-    return os.path.join(sample_path, f"reads_{suffix}.fastq")
+    return sample_path / f"reads_{suffix}.fastq"
 
 
 def join_legacy_read_paths(settings: dict, sample):
@@ -126,7 +127,7 @@ def join_legacy_read_paths(settings: dict, sample):
         return [join_legacy_read_path(sample_path, 1)]
 
 
-def join_read_paths(base_path: str, paired: bool) -> list:
+def join_read_paths(base_path: str, paired: bool) -> List[Path]:
     """
     Return a list of standard read paths given a base path and flag indicating whether the reads are `paired`.
 
@@ -143,7 +144,7 @@ def join_read_paths(base_path: str, paired: bool) -> list:
     return [join_read_path(base_path, 1)]
 
 
-def join_read_path(base_path: str, suffix: int) -> str:
+def join_read_path(base_path: str, suffix: int) -> Path:
     """
     Return a standard read path given a base path (eg. /mnt/data/samples/foo) and a read suffix.
 
@@ -152,8 +153,8 @@ def join_read_path(base_path: str, suffix: int) -> str:
     :return: a read path
 
     """
-    return os.path.join(base_path, f"reads_{suffix}.fq.gz")
+    return base_path / f"reads_{suffix}.fq.gz"
 
 
-def join_sample_path(settings, sample_id):
-    return os.path.join(settings["data_path"], "samples", sample_id)
+def join_sample_path(settings, sample_id) -> Path:
+    return settings["data_path"] / "samples" / sample_id

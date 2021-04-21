@@ -6,6 +6,7 @@ TODO: Port over to the normal API
 
 """
 from logging import getLogger
+from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
 
@@ -73,14 +74,14 @@ async def drop_fake_mongo(app: App):
         logger.debug(f"Dropped fake Mongo database: {db_name}")
 
 
-def create_fake_data_path() -> str:
+def create_fake_data_path() -> Path:
     """
     Create a temporary directory to use as a location for data for a fake instance.
 
     :return: the data path
 
     """
-    data_path = str(mkdtemp(prefix=f"virtool_fake_{random_alphanumeric()}_"))
+    data_path = Path(mkdtemp(prefix=f"virtool_fake_{random_alphanumeric()}_"))
     ensure_data_dir(data_path)
     return data_path
 

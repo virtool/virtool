@@ -1,6 +1,7 @@
 import logging
 import sys
 from typing import Optional
+
 from aioredis import Redis, create_redis_pool
 
 logger = logging.getLogger(__name__)

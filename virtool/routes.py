@@ -1,6 +1,5 @@
 import logging
-import os
-import sys
+from pathlib import Path
 
 import virtool.account.api
 import virtool.analyses.api
@@ -18,11 +17,11 @@ import virtool.indexes.api
 import virtool.jobs.api
 import virtool.labels.api
 import virtool.otus.api
-import virtool.tasks.api
 import virtool.references.api
 import virtool.samples.api
 import virtool.settings.api
 import virtool.subtractions.api
+import virtool.tasks.api
 import virtool.uploads.api
 import virtool.users.api
 import virtool.utils
@@ -79,6 +78,6 @@ def setup_routes(app):
     for routes in ROUTES:
         app.router.add_routes(routes)
 
-    static_path = os.path.join(sys.path[0], "static")
+    static_path = Path.cwd() / "static"
 
     app.router.add_static("/assets", static_path)

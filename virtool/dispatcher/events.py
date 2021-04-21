@@ -3,6 +3,7 @@ from typing import Callable, List, Union
 
 from sqlalchemy import event, inspect
 from sqlalchemy.orm import Session
+
 from virtool.dispatcher.operations import Operation
 from virtool.pg.base import Base
 

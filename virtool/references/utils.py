@@ -1,9 +1,9 @@
 import gzip
 import json
+from operator import itemgetter
 from typing import List, Set
 
 from cerberus import Validator
-from operator import itemgetter
 
 import virtool.otus.utils
 

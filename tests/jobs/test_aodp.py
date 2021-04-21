@@ -11,16 +11,18 @@ TEST_REF_PATH = os.path.join(TEST_FILES_PATH, "aodp", "reference.fa")
 
 
 @pytest.fixture
-async def mock_job(tmpdir, mocker, monkeypatch, request, dbi, test_db_connection_string, test_db_name):
+async def mock_job(tmp_path, mocker, monkeypatch, request, dbi, test_db_connection_string, test_db_name):
     monkeypatch.setattr('sys.stdin', io.StringIO('my input'))
 
-    index_dir = tmpdir.mkdir("references").mkdir("foo_ref").mkdir("foo_index")
-    shutil.copy(TEST_REF_PATH, index_dir.join("ref.fa"))
+    index_dir = tmp_path / "references" / "foo_ref" / "foo_index"
+    index_dir.mkdir(parents=True)
+    shutil.copy(TEST_REF_PATH, index_dir / "ref.fa")
 
-    tmpdir.mkdir("samples").mkdir("foo_sample").mkdir("analysis").mkdir("foo_analysis")
+    (tmp_path / "samples" / "foo_sample" / "analysis" / "foo_analysis").mkdir(parents=True)
+
 
     settings = {
-        "data_path": str(tmpdir),
+        "data_path": tmp_path,
         "db_name": test_db_name
     }
 

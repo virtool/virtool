@@ -2,7 +2,7 @@
 Database functions and utilities for sequences.
 
 """
-from typing import Optional, Union, Dict, Any
+from typing import Optional, Dict, Any
 
 import virtool.db.utils
 import virtool.history

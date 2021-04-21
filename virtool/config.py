@@ -1,8 +1,8 @@
 import asyncio
 import json
 import logging
-import os
 import sys
+from pathlib import Path
 
 import click
 import psutil
@@ -22,7 +22,7 @@ import virtool.utils
 
 logger = logging.getLogger(__name__)
 
-CONFIG_PATH = os.path.join(sys.path[0], "config.json")
+CONFIG_PATH = Path.cwd() / "config.json"
 
 JOB_LIMIT_KEYS = (
     "lg_proc",
@@ -145,7 +145,7 @@ def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_se
         redis_connection_string, verbose):
     ctx.ensure_object(dict)
     ctx.obj.update({
-        "data_path": data_path,
+        "data_path": Path(data_path),
         "db_connection_string": db_connection_string,
         "db_name": db_name,
         "dev": dev,

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
@@ -13,9 +14,9 @@ from virtool.tasks.models import Task
 
 
 @pytest.fixture
-def test_blast_obj(dbi):
+def test_blast_obj(dbi, tmp_path):
     settings = {
-        "data_path": "/mnt/data"
+        "data_path": tmp_path
     }
 
     return virtool.analyses.db.BLAST(
@@ -29,9 +30,9 @@ def test_blast_obj(dbi):
 
 class TestBLAST:
 
-    def test_init(self, dbi, test_blast_obj):
+    def test_init(self, dbi, test_blast_obj, tmp_path):
         assert test_blast_obj.db == dbi
-        assert test_blast_obj.settings == {"data_path": "/mnt/data"}
+        assert test_blast_obj.settings == {"data_path": tmp_path}
         assert test_blast_obj.analysis_id == "foo"
         assert test_blast_obj.sequence_index == 5
         assert test_blast_obj.rid == "ABC123"
@@ -180,15 +181,16 @@ async def test_remove_nuvs_blast(snapshot, dbi, static_time):
     snapshot.assert_match(await dbi.analyses.find().to_list(None))
 
 
-async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg, pg_session, static_time):
+async def test_store_nuvs_files_task(tmp_path, spawn_client, dbi, pg, pg_session, static_time):
     client = await spawn_client(authorize=True)
 
-    test_dir = tmpdir.mkdir("samples").mkdir("foo").mkdir("analysis").mkdir("bar")
-    test_dir.join("assembly.fa").write("FASTA file")
-    test_dir.join("hmm.tsv").write("HMM file")
-    test_dir.join("unmapped_otus.fq").write("FASTQ file")
+    test_dir = tmp_path / "samples" / "foo" / "analysis" / "bar"
+    test_dir.mkdir(parents=True, exist_ok=True)
+    test_dir.joinpath("assembly.fa").write_text("FASTA file")
+    test_dir.joinpath("hmm.tsv").write_text("HMM file")
+    test_dir.joinpath("unmapped_otus.fq").write_text("FASTQ file")
 
-    client.app["settings"]["data_path"] = str(tmpdir)
+    client.app["settings"]["data_path"] = tmp_path
 
     await dbi.analyses.insert_one({
         "_id": "bar",
@@ -227,7 +229,7 @@ async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg, pg_session, 
             'format': 'fasta',
             'name': 'assembly.fa.gz',
             'name_on_disk': '1-assembly.fa.gz',
-            'size': os.stat(os.path.join(tmpdir, "analyses", "bar", "assembly.fa.gz")).st_size,
+            'size': (tmp_path / "analyses" / "bar" / "assembly.fa.gz").stat().st_size,
             'uploaded_at': None
         },
         {
@@ -237,7 +239,7 @@ async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg, pg_session, 
             'format': 'tsv',
             'name': 'hmm.tsv',
             'name_on_disk': '2-hmm.tsv',
-            'size': os.stat(os.path.join(tmpdir, "analyses", "bar", "hmm.tsv")).st_size,
+            'size': (tmp_path / "analyses" / "bar" / "hmm.tsv").stat().st_size,
             'uploaded_at': None
         },
         {
@@ -247,12 +249,12 @@ async def test_store_nuvs_files_task(tmpdir, spawn_client, dbi, pg, pg_session, 
             'format': 'fastq',
             'name': 'unmapped_otus.fq.gz',
             'name_on_disk': '3-unmapped_otus.fq.gz',
-            'size': os.stat(os.path.join(tmpdir, "analyses", "bar", "unmapped_otus.fq.gz")).st_size,
+            'size': (tmp_path / "analyses" / "bar" / "unmapped_otus.fq.gz").stat().st_size,
             'uploaded_at': None
         }
     ]
-    assert set(os.listdir(tmpdir / "analyses" / "bar")) == {"assembly.fa.gz", "hmm.tsv", "unmapped_otus.fq.gz"}
-    assert not os.path.isdir(os.path.join(tmpdir, "samples", "foo", "analysis", "bar"))
+    assert set(os.listdir(tmp_path / "analyses" / "bar")) == {"assembly.fa.gz", "hmm.tsv", "unmapped_otus.fq.gz"}
+    assert not (tmp_path / "samples" / "foo" / "analysis" / "bar").is_dir()
 
 
 @pytest.mark.parametrize("analysis_id", [None, "test_analysis"])

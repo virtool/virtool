@@ -3,7 +3,7 @@ import os
 import virtool.subtractions.utils
 
 
-async def test_calculate_gc(tmpdir):
+async def test_calculate_gc(tmp_path):
     lines = [
         ">foo\n",
         "ATGGACTGGTTCTCTCTCTCTAGGCACTG\n",
@@ -13,7 +13,7 @@ async def test_calculate_gc(tmpdir):
         "TTTCGACTTGACTTCTTNTCTCATGCGAT"
     ]
 
-    path = os.path.join(str(tmpdir), "test.fa")
+    path = tmp_path / "test.fa"
 
     with open(path, "w") as handle:
         for line in lines:

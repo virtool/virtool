@@ -53,7 +53,7 @@ async def create_fake_indexes(app: App, ref_id: str, user_id: str):
         finalized_index_id
     )
 
-    data_path = Path(settings["data_path"])
+    data_path = settings["data_path"]
 
     path = data_path / "references" / ref_id / finalized_index_id
     path.mkdir(parents=True)

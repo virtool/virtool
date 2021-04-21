@@ -210,19 +210,22 @@ class TestRemoveSamples:
                 ]
         )
     ])
-    async def test(self, id_list, ls, samples, analyses, tmpdir, dbi):
+    async def test(self, id_list, ls, samples, analyses, tmp_path, dbi):
         """
         Test that the function can remove one or more samples, their analysis documents, and files.
 
         """
-        samples_dir = tmpdir.mkdir("samples")
+        samples_dir = tmp_path / "samples"
+        samples_dir.mkdir()
 
-        sample_1_file = samples_dir.mkdir("test_1").join("test.txt")
-        sample_2_file = samples_dir.mkdir("test_2").join("test.txt")
-        sample_3_file = samples_dir.mkdir("test_3").join("test.txt")
+        paths = dict()
 
-        for handle in [sample_1_file, sample_2_file, sample_3_file]:
-            handle.write("hello world")
+        for x in range(1,4):
+            paths[f"sample_{x}_file"] = samples_dir / f"test_{x}"
+            paths[f"sample_{x}_file"].mkdir()
+
+        for handle in paths.values():
+            handle.joinpath("text.txt").write_text("hello world")
 
         await dbi.samples.insert_many([
             {"_id": "test_1"},
@@ -243,23 +246,23 @@ class TestRemoveSamples:
         ])
 
         settings = {
-            "data_path": str(tmpdir)
+            "data_path": tmp_path
         }
 
         await virtool.samples.db.remove_samples(dbi, settings, id_list)
 
-        assert set(ls) == set(os.listdir(str(samples_dir)))
+        assert set(ls) == set(os.listdir(samples_dir))
 
         assert await dbi.samples.find().to_list(None) == samples
         assert await dbi.analyses.find().to_list(None) == analyses
 
-    async def test_not_list(self, dbi):
+    async def test_not_list(self, dbi, tmp_path):
         """
         Test that a custom ``TypeError`` is raised if a non-list variable is passed as ``id_list``.
 
         """
         settings = {
-            "data_path"
+            "data_path": tmp_path
         }
 
         with pytest.raises(TypeError) as excinfo:
@@ -267,16 +270,15 @@ class TestRemoveSamples:
 
         assert "id_list must be a list" in str(excinfo.value)
 
-    async def test_file_not_found(self, tmpdir, dbi):
+    async def test_file_not_found(self, tmp_path, dbi):
         """
         Test that the function does not fail when a sample folder is missing.
 
         """
-        samples_dir = tmpdir.mkdir("samples")
+        samples_dir = tmp_path / "samples" / "test_1"
+        samples_dir.mkdir(parents=True)
 
-        sample_1_file = samples_dir.mkdir("test_1").join("test.txt")
-
-        sample_1_file.write("hello world")
+        samples_dir.joinpath("test.txt").write_text("hello world")
 
         await dbi.samples.insert_many([
             {"_id": "test_1"},
@@ -284,12 +286,12 @@ class TestRemoveSamples:
         ])
 
         settings = {
-            "data_path": str(tmpdir)
+            "data_path": tmp_path
         }
 
         await virtool.samples.db.remove_samples(dbi, settings, ["test_1", "test_2"])
 
-        assert os.listdir(str(samples_dir)) == []
+        assert not samples_dir.exists()
 
         assert not await dbi.samples.count_documents({})
 
@@ -446,7 +448,7 @@ async def test_update_is_compressed(dbi):
 
 
 @pytest.mark.parametrize("paired", [True, False])
-async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmpdir):
+async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path):
     m_update_is_compressed = mocker.patch(
         "virtool.samples.db.update_is_compressed",
         make_mocked_coro()
@@ -455,7 +457,8 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmpdir):
     async def run_in_thread(func, *args):
         return func(*args)
 
-    sample_dir = tmpdir.mkdir("samples").mkdir("foo")
+    sample_dir = tmp_path / "samples" / "foo"
+    sample_dir.mkdir(parents=True)
 
     shutil.copy(FASTQ_PATH, sample_dir / "reads_1.fastq")
 
@@ -466,7 +469,7 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmpdir):
         "db": dbi,
         "run_in_thread": run_in_thread,
         "settings": {
-            "data_path": str(tmpdir)
+            "data_path": tmp_path
         }
     }
 
@@ -674,7 +677,7 @@ async def test_move_sample_files_task(legacy, compressed, paired, dbi, pg, pg_se
         assert sample_reads.upload == upload.id
 
 
-async def test_finalize(tmpdir, dbi, pg, pg_session):
+async def test_finalize(tmp_path, dbi, pg, pg_session):
     quality = {
         "count": 10000000,
         "gc": 43
@@ -695,7 +698,7 @@ async def test_finalize(tmpdir, dbi, pg, pg_session):
 
     m_run_in_thread = make_mocked_coro()
 
-    document = await virtool.samples.db.finalize(dbi, pg, "test", quality, m_run_in_thread, tmpdir)
+    document = await virtool.samples.db.finalize(dbi, pg, "test", quality, m_run_in_thread, tmp_path)
     assert document == {
         "_id": "test",
         "quality": {

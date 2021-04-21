@@ -1046,7 +1046,7 @@ async def download_reads(req: aiohttp.web.Request):
     if file_name not in existing_reads:
         return not_found()
 
-    file_path = os.path.join(req.app["settings"]["data_path"], "samples", sample_id, file_name)
+    file_path = req.app["settings"]["data_path"] / "samples" / sample_id / file_name
 
     if not os.path.isfile(file_path):
         return virtool.api.response.not_found()
@@ -1084,7 +1084,7 @@ async def download_artifact(req: aiohttp.web.Request):
 
     artifact = result.to_dict()
 
-    file_path = os.path.join(req.app["settings"]["data_path"], "samples", sample_id, artifact["name_on_disk"])
+    file_path = req.app["settings"]["data_path"] / "samples" / sample_id / artifact["name_on_disk"]
 
     if not os.path.isfile(file_path):
         return virtool.api.response.not_found()
@@ -1122,7 +1122,7 @@ async def download_reads_cache(req):
     if file_name not in existing_reads:
         return not_found()
 
-    file_path = Path(req.app["settings"]["data_path"]) / "caches" / key / file_name
+    file_path = req.app["settings"]["data_path"] / "caches" / key / file_name
 
     if not os.path.isfile(file_path):
         return not_found()
@@ -1162,7 +1162,7 @@ async def download_artifact_cache(req):
 
     artifact = result.to_dict()
 
-    file_path = Path(req.app["settings"]["data_path"]) / "caches" / key / artifact["name_on_disk"]
+    file_path = req.app["settings"]["data_path"] / "caches" / key / artifact["name_on_disk"]
 
     if not file_path.exists():
         return not_found()

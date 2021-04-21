@@ -19,18 +19,19 @@ async def test_migrate_caches(mocker, dbi):
     m_rename_hash_field.assert_called_with(app)
 
 
-async def test_add_missing_field(snapshot, tmpdir, dbi):
+async def test_add_missing_field(snapshot, tmp_path, dbi):
     app = {
         "db": dbi,
         "settings": {
-            "data_path": str(tmpdir)
+            "data_path": tmp_path
         }
     }
 
-    caches_dir = tmpdir.mkdir("caches")
+    caches_dir = tmp_path / "caches"
 
-    caches_dir.mkdir("foo")
-    caches_dir.mkdir("baz")
+    caches_dir.mkdir()
+    caches_dir.joinpath("foo").mkdir()
+    caches_dir.joinpath("baz").mkdir()
 
     await dbi.caches.insert_many([
         {
