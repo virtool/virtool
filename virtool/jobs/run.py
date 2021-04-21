@@ -11,7 +11,7 @@ import virtool.startup
 logger = logging.getLogger(__name__)
 
 
-async def create_shallow_app(config) -> dict:
+async def create_shallow_app(config: dict) -> dict:
     """
     This dict poses as an aiohttp application and can make use of the same startup and shutdown functions as the
     web applications.

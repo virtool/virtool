@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, List, Optional
 
 import virtool.db.utils
 import virtool.errors
@@ -18,7 +18,7 @@ PROJECTION = [
 ]
 
 
-async def attach_identicons(db, users: Union[dict, list]):
+async def attach_identicons(db, users: Union[dict, list]) -> Union[dict, List[dict]]:
     """
     Attach identicon fields to a list of user documents.
 
@@ -45,16 +45,12 @@ async def attach_identicons(db, users: Union[dict, list]):
     return dict(users, identicon=identicon)
 
 
-def compose_force_reset_update(force_reset):
+def compose_force_reset_update(force_reset: Optional[bool]) -> dict:
     """
     Compose a update dict for the database given a `force_reset` value.
 
     :param force_reset: a force reset value
-    :type force_reset: Union[bool, None]
-
     :return: an update
-    :rtype: dict
-
     """
     if force_reset is None:
         return dict()
@@ -65,19 +61,14 @@ def compose_force_reset_update(force_reset):
     }
 
 
-async def compose_groups_update(db, groups):
+async def compose_groups_update(db, groups: Optional[list]) -> dict:
     """
     Compose a update dict for the updating the list of groups a user is a member of.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param groups: the groups to include in the user update
-    :type groups: Union[list, None]
 
     :return: an update
-    :rtype: dict
-
     """
     if groups is None:
         return dict()
@@ -95,16 +86,13 @@ async def compose_groups_update(db, groups):
     return update
 
 
-def compose_password_update(password):
+def compose_password_update(password: Optional[str]) -> dict:
     """
     Compose an update dict for changing a user's password.
 
     :param password: a new password
-    :type password: Union[str, None]
 
     :return: an update
-    :rtype: dict
-
     """
     if password is None:
         return dict()
@@ -116,21 +104,15 @@ def compose_password_update(password):
     }
 
 
-async def compose_primary_group_update(db, user_id, primary_group):
+async def compose_primary_group_update(db, user_id: Optional[str], primary_group: Optional[str]) -> dict:
     """
     Compose an update dict for changing a user's `primary_group`.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param user_id: the id of the user being updated
-    :type user_id: Union[str, None]
-
     :param primary_group: the primary group to set for the user
-    :type primary_group: Union[str, None]
 
     :return: an update
-    :rtype: dict
 
     """
     if primary_group is None:
@@ -149,24 +131,16 @@ async def compose_primary_group_update(db, user_id, primary_group):
     }
 
 
-async def create(db, user_id, password, force_reset=True):
+async def create(db, user_id: str, password: str, force_reset: bool = True) -> dict:
     """
     Insert a new user document into the database.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param user_id: the requested id for the user
-    :type user_id: str
-
     :param password: a password
-    :type password: str
-
     :param force_reset: force the user to reset password on next login
-    :type force_reset: bool
 
     :return: the user document
-    :rtype: dict
 
     """
     if await virtool.db.utils.id_exists(db.users, user_id):
@@ -200,7 +174,15 @@ async def create(db, user_id, password, force_reset=True):
     return document
 
 
-async def edit(db, user_id, administrator=None, force_reset=None, groups=None, password=None, primary_group=None):
+async def edit(
+        db,
+        user_id: str,
+        administrator: Optional[str] = None,
+        force_reset: Optional[bool] = None,
+        groups: Optional[list] = None,
+        password: Optional[str] = None,
+        primary_group: Optional[str] = None
+) -> dict:
     if not await virtool.db.utils.id_exists(db.users, user_id):
         raise virtool.errors.DatabaseError("User does not exist")
 
@@ -240,26 +222,20 @@ async def edit(db, user_id, administrator=None, force_reset=None, groups=None, p
     return document
 
 
-async def is_member_of_group(db, user_id, group_id):
+async def is_member_of_group(db, user_id: str, group_id: str) -> bool:
     return bool(await db.users.count_documents({"_id": user_id, "groups": group_id}))
 
 
-async def validate_credentials(db, user_id, password):
+async def validate_credentials(db, user_id: str, password: str) -> bool:
     """
     Returns ``True`` if the username exists and the password is correct. Returns ``False`` if the username does not
     exist or the or the password is incorrect.
 
     :param db: a database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param user_id: the username to check.
-    :type user_id: str
-
     :param password: the password to check.
-    :type password: str
 
     :return: validation success
-    :rtype: Coroutine[bool]
 
     """
     document = await db.users.find_one(user_id, ["password", "salt"])
@@ -285,23 +261,14 @@ async def validate_credentials(db, user_id, password):
     return False
 
 
-async def update_sessions_and_keys(db, user_id, administrator, groups, permissions):
+async def update_sessions_and_keys(db, user_id: str, administrator: bool, groups: list, permissions: dict):
     """
 
     :param db: a database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param user_id: the id of the user to update keys and session for
-    :type user_id: str
-
     :param administrator: the administrator flag for the user
-    :type administrator: bool
-
     :param groups: an updated list of groups
-    :type groups: list
-
     :param permissions: an updated set of permissions derived from the updated groups
-    :type permissions: dict
 
     """
     find_query = {

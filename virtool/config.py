@@ -40,7 +40,7 @@ def create_default_map():
         return None
 
 
-def validate_limits(config):
+def validate_limits(config: dict) -> tuple:
     cpu_count = psutil.cpu_count()
     mem_total = psutil.virtual_memory().total
 

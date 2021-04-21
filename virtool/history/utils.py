@@ -45,7 +45,7 @@ def compose_edit_description(
         abbreviation: Optional[str],
         old_abbreviation: Optional[str],
         schema: Optional[dict]
-):
+) -> str:
     """
     Compose a change description for an edit on an existing OTU.
 

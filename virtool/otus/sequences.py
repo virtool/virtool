@@ -2,7 +2,7 @@
 Database functions and utilities for sequences.
 
 """
-from typing import Optional, Union
+from typing import Optional, Union, Dict, Any
 
 import virtool.db.utils
 import virtool.history
@@ -83,7 +83,7 @@ async def create(
         data: dict,
         user_id: str,
         sequence_id: Optional[str] = None
-):
+) -> Dict[str, Any]:
     """
     Create a new sequence document. Update the
 

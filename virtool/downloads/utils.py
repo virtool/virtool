@@ -37,7 +37,7 @@ def format_fasta_filename(*args) -> str:
     return filename.lower()
 
 
-def format_subtraction_filename(subtraction_id: str, subtraction_name: str):
+def format_subtraction_filename(subtraction_id: str, subtraction_name: str) -> str:
     """
     Format a subtraction filename of the form "subtraction-subtraction_id-subtraction_name.fa.gz".
 

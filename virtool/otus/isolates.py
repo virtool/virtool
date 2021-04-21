@@ -6,6 +6,7 @@ import virtool.history.db
 import virtool.otus.db
 import virtool.otus.utils
 import virtool.utils
+from virtool.types import App
 
 
 async def add(app, otu_id: str, data: dict, user_id: str, isolate_id: Optional[str] = None) -> dict:
@@ -87,7 +88,7 @@ async def add(app, otu_id: str, data: dict, user_id: str, isolate_id: Optional[s
     return {**isolate, "sequences": []}
 
 
-async def edit(app, otu_id, isolate_id, data, user_id):
+async def edit(app: App, otu_id: str, isolate_id: str, data: dict, user_id: str) -> dict:
     db = app["db"]
 
     isolates = await virtool.db.utils.get_one_field(db.otus, "isolates", otu_id)
@@ -132,7 +133,7 @@ async def edit(app, otu_id, isolate_id, data, user_id):
     return virtool.otus.utils.find_isolate(complete["isolates"], isolate_id)
 
 
-async def remove(app, otu_id, isolate_id, user_id):
+async def remove(app: App, otu_id: str, isolate_id: str, user_id: str):
     db = app["db"]
 
     document = await db.otus.find_one(otu_id)
@@ -189,7 +190,7 @@ async def remove(app, otu_id, isolate_id, user_id):
     )
 
 
-async def set_default(app, otu_id: str, isolate_id: str, user_id):
+async def set_default(app, otu_id: str, isolate_id: str, user_id: str) -> dict:
     """
     Set a new default isolate.
 

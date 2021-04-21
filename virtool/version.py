@@ -1,6 +1,8 @@
 import asyncio
 import os
 import subprocess
+from typing import Optional
+
 import aiofiles
 
 import logging
@@ -8,7 +10,7 @@ import logging
 logger = logging.getLogger("app")
 
 
-async def determine_server_version(install_path="."):
+async def determine_server_version(install_path: Optional[str] = "."):
     loop = asyncio.get_event_loop()
 
     version = await loop.run_in_executor(None, determine_server_version_from_git)

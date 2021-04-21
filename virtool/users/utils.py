@@ -33,10 +33,7 @@ def check_api_key(key: str, hashed: str) -> bool:
     Check a API key string against a hashed one from the user database.
 
     :param key: the API key to check
-    :type key: str
-
     :param hashed: the hashed key to check against
-    :type hashed: str
 
     """
     return hash_key(key) == hashed

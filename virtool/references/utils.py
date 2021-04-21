@@ -1,5 +1,6 @@
 import gzip
 import json
+from typing import List, Set
 
 from cerberus import Validator
 from operator import itemgetter
@@ -34,7 +35,7 @@ SEQUENCE_KEYS = [
 ]
 
 
-def check_import_data(import_data, strict=True, verify=True):
+def check_import_data(import_data: dict, strict: bool = True, verify: bool = True) -> List[dict]:
     errors = detect_duplicates(import_data["otus"])
 
     v = Validator(get_import_schema(require_meta=strict), allow_unknown=True)
@@ -71,7 +72,7 @@ def check_import_data(import_data, strict=True, verify=True):
     return errors
 
 
-def check_will_change(old, imported):
+def check_will_change(old: dict, imported: dict) -> bool:
     for key in ["name", "abbreviation"]:
         if old[key] != imported[key]:
             return True
@@ -110,7 +111,7 @@ def check_will_change(old, imported):
     return False
 
 
-def clean_export_list(otus):
+def clean_export_list(otus: List[dict]) -> List[dict]:
     cleaned = list()
 
     otu_keys = OTU_KEYS + ["_id"]
@@ -134,7 +135,7 @@ def clean_export_list(otus):
     return cleaned
 
 
-def clean_otu(otu, otu_keys=None, sequence_keys=None):
+def clean_otu(otu: dict, otu_keys: list = None, sequence_keys: list = None) -> dict:
     otu_keys = otu_keys or OTU_KEYS
     sequence_keys = sequence_keys or SEQUENCE_KEYS
 
@@ -165,7 +166,7 @@ def clean_otu(otu, otu_keys=None, sequence_keys=None):
     return cleaned
 
 
-def detect_duplicate_abbreviation(joined, duplicates, seen):
+def detect_duplicate_abbreviation(joined: dict, duplicates: set, seen: set):
     abbreviation = joined.get("abbreviation", "")
 
     if abbreviation:
@@ -175,14 +176,14 @@ def detect_duplicate_abbreviation(joined, duplicates, seen):
             seen.add(abbreviation)
 
 
-def detect_duplicate_ids(joined, duplicate_ids, seen_ids):
+def detect_duplicate_ids(joined: dict, duplicate_ids: set, seen_ids: set):
     if joined["_id"] in seen_ids:
         duplicate_ids.add(joined["_id"])
     else:
         seen_ids.add(joined["_id"])
 
 
-def detect_duplicate_isolate_ids(joined, duplicate_isolate_ids):
+def detect_duplicate_isolate_ids(joined: dict, duplicate_isolate_ids: dict):
     duplicates = set()
 
     isolate_ids = [i["id"] for i in joined["isolates"]]
@@ -198,7 +199,7 @@ def detect_duplicate_isolate_ids(joined, duplicate_isolate_ids):
         }
 
 
-def detect_duplicate_sequence_ids(joined, duplicate_sequence_ids, seen_sequence_ids):
+def detect_duplicate_sequence_ids(joined: dict, duplicate_sequence_ids: Set[str], seen_sequence_ids: Set[str]):
     sequence_ids = virtool.otus.utils.extract_sequence_ids(joined)
 
     # Add sequence ids that are duplicated within an OTU to the duplicate set.
@@ -213,7 +214,7 @@ def detect_duplicate_sequence_ids(joined, duplicate_sequence_ids, seen_sequence_
     seen_sequence_ids.update(sequence_ids)
 
 
-def detect_duplicate_name(joined, duplicates, seen):
+def detect_duplicate_name(joined: dict, duplicates: Set[str], seen: Set[str]):
     lowered = joined["name"].lower()
 
     if joined["name"].lower() in seen:
@@ -222,7 +223,7 @@ def detect_duplicate_name(joined, duplicates, seen):
         seen.add(lowered)
 
 
-def detect_duplicates(otus, strict=True):
+def detect_duplicates(otus: List[dict], strict: bool = True) -> List[dict]:
     duplicate_abbreviations = set()
     duplicate_ids = set()
     duplicate_isolate_ids = dict()
@@ -305,7 +306,7 @@ def detect_duplicates(otus, strict=True):
     return errors
 
 
-def get_import_schema(require_meta=True):
+def get_import_schema(require_meta: bool = True) -> dict:
     return {
         "data_type": {
             "type": "string",
@@ -322,7 +323,7 @@ def get_import_schema(require_meta=True):
     }
 
 
-def get_isolate_schema(require_id):
+def get_isolate_schema(require_id: bool) -> dict:
     return {
         "id": {
             "type": "string",
@@ -347,7 +348,7 @@ def get_isolate_schema(require_id):
     }
 
 
-def get_otu_schema(require_id):
+def get_otu_schema(require_id: bool) -> dict:
     return {
         "_id": {
             "type": "string",
@@ -367,7 +368,7 @@ def get_otu_schema(require_id):
     }
 
 
-def get_owner_user(user_id):
+def get_owner_user(user_id: str) -> dict:
     return {
         "id": user_id,
         "build": True,
@@ -377,7 +378,7 @@ def get_owner_user(user_id):
     }
 
 
-def get_sequence_schema(require_id):
+def get_sequence_schema(require_id: bool) -> dict:
     return {
         "_id": {
             "type": "string",
@@ -398,23 +399,20 @@ def get_sequence_schema(require_id):
     }
 
 
-def load_reference_file(path):
+def load_reference_file(path: str) -> dict:
     """
     Load a list of merged otus documents from a file associated with a Virtool reference file.
 
     :param path: the path to the otus.json.gz file
-    :type path: str
 
     :return: the otus data to import
-    :rtype: dict
-
     """
     with open(path, "rb") as handle:
         with gzip.open(handle, "rt") as gzip_file:
             return json.load(gzip_file)
 
 
-def validate_otu(otu, strict):
+def validate_otu(otu: dict, strict: bool) -> dict:
     report = {
         "otu": None,
         "isolates": dict(),

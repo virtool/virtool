@@ -2,7 +2,7 @@
 Work with OTUs in the database.
 
 """
-from typing import Optional, Union
+from typing import Optional, Union, Dict, Any, List
 
 import pymongo.results
 
@@ -13,6 +13,7 @@ import virtool.history.utils
 import virtool.otus.utils
 import virtool.utils
 from virtool.api.utils import compose_regex_query, paginate
+from virtool.types import App
 
 PROJECTION = [
     "_id",
@@ -39,7 +40,7 @@ async def check_name_and_abbreviation(
         ref_id: str,
         name: Optional[str] = None,
         abbreviation: Optional[str] = None
-):
+) -> Union[bool, str]:
     """
     Check is a otu name and abbreviation are already in use in the reference identified by `ref_id`. Returns a message
     if the ``name`` or ``abbreviation`` are already in use. Returns ``False`` if they are not in use.
@@ -81,7 +82,14 @@ async def check_name_and_abbreviation(
     return False
 
 
-async def create_otu(app, ref_id, name, abbreviation, user_id, otu_id: Optional[str] = None):
+async def create_otu(
+        app: App,
+        ref_id: str,
+        name: str,
+        abbreviation: str,
+        user_id: str,
+        otu_id: Optional[str] = None
+) -> Dict[str, Any]:
     """
     Create a new OTU.
 
@@ -132,13 +140,13 @@ async def create_otu(app, ref_id, name, abbreviation, user_id, otu_id: Optional[
 
 
 async def edit(
-        app,
+        app: App,
         otu_id: Optional[str],
         name: Optional[str],
         abbreviation: Optional[str],
         schema: Union[str, list],
         user_id: str
-):
+) -> Dict[str, Any]:
     """
     Edit an existing OTU identified by `otu_id`. Modifiable fields are `name`, `abbreviation`, and `schema`.
 
@@ -202,7 +210,14 @@ async def edit(
     return await virtool.otus.db.join_and_format(db, otu_id, joined=new, issues=issues)
 
 
-async def find(db, names, term, req_query, verified, ref_id=None):
+async def find(
+        db,
+        names: Union[bool, str],
+        term: str,
+        req_query: dict,
+        verified: bool,
+        ref_id: str = None
+) -> Union[Dict[str, Any], List[Optional[dict]]]:
     db_query = dict()
 
     if term:
@@ -243,19 +258,14 @@ async def find(db, names, term, req_query, verified, ref_id=None):
     return data
 
 
-async def join(db, query, document=None):
+async def join(db, query: Union[dict, str], document: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
     """
     Join the otu associated with the supplied ``otu_id`` with its sequences. If a otu entry is also passed,
     the database will not be queried for the otu based on its id.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param query: the id of the otu to join or a Mongo query.
-    :type query: Union[dict,str]
-
     :param document: use this otu document as a basis for the join instead finding it using the otu id.
-    :type document: dict
 
     :return: the joined otu document
     :rtype: Coroutine[dict]
@@ -357,7 +367,7 @@ async def remove(
     return True
 
 
-async def verify(db, otu_id, joined=None):
+async def verify(db, otu_id: str, joined: dict = None) -> Optional[dict]:
     """
     Verifies that the associated otu is ready to be included in an index rebuild. Returns verification errors if
     necessary.
@@ -393,7 +403,7 @@ async def update_last_indexed_version(db, id_list: list, version: int) -> pymong
     return result
 
 
-async def update_sequence_segments(db, old, new):
+async def update_sequence_segments(db, old: dict, new: dict):
     if old is None or new is None or "schema" not in old:
         return
 
@@ -412,7 +422,7 @@ async def update_sequence_segments(db, old, new):
     })
 
 
-async def update_verification(db, joined):
+async def update_verification(db, joined: dict) -> Optional[dict]:
     issues = virtool.otus.utils.verify(joined)
 
     if issues is None:

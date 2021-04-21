@@ -2,7 +2,7 @@
 Utilities for working with MongoDB.
 
 """
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Union, Set
 
 from motor.motor_asyncio import AsyncIOMotorCollection
 
@@ -53,7 +53,7 @@ async def delete_unready(collection):
 async def check_missing_ids(
         collection: AsyncIOMotorCollection,
         id_list: list,
-        query: dict = None):
+        query: dict = None) -> Set[str]:
     """
     Check if all IDs in the ``id_list`` exist in the database.
 
@@ -102,7 +102,7 @@ async def get_one_field(collection, field: str, query: Union[str, Dict]) -> Any:
     return projected.get(field)
 
 
-async def get_non_existent_ids(collection, id_list: Sequence[str]):
+async def get_non_existent_ids(collection, id_list: Sequence[str]) -> Set[str]:
     """
     Return the IDs that are in `id_list`, but don't exist in the specified `collection`.
 

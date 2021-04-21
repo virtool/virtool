@@ -9,7 +9,12 @@ import virtool.utils
 from virtool.db.core import DB
 
 
-async def create_session(db, ip, user_id=None, remember=False):
+async def create_session(
+        db,
+        ip: str,
+        user_id: Optional[str] = None,
+        remember: Optional[bool] = False
+) -> Tuple[dict, str]:
     session_id = await create_session_id(db)
 
     utc = arrow.utcnow()
@@ -105,7 +110,7 @@ async def get_session(db: DB, session_id: str, session_token: str) -> Tuple[Opti
         return document, session_token
 
 
-async def create_reset_code(db, session_id, user_id, remember=False):
+async def create_reset_code(db, session_id: str, user_id: str, remember: Optional[bool] = False) -> int:
     """
     Create a secret code that is used to verify a password reset request. Properties:
 
@@ -134,7 +139,7 @@ async def create_reset_code(db, session_id, user_id, remember=False):
     return reset_code
 
 
-async def check_reset_code(db, session_id, reset_code):
+async def check_reset_code(db, session_id: str, reset_code: int) -> bool:
     session = await db.sessions.find_one(session_id, ["reset_code", "reset_user_id"])
 
     await db.sessions.update_one({"_id": session_id}, {
@@ -171,8 +176,8 @@ async def replace_session(
         db: virtool.db.core.DB,
         session_id: str,
         ip: str,
-        user_id=None,
-        remember=False
+        user_id: Optional[str] = None,
+        remember: Optional[bool] = False
 ) -> Tuple[dict, str]:
     """
     Replace the session associated with `session_id` with a new one. Return the new session

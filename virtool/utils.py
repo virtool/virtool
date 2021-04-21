@@ -9,12 +9,14 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+from numbers import Number
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Iterable, Tuple, Optional
+from typing import Iterable, Tuple, Any, Optional, List
 
 import aiofiles
 import arrow
+from aiohttp import web
 
 RE_STATIC_HASH = re.compile("^main.([a-z0-9]+).css$")
 
@@ -30,7 +32,7 @@ SUB_DIRS = [
 ]
 
 
-def average_list(list1, list2):
+def average_list(list1: List[Number], list2: List[Number]) -> List[Number]:
     if not isinstance(list1, list) or not isinstance(list2, list):
         raise TypeError("Both arguments must be lists")
 
@@ -62,7 +64,7 @@ def base_processor(document: Optional[dict]) -> Optional[dict]:
     return document
 
 
-def chunk_list(lst, n):
+def chunk_list(lst: list, n: int):
     """Yield successive n-sized chunks from `lst`."""
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
@@ -79,13 +81,13 @@ def compress_file(path: str, target: str, processes: int = 1):
         compress_file_with_gzip(path, target)
 
 
-def compress_file_with_gzip(path, target):
+def compress_file_with_gzip(path: str, target: str):
     with open(path, "rb") as f_in:
         with gzip.open(target, "wb", compresslevel=6) as f_out:
             shutil.copyfileobj(f_in, f_out)
 
 
-def compress_file_with_pigz(path, target, processes):
+def compress_file_with_pigz(path: str, target: str, processes: int):
     command = [
         "pigz",
         "-p", str(processes),
@@ -107,7 +109,7 @@ def compress_json_with_gzip(json_string: str, target: str):
         f.write(bytes(json_string, "utf-8"))
 
 
-def coerce_list(obj) -> list:
+def coerce_list(obj: Any) -> list:
     """
     Takes an object of any type and returns a list. If ``obj`` is a list it will be passed back with modification.
     Otherwise, a single-item list containing ``obj`` will be returned.
@@ -119,7 +121,7 @@ def coerce_list(obj) -> list:
     return [obj] if not isinstance(obj, list) else obj
 
 
-def decompress_file(path: str, target: str, processes=1):
+def decompress_file(path: str, target: str, processes: Optional[int] = 1):
     """
     Decompress the gzip-compressed file at `path` to a `target` file.
 
@@ -134,7 +136,7 @@ def decompress_file(path: str, target: str, processes=1):
         decompress_file_with_gzip(path, target)
 
 
-def decompress_file_with_gzip(path, target):
+def decompress_file_with_gzip(path: str, target: str):
     with gzip.open(path, "rb") as f_in:
         with open(target, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
@@ -166,7 +168,7 @@ def decompress_tgz(path: str, target: str):
         tar.extractall(target)
 
 
-def ensure_data_dir(data_path):
+def ensure_data_dir(data_path: str):
     """
     Ensure the application data structure is correct. Fix it if it is broken.
 
@@ -177,7 +179,7 @@ def ensure_data_dir(data_path):
         os.makedirs(os.path.join(data_path, subdir), exist_ok=True)
 
 
-async def file_length(path):
+async def file_length(path: str):
     length = 0
 
     async with aiofiles.open(path) as f:
@@ -224,7 +226,7 @@ async def get_client_path() -> str:
             return path
 
 
-def get_static_hash(req):
+def get_static_hash(req: web.Request):
     try:
         client_path = req.app["client_path"]
 
@@ -244,7 +246,7 @@ def get_temp_dir():
     return tempfile.TemporaryDirectory()
 
 
-def is_gzipped(path):
+def is_gzipped(path: str):
     try:
         with gzip.open(path, "rb") as f:
             f.peek(1)
@@ -258,7 +260,11 @@ def is_gzipped(path):
     return True
 
 
-def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Optional[Iterable[str]] = None) -> str:
+def random_alphanumeric(
+        length: Optional[int] = 6,
+        mixed_case: Optional[bool] = False,
+        excluded: Optional[Iterable[str]] = None
+) -> str:
     """
     Generates a random string composed of letters and numbers.
 

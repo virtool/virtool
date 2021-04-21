@@ -19,7 +19,7 @@ class SubprocessError(Exception):
     pass
 
 
-async def eliminate_otus(job):
+async def eliminate_otus(job: virtool.jobs.job.Job):
     """
     Maps reads to the main otu reference using ``bowtie2``. Bowtie2 is set to use the search parameter
     ``--very-fast-local`` and retain unaligned reads to the FASTA file ``unmapped_otus.fq``.
@@ -40,7 +40,7 @@ async def eliminate_otus(job):
     await job.run_subprocess(command)
 
 
-async def eliminate_subtraction(job):
+async def eliminate_subtraction(job: virtool.jobs.job.Job):
     """
     Maps unaligned reads from :meth:`.map_otus` to the sample's subtraction host using ``bowtie2``. Bowtie2 is
     set to use the search parameter ``--very-fast-local`` and retain unaligned reads to the FASTA file
@@ -91,7 +91,7 @@ async def reunite_pairs(job: virtool.jobs.job.Job):
                     await f.write("\n".join([header, seq, "+", quality]) + "\n")
 
 
-async def assemble(job):
+async def assemble(job: virtool.jobs.job.Job):
     """
     Call ``spades.py`` to assemble contigs from ``unmapped_hosts.fq``. Passes ``21,33,55,75`` for the ``-k``
     argument.
@@ -146,7 +146,7 @@ async def assemble(job):
     )
 
 
-async def process_fasta(job):
+async def process_fasta(job: virtool.jobs.job.Job):
     """
     Finds ORFs in the contigs assembled by :meth:`.assemble`. Only ORFs that are 100+ amino acids long are recorded.
     Contigs with no acceptable ORFs are discarded.
@@ -298,7 +298,7 @@ async def vfam(job):
             sequences.remove(sequence)
 
 
-async def import_results(job):
+async def import_results(job: virtool.jobs.job.Job):
     """
     Save the results to the analysis document and set the ``ready`` field to ``True``.
 
@@ -322,7 +322,7 @@ async def import_results(job):
     await virtool.samples.db.recalculate_workflow_tags(job.db, sample_id)
 
 
-def create():
+def create() -> virtool.jobs.job.Job:
     job = virtool.jobs.job.Job()
 
     job.on_startup = [

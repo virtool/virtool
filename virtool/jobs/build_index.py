@@ -19,7 +19,7 @@ import virtool.utils
 from virtool.indexes.db import get_patched_otus
 
 
-async def check_db(job):
+async def check_db(job: virtool.jobs.job.Job):
     """
     Get job information from the database.
 
@@ -47,7 +47,7 @@ async def check_db(job):
     job.params["data_type"] = document["data_type"]
 
 
-async def mk_index_dir(job):
+async def mk_index_dir(job: virtool.jobs.job.Job):
     """
     Make dir for the new index at ``<data_path>/references/<index_id>``.
 
@@ -58,7 +58,7 @@ async def mk_index_dir(job):
     )
 
 
-async def write_fasta(job):
+async def write_fasta(job: virtool.jobs.job.Job):
     """
     Generates a FASTA file of all sequences in the reference database. The FASTA headers are
     the accession numbers.
@@ -91,7 +91,7 @@ async def write_fasta(job):
     })
 
 
-async def bowtie_build(job):
+async def bowtie_build(job: virtool.jobs.job.Job):
     """
     Run a standard bowtie-build process using the previously generated FASTA reference.
     The root name for the new reference is 'reference'
@@ -109,7 +109,7 @@ async def bowtie_build(job):
         await job.run_subprocess(command)
 
 
-async def upload(job):
+async def upload(job: virtool.jobs.job.Job):
     """
     Replaces the old index with the newly generated one.
 
@@ -130,7 +130,7 @@ async def upload(job):
     await virtool.indexes.db.update_last_indexed_versions(job.db, job.params["ref_id"])
 
 
-async def build_json(job):
+async def build_json(job: virtool.jobs.job.Job):
     """
     Create a reference.json.gz file at ``<data_path>/references/<ref_id>/<index_id>``.
 
@@ -269,7 +269,7 @@ async def write_sequences_to_file(path: str, sequences: typing.Iterable):
             await f.write(line)
 
 
-def create():
+def create() -> virtool.jobs.job.Job:
     job = virtool.jobs.job.Job()
 
     job.on_startup = [

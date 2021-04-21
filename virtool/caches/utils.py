@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 import virtool.samples.utils
 
 
-def join_cache_path(settings: Dict[str, Any], cache_id: str):
+def join_cache_path(settings: Dict[str, Any], cache_id: str) -> str:
     """
     Create a cache path string given the application settings and cache id.
 

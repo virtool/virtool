@@ -4,11 +4,12 @@ Functions for parsing FastQC results and running FastQC processes.
 """
 import os
 import shutil
+from typing import Dict, Any, Callable
 
 import virtool.utils
 
 
-def parse_fastqc(fastqc_path: str, sample_path: str, prefix="fastqc_"):
+def parse_fastqc(fastqc_path: str, sample_path: str, prefix="fastqc_") -> Dict[str, Any]:
     """
     Parse the FastQC results at `fastqc_path`.
 
@@ -151,7 +152,7 @@ def parse_fastqc(fastqc_path: str, sample_path: str, prefix="fastqc_"):
     return fastqc
 
 
-async def run_fastqc(run_subprocess, proc, read_paths, fastqc_path):
+async def run_fastqc(run_subprocess: Callable, proc: int, read_paths: str, fastqc_path: str):
     command = [
         "fastqc",
         "-f", "fastq",

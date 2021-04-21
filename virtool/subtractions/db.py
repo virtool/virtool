@@ -192,7 +192,7 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
         )
 
 
-async def attach_subtractions(db, document: Dict[str, Any]):
+async def attach_subtractions(db, document: Dict[str, Any]) -> Dict[str, Any]:
     """
     Attach more subtraction detail to a document with a field `subtractions` that contains a list
     of subtraction IDs.
@@ -297,7 +297,7 @@ async def create(
     return document
 
 
-async def delete(app, subtraction_id):
+async def delete(app: App, subtraction_id: str) -> int:
     db = app["db"]
     settings = app["settings"]
 
@@ -350,7 +350,7 @@ async def get_linked_samples(db, subtraction_id: str) -> List[dict]:
     return [virtool.utils.base_processor(d) async for d in cursor]
 
 
-async def unlink_default_subtractions(db, subtraction_id):
+async def unlink_default_subtractions(db, subtraction_id: str):
     await db.samples.update_many({"subtractions": subtraction_id}, {
         "$pull": {
             "subtractions": subtraction_id

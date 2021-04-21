@@ -114,7 +114,7 @@ async def create(
         sample_id: str,
         key: str,
         paired: bool,
-):
+) -> Dict[str, Any]:
     """
     Create and insert a new cache database document. Return the generated cache document.
 

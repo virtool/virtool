@@ -9,7 +9,7 @@ import virtool.samples.utils
 import virtool.utils
 
 
-async def check_db(job):
+async def check_db(job: virtool.jobs.job.Job):
     job.params = await virtool.jobs.utils.get_sample_params(
         job.db,
         job.settings,
@@ -27,7 +27,7 @@ async def check_db(job):
     })
 
 
-async def make_sample_dir(job):
+async def make_sample_dir(job: virtool.jobs.job.Job):
     """
     Make a data directory for the sample and a subdirectory for analyses. Read files, quality data from FastQC, and
     analysis data will be stored here.
@@ -39,7 +39,7 @@ async def make_sample_dir(job):
     await job.run_in_executor(os.makedirs, job.params["fastqc_path"])
 
 
-async def copy_files(job):
+async def copy_files(job: virtool.jobs.job.Job):
     """
     Copy the files from the files directory to the nascent sample directory.
 
@@ -76,7 +76,7 @@ async def copy_files(job):
     })
 
 
-async def fastqc(job):
+async def fastqc(job: virtool.jobs.job.Job):
     """
     Runs FastQC on the renamed, trimmed read files.
 
@@ -91,7 +91,7 @@ async def fastqc(job):
     )
 
 
-async def parse_fastqc(job):
+async def parse_fastqc(job: virtool.jobs.job.Job):
     """
     Capture the desired data from the FastQC output. The data is added to the samples database
     in the main run() method
@@ -111,7 +111,7 @@ async def parse_fastqc(job):
     })
 
 
-async def upload(job):
+async def upload(job: virtool.jobs.job.Job):
     await job.run_in_executor(
         shutil.copytree,
         job.params["temp_sample_path"],
@@ -119,13 +119,13 @@ async def upload(job):
     )
 
 
-async def clean_watch(job):
+async def clean_watch(job: virtool.jobs.job.Job):
     """ Remove the original read files from the files directory """
     file_ids = [f["id"] for f in job.params["files"]]
     await job.db.files.delete_many({"_id": {"$in": file_ids}})
 
 
-async def delete_sample(job):
+async def delete_sample(job: virtool.jobs.job.Job):
     await job.db.samples.delete_one({"_id": job.params["sample_id"]})
 
     try:
@@ -134,7 +134,7 @@ async def delete_sample(job):
         pass
 
 
-async def release_files(job):
+async def release_files(job: virtool.jobs.job.Job):
     for file_id in job.params["files"]:
         await job.db.files.update_many({"_id": file_id}, {
             "$set": {
@@ -143,7 +143,7 @@ async def release_files(job):
         })
 
 
-def create():
+def create() -> virtool.jobs.job.Job:
     job = virtool.jobs.job.Job()
 
     job.on_startup = [

@@ -93,7 +93,7 @@ def configure_runner(dev: bool, verbose: bool) -> Logger:
     return logger
 
 
-def configure_jobs_api_server(dev: bool, verbose: bool):
+def configure_jobs_api_server(dev: bool, verbose: bool) -> Logger:
     """Configure logging for the jobs API server."""
     logger = configure_base_logger(dev, verbose)
 

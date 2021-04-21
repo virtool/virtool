@@ -1,7 +1,9 @@
+from typing import Union, Callable
+
 from aiohttp import web
 
 
-def parse_value(value):
+def parse_value(value: str) -> Union[bool, str]:
     if value == "false" or value == "False":
         return False
 
@@ -12,7 +14,7 @@ def parse_value(value):
 
 
 @web.middleware
-async def middleware(req, handler):
+async def middleware(req: web.Request, handler: Callable):
     if req.method == "GET":
         req["query"] = {key: parse_value(value) for key, value in req.query.items()}
 
