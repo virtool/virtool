@@ -82,6 +82,7 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
     :param document: A document that represents a sample
     :return: Updated document with associated sample artifacts
     """
+    ready = document["ready"]
     sample = document["_id"]
 
     async with AsyncSession(pg) as session:
@@ -98,8 +99,8 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
         artifacts = [artifact.to_dict() for artifact in artifacts]
         reads = [reads_file.to_dict() for reads_file in reads_files]
 
-        for artifact in artifacts:
-            if document["ready"]:
+        if ready:
+            for artifact in artifacts:
                 artifact["download_url"] = f"/api/samples/{sample}/artifacts/{artifact['name_on_disk']}"
 
         for reads_file in reads:
@@ -110,7 +111,7 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
                     ).scalar()
                 ).to_dict()
 
-            if document["ready"]:
+            if ready:
                 reads_file["download_url"] = f"/api/samples/{sample}/reads/{reads_file['name']}"
 
     return {
