@@ -30,7 +30,4 @@ async def test_create_fake_job(snapshot, app, dbi):
 async def test_create_fake_references(snapshot, app, dbi, static_time):
     await create_fake_references(app)
 
-    document = await dbi.references.find_one({"_id": "reference_1"})
-    document["created_at"] = static_time.datetime
-
-    snapshot.assert_match(document)
+    snapshot.assert_match(await dbi.references.find().to_list(None))
