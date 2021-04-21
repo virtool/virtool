@@ -27,11 +27,10 @@ from virtool.utils import ensure_data_dir, random_alphanumeric
 logger = getLogger(__name__)
 
 REF_ID = "reference_1"
-USER_ID = "bob"
 
 
 async def populate(app: App):
-    await create_fake_user(app)
+    await create_fake_bob_user(app)
     await create_fake_subtractions(app, USER_ID)
     await create_fake_analysis(app)
     await create_fake_jobs(app)
@@ -81,18 +80,6 @@ def create_fake_data_path() -> str:
     data_path = str(mkdtemp(prefix=f"virtool_fake_{random_alphanumeric()}_"))
     ensure_data_dir(data_path)
     return data_path
-
-
-async def create_fake_user(app: App):
-    """
-    Create a fake user called Bob.
-
-    :param app: the application object
-
-    """
-    await virtool.users.db.create(app["db"], USER_ID, "hello_world", True)
-    await virtool.users.db.edit(app["db"], "bob", administrator=True, force_reset=False)
-    logger.debug("Created fake user")
 
 
 async def create_fake_analysis(app: App):
