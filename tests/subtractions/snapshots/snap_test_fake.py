@@ -15,6 +15,12 @@ snapshots['test_create_fake_subtractions[uvloop] 1'] = [
             'id': 1,
             'name': 'test.fa.gz'
         },
+        'gc': {
+            'a': 0.25,
+            'c': 0.25,
+            'g': 0.25,
+            't': 0.25
+        },
         'is_host': True,
         'name': 'subtraction_1',
         'nickname': '',
