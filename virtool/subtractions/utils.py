@@ -91,7 +91,12 @@ async def get_subtraction_files(pg: AsyncEngine, subtraction: str):
             await session.execute(select(SubtractionFile).filter_by(subtraction=subtraction))
         ).scalars().all()
 
-    return [file.to_dict() for file in files]
+    files = [file.to_dict() for file in files]
+
+    for file in files:
+        file["download_url"] = f"/api/subtractions/{file['subtraction']}/files/{file['name']}"
+
+    return files
 
 
 def rename_bowtie_files(path: str):

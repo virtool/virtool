@@ -24,21 +24,25 @@ async def test_get_subtraction_files(pg, test_subtraction_files):
                 'name': 'subtraction.fq.gz',
                 'subtraction': 'foo',
                 'type': 'fasta',
-                'size': 12345
+                'size': 12345,
+                'download_url': '/api/subtractions/foo/files/subtraction.fq.gz'
             },
             {
                 'id': 2,
                 'name': 'subtraction.1.bt2',
                 'subtraction': 'foo',
                 'type': 'bowtie2',
-                'size': 56437
+                'size': 56437,
+                'download_url': '/api/subtractions/foo/files/subtraction.1.bt2'
+
             },
             {
                 'id': 3,
                 'name': 'subtraction.2.bt2',
                 'subtraction': 'foo',
                 'type': 'bowtie2',
-                'size': 93845
+                'size': 93845,
+                'download_url': '/api/subtractions/foo/files/subtraction.2.bt2'
             }
         ]
 

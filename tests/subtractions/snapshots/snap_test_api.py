@@ -86,6 +86,7 @@ snapshots['test_upload[uvloop-404] 1'] = {
 snapshots['test_finalize_subtraction[uvloop-None] 1'] = {
     'files': [
         {
+            'download_url': '/api/subtractions/foo/files/subtraction.fq.gz',
             'id': 1,
             'name': 'subtraction.fq.gz',
             'size': 12345,
@@ -93,6 +94,7 @@ snapshots['test_finalize_subtraction[uvloop-None] 1'] = {
             'type': 'fasta'
         },
         {
+            'download_url': '/api/subtractions/foo/files/subtraction.1.bt2',
             'id': 2,
             'name': 'subtraction.1.bt2',
             'size': 56437,
@@ -100,6 +102,7 @@ snapshots['test_finalize_subtraction[uvloop-None] 1'] = {
             'type': 'bowtie2'
         },
         {
+            'download_url': '/api/subtractions/foo/files/subtraction.2.bt2',
             'id': 3,
             'name': 'subtraction.2.bt2',
             'size': 93845,
