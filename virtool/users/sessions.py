@@ -9,7 +9,12 @@ import virtool.utils
 from virtool.db.core import DB
 
 
-async def create_session(db, ip: str, user_id: Optional[str] = None, remember: Optional[bool] = False) -> tuple:
+async def create_session(
+        db,
+        ip: str,
+        user_id: Optional[str] = None,
+        remember: Optional[bool] = False
+) -> Tuple[dict, str]:
     session_id = await create_session_id(db)
 
     utc = arrow.utcnow()

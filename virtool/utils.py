@@ -9,9 +9,10 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+from numbers import Number
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Iterable, Tuple, Any, Optional
+from typing import Iterable, Tuple, Any, Optional, List
 
 import aiofiles
 import arrow
@@ -31,7 +32,7 @@ SUB_DIRS = [
 ]
 
 
-def average_list(list1: list, list2: list) -> list:
+def average_list(list1: List[Number], list2: List[Number]) -> List[Number]:
     if not isinstance(list1, list) or not isinstance(list2, list):
         raise TypeError("Both arguments must be lists")
 

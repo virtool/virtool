@@ -1,12 +1,12 @@
 from copy import deepcopy
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Tuple
 
 import virtool.errors
 import virtool.history.utils
 import virtool.utils
 
 
-def evaluate_changes(data: dict, document: dict) -> tuple:
+def evaluate_changes(data: dict, document: dict) -> Tuple[str, str, str]:
     name = data.get("name")
     abbreviation = data.get("abbreviation")
     schema = data.get("schema")
@@ -54,7 +54,7 @@ def extract_sequences(otu: dict):
             yield sequence
 
 
-def extract_sequence_ids(otu: dict) -> list:
+def extract_sequence_ids(otu: dict) -> List[str]:
     """
     Extract all sequence ids from a merged otu.
 
@@ -144,7 +144,7 @@ def format_isolate_name(isolate: dict) -> str:
     return " ".join((isolate["source_type"].capitalize(), isolate["source_name"]))
 
 
-def merge_otu(otu: dict, sequences: list) -> dict:
+def merge_otu(otu: dict, sequences: List[dict]) -> dict:
     """
     Merge the given sequences in the given otu document. The otu will gain a ``sequences`` field containing a
     list of its associated sequence documents.
@@ -164,7 +164,7 @@ def merge_otu(otu: dict, sequences: list) -> dict:
     return merged
 
 
-def split(merged: dict) -> tuple:
+def split(merged: dict) -> Tuple[dict, List[dict]]:
     """
     Split a merged otu document into a list of sequence documents associated with the otu and a regular otu
     document containing no sequence sub-documents.

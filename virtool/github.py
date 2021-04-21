@@ -25,7 +25,7 @@ HEADERS = {
 
 
 def create_update_subdocument(
-        release: list,
+        release: dict,
         ready: bool,
         user_id: str,
         created_at: Optional[datetime.datetime] = None

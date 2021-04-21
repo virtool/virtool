@@ -132,7 +132,7 @@ async def attach_labels(pg: AsyncEngine, document: dict) -> dict:
     return {**document, "labels": labels}
 
 
-async def check_name(db, settings: dict, name: str, sample_id: str = None) -> Optional[str]:
+async def check_name(db, settings: dict, name: str, sample_id: Optional[str] = None) -> Optional[str]:
     if settings["sample_unique_names"]:
         query = {"name": name}
 

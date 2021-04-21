@@ -1,6 +1,6 @@
 import gzip
 import json
-from typing import List
+from typing import List, Set
 
 from cerberus import Validator
 from operator import itemgetter
@@ -199,7 +199,7 @@ def detect_duplicate_isolate_ids(joined: dict, duplicate_isolate_ids: dict):
         }
 
 
-def detect_duplicate_sequence_ids(joined: dict, duplicate_sequence_ids: set, seen_sequence_ids: set):
+def detect_duplicate_sequence_ids(joined: dict, duplicate_sequence_ids: Set[str], seen_sequence_ids: Set[str]):
     sequence_ids = virtool.otus.utils.extract_sequence_ids(joined)
 
     # Add sequence ids that are duplicated within an OTU to the duplicate set.
@@ -214,7 +214,7 @@ def detect_duplicate_sequence_ids(joined: dict, duplicate_sequence_ids: set, see
     seen_sequence_ids.update(sequence_ids)
 
 
-def detect_duplicate_name(joined: dict, duplicates: set, seen: set):
+def detect_duplicate_name(joined: dict, duplicates: Set[str], seen: Set[str]):
     lowered = joined["name"].lower()
 
     if joined["name"].lower() in seen:
@@ -223,7 +223,7 @@ def detect_duplicate_name(joined: dict, duplicates: set, seen: set):
         seen.add(lowered)
 
 
-def detect_duplicates(otus: list, strict: bool = True) -> List[dict]:
+def detect_duplicates(otus: List[dict], strict: bool = True) -> List[dict]:
     duplicate_abbreviations = set()
     duplicate_ids = set()
     duplicate_isolate_ids = dict()
