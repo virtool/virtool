@@ -36,6 +36,7 @@ async def populate(app: App):
     await create_fake_analysis(app)
     await create_fake_jobs(app)
     await create_fake_hmms(app)
+    await create_fake_references(app)
     await create_fake_otus(app, REF_ID, USER_ID)
     await create_fake_indexes(app, REF_ID, USER_ID)
 
@@ -201,7 +202,7 @@ async def create_fake_references(app: App):
 
     :param app: the application object
     """
-    document = await virtool.references.db.create_document(
+    reference_1 = await virtool.references.db.create_document(
         app["db"],
         app["settings"],
         "Reference 1",
@@ -212,5 +213,16 @@ async def create_fake_references(app: App):
         user_id=USER_ID
     )
 
-    await app["db"].references.insert_one(document)
+    reference_2 = await virtool.references.db.create_document(
+        app["db"],
+        app["settings"],
+        "Reference 2",
+        "virus",
+        "A fake reference",
+        "genome",
+        ref_id="reference_2",
+        user_id=USER_ID
+    )
+
+    await app["db"].references.insert_many([reference_1, reference_2])
     logger.debug("Created fake reference")
