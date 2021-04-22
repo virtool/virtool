@@ -4,7 +4,7 @@ from aioredis import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from virtool.subtractions.db import AddSubtractionFilesTask
+from virtool.subtractions.tasks import AddSubtractionFilesTask
 from virtool.tasks.client import TasksClient
 from virtool.tasks.models import Task
 

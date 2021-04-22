@@ -1,8 +1,8 @@
 import logging
 
+import virtool.samples.db
 import virtool.tasks.pg
 
-from virtool.samples.db import compress_sample_reads, move_sample_files_to_pg
 from virtool.tasks.task import Task
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class CompressSamplesTask(Task):
             if sample is None:
                 break
 
-            await compress_sample_reads(self.app, sample)
+            await virtool.samples.db.compress_sample_reads(self.app, sample)
             await tracker.add(1)
 
             logger.info(
@@ -73,7 +73,7 @@ class MoveSampleFilesTask(Task):
             if sample is None:
                 break
 
-            await move_sample_files_to_pg(self.app, sample)
+            await virtool.samples.db.move_sample_files_to_pg(self.app, sample)
             await tracker.add(1)
 
             logger.info(
