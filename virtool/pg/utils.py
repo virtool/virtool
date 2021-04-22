@@ -110,7 +110,7 @@ async def get_row(
 
 async def get_rows(
     pg: AsyncEngine,
-    query: Union[str, int, bool, SQLEnum],
+    query: Optional[Union[str, int, bool, SQLEnum]],
     model: Base,
     filter_: str = "name",
 ) -> Optional[Base]:
@@ -124,11 +124,9 @@ async def get_rows(
     :return: Row from the given SQL model
     """
     async with AsyncSession(pg) as session:
-        rows = (
-            await session.execute(
-                select(model).filter(getattr(model, filter_) == query)
-            )
-        ).scalars()
+        statement = select(model).filter(getattr(model, filter_) == query) if query else select(model)
+
+        rows = (await session.execute(statement)).scalars()
 
         if not rows:
             return None
