@@ -3,8 +3,6 @@ API request handlers for managing and querying HMM data.
 
 """
 import gzip
-import os
-from pathlib import Path
 
 import aiohttp
 from aiohttp.web_fileresponse import FileResponse

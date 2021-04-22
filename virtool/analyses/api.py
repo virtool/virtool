@@ -4,7 +4,6 @@ Provides request handlers for managing and viewing analyses.
 """
 import asyncio
 import logging
-from pathlib import Path
 from typing import Any, Dict, Union
 
 import aiohttp.web
