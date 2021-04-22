@@ -27,7 +27,8 @@ import virtool.validators
 
 from virtool.api.response import bad_gateway, bad_request, insufficient_rights, json_response, no_content, not_found
 from virtool.uploads.models import Upload
-from virtool.references.db import CloneReferenceTask, ImportReferenceTask, RemoteReferenceTask, DeleteReferenceTask, UpdateRemoteReferenceTask
+from virtool.references.tasks import CloneReferenceTask, ImportReferenceTask, RemoteReferenceTask, \
+    DeleteReferenceTask, UpdateRemoteReferenceTask
 from virtool.http.schema import schema
 
 routes = virtool.http.routes.Routes()
