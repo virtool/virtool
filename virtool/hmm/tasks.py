@@ -1,7 +1,7 @@
 import json
 import logging
-import os
 import shutil
+from pathlib import Path
 
 import aiofiles
 import aiohttp
@@ -49,7 +49,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
             self.import_annotations
         ]
 
-        self.temp_path = self.temp_dir.name
+        self.temp_path = Path(self.temp_dir.name)
 
     async def download(self):
         release = self.context["release"]
@@ -57,7 +57,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
 
         tracker = await self.get_tracker(release["size"])
 
-        path = os.path.join(self.temp_path, "hmm.tar.gz")
+        path = self.temp_path / "hmm.tar.gz"
 
         try:
             await virtool.http.utils.download_file(
@@ -86,7 +86,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
 
         await self.run_in_thread(
             virtool.utils.decompress_tgz,
-            os.path.join(self.temp_path, "hmm.tar.gz"),
+            self.temp_path / "hmm.tar.gz",
             self.temp_path
         )
 
@@ -100,11 +100,11 @@ class HMMInstallTask(virtool.tasks.task.Task):
             step="install_profiles"
         )
 
-        decompressed_path = os.path.join(self.temp_path, "hmm")
+        decompressed_path = self.temp_path / "hmm"
 
-        install_path = os.path.join(self.app["settings"]["data_path"], "hmm", "profiles.hmm")
+        install_path = self.app["settings"]["data_path"] / "hmm" / "profiles.hmm"
 
-        await self.run_in_thread(shutil.move, os.path.join(decompressed_path, "profiles.hmm"), install_path)
+        await self.run_in_thread(shutil.move, decompressed_path / "profiles.hmm", install_path)
 
     async def import_annotations(self):
         release = self.context["release"]
@@ -114,7 +114,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
             step="import_annotations"
         )
 
-        async with aiofiles.open(os.path.join(self.temp_path, "hmm", "annotations.json"), "r") as f:
+        async with aiofiles.open(self.temp_path / "hmm" / "annotations.json", "r") as f:
             annotations = json.loads(await f.read())
 
         await purge(self.db, self.app["settings"])

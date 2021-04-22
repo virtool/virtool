@@ -388,10 +388,7 @@ class DeleteReferenceTask(virtool.tasks.task.Task):
     async def remove_directory(self):
         tracker = await self.get_tracker()
 
-        path = os.path.join(
-            self.app["settings"]["data_path"],
-            "references"
-        )
+        path = self.app["settings"]["data_path"] / "references"
 
         reference_ids = os.listdir(path)
         existent_references = await self.db.references.distinct("_id", {
@@ -402,7 +399,7 @@ class DeleteReferenceTask(virtool.tasks.task.Task):
         self.non_existent_references = [ref_id for ref_id in reference_ids if ref_id not in existent_references]
 
         for dir_name in self.non_existent_references:
-            await self.app["run_in_thread"](shutil.rmtree, os.path.join(path, dir_name), True)
+            await self.app["run_in_thread"](shutil.rmtree, path / dir_name, True)
 
         await virtool.tasks.pg.update(
             self.pg,
@@ -510,7 +507,7 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
             with virtool.utils.get_temp_dir() as tempdir:
                 temp_path = str(tempdir)
 
-                download_path = os.path.join(temp_path, "reference.tar.gz")
+                download_path = temp_path / "reference.tar.gz"
 
                 await virtool.http.utils.download_file(
                     self.app,
@@ -685,12 +682,12 @@ class CreateIndexJSONTask(virtool.tasks.task.Task):
             except KeyError:
                 pass
 
-            file_path = os.path.join(
-                self.app["settings"]["data_path"],
-                "references",
-                ref_id,
-                index_id,
-                "reference.json.gz")
+            file_path = (
+                self.app["settings"]["data_path"]
+                / "references"
+                / ref_id
+                / index_id
+                / "reference.json.gz")
 
             # Convert the list of OTUs to a JSON-formatted string.
             json_string = json.dumps(data, cls=virtool.api.json.CustomEncoder)

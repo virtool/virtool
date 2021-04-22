@@ -45,14 +45,14 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
                 sample_id
             )
 
-            target_path = os.path.join(settings["data_path"], "analyses", analysis_id)
+            target_path = settings["data_path"] / "analyses" / analysis_id
 
             async with AsyncSession(self.app["pg"]) as session:
                 exists = (
                     await session.execute(select(AnalysisFile).filter_by(analysis=analysis_id))
                 ).scalar()
 
-            if os.path.isdir(path) and not exists:
+            if path.is_dir() and not exists:
                 try:
                     await self.app["run_in_thread"](os.makedirs, target_path)
                 except FileExistsError:
@@ -102,7 +102,7 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
                 sample_id
             )
 
-            if os.path.isdir(os.path.join(settings["data_path"], "analyses", analysis_id)):
+            if (settings["data_path"] / "analyses" / analysis_id).is_dir():
                 await self.app["run_in_thread"](shutil.rmtree, path, True)
 
         await virtool.tasks.pg.update(

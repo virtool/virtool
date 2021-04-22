@@ -5,14 +5,15 @@ from virtool.subtractions.tasks import AddSubtractionFilesTask
 from virtool.tasks.models import Task
 
 
-async def test_add_subtraction_files_task(tmpdir, spawn_client, dbi, pg_session,
+async def test_add_subtraction_files_task(tmp_path, spawn_client, dbi, pg_session,
                                           static_time):
     client = await spawn_client(authorize=True)
-    client.app["settings"]["data_path"] = str(tmpdir)
+    client.app["settings"]["data_path"] = tmp_path
 
-    test_dir = tmpdir.mkdir("subtractions").mkdir("foo")
-    test_dir.join("subtraction.fa.gz").write("FASTA file")
-    test_dir.join("subtraction.1.bt2").write("Bowtie2 file")
+    test_dir = tmp_path / "subtractions" / "foo"
+    test_dir.mkdir(parents=True)
+    test_dir.joinpath("subtraction.fa.gz").write_text("FASTA file")
+    test_dir.joinpath("subtraction.1.bt2").write_text("Bowtie2 file")
 
     subtraction = {
         "_id": "foo",
