@@ -22,13 +22,11 @@ async def find(req):
     Get a list of all label documents in the database.
 
     """
-    documents = list()
     find = req.query.get("find")
 
     labels = await get_rows(req.app["pg"], find, Label)
 
-    for label in labels:
-        documents.append(label.to_dict())
+    documents = [label.to_dict() for label in labels]
 
     documents = await asyncio.gather(*[virtool.labels.db.attach_sample_count(req.app["db"], d) for d in documents])
 
