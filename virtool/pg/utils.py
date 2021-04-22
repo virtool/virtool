@@ -102,9 +102,6 @@ async def get_row(
             )
         ).scalar()
 
-        if not row:
-            return None
-
     return row
 
 
@@ -128,7 +125,4 @@ async def get_rows(
 
         rows = (await session.execute(statement)).scalars()
 
-        if not rows:
-            return None
-
-        return rows
+    return rows
