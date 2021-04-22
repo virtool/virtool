@@ -394,16 +394,6 @@ snapshots['test_find[uvloop-None-None-None-None-d_range0-meta0] 1'] = {
     'total_count': 3
 }
 
-snapshots['test_find[uvloop-None-None-None-label_filter1-d_range1-meta1] 1'] = {
-    'documents': [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 3
-}
-
 snapshots['test_find[uvloop-None-2-1-None-d_range2-meta2] 1'] = {
     'documents': [
         {
@@ -1009,4 +999,213 @@ snapshots['TestEdit.test_label_exists[uvloop-True] 1'] = {
         }
     ],
     'name': 'Foo'
+}
+
+snapshots['test_find[uvloop-None-None-None-None-d_range1-meta1] 1'] = {
+    'documents': [
+        {
+            'created_at': '2015-10-06T22:00:00Z',
+            'host': '',
+            'id': 'cb400e6d',
+            'isolate': '',
+            'labels': [
+                {
+                    'color': '#0d321d',
+                    'description': 'This is a question',
+                    'id': 3,
+                    'name': 'Question'
+                }
+            ],
+            'name': '16SPP044',
+            'nuvs': False,
+            'pathoscope': False,
+            'ready': True,
+            'user': {
+                'id': 'fred'
+            }
+        },
+        {
+            'created_at': '2015-10-06T21:00:00Z',
+            'host': '',
+            'id': 'beb1eb10',
+            'isolate': 'Thing',
+            'labels': [
+                {
+                    'color': '#a83432',
+                    'description': 'This is a bug',
+                    'id': 1,
+                    'name': 'Bug'
+                },
+                {
+                    'color': '#03fc20',
+                    'description': 'This is a info',
+                    'id': 2,
+                    'name': 'Info'
+                }
+            ],
+            'name': '16GVP042',
+            'nuvs': False,
+            'pathoscope': False,
+            'ready': True,
+            'user': {
+                'id': 'bob'
+            }
+        },
+        {
+            'created_at': '2015-10-06T20:00:00Z',
+            'host': '',
+            'id': '72bb8b31',
+            'isolate': 'Test',
+            'labels': [
+                {
+                    'color': '#a83432',
+                    'description': 'This is a bug',
+                    'id': 1,
+                    'name': 'Bug'
+                }
+            ],
+            'name': '16GVP043',
+            'nuvs': False,
+            'pathoscope': False,
+            'ready': True,
+            'user': {
+                'id': 'fred'
+            }
+        }
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3
+}
+
+snapshots['test_find[uvloop-None-None-None-label_filter7-None-None] 1'] = {
+    'documents': [
+        {
+            'created_at': '2015-10-06T22:00:00Z',
+            'host': '',
+            'id': 'cb400e6d',
+            'isolate': '',
+            'labels': [
+                {
+                    'color': '#0d321d',
+                    'description': 'This is a question',
+                    'id': 3,
+                    'name': 'Question'
+                }
+            ],
+            'name': '16SPP044',
+            'nuvs': False,
+            'pathoscope': False,
+            'ready': True,
+            'user': {
+                'id': 'fred'
+            }
+        }
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3
+}
+
+snapshots['test_find[uvloop-None-None-None-label_filter8-None-None] 1'] = {
+    'documents': [
+        {
+            'created_at': '2015-10-06T22:00:00Z',
+            'host': '',
+            'id': 'cb400e6d',
+            'isolate': '',
+            'labels': [
+                {
+                    'color': '#0d321d',
+                    'description': 'This is a question',
+                    'id': 3,
+                    'name': 'Question'
+                }
+            ],
+            'name': '16SPP044',
+            'nuvs': False,
+            'pathoscope': False,
+            'ready': True,
+            'user': {
+                'id': 'fred'
+            }
+        },
+        {
+            'created_at': '2015-10-06T21:00:00Z',
+            'host': '',
+            'id': 'beb1eb10',
+            'isolate': 'Thing',
+            'labels': [
+                {
+                    'color': '#a83432',
+                    'description': 'This is a bug',
+                    'id': 1,
+                    'name': 'Bug'
+                },
+                {
+                    'color': '#03fc20',
+                    'description': 'This is a info',
+                    'id': 2,
+                    'name': 'Info'
+                }
+            ],
+            'name': '16GVP042',
+            'nuvs': False,
+            'pathoscope': False,
+            'ready': True,
+            'user': {
+                'id': 'bob'
+            }
+        }
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3
+}
+
+snapshots['test_find[uvloop-None-None-None-label_filter9-None-None] 1'] = {
+    'documents': [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 3
+}
+
+snapshots['test_find[uvloop-None-None-None-label_filter10-None-None] 1'] = {
+    'documents': [
+        {
+            'created_at': '2015-10-06T22:00:00Z',
+            'host': '',
+            'id': 'cb400e6d',
+            'isolate': '',
+            'labels': [
+                {
+                    'color': '#0d321d',
+                    'description': 'This is a question',
+                    'id': 3,
+                    'name': 'Question'
+                }
+            ],
+            'name': '16SPP044',
+            'nuvs': False,
+            'pathoscope': False,
+            'ready': True,
+            'user': {
+                'id': 'fred'
+            }
+        }
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3
 }

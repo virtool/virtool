@@ -32,7 +32,7 @@ class MockJobInterface:
         "total_count": 3
     }),
     # Test ``label_filter`` query param.
-    (None, None, None, ["Question", "Info"], range(0, 3), {
+    (None, None, None, None, range(0, 3), {
         "page": 1,
         "per_page": 25,
         "page_count": 1,
@@ -76,7 +76,11 @@ class MockJobInterface:
         "page_count": 1,
         "found_count": 2,
         "total_count": 3
-    })
+    }),
+    (None, None, None, [3], None, None),
+    (None, None, None, [2, 3], None, None),
+    (None, None, None, [0], None, None),
+    (None, None, None, [3, "info"], None, None),
 ])
 async def test_find(
         find,
@@ -168,8 +172,8 @@ async def test_find(
         query.append("page={}".format(page))
 
     if label_filter is not None:
-        filter_query = '&filter='.join(label_filter)
-        query.append(("filter={}".format(filter_query)))
+        filter_query = '&label='.join(str(label) for label in label_filter)
+        query.append(("label={}".format(filter_query)))
 
     if len(query):
         path += "?{}".format("&".join(query))

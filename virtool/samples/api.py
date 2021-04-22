@@ -57,10 +57,6 @@ QUERY_SCHEMA = {
         "default": 15,
         "min": 1,
         "max": 100
-    },
-    "filter": {
-        "type": "string",
-        "default": ""
     }
 }
 
@@ -84,10 +80,13 @@ async def find(req):
 
     query = v.document
 
-    filter_query = dict()
-    if "filter" in req.query:
-        filter_query = {
-            "labels": {"$in": req.query.getall("filter")}
+    label_query = dict()
+    if "label" in req.query:
+        labels = req.query.getall("label")
+        labels = [int(label) if label.isdigit() else label for label in labels]
+
+        label_query = {
+            "labels": {"$in": labels}
         }
 
     rights_filter = [
@@ -128,11 +127,11 @@ async def find(req):
         else:
             db_query = workflow_query
 
-    if filter_query:
+    if label_query:
         db_query = {
             "$and": [
                 db_query,
-                filter_query
+                label_query
             ]
         }
 
