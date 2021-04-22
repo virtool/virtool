@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
