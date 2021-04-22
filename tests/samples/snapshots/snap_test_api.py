@@ -394,16 +394,6 @@ snapshots['test_find[uvloop-None-None-None-None-d_range0-meta0] 1'] = {
     'total_count': 3
 }
 
-snapshots['test_find[uvloop-None-None-None-label_filter1-d_range1-meta1] 1'] = {
-    'documents': [
-    ],
-    'found_count': 0,
-    'page': 1,
-    'page_count': 0,
-    'per_page': 25,
-    'total_count': 3
-}
-
 snapshots['test_find[uvloop-None-2-1-None-d_range2-meta2] 1'] = {
     'documents': [
         {
