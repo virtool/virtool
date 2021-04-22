@@ -67,12 +67,13 @@ async def test_all(get, missing, spawn_client):
 
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("paired", [True, False])
-async def test_download_cache_reads(error, paired, tmpdir, spawn_client, resp_is):
+async def test_download_cache_reads(error, paired, spawn_client, resp_is, tmp_path):
     client = await spawn_client(authorize=True)
-    client.app["settings"]["data_path"] = str(tmpdir)
+    client.app["settings"]["data_path"] = tmp_path
 
-    test_dir = tmpdir.mkdir("caches").mkdir("foo")
-    test_dir.join("reads_1.fq.gz").write("test_1")
+    test_dir = tmp_path / "caches" / "foo"
+    test_dir.mkdir(parents=True)
+    test_dir.joinpath("reads_1.fq.gz").write_text("test_1")
 
     cache = {
         "_id": "foo",
@@ -86,7 +87,7 @@ async def test_download_cache_reads(error, paired, tmpdir, spawn_client, resp_is
     }
 
     if paired:
-        test_dir.join("reads_2.fq.gz").write("test_2")
+        test_dir.joinpath("reads_2.fq.gz").write_text("test_2")
         cache["files"].append(
             {
                 "name": "reads_2.fq.gz",

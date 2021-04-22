@@ -3,7 +3,7 @@ import pytest
 from virtool.fake.wrapper import FakerWrapper
 
 @pytest.fixture
-def app(dbi, pg, tmpdir):
+def app(dbi, pg, tmp_path):
     return {
         "db": dbi,
         "fake": FakerWrapper(),
@@ -13,6 +13,6 @@ def app(dbi, pg, tmpdir):
                 "isolate",
                 "strain"
             ],
-            "data_path": str(tmpdir)
+            "data_path": tmp_path
         }
     }

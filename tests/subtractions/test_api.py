@@ -33,17 +33,18 @@ async def test_edit(data, mocker, snapshot, spawn_client):
 
 
 @pytest.mark.parametrize("error", [None, "404_name", "404", "409"])
-async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_session):
+async def test_upload(error, tmp_path, spawn_job_client, snapshot, resp_is, pg_session):
     client = await spawn_job_client(authorize=True)
-    test_dir = tmpdir.mkdir("files")
-    test_dir.join("subtraction.1.bt2").write("Bowtie2 file")
-    path = os.path.join(test_dir, "subtraction.1.bt2")
+    test_dir = tmp_path / "files"
+    test_dir.mkdir()
+    test_dir.joinpath("subtraction.1.bt2").write_text("Bowtie2 file")
+    path = test_dir / "subtraction.1.bt2"
 
     files = {
         "file": open(path, "rb")
     }
 
-    client.app["settings"]["data_path"] = str(tmpdir)
+    client.app["settings"]["data_path"] = tmp_path
 
     subtraction = {
         "_id": "foo",
@@ -78,7 +79,7 @@ async def test_upload(error, tmpdir, spawn_job_client, snapshot, resp_is, pg_ses
         return
 
     assert resp.status == 201
-    assert os.listdir(tmpdir / "subtractions" / "foo") == ["subtraction.1.bt2"]
+    assert os.listdir(tmp_path / "subtractions" / "foo") == ["subtraction.1.bt2"]
     snapshot.assert_match(await resp.json())
 
 
@@ -133,9 +134,9 @@ async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is, 
 
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("exists", [True, False])
-async def test_job_remove(exists, ready, tmpdir, spawn_job_client, snapshot, resp_is):
+async def test_job_remove(exists, ready, tmp_path, spawn_job_client, snapshot, resp_is):
     client = await spawn_job_client(authorize=True)
-    client.app["settings"]["data_path"] = str(tmpdir)
+    client.app["settings"]["data_path"] = tmp_path
 
     if exists:
         await client.db.subtraction.insert_one({
@@ -169,16 +170,17 @@ async def test_job_remove(exists, ready, tmpdir, spawn_job_client, snapshot, res
 
 
 @pytest.mark.parametrize("error", [None, "400_subtraction", "400_file", "400_path"])
-async def test_download_subtraction_files(error, tmpdir, spawn_job_client, pg_session):
+async def test_download_subtraction_files(error, tmp_path, spawn_job_client, pg_session):
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = str(tmpdir)
+    client.app["settings"]["data_path"] = tmp_path
 
-    test_dir = tmpdir.mkdir("subtractions").mkdir("foo")
+    test_dir = tmp_path / "subtractions" / "foo"
+    test_dir.mkdir(parents=True)
 
     if error != "400_path":
-        test_dir.join("subtraction.fa.gz").write("FASTA file")
-        test_dir.join("subtraction.1.bt2").write("Bowtie2 file")
+        test_dir.joinpath("subtraction.fa.gz").write_text("FASTA file")
+        test_dir.joinpath("subtraction.1.bt2").write_text("Bowtie2 file")
 
     subtraction = {
         "_id": "foo",
@@ -216,8 +218,8 @@ async def test_download_subtraction_files(error, tmpdir, spawn_job_client, pg_se
         assert fasta_resp.status == bowtie_resp.status == 404
         return
 
-    fasta_expected_path = Path(client.app["settings"]["data_path"]) / "subtractions" / "foo" / "subtraction.fa.gz"
-    bowtie_expected_path = Path(client.app["settings"]["data_path"]) / "subtractions" / "foo" / "subtraction.1.bt2"
+    fasta_expected_path = client.app["settings"]["data_path"] / "subtractions" / "foo" / "subtraction.fa.gz"
+    bowtie_expected_path = client.app["settings"]["data_path"] / "subtractions" / "foo" / "subtraction.1.bt2"
 
     assert fasta_expected_path.read_bytes() == await fasta_resp.content.read()
     assert bowtie_expected_path.read_bytes() == await bowtie_resp.content.read()

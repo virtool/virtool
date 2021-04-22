@@ -8,11 +8,11 @@ import virtool.history.db
 
 class TestAdd:
 
-    async def test(self, snapshot, dbi, static_time, test_otu_edit, test_change):
+    async def test(self, snapshot, dbi, static_time, test_otu_edit, test_change, tmp_path):
         app = {
             "db": dbi,
             "settings": {
-                "data_path": "/foo/bar"
+                "data_path": tmp_path
             }
         }
 
@@ -32,11 +32,11 @@ class TestAdd:
         snapshot.assert_match(change, "change")
         snapshot.assert_match(document, "document")
 
-    async def test_create(self, snapshot, dbi, static_time, test_otu_edit, test_change):
+    async def test_create(self, snapshot, dbi, static_time, test_otu_edit, test_change, tmp_path):
         app = {
             "db": dbi,
             "settings": {
-                "data_path": "/foo/bar"
+                "data_path": tmp_path
             }
         }
 
@@ -61,7 +61,7 @@ class TestAdd:
         snapshot.assert_match(change)
         snapshot.assert_match(document)
 
-    async def test_remove(self, snapshot, dbi, static_time, test_otu_edit, test_change):
+    async def test_remove(self, snapshot, dbi, static_time, test_otu_edit, test_change, tmp_path):
         """
         Test that the addition of a change due to otu removal inserts the expected change document.
 
@@ -69,7 +69,7 @@ class TestAdd:
         app = {
             "db": dbi,
             "settings": {
-                "data_path": "/foo/bar"
+                "data_path": tmp_path
             }
         }
 
@@ -96,7 +96,7 @@ class TestAdd:
 
 
 @pytest.mark.parametrize("file", [True, False])
-async def test_get(file, mocker, snapshot, dbi):
+async def test_get(file, mocker, snapshot, dbi, tmp_path):
     await dbi.history.insert_one({
         "_id": "baz.2",
         "diff": "file" if file else {
@@ -109,7 +109,7 @@ async def test_get(file, mocker, snapshot, dbi):
     app = {
         "db": dbi,
         "settings": {
-            "data_path": "/foo/bar"
+            "data_path": tmp_path
         }
     }
 

@@ -2,6 +2,7 @@ import datetime
 import os
 import shutil
 import sys
+from pathlib import Path
 
 import arrow
 import pytest
@@ -60,20 +61,20 @@ def test_generate_key(mocker):
     m_token_hex.assert_called_with(32)
 
 
-def test_decompress_tgz(tmpdir):
-    path = str(tmpdir)
+def test_decompress_tgz(tmp_path):
+    path = tmp_path
 
-    src_path = os.path.join(sys.path[0], "tests", "test_files", "virtool.tar.gz")
+    src_path = Path.cwd() / "tests" / "test_files" / "virtool.tar.gz"
 
     shutil.copy(src_path, path)
 
-    virtool.utils.decompress_tgz(os.path.join(path, "virtool.tar.gz"), os.path.join(path, "de"))
+    virtool.utils.decompress_tgz(path / "virtool.tar.gz", path / "de")
 
     assert set(os.listdir(path)) == {"virtool.tar.gz", "de"}
 
-    assert os.listdir(os.path.join(path, "de")) == ["virtool"]
+    assert os.listdir(path / "de") == ["virtool"]
 
-    assert set(os.listdir(os.path.join(path, "de", "virtool"))) == {
+    assert set(os.listdir(path / "de" / "virtool")) == {
         "run",
         "client",
         "VERSION", "install.sh"
@@ -106,33 +107,33 @@ class TestRandomAlphanumeric:
     (True, {"foo.txt"}),
     (False, {"foo.txt", "baz"})
 ])
-def test_rm(recursive, expected, tmpdir):
+def test_rm(recursive, expected, tmp_path):
     """
     Test that a file can be removed and that a folder can be removed when `recursive` is set to
     `True`.
 
     """
-    tmpdir.join("foo.txt").write("hello world")
-    tmpdir.join("bar.txt").write("hello world")
-    tmpdir.mkdir("baz")
+    tmp_path.joinpath("foo.txt").write_text("hello world")
+    tmp_path.joinpath("bar.txt").write_text("hello world")
+    (tmp_path / "baz").mkdir()
 
-    assert set(os.listdir(str(tmpdir))) == {"foo.txt", "bar.txt", "baz"}
+    assert set(os.listdir(tmp_path)) == {"foo.txt", "bar.txt", "baz"}
 
-    virtool.utils.rm(os.path.join(str(tmpdir), "bar.txt"))
+    virtool.utils.rm(tmp_path / "bar.txt")
 
     if recursive:
         virtool.utils.rm(
-            os.path.join(str(tmpdir), "baz"),
+            tmp_path / "baz",
             recursive=recursive
         )
     else:
         with pytest.raises(IsADirectoryError):
             virtool.utils.rm(
-                os.path.join(str(tmpdir), "baz"),
+                tmp_path / "baz",
                 recursive=recursive
             )
 
-    assert set(os.listdir(str(tmpdir))) == expected
+    assert set(os.listdir(tmp_path)) == expected
 
 
 @pytest.mark.parametrize("processes", [1, 4])

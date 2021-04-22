@@ -1,16 +1,15 @@
 import asyncio
-import os
+import logging
 import subprocess
+from pathlib import Path
 from typing import Optional
 
 import aiofiles
 
-import logging
-
 logger = logging.getLogger("app")
 
 
-async def determine_server_version(install_path: Optional[str] = "."):
+async def determine_server_version(install_path: Optional[Path] = Path.cwd()):
     loop = asyncio.get_event_loop()
 
     version = await loop.run_in_executor(None, determine_server_version_from_git)
@@ -19,7 +18,7 @@ async def determine_server_version(install_path: Optional[str] = "."):
         return version
 
     try:
-        version_file_path = os.path.join(install_path, "VERSION")
+        version_file_path = install_path / "VERSION"
 
         async with aiofiles.open(version_file_path, "r") as version_file:
             content = await version_file.read()

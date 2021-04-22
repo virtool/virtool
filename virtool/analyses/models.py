@@ -1,5 +1,3 @@
-import enum
-
 from sqlalchemy import Column, Integer, String, DateTime, Enum
 
 from virtool.pg.utils import Base, SQLEnum

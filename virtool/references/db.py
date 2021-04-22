@@ -83,7 +83,6 @@ import virtool.tasks.task
 import virtool.users.db
 import virtool.utils
 from virtool.types import App
-
 from virtool.uploads.models import Upload
 
 PROJECTION = [
@@ -723,7 +722,7 @@ async def download_and_parse_release(app, url: str, task_id: str, progress_handl
     with virtool.utils.get_temp_dir() as tempdir:
         temp_path = str(tempdir)
 
-        download_path = os.path.join(temp_path, "reference.tar.gz")
+        download_path = temp_path / "reference.tar.gz"
 
         await virtool.http.utils.download_file(
             app,

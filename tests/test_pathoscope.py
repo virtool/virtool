@@ -4,19 +4,20 @@ import pytest
 import shutil
 import pickle
 import filecmp
+from pathlib import Path
 
 import virtool.pathoscope
 
-BASE_PATH = os.path.join(sys.path[0], "tests", "test_files", "pathoscope")
-BEST_HIT_PATH = os.path.join(BASE_PATH, "best_hit")
-EM_PATH = os.path.join(BASE_PATH, "em")
-MATRIX_PATH = os.path.join(BASE_PATH, "ps_matrix")
-SAM_PATH = os.path.join(BASE_PATH, "test_al.sam")
-SCORES = os.path.join(BASE_PATH, "scores")
-TSV_PATH = os.path.join(BASE_PATH, "report.tsv")
-UNU_PATH = os.path.join(BASE_PATH, "unu")
-UPDATED_VTA_PATH = os.path.join(BASE_PATH, "updated.vta")
-VTA_PATH = os.path.join(BASE_PATH, "test.vta")
+BASE_PATH = Path.cwd() / "tests" / "test_files" / "pathoscope"
+BEST_HIT_PATH = Path.cwd() / BASE_PATH / "best_hit"
+EM_PATH = BASE_PATH / "em"
+MATRIX_PATH = BASE_PATH / "ps_matrix"
+SAM_PATH = BASE_PATH / "test_al.sam"
+SCORES = BASE_PATH / "scores"
+TSV_PATH = BASE_PATH / "report.tsv"
+UNU_PATH = BASE_PATH / "unu"
+UPDATED_VTA_PATH = BASE_PATH / "updated.vta"
+VTA_PATH = BASE_PATH / "test.vta"
 
 
 @pytest.fixture(scope="session")
@@ -39,9 +40,9 @@ def test_find_sam_align_score(sam_line, expected_scores):
     assert virtool.pathoscope.find_sam_align_score(sam_line) == expected_scores["".join(sam_line)]
 
 
-def test_build_matrix(tmpdir):
-    shutil.copy(VTA_PATH, str(tmpdir))
-    vta_path = os.path.join(str(tmpdir), "test.vta")
+def test_build_matrix(tmp_path):
+    shutil.copy(VTA_PATH, tmp_path)
+    vta_path = tmp_path / "test.vta"
 
     with open(MATRIX_PATH, "rb") as handle:
         expected = pickle.load(handle)
@@ -58,9 +59,9 @@ def test_build_matrix(tmpdir):
 @pytest.mark.parametrize("pi_prior", [0, 1e-5])
 @pytest.mark.parametrize("epsilon", [1e-6, 1e-7, 1e-8])
 @pytest.mark.parametrize("max_iter", [5, 10, 20, 30])
-def test_em(tmpdir, theta_prior, pi_prior, epsilon, max_iter, expected_em):
-    shutil.copy(VTA_PATH, str(tmpdir))
-    vta_path = os.path.join(str(tmpdir), "test.vta")
+def test_em(tmp_path, theta_prior, pi_prior, epsilon, max_iter, expected_em):
+    shutil.copy(VTA_PATH, tmp_path)
+    vta_path = tmp_path / "test.vta"
 
     u, nu, refs, _ = virtool.pathoscope.build_matrix(vta_path, 0.01)
 
@@ -86,14 +87,14 @@ def test_compute_best_hit():
         assert pickle.load(handle) == virtool.pathoscope.compute_best_hit(*matrix_tuple)
 
 
-def test_rewrite_align(tmpdir):
+def test_rewrite_align(tmp_path):
     with open(UNU_PATH, "rb") as f:
         u, nu = pickle.load(f)
 
-    shutil.copy(VTA_PATH, str(tmpdir))
-    vta_path = os.path.join(str(tmpdir), "test.vta")
+    shutil.copy(VTA_PATH, tmp_path)
+    vta_path = tmp_path / "test.vta"
 
-    rewrite_path = os.path.join(str(tmpdir), "rewrite.vta")
+    rewrite_path = tmp_path / "rewrite.vta"
 
     virtool.pathoscope.rewrite_align(u, nu, vta_path, 0.01, rewrite_path)
 
@@ -101,11 +102,11 @@ def test_rewrite_align(tmpdir):
     assert not filecmp.cmp(vta_path, rewrite_path)
 
 
-def test_calculate_coverage(tmpdir, test_sam_path):
+def test_calculate_coverage(tmp_path, test_sam_path):
     ref_lengths = dict()
 
-    shutil.copy(VTA_PATH, str(tmpdir))
-    vta_path = os.path.join(str(tmpdir), "test.vta")
+    shutil.copy(VTA_PATH, tmp_path)
+    vta_path = tmp_path / "test.vta"
 
     with open(test_sam_path, "r") as handle:
         for line in handle:
@@ -127,9 +128,9 @@ def test_calculate_coverage(tmpdir, test_sam_path):
     virtool.pathoscope.calculate_coverage(vta_path, ref_lengths)
 
 
-def test_write_report(tmpdir):
-    shutil.copy(VTA_PATH, str(tmpdir))
-    vta_path = os.path.join(str(tmpdir), "test.vta")
+def test_write_report(tmp_path):
+    shutil.copy(VTA_PATH, tmp_path)
+    vta_path = tmp_path / "test.vta"
 
     u, nu, refs, reads = virtool.pathoscope.build_matrix(vta_path, 0.01)
 
@@ -145,7 +146,7 @@ def test_write_report(tmpdir):
         reads
     )
 
-    report_path = os.path.join(str(tmpdir), "report.tsv")
+    report_path = tmp_path / "report.tsv"
 
     virtool.pathoscope.write_report(
         report_path,

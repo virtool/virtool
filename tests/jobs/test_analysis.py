@@ -28,7 +28,7 @@ class MockAnalysisJob:
 
 
 @pytest.fixture
-async def mock_job(tmpdir, mocker, request, dbi):
+async def mock_job(tmp_path, mocker, request, dbi):
     temp_dir = tempfile.TemporaryDirectory()
 
     await dbi.jobs.insert_one({
@@ -80,7 +80,7 @@ async def mock_job(tmpdir, mocker, request, dbi):
     job.db = dbi
     job.id = "foobar"
     job.settings = {
-        "data_path": str(tmpdir)
+        "data_path": tmp_path
     }
 
     job.task_args = {
@@ -110,7 +110,7 @@ async def test_make_analysis_dir(mock_job):
 
 
 @pytest.mark.parametrize("paired", [False, True])
-async def test_check_db(tmpdir, paired, dbi, mock_job):
+async def test_check_db(tmp_path, paired, dbi, mock_job):
     """
     Check that the method assigns various job attributes based on information from the database.
 
@@ -135,9 +135,4 @@ async def test_check_db(tmpdir, paired, dbi, mock_job):
     if paired:
         expected_read_filenames.append("reads_2.fastq")
 
-    assert mock_job.params["subtraction_path"] == os.path.join(
-        str(tmpdir),
-        "subtractions",
-        "boo",
-        "reference"
-    )
+    assert mock_job.params["subtraction_path"] == tmp_path / "subtractions" / "boo" / "reference"

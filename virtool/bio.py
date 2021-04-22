@@ -1,15 +1,13 @@
 import asyncio
-import typing
-
-import aiofiles
-import gzip
 import io
 import json
 import logging
 import re
+import typing
 import zipfile
 from typing import Generator, List
 
+import aiofiles
 import aiohttp
 
 import virtool.analyses.db

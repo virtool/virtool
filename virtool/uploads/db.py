@@ -5,8 +5,8 @@ from typing import Union, Optional, List, Dict, Type
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
-import virtool.tasks.task
 import virtool.tasks.pg
+import virtool.tasks.task
 import virtool.uploads.utils
 import virtool.utils
 

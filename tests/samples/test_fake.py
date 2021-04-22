@@ -5,14 +5,14 @@ from virtool.samples.db import LIST_PROJECTION
 
 
 @pytest.fixture
-def app(dbi, pg, run_in_thread, tmpdir):
+def app(dbi, pg, run_in_thread, tmp_path):
     return {
         "db": dbi,
         "fake": FakerWrapper(),
         "pg": pg,
         "run_in_thread": run_in_thread,
         "settings": {
-            "data_path": str(tmpdir)
+            "data_path": tmp_path
         },
     }
 

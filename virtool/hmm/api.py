@@ -3,8 +3,6 @@ API request handlers for managing and querying HMM data.
 
 """
 import gzip
-import os
-from pathlib import Path
 
 import aiohttp
 from aiohttp.web_fileresponse import FileResponse
@@ -182,7 +180,7 @@ async def purge(req):
 
     await virtool.hmm.db.purge(db, req.app["settings"])
 
-    hmm_path = os.path.join(req.app["settings"]["data_path"], "hmm/profiles.hmm")
+    hmm_path = req.app["settings"]["data_path"] / "hmm/profiles.hmm"
 
     try:
         await req.app["run_in_thread"](virtool.utils.rm, hmm_path)
@@ -205,7 +203,7 @@ async def purge(req):
 @routes.jobs_api.get("/api/hmms/files/annotations.json.gz")
 async def get_hmm_annotations(request):
     """Get a compressed json file containing the database documents for all HMMs."""
-    data_path = Path(request.app["settings"]["data_path"])
+    data_path = request.app["settings"]["data_path"]
     annotation_path = data_path / "hmm/annotations.json.gz"
 
     if not annotation_path.exists():
@@ -222,7 +220,7 @@ async def get_hmm_profiles(req):
     Download the HMM profiles file if HMM data is available.
 
     """
-    file_path = Path(req.app["settings"]["data_path"]) / "hmm" / "profiles.hmm"
+    file_path = req.app["settings"]["data_path"] / "hmm" / "profiles.hmm"
 
     if not await req.app["run_in_thread"](hmm_data_exists, file_path):
         return virtool.api.response.not_found("Profiles file could not be found")

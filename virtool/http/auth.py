@@ -175,7 +175,7 @@ async def index_handler(req: web.Request) -> web.Response:
 
     requires_login = req["client"] is None
 
-    path = os.path.join(req.app["client_path"], "index.html")
+    path = req.app["client_path"] / "index.html"
 
     async with aiofiles.open(path, "r") as f:
         template = jinja2.Template(await f.read(), autoescape=True)

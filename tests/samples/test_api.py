@@ -32,7 +32,7 @@ class MockJobInterface:
         "total_count": 3
     }),
     # Test ``label_filter`` query param.
-    (None, None, None, ["Question", "Info"], range(0, 3), {
+    (None, None, None, None, range(0, 3), {
         "page": 1,
         "per_page": 25,
         "page_count": 1,
@@ -76,7 +76,11 @@ class MockJobInterface:
         "page_count": 1,
         "found_count": 2,
         "total_count": 3
-    })
+    }),
+    (None, None, None, [3], None, None),
+    (None, None, None, [2, 3], None, None),
+    (None, None, None, [0], None, None),
+    (None, None, None, [3, "info"], None, None),
 ])
 async def test_find(
         find,
@@ -168,8 +172,8 @@ async def test_find(
         query.append("page={}".format(page))
 
     if label_filter is not None:
-        filter_query = '&filter='.join(label_filter)
-        query.append(("filter={}".format(filter_query)))
+        filter_query = '&label='.join(str(label) for label in label_filter)
+        query.append(("label={}".format(filter_query)))
 
     if len(query):
         path += "?{}".format("&".join(query))
@@ -629,14 +633,14 @@ class TestEdit:
 
 
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
-async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_session):
+async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_session, tmp_path):
     """
     Test that sample can be finalized using the Jobs API.
 
     """
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = ""
+    client.app["settings"]["data_path"] = tmp_path
 
     data = {field: {}}
 
@@ -714,14 +718,14 @@ async def test_job_remove(
         static_time,
         spawn_job_client,
         pg,
-        tmpdir
+        tmp_path
 ):
     """
     Test that a sample can be removed when called using the Jobs API.
 
     """
     client = await spawn_job_client(authorize=True)
-    client.app["settings"]["data_path"] = str(tmpdir)
+    client.app["settings"]["data_path"] = tmp_path
 
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
@@ -974,12 +978,14 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is, test_r
 
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("exists", [True, False])
-async def test_cache_job_remove(exists, ready, tmpdir, spawn_job_client, snapshot, resp_is):
+async def test_cache_job_remove(exists, ready, tmp_path, spawn_job_client, snapshot, resp_is):
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = str(tmpdir)
+    client.app["settings"]["data_path"] = tmp_path
 
-    tmpdir.mkdir("caches").mkdir("foo").join("reads_1.fq.gz").write("Cache file")
+    path = tmp_path / "caches" / "foo"
+    path.mkdir(parents=True)
+    path.joinpath("reads_1.fq.gz").write_text("Cache file")
 
     if exists:
         await client.db.caches.insert_one({
@@ -1003,7 +1009,7 @@ async def test_cache_job_remove(exists, ready, tmpdir, spawn_job_client, snapsho
 
     assert await resp_is.no_content(resp)
     assert await client.db.caches.find_one("foo") is None
-    assert not os.path.isdir(tmpdir / "caches" / "foo")
+    assert not (tmp_path / "caches" / "foo").is_dir()
 
 
 @pytest.mark.parametrize("artifact_type", ["fastq", "foo"])
@@ -1013,7 +1019,7 @@ async def test_upload_artifacts(
         spawn_job_client,
         static_time,
         resp_is,
-        tmpdir
+        tmp_path
 ):
     """
     Test that new artifacts can be uploaded after sample creation using the Jobs API.
@@ -1027,8 +1033,8 @@ async def test_upload_artifacts(
 
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = str(tmpdir)
-    sample_file_path = Path(client.app["settings"]["data_path"]) / "samples" / "test"
+    client.app["settings"]["data_path"] = tmp_path
+    sample_file_path = client.app["settings"]["data_path"] / "samples" / "test"
 
     await client.db.samples.insert_one({
         "_id": "test",
@@ -1046,7 +1052,7 @@ async def test_upload_artifacts(
 
 class TestUploadReads:
     @pytest.mark.parametrize("compressed", [True, False])
-    async def test_upload_reads(self, compressed, mocker, snapshot, spawn_job_client, static_time, resp_is, pg, tmpdir):
+    async def test_upload_reads(self, compressed, mocker, snapshot, spawn_job_client, static_time, resp_is, pg, tmp_path):
         """
         Test that new sample reads can be uploaded using the Jobs API.
 
@@ -1059,7 +1065,7 @@ class TestUploadReads:
 
         client = await spawn_job_client(authorize=True)
 
-        client.app["settings"]["data_path"] = str(tmpdir)
+        client.app["settings"]["data_path"] = tmp_path
 
         await client.db.samples.insert_one({
             "_id": "test",
@@ -1079,7 +1085,7 @@ class TestUploadReads:
             assert await resp_is.bad_request(resp, "File is not compressed")
 
     @pytest.mark.parametrize("conflict", [True, False])
-    async def test_upload_paired_reads(self, conflict, resp_is, spawn_job_client, tmpdir):
+    async def test_upload_paired_reads(self, conflict, resp_is, spawn_job_client, tmp_path):
         """
         Test that paired sample reads can be uploaded using the Jobs API and that conflicts are properly handled.
 
@@ -1092,7 +1098,7 @@ class TestUploadReads:
 
         client = await spawn_job_client(authorize=True)
 
-        client.app["settings"]["data_path"] = str(tmpdir)
+        client.app["settings"]["data_path"] = tmp_path
         sample_file_path = Path(client.app["settings"]["data_path"]) / "samples" / "test"
 
         await client.db.samples.insert_one({
@@ -1146,17 +1152,19 @@ async def test_get_cache(error, snapshot, spawn_job_client, resp_is, static_time
 
 @pytest.mark.parametrize("suffix", ["1", "2"])
 @pytest.mark.parametrize("error", [None, "404_sample", "404_reads", "404_file"])
-async def test_download_reads(suffix, error, tmpdir, spawn_client, spawn_job_client, pg):
+async def test_download_reads(suffix, error, tmp_path, spawn_client, spawn_job_client, pg):
     client = await spawn_client(authorize=True)
     job_client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = str(tmpdir)
-    job_client.app["settings"]["data_path"] = str(tmpdir)
+    client.app["settings"]["data_path"] = tmp_path
+    job_client.app["settings"]["data_path"] = tmp_path
 
     file_name = f"reads_{suffix}.fq.gz"
 
     if error != "404_file":
-        tmpdir.mkdir("samples").mkdir("foo").join(file_name).write("test")
+        path = tmp_path / "samples" / "foo"
+        path.mkdir(parents=True)
+        path.joinpath(file_name).write_text("test")
 
     if error != "404_sample":
         await client.db.samples.insert_one({
@@ -1174,7 +1182,7 @@ async def test_download_reads(suffix, error, tmpdir, spawn_client, spawn_job_cli
     resp = await client.get(f"/api/samples/foo/reads/{file_name}")
     job_resp = await job_client.get(f"/api/samples/foo/reads/{file_name}")
 
-    expected_path = Path(client.app["settings"]["data_path"]) / "samples" / "foo" / file_name
+    expected_path = client.app["settings"]["data_path"] / "samples" / "foo" / file_name
 
     if error:
         assert resp.status == job_resp.status == 404
@@ -1185,13 +1193,15 @@ async def test_download_reads(suffix, error, tmpdir, spawn_client, spawn_job_cli
 
 
 @pytest.mark.parametrize("error", [None, "404_sample", "404_artifact", "404_file"])
-async def test_download_artifact(error, tmpdir, spawn_job_client, pg):
+async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = str(tmpdir)
+    client.app["settings"]["data_path"] = tmp_path
 
     if error != "404_file":
-        tmpdir.mkdir("samples").mkdir("foo").join("1-fastqc.txt").write("test")
+        path = (tmp_path / "samples" / "foo")
+        path.mkdir(parents=True)
+        path.joinpath("1-fastqc.txt").write_text("test")
 
     if error != "404_sample":
         await client.db.samples.insert_one({
@@ -1214,7 +1224,7 @@ async def test_download_artifact(error, tmpdir, spawn_job_client, pg):
 
     resp = await client.get("/api/samples/foo/artifacts/fastqc.txt")
 
-    expected_path = Path(client.app["settings"]["data_path"]) / "samples" / "foo" / "1-fastqc.txt"
+    expected_path = client.app["settings"]["data_path"] / "samples" / "foo" / "1-fastqc.txt"
 
     if error:
         assert resp.status == 404
@@ -1288,7 +1298,7 @@ async def test_upload_artifact_cache(
         snapshot,
         static_time,
         spawn_job_client,
-        tmpdir
+        tmp_path
 ):
     """
     Test that a new artifact cache can be uploaded after sample creation using the Jobs API.
@@ -1302,9 +1312,9 @@ async def test_upload_artifact_cache(
 
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = str(tmpdir)
+    client.app["settings"]["data_path"] = tmp_path
 
-    cache_path = Path(virtool.caches.utils.join_cache_path(client.app["settings"], "aodp-abcdefgh"))
+    cache_path = virtool.caches.utils.join_cache_path(client.app["settings"], "aodp-abcdefgh")
 
     await client.db.samples.insert_one({
         "_id": "test",
@@ -1331,7 +1341,7 @@ async def test_upload_artifact_cache(
 
 
 @pytest.mark.parametrize("paired", [True, False])
-async def test_upload_reads_cache(paired, snapshot, static_time, spawn_job_client, tmpdir):
+async def test_upload_reads_cache(paired, snapshot, static_time, spawn_job_client, tmp_path):
     """
     Test that sample reads' files cache can be uploaded using the Jobs API.
 
@@ -1344,8 +1354,8 @@ async def test_upload_reads_cache(paired, snapshot, static_time, spawn_job_clien
 
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = str(tmpdir)
-    cache_path = Path(virtool.caches.utils.join_cache_path(client.app["settings"], "aodp-abcdefgh"))
+    client.app["settings"]["data_path"] = tmp_path
+    cache_path = virtool.caches.utils.join_cache_path(client.app["settings"], "aodp-abcdefgh")
 
     await client.db.samples.insert_one({
         "_id": "test",
@@ -1383,20 +1393,22 @@ async def test_upload_reads_cache(paired, snapshot, static_time, spawn_job_clien
 
 
 @pytest.mark.parametrize("error", [None, "404_sample", "404_reads", "404_file", "404_cache"])
-async def test_download_reads_cache(error, spawn_job_client, pg, tmpdir):
+async def test_download_reads_cache(error, spawn_job_client, pg, tmp_path):
     """
     Test that a sample reads cache can be downloaded using the Jobs API.
 
     """
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = str(tmpdir)
+    client.app["settings"]["data_path"] = tmp_path
 
     filename = "reads_1.fq.gz"
     key = "aodp-abcdefgh"
 
     if error != "404_file":
-        tmpdir.mkdir("caches").mkdir(key).join(filename).write("test")
+        path = tmp_path / "caches" / key
+        path.mkdir(parents=True)
+        path.joinpath(filename).write_text("test")
 
     if error != "404_sample":
         await client.db.samples.insert_one({
@@ -1419,7 +1431,7 @@ async def test_download_reads_cache(error, spawn_job_client, pg, tmpdir):
 
     resp = await client.get(f"/api/samples/foo/caches/{key}/reads/{filename}")
 
-    expected_path = Path(client.app["settings"]["data_path"]) / "caches" / key / filename
+    expected_path = client.app["settings"]["data_path"] / "caches" / key / filename
 
     if error:
         assert resp.status == 404
@@ -1429,21 +1441,23 @@ async def test_download_reads_cache(error, spawn_job_client, pg, tmpdir):
 
 
 @pytest.mark.parametrize("error", [None, "404_sample", "404_artifact", "404_file", "404_cache"])
-async def test_download_artifact_cache(error, spawn_job_client, pg, tmpdir):
+async def test_download_artifact_cache(error, spawn_job_client, pg, tmp_path):
     """
     Test that a sample artifact cache can be downloaded using the Jobs API.
 
     """
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = str(tmpdir)
+    client.app["settings"]["data_path"] = tmp_path
 
     key = "aodp-abcdefgh"
     name = "fastqc.txt"
     name_on_disk = "1-fastqc.txt"
 
     if error != "404_file":
-        tmpdir.mkdir("caches").mkdir(key).join(name_on_disk).write("test")
+        path = tmp_path / "caches" / key
+        path.mkdir(parents=True)
+        path.joinpath(name_on_disk).write_text("text")
 
     if error != "404_sample":
         await client.db.samples.insert_one({
@@ -1469,7 +1483,7 @@ async def test_download_artifact_cache(error, spawn_job_client, pg, tmpdir):
 
     resp = await client.get(f"/api/samples/foo/caches/{key}/artifacts/{name}")
 
-    expected_path = Path(client.app["settings"]["data_path"]) / "caches" / key / name_on_disk
+    expected_path = client.app["settings"]["data_path"] / "caches" / key / name_on_disk
 
     if error:
         assert resp.status == 404

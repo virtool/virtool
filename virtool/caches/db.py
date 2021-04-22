@@ -6,7 +6,6 @@ analyses.
 import asyncio
 import hashlib
 import json
-import os
 from typing import Any, Dict, Optional
 
 import pymongo.errors
@@ -170,7 +169,7 @@ async def remove(app: App, cache_id: str):
         "_id": cache_id
     })
 
-    path = os.path.join(settings["data_path"], "caches", cache_id)
+    path = settings["data_path"] / "caches" / cache_id
 
     try:
         await app["run_in_thread"](virtool.utils.rm, path, True)

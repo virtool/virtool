@@ -16,7 +16,8 @@ async def test_add(
         snapshot,
         test_otu,
         static_time,
-        test_random_alphanumeric
+        test_random_alphanumeric,
+        tmp_path
 ):
     """
     Test that adding an isolate works correctly. Parametrize to make sure that setting the default isolate works
@@ -26,7 +27,7 @@ async def test_add(
     app = {
         "db": dbi,
         "settings": {
-            "data_path": "/foo"
+            "data_path": tmp_path
         }
     }
 
@@ -54,11 +55,11 @@ async def test_add(
     snapshot.assert_match(return_value, "return_value")
 
 
-async def test_edit(dbi, snapshot, test_otu, static_time):
+async def test_edit(dbi, snapshot, test_otu, static_time, tmp_path):
     app = {
         "db": dbi,
         "settings": {
-            "data_path": "/foo"
+            "data_path": tmp_path
         }
     }
 
@@ -80,7 +81,7 @@ async def test_edit(dbi, snapshot, test_otu, static_time):
 
 
 @pytest.mark.parametrize("isolate_id", ["cab8b360", "bar"])
-async def test_remove(isolate_id, dbi, snapshot, test_otu, test_sequence, static_time):
+async def test_remove(isolate_id, dbi, snapshot, test_otu, test_sequence, static_time, tmp_path):
     """
     Test removing an isolate. Make sure the default isolate is reassigned if the default isolate is removed.
 
@@ -88,7 +89,7 @@ async def test_remove(isolate_id, dbi, snapshot, test_otu, test_sequence, static
     app = {
         "db": dbi,
         "settings": {
-            "data_path": "/foo"
+            "data_path": tmp_path
         }
     }
 
@@ -114,11 +115,11 @@ async def test_remove(isolate_id, dbi, snapshot, test_otu, test_sequence, static
     snapshot.assert_match(await dbi.sequences.find().to_list(None), "sequences")
 
 
-async def test_set_default(dbi, snapshot, test_otu, static_time):
+async def test_set_default(dbi, snapshot, test_otu, static_time, tmp_path):
     app = {
         "db": dbi,
         "settings": {
-            "data_path": "/foo"
+            "data_path": tmp_path
         }
     }
 

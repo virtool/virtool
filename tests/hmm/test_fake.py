@@ -1,8 +1,9 @@
 from virtool.hmm.fake import create_fake_hmms
 
 
-async def test_fake_hmms(app, snapshot, tmpdir, dbi, example_path, pg):
-    hmm_dir = tmpdir.mkdir("hmm")
+async def test_fake_hmms(app, snapshot, tmp_path, dbi, example_path, pg):
+    hmm_dir = tmp_path / "hmm"
+    hmm_dir.mkdir()
 
     await create_fake_hmms(app)
 

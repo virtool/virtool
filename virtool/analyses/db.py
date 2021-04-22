@@ -15,8 +15,8 @@ import virtool.indexes.db
 import virtool.jobs.db
 import virtool.otus.utils
 import virtool.samples.db
-import virtool.tasks.task
 import virtool.tasks.pg
+import virtool.tasks.task
 import virtool.types
 import virtool.utils
 
@@ -261,17 +261,17 @@ async def remove_orphaned_directories(app: virtool.types.App):
     """
     db = app["db"]
 
-    samples_path = os.path.join(app["settings"]["data_path"], "samples")
+    samples_path = app["settings"]["data_path"] / "samples"
 
     existing_ids = set(await db.analyses.distinct("_id"))
 
     for sample_id in os.listdir(samples_path):
-        analyses_path = os.path.join(samples_path, sample_id, "analysis")
+        analyses_path = samples_path / sample_id / "analysis"
 
         to_delete = set(os.listdir(analyses_path)) - existing_ids
 
         for analysis_id in to_delete:
-            analysis_path = os.path.join(analyses_path, analysis_id)
+            analysis_path = analyses_path / analysis_id
             try:
                 await app["run_in_thread"](virtool.utils.rm, analysis_path, True)
             except FileNotFoundError:

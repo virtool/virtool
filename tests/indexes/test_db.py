@@ -191,7 +191,7 @@ async def test_tag_unbuilt_changes(dbi, create_mock_history):
     assert await dbi.history.count_documents({"reference.id": "hxn167", "index.id": "foo", "index.version": 5}) == 4
 
 
-async def test_get_patched_otus(mocker, dbi):
+async def test_get_patched_otus(mocker, dbi, tmp_path):
     m = mocker.patch("virtool.history.db.patch_to_version", make_mocked_coro((None, {"_id": "foo"}, None)))
 
     manifest = {
@@ -201,7 +201,7 @@ async def test_get_patched_otus(mocker, dbi):
     }
 
     settings = {
-        "data_path": "foo"
+        "data_path": tmp_path
     }
 
     patched_otus = await virtool.indexes.db.get_patched_otus(

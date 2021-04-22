@@ -1,13 +1,12 @@
-import os
 import shutil
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import visvalingamwyatt as vw
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.future import select
 
 import virtool.utils
-
 from virtool.analyses.models import AnalysisFile
 
 WORKFLOW_NAMES = (
@@ -81,7 +80,7 @@ def find_nuvs_sequence_by_index(
     return sequences[0]
 
 
-def join_analysis_path(data_path: str, analysis_id: str, sample_id: str) -> str:
+def join_analysis_path(data_path: Path, analysis_id: str, sample_id: str) -> Path:
     """
     Returns the path to an analysis JSON output file.
 
@@ -91,16 +90,10 @@ def join_analysis_path(data_path: str, analysis_id: str, sample_id: str) -> str:
     :return: an analysis JSON path
 
     """
-    return os.path.join(
-        data_path,
-        "samples",
-        sample_id,
-        "analysis",
-        analysis_id
-    )
+    return data_path / "samples" / sample_id / "analysis" / analysis_id
 
 
-def join_analysis_json_path(data_path: str, analysis_id: str, sample_id: str) -> str:
+def join_analysis_json_path(data_path: Path, analysis_id: str, sample_id: str) -> Path:
     """
     Join the path to an analysis JSON file for the given sample-analysis ID combination.
 
@@ -112,13 +105,10 @@ def join_analysis_json_path(data_path: str, analysis_id: str, sample_id: str) ->
     :return: a path
 
     """
-    return os.path.join(
-        join_analysis_path(data_path, analysis_id, sample_id),
-        "results.json"
-    )
+    return join_analysis_path(data_path, analysis_id, sample_id) / "results.json"
 
 
-async def move_nuvs_files(filename: str, run_in_thread: callable, file_path: str, target_path: str):
+async def move_nuvs_files(filename: str, run_in_thread: callable, file_path: Path, target_path: Path):
     """
     Move NuVs analysis files from `file_path` to `target_path`, compress FASTA files and FASTQ files.
 
@@ -131,13 +121,13 @@ async def move_nuvs_files(filename: str, run_in_thread: callable, file_path: str
     if filename == "hmm.tsv":
         await run_in_thread(
             shutil.copy,
-            os.path.join(file_path, "hmm.tsv"),
-            os.path.join(target_path, "hmm.tsv")
+            file_path / "hmm.tsv",
+            target_path / "hmm.tsv"
         )
     else:
         await run_in_thread(virtool.utils.compress_file,
-                            os.path.join(file_path, filename),
-                            os.path.join(target_path, f"{filename}.gz"))
+                            file_path / filename,
+                            target_path / f"{filename}.gz")
 
 
 def transform_coverage_to_coordinates(coverage_list: List[int]) -> List[Tuple[int, int]]:

@@ -4,12 +4,6 @@ import os
 import aiohttp
 
 import virtool.api.utils
-import virtool.history.db
-import virtool.indexes.db
-import virtool.otus.db
-import virtool.tasks.pg
-import virtool.references.db
-import virtool.users.db
 import virtool.db.utils
 import virtool.errors
 import virtool.github
@@ -18,13 +12,13 @@ import virtool.http.routes
 import virtool.indexes.db
 import virtool.otus.db
 import virtool.otus.utils
+import virtool.pg.utils
 import virtool.references.db
 import virtool.references.utils
-import virtool.pg.utils
+import virtool.tasks.pg
 import virtool.users.db
 import virtool.utils
 import virtool.validators
-
 from virtool.api.response import bad_gateway, bad_request, insufficient_rights, json_response, no_content, not_found
 from virtool.uploads.models import Upload
 from virtool.references.tasks import CloneReferenceTask, ImportReferenceTask, RemoteReferenceTask, \
@@ -361,7 +355,7 @@ async def create(req):
         if not await virtool.pg.utils.get_row(pg, import_from, Upload, filter_="name_on_disk"):
             return not_found("File not found")
 
-        path = os.path.join(req.app["settings"]["data_path"], "files", import_from)
+        path = req.app["settings"]["data_path"] / "files" / import_from
 
         document = await virtool.references.db.create_import(
             db,

@@ -7,9 +7,9 @@ import virtool.tasks.pg
 
 
 @pytest.fixture
-def test_blast_obj(dbi):
+def test_blast_obj(dbi, tmp_path):
     settings = {
-        "data_path": "/mnt/data"
+        "data_path": tmp_path
     }
 
     return virtool.analyses.db.BLAST(
@@ -23,9 +23,9 @@ def test_blast_obj(dbi):
 
 class TestBLAST:
 
-    def test_init(self, dbi, test_blast_obj):
+    def test_init(self, dbi, test_blast_obj, tmp_path):
         assert test_blast_obj.db == dbi
-        assert test_blast_obj.settings == {"data_path": "/mnt/data"}
+        assert test_blast_obj.settings == {"data_path": tmp_path}
         assert test_blast_obj.analysis_id == "foo"
         assert test_blast_obj.sequence_index == 5
         assert test_blast_obj.rid == "ABC123"

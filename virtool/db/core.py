@@ -27,8 +27,8 @@ import virtool.references.db
 import virtool.samples.db
 import virtool.settings.db
 import virtool.subtractions.db
-import virtool.users.db
 import virtool.uploads.db
+import virtool.users.db
 import virtool.utils
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
 from virtool.types import Projection

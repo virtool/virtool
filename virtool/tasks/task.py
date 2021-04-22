@@ -4,10 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.db.utils
+import virtool.tasks.models
 import virtool.tasks.pg
 import virtool.utils
-
-import virtool.tasks.models
 
 logger = logging.getLogger("task")
 

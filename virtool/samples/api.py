@@ -57,10 +57,6 @@ QUERY_SCHEMA = {
         "default": 15,
         "min": 1,
         "max": 100
-    },
-    "filter": {
-        "type": "string",
-        "default": ""
     }
 }
 
@@ -84,10 +80,13 @@ async def find(req):
 
     query = v.document
 
-    filter_query = dict()
-    if "filter" in req.query:
-        filter_query = {
-            "labels": {"$in": req.query.getall("filter")}
+    label_query = dict()
+    if "label" in req.query:
+        labels = req.query.getall("label")
+        labels = [int(label) if label.isdigit() else label for label in labels]
+
+        label_query = {
+            "labels": {"$in": labels}
         }
 
     rights_filter = [
@@ -128,11 +127,11 @@ async def find(req):
         else:
             db_query = workflow_query
 
-    if filter_query:
+    if label_query:
         db_query = {
             "$and": [
                 db_query,
-                filter_query
+                label_query
             ]
         }
 
@@ -1047,7 +1046,7 @@ async def download_reads(req: aiohttp.web.Request):
     if file_name not in existing_reads:
         return not_found()
 
-    file_path = os.path.join(req.app["settings"]["data_path"], "samples", sample_id, file_name)
+    file_path = req.app["settings"]["data_path"] / "samples" / sample_id / file_name
 
     if not os.path.isfile(file_path):
         return virtool.api.response.not_found()
@@ -1085,7 +1084,7 @@ async def download_artifact(req: aiohttp.web.Request):
 
     artifact = result.to_dict()
 
-    file_path = os.path.join(req.app["settings"]["data_path"], "samples", sample_id, artifact["name_on_disk"])
+    file_path = req.app["settings"]["data_path"] / "samples" / sample_id / artifact["name_on_disk"]
 
     if not os.path.isfile(file_path):
         return virtool.api.response.not_found()
@@ -1123,7 +1122,7 @@ async def download_reads_cache(req):
     if file_name not in existing_reads:
         return not_found()
 
-    file_path = Path(req.app["settings"]["data_path"]) / "caches" / key / file_name
+    file_path = req.app["settings"]["data_path"] / "caches" / key / file_name
 
     if not os.path.isfile(file_path):
         return not_found()
@@ -1163,7 +1162,7 @@ async def download_artifact_cache(req):
 
     artifact = result.to_dict()
 
-    file_path = Path(req.app["settings"]["data_path"]) / "caches" / key / artifact["name_on_disk"]
+    file_path = req.app["settings"]["data_path"] / "caches" / key / artifact["name_on_disk"]
 
     if not file_path.exists():
         return not_found()

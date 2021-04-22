@@ -1,4 +1,5 @@
 import secrets
+
 import aiohttp.web
 
 URL_FONT_AWESOME = "https://use.fontawesome.com"

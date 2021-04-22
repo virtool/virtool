@@ -428,16 +428,16 @@ async def compress_sample_reads(app: App, sample: Dict[str, Any]):
 
     for i, path in enumerate(paths):
         target_filename = (
-            "reads_1.fq.gz" if "reads_1.fastq" in path else "reads_2.fq.gz"
+            "reads_1.fq.gz" if "reads_1.fastq" in str(path) else "reads_2.fq.gz"
         )
-        target_path = os.path.join(
-            data_path, "samples", sample_id, target_filename)
+
+        target_path = data_path / "samples" / sample_id / target_filename
 
         await app["run_in_thread"](compress_file, path, target_path, 1)
 
         stats = await app["run_in_thread"](file_stats, target_path)
 
-        assert os.path.isfile(target_path)
+        assert target_path.is_file()
 
         files.append(
             {
@@ -556,7 +556,7 @@ async def finalize(
 
             try:
                 await run_in_thread(
-                    virtool.utils.rm, Path(data_path) /
+                    virtool.utils.rm, data_path /
                     "files" / row.name_on_disk
                 )
             except FileNotFoundError:

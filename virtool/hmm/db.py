@@ -295,7 +295,7 @@ async def generate_annotations_json_file(app: virtool.types.App) -> Path:
     """
     settings, db = app["settings"], app["db"]
 
-    annotations_path = Path(settings["data_path"]) / "hmm/annotations.json"
+    annotations_path = settings["data_path"] / "hmm/annotations.json"
     annotations_path.parent.mkdir(parents=True, exist_ok=True)
 
     hmm_documents = await get_hmm_documents(db)

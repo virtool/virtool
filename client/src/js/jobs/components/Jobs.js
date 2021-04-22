@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Route, Switch } from "react-router-dom";
 import { mapSettingsStateToProps } from "../../administration/mappers";
-import { LoadingPlaceholder, NarrowPaddedContainer } from "../../base";
+import { Container, LoadingPlaceholder, NarrowContainer } from "../../base";
 import JobDetail from "./Detail";
 import JobsList from "./List";
 
@@ -12,12 +12,14 @@ export const Jobs = ({ loading }) => {
     }
 
     return (
-        <NarrowPaddedContainer>
-            <Switch>
-                <Route path="/jobs" component={JobsList} exact />
-                <Route path="/jobs/:jobId" component={JobDetail} />
-            </Switch>
-        </NarrowPaddedContainer>
+        <Container>
+            <NarrowContainer>
+                <Switch>
+                    <Route path="/jobs" component={JobsList} exact />
+                    <Route path="/jobs/:jobId" component={JobDetail} />
+                </Switch>
+            </NarrowContainer>
+        </Container>
     );
 };
 

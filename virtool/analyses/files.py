@@ -1,11 +1,11 @@
 import os
+from pathlib import Path
 from typing import Dict
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-import virtool.utils
 import virtool.analyses.utils
-
+import virtool.utils
 from virtool.analyses.models import AnalysisFile
 
 
@@ -42,7 +42,7 @@ async def create_analysis_file(pg: AsyncEngine, analysis_id: str, analysis_forma
         return analysis_file
 
 
-async def create_nuvs_analysis_files(pg: AsyncEngine, analysis_id: str, files: list, file_path: str):
+async def create_nuvs_analysis_files(pg: AsyncEngine, analysis_id: str, files: list, file_path: Path):
     """
     Create a row in the `analysis_files` SQL table that represents an NuVs analysis result file.
 
@@ -59,7 +59,7 @@ async def create_nuvs_analysis_files(pg: AsyncEngine, analysis_id: str, files: l
         if not filename.endswith(".tsv"):
             filename += ".gz"
 
-        size = virtool.utils.file_stats(os.path.join(file_path, filename))["size"]
+        size = virtool.utils.file_stats(file_path / filename)["size"]
 
         analysis_files.append(AnalysisFile(
             name=filename,

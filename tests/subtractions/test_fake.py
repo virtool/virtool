@@ -9,9 +9,10 @@ from virtool.subtractions.models import SubtractionFile
 from virtool.subtractions.utils import FILES
 
 
-async def test_create_fake_subtractions(app, example_path, snapshot, static_time, tmpdir):
-    example_path = example_path / "subtractions/arabidopsis_thaliana"
-    subtraction_path = Path(tmpdir.mkdir("subtractions").mkdir("2x6YnyMt"))
+async def test_create_fake_subtractions(app, example_path, snapshot, static_time, tmp_path):
+    example_path = example_path / "subtractions" / "arabidopsis_thaliana"
+    subtraction_path = tmp_path / "subtractions" / "2x6YnyMt"
+    subtraction_path.mkdir(parents=True)
 
     await create_fake_subtractions(app)
 
