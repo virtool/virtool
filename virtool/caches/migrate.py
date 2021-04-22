@@ -29,7 +29,7 @@ async def add_missing_field(app: App):
     """
     db = app["db"]
 
-    path = os.path.join(app["settings"]["data_path"], "caches")
+    path = app["settings"]["data_path"] / "caches"
 
     found_cache_ids = os.listdir(path)
 

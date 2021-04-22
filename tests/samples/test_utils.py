@@ -27,13 +27,14 @@ async def test_check_labels(exists, labels, spawn_client, pg_session, pg):
     assert len(bad_labels) == (2 - exists)
 
 
-def test_join_read_path():
-    assert virtool.samples.utils.join_read_path("/mnt/data/foo", 1) == "/mnt/data/foo/reads_1.fq.gz"
+def test_join_read_path(tmp_path):
+    assert virtool.samples.utils.join_read_path(tmp_path, 1) == tmp_path / "reads_1.fq.gz"
 
 
-@pytest.mark.parametrize("paired,paths", [
-    (True, ["/mnt/foo/bar/reads_1.fq.gz", "/mnt/foo/bar/reads_2.fq.gz"]),
-    (False, ["/mnt/foo/bar/reads_1.fq.gz"])
+@pytest.mark.parametrize("paired,files", [
+    (True, ["reads_1.fq.gz", "reads_2.fq.gz"]),
+    (False, ["reads_1.fq.gz"])
 ])
-def test_join_read_paths(paired, paths):
-    assert virtool.samples.utils.join_read_paths("/mnt/foo/bar", paired) == paths
+def test_join_read_paths(paired, files, tmp_path):
+    paths = [tmp_path / file_ for file_ in files]
+    assert virtool.samples.utils.join_read_paths(tmp_path, paired) == paths

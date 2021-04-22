@@ -153,9 +153,9 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
         subtraction = self.context["subtraction"]
 
         index_path = virtool.subtractions.utils.join_subtraction_index_path(settings, subtraction)
-        fasta_path = os.path.join(
-            virtool.subtractions.utils.join_subtraction_path(settings, subtraction),
-            "subtraction.fa"
+        fasta_path = (
+            virtool.subtractions.utils.join_subtraction_path(settings, subtraction)
+            / "subtraction.fa"
         )
 
         command = f'bowtie2-inspect {index_path} > {fasta_path}'
@@ -167,9 +167,9 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
 
         await proc.communicate()
 
-        target_path = os.path.join(
-            virtool.subtractions.utils.join_subtraction_path(settings, subtraction),
-            "subtraction.fa.gz"
+        target_path = (
+            virtool.subtractions.utils.join_subtraction_path(settings, subtraction)
+            / "subtraction.fa.gz"
         )
 
         await self.run_in_thread(virtool.utils.compress_file,

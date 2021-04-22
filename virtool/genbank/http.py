@@ -4,10 +4,11 @@ HTTP utilities for collecting data from GenBank on the API server.
 """
 import io
 import logging
+from typing import Union, Optional
 
 import Bio.SeqIO
 import aiohttp
-from typing import Union, Optional
+
 import virtool.http.proxy
 
 logger = logging.getLogger(__name__)

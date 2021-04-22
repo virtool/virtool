@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import semver
+
 import virtool.github
 
 

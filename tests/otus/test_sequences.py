@@ -82,14 +82,14 @@ async def test_check_segment_or_target(data_type, defined, missing, used, sequen
 @pytest.mark.parametrize("host", [True, False])
 @pytest.mark.parametrize("segment", [True, False])
 @pytest.mark.parametrize("sequence_id", ["foobar", None])
-async def test_create(host, segment, sequence_id, snapshot, dbi, static_time, test_random_alphanumeric):
+async def test_create(host, segment, sequence_id, snapshot, dbi, static_time, test_random_alphanumeric, tmp_path):
     """
 
     """
     app = {
         "db": dbi,
         "settings": {
-            "data_path": "/foo"
+            "data_path": tmp_path
         }
     }
 
@@ -139,7 +139,7 @@ async def test_create(host, segment, sequence_id, snapshot, dbi, static_time, te
 
 
 @pytest.mark.parametrize("sequence", [True, False])
-async def test_edit(sequence, snapshot, dbi, static_time):
+async def test_edit(sequence, snapshot, dbi, static_time, tmp_path):
     """
     Test that an existing sequence is edited, creating an appropriate history document in the process.
 
@@ -147,7 +147,7 @@ async def test_edit(sequence, snapshot, dbi, static_time):
     app = {
         "db": dbi,
         "settings": {
-            "data_path": "/foo"
+            "data_path": tmp_path
         }
     }
 
@@ -251,11 +251,11 @@ async def test_increment_otu_version(dbi, snapshot):
     snapshot.assert_match(otu)
 
 
-async def test_remove(snapshot, dbi, test_otu, static_time):
+async def test_remove(snapshot, dbi, test_otu, static_time, tmp_path):
     app = {
         "db": dbi,
         "settings": {
-            "data_path": "/foo"
+            "data_path": tmp_path
         }
     }
 

@@ -142,16 +142,16 @@ async def test_get(error, spawn_client, hmm_document, resp_is):
     assert await resp.json() == expected
 
 
-async def test_get_hmm_annotations(spawn_job_client, tmpdir):
+async def test_get_hmm_annotations(spawn_job_client, tmp_path):
     client = await spawn_job_client(authorize=True)
-    client.settings["data_path"] = Path(tmpdir)
+    client.settings["data_path"] = tmp_path
     db = client.app["db"]
 
     await db.hmm.insert_one({"_id": "foo"})
     await db.hmm.insert_one({"_id": "bar"})
 
-    compressed_hmm_annotations = Path(tmpdir) / "annotations.json.gz"
-    decompressed_hmm_annotations = Path(tmpdir) / "annotations.json"
+    compressed_hmm_annotations = tmp_path / "annotations.json.gz"
+    decompressed_hmm_annotations = tmp_path / "annotations.json"
 
     async with client.get("/api/hmms/files/annotations.json.gz") as response:
         assert response.status == 200
@@ -176,7 +176,7 @@ async def test_get_hmm_profiles(
         example_path,
         spawn_client,
         spawn_job_client,
-        tmpdir
+        tmp_path
 ):
     """
     Test that HMM profiles can be properly downloaded once they are available.
@@ -184,8 +184,8 @@ async def test_get_hmm_profiles(
     """
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = str(tmpdir)
-    hmms_path = Path(client.app["settings"]["data_path"]) / "hmm"
+    client.app["settings"]["data_path"] = tmp_path
+    hmms_path = client.app["settings"]["data_path"] / "hmm"
     profiles_path = hmms_path / "profiles.hmm"
 
     if data_exists:

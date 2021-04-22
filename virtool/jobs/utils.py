@@ -1,5 +1,6 @@
 import os
 import shutil
+from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
 
 import virtool.caches.db
@@ -178,7 +179,7 @@ def copy_or_compress(path: str, target: str, proc: int):
         virtool.utils.compress_file(path, target, processes=proc)
 
 
-def copy_or_decompress(path: str, target: str, proc: int):
+def copy_or_decompress(path: Path, target: str, proc: int):
     if virtool.utils.is_gzipped(path):
         virtool.utils.decompress_file(path, target, proc)
     else:

@@ -3,7 +3,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 import virtool.db.utils
 import virtool.utils
-
 from virtool.tasks.models import Task
 
 

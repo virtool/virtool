@@ -109,12 +109,12 @@ async def test_get(exists, dbi):
 
 
 @pytest.mark.parametrize("exception", [False, True])
-async def test_remove(exception, dbi):
+async def test_remove(exception, dbi, tmp_path):
     app = {
         "db": dbi,
         "run_in_thread": make_mocked_coro(raise_exception=FileNotFoundError) if exception else make_mocked_coro(),
         "settings": {
-            "data_path": "/foo"
+            "data_path": tmp_path
         }
     }
 
@@ -126,6 +126,6 @@ async def test_remove(exception, dbi):
 
     app["run_in_thread"].assert_called_with(
         virtool.utils.rm,
-        "/foo/caches/baz",
+        tmp_path / "caches" / "baz",
         True
     )

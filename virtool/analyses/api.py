@@ -4,8 +4,6 @@ Provides request handlers for managing and viewing analyses.
 """
 import asyncio
 import logging
-import os
-from pathlib import Path
 from typing import Any, Dict, Union
 
 import aiohttp.web
@@ -170,12 +168,12 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     await db.analyses.delete_one({"_id": analysis_id})
 
-    path = os.path.join(
-        req.app["settings"]["data_path"],
-        "samples",
-        sample_id,
-        "analysis",
-        analysis_id
+    path = (
+        req.app["settings"]["data_path"]
+        / "samples"
+        / sample_id
+        / "analysis"
+        / analysis_id
     )
 
     try:
@@ -219,7 +217,7 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     upload_id = analysis_file["id"]
 
-    analysis_file_path = Path(req.app["settings"]["data_path"]) / "analyses" / analysis_file["name_on_disk"]
+    analysis_file_path = req.app["settings"]["data_path"] / "analyses" / analysis_file["name_on_disk"]
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, analysis_file_path)
@@ -252,7 +250,7 @@ async def download_analysis_result(req: aiohttp.web.Request) -> Union[aiohttp.we
     if not analysis_file:
         return not_found()
 
-    analysis_file_path = Path(req.app["settings"]["data_path"]) / "analyses" / analysis_file.name_on_disk
+    analysis_file_path = req.app["settings"]["data_path"] / "analyses" / analysis_file.name_on_disk
 
     if not analysis_file_path.exists():
         return not_found("Uploaded file not found at expected location")

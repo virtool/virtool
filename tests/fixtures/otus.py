@@ -3,16 +3,17 @@ import gzip
 import json
 import os
 import sys
+from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
-TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
+TEST_FILES_PATH = Path.cwd() / "tests" / "test_files"
 
 
 @pytest.fixture(scope="session")
 def import_data_file():
-    with gzip.open(os.path.join(TEST_FILES_PATH, "otus.json.gz"), "rt") as f:
+    with gzip.open(TEST_FILES_PATH / "otus.json.gz", "rt") as f:
         data = json.load(f)
 
     return data

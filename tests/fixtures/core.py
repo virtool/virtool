@@ -1,16 +1,14 @@
 from pathlib import Path
 
 import arrow
-import os
 import pytest
 import shutil
-import sys
 import multidict
 import functools
 from concurrent.futures import ThreadPoolExecutor
 
-SAM_PATH = os.path.join(sys.path[0], "tests", "test_files", "test_al.sam")
-SAM_50_PATH = os.path.join(sys.path[0], "tests", "test_files", "sam_50.sam")
+SAM_PATH = Path.cwd() / "tests" / "test_files" / "test_al.sam"
+SAM_50_PATH = Path.cwd() / "tests" / "test_files" / "sam_50.sam"
 
 
 class MockRequest:
@@ -47,7 +45,7 @@ def md_proxy():
 
 @pytest.fixture
 def test_files_path():
-    return os.path.join(sys.path[0], "tests/test_files")
+    return Path.cwd() / "tests/test_files"
 
 
 @pytest.fixture
@@ -114,8 +112,10 @@ def static_time(mocker, static_time_obj):
 
 
 @pytest.fixture
-def test_sam_path(tmpdir):
-    path = os.path.join(str(tmpdir.mkdir("test_sam_file")), "test_al.sam")
+def test_sam_path(tmp_path):
+    path = tmp_path / "test_sam_file"
+    path.mkdir()
+    path = path / "test_al.sam"
     shutil.copy(SAM_PATH, path)
     return path
 

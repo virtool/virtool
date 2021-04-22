@@ -1,5 +1,6 @@
 import os
 import pytest
+from pathlib import Path
 
 from sqlalchemy import select
 
@@ -17,10 +18,10 @@ class TestTask(virtool.tasks.task.Task):
             self.create_file,
             self.remove_file
         ]
-        self.temp_path = self.temp_dir.name
+        self.temp_path = Path(self.temp_dir.name)
 
     async def create_file(self):
-        with open(os.path.join(self.temp_path, "test.txt"), "w") as f:
+        with open(self.temp_path / "test.txt", "w") as f:
             f.write("This is a test file.")
 
         await virtool.tasks.pg.update(
@@ -31,7 +32,7 @@ class TestTask(virtool.tasks.task.Task):
         )
 
     async def remove_file(self):
-        os.remove(os.path.join(self.temp_path, "test.txt"))
+        os.remove(self.temp_path / "test.txt")
 
         await virtool.tasks.pg.update(
             self.pg,

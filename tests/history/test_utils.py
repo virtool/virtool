@@ -2,10 +2,11 @@ import json
 import os
 import sys
 import pytest
+from pathlib import Path
 
 import virtool.history.utils
 
-TEST_DIFF_PATH = os.path.join(sys.path[0], "tests", "test_files", "diff.json")
+TEST_DIFF_PATH = Path.cwd() / "tests" / "test_files" / "diff.json"
 
 
 def test_calculate_diff(test_otu_edit):
@@ -160,14 +161,14 @@ def test_derive_otu_information(version, missing):
         assert otu_version == 5
 
 
-def test_join_diff_path():
+def test_join_diff_path(tmp_path):
     path = virtool.history.utils.join_diff_path(
-        "/data",
+        tmp_path,
         "foo",
         "2"
     )
 
-    assert path == "/data/history/foo_2.json"
+    assert path == tmp_path / "history/foo_2.json"
 
 
 @pytest.mark.parametrize("is_datetime", [True, False])
@@ -217,17 +218,18 @@ async def test_read_diff_file(mocker, snapshot):
     snapshot.assert_match(diff)
 
 
-async def test_remove_diff_files(loop, tmpdir):
+async def test_remove_diff_files(loop, tmp_path):
     """
     Test that diff files are removed correctly and the function can handle a non-existent diff file.
 
     """
-    history_dir = tmpdir.mkdir("history")
+    history_dir = tmp_path / "history"
+    history_dir.mkdir()
 
-    history_dir.join("foo_0.json").write("hello world")
-    history_dir.join("foo_1.json").write("hello world")
-    history_dir.join("bar_0.json").write("hello world")
-    history_dir.join("bar_1.json").write("hello world")
+    history_dir.joinpath("foo_0.json").write_text("hello world")
+    history_dir.joinpath("foo_1.json").write_text("hello world")
+    history_dir.joinpath("bar_0.json").write_text("hello world")
+    history_dir.joinpath("bar_1.json").write_text("hello world")
 
     id_list = [
         "foo.0",
@@ -242,7 +244,7 @@ async def test_remove_diff_files(loop, tmpdir):
     app = {
         "run_in_thread": run_in_thread,
         "settings": {
-            "data_path": str(tmpdir)
+            "data_path": tmp_path
         }
     }
 
@@ -251,22 +253,22 @@ async def test_remove_diff_files(loop, tmpdir):
         id_list
     )
 
-    assert os.listdir(str(history_dir)) == ["bar_1.json"]
+    assert os.listdir(history_dir) == ["bar_1.json"]
 
 
-async def test_write_diff_file(snapshot, tmpdir):
+async def test_write_diff_file(snapshot, tmp_path):
     """
     Test that a diff file is written correctly.
 
     """
-    tmpdir.mkdir("history")
+    (tmp_path / "history").mkdir()
 
     with open(TEST_DIFF_PATH, "r") as f:
         diff = json.load(f)
 
-    await virtool.history.utils.write_diff_file(str(tmpdir), "foo", "1", diff)
+    await virtool.history.utils.write_diff_file(tmp_path, "foo", "1", diff)
 
-    path = os.path.join(str(tmpdir), "history", "foo_1.json")
+    path = tmp_path / "history" / "foo_1.json"
 
     with open(path, "r") as f:
         snapshot.assert_match(json.load(f))

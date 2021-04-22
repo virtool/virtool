@@ -3,7 +3,6 @@ Provides request handlers for file downloads.
 
 """
 import os
-from pathlib import Path
 
 from aiohttp import web
 
@@ -139,12 +138,12 @@ async def download_index_json(req):
     if "has_json" not in document or document["has_json"] is False:
         return virtool.api.response.not_found("Index JSON file not found")
 
-    path = os.path.join(
-        req.app["settings"]["data_path"],
-        "references",
-        ref_id,
-        index_id,
-        "reference.json.gz")
+    path = (
+        req.app["settings"]["data_path"]
+        / "references"
+        / ref_id
+        / index_id
+        / "reference.json.gz")
 
     return web.FileResponse(path, headers={
         "Content-Type": "application/gzip"

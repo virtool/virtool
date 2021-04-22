@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-from pathlib import Path
 
 import aiohttp.web
 from aiohttp.web_fileresponse import FileResponse
@@ -23,8 +22,7 @@ import virtool.references.db
 import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
-from virtool.api.response import bad_request, conflict, insufficient_rights, invalid_query, \
-    json_response, no_content, not_found
+from virtool.api.response import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
 from virtool.indexes.db import FILES, reset_history
 from virtool.indexes.models import IndexFile, IndexType
 from virtool.jobs.utils import JobRights
@@ -141,7 +139,7 @@ async def download_otus_json(req):
 
     ref_id = index["reference"]["id"]
 
-    data_path = Path(req.app["settings"]["data_path"])
+    data_path = req.app["settings"]["data_path"]
     json_path = data_path / f"references/{ref_id}/{index_id}/otus.json.gz"
 
     if not json_path.exists():
@@ -179,7 +177,7 @@ async def download_index_file(req: aiohttp.web.Request):
 
     reference_id = index_document["reference"]["id"]
 
-    path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id / filename
+    path = req.app["settings"]["data_path"] / "references" / reference_id / index_id / filename
 
     if not path.exists():
         return not_found("File not found")
@@ -287,7 +285,7 @@ async def upload(req):
         return conflict("File name already exists")
 
     upload_id = index_file["id"]
-    path = Path(req.app["settings"]["data_path"]) / "references" / reference_id / index_id / name
+    path = req.app["settings"]["data_path"] / "references" / reference_id / index_id / name
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, path)

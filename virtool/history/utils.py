@@ -1,10 +1,12 @@
-import arrow
-from typing import Tuple, Union, List, Optional
 import datetime
-import os
 import json
-import dictdiffer
+import os
+from pathlib import Path
+from typing import List, Optional, Tuple, Union
+
 import aiofiles
+import arrow
+import dictdiffer
 
 
 def calculate_diff(old: dict, new: dict) -> list:
@@ -139,17 +141,17 @@ def derive_otu_information(old: Optional[dict], new: Optional[dict]) -> Tuple[st
     return otu_id, otu_name, otu_version, ref_id
 
 
-def join_diff_path(data_path: str, otu_id: str, otu_version: Union[int, str]) -> str:
+def join_diff_path(data_path: Path, otu_id: str, otu_version: Union[int, str]) -> Path:
     """
     Derive the path to a diff file based on the application `data_path` setting and the OTU ID and version.
 
-    :param data_path: the application data path settings
+    :param data_path: the application data path
     :param otu_id: the OTU ID to join a diff path for
     :param otu_version: the OTU version to join a diff path for
     :return: the change path
 
     """
-    return os.path.join(data_path, "history", f"{otu_id}_{otu_version}.json")
+    return data_path / "history" / f"{otu_id}_{otu_version}.json"
 
 
 def json_encoder(o):
@@ -181,7 +183,7 @@ def json_object_hook(o: dict) -> dict:
     return o
 
 
-async def read_diff_file(data_path, otu_id, otu_version):
+async def read_diff_file(data_path: Path, otu_id: str, otu_version: Union[int, str]):
     """
     Read a history diff JSON file.
 
@@ -217,7 +219,7 @@ async def remove_diff_files(app, id_list: List[str]):
             pass
 
 
-async def write_diff_file(data_path, otu_id, otu_version, body):
+async def write_diff_file(data_path: Path, otu_id: str, otu_version: Union[int, str], body):
     path = join_diff_path(data_path, otu_id, otu_version)
 
     async with aiofiles.open(path, "w") as f:

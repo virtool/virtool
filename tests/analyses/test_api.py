@@ -13,7 +13,7 @@ from virtool.utils import base_processor
 
 
 @pytest.fixture
-def files(tmpdir):
+def files(tmp_path):
     path = Path.cwd() / "tests" / "test_files" / "aodp" / "reference.fa"
 
     data = {
@@ -200,10 +200,10 @@ async def test_find(snapshot, mocker, spawn_client, resp_is, static_time):
 
 
 @pytest.mark.parametrize("error", [None, "400", "403", "404", "409"])
-async def test_remove(mocker, error, spawn_client, resp_is):
+async def test_remove(mocker, error, spawn_client, resp_is, tmp_path):
     client = await spawn_client(authorize=True)
 
-    client.app["settings"]["data_path"] = "data"
+    client.app["settings"]["data_path"] = tmp_path
 
     if error != "400":
         await client.db.samples.insert_one({
@@ -259,14 +259,14 @@ async def test_remove(mocker, error, spawn_client, resp_is):
 
 
 @pytest.mark.parametrize("error", [None, 400, 404, 422])
-async def test_upload_file(error, files, resp_is, spawn_job_client, static_time, snapshot, pg, tmpdir):
+async def test_upload_file(error, files, resp_is, spawn_job_client, static_time, snapshot, pg, tmp_path):
     """
     Test that an analysis result file is properly uploaded and a row is inserted into the `analysis_files` SQL table.
 
     """
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = str(tmpdir)
+    client.app["settings"]["data_path"] = tmp_path
 
     if error == 400:
         format_ = "foo"
@@ -292,7 +292,7 @@ async def test_upload_file(error, files, resp_is, spawn_job_client, static_time,
 
         snapshot.assert_match(await resp.json())
 
-        assert os.listdir(tmpdir / "analyses") == ["1-reference.fa"]
+        assert os.listdir(tmp_path / "analyses") == ["1-reference.fa"]
 
         assert await virtool.pg.utils.get_row(pg, 1, AnalysisFile)
 
@@ -310,7 +310,7 @@ async def test_upload_file(error, files, resp_is, spawn_job_client, static_time,
 
 @pytest.mark.parametrize("file_exists", [True, False])
 @pytest.mark.parametrize("row_exists", [True, False])
-async def test_download_analysis_result(file_exists, row_exists, files, spawn_client, spawn_job_client, snapshot, tmpdir):
+async def test_download_analysis_result(file_exists, row_exists, files, spawn_client, spawn_job_client, snapshot, tmp_path):
     """
     Test that you can properly download an analysis result file using details from the `analysis_files` SQL table
 
@@ -318,10 +318,10 @@ async def test_download_analysis_result(file_exists, row_exists, files, spawn_cl
     client = await spawn_client(authorize=True, administrator=True)
     job_client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = str(tmpdir)
-    job_client.app["settings"]["data_path"] = str(tmpdir)
+    client.app["settings"]["data_path"] = tmp_path
+    job_client.app["settings"]["data_path"] = tmp_path
 
-    expected_path = Path(client.app["settings"]["data_path"]) / "analyses" / "1-reference.fa"
+    expected_path = client.app["settings"]["data_path"] / "analyses" / "1-reference.fa"
 
     await client.db.analyses.insert_one({
         "_id": "foobar",

@@ -8,10 +8,10 @@ import virtool.http.accept
 import virtool.jobs_api.auth
 import virtool.jobs_api.routes
 import virtool.logs
+import virtool.shutdown
 import virtool.startup
 from virtool.dev.fake import drop_fake_mongo, remove_fake_data_path
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
-import virtool.shutdown
 from virtool.types import App
 
 

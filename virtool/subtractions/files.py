@@ -65,7 +65,7 @@ async def create_subtraction_files(
             name=filename,
             subtraction=subtraction_id,
             type=check_subtraction_file_type(filename),
-            size=file_stats(os.path.join(path, filename))["size"]
+            size=file_stats(path / filename)["size"]
         ))
 
     async with AsyncSession(pg) as session:

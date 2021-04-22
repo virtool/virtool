@@ -5,10 +5,11 @@ import virtool.analyses.files
 from virtool.analyses.models import AnalysisFile
 
 
-async def test_create_nuvs_analysis_files(tmpdir, pg, pg_session):
-    test_dir = tmpdir.mkdir("analyses")
-    test_dir.join("assembly.fa.gz").write("FASTA file")
-    test_dir.join("hmm.tsv").write("HMM file")
+async def test_create_nuvs_analysis_files(tmp_path, pg, pg_session):
+    test_dir = tmp_path / "analyses"
+    test_dir.mkdir()
+    test_dir.joinpath("assembly.fa.gz").write_text("FASTA file")
+    test_dir.joinpath("hmm.tsv").write_text("HMM file")
 
     await virtool.analyses.files.create_nuvs_analysis_files(pg, "foo", ["assembly.fa", "hmm.tsv"], test_dir)
 

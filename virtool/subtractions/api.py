@@ -222,7 +222,7 @@ async def upload(req):
         return conflict("File name already exists")
 
     upload_id = subtraction_file["id"]
-    path = Path(req.app["settings"]["data_path"]) / "subtractions" / subtraction_id / filename
+    path = req.app["settings"]["data_path"] / "subtractions" / subtraction_id / filename
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, path)
@@ -379,9 +379,9 @@ async def download_subtraction_files(req: aiohttp.web.Request):
 
     file = result.to_dict()
 
-    file_path = os.path.join(
-        virtool.subtractions.utils.join_subtraction_path(req.app["settings"], subtraction_id),
-        filename
+    file_path = (
+        virtool.subtractions.utils.join_subtraction_path(req.app["settings"], subtraction_id)
+        / filename
     )
 
     if not os.path.isfile(file_path):

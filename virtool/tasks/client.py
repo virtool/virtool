@@ -4,8 +4,8 @@ from asyncio import CancelledError
 from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.tasks.task import Task
 from virtool.tasks.pg import register
+from virtool.tasks.task import Task
 
 
 class TasksClient:
