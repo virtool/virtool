@@ -76,7 +76,7 @@ async def create_fake_indexes(app: App, ref_id: str, user_id: str):
         ref_id,
         finalized_index_id
     )
-    
+
     unfinalized_index_id = fake.get_mongo_id()
 
     await create(
