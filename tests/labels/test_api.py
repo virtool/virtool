@@ -2,57 +2,79 @@ import pytest
 from virtool.labels.models import Label
 
 
-async def test_find(spawn_client, pg_session):
-    """
-    Test that a ``GET /api/labels`` return a complete list of labels.
+class TestFind:
+    async def test_find(self, spawn_client, pg_session):
+        """
+        Test that a ``GET /api/labels`` return a complete list of labels.
 
-    """
-    client = await spawn_client(authorize=True, administrator=True)
+        """
+        client = await spawn_client(authorize=True, administrator=True)
 
-    label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
-    label_2 = Label(id=2, name="Question", color="#03fc20", description="This is a question")
+        label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+        label_2 = Label(id=2, name="Question", color="#03fc20", description="This is a question")
 
-    await client.db.samples.insert_many([
-        {
-            "_id": "foo",
-            "name": "Foo",
-            "labels": [2]
-        },
-        {
-            "_id": "bar",
-            "name": "Bar",
-            "labels": [1]
-        },
-        {
-            "_id": "baz",
-            "name": "Baz",
-            "labels": [2]
-        }
-    ])
+        await client.db.samples.insert_many([
+            {
+                "_id": "foo",
+                "name": "Foo",
+                "labels": [2]
+            },
+            {
+                "_id": "bar",
+                "name": "Bar",
+                "labels": [1]
+            },
+            {
+                "_id": "baz",
+                "name": "Baz",
+                "labels": [2]
+            }
+        ])
 
-    async with pg_session as session:
-        session.add_all([label_1, label_2])
-        await session.commit()
+        async with pg_session as session:
+            session.add_all([label_1, label_2])
+            await session.commit()
 
-    resp = await client.get("/api/labels")
-    assert resp.status == 200
+        resp = await client.get("/api/labels")
+        assert resp.status == 200
 
-    assert await resp.json() == [
-        {
-            "id": 1,
-            "name": "Bug",
-            "color": "#a83432",
-            "description": "This is a bug",
-            "count": 1
-        },
-        {
-            "id": 2,
-            "name": "Question",
-            "color": "#03fc20",
-            "description": "This is a question",
-            "count": 2
-        }
-    ]
+        assert await resp.json() == [
+            {
+                "id": 1,
+                "name": "Bug",
+                "color": "#a83432",
+                "description": "This is a bug",
+                "count": 1
+            },
+            {
+                "id": 2,
+                "name": "Question",
+                "color": "#03fc20",
+                "description": "This is a question",
+                "count": 2
+            }
+        ]
+
+    async def test_find_by_name(self, snapshot, spawn_client, pg_session):
+        """
+        Test that a ``GET /api/labels`` with a `find` query returns a particular label.
+
+        """
+        client = await spawn_client(authorize=True, administrator=True)
+
+        label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+
+        async with pg_session as session:
+            session.add(label)
+            await session.commit()
+
+        resp = await client.get("/api/labels?find=Bug")
+        resp_2 = await client.get("/api/labels?find=Question")
+
+        assert resp.status, resp_2.status == 200
+
+        snapshot.assert_match(await resp.json())
+        assert await resp_2.json() == []
 
 
 @pytest.mark.parametrize("error", [None, "404"])

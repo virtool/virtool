@@ -11,6 +11,7 @@ import virtool.validators
 from virtool.api.response import bad_request, empty_request, json_response, no_content, not_found
 from virtool.http.schema import schema
 from virtool.labels.models import Label
+from virtool.pg.utils import get_rows
 
 routes = virtool.http.routes.Routes()
 
@@ -22,11 +23,12 @@ async def find(req):
 
     """
     documents = list()
-    async with AsyncSession(req.app["pg"]) as session:
-        result = await session.execute(select(Label))
-        labels = result.scalars().all()
-        for label in labels:
-            documents.append(label.to_dict())
+    find = req.query.get("find")
+
+    labels = await get_rows(req.app["pg"], find, Label)
+
+    for label in labels:
+        documents.append(label.to_dict())
 
     documents = await asyncio.gather(*[virtool.labels.db.attach_sample_count(req.app["db"], d) for d in documents])
 
