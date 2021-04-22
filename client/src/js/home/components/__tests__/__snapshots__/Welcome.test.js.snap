@@ -1,30 +1,32 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Welcome /> should render 1`] = `
-<Welcome__StyledWelcome>
-  <Box>
-    <h1>
-      Virtool 
-      v1.2.3
-    </h1>
-    <p>
-      Viral infection diagnostics using next-generation sequencing
-    </p>
-    <strong>
-      <ExternalLink
-        href="http://www.virtool.ca/"
-      >
-        Website
-      </ExternalLink>
-      <ExternalLink
-        href="https://github.com/virtool/virtool"
-      >
-        Github
-      </ExternalLink>
-    </strong>
-  </Box>
-  <Support />
-</Welcome__StyledWelcome>
+<Container>
+  <Welcome__StyledWelcome>
+    <Box>
+      <h1>
+        Virtool 
+        v1.2.3
+      </h1>
+      <p>
+        Viral infection diagnostics using next-generation sequencing
+      </p>
+      <strong>
+        <ExternalLink
+          href="http://www.virtool.ca/"
+        >
+          Website
+        </ExternalLink>
+        <ExternalLink
+          href="https://github.com/virtool/virtool"
+        >
+          Github
+        </ExternalLink>
+      </strong>
+    </Box>
+    <Support />
+  </Welcome__StyledWelcome>
+</Container>
 `;
 
 exports[`<Welcome /> should render LoadingPlaceholder when version information is ("3.6.3", null) 1`] = `<LoadingPlaceholder />`;

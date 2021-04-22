@@ -31,7 +31,7 @@ export class JobsList extends React.Component {
         }
 
         return (
-            <div>
+            <React.Fragment>
                 <ViewHeader title="Jobs">
                     <ViewHeaderTitle>
                         Jobs <Badge>{this.props.total_count}</Badge>
@@ -49,7 +49,7 @@ export class JobsList extends React.Component {
                     onLoadNextPage={page => this.props.onLoadNextPage(this.props.term, page)}
                     renderRow={this.renderRow}
                 />
-            </div>
+            </React.Fragment>
         );
     }
 }

@@ -38,7 +38,7 @@ export class SubtractionList extends React.Component {
         }
 
         return (
-            <div>
+            <React.Fragment>
                 <ViewHeader title="Subtraction">
                     <ViewHeaderTitle>
                         Subtraction <Badge>{this.props.total_count}</Badge>
@@ -50,7 +50,7 @@ export class SubtractionList extends React.Component {
                 {subtractionComponents}
 
                 <CreateSubtraction />
-            </div>
+            </React.Fragment>
         );
     }
 }
