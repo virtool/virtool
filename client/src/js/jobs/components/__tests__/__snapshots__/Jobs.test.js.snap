@@ -3,33 +3,35 @@
 exports[`<Jobs /> should render placeholder when loading 1`] = `<LoadingPlaceholder />`;
 
 exports[`<Jobs /> should render when loaded 1`] = `
-<Container__NarrowPaddedContainer>
-  <Switch>
-    <Route
-      component={
-        Object {
-          "$$typeof": Symbol(react.memo),
-          "WrappedComponent": [Function],
-          "compare": null,
-          "displayName": "Connect(JobsList)",
-          "type": [Function],
+<Container>
+  <Container__NarrowContainer>
+    <Switch>
+      <Route
+        component={
+          Object {
+            "$$typeof": Symbol(react.memo),
+            "WrappedComponent": [Function],
+            "compare": null,
+            "displayName": "Connect(JobsList)",
+            "type": [Function],
+          }
         }
-      }
-      exact={true}
-      path="/jobs"
-    />
-    <Route
-      component={
-        Object {
-          "$$typeof": Symbol(react.memo),
-          "WrappedComponent": [Function],
-          "compare": null,
-          "displayName": "Connect(JobDetail)",
-          "type": [Function],
+        exact={true}
+        path="/jobs"
+      />
+      <Route
+        component={
+          Object {
+            "$$typeof": Symbol(react.memo),
+            "WrappedComponent": [Function],
+            "compare": null,
+            "displayName": "Connect(JobDetail)",
+            "type": [Function],
+          }
         }
-      }
-      path="/jobs/:jobId"
-    />
-  </Switch>
-</Container__NarrowPaddedContainer>
+        path="/jobs/:jobId"
+      />
+    </Switch>
+  </Container__NarrowContainer>
+</Container>
 `;

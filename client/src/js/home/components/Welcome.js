@@ -3,10 +3,10 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { getFontSize } from "../../app/theme";
-import { Box, ExternalLink, LoadingPlaceholder, NarrowPaddedContainer } from "../../base";
+import { Box, Container, ExternalLink, LoadingPlaceholder, NarrowContainer } from "../../base";
 import { Support } from "./Support";
 
-const StyledWelcome = styled(NarrowPaddedContainer)`
+const StyledWelcome = styled(NarrowContainer)`
     ${Box}:first-child {
         h1 {
             font-size: ${getFontSize("xxl")};
@@ -30,19 +30,21 @@ export const Welcome = ({ mongoVersion, version }) => {
     }
 
     return (
-        <StyledWelcome>
-            <Box>
-                <h1>Virtool {version}</h1>
-                <p>Viral infection diagnostics using next-generation sequencing</p>
+        <Container>
+            <StyledWelcome>
+                <Box>
+                    <h1>Virtool {version}</h1>
+                    <p>Viral infection diagnostics using next-generation sequencing</p>
 
-                <strong>
-                    <ExternalLink href="http://www.virtool.ca/">Website</ExternalLink>
-                    <ExternalLink href="https://github.com/virtool/virtool">Github</ExternalLink>
-                </strong>
-            </Box>
+                    <strong>
+                        <ExternalLink href="http://www.virtool.ca/">Website</ExternalLink>
+                        <ExternalLink href="https://github.com/virtool/virtool">Github</ExternalLink>
+                    </strong>
+                </Box>
 
-            <Support />
-        </StyledWelcome>
+                <Support />
+            </StyledWelcome>
+        </Container>
     );
 };
 
