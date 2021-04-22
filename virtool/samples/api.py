@@ -82,8 +82,11 @@ async def find(req):
 
     label_query = dict()
     if "label" in req.query:
+        labels = req.query.getall("label")
+        labels = [int(label) if label.isdigit() else label for label in labels]
+
         label_query = {
-            "labels": {"$in": req.query.getall("label")}
+            "labels": {"$in": labels}
         }
 
     rights_filter = [
