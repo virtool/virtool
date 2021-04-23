@@ -68,7 +68,7 @@ class TestFind:
             session.add(label)
             await session.commit()
 
-        resp = await client.get("/api/labels?find=Bug")
+        resp = await client.get("/api/labels?find=bug")
         resp_2 = await client.get("/api/labels?find=Question")
 
         assert resp.status, resp_2.status == 200

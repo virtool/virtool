@@ -3,7 +3,7 @@ import sys
 from enum import Enum
 from typing import Optional, Union
 
-from sqlalchemy import select, text
+from sqlalchemy import select, text, func
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
 from virtool.api.json import pretty_dumps
@@ -81,10 +81,10 @@ async def delete_row(pg: AsyncEngine, id_: int, model: Base):
 
 
 async def get_row(
-    pg: AsyncEngine,
-    query: Union[str, int, bool, SQLEnum],
-    model: Base,
-    filter_: str = "id",
+        pg: AsyncEngine,
+        query: Union[str, int, bool, SQLEnum],
+        model: Base,
+        filter_: str = "id",
 ) -> Optional[Base]:
     """
     Get a row from the `model` SQL model by its `filter_`. By default, a row will be fetched by its `id`.
@@ -106,10 +106,10 @@ async def get_row(
 
 
 async def get_rows(
-    pg: AsyncEngine,
-    model: Base,
-    filter_: str = "name",
-    query: Optional[Union[str, int, bool, SQLEnum]] = None,
+        pg: AsyncEngine,
+        model: Base,
+        filter_: str = "name",
+        query: Optional[Union[str, int, bool, SQLEnum]] = None,
 ) -> Optional[Base]:
     """
     Get one or more rows from the `model` SQL model by its `filter_`. By default, rows will be fetched by their `name`.
@@ -121,7 +121,8 @@ async def get_rows(
     :return: Row from the given SQL model
     """
     async with AsyncSession(pg) as session:
-        statement = select(model).filter(getattr(model, filter_) == query) if query else select(model)
+        statement = select(model).filter(
+            getattr(model, filter_).ilike(f"%{query}%")) if query else select(model)
 
         rows = (await session.execute(statement)).scalars()
 
