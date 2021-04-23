@@ -1,9 +1,9 @@
 import json
-from pathlib import Path
 from shutil import copy
 
 import aiofiles
 
+from virtool.example.paths import example_path
 from virtool.fake.wrapper import FakerWrapper
 from virtool.types import App
 
@@ -13,8 +13,6 @@ async def create_fake_hmms(app: App):
 
     data_path = app["settings"]["data_path"]
     hmms_path = data_path / "hmm"
-
-    example_path = Path(__file__).parent.parent.parent / "example"
 
     copy(example_path / "hmms/profiles.hmm", hmms_path)
 

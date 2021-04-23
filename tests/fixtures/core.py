@@ -7,6 +7,8 @@ import multidict
 import functools
 from concurrent.futures import ThreadPoolExecutor
 
+from virtool.example.paths import example_path as path
+
 SAM_PATH = Path.cwd() / "tests" / "test_files" / "test_al.sam"
 SAM_50_PATH = Path.cwd() / "tests" / "test_files" / "sam_50.sam"
 
@@ -132,7 +134,7 @@ def sam_line(request):
 
 @pytest.fixture
 def example_path():
-    return Path(__file__).parent.parent.parent / "example"
+    return path
 
 
 @pytest.fixture

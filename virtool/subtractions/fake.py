@@ -6,6 +6,7 @@ from typing import Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.subtractions.db
+from virtool.example.paths import example_path
 from virtool.fake.identifiers import USER_ID
 from virtool.fake.wrapper import FakerWrapper
 from virtool.subtractions.db import finalize
@@ -101,11 +102,9 @@ async def create_fake_finalized_subtraction(
 
     subtractions_path = Path(app["settings"]["data_path"]) / "subtractions"
 
-    example_path = (
-            Path(__file__).parent.parent.parent / "example/subtractions/arabidopsis_thaliana"
-    )
+    subtractions_example_path = example_path / "subtractions" / "arabidopsis_thaliana"
 
-    copytree(example_path, subtractions_path / subtraction_id, dirs_exist_ok=True)
+    copytree(subtractions_example_path, subtractions_path / subtraction_id, dirs_exist_ok=True)
 
     await create_subtraction_files(
         pg,
