@@ -118,38 +118,6 @@ async def download_otu(req):
     })
 
 
-@routes.get("/download/indexes/{index_id}")
-@routes.jobs_api.get("/download/indexes/{index_id}")
-async def download_index_json(req):
-    """
-    Download a gzipped JSON file named ``reference.json.gz`` for a given index.
-
-    """
-    db = req.app["db"]
-    index_id = req.match_info["index_id"]
-
-    document = await db.indexes.find_one(index_id)
-
-    if document is None:
-        return virtool.api.response.not_found()
-
-    ref_id = document["reference"]["id"]
-
-    if "has_json" not in document or document["has_json"] is False:
-        return virtool.api.response.not_found("Index JSON file not found")
-
-    path = (
-        req.app["settings"]["data_path"]
-        / "references"
-        / ref_id
-        / index_id
-        / "reference.json.gz")
-
-    return web.FileResponse(path, headers={
-        "Content-Type": "application/gzip"
-    })
-
-
 @routes.get("/download/sequences/{sequence_id}")
 async def download_sequence(req):
     """
