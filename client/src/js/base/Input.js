@@ -57,6 +57,7 @@ export class UnstyledInput extends React.Component {
     render() {
         return (
             <input
+                aria-label={this.props["aria-label"]}
                 ref={this.inputRef}
                 autoFocus={this.props.autoFocus}
                 children={this.props.children}
