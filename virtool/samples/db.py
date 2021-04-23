@@ -510,6 +510,7 @@ async def create_sample_reads_record(app: App,
         await session.commit()
 
     reads_path = app["settings"]["data_path"] / "samples" / sample_id / name
+    reads_path.mkdir(parents=True, exist_ok=True)
 
     await app["run_in_thread"](shutil.copy, path, reads_path)
 
