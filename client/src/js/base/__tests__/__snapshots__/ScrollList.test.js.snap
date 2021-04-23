@@ -20,6 +20,25 @@ exports[`<ScrollList /> should render when [noContainer=false] 1`] = `
 `;
 
 exports[`<ScrollList /> should return LoadingPlaceholder when [documents=null] and [page<pageCount] 1`] = `
+.c1 {
+  -webkit-animation: dzGqrz 0.75s 0s infinite linear;
+  animation: dzGqrz 0.75s 0s infinite linear;
+  border: 2px solid;
+  border-bottom-color: transparent !important;
+  border-radius: 100%;
+  background: transparent;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+  display: inline-block;
+  height: 22px;
+  width: 22px;
+}
+
+.c0 {
+  margin-top: 20px;
+  text-align: center;
+}
+
 <ScrollList
   document={
     Array [
@@ -42,7 +61,7 @@ exports[`<ScrollList /> should return LoadingPlaceholder when [documents=null] a
         margin="20px"
       >
         <div
-          className="LoadingPlaceholder__StyledLoadingPlaceholder-sc-1yo1zdt-0 hSYVB"
+          className="c0"
         >
           <Loader>
             <Loader__StyledLoader
@@ -50,7 +69,7 @@ exports[`<ScrollList /> should return LoadingPlaceholder when [documents=null] a
               size="22px"
             >
               <div
-                className="Loader__StyledLoader-sc-338y7h-0 kpNknI"
+                className="c1"
                 color="greyDark"
                 size="22px"
               >

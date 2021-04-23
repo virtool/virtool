@@ -1,37 +1,35 @@
 import { find, map } from "lodash-es";
-import { updateDocuments, insert, remove, update } from "../utils/reducers";
-import { formatIsolateName } from "../utils/utils";
 import {
-    WS_INSERT_OTU,
-    WS_UPDATE_OTU,
-    WS_REMOVE_OTU,
-    WS_UPDATE_STATUS,
+    ADD_ISOLATE,
+    ADD_SEQUENCE,
+    EDIT_ISOLATE,
+    EDIT_OTU,
+    EDIT_SEQUENCE,
     FIND_OTUS,
     GET_OTU,
-    EDIT_OTU,
-    REMOVE_OTU,
-    ADD_ISOLATE,
-    EDIT_ISOLATE,
-    SET_ISOLATE_AS_DEFAULT,
+    GET_OTU_HISTORY,
+    HIDE_OTU_MODAL,
+    REFRESH_OTUS,
     REMOVE_ISOLATE,
-    ADD_SEQUENCE,
-    EDIT_SEQUENCE,
+    REMOVE_OTU,
     REMOVE_SEQUENCE,
     REVERT,
-    UPLOAD_IMPORT,
     SELECT_ISOLATE,
-    SHOW_EDIT_OTU,
-    SHOW_REMOVE_OTU,
+    SET_ISOLATE_AS_DEFAULT,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
+    SHOW_EDIT_OTU,
     SHOW_REMOVE_ISOLATE,
-    SHOW_ADD_SEQUENCE,
-    SHOW_EDIT_SEQUENCE,
+    SHOW_REMOVE_OTU,
     SHOW_REMOVE_SEQUENCE,
-    HIDE_OTU_MODAL,
-    GET_OTU_HISTORY,
-    REFRESH_OTUS
+    UPLOAD_IMPORT,
+    WS_INSERT_OTU,
+    WS_REMOVE_OTU,
+    WS_UPDATE_OTU,
+    WS_UPDATE_STATUS
 } from "../app/actionTypes";
+import { insert, remove, update, updateDocuments } from "../utils/reducers";
+import { formatIsolateName } from "../utils/utils";
 
 export const initialState = {
     term: "",
@@ -45,8 +43,6 @@ export const initialState = {
     addIsolate: false,
     editIsolate: false,
     removeIsolate: false,
-    addSequence: false,
-    editSequence: false,
     removeSequence: false,
     activeIsolateId: null,
     importData: null,
@@ -60,8 +56,6 @@ export const hideOTUModal = state => ({
     addIsolate: false,
     editIsolate: false,
     removeIsolate: false,
-    addSequence: false,
-    editSequence: false,
     removeSequence: false
 });
 
@@ -191,17 +185,19 @@ export default function OTUsReducer(state = initialState, action) {
         case SHOW_REMOVE_ISOLATE:
             return { ...state, removeIsolate: true };
 
-        case SHOW_ADD_SEQUENCE:
-            return { ...state, addSequence: true, targetName: action.targetName };
-
-        case SHOW_EDIT_SEQUENCE:
-            return { ...state, editSequence: action.sequenceId };
-
         case SHOW_REMOVE_SEQUENCE:
             return { ...state, removeSequence: action.sequenceId };
 
         case HIDE_OTU_MODAL:
-            return hideOTUModal(state);
+            return {
+                ...state,
+                edit: false,
+                remove: false,
+                addIsolate: false,
+                editIsolate: false,
+                removeIsolate: false,
+                removeSequence: false
+            };
 
         default:
             return state;

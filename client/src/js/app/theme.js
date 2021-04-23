@@ -13,6 +13,7 @@ export const theme = {
         sm: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
         md: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
         lg: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+        input: "inset 0 1px 1px rgba(0, 0, 0, 0.075);",
         inset: "inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)"
     },
     color: {
@@ -87,3 +88,26 @@ export const getColor = ({ color, theme }) => get(theme, ["color", color]);
 export const getFontSize = size => ({ theme }) => theme.fontSize[size];
 
 export const getFontWeight = weight => ({ theme }) => theme.fontWeight[weight];
+
+export const border = getBorder;
+
+export const borderRadius = {
+    sm: ({ theme }) => theme.borderRadius.sm,
+    md: ({ theme }) => theme.borderRadius.md,
+    lg: ({ theme }) => theme.borderRadius.lg
+};
+
+export const boxShadow = {
+    xs: ({ theme }) => theme.boxShadow.xs,
+    sm: ({ theme }) => theme.boxShadow.sm,
+    md: ({ theme }) => theme.boxShadow.md,
+    lg: ({ theme }) => theme.boxShadow.lg,
+    input: ({ theme }) => theme.boxShadow.input,
+    inset: ({ theme }) => theme.boxShadow.inset
+};
+
+export const fontWeight = {
+    normal: ({ theme }) => theme.fontWeight.normal,
+    thick: ({ theme }) => theme.fontWeight.thick,
+    bold: ({ theme }) => theme.fontWeight.bold
+};

@@ -1,5 +1,6 @@
 import { push } from "connected-react-router";
 import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { pushState } from "../app/actions";
 import {
     ADD_ISOLATE,
     ADD_SEQUENCE,
@@ -22,17 +23,19 @@ import * as otusAPI from "./api";
 const getCurrentOTUsPath = state => `/refs/${state.references.detail.id}/otus`;
 
 export function* updateAndGetOTU(apiMethod, action, actionType) {
-    yield setPending(
-        (function* (action) {
-            try {
-                yield apiMethod(action);
-                const response = yield otusAPI.get(action);
-                yield put({ type: actionType.SUCCEEDED, data: response.body });
-            } catch (err) {
-                yield putGenericError(actionType, err);
-            }
-        })(action)
-    );
+    let response;
+
+    try {
+        response = yield apiMethod(action);
+    } catch (err) {
+        yield putGenericError(actionType, err);
+        response = err.response;
+    }
+
+    const getResponse = yield otusAPI.get(action);
+    yield put({ type: actionType.SUCCEEDED, data: getResponse.body });
+
+    return response;
 }
 
 export function* findOTUs(action) {
@@ -81,11 +84,19 @@ export function* removeIsolate(action) {
 }
 
 export function* addSequence(action) {
-    yield updateAndGetOTU(otusAPI.addSequence, action, ADD_SEQUENCE);
+    const response = yield updateAndGetOTU(otusAPI.addSequence, action, ADD_SEQUENCE);
+
+    if (response.ok) {
+        yield put(pushState({ addSequence: false }));
+    }
 }
 
 export function* editSequence(action) {
-    yield updateAndGetOTU(otusAPI.editSequence, action, EDIT_SEQUENCE);
+    const response = yield updateAndGetOTU(otusAPI.editSequence, action, EDIT_SEQUENCE);
+
+    if (response.ok) {
+        yield put(pushState({ editSequence: false }));
+    }
 }
 
 export function* removeSequence(action) {

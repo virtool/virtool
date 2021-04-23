@@ -16,10 +16,8 @@ import {
     SELECT_ISOLATE,
     SET_ISOLATE_AS_DEFAULT,
     SHOW_ADD_ISOLATE,
-    SHOW_ADD_SEQUENCE,
     SHOW_EDIT_ISOLATE,
     SHOW_EDIT_OTU,
-    SHOW_EDIT_SEQUENCE,
     SHOW_REMOVE_ISOLATE,
     SHOW_REMOVE_OTU,
     SHOW_REMOVE_SEQUENCE,
@@ -203,15 +201,15 @@ export const removeIsolate = (otuId, isolateId, nextIsolateId) => ({
  * @param target {string} the reference target associated with the sequence
  * @returns {object}
  */
-export const addSequence = (otuId, isolateId, accession, definition, host, sequence, segment, target) => ({
+export const addSequence = ({ otuId, isolateId, accession, definition, host, sequence, segment, target }) => ({
     type: ADD_SEQUENCE.REQUESTED,
-    otuId,
-    isolateId,
     accession,
     definition,
     host,
-    sequence,
+    isolateId,
+    otuId,
     segment,
+    sequence,
     target
 });
 
@@ -227,9 +225,20 @@ export const addSequence = (otuId, isolateId, accession, definition, host, seque
  * @param host {string} the host the sequence originated from
  * @param sequence {string} an abbreviation for the OTU
  * @param segment {string} the schema segment associated with the OTU
+ * @param target {string} the barcode target associated with the OTU
  * @returns {object}
  */
-export const editSequence = (otuId, isolateId, sequenceId, accession, definition, host, sequence, segment) => ({
+export const editSequence = ({
+    otuId,
+    isolateId,
+    sequenceId,
+    accession,
+    definition,
+    host,
+    sequence,
+    segment,
+    target
+}) => ({
     type: EDIT_SEQUENCE.REQUESTED,
     otuId,
     isolateId,
@@ -238,7 +247,8 @@ export const editSequence = (otuId, isolateId, sequenceId, accession, definition
     definition,
     host,
     sequence,
-    segment
+    segment,
+    target
 });
 
 /**
@@ -333,31 +343,6 @@ export const showEditIsolate = (otuId, isolateId, sourceType, sourceName) => ({
  * @returns {object}
  */
 export const showRemoveIsolate = simpleActionCreator(SHOW_REMOVE_ISOLATE);
-
-/**
- * Returns action for displaying the add sequence modal.
- *
- * @func
- * @returns {object}
- */
-export const showAddSequence = targetName => {
-    return {
-        type: SHOW_ADD_SEQUENCE,
-        targetName
-    };
-};
-
-/**
- * Returns action for displaying the edit sequence modal.
- *
- * @func
- * @param sequenceId {string} unique sequence id
- * @returns {object}
- */
-export const showEditSequence = sequenceId => ({
-    type: SHOW_EDIT_SEQUENCE,
-    sequenceId
-});
 
 /**
  * Returns action for displaying the remove sequence modal.

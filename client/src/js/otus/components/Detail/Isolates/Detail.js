@@ -1,11 +1,10 @@
-import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { Box, Icon, Label } from "../../../../base";
-import { checkRefRight, followDownload } from "../../../../utils/utils";
+import { getCanModifyReferenceOTU } from "../../../../references/selectors";
+import IsolateSequences from "../../../../sequences/components/Sequences";
 import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../../actions";
-import IsolateSequences from "../Sequences/Sequences";
 import EditIsolate from "./Edit";
 import RemoveIsolate from "./Remove";
 
@@ -32,10 +31,6 @@ const StyledIsolateDetail = styled.div`
 `;
 
 export class Detail extends React.Component {
-    handleDownload = () => {
-        followDownload(`/download/otus/${this.props.otuId}/isolates/${this.props.activeIsolate.id}`);
-    };
-
     handleSetDefaultIsolate = () => {
         this.props.setIsolateAsDefault(this.props.otuId, this.props.activeIsolate.id);
     };
@@ -98,7 +93,9 @@ export class Detail extends React.Component {
                     <div>
                         {defaultIsolateLabel}
                         {modifyIcons}
-                        <Icon name="download" tip="Download FASTA" tipPlacement="left" onClick={this.handleDownload} />
+                        <a href={`/download/otus/${this.props.otuId}/isolates/${this.props.activeIsolate.id}`} download>
+                            <Icon name="download" tip="Download FASTA" tipPlacement="left" />
+                        </a>
                     </div>
                 </IsolateDetailHeader>
 
@@ -117,7 +114,7 @@ const mapStateToProps = state => ({
     editing: state.otus.editingIsolate,
     allowedSourceTypes: state.settings.data.allowed_source_types,
     restrictSourceTypes: state.settings.data.restrict_source_types,
-    canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu"),
+    canModify: getCanModifyReferenceOTU(state),
     dataType: state.references.detail.data_type
 });
 

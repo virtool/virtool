@@ -29,9 +29,24 @@ async def migrate_samples(app):
     await update_pairedness(motor_client)
     await prune_fields(motor_client)
     await add_library_type(motor_client)
+    await add_is_legacy(motor_client)
 
     for sample_id in await motor_client.samples.distinct("_id"):
         await virtool.samples.db.recalculate_workflow_tags(motor_client, sample_id)
+
+
+async def add_is_legacy(db):
+    await db.samples.update_many({"files.raw": False}, {
+        "$set": {
+            "is_legacy": True
+        }
+    })
+
+    await db.samples.update_many({"files.raw": True}, {
+        "$set": {
+            "is_legacy": False
+        }
+    })
 
 
 async def add_library_type(db):

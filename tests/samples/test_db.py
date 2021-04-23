@@ -1,8 +1,17 @@
+import gzip
 import os
+import shutil
+import sys
+from pathlib import Path
+from unittest.mock import call
+
 import pytest
+from aiohttp.test_utils import make_mocked_coro
 
 import virtool.samples.db
 import virtool.samples.utils
+
+FASTQ_PATH = Path(sys.path[0]) / "tests/test_files/test.fq"
 
 
 class TestCalculateWorkflowTags:
@@ -276,3 +285,254 @@ class TestRemoveSamples:
         assert os.listdir(str(samples_dir)) == []
 
         assert not await dbi.samples.count_documents({})
+
+
+class TestCheckIsLegacy:
+
+    @pytest.mark.parametrize("is_legacy,files", [
+        (False, [{"raw": True}]),
+        (True, [{"raw": False}]),
+        (False, [{"raw": True}, {"raw": False}]),
+        (True, [{"raw": False}, {"raw": False}]),
+    ])
+    def test_raw(self, is_legacy, files):
+        """
+
+
+        """
+        files[0]["name"] = "reads_1.fastq"
+
+        try:
+            files[1]["name"] = "reads_2.fastq"
+        except IndexError:
+            pass
+
+        sample = {
+            "_id": "foo",
+            "paired": len(files) == 2,
+            "files": files
+        }
+
+        assert virtool.samples.db.check_is_legacy(sample) is is_legacy
+
+    @pytest.mark.parametrize("paired", [True, False])
+    def test_names(self, paired):
+        """
+        Test that checks fail when names are not as expected.
+
+        """
+        files = [{
+            "name": "reads.fastq",
+            "raw": False
+        }]
+
+        if paired:
+            files.append({
+                "name": "reads_two.fastq",
+                "raw": False
+            })
+
+        sample = {
+            "_id": "foo",
+            "files": files,
+            "paired": paired
+        }
+
+        assert virtool.samples.db.check_is_legacy(sample) is False
+
+
+async def test_update_is_compressed(dbi):
+    """
+    Test that samples with both files gzipped are flagged with ``is_compressed``.
+
+    """
+    samples = [
+        {
+            "_id": "foo",
+            "files": [
+                {"name": "reads_1.fq.gz"},
+                {"name": "reads_2.fq.gz"},
+            ]
+        },
+        {
+            "_id": "baz",
+            "files": [
+                {"name": "reads_1.fastq"}
+            ]
+        },
+        {
+            "_id": "bar",
+            "files": [
+                {"name": "reads_1.fq.gz"}
+            ]
+        }
+    ]
+
+    await dbi.samples.insert_many(samples)
+
+    for sample in samples:
+        await virtool.samples.db.update_is_compressed(dbi, sample)
+
+    assert await dbi.samples.find().to_list(None) == [
+        {
+            "_id": "foo",
+            "is_compressed": True,
+            "files": [
+                {"name": "reads_1.fq.gz"},
+                {"name": "reads_2.fq.gz"},
+            ]
+        },
+        {
+            "_id": "baz",
+            "files": [
+                {"name": "reads_1.fastq"}
+            ]
+        },
+        {
+            "_id": "bar",
+            "is_compressed": True,
+            "files": [
+                {"name": "reads_1.fq.gz"}
+            ]
+        }
+    ]
+
+
+@pytest.mark.parametrize("paired", [True, False])
+async def test_compress_reads(paired, mocker, dbi, snapshot, tmpdir):
+    m_update_is_compressed = mocker.patch(
+        "virtool.samples.db.update_is_compressed",
+        make_mocked_coro()
+    )
+
+    async def run_in_thread(func, *args):
+        return func(*args)
+
+    sample_dir = tmpdir.mkdir("samples").mkdir("foo")
+
+    shutil.copy(FASTQ_PATH, sample_dir / "reads_1.fastq")
+
+    if paired:
+        shutil.copy(FASTQ_PATH, sample_dir / "reads_2.fastq")
+
+    app_dict = {
+        "db": dbi,
+        "run_in_thread": run_in_thread,
+        "settings": {
+            "data_path": str(tmpdir)
+        }
+    }
+
+    sample_id = "foo"
+
+    file = {
+        "name": "reads_1.fastq",
+        "download_url": f"/download/samples/{sample_id}/reads_1.fastq",
+        "size": 3750821789,
+        "raw": False,
+        "from": {
+            "id": "M_S11_R1_001.fastq",
+            "name": "M_S11_R1_001.fastq",
+            "size": 3750821789
+        }
+    }
+
+    files = [file]
+
+    if paired:
+        files.append({
+            **file,
+            "name": "reads_2.fastq",
+            "download_url": f"/download/samples/{sample_id}/reads_2.fastq"
+        })
+
+    sample = {
+        "_id": sample_id,
+        "files": files,
+        "paired": paired
+    }
+
+    await dbi.samples.insert_one(sample)
+
+    await virtool.samples.db.compress_reads(app_dict, sample)
+
+    expected_listdir = ["reads_1.fq.gz", "reads_2.fq.gz"] if paired else ["reads_1.fq.gz"]
+
+    assert sorted(os.listdir(sample_dir)) == expected_listdir
+
+    with open(FASTQ_PATH, "r") as f:
+        expected_content = f.read()
+
+    with gzip.open(sample_dir / "reads_1.fq.gz", "rt") as f:
+        assert expected_content == f.read()
+
+    if paired:
+        with gzip.open(sample_dir / "reads_2.fq.gz", "rt") as f:
+            assert expected_content == f.read()
+
+    snapshot.assert_match(await dbi.samples.find_one())
+
+    m_update_is_compressed.assert_called_with(app_dict["db"], sample)
+
+
+async def test_compress_reads_process(mocker, dbi):
+    """
+    Ensure `compress_reads` is called correctly given a samples collection.
+
+    """
+    app_dict = {
+        "db": dbi,
+        "run_in_thread": make_mocked_coro(),
+        "settings": dict()
+    }
+
+    await dbi.samples.insert_many([
+        {
+            "_id": "foo",
+            "is_legacy": True
+        },
+        {
+            "_id": "fab",
+            "is_legacy": False
+        },
+        {
+            "_id": "bar",
+            "is_legacy": True
+        }
+    ])
+
+    await dbi.processes.insert_one({
+        "_id": "foo",
+        "context": {
+            "test": True
+        }
+    })
+
+    calls = list()
+
+    async def compress_reads(app, sample):
+        calls.append((app, sample))
+
+        # Set is_compressed on the sample as would be expected after a successful compression
+        await app["db"].samples.update_one({"_id": sample["_id"]}, {
+            "$set": {
+                "is_compressed": True
+            }
+        })
+
+    mocker.patch("virtool.samples.db.compress_reads", compress_reads)
+
+    process = virtool.samples.db.CompressReadsProcess(app_dict, "foo")
+
+    await process.run()
+
+    assert calls == ([
+        (app_dict, {
+            "_id": "foo",
+            "is_legacy": True
+        }),
+        (app_dict, {
+            "_id": "bar",
+            "is_legacy": True
+        })
+    ])
