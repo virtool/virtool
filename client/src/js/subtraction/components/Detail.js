@@ -2,12 +2,33 @@ import { get } from "lodash-es";
 import numbro from "numbro";
 import React from "react";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import { Icon, LoadingPlaceholder, NotFound, Table, ViewHeader, ViewHeaderIcons, ViewHeaderTitle } from "../../base";
+import {
+    BoxGroup,
+    BoxGroupHeader,
+    BoxGroupSection,
+    Icon,
+    LoadingPlaceholder,
+    NotFound,
+    Table,
+    ViewHeader,
+    ViewHeaderIcons,
+    ViewHeaderTitle
+} from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { getSubtraction } from "../actions";
 import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";
+
+const StyledBoxGroupSection = styled(BoxGroupSection)`
+    align-items: center;
+    display: flex;
+
+    a {
+        margin-right: auto;
+    }
+`;
 
 const calculateGC = nucleotides => numbro(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000");
 
@@ -22,6 +43,7 @@ export class SubtractionDetail extends React.Component {
 
     componentDidMount() {
         this.props.onGet(this.props.match.params.subtractionId);
+        console.log("state = ", this.props.state);
     }
 
     handleHide = () => {
@@ -86,6 +108,17 @@ export class SubtractionDetail extends React.Component {
                     </tbody>
                 </Table>
 
+                <BoxGroup>
+                    <BoxGroupHeader>Files</BoxGroupHeader>
+                    {this.props.files.map(file => (
+                        <StyledBoxGroupSection key={`[${file.id}] ${file.name}`}>
+                            <a href={file.download_url}>{file.name}</a>
+                        </StyledBoxGroupSection>
+                    ))}
+                </BoxGroup>
+
+                <button onClick={() => console.log("files = ", this.props.files)}>Console Log</button>
+
                 <EditSubtraction show={this.state.showEdit} onHide={this.handleHide} />
                 <RemoveSubtraction />
             </div>
@@ -96,7 +129,8 @@ export class SubtractionDetail extends React.Component {
 const mapStateToProps = state => ({
     error: get(state, "errors.GET_SUBTRACTION_ERROR"),
     canModify: checkAdminOrPermission(state, "modify_subtraction"),
-    detail: state.subtraction.detail
+    detail: state.subtraction.detail,
+    files: get(state, "subtraction.detail.files", [])
 });
 
 const mapDispatchToProps = dispatch => ({
