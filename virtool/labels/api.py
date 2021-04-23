@@ -6,11 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.db.utils
 import virtool.http.routes
-import virtool.labels.db
 import virtool.validators
 from virtool.api.response import bad_request, empty_request, json_response, no_content, not_found
 from virtool.http.schema import schema
+from virtool.labels.db import attach_sample_count
 from virtool.labels.models import Label
+from virtool.pg.utils import get_rows
 
 routes = virtool.http.routes.Routes()
 
@@ -21,14 +22,11 @@ async def find(req):
     Get a list of all label documents in the database.
 
     """
-    documents = list()
-    async with AsyncSession(req.app["pg"]) as session:
-        result = await session.execute(select(Label))
-        labels = result.scalars().all()
-        for label in labels:
-            documents.append(label.to_dict())
+    term = req.query.get("find")
 
-    documents = await asyncio.gather(*[virtool.labels.db.attach_sample_count(req.app["db"], d) for d in documents])
+    labels = await get_rows(req.app["pg"], Label, query=term)
+
+    documents = await asyncio.gather(*[attach_sample_count(req.app["db"], label.to_dict()) for label in labels])
 
     return json_response(documents)
 
@@ -46,7 +44,7 @@ async def get(req):
         if label is None:
             return not_found()
 
-    document = await virtool.labels.db.attach_sample_count(req.app["db"], label.to_dict())
+    document = await attach_sample_count(req.app["db"], label.to_dict())
 
     return json_response(document)
 
@@ -88,7 +86,7 @@ async def create(req):
         except IntegrityError:
             return bad_request("Label name already exists")
 
-    document = await virtool.labels.db.attach_sample_count(req.app["db"], document)
+    document = await attach_sample_count(req.app["db"], document)
 
     headers = {
         "Location": f"/api/labels/{document['id']}"
@@ -141,7 +139,7 @@ async def edit(req):
         except IntegrityError:
             return bad_request("Label name already exists")
 
-    document = await virtool.labels.db.attach_sample_count(req.app["db"], document)
+    document = await attach_sample_count(req.app["db"], document)
 
     return json_response(document)
 
