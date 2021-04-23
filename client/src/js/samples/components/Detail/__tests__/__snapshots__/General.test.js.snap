@@ -2,304 +2,314 @@
 
 exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
 <General__StyledSampleDetailGeneral>
-  <Connect(SampleFileSizeWarning) />
-  <Box__BoxGroup>
-    <Box__BoxGroupHeader>
-      <h2>
-        General
-      </h2>
-      <p>
-        User-defined information about the sample.
-      </p>
-    </Box__BoxGroupHeader>
-    <Table>
-      <tbody>
-        <tr>
-          <th>
-            Name
-          </th>
-          <td>
-            Foo
-          </td>
-        </tr>
-        <tr>
-          <th>
-            Host
-          </th>
-          <td>
-            Malus domestica
-          </td>
-        </tr>
-        <tr>
-          <th>
-            Isolate
-          </th>
-          <td>
-            Isolate Foo
-          </td>
-        </tr>
-        <tr>
-          <th>
-            Locale
-          </th>
-          <td>
-            Bar
-          </td>
-        </tr>
-      </tbody>
-    </Table>
-  </Box__BoxGroup>
-  <Box__BoxGroup>
-    <Box__BoxGroupHeader>
-      <h2>
-        Library
-      </h2>
-      <p>
-        Information about the sequencing reads in this sample.
-      </p>
-    </Box__BoxGroupHeader>
-    <Table>
-      <tbody>
-        <tr>
-          <th>
-            Encoding
-          </th>
-          <td>
-            Sanger / Illumina 2.1
-          </td>
-        </tr>
-        <tr>
-          <th>
-            Read Count
-          </th>
-          <td>
-            235
-          </td>
-        </tr>
-        <tr>
-          <th>
-            Library Type
-          </th>
-          <td />
-        </tr>
-        <tr>
-          <th>
-            Length Range
-          </th>
-          <td>
-            41 - 76
-          </td>
-        </tr>
-        <tr>
-          <th>
-            GC Content
-          </th>
-          <td>
-            42.3%
-          </td>
-        </tr>
-        <tr>
-          <th>
-            Paired
-          </th>
-          <td>
-            No
-          </td>
-        </tr>
-      </tbody>
-    </Table>
-  </Box__BoxGroup>
-  <Box__BoxGroup>
-    <Box__BoxGroupHeader>
-      <h2>
-        Default Subtraction
-      </h2>
-      <p>
-        This subtraction will be the default selection when creating an analysis.
-      </p>
-    </Box__BoxGroupHeader>
-    <Table>
-      <tbody>
-        <tr>
-          <th>
-            Subtraction
-          </th>
-          <td>
-            <Link
-              to="/subtraction/baz"
-            >
-              Arabidopsis thaliana
-            </Link>
-          </td>
-        </tr>
-      </tbody>
-    </Table>
-  </Box__BoxGroup>
-  <Box__BoxGroup>
-    <Box__BoxGroupHeader>
-      <h2>
-        Notes
-      </h2>
-      <p>
-        Additional notes about the sample.
-      </p>
-    </Box__BoxGroupHeader>
-    <Markdown
-      markdown="Example notes"
-    />
-  </Box__BoxGroup>
+  <Container__NarrowContainer>
+    <Connect(SampleFileSizeWarning) />
+    <Box__BoxGroup>
+      <Box__BoxGroupHeader>
+        <h2>
+          General
+        </h2>
+        <p>
+          User-defined information about the sample.
+        </p>
+      </Box__BoxGroupHeader>
+      <Table>
+        <tbody>
+          <tr>
+            <th>
+              Name
+            </th>
+            <td>
+              Foo
+            </td>
+          </tr>
+          <tr>
+            <th>
+              Host
+            </th>
+            <td>
+              Malus domestica
+            </td>
+          </tr>
+          <tr>
+            <th>
+              Isolate
+            </th>
+            <td>
+              Isolate Foo
+            </td>
+          </tr>
+          <tr>
+            <th>
+              Locale
+            </th>
+            <td>
+              Bar
+            </td>
+          </tr>
+        </tbody>
+      </Table>
+    </Box__BoxGroup>
+    <Box__BoxGroup>
+      <Box__BoxGroupHeader>
+        <h2>
+          Library
+        </h2>
+        <p>
+          Information about the sequencing reads in this sample.
+        </p>
+      </Box__BoxGroupHeader>
+      <Table>
+        <tbody>
+          <tr>
+            <th>
+              Encoding
+            </th>
+            <td>
+              Sanger / Illumina 2.1
+            </td>
+          </tr>
+          <tr>
+            <th>
+              Read Count
+            </th>
+            <td>
+              235
+            </td>
+          </tr>
+          <tr>
+            <th>
+              Library Type
+            </th>
+            <td />
+          </tr>
+          <tr>
+            <th>
+              Length Range
+            </th>
+            <td>
+              41 - 76
+            </td>
+          </tr>
+          <tr>
+            <th>
+              GC Content
+            </th>
+            <td>
+              42.3%
+            </td>
+          </tr>
+          <tr>
+            <th>
+              Paired
+            </th>
+            <td>
+              No
+            </td>
+          </tr>
+        </tbody>
+      </Table>
+    </Box__BoxGroup>
+    <Box__BoxGroup>
+      <Box__BoxGroupHeader>
+        <h2>
+          Default Subtraction
+        </h2>
+        <p>
+          This subtraction will be the default selection when creating an analysis.
+        </p>
+      </Box__BoxGroupHeader>
+      <Table>
+        <tbody>
+          <tr>
+            <th>
+              Subtraction
+            </th>
+            <td>
+              <Link
+                to="/subtraction/baz"
+              >
+                Arabidopsis thaliana
+              </Link>
+            </td>
+          </tr>
+        </tbody>
+      </Table>
+    </Box__BoxGroup>
+    <Box__BoxGroup>
+      <Box__BoxGroupHeader>
+        <h2>
+          Notes
+        </h2>
+        <p>
+          Additional notes about the sample.
+        </p>
+      </Box__BoxGroupHeader>
+      <Markdown
+        markdown="Example notes"
+      />
+    </Box__BoxGroup>
+  </Container__NarrowContainer>
+  <General__SampleDetailSidebarContainer>
+    <Sidebar />
+  </General__SampleDetailSidebarContainer>
   <Connect(EditSample) />
 </General__StyledSampleDetailGeneral>
 `;
 
 exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
 <General__StyledSampleDetailGeneral>
-  <Connect(SampleFileSizeWarning) />
-  <Box__BoxGroup>
-    <Box__BoxGroupHeader>
-      <h2>
-        General
-      </h2>
-      <p>
-        User-defined information about the sample.
-      </p>
-    </Box__BoxGroupHeader>
-    <Table>
-      <tbody>
-        <tr>
-          <th>
-            Name
-          </th>
-          <td>
-            Foo
-          </td>
-        </tr>
-        <tr>
-          <th>
-            Host
-          </th>
-          <td>
-            Malus domestica
-          </td>
-        </tr>
-        <tr>
-          <th>
-            Isolate
-          </th>
-          <td>
-            Isolate Foo
-          </td>
-        </tr>
-        <tr>
-          <th>
-            Locale
-          </th>
-          <td>
-            Bar
-          </td>
-        </tr>
-      </tbody>
-    </Table>
-  </Box__BoxGroup>
-  <Box__BoxGroup>
-    <Box__BoxGroupHeader>
-      <h2>
-        Library
-      </h2>
-      <p>
-        Information about the sequencing reads in this sample.
-      </p>
-    </Box__BoxGroupHeader>
-    <Table>
-      <tbody>
-        <tr>
-          <th>
-            Encoding
-          </th>
-          <td>
-            Sanger / Illumina 2.1
-          </td>
-        </tr>
-        <tr>
-          <th>
-            Read Count
-          </th>
-          <td>
-            235
-          </td>
-        </tr>
-        <tr>
-          <th>
-            Library Type
-          </th>
-          <td />
-        </tr>
-        <tr>
-          <th>
-            Length Range
-          </th>
-          <td>
-            41 - 76
-          </td>
-        </tr>
-        <tr>
-          <th>
-            GC Content
-          </th>
-          <td>
-            42.3%
-          </td>
-        </tr>
-        <tr>
-          <th>
-            Paired
-          </th>
-          <td>
-            Yes
-          </td>
-        </tr>
-      </tbody>
-    </Table>
-  </Box__BoxGroup>
-  <Box__BoxGroup>
-    <Box__BoxGroupHeader>
-      <h2>
-        Default Subtraction
-      </h2>
-      <p>
-        This subtraction will be the default selection when creating an analysis.
-      </p>
-    </Box__BoxGroupHeader>
-    <Table>
-      <tbody>
-        <tr>
-          <th>
-            Subtraction
-          </th>
-          <td>
-            <Link
-              to="/subtraction/baz"
-            >
-              Arabidopsis thaliana
-            </Link>
-          </td>
-        </tr>
-      </tbody>
-    </Table>
-  </Box__BoxGroup>
-  <Box__BoxGroup>
-    <Box__BoxGroupHeader>
-      <h2>
-        Notes
-      </h2>
-      <p>
-        Additional notes about the sample.
-      </p>
-    </Box__BoxGroupHeader>
-    <Markdown
-      markdown="Example notes"
-    />
-  </Box__BoxGroup>
+  <Container__NarrowContainer>
+    <Connect(SampleFileSizeWarning) />
+    <Box__BoxGroup>
+      <Box__BoxGroupHeader>
+        <h2>
+          General
+        </h2>
+        <p>
+          User-defined information about the sample.
+        </p>
+      </Box__BoxGroupHeader>
+      <Table>
+        <tbody>
+          <tr>
+            <th>
+              Name
+            </th>
+            <td>
+              Foo
+            </td>
+          </tr>
+          <tr>
+            <th>
+              Host
+            </th>
+            <td>
+              Malus domestica
+            </td>
+          </tr>
+          <tr>
+            <th>
+              Isolate
+            </th>
+            <td>
+              Isolate Foo
+            </td>
+          </tr>
+          <tr>
+            <th>
+              Locale
+            </th>
+            <td>
+              Bar
+            </td>
+          </tr>
+        </tbody>
+      </Table>
+    </Box__BoxGroup>
+    <Box__BoxGroup>
+      <Box__BoxGroupHeader>
+        <h2>
+          Library
+        </h2>
+        <p>
+          Information about the sequencing reads in this sample.
+        </p>
+      </Box__BoxGroupHeader>
+      <Table>
+        <tbody>
+          <tr>
+            <th>
+              Encoding
+            </th>
+            <td>
+              Sanger / Illumina 2.1
+            </td>
+          </tr>
+          <tr>
+            <th>
+              Read Count
+            </th>
+            <td>
+              235
+            </td>
+          </tr>
+          <tr>
+            <th>
+              Library Type
+            </th>
+            <td />
+          </tr>
+          <tr>
+            <th>
+              Length Range
+            </th>
+            <td>
+              41 - 76
+            </td>
+          </tr>
+          <tr>
+            <th>
+              GC Content
+            </th>
+            <td>
+              42.3%
+            </td>
+          </tr>
+          <tr>
+            <th>
+              Paired
+            </th>
+            <td>
+              Yes
+            </td>
+          </tr>
+        </tbody>
+      </Table>
+    </Box__BoxGroup>
+    <Box__BoxGroup>
+      <Box__BoxGroupHeader>
+        <h2>
+          Default Subtraction
+        </h2>
+        <p>
+          This subtraction will be the default selection when creating an analysis.
+        </p>
+      </Box__BoxGroupHeader>
+      <Table>
+        <tbody>
+          <tr>
+            <th>
+              Subtraction
+            </th>
+            <td>
+              <Link
+                to="/subtraction/baz"
+              >
+                Arabidopsis thaliana
+              </Link>
+            </td>
+          </tr>
+        </tbody>
+      </Table>
+    </Box__BoxGroup>
+    <Box__BoxGroup>
+      <Box__BoxGroupHeader>
+        <h2>
+          Notes
+        </h2>
+        <p>
+          Additional notes about the sample.
+        </p>
+      </Box__BoxGroupHeader>
+      <Markdown
+        markdown="Example notes"
+      />
+    </Box__BoxGroup>
+  </Container__NarrowContainer>
+  <General__SampleDetailSidebarContainer>
+    <Sidebar />
+  </General__SampleDetailSidebarContainer>
   <Connect(EditSample) />
 </General__StyledSampleDetailGeneral>
 `;
