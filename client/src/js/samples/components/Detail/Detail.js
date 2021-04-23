@@ -22,10 +22,9 @@ import { getSample } from "../../actions";
 import { getCanModify } from "../../selectors";
 import { SampleDetailFiles } from "../Files/Files";
 import Quality from "../Quality";
+import General from "./General";
 import RemoveSample from "./Remove";
 import Rights from "./Rights";
-import General from "./General";
-import SampleDetailLabels from "./Labels";
 
 const SampleDetail = ({ canModify, detail, error, history, match, onGetSample }) => {
     const sampleId = match.params.sampleId;
@@ -85,7 +84,6 @@ const SampleDetail = ({ canModify, detail, error, history, match, onGetSample })
                     </ViewHeaderIcons>
                 </ViewHeaderTitle>
                 <ViewHeaderAttribution time={created_at} user={user.id} />
-                <SampleDetailLabels />
             </ViewHeader>
 
             <Tabs bsStyle="tabs">
