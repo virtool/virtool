@@ -1,4 +1,3 @@
-import Fuse from "fuse.js";
 import { filter, find, get, groupBy, intersection, keyBy, map, reject, sortBy, toNumber, toString } from "lodash-es";
 import { createSelector } from "reselect";
 import { getRouterLocationState } from "../app/selectors";
