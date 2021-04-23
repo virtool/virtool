@@ -33,7 +33,7 @@ import virtool.subtractions.utils
 import virtool.tasks.pg
 import virtool.utils
 import virtool.version
-from virtool.analyses.db import StoreNuvsFilesTask
+from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.dev.fake import create_fake_data_path
 from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.dispatcher import Dispatcher
@@ -41,13 +41,13 @@ from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.fake.wrapper import FakerWrapper
 from virtool.pg.testing import create_test_database
-from virtool.references.db import CreateIndexJSONTask, DeleteReferenceTask
-from virtool.samples.db import CompressSamplesTask, MoveSampleFilesTask
-from virtool.subtractions.db import AddSubtractionFilesTask, WriteSubtractionFASTATask
+from virtool.references.tasks import CreateIndexJSONTask, DeleteReferenceTask
+from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
+from virtool.subtractions.tasks import AddSubtractionFilesTask, WriteSubtractionFASTATask
 from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
-from virtool.uploads.db import MigrateFilesTask
+from virtool.uploads.tasks import MigrateFilesTask
 from virtool.utils import random_alphanumeric
 
 logger = logging.getLogger("startup")

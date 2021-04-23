@@ -16,7 +16,8 @@ import virtool.http.routes
 import virtool.tasks.pg
 import virtool.utils
 from virtool.api.response import bad_gateway, bad_request, conflict, json_response, no_content, not_found
-from virtool.hmm.db import HMMInstallTask, generate_annotations_json_file
+from virtool.hmm.db import generate_annotations_json_file
+from virtool.hmm.tasks import HMMInstallTask
 from virtool.hmm.utils import hmm_data_exists
 
 routes = virtool.http.routes.Routes()
