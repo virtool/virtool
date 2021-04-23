@@ -8,27 +8,22 @@ import virtool.db.utils
 import virtool.errors
 import virtool.github
 import virtool.history.db
-import virtool.history.db
 import virtool.http.routes
 import virtool.indexes.db
-import virtool.indexes.db
-import virtool.otus.db
 import virtool.otus.db
 import virtool.otus.utils
 import virtool.pg.utils
 import virtool.references.db
-import virtool.references.db
 import virtool.references.utils
 import virtool.tasks.pg
-import virtool.users.db
 import virtool.users.db
 import virtool.utils
 import virtool.validators
 from virtool.api.response import bad_gateway, bad_request, insufficient_rights, json_response, no_content, not_found
-from virtool.http.schema import schema
-from virtool.references.db import CloneReferenceTask, ImportReferenceTask, RemoteReferenceTask, DeleteReferenceTask, \
-    UpdateRemoteReferenceTask
 from virtool.uploads.models import Upload
+from virtool.references.tasks import CloneReferenceTask, ImportReferenceTask, RemoteReferenceTask, \
+    DeleteReferenceTask, UpdateRemoteReferenceTask
+from virtool.http.schema import schema
 
 routes = virtool.http.routes.Routes()
 

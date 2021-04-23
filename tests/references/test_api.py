@@ -1,7 +1,8 @@
 import aiohttp.web
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-from virtool.references.db import UpdateRemoteReferenceTask
+from virtool.references.tasks import UpdateRemoteReferenceTask
+
 
 @pytest.mark.parametrize("error", [None, "400", "404"])
 async def test_get_release(error, mocker, spawn_client, resp_is):
@@ -102,7 +103,7 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
             }
         })
 
-    mocker.patch("virtool.references.db.UpdateRemoteReferenceTask")
+    mocker.patch("virtool.references.tasks.UpdateRemoteReferenceTask")
 
     m_add_task = mocker.patch(
         "virtool.tasks.client.TasksClient.add",
