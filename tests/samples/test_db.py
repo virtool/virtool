@@ -737,7 +737,6 @@ async def test_create_sample_reads_record(tmp_path, pg, pg_session):
     }
 
     test_dir = tmp_path / "samples" / "sample_1"
-    test_dir.mkdir(parents=True)
 
     file_path = Path(sys.path[0]) / "tests" / "test_files" / "samples" / "reads_1.fq.gz"
 
