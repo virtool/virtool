@@ -722,3 +722,31 @@ async def test_finalize(tmp_path, dbi, pg, pg_session):
     }
     assert not await virtool.uploads.db.get(pg, 1)
     assert not (await virtool.pg.utils.get_row(pg, 1, SampleReads)).upload
+
+
+async def test_create_sample_reads_record(tmp_path, pg, pg_session):
+    async def run_in_thread(func, *args):
+        return func(*args)
+
+    app = {
+        "pg": pg,
+        "run_in_thread": run_in_thread,
+        "settings": {
+            "data_path": tmp_path
+        }
+    }
+
+    test_dir = tmp_path / "samples" / "sample_1"
+    test_dir.mkdir(parents=True)
+
+    file_path = Path(sys.path[0]) / "tests" / "test_files" / "samples" / "reads_1.fq.gz"
+
+    await virtool.samples.db.create_sample_reads_record(app, "sample_1", file_path, "reads_1.fq.gz")
+
+    async with pg_session as session:
+        sample_reads = (await session.execute(select(SampleReads).filter_by(id=1))).scalar()
+
+    assert sample_reads.name == "reads_1.fq.gz"
+    assert sample_reads.sample == "sample_1"
+
+    assert os.listdir(test_dir) == ["reads_1.fq.gz"]
