@@ -24,7 +24,7 @@ async def find(req):
     """
     term = req.query.get("find")
 
-    labels = await get_rows(req.app["pg"], term, Label)
+    labels = await get_rows(req.app["pg"], Label, query=term)
 
     documents = await asyncio.gather(*[attach_sample_count(req.app["db"], label.to_dict()) for label in labels])
 

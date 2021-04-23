@@ -107,9 +107,9 @@ async def get_row(
 
 async def get_rows(
     pg: AsyncEngine,
-    query: Optional[Union[str, int, bool, SQLEnum]],
     model: Base,
     filter_: str = "name",
+    query: Optional[Union[str, int, bool, SQLEnum]] = None,
 ) -> Optional[Base]:
     """
     Get one or more rows from the `model` SQL model by its `filter_`. By default, rows will be fetched by their `name`.

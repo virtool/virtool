@@ -408,7 +408,7 @@ async def attach_files(pg: AsyncEngine, document: dict) -> dict:
     :return: Index document with updated `files` entry containing a list of index files.
 
     """
-    rows = await virtool.pg.utils.get_rows(pg, document["_id"], IndexFile, "index")
+    rows = await virtool.pg.utils.get_rows(pg, IndexFile, "index", document["_id"])
 
     files = [row.to_dict() for row in rows]
 

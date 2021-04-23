@@ -34,6 +34,6 @@ async def test_get_rows(pg, pg_session):
         session.add_all([index_1, index_2, index_3])
         await session.commit()
 
-    results = await virtool.pg.utils.get_rows(pg, "foo", IndexFile, "index")
+    results = await virtool.pg.utils.get_rows(pg, IndexFile, "index", "foo")
 
     assert len(results.all()) == 3
