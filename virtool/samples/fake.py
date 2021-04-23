@@ -13,9 +13,12 @@ READ_FILES_PATH = EXAMPLE_FILES_PATH / "reads"
 
 async def create_fake_samples(app: App) -> List[dict]:
     samples = []
-    samples.append(await create_fake_sample(app, paired=True, finalized=True))
-    samples.append(await create_fake_sample(app, paired=False, finalized=True))
-    samples.append(await create_fake_sample(app, finalized=False))
+    fake = app["fake"]
+
+    samples.append(await create_fake_sample(app, fake.get_mongo_id(), USER_ID, paired=True, finalized=True))
+    samples.append(await create_fake_sample(app, fake.get_mongo_id(), USER_ID, paired=False, finalized=True))
+    samples.append(await create_fake_sample(app, fake.get_mongo_id(), USER_ID, finalized=False))
+
     return samples
 
 
@@ -67,14 +70,12 @@ async def create_fake_quality(fake: FakerWrapper) -> dict:
     }
 
 
-async def create_fake_sample(app: App, paired=False, finalized=False) -> dict:
+async def create_fake_sample(app: App, sample_id: str, user_id: str, paired=False, finalized=False) -> dict:
     fake = app["fake"]
     db = app["db"]
     pg = app["pg"]
 
     subtraction_ids = [doc["_id"] async for doc in db.subtraction.find()]
-
-    sample_id = fake.get_mongo_id()
 
     if finalized is True:
         if paired:
@@ -104,7 +105,7 @@ async def create_fake_sample(app: App, paired=False, finalized=False) -> dict:
         notes=fake.text(50),
         library_type="normal",
         labels=[],
-        user_id=USER_ID,
+        user_id=user_id,
         group=fake.words(1)[0],
         settings={
             "app": app,
