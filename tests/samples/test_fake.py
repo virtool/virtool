@@ -22,6 +22,8 @@ def app(dbi, pg, run_in_thread, tmp_path):
 async def test_create_fake_unpaired(paired, finalized, app, snapshot,
                                     static_time):
     fake_sample = await create_fake_sample(app,
+                                           "sample_1",
+                                           "bob",
                                            paired=paired,
                                            finalized=finalized)
 
