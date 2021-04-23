@@ -22,9 +22,9 @@ async def find(req):
     Get a list of all label documents in the database.
 
     """
-    find = req.query.get("find")
+    term = req.query.get("find")
 
-    labels = await get_rows(req.app["pg"], find, Label)
+    labels = await get_rows(req.app["pg"], term, Label)
 
     documents = [label.to_dict() for label in labels]
 
