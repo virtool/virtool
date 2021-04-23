@@ -3,6 +3,7 @@ import { filter, find, get, groupBy, intersection, keyBy, map, reject, sortBy, t
 import { createSelector } from "reselect";
 import { getRouterLocationState } from "../app/selectors";
 import { getMaxReadLength, getSampleLibraryType, getSelectedSamples } from "../samples/selectors";
+import { createFuse } from "../utils/utils";
 import { fuseSearchKeys } from "./utils";
 
 export const getReadCount = state => state.analyses.detail.read_count;
@@ -17,17 +18,9 @@ export const getMaxSequenceLength = state => state.analyses.detail.maxSequenceLe
  * search runs over.
  *
  */
-export const getFuse = createSelector([getWorkflow, getResults], (workflow, results) => {
-    const keys = fuseSearchKeys[workflow];
-
-    return new Fuse(results, {
-        keys,
-        id: "id",
-        minMatchCharLength: 2,
-        threshold: 0.3,
-        tokenize: true
-    });
-});
+export const getFuse = createSelector([getWorkflow, getResults], (workflow, results) =>
+    createFuse(results, fuseSearchKeys[workflow], "id")
+);
 
 export const getFilterOTUs = state => state.analyses.filterOTUs;
 export const getFilterSequences = state => state.analyses.filterSequences;

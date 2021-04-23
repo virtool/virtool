@@ -2,6 +2,7 @@
  * General utility constants and functions.
  *
  */
+import Fuse from "fuse.js";
 import { capitalize, get, replace, sampleSize, split, startCase, upperFirst } from "lodash-es";
 import numbro from "numbro";
 import { getAccountAdministrator } from "../account/selectors";
@@ -48,6 +49,20 @@ export const createFindURL = term => {
 
     return url;
 };
+
+/**
+ * Create a Fuse object.
+ *
+ */
+export function createFuse(collection, keys, id) {
+    return new Fuse(collection, {
+        keys,
+        id,
+        minMatchCharLength: 2,
+        threshold: 0.3,
+        tokenize: true
+    });
+}
 
 /**
  * Create a random string of {@link length} from [alphanumeric]{@link module:utils.alphanumeric}.
