@@ -1,4 +1,5 @@
 import { createGlobalStyle, css } from "styled-components";
+import { fontWeight } from "./theme";
 
 export const tabFocus = css`
     // WebKit-specific. Other browsers will keep their default outline style.
@@ -30,7 +31,7 @@ export const GlobalStyles = createGlobalStyle`
     
     h5 {
         font-size: ${props => props.theme.fontSize.md};
-        font-weight: bold;
+        font-weight: ${fontWeight.thick};
         margin: 5px 0 10px;
     }
 
