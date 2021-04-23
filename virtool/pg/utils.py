@@ -3,7 +3,7 @@ import sys
 from enum import Enum
 from typing import Optional, Union
 
-from sqlalchemy import select, text, func
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
 from virtool.api.json import pretty_dumps

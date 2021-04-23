@@ -57,7 +57,7 @@ class TestFind:
 
     async def test_find_by_name(self, snapshot, spawn_client, pg_session):
         """
-        Test that a ``GET /api/labels`` with a `find` query returns a particular label.
+        Test that a ``GET /api/labels`` with a `find` query returns a particular label. Also test for partial matches.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
@@ -68,7 +68,7 @@ class TestFind:
             session.add(label)
             await session.commit()
 
-        resp = await client.get("/api/labels?find=bug")
+        resp = await client.get("/api/labels?find=b")
         resp_2 = await client.get("/api/labels?find=Question")
 
         assert resp.status, resp_2.status == 200
