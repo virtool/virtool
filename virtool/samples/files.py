@@ -59,7 +59,7 @@ async def create_artifact_file(
 
         await session.commit()
 
-        return artifact
+    return artifact
 
 
 async def create_reads_file(
@@ -106,4 +106,4 @@ async def create_reads_file(
 
         await session.commit()
 
-        return reads
+    return reads

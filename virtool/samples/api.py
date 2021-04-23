@@ -804,7 +804,10 @@ async def upload_artifact(req):
     if artifact_type and artifact_type not in ArtifactType.to_list():
         return bad_request("Unsupported sample artifact type")
 
-    artifact = await virtool.samples.files.create_artifact_file(pg, name, sample_id, artifact_type)
+    try:
+        artifact = await virtool.samples.files.create_artifact_file(pg, name, sample_id, artifact_type)
+    except exc.IntegrityError:
+        return conflict("Artifact file has already been uploaded for this sample")
 
     file_id = artifact["id"]
 
@@ -936,7 +939,10 @@ async def upload_artifacts_cache(req):
     if artifact_type and artifact_type not in ArtifactType.to_list():
         return bad_request("Unsupported sample artifact type")
 
-    artifact = await virtool.samples.files.create_artifact_file(pg, name, sample_id, artifact_type, cache=True)
+    try:
+        artifact = await virtool.samples.files.create_artifact_file(pg, name, sample_id, artifact_type, cache=True)
+    except exc.IntegrityError:
+        return conflict("Artifact file has already been uploaded for this sample cache")
 
     upload_id = artifact["id"]
 
@@ -1155,7 +1161,8 @@ async def download_artifact_cache(req):
 
     async with AsyncSession(pg) as session:
         result = (
-            await session.execute(select(SampleArtifactCache).filter_by(sample=sample_id, name=filename))).scalar()
+            await session.execute(select(SampleArtifactCache).filter_by(sample=sample_id, name=filename))
+        ).scalar()
 
     if not result:
         return not_found()

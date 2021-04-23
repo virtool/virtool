@@ -938,16 +938,6 @@ snapshots['TestEdit.test_name_exists[uvloop-False] 1'] = {
     'name': 'Bar'
 }
 
-snapshots['test_upload_artifacts[uvloop-fastq] 1'] = {
-    'id': 1,
-    'name': 'small.fq',
-    'name_on_disk': '1-small.fq',
-    'sample': 'test',
-    'size': 3130756,
-    'type': 'fastq',
-    'uploaded_at': '2015-10-06T20:00:00Z'
-}
-
 snapshots['TestUploadReads.test_upload_reads[uvloop-True] 1'] = {
     'id': 1,
     'name': 'reads_1.fq.gz',
@@ -955,16 +945,6 @@ snapshots['TestUploadReads.test_upload_reads[uvloop-True] 1'] = {
     'sample': 'test',
     'size': 9081,
     'upload': 1,
-    'uploaded_at': '2015-10-06T20:00:00Z'
-}
-
-snapshots['test_upload_artifact_cache[uvloop-fastq] 1'] = {
-    'id': 1,
-    'name': 'small.fq',
-    'name_on_disk': '1-small.fq',
-    'sample': 'test',
-    'size': 3130756,
-    'type': 'fastq',
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
@@ -1208,4 +1188,24 @@ snapshots['test_find[uvloop-None-None-None-label_filter10-None-None] 1'] = {
     'page_count': 1,
     'per_page': 25,
     'total_count': 3
+}
+
+snapshots['test_upload_artifact_cache[uvloop-None] 1'] = {
+    'id': 1,
+    'name': 'small.fq',
+    'name_on_disk': '1-small.fq',
+    'sample': 'test',
+    'size': 3130756,
+    'type': 'fastq',
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
+snapshots['test_upload_artifacts[uvloop-None] 1'] = {
+    'id': 1,
+    'name': 'small.fq',
+    'name_on_disk': '1-small.fq',
+    'sample': 'test',
+    'size': 3130756,
+    'type': 'fastq',
+    'uploaded_at': '2015-10-06T20:00:00Z'
 }
