@@ -3,7 +3,7 @@ from shutil import copy
 
 import aiofiles
 
-from virtool.example.paths import example_path
+from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
 from virtool.types import App
 

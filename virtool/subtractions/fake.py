@@ -6,7 +6,7 @@ from typing import Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.subtractions.db
-from virtool.example.paths import example_path
+from virtool.example import example_path
 from virtool.fake.identifiers import USER_ID
 from virtool.fake.wrapper import FakerWrapper
 from virtool.subtractions.db import finalize

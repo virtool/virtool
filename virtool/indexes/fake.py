@@ -3,7 +3,7 @@ from shutil import copy
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.example.paths import example_path
+from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
 from virtool.indexes.db import create, finalize
 from virtool.indexes.files import create_index_file
