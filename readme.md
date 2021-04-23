@@ -1,5 +1,4 @@
-Virtool
-=======
+# Virtool
 
 [![Build Status](https://cloud.drone.io/api/badges/virtool/virtool/status.svg)](https://cloud.drone.io/virtool/virtool)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/1388b43207ae407c891744a4d70dde35)](https://www.codacy.com/gh/virtool/virtool?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=virtool/virtool&amp;utm_campaign=Badge_Grade)
