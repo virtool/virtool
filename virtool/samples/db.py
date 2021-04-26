@@ -472,10 +472,10 @@ async def create_sample_reads_record(app: App,
 
         await session.commit()
 
-    reads_path = app["settings"]["data_path"] / "samples" / sample_id / name
+    reads_path = app["settings"]["data_path"] / "samples" / sample_id
     reads_path.mkdir(parents=True, exist_ok=True)
 
-    await app["run_in_thread"](shutil.copy, path, reads_path)
+    await app["run_in_thread"](shutil.copy, path, reads_path / name)
 
 
 async def move_sample_files_to_pg(app: App, sample: Dict[str, any]):
