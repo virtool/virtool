@@ -830,7 +830,7 @@ async def upload_artifact(req):
     return json_response(artifact, status=201, headers=headers)
 
 
-@routes.jobs_api.put("/api/samples/{sample_id}/reads/{name}")
+@routes.jobs_api.put("/api/samples/{sample_id}/reads/{filename}")
 async def upload_reads(req):
     """
     Upload sample reads using the Jobs API.
@@ -839,7 +839,7 @@ async def upload_reads(req):
     db = req.app["db"]
     pg = req.app["pg"]
 
-    name = req.match_info["name"]
+    name = req.match_info["filename"]
     sample_id = req.match_info["sample_id"]
 
     try:
@@ -962,7 +962,7 @@ async def upload_artifacts_cache(req):
     return json_response(artifact, status=201, headers=headers)
 
 
-@routes.jobs_api.put("/api/samples/{sample_id}/caches/{key}/reads/{name}")
+@routes.jobs_api.put("/api/samples/{sample_id}/caches/{key}/reads/{filename}")
 async def upload_reads_cache(req):
     """
     Upload reads files to cache using the Jobs API.
@@ -971,7 +971,7 @@ async def upload_reads_cache(req):
     db = req.app["db"]
     pg = req.app["pg"]
 
-    name = req.match_info["name"]
+    name = req.match_info["filename"]
     sample_id = req.match_info["sample_id"]
     key = req.match_info["key"]
 
