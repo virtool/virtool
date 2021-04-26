@@ -3,13 +3,13 @@ import { NarrowContainer } from "../../../base";
 import SampleFileSizeWarning from "../Detail/FileSizeWarning.js";
 import SampleFilesMessage from "../LegacyAlert";
 import SampleFilesCache from "./Cache";
-import SampleFilesRaw from "./Raw";
+import SampleReads from "./Reads";
 
 export const SampleDetailFiles = () => (
     <NarrowContainer>
         <SampleFileSizeWarning />
         <SampleFilesMessage />
-        <SampleFilesRaw />
+        <SampleReads />
         <SampleFilesCache />
     </NarrowContainer>
 );
