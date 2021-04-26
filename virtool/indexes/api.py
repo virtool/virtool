@@ -251,7 +251,7 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
 
 
-@routes.jobs_api.put("/api/indexes/{index_id}/files/{name}")
+@routes.jobs_api.put("/api/indexes/{index_id}/files/{filename}")
 async def upload(req):
     """
     Upload a new index file to the `index_files` SQL table and the `references` folder in the
@@ -261,7 +261,7 @@ async def upload(req):
     db = req.app["db"]
     pg = req.app["pg"]
     index_id = req.match_info["index_id"]
-    name = req.match_info["name"]
+    name = req.match_info["filename"]
 
     if name not in FILES:
         return not_found("Index file not found")
