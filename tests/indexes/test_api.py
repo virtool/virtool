@@ -17,7 +17,7 @@ from virtool.indexes.db import FILES
 from virtool.indexes.models import IndexFile
 from virtool.indexes.utils import check_index_file_type
 
-OTUS_JSON_PATH = Path(sys.path[0]) / "tests/test_files/index/otus.json.gz"
+OTUS_JSON_PATH = Path.cwd() / "tests/test_files/index/otus.json.gz"
 
 
 async def test_find(mocker, snapshot, spawn_client, static_time):
@@ -519,7 +519,7 @@ async def test_delete_index(spawn_job_client, error):
 @pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])
 async def test_upload(error, tmp_path, spawn_job_client, snapshot, resp_is, pg_session):
     client = await spawn_job_client(authorize=True)
-    path = Path(sys.path[0]) / "tests" / "test_files" / "index" / "reference.1.bt2"
+    path = Path.cwd() / "tests" / "test_files" / "index" / "reference.1.bt2"
 
     files = {
         "file": open(path, "rb")

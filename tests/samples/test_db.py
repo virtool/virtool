@@ -17,7 +17,7 @@ from virtool.labels.models import Label
 from virtool.samples.models import SampleReads
 from virtool.uploads.models import Upload
 
-FASTQ_PATH = Path(sys.path[0]) / "tests/test_files/test.fq"
+FASTQ_PATH = Path.cwd() / "tests/test_files/test.fq"
 
 
 class TestCalculateWorkflowTags:

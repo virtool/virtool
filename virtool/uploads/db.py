@@ -153,7 +153,7 @@ async def delete(req, pg: AsyncEngine, upload_id: int) -> Optional[dict]:
     try:
         await req.app["run_in_thread"](
             virtool.utils.rm,
-            Path(req.app["settings"]["data_path"]) / "files" / upload["name_on_disk"]
+            req.app["settings"]["data_path"] / "files" / upload["name_on_disk"]
         )
     except FileNotFoundError:
         pass
