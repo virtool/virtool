@@ -568,7 +568,7 @@ async def test_finalize(tmp_path, dbi, pg, pg_session):
         ]
     }
     assert not await virtool.uploads.db.get(pg, 1)
-    assert not (await virtool.pg.utils.get_row(pg, 1, SampleReads)).upload
+    assert not (await virtool.pg.utils.get_row_by_id(pg, SampleReads, 1)).upload
 
 
 async def test_create_sample_reads_record(tmp_path, pg, pg_session):

@@ -664,7 +664,7 @@ async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_sessi
         assert resp.status == 200
         snapshot.assert_match(await resp.json())
         assert not await virtool.uploads.db.get(pg, 1)
-        assert not (await virtool.pg.utils.get_row(pg, 1, SampleReads)).upload
+        assert not (await virtool.pg.utils.get_row_by_id(pg, SampleReads, 1)).upload
     else:
         assert resp.status == 422
         assert await resp_is.invalid_input(resp, {"quality": ['required field']})

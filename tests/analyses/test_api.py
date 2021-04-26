@@ -294,7 +294,7 @@ async def test_upload_file(error, files, resp_is, spawn_job_client, static_time,
 
         assert os.listdir(tmp_path / "analyses") == ["1-reference.fa"]
 
-        assert await virtool.pg.utils.get_row(pg, 1, AnalysisFile)
+        assert await virtool.pg.utils.get_row_by_id(pg, AnalysisFile, 1)
 
     elif error == 400:
         assert await resp_is.bad_request(resp, "Unsupported analysis file format")

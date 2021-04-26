@@ -245,7 +245,7 @@ async def download_analysis_result(req: aiohttp.web.Request) -> Union[aiohttp.we
     pg = req.app["pg"]
     upload_id = int(req.match_info["upload_id"])
 
-    analysis_file = await virtool.pg.utils.get_row(pg, AnalysisFile, query=upload_id)
+    analysis_file = await virtool.pg.utils.get_row_by_id(pg, AnalysisFile, upload_id)
 
     if not analysis_file:
         return not_found()

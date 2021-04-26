@@ -21,7 +21,7 @@ async def test_create_fake_subtractions(app, example_path, snapshot, static_time
     snapshot.assert_match(await app["db"].subtraction.find().to_list(None))
 
     for file_name in FILES:
-        assert await get_row(app["pg"], file_name, SubtractionFile, "name")
+        assert await get_row(app["pg"], SubtractionFile, (file_name, "name"))
 
         is_fasta = "fa.gz" in file_name
 

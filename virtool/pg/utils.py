@@ -80,25 +80,39 @@ async def delete_row(pg: AsyncEngine, id_: int, model: Base):
         await session.commit()
 
 
-async def get_row(
-        pg: AsyncEngine,
-        model: Base,
-        filter_: str = "id",
-        query: Optional[Union[str, int, bool, SQLEnum]] = None,
-) -> Optional[Base]:
+async def get_row_by_id(pg: AsyncEngine, model: Base, id_: int):
     """
-    Get a row from the `model` SQL model by its `filter_`. By default, a row will be fetched by its `id`.
+    Get a row from a SQL `model` by its `id`.
 
     :param pg: PostgreSQL AsyncEngine object
-    :param query: A query to filter by
     :param model: A model to retrieve a row from
-    :param filter_: A table column to search for a given `query`
+    :param id_: An SQL row `id`
     :return: Row from the given SQL model
     """
     async with AsyncSession(pg) as session:
+        row = (await session.execute(select(model).filter(getattr(model, "id") == id_))).scalar()
+
+    return row
+
+
+async def get_row(
+        pg: AsyncEngine,
+        model: Base,
+        match: tuple
+) -> Optional[Base]:
+    """
+    Get a row from the SQL `model` that matches a query and column combination.
+
+    :param pg: PostgreSQL AsyncEngine object
+    :param model: A model to retrieve a row from
+    :param match: A (query, column) tuple to filter results by
+    :return: Row from the given SQL model
+    """
+    (query, column) = match
+    async with AsyncSession(pg) as session:
         row = (
             await session.execute(
-                select(model).filter(getattr(model, filter_) == query)
+                select(model).filter(getattr(model, column) == query)
             )
         ).scalar()
 
@@ -109,7 +123,7 @@ async def get_rows(
         pg: AsyncEngine,
         model: Base,
         filter_: str = "name",
-        query: Optional[Union[str, int, bool, SQLEnum]] = None,
+        query: Optional[Union[str, int, bool, SQLEnum]] = None
 ) -> Optional[Base]:
     """
     Get one or more rows from the `model` SQL model by its `filter_`. By default, rows will be fetched by their `name`.

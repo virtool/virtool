@@ -25,6 +25,18 @@ async def test_delete_row(pg, pg_session):
     assert result is None
 
 
+async def test_get_row_by_id(snapshot, pg, pg_session):
+    index_1 = IndexFile(id=1, name="reference.1.bt2", index="foo", type="bowtie2", size=1234567)
+
+    async with pg_session as session:
+        session.add(index_1)
+        await session.commit()
+
+    result = await virtool.pg.utils.get_row_by_id(pg, IndexFile, 1)
+
+    snapshot.assert_match(result)
+
+
 async def test_get_row(snapshot, pg, pg_session):
     index_1 = IndexFile(id=1, name="reference.1.bt2", index="foo", type="bowtie2", size=1234567)
 
@@ -32,9 +44,10 @@ async def test_get_row(snapshot, pg, pg_session):
         session.add(index_1)
         await session.commit()
 
-    result = await virtool.pg.utils.get_row(pg, IndexFile, "index", "foo")
+    result = await virtool.pg.utils.get_row(pg, IndexFile, ("foo", "index"))
 
     snapshot.assert_match(result)
+
 
 async def test_get_rows(snapshot, pg, pg_session):
     index_1 = IndexFile(id=1, name="reference.1.bt2", index="foo", type="bowtie2", size=1234567)
