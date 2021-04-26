@@ -3,6 +3,7 @@ from logging import getLogger
 from virtool.api.response import no_content
 from virtool.fake.wrapper import FakerWrapper
 from virtool.http.routes import Routes
+from virtool.samples.fake import create_fake_samples
 from virtool.subtractions.fake import create_fake_fasta_upload, create_fake_finalized_subtraction
 from virtool.utils import random_alphanumeric
 
@@ -39,5 +40,8 @@ async def dev(req):
             random_alphanumeric(8),
             user_id
         )
+
+    if command == "create_sample":
+        await create_fake_samples(req.app)
 
     return no_content()

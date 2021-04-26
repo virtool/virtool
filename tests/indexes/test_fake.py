@@ -18,7 +18,7 @@ async def test_create_fake_indexes(dbi, pg, snapshot, tmp_path, static_time):
 
     await create_fake_indexes(app, "reference_1", "bob")
 
-    rows = [row for row in await get_rows(pg, "2x6YnyMt", IndexFile, "index")]
+    rows = [row for row in await get_rows(pg, IndexFile, "index", "2x6YnyMt")]
 
     snapshot.assert_match(rows, "index_files")
     snapshot.assert_match(await dbi.indexes.find().to_list(None), "indexes")

@@ -1,9 +1,9 @@
 from logging import getLogger
-from pathlib import Path
 from shutil import copy
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
 from virtool.indexes.db import create, finalize
 from virtool.indexes.files import create_index_file
@@ -58,10 +58,10 @@ async def create_fake_indexes(app: App, ref_id: str, user_id: str):
     path = data_path / "references" / ref_id / finalized_index_id
     path.mkdir(parents=True)
 
-    example_path = Path(__file__).parent.parent.parent / "example/indexes"
+    example_indexes = example_path / "indexes"
 
     for index_file in INDEX_FILES:
-        copy(example_path / index_file, path)
+        copy(example_indexes / index_file, path)
 
         await create_index_file(
             pg,

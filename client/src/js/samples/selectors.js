@@ -42,6 +42,7 @@ export const getDefaultSubtraction = state =>
 export const getMaxReadLength = state => state.samples.detail.quality.length[1];
 
 export const getSampleFiles = state => state.samples.detail.files;
+export const getSampleLabels = state => state.samples.detail.labels;
 
 export const getHasRawFilesOnly = createSelector([getSampleFiles], files => every(files, "raw"));
 

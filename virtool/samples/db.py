@@ -5,6 +5,7 @@ Code for working with samples in the database and filesystem.
 import asyncio
 import logging
 import os
+import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -208,20 +209,20 @@ def compose_analysis_query(url_query: web.Request.query) -> Optional[dict]:
 
 
 async def create_sample(
-    db,
-    name: str,
-    host: str,
-    isolate: str,
-    group: str,
-    locale: str,
-    library_type: str,
-    subtractions: List[str],
-    notes: str,
-    labels: List[int],
-    user_id: str,
-    settings: Dict[str, any],
-    paired=False,
-    _id=None,
+        db,
+        name: str,
+        host: str,
+        isolate: str,
+        group: str,
+        locale: str,
+        library_type: str,
+        subtractions: List[str],
+        notes: str,
+        labels: List[int],
+        user_id: str,
+        settings: Dict[str, any],
+        paired=False,
+        _id=None,
 ) -> Dict[str, any]:
     """
     Create, insert, and return a new sample document.
@@ -305,7 +306,7 @@ async def recalculate_workflow_tags(db, sample_id: str) -> dict:
     """
     analyses = await asyncio.shield(
         db.analyses.find({"sample.id": sample_id}, [
-                         "ready", "workflow"]).to_list(None)
+            "ready", "workflow"]).to_list(None)
     )
 
     update = virtool.samples.utils.calculate_workflow_tags(analyses)
@@ -318,7 +319,7 @@ async def recalculate_workflow_tags(db, sample_id: str) -> dict:
 
 
 async def remove_samples(
-    db, settings: Dict[str, Any], id_list: List[str]
+        db, settings: Dict[str, Any], id_list: List[str]
 ) -> DeleteResult:
     """
     Complete removes the samples identified by the document ids in ``id_list``. In order, it:
@@ -374,11 +375,11 @@ def check_is_legacy(sample: Dict[str, Any]) -> bool:
 
     return (
         # All files have the `raw` flag set false indicating they are legacy data.
-        all(file.get("raw", False) is False for file in files)
-        and
-        # File naming matches expectations.
-        files[0]["name"] == "reads_1.fastq"
-        and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
+            all(file.get("raw", False) is False for file in files)
+            and
+            # File naming matches expectations.
+            files[0]["name"] == "reads_1.fastq"
+            and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
     )
 
 
@@ -455,8 +456,10 @@ async def compress_sample_reads(app: App, sample: Dict[str, Any]):
         await app["run_in_thread"](os.remove, path)
 
 
-async def create_sample_reads_record(app: App, sample_id: str,
-                                  path: Path, name: str = None):
+async def create_sample_reads_record(app: App,
+                                     sample_id: str,
+                                     path: Path,
+                                     name: str = None):
     async with AsyncSession(app["pg"]) as session:
         reads = SampleReads(
             name=name or path.name,
@@ -468,6 +471,11 @@ async def create_sample_reads_record(app: App, sample_id: str,
         session.add(reads)
 
         await session.commit()
+
+    reads_path = app["settings"]["data_path"] / "samples" / sample_id / name
+    reads_path.mkdir(parents=True, exist_ok=True)
+
+    await app["run_in_thread"](shutil.copy, path, reads_path)
 
 
 async def move_sample_files_to_pg(app: App, sample: Dict[str, any]):
@@ -512,12 +520,12 @@ async def move_sample_files_to_pg(app: App, sample: Dict[str, any]):
 
 
 async def finalize(
-    db,
-    pg: AsyncEngine,
-    sample_id: str,
-    quality: Dict[str, Any],
-    run_in_thread: callable,
-    data_path: str,
+        db,
+        pg: AsyncEngine,
+        sample_id: str,
+        quality: Dict[str, Any],
+        run_in_thread: callable,
+        data_path: str,
 ) -> Dict[str, Any]:
     """
     Finalize a sample document by setting a ``quality`` field and ``ready`` to ``True``
@@ -541,12 +549,12 @@ async def finalize(
             (
                 await session.execute(
                     select(Upload)
-                    .filter(SampleReads.sample == sample_id)
-                    .join_from(SampleReads, Upload)
+                        .filter(SampleReads.sample == sample_id)
+                        .join_from(SampleReads, Upload)
                 )
             )
-            .unique()
-            .scalars()
+                .unique()
+                .scalars()
         )
 
         for row in rows:
@@ -557,7 +565,7 @@ async def finalize(
             try:
                 await run_in_thread(
                     virtool.utils.rm, data_path /
-                    "files" / row.name_on_disk
+                                      "files" / row.name_on_disk
                 )
             except FileNotFoundError:
                 pass

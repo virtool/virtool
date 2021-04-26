@@ -61,7 +61,9 @@ const SampleItemWorkflowTagLink = styled(StyledSampleItemWorkflowTag)`
 `;
 
 const SampleItemWorkflowTagNone = styled(StyledSampleItemWorkflowTag)`
-    background-color: #ec4899;
+    background-color: ${props => props.theme.color.purpleLightest};
+    border: 1px solid ${props => props.theme.color.purple};
+    color: ${props => props.theme.color.purpleDarkest};
 `;
 
 const StyledSampleWorkflowTags = styled.div`

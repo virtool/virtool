@@ -35,12 +35,12 @@ export const SampleLibraryTypeLabel = ({ libraryType }) => (
     </StyledSampleLibraryTypeLabel>
 );
 
-export const SampleLabel = ({ className, color, name }) => (
+export const SampleLabel = styled(({ className, color, name }) => (
     <StyledSampleLabel className={className} color={color}>
         <Icon name="circle" />
         {name}
     </StyledSampleLabel>
-);
+))``;
 
 export const SmallSampleLabel = styled(SampleLabel)`
     font-size: ${getFontSize("sm")};

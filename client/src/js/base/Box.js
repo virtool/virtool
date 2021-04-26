@@ -50,8 +50,11 @@ export const BoxGroupSection = styled.div`
     border-radius: 0;
     color: inherit;
     cursor: ${props => (props.onClick && !props.active ? "pointer" : "auto")};
+    display: block;
     padding: 10px 15px;
     position: relative;
+    text-align: left;
+    width: 100%;
 
     &[disabled] {
         background-color: ${props => props.theme.color.greyHover};
