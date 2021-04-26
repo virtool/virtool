@@ -1439,7 +1439,7 @@ async def test_download_reads_cache(error, spawn_job_client, pg, tmp_path):
             }
         })
     if error != "404_reads":
-        sample_reads_cache = SampleReadsCache(id=1, sample="foo", name=filename, name_on_disk=filename)
+        sample_reads_cache = SampleReadsCache(id=1, sample="foo", name=filename, name_on_disk=filename, key="aodp-abcdefgh")
 
         async with AsyncSession(pg) as session:
             session.add(sample_reads_cache)
@@ -1482,7 +1482,7 @@ async def test_download_artifact_cache(error, spawn_job_client, pg, tmp_path):
 
     if error != "404_artifact":
         sample_artfact_cache = SampleArtifactCache(id=1, sample="foo", name=name, name_on_disk=name_on_disk,
-                                                   type="fastq")
+                                                   type="fastq", key="aodp-abcdefgh")
 
         async with AsyncSession(pg) as session:
             session.add(sample_artfact_cache)

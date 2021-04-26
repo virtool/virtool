@@ -939,7 +939,7 @@ async def upload_artifacts_cache(req):
         return bad_request("Unsupported sample artifact type")
 
     try:
-        artifact = await virtool.samples.files.create_artifact_file(pg, name, name, sample_id, artifact_type, cache=True)
+        artifact = await virtool.samples.files.create_artifact_file(pg, name, sample_id, artifact_type, key=key)
     except exc.IntegrityError:
         return conflict("Artifact file has already been uploaded for this sample cache")
 
@@ -1120,7 +1120,7 @@ async def download_reads_cache(req):
     if not await db.samples.count_documents({"_id": sample_id}) or not await db.caches.count_documents({"key": key}):
         return not_found()
 
-    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id, cache=True)
+    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id, key=key)
 
     if file_name not in existing_reads:
         return not_found()
@@ -1158,8 +1158,7 @@ async def download_artifact_cache(req):
 
     async with AsyncSession(pg) as session:
         result = (
-            await session.execute(select(SampleArtifactCache).filter_by(sample=sample_id, name=filename))
-        ).scalar()
+            await session.execute(select(SampleArtifactCache).filter_by(name=filename, key=key, sample=sample_id))).scalar()
 
     if not result:
         return not_found()
