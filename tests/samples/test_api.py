@@ -221,7 +221,7 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
         })
 
         label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
-        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta", name_on_disk="1-reference.fa.gz")
+        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta", name_on_disk="reference.fa.gz")
         reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
         upload = Upload(name="test")
         async with pg_session as session:
@@ -650,7 +650,7 @@ async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_sessi
 
     async with pg_session as session:
         upload = Upload(name="test", name_on_disk="test.fq.gz")
-        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta", name_on_disk="1-reference.fa.gz")
+        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta", name_on_disk="reference.fa.gz")
         reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
 
         upload.reads.append(reads)
@@ -1052,7 +1052,7 @@ async def test_upload_artifacts(
     if not error:
         assert resp.status == 201
         snapshot.assert_match(await resp.json())
-        assert os.listdir(sample_file_path) == ["1-small.fq"]
+        assert os.listdir(sample_file_path) == ["small.fq"]
     elif error == 400:
         assert await resp_is.bad_request(resp, "Unsupported sample artifact type")
 
@@ -1209,7 +1209,7 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
     if error != "404_file":
         path = (tmp_path / "samples" / "foo")
         path.mkdir(parents=True)
-        path.joinpath("1-fastqc.txt").write_text("test")
+        path.joinpath("fastqc.txt").write_text("test")
 
     if error != "404_sample":
         await client.db.samples.insert_one({
@@ -1221,7 +1221,6 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
             id=1,
             sample="foo",
             name="fastqc.txt",
-            name_on_disk="1-fastqc.txt",
             type="fastq"
         )
 
@@ -1232,7 +1231,7 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
 
     resp = await client.get("/api/samples/foo/artifacts/fastqc.txt")
 
-    expected_path = client.app["settings"]["data_path"] / "samples" / "foo" / "1-fastqc.txt"
+    expected_path = client.app["settings"]["data_path"] / "samples" / "foo" / "fastqc.txt"
 
     if error:
         assert resp.status == 404
@@ -1351,7 +1350,7 @@ async def test_upload_artifact_cache(
     if not error:
         assert resp.status == 201
         snapshot.assert_match(await resp.json())
-        assert os.listdir(cache_path) == ["1-small.fq"]
+        assert os.listdir(cache_path) == ["small.fq"]
     elif error == 400:
         assert await resp_is.bad_request(resp, "Unsupported sample artifact type")
 
