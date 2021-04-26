@@ -669,7 +669,7 @@ async def create_import(db, pg: AsyncEngine, settings: dict, name: str, descript
         user_id=user_id
     )
 
-    upload = await virtool.pg.utils.get_row(pg, import_from, Upload, filter_="name_on_disk")
+    upload = await virtool.pg.utils.get_row(pg, Upload, filter_="name_on_disk", query=import_from)
 
     document["imported_from"] = upload.to_dict()
 

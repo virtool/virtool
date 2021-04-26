@@ -82,9 +82,9 @@ async def delete_row(pg: AsyncEngine, id_: int, model: Base):
 
 async def get_row(
         pg: AsyncEngine,
-        query: Union[str, int, bool, SQLEnum],
         model: Base,
         filter_: str = "id",
+        query: Optional[Union[str, int, bool, SQLEnum]] = None,
 ) -> Optional[Base]:
     """
     Get a row from the `model` SQL model by its `filter_`. By default, a row will be fetched by its `id`.
