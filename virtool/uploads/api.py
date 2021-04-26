@@ -42,7 +42,7 @@ async def create(req):
 
     upload_id = upload["id"]
 
-    file_path = Path(req.app["settings"]["data_path"]) / "files" / upload["name_on_disk"]
+    file_path = req.app["settings"]["data_path"] / "files" / upload["name_on_disk"]
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, file_path)

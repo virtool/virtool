@@ -32,15 +32,3 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
         return not_found()
 
     return json_response(cache)
-
-
-@routes.jobs_api.get("/api/caches/{key}/artifacts/{filename}")
-async def download_artifacts_cache(req: aiohttp.web.Request) -> aiohttp.web.Response:
-    db = req.app["db"]
-    pg = req.app["pg"]
-
-    key = req.match_info["key"]
-    filename = req.match_info["filename"]
-
-    if not await db.caches.count_documents({"key": key}):
-        return not_found()

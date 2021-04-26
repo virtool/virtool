@@ -1107,7 +1107,7 @@ class TestUploadReads:
         client = await spawn_job_client(authorize=True)
 
         client.app["settings"]["data_path"] = tmp_path
-        sample_file_path = Path(client.app["settings"]["data_path"]) / "samples" / "test"
+        sample_file_path = client.app["settings"]["data_path"] / "samples" / "test"
 
         await client.db.samples.insert_one({
             "_id": "test",
