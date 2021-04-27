@@ -56,7 +56,7 @@ async def download_otu(req):
     if not await db.otus.count_documents({"_id": otu_id}):
         return virtool.api.response.not_found("OTU not found")
 
-    filename, fasta = await virtool.downloads.db.generate_otu_fasta(db, otu_id)
+    filename, fasta = await virtool.otus.db.generate_otu_fasta(db, otu_id)
 
     if not filename and not fasta:
         return virtool.api.response.not_found("Sequence not found")

@@ -2,11 +2,12 @@
 Work with OTUs in the database.
 
 """
-from typing import Optional, Union, Dict, Any, List
+from typing import Optional, Union, Dict, Any, List, Tuple
 
 import pymongo.results
 
 import virtool.db.utils
+import virtool.downloads.utils
 import virtool.errors
 import virtool.history.db
 import virtool.history.utils
@@ -435,3 +436,35 @@ async def update_verification(db, joined: dict) -> Optional[dict]:
         joined["verified"] = True
 
     return issues
+
+
+async def generate_otu_fasta(db, otu_id: str) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Generate a FASTA filename and body for the sequences associated with the otu identified by the passed
+    ``otu_id``.
+
+    :param db: the application database client
+    :param otu_id: the id of the otu whose sequences should be expressed in FASTA format
+    :return: as FASTA filename and body
+
+    """
+    otu = await db.otus.find_one(otu_id, ["name", "isolates"])
+
+    fasta = list()
+
+    for isolate in otu["isolates"]:
+        sequences = await db.sequences.find({"otu_id": otu_id, "isolate_id": isolate["id"]}, ["sequence"]).to_list(None)
+        if sequences:
+            for sequence in sequences:
+                fasta.append(virtool.downloads.utils.format_fasta_entry(
+                    otu["name"],
+                    virtool.otus.utils.format_isolate_name(isolate),
+                    sequence["_id"],
+                    sequence["sequence"]
+                ))
+        else:
+            return None, None
+
+    fasta = "\n".join(fasta)
+
+    return virtool.downloads.utils.format_fasta_filename(otu["name"]), fasta
