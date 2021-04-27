@@ -1,3 +1,5 @@
+import shutil
+from pathlib import Path
 from typing import Dict, List
 
 from sqlalchemy import select
@@ -7,6 +9,7 @@ import virtool.pg.utils
 import virtool.utils
 from virtool.caches.models import SampleArtifactCache, SampleReadsCache
 from virtool.samples.models import SampleArtifact, SampleReads
+from virtool.types import App
 from virtool.uploads.models import Upload
 
 
@@ -63,28 +66,33 @@ async def create_artifact_file(
 
 
 async def create_reads_file(
-    pg: AsyncEngine,
+    app: App,
     size: int,
     name: str,
     name_on_disk: str,
     sample_id: str,
     cache: bool = False,
     upload_id: int = None,
+    path: Path = None,
+    copy_file: bool = False
 ) -> Dict[str, any]:
     """
     Create a row in a SQL table that represents uploaded sample reads files.
 
-    :param pg: PostgreSQL AsyncEngine object
+    :param app: The application object
     :param size: Size of a newly uploaded file in bytes
     :param name: Name of the file (either `reads_1.fq.gz` or `reads_2.fq.gz`)
     :param name_on_disk: Name of the newly uploaded file on disk
     :param sample_id: ID that corresponds to a parent sample
     :param cache: Whether the row should be created in the `sample_reads_files` or `sample_reads_files_cache` table
     :param upload_id: ID for a row in the `uploads` table to pair with
+    :param path: The path to the reads file
+    :param copy_file: Whether the file should be copied to the data path.
+
     :return: List of dictionary representations of the newly created row(s)
     """
 
-    async with AsyncSession(pg) as session:
+    async with AsyncSession(app["pg"]) as session:
         reads = SampleReads() if not cache else SampleReadsCache()
 
         reads.sample, reads.name, reads.name_on_disk, reads.size, reads.uploaded_at = (
@@ -106,4 +114,10 @@ async def create_reads_file(
 
         await session.commit()
 
-        return reads
+    if path and copy_file:
+        reads_path = app["settings"]["data_path"] / "samples" / sample_id
+        reads_path.mkdir(parents=True, exist_ok=True)
+
+        await app["run_in_thread"](shutil.copy, path, reads_path / name)
+
+    return reads
