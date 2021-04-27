@@ -1408,54 +1408,6 @@ async def test_upload_reads_cache(paired, snapshot, static_time, spawn_job_clien
         assert os.listdir(cache_path) == ["reads_1.fq.gz"]
 
 
-@pytest.mark.parametrize("error", [None, "404_sample", "404_reads", "404_file", "404_cache"])
-async def test_download_reads_cache(error, spawn_job_client, pg, tmp_path):
-    """
-    Test that a sample reads cache can be downloaded using the Jobs API.
-
-    """
-    client = await spawn_job_client(authorize=True)
-
-    client.app["settings"]["data_path"] = tmp_path
-
-    filename = "reads_1.fq.gz"
-    key = "aodp-abcdefgh"
-
-    if error != "404_file":
-        path = tmp_path / "caches" / key
-        path.mkdir(parents=True)
-        path.joinpath(filename).write_text("test")
-
-    if error != "404_sample":
-        await client.db.samples.insert_one({
-            "_id": "foo",
-        })
-
-    if error != "404_cache":
-        await client.db.caches.insert_one({
-            "key": key,
-            "sample": {
-                "id": "test"
-            }
-        })
-    if error != "404_reads":
-        sample_reads_cache = SampleReadsCache(id=1, sample="foo", name=filename, name_on_disk=filename, key="aodp-abcdefgh")
-
-        async with AsyncSession(pg) as session:
-            session.add(sample_reads_cache)
-            await session.commit()
-
-    resp = await client.get(f"/api/samples/foo/caches/{key}/reads/{filename}")
-
-    expected_path = client.app["settings"]["data_path"] / "caches" / key / filename
-
-    if error:
-        assert resp.status == 404
-    else:
-        assert resp.status == 200
-        assert expected_path.read_bytes() == await resp.content.read()
-
-
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
 async def test_finalize_cache(field, resp_is, snapshot, spawn_job_client):
     client = await spawn_job_client(authorize=True)

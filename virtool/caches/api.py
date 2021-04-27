@@ -74,3 +74,38 @@ async def download_artifact_cache(req):
     }
 
     return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
+
+
+@routes.jobs_api.get("/api/caches/{key}/reads/reads_{suffix}.fq.gz")
+async def download_reads_cache(req):
+    """
+    Download sample reads cache for a given key.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+
+    key = req.match_info["key"]
+    suffix = req.match_info["suffix"]
+
+    file_name = f"reads_{suffix}.fq.gz"
+
+    if not (document := await db.caches.find_one({"key": key})) or not (sample_id := document.get("sample").get("id")):
+        return not_found()
+
+    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id, key=key)
+
+    if file_name not in existing_reads:
+        return not_found()
+
+    file_path = req.app["settings"]["data_path"] / "caches" / key / file_name
+
+    if not file_path.exists():
+        return not_found()
+
+    headers = {
+        "Content-Length": virtool.utils.file_stats(file_path)["size"],
+        "Content-Type": "application/gzip"
+    }
+
+    return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
