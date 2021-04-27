@@ -208,24 +208,24 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
     },
     'reads': [
         {
-            'download_url': '/api/samples/2x6YnyMt/reads/read_1.fq.gz',
+            'download_url': '/api/samples/2x6YnyMt/reads/reads_1.fq.gz',
             'id': 1,
-            'name': 'read_1.fq.gz',
-            'name_on_disk': 'paired_1.fq.gz',
+            'name': 'reads_1.fq.gz',
+            'name_on_disk': 'reads_1.fq.gz',
             'sample': '2x6YnyMt',
             'size': 35441105,
             'upload': None,
-            'uploaded_at': None
+            'uploaded_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)')
         },
         {
-            'download_url': '/api/samples/2x6YnyMt/reads/read_2.fq.gz',
+            'download_url': '/api/samples/2x6YnyMt/reads/reads_2.fq.gz',
             'id': 2,
-            'name': 'read_2.fq.gz',
-            'name_on_disk': 'paired_2.fq.gz',
+            'name': 'reads_2.fq.gz',
+            'name_on_disk': 'reads_2.fq.gz',
             'sample': '2x6YnyMt',
             'size': 41550519,
             'upload': None,
-            'uploaded_at': None
+            'uploaded_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)')
         }
     ],
     'ready': True,
@@ -397,11 +397,11 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
             'download_url': '/api/samples/LB1U6zCj/reads/reads.fq.gz',
             'id': 3,
             'name': 'reads.fq.gz',
-            'name_on_disk': 'single.fq.gz',
+            'name_on_disk': 'reads.fq.gz',
             'sample': 'LB1U6zCj',
             'size': 16700094,
             'upload': None,
-            'uploaded_at': None
+            'uploaded_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)')
         }
     ],
     'ready': True,
@@ -579,24 +579,24 @@ snapshots['test_create_fake_unpaired[uvloop-True-True] 1'] = {
     },
     'reads': [
         {
-            'download_url': '/api/samples/sample_1/reads/read_1.fq.gz',
+            'download_url': '/api/samples/sample_1/reads/reads_1.fq.gz',
             'id': 1,
-            'name': 'read_1.fq.gz',
-            'name_on_disk': 'paired_1.fq.gz',
+            'name': 'reads_1.fq.gz',
+            'name_on_disk': 'reads_1.fq.gz',
             'sample': 'sample_1',
             'size': 35441105,
             'upload': None,
-            'uploaded_at': None
+            'uploaded_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)')
         },
         {
-            'download_url': '/api/samples/sample_1/reads/read_2.fq.gz',
+            'download_url': '/api/samples/sample_1/reads/reads_2.fq.gz',
             'id': 2,
-            'name': 'read_2.fq.gz',
-            'name_on_disk': 'paired_2.fq.gz',
+            'name': 'reads_2.fq.gz',
+            'name_on_disk': 'reads_2.fq.gz',
             'sample': 'sample_1',
             'size': 41550519,
             'upload': None,
-            'uploaded_at': None
+            'uploaded_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)')
         }
     ],
     'ready': True,
@@ -746,11 +746,11 @@ snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
             'download_url': '/api/samples/sample_1/reads/reads.fq.gz',
             'id': 1,
             'name': 'reads.fq.gz',
-            'name_on_disk': 'single.fq.gz',
+            'name_on_disk': 'reads.fq.gz',
             'sample': 'sample_1',
             'size': 16700094,
             'upload': None,
-            'uploaded_at': None
+            'uploaded_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)')
         }
     ],
     'ready': True,
