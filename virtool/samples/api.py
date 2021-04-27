@@ -981,7 +981,7 @@ async def upload_reads_cache(req):
     cache_path = virtool.caches.utils.join_cache_path(req.app["settings"], key) / name
 
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
-        return not_found("Cache doesn't exist with given key")
+        return not_found()
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, cache_path, is_gzip_compressed)
@@ -1128,46 +1128,6 @@ async def download_reads_cache(req):
     file_path = req.app["settings"]["data_path"] / "caches" / key / file_name
 
     if not os.path.isfile(file_path):
-        return not_found()
-
-    file_stats = virtool.utils.file_stats(file_path)
-
-    headers = {
-        "Content-Length": file_stats["size"],
-        "Content-Type": "application/gzip"
-    }
-
-    return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
-
-
-@routes.jobs_api.get("/api/samples/{sample_id}/caches/{key}/artifacts/{filename}")
-async def download_artifact_cache(req):
-    """
-    Download sample artifact cache for a given key.
-
-    """
-    db = req.app["db"]
-    pg = req.app["pg"]
-
-    sample_id = req.match_info["sample_id"]
-    key = req.match_info["key"]
-    filename = req.match_info["filename"]
-
-    if not await db.samples.count_documents({"_id": sample_id}) or not await db.caches.count_documents({"key": key}):
-        return not_found()
-
-    async with AsyncSession(pg) as session:
-        result = (
-            await session.execute(select(SampleArtifactCache).filter_by(name=filename, key=key, sample=sample_id))).scalar()
-
-    if not result:
-        return not_found()
-
-    artifact = result.to_dict()
-
-    file_path = req.app["settings"]["data_path"] / "caches" / key / artifact["name_on_disk"]
-
-    if not file_path.exists():
         return not_found()
 
     file_stats = virtool.utils.file_stats(file_path)
