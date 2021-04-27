@@ -95,8 +95,8 @@ async def create_fake_sample(app: App, sample_id: str, user_id: str, paired=Fals
             await create_reads_file(
                 app,
                 file_path.stat().st_size,
-                "reads.fq.gz",
-                "reads.fq.gz",
+                "reads_1.fq.gz",
+                "reads_1.fq.gz",
                 sample_id,
                 path=file_path,
                 copy_file=True

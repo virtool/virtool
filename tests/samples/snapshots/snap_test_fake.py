@@ -394,10 +394,10 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
     },
     'reads': [
         {
-            'download_url': '/api/samples/LB1U6zCj/reads/reads.fq.gz',
+            'download_url': '/api/samples/LB1U6zCj/reads/reads_1.fq.gz',
             'id': 3,
-            'name': 'reads.fq.gz',
-            'name_on_disk': 'reads.fq.gz',
+            'name': 'reads_1.fq.gz',
+            'name_on_disk': 'reads_1.fq.gz',
             'sample': 'LB1U6zCj',
             'size': 16700094,
             'upload': None,
@@ -743,10 +743,10 @@ snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
     },
     'reads': [
         {
-            'download_url': '/api/samples/sample_1/reads/reads.fq.gz',
+            'download_url': '/api/samples/sample_1/reads/reads_1.fq.gz',
             'id': 1,
-            'name': 'reads.fq.gz',
-            'name_on_disk': 'reads.fq.gz',
+            'name': 'reads_1.fq.gz',
+            'name_on_disk': 'reads_1.fq.gz',
             'sample': 'sample_1',
             'size': 16700094,
             'upload': None,

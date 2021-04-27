@@ -47,5 +47,5 @@ async def test_create_fake_samples(app, snapshot, dbi, static_time):
     for sample in samples:
         snapshot.assert_match(sample)
 
-    assert os.listdir(app["settings"]["data_path"] / "samples" / "LB1U6zCj") == ["reads.fq.gz"]
+    assert os.listdir(app["settings"]["data_path"] / "samples" / "LB1U6zCj") == ["reads_1.fq.gz"]
     assert set(os.listdir(app["settings"]["data_path"] / "samples" / "2x6YnyMt")) == {"reads_1.fq.gz", "reads_2.fq.gz"}
