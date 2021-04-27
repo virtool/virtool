@@ -16,15 +16,14 @@ async def test_download_artifact_cache(error, spawn_job_client, pg, tmp_path):
 
     key = "aodp-abcdefgh"
     name = "fastqc.txt"
-    name_on_disk = "1-fastqc.txt"
 
     if error != "404_file":
         path = tmp_path / "caches" / key
         path.mkdir(parents=True)
-        path.joinpath(name_on_disk).write_text("text")
+        path.joinpath(name).write_text("text")
 
     if error != "404_artifact":
-        sample_artfact_cache = SampleArtifactCache(id=1, sample="foo", name=name, name_on_disk=name_on_disk,
+        sample_artfact_cache = SampleArtifactCache(id=1, sample="foo", name=name, name_on_disk=name,
                                                    type="fastq", key="aodp-abcdefgh")
 
         async with AsyncSession(pg) as session:
@@ -42,7 +41,7 @@ async def test_download_artifact_cache(error, spawn_job_client, pg, tmp_path):
 
     resp = await client.get(f"/api/caches/{key}/artifacts/{name}")
 
-    expected_path = client.app["settings"]["data_path"] / "caches" / key / name_on_disk
+    expected_path = client.app["settings"]["data_path"] / "caches" / key / name
 
     if error:
         assert resp.status == 404
