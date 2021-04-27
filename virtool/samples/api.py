@@ -835,7 +835,6 @@ async def upload_reads(req):
 
     """
     db = req.app["db"]
-    pg = req.app["pg"]
 
     name = req.match_info["name"]
     sample_id = req.match_info["sample_id"]
@@ -861,7 +860,7 @@ async def upload_reads(req):
         logger.debug(f"Reads file upload aborted for {sample_id}")
         return aiohttp.web.Response(status=499)
     try:
-        reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id, upload_id=upload)
+        reads = await virtool.samples.files.create_reads_file(req.app, size, name, name, sample_id, upload_id=upload)
     except exc.IntegrityError:
         return conflict("Reads file name is already uploaded for this sample")
 
@@ -966,7 +965,6 @@ async def upload_reads_cache(req):
 
     """
     db = req.app["db"]
-    pg = req.app["pg"]
 
     name = req.match_info["name"]
     sample_id = req.match_info["sample_id"]
@@ -990,7 +988,7 @@ async def upload_reads_cache(req):
         logger.debug(f"Reads cache file upload aborted for {key}")
         return aiohttp.web.Response(status=499)
 
-    reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id)
+    reads = await virtool.samples.files.create_reads_file(req.app, size, name, name, sample_id)
 
     headers = {
         "Location": f"/api/samples/{sample_id}/caches/{key}/reads/{reads['id']}"
