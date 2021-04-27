@@ -934,7 +934,7 @@ async def upload_artifacts_cache(req):
     try:
         size = await virtool.uploads.utils.naive_writer(req, cache_path)
     except asyncio.CancelledError:
-        logger.debug(f"Artifact file cache upload aborted: {sample_id}")
+        logger.debug(f"Artifact file cache upload aborted for sample: {sample_id}")
         await req.app["run_in_thread"](os.remove, cache_path)
         return aiohttp.web.Response(status=499)
 
