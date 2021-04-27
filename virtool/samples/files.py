@@ -49,8 +49,7 @@ async def create_artifact_file(
     """
     async with AsyncSession(pg) as session:
         if key:
-            artifact = SampleArtifactCache()
-            artifact.key = key
+            artifact = SampleArtifactCache(key=key)
         else:
             artifact = SampleArtifact()
 
