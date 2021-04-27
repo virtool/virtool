@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from typing import List
 
@@ -81,6 +82,9 @@ async def create_fake_sample(app: App, sample_id: str, user_id: str, paired=Fals
         if paired:
             for n in (1, 2):
                 file_path = READ_FILES_PATH / f"paired_{n}.fq.gz"
+
+                await copy_reads_file(app, file_path, f"reads_{n}.fq.gz", sample_id)
+
                 await create_reads_file(
                     pg,
                     file_path.stat().st_size,
@@ -90,6 +94,9 @@ async def create_fake_sample(app: App, sample_id: str, user_id: str, paired=Fals
                 )
         else:
             file_path = READ_FILES_PATH / "single.fq.gz"
+
+            await copy_reads_file(app, file_path, "reads_1.fq.gz", sample_id)
+
             await create_reads_file(
                 pg,
                 file_path.stat().st_size,
@@ -132,3 +139,19 @@ async def create_fake_sample(app: App, sample_id: str, user_id: str, paired=Fals
         )
 
     return sample
+
+
+async def copy_reads_file(app: App, file_path: Path, filename: str, sample_id: str):
+    """
+    Copy the example reads file to the sample directory.
+
+    :param app: the application object
+    :param file_path: the path to the reads file
+    :param filename: the name of the file
+    :param sample_id: the id of the sample
+
+    """
+    reads_path = app["settings"]["data_path"] / "samples" / sample_id
+    reads_path.mkdir(parents=True, exist_ok=True)
+
+    await app["run_in_thread"](shutil.copy, file_path, reads_path / filename)
