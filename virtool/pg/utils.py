@@ -70,14 +70,11 @@ async def delete_row(pg: AsyncEngine, id_: int, model: Base):
     :param model: Table to delete row from
     """
     async with AsyncSession(pg) as session:
-        row = (await session.execute(select(model).filter(model.id == id_))).scalar()
+        row = await get_row_by_id(pg, model, id_)
 
-        if not row:
-            return None
-
-        await session.delete(row)
-
-        await session.commit()
+        if row:
+            await session.delete(row)
+            await session.commit()
 
 
 async def get_row_by_id(pg: AsyncEngine, model: Base, id_: int):
