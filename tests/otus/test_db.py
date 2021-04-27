@@ -144,7 +144,7 @@ async def test_update_last_indexed_version(dbi, test_otu):
     assert otu_2["last_indexed_version"] == 5
 
 
-async def test_generate_virus_fasta(dbi, test_otu, test_sequence):
+async def test_generate_otu_fasta(dbi, test_otu, test_sequence):
     await dbi.otus.insert_one(
         dict(test_otu, isolates=[
             *test_otu["isolates"],
