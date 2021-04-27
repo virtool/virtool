@@ -82,24 +82,20 @@ async def create_fake_sample(app: App, sample_id: str, user_id: str, paired=Fals
             for n in (1, 2):
                 file_path = READ_FILES_PATH / f"paired_{n}.fq.gz"
                 await create_reads_file(
-                    app,
+                    pg,
                     file_path.stat().st_size,
                     f"reads_{n}.fq.gz",
                     f"reads_{n}.fq.gz",
                     sample_id,
-                    path=file_path,
-                    copy_file=True
                 )
         else:
             file_path = READ_FILES_PATH / "single.fq.gz"
             await create_reads_file(
-                app,
+                pg,
                 file_path.stat().st_size,
                 "reads_1.fq.gz",
                 "reads_1.fq.gz",
                 sample_id,
-                path=file_path,
-                copy_file=True
             )
 
     sample = await create_sample(
