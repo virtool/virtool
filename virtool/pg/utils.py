@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Optional, Union
 
 from sqlalchemy import select, text
+from sqlalchemy.engine.result import ScalarResult
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
 from virtool.api.json import pretty_dumps
@@ -77,7 +78,7 @@ async def delete_row(pg: AsyncEngine, id_: int, model: Base):
             await session.commit()
 
 
-async def get_row_by_id(pg: AsyncEngine, model: Base, id_: int):
+async def get_row_by_id(pg: AsyncEngine, model: Base, id_: int) -> Optional[Base]:
     """
     Get a row from a SQL `model` by its `id`.
 
@@ -112,7 +113,7 @@ async def get_rows(
         model: Base,
         filter_: str = "name",
         query: Optional[Union[str, int, bool, SQLEnum]] = None
-) -> Optional[Base]:
+) -> ScalarResult:
     """
     Get one or more rows from the `model` SQL model by its `filter_`. By default, rows will be fetched by their `name`.
 
