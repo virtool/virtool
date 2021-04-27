@@ -112,7 +112,7 @@ async def get_row(
     async with AsyncSession(pg) as session:
         row = (
             await session.execute(
-                select(model).filter(getattr(model, column) == query)
+                select(model).filter(getattr(model, column) == value)
             )
         ).scalar()
 
