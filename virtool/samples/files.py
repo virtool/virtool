@@ -1,5 +1,3 @@
-import shutil
-from pathlib import Path
 from typing import Dict, List
 
 from sqlalchemy import select
@@ -9,7 +7,6 @@ import virtool.pg.utils
 import virtool.utils
 from virtool.caches.models import SampleArtifactCache, SampleReadsCache
 from virtool.samples.models import SampleArtifact, SampleReads
-from virtool.types import App
 from virtool.uploads.models import Upload
 
 
