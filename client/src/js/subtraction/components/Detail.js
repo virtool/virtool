@@ -61,7 +61,7 @@ export class SubtractionDetail extends React.Component {
 
         const detail = this.props.detail;
 
-        const hasFiles = get(this.props, "state.files.length", 0) > 0;
+        const hasFiles = get(this.props, "files.length", 0) > 0;
 
         if (!detail.ready) {
             return <LoadingPlaceholder message="Subtraction is still being imported" />;
