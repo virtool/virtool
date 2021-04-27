@@ -4,7 +4,7 @@ from typing import List
 from virtool.fake.identifiers import USER_ID
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import create_sample, finalize
-from virtool.samples.db import create_sample_reads_record
+from virtool.samples.files import create_reads_file
 from virtool.types import App
 
 EXAMPLE_FILES_PATH = Path(__file__).parent.parent.parent / "example"
@@ -80,18 +80,26 @@ async def create_fake_sample(app: App, sample_id: str, user_id: str, paired=Fals
     if finalized is True:
         if paired:
             for n in (1, 2):
-                await create_sample_reads_record(
+                file_path = READ_FILES_PATH / f"paired_{n}.fq.gz"
+                await create_reads_file(
                     app,
-                    sample_id=sample_id,
-                    name=f"read_{n}.fq.gz",
-                    path=READ_FILES_PATH / f"paired_{n}.fq.gz",
+                    file_path.stat().st_size,
+                    f"reads_{n}.fq.gz",
+                    f"reads_{n}.fq.gz",
+                    sample_id,
+                    path=file_path,
+                    copy_file=True
                 )
         else:
-            await create_sample_reads_record(
+            file_path = READ_FILES_PATH / "single.fq.gz"
+            await create_reads_file(
                 app,
-                sample_id=sample_id,
-                name="reads.fq.gz",
-                path=READ_FILES_PATH / "single.fq.gz",
+                file_path.stat().st_size,
+                "reads.fq.gz",
+                "reads.fq.gz",
+                sample_id,
+                path=file_path,
+                copy_file=True
             )
 
     sample = await create_sample(
