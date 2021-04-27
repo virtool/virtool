@@ -110,13 +110,7 @@ async def get_row(
     """
     (column, value) = match
     async with AsyncSession(pg) as session:
-        row = (
-            await session.execute(
-                select(model).filter(getattr(model, column) == value)
-            )
-        ).scalar()
-
-    return row
+        return (await session.execute(select(model).filter(getattr(model, column) == value))).scalar()
 
 
 async def get_rows(
@@ -138,6 +132,4 @@ async def get_rows(
         statement = select(model).filter(
             getattr(model, filter_).ilike(f"%{query}%")) if query else select(model)
 
-        rows = (await session.execute(statement)).scalars()
-
-    return rows
+        return (await session.execute(statement)).scalars()
