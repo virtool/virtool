@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<SubtractionDetail /> should not render icons when [canModify=false] 1`] = `
-<div>
+<Fragment>
   <ViewHeader
     title="Foo"
   >
@@ -56,22 +56,17 @@ exports[`<SubtractionDetail /> should not render icons when [canModify=false] 1`
     show={false}
   />
   <Connect(RemoveSubtraction) />
-</div>
+</Fragment>
 `;
 
 exports[`<SubtractionDetail /> should render 1`] = `
-<div>
+<Fragment>
   <ViewHeader
     title="Foo"
   >
     <ViewHeader__ViewHeaderTitle>
       Foo
       <ViewHeader__ViewHeaderIcons>
-        <a
-          href="/download/subtraction/foo"
-        >
-           Download FASTA 
-        </a>
         <Icon
           color="orange"
           faStyle="fas"
@@ -136,22 +131,17 @@ exports[`<SubtractionDetail /> should render 1`] = `
     show={false}
   />
   <Connect(RemoveSubtraction) />
-</div>
+</Fragment>
 `;
 
 exports[`<SubtractionDetail /> should render file id when name not defined 1`] = `
-<div>
+<Fragment>
   <ViewHeader
     title="Foo"
   >
     <ViewHeader__ViewHeaderTitle>
       Foo
       <ViewHeader__ViewHeaderIcons>
-        <a
-          href="/download/subtraction/foo"
-        >
-           Download FASTA 
-        </a>
         <Icon
           color="orange"
           faStyle="fas"
@@ -216,7 +206,7 @@ exports[`<SubtractionDetail /> should render file id when name not defined 1`] =
     show={false}
   />
   <Connect(RemoveSubtraction) />
-</div>
+</Fragment>
 `;
 
 exports[`<SubtractionDetail /> should render loading when [detail=null] 1`] = `<LoadingPlaceholder />`;

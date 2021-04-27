@@ -4,6 +4,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
+import { fontWeight } from "../../app/theme";
 import {
     BoxGroup,
     BoxGroupHeader,
@@ -16,7 +17,7 @@ import {
     ViewHeaderIcons,
     ViewHeaderTitle
 } from "../../base";
-import { checkAdminOrPermission } from "../../utils/utils";
+import { byteSize, checkAdminOrPermission } from "../../utils/utils";
 import { getSubtraction } from "../actions";
 import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";
@@ -27,9 +28,9 @@ const StyledBoxGroupSection = styled(BoxGroupSection)`
 
     a {
         margin-right: auto;
+        font-weight: ${fontWeight.thick};
     }
 `;
-
 const calculateGC = nucleotides => numbro(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000");
 
 export class SubtractionDetail extends React.Component {
@@ -43,7 +44,6 @@ export class SubtractionDetail extends React.Component {
 
     componentDidMount() {
         this.props.onGet(this.props.match.params.subtractionId);
-        console.log("state = ", this.props.state);
     }
 
     handleHide = () => {
@@ -61,12 +61,14 @@ export class SubtractionDetail extends React.Component {
 
         const detail = this.props.detail;
 
+        const hasFiles = get(this.props, "state.files.length", 0) > 0;
+
         if (!detail.ready) {
             return <LoadingPlaceholder message="Subtraction is still being imported" />;
         }
 
         return (
-            <div>
+            <React.Fragment>
                 <ViewHeader title={detail.name}>
                     <ViewHeaderTitle>
                         {detail.name}
@@ -82,7 +84,6 @@ export class SubtractionDetail extends React.Component {
                         )}
                     </ViewHeaderTitle>
                 </ViewHeader>
-
                 <Table>
                     <tbody>
                         <tr>
@@ -107,21 +108,23 @@ export class SubtractionDetail extends React.Component {
                         </tr>
                     </tbody>
                 </Table>
-
-                <BoxGroup>
-                    <BoxGroupHeader>Files</BoxGroupHeader>
-                    {this.props.files.map(file => (
-                        <StyledBoxGroupSection key={`[${file.id}] ${file.name}`}>
-                            <a href={file.download_url}>{file.name}</a>
-                        </StyledBoxGroupSection>
-                    ))}
-                </BoxGroup>
-
-                <button onClick={() => console.log("files = ", this.props.files)}>Console Log</button>
-
+                {hasFiles && (
+                    <BoxGroup>
+                        <BoxGroupHeader>
+                            <h2>Files</h2>
+                            <p>Data files available to workflows using this subtraction</p>
+                        </BoxGroupHeader>
+                        {this.props.files.map(file => (
+                            <StyledBoxGroupSection key={file.id}>
+                                <a href={file.download_url}>{file.name}</a>
+                                <strong>{byteSize(file.size)}</strong>
+                            </StyledBoxGroupSection>
+                        ))}
+                    </BoxGroup>
+                )}
                 <EditSubtraction show={this.state.showEdit} onHide={this.handleHide} />
                 <RemoveSubtraction />
-            </div>
+            </React.Fragment>
         );
     }
 }
