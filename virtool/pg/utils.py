@@ -108,7 +108,7 @@ async def get_row(
     :param match: A (query, column) tuple to filter results by
     :return: Row from the given SQL model
     """
-    (value, column) = match
+    (column, value) = match
     async with AsyncSession(pg) as session:
         row = (
             await session.execute(

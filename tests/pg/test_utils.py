@@ -44,7 +44,7 @@ async def test_get_row(snapshot, pg, pg_session):
         session.add(index_1)
         await session.commit()
 
-    result = await virtool.pg.utils.get_row(pg, IndexFile, ("foo", "index"))
+    result = await virtool.pg.utils.get_row(pg, IndexFile, ("index", "foo"))
 
     snapshot.assert_match(result)
 
