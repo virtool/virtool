@@ -48,10 +48,7 @@ async def create_artifact_file(
     :return: A dictionary representation of the newly created row
     """
     async with AsyncSession(pg) as session:
-        if key:
-            artifact = SampleArtifactCache(key=key)
-        else:
-            artifact = SampleArtifact()
+        artifact = SampleArtifactCache(key=key) if key else SampleArtifact()
 
         artifact.name = name
         artifact.name_on_disk = name_on_disk
