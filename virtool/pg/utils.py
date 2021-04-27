@@ -89,10 +89,7 @@ async def get_row_by_id(pg: AsyncEngine, model: Base, id_: int):
     :param id_: An SQL row `id`
     :return: Row from the given SQL model
     """
-    async with AsyncSession(pg) as session:
-        row = (await session.execute(select(model).filter(getattr(model, "id") == id_))).scalar()
-
-    return row
+    return await get_row(pg, model, ("id", id_))
 
 
 async def get_row(
