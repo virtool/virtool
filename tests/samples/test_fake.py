@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from virtool.samples.fake import create_fake_sample, create_fake_samples
 from virtool.fake.wrapper import FakerWrapper
@@ -44,3 +46,6 @@ async def test_create_fake_samples(app, snapshot, dbi, static_time):
 
     for sample in samples:
         snapshot.assert_match(sample)
+
+    assert os.listdir(app["settings"]["data_path"] / "samples" / "LB1U6zCj") == ["reads.fq.gz"]
+    assert set(os.listdir(app["settings"]["data_path"] / "samples" / "2x6YnyMt")) == {"reads_1.fq.gz", "reads_2.fq.gz"}
