@@ -142,3 +142,29 @@ async def test_update_last_indexed_version(dbi, test_otu):
 
     assert otu_2["version"] == 5
     assert otu_2["last_indexed_version"] == 5
+
+
+async def test_generate_otu_fasta(dbi, test_otu, test_sequence):
+    await dbi.otus.insert_one(
+        dict(test_otu, isolates=[
+            *test_otu["isolates"],
+            {
+                "id": "baz",
+                "source_type": "isolate",
+                "source_name": "A"
+            }
+        ])
+    )
+
+    await dbi.sequences.insert_many([
+        test_sequence,
+        dict(test_sequence, _id="AX12345", sequence="ATAGAGGAGTTA", isolate_id="baz")
+    ])
+
+    expected = (
+        "prunus_virus_f.fa",
+        ">Prunus virus F|Isolate 8816-v2|KX269872|27\nTGTTTAAGAGATTAAACAACCGCTTTC\n"
+        ">Prunus virus F|Isolate A|AX12345|12\nATAGAGGAGTTA"
+    )
+
+    assert await virtool.otus.db.generate_otu_fasta(dbi, test_otu["_id"]) == expected

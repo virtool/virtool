@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 
-@pytest.mark.parametrize("get", ["otu", "isolate", "sequence"])
+@pytest.mark.parametrize("get", ["isolate", "sequence"])
 @pytest.mark.parametrize("missing", [None, "otu", "isolate", "sequence"])
 async def test_all(get, missing, spawn_client):
     client = await spawn_client(authorize=True)

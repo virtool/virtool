@@ -88,36 +88,6 @@ async def download_isolate(req):
     })
 
 
-@routes.get("/download/otus/{otu_id}")
-@routes.jobs_api.get("/download/otus/{otu_id}")
-async def download_otu(req):
-    """
-    Download a FASTA file containing the sequences for all isolates in a single Virtool otu.
-
-    """
-    db = req.app["db"]
-
-    otu_id = req.match_info["otu_id"]
-
-    try:
-        filename, fasta = await virtool.downloads.db.generate_otu_fasta(db, otu_id)
-    except virtool.errors.DatabaseError as err:
-        if "Sequence does not exist" in str(err):
-            return virtool.api.response.not_found("Sequence not found")
-
-        if "OTU does not exist" in str(err):
-            return virtool.api.response.not_found("OTU not found")
-
-        raise
-
-    if not fasta:
-        return web.Response(status=404)
-
-    return web.Response(text=fasta, headers={
-        "Content-Disposition": f"attachment; filename={filename}"
-    })
-
-
 @routes.get("/download/sequences/{sequence_id}")
 async def download_sequence(req):
     """

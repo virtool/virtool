@@ -3,6 +3,7 @@ import asyncio
 from aiohttp import web
 
 import virtool.db.utils
+import virtool.downloads.db
 import virtool.history.db
 import virtool.history.utils
 import virtool.http.routes
@@ -40,6 +41,32 @@ SCHEMA_VALIDATOR = {
 }
 
 routes = virtool.http.routes.Routes()
+
+
+@routes.get("/api/otus/{otu_id}.fa")
+@routes.jobs_api.get("/api/otus/{otu_id}.fa")
+async def download_otu(req):
+    """
+    Download a FASTA file containing the sequences for all isolates in a single Virtool otu.
+
+    """
+    db = req.app["db"]
+    otu_id = req.match_info["otu_id"]
+
+    if not await db.otus.count_documents({"_id": otu_id}):
+        return virtool.api.response.not_found("OTU not found")
+
+    filename, fasta = await virtool.otus.db.generate_otu_fasta(db, otu_id)
+
+    if not filename and not fasta:
+        return virtool.api.response.not_found("Sequence not found")
+
+    if not fasta:
+        return web.Response(status=404)
+
+    return web.Response(text=fasta, headers={
+        "Content-Disposition": f"attachment; filename={filename}"
+    })
 
 
 @routes.get("/api/otus")
