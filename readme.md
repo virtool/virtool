@@ -9,6 +9,8 @@ Virtool is a web-based application for diagnosing viral infections in plant samp
 Website: https://www.virtool.ca  
 Gitter: https://gitter.im/virtool
 
+![Virtool Graph Example](./static/graph-example.png)
+
 #### Required Software
 
 | Software                                                            | Version | Use
