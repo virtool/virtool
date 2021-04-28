@@ -100,7 +100,7 @@ async def get_row(
 
     :param pg: PostgreSQL AsyncEngine object
     :param model: A model to retrieve a row from
-    :param match: A (query, column) tuple to filter results by
+    :param match: A (column, value) tuple to filter results by
     :return: Row from the given SQL model
     """
     (column, value) = match
