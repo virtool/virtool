@@ -805,16 +805,21 @@ async def upload_artifact(req):
         return bad_request("Unsupported sample artifact type")
 
     try:
+        artifact = await virtool.samples.files.create_artifact_file(pg, name, name, sample_id, artifact_type)
+    except exc.IntegrityError:
+        return conflict("Artifact file has already been uploaded for this sample")
+
+    upload_id = artifact["id"]
+
+    try:
         size = await virtool.uploads.utils.naive_writer(req, artifact_file_path)
     except asyncio.CancelledError:
         logger.debug(f"Artifact file upload aborted for sample: {sample_id}")
+        await virtool.pg.utils.delete_row(pg, upload_id, SampleArtifact)
         await req.app["run_in_thread"](os.remove, artifact_file_path)
         return aiohttp.web.Response(status=499)
 
-    try:
-        artifact = await virtool.samples.files.create_artifact_file(pg, name, name, sample_id, size, artifact_type)
-    except exc.IntegrityError:
-        return conflict("Artifact file has already been uploaded for this sample")
+    artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SampleArtifact)
 
     headers = {
         "Location": f"/api/samples/{sample_id}/artifact/{name}"
@@ -932,16 +937,21 @@ async def upload_artifacts_cache(req):
         return bad_request("Unsupported sample artifact type")
 
     try:
+        artifact = await virtool.samples.files.create_artifact_file(pg, name, name, sample_id, artifact_type, cache=True)
+    except exc.IntegrityError:
+        return conflict("Artifact file has already been uploaded for this sample cache")
+
+    upload_id = artifact["id"]
+
+    try:
         size = await virtool.uploads.utils.naive_writer(req, cache_path)
     except asyncio.CancelledError:
         logger.debug(f"Artifact file cache upload aborted for sample: {sample_id}")
+        await virtool.pg.utils.delete_row(pg, upload_id, SampleArtifact)
         await req.app["run_in_thread"](os.remove, cache_path)
         return aiohttp.web.Response(status=499)
 
-    try:
-        artifact = await virtool.samples.files.create_artifact_file(pg, name, name, sample_id, size, artifact_type, cache=True)
-    except exc.IntegrityError:
-        return conflict("Artifact file has already been uploaded for this sample cache")
+    artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SampleArtifactCache)
 
     headers = {
         "Location": f"/api/samples/{sample_id}/caches/{key}/artifacts/{name}"

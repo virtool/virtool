@@ -20,7 +20,7 @@ async def test_delete_row(pg, pg_session):
     await virtool.pg.utils.delete_row(pg, 1, IndexFile)
 
     async with pg_session as session:
-        result = (await session.execute(select(IndexFile).filter_by(id=1))).scalar()
+        result = await virtool.pg.utils.get_row_by_id(pg, IndexFile, 1)
 
     assert result is None
 
