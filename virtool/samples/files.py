@@ -48,12 +48,10 @@ async def create_artifact_file(
     async with AsyncSession(pg) as session:
         artifact = SampleArtifact() if not cache else SampleArtifactCache()
 
-        artifact.name, artifact.name_on_disk, artifact.sample, artifact.type = (
-            name,
-            name_on_disk,
-            sample,
-            artifact_type
-        )
+        artifact.name = name
+        artifact.name_on_disk = name_on_disk
+        artifact.sample = sample
+        artifact.type = artifact_type
 
         session.add(artifact)
         await session.flush()
