@@ -20,7 +20,7 @@ import virtool.utils
 from virtool.fake.identifiers import USER_ID
 from virtool.hmm.fake import create_fake_hmms
 from virtool.indexes.fake import create_fake_indexes
-from virtool.samples.fake import create_fake_samples, SAMPLE_ID_PAIRED
+from virtool.samples.fake import create_fake_samples, SAMPLE_ID_PAIRED_FINALIZED
 from virtool.jobs.utils import JobRights
 from virtool.otus.fake import create_fake_otus
 from virtool.subtractions.fake import create_fake_subtractions
@@ -174,7 +174,7 @@ async def create_sample_integration_test_job(app: App):
         db=app["db"],
         workflow_name=name,
         job_args={
-            "sample_id": SAMPLE_ID_PAIRED,
+            "sample_id": SAMPLE_ID_PAIRED_FINALIZED,
             "subtraction_id": "subtraction_1",
             "ref_id": "reference_1",
             "analysis_id": "analysis_1"
