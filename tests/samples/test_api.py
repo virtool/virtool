@@ -13,6 +13,7 @@ import virtool.samples.db
 import virtool.uploads.db
 from virtool.caches.models import SampleArtifactCache, SampleReadsCache
 from virtool.labels.models import Label
+from virtool.samples.files import create_reads_file
 from virtool.samples.models import SampleReads, SampleArtifact
 from virtool.uploads.models import Upload
 
@@ -731,12 +732,12 @@ async def test_job_remove(
 
     if exists:
         file = await virtool.uploads.db.create(pg, "test", "reads", reserved=True)
+        await create_reads_file(pg, 0, "test", "test", "test", upload_id=1)
 
         await client.db.samples.insert_one({
             "_id": "test",
             "all_read": True,
             "all_write": True,
-            "files": [file["id"]],
             "ready": ready
         })
 
