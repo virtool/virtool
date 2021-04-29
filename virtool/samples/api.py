@@ -33,7 +33,7 @@ from virtool.api.response import bad_request, conflict, insufficient_rights, inv
 from virtool.caches.models import SampleArtifactCache
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
-from virtool.samples.models import ArtifactType, SampleArtifact
+from virtool.samples.models import ArtifactType, SampleArtifact, SampleReads
 from virtool.samples.utils import bad_labels_response, check_labels
 from virtool.uploads.utils import is_gzip_compressed
 
@@ -572,18 +572,20 @@ async def job_remove(req):
 
     """
     db = req.app["db"]
+    pg = req.app["pg"]
 
     sample_id = req.match_info["sample_id"]
 
-    ready = await virtool.db.utils.get_one_field(db.samples, "ready", sample_id)
+    document = await db.samples.find_one({"_id": sample_id})
 
-    if ready is None:
+    if not document:
         return not_found()
 
-    if ready is True:
+    if document["ready"]:
         return bad_request("Only unfinalized samples can be deleted")
 
-    upload_ids = await virtool.db.utils.get_one_field(db.samples, "files", sample_id)
+    reads_files = await virtool.pg.utils.get_rows(pg, SampleReads, "sample", sample_id)
+    upload_ids = [upload for reads in reads_files if (upload := reads.upload)]
 
     if upload_ids:
         await virtool.uploads.db.release(req.app["pg"], upload_ids)
