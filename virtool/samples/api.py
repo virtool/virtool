@@ -1011,7 +1011,7 @@ async def upload_reads_cache(req):
         logger.debug(f"Reads cache file upload aborted for {key}")
         return aiohttp.web.Response(status=499)
 
-    reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id)
+    reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id, cache=True)
 
     headers = {
         "Location": f"/api/samples/{sample_id}/caches/{key}/reads/{reads['id']}"
@@ -1106,8 +1106,7 @@ async def download_artifact(req: aiohttp.web.Request):
 
     artifact = result.to_dict()
 
-    file_path = req.app["settings"]["data_path"] / \
-        "samples" / sample_id / artifact["name_on_disk"]
+    file_path = req.app["settings"]["data_path"] / f"samples/{sample_id}/{artifact['name_on_disk']}"
 
     if not os.path.isfile(file_path):
         return virtool.api.response.not_found()
