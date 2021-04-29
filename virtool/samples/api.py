@@ -172,7 +172,7 @@ async def get(req):
 
         return json_response(sample)
     except ValueError:
-        raise not_found()
+        return not_found()
 
 
 @routes.jobs_api.get("/api/samples/{sample_id}")
@@ -188,7 +188,7 @@ async def get_sample(req):
             await virtool.samples.db.get_sample(req.app, sample_id)
         )
     except ValueError:
-        raise not_found()
+        return not_found()
 
 
 @routes.jobs_api.get("/api/samples/{sample_id}/caches/{cache_key}")

@@ -43,7 +43,7 @@ async def test_create_fake_unpaired(paired, finalized, app, snapshot,
 async def test_create_fake_samples(app, snapshot, dbi, static_time):
     samples = await create_fake_samples(app)
 
-    assert len(samples) == 3
+    assert len(samples) == 4
 
     for sample in samples:
         snapshot.assert_match(sample)
