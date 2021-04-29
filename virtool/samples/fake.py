@@ -11,14 +11,43 @@ from virtool.types import App
 EXAMPLE_FILES_PATH = Path(__file__).parent.parent.parent / "example"
 READ_FILES_PATH = EXAMPLE_FILES_PATH / "reads"
 
+SAMPLE_ID_UNPAIRED = "sample_unpaired"
+SAMPLE_ID_PAIRED = "sample_paired"
+SAMPLE_ID_UNPAIRED_FINALIZED = "sample_unpaired_finalized"
+SAMPLE_ID_PAIRED_FINALIZED = "sample_paired_finalized"
+
 
 async def create_fake_samples(app: App) -> List[dict]:
     samples = []
-    fake = app["fake"]
 
-    samples.append(await create_fake_sample(app, fake.get_mongo_id(), USER_ID, paired=True, finalized=True))
-    samples.append(await create_fake_sample(app, fake.get_mongo_id(), USER_ID, paired=False, finalized=True))
-    samples.append(await create_fake_sample(app, fake.get_mongo_id(), USER_ID, finalized=False))
+    samples.append(await create_fake_sample(
+        app,
+        SAMPLE_ID_UNPAIRED_FINALIZED,
+        USER_ID,
+        paired=False,
+        finalized=True)
+    )
+    samples.append(await create_fake_sample(
+        app,
+        SAMPLE_ID_PAIRED_FINALIZED,
+        USER_ID,
+        paired=True,
+        finalized=True)
+    )
+    samples.append(await create_fake_sample(
+        app,
+        USER_ID,
+        SAMPLE_ID_UNPAIRED,
+        paired=False,
+        finalized=False)
+    )
+    samples.append(await create_fake_sample(
+        app,
+        SAMPLE_ID_PAIRED,
+        USER_ID,
+        paired=True,
+        finalized=False)
+    )
 
     return samples
 
