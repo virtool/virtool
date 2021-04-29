@@ -17,7 +17,7 @@ from virtool.labels.models import Label
 from virtool.samples.models import SampleReads
 from virtool.uploads.models import Upload
 
-FASTQ_PATH = Path(sys.path[0]) / "tests/test_files/test.fq"
+FASTQ_PATH = Path.cwd() / "tests/test_files/test.fq"
 
 
 class TestCalculateWorkflowTags:
@@ -568,7 +568,7 @@ async def test_finalize(tmp_path, dbi, pg, pg_session):
         ]
     }
     assert not await virtool.uploads.db.get(pg, 1)
-    assert not (await virtool.pg.utils.get_row(pg, 1, SampleReads)).upload
+    assert not (await virtool.pg.utils.get_row_by_id(pg, SampleReads, 1)).upload
 
 
 async def test_create_sample_reads_record(tmp_path, example_path, pg, pg_session):

@@ -100,7 +100,7 @@ async def create_fake_finalized_subtraction(
         "user": {"id": user_id},
     })
 
-    subtractions_path = Path(app["settings"]["data_path"]) / "subtractions"
+    subtractions_path = app["settings"]["data_path"] / "subtractions"
 
     subtractions_example_path = example_path / "subtractions" / "arabidopsis_thaliana"
 

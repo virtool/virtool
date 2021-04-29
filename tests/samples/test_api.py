@@ -221,7 +221,7 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
         })
 
         label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
-        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta", name_on_disk="1-reference.fa.gz")
+        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta", name_on_disk="reference.fa.gz")
         reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
         upload = Upload(name="test")
         async with pg_session as session:
@@ -650,7 +650,7 @@ async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_sessi
 
     async with pg_session as session:
         upload = Upload(name="test", name_on_disk="test.fq.gz")
-        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta", name_on_disk="1-reference.fa.gz")
+        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta", name_on_disk="reference.fa.gz")
         reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
 
         upload.reads.append(reads)
@@ -664,7 +664,7 @@ async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_sessi
         assert resp.status == 200
         snapshot.assert_match(await resp.json())
         assert not await virtool.uploads.db.get(pg, 1)
-        assert not (await virtool.pg.utils.get_row(pg, 1, SampleReads)).upload
+        assert not (await virtool.pg.utils.get_row_by_id(pg, SampleReads, 1)).upload
     else:
         assert resp.status == 422
         assert await resp_is.invalid_input(resp, {"quality": ['required field']})
@@ -1012,9 +1012,9 @@ async def test_cache_job_remove(exists, ready, tmp_path, spawn_job_client, snaps
     assert not (tmp_path / "caches" / "foo").is_dir()
 
 
-@pytest.mark.parametrize("artifact_type", ["fastq", "foo"])
+@pytest.mark.parametrize("error", [None, 400, 409])
 async def test_upload_artifacts(
-        artifact_type,
+        error,
         snapshot,
         spawn_job_client,
         static_time,
@@ -1026,6 +1026,7 @@ async def test_upload_artifacts(
 
     """
     path = Path.cwd() / "tests" / "test_files" / "nuvs" / "reads_1.fq"
+    artifact_type = "fastq" if error != 400 else "foo"
 
     data = {
         "file": open(path, "rb")
@@ -1042,17 +1043,24 @@ async def test_upload_artifacts(
 
     resp = await client.post(f"/api/samples/test/artifacts?name=small.fq&type={artifact_type}", data=data)
 
-    if artifact_type == "fastq":
+    if error == 409:
+        data["file"] = open(path, "rb")
+        resp_2 = await client.post(f"/api/samples/test/artifacts?name=small.fq&type={artifact_type}", data=data)
+
+        assert await resp_is.conflict(resp_2, "Artifact file has already been uploaded for this sample")
+
+    if not error:
         assert resp.status == 201
-        assert os.listdir(sample_file_path) == ["1-small.fq"]
         snapshot.assert_match(await resp.json())
-    else:
+        assert os.listdir(sample_file_path) == ["small.fq"]
+    elif error == 400:
         assert await resp_is.bad_request(resp, "Unsupported sample artifact type")
 
 
 class TestUploadReads:
     @pytest.mark.parametrize("compressed", [True, False])
-    async def test_upload_reads(self, compressed, mocker, snapshot, spawn_job_client, static_time, resp_is, pg, tmp_path):
+    async def test_upload_reads(self, compressed, mocker, snapshot, spawn_job_client, static_time, resp_is, pg,
+                                tmp_path):
         """
         Test that new sample reads can be uploaded using the Jobs API.
 
@@ -1099,7 +1107,7 @@ class TestUploadReads:
         client = await spawn_job_client(authorize=True)
 
         client.app["settings"]["data_path"] = tmp_path
-        sample_file_path = Path(client.app["settings"]["data_path"]) / "samples" / "test"
+        sample_file_path = client.app["settings"]["data_path"] / "samples" / "test"
 
         await client.db.samples.insert_one({
             "_id": "test",
@@ -1201,7 +1209,7 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
     if error != "404_file":
         path = (tmp_path / "samples" / "foo")
         path.mkdir(parents=True)
-        path.joinpath("1-fastqc.txt").write_text("test")
+        path.joinpath("fastqc.txt").write_text("test")
 
     if error != "404_sample":
         await client.db.samples.insert_one({
@@ -1213,7 +1221,6 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
             id=1,
             sample="foo",
             name="fastqc.txt",
-            name_on_disk="1-fastqc.txt",
             type="fastq"
         )
 
@@ -1224,7 +1231,7 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
 
     resp = await client.get("/api/samples/foo/artifacts/fastqc.txt")
 
-    expected_path = client.app["settings"]["data_path"] / "samples" / "foo" / "1-fastqc.txt"
+    expected_path = client.app["settings"]["data_path"] / "samples" / "foo" / "fastqc.txt"
 
     if error:
         assert resp.status == 404
@@ -1291,9 +1298,9 @@ class TestCreateCache:
         assert await dbi.caches.count_documents({}) == 1
 
 
-@pytest.mark.parametrize("artifact_type", ["fastq", "foo"])
+@pytest.mark.parametrize("error", [None, 400, 409])
 async def test_upload_artifact_cache(
-        artifact_type,
+        error,
         resp_is,
         snapshot,
         static_time,
@@ -1305,6 +1312,7 @@ async def test_upload_artifact_cache(
 
     """
     path = Path.cwd() / "tests" / "test_files" / "nuvs" / "reads_1.fq"
+    artifact_type = "fastq" if error != 400 else "foo"
 
     data = {
         "file": open(path, "rb")
@@ -1332,11 +1340,18 @@ async def test_upload_artifact_cache(
         f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}",
         data=data)
 
-    if artifact_type == "fastq":
+    if error == 409:
+        data["file"] = open(path, "rb")
+        resp_2 = await client.post(
+            f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}", data=data)
+
+        assert await resp_is.conflict(resp_2, "Artifact file has already been uploaded for this sample cache")
+
+    if not error:
         assert resp.status == 201
         snapshot.assert_match(await resp.json())
-        assert os.listdir(cache_path) == ["1-small.fq"]
-    else:
+        assert os.listdir(cache_path) == ["small.fq"]
+    elif error == 400:
         assert await resp_is.bad_request(resp, "Unsupported sample artifact type")
 
 

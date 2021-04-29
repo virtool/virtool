@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Optional, Union
 
 from sqlalchemy import select, text
+from sqlalchemy.engine.result import ScalarResult
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
 from virtool.api.json import pretty_dumps
@@ -70,47 +71,49 @@ async def delete_row(pg: AsyncEngine, id_: int, model: Base):
     :param model: Table to delete row from
     """
     async with AsyncSession(pg) as session:
-        row = (await session.execute(select(model).filter(model.id == id_))).scalar()
+        row = await get_row_by_id(pg, model, id_)
 
-        if not row:
-            return None
+        if row:
+            await session.delete(row)
+            await session.commit()
 
-        await session.delete(row)
 
-        await session.commit()
+async def get_row_by_id(pg: AsyncEngine, model: Base, id_: int) -> Optional[Base]:
+    """
+    Get a row from a SQL `model` by its `id`.
+
+    :param pg: PostgreSQL AsyncEngine object
+    :param model: A model to retrieve a row from
+    :param id_: An SQL row `id`
+    :return: Row from the given SQL model
+    """
+    return await get_row(pg, model, ("id", id_))
 
 
 async def get_row(
         pg: AsyncEngine,
-        query: Union[str, int, bool, SQLEnum],
         model: Base,
-        filter_: str = "id",
+        match: tuple
 ) -> Optional[Base]:
     """
-    Get a row from the `model` SQL model by its `filter_`. By default, a row will be fetched by its `id`.
+    Get a row from the SQL `model` that matches a query and column combination.
 
     :param pg: PostgreSQL AsyncEngine object
-    :param query: A query to filter by
     :param model: A model to retrieve a row from
-    :param filter_: A table column to search for a given `query`
+    :param match: A (column, value) tuple to filter results by
     :return: Row from the given SQL model
     """
+    (column, value) = match
     async with AsyncSession(pg) as session:
-        row = (
-            await session.execute(
-                select(model).filter(getattr(model, filter_) == query)
-            )
-        ).scalar()
-
-    return row
+        return (await session.execute(select(model).filter(getattr(model, column) == value))).scalar()
 
 
 async def get_rows(
         pg: AsyncEngine,
         model: Base,
         filter_: str = "name",
-        query: Optional[Union[str, int, bool, SQLEnum]] = None,
-) -> Optional[Base]:
+        query: Optional[Union[str, int, bool, SQLEnum]] = None
+) -> ScalarResult:
     """
     Get one or more rows from the `model` SQL model by its `filter_`. By default, rows will be fetched by their `name`.
 
@@ -124,6 +127,4 @@ async def get_rows(
         statement = select(model).filter(
             getattr(model, filter_).ilike(f"%{query}%")) if query else select(model)
 
-        rows = (await session.execute(statement)).scalars()
-
-    return rows
+        return (await session.execute(statement)).scalars()

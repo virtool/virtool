@@ -789,8 +789,6 @@ async def upload_artifact(req):
     sample_id = req.match_info["sample_id"]
     artifact_type = req.query.get("type")
 
-    artifact_file_path = Path(virtool.samples.utils.join_sample_path(req.app["settings"], sample_id))
-
     if not await db.samples.find_one(sample_id):
         return not_found()
 
@@ -801,28 +799,30 @@ async def upload_artifact(req):
 
     name = req.query.get("name")
 
+    artifact_file_path = virtool.samples.utils.join_sample_path(req.app["settings"], sample_id) / name
+
     if artifact_type and artifact_type not in ArtifactType.to_list():
         return bad_request("Unsupported sample artifact type")
 
-    artifact = await virtool.samples.files.create_artifact_file(pg, name, sample_id, artifact_type)
+    try:
+        artifact = await virtool.samples.files.create_artifact_file(pg, name, name, sample_id, artifact_type)
+    except exc.IntegrityError:
+        return conflict("Artifact file has already been uploaded for this sample")
 
-    file_id = artifact["id"]
-
-    artifact_file_path = artifact_file_path / artifact["name_on_disk"]
+    upload_id = artifact["id"]
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, artifact_file_path)
     except asyncio.CancelledError:
-        logger.debug(f"Artifact file upload aborted: {file_id}")
+        logger.debug(f"Artifact file upload aborted for sample: {sample_id}")
+        await virtool.pg.utils.delete_row(pg, upload_id, SampleArtifact)
         await req.app["run_in_thread"](os.remove, artifact_file_path)
-        await virtool.pg.utils.delete_row(pg, file_id, SampleArtifact)
-
         return aiohttp.web.Response(status=499)
 
-    artifact = await virtool.uploads.db.finalize(pg, size, file_id, SampleArtifact)
+    artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SampleArtifact)
 
     headers = {
-        "Location": f"/api/samples/{sample_id}/artifact/{file_id}"
+        "Location": f"/api/samples/{sample_id}/artifact/{name}"
     }
 
     return json_response(artifact, status=201, headers=headers)
@@ -848,7 +848,7 @@ async def upload_reads(req):
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         return bad_request("File name is not an accepted reads file")
 
-    reads_path = Path(virtool.samples.utils.join_sample_path(req.app["settings"], sample_id)) / name
+    reads_path = virtool.samples.utils.join_sample_path(req.app["settings"], sample_id) / name
 
     if not await db.samples.find_one(sample_id):
         return not_found()
@@ -921,8 +921,6 @@ async def upload_artifacts_cache(req):
     key = req.match_info["key"]
     artifact_type = req.query.get("type")
 
-    cache_path = Path(virtool.caches.utils.join_cache_path(req.app["settings"], key))
-
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
         return not_found()
 
@@ -933,27 +931,30 @@ async def upload_artifacts_cache(req):
 
     name = req.query.get("name")
 
+    cache_path = virtool.caches.utils.join_cache_path(req.app["settings"], key) / name
+
     if artifact_type and artifact_type not in ArtifactType.to_list():
         return bad_request("Unsupported sample artifact type")
 
-    artifact = await virtool.samples.files.create_artifact_file(pg, name, sample_id, artifact_type, cache=True)
+    try:
+        artifact = await virtool.samples.files.create_artifact_file(pg, name, name, sample_id, artifact_type, cache=True)
+    except exc.IntegrityError:
+        return conflict("Artifact file has already been uploaded for this sample cache")
 
     upload_id = artifact["id"]
-
-    cache_path = cache_path / artifact["name_on_disk"]
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, cache_path)
     except asyncio.CancelledError:
-        logger.debug(f"Artifact file upload aborted: {upload_id}")
+        logger.debug(f"Artifact file cache upload aborted for sample: {sample_id}")
+        await virtool.pg.utils.delete_row(pg, upload_id, SampleArtifact)
         await req.app["run_in_thread"](os.remove, cache_path)
-        await virtool.pg.utils.delete_row(pg, upload_id, SampleArtifactCache)
         return aiohttp.web.Response(status=499)
 
     artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SampleArtifactCache)
 
     headers = {
-        "Location": f"/api/samples/{sample_id}/caches/{key}/{upload_id}"
+        "Location": f"/api/samples/{sample_id}/caches/{key}/artifacts/{name}"
     }
 
     return json_response(artifact, status=201, headers=headers)
@@ -975,7 +976,7 @@ async def upload_reads_cache(req):
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         return bad_request("File name is not an accepted reads file")
 
-    cache_path = Path(virtool.caches.utils.join_cache_path(req.app["settings"], key)) / name
+    cache_path = virtool.caches.utils.join_cache_path(req.app["settings"], key) / name
 
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
         return not_found("Cache doesn't exist with given key")
@@ -1084,7 +1085,7 @@ async def download_artifact(req: aiohttp.web.Request):
 
     artifact = result.to_dict()
 
-    file_path = req.app["settings"]["data_path"] / "samples" / sample_id / artifact["name_on_disk"]
+    file_path = req.app["settings"]["data_path"] / "samples" / sample_id / artifact["name"]
 
     if not os.path.isfile(file_path):
         return virtool.api.response.not_found()
@@ -1155,7 +1156,8 @@ async def download_artifact_cache(req):
 
     async with AsyncSession(pg) as session:
         result = (
-            await session.execute(select(SampleArtifactCache).filter_by(sample=sample_id, name=filename))).scalar()
+            await session.execute(select(SampleArtifactCache).filter_by(sample=sample_id, name=filename))
+        ).scalar()
 
     if not result:
         return not_found()

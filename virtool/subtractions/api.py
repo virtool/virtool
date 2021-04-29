@@ -133,7 +133,7 @@ async def create(req):
     nickname = data["nickname"]
     upload_id = data["upload_id"]
 
-    file = await virtool.pg.utils.get_row(pg, upload_id, Upload)
+    file = await virtool.pg.utils.get_row_by_id(pg, Upload, upload_id)
 
     if file is None:
         return bad_request("File does not exist")

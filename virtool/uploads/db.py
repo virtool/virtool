@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 from typing import Union, Optional, List, Dict, Type
+from virtool.pg.base import Base
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
@@ -63,7 +64,7 @@ async def create(pg: AsyncEngine, name: str, upload_type: str, reserved: bool = 
         return upload
 
 
-async def finalize(pg, size: int, id_: int, table: Type[any]) -> Optional[dict]:
+async def finalize(pg, size: int, id_: int, model: Base) -> Optional[dict]:
     """
     Finalize row creation for tables that store uploaded files. Updates table with file information and sets `ready`
     to `True`.
@@ -75,7 +76,7 @@ async def finalize(pg, size: int, id_: int, table: Type[any]) -> Optional[dict]:
     :return: Dictionary representation of new row in `table`
     """
     async with AsyncSession(pg) as session:
-        upload = (await session.execute(select(table).filter_by(id=id_))).scalar()
+        upload = (await session.execute(select(model).filter_by(id=id_))).scalar()
 
         if not upload:
             return None
@@ -153,7 +154,7 @@ async def delete(req, pg: AsyncEngine, upload_id: int) -> Optional[dict]:
     try:
         await req.app["run_in_thread"](
             virtool.utils.rm,
-            Path(req.app["settings"]["data_path"]) / "files" / upload["name_on_disk"]
+            req.app["settings"]["data_path"] / "files" / upload["name_on_disk"]
         )
     except FileNotFoundError:
         pass

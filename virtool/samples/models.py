@@ -25,6 +25,7 @@ class SampleArtifact(Base):
 
     """
     __tablename__ = "sample_artifacts"
+    __table_args__ = (UniqueConstraint("sample", "name"),)
 
     id = Column(Integer, primary_key=True)
     sample = Column(String, nullable=False)

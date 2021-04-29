@@ -32,7 +32,7 @@ async def get_existing_reads(
 
 
 async def create_artifact_file(
-    pg: AsyncEngine, name: str, sample: str, artifact_type: str, cache: bool = False
+    pg: AsyncEngine, name: str, name_on_disk: str, sample: str, artifact_type: str, cache: bool = False
 ) -> Dict[str, any]:
     """
     Create a row in an SQL table that represents uploaded sample artifact files. A row is created in either the
@@ -48,18 +48,19 @@ async def create_artifact_file(
     async with AsyncSession(pg) as session:
         artifact = SampleArtifact() if not cache else SampleArtifactCache()
 
-        artifact.sample, artifact.name, artifact.type = sample, name, artifact_type
+        artifact.name = name
+        artifact.name_on_disk = name_on_disk
+        artifact.sample = sample
+        artifact.type = artifact_type
 
         session.add(artifact)
         await session.flush()
-
-        artifact.name_on_disk = f"{artifact.id}-{artifact.name}"
 
         artifact = artifact.to_dict()
 
         await session.commit()
 
-        return artifact
+    return artifact
 
 
 async def create_reads_file(
@@ -107,4 +108,4 @@ async def create_reads_file(
 
         await session.commit()
 
-        return reads
+    return reads
