@@ -1,6 +1,0 @@
-example/hmms/profiles.hmm.h3f filter=lfs diff=lfs merge=lfs -text
-example/hmms/profiles.hmm.h3i filter=lfs diff=lfs merge=lfs -text
-example/hmms/profiles.hmm.h3m filter=lfs diff=lfs merge=lfs -text
-example/hmms/profiles.hmm.h3p filter=lfs diff=lfs merge=lfs -text
-example/**/*.fa.gz filter=lfs diff=lfs merge=lfs -text
-example/**/*.bt2 filter=lfs diff=lfs merge=lfs -text
