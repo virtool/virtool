@@ -453,17 +453,13 @@ async def generate_otu_fasta(db, otu_id: str) -> Tuple[Optional[str], Optional[s
     fasta = list()
 
     for isolate in otu["isolates"]:
-        sequences = await db.sequences.find({"otu_id": otu_id, "isolate_id": isolate["id"]}, ["sequence"]).to_list(None)
-        if sequences:
-            for sequence in sequences:
-                fasta.append(virtool.downloads.utils.format_fasta_entry(
-                    otu["name"],
-                    virtool.otus.utils.format_isolate_name(isolate),
-                    sequence["_id"],
-                    sequence["sequence"]
-                ))
-        else:
-            return None, None
+        async for sequence in db.sequences.find({"otu_id": otu_id, "isolate_id": isolate["id"]}, ["sequence"]):
+            fasta.append(virtool.downloads.utils.format_fasta_entry(
+                otu["name"],
+                virtool.otus.utils.format_isolate_name(isolate),
+                sequence["_id"],
+                sequence["sequence"]
+            ))
 
     fasta = "\n".join(fasta)
 

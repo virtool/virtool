@@ -1046,24 +1046,19 @@ async def test_remove_sequence(error, snapshot, spawn_client, check_ref_right, r
     snapshot.assert_match(await client.db.history.find_one(), "history")
 
 
-@pytest.mark.parametrize("error", [None, "404_otu", "404_sequence"])
+@pytest.mark.parametrize("error", [None, "404"])
 async def test_download_otu(error, spawn_client, resp_is, test_sequence, test_otu):
     client = await spawn_client(authorize=True)
 
     if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
 
-    if error != "404_sequence":
-        await client.db.sequences.insert_one(test_sequence)
+    await client.db.sequences.insert_one(test_sequence)
 
     resp = await client.get("/api/otus/6116cba1.fa")
 
     if error == "404_otu":
         assert await resp_is.not_found(resp, "OTU not found")
-        return
-
-    if error == "404_sequence":
-        assert await resp_is.not_found(resp, "Sequence not found")
         return
 
     assert resp.status == 200
