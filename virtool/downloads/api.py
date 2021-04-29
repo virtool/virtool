@@ -29,38 +29,6 @@ import virtool.utils
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/download/caches/{cache_id}/reads_{suffix}.fq.gz")
-async def download_cache_reads(req):
-    """
-    Download the cached trimmed data for the sample.
-
-    """
-    db = req.app["db"]
-
-    cache_id = req.match_info["cache_id"]
-    suffix = req.match_info["suffix"]
-
-    files = await virtool.db.utils.get_one_field(db.caches, "files", cache_id)
-
-    if not files:
-        return virtool.api.response.not_found()
-
-    cache_path = virtool.caches.utils.join_cache_path(req.app["settings"], cache_id)
-    file_path = virtool.samples.utils.join_read_path(cache_path, suffix)
-
-    if not os.path.isfile(file_path):
-        return virtool.api.response.not_found()
-
-    file_stats = virtool.utils.file_stats(file_path)
-
-    headers = {
-        "Content-Length": file_stats["size"],
-        "Content-Type": "application/gzip"
-    }
-
-    return web.FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
-
-
 @routes.get("/download/otus/{otu_id}/isolates/{isolate_id}")
 async def download_isolate(req):
     """
