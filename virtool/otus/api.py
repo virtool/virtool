@@ -58,12 +58,6 @@ async def download_otu(req):
 
     filename, fasta = await virtool.otus.db.generate_otu_fasta(db, otu_id)
 
-    if not filename and not fasta:
-        return virtool.api.response.not_found("Sequence not found")
-
-    if not fasta:
-        return web.Response(status=404)
-
     return web.Response(text=fasta, headers={
         "Content-Disposition": f"attachment; filename={filename}"
     })
