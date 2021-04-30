@@ -42,6 +42,7 @@ async def create_artifact_file(
 
     :param pg: PostgreSQL AsyncEngine object
     :param name: Name of the sample artifact file
+    :param name_on_disk: Name of the sample artifact file as it appears on disk
     :param sample: ID that corresponds to a parent sample
     :param artifact_type: Type of artifact to be uploaded
     :param key: A key for a given cache
