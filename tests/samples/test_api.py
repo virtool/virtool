@@ -1014,7 +1014,7 @@ async def test_cache_job_remove(exists, ready, tmp_path, spawn_job_client, snaps
 
 
 @pytest.mark.parametrize("error", [None, 400, 409])
-async def test_upload_artifacts(
+async def test_upload_artifact(
         error,
         snapshot,
         spawn_job_client,

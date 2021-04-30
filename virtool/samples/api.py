@@ -939,7 +939,7 @@ async def upload_artifacts_cache(req):
         return bad_request("Unsupported sample artifact type")
 
     try:
-        artifact = await virtool.samples.files.create_artifact_file(pg, name, sample_id, artifact_type, key=key)
+        artifact = await virtool.samples.files.create_artifact_file(pg, name, name, sample_id, artifact_type, key=key)
     except exc.IntegrityError:
         return conflict("Artifact file has already been uploaded for this sample cache")
 
