@@ -34,7 +34,7 @@ async def get_existing_reads(
 
 
 async def create_artifact_file(
-    pg: AsyncEngine, name: str, sample: str, artifact_type: str, key: str = None
+    pg: AsyncEngine, name: str, name_on_disk: str, sample: str, artifact_type: str, key: str = None
 ) -> Dict[str, any]:
     """
     Create a row in an SQL table that represents uploaded sample artifact files. A row is created in either the
