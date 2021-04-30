@@ -783,7 +783,6 @@ snapshots['test_upload_reads_cache[uvloop-True] 1'] = {
     'name_on_disk': 'reads_2.fq.gz',
     'sample': 'test',
     'size': 9081,
-    'upload': None,
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
@@ -793,7 +792,6 @@ snapshots['test_upload_reads_cache[uvloop-False] 1'] = {
     'name_on_disk': 'reads_1.fq.gz',
     'sample': 'test',
     'size': 9081,
-    'upload': None,
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
