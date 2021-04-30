@@ -3,8 +3,8 @@ import numbro from "numbro";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { pushState } from "../../app/actions";
-import { fontWeight } from "../../app/theme";
+import { pushState } from "../../../app/actions";
+import { fontWeight } from "../../../app/theme";
 import {
     BoxGroup,
     BoxGroupHeader,
@@ -16,11 +16,12 @@ import {
     ViewHeader,
     ViewHeaderIcons,
     ViewHeaderTitle
-} from "../../base";
-import { byteSize, checkAdminOrPermission } from "../../utils/utils";
-import { getSubtraction } from "../actions";
-import EditSubtraction from "./Edit";
-import RemoveSubtraction from "./Remove";
+} from "../../../base";
+import { checkAdminOrPermission } from "../../../utils/utils";
+import { getSubtraction } from "../../actions";
+import EditSubtraction from "../Edit";
+import RemoveSubtraction from "../Remove";
+import SubtractionFiles from "./FileList";
 
 const StyledBoxGroupSection = styled(BoxGroupSection)`
     align-items: center;
@@ -60,8 +61,6 @@ export class SubtractionDetail extends React.Component {
         }
 
         const detail = this.props.detail;
-
-        const hasFiles = get(this.props, "files.length", 0) > 0;
 
         if (!detail.ready) {
             return <LoadingPlaceholder message="Subtraction is still being imported" />;
@@ -108,20 +107,7 @@ export class SubtractionDetail extends React.Component {
                         </tr>
                     </tbody>
                 </Table>
-                {hasFiles && (
-                    <BoxGroup>
-                        <BoxGroupHeader>
-                            <h2>Files</h2>
-                            <p>Data files available to workflows using this subtraction</p>
-                        </BoxGroupHeader>
-                        {this.props.files.map(file => (
-                            <StyledBoxGroupSection key={file.id}>
-                                <a href={file.download_url}>{file.name}</a>
-                                <strong>{byteSize(file.size)}</strong>
-                            </StyledBoxGroupSection>
-                        ))}
-                    </BoxGroup>
-                )}
+                <SubtractionFiles />
                 <EditSubtraction show={this.state.showEdit} onHide={this.handleHide} />
                 <RemoveSubtraction />
             </React.Fragment>
@@ -132,8 +118,7 @@ export class SubtractionDetail extends React.Component {
 const mapStateToProps = state => ({
     error: get(state, "errors.GET_SUBTRACTION_ERROR"),
     canModify: checkAdminOrPermission(state, "modify_subtraction"),
-    detail: state.subtraction.detail,
-    files: get(state, "subtraction.detail.files", [])
+    detail: state.subtraction.detail
 });
 
 const mapDispatchToProps = dispatch => ({
