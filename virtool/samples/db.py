@@ -599,4 +599,6 @@ async def get_sample(app, sample_id: str):
     document = await virtool.samples.db.attach_labels(pg, document)
     document = await virtool.samples.db.attach_artifacts_and_reads(pg, document)
 
+    document["paired"] = (len(document["reads"]) == 2)
+
     return virtool.utils.base_processor(document)

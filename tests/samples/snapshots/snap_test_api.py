@@ -1050,6 +1050,7 @@ snapshots['test_get[uvloop-True-None] 1'] = {
         }
     ],
     'name': 'Test',
+    'paired': False,
     'reads': [
         {
             'download_url': '/api/samples/test/reads/reads_1.fq.gz',
@@ -1120,6 +1121,7 @@ snapshots['test_get[uvloop-False-None] 1'] = {
         }
     ],
     'name': 'Test',
+    'paired': False,
     'reads': [
         {
             'id': 1,
