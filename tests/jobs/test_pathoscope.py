@@ -170,8 +170,6 @@ async def test_map_default_isolates(tmpdir, mock_job):
 async def test_map_isolates(snapshot, tmpdir, mock_job):
     shutil.copyfile(FASTQ_PATH, os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq"))
 
-    sample_path = os.path.join(str(tmpdir), "samples", "foobar")
-
     for filename in os.listdir(INDEXES_PATH):
         if "reference" in filename:
             shutil.copyfile(

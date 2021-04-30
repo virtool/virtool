@@ -92,7 +92,7 @@ async def create(
 ) -> Dict[str, Any]:
     """
     Create, insert, and return a job document.
-    
+
     :param db: the application database object
     :param workflow_name: the name of the workflow to run
     :param job_args: the arguments required to run the job

@@ -2,8 +2,6 @@
 API request handlers for managing and querying HMM data.
 
 """
-import gzip
-
 import aiohttp
 from aiohttp.web_fileresponse import FileResponse
 

@@ -1,4 +1,3 @@
-import os
 from typing import Callable, Tuple
 
 import aiofiles

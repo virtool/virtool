@@ -1,6 +1,5 @@
 import logging
-from pathlib import Path
-from typing import Union, Optional, List, Dict, Type
+from typing import Union, Optional, List, Dict
 from virtool.pg.base import Base
 
 from sqlalchemy import select, update

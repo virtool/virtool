@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import aiohttp.test_utils
 import pytest

@@ -1,5 +1,3 @@
-from sqlalchemy import select
-
 import virtool.pg.utils
 from virtool.indexes.models import IndexFile
 

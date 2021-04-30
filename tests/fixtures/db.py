@@ -1,4 +1,3 @@
-import pymongo
 import motor.motor_asyncio
 import pytest
 from aiohttp.test_utils import make_mocked_coro

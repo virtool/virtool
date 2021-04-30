@@ -1,10 +1,6 @@
 import pytest
 from operator import itemgetter
 
-import virtool.otus.db
-import virtool.otus.utils
-import virtool.history.utils
-
 
 async def test_find(snapshot, spawn_client, test_changes, static_time):
     """

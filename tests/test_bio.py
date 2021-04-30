@@ -1,8 +1,6 @@
 import json
-import os
 import pickle
 import pytest
-import sys
 from aiohttp import web
 from pathlib import Path
 

@@ -1,7 +1,6 @@
 import filecmp
 import gzip
 import os
-from pathlib import Path
 
 from virtool.pg.utils import get_row
 from virtool.subtractions.fake import create_fake_subtractions

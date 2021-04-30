@@ -1,5 +1,4 @@
 from logging import getLogger
-from pathlib import Path
 from shutil import copytree
 from typing import Tuple
 

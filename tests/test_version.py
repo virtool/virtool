@@ -1,5 +1,4 @@
 import concurrent.futures
-import os
 import pytest
 import subprocess
 

@@ -1,6 +1,5 @@
 import json
 import shutil
-from pathlib import Path
 
 import aiofiles
 import aiohttp

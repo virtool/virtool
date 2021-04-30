@@ -57,7 +57,6 @@ Schema:
 import asyncio
 import datetime
 import logging
-import os
 from typing import List, Union, Optional
 
 import aiohttp

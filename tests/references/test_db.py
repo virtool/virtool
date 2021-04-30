@@ -1,4 +1,3 @@
-import sys
 from aiohttp.test_utils import make_mocked_coro
 from pathlib import Path
 
