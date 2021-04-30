@@ -1190,8 +1190,9 @@ snapshots['test_finalize[uvloop-quality] 1'] = {
     'ready': True
 }
 
-snapshots['test_upload_artifacts[uvloop-None] 1'] = {
+snapshots['test_upload_artifact_cache[uvloop-None] 1'] = {
     'id': 1,
+    'key': 'aodp-abcdefgh',
     'name': 'small.fq',
     'name_on_disk': 'small.fq',
     'sample': 'test',
@@ -1200,7 +1201,7 @@ snapshots['test_upload_artifacts[uvloop-None] 1'] = {
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
-snapshots['test_upload_artifact_cache[uvloop-None] 1'] = {
+snapshots['test_upload_artifact[uvloop-None] 1'] = {
     'id': 1,
     'name': 'small.fq',
     'name_on_disk': 'small.fq',
