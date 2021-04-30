@@ -1,5 +1,4 @@
 import asyncio
-import os
 
 import aiohttp
 
@@ -359,6 +358,7 @@ async def create(req):
 
         document = await virtool.references.db.create_import(
             db,
+            pg,
             settings,
             data["name"],
             data["description"],

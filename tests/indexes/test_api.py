@@ -1,10 +1,8 @@
-import asyncio
 import filecmp
 import gzip
 import json
 import os
 import shutil
-import sys
 from io import BytesIO
 from pathlib import Path
 

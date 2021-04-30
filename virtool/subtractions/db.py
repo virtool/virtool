@@ -14,7 +14,6 @@ import virtool.subtractions.files
 import virtool.subtractions.utils
 import virtool.tasks.pg
 import virtool.tasks.task
-import virtool.tasks.task
 import virtool.utils
 from virtool.types import App
 

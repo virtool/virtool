@@ -56,8 +56,6 @@ class DispatcherSQLEvents:
         """
         changes = list(self._changes[id(session)].values())
 
-        id_lists = dict()
-
         for data, change_type in changes:
             interface = get_interface_from_model(data)
             self._enqueue_change(interface, change_type, [data.id])

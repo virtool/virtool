@@ -153,7 +153,7 @@ async def format_aodp(app: virtool.types.App, document: Dict[str, Any]) -> Dict[
     :param app: the application object
     :param document: the document to format
     :return: the formatted document
-    
+
     """
     patched_otus = await gather_patched_otus(app, document["results"])
 

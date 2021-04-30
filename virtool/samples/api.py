@@ -1,7 +1,6 @@
 import asyncio.tasks
 import logging
 import os
-from pathlib import Path
 
 import aiohttp.web
 import pymongo.errors

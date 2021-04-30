@@ -1,12 +1,9 @@
 import copy
 import gzip
 import json
-import os
-import sys
 from pathlib import Path
 
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 
 TEST_FILES_PATH = Path.cwd() / "tests" / "test_files"
 

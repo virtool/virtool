@@ -1,4 +1,3 @@
-from aioredis import Channel
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.dispatcher.dispatcher import Dispatcher

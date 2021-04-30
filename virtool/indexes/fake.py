@@ -41,8 +41,6 @@ async def create_fake_indexes(app: App, ref_id: str, user_id: str):
     settings = app["settings"]
     pg: AsyncEngine = app["pg"]
 
-    manifest = dict()
-
     finalized_index_id = fake.get_mongo_id()
 
     await create(

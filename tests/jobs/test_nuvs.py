@@ -4,7 +4,6 @@ import pytest
 import filecmp
 import json
 import os
-import pickle
 import shutil
 import sys
 
