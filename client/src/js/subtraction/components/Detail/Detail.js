@@ -21,7 +21,7 @@ import { checkAdminOrPermission } from "../../../utils/utils";
 import { getSubtraction } from "../../actions";
 import EditSubtraction from "../Edit";
 import RemoveSubtraction from "../Remove";
-import SubtractionFiles from "./FileList";
+import SubtractionFiles from "./Files";
 
 const StyledBoxGroupSection = styled(BoxGroupSection)`
     align-items: center;

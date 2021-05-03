@@ -51,6 +51,7 @@ exports[`<SubtractionDetail /> should not render icons when [canModify=false] 1`
       </tr>
     </tbody>
   </Table>
+  <Connect(SubtractionFiles) />
   <Connect(EditSubtraction)
     onHide={[Function]}
     show={false}
@@ -126,6 +127,7 @@ exports[`<SubtractionDetail /> should render 1`] = `
       </tr>
     </tbody>
   </Table>
+  <Connect(SubtractionFiles) />
   <Connect(EditSubtraction)
     onHide={[Function]}
     show={false}
@@ -201,6 +203,7 @@ exports[`<SubtractionDetail /> should render file id when name not defined 1`] =
       </tr>
     </tbody>
   </Table>
+  <Connect(SubtractionFiles) />
   <Connect(EditSubtraction)
     onHide={[Function]}
     show={false}

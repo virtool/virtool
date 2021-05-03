@@ -13,7 +13,7 @@ export const SubtractionFiles = ({ files }) => {
         <BoxGroup>
             <BoxGroupHeader>
                 <h2>Files</h2>
-                <p>Data files available to workflows using this subtraction</p>
+                <p>Data files available to workflows using this subtraction.</p>
             </BoxGroupHeader>
             {files.map(file => (
                 <SubtractionFile file={file} key={file.id} />
