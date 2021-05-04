@@ -36,8 +36,8 @@ async def create_fake_samples(app: App) -> List[dict]:
     )
     samples.append(await create_fake_sample(
         app,
-        USER_ID,
         SAMPLE_ID_UNPAIRED,
+        USER_ID,
         paired=False,
         finalized=False)
     )
