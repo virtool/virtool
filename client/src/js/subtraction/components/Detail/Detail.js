@@ -2,13 +2,36 @@ import { get } from "lodash-es";
 import numbro from "numbro";
 import React from "react";
 import { connect } from "react-redux";
-import { pushState } from "../../app/actions";
-import { Icon, LoadingPlaceholder, NotFound, Table, ViewHeader, ViewHeaderIcons, ViewHeaderTitle } from "../../base";
-import { checkAdminOrPermission } from "../../utils/utils";
-import { getSubtraction } from "../actions";
-import EditSubtraction from "./Edit";
-import RemoveSubtraction from "./Remove";
+import styled from "styled-components";
+import { pushState } from "../../../app/actions";
+import { fontWeight } from "../../../app/theme";
+import {
+    BoxGroup,
+    BoxGroupHeader,
+    BoxGroupSection,
+    Icon,
+    LoadingPlaceholder,
+    NotFound,
+    Table,
+    ViewHeader,
+    ViewHeaderIcons,
+    ViewHeaderTitle
+} from "../../../base";
+import { checkAdminOrPermission } from "../../../utils/utils";
+import { getSubtraction } from "../../actions";
+import EditSubtraction from "../Edit";
+import RemoveSubtraction from "../Remove";
+import SubtractionFiles from "./Files";
 
+const StyledBoxGroupSection = styled(BoxGroupSection)`
+    align-items: center;
+    display: flex;
+
+    a {
+        margin-right: auto;
+        font-weight: ${fontWeight.thick};
+    }
+`;
 const calculateGC = nucleotides => numbro(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000");
 
 export class SubtractionDetail extends React.Component {
@@ -44,13 +67,12 @@ export class SubtractionDetail extends React.Component {
         }
 
         return (
-            <div>
+            <React.Fragment>
                 <ViewHeader title={detail.name}>
                     <ViewHeaderTitle>
                         {detail.name}
                         {this.props.canModify && (
                             <ViewHeaderIcons>
-                                <a href={`/download/subtraction/${this.props.detail.id}`}> Download FASTA </a>
                                 <Icon
                                     name="pencil-alt"
                                     color="orange"
@@ -61,7 +83,6 @@ export class SubtractionDetail extends React.Component {
                         )}
                     </ViewHeaderTitle>
                 </ViewHeader>
-
                 <Table>
                     <tbody>
                         <tr>
@@ -86,10 +107,10 @@ export class SubtractionDetail extends React.Component {
                         </tr>
                     </tbody>
                 </Table>
-
+                <SubtractionFiles />
                 <EditSubtraction show={this.state.showEdit} onHide={this.handleHide} />
                 <RemoveSubtraction />
-            </div>
+            </React.Fragment>
         );
     }
 }
