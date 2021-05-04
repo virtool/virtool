@@ -2,6 +2,8 @@ import asyncio.tasks
 import logging
 import os
 
+from pathlib import Path
+
 import aiohttp.web
 import pymongo.errors
 from aiohttp.web_fileresponse import FileResponse
@@ -113,7 +115,8 @@ async def find(req):
     term = query.get("find")
 
     if term:
-        db_query = virtool.api.utils.compose_regex_query(term, ["name", "user.id"])
+        db_query = virtool.api.utils.compose_regex_query(
+            term, ["name", "user.id"])
 
     if workflow_query:
         if db_query:
@@ -151,37 +154,43 @@ async def find(req):
 
 
 @routes.get("/api/samples/{sample_id}")
-@routes.jobs_api.get("/api/samples/{sample_id}")
 async def get(req):
     """
     Get a complete sample document.
 
     """
-    db = req.app["db"]
-    pg = req.app["pg"]
-
     sample_id = req.match_info["sample_id"]
 
-    document = await db.samples.find_one(sample_id)
+    try:
+        sample = await virtool.samples.db.get_sample(req.app, sample_id)
 
-    if not document:
+        rights = virtool.samples.utils.get_sample_rights(
+            sample,
+            req["client"]
+        )[0]
+
+        if not rights:
+            return insufficient_rights()
+
+        return json_response(sample)
+    except ValueError:
         return not_found()
 
-    if not virtool.samples.utils.get_sample_rights(document, req["client"])[0]:
-        return insufficient_rights()
 
-    caches = list()
+@routes.jobs_api.get("/api/samples/{sample_id}")
+async def get_sample(req):
+    """
+    Get a complete sample document from a job.
 
-    async for cache in db.caches.find({"sample.id": sample_id}):
-        caches.append(virtool.utils.base_processor(cache))
+    """
+    sample_id = req.match_info["sample_id"]
 
-    document["caches"] = caches
-
-    document = await virtool.subtractions.db.attach_subtractions(db, document)
-    document = await virtool.samples.db.attach_labels(pg, document)
-    document = await virtool.samples.db.attach_artifacts_and_reads(pg, document)
-
-    return json_response(virtool.utils.base_processor(document))
+    try:
+        return json_response(
+            await virtool.samples.db.get_sample(req.app, sample_id)
+        )
+    except ValueError:
+        return not_found()
 
 
 @routes.jobs_api.get("/api/samples/{sample_id}/caches/{cache_key}")
@@ -622,7 +631,8 @@ async def find_analyses(req):
     db_query = dict()
 
     if term:
-        db_query.update(virtool.api.utils.compose_regex_query(term, ["reference.name", "user.id"]))
+        db_query.update(virtool.api.utils.compose_regex_query(
+            term, ["reference.name", "user.id"]))
 
     base_query = {
         "sample.id": sample_id
@@ -790,6 +800,9 @@ async def upload_artifact(req):
     sample_id = req.match_info["sample_id"]
     artifact_type = req.query.get("type")
 
+    artifact_file_path = Path(
+        virtool.samples.utils.join_sample_path(req.app["settings"], sample_id))
+
     if not await db.samples.find_one(sample_id):
         return not_found()
 
@@ -800,7 +813,8 @@ async def upload_artifact(req):
 
     name = req.query.get("name")
 
-    artifact_file_path = virtool.samples.utils.join_sample_path(req.app["settings"], sample_id) / name
+    artifact_file_path = virtool.samples.utils.join_sample_path(
+        req.app["settings"], sample_id) / name
 
     if artifact_type and artifact_type not in ArtifactType.to_list():
         return bad_request("Unsupported sample artifact type")
@@ -849,7 +863,8 @@ async def upload_reads(req):
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         return bad_request("File name is not an accepted reads file")
 
-    reads_path = virtool.samples.utils.join_sample_path(req.app["settings"], sample_id) / name
+    reads_path = virtool.samples.utils.join_sample_path(
+        req.app["settings"], sample_id) / name
 
     if not await db.samples.find_one(sample_id):
         return not_found()
@@ -922,6 +937,9 @@ async def upload_artifacts_cache(req):
     key = req.match_info["key"]
     artifact_type = req.query.get("type")
 
+    cache_path = Path(virtool.caches.utils.join_cache_path(
+        req.app["settings"], key))
+
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
         return not_found()
 
@@ -932,7 +950,8 @@ async def upload_artifacts_cache(req):
 
     name = req.query.get("name")
 
-    cache_path = virtool.caches.utils.join_cache_path(req.app["settings"], key) / name
+    cache_path = virtool.caches.utils.join_cache_path(
+        req.app["settings"], key) / name
 
     if artifact_type and artifact_type not in ArtifactType.to_list():
         return bad_request("Unsupported sample artifact type")
@@ -947,7 +966,8 @@ async def upload_artifacts_cache(req):
     try:
         size = await virtool.uploads.utils.naive_writer(req, cache_path)
     except asyncio.CancelledError:
-        logger.debug(f"Artifact file cache upload aborted for sample: {sample_id}")
+        logger.debug(
+            f"Artifact file cache upload aborted for sample: {sample_id}")
         await virtool.pg.utils.delete_row(pg, upload_id, SampleArtifact)
         await req.app["run_in_thread"](os.remove, cache_path)
         return aiohttp.web.Response(status=499)
@@ -977,7 +997,8 @@ async def upload_reads_cache(req):
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         return bad_request("File name is not an accepted reads file")
 
-    cache_path = virtool.caches.utils.join_cache_path(req.app["settings"], key) / name
+    cache_path = Path(virtool.caches.utils.join_cache_path(
+        req.app["settings"], key)) / name
 
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
         return not_found("Cache doesn't exist with given key")
@@ -992,7 +1013,7 @@ async def upload_reads_cache(req):
         logger.debug(f"Reads cache file upload aborted for {key}")
         return aiohttp.web.Response(status=499)
 
-    reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id)
+    reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id, cache=True)
 
     headers = {
         "Location": f"/api/samples/{sample_id}/caches/{key}/reads/{reads['id']}"
@@ -1048,7 +1069,8 @@ async def download_reads(req: aiohttp.web.Request):
     if file_name not in existing_reads:
         return not_found()
 
-    file_path = req.app["settings"]["data_path"] / "samples" / sample_id / file_name
+    file_path = req.app["settings"]["data_path"] / \
+        "samples" / sample_id / file_name
 
     if not os.path.isfile(file_path):
         return virtool.api.response.not_found()
@@ -1086,7 +1108,7 @@ async def download_artifact(req: aiohttp.web.Request):
 
     artifact = result.to_dict()
 
-    file_path = req.app["settings"]["data_path"] / "samples" / sample_id / artifact["name"]
+    file_path = req.app["settings"]["data_path"] / f"samples/{sample_id}/{artifact['name_on_disk']}"
 
     if not os.path.isfile(file_path):
         return virtool.api.response.not_found()
@@ -1165,7 +1187,8 @@ async def download_artifact_cache(req):
 
     artifact = result.to_dict()
 
-    file_path = req.app["settings"]["data_path"] / "caches" / key / artifact["name_on_disk"]
+    file_path = req.app["settings"]["data_path"] / \
+        "caches" / key / artifact["name_on_disk"]
 
     if not file_path.exists():
         return not_found()

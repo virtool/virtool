@@ -1222,6 +1222,7 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
             id=1,
             sample="foo",
             name="fastqc.txt",
+            name_on_disk="fastqc.txt",
             type="fastq"
         )
 

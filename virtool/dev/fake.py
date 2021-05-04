@@ -20,6 +20,7 @@ import virtool.utils
 from virtool.fake.identifiers import USER_ID
 from virtool.hmm.fake import create_fake_hmms
 from virtool.indexes.fake import create_fake_indexes
+from virtool.samples.fake import create_fake_samples, SAMPLE_ID_PAIRED_FINALIZED
 from virtool.jobs.utils import JobRights
 from virtool.otus.fake import create_fake_otus
 from virtool.subtractions.fake import create_fake_subtractions
@@ -36,11 +37,12 @@ async def populate(app: App):
     await create_fake_bob_user(app)
     await create_fake_subtractions(app)
     await create_fake_analysis(app)
-    await create_fake_jobs(app)
     await create_fake_hmms(app)
     await create_fake_references(app)
     await create_fake_otus(app, REF_ID, USER_ID)
     await create_fake_indexes(app, REF_ID, USER_ID)
+    await create_fake_samples(app)
+    await create_fake_jobs(app)
 
 
 async def remove_fake_data_path(app: App):
@@ -164,7 +166,7 @@ async def create_fake_analysis(app: App):
     logger.debug("Created fake analyses")
 
 
-async def create_integration_test_job(app: App):
+async def create_sample_integration_test_job(app: App):
     name = "integration_test_workflow"
     rights = JobRights()
 
@@ -172,18 +174,19 @@ async def create_integration_test_job(app: App):
         db=app["db"],
         workflow_name=name,
         job_args={
-            "sample_id": "sample_1",
+            "sample_id": SAMPLE_ID_PAIRED_FINALIZED,
             "subtraction_id": "subtraction_1",
             "ref_id": "reference_1",
+            "analysis_id": "analysis_1"
         },
         user_id=USER_ID,
         rights=rights,
-        job_id="integration_test_job",
+        job_id="sample_integration_test_job",
     )
 
 
 async def create_fake_jobs(app: App):
-    await create_integration_test_job(app)
+    await create_sample_integration_test_job(app)
 
 
 async def create_fake_references(app: App):

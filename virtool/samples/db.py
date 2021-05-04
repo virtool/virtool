@@ -375,11 +375,11 @@ def check_is_legacy(sample: Dict[str, Any]) -> bool:
 
     return (
         # All files have the `raw` flag set false indicating they are legacy data.
-            all(file.get("raw", False) is False for file in files)
-            and
-            # File naming matches expectations.
-            files[0]["name"] == "reads_1.fastq"
-            and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
+        all(file.get("raw", False) is False for file in files)
+        and
+        # File naming matches expectations.
+        files[0]["name"] == "reads_1.fastq"
+        and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
     )
 
 
@@ -429,7 +429,8 @@ async def compress_sample_reads(app: App, sample: Dict[str, Any]):
 
     for i, path in enumerate(paths):
         target_filename = (
-            "reads_1.fq.gz" if "reads_1.fastq" in str(path) else "reads_2.fq.gz"
+            "reads_1.fq.gz" if "reads_1.fastq" in str(
+                path) else "reads_2.fq.gz"
         )
 
         target_path = data_path / "samples" / sample_id / target_filename
@@ -549,12 +550,12 @@ async def finalize(
             (
                 await session.execute(
                     select(Upload)
-                        .filter(SampleReads.sample == sample_id)
-                        .join_from(SampleReads, Upload)
+                    .filter(SampleReads.sample == sample_id)
+                    .join_from(SampleReads, Upload)
                 )
             )
-                .unique()
-                .scalars()
+            .unique()
+            .scalars()
         )
 
         for row in rows:
@@ -565,7 +566,7 @@ async def finalize(
             try:
                 await run_in_thread(
                     virtool.utils.rm, data_path /
-                                      "files" / row.name_on_disk
+                    "files" / row.name_on_disk
                 )
             except FileNotFoundError:
                 pass
@@ -575,3 +576,29 @@ async def finalize(
         await session.commit()
 
     return await virtool.samples.db.attach_artifacts_and_reads(pg, document)
+
+
+async def get_sample(app, sample_id: str):
+    """Get the sample document with subtractions, labels, and reads attached."""
+    db = app["db"]
+    pg = app["pg"]
+
+    document = await db.samples.find_one({"_id": sample_id})
+
+    if not document:
+        raise ValueError("Sample {sample_id} does not exist.")
+
+    caches = list()
+
+    async for cache in db.caches.find({"sample.id": sample_id}):
+        caches.append(virtool.utils.base_processor(cache))
+
+    document["caches"] = caches
+
+    document = await virtool.subtractions.db.attach_subtractions(db, document)
+    document = await virtool.samples.db.attach_labels(pg, document)
+    document = await virtool.samples.db.attach_artifacts_and_reads(pg, document)
+
+    document["paired"] = (len(document["reads"]) == 2)
+
+    return virtool.utils.base_processor(document)
