@@ -42,6 +42,17 @@ export const DeveloperDialog = ({ show, onCommand, onHide }) => (
         </DeveloperCommand>
         <DeveloperCommand>
             <DeveloperCommandLabel>
+                <h3>Create Sample</h3>
+                <p>Creates a sample that is ready for use.</p>
+            </DeveloperCommandLabel>
+            <DeveloperCommandControl>
+                <Button color="red" onClick={() => onCommand("create_sample")}>
+                    Create Sample
+                </Button>
+            </DeveloperCommandControl>
+        </DeveloperCommand>
+        <DeveloperCommand>
+            <DeveloperCommandLabel>
                 <h3>Create Subtraction</h3>
                 <p>Creates a subtraction that is ready for use.</p>
             </DeveloperCommandLabel>
