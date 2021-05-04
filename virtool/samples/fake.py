@@ -6,10 +6,10 @@ from virtool.fake.identifiers import USER_ID
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import create_sample, finalize
 from virtool.samples.files import create_reads_file
+from virtool.example import example_path
 from virtool.types import App
 
-EXAMPLE_FILES_PATH = Path(__file__).parent.parent.parent / "example"
-READ_FILES_PATH = EXAMPLE_FILES_PATH / "reads"
+READ_FILES_PATH = example_path / "reads"
 
 SAMPLE_ID_UNPAIRED = "sample_unpaired"
 SAMPLE_ID_PAIRED = "sample_paired"
