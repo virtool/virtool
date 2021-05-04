@@ -396,7 +396,7 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
 }
 
 snapshots['test_create_fake_samples[uvloop] 3'] = {
-    '_id': 'bob',
+    '_id': 'sample_unpaired',
     'all_read': True,
     'all_write': True,
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
@@ -422,7 +422,7 @@ snapshots['test_create_fake_samples[uvloop] 3'] = {
     'subtractions': [
     ],
     'user': {
-        'id': 'sample_unpaired'
+        'id': 'bob'
     }
 }
 
