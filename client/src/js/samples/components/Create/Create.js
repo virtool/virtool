@@ -51,13 +51,9 @@ const getInitialState = props => ({
     libraryType: "normal"
 });
 
-export class CreateSample extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = getInitialState(props);
-    }
+export const CreateSample = props => {
 
-    static getDerivedStateFromProps(nextProps, prevState) {
+    getDerivedStateFromProps(nextProps, prevState) {
         if (!prevState.errorName.length && !!nextProps.error) {
             return { errorName: nextProps.error };
         }
@@ -65,9 +61,9 @@ export class CreateSample extends React.Component {
         return null;
     }
 
-    componentDidMount = () => {
+    useEffect(() => {
         this.props.onLoadSubtractionsAndFiles();
-    };
+    },[]);
 
     handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
@@ -180,7 +176,8 @@ export class CreateSample extends React.Component {
                             <InputGroup>
                                 <InputLabel>Sample Name</InputLabel>
                                 <InputContainer align="right">
-                                    <Input
+                                    <Field
+                                        as={Input}
                                         error={errorName}
                                         name="name"
                                         value={this.state.name}
@@ -195,16 +192,29 @@ export class CreateSample extends React.Component {
                                 </InputContainer>
                                 <InputError>{errorName}</InputError>
                             </InputGroup>
-                            <InputGroup>
+                            {/* <InputGroup>
                                 <InputLabel>Locale</InputLabel>
-                                <Input name="locale" value={this.state.locale} onChange={this.handleChange} />
+                                <Field
+                                    as={Input}
+                                    name="locale"
+                                    value={this.state.locale}
+                                    onChange={this.handleChange}
+                                />
                             </InputGroup>
                             <InputGroup>
                                 <InputLabel>Isolate</InputLabel>
-                                <Input name="isolate" value={this.state.isolate} onChange={this.handleChange} />
+                                <Field
+                                    as={Input}
+                                    name="isolate"
+                                    value={this.state.isolate}
+                                    onChange={this.handleChange}
+                                />
                             </InputGroup>
                             <InputGroup>
                                 <InputLabel>Default Subtraction</InputLabel>
+                                {
+                                    // TODO: !!!! Convert this into a Field Input
+                                }
                                 <Select name="subtractionId" value={subtractionId} onChange={this.handleChange}>
                                     {subtractionComponents}
                                 </Select>
@@ -212,16 +222,16 @@ export class CreateSample extends React.Component {
 
                             <InputGroup>
                                 <InputLabel>Host</InputLabel>
-                                <Input name="host" value={this.state.host} onChange={this.handleChange} />
+                                <Field as={Input} name="host" value={this.state.host} onChange={this.handleChange} />
                             </InputGroup>
 
                             <InputGroup>
                                 <InputLabel>Pairedness</InputLabel>
-                                <Input value={pairedness} readOnly={true} />
-                            </InputGroup>
+                                <Field as={Input} value={pairedness} readOnly={true} />
+                            </InputGroup> */}
                         </CreateSampleFields>
 
-                        <LibraryTypeSelector onSelect={this.handleLibrarySelect} libraryType={this.state.libraryType} />
+                        {/* <LibraryTypeSelector onSelect={this.handleLibrarySelect} libraryType={this.state.libraryType} />
 
                         {userGroup}
 
@@ -230,7 +240,7 @@ export class CreateSample extends React.Component {
                             selected={this.state.selected}
                             onSelect={this.handleSelect}
                             error={errorFile}
-                        />
+                        /> */}
                         <SaveButton />
                     </Form>
                 </Formik>
