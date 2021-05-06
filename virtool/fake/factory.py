@@ -3,14 +3,15 @@ import shutil
 from typing import List
 
 import virtool.indexes.db
+import virtool.references.db
 import virtool.subtractions.db
 import virtool.utils
 from virtool.analyses.files import create_analysis_file
 from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
+from virtool.hmm.fake import create_fake_hmms
 from virtool.indexes.fake import INDEX_FILES
 from virtool.indexes.files import create_index_file
-from virtool.hmm.fake import create_fake_hmms
 from virtool.samples.fake import create_fake_sample
 from virtool.subtractions.fake import (create_fake_fasta_upload,
                                        create_fake_finalized_subtraction)
@@ -89,7 +90,7 @@ class TestCaseDataFactory:
             finalized=finalized,
         )
 
-    async def subtraction(self, finalize=True):
+    async def subtraction(self, finalize=True) -> dict:
         id_ = self.fake.get_mongo_id()
         upload_id, upload_name = await create_fake_fasta_upload(
             self.app,
@@ -115,9 +116,21 @@ class TestCaseDataFactory:
             subtraction_id=id_,
         )
 
-    async def index(self, ref_id: str, finalize: bool = True):
+    async def reference(self) -> dict:
         id_ = self.fake.get_mongo_id()
-        await virtool.indexes.db.create(
+        return await virtool.references.db.create_document(
+            db=self.db,
+            settings=self.settings,
+            ref_id=id_,
+            organism="virus",
+            description="A fake reference",
+            data_type="genome",
+            user_id=self.user_id
+        )
+
+    async def index(self, ref_id: str, finalize: bool = True) -> dict:
+        id_ = self.fake.get_mongo_id()
+        document = await virtool.indexes.db.create(
             db=self.db,
             ref_id=ref_id,
             user_id=self.user_id,
@@ -140,12 +153,17 @@ class TestCaseDataFactory:
                     index_file
                 )
 
-            await virtool.indexes.db.finalize(
+            document = await virtool.indexes.db.finalize(
                 db=self.db,
                 pg=self.pg,
                 ref_id=ref_id,
                 index_id=id_
             )
 
+        return document
+
     async def hmms(self) -> List[dict]:
         return await create_fake_hmms(self.app)
+
+    async def otus(self, ref_id: str) -> List[dict]:
+        return await create_fake_otus(self,app, ref_id, self.user_id)
