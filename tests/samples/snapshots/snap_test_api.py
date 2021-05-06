@@ -777,6 +777,37 @@ snapshots['TestUploadReads.test_upload_reads[uvloop-True] 1'] = {
     'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
+snapshots['test_upload_artifact_cache[uvloop-fastq] 1'] = {
+    'id': 1,
+    'key': 'aodp-abcdefgh',
+    'name': 'small.fq',
+    'name_on_disk': '1-small.fq',
+    'sample': 'test',
+    'size': 3130756,
+    'type': 'fastq',
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
+snapshots['test_upload_reads_cache[uvloop-True] 1'] = {
+    'id': 2,
+    'name': 'reads_2.fq.gz',
+    'name_on_disk': 'reads_2.fq.gz',
+    'sample': 'test',
+    'size': 9081,
+    'upload': None,
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
+snapshots['test_upload_reads_cache[uvloop-False] 1'] = {
+    'id': 1,
+    'name': 'reads_1.fq.gz',
+    'name_on_disk': 'reads_1.fq.gz',
+    'sample': 'test',
+    'size': 9081,
+    'upload': None,
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
 snapshots['TestEdit.test_label_exists[uvloop-True] 1'] = {
     'id': 'foo',
     'labels': [
