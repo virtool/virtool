@@ -1,16 +1,19 @@
 import logging
+import shutil
 from typing import List
 
-import virtool.utils
+import virtool.indexes.db
 import virtool.subtractions.db
+import virtool.utils
 from virtool.analyses.files import create_analysis_file
-from virtool.hmm.fake import create_fake_hmms
+from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
+from virtool.indexes.fake import INDEX_FILES
+from virtool.indexes.files import create_index_file
+from virtool.hmm.fake import create_fake_hmms
 from virtool.samples.fake import create_fake_sample
-from virtool.subtractions.fake import (
-        create_fake_fasta_upload,
-        create_fake_finalized_subtraction
-)
+from virtool.subtractions.fake import (create_fake_fasta_upload,
+                                       create_fake_finalized_subtraction)
 from virtool.types import App
 
 logger = logging.getLogger(__name__)
@@ -26,6 +29,8 @@ class TestCaseDataFactory:
         self.app = app
         self.db = app["db"]
         self.pg = app["pg"]
+        self.settings = app["settings"]
+        self.data_path = self.settings["data_path"]
 
     async def analysis(
             self,
@@ -87,8 +92,8 @@ class TestCaseDataFactory:
     async def subtraction(self, finalize=True):
         id_ = self.fake.get_mongo_id()
         upload_id, upload_name = await create_fake_fasta_upload(
-                self.app,
-                self.user_id
+            self.app,
+            self.user_id
         )
 
         if finalize:
@@ -109,6 +114,38 @@ class TestCaseDataFactory:
             filename=upload_name,
             subtraction_id=id_,
         )
+
+    async def index(self, ref_id: str, finalize: bool = True):
+        id_ = self.fake.get_mongo_id()
+        await virtool.indexes.db.create(
+            db=self.db,
+            ref_id=ref_id,
+            user_id=self.user_id,
+            job_id=self.job_id,
+            index_id=id_,
+        )
+
+        path = self.data_path / "references" / ref_id / id_
+        example_indexes = example_path / "indexes"
+        path.mkdir(parents=True)
+
+        if finalize:
+            for index_file in INDEX_FILES:
+                shutil.copy(example_indexes / index_file, path)
+
+                await create_index_file(
+                    self.pg,
+                    id_,
+                    "fasta" if index_file == "reference.fa.gz" else "bowtie2",
+                    index_file
+                )
+
+            await virtool.indexes.db.finalize(
+                db=self.db,
+                pg=self.pg,
+                ref_id=ref_id,
+                index_id=id_
+            )
 
     async def hmms(self) -> List[dict]:
         return await create_fake_hmms(self.app)
