@@ -4,6 +4,7 @@ from typing import List
 import virtool.utils
 import virtool.subtractions.db
 from virtool.analyses.files import create_analysis_file
+from virtool.hmm.fake import create_fake_hmms
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.fake import create_fake_sample
 from virtool.subtractions.fake import (
@@ -108,3 +109,6 @@ class TestCaseDataFactory:
             filename=upload_name,
             subtraction_id=id_,
         )
+
+    async def hmms(self) -> List[dict]:
+        return await create_fake_hmms(self.app)
