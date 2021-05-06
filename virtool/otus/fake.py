@@ -144,3 +144,5 @@ async def create_fake_otus(app: App, ref_id: str, user_id: str):
     await lchv_1.add_isolate("Isolate", "A", [FakeSequence("bar", "LChV1 sequence 1", SEQUENCE)])
     await lchv_1.add_isolate("Isolate", "B", [FakeSequence("baz", "LChV1 sequence 1", SEQUENCE)])
     await lchv_1.add_isolate("Isolate", "C", [FakeSequence("bat", "LChV1 sequence 1", SEQUENCE)])
+
+    return [abtv._document, aspv._document, tmv._document, lchv_1._document]
