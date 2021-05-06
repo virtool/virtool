@@ -5,7 +5,10 @@ from typing import List
 import virtool.indexes.db
 import virtool.references.db
 import virtool.subtractions.db
+import virtool.jobs.db
 import virtool.utils
+from virtool.jobs.utils import JobRights
+from virtool.otus.fake import create_fake_otus
 from virtool.analyses.files import create_analysis_file
 from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
@@ -71,7 +74,7 @@ class TestCaseDataFactory:
             file_ = await create_analysis_file(
                 pg=self.pg,
                 analysis_id=id_,
-                format="fasta",
+                analysis_format="fasta",
                 name="result.fa",
                 size=123456,
             )
@@ -84,6 +87,7 @@ class TestCaseDataFactory:
 
     async def sample(self, paired: bool, finalized: bool) -> dict:
         return await create_fake_sample(
+            app=self.app,
             sample_id=self.fake.get_mongo_id(),
             user_id=self.user_id,
             paired=paired,
@@ -122,6 +126,7 @@ class TestCaseDataFactory:
             db=self.db,
             settings=self.settings,
             ref_id=id_,
+            name=self.fake.words(1)[0],
             organism="virus",
             description="A fake reference",
             data_type="genome",
@@ -166,4 +171,14 @@ class TestCaseDataFactory:
         return await create_fake_hmms(self.app)
 
     async def otus(self, ref_id: str) -> List[dict]:
-        return await create_fake_otus(self,app, ref_id, self.user_id)
+        return await create_fake_otus(self.app, ref_id, self.user_id)
+
+    async def job(self, workflow: str, args: dict, rights=JobRights()):
+        return await virtool.jobs.db.create(
+            db=self.db,
+            workflow_name=workflow,
+            job_args=args,
+            user_id=self.user_id,
+            job_id=self.job_id,
+            rights=rights,
+        )
