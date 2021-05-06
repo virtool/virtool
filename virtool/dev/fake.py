@@ -27,6 +27,7 @@ from virtool.subtractions.fake import create_fake_subtractions
 from virtool.types import App
 from virtool.users.fake import create_fake_bob_user
 from virtool.utils import ensure_data_dir, random_alphanumeric
+from virtool.fake.test_cases import sample_integration
 
 logger = getLogger(__name__)
 
@@ -42,7 +43,8 @@ async def populate(app: App):
     await create_fake_otus(app, REF_ID, USER_ID)
     await create_fake_indexes(app, REF_ID, USER_ID)
     await create_fake_samples(app)
-    await create_fake_jobs(app)
+
+    await sample_integration.populate(app)
 
 
 async def remove_fake_data_path(app: App):
