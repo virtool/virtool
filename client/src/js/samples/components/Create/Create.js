@@ -1,5 +1,5 @@
 import { filter, get, map, values } from "lodash-es";
-import React from "react";
+import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import {
@@ -51,21 +51,23 @@ const getInitialState = props => ({
     libraryType: "normal"
 });
 
+const validationSchema = "";
+
 export const CreateSample = props => {
+    // Don't know why nextProps is being double negated or if this is still actually needed
+    // getDerivedStateFromProps(nextProps, prevState) {
+    //     if (!prevState.errorName.length && !!nextProps.error) {
+    //         return { errorName: nextProps.error };
+    //     }
 
-    getDerivedStateFromProps(nextProps, prevState) {
-        if (!prevState.errorName.length && !!nextProps.error) {
-            return { errorName: nextProps.error };
-        }
-
-        return null;
-    }
+    //     return null;
+    // }
 
     useEffect(() => {
-        this.props.onLoadSubtractionsAndFiles();
-    },[]);
+        props.onLoadSubtractionsAndFiles();
+    }, []);
 
-    handleChange = e => {
+    const handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
 
         if (name === "name" || name === "subtractionId") {
@@ -80,11 +82,11 @@ export const CreateSample = props => {
         }
     };
 
-    handleLibrarySelect = libraryType => {
+    const handleLibrarySelect = libraryType => {
         this.setState({ libraryType });
     };
 
-    handleSubmit = values => {
+    const handleSubmit = values => {
         console.log("TEST!!!");
         console.log("The values are: ", values);
         console.log("The state is: ", this.state);
@@ -97,7 +99,7 @@ export const CreateSample = props => {
             this.setState({ errorName: "Required Field" });
         }
 
-        if (!this.props.subtractions || !this.props.subtractions.length) {
+        if (!props.subtractions || !props.subtractions.length) {
             hasError = true;
             this.setState({
                 errorSubtraction: "At least one subtraction must be added to Virtool before samples can be analyzed."
@@ -113,13 +115,13 @@ export const CreateSample = props => {
 
         if (!hasError) {
             const { name, isolate, host, locale, libraryType, subtractionId } = this.state;
-            // this.props.onCreate(
+            // props.onCreate(
             //     name,
             //     isolate,
             //     host,
             //     locale,
             //     libraryType,
-            //     subtractionId || get(this.props.subtractions, [0, "id"]),
+            //     subtractionId || get(props.subtractions, [0, "id"]),
             //     this.state.selected
             // );
             console.log("The submission was successful");
@@ -129,7 +131,7 @@ export const CreateSample = props => {
         console.log(this.state);
     };
 
-    autofill = () => {
+    const autofill = () => {
         if (this.state.selected.length) {
             this.setState({
                 name: getFileNameFromId(this.state.selected[0])
@@ -137,34 +139,28 @@ export const CreateSample = props => {
         }
     };
 
-    handleSelect = selected => {
+    const handleSelect = selected => {
         this.setState({ selected, errorFile: "" });
     };
 
-    render() {
-        if (this.props.subtractions === null || this.props.readyReads === null) {
-            return <LoadingPlaceholder margin="36px" />;
-        }
-
-        const subtractionComponents = map(this.props.subtractions, subtraction => (
+    if (props.subtractions === null || props.readyReads === null) {
+        return <LoadingPlaceholder margin="36px" />;
+    } else {
+        const subtractionComponents = map(props.subtractions, subtraction => (
             <option key={subtraction.id} value={subtraction.id}>
                 {subtraction.name}
             </option>
         ));
 
-        const userGroup = this.props.forceGroupChoice ? (
-            <SampleUserGroup
-                group={this.props.group}
-                groups={this.props.groups}
-                onChange={e => this.setState({ group: e })}
-            />
+        const userGroup = props.forceGroupChoice ? (
+            <SampleUserGroup group={props.group} groups={props.groups} onChange={e => this.setState({ group: e })} />
         ) : null;
 
         const pairedness = this.state.selected.length === 2 ? "Paired" : "Unpaired";
 
         const { errorName, errorFile } = this.state;
 
-        const subtractionId = this.state.subtractionId || get(this.props.subtractions, [0, "id"]);
+        const subtractionId = this.state.subtractionId || get(props.subtractions, [0, "id"]);
         return (
             <NarrowContainer>
                 <ViewHeader title="Create Sample">
@@ -236,7 +232,7 @@ export const CreateSample = props => {
                         {userGroup}
 
                         <ReadSelector
-                            files={this.props.readyReads}
+                            files={props.readyReads}
                             selected={this.state.selected}
                             onSelect={this.handleSelect}
                             error={errorFile}
@@ -247,7 +243,7 @@ export const CreateSample = props => {
             </NarrowContainer>
         );
     }
-}
+};
 
 export const mapStateToProps = state => ({
     error: get(state, "errors.CREATE_SAMPLE_ERROR.message", ""),
