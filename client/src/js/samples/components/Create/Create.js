@@ -1,4 +1,4 @@
-import { filter, get, map } from "lodash-es";
+import { filter, get, map, values } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
@@ -24,6 +24,7 @@ import { createSample, findReadFiles } from "../../actions";
 import { LibraryTypeSelector } from "./LibraryTypeSelector";
 import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
+import { Formik, Form, Field } from "formik";
 
 const CreateSampleFields = styled.div`
     display: grid;
@@ -87,8 +88,11 @@ export class CreateSample extends React.Component {
         this.setState({ libraryType });
     };
 
-    handleSubmit = e => {
-        e.preventDefault();
+    handleSubmit = values => {
+        console.log("TEST!!!");
+        console.log("The values are: ", values);
+        console.log("The state is: ", this.state);
+        //e.preventDefault();
 
         let hasError = false;
 
@@ -113,16 +117,20 @@ export class CreateSample extends React.Component {
 
         if (!hasError) {
             const { name, isolate, host, locale, libraryType, subtractionId } = this.state;
-            this.props.onCreate(
-                name,
-                isolate,
-                host,
-                locale,
-                libraryType,
-                subtractionId || get(this.props.subtractions, [0, "id"]),
-                this.state.selected
-            );
+            // this.props.onCreate(
+            //     name,
+            //     isolate,
+            //     host,
+            //     locale,
+            //     libraryType,
+            //     subtractionId || get(this.props.subtractions, [0, "id"]),
+            //     this.state.selected
+            // );
+            console.log("The submission was successful");
+        } else {
+            console.log("There is an error in submitting", this.state);
         }
+        console.log(this.state);
     };
 
     autofill = () => {
@@ -166,64 +174,66 @@ export class CreateSample extends React.Component {
                 <ViewHeader title="Create Sample">
                     <ViewHeaderTitle>Create Sample</ViewHeaderTitle>
                 </ViewHeader>
-                <form onSubmit={this.handleSubmit}>
-                    <CreateSampleFields>
-                        <InputGroup>
-                            <InputLabel>Sample Name</InputLabel>
-                            <InputContainer align="right">
-                                <Input
-                                    error={errorName}
-                                    name="name"
-                                    value={this.state.name}
-                                    onChange={this.handleChange}
-                                    autocomplete={false}
-                                />
-                                <InputIcon
-                                    name="magic"
-                                    onClick={this.autofill}
-                                    disabled={!this.state.selected.length}
-                                />
-                            </InputContainer>
-                            <InputError>{errorName}</InputError>
-                        </InputGroup>
-                        <InputGroup>
-                            <InputLabel>Locale</InputLabel>
-                            <Input name="locale" value={this.state.locale} onChange={this.handleChange} />
-                        </InputGroup>
-                        <InputGroup>
-                            <InputLabel>Isolate</InputLabel>
-                            <Input name="isolate" value={this.state.isolate} onChange={this.handleChange} />
-                        </InputGroup>
-                        <InputGroup>
-                            <InputLabel>Default Subtraction</InputLabel>
-                            <Select name="subtractionId" value={subtractionId} onChange={this.handleChange}>
-                                {subtractionComponents}
-                            </Select>
-                        </InputGroup>
+                <Formik onSubmit={this.handleSubmit}>
+                    <Form>
+                        <CreateSampleFields>
+                            <InputGroup>
+                                <InputLabel>Sample Name</InputLabel>
+                                <InputContainer align="right">
+                                    <Input
+                                        error={errorName}
+                                        name="name"
+                                        value={this.state.name}
+                                        onChange={this.handleChange}
+                                        autocomplete={false}
+                                    />
+                                    <InputIcon
+                                        name="magic"
+                                        onClick={this.autofill}
+                                        disabled={!this.state.selected.length}
+                                    />
+                                </InputContainer>
+                                <InputError>{errorName}</InputError>
+                            </InputGroup>
+                            <InputGroup>
+                                <InputLabel>Locale</InputLabel>
+                                <Input name="locale" value={this.state.locale} onChange={this.handleChange} />
+                            </InputGroup>
+                            <InputGroup>
+                                <InputLabel>Isolate</InputLabel>
+                                <Input name="isolate" value={this.state.isolate} onChange={this.handleChange} />
+                            </InputGroup>
+                            <InputGroup>
+                                <InputLabel>Default Subtraction</InputLabel>
+                                <Select name="subtractionId" value={subtractionId} onChange={this.handleChange}>
+                                    {subtractionComponents}
+                                </Select>
+                            </InputGroup>
 
-                        <InputGroup>
-                            <InputLabel>Host</InputLabel>
-                            <Input name="host" value={this.state.host} onChange={this.handleChange} />
-                        </InputGroup>
+                            <InputGroup>
+                                <InputLabel>Host</InputLabel>
+                                <Input name="host" value={this.state.host} onChange={this.handleChange} />
+                            </InputGroup>
 
-                        <InputGroup>
-                            <InputLabel>Pairedness</InputLabel>
-                            <Input value={pairedness} readOnly={true} />
-                        </InputGroup>
-                    </CreateSampleFields>
+                            <InputGroup>
+                                <InputLabel>Pairedness</InputLabel>
+                                <Input value={pairedness} readOnly={true} />
+                            </InputGroup>
+                        </CreateSampleFields>
 
-                    <LibraryTypeSelector onSelect={this.handleLibrarySelect} libraryType={this.state.libraryType} />
+                        <LibraryTypeSelector onSelect={this.handleLibrarySelect} libraryType={this.state.libraryType} />
 
-                    {userGroup}
+                        {userGroup}
 
-                    <ReadSelector
-                        files={this.props.readyReads}
-                        selected={this.state.selected}
-                        onSelect={this.handleSelect}
-                        error={errorFile}
-                    />
-                    <SaveButton />
-                </form>
+                        <ReadSelector
+                            files={this.props.readyReads}
+                            selected={this.state.selected}
+                            onSelect={this.handleSelect}
+                            error={errorFile}
+                        />
+                        <SaveButton />
+                    </Form>
+                </Formik>
             </NarrowContainer>
         );
     }
