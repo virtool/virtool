@@ -16,9 +16,14 @@ async def create_fake_hmms(app: App):
 
     copy(example_path / "hmms/profiles.hmm", hmms_path)
 
+    hmms = []
     async with aiofiles.open(example_path / "hmms/annotations.json", "r") as f:
         for annotation in json.loads(await f.read()):
-            await app["db"].hmm.insert_one({
+            hmm = {
                 **annotation,
                 "_id": fake.get_mongo_id()
-            })
+            }
+            await app["db"].hmm.insert_one(hmm)
+            hmms.append(hmm)
+
+    return hmms
