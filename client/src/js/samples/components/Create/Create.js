@@ -195,29 +195,30 @@ export const CreateSample = props => {
                 <ViewHeader title="Create Sample">
                     <ViewHeaderTitle>Create Sample</ViewHeaderTitle>
                 </ViewHeader>
-                <Formik onSubmit={handleSubmit} initialValues={initialValues}>
-                    <Form>
-                        <CreateSampleFields>
-                            <InputGroup>
-                                <InputLabel>Sample Name</InputLabel>
-                                <InputContainer align="right">
-                                    <Field
-                                        as={Input}
-                                        error={errorName}
-                                        name="name"
-                                        // value={this.state.name}
-                                        // onChange={this.handleChange}
-                                        autocomplete={false}
-                                    />
-                                    <InputIcon
-                                        name="magic"
-                                        // onClick={this.autofill}
-                                        disabled={!selected.length}
-                                    />
-                                </InputContainer>
-                                <InputError>{errorName}</InputError>
-                            </InputGroup>
-                            {/* <InputGroup>
+                <Formik onSubmit={handleSubmit} initialValues={initialValues} validationSchema={nameValidationSchema}>
+                    {({ errors, touched }) => (
+                        <Form>
+                            <CreateSampleFields>
+                                <InputGroup>
+                                    <InputLabel>Sample Name</InputLabel>
+                                    <InputContainer align="right">
+                                        <Field
+                                            as={Input}
+                                            error={errorName}
+                                            name="name"
+                                            // value={this.state.name}
+                                            // onChange={this.handleChange}
+                                            autocomplete={false}
+                                        />
+                                        <InputIcon
+                                            name="magic"
+                                            // onClick={this.autofill}
+                                            disabled={!selected.length}
+                                        />
+                                    </InputContainer>
+                                    {errors.name && touched.name && <InputError>{errors.name}</InputError>}
+                                </InputGroup>
+                                {/* <InputGroup>
                                 <InputLabel>Locale</InputLabel>
                                 <Field
                                     as={Input}
@@ -254,9 +255,9 @@ export const CreateSample = props => {
                                 <InputLabel>Pairedness</InputLabel>
                                 <Field as={Input} value={pairedness} readOnly={true} />
                             </InputGroup> */}
-                        </CreateSampleFields>
+                            </CreateSampleFields>
 
-                        {/* <LibraryTypeSelector onSelect={this.handleLibrarySelect} libraryType={this.state.libraryType} />
+                            {/* <LibraryTypeSelector onSelect={this.handleLibrarySelect} libraryType={this.state.libraryType} />
 
                         {userGroup}
 
@@ -266,8 +267,9 @@ export const CreateSample = props => {
                             onSelect={this.handleSelect}
                             error={errorFile}
                         /> */}
-                        <SaveButton />
-                    </Form>
+                            <SaveButton />
+                        </Form>
+                    )}
                 </Formik>
             </NarrowContainer>
         );
