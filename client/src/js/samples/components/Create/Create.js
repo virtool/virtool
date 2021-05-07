@@ -1,5 +1,5 @@
 import { filter, get, map, values } from "lodash-es";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import {
@@ -25,6 +25,7 @@ import { LibraryTypeSelector } from "./LibraryTypeSelector";
 import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
 import { Formik, Form, Field } from "formik";
+import * as Yup from "yup";
 
 const CreateSampleFields = styled.div`
     display: grid;
@@ -51,9 +52,33 @@ const getInitialState = props => ({
     libraryType: "normal"
 });
 
-const validationSchema = "";
+//TODO: Check what type the subtraction actually is
+const validationSchema = Yup.object().shape({
+    name: Yup.string().required("Required"),
+    subtraction: Yup.string().required(
+        "At least one subtraction must be added to Virtool before samples can be analyzed."
+    ),
+    selected: Yup.array
+});
+
+const nameValidationSchema = Yup.object().shape({
+    name: Yup.string().required("Required")
+});
+
+const initialValues = { name: "" };
 
 export const CreateSample = props => {
+    const [selected, setSelected] = useState([]);
+    const [name, setName] = useState("");
+    const [host, setHost] = useState("");
+    const [isolate, setIsolate] = useState("");
+    const [locale, setLocale] = useState("");
+    const [subtractionId, setSubtractionId] = useState("");
+    const [group, setGroup] = useState(props.forceGroupChoice ? "none" : "");
+    const [errorName, setErrorName] = useState("");
+    const [errorSubtraction, setErrorSubtraction] = useState("");
+    const [errorFile, setErrorFile] = useState("");
+    const [libraryType, setLibraryType] = useState("normal");
     // Don't know why nextProps is being double negated or if this is still actually needed
     // getDerivedStateFromProps(nextProps, prevState) {
     //     if (!prevState.errorName.length && !!nextProps.error) {
@@ -67,77 +92,80 @@ export const CreateSample = props => {
         props.onLoadSubtractionsAndFiles();
     }, []);
 
-    const handleChange = e => {
-        const { name, value, error } = getTargetChange(e.target);
+    // const handleChange = e => {
+    //     const { name, value, error } = getTargetChange(e.target);
 
-        if (name === "name" || name === "subtractionId") {
-            this.setState({
-                [name]: value,
-                [error]: ""
-            });
-        } else {
-            this.setState({
-                [name]: value
-            });
-        }
-    };
+    //     if (name === "name" || name === "subtractionId") {
+    //         this.setState({
+    //             [name]: value,
+    //             [error]: ""
+    //         });
+    //     } else {
+    //         this.setState({
+    //             [name]: value
+    //         });
+    //     }
+    // };
 
-    const handleLibrarySelect = libraryType => {
-        this.setState({ libraryType });
-    };
+    // const handleLibrarySelect = libraryType => {
+    //     this.setState({ libraryType });
+    // };
 
-    const handleSubmit = values => {
-        console.log("TEST!!!");
-        console.log("The values are: ", values);
-        console.log("The state is: ", this.state);
-        //e.preventDefault();
+    // Temporary handleSubmit
+    const handleSubmit = values => console.log("The values received were: ", values);
 
-        let hasError = false;
+    // const handleSubmit = values => {
+    //     console.log("TEST!!!");
+    //     console.log("The values are: ", values);
+    //     console.log("The state is: ", this.state);
+    //     //e.preventDefault();
 
-        if (!this.state.name) {
-            hasError = true;
-            this.setState({ errorName: "Required Field" });
-        }
+    //     let hasError = false;
 
-        if (!props.subtractions || !props.subtractions.length) {
-            hasError = true;
-            this.setState({
-                errorSubtraction: "At least one subtraction must be added to Virtool before samples can be analyzed."
-            });
-        }
+    //     if (!this.state.name) {
+    //         hasError = true;
+    //         this.setState({ errorName: "Required Field" });
+    //     }
 
-        if (!this.state.selected.length) {
-            hasError = true;
-            this.setState({
-                errorFile: "At least one read file must be attached to the sample"
-            });
-        }
+    //     if (!props.subtractions || !props.subtractions.length) {
+    //         hasError = true;
+    //         this.setState({
+    //             errorSubtraction: "At least one subtraction must be added to Virtool before samples can be analyzed."
+    //         });
+    //     }
 
-        if (!hasError) {
-            const { name, isolate, host, locale, libraryType, subtractionId } = this.state;
-            // props.onCreate(
-            //     name,
-            //     isolate,
-            //     host,
-            //     locale,
-            //     libraryType,
-            //     subtractionId || get(props.subtractions, [0, "id"]),
-            //     this.state.selected
-            // );
-            console.log("The submission was successful");
-        } else {
-            console.log("There is an error in submitting", this.state);
-        }
-        console.log(this.state);
-    };
+    //     if (!this.state.selected.length) {
+    //         hasError = true;
+    //         this.setState({
+    //             errorFile: "At least one read file must be attached to the sample"
+    //         });
+    //     }
 
-    const autofill = () => {
-        if (this.state.selected.length) {
-            this.setState({
-                name: getFileNameFromId(this.state.selected[0])
-            });
-        }
-    };
+    //     if (!hasError) {
+    //         const { name, isolate, host, locale, libraryType, subtractionId } = this.state;
+    //         // props.onCreate(
+    //         //     name,
+    //         //     isolate,
+    //         //     host,
+    //         //     locale,
+    //         //     libraryType,
+    //         //     subtractionId || get(props.subtractions, [0, "id"]),
+    //         //     this.state.selected
+    //         // );
+    //         console.log("The submission was successful");
+    //     } else {
+    //         console.log("There is an error in submitting", this.state);
+    //     }
+    //     console.log(this.state);
+    // };
+
+    // const autofill = () => {
+    //     if (this.state.selected.length) {
+    //         this.setState({
+    //             name: getFileNameFromId(this.state.selected[0])
+    //         });
+    //     }
+    // };
 
     const handleSelect = selected => {
         this.setState({ selected, errorFile: "" });
@@ -152,21 +180,22 @@ export const CreateSample = props => {
             </option>
         ));
 
-        const userGroup = props.forceGroupChoice ? (
-            <SampleUserGroup group={props.group} groups={props.groups} onChange={e => this.setState({ group: e })} />
-        ) : null;
+        // const userGroup = props.forceGroupChoice ? (
+        //     <SampleUserGroup group={props.group} groups={props.groups} onChange={e => this.setState({ group: e })} />
+        // ) : null;
 
-        const pairedness = this.state.selected.length === 2 ? "Paired" : "Unpaired";
+        const pairedness = selected.length === 2 ? "Paired" : "Unpaired";
 
-        const { errorName, errorFile } = this.state;
+        // const { errorName, errorFile } = this.state;
 
-        const subtractionId = this.state.subtractionId || get(props.subtractions, [0, "id"]);
+        // The name of the subtractionID from state must be renamed
+        // const subtractionId = this.state.subtractionId || get(props.subtractions, [0, "id"]);
         return (
             <NarrowContainer>
                 <ViewHeader title="Create Sample">
                     <ViewHeaderTitle>Create Sample</ViewHeaderTitle>
                 </ViewHeader>
-                <Formik onSubmit={this.handleSubmit}>
+                <Formik onSubmit={handleSubmit} initialValues={initialValues}>
                     <Form>
                         <CreateSampleFields>
                             <InputGroup>
@@ -176,14 +205,14 @@ export const CreateSample = props => {
                                         as={Input}
                                         error={errorName}
                                         name="name"
-                                        value={this.state.name}
-                                        onChange={this.handleChange}
+                                        // value={this.state.name}
+                                        // onChange={this.handleChange}
                                         autocomplete={false}
                                     />
                                     <InputIcon
                                         name="magic"
-                                        onClick={this.autofill}
-                                        disabled={!this.state.selected.length}
+                                        // onClick={this.autofill}
+                                        disabled={!selected.length}
                                     />
                                 </InputContainer>
                                 <InputError>{errorName}</InputError>
