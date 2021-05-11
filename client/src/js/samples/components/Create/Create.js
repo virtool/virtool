@@ -2,6 +2,8 @@ import { filter, get, map, values } from "lodash-es";
 import React, { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
+import { Formik, Form, Field } from "formik";
+import * as Yup from "yup";
 import {
     Input,
     InputContainer,
@@ -24,8 +26,6 @@ import { createSample, findReadFiles } from "../../actions";
 import { LibraryTypeSelector } from "./LibraryTypeSelector";
 import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
-import { Formik, Form, Field } from "formik";
-import * as Yup from "yup";
 
 const CreateSampleFields = styled.div`
     display: grid;
@@ -65,7 +65,7 @@ const nameValidationSchema = Yup.object().shape({
     name: Yup.string().required("Required")
 });
 
-const initialValues = { name: "" };
+const initialValues = { selected: [], name: "", host: "", isolate: "", locale: "", subtractionId: "" };
 
 export const CreateSample = props => {
     const [selected, setSelected] = useState([]);
@@ -204,7 +204,7 @@ export const CreateSample = props => {
                                     <InputContainer align="right">
                                         <Field
                                             as={Input}
-                                            error={errorName}
+                                            // error={errorName}
                                             name="name"
                                             // value={this.state.name}
                                             // onChange={this.handleChange}
@@ -213,60 +213,79 @@ export const CreateSample = props => {
                                         <InputIcon
                                             name="magic"
                                             // onClick={this.autofill}
+                                            // onClick={() => console.log("magic icon was pressed")}
                                             disabled={!selected.length}
                                         />
                                     </InputContainer>
                                     {errors.name && touched.name && <InputError>{errors.name}</InputError>}
                                 </InputGroup>
-                                {/* <InputGroup>
-                                <InputLabel>Locale</InputLabel>
-                                <Field
-                                    as={Input}
-                                    name="locale"
-                                    value={this.state.locale}
-                                    onChange={this.handleChange}
-                                />
-                            </InputGroup>
-                            <InputGroup>
-                                <InputLabel>Isolate</InputLabel>
-                                <Field
-                                    as={Input}
-                                    name="isolate"
-                                    value={this.state.isolate}
-                                    onChange={this.handleChange}
-                                />
-                            </InputGroup>
-                            <InputGroup>
-                                <InputLabel>Default Subtraction</InputLabel>
-                                {
-                                    // TODO: !!!! Convert this into a Field Input
-                                }
-                                <Select name="subtractionId" value={subtractionId} onChange={this.handleChange}>
-                                    {subtractionComponents}
-                                </Select>
-                            </InputGroup>
+                                <InputGroup>
+                                    <InputLabel>Locale</InputLabel>
+                                    <Field
+                                        as={Input}
+                                        name="locale"
+                                        // value={this.state.locale}
+                                        // onChange={this.handleChange}
+                                    />
+                                </InputGroup>
+                                <InputGroup>
+                                    <InputLabel>Isolate</InputLabel>
+                                    <Field
+                                        as={Input}
+                                        name="isolate"
+                                        // value={this.state.isolate}
+                                        // onChange={this.handleChange}
+                                    />
+                                </InputGroup>
 
-                            <InputGroup>
-                                <InputLabel>Host</InputLabel>
-                                <Field as={Input} name="host" value={this.state.host} onChange={this.handleChange} />
-                            </InputGroup>
+                                <InputGroup>
+                                    <InputLabel>Default Subtraction</InputLabel>
+                                    {
+                                        // TODO: !!!! Convert this into a Field Input
+                                    }
+                                    <Field
+                                        as={Select}
+                                        name="subtractionId"
+                                        //value={subtractionId}
+                                        //onChange={this.handleChange}
+                                    >
+                                        {subtractionComponents}
+                                    </Field>
+                                </InputGroup>
 
-                            <InputGroup>
-                                <InputLabel>Pairedness</InputLabel>
-                                <Field as={Input} value={pairedness} readOnly={true} />
-                            </InputGroup> */}
+                                <InputGroup>
+                                    <InputLabel>Host</InputLabel>
+                                    <Field
+                                        as={Input}
+                                        name="host"
+                                        // value={this.state.host}
+                                        // onChange={this.handleChange}
+                                    />
+                                </InputGroup>
+
+                                <InputGroup>
+                                    <InputLabel>Pairedness</InputLabel>
+                                    <Field
+                                        as={Input}
+                                        readOnly={true}
+                                        //value={pairedness}
+                                    />
+                                </InputGroup>
                             </CreateSampleFields>
 
                             {/* <LibraryTypeSelector onSelect={this.handleLibrarySelect} libraryType={this.state.libraryType} />
 
                         {userGroup}
 
-                        <ReadSelector
-                            files={props.readyReads}
-                            selected={this.state.selected}
-                            onSelect={this.handleSelect}
-                            error={errorFile}
-                        /> */}
+                        
+
+                            <ReadSelector
+                                files={props.readyReads}
+                                selected={selected}
+                                //onSelect={this.handleSelect}
+                                //error={errorFile}
+                            />
+                            */}
                             <SaveButton />
                         </Form>
                     )}
