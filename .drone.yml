@@ -12,6 +12,9 @@ steps:
     image: virtool/external-tools:0.1.2
 
     commands:
+      - apt-get update
+      - apt-get install -y  libssl-dev
+      - pip install --upgrade pip setuptools wheel
       - pip install -qr requirements.txt
       - pytest -x --db-connection-string mongodb://mongo:27017 --cov --cov-report xml
 
