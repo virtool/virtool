@@ -58,7 +58,7 @@ const validationSchema = Yup.object().shape({
     subtraction: Yup.string().required(
         "At least one subtraction must be added to Virtool before samples can be analyzed."
     ),
-    selected: Yup.array
+    selected: Yup.array //.length(1, "At least one read file must be attached to the sample")
 });
 
 const nameValidationSchema = Yup.object().shape({
@@ -79,6 +79,7 @@ export const CreateSample = props => {
     const [errorSubtraction, setErrorSubtraction] = useState("");
     const [errorFile, setErrorFile] = useState("");
     const [libraryType, setLibraryType] = useState("normal");
+
     // Don't know why nextProps is being double negated or if this is still actually needed
     // getDerivedStateFromProps(nextProps, prevState) {
     //     if (!prevState.errorName.length && !!nextProps.error) {
@@ -92,24 +93,9 @@ export const CreateSample = props => {
         props.onLoadSubtractionsAndFiles();
     }, []);
 
-    // const handleChange = e => {
-    //     const { name, value, error } = getTargetChange(e.target);
-
-    //     if (name === "name" || name === "subtractionId") {
-    //         this.setState({
-    //             [name]: value,
-    //             [error]: ""
-    //         });
-    //     } else {
-    //         this.setState({
-    //             [name]: value
-    //         });
-    //     }
-    // };
-
-    // const handleLibrarySelect = libraryType => {
-    //     this.setState({ libraryType });
-    // };
+    const handleLibrarySelect = newLibraryType => {
+        setLibraryType(newLibraryType);
+    };
 
     // Temporary handleSubmit
     const handleSubmit = values => console.log("The values received were: ", values);
@@ -167,10 +153,6 @@ export const CreateSample = props => {
     //     }
     // };
 
-    const handleSelect = selected => {
-        this.setState({ selected, errorFile: "" });
-    };
-
     if (props.subtractions === null || props.readyReads === null) {
         return <LoadingPlaceholder margin="36px" />;
     } else {
@@ -180,9 +162,9 @@ export const CreateSample = props => {
             </option>
         ));
 
-        // const userGroup = props.forceGroupChoice ? (
-        //     <SampleUserGroup group={props.group} groups={props.groups} onChange={e => this.setState({ group: e })} />
-        // ) : null;
+        const userGroup = props.forceGroupChoice ? (
+            <SampleUserGroup group={props.group} groups={props.groups} onChange={e => setGroup(e)} />
+        ) : null;
 
         const pairedness = selected.length === 2 ? "Paired" : "Unpaired";
 
@@ -240,9 +222,6 @@ export const CreateSample = props => {
 
                                 <InputGroup>
                                     <InputLabel>Default Subtraction</InputLabel>
-                                    {
-                                        // TODO: !!!! Convert this into a Field Input
-                                    }
                                     <Field
                                         as={Select}
                                         name="subtractionId"
@@ -265,27 +244,34 @@ export const CreateSample = props => {
 
                                 <InputGroup>
                                     <InputLabel>Pairedness</InputLabel>
-                                    <Field
-                                        as={Input}
-                                        readOnly={true}
-                                        //value={pairedness}
-                                    />
+                                    <Field as={Input} name={"pairedness"} readOnly={true} value={pairedness} />
                                 </InputGroup>
                             </CreateSampleFields>
 
-                            {/* <LibraryTypeSelector onSelect={this.handleLibrarySelect} libraryType={this.state.libraryType} />
+                            <Field
+                                name={"librarySelector"}
+                                as={LibraryTypeSelector}
+                                onSelect={handleLibrarySelect}
+                                libraryType={libraryType}
+                            />
 
-                        {userGroup}
+                            {/* TODO: Add a fake user group for testing purposes */}
+                            {userGroup}
 
-                        
-
-                            <ReadSelector
+                            {/* 
+                                Currently causing the application to crash due to the error:
+                                ```
+                                TypeError: prevProps.onSelect is not a function at 
+                                ReadSelector.componentDidUpdate (ReadSelector.js:61)
+                                ```
+                            */}
+                            {/* <ReadSelector
                                 files={props.readyReads}
                                 selected={selected}
                                 //onSelect={this.handleSelect}
                                 //error={errorFile}
-                            />
-                            */}
+                            /> */}
+
                             <SaveButton />
                         </Form>
                     )}
