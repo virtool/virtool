@@ -43,16 +43,8 @@ export const CreateAnalysis = ({
         }
     }, [show]);
 
-    const {
-        errors,
-        references,
-        subtraction,
-        workflows,
-        setErrors,
-        setReferences,
-        setSubtraction,
-        setWorkflows
-    } = useCreateAnalysis(dataType, defaultSubtraction);
+    const { errors, references, subtraction, workflows, setErrors, setReferences, setSubtraction, setWorkflows } =
+        useCreateAnalysis(dataType, defaultSubtraction);
 
     const handleSubmit = e => {
         e.preventDefault();
