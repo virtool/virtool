@@ -843,7 +843,7 @@ async def upload_artifact(req):
     return json_response(artifact, status=201, headers=headers)
 
 
-@routes.jobs_api.put("/api/samples/{sample_id}/reads/{name}")
+@routes.jobs_api.put("/api/samples/{sample_id}/reads/{filename}")
 async def upload_reads(req):
     """
     Upload sample reads using the Jobs API.
@@ -852,7 +852,7 @@ async def upload_reads(req):
     db = req.app["db"]
     pg = req.app["pg"]
 
-    name = req.match_info["name"]
+    name = req.match_info["filename"]
     sample_id = req.match_info["sample_id"]
 
     try:
@@ -957,7 +957,7 @@ async def upload_artifacts_cache(req):
         return bad_request("Unsupported sample artifact type")
 
     try:
-        artifact = await virtool.samples.files.create_artifact_file(pg, name, name, sample_id, artifact_type, cache=True)
+        artifact = await virtool.samples.files.create_artifact_file(pg, name, name, sample_id, artifact_type, key=key)
     except exc.IntegrityError:
         return conflict("Artifact file has already been uploaded for this sample cache")
 
@@ -981,7 +981,7 @@ async def upload_artifacts_cache(req):
     return json_response(artifact, status=201, headers=headers)
 
 
-@routes.jobs_api.put("/api/samples/{sample_id}/caches/{key}/reads/{name}")
+@routes.jobs_api.put("/api/samples/{sample_id}/caches/{key}/reads/{filename}")
 async def upload_reads_cache(req):
     """
     Upload reads files to cache using the Jobs API.
@@ -990,7 +990,7 @@ async def upload_reads_cache(req):
     db = req.app["db"]
     pg = req.app["pg"]
 
-    name = req.match_info["name"]
+    name = req.match_info["filename"]
     sample_id = req.match_info["sample_id"]
     key = req.match_info["key"]
 
@@ -1013,7 +1013,15 @@ async def upload_reads_cache(req):
         logger.debug(f"Reads cache file upload aborted for {key}")
         return aiohttp.web.Response(status=499)
 
-    reads = await virtool.samples.files.create_reads_file(pg, size, name, name, sample_id, cache=True)
+    reads = await virtool.samples.files.create_reads_file(
+        pg,
+        size,
+        name,
+        name,
+        sample_id,
+        key=key,
+        cache=True
+    )
 
     headers = {
         "Location": f"/api/samples/{sample_id}/caches/{key}/reads/{reads['id']}"
@@ -1141,7 +1149,7 @@ async def download_reads_cache(req):
     if not await db.samples.count_documents({"_id": sample_id}) or not await db.caches.count_documents({"key": key}):
         return not_found()
 
-    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id, cache=True)
+    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id, key=key)
 
     if file_name not in existing_reads:
         return not_found()
@@ -1179,7 +1187,9 @@ async def download_artifact_cache(req):
 
     async with AsyncSession(pg) as session:
         result = (
-            await session.execute(select(SampleArtifactCache).filter_by(sample=sample_id, name=filename))
+            await session.execute(
+                select(SampleArtifactCache).filter_by(name=filename, key=key, sample=sample_id)
+            )
         ).scalar()
 
     if not result:

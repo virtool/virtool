@@ -11,12 +11,13 @@ class SampleArtifactCache(Base):
 
     """
     __tablename__ = "sample_artifacts_cache"
-    __table_args__ = (UniqueConstraint("sample", "name"),)
+    __table_args__ = (UniqueConstraint("key", "name", "sample"),)
 
     id = Column(Integer, primary_key=True)
-    sample = Column(String, nullable=False)
+    key = Column(String, nullable=False)
     name = Column(String, nullable=False)
     name_on_disk = Column(String)
+    sample = Column(String, nullable=False)
     size = Column(Integer)
     type = Column(Enum(ArtifactType), nullable=False)
     uploaded_at = Column(DateTime)
@@ -28,11 +29,12 @@ class SampleReadsCache(Base):
 
     """
     __tablename__ = "sample_reads_cache"
-    __tableargs__ = (UniqueConstraint("sample", "name"),)
+    __tableargs__ = (UniqueConstraint("key", "name", "sample"),)
 
     id = Column(Integer, primary_key=True)
-    sample = Column(String, nullable=False)
+    key = Column(String, nullable=False)
     name = Column(String(length=13), nullable=False)
     name_on_disk = Column(String, nullable=False)
+    sample = Column(String, nullable=False)
     size = Column(Integer)
     uploaded_at = Column(DateTime)
