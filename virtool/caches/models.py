@@ -11,7 +11,7 @@ class SampleArtifactCache(Base):
 
     """
     __tablename__ = "sample_artifacts_cache"
-    __table_args__ = (UniqueConstraint("sample", "name"),)
+    __table_args__ = (UniqueConstraint("key", "name", "sample"),)
 
     id = Column(Integer, primary_key=True)
     key = Column(String, nullable=False)
@@ -29,7 +29,7 @@ class SampleReadsCache(Base):
 
     """
     __tablename__ = "sample_reads_cache"
-    __tableargs__ = (UniqueConstraint("sample", "name"),)
+    __tableargs__ = (UniqueConstraint("key", "name", "sample"),)
 
     id = Column(Integer, primary_key=True)
     key = Column(String, nullable=False)
