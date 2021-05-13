@@ -1440,7 +1440,13 @@ async def test_download_reads_cache(error, spawn_job_client, pg, tmp_path):
             }
         })
     if error != "404_reads":
-        sample_reads_cache = SampleReadsCache(id=1, sample="foo", name=filename, name_on_disk=filename, key="aodp-abcdefgh")
+        sample_reads_cache = SampleReadsCache(
+            id=1,
+            sample="foo",
+            name=filename,
+            name_on_disk=filename,
+            key="aodp-abcdefgh"
+        )
 
         async with AsyncSession(pg) as session:
             session.add(sample_reads_cache)
@@ -1458,7 +1464,7 @@ async def test_download_reads_cache(error, spawn_job_client, pg, tmp_path):
 
 
 @pytest.mark.parametrize("error", [None, "404_sample", "404_artifact", "404_file", "404_cache"])
-async def test_download_artifact_cache(error, spawn_job_client, pg, tmp_path):
+async def test_download_artifact_cache(error, spawn_job_client, pg: AsyncEngine, tmp_path):
     """
     Test that a sample artifact cache can be downloaded using the Jobs API.
 
@@ -1482,8 +1488,14 @@ async def test_download_artifact_cache(error, spawn_job_client, pg, tmp_path):
         })
 
     if error != "404_artifact":
-        sample_artfact_cache = SampleArtifactCache(id=1, sample="foo", name=name, name_on_disk=name_on_disk,
-                                                   type="fastq", key="aodp-abcdefgh")
+        sample_artfact_cache = SampleArtifactCache(
+            id=1,
+            sample="foo",
+            name=name,
+            name_on_disk=name_on_disk,
+            type="fastq",
+            key="aodp-abcdefgh"
+        )
 
         async with AsyncSession(pg) as session:
             session.add(sample_artfact_cache)

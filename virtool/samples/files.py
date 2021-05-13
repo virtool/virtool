@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -41,7 +41,7 @@ async def create_artifact_file(
         name_on_disk: str,
         sample: str,
         artifact_type: str,
-        key: str = None
+        key: Optional[str] = None
 ) -> Dict[str, any]:
     """
     Create a row in an SQL table that represents uploaded sample artifact files. A row is created in either the
@@ -80,7 +80,8 @@ async def create_reads_file(
         name_on_disk: str,
         sample_id: str,
         cache: bool = False,
-        upload_id: int = None,
+        upload_id: Optional[int] = None,
+        key: Optional[str] = None
 ) -> Dict[str, any]:
     """
     Create a row in a SQL table that represents uploaded sample reads files.
@@ -92,11 +93,12 @@ async def create_reads_file(
     :param sample_id: ID that corresponds to a parent sample
     :param cache: Whether the row should be created in the `sample_reads_files` or `sample_reads_files_cache` table
     :param upload_id: ID for a row in the `uploads` table to pair with
+    :param key: the cache key if the file is associated with a cache
     :return: List of dictionary representations of the newly created row(s)
 
     """
     async with AsyncSession(pg) as session:
-        reads = SampleReadsCache() if cache else SampleReads()
+        reads = SampleReadsCache(key=key) if cache else SampleReads()
 
         reads.sample = sample_id
         reads.name = name
