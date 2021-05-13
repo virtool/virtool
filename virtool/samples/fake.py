@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from virtool.fake.identifiers import USER_ID
 from virtool.fake.wrapper import FakerWrapper
@@ -25,29 +25,32 @@ async def create_fake_samples(app: App) -> List[dict]:
         SAMPLE_ID_UNPAIRED_FINALIZED,
         USER_ID,
         paired=False,
-        finalized=True)
-    )
+        finalized=True
+    ))
+
     samples.append(await create_fake_sample(
         app,
         SAMPLE_ID_PAIRED_FINALIZED,
         USER_ID,
         paired=True,
-        finalized=True)
-    )
+        finalized=True
+    ))
+
     samples.append(await create_fake_sample(
         app,
         SAMPLE_ID_UNPAIRED,
         USER_ID,
         paired=False,
-        finalized=False)
-    )
+        finalized=False
+    ))
+
     samples.append(await create_fake_sample(
         app,
         SAMPLE_ID_PAIRED,
         USER_ID,
         paired=True,
-        finalized=False)
-    )
+        finalized=False
+    ))
 
     return samples
 
@@ -55,6 +58,7 @@ async def create_fake_samples(app: App) -> List[dict]:
 def create_fake_composition(fake: FakerWrapper):
     left = 100
     sent = 0
+
     while left > 0 and sent < 4:
         i = fake.integer(1, 97)
         yield i
@@ -66,42 +70,42 @@ def create_fake_composition(fake: FakerWrapper):
         sent += 1
 
 
-async def create_fake_quality(fake: FakerWrapper) -> dict:
+async def create_fake_quality(fake: Optional[FakerWrapper]) -> dict:
+    if fake is None:
+        fake = FakerWrapper()
+
     return {
-        "count":
-        fake.integer(min_value=10000, max_value=10000000000),
-        "encoding":
-        "Sanger / Illumina 1.9\n",
+        "count": fake.integer(min_value=10000, max_value=10000000000),
+        "encoding": "Sanger / Illumina 1.9\n",
         "length": [
             fake.integer(10, 100),
             fake.integer(10, 100),
         ],
-        "gc":
-        fake.integer(0, 100),
+        "gc": fake.integer(0, 100),
         "bases": [[fake.integer(31, 32) for _ in range(5)] for _ in range(5)],
-        "sequences":
-        fake.list(25, value_types=[int]),
+        "sequences": fake.list(25, value_types=[int]),
         "composition": [
             list(create_fake_composition(fake))
             for _ in range(fake.integer(4, 8))
         ],
-        "hold":
-        fake.boolean(),
-        "group_read":
-        fake.boolean(),
-        "group_write":
-        fake.boolean(),
-        "all_read":
-        fake.boolean(),
-        "all_write":
-        fake.boolean(),
-        "paired":
-        fake.boolean(),
+        "hold": fake.boolean(),
+        "group_read": fake.boolean(),
+        "group_write": fake.boolean(),
+        "all_read": fake.boolean(),
+        "all_write": fake.boolean(),
+        "paired": fake.boolean(),
     }
 
 
-async def create_fake_sample(app: App, sample_id: str, user_id: str, paired=False, finalized=False) -> dict:
-    fake = app["fake"]
+async def create_fake_sample(
+        app: App,
+        sample_id: str,
+        user_id: str,
+        paired=False,
+        finalized=False
+) -> dict:
+    fake = app.get("fake", FakerWrapper())
+
     db = app["db"]
     pg = app["pg"]
 
@@ -137,7 +141,7 @@ async def create_fake_sample(app: App, sample_id: str, user_id: str, paired=Fals
     sample = await create_sample(
         _id=sample_id,
         db=db,
-        name=" ".join(fake.words(2)),
+        name=f"Fake {sample_id.upper()}",
         host="Vine",
         isolate="Isolate A1",
         locale="",
@@ -146,7 +150,7 @@ async def create_fake_sample(app: App, sample_id: str, user_id: str, paired=Fals
         library_type="normal",
         labels=[],
         user_id=user_id,
-        group=fake.words(1)[0],
+        group="none",
         settings={
             "app": app,
             "db": db,
