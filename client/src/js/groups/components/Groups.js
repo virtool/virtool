@@ -1,5 +1,5 @@
 import { push } from "connected-react-router";
-import { find, get, includes, map, sortBy } from "lodash-es";
+import { get, includes, map, sortBy } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
@@ -18,8 +18,8 @@ import {
 import { clearError } from "../../errors/actions";
 import { routerLocationHasState } from "../../utils/utils";
 
-import { createGroup, removeGroup, setGroupPermission } from "../actions";
-import { GroupDetail } from "./Detail";
+import { createGroup } from "../actions";
+import GroupDetail from "./Detail";
 import Group from "./Group";
 
 const GroupsModalBody = styled(ModalBody)`
@@ -89,13 +89,11 @@ class Groups extends React.Component {
     };
 
     render() {
-        if (this.props.groups === null || this.props.users === null) {
+        if (this.props.loading) {
             return <LoadingPlaceholder margin="130px" />;
         }
 
         const groupComponents = map(sortBy(this.props.groups, "id"), group => <Group key={group.id} {...group} />);
-
-        const activeGroup = find(this.props.groups, { id: this.props.activeId });
 
         let error;
 
@@ -133,13 +131,7 @@ class Groups extends React.Component {
                         </form>
                         <BoxGroup>{groupComponents}</BoxGroup>
                     </div>
-                    <GroupDetail
-                        group={activeGroup}
-                        pending={this.props.pending}
-                        users={this.props.users}
-                        onRemove={this.props.onRemove}
-                        onSetPermission={this.props.onSetPermission}
-                    />
+                    <GroupDetail />
                 </GroupsModalBody>
             </Modal>
         );
@@ -147,11 +139,9 @@ class Groups extends React.Component {
 }
 
 const mapStateToProps = state => ({
+    loading: state.groups.documents === null || state.users.documents === null,
     show: routerLocationHasState(state, "groups"),
-    users: state.users.documents,
     groups: state.groups.documents,
-    pending: state.groups.pending,
-    activeId: state.groups.activeId,
     error: get(state, "errors.CREATE_GROUP_ERROR.message", "")
 });
 
@@ -162,14 +152,6 @@ const mapDispatchToProps = dispatch => ({
 
     onHide: () => {
         dispatch(push({ ...window.location, state: { groups: false } }));
-    },
-
-    onRemove: groupId => {
-        dispatch(removeGroup(groupId));
-    },
-
-    onSetPermission: (groupId, permission, value) => {
-        dispatch(setGroupPermission(groupId, permission, value));
     },
 
     onClearError: () => {

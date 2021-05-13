@@ -1,7 +1,9 @@
-import { filter, includes, map, transform } from "lodash-es";
+import { filter, find, includes, map, transform } from "lodash-es";
 import React, { useCallback } from "react";
+import { connect } from "react-redux";
 import styled from "styled-components";
 import { Box, BoxGroup, BoxGroupHeader, BoxGroupSection, Button, Icon, Loader, NoneFoundSection } from "../../base";
+import { removeGroup, setGroupPermission } from "../actions";
 import { GroupPermission } from "./Permission";
 
 const EmptyGroupDetail = styled(Box)`
@@ -93,3 +95,21 @@ export const GroupDetail = ({ group, pending, users, onRemove, onSetPermission }
         </StyledGroupDetail>
     );
 };
+
+export const mapStateToProps = state => ({
+    group: find(state.groups.documents, { id: state.groups.activeId }),
+    pending: state.groups.pending,
+    users: state.users.documents
+});
+
+export const mapDispatchToProps = dispatch => ({
+    onRemove: groupId => {
+        dispatch(removeGroup(groupId));
+    },
+
+    onSetPermission: (groupId, permission, value) => {
+        dispatch(setGroupPermission(groupId, permission, value));
+    }
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(GroupDetail);
