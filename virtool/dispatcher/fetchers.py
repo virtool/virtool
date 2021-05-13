@@ -243,7 +243,7 @@ class SamplesFetcher(AbstractFetcher):
                     yield connection, {
                         "interface": change.interface,
                         "operation": change.operation,
-                        "data": document
+                        "data": base_processor(document)
                     }
 
 
