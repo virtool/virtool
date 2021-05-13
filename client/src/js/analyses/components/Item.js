@@ -48,19 +48,8 @@ const AnalysisItemTop = styled.div`
 `;
 
 export const AnalysisItem = props => {
-    const {
-        canModify,
-        created_at,
-        id,
-        index,
-        ready,
-        reference,
-        sampleId,
-        subtraction,
-        user,
-        workflow,
-        onRemove
-    } = props;
+    const { canModify, created_at, id, index, ready, reference, sampleId, subtraction, user, workflow, onRemove } =
+        props;
 
     return (
         <StyledAnalysisItem>

@@ -85,9 +85,15 @@ export const getBorder = ({ theme }) => `1px solid ${theme.color.greyLight}`;
 
 export const getColor = ({ color, theme }) => get(theme, ["color", color]);
 
-export const getFontSize = size => ({ theme }) => theme.fontSize[size];
+export const getFontSize =
+    size =>
+    ({ theme }) =>
+        theme.fontSize[size];
 
-export const getFontWeight = weight => ({ theme }) => theme.fontWeight[weight];
+export const getFontWeight =
+    weight =>
+    ({ theme }) =>
+        theme.fontWeight[weight];
 
 export const border = getBorder;
 

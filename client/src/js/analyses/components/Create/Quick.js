@@ -81,16 +81,8 @@ export const QuickAnalyze = ({
     };
 
     // This hook is shared with the analyze modal for single samples.
-    const {
-        error,
-        references,
-        subtraction,
-        workflows,
-        setError,
-        setReferences,
-        setSubtraction,
-        setWorkflows
-    } = useCreateAnalysis(mode);
+    const { error, references, subtraction, workflows, setError, setReferences, setSubtraction, setWorkflows } =
+        useCreateAnalysis(mode);
 
     return (
         <Modal label="Quick Analyze" show={show} size="lg" onHide={onHide}>
