@@ -13,7 +13,7 @@ snapshots['test_create_fake_unpaired[uvloop-False-True] 1'] = {
     'all_write': True,
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'format': 'fastq',
-    'group': 'enough',
+    'group': 'none',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -24,8 +24,8 @@ snapshots['test_create_fake_unpaired[uvloop-False-True] 1'] = {
     ],
     'library_type': 'normal',
     'locale': '',
-    'name': 'such serious',
-    'notes': 'American whole magazine truth stop whose.',
+    'name': 'Fake SAMPLE_1',
+    'notes': 'Serious inside else memory if six.',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
@@ -44,7 +44,7 @@ snapshots['test_create_fake_unpaired[uvloop-False-False] 1'] = {
     'all_write': True,
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'format': 'fastq',
-    'group': 'enough',
+    'group': 'none',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -55,8 +55,8 @@ snapshots['test_create_fake_unpaired[uvloop-False-False] 1'] = {
     ],
     'library_type': 'normal',
     'locale': '',
-    'name': 'such serious',
-    'notes': 'American whole magazine truth stop whose.',
+    'name': 'Fake SAMPLE_1',
+    'notes': 'Serious inside else memory if six.',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
@@ -77,7 +77,7 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
     ],
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'format': 'fastq',
-    'group': 'enough',
+    'group': 'none',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -88,20 +88,20 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
     ],
     'library_type': 'normal',
     'locale': '',
-    'name': 'such serious',
-    'notes': 'American whole magazine truth stop whose.',
+    'name': 'Fake SAMPLE_UNPAIRED_FINALIZED',
+    'notes': 'Serious inside else memory if six.',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
     'quality': {
-        'all_read': True,
-        'all_write': True,
+        'all_read': False,
+        'all_write': False,
         'bases': [
             [
-                32,
-                32,
                 31,
                 32,
+                31,
+                31,
                 32
             ],
             [
@@ -113,77 +113,68 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
             ],
             [
                 31,
-                31,
-                31,
-                32,
-                31
-            ],
-            [
                 32,
                 32,
-                31,
                 32,
                 31
             ],
             [
                 31,
                 31,
-                31,
+                32,
                 31,
                 32
+            ],
+            [
+                32,
+                31,
+                32,
+                31,
+                31
             ]
         ],
         'composition': [
             [
-                67,
-                31,
-                28,
-                1
-            ],
-            [
-                87,
-                76,
-                1,
-                1
-            ],
-            [
-                54,
-                75,
-                1,
-                1
-            ],
-            [
-                36,
-                58,
-                64,
-                1
-            ],
-            [
-                85,
-                83,
-                1,
-                1
-            ],
-            [
+                19,
                 90,
-                46,
+                1,
+                1
+            ],
+            [
+                29,
+                6,
+                74,
+                1
+            ],
+            [
+                82,
+                69,
+                1,
+                1
+            ],
+            [
+                78,
+                88,
                 1,
                 1
             ]
         ],
-        'count': 4926171705,
+        'count': 8997239604,
         'encoding': '''Sanger / Illumina 1.9
 ''',
-        'gc': 87,
-        'group_read': True,
+        'gc': 90,
+        'group_read': False,
         'group_write': False,
         'hold': False,
         'length': [
-            22,
-            19
+            42,
+            78
         ],
-        'paired': False,
+        'paired': True,
         'sequences': [
+            3909,
+            8896,
+            1494,
             5243,
             1786,
             9031,
@@ -200,7 +191,20 @@ snapshots['test_create_fake_samples[uvloop] 1'] = {
             1471,
             2450,
             1314,
-            8594
+            8594,
+            8549,
+            3525,
+            9497,
+            7382,
+            5855,
+            5313,
+            7969,
+            3119,
+            265,
+            1919,
+            6095,
+            5448,
+            1018
         ]
     },
     'reads': [
@@ -231,7 +235,7 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
     ],
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'format': 'fastq',
-    'group': 'painting',
+    'group': 'none',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -242,104 +246,96 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
     ],
     'library_type': 'normal',
     'locale': '',
-    'name': 'drug rule',
-    'notes': 'Relate head color international.',
+    'name': 'Fake SAMPLE_PAIRED_FINALIZED',
+    'notes': 'Have wonder already against.',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
     'quality': {
         'all_read': True,
-        'all_write': True,
+        'all_write': False,
         'bases': [
             [
                 31,
                 32,
                 31,
+                31,
+                31
+            ],
+            [
                 32,
+                32,
+                32,
+                31,
+                31
+            ],
+            [
+                32,
+                31,
+                31,
+                32,
+                31
+            ],
+            [
+                32,
+                32,
+                32,
+                31,
                 31
             ],
             [
                 31,
                 31,
                 31,
-                31,
-                31
-            ],
-            [
                 32,
-                31,
-                31,
-                31,
                 32
-            ],
-            [
-                31,
-                32,
-                31,
-                31,
-                31
-            ],
-            [
-                32,
-                32,
-                32,
-                31,
-                31
             ]
         ],
         'composition': [
             [
+                82,
                 58,
-                9,
-                34,
+                1,
+                1
+            ],
+            [
+                49,
+                91,
+                1,
+                1
+            ],
+            [
+                87,
+                73,
+                1,
+                1
+            ],
+            [
+                54,
+                5,
+                52,
                 1
             ],
             [
                 90,
-                21,
-                1,
-                1
-            ],
-            [
-                58,
-                68,
-                1,
-                1
-            ],
-            [
-                63,
-                72,
-                1,
-                1
-            ],
-            [
-                78,
-                97,
+                73,
                 1,
                 1
             ]
         ],
-        'count': 317824271,
+        'count': 2917784004,
         'encoding': '''Sanger / Illumina 1.9
 ''',
-        'gc': 24,
+        'gc': 79,
         'group_read': False,
-        'group_write': True,
-        'hold': False,
+        'group_write': False,
+        'hold': True,
         'length': [
-            25,
-            91
+            79,
+            64
         ],
         'paired': True,
         'sequences': [
-            645,
-            6410,
-            4262,
-            7704,
-            3332,
-            2592,
-            5608,
-            1920,
             2864,
             7727,
             9324,
@@ -357,12 +353,7 @@ snapshots['test_create_fake_samples[uvloop] 2'] = {
             6789,
             24,
             5478,
-            3922,
-            7342,
-            9308,
-            516,
-            9297,
-            766
+            3922
         ]
     },
     'reads': [
@@ -401,7 +392,7 @@ snapshots['test_create_fake_samples[uvloop] 3'] = {
     'all_write': True,
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'format': 'fastq',
-    'group': 'Republican',
+    'group': 'none',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -412,8 +403,8 @@ snapshots['test_create_fake_samples[uvloop] 3'] = {
     ],
     'library_type': 'normal',
     'locale': '',
-    'name': 'anyone state',
-    'notes': 'Could yourself plan base rise would.',
+    'name': 'Fake SAMPLE_UNPAIRED',
+    'notes': 'Land those traditional page. This manager fine.',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
@@ -434,7 +425,7 @@ snapshots['test_create_fake_unpaired[uvloop-True-True] 1'] = {
     ],
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'format': 'fastq',
-    'group': 'enough',
+    'group': 'none',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -445,20 +436,20 @@ snapshots['test_create_fake_unpaired[uvloop-True-True] 1'] = {
     ],
     'library_type': 'normal',
     'locale': '',
-    'name': 'such serious',
-    'notes': 'American whole magazine truth stop whose.',
+    'name': 'Fake SAMPLE_1',
+    'notes': 'Serious inside else memory if six.',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
     'quality': {
-        'all_read': True,
-        'all_write': True,
+        'all_read': False,
+        'all_write': False,
         'bases': [
             [
-                32,
-                32,
                 31,
                 32,
+                31,
+                31,
                 32
             ],
             [
@@ -470,77 +461,68 @@ snapshots['test_create_fake_unpaired[uvloop-True-True] 1'] = {
             ],
             [
                 31,
-                31,
-                31,
-                32,
-                31
-            ],
-            [
                 32,
                 32,
-                31,
                 32,
                 31
             ],
             [
                 31,
                 31,
-                31,
+                32,
                 31,
                 32
+            ],
+            [
+                32,
+                31,
+                32,
+                31,
+                31
             ]
         ],
         'composition': [
             [
-                67,
-                31,
-                28,
-                1
-            ],
-            [
-                87,
-                76,
-                1,
-                1
-            ],
-            [
-                54,
-                75,
-                1,
-                1
-            ],
-            [
-                36,
-                58,
-                64,
-                1
-            ],
-            [
-                85,
-                83,
-                1,
-                1
-            ],
-            [
+                19,
                 90,
-                46,
+                1,
+                1
+            ],
+            [
+                29,
+                6,
+                74,
+                1
+            ],
+            [
+                82,
+                69,
+                1,
+                1
+            ],
+            [
+                78,
+                88,
                 1,
                 1
             ]
         ],
-        'count': 4926171705,
+        'count': 8997239604,
         'encoding': '''Sanger / Illumina 1.9
 ''',
-        'gc': 87,
-        'group_read': True,
+        'gc': 90,
+        'group_read': False,
         'group_write': False,
         'hold': False,
         'length': [
-            22,
-            19
+            42,
+            78
         ],
-        'paired': False,
+        'paired': True,
         'sequences': [
+            3909,
+            8896,
+            1494,
             5243,
             1786,
             9031,
@@ -557,7 +539,20 @@ snapshots['test_create_fake_unpaired[uvloop-True-True] 1'] = {
             1471,
             2450,
             1314,
-            8594
+            8594,
+            8549,
+            3525,
+            9497,
+            7382,
+            5855,
+            5313,
+            7969,
+            3119,
+            265,
+            1919,
+            6095,
+            5448,
+            1018
         ]
     },
     'reads': [
@@ -598,7 +593,7 @@ snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
     ],
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'format': 'fastq',
-    'group': 'enough',
+    'group': 'none',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -609,20 +604,20 @@ snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
     ],
     'library_type': 'normal',
     'locale': '',
-    'name': 'such serious',
-    'notes': 'American whole magazine truth stop whose.',
+    'name': 'Fake SAMPLE_1',
+    'notes': 'Serious inside else memory if six.',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
     'quality': {
-        'all_read': True,
-        'all_write': True,
+        'all_read': False,
+        'all_write': False,
         'bases': [
             [
-                32,
-                32,
                 31,
                 32,
+                31,
+                31,
                 32
             ],
             [
@@ -634,77 +629,68 @@ snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
             ],
             [
                 31,
-                31,
-                31,
-                32,
-                31
-            ],
-            [
                 32,
                 32,
-                31,
                 32,
                 31
             ],
             [
                 31,
                 31,
-                31,
+                32,
                 31,
                 32
+            ],
+            [
+                32,
+                31,
+                32,
+                31,
+                31
             ]
         ],
         'composition': [
             [
-                67,
-                31,
-                28,
-                1
-            ],
-            [
-                87,
-                76,
-                1,
-                1
-            ],
-            [
-                54,
-                75,
-                1,
-                1
-            ],
-            [
-                36,
-                58,
-                64,
-                1
-            ],
-            [
-                85,
-                83,
-                1,
-                1
-            ],
-            [
+                19,
                 90,
-                46,
+                1,
+                1
+            ],
+            [
+                29,
+                6,
+                74,
+                1
+            ],
+            [
+                82,
+                69,
+                1,
+                1
+            ],
+            [
+                78,
+                88,
                 1,
                 1
             ]
         ],
-        'count': 4926171705,
+        'count': 8997239604,
         'encoding': '''Sanger / Illumina 1.9
 ''',
-        'gc': 87,
-        'group_read': True,
+        'gc': 90,
+        'group_read': False,
         'group_write': False,
         'hold': False,
         'length': [
-            22,
-            19
+            42,
+            78
         ],
-        'paired': False,
+        'paired': True,
         'sequences': [
+            3909,
+            8896,
+            1494,
             5243,
             1786,
             9031,
@@ -721,7 +707,20 @@ snapshots['test_create_fake_unpaired[uvloop-True-False] 1'] = {
             1471,
             2450,
             1314,
-            8594
+            8594,
+            8549,
+            3525,
+            9497,
+            7382,
+            5855,
+            5313,
+            7969,
+            3119,
+            265,
+            1919,
+            6095,
+            5448,
+            1018
         ]
     },
     'reads': [
@@ -750,7 +749,7 @@ snapshots['test_create_fake_samples[uvloop] 4'] = {
     'all_write': True,
     'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
     'format': 'fastq',
-    'group': 'technology',
+    'group': 'none',
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -761,8 +760,8 @@ snapshots['test_create_fake_samples[uvloop] 4'] = {
     ],
     'library_type': 'normal',
     'locale': '',
-    'name': 'more best',
-    'notes': 'Part cup few read. Beyond take however ball.',
+    'name': 'Fake SAMPLE_PAIRED',
+    'notes': 'Would I question first.',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
