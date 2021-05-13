@@ -1,10 +1,12 @@
 import React from "react";
 import styled from "styled-components";
 import { connect } from "react-redux";
+import { getActiveShadow } from "../../app/theme";
 import { BoxGroupSection } from "../../base";
 import { changeActiveGroup } from "../actions";
 
 const StyledGroup = styled(BoxGroupSection)`
+    box-shadow: ${getActiveShadow};
     text-transform: capitalize;
 `;
 
