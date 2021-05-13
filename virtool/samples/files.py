@@ -11,7 +11,9 @@ from virtool.uploads.models import Upload
 
 
 async def get_existing_reads(
-    pg: AsyncEngine, sample: str, key: str = None
+        pg: AsyncEngine,
+        sample: str,
+        key: str = None
 ) -> List[str]:
     """
     Get reads files in either `sample_reads_files` or `sample_reads_files_cache` depending on value of `key`.
@@ -34,7 +36,12 @@ async def get_existing_reads(
 
 
 async def create_artifact_file(
-    pg: AsyncEngine, name: str, name_on_disk: str, sample: str, artifact_type: str, key: str = None
+        pg: AsyncEngine,
+        name: str,
+        name_on_disk: str,
+        sample: str,
+        artifact_type: str,
+        key: str = None
 ) -> Dict[str, any]:
     """
     Create a row in an SQL table that represents uploaded sample artifact files. A row is created in either the
@@ -67,13 +74,13 @@ async def create_artifact_file(
 
 
 async def create_reads_file(
-    pg: AsyncEngine,
-    size: int,
-    name: str,
-    name_on_disk: str,
-    sample_id: str,
-    cache: bool = False,
-    upload_id: int = None,
+        pg: AsyncEngine,
+        size: int,
+        name: str,
+        name_on_disk: str,
+        sample_id: str,
+        cache: bool = False,
+        upload_id: int = None,
 ) -> Dict[str, any]:
     """
     Create a row in a SQL table that represents uploaded sample reads files.
@@ -85,25 +92,22 @@ async def create_reads_file(
     :param sample_id: ID that corresponds to a parent sample
     :param cache: Whether the row should be created in the `sample_reads_files` or `sample_reads_files_cache` table
     :param upload_id: ID for a row in the `uploads` table to pair with
-
     :return: List of dictionary representations of the newly created row(s)
+
     """
-
     async with AsyncSession(pg) as session:
-        reads = SampleReads() if not cache else SampleReadsCache()
+        reads = SampleReadsCache() if cache else SampleReads()
 
-        reads.sample, reads.name, reads.name_on_disk, reads.size, reads.uploaded_at = (
-            sample_id,
-            name,
-            name_on_disk,
-            size,
-            virtool.utils.timestamp(),
-        )
+        reads.sample = sample_id
+        reads.name = name
+        reads.name_on_disk = name_on_disk
+        reads.size = size
+        reads.uploaded_at = virtool.utils.timestamp()
 
         if upload_id and (
-            upload := (
-                await session.execute(select(Upload).filter_by(id=upload_id))
-            ).scalar()
+                upload := (
+                        await session.execute(select(Upload).filter_by(id=upload_id))
+                ).scalar()
         ):
             upload.reads.append(reads)
 
