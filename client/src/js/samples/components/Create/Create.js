@@ -283,7 +283,7 @@ export const CreateSample = props => {
 
 export const mapStateToProps = state => ({
     error: get(state, "errors.CREATE_SAMPLE_ERROR.message", ""),
-    forceGroupChoice: state.settings.sample_group === "force_choice",
+    forceGroupChoice: state.settings.data.sample_group === "force_choice",
     groups: state.account.groups,
     readyReads: filter(state.samples.readFiles, { reserved: false }),
     subtractions: getSubtractionShortlist(state)
