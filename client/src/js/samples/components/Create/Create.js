@@ -65,19 +65,11 @@ const nameValidationSchema = Yup.object().shape({
     name: Yup.string().required("Required")
 });
 
-const initialValues = { selected: [], name: "", host: "", isolate: "", locale: "", subtractionId: "" };
+const initialValues = { selected: [], name: "", host: "", isolate: "", locale: "", subtractionId: "", select: [] };
 
 export const CreateSample = props => {
-    const [selected, setSelected] = useState([]);
-    const [name, setName] = useState("");
-    const [host, setHost] = useState("");
-    const [isolate, setIsolate] = useState("");
-    const [locale, setLocale] = useState("");
     const [subtractionId, setSubtractionId] = useState("");
-    const [group, setGroup] = useState(props.forceGroupChoice ? "none" : "");
-    const [errorName, setErrorName] = useState("");
-    const [errorSubtraction, setErrorSubtraction] = useState("");
-    const [errorFile, setErrorFile] = useState("");
+    const [group, setGroup] = useState(props.forceGroupChoice ? "None" : "");
     const [libraryType, setLibraryType] = useState("normal");
 
     // Don't know why nextProps is being double negated or if this is still actually needed
@@ -90,8 +82,8 @@ export const CreateSample = props => {
     // }
 
     useEffect(() => {
-        props.onLoadSubtractionsAndFiles();
-    }, []);
+        console.log("group = ", group);
+    }, [group]);
 
     const handleLibrarySelect = newLibraryType => {
         setLibraryType(newLibraryType);
@@ -162,11 +154,45 @@ export const CreateSample = props => {
             </option>
         ));
 
-        const userGroup = props.forceGroupChoice ? (
-            <SampleUserGroup group={props.group} groups={props.groups} onChange={e => setGroup(e)} />
-        ) : null;
+        const changeGroup = (e, setValue) => {
+            console.log(`changeGroup fired with: ${e.target.value} and: `, setValue);
+            setGroup(e.target.value);
+        };
 
-        const pairedness = selected.length === 2 ? "Paired" : "Unpaired";
+        const updateValue = (value, name, setValue) => {
+            console.log("value: ", value);
+            console.log("name: ", name);
+            console.log("setValue: ", setValue);
+        };
+
+        const handleSelect = (newValue, name, setValue) => setValue(name, newValue);
+
+        //TODO: There's no props.groups array+
+        // const userGroup = props.forceGroupChoice ? (
+        //     <SampleUserGroup
+        //         name="group"
+        //         group={props.group}
+        //         groups={["Option 1", "Option 2", "Option 3"]} //props.groups}
+        //         onChange={changeGroup}
+        //         // onSelect={changeGroup}
+        //     />
+        // ) : null;
+
+        // const userGroup = (
+        //     <Field
+        //         name="group"
+        //         as={SampleUserGroup}
+        //         // error={errorName}
+        //         group={props.group}
+        //         groups={["Option 1", "Option 2", "Option 3"]}
+        //         handleChange={changeGroup}
+
+        //         // value={this.state.name}
+        //         // onChange={this.handleChange}
+        //     />
+        // );
+
+        //const pairedness = selected.length === 2 ? "Paired" : "Unpaired";
 
         // const { errorName, errorFile } = this.state;
 
@@ -178,7 +204,7 @@ export const CreateSample = props => {
                     <ViewHeaderTitle>Create Sample</ViewHeaderTitle>
                 </ViewHeader>
                 <Formik onSubmit={handleSubmit} initialValues={initialValues} validationSchema={nameValidationSchema}>
-                    {({ errors, touched }) => (
+                    {({ errors, touched, setFieldValue, values }) => (
                         <Form>
                             <CreateSampleFields>
                                 <InputGroup>
@@ -196,7 +222,7 @@ export const CreateSample = props => {
                                             name="magic"
                                             // onClick={this.autofill}
                                             // onClick={() => console.log("magic icon was pressed")}
-                                            disabled={!selected.length}
+                                            disabled={!values.selected.length}
                                         />
                                     </InputContainer>
                                     {errors.name && touched.name && <InputError>{errors.name}</InputError>}
@@ -244,19 +270,33 @@ export const CreateSample = props => {
 
                                 <InputGroup>
                                     <InputLabel>Pairedness</InputLabel>
-                                    <Field as={Input} name={"pairedness"} readOnly={true} value={pairedness} />
+                                    <Field
+                                        as={Input}
+                                        name={"pairedness"}
+                                        readOnly={true}
+                                        value={values.selected.length === 2 ? "Paired" : "Unpaired"}
+                                    />
                                 </InputGroup>
                             </CreateSampleFields>
-
                             <Field
                                 name={"librarySelector"}
                                 as={LibraryTypeSelector}
                                 onSelect={handleLibrarySelect}
                                 libraryType={libraryType}
                             />
-
                             {/* TODO: Add a fake user group for testing purposes */}
-                            {userGroup}
+                            {props.forceGroupChoice && (
+                                <Field
+                                    as={SampleUserGroup}
+                                    name="group"
+                                    // error={errorName}
+                                    group={props.group}
+                                    groups={["Option 1", "Option 2", "Option 3"]}
+                                    onChange={e => changeGroup(e, setFieldValue)}
+                                />
+                            )}
+
+                            {/* {userGroup} */}
 
                             {/* 
                                 Currently causing the application to crash due to the error:
@@ -265,12 +305,15 @@ export const CreateSample = props => {
                                 ReadSelector.componentDidUpdate (ReadSelector.js:61)
                                 ```
                             */}
-                            {/* <ReadSelector
+                            <Field
+                                name="selected"
+                                as={ReadSelector}
                                 files={props.readyReads}
-                                selected={selected}
-                                //onSelect={this.handleSelect}
+                                selected={values.selected}
+                                onSelect={selection => handleSelect(selection, "selected", setFieldValue)}
                                 //error={errorFile}
-                            /> */}
+                            />
+                            <button onClick={() => alert(JSON.stringify(values))}>Print the values</button>
 
                             <SaveButton />
                         </Form>
@@ -286,7 +329,8 @@ export const mapStateToProps = state => ({
     forceGroupChoice: state.settings.data.sample_group === "force_choice",
     groups: state.account.groups,
     readyReads: filter(state.samples.readFiles, { reserved: false }),
-    subtractions: getSubtractionShortlist(state)
+    subtractions: getSubtractionShortlist(state),
+    state: state
 });
 
 export const mapDispatchToProps = dispatch => ({
