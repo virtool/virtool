@@ -66,13 +66,20 @@ const nameValidationSchema = Yup.object().shape({
     name: Yup.string().required("Required")
 });
 
-const initialValues = { selected: [], name: "", host: "", isolate: "", locale: "", subtractionId: "", select: [] };
+const initialValues = {
+    selected: [],
+    name: "",
+    host: "",
+    isolate: "",
+    locale: "",
+    subtractionId: "",
+    select: [],
+    libraryType: "normal"
+};
 
 //TODO: Add error message(s) for server responses
 export const CreateSample = props => {
-    const [subtractionId, setSubtractionId] = useState("");
     const [group, setGroup] = useState(props.forceGroupChoice ? "None" : "");
-    const [libraryType, setLibraryType] = useState("normal");
 
     useEffect(() => {
         props.onLoadSubtractionsAndFiles();
@@ -90,10 +97,6 @@ export const CreateSample = props => {
         return <LoadingPlaceholder margin="36px" />;
     }
 
-    const handleLibrarySelect = newLibraryType => {
-        setLibraryType(newLibraryType);
-    };
-
     // Temporary handleSubmit
     const handleSubmit = values => console.log("The values received were: ", values);
 
@@ -109,9 +112,10 @@ export const CreateSample = props => {
     };
 
     const updateValue = (event, name, setValue) => {
-        console.log("value: ", value);
+        console.log("value: ", event.target.value);
         console.log("name: ", name);
         console.log("setValue: ", setValue);
+        setValue(name, event.target.value);
     };
 
     const handleSelect = (newValue, name, setValue) => setValue(name, newValue);
@@ -203,13 +207,14 @@ export const CreateSample = props => {
                                 />
                             </InputGroup>
 
+                            {/* TODO: Fix the selection defaulting */}
                             <InputGroup>
                                 <InputLabel>Default Subtraction</InputLabel>
                                 <Field
                                     as={Select}
                                     name="subtractionId"
-                                    //value={subtractionId}
-                                    onChange={handleChange}
+                                    // value={values.subtractionId || props.subtractions[0]}
+                                    onChange={e => updateValue(e, "subtractionId", setFieldValue)}
                                 >
                                     {subtractionComponents}
                                 </Field>
@@ -236,10 +241,10 @@ export const CreateSample = props => {
                             </InputGroup>
                         </CreateSampleFields>
                         <Field
-                            name={"librarySelector"}
+                            name={"libraryType"}
                             as={LibraryTypeSelector}
-                            onSelect={handleLibrarySelect}
-                            libraryType={libraryType}
+                            onSelect={library => setFieldValue("libraryType", library)}
+                            libraryType={values.libraryType}
                         />
                         {/* TODO: Add a fake user group for testing purposes */}
                         {props.forceGroupChoice && (
