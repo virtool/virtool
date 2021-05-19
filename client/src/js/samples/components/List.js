@@ -1,5 +1,5 @@
 import { forEach, includes, pull, slice } from "lodash-es";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { getAccountId } from "../../account/selectors";
@@ -31,107 +31,71 @@ const StyledSamplesList = styled.div`
     }
 `;
 
-export class SamplesList extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            lastChecked: null,
-            sampleId: ""
-        };
-    }
+export const SamplesList = ({
+    documents,
+    loading,
+    page,
+    pageCount,
+    totalCount,
+    onFindHmms,
+    onListLabels,
+    onListIndexes,
+    onLoadNextPage
+}) => {
+    useEffect(() => {
+        onFindHmms();
+        onListLabels();
+        onListIndexes();
+    }, [null]);
 
-    componentDidMount() {
-        this.props.onFindHmms();
-        this.props.onListLabels();
-        this.props.onListReadyIndexes();
-        this.props.onLoadNextPage(1);
-    }
+    useEffect(() => {
+        onLoadNextPage(1);
+    }, [page]);
 
-    onSelect = (id, index, isShiftKey) => {
-        const newSelected = [...this.props.selected];
-
-        let selectedSegment;
-
-        if (isShiftKey && this.state.lastChecked !== index) {
-            let startIndex;
-            let endIndex;
-
-            if (this.state.lastChecked < index) {
-                startIndex = this.state.lastChecked;
-                endIndex = index;
-            } else {
-                startIndex = index;
-                endIndex = this.state.lastChecked;
-            }
-
-            selectedSegment = slice(this.props.documents, startIndex, endIndex + 1);
-        } else {
-            selectedSegment = [this.props.documents[index]];
-        }
-
-        if (includes(this.props.selected, this.props.documents[index].id)) {
-            forEach(selectedSegment, entry => {
-                pull(newSelected, entry.id);
-            });
-        } else {
-            forEach(selectedSegment, entry => {
-                if (!includes(newSelected, entry.id)) {
-                    newSelected.push(entry.id);
-                }
-            });
-        }
-
-        this.setState({
-            lastChecked: index
-        });
+    const renderRow = index => {
+        return <SampleItem key={documents[index].id} id={documents[index].id} />;
     };
 
-    renderRow = index => {
-        return <SampleItem key={this.props.documents[index].id} id={this.props.documents[index].id} />;
-    };
+    if (loading) {
+        return <LoadingPlaceholder />;
+    }
 
-    render() {
-        if (this.props.loading) {
-            return <LoadingPlaceholder />;
-        }
+    let noneFound;
 
-        let noneFound;
+    if (!documents.length) {
+        noneFound = <NoneFoundBox key="noSample" noun="samples" />;
+    }
 
-        if (!this.props.documents.length) {
-            noneFound = <NoneFoundBox key="noSample" noun="samples" />;
-        }
-
-        return (
-            <React.Fragment>
+    return (
+        <React.Fragment>
+            <NarrowContainer>
+                <ViewHeader title="Samples">
+                    <ViewHeaderTitle>
+                        Samples <Badge>{totalCount}</Badge>
+                    </ViewHeaderTitle>
+                </ViewHeader>
+                <SampleToolbar />
+            </NarrowContainer>
+            <StyledSamplesList>
                 <NarrowContainer>
-                    <ViewHeader title="Samples">
-                        <ViewHeaderTitle>
-                            Samples <Badge>{this.props.total_count}</Badge>
-                        </ViewHeaderTitle>
-                    </ViewHeader>
-                    <SampleToolbar />
+                    {noneFound || (
+                        <ScrollList
+                            documents={documents}
+                            page={page}
+                            pageCount={pageCount}
+                            onLoadNextPage={page => onLoadNextPage(page)}
+                            renderRow={renderRow}
+                        />
+                    )}
+                    <QuickAnalysis />
                 </NarrowContainer>
-                <StyledSamplesList>
-                    <NarrowContainer>
-                        {noneFound || (
-                            <ScrollList
-                                documents={this.props.documents}
-                                page={this.props.page}
-                                pageCount={this.props.page_count}
-                                onLoadNextPage={page => this.props.onLoadNextPage(page)}
-                                renderRow={this.renderRow}
-                            />
-                        )}
-                        <QuickAnalysis />
-                    </NarrowContainer>
-                    <SideContainer>
-                        <SampleFilters />
-                    </SideContainer>
-                </StyledSamplesList>
-            </React.Fragment>
-        );
-    }
-}
+                <SideContainer>
+                    <SampleFilters />
+                </SideContainer>
+            </StyledSamplesList>
+        </React.Fragment>
+    );
+};
 
 const mapStateToProps = state => {
     const loading =
@@ -140,10 +104,16 @@ const mapStateToProps = state => {
         state.samples.readyIndexes === null ||
         state.labels.documents === null;
 
+    const { documents, page, page_count, selected, total_count } = state.samples;
+
     return {
+        documents,
         loading,
         userId: getAccountId(state),
-        ...state.samples
+        page,
+        pageCount: page_count,
+        selected,
+        totalCount: total_count
     };
 };
 
@@ -160,7 +130,7 @@ const mapDispatchToProps = dispatch => ({
         dispatch(listLabels());
     },
 
-    onListReadyIndexes: () => {
+    onListIndexes: () => {
         dispatch(listReadyIndexes());
     }
 });
