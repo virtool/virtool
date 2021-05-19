@@ -1,4 +1,4 @@
-import { every, filter, get, includes, some } from "lodash-es";
+import { every, filter, get, includes, some, toNumber } from "lodash-es";
 import createCachedSelector from "re-reselect";
 import { createSelector } from "reselect";
 import { getAccountAdministrator, getAccountId } from "../account/selectors";
@@ -47,6 +47,32 @@ export const getSampleLabels = state => state.samples.detail.labels;
 export const getHasRawFilesOnly = createSelector([getSampleFiles], files => every(files, "raw"));
 
 export const getTerm = getTermSelectorFactory(state => state.samples.term);
+
+export const getTermFromURL = state => {
+    if (state.router.location.search) {
+        const search = new URLSearchParams(state.router.location.search);
+        const term = search.get("find");
+
+        if (term) {
+            return term;
+        }
+    }
+
+    return "";
+};
+
+export const getLabelsFromURL = state => {
+    if (state.router.location.search) {
+        const search = new URLSearchParams(state.router.location.search);
+        const labels = search.getAll("label");
+
+        if (labels) {
+            return labels.map(label => toNumber(label));
+        }
+    }
+
+    return [];
+};
 
 export const getIsSelected = createCachedSelector(
     [getSelectedSampleIds, (state, sampleId) => sampleId],

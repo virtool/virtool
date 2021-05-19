@@ -22,16 +22,17 @@ export const setWorkflowFindParameters = (url, workflow, conditions) => {
     }
 };
 
-export const createFindURL = (term, pathoscope, nuvs) => {
+export const createFindURL = (term, labels, pathoscope, nuvs) => {
     const url = new window.URL(window.location);
 
-    if (term !== undefined) {
-        if (term) {
-            url.searchParams.set("find", term);
-        } else {
-            url.searchParams.delete("find");
-        }
+    if (term) {
+        url.searchParams.set("find", term);
+    } else {
+        url.searchParams.delete("find");
     }
+
+    url.searchParams.delete("label");
+    labels.forEach(label => url.searchParams.append("label", label));
 
     setWorkflowFindParameters(url, "pathoscope", pathoscope);
     setWorkflowFindParameters(url, "nuvs", nuvs);

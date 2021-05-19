@@ -65,15 +65,17 @@ describe("Sample Action Creators:", () => {
 
     it("findSamples", () => {
         const term = "foo";
+        const labels = [1, 6];
         const page = 1;
         const pathoscope = [false];
         const nuvs = ["ip", true];
 
-        const result = findSamples(term, page, pathoscope, nuvs);
+        const result = findSamples(term, labels, page, pathoscope, nuvs);
 
         expect(result).toEqual({
             type: FIND_SAMPLES.REQUESTED,
             term,
+            labels,
             page,
             pathoscope,
             nuvs

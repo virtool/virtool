@@ -1,6 +1,7 @@
 import { push } from "connected-react-router";
 import { includes } from "lodash-es";
 import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { pushState } from "../app/actions";
 import {
     CREATE_SAMPLE,
     FIND_READ_FILES,
@@ -14,11 +15,11 @@ import {
 import * as filesAPI from "../files/api";
 import { apiCall, putGenericError, setPending } from "../utils/sagas";
 import * as samplesAPI from "./api";
-import { getSampleDetailId } from "./selectors";
+import { getLabelsFromURL, getSampleDetailId, getTermFromURL } from "./selectors";
 import { createFindURL } from "./utils";
 
 export function* watchSamples() {
-    yield throttle(300, FIND_SAMPLES.REQUESTED, findSamples);
+    yield takeLatest(FIND_SAMPLES.REQUESTED, findSamples);
     yield takeLatest(FIND_READ_FILES.REQUESTED, findReadFiles);
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
     yield throttle(500, CREATE_SAMPLE.REQUESTED, createSample);
@@ -36,11 +37,27 @@ export function* wsUpdateSample(action) {
 }
 
 export function* findSamples(action) {
-    yield apiCall(samplesAPI.find, action, FIND_SAMPLES);
+    let { labels, term } = action.parameters;
 
-    const { term, pathoscope, nuvs } = action;
+    if (labels === undefined) {
+        labels = yield select(getLabelsFromURL);
+    }
 
-    const { pathname, search } = createFindURL(term, pathoscope, nuvs);
+    if (term === undefined) {
+        term = yield select(getTermFromURL);
+    }
+
+    const { nuvs = [], pathoscope = [], page = 1 } = action.parameters;
+
+    const parameters = {
+        labels,
+        page,
+        term
+    };
+
+    yield apiCall(samplesAPI.find, { parameters }, FIND_SAMPLES);
+
+    const { pathname, search } = createFindURL(term, labels, pathoscope, nuvs);
 
     yield put(push(pathname + search));
 }
@@ -78,13 +95,12 @@ export function* getSample(action) {
 }
 
 export function* createSample(action) {
-    const extraFunc = { closeModal: put(push({ state: { create: false } })) };
     yield setPending(apiCall(samplesAPI.create, action, CREATE_SAMPLE, {}, extraFunc));
     yield put(push("/samples"));
 }
 
 export function* updateSample(action) {
-    const extraFunc = { closeModal: put(push({ editSample: false })) };
+    const extraFunc = { closeModal: put(pushState({ editSample: false })) };
     yield setPending(apiCall(samplesAPI.update, action, UPDATE_SAMPLE, {}, extraFunc));
 }
 
