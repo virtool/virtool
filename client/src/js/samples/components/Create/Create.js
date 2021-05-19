@@ -132,6 +132,27 @@ export const CreateSample = props => {
         }
     };
 
+    const handleSubmit = values => {
+        console.log("The values received are: ", values);
+        console.log("Correct location");
+        // Get the values that are hooks
+        //============
+
+        // Submit it
+        //===========
+        const { name, isolate, host, locale, libraryType, subtractionId, selected } = values;
+        // TODO: Handle the return and not close the page
+        props.onCreate(
+            name,
+            isolate,
+            host,
+            locale,
+            libraryType,
+            subtractionId, //|| get(this.props.subtractions, [0, "id"]),
+            selected //this.state.selected
+        );
+    };
+
     //TODO: There's no props.groups array
     // const userGroup = props.forceGroupChoice ? (
     //     <SampleUserGroup
@@ -142,20 +163,6 @@ export const CreateSample = props => {
     //         // onSelect={changeGroup}
     //     />
     // ) : null;
-
-    // const userGroup = (
-    //     <Field
-    //         name="group"
-    //         as={SampleUserGroup}
-    //         // error={errorName}
-    //         group={props.group}
-    //         groups={["Option 1", "Option 2", "Option 3"]}
-    //         handleChange={changeGroup}
-
-    //         // value={this.state.name}
-    //         // onChange={this.handleChange}
-    //     />
-    // );
 
     // The name of the subtractionID from state must be renamed
     // const subtractionId = this.state.subtractionId || get(props.subtractions, [0, "id"]);
