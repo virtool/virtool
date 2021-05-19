@@ -131,7 +131,7 @@ const mapDispatchToProps = dispatch => ({
     },
 
     onFindHmms: () => {
-        dispatch(findHmms("", 1, false));
+        dispatch(findHmms("", 1));
     },
 
     onListReadyIndexes: () => {
