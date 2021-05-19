@@ -5,13 +5,11 @@ describe("HMM Action Creators:", () => {
     it("findHmms: returns action for filtering results by search term", () => {
         const term = "search";
         const page = 5;
-        const background = true;
-        const result = findHmms(term, page, background);
+        const result = findHmms(term, page);
         expect(result).toEqual({
             type: FIND_HMMS.REQUESTED,
             term,
-            page,
-            background
+            page
         });
     });
 

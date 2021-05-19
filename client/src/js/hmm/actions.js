@@ -1,11 +1,10 @@
 import { simpleActionCreator } from "../utils/utils";
 import { GET_HMM, INSTALL_HMMS, FIND_HMMS, PURGE_HMMS } from "../app/actionTypes";
 
-export const findHmms = (term, page, background = true) => ({
+export const findHmms = (term, page) => ({
     type: FIND_HMMS.REQUESTED,
     term,
-    page,
-    background
+    page
 });
 
 /**

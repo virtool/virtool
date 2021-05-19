@@ -1,5 +1,5 @@
-import { push } from "connected-react-router";
-import { put, takeLatest, throttle } from "redux-saga/effects";
+import { getLocation, push } from "connected-react-router";
+import { put, select, takeLatest, throttle } from "redux-saga/effects";
 import { FIND_HMMS, GET_HMM, INSTALL_HMMS, PURGE_HMMS } from "../app/actionTypes";
 import { apiCall, pushFindTerm } from "../utils/sagas";
 import * as hmmsAPI from "./api";
@@ -13,7 +13,10 @@ export function* watchHmms() {
 
 export function* findHmms(action) {
     yield apiCall(hmmsAPI.find, action, FIND_HMMS);
-    if (!action.background) {
+
+    const routerLocation = yield select(getLocation);
+
+    if (routerLocation.pathname.startsWith("/hmm")) {
         yield pushFindTerm(action.term);
     }
 }
@@ -27,8 +30,9 @@ export function* getHmm(action) {
 }
 
 export function* purgeHmms(action) {
-    const extraFunc = {
-        goToList: put(push("/hmm"))
-    };
-    yield apiCall(hmmsAPI.purge, action, PURGE_HMMS, {}, extraFunc);
+    const resp = yield apiCall(hmmsAPI.purge, action, PURGE_HMMS, {}, extraFunc);
+
+    if (resp.ok) {
+        yield put(push("/hmm"));
+    }
 }
