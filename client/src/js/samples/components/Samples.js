@@ -18,12 +18,12 @@ export const SampleFileManager = () => (
 export const Samples = () => (
     <Container>
         <Switch>
-            <Route path="/samples" component={SamplesList} exact />
-            <Route path="/samples/files" component={SampleFileManager} exact />
             <Route path="/samples/settings" component={SamplesSettings} />
-            <Route path="/samples/labels" component={Labels} exact />
+            <Route path="/samples/files" component={SampleFileManager} />
+            <Route path="/samples/labels" component={Labels} />
             <Route path="/samples/create" component={CreateSample} />
             <Route path="/samples/:sampleId" component={SampleDetail} />
+            <Route path="/samples" component={SamplesList} />
         </Switch>
     </Container>
 );

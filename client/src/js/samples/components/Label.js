@@ -6,6 +6,7 @@ import { getLibraryTypeDisplayName } from "../utils";
 
 export const StyledSampleLabel = styled.span`
     align-items: center;
+    background-color: ${props => props.theme.color.white};
     border: ${getBorder};
     border-radius: ${borderRadius.md};
     display: inline-flex;
@@ -35,8 +36,8 @@ export const SampleLibraryTypeLabel = ({ libraryType }) => (
     </StyledSampleLibraryTypeLabel>
 );
 
-export const SampleLabel = styled(({ className, color, name }) => (
-    <StyledSampleLabel className={className} color={color}>
+export const SampleLabel = styled(({ className, color, name, role }) => (
+    <StyledSampleLabel className={className} color={color} role={role}>
         <Icon name="circle" />
         {name}
     </StyledSampleLabel>

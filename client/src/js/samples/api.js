@@ -1,12 +1,26 @@
 import { Request } from "../app/request";
 
-export const find = ({ term, page, pathoscope, nuvs }) =>
-    Request.get("/api/samples").query({
-        find: term,
+export const find = ({ parameters }) => {
+    const { term, labels, page, pathoscope, nuvs } = parameters;
+
+    const request = Request.get("/api/samples").query({
         pathoscope,
         nuvs,
         page
     });
+
+    if (term) {
+        request.query({ find: term });
+    }
+
+    if (labels) {
+        labels.forEach(label => request.query({ label }));
+    }
+
+    request.sortQuery();
+
+    return request;
+};
 
 export const filter = ({ term }) => Request.get(`/api/samples?find=${term}`);
 

@@ -1,6 +1,7 @@
 import { forEach, includes, pull, slice } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { getAccountId } from "../../account/selectors";
 import QuickAnalysis from "../../analyses/components/Create/Quick";
 import {
@@ -9,15 +10,26 @@ import {
     NarrowContainer,
     NoneFoundBox,
     ScrollList,
+    SideContainer,
     ViewHeader,
     ViewHeaderTitle
 } from "../../base";
 import { findHmms } from "../../hmm/actions";
 import { listReadyIndexes } from "../../indexes/actions";
+import { listLabels } from "../../labels/actions";
 import { findSamples } from "../actions";
-import { getTerm } from "../selectors";
+import { SampleFilters } from "./Filter/Filters";
 import SampleItem from "./Item/Item";
 import SampleToolbar from "./Toolbar";
+
+const StyledSamplesList = styled.div`
+    align-items: stretch;
+    display: flex;
+
+    th {
+        width: 220px;
+    }
+`;
 
 export class SamplesList extends React.Component {
     constructor(props) {
@@ -29,10 +41,10 @@ export class SamplesList extends React.Component {
     }
 
     componentDidMount() {
-        const { nuvs, pathoscope, term } = this.props;
         this.props.onFindHmms();
+        this.props.onListLabels();
         this.props.onListReadyIndexes();
-        this.props.onLoadNextPage(term, 1, pathoscope, nuvs);
+        this.props.onLoadNextPage(1);
     }
 
     onSelect = (id, index, isShiftKey) => {
@@ -79,7 +91,7 @@ export class SamplesList extends React.Component {
     };
 
     render() {
-        if (this.props.documents === null || this.props.hmms.documents === null || this.props.indexes === null) {
+        if (this.props.loading) {
             return <LoadingPlaceholder />;
         }
 
@@ -89,49 +101,63 @@ export class SamplesList extends React.Component {
             noneFound = <NoneFoundBox key="noSample" noun="samples" />;
         }
 
-        const { term, pathoscope, nuvs } = this.props;
-
         return (
-            <NarrowContainer>
-                <ViewHeader title="Samples">
-                    <ViewHeaderTitle>
-                        Samples <Badge>{this.props.total_count}</Badge>
-                    </ViewHeaderTitle>
-                </ViewHeader>
-
-                <SampleToolbar />
-
-                {noneFound || (
-                    <ScrollList
-                        documents={this.props.documents}
-                        page={this.props.page}
-                        pageCount={this.props.page_count}
-                        onLoadNextPage={page => this.props.onLoadNextPage(term, page, pathoscope, nuvs)}
-                        renderRow={this.renderRow}
-                    />
-                )}
-                <QuickAnalysis />
-            </NarrowContainer>
+            <React.Fragment>
+                <NarrowContainer>
+                    <ViewHeader title="Samples">
+                        <ViewHeaderTitle>
+                            Samples <Badge>{this.props.total_count}</Badge>
+                        </ViewHeaderTitle>
+                    </ViewHeader>
+                    <SampleToolbar />
+                </NarrowContainer>
+                <StyledSamplesList>
+                    <NarrowContainer>
+                        {noneFound || (
+                            <ScrollList
+                                documents={this.props.documents}
+                                page={this.props.page}
+                                pageCount={this.props.page_count}
+                                onLoadNextPage={page => this.props.onLoadNextPage(page)}
+                                renderRow={this.renderRow}
+                            />
+                        )}
+                        <QuickAnalysis />
+                    </NarrowContainer>
+                    <SideContainer>
+                        <SampleFilters />
+                    </SideContainer>
+                </StyledSamplesList>
+            </React.Fragment>
         );
     }
 }
 
-const mapStateToProps = state => ({
-    userId: getAccountId(state),
-    ...state.samples,
-    term: getTerm(state),
-    pathoscope: state.samples.pathoscopeCondition,
-    nuvs: state.samples.nuvsCondition,
-    hmms: state.hmms
-});
+const mapStateToProps = state => {
+    const loading =
+        state.hmms.documents === null ||
+        state.samples.documents === null ||
+        state.samples.readyIndexes === null ||
+        state.labels.documents === null;
+
+    return {
+        loading,
+        userId: getAccountId(state),
+        ...state.samples
+    };
+};
 
 const mapDispatchToProps = dispatch => ({
-    onLoadNextPage: (term, page, pathoscope, nuvs) => {
-        dispatch(findSamples(term, page, pathoscope, nuvs));
+    onLoadNextPage: page => {
+        dispatch(findSamples({ page }));
     },
 
     onFindHmms: () => {
         dispatch(findHmms("", 1));
+    },
+
+    onListLabels: () => {
+        dispatch(listLabels());
     },
 
     onListReadyIndexes: () => {
