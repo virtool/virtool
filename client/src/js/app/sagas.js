@@ -1,4 +1,4 @@
-import { push } from "connected-react-router";
+import { getLocation, push } from "connected-react-router";
 import { all, put, select, takeLatest } from "redux-saga/effects";
 import { watchAccount } from "../account/sagas";
 import { watchSettings } from "../administration/sagas";
@@ -18,8 +18,6 @@ import { watchSubtraction } from "../subtraction/sagas";
 import { watchTasks } from "../tasks/sagas";
 import { watchUsers } from "../users/sagas";
 import { PUSH_STATE } from "./actionTypes";
-
-const getLocation = state => state.router.location;
 
 function* pushState(action) {
     const routerLocation = yield select(getLocation);
