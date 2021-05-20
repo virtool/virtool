@@ -515,7 +515,7 @@ async def test_delete_index(spawn_job_client, error):
 
 
 @pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])
-async def test_upload(error, tmp_path, spawn_job_client, snapshot, resp_is, pg_session):
+async def test_upload(error, tmp_path, spawn_job_client, snapshot, static_time, resp_is, pg_session):
     client = await spawn_job_client(authorize=True)
     path = Path.cwd() / "tests" / "test_files" / "index" / "reference.1.bt2"
 

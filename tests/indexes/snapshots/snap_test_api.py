@@ -251,7 +251,8 @@ snapshots['test_upload[uvloop-None] 1'] = {
     'index': 'foo',
     'name': 'reference.1.bt2',
     'size': 7205747,
-    'type': 'bowtie2'
+    'type': 'bowtie2',
+    'uploaded_at': '2015-10-06T20:00:00Z'
 }
 
 snapshots['test_upload[uvloop-None] 2'] = {
