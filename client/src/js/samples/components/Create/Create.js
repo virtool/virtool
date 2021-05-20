@@ -1,4 +1,4 @@
-import { filter, get, map, values } from "lodash-es";
+import { filter, get, map } from "lodash-es";
 import React, { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
@@ -73,29 +73,30 @@ const nameValidationSchema = Yup.object().shape({
 const initialValues = {
     selected: [],
     name: "",
-    host: "",
     isolate: "",
+    host: "",
     locale: "",
-    subtractionId: "",
+    libraryType: "normal",
     select: [],
-    libraryType: "normal"
+    // Values below will be updated on mount since they are dependent on props
+    group: "",
+    subtractionId: ""
 };
 
 //TODO: Add error message(s) for server responses
 export const CreateSample = props => {
-    const [group, setGroup] = useState(props.forceGroupChoice ? "None" : "");
+    // const [group, setGroup] = useState();
+
+    // This function updates the initial values which are dependent on props
+    const updateInitialValues = () => {
+        initialValues.group = props.forceGroupChoice ? "None" : "";
+        initialValues.subtractionId = get(props, "subtractions[0]", "");
+    };
 
     useEffect(() => {
         props.onLoadSubtractionsAndFiles();
+        updateInitialValues();
     }, []);
-
-    useEffect(() => {
-        console.log("state = ", props.state);
-    }, [props.state]);
-
-    useEffect(() => {
-        console.log("group = ", group);
-    }, [group]);
 
     if (props.subtractions === null || props.readyReads === null) {
         return <LoadingPlaceholder margin="36px" />;
@@ -181,7 +182,12 @@ export const CreateSample = props => {
                 <ViewHeaderTitle>Create Sample</ViewHeaderTitle>
                 {errorSubtraction && <StyledInputError>{errorSubtraction}</StyledInputError>}
             </ViewHeader>
-            <Formik onSubmit={handleSubmit} initialValues={initialValues} validationSchema={nameValidationSchema}>
+            <Formik
+                onSubmit={handleSubmit}
+                initialValues={initialValues}
+                validationSchema={nameValidationSchema}
+                enableReinitialize={true} // Reloads form on mount
+            >
                 {({ errors, touched, setFieldValue, values }) => (
                     <Form>
                         <CreateSampleFields>
