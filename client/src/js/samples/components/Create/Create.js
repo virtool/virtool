@@ -34,6 +34,10 @@ const CreateSampleFields = styled.div`
     grid-column-gap: ${props => props.theme.gap.column};
 `;
 
+const StyledInputError = styled(InputError)`
+    text-align: left;
+`;
+
 const extensionRegex = /^[a-z0-9]+-(.*)\.f[aq](st)?[aq]?(\.gz)?$/;
 
 const getFileNameFromId = id => id.match(extensionRegex)[1];
@@ -97,8 +101,11 @@ export const CreateSample = props => {
         return <LoadingPlaceholder margin="36px" />;
     }
 
-    // Temporary handleSubmit
-    const handleSubmit = values => console.log("The values received were: ", values);
+    // If there are no default subtractions, an error must be made
+    const errorSubtraction =
+        !props.subtractions || !props.subtractions.length
+            ? "At least one subtraction must be added to Virtool before samples can be analyzed."
+            : "";
 
     const subtractionComponents = map(props.subtractions, subtraction => (
         <option key={subtraction.id} value={subtraction.id}>
@@ -142,15 +149,17 @@ export const CreateSample = props => {
         //===========
         const { name, isolate, host, locale, libraryType, subtractionId, selected } = values;
         // TODO: Handle the return and not close the page
-        props.onCreate(
-            name,
-            isolate,
-            host,
-            locale,
-            libraryType,
-            subtractionId, //|| get(this.props.subtractions, [0, "id"]),
-            selected //this.state.selected
-        );
+        // if(!errorSubtraction){
+        // props.onCreate(
+        //     name,
+        //     isolate,
+        //     host,
+        //     locale,
+        //     libraryType,
+        //     subtractionId, //|| get(this.props.subtractions, [0, "id"]),
+        //     selected //this.state.selected
+        // );
+        // }
     };
 
     //TODO: There's no props.groups array
@@ -170,6 +179,7 @@ export const CreateSample = props => {
         <NarrowContainer>
             <ViewHeader title="Create Sample">
                 <ViewHeaderTitle>Create Sample</ViewHeaderTitle>
+                {errorSubtraction && <StyledInputError>{errorSubtraction}</StyledInputError>}
             </ViewHeader>
             <Formik onSubmit={handleSubmit} initialValues={initialValues} validationSchema={nameValidationSchema}>
                 {({ errors, touched, setFieldValue, values }) => (
@@ -265,15 +275,6 @@ export const CreateSample = props => {
                             />
                         )}
 
-                        {/* {userGroup} */}
-
-                        {/* 
-                                Currently causing the application to crash due to the error:
-                                ```
-                                TypeError: prevProps.onSelect is not a function at 
-                                ReadSelector.componentDidUpdate (ReadSelector.js:61)
-                                ```
-                            */}
                         <Field
                             name="selected"
                             as={ReadSelector}
