@@ -61,18 +61,4 @@ describe("<SubtractionDetail />", () => {
         const wrapper = shallow(<SubtractionDetail {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
-
-    // it("should render files when files is defined"),
-    //     () => {
-    //         props.files = [
-    //             {
-    //                 download_url: "/api/subtractions/xl8faqqz/files/subtraction.fa.gz",
-    //                 id: 22,
-    //                 name: "subtraction.fa.gz",
-    //                 size: 36461731,
-    //                 subtraction: "xl8faqqz",
-    //                 type: "fasta"
-    //             }
-    //         ];
-    //     };
 });
