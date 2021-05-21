@@ -38,10 +38,10 @@ class TestCaseDataFactory:
 
     async def analysis(
             self,
-            index_id: str,
-            ref_id: str,
-            subtraction_ids: List[str],
-            sample_id: str,
+            index_id: str = None,
+            ref_id: str = None,
+            subtraction_ids: List[str] = None,
+            sample_id: str = None,
             workflow: str = "test",
             ready=False
     ):
@@ -122,7 +122,7 @@ class TestCaseDataFactory:
 
     async def reference(self) -> dict:
         id_ = self.fake.get_mongo_id()
-        return await virtool.references.db.create_document(
+        document = await virtool.references.db.create_document(
             db=self.db,
             settings=self.settings,
             ref_id=id_,
@@ -132,6 +132,10 @@ class TestCaseDataFactory:
             data_type="genome",
             user_id=self.user_id
         )
+
+        await self.db.references.insert_one(document)
+
+        return document
 
     async def index(self, ref_id: str, finalize: bool = True) -> dict:
         id_ = self.fake.get_mongo_id()

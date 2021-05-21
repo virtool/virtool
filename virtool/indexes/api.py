@@ -264,7 +264,7 @@ async def upload(req):
     name = req.match_info["filename"]
 
     if name not in FILES:
-        return not_found("Index file not found")
+        return not_found(f"Index file not found")
 
     document = await db.indexes.find_one(index_id)
 
@@ -300,6 +300,8 @@ async def upload(req):
     headers = {
         "Location": f"/api/indexes/{index_id}/files/{name}"
     }
+
+    index_file["uploaded_at"] = virtool.utils.timestamp()
 
     return json_response(index_file, headers=headers, status=201)
 

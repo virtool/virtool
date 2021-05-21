@@ -20,14 +20,16 @@ import virtool.utils
 from virtool.fake.identifiers import USER_ID
 from virtool.hmm.fake import create_fake_hmms
 from virtool.indexes.fake import create_fake_indexes
-from virtool.samples.fake import create_fake_samples, SAMPLE_ID_PAIRED_FINALIZED
+from virtool.samples.fake import (create_fake_samples,
+                                  SAMPLE_ID_PAIRED_FINALIZED)
 from virtool.jobs.utils import JobRights
 from virtool.otus.fake import create_fake_otus
 from virtool.subtractions.fake import create_fake_subtractions
 from virtool.types import App
 from virtool.users.fake import create_fake_bob_user
 from virtool.utils import ensure_data_dir, random_alphanumeric
-from virtool.fake.test_cases import sample_integration
+from virtool.fake.test_cases import (sample_integration,
+                                     index_integration)
 
 logger = getLogger(__name__)
 
@@ -45,6 +47,7 @@ async def populate(app: App):
     await create_fake_samples(app)
 
     await sample_integration.populate(app)
+    await index_integration.populate(app)
 
 
 async def remove_fake_data_path(app: App):
