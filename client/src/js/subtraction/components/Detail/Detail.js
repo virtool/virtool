@@ -2,36 +2,14 @@ import { get } from "lodash-es";
 import numbro from "numbro";
 import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
 import { pushState } from "../../../app/actions";
-import { fontWeight } from "../../../app/theme";
-import {
-    BoxGroup,
-    BoxGroupHeader,
-    BoxGroupSection,
-    Icon,
-    LoadingPlaceholder,
-    NotFound,
-    Table,
-    ViewHeader,
-    ViewHeaderIcons,
-    ViewHeaderTitle
-} from "../../../base";
+import { Icon, LoadingPlaceholder, NotFound, Table, ViewHeader, ViewHeaderIcons, ViewHeaderTitle } from "../../../base";
 import { checkAdminOrPermission } from "../../../utils/utils";
 import { getSubtraction } from "../../actions";
 import EditSubtraction from "../Edit";
 import RemoveSubtraction from "../Remove";
 import SubtractionFiles from "./Files";
 
-const StyledBoxGroupSection = styled(BoxGroupSection)`
-    align-items: center;
-    display: flex;
-
-    a {
-        margin-right: auto;
-        font-weight: ${fontWeight.thick};
-    }
-`;
 const calculateGC = nucleotides => numbro(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000");
 
 export class SubtractionDetail extends React.Component {
