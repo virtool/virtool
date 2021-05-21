@@ -70,22 +70,20 @@ const nameValidationSchema = Yup.object().shape({
     name: Yup.string().required("Required")
 });
 
-const initialValues = {
-    selected: [],
-    name: "",
-    isolate: "",
-    host: "",
-    locale: "",
-    libraryType: "normal",
-    select: [],
-    // Values below will be updated on mount since they are dependent on props
-    group: "",
-    subtractionId: ""
-};
-
 //TODO: Add error message(s) for server responses
 export const CreateSample = props => {
-    // const [group, setGroup] = useState();
+    const initialValues = {
+        selected: [],
+        name: "",
+        isolate: "",
+        host: "",
+        locale: "",
+        libraryType: "normal",
+        select: [],
+        // Values below will be updated since they are dependent on props
+        group: "",
+        subtractionId: ""
+    };
 
     // This function updates the initial values which are dependent on props
     const updateInitialValues = () => {
@@ -95,8 +93,13 @@ export const CreateSample = props => {
 
     useEffect(() => {
         props.onLoadSubtractionsAndFiles();
-        updateInitialValues();
     }, []);
+
+    useEffect(() => {
+        if (props.subtractions !== null || props.readyReads !== null) {
+            updateInitialValues();
+        }
+    }, [props.subtractions, props.readyReads]);
 
     if (props.subtractions === null || props.readyReads === null) {
         return <LoadingPlaceholder margin="36px" />;
@@ -126,17 +129,26 @@ export const CreateSample = props => {
         setValue(name, event.target.value);
     };
 
-    const handleSelect = (newValue, name, setValue) => setValue(name, newValue);
+    const handleSelect = (newValue, name, setFieldValue) => setFieldValue(name, newValue);
 
     // TODO: Figure out how to make Formik values get sent in this function
-    const autofill = (selected, setValue, e) => {
+    const autofill = (selected, setFieldValue, e) => {
+        // setValue(prevValue => {
+        //     // Code added by Ian
+        //     console.log();
+        // });
+
         console.log("AutoFill was called");
 
-        setValue("name", "Testing Name");
+        console.log("values: ", selected);
+        console.log("setValue: ", setFieldValue);
+        console.log("e: ", e);
+
+        //setValue("name", "Testing Name");
 
         if (selected.length) {
             console.log("... and filling name");
-            setValue("name", selected[0]);
+            setFieldValue("name", selected[0]);
         }
     };
 
@@ -144,10 +156,10 @@ export const CreateSample = props => {
         console.log("The values received are: ", values);
         console.log("Correct location");
         // Get the values that are hooks
-        //============
+        //==============================//
 
         // Submit it
-        //===========
+        //==============================//
         const { name, isolate, host, locale, libraryType, subtractionId, selected } = values;
         // TODO: Handle the return and not close the page
         // if(!errorSubtraction){
@@ -204,8 +216,7 @@ export const CreateSample = props => {
                                     />
                                     <InputIcon
                                         name="magic"
-                                        onClick={e => autofill(values, setFieldValue, e)}
-                                        // onClick={() => console.log("magic icon was pressed")}
+                                        onClick={e => autofill(values.selected, setFieldValue, e)}
                                         disabled={!values.selected.length}
                                     />
                                 </InputContainer>
@@ -266,7 +277,7 @@ export const CreateSample = props => {
                         <Field
                             name={"libraryType"}
                             as={LibraryTypeSelector}
-                            onSelect={library => setFieldValue("libraryType", library)}
+                            onSelect={library => handleSelect(library, "libraryType", setFieldValue)} //TODO: Fix this
                             libraryType={values.libraryType}
                         />
                         {/* TODO: Add a fake user group for testing purposes */}
@@ -289,7 +300,8 @@ export const CreateSample = props => {
                             onSelect={selection => handleSelect(selection, "selected", setFieldValue)}
                             //error={errorFile}
                         />
-                        <button type="button" onClick={() => alert(JSON.stringify(values))}>
+
+                        <button type="button" onClick={() => console.log(values)}>
                             Print the values
                         </button>
 
