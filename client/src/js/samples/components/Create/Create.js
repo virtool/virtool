@@ -140,7 +140,7 @@ export const CreateSample = props => {
 
         console.log("AutoFill was called");
 
-        console.log("values: ", selected);
+        console.log("selected: ", selected);
         console.log("setValue: ", setFieldValue);
         console.log("e: ", e);
 
@@ -219,6 +219,14 @@ export const CreateSample = props => {
                                         onClick={e => autofill(values.selected, setFieldValue, e)}
                                         disabled={!values.selected.length}
                                     />
+                                    {/* Button below contains identical props to Icon above but functions correctly */}
+                                    <button
+                                        name="magic-button"
+                                        onClick={e => autofill(values.selected, setFieldValue, e)}
+                                        disabled={!values.selected.length}
+                                    >
+                                        Magic Button
+                                    </button>
                                 </InputContainer>
                                 {errors.name && touched.name && <InputError>{errors.name}</InputError>}
                             </InputGroup>
