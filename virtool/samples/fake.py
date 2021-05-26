@@ -1,6 +1,8 @@
 import shutil
 from pathlib import Path
 from typing import List, Optional
+from sqlalchemy.exc import IntegrityError
+from contextlib import suppress
 
 from virtool.fake.identifiers import USER_ID
 from virtool.fake.wrapper import FakerWrapper
@@ -112,31 +114,32 @@ async def create_fake_sample(
     subtraction_ids = [doc["_id"] async for doc in db.subtraction.find()]
 
     if finalized is True:
-        if paired:
-            for n in (1, 2):
-                file_path = READ_FILES_PATH / f"paired_{n}.fq.gz"
+        with suppress(IntegrityError):
+            if paired:
+                for n in (1, 2):
+                    file_path = READ_FILES_PATH / f"paired_{n}.fq.gz"
 
-                await copy_reads_file(app, file_path, f"reads_{n}.fq.gz", sample_id)
+                    await copy_reads_file(app, file_path, f"reads_{n}.fq.gz", sample_id)
+
+                    await create_reads_file(
+                        pg,
+                        file_path.stat().st_size,
+                        f"reads_{n}.fq.gz",
+                        f"reads_{n}.fq.gz",
+                        sample_id,
+                    )
+            else:
+                file_path = READ_FILES_PATH / "single.fq.gz"
+
+                await copy_reads_file(app, file_path, "reads_1.fq.gz", sample_id)
 
                 await create_reads_file(
                     pg,
                     file_path.stat().st_size,
-                    f"reads_{n}.fq.gz",
-                    f"reads_{n}.fq.gz",
+                    "reads_1.fq.gz",
+                    "reads_1.fq.gz",
                     sample_id,
                 )
-        else:
-            file_path = READ_FILES_PATH / "single.fq.gz"
-
-            await copy_reads_file(app, file_path, "reads_1.fq.gz", sample_id)
-
-            await create_reads_file(
-                pg,
-                file_path.stat().st_size,
-                "reads_1.fq.gz",
-                "reads_1.fq.gz",
-                sample_id,
-            )
 
     sample = await create_sample(
         _id=sample_id,
