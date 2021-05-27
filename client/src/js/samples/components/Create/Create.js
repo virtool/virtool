@@ -40,21 +40,8 @@ const StyledInputError = styled(InputError)`
 
 const extensionRegex = /^[a-z0-9]+-(.*)\.f[aq](st)?[aq]?(\.gz)?$/;
 
+// TODO: Make this work
 const getFileNameFromId = id => id.match(extensionRegex)[1];
-
-const getInitialState = props => ({
-    selected: [],
-    name: "",
-    host: "",
-    isolate: "",
-    locale: "",
-    subtractionId: "",
-    group: props.forceGroupChoice ? "none" : "",
-    errorName: "",
-    errorSubtraction: "",
-    errorFile: "",
-    libraryType: "normal"
-});
 
 //TODO: Check what type the subtraction actually is
 //TODO: Add proper file selected validation
@@ -91,10 +78,12 @@ export const CreateSample = props => {
         initialValues.subtractionId = get(props, "subtractions[0]", "");
     };
 
+    // Load the files on mount
     useEffect(() => {
         props.onLoadSubtractionsAndFiles();
     }, []);
 
+    // Update Formik's initial values once the subtraction files have been received
     useEffect(() => {
         if (props.subtractions !== null || props.readyReads !== null) {
             updateInitialValues();
@@ -133,15 +122,10 @@ export const CreateSample = props => {
 
     // TODO: Figure out how to make Formik values get sent in this function
     const autofill = (selected, setFieldValue, e) => {
-        // setValue(prevValue => {
-        //     // Code added by Ian
-        //     console.log();
-        // });
-
         console.log("AutoFill was called");
 
         console.log("selected: ", selected);
-        console.log("setValue: ", setFieldValue);
+        // console.log("setValue: ", setFieldValue);
         console.log("e: ", e);
 
         //setValue("name", "Testing Name");
@@ -175,7 +159,7 @@ export const CreateSample = props => {
         // }
     };
 
-    //TODO: There's no props.groups array
+    // TODO: There's no props.groups array
     // const userGroup = props.forceGroupChoice ? (
     //     <SampleUserGroup
     //         name="group"
@@ -206,14 +190,7 @@ export const CreateSample = props => {
                             <InputGroup>
                                 <InputLabel>Sample Name</InputLabel>
                                 <InputContainer align="right">
-                                    <Field
-                                        as={Input}
-                                        // error={errorName}
-                                        name="name"
-                                        // value={this.state.name}
-                                        // onChange={this.handleChange}
-                                        autocomplete={false}
-                                    />
+                                    <Field as={Input} name="name" autocomplete={false} />
                                     <InputIcon
                                         name="magic"
                                         onClick={e => autofill(values.selected, setFieldValue, e)}
@@ -224,6 +201,7 @@ export const CreateSample = props => {
                                         name="magic-button"
                                         onClick={e => autofill(values.selected, setFieldValue, e)}
                                         disabled={!values.selected.length}
+                                        type="button"
                                     >
                                         Magic Button
                                     </button>
@@ -232,30 +210,18 @@ export const CreateSample = props => {
                             </InputGroup>
                             <InputGroup>
                                 <InputLabel>Locale</InputLabel>
-                                <Field
-                                    as={Input}
-                                    name="locale"
-                                    // value={this.state.locale}
-                                    // onChange={this.handleChange}
-                                />
+                                <Field as={Input} name="locale" />
                             </InputGroup>
                             <InputGroup>
                                 <InputLabel>Isolate</InputLabel>
-                                <Field
-                                    as={Input}
-                                    name="isolate"
-                                    // value={this.state.isolate}
-                                    // onChange={this.handleChange}
-                                />
+                                <Field as={Input} name="isolate" />
                             </InputGroup>
 
-                            {/* TODO: Fix the selection defaulting */}
                             <InputGroup>
                                 <InputLabel>Default Subtraction</InputLabel>
                                 <Field
                                     as={Select}
                                     name="subtractionId"
-                                    // value={values.subtractionId || props.subtractions[0]}
                                     onChange={e => updateValue(e, "subtractionId", setFieldValue)}
                                 >
                                     {subtractionComponents}
@@ -264,12 +230,7 @@ export const CreateSample = props => {
 
                             <InputGroup>
                                 <InputLabel>Host</InputLabel>
-                                <Field
-                                    as={Input}
-                                    name="host"
-                                    // value={this.state.host}
-                                    // onChange={this.handleChange}
-                                />
+                                <Field as={Input} name="host" />
                             </InputGroup>
 
                             <InputGroup>
@@ -285,10 +246,9 @@ export const CreateSample = props => {
                         <Field
                             name={"libraryType"}
                             as={LibraryTypeSelector}
-                            onSelect={library => handleSelect(library, "libraryType", setFieldValue)} //TODO: Fix this
+                            onSelect={library => handleSelect(library, "libraryType", setFieldValue)}
                             libraryType={values.libraryType}
                         />
-                        {/* TODO: Add a fake user group for testing purposes */}
                         {props.forceGroupChoice && (
                             <Field
                                 as={SampleUserGroup}
