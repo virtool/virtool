@@ -21,7 +21,6 @@ import {
 import { clearError } from "../../../errors/actions";
 import { shortlistSubtractions } from "../../../subtraction/actions";
 import { getSubtractionShortlist } from "../../../subtraction/selectors";
-import { getTargetChange } from "../../../utils/utils";
 import { createSample, findReadFiles } from "../../actions";
 import { LibraryTypeSelector } from "./LibraryTypeSelector";
 import ReadSelector from "./ReadSelector";
@@ -43,18 +42,10 @@ const extensionRegex = /^[a-z0-9]+-(.*)\.f[aq](st)?[aq]?(\.gz)?$/;
 // TODO: Make this work
 const getFileNameFromId = id => id.match(extensionRegex)[1];
 
-//TODO: Check what type the subtraction actually is
-//TODO: Add proper file selected validation
 const validationSchema = Yup.object().shape({
-    name: Yup.string().required("Required"),
-    subtraction: Yup.string().required(
-        "At least one subtraction must be added to Virtool before samples can be analyzed."
-    ),
-    selected: Yup.array //.length(1, "At least one read file must be attached to the sample")
-});
-
-const nameValidationSchema = Yup.object().shape({
-    name: Yup.string().required("Required")
+    name: Yup.string().required("Required Field"),
+    subtractionId: Yup.string().required("A default subtraction must be selected"),
+    selected: Yup.array().length(1, "At least one read file must be attached to the sample")
 });
 
 //TODO: Add error message(s) for server responses
@@ -66,7 +57,7 @@ export const CreateSample = props => {
         host: "",
         locale: "",
         libraryType: "normal",
-        select: [],
+        selected: [],
         // Values below will be updated since they are dependent on props
         group: "",
         subtractionId: ""
@@ -75,7 +66,7 @@ export const CreateSample = props => {
     // This function updates the initial values which are dependent on props
     const updateInitialValues = () => {
         initialValues.group = props.forceGroupChoice ? "None" : "";
-        initialValues.subtractionId = get(props, "subtractions[0]", "");
+        initialValues.subtractionId = get(props, "subtractions[0].id", "");
     };
 
     // Load the files on mount
@@ -111,12 +102,7 @@ export const CreateSample = props => {
         setGroup(e.target.value);
     };
 
-    const updateValue = (event, name, setValue) => {
-        console.log("value: ", event.target.value);
-        console.log("name: ", name);
-        console.log("setValue: ", setValue);
-        setValue(name, event.target.value);
-    };
+    const updateValue = (event, name, setFieldValue) => setFieldValue(name, event.target.value);
 
     const handleSelect = (newValue, name, setFieldValue) => setFieldValue(name, newValue);
 
@@ -181,7 +167,7 @@ export const CreateSample = props => {
             <Formik
                 onSubmit={handleSubmit}
                 initialValues={initialValues}
-                validationSchema={nameValidationSchema}
+                validationSchema={validationSchema}
                 enableReinitialize={true} // Reloads form on mount
             >
                 {({ errors, touched, setFieldValue, values }) => (
@@ -193,6 +179,7 @@ export const CreateSample = props => {
                                     <Field as={Input} name="name" autocomplete={false} />
                                     <InputIcon
                                         name="magic"
+                                        error={errors.name && touched.name ? errors.name : null}
                                         onClick={e => autofill(values.selected, setFieldValue, e)}
                                         disabled={!values.selected.length}
                                     />
@@ -222,6 +209,7 @@ export const CreateSample = props => {
                                 <Field
                                     as={Select}
                                     name="subtractionId"
+                                    error={errors.subtractionId && touched.subtractionId ? errors.subtractionId : null}
                                     onChange={e => updateValue(e, "subtractionId", setFieldValue)}
                                 >
                                     {subtractionComponents}
@@ -253,24 +241,26 @@ export const CreateSample = props => {
                             <Field
                                 as={SampleUserGroup}
                                 name="group"
-                                // error={errorName}
                                 group={props.group}
                                 groups={["Option 1", "Option 2", "Option 3"]}
                                 onChange={e => changeGroup(e, setFieldValue)}
                             />
                         )}
-
                         <Field
                             name="selected"
                             as={ReadSelector}
                             files={props.readyReads}
                             selected={values.selected}
                             onSelect={selection => handleSelect(selection, "selected", setFieldValue)}
-                            //error={errorFile}
+                            error={errors.selected && touched.selected ? errors.selected : null}
                         />
 
                         <button type="button" onClick={() => console.log(values)}>
                             Print the values
+                        </button>
+
+                        <button type="button" onClick={() => console.log(errors)}>
+                            Print the errors
                         </button>
 
                         <SaveButton />
