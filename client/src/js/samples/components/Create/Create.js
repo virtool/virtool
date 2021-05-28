@@ -102,10 +102,6 @@ export const CreateSample = props => {
         setGroup(e.target.value);
     };
 
-    const updateValue = (event, name, setFieldValue) => setFieldValue(name, event.target.value);
-
-    const handleSelect = (newValue, name, setFieldValue) => setFieldValue(name, newValue);
-
     // TODO: Figure out how to make Formik values get sent in this function
     const autofill = (selected, setFieldValue, e) => {
         console.log("AutoFill was called");
@@ -210,7 +206,7 @@ export const CreateSample = props => {
                                     as={Select}
                                     name="subtractionId"
                                     error={errors.subtractionId && touched.subtractionId ? errors.subtractionId : null}
-                                    onChange={e => updateValue(e, "subtractionId", setFieldValue)}
+                                    onChange={e => setFieldValue("subtractionId", e.value)}
                                 >
                                     {subtractionComponents}
                                 </Field>
@@ -234,7 +230,7 @@ export const CreateSample = props => {
                         <Field
                             name={"libraryType"}
                             as={LibraryTypeSelector}
-                            onSelect={library => handleSelect(library, "libraryType", setFieldValue)}
+                            onSelect={library => setFieldValue("libraryType", library)}
                             libraryType={values.libraryType}
                         />
                         {props.forceGroupChoice && (
@@ -251,7 +247,7 @@ export const CreateSample = props => {
                             as={ReadSelector}
                             files={props.readyReads}
                             selected={values.selected}
-                            onSelect={selection => handleSelect(selection, "selected", setFieldValue)}
+                            onSelect={selection => setFieldValue("selected", selection)}
                             error={errors.selected && touched.selected ? errors.selected : null}
                         />
 
