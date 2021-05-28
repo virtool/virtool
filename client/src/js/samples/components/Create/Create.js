@@ -172,10 +172,14 @@ export const CreateSample = props => {
                             <InputGroup>
                                 <InputLabel>Sample Name</InputLabel>
                                 <InputContainer align="right">
-                                    <Field as={Input} name="name" autocomplete={false} />
+                                    <Field
+                                        as={Input}
+                                        name="name"
+                                        autocomplete={false}
+                                        error={touched.name ? errors.name : null}
+                                    />
                                     <InputIcon
                                         name="magic"
-                                        error={errors.name && touched.name ? errors.name : null}
                                         onClick={e => autofill(values.selected, setFieldValue, e)}
                                         disabled={!values.selected.length}
                                     />
@@ -189,7 +193,7 @@ export const CreateSample = props => {
                                         Magic Button
                                     </button>
                                 </InputContainer>
-                                {errors.name && touched.name && <InputError>{errors.name}</InputError>}
+                                {touched.name && <InputError>{errors.name}</InputError>}
                             </InputGroup>
                             <InputGroup>
                                 <InputLabel>Locale</InputLabel>
@@ -205,11 +209,12 @@ export const CreateSample = props => {
                                 <Field
                                     as={Select}
                                     name="subtractionId"
-                                    error={errors.subtractionId && touched.subtractionId ? errors.subtractionId : null}
+                                    error={touched.subtractionId ? errors.subtractionId : null}
                                     onChange={e => setFieldValue("subtractionId", e.value)}
                                 >
                                     {subtractionComponents}
                                 </Field>
+                                {touched.name && <InputError>{errors.subtractionId}</InputError>}
                             </InputGroup>
 
                             <InputGroup>
@@ -238,7 +243,7 @@ export const CreateSample = props => {
                                 as={SampleUserGroup}
                                 name="group"
                                 group={props.group}
-                                groups={["Option 1", "Option 2", "Option 3"]}
+                                groups={props.groups}
                                 onChange={e => changeGroup(e, setFieldValue)}
                             />
                         )}
@@ -248,7 +253,7 @@ export const CreateSample = props => {
                             files={props.readyReads}
                             selected={values.selected}
                             onSelect={selection => setFieldValue("selected", selection)}
-                            error={errors.selected && touched.selected ? errors.selected : null}
+                            error={touched.selected ? errors.selected : null}
                         />
 
                         <button type="button" onClick={() => console.log(values)}>
