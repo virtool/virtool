@@ -29,7 +29,8 @@ from virtool.types import App
 from virtool.users.fake import create_fake_bob_user
 from virtool.utils import ensure_data_dir, random_alphanumeric
 from virtool.fake.test_cases import (sample_integration,
-                                     index_integration)
+                                     index_integration,
+                                     hmms_integration)
 
 logger = getLogger(__name__)
 
@@ -48,6 +49,7 @@ async def populate(app: App):
 
     await sample_integration.populate(app)
     await index_integration.populate(app)
+    await hmms_integration.populate(app)
 
 
 async def remove_fake_data_path(app: App):

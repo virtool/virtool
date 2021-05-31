@@ -130,7 +130,6 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.delete("/api/analyses/{analysis_id}")
-@routes.jobs_api.delete("/api/analyses/{analysis_id}")
 async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Remove an analysis document by its id.
@@ -167,6 +166,45 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
         return conflict("Analysis is still running")
 
     await db.analyses.delete_one({"_id": analysis_id})
+
+    path = (
+        req.app["settings"]["data_path"]
+        / "samples"
+        / sample_id
+        / "analysis"
+        / analysis_id
+    )
+
+    try:
+        await req.app["run_in_thread"](virtool.utils.rm, path, True)
+    except FileNotFoundError:
+        pass
+
+    await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
+
+    return no_content()
+
+
+@routes.jobs_api.delete("/api/analyses/{analysis_id}")
+async def delete_analysis(req):
+    db = req.app["db"]
+
+    analysis_id = req.match_info["analysis_id"]
+
+    document = await db.analyses.find_one(
+        {"_id": analysis_id},
+        ["job", "ready", "sample"]
+    )
+
+    if not document:
+        return not_found()
+
+    if document["ready"]:
+        return conflict("Analysis is finalized")
+
+    await db.analyses.delete_one({"_id": analysis_id})
+
+    sample_id = document["sample"]["id"]
 
     path = (
         req.app["settings"]["data_path"]
