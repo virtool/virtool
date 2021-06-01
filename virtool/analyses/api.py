@@ -74,8 +74,59 @@ async def find(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(data)
 
 
-@routes.get("/api/analyses/{analysis_id}")
 @routes.jobs_api.get("/api/analyses/{analysis_id}")
+async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
+    """
+    Get a complete analysis document.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+
+    analysis_id = req.match_info["analysis_id"]
+
+    document = await db.analyses.find_one(analysis_id)
+
+    if document is None:
+        return not_found()
+
+    try:
+        iso = virtool.api.json.isoformat(document["updated_at"])
+    except KeyError:
+        iso = virtool.api.json.isoformat(document["created_at"])
+
+    if_modified_since = req.headers.get("If-Modified-Since")
+
+    if if_modified_since and if_modified_since == iso:
+        return virtool.api.response.not_modified()
+
+    document = await virtool.analyses.utils.attach_analysis_files(pg, analysis_id, document)
+
+    sample = await db.samples.find_one(
+        {"_id": document["sample"]["id"]},
+        {"quality": False}
+    )
+
+    if not sample:
+        return bad_request("Parent sample does not exist")
+
+    document = await virtool.subtractions.db.attach_subtractions(db, document)
+
+    if document["ready"]:
+        try:
+            document = await virtool.analyses.format.format_analysis(req.app, document)
+        except ValueError:
+            pass
+
+    headers = {
+        "Cache-Control": "no-cache",
+        "Last-Modified": virtool.api.json.isoformat(document["created_at"])
+    }
+
+    return json_response(virtool.utils.base_processor(document), headers=headers)
+
+
+@routes.get("/api/analyses/{analysis_id}")
 async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Get a complete analysis document.
@@ -224,7 +275,7 @@ async def delete_analysis(req):
     return no_content()
 
 
-@routes.jobs_api.post("/api/analyses/{id}/files")
+@routes.jobs_api.put("/api/analyses/{id}/files")
 async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Upload a new analysis result file to the `analysis_files` SQL table and the `analyses` folder in the Virtool
