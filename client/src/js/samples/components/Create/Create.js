@@ -1,4 +1,4 @@
-import { filter, get, map } from "lodash-es";
+import { filter, find, get, map } from "lodash-es";
 import React, { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
@@ -39,13 +39,17 @@ const StyledInputError = styled(InputError)`
 
 const extensionRegex = /^[a-z0-9]+-(.*)\.f[aq](st)?[aq]?(\.gz)?$/;
 
-// TODO: Make this work
-const getFileNameFromId = id => id.match(extensionRegex)[1];
+// This method takes selected read file's id and the list of read files
+// The return value is the it's corresponding name without the file extension
+const getFileNameFromId = (id, files) => {
+    const file = find(files, file => file.id === id);
+    return file ? file.name_on_disk.match(extensionRegex)[1] : "";
+};
 
 const validationSchema = Yup.object().shape({
     name: Yup.string().required("Required Field"),
     subtractionId: Yup.string().required("A default subtraction must be selected"),
-    selected: Yup.array().length(1, "At least one read file must be attached to the sample")
+    selected: Yup.array().min(1, "At least one read file must be attached to the sample")
 });
 
 //TODO: Add error message(s) for server responses
@@ -85,12 +89,6 @@ export const CreateSample = props => {
         return <LoadingPlaceholder margin="36px" />;
     }
 
-    // If there are no default subtractions, an error must be made
-    const errorSubtraction =
-        !props.subtractions || !props.subtractions.length
-            ? "At least one subtraction must be added to Virtool before samples can be analyzed."
-            : "";
-
     const subtractionComponents = map(props.subtractions, subtraction => (
         <option key={subtraction.id} value={subtraction.id}>
             {subtraction.name}
@@ -102,19 +100,10 @@ export const CreateSample = props => {
         setGroup(e.target.value);
     };
 
-    // TODO: Figure out how to make Formik values get sent in this function
     const autofill = (selected, setFieldValue, e) => {
-        console.log("AutoFill was called");
-
-        console.log("selected: ", selected);
-        // console.log("setValue: ", setFieldValue);
-        console.log("e: ", e);
-
-        //setValue("name", "Testing Name");
-
-        if (selected.length) {
-            console.log("... and filling name");
-            setFieldValue("name", selected[0]);
+        const fileName = getFileNameFromId(selected[0], props.readyReads);
+        if (fileName) {
+            setFieldValue("name", fileName);
         }
     };
 
@@ -183,15 +172,6 @@ export const CreateSample = props => {
                                         onClick={e => autofill(values.selected, setFieldValue, e)}
                                         disabled={!values.selected.length}
                                     />
-                                    {/* Button below contains identical props to Icon above but functions correctly */}
-                                    <button
-                                        name="magic-button"
-                                        onClick={e => autofill(values.selected, setFieldValue, e)}
-                                        disabled={!values.selected.length}
-                                        type="button"
-                                    >
-                                        Magic Button
-                                    </button>
                                 </InputContainer>
                                 {touched.name && <InputError>{errors.name}</InputError>}
                             </InputGroup>
