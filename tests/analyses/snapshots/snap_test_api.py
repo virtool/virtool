@@ -160,6 +160,16 @@ snapshots['test_find[uvloop] 1'] = {
     'total_count': 3
 }
 
+snapshots['test_download_analysis_result[uvloop-False-True] 1'] = {
+    'id': 'not_found',
+    'message': 'Not found'
+}
+
+snapshots['test_download_analysis_result[uvloop-False-False] 1'] = {
+    'id': 'not_found',
+    'message': 'Not found'
+}
+
 snapshots['test_upload_file[uvloop-None] 1'] = {
     'analysis': 'foobar',
     'description': None,
@@ -169,16 +179,6 @@ snapshots['test_upload_file[uvloop-None] 1'] = {
     'name_on_disk': '1-reference.fa',
     'size': 20466,
     'uploaded_at': '2015-10-06T20:00:00Z'
-}
-
-snapshots['test_download_analysis_result[uvloop-False-True] 1'] = {
-    'id': 'not_found',
-    'message': 'Not found'
-}
-
-snapshots['test_download_analysis_result[uvloop-False-False] 1'] = {
-    'id': 'not_found',
-    'message': 'Not found'
 }
 
 snapshots['test_download_analysis_result[uvloop-True-False] 1'] = {
