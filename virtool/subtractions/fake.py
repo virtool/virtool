@@ -99,20 +99,24 @@ async def create_fake_finalized_subtraction(
         "user": {"id": user_id},
     })
 
-    subtractions_path = app["settings"]["data_path"] / "subtractions"
+    subtractions_path = (
+            app["settings"]["data_path"] 
+            / "subtractions" 
+            / subtraction_id.replace(" ", "_").lower()
+    )
 
     subtractions_example_path = example_path / "subtractions" / "arabidopsis_thaliana"
 
-    copytree(subtractions_example_path, subtractions_path / subtraction_id, dirs_exist_ok=True)
+    copytree(subtractions_example_path, subtractions_path, dirs_exist_ok=True)
 
     await create_subtraction_files(
         pg,
         document["_id"],
         FILES,
-        subtractions_path / subtraction_id
+        subtractions_path
     )
 
-    await finalize(
+    return await finalize(
         db,
         pg,
         subtraction_id,
