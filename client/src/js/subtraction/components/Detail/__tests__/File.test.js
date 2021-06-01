@@ -4,18 +4,21 @@ import { SubtractionFile } from "../File";
 import { byteSize } from "../../../../utils/utils";
 
 describe("<SubtractionFile />", () => {
-    let props = {};
+    let props;
 
     beforeEach(() => {
-        props.file = {
-            download_url: "/api/subtractions/xl8faqqz/files/subtraction.fa.gz",
-            id: 1,
-            name: "foo",
-            size: 36461731,
-            subtraction: "xl8faqqz",
-            type: "fasta"
+        props = {
+            file: {
+                download_url: "/api/subtractions/xl8faqqz/files/subtraction.fa.gz",
+                id: 1,
+                name: "foo",
+                size: 36461731,
+                subtraction: "xl8faqqz",
+                type: "fasta"
+            }
         };
     });
+
     it("should render", () => {
         const { getByText } = renderWithProviders(<SubtractionFile {...props} />);
 

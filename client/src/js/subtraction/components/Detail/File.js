@@ -14,11 +14,9 @@ const StyledBoxGroupSection = styled(BoxGroupSection)`
     }
 `;
 
-export const SubtractionFile = ({ file }) => {
-    return (
-        <StyledBoxGroupSection>
-            <a href={file.download_url}>{file.name}</a>
-            <strong>{byteSize(file.size)}</strong>
-        </StyledBoxGroupSection>
-    );
-};
+export const SubtractionFile = ({ file: { download_url, name, size } }) => (
+    <StyledBoxGroupSection>
+        <a href={download_url}>{name}</a>
+        <strong>{byteSize(size)}</strong>
+    </StyledBoxGroupSection>
+);
