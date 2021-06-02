@@ -35,10 +35,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Test
+
+      - name: Poetry Setup
         run: |
-          pip install -qr requirements.txt
-          pytest  -x --db-connection-string mongodb://mongo:27017 --redis-connection-string redis://redis:6379 --postgres-connection-string postgresql+asyncpg://virtool:virtool@postgres --cov --cov-report xml
+          pip install poetry
+          poetry install
+
+      - name: Run
+        run: >-
+            poetry run 
+            pytest  
+            -x 
+            --db-connection-string mongodb://mongo:27017 
+            --redis-connection-string redis://redis:6379 
+            --postgres-connection-string postgresql+asyncpg://virtool:virtool@postgres 
+            --cov 
+            --cov-report xml
+
       - name: Run codacy-coverage-reporter
         if: ${{ github.event_name == 'push' }}
         uses: codacy/codacy-coverage-reporter-action@master
