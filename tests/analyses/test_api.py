@@ -283,9 +283,9 @@ async def test_upload_file(error, files, resp_is, spawn_job_client, static_time,
         })
 
     if error == 422:
-        resp = await client.post("/api/analyses/foobar/files?format=fasta", data=files)
+        resp = await client.put("/api/analyses/foobar/files?format=fasta", data=files)
     else:
-        resp = await client.post(f"/api/analyses/foobar/files?name=reference.fa&format={format_}", data=files)
+        resp = await client.put(f"/api/analyses/foobar/files?name=reference.fa&format={format_}", data=files)
 
     if error is None:
         assert resp.status == 201
@@ -332,7 +332,7 @@ async def test_download_analysis_result(file_exists, row_exists, files, spawn_cl
     })
 
     if row_exists:
-        await job_client.post("/api/analyses/foobar/files?name=reference.fa&format=fasta", data=files)
+        await job_client.put("/api/analyses/foobar/files?name=reference.fa&format=fasta", data=files)
 
         assert expected_path.is_file()
 
