@@ -54,6 +54,8 @@ const validationSchema = Yup.object().shape({
 
 //TODO: Add error message(s) for server responses
 export const CreateSample = props => {
+    const [reinitialize, setReinitialize] = useState(true);
+
     const initialValues = {
         selected: [],
         name: "",
@@ -67,10 +69,11 @@ export const CreateSample = props => {
         subtractionId: ""
     };
 
-    // This function updates the initial values which are dependent on props
+    // This function updates the initial values that are dependent on props
     const updateInitialValues = () => {
         initialValues.group = props.forceGroupChoice ? "None" : "";
         initialValues.subtractionId = get(props, "subtractions[0].id", "");
+        setReinitialize(false);
     };
 
     // Load the files on mount
@@ -147,15 +150,15 @@ export const CreateSample = props => {
         <NarrowContainer>
             <ViewHeader title="Create Sample">
                 <ViewHeaderTitle>Create Sample</ViewHeaderTitle>
-                {errorSubtraction && <StyledInputError>{errorSubtraction}</StyledInputError>}
+                <StyledInputError>{props.error}</StyledInputError>
             </ViewHeader>
             <Formik
                 onSubmit={handleSubmit}
                 initialValues={initialValues}
                 validationSchema={validationSchema}
-                enableReinitialize={true} // Reloads form on mount
+                enableReinitialize={reinitialize} // Allows the reloads of initialValues on mount
             >
-                {({ errors, touched, setFieldValue, values }) => (
+                {({ errors, setFieldValue, touched, values }) => (
                     <Form>
                         <CreateSampleFields>
                             <InputGroup>
