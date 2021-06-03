@@ -22,6 +22,6 @@ export const SubtractionFiles = ({ files }) => {
     );
 };
 
-const mapStateToProps = state => ({ files: get(state, "subtraction.detail.files", []) });
+export const mapStateToProps = state => ({ files: state.subtraction.detail.files });
 
 export default connect(mapStateToProps)(SubtractionFiles);

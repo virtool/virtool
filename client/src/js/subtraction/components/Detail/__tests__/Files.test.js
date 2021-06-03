@@ -1,6 +1,6 @@
 import React from "react";
 import "@testing-library/jest-dom/extend-expect";
-import { SubtractionFiles } from "../Files";
+import { SubtractionFiles, mapStateToProps } from "../Files";
 
 describe("<SubtractionFiles />", () => {
     let props = {};
@@ -37,5 +37,19 @@ describe("<SubtractionFiles />", () => {
 
         expect(getByText("Files")).toBeInTheDocument();
         expect(getByText("Data files available to workflows using this subtraction.")).toBeInTheDocument();
+    });
+});
+
+describe("mapStateToProps()", () => {
+    it("should return props", () => {
+        const detail = {
+            files: [
+                { id: 1, name: "File 1" },
+                { id: 2, name: "File 2" }
+            ]
+        };
+        const state = { subtraction: { detail } };
+        const props = mapStateToProps(state);
+        expect(props).toEqual(detail);
     });
 });
