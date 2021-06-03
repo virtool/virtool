@@ -4,7 +4,7 @@ import { BoxGroupSection } from "../../../base";
 import { byteSize } from "../../../utils/utils";
 import { fontWeight } from "../../../app/theme";
 
-const StyledBoxGroupSection = styled(BoxGroupSection)`
+const StyledSubtractionFile = styled(BoxGroupSection)`
     align-items: center;
     display: flex;
 
@@ -15,8 +15,8 @@ const StyledBoxGroupSection = styled(BoxGroupSection)`
 `;
 
 export const SubtractionFile = ({ file: { download_url, name, size } }) => (
-    <StyledBoxGroupSection>
+    <StyledSubtractionFile>
         <a href={download_url}>{name}</a>
         <strong>{byteSize(size)}</strong>
-    </StyledBoxGroupSection>
+    </StyledSubtractionFile>
 );
