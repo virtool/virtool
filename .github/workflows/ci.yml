@@ -3,12 +3,14 @@ name: ci
 on:
   push:
     branches:
-      - release/5.0.0
+      - develop
       - feature/**
+      - release/**
   pull_request:
     branches:
-      - release/5.0.0
+      - develop
       - feature/**
+      - release/**
 
 jobs:
   server:
@@ -43,14 +45,14 @@ jobs:
 
       - name: Run
         run: >-
-            poetry run 
-            pytest  
-            -x 
-            --db-connection-string mongodb://mongo:27017 
-            --redis-connection-string redis://redis:6379 
-            --postgres-connection-string postgresql+asyncpg://virtool:virtool@postgres 
-            --cov 
-            --cov-report xml
+          poetry run
+          pytest
+          -x
+          --db-connection-string mongodb://mongo:27017
+          --redis-connection-string redis://redis:6379
+          --postgres-connection-string postgresql+asyncpg://virtool:virtool@postgres
+          --cov
+          --cov-report xml
 
       - name: Run codacy-coverage-reporter
         if: ${{ github.event_name == 'push' }}
