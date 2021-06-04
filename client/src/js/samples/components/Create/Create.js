@@ -39,8 +39,8 @@ const StyledInputError = styled(InputError)`
 
 const extensionRegex = /^[a-z0-9]+-(.*)\.f[aq](st)?[aq]?(\.gz)?$/;
 
-// This method takes selected read file's id and the list of read files
-// The return value is the it's corresponding name without the file extension
+// This method's inputs are the selected read file's id and the list of read files
+// The output is the id's corresponding name without the file extension
 const getFileNameFromId = (id, files) => {
     const file = find(files, file => file.id === id);
     return file ? file.name_on_disk.match(extensionRegex)[1] : "";
@@ -52,7 +52,6 @@ const validationSchema = Yup.object().shape({
     selected: Yup.array().min(1, "At least one read file must be attached to the sample")
 });
 
-//TODO: Add error message(s) for server responses
 export const CreateSample = props => {
     const [reinitialize, setReinitialize] = useState(true);
 
@@ -64,19 +63,18 @@ export const CreateSample = props => {
         locale: "",
         libraryType: "normal",
         selected: [],
-        // Values below will be updated since they are dependent on props
+        // Values below will be updated on mount since they are dependent on props
         group: "",
         subtractionId: ""
     };
 
-    // This function updates the initial values that are dependent on props
     const updateInitialValues = () => {
-        initialValues.group = props.forceGroupChoice ? "None" : "";
+        initialValues.group = props.forceGroupChoice ? "none" : "";
         initialValues.subtractionId = get(props, "subtractions[0].id", "");
+        // Prevent further reinitialization of the form
         setReinitialize(false);
     };
 
-    // Load the files on mount
     useEffect(() => {
         props.onLoadSubtractionsAndFiles();
     }, []);
@@ -98,12 +96,7 @@ export const CreateSample = props => {
         </option>
     ));
 
-    const changeGroup = (e, setValue) => {
-        console.log(`changeGroup fired with: ${e.target.value} and: `, setValue);
-        setGroup(e.target.value);
-    };
-
-    const autofill = (selected, setFieldValue, e) => {
+    const autofill = (selected, setFieldValue) => {
         const fileName = getFileNameFromId(selected[0], props.readyReads);
         if (fileName) {
             setFieldValue("name", fileName);
@@ -123,8 +116,6 @@ export const CreateSample = props => {
         );
     };
 
-    // The name of the subtractionID from state must be renamed
-    // const subtractionId = this.state.subtractionId || get(props.subtractions, [0, "id"]);
     return (
         <NarrowContainer>
             <ViewHeader title="Create Sample">
@@ -135,7 +126,7 @@ export const CreateSample = props => {
                 onSubmit={handleSubmit}
                 initialValues={initialValues}
                 validationSchema={validationSchema}
-                enableReinitialize={reinitialize} // Allows the reloads of initialValues on mount
+                enableReinitialize={reinitialize}
             >
                 {({ errors, setFieldValue, touched, values }) => (
                     <Form>
@@ -157,10 +148,12 @@ export const CreateSample = props => {
                                 </InputContainer>
                                 {touched.name && <InputError>{errors.name}</InputError>}
                             </InputGroup>
+
                             <InputGroup>
                                 <InputLabel>Locale</InputLabel>
                                 <Field as={Input} name="locale" />
                             </InputGroup>
+
                             <InputGroup>
                                 <InputLabel>Isolate</InputLabel>
                                 <Field as={Input} name="isolate" />
@@ -188,14 +181,15 @@ export const CreateSample = props => {
                                 <InputLabel>Pairedness</InputLabel>
                                 <Field
                                     as={Input}
-                                    name={"pairedness"}
+                                    name="pairedness"
                                     readOnly={true}
                                     value={values.selected.length === 2 ? "Paired" : "Unpaired"}
                                 />
                             </InputGroup>
                         </CreateSampleFields>
+
                         <Field
-                            name={"libraryType"}
+                            name="libraryType"
                             as={LibraryTypeSelector}
                             onSelect={library => setFieldValue("libraryType", library)}
                             libraryType={values.libraryType}
@@ -217,15 +211,6 @@ export const CreateSample = props => {
                             onSelect={selection => setFieldValue("selected", selection)}
                             error={touched.selected ? errors.selected : null}
                         />
-
-                        <button type="button" onClick={() => console.log(values)}>
-                            Print the values
-                        </button>
-
-                        <button type="button" onClick={() => console.log(errors)}>
-                            Print the errors
-                        </button>
-
                         <SaveButton />
                     </Form>
                 )}
@@ -239,8 +224,7 @@ export const mapStateToProps = state => ({
     forceGroupChoice: get(state, "settings.data.sample_group", "") === "force_choice",
     groups: state.account.groups,
     readyReads: filter(state.samples.readFiles, { reserved: false }),
-    subtractions: getSubtractionShortlist(state),
-    state: state
+    subtractions: getSubtractionShortlist(state)
 });
 
 export const mapDispatchToProps = dispatch => ({
