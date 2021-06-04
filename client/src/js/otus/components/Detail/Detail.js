@@ -14,6 +14,7 @@ import {
     ViewHeaderIcons,
     ViewHeaderTitle
 } from "../../../base";
+import { DownloadLink } from "../../../references/components/Detail/DownloadLink";
 import { getCanModifyReferenceOTU } from "../../../references/selectors";
 import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
 import EditOTU from "./Edit";
@@ -84,7 +85,7 @@ class OTUDetail extends React.Component {
 
         if (this.props.canModify) {
             iconButtons = (
-                <ViewHeaderIcons>
+                <React.Fragment>
                     <Icon
                         key="edit-icon"
                         color="orange"
@@ -101,7 +102,7 @@ class OTUDetail extends React.Component {
                         tipPlacement="left"
                         onClick={this.props.showRemove}
                     />
-                </ViewHeaderIcons>
+                </React.Fragment>
             );
 
             modifyOTUComponents = (
@@ -117,7 +118,12 @@ class OTUDetail extends React.Component {
                 <ViewHeader title={name}>
                     <OTUDetailTitle>
                         {name} <small>{abbreviation || <em>No Abbreviation</em>}</small>
-                        {iconButtons}
+                        <ViewHeaderIcons>
+                            <a href={`/api/otus/${id}.fa`} download>
+                                Download FASTA
+                            </a>
+                            {iconButtons}
+                        </ViewHeaderIcons>
                     </OTUDetailTitle>
                     <OTUDetailSubtitle>
                         <strong>From Reference / </strong>
