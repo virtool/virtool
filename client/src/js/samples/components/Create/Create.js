@@ -172,7 +172,7 @@ export const CreateSample = props => {
                                     as={Select}
                                     name="subtractionId"
                                     error={touched.subtractionId ? errors.subtractionId : null}
-                                    onChange={e => setFieldValue("subtractionId", e.value)}
+                                    onChange={e => setFieldValue("subtractionId", e.target.value)}
                                 >
                                     {subtractionComponents}
                                 </Field>
@@ -206,7 +206,7 @@ export const CreateSample = props => {
                                 name="group"
                                 group={props.group}
                                 groups={props.groups}
-                                onChange={e => changeGroup(e, setFieldValue)}
+                                onChange={e => setFieldValue("group", e.target.value)}
                             />
                         )}
                         <Field
