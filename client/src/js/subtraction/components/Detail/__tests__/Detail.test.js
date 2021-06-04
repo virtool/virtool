@@ -21,7 +21,8 @@ describe("<SubtractionDetail />", () => {
             canModify: true,
             error: "",
             onGet: jest.fn(),
-            onShowRemove: jest.fn()
+            onShowRemove: jest.fn(),
+            files: []
         };
     });
 
