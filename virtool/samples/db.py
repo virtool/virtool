@@ -24,6 +24,7 @@ import virtool.utils
 from virtool.labels.models import Label
 from virtool.samples.models import SampleReads, SampleArtifact
 from virtool.samples.utils import join_legacy_read_paths
+from virtool.subtractions.db import attach_subtractions
 from virtool.types import App
 from virtool.uploads.models import Upload
 from virtool.utils import compress_file, file_stats
@@ -102,7 +103,8 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
 
         if ready:
             for artifact in artifacts:
-                artifact["download_url"] = f"/api/samples/{sample_id}/artifacts/{artifact['name_on_disk']}"
+                name_on_disk = artifact["name_on_disk"]
+                artifact["download_url"] = f"/api/samples/{sample_id}/artifacts/{name_on_disk}"
 
         for reads_file in reads:
             if upload := reads_file.get("upload"):
@@ -144,7 +146,12 @@ async def attach_labels(pg: AsyncEngine, document: dict) -> dict:
     return {**document, "labels": labels}
 
 
-async def check_name(db, settings: dict, name: str, sample_id: Optional[str] = None) -> Optional[str]:
+async def check_name(
+        db,
+        settings: dict,
+        name: str,
+        sample_id: Optional[str] = None
+) -> Optional[str]:
     if settings["sample_unique_names"]:
         query = {"name": name}
 
@@ -374,12 +381,9 @@ def check_is_legacy(sample: Dict[str, Any]) -> bool:
     files = sample["files"]
 
     return (
-        # All files have the `raw` flag set false indicating they are legacy data.
-        all(file.get("raw", False) is False for file in files)
-        and
-        # File naming matches expectations.
-        files[0]["name"] == "reads_1.fastq"
-        and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
+            all(file.get("raw", False) is False for file in files)
+            and files[0]["name"] == "reads_1.fastq"
+            and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
     )
 
 
@@ -526,7 +530,7 @@ async def finalize(
         sample_id: str,
         quality: Dict[str, Any],
         run_in_thread: callable,
-        data_path: str,
+        data_path: Path,
 ) -> Dict[str, Any]:
     """
     Finalize a sample document by setting a ``quality`` field and ``ready`` to ``True``
@@ -548,14 +552,11 @@ async def finalize(
     async with AsyncSession(pg) as session:
         rows = (
             (
-                await session.execute(
-                    select(Upload)
+                await session.execute(select(Upload)
                     .filter(SampleReads.sample == sample_id)
                     .join_from(SampleReads, Upload)
                 )
-            )
-            .unique()
-            .scalars()
+            ).unique().scalars()
         )
 
         for row in rows:
@@ -564,10 +565,7 @@ async def finalize(
             row.removed_at = virtool.utils.timestamp()
 
             try:
-                await run_in_thread(
-                    virtool.utils.rm, data_path /
-                    "files" / row.name_on_disk
-                )
+                await run_in_thread(virtool.utils.rm, data_path / "files" / row.name_on_disk)
             except FileNotFoundError:
                 pass
 
@@ -595,9 +593,9 @@ async def get_sample(app, sample_id: str):
 
     document["caches"] = caches
 
-    document = await virtool.subtractions.db.attach_subtractions(db, document)
-    document = await virtool.samples.db.attach_labels(pg, document)
-    document = await virtool.samples.db.attach_artifacts_and_reads(pg, document)
+    document = await attach_subtractions(db, document)
+    document = await attach_labels(pg, document)
+    document = await attach_artifacts_and_reads(pg, document)
 
     document["paired"] = (len(document["reads"]) == 2)
 

@@ -16,7 +16,8 @@ async def get_existing_reads(
         key: str = None
 ) -> List[str]:
     """
-    Get reads files in either `sample_reads_files` or `sample_reads_files_cache` depending on value of `key`.
+    Get reads files in either `sample_reads_files` or `sample_reads_files_cache` depending on value
+    of `key`.
 
     :param pg: PostgreSQL AsyncEngine object
     :param sample: ID that corresponds to a parent sample
@@ -44,8 +45,9 @@ async def create_artifact_file(
         key: Optional[str] = None
 ) -> Dict[str, any]:
     """
-    Create a row in an SQL table that represents uploaded sample artifact files. A row is created in either the
-    `sample_artifact` or `sample_artifact_cache` table depending on the value of `key`.
+    Create a row in an SQL table that represents uploaded sample artifact files. A row is created
+    in either the `sample_artifact` or `sample_artifact_cache` table depending on the value of
+    `key`.
 
     :param pg: PostgreSQL AsyncEngine object
     :param name: Name of the sample artifact file

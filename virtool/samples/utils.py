@@ -26,8 +26,8 @@ TRIM_PARAMETERS = {
 
 def calculate_workflow_tags(analyses: list) -> dict:
     """
-    Calculate the workflow tags (eg. "ip", True) that should be applied to a sample document based on a list of its
-    associated analyses.
+    Calculate the workflow tags (eg. "ip", True) that should be applied to a sample document based
+    on a list of its associated analyses.
 
     :param analyses: the analyses to calculate tags for
     :return: workflow tags to apply to the sample document
@@ -93,9 +93,10 @@ def bad_labels_response(labels: List[int]) -> Response:
     return bad_request(f"Labels do not exist: {', '.join(str(label) for label in labels)}")
 
 
-def join_legacy_read_path(sample_path: str, suffix: int) -> str:
+def join_legacy_read_path(sample_path: Path, suffix: int) -> Path:
     """
-    Create a path string for a sample read file using the old file name convention (eg. reads_1.fastq).
+    Create a path string for a sample read file using the old file naming
+    convention (eg. reads_1.fastq).
 
     :param sample_path: the path to the sample directory
     :param suffix: the read file suffix
@@ -126,9 +127,10 @@ def join_legacy_read_paths(settings: dict, sample):
         return [join_legacy_read_path(sample_path, 1)]
 
 
-def join_read_paths(base_path: str, paired: bool) -> List[Path]:
+def join_read_paths(base_path: Path, paired: bool) -> List[Path]:
     """
-    Return a list of standard read paths given a base path and flag indicating whether the reads are `paired`.
+    Return a list of standard read paths given a base path and flag indicating whether the reads
+    are `paired`.
 
     The list will contain two paths if the data is paired, and one if it is not.
 
@@ -143,7 +145,7 @@ def join_read_paths(base_path: str, paired: bool) -> List[Path]:
     return [join_read_path(base_path, 1)]
 
 
-def join_read_path(base_path: str, suffix: int) -> Path:
+def join_read_path(base_path: Path, suffix: int) -> Path:
     """
     Return a standard read path given a base path (eg. /mnt/data/samples/foo) and a read suffix.
 
