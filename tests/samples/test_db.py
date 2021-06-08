@@ -4,7 +4,7 @@ import shutil
 from pathlib import Path
 
 import pytest
-from aiohttp.test_utils import make_mocked_coro
+from aiohttp.test_utils import make_mocked_coro, make_mocked_request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -13,10 +13,11 @@ import virtool.samples.utils
 import virtool.uploads.db
 import virtool.pg.utils
 from virtool.labels.models import Label
+from virtool.samples.db import compose_sample_workflow_query
 from virtool.samples.models import SampleReads
 from virtool.uploads.models import Upload
 
-FASTQ_PATH = Path.cwd() / "tests/test_files/test.fq"
+FASTQ_PATH = Path(__file__).parent.parent / "test_files/test.fq"
 
 
 class TestCalculateWorkflowTags:
@@ -218,7 +219,7 @@ class TestRemoveSamples:
 
         paths = dict()
 
-        for x in range(1,4):
+        for x in range(1, 4):
             paths[f"sample_{x}_file"] = samples_dir / f"test_{x}"
             paths[f"sample_{x}_file"].mkdir()
 
@@ -253,20 +254,6 @@ class TestRemoveSamples:
 
         assert await dbi.samples.find().to_list(None) == samples
         assert await dbi.analyses.find().to_list(None) == analyses
-
-    async def test_not_list(self, dbi, tmp_path):
-        """
-        Test that a custom ``TypeError`` is raised if a non-list variable is passed as ``id_list``.
-
-        """
-        settings = {
-            "data_path": tmp_path
-        }
-
-        with pytest.raises(TypeError) as excinfo:
-            await virtool.samples.db.remove_samples(dbi, settings, "foobar")
-
-        assert "id_list must be a list" in str(excinfo.value)
 
     async def test_file_not_found(self, tmp_path, dbi):
         """
@@ -329,7 +316,8 @@ async def test_create_sample(dbi, mocker, snapshot, static_time, spawn_client):
 
     mocker.patch("virtool.db.utils.get_new_id", return_value="a2oj3gfd")
 
-    document = await virtool.samples.db.create_sample(dbi, "foo", "", "", "", "", "", [], "test", [], "bob", client.app["settings"])
+    document = await virtool.samples.db.create_sample(dbi, "foo", "", "", "", "", "", [], "test",
+                                                      [], "bob", client.app["settings"])
 
     snapshot.assert_match(document)
 
@@ -523,7 +511,7 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path):
     m_update_is_compressed.assert_called_with(app_dict["db"], sample)
 
 
-async def test_finalize(tmp_path, dbi, pg, pg_session):
+async def test_finalize(tmp_path, dbi, pg: AsyncEngine, pg_session):
     quality = {
         "count": 10000000,
         "gc": 43
@@ -544,7 +532,8 @@ async def test_finalize(tmp_path, dbi, pg, pg_session):
 
     m_run_in_thread = make_mocked_coro()
 
-    document = await virtool.samples.db.finalize(dbi, pg, "test", quality, m_run_in_thread, tmp_path)
+    document = await virtool.samples.db.finalize(dbi, pg, "test", quality, m_run_in_thread,
+                                                 tmp_path)
     assert document == {
         "_id": "test",
         "quality": {
@@ -586,7 +575,8 @@ async def test_create_sample_reads_record(tmp_path, example_path, pg, pg_session
 
     file_path = example_path / "reads" / "paired_1.fq.gz"
 
-    await virtool.samples.db.create_sample_reads_record(app, "sample_1", file_path, "reads_1.fq.gz")
+    await virtool.samples.db.create_sample_reads_record(app, "sample_1", file_path,
+                                                        "reads_1.fq.gz")
 
     async with pg_session as session:
         sample_reads = (await session.execute(select(SampleReads).filter_by(id=1))).scalar()
@@ -595,3 +585,66 @@ async def test_create_sample_reads_record(tmp_path, example_path, pg, pg_session
     assert sample_reads.sample == "sample_1"
 
     assert os.listdir(test_dir) == ["reads_1.fq.gz"]
+
+
+class TestComposeWorkflowQuery:
+
+    @pytest.mark.parametrize("url", [
+        "/api/samples?workflows=pathoscope%3Aready foo%3Apending foo%3Anone",
+        "/api/samples?workflows=pathoscope%3Aready foo%3Apending&workflows=foo%3Anone"
+    ], ids=["single", "multiple"])
+    def test(self, url):
+        """
+        Test that the workflow query is composed from a single `workflows` parameter as well as
+        two.
+
+        """
+        req = make_mocked_request("GET", url)
+
+        result = compose_sample_workflow_query(req.query)\
+
+        assert len(result) == 2
+        assert result["pathoscope"]["$in"] == [True]
+        assert set(result["foo"]["$in"]) == {False, "ip"}
+
+    def test_empty(self):
+        """
+        Check that `None` is returned when there is no `workflows` parameter.
+
+        """
+        req = make_mocked_request(
+            "GET",
+            "/api/samples?find=foo"
+        )
+
+        assert compose_sample_workflow_query(req.query) is None
+
+    def test_some_conditions_invalid(self):
+        """
+        Check that an invalid condition doesn't make it into the query.
+
+        """
+        req = make_mocked_request(
+            "GET",
+            "/api/samples?workflows=pathoscope%3Abar pathoscope%3Aready"
+        )
+
+        assert compose_sample_workflow_query(req.query) == {
+            "pathoscope": {
+                "$in": [True]
+            }
+        }
+
+    def test_all_conditions_invalid(self):
+        """
+        Check that if no valid conditions are found, `None` is returned.
+
+        """
+        req = make_mocked_request(
+            "GET",
+            "/api/samples?workflows=pathoscope%3Abar"
+        )
+
+        assert compose_sample_workflow_query(req.query) is None
+
+

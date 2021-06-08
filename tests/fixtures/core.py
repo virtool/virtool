@@ -1,16 +1,13 @@
+import functools
+import shutil
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import arrow
-import pytest
-import shutil
 import multidict
-import functools
-from concurrent.futures import ThreadPoolExecutor
+import pytest
 
-from virtool.example import example_path as path
-
-SAM_PATH = Path.cwd() / "tests" / "test_files" / "test_al.sam"
-SAM_50_PATH = Path.cwd() / "tests" / "test_files" / "sam_50.sam"
+from virtool.example import example_path as virtool_example_path
 
 
 class MockRequest:
@@ -47,7 +44,7 @@ def md_proxy():
 
 @pytest.fixture
 def test_files_path():
-    return Path.cwd() / "tests/test_files"
+    return Path(__file__).parent.parent / "test_files"
 
 
 @pytest.fixture
@@ -114,16 +111,20 @@ def static_time(mocker, static_time_obj):
 
 
 @pytest.fixture
-def test_sam_path(tmp_path):
-    path = tmp_path / "test_sam_file"
-    path.mkdir()
-    path = path / "test_al.sam"
-    shutil.copy(SAM_PATH, path)
-    return path
+def test_sam_path(test_files_path, tmp_path):
+    src_path = test_files_path / "test_al.sam"
+    dst_path = tmp_path / "test_sam_file"
+    dst_path.mkdir()
+    dst_path = dst_path / "test_al.sam"
+    shutil.copy(src_path, dst_path)
+
+    return dst_path
 
 
 def get_sam_lines():
-    with open(SAM_50_PATH, "r") as handle:
+    path = Path(__file__).parent.parent / "test_files" / "sam_50.sam"
+
+    with open(path, "r") as handle:
         return handle.read().split("\n")[0:-1]
 
 
@@ -134,7 +135,7 @@ def sam_line(request):
 
 @pytest.fixture
 def example_path():
-    return path
+    return virtool_example_path
 
 
 @pytest.fixture
