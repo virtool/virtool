@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
 import { Icon, LinkButton, SearchInput, Toolbar } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
-import { clearSampleSelection, findSamples } from "../actions";
+import { clearSampleSelection, updateSearch } from "../actions";
 import { getTermFromURL } from "../selectors";
 import { SampleSelectionToolbar } from "./SelectionToolbar";
 
@@ -55,7 +55,7 @@ const mapDispatchToProps = dispatch => ({
     },
 
     onFind: debounce(term => {
-        dispatch(findSamples({ term }));
+        dispatch(updateSearch({ term }));
     }, 150),
 
     onQuickAnalyze: () => {

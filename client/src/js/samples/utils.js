@@ -1,3 +1,11 @@
+import { forEach } from "lodash-es";
+
+export const workflowStates = {
+    NONE: "none",
+    PENDING: "pending",
+    READY: "ready"
+};
+
 export const getDataTypeFromLibraryType = libraryType => {
     if (libraryType === "amplicon") {
         return "barcode";
@@ -22,20 +30,31 @@ export const setWorkflowFindParameters = (url, workflow, conditions) => {
     }
 };
 
-export const createFindURL = (term, labels, pathoscope, nuvs) => {
+export const createFindURL = (term, labels, workflows) => {
     const url = new window.URL(window.location);
+
+    url.searchParams.delete("find");
 
     if (term) {
         url.searchParams.set("find", term);
-    } else {
-        url.searchParams.delete("find");
     }
 
     url.searchParams.delete("label");
     labels.forEach(label => url.searchParams.append("label", label));
 
-    setWorkflowFindParameters(url, "pathoscope", pathoscope);
-    setWorkflowFindParameters(url, "nuvs", nuvs);
+    url.searchParams.delete("workflows");
+
+    const workflowFilters = [];
+
+    forEach(workflows, (conditions, workflow) => {
+        if (conditions.length) {
+            forEach(conditions, condition => workflowFilters.push(`${workflow}:${condition}`));
+        }
+    });
+
+    if (workflowFilters.length) {
+        url.searchParams.set("workflows", workflowFilters.join(" "));
+    }
 
     return url;
 };

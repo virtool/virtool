@@ -1,7 +1,6 @@
 import React from "react";
-import { get } from "lodash-es";
 import { connect } from "react-redux";
-import { BoxGroupHeader, BoxGroup, NoneFound } from "../../../base";
+import { BoxGroup, BoxGroupHeader, NoneFound } from "../../../base";
 import { SubtractionFile } from "./File";
 
 export const SubtractionFiles = ({ files }) => {

@@ -11,6 +11,7 @@ import {
     SHOW_REMOVE_SAMPLE,
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
+    UPDATE_SEARCH,
     WS_INSERT_SAMPLE,
     WS_REMOVE_SAMPLE,
     WS_UPDATE_SAMPLE
@@ -46,9 +47,17 @@ export const wsRemoveSample = data => ({
     data
 });
 
-export const findSamples = parameters => ({
-    type: FIND_SAMPLES.REQUESTED,
+export const updateSearch = parameters => ({
+    type: UPDATE_SEARCH,
     parameters
+});
+
+export const findSamples = ({ labels, page, term, workflows }) => ({
+    type: FIND_SAMPLES.REQUESTED,
+    labels,
+    term,
+    page,
+    workflows
 });
 
 export const findReadFiles = simpleActionCreator(FIND_READ_FILES.REQUESTED);
