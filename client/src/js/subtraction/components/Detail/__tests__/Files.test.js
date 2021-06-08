@@ -3,28 +3,31 @@ import "@testing-library/jest-dom/extend-expect";
 import { SubtractionFiles, mapStateToProps } from "../Files";
 
 describe("<SubtractionFiles />", () => {
-    let props = {};
+    let props;
 
     beforeEach(() => {
-        props.files = [
-            {
-                download_url: "/api/subtractions/xl8faqqz/files/subtraction.fa.gz",
-                id: 1,
-                name: "foo",
-                size: 36461731,
-                subtraction: "xl8faqqz",
-                type: "fasta"
-            },
-            {
-                download_url: "/api/subtractions/k66fpdyy/files/subtraction.3.bt2",
-                id: 2,
-                name: "bar",
-                size: 3257,
-                subtraction: "k66fpdyy",
-                type: "bowtie2"
-            }
-        ];
+        props = {
+            files: [
+                {
+                    download_url: "/api/subtractions/xl8faqqz/files/subtraction.fa.gz",
+                    id: 1,
+                    name: "foo",
+                    size: 36461731,
+                    subtraction: "xl8faqqz",
+                    type: "fasta"
+                },
+                {
+                    download_url: "/api/subtractions/k66fpdyy/files/subtraction.3.bt2",
+                    id: 2,
+                    name: "bar",
+                    size: 3257,
+                    subtraction: "k66fpdyy",
+                    type: "bowtie2"
+                }
+            ]
+        };
     });
+
     it("should render NoneFound when no files are supplied", () => {
         props.files = [];
         const { getByText } = renderWithProviders(<SubtractionFiles {...props} />);

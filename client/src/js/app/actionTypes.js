@@ -24,6 +24,7 @@ const createRequestActionType = root => ({
 export const PUSH_STATE = "PUSH_STATE";
 export const SET_APP_PENDING = "SET_APP_PENDING";
 export const UNSET_APP_PENDING = "UNSET_APP_PENDING";
+export const UPDATE_SEARCH = "UPDATE_SEARCH";
 
 // Dev
 export const POST_DEV_COMMAND = createRequestActionType("POST_DEV_COMMAND");

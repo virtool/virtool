@@ -1,5 +1,4 @@
-import { forEach, includes, pull, slice } from "lodash-es";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { getAccountId } from "../../account/selectors";
@@ -31,26 +30,12 @@ const StyledSamplesList = styled.div`
     }
 `;
 
-export const SamplesList = ({
-    documents,
-    loading,
-    page,
-    pageCount,
-    totalCount,
-    onFindHmms,
-    onListLabels,
-    onListIndexes,
-    onLoadNextPage
-}) => {
-    useEffect(() => {
-        onFindHmms();
-        onListLabels();
-        onListIndexes();
-    }, [null]);
+export const SamplesList = ({ documents, loading, match, page, pageCount, totalCount, onFindSamples, onFindOther }) => {
+    useEffect(onFindOther, [null]);
 
     useEffect(() => {
-        onLoadNextPage(1);
-    }, [page]);
+        onFindSamples(1);
+    }, [match]);
 
     const renderRow = index => {
         return <SampleItem key={documents[index].id} id={documents[index].id} />;
@@ -83,7 +68,7 @@ export const SamplesList = ({
                             documents={documents}
                             page={page}
                             pageCount={pageCount}
-                            onLoadNextPage={page => onLoadNextPage(page)}
+                            onLoadNextPage={page => onFindSamples(page)}
                             renderRow={renderRow}
                         />
                     )}
@@ -97,7 +82,7 @@ export const SamplesList = ({
     );
 };
 
-const mapStateToProps = state => {
+export const mapStateToProps = state => {
     const loading =
         state.hmms.documents === null ||
         state.samples.documents === null ||
@@ -117,20 +102,14 @@ const mapStateToProps = state => {
     };
 };
 
-const mapDispatchToProps = dispatch => ({
-    onLoadNextPage: page => {
+export const mapDispatchToProps = dispatch => ({
+    onFindSamples: page => {
         dispatch(findSamples({ page }));
     },
 
-    onFindHmms: () => {
+    onFindOther: () => {
         dispatch(findHmms("", 1));
-    },
-
-    onListLabels: () => {
         dispatch(listLabels());
-    },
-
-    onListIndexes: () => {
         dispatch(listReadyIndexes());
     }
 });

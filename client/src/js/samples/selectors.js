@@ -74,6 +74,26 @@ export const getLabelsFromURL = state => {
     return [];
 };
 
+export const getWorkflowsFromURL = state => {
+    const workflowFilter = {
+        aodp: [],
+        nuvs: [],
+        pathoscope: []
+    };
+
+    const search = new URLSearchParams(state.router.location.search);
+    const workflows = search.get("workflows");
+
+    if (workflows) {
+        workflows.split(" ").forEach(workflowFlag => {
+            const [workflow, condition] = workflowFlag.split(":");
+            workflowFilter[workflow].push(condition);
+        });
+    }
+
+    return workflowFilter;
+};
+
 export const getIsSelected = createCachedSelector(
     [getSelectedSampleIds, (state, sampleId) => sampleId],
     (selectedSampleIds, sampleId) => includes(selectedSampleIds, sampleId)

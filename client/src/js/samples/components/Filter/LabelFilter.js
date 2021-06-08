@@ -2,14 +2,13 @@ import { xor } from "lodash-es";
 import React, { useState } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { findSamples } from "../../actions";
+import { updateSearch } from "../../actions";
 import { getLabelsFromURL } from "../../selectors";
 import { LabelFilterItem } from "./LabelFilterItem";
 
 const StyledLabelFilter = styled.div`
-    > *:not(:last-child) {
-        margin-right: 5px;
-    }
+    display: flex;
+    flex-wrap: wrap;
 `;
 
 export const LabelFilter = ({ initialLabels, labels, onFind }) => {
@@ -34,7 +33,7 @@ export const mapStateToProps = state => ({
 
 export const mapDispatchToProps = dispatch => ({
     onFind: labels => {
-        dispatch(findSamples({ labels }));
+        dispatch(updateSearch({ labels }));
     }
 });
 

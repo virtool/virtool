@@ -2,85 +2,133 @@ import { xor } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { fontWeight, getFontSize } from "../../../app/theme";
-import { Box, Button } from "../../../base";
+import { getBorder, getFontSize } from "../../../app/theme";
+import { Box, BoxTitle, Icon } from "../../../base";
 import { getTaskDisplayName } from "../../../utils/utils";
-import { findSamples } from "../../actions";
-import { getTermFromURL } from "../../selectors";
-
-const statuses = [true, "ip", false];
+import { updateSearch } from "../../actions";
+import { getWorkflowsFromURL } from "../../selectors";
+import { workflowStates } from "../../utils";
 
 const WorkflowFilterLabel = styled.div`
-    background-color: ${props => props.theme.color.purple};
-    color: ${props => props.theme.color.white};
-    font-weight: ${fontWeight.thick};
     padding: 4px 8px;
 `;
 
-const WorkflowFilterControlButtons = styled.div`
+const StyledWorkflowFilterControlButton = styled.button`
+    align-items: center;
+    background-color: ${props => props.theme.color[props.active ? "purple" : "purpleLightest"]};
+    color: ${props => props.theme.color[props.active ? "white" : "purpleDark"]};
+
+    border: 2px solid ${props => props.theme.color.purple};
+    border-radius: 20px;
+    cursor: pointer;
+    justify-content: center;
     display: flex;
+    height: 30px;
+    transform: scale(${props => (props.active ? 1 : 0.95)});
+    width: 30px;
+
+    i {
+        font-size: ${getFontSize("md")};
+    }
+
+    &[aria-pressed="false"]:hover,
+    &[aria-pressed="false"]:focus {
+        background-color: ${props => props.theme.color.purpleLight};
+        color: ${props => props.theme.color.purpleDarkest};
+        outline: none;
+    }
+`;
+
+const WorkflowFilterControlButton = ({ active, icon, value, onClick }) => (
+    <StyledWorkflowFilterControlButton aria-pressed={active} active={active} onClick={() => onClick(value)}>
+        <Icon name={icon} />
+    </StyledWorkflowFilterControlButton>
+);
+
+const WorkflowFilterControlPath = styled.div`
+    border: ${getBorder};
+    flex: 1 0 auto;
+    height: 2px;
+`;
+
+const WorkflowFilterControlButtons = styled.div`
+    align-items: center;
+    display: flex;
+    justify-content: stretch;
+    padding: 4px 8px 8px;
 `;
 
 const StyledWorkflowFilterControl = styled(Box)`
     padding: 0;
+`;
 
-    button {
-        border-bottom: none;
-        border-radius: 0;
-        border-left: none;
-        flex: 1 0 auto;
-        font-size: ${getFontSize("sm")};
-        padding: 5px;
+const WorkflowFilterControl = ({ workflow, states, onChange }) => {
+    const handleClick = state => onChange(workflow, state);
 
-        :last-child {
-            border-right: none;
-        }
+    return (
+        <StyledWorkflowFilterControl>
+            <WorkflowFilterLabel>{getTaskDisplayName(workflow)}</WorkflowFilterLabel>
+            <WorkflowFilterControlButtons>
+                <WorkflowFilterControlButton
+                    active={states.includes(workflowStates.NONE)}
+                    icon="times"
+                    value={workflowStates.NONE}
+                    onClick={handleClick}
+                />
+                <WorkflowFilterControlPath />
+                <WorkflowFilterControlButton
+                    active={states.includes(workflowStates.PENDING)}
+                    icon="running"
+                    value={workflowStates.PENDING}
+                    onClick={handleClick}
+                />
+                <WorkflowFilterControlPath />
+                <WorkflowFilterControlButton
+                    active={states.includes(workflowStates.READY)}
+                    icon="check"
+                    value={workflowStates.READY}
+                    onClick={handleClick}
+                />
+            </WorkflowFilterControlButtons>
+        </StyledWorkflowFilterControl>
+    );
+};
+
+const WorkflowFilterTitle = styled(BoxTitle)`
+    align-items: center;
+    display: flex;
+
+    i {
+        margin-left: auto;
     }
 `;
 
-const WorkflowFilterControl = ({ workflow, states }) => (
-    <StyledWorkflowFilterControl>
-        <WorkflowFilterLabel>{getTaskDisplayName(workflow)}</WorkflowFilterLabel>
-        <WorkflowFilterControlButtons>
-            <Button active={true}>All</Button>
-            <Button>None</Button>
-            <Button>Pending</Button>
-            <Button>Ready</Button>
-        </WorkflowFilterControlButtons>
-    </StyledWorkflowFilterControl>
-);
-
-class WorkflowFilter extends React.Component {
-    handleClick = (workflow, status) => {
-        const { pathoscope, nuvs, onFind } = this.props;
-
-        if (workflow === "Pathoscope") {
-            onFind(xor(pathoscope, [status]), nuvs);
-        } else {
-            onFind(pathoscope, xor(nuvs, [status]));
-        }
+const WorkflowFilter = ({ workflows, onUpdate }) => {
+    const handleClick = (workflow, state) => {
+        onUpdate({
+            [workflow]: xor(workflows[workflow], [state])
+        });
     };
 
-    render() {
-        const { pathoscope, nuvs } = this.props;
+    const { aodp, nuvs, pathoscope } = workflows;
 
-        return (
-            <React.Fragment>
-                <WorkflowFilterControl workflow="pathoscope" />
-                <WorkflowFilterControl workflow="nuvs" />
-            </React.Fragment>
-        );
-    }
-}
+    return (
+        <Box>
+            <WorkflowFilterTitle>Workflows</WorkflowFilterTitle>
+            <WorkflowFilterControl workflow="pathoscope" states={pathoscope} onChange={handleClick} />
+            <WorkflowFilterControl workflow="nuvs" states={nuvs} onChange={handleClick} />
+            <WorkflowFilterControl workflow="aodp" states={aodp} onChange={handleClick} />
+        </Box>
+    );
+};
 
-const mapStateToProps = state => ({
-    pathoscope: state.samples.pathoscopeCondition,
-    nuvs: state.samples.nuvsCondition
+export const mapStateToProps = state => ({
+    workflows: getWorkflowsFromURL(state)
 });
 
-const mapDispatchToProps = dispatch => ({
-    onFind: (pathoscope, nuvs) => {
-        dispatch(findSamples({ pathoscope, nuvs, page: 1 }));
+export const mapDispatchToProps = dispatch => ({
+    onUpdate: update => {
+        dispatch(updateSearch({ workflows: update, page: 1 }));
     }
 });
 

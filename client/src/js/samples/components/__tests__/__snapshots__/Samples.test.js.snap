@@ -17,29 +17,15 @@ exports[`<Samples /> should render 1`] = `
           "$$typeof": Symbol(react.memo),
           "WrappedComponent": [Function],
           "compare": null,
-          "displayName": "Connect(SamplesList)",
-          "type": [Function],
-        }
-      }
-      exact={true}
-      path="/samples"
-    />
-    <Route
-      component={[Function]}
-      exact={true}
-      path="/samples/files"
-    />
-    <Route
-      component={
-        Object {
-          "$$typeof": Symbol(react.memo),
-          "WrappedComponent": [Function],
-          "compare": null,
           "displayName": "Connect(SamplesSettings)",
           "type": [Function],
         }
       }
       path="/samples/settings"
+    />
+    <Route
+      component={[Function]}
+      path="/samples/files"
     />
     <Route
       component={
@@ -51,7 +37,6 @@ exports[`<Samples /> should render 1`] = `
           "type": [Function],
         }
       }
-      exact={true}
       path="/samples/labels"
     />
     <Route
@@ -77,6 +62,18 @@ exports[`<Samples /> should render 1`] = `
         }
       }
       path="/samples/:sampleId"
+    />
+    <Route
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(SamplesList)",
+          "type": [Function],
+        }
+      }
+      path="/samples"
     />
   </Switch>
 </Container>

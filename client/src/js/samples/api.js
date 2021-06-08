@@ -1,16 +1,16 @@
 import { Request } from "../app/request";
 
-export const find = ({ parameters }) => {
-    const { term, labels, page, pathoscope, nuvs } = parameters;
-
+export const find = ({ term, labels, workflows, page = 1 }) => {
     const request = Request.get("/api/samples").query({
-        pathoscope,
-        nuvs,
         page
     });
 
     if (term) {
         request.query({ find: term });
+    }
+
+    if (workflows) {
+        request.query({ workflows });
     }
 
     if (labels) {
