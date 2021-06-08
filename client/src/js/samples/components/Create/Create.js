@@ -136,7 +136,9 @@ export const CreateSample = props => {
                                 <InputContainer align="right">
                                     <Field
                                         as={Input}
+                                        type="text"
                                         name="name"
+                                        aria-label="Sample Name"
                                         autocomplete={false}
                                         error={touched.name ? errors.name : null}
                                     />
@@ -221,7 +223,7 @@ export const CreateSample = props => {
 
 export const mapStateToProps = state => ({
     error: get(state, "errors.CREATE_SAMPLE_ERROR.message", ""),
-    forceGroupChoice: get(state, "settings.data.sample_group", "") === "force_choice",
+    forceGroupChoice: state.settings.data.sample_group === "force_choice",
     groups: state.account.groups,
     readyReads: filter(state.samples.readFiles, { reserved: false }),
     subtractions: getSubtractionShortlist(state)

@@ -1,125 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<CreateSample> should display error when form submitted with no name 1`] = `
-<Container__NarrowContainer>
-  <ViewHeader
-    title="Create Sample"
-  >
-    <ViewHeader__ViewHeaderTitle>
-      Create Sample
-    </ViewHeader__ViewHeaderTitle>
-  </ViewHeader>
-  <form
-    onSubmit={[Function]}
-  >
-    <Create__CreateSampleFields>
-      <InputGroup>
-        <Input__InputLabel>
-          Sample Name
-        </Input__InputLabel>
-        <Input__InputContainer
-          align="right"
-        >
-          <Input
-            autocomplete={false}
-            error="Required Field"
-            name="name"
-            onChange={[Function]}
-            value=""
-          />
-          <Input__InputIcon
-            disabled={false}
-            name="magic"
-            onClick={[Function]}
-          />
-        </Input__InputContainer>
-        <Input__InputError>
-          Required Field
-        </Input__InputError>
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Locale
-        </Input__InputLabel>
-        <Input
-          name="locale"
-          onChange={[Function]}
-          value="Timbuktu"
-        />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Isolate
-        </Input__InputLabel>
-        <Input
-          name="isolate"
-          onChange={[Function]}
-          value="Isolate"
-        />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Default Subtraction
-        </Input__InputLabel>
-        <Select
-          name="subtractionId"
-          onChange={[Function]}
-          value="sub_bar"
-        >
-          <option
-            key="sub_foo"
-            value="sub_foo"
-          >
-            Sub Foo
-          </option>
-          <option
-            key="sub_bar"
-            value="sub_bar"
-          >
-            Sub Bar
-          </option>
-        </Select>
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Host
-        </Input__InputLabel>
-        <Input
-          name="host"
-          onChange={[Function]}
-          value="Host"
-        />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Pairedness
-        </Input__InputLabel>
-        <Input
-          readOnly={true}
-          value="Paired"
-        />
-      </InputGroup>
-    </Create__CreateSampleFields>
-    <LibraryTypeSelector
-      libraryType="normal"
-      onSelect={[Function]}
-    />
-    <ReadSelector
-      error=""
-      files={Array []}
-      onSelect={[Function]}
-      selected={
-        Array [
-          "abc123-Foo.fq.gz",
-          "789xyz-Bar.fq.gz",
-        ]
-      }
-    />
-    <SaveButton />
-  </form>
-</Container__NarrowContainer>
-`;
-
 exports[`<CreateSample> should render 1`] = `
 <Container__NarrowContainer>
   <ViewHeader
@@ -128,108 +8,168 @@ exports[`<CreateSample> should render 1`] = `
     <ViewHeader__ViewHeaderTitle>
       Create Sample
     </ViewHeader__ViewHeaderTitle>
+    <Create__StyledInputError />
   </ViewHeader>
-  <form
+  <Formik
+    enableReinitialize={true}
+    initialValues={
+      Object {
+        "group": "",
+        "host": "",
+        "isolate": "",
+        "libraryType": "normal",
+        "locale": "",
+        "name": "",
+        "selected": Array [],
+        "subtractionId": "",
+      }
+    }
     onSubmit={[Function]}
+    validationSchema={
+      ObjectSchema {
+        "_blacklist": ReferenceSet {
+          "list": Set {},
+          "refs": Map {},
+        },
+        "_blacklistError": undefined,
+        "_excludedEdges": Array [],
+        "_nodes": Array [
+          "selected",
+          "subtractionId",
+          "name",
+        ],
+        "_sortErrors": [Function],
+        "_typeError": [Function],
+        "_whitelist": ReferenceSet {
+          "list": Set {},
+          "refs": Map {},
+        },
+        "_whitelistError": undefined,
+        "conditions": Array [],
+        "deps": Array [],
+        "exclusiveTests": Object {},
+        "fields": Object {
+          "name": StringSchema {
+            "_blacklist": ReferenceSet {
+              "list": Set {},
+              "refs": Map {},
+            },
+            "_blacklistError": undefined,
+            "_mutate": undefined,
+            "_typeError": [Function],
+            "_whitelist": ReferenceSet {
+              "list": Set {},
+              "refs": Map {},
+            },
+            "_whitelistError": undefined,
+            "conditions": Array [],
+            "deps": Array [],
+            "exclusiveTests": Object {
+              "required": true,
+            },
+            "spec": Object {
+              "abortEarly": true,
+              "nullable": false,
+              "presence": "required",
+              "recursive": true,
+              "strict": false,
+              "strip": false,
+            },
+            "tests": Array [
+              [Function],
+            ],
+            "transforms": Array [
+              [Function],
+            ],
+            "type": "string",
+          },
+          "selected": ArraySchema {
+            "_blacklist": ReferenceSet {
+              "list": Set {},
+              "refs": Map {},
+            },
+            "_blacklistError": undefined,
+            "_typeError": [Function],
+            "_whitelist": ReferenceSet {
+              "list": Set {},
+              "refs": Map {},
+            },
+            "_whitelistError": undefined,
+            "conditions": Array [],
+            "deps": Array [],
+            "exclusiveTests": Object {
+              "min": true,
+            },
+            "innerType": undefined,
+            "spec": Object {
+              "abortEarly": true,
+              "nullable": false,
+              "presence": "optional",
+              "recursive": true,
+              "strict": false,
+              "strip": false,
+            },
+            "tests": Array [
+              [Function],
+            ],
+            "transforms": Array [
+              [Function],
+            ],
+            "type": "array",
+          },
+          "subtractionId": StringSchema {
+            "_blacklist": ReferenceSet {
+              "list": Set {},
+              "refs": Map {},
+            },
+            "_blacklistError": undefined,
+            "_mutate": undefined,
+            "_typeError": [Function],
+            "_whitelist": ReferenceSet {
+              "list": Set {},
+              "refs": Map {},
+            },
+            "_whitelistError": undefined,
+            "conditions": Array [],
+            "deps": Array [],
+            "exclusiveTests": Object {
+              "required": true,
+            },
+            "spec": Object {
+              "abortEarly": true,
+              "nullable": false,
+              "presence": "required",
+              "recursive": true,
+              "strict": false,
+              "strip": false,
+            },
+            "tests": Array [
+              [Function],
+            ],
+            "transforms": Array [
+              [Function],
+            ],
+            "type": "string",
+          },
+        },
+        "spec": Object {
+          "abortEarly": true,
+          "nullable": false,
+          "presence": "optional",
+          "recursive": true,
+          "strict": false,
+          "strip": false,
+        },
+        "tests": Array [],
+        "transforms": Array [
+          [Function],
+        ],
+        "type": "object",
+      }
+    }
   >
-    <Create__CreateSampleFields>
-      <InputGroup>
-        <Input__InputLabel>
-          Sample Name
-        </Input__InputLabel>
-        <Input__InputContainer
-          align="right"
-        >
-          <Input
-            autocomplete={false}
-            error=""
-            name="name"
-            onChange={[Function]}
-            value=""
-          />
-          <Input__InputIcon
-            disabled={true}
-            name="magic"
-            onClick={[Function]}
-          />
-        </Input__InputContainer>
-        <Input__InputError />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Locale
-        </Input__InputLabel>
-        <Input
-          name="locale"
-          onChange={[Function]}
-          value=""
-        />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Isolate
-        </Input__InputLabel>
-        <Input
-          name="isolate"
-          onChange={[Function]}
-          value=""
-        />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Default Subtraction
-        </Input__InputLabel>
-        <Select
-          name="subtractionId"
-          onChange={[Function]}
-          value="sub_foo"
-        >
-          <option
-            key="sub_foo"
-            value="sub_foo"
-          >
-            Sub Foo
-          </option>
-          <option
-            key="sub_bar"
-            value="sub_bar"
-          >
-            Sub Bar
-          </option>
-        </Select>
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Host
-        </Input__InputLabel>
-        <Input
-          name="host"
-          onChange={[Function]}
-          value=""
-        />
-      </InputGroup>
-      <InputGroup>
-        <Input__InputLabel>
-          Pairedness
-        </Input__InputLabel>
-        <Input
-          readOnly={true}
-          value="Unpaired"
-        />
-      </InputGroup>
-    </Create__CreateSampleFields>
-    <LibraryTypeSelector
-      libraryType="normal"
-      onSelect={[Function]}
-    />
-    <ReadSelector
-      error=""
-      files={Array []}
-      onSelect={[Function]}
-      selected={Array []}
-    />
-    <SaveButton />
-  </form>
+    <Component />
+  </Formik>
 </Container__NarrowContainer>
 `;
 
