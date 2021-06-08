@@ -24,72 +24,23 @@ class MockJobInterface:
         self.enqueue = make_mocked_coro()
 
 
-@pytest.mark.parametrize("find,per_page,page,label_filter,d_range,meta", [
-    (None, None, None, None, range(0, 3), {
-        "page": 1,
-        "per_page": 25,
-        "page_count": 1,
-        "found_count": 3,
-        "total_count": 3
-    }),
-    # Test ``label_filter`` query param.
-    (None, None, None, None, range(0, 3), {
-        "page": 1,
-        "per_page": 25,
-        "page_count": 1,
-        "found_count": 2,
-        "total_count": 3
-    }),
-    # Test ``per_page`` query param.
-    (None, 2, 1, None, range(0, 2), {
-        "page": 1,
-        "per_page": 2,
-        "page_count": 2,
-        "found_count": 3,
-        "total_count": 3
-    }),
-    # Test ``per_page`` and ``page`` query param.
-    (None, 2, 2, None, range(2, 3), {
-        "page": 2,
-        "per_page": 2,
-        "page_count": 2,
-        "found_count": 3,
-        "total_count": 3
-    }),
-    # Test ``find`` query param and ``found_count`` response field.
-    ("gv", None, None, None, range(1, 3), {
-        "page": 1,
-        "per_page": 25,
-        "page_count": 1,
-        "found_count": 2,
-        "total_count": 3
-    }),
-    ("sp", None, None, None, range(0, 1), {
-        "page": 1,
-        "per_page": 25,
-        "page_count": 1,
-        "found_count": 1,
-        "total_count": 3
-    }),
-    ("fred", None, None, None, [0, 2], {
-        "page": 1,
-        "per_page": 25,
-        "page_count": 1,
-        "found_count": 2,
-        "total_count": 3
-    }),
-    (None, None, None, [3], None, None),
-    (None, None, None, [2, 3], None, None),
-    (None, None, None, [0], None, None),
-    (None, None, None, [3, "info"], None, None),
+@pytest.mark.parametrize("find,per_page,page,labels", [
+    (None, None, None, None),
+    (None, 2, 1, None),
+    (None, 2, 2, None),
+    ("gv", None, None, None),
+    ("sp", None, None, None),
+    ("fred", None, None, None),
+    (None, None, None, [3]),
+    (None, None, None, [2, 3]),
+    (None, None, None, [0]),
+    (None, None, None, [3, "info"]),
 ])
 async def test_find(
         find,
         per_page,
         page,
-        label_filter,
-        d_range,
-        meta,
+        labels,
         snapshot,
         spawn_client,
         static_time,
@@ -97,16 +48,12 @@ async def test_find(
 ):
     client = await spawn_client(authorize=True)
 
-    time_1 = arrow.get(static_time.datetime).datetime
-    time_2 = arrow.get(static_time.datetime).shift(hours=1).datetime
-    time_3 = arrow.get(static_time.datetime).shift(hours=2).datetime
-
-    label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
-    label_2 = Label(id=2, name="Info", color="#03fc20", description="This is a info")
-    label_3 = Label(id=3, name="Question", color="#0d321d", description="This is a question")
-
     async with pg_session as session:
-        session.add_all([label_1, label_2, label_3])
+        session.add_all([
+            Label(id=1, name="Bug", color="#a83432", description="This is a bug"),
+            Label(id=2, name="Info", color="#03fc20", description="This is a info"),
+            Label(id=3, name="Question", color="#0d321d", description="This is a question")
+        ])
         await session.commit()
 
     await client.db.samples.insert_many([
@@ -118,7 +65,7 @@ async def test_find(
             "host": "",
             "foobar": True,
             "isolate": "Thing",
-            "created_at": time_2,
+            "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
             "_id": "beb1eb10",
             "name": "16GVP042",
             "pathoscope": False,
@@ -134,7 +81,7 @@ async def test_find(
             "host": "",
             "foobar": True,
             "isolate": "Test",
-            "created_at": time_1,
+            "created_at": arrow.get(static_time.datetime).datetime,
             "_id": "72bb8b31",
             "name": "16GVP043",
             "pathoscope": False,
@@ -151,7 +98,7 @@ async def test_find(
             "foobar": True,
             "ready": True,
             "isolate": "",
-            "created_at": time_3,
+            "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
             "_id": "cb400e6d",
             "name": "16SPP044",
             "pathoscope": False,
@@ -164,17 +111,17 @@ async def test_find(
     query = list()
 
     if find is not None:
-        query.append("find={}".format(find))
+        query.append(f"find={find}")
 
     if per_page is not None:
-        query.append("per_page={}".format(per_page))
+        query.append(f"per_page={per_page}")
 
     if page is not None:
-        query.append("page={}".format(page))
+        query.append(f"page={page}")
 
-    if label_filter is not None:
-        filter_query = '&label='.join(str(label) for label in label_filter)
-        query.append(("label={}".format(filter_query)))
+    if labels is not None:
+        label_query = "&label=".join(str(label) for label in labels)
+        query.append(f"label={label_query}")
 
     if len(query):
         path += "?{}".format("&".join(query))
@@ -221,14 +168,22 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
             "subtractions": ["foo", "bar"]
         })
 
-        label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
-        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta", name_on_disk="reference.fa.gz")
-        reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
-        upload = Upload(name="test")
-        async with pg_session as session:
-            upload.reads.append(reads)
+        label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
 
-            session.add_all([label_1, artifact, reads, upload])
+        artifact = SampleArtifact(
+            name="reference.fa.gz",
+            sample="test",
+            type="fasta",
+            name_on_disk="reference.fa.gz"
+        )
+
+        reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
+
+        upload = Upload(name="test")
+        upload.reads.append(reads)
+
+        async with pg_session as session:
+            session.add_all([label, artifact, reads, upload])
             await session.commit()
 
     resp = await client.get("api/samples/test")
@@ -651,7 +606,8 @@ async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_sessi
 
     async with pg_session as session:
         upload = Upload(name="test", name_on_disk="test.fq.gz")
-        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta", name_on_disk="reference.fa.gz")
+        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta",
+                                  name_on_disk="reference.fa.gz")
         reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
 
         upload.reads.append(reads)
@@ -876,7 +832,8 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
     "400_subtraction",
     "404"
 ])
-async def test_analyze(error, mocker, spawn_client, static_time, resp_is, test_random_alphanumeric):
+async def test_analyze(error, mocker, spawn_client, static_time, resp_is,
+                       test_random_alphanumeric):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
     client = await spawn_client(authorize=True)
@@ -1042,13 +999,16 @@ async def test_upload_artifact(
         "_id": "test",
     })
 
-    resp = await client.post(f"/api/samples/test/artifacts?name=small.fq&type={artifact_type}", data=data)
+    resp = await client.post(f"/api/samples/test/artifacts?name=small.fq&type={artifact_type}",
+                             data=data)
 
     if error == 409:
         data["file"] = open(path, "rb")
-        resp_2 = await client.post(f"/api/samples/test/artifacts?name=small.fq&type={artifact_type}", data=data)
+        resp_2 = await client.post(
+            f"/api/samples/test/artifacts?name=small.fq&type={artifact_type}", data=data)
 
-        assert await resp_is.conflict(resp_2, "Artifact file has already been uploaded for this sample")
+        assert await resp_is.conflict(resp_2,
+                                      "Artifact file has already been uploaded for this sample")
 
     if not error:
         assert resp.status == 201
@@ -1060,7 +1020,8 @@ async def test_upload_artifact(
 
 class TestUploadReads:
     @pytest.mark.parametrize("compressed", [True, False])
-    async def test_upload_reads(self, compressed, mocker, snapshot, spawn_job_client, static_time, resp_is, pg,
+    async def test_upload_reads(self, compressed, mocker, snapshot, spawn_job_client, static_time,
+                                resp_is, pg,
                                 tmp_path):
         """
         Test that new sample reads can be uploaded using the Jobs API.
@@ -1083,7 +1044,8 @@ class TestUploadReads:
         await virtool.uploads.db.create(pg, "test", "reads")
 
         if not compressed:
-            mocker.patch("virtool.uploads.utils.naive_writer", side_effect=OSError("Not a gzipped file"))
+            mocker.patch("virtool.uploads.utils.naive_writer",
+                         side_effect=OSError("Not a gzipped file"))
 
         resp = await client.put("/api/samples/test/reads/reads_1.fq.gz?upload=1", data=data)
 
@@ -1123,7 +1085,8 @@ class TestUploadReads:
             data["file"] = open(path / "reads_2.fq.gz", "rb")
             resp_3 = await client.put("/api/samples/test/reads/reads_2.fq.gz", data=data)
 
-            assert await resp_is.conflict(resp_3, "Reads file name is already uploaded for this sample")
+            assert await resp_is.conflict(resp_3,
+                                          "Reads file name is already uploaded for this sample")
 
         assert resp.status == 201
         assert resp_2.status == 201
@@ -1345,9 +1308,11 @@ async def test_upload_artifact_cache(
     if error == 409:
         data["file"] = open(path, "rb")
         resp_2 = await client.post(
-            f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}", data=data)
+            f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}",
+            data=data)
 
-        assert await resp_is.conflict(resp_2, "Artifact file has already been uploaded for this sample cache")
+        assert await resp_is.conflict(resp_2,
+                                      "Artifact file has already been uploaded for this sample cache")
 
     if not error:
         assert resp.status == 201

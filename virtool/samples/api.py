@@ -76,10 +76,6 @@ async def find(req):
     db = req.app["db"]
     pg = req.app["pg"]
 
-    workflow_query = compose_sample_workflow_query(req.query)
-
-    print(workflow_query)
-
     v = Validator(QUERY_SCHEMA, allow_unknown=True)
 
     if not v.validate(dict(req.query)):
@@ -87,15 +83,28 @@ async def find(req):
 
     query = v.document
 
-    label_query = dict()
+    queries = list()
+
+    term = req.query.get("find")
+
+    if term:
+        queries.append(compose_regex_query(term, ["name", "user.id"]))
 
     if "label" in req.query:
         labels = req.query.getall("label")
         labels = [int(label) if label.isdigit() else label for label in labels]
 
-        label_query = {
+        queries.append({
             "labels": {"$in": labels}
-        }
+        })
+
+    if "workflows" in req.query:
+        queries.append(compose_sample_workflow_query(req.query))
+
+    db_query = dict()
+
+    if queries:
+        db_query["$and"] = queries
 
     rights_filter = [
         # The requesting user is the sample owner
@@ -116,32 +125,6 @@ async def find(req):
     base_query = {
         "$or": rights_filter
     }
-
-    db_query = dict()
-
-    term = query.get("find")
-
-    if term:
-        db_query = compose_regex_query(term, ["name", "user.id"])
-
-    if workflow_query:
-        if db_query:
-            db_query = {
-                "$and": [
-                    db_query,
-                    workflow_query
-                ]
-            }
-        else:
-            db_query = workflow_query
-
-    if label_query:
-        db_query = {
-            "$and": [
-                db_query,
-                label_query
-            ]
-        }
 
     data = await virtool.api.utils.paginate(
         db.samples,
