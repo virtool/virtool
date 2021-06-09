@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import List
 
-from requests import Response
+from aiohttp.web import Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
