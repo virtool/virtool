@@ -12,9 +12,9 @@ describe("<CreateSample>", () => {
 
     // Might need the upload date (created_at)
     const readyReads = [
-        { id: 0, name: "file 0", size: 0 },
-        { id: 1, name: "file 1", size: 0 },
-        { id: 2, name: "file 2", size: 0 }
+        { id: 0, name: "file 0", name_on_disk: "file0.fq.gz", size: 0 },
+        { id: 1, name: "file 1", name_on_disk: "file1.fq.gz", size: 0 },
+        { id: 2, name: "file 2", name_on_disk: "file2.fq.gz", size: 0 }
     ];
 
     beforeEach(() => {
@@ -62,13 +62,21 @@ describe("<CreateSample>", () => {
         };
     });
 
+    //===============================
+    // Helper Functions
+    //===============================
+    const submitForm = () => userEvent.click(screen.getByRole("button", { name: /Save/i }));
+
     const inputFormRequirements = sampleName => {
         userEvent.type(screen.getByRole("textbox", { name: /Sample Name/i }), sampleName);
         userEvent.click(screen.getByText(readyReads[0].name));
         userEvent.click(screen.getByText(readyReads[1].name));
-        userEvent.click(screen.getByRole("button", { name: /Save/i }));
+        submitForm();
     };
 
+    //===============================
+    // Tests
+    //===============================
     it("should render", () => {
         const wrapper = shallow(<CreateSample {...props} />);
         expect(wrapper).toMatchSnapshot();
@@ -93,6 +101,21 @@ describe("<CreateSample>", () => {
     // expect(wrapper.state()).toEqual({ ...state, name: "foo" });
     //}
 
+    it("should fail to submit and show errors on an empty submission", async () => {
+        renderWithProviders(<CreateSample {...props} />);
+        // Ensure errors aren't shown prematurely
+        expect(screen.queryByText("Required Field")).not.toBeInTheDocument();
+        expect(screen.queryByText("At least one read file must be attached to the sample")).not.toBeInTheDocument();
+
+        submitForm();
+
+        await waitFor(() => {
+            expect(props.onCreate).toHaveBeenCalledTimes(0);
+            expect(screen.getByText("Required Field")).toBeInTheDocument();
+            expect(screen.getByText("At least one read file must be attached to the sample")).toBeInTheDocument();
+        });
+    });
+
     it("should submit when required fields are completed", async () => {
         const name = "Sample Name";
         renderWithProviders(<CreateSample {...props} />);
@@ -104,6 +127,12 @@ describe("<CreateSample>", () => {
             expect(props.onCreate).toHaveBeenCalledWith(name, anything, anything, anything, anything, anything, [0, 1])
         );
     });
+
+    // it("should update the sample name when the magic icon is pressed", async () => {
+    //     renderWithProviders(<CreateSample {...props} />);
+    //     userEvent.click(screen.getByText(readyReads[0].name));
+    //     userEvent.click(screen.getByRole({ name: /Auto Fill/i }));
+    // });
 
     // it("handleChange() should update [name] when [name='isolate']", () => {
     //     e.target.name = "isolate";
