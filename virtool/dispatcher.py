@@ -60,7 +60,18 @@ class Connection:
         self.permissions = session.permissions
 
     async def send(self, message):
-        await self._ws.send_json(message, dumps=virtool.api.json.dumps)
+        """
+        Sends the passed JSON-encodable message to the connected client.
+
+        A `ConnectionResetError` is sometimes raised if a message is sent while the connection is closing. This is
+        caught and ignored. See https://github.com/aio-libs/aiohttp/issues/4587#issuecomment-719570582.
+
+        :param message: the message to send
+        """
+        try:
+            await self._ws.send_json(message, dumps=virtool.api.json.dumps)
+        except ConnectionResetError:
+            pass
 
     async def close(self):
         await self._ws.close()
