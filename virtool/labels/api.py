@@ -60,7 +60,7 @@ async def get(req):
     "color": {
         "type": "string",
         "coerce": virtool.validators.strip,
-        "validator": virtool.validators.is_valid_hex_color,
+        "check_with": virtool.validators.is_valid_hex_color,
         "default": "#A0AEC0"
     },
     "description": {
@@ -104,7 +104,7 @@ async def create(req):
     "color": {
         "type": "string",
         "coerce": virtool.validators.strip,
-        "validator": virtool.validators.is_valid_hex_color,
+        "check_with": virtool.validators.is_valid_hex_color,
     },
     "description": {
         "type": "string",

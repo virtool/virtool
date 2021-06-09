@@ -20,7 +20,7 @@ from virtool.http.schema import schema
 
 SCHEMA_VALIDATOR = {
     "type": "list",
-    "validator": virtool.validators.has_unique_segment_names,
+    "check_with": virtool.validators.has_unique_segment_names,
     "schema": {
         "type": "dict",
         "allow_unknown": False,

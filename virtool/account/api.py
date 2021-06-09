@@ -196,7 +196,7 @@ async def get_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     "permissions": {
         "type": "dict",
         "default": {},
-        "validator": virtool.validators.is_permission_dict
+        "check_with": virtool.validators.is_permission_dict
     }
 })
 async def create_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
@@ -228,7 +228,7 @@ async def create_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
 @schema({
     "permissions": {
         "type": "dict",
-        "validator": virtool.validators.is_permission_dict,
+        "check_with": virtool.validators.is_permission_dict,
         "required": True
     }
 })
