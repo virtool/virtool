@@ -43,6 +43,7 @@ export const Icon = ({ hoverable, style, ...props }) => {
             onClick={props.onClick ? handleClick : null}
             color={props.color}
             shade={props.shade}
+            data-testid={props["data-testid"]}
         />
     );
 

@@ -128,11 +128,15 @@ describe("<CreateSample>", () => {
         );
     });
 
-    // it("should update the sample name when the magic icon is pressed", async () => {
-    //     renderWithProviders(<CreateSample {...props} />);
-    //     userEvent.click(screen.getByText(readyReads[0].name));
-    //     userEvent.click(screen.getByRole({ name: /Auto Fill/i }));
-    // });
+    it("should update the sample name when the magic icon is pressed", async () => {
+        renderWithProviders(<CreateSample {...props} />);
+        const nameInput = screen.getByRole("textbox", { name: /Sample Name/i });
+        expect(nameInput.value).toBe("");
+
+        userEvent.click(screen.getByText(readyReads[0].name));
+        userEvent.click(screen.getByTestId("Auto Fill"));
+        expect(nameInput.value).toBe(readyReads[0].name.trim().split(" ")[0]);
+    });
 
     // it("handleChange() should update [name] when [name='isolate']", () => {
     //     e.target.name = "isolate";

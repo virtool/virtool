@@ -144,6 +144,7 @@ export const CreateSample = props => {
                                     />
                                     <InputIcon
                                         name="magic"
+                                        data-testid="Auto Fill"
                                         onClick={e => autofill(values.selected, setFieldValue, e)}
                                         disabled={!values.selected.length}
                                     />
@@ -199,6 +200,7 @@ export const CreateSample = props => {
                         {props.forceGroupChoice && (
                             <Field
                                 as={SampleUserGroup}
+                                aria-label="User Group"
                                 name="group"
                                 group={props.group}
                                 groups={props.groups}
