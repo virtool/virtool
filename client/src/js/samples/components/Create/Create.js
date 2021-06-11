@@ -154,12 +154,12 @@ export const CreateSample = props => {
 
                             <InputGroup>
                                 <InputLabel>Locale</InputLabel>
-                                <Field as={Input} name="locale" />
+                                <Field as={Input} name="locale" aria-label="Locale" />
                             </InputGroup>
 
                             <InputGroup>
                                 <InputLabel>Isolate</InputLabel>
-                                <Field as={Input} name="isolate" />
+                                <Field as={Input} name="isolate" aria-label="Isolate" />
                             </InputGroup>
 
                             <InputGroup>
@@ -167,6 +167,7 @@ export const CreateSample = props => {
                                 <Field
                                     as={Select}
                                     name="subtractionId"
+                                    aria-label="Default Subtraction"
                                     error={touched.subtractionId ? errors.subtractionId : null}
                                     onChange={e => setFieldValue("subtractionId", e.target.value)}
                                 >
@@ -177,7 +178,7 @@ export const CreateSample = props => {
 
                             <InputGroup>
                                 <InputLabel>Host</InputLabel>
-                                <Field as={Input} name="host" />
+                                <Field as={Input} name="host" aria-label="Host" />
                             </InputGroup>
 
                             <InputGroup>
@@ -185,6 +186,7 @@ export const CreateSample = props => {
                                 <Field
                                     as={Input}
                                     name="pairedness"
+                                    aria-label="Pairedness"
                                     readOnly={true}
                                     value={values.selected.length === 2 ? "Paired" : "Unpaired"}
                                 />

@@ -49,7 +49,7 @@ describe("<CreateSample>", () => {
             errorName: "",
             errorSubtraction: "",
             errorFile: "",
-            libraryType: "normal"
+            libraryType: "sRNA"
         };
         e = {
             preventDefault: jest.fn(),
@@ -67,10 +67,9 @@ describe("<CreateSample>", () => {
     const submitForm = () => userEvent.click(screen.getByRole("button", { name: /Save/i }));
 
     const inputFormRequirements = (sampleName = "Name") => {
-        userEvent.type(screen.getByRole("textbox", { name: /Sample Name/i }), sampleName);
+        userEvent.type(screen.getByLabelText("Sample Name"), sampleName);
         userEvent.click(screen.getByText(readyReads[0].name));
         userEvent.click(screen.getByText(readyReads[1].name));
-        submitForm();
     };
 
     //===============================
@@ -100,7 +99,7 @@ describe("<CreateSample>", () => {
     // expect(wrapper.state()).toEqual({ ...state, name: "foo" });
     //}
 
-    it("should fail to submit and show errors on an empty submission", async () => {
+    it("should fail to submit and show errors on empty submission", async () => {
         renderWithProviders(<CreateSample {...props} />);
         // Ensure errors aren't shown prematurely
         expect(screen.queryByText("Required Field")).not.toBeInTheDocument();
@@ -116,23 +115,48 @@ describe("<CreateSample>", () => {
     });
 
     it("should submit when required fields are completed", async () => {
-        const name = "Sample Name";
+        const { name } = state;
         renderWithProviders(<CreateSample {...props} />);
         inputFormRequirements(name);
-
-        const anything = expect.anything();
+        submitForm();
 
         await waitFor(() =>
-            expect(props.onCreate).toHaveBeenCalledWith(name, anything, anything, anything, anything, anything, [0, 1])
+            expect(props.onCreate).toHaveBeenCalledWith(name, "", "", "", "normal", props.subtractions[0].id, [0, 1])
         );
     });
 
-    it("should render userGroup when forcedGroup props is True", () => {
+    it("should submit expected results when form is fully completed", async () => {
+        renderWithProviders(<CreateSample {...props} />);
+        const { name, isolate, host, locale, libraryType } = state;
+        inputFormRequirements(name);
+
+        // Fill out the rest of the form and submit
+        userEvent.type(screen.getByLabelText("Isolate"), isolate);
+        userEvent.type(screen.getByLabelText("Host"), host);
+        userEvent.type(screen.getByLabelText("Locale"), locale);
+        userEvent.selectOptions(screen.getByLabelText("Default Subtraction"), props.subtractions[1].name);
+        userEvent.click(screen.getByText(libraryType));
+        submitForm();
+
+        await waitFor(() =>
+            expect(props.onCreate).toHaveBeenCalledWith(
+                name,
+                isolate,
+                host,
+                locale,
+                libraryType.toLowerCase(),
+                props.subtractions[1].id,
+                [0, 1]
+            )
+        );
+    });
+
+    it("should render userGroup when [props.forcedGroup=true]", () => {
         renderWithProviders(<CreateSample {...props} />);
         expect(screen.queryByText("User Group")).not.toBeInTheDocument();
     });
 
-    it("should render userGroup when forcedGroup props is False", () => {
+    it("should render userGroup when [props.forcedGroup=false]", () => {
         props.forceGroupChoice = true;
         renderWithProviders(<CreateSample {...props} />);
         expect(screen.getByText("User Group")).toBeInTheDocument();
