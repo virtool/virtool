@@ -40,7 +40,6 @@ describe("<CreateSample>", () => {
             isolate: "Isolate",
             locale: "Timbuktu",
             subtractionId: "sub_bar",
-            group: "technician",
             libraryType: "sRNA"
         };
     });

@@ -199,16 +199,18 @@ export const CreateSample = props => {
                             onSelect={library => setFieldValue("libraryType", library)}
                             libraryType={values.libraryType}
                         />
+
                         {props.forceGroupChoice && (
                             <Field
                                 as={SampleUserGroup}
                                 aria-label="User Group"
                                 name="group"
-                                group={props.group}
+                                group={values.group}
                                 groups={props.groups}
                                 onChange={e => setFieldValue("group", e.target.value)}
                             />
                         )}
+
                         <Field
                             name="selected"
                             as={ReadSelector}
