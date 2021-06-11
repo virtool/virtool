@@ -1,14 +1,13 @@
-import asyncio
+from asyncio import gather
 
-import virtool.db.migrate
-import virtool.db.utils
-import virtool.samples.db
-import virtool.types
-import virtool.utils
 from virtool.db.migrate_shared import add_subtractions_field
+from virtool.db.utils import delete_unready
+from virtool.samples.db import recalculate_workflow_tags
+from virtool.types import App
+from virtool.utils import chunk_list
 
 
-async def migrate_samples(app: virtool.types.App):
+async def migrate_samples(app: App):
     """
     Automatically update sample documents on application start.
 
@@ -18,7 +17,7 @@ async def migrate_samples(app: virtool.types.App):
     """
     db = app["db"]
 
-    await virtool.db.utils.delete_unready(db.samples)
+    await delete_unready(db.samples)
     await recalculate_all_workflow_tags(db)
     await add_subtractions_field(db.samples)
     await add_is_legacy(db)
@@ -53,7 +52,5 @@ async def recalculate_all_workflow_tags(db):
     """
     sample_ids = await db.samples.distinct("_id")
 
-    for chunk in virtool.utils.chunk_list(sample_ids, 50):
-        coros = [virtool.samples.db.recalculate_workflow_tags(db, sample_id) for sample_id in chunk]
-        await asyncio.gather(*coros)
-
+    for chunk in chunk_list(sample_ids, 50):
+        await gather(*[recalculate_workflow_tags(db, sample_id) for sample_id in chunk])

@@ -16,7 +16,7 @@ export const mapStateToProps = state => ({
 
 export const mapDispatchToProps = dispatch => ({
     onFind: e => {
-        dispatch(findHmms(e.target.value, 1, false));
+        dispatch(findHmms(e.target.value, 1));
     }
 });
 

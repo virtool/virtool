@@ -76,8 +76,14 @@ export const theme = {
     },
     gap: {
         column: "15px"
+    },
+    ring: {
+        sm: "0 0 0 2px",
+        md: "0 0 0 5px"
     }
 };
+
+export const getRing = color => ({ theme }) => `${theme.ring.sm} ${theme.color[color]}`;
 
 export const getActiveShadow = ({ active, theme }) => (active ? `inset 3px 0 0 ${theme.color.primary}` : "none");
 

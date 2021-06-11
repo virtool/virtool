@@ -6,10 +6,12 @@ import asyncio
 import logging
 import os
 import shutil
+from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from aiohttp import web
+from multidict import MultiDictProxy
 from pymongo.results import DeleteResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -24,6 +26,7 @@ import virtool.utils
 from virtool.labels.models import Label
 from virtool.samples.models import SampleReads, SampleArtifact
 from virtool.samples.utils import join_legacy_read_paths
+from virtool.subtractions.db import attach_subtractions
 from virtool.types import App
 from virtool.uploads.models import Upload
 from virtool.utils import compress_file, file_stats
@@ -102,7 +105,8 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
 
         if ready:
             for artifact in artifacts:
-                artifact["download_url"] = f"/api/samples/{sample_id}/artifacts/{artifact['name_on_disk']}"
+                name_on_disk = artifact["name_on_disk"]
+                artifact["download_url"] = f"/api/samples/{sample_id}/artifacts/{name_on_disk}"
 
         for reads_file in reads:
             if upload := reads_file.get("upload"):
@@ -144,7 +148,12 @@ async def attach_labels(pg: AsyncEngine, document: dict) -> dict:
     return {**document, "labels": labels}
 
 
-async def check_name(db, settings: dict, name: str, sample_id: Optional[str] = None) -> Optional[str]:
+async def check_name(
+        db,
+        settings: dict,
+        name: str,
+        sample_id: Optional[str] = None
+) -> Optional[str]:
     if settings["sample_unique_names"]:
         query = {"name": name}
 
@@ -169,43 +178,46 @@ async def check_rights(db, sample_id: str, client, write: bool = True) -> bool:
     return has_read and (write is False or has_write)
 
 
-def compose_workflow_conditions(workflow: str, url_query: web.Request.query) -> Optional[dict]:
-    values = url_query.getall(workflow, None)
+def compose_sample_workflow_query(url_query: MultiDictProxy) -> Optional[dict]:
+    """
+    Compose a MongoDB query for filtering samples by completed workflow (ie. workflow tags).
 
-    if values is None:
+    :param url_query: a URL query string to compose the workflow query from
+    :return: a MongoDB query for filtering by workflow
+
+    """
+    try:
+        workflow_query_strings = url_query.getall("workflows")
+    except KeyError:
         return None
 
-    values = set(values)
+    workflow_query = defaultdict(set)
 
-    conditions = list()
+    for workflow_query_string in workflow_query_strings:
+        for pair in workflow_query_string.split(" "):
+            pair = pair.split(":")
 
-    if values and values != {"true", "false", "ip"}:
-        if "true" in values:
-            conditions.append(True)
+            if len(pair) == 2:
+                workflow, condition = pair
+                condition = convert_workflow_condition(condition)
 
-        if "false" in values:
-            conditions.append(False)
+                if condition is not None:
+                    workflow_query[workflow].add(condition)
 
-        if "ip" in values:
-            conditions.append("ip")
-
-    if conditions:
-        if len(conditions) == 1:
-            return {workflow: conditions[0]}
-
-        return {workflow: {"$in": conditions}}
+    if any(workflow_query):
+        return {
+            workflow: {"$in": list(conditions)} for workflow, conditions in workflow_query.items()
+        }
 
     return None
 
 
-def compose_analysis_query(url_query: web.Request.query) -> Optional[dict]:
-    pathoscope = compose_workflow_conditions("pathoscope", url_query)
-    nuvs = compose_workflow_conditions("nuvs", url_query)
-
-    if pathoscope and nuvs:
-        return {"$or": [pathoscope, nuvs]}
-
-    return pathoscope or nuvs or None
+def convert_workflow_condition(condition: str) -> Optional[dict]:
+    return {
+        "none": False,
+        "pending": "ip",
+        "ready": True
+    }.get(condition, None)
 
 
 async def create_sample(
@@ -334,9 +346,6 @@ async def remove_samples(
     :return: the result from the samples collection remove operation
 
     """
-    if not isinstance(id_list, list):
-        raise TypeError("id_list must be a list")
-
     # Remove all analysis documents associated with the sample.
     await db.analyses.delete_many({"sample.id": {"$in": id_list}})
 
@@ -374,12 +383,9 @@ def check_is_legacy(sample: Dict[str, Any]) -> bool:
     files = sample["files"]
 
     return (
-        # All files have the `raw` flag set false indicating they are legacy data.
-        all(file.get("raw", False) is False for file in files)
-        and
-        # File naming matches expectations.
-        files[0]["name"] == "reads_1.fastq"
-        and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
+            all(file.get("raw", False) is False for file in files)
+            and files[0]["name"] == "reads_1.fastq"
+            and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
     )
 
 
@@ -526,7 +532,7 @@ async def finalize(
         sample_id: str,
         quality: Dict[str, Any],
         run_in_thread: callable,
-        data_path: str,
+        data_path: Path,
 ) -> Dict[str, Any]:
     """
     Finalize a sample document by setting a ``quality`` field and ``ready`` to ``True``
@@ -548,14 +554,11 @@ async def finalize(
     async with AsyncSession(pg) as session:
         rows = (
             (
-                await session.execute(
-                    select(Upload)
-                    .filter(SampleReads.sample == sample_id)
-                    .join_from(SampleReads, Upload)
-                )
-            )
-            .unique()
-            .scalars()
+                await session.execute(select(Upload)
+                                      .filter(SampleReads.sample == sample_id)
+                                      .join_from(SampleReads, Upload)
+                                      )
+            ).unique().scalars()
         )
 
         for row in rows:
@@ -564,10 +567,7 @@ async def finalize(
             row.removed_at = virtool.utils.timestamp()
 
             try:
-                await run_in_thread(
-                    virtool.utils.rm, data_path /
-                    "files" / row.name_on_disk
-                )
+                await run_in_thread(virtool.utils.rm, data_path / "files" / row.name_on_disk)
             except FileNotFoundError:
                 pass
 
@@ -595,9 +595,9 @@ async def get_sample(app, sample_id: str):
 
     document["caches"] = caches
 
-    document = await virtool.subtractions.db.attach_subtractions(db, document)
-    document = await virtool.samples.db.attach_labels(pg, document)
-    document = await virtool.samples.db.attach_artifacts_and_reads(pg, document)
+    document = await attach_subtractions(db, document)
+    document = await attach_labels(pg, document)
+    document = await attach_artifacts_and_reads(pg, document)
 
     document["paired"] = (len(document["reads"]) == 2)
 

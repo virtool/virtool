@@ -14,7 +14,6 @@ import {
     ViewHeaderIcons,
     ViewHeaderTitle
 } from "../../../base";
-import { DownloadLink } from "../../../references/components/Detail/DownloadLink";
 import { getCanModifyReferenceOTU } from "../../../references/selectors";
 import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
 import EditOTU from "./Edit";

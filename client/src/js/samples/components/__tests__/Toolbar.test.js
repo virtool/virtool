@@ -7,10 +7,8 @@ describe("<SampleSearchToolbar />", () => {
     beforeEach(() => {
         props = {
             canCreate: true,
-            onFind: jest.fn(),
-            term: "",
-            pathoscope: [true, false],
-            nuvs: [true, false, "ip"]
+            initialTerm: "foo",
+            onFind: jest.fn()
         };
     });
 
@@ -26,6 +24,6 @@ describe("<SampleSearchToolbar />", () => {
 
         wrapper.find(SearchInput).simulate("change", e);
 
-        expect(props.onFind).toHaveBeenCalledWith("foo", props.pathoscope, props.nuvs);
+        expect(props.onFind).toHaveBeenCalledWith("foo");
     });
 });

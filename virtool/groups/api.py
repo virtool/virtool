@@ -74,7 +74,7 @@ async def get(req):
     "permissions": {
         "type": "dict",
         "default": {},
-        "validator": virtool.validators.is_permission_dict
+        "check_with": virtool.validators.is_permission_dict
     }
 })
 async def update_permissions(req):

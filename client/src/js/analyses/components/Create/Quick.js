@@ -57,7 +57,7 @@ export const QuickAnalyze = ({
 
     // The dialog should close when all selected samples have been analyzed and deselected.
     useEffect(() => {
-        if (compatibleSamples.length === 0) {
+        if (show && compatibleSamples.length === 0) {
             onHide();
         }
     }, [mode]);
@@ -166,12 +166,15 @@ export const mapDispatchToProps = dispatch => ({
             });
         });
     },
+
     onHide: () => {
         dispatch(pushState({ quickAnalysis: false }));
     },
+
     onShortlistSubtractions: () => {
         dispatch(shortlistSubtractions());
     },
+
     onUnselect: sampleIds => {
         dispatch(deselectSamples(sampleIds));
     }

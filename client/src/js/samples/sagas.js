@@ -1,6 +1,7 @@
-import { push } from "connected-react-router";
+import { getLocation, push } from "connected-react-router";
 import { includes } from "lodash-es";
 import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { pushState } from "../app/actions";
 import {
     CREATE_SAMPLE,
     FIND_READ_FILES,
@@ -9,16 +10,18 @@ import {
     REMOVE_SAMPLE,
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
+    UPDATE_SEARCH,
     WS_UPDATE_SAMPLE
 } from "../app/actionTypes";
 import * as filesAPI from "../files/api";
-import { apiCall, putGenericError, setPending } from "../utils/sagas";
+import { apiCall, putGenericError } from "../utils/sagas";
 import * as samplesAPI from "./api";
-import { getSampleDetailId } from "./selectors";
+import { getLabelsFromURL, getSampleDetailId, getTermFromURL, getWorkflowsFromURL } from "./selectors";
 import { createFindURL } from "./utils";
 
 export function* watchSamples() {
-    yield throttle(300, FIND_SAMPLES.REQUESTED, findSamples);
+    yield takeLatest(UPDATE_SEARCH, updateSearch);
+    yield takeLatest(FIND_SAMPLES.REQUESTED, findSamples);
     yield takeLatest(FIND_READ_FILES.REQUESTED, findReadFiles);
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
     yield throttle(500, CREATE_SAMPLE.REQUESTED, createSample);
@@ -35,14 +38,40 @@ export function* wsUpdateSample(action) {
     }
 }
 
-export function* findSamples(action) {
-    yield apiCall(samplesAPI.find, action, FIND_SAMPLES);
+export function* updateSearch(action) {
+    let { labels, term } = action.parameters;
 
-    const { term, pathoscope, nuvs } = action;
+    if (labels === undefined) {
+        labels = yield select(getLabelsFromURL);
+    }
 
-    const { pathname, search } = createFindURL(term, pathoscope, nuvs);
+    if (term === undefined) {
+        term = yield select(getTermFromURL);
+    }
+
+    const workflowsFromURL = yield select(getWorkflowsFromURL);
+
+    const workflows = {
+        ...workflowsFromURL,
+        ...action.parameters.workflows
+    };
+
+    const { pathname, search } = createFindURL(term, labels, workflows);
 
     yield put(push(pathname + search));
+}
+
+export function* findSamples() {
+    const routerLocation = yield select(getLocation);
+
+    if (routerLocation.pathname === "/samples") {
+        const term = yield select(getTermFromURL);
+        const labels = yield select(getLabelsFromURL);
+
+        const params = new URLSearchParams(routerLocation.search);
+
+        yield apiCall(samplesAPI.find, { term, labels, workflows: params.get("workflows") }, FIND_SAMPLES);
+    }
 }
 
 export function* findReadFiles() {
@@ -85,15 +114,18 @@ export function* createSample(action) {
 }
 
 export function* updateSample(action) {
-    const extraFunc = { closeModal: put(push({ editSample: false })) };
-    yield setPending(apiCall(samplesAPI.update, action, UPDATE_SAMPLE, {}, extraFunc));
+    const resp = yield apiCall(samplesAPI.update, action, UPDATE_SAMPLE);
+
+    if (resp.ok) {
+        yield put(pushState({ editSample: false }));
+    }
 }
 
 export function* updateSampleRights(action) {
-    yield setPending(apiCall(samplesAPI.updateRights, action, UPDATE_SAMPLE_RIGHTS));
+    yield apiCall(samplesAPI.updateRights, action, UPDATE_SAMPLE_RIGHTS);
 }
 
 export function* removeSample(action) {
-    yield setPending(apiCall(samplesAPI.remove, action, REMOVE_SAMPLE));
+    yield apiCall(samplesAPI.remove, action, REMOVE_SAMPLE);
     yield put(push("/samples"));
 }

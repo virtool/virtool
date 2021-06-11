@@ -1,13 +1,22 @@
-import React from "react";
+import { debounce } from "lodash-es";
+import React, { useState } from "react";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { Box, Icon, LinkButton, SearchInput, Toolbar } from "../../base";
+import { Icon, LinkButton, SearchInput, Toolbar } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
-import { clearSampleSelection, findSamples } from "../actions";
+import { clearSampleSelection, updateSearch } from "../actions";
+import { getTermFromURL } from "../selectors";
 import { SampleSelectionToolbar } from "./SelectionToolbar";
-import WorkflowFilter from "./WorkflowFilter";
 
-export const SampleSearchToolbar = ({ canCreate, nuvs, pathoscope, term, onFind }) => {
+export const SampleSearchToolbar = ({ canCreate, initialTerm, onFind }) => {
+    const [term, setTerm] = useState(initialTerm);
+
+    const handleChange = e => {
+        const value = e.target.value;
+        setTerm(value);
+        onFind(value);
+    };
+
     let createButton;
 
     if (canCreate) {
@@ -19,20 +28,10 @@ export const SampleSearchToolbar = ({ canCreate, nuvs, pathoscope, term, onFind 
     }
 
     return (
-        <div>
-            <Toolbar>
-                <SearchInput
-                    value={term}
-                    onChange={e => onFind(e.target.value, pathoscope, nuvs)}
-                    placeholder="Sample name"
-                />
-                {createButton}
-            </Toolbar>
-
-            <Box>
-                <WorkflowFilter />
-            </Box>
-        </div>
+        <Toolbar>
+            <SearchInput value={term} onChange={handleChange} placeholder="Sample name" />
+            {createButton}
+        </Toolbar>
     );
 };
 
@@ -44,29 +43,27 @@ const SampleToolbar = props => {
     return <SampleSearchToolbar {...props} />;
 };
 
-const mapStateToProps = state => {
-    const { term, nuvsCondition, pathoscopeCondition, selected } = state.samples;
-    return {
-        term,
-        selected,
-        nuvs: nuvsCondition,
-        pathoscope: pathoscopeCondition,
-        canCreate: checkAdminOrPermission(state, "create_sample")
-    };
-};
+const mapStateToProps = state => ({
+    canCreate: checkAdminOrPermission(state, "create_sample"),
+    initialTerm: getTermFromURL(state),
+    selected: state.samples.selected
+});
 
 const mapDispatchToProps = dispatch => ({
-    onFind: (term, pathoscope, nuvs) => {
-        dispatch(findSamples(term, 1, pathoscope, nuvs));
-    },
     onClear: () => {
         dispatch(clearSampleSelection());
     },
-    onSelect: sampleId => {
-        dispatch(toggleSelectSample(sampleId));
-    },
+
+    onFind: debounce(term => {
+        dispatch(updateSearch({ term }));
+    }, 150),
+
     onQuickAnalyze: () => {
         dispatch(pushState({ quickAnalysis: true }));
+    },
+
+    onSelect: sampleId => {
+        dispatch(toggleSelectSample(sampleId));
     }
 });
 

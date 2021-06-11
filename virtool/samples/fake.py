@@ -20,7 +20,7 @@ SAMPLE_ID_PAIRED_FINALIZED = "sample_paired_finalized"
 
 
 async def create_fake_samples(app: App) -> List[dict]:
-    samples = []
+    samples = list()
 
     samples.append(await create_fake_sample(
         app,

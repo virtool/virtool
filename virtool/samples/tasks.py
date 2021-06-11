@@ -2,7 +2,6 @@ import logging
 
 import virtool.samples.db
 import virtool.tasks.pg
-
 from virtool.tasks.task import Task
 
 logger = logging.getLogger(__name__)
@@ -10,15 +9,13 @@ logger = logging.getLogger(__name__)
 
 class CompressSamplesTask(Task):
     """
-    Compress the legacy FASTQ file for all uncompressed samples.
+    Compress the legacy FASTQ files for all uncompressed samples.
 
     """
-
     task_type = "compress_samples"
 
     def __init__(self, app, process_id):
         super().__init__(app, process_id)
-
         self.steps = [self.compress_samples]
 
     async def compress_samples(self):

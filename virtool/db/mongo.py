@@ -3,8 +3,8 @@ import sys
 from typing import Any, Callable, Dict, List
 
 import pymongo.errors
-import semver
 from motor.motor_asyncio import AsyncIOMotorClient
+from semver import VersionInfo
 
 import virtool.db.core
 import virtool.db.utils
@@ -55,7 +55,7 @@ async def check_mongo_version(db: AsyncIOMotorClient) -> str:
     """
     mongo_version = await get_mongo_version(db)
 
-    if semver.compare(mongo_version, MINIMUM_MONGO_VERSION) == -1:
+    if VersionInfo.parse(mongo_version) < VersionInfo.parse(MINIMUM_MONGO_VERSION):
         logger.critical(
             f"Virtool requires MongoDB {MINIMUM_MONGO_VERSION}. Found {mongo_version}."
         )

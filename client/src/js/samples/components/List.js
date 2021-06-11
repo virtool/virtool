@@ -1,6 +1,6 @@
-import { forEach, includes, pull, slice } from "lodash-es";
-import React from "react";
+import React, { useEffect } from "react";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { getAccountId } from "../../account/selectors";
 import QuickAnalysis from "../../analyses/components/Create/Quick";
 import {
@@ -9,132 +9,107 @@ import {
     NarrowContainer,
     NoneFoundBox,
     ScrollList,
+    SideContainer,
     ViewHeader,
     ViewHeaderTitle
 } from "../../base";
 import { findHmms } from "../../hmm/actions";
 import { listReadyIndexes } from "../../indexes/actions";
+import { listLabels } from "../../labels/actions";
 import { findSamples } from "../actions";
-import { getTerm } from "../selectors";
+import { SampleFilters } from "./Filter/Filters";
 import SampleItem from "./Item/Item";
 import SampleToolbar from "./Toolbar";
 
-export class SamplesList extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            lastChecked: null,
-            sampleId: ""
-        };
+const StyledSamplesList = styled.div`
+    align-items: stretch;
+    display: flex;
+
+    th {
+        width: 220px;
     }
+`;
 
-    componentDidMount() {
-        const { nuvs, pathoscope, term } = this.props;
-        this.props.onFindHmms();
-        this.props.onListReadyIndexes();
-        this.props.onLoadNextPage(term, 1, pathoscope, nuvs);
-    }
+export const SamplesList = ({ documents, loading, match, page, pageCount, totalCount, onFindSamples, onFindOther }) => {
+    useEffect(onFindOther, [null]);
 
-    onSelect = (id, index, isShiftKey) => {
-        const newSelected = [...this.props.selected];
+    useEffect(() => {
+        onFindSamples(1);
+    }, [match]);
 
-        let selectedSegment;
-
-        if (isShiftKey && this.state.lastChecked !== index) {
-            let startIndex;
-            let endIndex;
-
-            if (this.state.lastChecked < index) {
-                startIndex = this.state.lastChecked;
-                endIndex = index;
-            } else {
-                startIndex = index;
-                endIndex = this.state.lastChecked;
-            }
-
-            selectedSegment = slice(this.props.documents, startIndex, endIndex + 1);
-        } else {
-            selectedSegment = [this.props.documents[index]];
-        }
-
-        if (includes(this.props.selected, this.props.documents[index].id)) {
-            forEach(selectedSegment, entry => {
-                pull(newSelected, entry.id);
-            });
-        } else {
-            forEach(selectedSegment, entry => {
-                if (!includes(newSelected, entry.id)) {
-                    newSelected.push(entry.id);
-                }
-            });
-        }
-
-        this.setState({
-            lastChecked: index
-        });
+    const renderRow = index => {
+        return <SampleItem key={documents[index].id} id={documents[index].id} />;
     };
 
-    renderRow = index => {
-        return <SampleItem key={this.props.documents[index].id} id={this.props.documents[index].id} />;
-    };
+    if (loading) {
+        return <LoadingPlaceholder />;
+    }
 
-    render() {
-        if (this.props.documents === null || this.props.hmms.documents === null || this.props.indexes === null) {
-            return <LoadingPlaceholder />;
-        }
+    let noneFound;
 
-        let noneFound;
+    if (!documents.length) {
+        noneFound = <NoneFoundBox key="noSample" noun="samples" />;
+    }
 
-        if (!this.props.documents.length) {
-            noneFound = <NoneFoundBox key="noSample" noun="samples" />;
-        }
-
-        const { term, pathoscope, nuvs } = this.props;
-
-        return (
+    return (
+        <React.Fragment>
             <NarrowContainer>
                 <ViewHeader title="Samples">
                     <ViewHeaderTitle>
-                        Samples <Badge>{this.props.total_count}</Badge>
+                        Samples <Badge>{totalCount}</Badge>
                     </ViewHeaderTitle>
                 </ViewHeader>
-
                 <SampleToolbar />
-
-                {noneFound || (
-                    <ScrollList
-                        documents={this.props.documents}
-                        page={this.props.page}
-                        pageCount={this.props.page_count}
-                        onLoadNextPage={page => this.props.onLoadNextPage(term, page, pathoscope, nuvs)}
-                        renderRow={this.renderRow}
-                    />
-                )}
-                <QuickAnalysis />
             </NarrowContainer>
-        );
-    }
-}
+            <StyledSamplesList>
+                <NarrowContainer>
+                    {noneFound || (
+                        <ScrollList
+                            documents={documents}
+                            page={page}
+                            pageCount={pageCount}
+                            onLoadNextPage={page => onFindSamples(page)}
+                            renderRow={renderRow}
+                        />
+                    )}
+                    <QuickAnalysis />
+                </NarrowContainer>
+                <SideContainer>
+                    <SampleFilters />
+                </SideContainer>
+            </StyledSamplesList>
+        </React.Fragment>
+    );
+};
 
-const mapStateToProps = state => ({
-    userId: getAccountId(state),
-    ...state.samples,
-    term: getTerm(state),
-    pathoscope: state.samples.pathoscopeCondition,
-    nuvs: state.samples.nuvsCondition,
-    hmms: state.hmms
-});
+export const mapStateToProps = state => {
+    const loading =
+        state.hmms.documents === null ||
+        state.samples.documents === null ||
+        state.samples.readyIndexes === null ||
+        state.labels.documents === null;
 
-const mapDispatchToProps = dispatch => ({
-    onLoadNextPage: (term, page, pathoscope, nuvs) => {
-        dispatch(findSamples(term, page, pathoscope, nuvs));
+    const { documents, page, page_count, selected, total_count } = state.samples;
+
+    return {
+        documents,
+        loading,
+        userId: getAccountId(state),
+        page,
+        pageCount: page_count,
+        selected,
+        totalCount: total_count
+    };
+};
+
+export const mapDispatchToProps = dispatch => ({
+    onFindSamples: page => {
+        dispatch(findSamples({ page }));
     },
 
-    onFindHmms: () => {
-        dispatch(findHmms("", 1, false));
-    },
-
-    onListReadyIndexes: () => {
+    onFindOther: () => {
+        dispatch(findHmms("", 1));
+        dispatch(listLabels());
         dispatch(listReadyIndexes());
     }
 });

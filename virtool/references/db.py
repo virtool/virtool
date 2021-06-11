@@ -61,8 +61,8 @@ from typing import List, Union, Optional
 
 import aiohttp
 import pymongo
-import semver
 from aiohttp import web
+from semver import VersionInfo
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 
 import virtool.api
@@ -401,7 +401,7 @@ async def fetch_and_update_release(app, ref_id: str, ignore_errors: bool = False
 
         release["newer"] = bool(
             installed and
-            semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
+            VersionInfo.parse(release["name"].lstrip("v")) > VersionInfo.parse(installed["name"].lstrip("v"))
         )
 
         release["retrieved_at"] = retrieved_at

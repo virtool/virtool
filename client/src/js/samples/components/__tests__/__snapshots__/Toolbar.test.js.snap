@@ -1,43 +1,33 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<SampleSearchToolbar /> should render when [canCreate=false] 1`] = `
-<div>
-  <Toolbar>
-    <SearchInput
-      onChange={[Function]}
-      placeholder="Sample name"
-      value=""
-    />
-  </Toolbar>
-  <Box>
-    <Connect(WorkflowFilter) />
-  </Box>
-</div>
+<Toolbar>
+  <SearchInput
+    onChange={[Function]}
+    placeholder="Sample name"
+    value="foo"
+  />
+</Toolbar>
 `;
 
 exports[`<SampleSearchToolbar /> should render when [canCreate=true] 1`] = `
-<div>
-  <Toolbar>
-    <SearchInput
-      onChange={[Function]}
-      placeholder="Sample name"
-      value=""
+<Toolbar>
+  <SearchInput
+    onChange={[Function]}
+    placeholder="Sample name"
+    value="foo"
+  />
+  <LinkButton
+    color="blue"
+    tip="Create"
+    tipPlacement="top"
+    to="/samples/create"
+  >
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="plus-square fa-fw"
     />
-    <LinkButton
-      color="blue"
-      tip="Create"
-      tipPlacement="top"
-      to="/samples/create"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="plus-square fa-fw"
-      />
-    </LinkButton>
-  </Toolbar>
-  <Box>
-    <Connect(WorkflowFilter) />
-  </Box>
-</div>
+  </LinkButton>
+</Toolbar>
 `;

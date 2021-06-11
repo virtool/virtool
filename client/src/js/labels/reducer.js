@@ -2,7 +2,7 @@ import { CREATE_LABEL, LIST_LABELS, REMOVE_LABEL, UPDATE_LABEL } from "../app/ac
 import { insert, remove, update } from "../utils/reducers";
 
 export const initialState = {
-    documents: []
+    documents: null
 };
 
 export default function labelsReducer(state = initialState, action) {

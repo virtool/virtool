@@ -78,6 +78,10 @@ exports[`<App /> renders correctly 1`] = `
       "gap": Object {
         "column": "15px",
       },
+      "ring": Object {
+        "md": "0 0 0 5px",
+        "sm": "0 0 0 2px",
+      },
     }
   }
 >

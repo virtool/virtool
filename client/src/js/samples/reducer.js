@@ -17,7 +17,6 @@ import { insert, remove, update, updateDocuments } from "../utils/reducers";
 
 export const initialState = {
     documents: null,
-    term: "",
     page: 0,
     detail: null,
     readFiles: null,
