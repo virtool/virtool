@@ -1,20 +1,12 @@
 import React from "react";
-import { Input, InputIcon } from "../../../../base";
 import { CreateSample, mapDispatchToProps, mapStateToProps } from "../Create";
-import { LibraryTypeSelector } from "../LibraryTypeSelector";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 describe("<CreateSample>", () => {
+    const readFileName = "large";
     let props;
-    let state;
-    let e;
-
-    // Might need the upload date (created_at)
-    const fileName = "file";
-    const readyReads = Array(3)
-        .fill(0)
-        .map((_, id) => ({ id, name: `${fileName} ${id}`, name_on_disk: `${id}-${fileName}.fq.gz`, size: 0 }));
+    let values;
 
     beforeEach(() => {
         props = {
@@ -29,16 +21,19 @@ describe("<CreateSample>", () => {
                     name: "Sub Bar"
                 }
             ],
-            readyReads,
+            readyReads: Array(3)
+                .fill(0)
+                .map((_, id) => ({
+                    id,
+                    name: `${readFileName} ${id}`,
+                    name_on_disk: `${id}-${readFileName}.fq.gz`,
+                    size: 0
+                })),
             forceGroupChoice: false,
             onCreate: jest.fn(),
-            onHide: jest.fn(),
-            onLoadSubtractionsAndFiles: jest.fn(),
-            history: {
-                push: jest.fn()
-            }
+            onLoadSubtractionsAndFiles: jest.fn()
         };
-        state = {
+        values = {
             name: "Sample 1",
             selected: ["abc123-Foo.fq.gz", "789xyz-Bar.fq.gz"],
             host: "Host",
@@ -46,18 +41,7 @@ describe("<CreateSample>", () => {
             locale: "Timbuktu",
             subtractionId: "sub_bar",
             group: "technician",
-            errorName: "",
-            errorSubtraction: "",
-            errorFile: "",
             libraryType: "sRNA"
-        };
-        e = {
-            preventDefault: jest.fn(),
-            target: {
-                name: "name",
-                value: "foo",
-                error: "error"
-            }
         };
     });
 
@@ -68,8 +52,8 @@ describe("<CreateSample>", () => {
 
     const inputFormRequirements = (sampleName = "Name") => {
         userEvent.type(screen.getByLabelText("Sample Name"), sampleName);
-        userEvent.click(screen.getByText(readyReads[0].name));
-        userEvent.click(screen.getByText(readyReads[1].name));
+        userEvent.click(screen.getByText(props.readyReads[0].name));
+        userEvent.click(screen.getByText(props.readyReads[1].name));
     };
 
     //===============================
@@ -80,24 +64,17 @@ describe("<CreateSample>", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render LoadingPlaceholder when [this.props.subtractions=null]", () => {
+    it("should render LoadingPlaceholder when [props.subtractions=null]", () => {
         props.subtractions = null;
         const wrapper = shallow(<CreateSample {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render LoadingPlaceholder when [this.props.readyReads=null]", () => {
+    it("should render LoadingPlaceholder when [props.readyReads=null]", () => {
         props.readyReads = null;
         const wrapper = shallow(<CreateSample {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
-
-    // it("handleChange() should update state [name] and [error] when InputError is changed and [name=name]", async () => {
-    // const wrapper = shallow(<CreateSample {...props} />);
-    // wrapper.setState(state);
-    // wrapper.find(Input).at(0).simulate("change", e);
-    // expect(wrapper.state()).toEqual({ ...state, name: "foo" });
-    //}
 
     it("should fail to submit and show errors on empty submission", async () => {
         renderWithProviders(<CreateSample {...props} />);
@@ -115,7 +92,7 @@ describe("<CreateSample>", () => {
     });
 
     it("should submit when required fields are completed", async () => {
-        const { name } = state;
+        const { name } = values;
         renderWithProviders(<CreateSample {...props} />);
         inputFormRequirements(name);
         submitForm();
@@ -127,7 +104,7 @@ describe("<CreateSample>", () => {
 
     it("should submit expected results when form is fully completed", async () => {
         renderWithProviders(<CreateSample {...props} />);
-        const { name, isolate, host, locale, libraryType } = state;
+        const { name, isolate, host, locale, libraryType } = values;
         inputFormRequirements(name);
 
         // Fill out the rest of the form and submit
@@ -167,76 +144,10 @@ describe("<CreateSample>", () => {
         const nameInput = screen.getByRole("textbox", { name: /Sample Name/i });
         expect(nameInput.value).toBe("");
 
-        userEvent.click(screen.getByText(readyReads[0].name));
+        userEvent.click(screen.getByText(props.readyReads[0].name));
         userEvent.click(screen.getByTestId("Auto Fill"));
-        expect(nameInput.value).toBe(fileName);
+        expect(nameInput.value).toBe(readFileName);
     });
-
-    // it("handleChange() should update [name] when [name='isolate']", () => {
-    //     e.target.name = "isolate";
-    //     e.target.value = "Foo Isolate";
-
-    //     const wrapper = shallow(<CreateSample {...props} />);
-    //     wrapper.setState(state);
-    //     wrapper.find(Input).at(0).simulate("change", e);
-
-    //     expect(wrapper.state()).toEqual({ ...state, isolate: "Foo Isolate" });
-    // });
-
-    // it("handleLibrarySelect() should update libraryType when LibraryTypeSelector is selected", () => {
-    //     const libraryType = "srna";
-    //     const wrapper = shallow(<CreateSample {...props} />);
-    //     wrapper.setState(state);
-    //     wrapper.find(LibraryTypeSelector).at(0).simulate("select", libraryType);
-    //     expect(wrapper.state()).toEqual({ ...state, libraryType });
-    // });
-
-    // it("should display error when form submitted with no name", () => {
-    //     const wrapper = shallow(<CreateSample {...props} />);
-    //     wrapper.setState({ ...state, name: "" });
-    //     wrapper.find("form").simulate("submit", e);
-    //     expect(wrapper.state()).toEqual({ ...state, name: "", errorName: "Required Field" });
-    //     expect(wrapper).toMatchSnapshot();
-    // });
-
-    // it("handleSubmit() should update errorFile when form is submitted and [this.props.selected=[]]", () => {
-    //     const wrapper = shallow(<CreateSample {...props} />);
-    //     wrapper.setState({
-    //         ...state,
-    //         selected: []
-    //     });
-    //     wrapper.find("form").simulate("submit", e);
-    //     expect(wrapper.state()).toEqual({
-    //         ...state,
-    //         selected: [],
-    //         errorFile: "At least one read file must be attached to the sample"
-    //     });
-    // });
-
-    // it("should call onCreate() when form is submitted and [hasError=false]", () => {
-    //     const wrapper = shallow(<CreateSample {...props} />);
-    //     wrapper.setState({ ...state, selected: ["foo"] });
-    //     wrapper.find("form").simulate("submit", e);
-
-    //     expect(props.onCreate).toHaveBeenCalledWith("Sample 1", "Isolate", "Host", "Timbuktu", "normal", "sub_bar", [
-    //         "foo"
-    //     ]);
-    // });
-
-    // it("should update name when auto-fill Button is clicked", () => {
-    //     const wrapper = shallow(<CreateSample {...props} />);
-    //     const selected = ["abc123-FooBar.fq.gz"];
-    //     wrapper.setState({ ...state, selected });
-    //     wrapper.find(InputIcon).simulate("click");
-    //     expect(wrapper.state()).toEqual({ ...state, name: "FooBar", selected });
-    // });
-
-    // it("should update selected and errorFile when read is selected", () => {
-    //     const wrapper = shallow(<CreateSample {...props} />);
-    //     wrapper.setState(state);
-    //     wrapper.find("ReadSelector").prop("onSelect")(["foo"]);
-    //     expect(wrapper.state()).toEqual({ ...state, selected: ["foo"] });
-    // });
 });
 
 describe("mapStateToProps()", () => {

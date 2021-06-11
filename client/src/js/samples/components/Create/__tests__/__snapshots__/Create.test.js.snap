@@ -173,13 +173,13 @@ exports[`<CreateSample> should render 1`] = `
 </Container__NarrowContainer>
 `;
 
-exports[`<CreateSample> should render LoadingPlaceholder when [this.props.readyReads=null] 1`] = `
+exports[`<CreateSample> should render LoadingPlaceholder when [props.readyReads=null] 1`] = `
 <LoadingPlaceholder
   margin="36px"
 />
 `;
 
-exports[`<CreateSample> should render LoadingPlaceholder when [this.props.subtractions=null] 1`] = `
+exports[`<CreateSample> should render LoadingPlaceholder when [props.subtractions=null] 1`] = `
 <LoadingPlaceholder
   margin="36px"
 />
