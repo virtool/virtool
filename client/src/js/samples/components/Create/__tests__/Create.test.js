@@ -11,11 +11,10 @@ describe("<CreateSample>", () => {
     let e;
 
     // Might need the upload date (created_at)
-    const readyReads = [
-        { id: 0, name: "file 0", name_on_disk: "file0.fq.gz", size: 0 },
-        { id: 1, name: "file 1", name_on_disk: "file1.fq.gz", size: 0 },
-        { id: 2, name: "file 2", name_on_disk: "file2.fq.gz", size: 0 }
-    ];
+    const fileName = "file";
+    const readyReads = Array(3)
+        .fill(0)
+        .map((_, id) => ({ id, name: `${fileName} ${id}`, name_on_disk: `${id}-${fileName}.fq.gz`, size: 0 }));
 
     beforeEach(() => {
         props = {
@@ -67,7 +66,7 @@ describe("<CreateSample>", () => {
     //===============================
     const submitForm = () => userEvent.click(screen.getByRole("button", { name: /Save/i }));
 
-    const inputFormRequirements = sampleName => {
+    const inputFormRequirements = (sampleName = "Name") => {
         userEvent.type(screen.getByRole("textbox", { name: /Sample Name/i }), sampleName);
         userEvent.click(screen.getByText(readyReads[0].name));
         userEvent.click(screen.getByText(readyReads[1].name));
@@ -146,7 +145,7 @@ describe("<CreateSample>", () => {
 
         userEvent.click(screen.getByText(readyReads[0].name));
         userEvent.click(screen.getByTestId("Auto Fill"));
-        expect(nameInput.value).toBe(readyReads[0].name.trim().split(" ")[0]);
+        expect(nameInput.value).toBe(fileName);
     });
 
     // it("handleChange() should update [name] when [name='isolate']", () => {
