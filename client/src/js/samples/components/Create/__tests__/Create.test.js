@@ -128,6 +128,17 @@ describe("<CreateSample>", () => {
         );
     });
 
+    it("should render userGroup when forcedGroup props is True", () => {
+        renderWithProviders(<CreateSample {...props} />);
+        expect(screen.queryByText("User Group")).not.toBeInTheDocument();
+    });
+
+    it("should render userGroup when forcedGroup props is False", () => {
+        props.forceGroupChoice = true;
+        renderWithProviders(<CreateSample {...props} />);
+        expect(screen.getByText("User Group")).toBeInTheDocument();
+    });
+
     it("should update the sample name when the magic icon is pressed", async () => {
         renderWithProviders(<CreateSample {...props} />);
         const nameInput = screen.getByRole("textbox", { name: /Sample Name/i });
