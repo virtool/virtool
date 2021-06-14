@@ -9,7 +9,7 @@ WORKDIR /build
 RUN pip install --user poetry
 COPY pyproject.toml ./pyproject.toml
 COPY poetry.lock ./poetry.lock
-RUN /root/.local/bin/poetry export > requirements.txt
+RUN /root/.local/bin/poetry export --without-hashes > requirements.txt
 RUN pip install --user -r requirements.txt
 COPY . . 
 RUN pip install --user .
