@@ -25,12 +25,7 @@ const StyledIcon = styled.i`
 `;
 
 export const Icon = ({ hoverable, style, ...props }) => {
-    const handleClick = useCallback(
-        e => {
-            props.onClick(e);
-        },
-        [props.onClick]
-    );
+    const handleClick = useCallback(props.onClick, [props.onClick]);
 
     const className = `${props.className ? props.className + " " : ""} ${props.faStyle} fa-${props.name}`;
 
