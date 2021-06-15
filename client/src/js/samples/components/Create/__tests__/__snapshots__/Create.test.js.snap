@@ -11,7 +11,6 @@ exports[`<CreateSample> should render 1`] = `
     <Create__StyledInputError />
   </ViewHeader>
   <Formik
-    enableReinitialize={true}
     initialValues={
       Object {
         "group": "",
@@ -21,7 +20,7 @@ exports[`<CreateSample> should render 1`] = `
         "locale": "",
         "name": "",
         "selected": Array [],
-        "subtractionId": "",
+        "subtractionId": "sub_foo",
       }
     }
     onSubmit={[Function]}

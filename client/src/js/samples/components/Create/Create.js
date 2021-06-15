@@ -1,5 +1,5 @@
 import { filter, find, get, map } from "lodash-es";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { Formik, Form, Field } from "formik";
@@ -59,7 +59,11 @@ const validationSchema = Yup.object().shape({
 });
 
 export const CreateSample = props => {
-    const [reinitialize, setReinitialize] = useState(true);
+    useEffect(props.onLoadSubtractionsAndFiles, []);
+
+    if (props.subtractions === null || props.readyReads === null) {
+        return <LoadingPlaceholder margin="36px" />;
+    }
 
     const initialValues = {
         selected: [],
@@ -68,30 +72,9 @@ export const CreateSample = props => {
         host: "",
         locale: "",
         libraryType: "normal",
-        // Values below will be updated on mount since they are dependent on props
-        group: "",
-        subtractionId: ""
+        group: props.forceGroupChoice ? "none" : "",
+        subtractionId: get(props, "subtractions[0].id", "")
     };
-
-    const updateInitialValues = () => {
-        initialValues.group = props.forceGroupChoice ? "none" : "";
-        initialValues.subtractionId = get(props, "subtractions[0].id", "");
-        // Prevent further reinitialization of the form
-        setReinitialize(false);
-    };
-
-    useEffect(props.onLoadSubtractionsAndFiles, []);
-
-    // Update Formik's initial values once the subtraction files have been received
-    useEffect(() => {
-        if (props.subtractions !== null || props.readyReads !== null) {
-            updateInitialValues();
-        }
-    }, [props.subtractions, props.readyReads]);
-
-    if (props.subtractions === null || props.readyReads === null) {
-        return <LoadingPlaceholder margin="36px" />;
-    }
 
     const subtractionComponents = map(props.subtractions, subtraction => (
         <option key={subtraction.id} value={subtraction.id}>
@@ -125,12 +108,7 @@ export const CreateSample = props => {
                 <ViewHeaderTitle>Create Sample</ViewHeaderTitle>
                 <StyledInputError>{props.error}</StyledInputError>
             </ViewHeader>
-            <Formik
-                onSubmit={handleSubmit}
-                initialValues={initialValues}
-                validationSchema={validationSchema}
-                enableReinitialize={reinitialize}
-            >
+            <Formik onSubmit={handleSubmit} initialValues={initialValues} validationSchema={validationSchema}>
                 {({ errors, setFieldValue, touched, values }) => (
                     <Form>
                         <CreateSampleFields>
