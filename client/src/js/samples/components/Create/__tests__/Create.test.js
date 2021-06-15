@@ -44,9 +44,6 @@ describe("<CreateSample>", () => {
         };
     });
 
-    //===============================
-    // Helper Functions
-    //===============================
     const submitForm = () => userEvent.click(screen.getByRole("button", { name: /Save/i }));
 
     const inputFormRequirements = (sampleName = "Name") => {
@@ -55,9 +52,6 @@ describe("<CreateSample>", () => {
         userEvent.click(screen.getByText(props.readyReads[1].name));
     };
 
-    //===============================
-    // Tests
-    //===============================
     it("should render", () => {
         const wrapper = shallow(<CreateSample {...props} />);
         expect(wrapper).toMatchSnapshot();
