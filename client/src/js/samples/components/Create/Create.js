@@ -39,8 +39,14 @@ const StyledInputError = styled(InputError)`
 
 const extensionRegex = /^[a-z0-9]+-(.*)\.f[aq](st)?[aq]?(\.gz)?$/;
 
-// This method's inputs are the selected read file's id and the list of read files
-// The output is the id's corresponding name without the file extension
+/**
+ * Gets a filename without extension, given the file ID and an array of all available read files.
+ * Used to autofill the name for a new sample based on the selected read file(s).
+ *
+ * @param {Number} id - the file ID
+ * @param {Array} files - all available read files
+ * @returns {*|string} the filename without its extension
+ */
 const getFileNameFromId = (id, files) => {
     const file = find(files, file => file.id === id);
     return file ? file.name_on_disk.match(extensionRegex)[1] : "";
@@ -62,7 +68,6 @@ export const CreateSample = props => {
         host: "",
         locale: "",
         libraryType: "normal",
-        selected: [],
         // Values below will be updated on mount since they are dependent on props
         group: "",
         subtractionId: ""
@@ -75,9 +80,7 @@ export const CreateSample = props => {
         setReinitialize(false);
     };
 
-    useEffect(() => {
-        props.onLoadSubtractionsAndFiles();
-    }, []);
+    useEffect(props.onLoadSubtractionsAndFiles, []);
 
     // Update Formik's initial values once the subtraction files have been received
     useEffect(() => {
