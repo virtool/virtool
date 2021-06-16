@@ -1,12 +1,12 @@
 import React from "react";
-import { Input, InputIcon } from "../../../../base";
 import { CreateSample, mapDispatchToProps, mapStateToProps } from "../Create";
-import { LibraryTypeSelector } from "../LibraryTypeSelector";
+import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 describe("<CreateSample>", () => {
+    const readFileName = "large";
     let props;
-    let state;
-    let e;
+    let values;
 
     beforeEach(() => {
         props = {
@@ -21,126 +21,125 @@ describe("<CreateSample>", () => {
                     name: "Sub Bar"
                 }
             ],
-            readyReads: [],
+            readyReads: Array(3)
+                .fill(0)
+                .map((_, id) => ({
+                    id,
+                    name: `${readFileName} ${id}`,
+                    name_on_disk: `${id}-${readFileName}.fq.gz`,
+                    size: 0
+                })),
             forceGroupChoice: false,
             onCreate: jest.fn(),
-            onHide: jest.fn(),
-            onLoadSubtractionsAndFiles: jest.fn(),
-            history: {
-                push: jest.fn()
-            }
+            onLoadSubtractionsAndFiles: jest.fn()
         };
-        state = {
+        values = {
             name: "Sample 1",
             selected: ["abc123-Foo.fq.gz", "789xyz-Bar.fq.gz"],
             host: "Host",
             isolate: "Isolate",
             locale: "Timbuktu",
             subtractionId: "sub_bar",
-            group: "technician",
-            errorName: "",
-            errorSubtraction: "",
-            errorFile: "",
-            libraryType: "normal"
-        };
-        e = {
-            preventDefault: jest.fn(),
-            target: {
-                name: "name",
-                value: "foo",
-                error: "error"
-            }
+            libraryType: "sRNA"
         };
     });
+
+    const submitForm = () => userEvent.click(screen.getByRole("button", { name: /Save/i }));
+
+    const inputFormRequirements = (sampleName = "Name") => {
+        userEvent.type(screen.getByLabelText("Sample Name"), sampleName);
+        userEvent.click(screen.getByText(props.readyReads[0].name));
+        userEvent.click(screen.getByText(props.readyReads[1].name));
+    };
 
     it("should render", () => {
         const wrapper = shallow(<CreateSample {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render LoadingPlaceholder when [this.props.subtractions=null]", () => {
+    it("should render LoadingPlaceholder when [props.subtractions=null]", () => {
         props.subtractions = null;
         const wrapper = shallow(<CreateSample {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render LoadingPlaceholder when [this.props.readyReads=null]", () => {
+    it("should render LoadingPlaceholder when [props.readyReads=null]", () => {
         props.readyReads = null;
         const wrapper = shallow(<CreateSample {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("handleChange() should update state [name] and [error] when InputError is changed and [name=name]", () => {
-        const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.setState(state);
-        wrapper.find(Input).at(0).simulate("change", e);
-        expect(wrapper.state()).toEqual({ ...state, name: "foo" });
-    });
+    it("should fail to submit and show errors on empty submission", async () => {
+        renderWithProviders(<CreateSample {...props} />);
+        // Ensure errors aren't shown prematurely
+        expect(screen.queryByText("Required Field")).not.toBeInTheDocument();
+        expect(screen.queryByText("At least one read file must be attached to the sample")).not.toBeInTheDocument();
 
-    it("handleChange() should update [name] when [name='isolate']", () => {
-        e.target.name = "isolate";
-        e.target.value = "Foo Isolate";
+        submitForm();
 
-        const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.setState(state);
-        wrapper.find(Input).at(0).simulate("change", e);
-
-        expect(wrapper.state()).toEqual({ ...state, isolate: "Foo Isolate" });
-    });
-
-    it("handleLibrarySelect() should update libraryType when LibraryTypeSelector is selected", () => {
-        const libraryType = "srna";
-        const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.setState(state);
-        wrapper.find(LibraryTypeSelector).at(0).simulate("select", libraryType);
-        expect(wrapper.state()).toEqual({ ...state, libraryType });
-    });
-
-    it("should display error when form submitted with no name", () => {
-        const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.setState({ ...state, name: "" });
-        wrapper.find("form").simulate("submit", e);
-        expect(wrapper.state()).toEqual({ ...state, name: "", errorName: "Required Field" });
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("handleSubmit() should update errorFile when form is submitted and [this.props.selected=[]]", () => {
-        const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.setState({
-            ...state,
-            selected: []
-        });
-        wrapper.find("form").simulate("submit", e);
-        expect(wrapper.state()).toEqual({
-            ...state,
-            selected: [],
-            errorFile: "At least one read file must be attached to the sample"
+        await waitFor(() => {
+            expect(props.onCreate).toHaveBeenCalledTimes(0);
+            expect(screen.getByText("Required Field")).toBeInTheDocument();
+            expect(screen.getByText("At least one read file must be attached to the sample")).toBeInTheDocument();
         });
     });
 
-    it("should call onCreate() when form is submitted and [hasError=false]", () => {
-        const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.setState({ ...state, selected: ["foo"] });
-        wrapper.find("form").simulate("submit", e);
+    it("should submit when required fields are completed", async () => {
+        const { name } = values;
+        renderWithProviders(<CreateSample {...props} />);
+        inputFormRequirements(name);
+        submitForm();
 
-        expect(props.onCreate).toHaveBeenCalledWith("Sample 1", "Isolate", "Host", "Timbuktu", "normal", "sub_bar", [
-            "foo"
-        ]);
+        await waitFor(() =>
+            expect(props.onCreate).toHaveBeenCalledWith(name, "", "", "", "normal", props.subtractions[0].id, [0, 1])
+        );
     });
 
-    it("should update name when auto-fill Button is clicked", () => {
-        const wrapper = shallow(<CreateSample {...props} />);
-        const selected = ["abc123-FooBar.fq.gz"];
-        wrapper.setState({ ...state, selected });
-        wrapper.find(InputIcon).simulate("click");
-        expect(wrapper.state()).toEqual({ ...state, name: "FooBar", selected });
+    it("should submit expected results when form is fully completed", async () => {
+        renderWithProviders(<CreateSample {...props} />);
+        const { name, isolate, host, locale, libraryType } = values;
+        inputFormRequirements(name);
+
+        // Fill out the rest of the form and submit
+        userEvent.type(screen.getByLabelText("Isolate"), isolate);
+        userEvent.type(screen.getByLabelText("Host"), host);
+        userEvent.type(screen.getByLabelText("Locale"), locale);
+        userEvent.selectOptions(screen.getByLabelText("Default Subtraction"), props.subtractions[1].name);
+        userEvent.click(screen.getByText(libraryType));
+        submitForm();
+
+        await waitFor(() =>
+            expect(props.onCreate).toHaveBeenCalledWith(
+                name,
+                isolate,
+                host,
+                locale,
+                libraryType.toLowerCase(),
+                props.subtractions[1].id,
+                [0, 1]
+            )
+        );
     });
 
-    it("should update selected and errorFile when read is selected", () => {
-        const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.setState(state);
-        wrapper.find("ReadSelector").prop("onSelect")(["foo"]);
-        expect(wrapper.state()).toEqual({ ...state, selected: ["foo"] });
+    it("should render userGroup when [props.forcedGroup=true]", () => {
+        renderWithProviders(<CreateSample {...props} />);
+        expect(screen.queryByText("User Group")).not.toBeInTheDocument();
+    });
+
+    it("should render userGroup when [props.forcedGroup=false]", () => {
+        props.forceGroupChoice = true;
+        renderWithProviders(<CreateSample {...props} />);
+        expect(screen.getByText("User Group")).toBeInTheDocument();
+    });
+
+    it("should update the sample name when the magic icon is pressed", async () => {
+        renderWithProviders(<CreateSample {...props} />);
+        const nameInput = screen.getByRole("textbox", { name: /Sample Name/i });
+        expect(nameInput.value).toBe("");
+
+        userEvent.click(screen.getByText(props.readyReads[0].name));
+        userEvent.click(screen.getByTestId("Auto Fill"));
+        expect(nameInput.value).toBe(readFileName);
     });
 });
 
@@ -160,7 +159,9 @@ describe("mapStateToProps()", () => {
         const state = {
             router: { location: { stae: "foo" } },
             settings: {
-                sample_group: "force_choice"
+                data: {
+                    sample_group: "force_choice"
+                }
             },
             account: { groups: "foo" },
             samples: {

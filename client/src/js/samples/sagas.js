@@ -108,7 +108,6 @@ export function* getSample(action) {
 
 export function* createSample(action) {
     const resp = yield apiCall(samplesAPI.create, action, CREATE_SAMPLE);
-
     if (resp.ok) {
         yield put(push("/samples"));
     }

@@ -1,7 +1,9 @@
-import { filter, get, map } from "lodash-es";
-import React from "react";
+import { filter, find, get, map } from "lodash-es";
+import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
+import { Formik, Form, Field } from "formik";
+import * as Yup from "yup";
 import {
     Input,
     InputContainer,
@@ -19,7 +21,6 @@ import {
 import { clearError } from "../../../errors/actions";
 import { shortlistSubtractions } from "../../../subtraction/actions";
 import { getSubtractionShortlist } from "../../../subtraction/selectors";
-import { getTargetChange } from "../../../utils/utils";
 import { createSample, findReadFiles } from "../../actions";
 import { LibraryTypeSelector } from "./LibraryTypeSelector";
 import ReadSelector from "./ReadSelector";
@@ -32,206 +33,184 @@ const CreateSampleFields = styled.div`
     grid-column-gap: ${props => props.theme.gap.column};
 `;
 
+const StyledInputError = styled(InputError)`
+    text-align: left;
+`;
+
 const extensionRegex = /^[a-z0-9]+-(.*)\.f[aq](st)?[aq]?(\.gz)?$/;
 
-const getFileNameFromId = id => id.match(extensionRegex)[1];
+/**
+ * Gets a filename without extension, given the file ID and an array of all available read files.
+ * Used to autofill the name for a new sample based on the selected read file(s).
+ *
+ * @param {Number} id - the file ID
+ * @param {Array} files - all available read files
+ * @returns {*|string} the filename without its extension
+ */
+const getFileNameFromId = (id, files) => {
+    const file = find(files, file => file.id === id);
+    return file ? file.name_on_disk.match(extensionRegex)[1] : "";
+};
 
-const getInitialState = props => ({
-    selected: [],
-    name: "",
-    host: "",
-    isolate: "",
-    locale: "",
-    subtractionId: "",
-    group: props.forceGroupChoice ? "none" : "",
-    errorName: "",
-    errorSubtraction: "",
-    errorFile: "",
-    libraryType: "normal"
+const validationSchema = Yup.object().shape({
+    name: Yup.string().required("Required Field"),
+    subtractionId: Yup.string().required("A default subtraction must be selected"),
+    selected: Yup.array().min(1, "At least one read file must be attached to the sample")
 });
 
-export class CreateSample extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = getInitialState(props);
+export const CreateSample = props => {
+    useEffect(props.onLoadSubtractionsAndFiles, []);
+
+    if (props.subtractions === null || props.readyReads === null) {
+        return <LoadingPlaceholder margin="36px" />;
     }
 
-    static getDerivedStateFromProps(nextProps, prevState) {
-        if (!prevState.errorName.length && !!nextProps.error) {
-            return { errorName: nextProps.error };
-        }
-
-        return null;
-    }
-
-    componentDidMount = () => {
-        this.props.onLoadSubtractionsAndFiles();
+    const initialValues = {
+        selected: [],
+        name: "",
+        isolate: "",
+        host: "",
+        locale: "",
+        libraryType: "normal",
+        group: props.forceGroupChoice ? "none" : "",
+        subtractionId: get(props, "subtractions[0].id", "")
     };
 
-    handleChange = e => {
-        const { name, value, error } = getTargetChange(e.target);
+    const subtractionComponents = map(props.subtractions, subtraction => (
+        <option key={subtraction.id} value={subtraction.id}>
+            {subtraction.name}
+        </option>
+    ));
 
-        if (name === "name" || name === "subtractionId") {
-            this.setState({
-                [name]: value,
-                [error]: ""
-            });
-        } else {
-            this.setState({
-                [name]: value
-            });
+    const autofill = (selected, setFieldValue) => {
+        const fileName = getFileNameFromId(selected[0], props.readyReads);
+        if (fileName) {
+            setFieldValue("name", fileName);
         }
     };
 
-    handleLibrarySelect = libraryType => {
-        this.setState({ libraryType });
-    };
-
-    handleSubmit = e => {
-        e.preventDefault();
-
-        let hasError = false;
-
-        if (!this.state.name) {
-            hasError = true;
-            this.setState({ errorName: "Required Field" });
-        }
-
-        if (!this.props.subtractions || !this.props.subtractions.length) {
-            hasError = true;
-            this.setState({
-                errorSubtraction: "At least one subtraction must be added to Virtool before samples can be analyzed."
-            });
-        }
-
-        if (!this.state.selected.length) {
-            hasError = true;
-            this.setState({
-                errorFile: "At least one read file must be attached to the sample"
-            });
-        }
-
-        if (!hasError) {
-            const { name, isolate, host, locale, libraryType, subtractionId } = this.state;
-            this.props.onCreate(
-                name,
-                isolate,
-                host,
-                locale,
-                libraryType,
-                subtractionId || get(this.props.subtractions, [0, "id"]),
-                this.state.selected
-            );
-        }
-    };
-
-    autofill = () => {
-        if (this.state.selected.length) {
-            this.setState({
-                name: getFileNameFromId(this.state.selected[0])
-            });
-        }
-    };
-
-    handleSelect = selected => {
-        this.setState({ selected, errorFile: "" });
-    };
-
-    render() {
-        if (this.props.subtractions === null || this.props.readyReads === null) {
-            return <LoadingPlaceholder margin="36px" />;
-        }
-
-        const subtractionComponents = map(this.props.subtractions, subtraction => (
-            <option key={subtraction.id} value={subtraction.id}>
-                {subtraction.name}
-            </option>
-        ));
-
-        const userGroup = this.props.forceGroupChoice ? (
-            <SampleUserGroup
-                group={this.props.group}
-                groups={this.props.groups}
-                onChange={e => this.setState({ group: e })}
-            />
-        ) : null;
-
-        const pairedness = this.state.selected.length === 2 ? "Paired" : "Unpaired";
-
-        const { errorName, errorFile } = this.state;
-
-        const subtractionId = this.state.subtractionId || get(this.props.subtractions, [0, "id"]);
-        return (
-            <NarrowContainer>
-                <ViewHeader title="Create Sample">
-                    <ViewHeaderTitle>Create Sample</ViewHeaderTitle>
-                </ViewHeader>
-                <form onSubmit={this.handleSubmit}>
-                    <CreateSampleFields>
-                        <InputGroup>
-                            <InputLabel>Sample Name</InputLabel>
-                            <InputContainer align="right">
-                                <Input
-                                    error={errorName}
-                                    name="name"
-                                    value={this.state.name}
-                                    onChange={this.handleChange}
-                                    autocomplete={false}
-                                />
-                                <InputIcon
-                                    name="magic"
-                                    onClick={this.autofill}
-                                    disabled={!this.state.selected.length}
-                                />
-                            </InputContainer>
-                            <InputError>{errorName}</InputError>
-                        </InputGroup>
-                        <InputGroup>
-                            <InputLabel>Locale</InputLabel>
-                            <Input name="locale" value={this.state.locale} onChange={this.handleChange} />
-                        </InputGroup>
-                        <InputGroup>
-                            <InputLabel>Isolate</InputLabel>
-                            <Input name="isolate" value={this.state.isolate} onChange={this.handleChange} />
-                        </InputGroup>
-                        <InputGroup>
-                            <InputLabel>Default Subtraction</InputLabel>
-                            <Select name="subtractionId" value={subtractionId} onChange={this.handleChange}>
-                                {subtractionComponents}
-                            </Select>
-                        </InputGroup>
-
-                        <InputGroup>
-                            <InputLabel>Host</InputLabel>
-                            <Input name="host" value={this.state.host} onChange={this.handleChange} />
-                        </InputGroup>
-
-                        <InputGroup>
-                            <InputLabel>Pairedness</InputLabel>
-                            <Input value={pairedness} readOnly={true} />
-                        </InputGroup>
-                    </CreateSampleFields>
-
-                    <LibraryTypeSelector onSelect={this.handleLibrarySelect} libraryType={this.state.libraryType} />
-
-                    {userGroup}
-
-                    <ReadSelector
-                        files={this.props.readyReads}
-                        selected={this.state.selected}
-                        onSelect={this.handleSelect}
-                        error={errorFile}
-                    />
-                    <SaveButton />
-                </form>
-            </NarrowContainer>
+    const handleSubmit = values => {
+        const { name, isolate, host, locale, libraryType, subtractionId, selected } = values;
+        props.onCreate(
+            name,
+            isolate,
+            host,
+            locale,
+            libraryType,
+            subtractionId || get(props.subtractions, [0, "id"]),
+            selected
         );
-    }
-}
+    };
+
+    return (
+        <NarrowContainer>
+            <ViewHeader title="Create Sample">
+                <ViewHeaderTitle>Create Sample</ViewHeaderTitle>
+                <StyledInputError>{props.error}</StyledInputError>
+            </ViewHeader>
+            <Formik onSubmit={handleSubmit} initialValues={initialValues} validationSchema={validationSchema}>
+                {({ errors, setFieldValue, touched, values }) => (
+                    <Form>
+                        <CreateSampleFields>
+                            <InputGroup>
+                                <InputLabel>Sample Name</InputLabel>
+                                <InputContainer align="right">
+                                    <Field
+                                        as={Input}
+                                        type="text"
+                                        name="name"
+                                        aria-label="Sample Name"
+                                        autocomplete={false}
+                                        error={touched.name ? errors.name : null}
+                                    />
+                                    <InputIcon
+                                        name="magic"
+                                        data-testid="Auto Fill"
+                                        onClick={e => autofill(values.selected, setFieldValue, e)}
+                                        disabled={!values.selected.length}
+                                    />
+                                </InputContainer>
+                                {touched.name && <InputError>{errors.name}</InputError>}
+                            </InputGroup>
+
+                            <InputGroup>
+                                <InputLabel>Locale</InputLabel>
+                                <Field as={Input} name="locale" aria-label="Locale" />
+                            </InputGroup>
+
+                            <InputGroup>
+                                <InputLabel>Isolate</InputLabel>
+                                <Field as={Input} name="isolate" aria-label="Isolate" />
+                            </InputGroup>
+
+                            <InputGroup>
+                                <InputLabel>Default Subtraction</InputLabel>
+                                <Field
+                                    as={Select}
+                                    name="subtractionId"
+                                    aria-label="Default Subtraction"
+                                    error={touched.subtractionId ? errors.subtractionId : null}
+                                    onChange={e => setFieldValue("subtractionId", e.target.value)}
+                                >
+                                    {subtractionComponents}
+                                </Field>
+                                {touched.name && <InputError>{errors.subtractionId}</InputError>}
+                            </InputGroup>
+
+                            <InputGroup>
+                                <InputLabel>Host</InputLabel>
+                                <Field as={Input} name="host" aria-label="Host" />
+                            </InputGroup>
+
+                            <InputGroup>
+                                <InputLabel>Pairedness</InputLabel>
+                                <Field
+                                    as={Input}
+                                    name="pairedness"
+                                    aria-label="Pairedness"
+                                    readOnly={true}
+                                    value={values.selected.length === 2 ? "Paired" : "Unpaired"}
+                                />
+                            </InputGroup>
+                        </CreateSampleFields>
+
+                        <Field
+                            name="libraryType"
+                            as={LibraryTypeSelector}
+                            onSelect={library => setFieldValue("libraryType", library)}
+                            libraryType={values.libraryType}
+                        />
+
+                        {props.forceGroupChoice && (
+                            <Field
+                                as={SampleUserGroup}
+                                aria-label="User Group"
+                                name="group"
+                                group={values.group}
+                                groups={props.groups}
+                                onChange={e => setFieldValue("group", e.target.value)}
+                            />
+                        )}
+
+                        <Field
+                            name="selected"
+                            as={ReadSelector}
+                            files={props.readyReads}
+                            selected={values.selected}
+                            onSelect={selection => setFieldValue("selected", selection)}
+                            error={touched.selected ? errors.selected : null}
+                        />
+                        <SaveButton />
+                    </Form>
+                )}
+            </Formik>
+        </NarrowContainer>
+    );
+};
 
 export const mapStateToProps = state => ({
     error: get(state, "errors.CREATE_SAMPLE_ERROR.message", ""),
-    forceGroupChoice: state.settings.sample_group === "force_choice",
+    forceGroupChoice: state.settings.data.sample_group === "force_choice",
     groups: state.account.groups,
     readyReads: filter(state.samples.readFiles, { reserved: false }),
     subtractions: getSubtractionShortlist(state)
