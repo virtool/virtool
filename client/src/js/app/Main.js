@@ -81,7 +81,7 @@ export const Main = ({ ready, onLoad }) => {
 };
 
 export const mapStateToProps = ({ account: { ready }, settings: { data } }) => ({
-    ready: ready && data
+    ready: ready && Boolean(data)
 });
 
 export const mapDispatchToProps = dispatch => ({
