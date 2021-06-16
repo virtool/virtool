@@ -1,4 +1,3 @@
-import { keys } from "lodash-es";
 import React, { lazy, Suspense, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { connect } from "react-redux";
@@ -46,7 +45,7 @@ export const Main = ({ ready, onLoad }) => {
 
     if (ready) {
         return (
-            <div>
+            <React.Fragment>
                 <Helmet>
                     <title>Virtool</title>
                     <meta charSet="utf-8" />
@@ -74,7 +73,7 @@ export const Main = ({ ready, onLoad }) => {
 
                 <DevDialog />
                 <UploadOverlay />
-            </div>
+            </React.Fragment>
         );
     }
 
