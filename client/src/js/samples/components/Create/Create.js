@@ -140,14 +140,12 @@ export const CreateSample = props => {
                                     as={MultiSelector}
                                     name="subtractionIds"
                                     aria-label="Default Subtraction"
-                                    error={touched.subtractionIds ? errors.subtractionIds : null}
                                     noun="Default Subtraction"
                                     selected={values.subtractionIds}
                                     onChange={selected => setFieldValue("subtractionIds", selected)}
                                 >
                                     {subtractionComponents}
                                 </Field>
-                                {touched.name && <InputError>{errors.subtractionIds}</InputError>}
                             </InputGroup>
 
                             <InputGroup>
