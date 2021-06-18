@@ -27,7 +27,7 @@ import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
 
 const CreateSampleFields = styled.div`
-    display: grid;
+    display: inline;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
     grid-column-gap: ${props => props.theme.gap.column};
