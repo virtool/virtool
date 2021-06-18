@@ -14,10 +14,10 @@ import {
     LoadingPlaceholder,
     NarrowContainer,
     SaveButton,
-    Select,
     ViewHeader,
     ViewHeaderTitle
 } from "../../../base";
+import { MultiSelector, MultiSelectorItem } from "../../../base/MultiSelector";
 import { clearError } from "../../../errors/actions";
 import { shortlistSubtractions } from "../../../subtraction/actions";
 import { getSubtractionShortlist } from "../../../subtraction/selectors";
@@ -54,7 +54,7 @@ const getFileNameFromId = (id, files) => {
 
 const validationSchema = Yup.object().shape({
     name: Yup.string().required("Required Field"),
-    subtractionId: Yup.string().required("A default subtraction must be selected"),
+    subtractionIds: Yup.string().required("A default subtraction must be selected"),
     selected: Yup.array().min(1, "At least one read file must be attached to the sample")
 });
 
@@ -73,13 +73,13 @@ export const CreateSample = props => {
         locale: "",
         libraryType: "normal",
         group: props.forceGroupChoice ? "none" : "",
-        subtractionId: get(props, "subtractions[0].id", "")
+        subtractionIds: []
     };
 
     const subtractionComponents = map(props.subtractions, subtraction => (
-        <option key={subtraction.id} value={subtraction.id}>
-            {subtraction.name}
-        </option>
+        <MultiSelectorItem key={subtraction.id} name={subtraction.name} value={subtraction.id}>
+            <span>{subtraction.name}</span>
+        </MultiSelectorItem>
     ));
 
     const autofill = (selected, setFieldValue) => {
@@ -90,8 +90,8 @@ export const CreateSample = props => {
     };
 
     const handleSubmit = values => {
-        const { name, isolate, host, locale, libraryType, subtractionId, selected } = values;
-        props.onCreate(name, isolate, host, locale, libraryType, [subtractionId], selected);
+        const { name, isolate, host, locale, libraryType, subtractionIds, selected } = values;
+        props.onCreate(name, isolate, host, locale, libraryType, [subtractionIds], selected);
     };
 
     return (
@@ -138,15 +138,17 @@ export const CreateSample = props => {
                             <InputGroup>
                                 <InputLabel>Default Subtraction</InputLabel>
                                 <Field
-                                    as={Select}
-                                    name="subtractionId"
+                                    as={MultiSelector}
+                                    name="subtractionIds"
                                     aria-label="Default Subtraction"
-                                    error={touched.subtractionId ? errors.subtractionId : null}
-                                    onChange={e => setFieldValue("subtractionId", e.target.value)}
+                                    error={touched.subtractionIds ? errors.subtractionIds : null}
+                                    noun="Default Subtraction"
+                                    selected={values.subtractionIds}
+                                    onChange={e => setFieldValue("subtractionIds", e.target.value)}
                                 >
                                     {subtractionComponents}
                                 </Field>
-                                {touched.name && <InputError>{errors.subtractionId}</InputError>}
+                                {touched.name && <InputError>{errors.subtractionIds}</InputError>}
                             </InputGroup>
 
                             <InputGroup>
