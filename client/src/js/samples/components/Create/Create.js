@@ -54,7 +54,6 @@ const getFileNameFromId = (id, files) => {
 
 const validationSchema = Yup.object().shape({
     name: Yup.string().required("Required Field"),
-    subtractionIds: Yup.string().required("A default subtraction must be selected"),
     selected: Yup.array().min(1, "At least one read file must be attached to the sample")
 });
 
@@ -66,19 +65,19 @@ export const CreateSample = props => {
     }
 
     const initialValues = {
-        selected: [],
         name: "",
         isolate: "",
         host: "",
         locale: "",
         libraryType: "normal",
-        group: props.forceGroupChoice ? "none" : "",
-        subtractionIds: []
+        subtractionIds: [],
+        selected: [],
+        group: props.forceGroupChoice ? "none" : ""
     };
 
-    const subtractionComponents = map(props.subtractions, subtraction => (
-        <MultiSelectorItem key={subtraction.id} name={subtraction.name} value={subtraction.id}>
-            <span>{subtraction.name}</span>
+    const subtractionComponents = map(props.subtractions, ({ name, id }) => (
+        <MultiSelectorItem key={id} name={name} value={id} id={id}>
+            <span>{name}</span>
         </MultiSelectorItem>
     ));
 
@@ -91,7 +90,7 @@ export const CreateSample = props => {
 
     const handleSubmit = values => {
         const { name, isolate, host, locale, libraryType, subtractionIds, selected } = values;
-        props.onCreate(name, isolate, host, locale, libraryType, [subtractionIds], selected);
+        props.onCreate(name, isolate, host, locale, libraryType, subtractionIds, selected);
     };
 
     return (
@@ -144,7 +143,7 @@ export const CreateSample = props => {
                                     error={touched.subtractionIds ? errors.subtractionIds : null}
                                     noun="Default Subtraction"
                                     selected={values.subtractionIds}
-                                    onChange={e => setFieldValue("subtractionIds", e.target.value)}
+                                    onChange={selected => setFieldValue("subtractionIds", selected)}
                                 >
                                     {subtractionComponents}
                                 </Field>
