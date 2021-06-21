@@ -14,10 +14,10 @@ import {
     LoadingPlaceholder,
     NarrowContainer,
     SaveButton,
-    Select,
     ViewHeader,
     ViewHeaderTitle
 } from "../../../base";
+import { MultiSelector, MultiSelectorItem } from "../../../base/MultiSelector";
 import { clearError } from "../../../errors/actions";
 import { shortlistSubtractions } from "../../../subtraction/actions";
 import { getSubtractionShortlist } from "../../../subtraction/selectors";
@@ -27,7 +27,6 @@ import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
 
 const CreateSampleFields = styled.div`
-    display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
     grid-column-gap: ${props => props.theme.gap.column};
@@ -54,7 +53,6 @@ const getFileNameFromId = (id, files) => {
 
 const validationSchema = Yup.object().shape({
     name: Yup.string().required("Required Field"),
-    subtractionId: Yup.string().required("A default subtraction must be selected"),
     selected: Yup.array().min(1, "At least one read file must be attached to the sample")
 });
 
@@ -66,20 +64,20 @@ export const CreateSample = props => {
     }
 
     const initialValues = {
-        selected: [],
         name: "",
         isolate: "",
         host: "",
         locale: "",
         libraryType: "normal",
-        group: props.forceGroupChoice ? "none" : "",
-        subtractionId: get(props, "subtractions[0].id", "")
+        subtractionIds: [],
+        selected: [],
+        group: props.forceGroupChoice ? "none" : ""
     };
 
-    const subtractionComponents = map(props.subtractions, subtraction => (
-        <option key={subtraction.id} value={subtraction.id}>
-            {subtraction.name}
-        </option>
+    const subtractionComponents = map(props.subtractions, ({ name, id }) => (
+        <MultiSelectorItem key={id} name={name} value={id} id={id}>
+            <span>{name}</span>
+        </MultiSelectorItem>
     ));
 
     const autofill = (selected, setFieldValue) => {
@@ -90,16 +88,8 @@ export const CreateSample = props => {
     };
 
     const handleSubmit = values => {
-        const { name, isolate, host, locale, libraryType, subtractionId, selected } = values;
-        props.onCreate(
-            name,
-            isolate,
-            host,
-            locale,
-            libraryType,
-            subtractionId || get(props.subtractions, [0, "id"]),
-            selected
-        );
+        const { name, isolate, host, locale, libraryType, subtractionIds, selected } = values;
+        props.onCreate(name, isolate, host, locale, libraryType, subtractionIds, selected);
     };
 
     return (
@@ -146,15 +136,15 @@ export const CreateSample = props => {
                             <InputGroup>
                                 <InputLabel>Default Subtraction</InputLabel>
                                 <Field
-                                    as={Select}
-                                    name="subtractionId"
+                                    as={MultiSelector}
+                                    name="subtractionIds"
                                     aria-label="Default Subtraction"
-                                    error={touched.subtractionId ? errors.subtractionId : null}
-                                    onChange={e => setFieldValue("subtractionId", e.target.value)}
+                                    noun="Default Subtraction"
+                                    selected={values.subtractionIds}
+                                    onChange={selected => setFieldValue("subtractionIds", selected)}
                                 >
                                     {subtractionComponents}
                                 </Field>
-                                {touched.name && <InputError>{errors.subtractionId}</InputError>}
                             </InputGroup>
 
                             <InputGroup>
@@ -222,8 +212,8 @@ export const mapDispatchToProps = dispatch => ({
         dispatch(findReadFiles());
     },
 
-    onCreate: (name, isolate, host, locale, libraryType, subtractionId, files) => {
-        dispatch(createSample(name, isolate, host, locale, libraryType, subtractionId, files));
+    onCreate: (name, isolate, host, locale, libraryType, subtractionIds, files) => {
+        dispatch(createSample(name, isolate, host, locale, libraryType, subtractionIds, files));
     },
 
     onClearError: () => {

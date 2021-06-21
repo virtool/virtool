@@ -90,9 +90,7 @@ describe("<CreateSample>", () => {
         inputFormRequirements(name);
         submitForm();
 
-        await waitFor(() =>
-            expect(props.onCreate).toHaveBeenCalledWith(name, "", "", "", "normal", props.subtractions[0].id, [0, 1])
-        );
+        await waitFor(() => expect(props.onCreate).toHaveBeenCalledWith(name, "", "", "", "normal", [], [0, 1]));
     });
 
     it("should submit expected results when form is fully completed", async () => {
@@ -104,7 +102,7 @@ describe("<CreateSample>", () => {
         userEvent.type(screen.getByLabelText("Isolate"), isolate);
         userEvent.type(screen.getByLabelText("Host"), host);
         userEvent.type(screen.getByLabelText("Locale"), locale);
-        userEvent.selectOptions(screen.getByLabelText("Default Subtraction"), props.subtractions[1].name);
+        userEvent.click(screen.getByText(props.subtractions[1].name));
         userEvent.click(screen.getByText(libraryType));
         submitForm();
 
@@ -115,7 +113,7 @@ describe("<CreateSample>", () => {
                 host,
                 locale,
                 libraryType.toLowerCase(),
-                props.subtractions[1].id,
+                [props.subtractions[1].id],
                 [0, 1]
             )
         );
@@ -215,14 +213,14 @@ describe("mapDispatchToProps()", () => {
     });
 
     it("should return createSample() in props", () => {
-        props.onCreate("name", "isolate", "host", "locale", "libraryType", "subtraction", "files");
+        props.onCreate("name", "isolate", "host", "locale", "libraryType", ["subtractions"], "files");
         expect(dispatch).toHaveBeenCalledWith({
             name: "name",
             isolate: "isolate",
             host: "host",
             locale: "locale",
             libraryType: "libraryType",
-            subtraction: "subtraction",
+            subtractions: ["subtractions"],
             files: "files",
             type: "CREATE_SAMPLE_REQUESTED"
         });

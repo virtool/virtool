@@ -20,7 +20,7 @@ exports[`<CreateSample> should render 1`] = `
         "locale": "",
         "name": "",
         "selected": Array [],
-        "subtractionId": "sub_foo",
+        "subtractionIds": Array [],
       }
     }
     onSubmit={[Function]}
@@ -34,7 +34,6 @@ exports[`<CreateSample> should render 1`] = `
         "_excludedEdges": Array [],
         "_nodes": Array [
           "selected",
-          "subtractionId",
           "name",
         ],
         "_sortErrors": [Function],
@@ -115,40 +114,6 @@ exports[`<CreateSample> should render 1`] = `
               [Function],
             ],
             "type": "array",
-          },
-          "subtractionId": StringSchema {
-            "_blacklist": ReferenceSet {
-              "list": Set {},
-              "refs": Map {},
-            },
-            "_blacklistError": undefined,
-            "_mutate": undefined,
-            "_typeError": [Function],
-            "_whitelist": ReferenceSet {
-              "list": Set {},
-              "refs": Map {},
-            },
-            "_whitelistError": undefined,
-            "conditions": Array [],
-            "deps": Array [],
-            "exclusiveTests": Object {
-              "required": true,
-            },
-            "spec": Object {
-              "abortEarly": true,
-              "nullable": false,
-              "presence": "required",
-              "recursive": true,
-              "strict": false,
-              "strip": false,
-            },
-            "tests": Array [
-              [Function],
-            ],
-            "transforms": Array [
-              [Function],
-            ],
-            "type": "string",
           },
         },
         "spec": Object {
