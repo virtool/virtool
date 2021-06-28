@@ -87,7 +87,7 @@ export const CreateAnalysis = ({
                         <SubtractionSelector
                             subtractions={subtractions}
                             value={subtraction}
-                            onChange={e => setSubtraction(e.target.value)}
+                            onChange={selected => setSubtraction(selected)}
                         />
                     )}
                     <ReferenceSelector
@@ -116,7 +116,7 @@ export const mapStateToProps = state => ({
     accountId: getAccountId(state),
     compatibleIndexes: getCompatibleIndexesWithLibraryType(state),
     dataType: getDataTypeFromLibraryType(getSampleLibraryType(state)),
-    defaultSubtraction: getDefaultSubtraction(state),
+    defaultSubtraction: [], //getDefaultSubtraction(state),
     hasHmm: !!state.hmms.total_count,
     sampleId: getSampleDetailId(state),
     show: routerLocationHasState(state, "createAnalysis"),

@@ -1,21 +1,24 @@
 import { map } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
-import { InputGroup, InputLabel, Select } from "../../../base";
+import { InputGroup, InputLabel } from "../../../base";
+import { MultiSelector, MultiSelectorItem } from "../../../base/MultiSelector";
 
 export const SubtractionSelector = ({ subtractions, value, onChange }) => {
-    const optionComponents = map(subtractions, subtraction => (
-        <option key={subtraction.id} value={subtraction.id}>
-            {subtraction.name}
-        </option>
+    const optionComponents = map(subtractions, ({ name, id }) => (
+        <MultiSelectorItem key={id} name={name} value={id} id={id}>
+            <span>{name}</span>
+        </MultiSelectorItem>
     ));
+
+    console.log("Value is: ", value);
 
     return (
         <InputGroup>
             <InputLabel>Subtraction</InputLabel>
-            <Select name="subtraction" value={value} onChange={onChange}>
+            <MultiSelector name="subtraction" noun="Subtractions" selected={value} onChange={onChange}>
                 {optionComponents}
-            </Select>
+            </MultiSelector>
         </InputGroup>
     );
 };
