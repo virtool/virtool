@@ -5,7 +5,7 @@ import styled from "styled-components";
 import { getAccountId } from "../../../account/selectors";
 import { pushState } from "../../../app/actions";
 import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from "../../../base";
-import { getDefaultSubtraction, getSampleDetailId, getSampleLibraryType } from "../../../samples/selectors";
+import { getDefaultSubtractions, getSampleDetailId, getSampleLibraryType } from "../../../samples/selectors";
 import { getDataTypeFromLibraryType } from "../../../samples/utils";
 import { shortlistSubtractions } from "../../../subtraction/actions";
 import { routerLocationHasState } from "../../../utils/utils";
@@ -116,7 +116,7 @@ export const mapStateToProps = state => ({
     accountId: getAccountId(state),
     compatibleIndexes: getCompatibleIndexesWithLibraryType(state),
     dataType: getDataTypeFromLibraryType(getSampleLibraryType(state)),
-    defaultSubtraction: [], //getDefaultSubtraction(state),
+    defaultSubtraction: getDefaultSubtractions(state).map(subtraction => subtraction.id),
     hasHmm: !!state.hmms.total_count,
     sampleId: getSampleDetailId(state),
     show: routerLocationHasState(state, "createAnalysis"),
