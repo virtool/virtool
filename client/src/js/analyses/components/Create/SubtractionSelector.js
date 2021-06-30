@@ -11,8 +11,6 @@ export const SubtractionSelector = ({ subtractions, value, onChange }) => {
         </MultiSelectorItem>
     ));
 
-    console.log("Value is: ", value);
-
     return (
         <InputGroup>
             <InputLabel>Subtraction</InputLabel>
@@ -25,6 +23,6 @@ export const SubtractionSelector = ({ subtractions, value, onChange }) => {
 
 SubtractionSelector.propTypes = {
     subtractions: PropTypes.arrayOf(PropTypes.object),
-    value: PropTypes.string,
+    value: PropTypes.arrayOf(PropTypes.string),
     onChange: PropTypes.func
 };
