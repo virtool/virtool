@@ -1,4 +1,4 @@
-import { filter, find, get, map } from "lodash-es";
+import { filter, find, get } from "lodash-es";
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
@@ -17,7 +17,7 @@ import {
     ViewHeader,
     ViewHeaderTitle
 } from "../../../base";
-import { MultiSelector, MultiSelectorItem } from "../../../base/MultiSelector";
+import { MultiSubtractionSelector } from "../../../analyses/components/Create/MultiSubtractionSelector";
 import { clearError } from "../../../errors/actions";
 import { shortlistSubtractions } from "../../../subtraction/actions";
 import { getSubtractionShortlist } from "../../../subtraction/selectors";
@@ -73,12 +73,6 @@ export const CreateSample = props => {
         selected: [],
         group: props.forceGroupChoice ? "none" : ""
     };
-
-    const subtractionComponents = map(props.subtractions, ({ name, id }) => (
-        <MultiSelectorItem key={id} name={name} value={id} id={id}>
-            <span>{name}</span>
-        </MultiSelectorItem>
-    ));
 
     const autofill = (selected, setFieldValue) => {
         const fileName = getFileNameFromId(selected[0], props.readyReads);
@@ -136,15 +130,14 @@ export const CreateSample = props => {
                             <InputGroup>
                                 <InputLabel>Default Subtraction</InputLabel>
                                 <Field
-                                    as={MultiSelector}
+                                    as={MultiSubtractionSelector}
                                     name="subtractionIds"
                                     aria-label="Default Subtraction"
                                     noun="Default Subtraction"
                                     selected={values.subtractionIds}
+                                    subtractions={props.subtractions}
                                     onChange={selected => setFieldValue("subtractionIds", selected)}
-                                >
-                                    {subtractionComponents}
-                                </Field>
+                                />
                             </InputGroup>
 
                             <InputGroup>
