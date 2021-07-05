@@ -7,7 +7,13 @@ export const SubtractionSelector = ({ subtractions, value, onChange }) => {
     return (
         <InputGroup>
             <InputLabel>Subtraction</InputLabel>
-            <MultiSubtractionSelector subtractions={subtractions} selected={value} onChange={onChange} />
+            <MultiSubtractionSelector
+                name="Subtraction"
+                noun="Subtractions"
+                subtractions={subtractions}
+                selected={value}
+                onChange={onChange}
+            />
         </InputGroup>
     );
 };
