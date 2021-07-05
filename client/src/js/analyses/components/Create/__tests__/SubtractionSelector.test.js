@@ -1,6 +1,7 @@
 import React from "react";
-import { Select } from "../../../../base";
 import { SubtractionSelector } from "../SubtractionSelector";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 describe("<SubtractionSelector />", () => {
     let props;
@@ -11,7 +12,7 @@ describe("<SubtractionSelector />", () => {
                 { id: "foo", name: "Foo" },
                 { id: "bar", name: "Bar" }
             ],
-            value: "foo",
+            value: ["foo"],
             onChange: jest.fn()
         };
     });
@@ -22,9 +23,9 @@ describe("<SubtractionSelector />", () => {
     });
 
     it("should call onChange when change event occur on Input", () => {
-        const wrapper = shallow(<SubtractionSelector {...props} />);
+        renderWithProviders(<SubtractionSelector {...props} />);
         expect(props.onChange).not.toHaveBeenCalled();
-        wrapper.find(Select).simulate("change");
+        userEvent.click(screen.getByText(props.subtractions[0].name));
         expect(props.onChange).toHaveBeenCalled();
     });
 });

@@ -5,23 +5,27 @@ exports[`<SubtractionSelector /> should render 1`] = `
   <Input__InputLabel>
     Subtraction
   </Input__InputLabel>
-  <Select
-    name="subtraction"
+  <MultiSubtractionSelector
+    name="Subtraction"
+    noun="Subtractions"
     onChange={[MockFunction]}
-    value="foo"
-  >
-    <option
-      key="foo"
-      value="foo"
-    >
-      Foo
-    </option>
-    <option
-      key="bar"
-      value="bar"
-    >
-      Bar
-    </option>
-  </Select>
+    selected={
+      Array [
+        "foo",
+      ]
+    }
+    subtractions={
+      Array [
+        Object {
+          "id": "foo",
+          "name": "Foo",
+        },
+        Object {
+          "id": "bar",
+          "name": "Bar",
+        },
+      ]
+    }
+  />
 </InputGroup>
 `;
