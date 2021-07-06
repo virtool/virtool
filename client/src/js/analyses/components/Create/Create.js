@@ -124,9 +124,9 @@ export const mapStateToProps = state => ({
 });
 
 export const mapDispatchToProps = dispatch => ({
-    onAnalyze: (sampleId, references, subtractionId, accountId, workflows) => {
+    onAnalyze: (sampleId, references, subtractionIds, accountId, workflows) => {
         forEach(references, refId => {
-            forEach(workflows, workflow => dispatch(analyze(sampleId, refId, subtractionId, accountId, workflow)));
+            forEach(workflows, workflow => dispatch(analyze(sampleId, refId, subtractionIds, accountId, workflow)));
         });
     },
     onHide: () => {
