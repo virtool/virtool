@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import React from "react";
 import { InputGroup, InputLabel } from "../../../base";
-import { MultiSubtractionSelector } from "./MultiSubtractionSelector";
+import { MultiSubtractionSelector } from "../../../subtraction/components/MultiSubtractionSelector";
 
 export const SubtractionSelector = ({ subtractions, value, onChange }) => {
     return (

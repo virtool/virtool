@@ -17,7 +17,7 @@ import {
     ViewHeader,
     ViewHeaderTitle
 } from "../../../base";
-import { MultiSubtractionSelector } from "../../../analyses/components/Create/MultiSubtractionSelector";
+import { MultiSubtractionSelector } from "../../../subtraction/components/MultiSubtractionSelector";
 import { clearError } from "../../../errors/actions";
 import { shortlistSubtractions } from "../../../subtraction/actions";
 import { getSubtractionShortlist } from "../../../subtraction/selectors";
