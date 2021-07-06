@@ -14,7 +14,7 @@ import virtool.utils
 from virtool.api.response import invalid_query, json_response, bad_request, not_found
 from virtool.uploads.models import Upload, UploadType
 
-logger = logging.getLogger("uploads")
+logger = logging.getLogger(__name__)
 
 routes = virtool.http.routes.Routes()
 
