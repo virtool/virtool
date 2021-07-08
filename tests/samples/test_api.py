@@ -891,7 +891,7 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is,
             "all_write": True
         })
 
-    m_new = mocker.patch("virtool.analyses.db.create", new=make_mocked_coro(test_analysis))
+    m_create = mocker.patch("virtool.analyses.db.create", new=make_mocked_coro(test_analysis))
 
     resp = await client.post("/api/samples/test/analyses", data={
         "workflow": "pathoscope_bowtie",
@@ -923,8 +923,8 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is,
 
     assert await resp.json() == test_analysis
 
-    m_new.assert_called_with(
-        client.app,
+    m_create.assert_called_with(
+        client.db,
         "test",
         "foo",
         ["bar"],

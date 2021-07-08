@@ -700,9 +700,8 @@ async def analyze(req):
 
     job_id = await virtool.db.utils.get_new_id(db.jobs)
 
-    # Generate a unique _id for the analysis entry
     document = await virtool.analyses.db.create(
-        req.app,
+        req.app["db"],
         sample_id,
         ref_id,
         subtractions,
