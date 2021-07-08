@@ -125,7 +125,8 @@ LinkButton.defaultProps = {
     tipPlacement: "top"
 };
 
-export const Button = ({ active, children, className, color, disabled, icon, tip, type, onBlur, onClick }) => {
+export const Button = props => {
+    const { active, children, className, color, disabled, icon, tip, type, onBlur, onClick } = props;
     const button = (
         <StyledButton
             active={active}
@@ -135,6 +136,7 @@ export const Button = ({ active, children, className, color, disabled, icon, tip
             type={type}
             onBlur={onBlur}
             onClick={onClick}
+            data-testid={props["data-testid"]}
         >
             {icon && <Icon name={icon} />}
             {children ? <span>{children}</span> : null}

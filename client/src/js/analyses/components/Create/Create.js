@@ -103,7 +103,7 @@ export const CreateAnalysis = ({
                         indexCount={references.length}
                         workflowCount={workflows.length}
                     />
-                    <Button type="submit" color="blue" icon="play">
+                    <Button type="submit" color="blue" icon="play" data-testid="Start">
                         Start
                     </Button>
                 </CreateAnalysisFooter>

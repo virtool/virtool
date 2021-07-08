@@ -1,0 +1,77 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<CreateAnalysis /> should render 1`] = `
+<Modal
+  label="Analyze"
+  onHide={[MockFunction]}
+  show={true}
+  size="lg"
+>
+  <ModalHeader>
+    Analyze
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__ModalBody>
+      <Connect(AnalysisHMMAlert) />
+      <WorkflowSelector
+        dataType="genome"
+        hasHmm={false}
+        onSelect={[Function]}
+        workflows={Array []}
+      />
+      <SubtractionSelector
+        onChange={[Function]}
+        subtractions={
+          Array [
+            Object {
+              "id": "foo",
+              "name": "Foo",
+            },
+            Object {
+              "id": "bar",
+              "name": "Bar",
+            },
+          ]
+        }
+        value={Array []}
+      />
+      <ReferenceSelector
+        indexes={
+          Array [
+            Object {
+              "id": "foo",
+              "reference": Object {
+                "data_type": "genome",
+                "id": "bar",
+                "name": "Plant Viruses",
+              },
+              "version": 0,
+            },
+          ]
+        }
+        onChange={[Function]}
+        selected={Array []}
+      />
+    </Modal__ModalBody>
+    <Create__CreateAnalysisFooter>
+      <CreateAnalysisSummary
+        indexCount={0}
+        sampleCount={1}
+        workflowCount={0}
+      />
+      <Button
+        color="blue"
+        data-testid="Start"
+        disabled={false}
+        icon="play"
+        tipPlacement="top"
+        type="submit"
+      >
+        Start
+      </Button>
+    </Create__CreateAnalysisFooter>
+  </form>
+</Modal>
+`;
