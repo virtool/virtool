@@ -7,14 +7,19 @@ import { configureStore } from "@reduxjs/toolkit";
 import { Provider } from "react-redux";
 import { Router } from "react-router-dom";
 import { createBrowserHistory } from "history";
+import { noop } from "lodash-es";
 
 describe("<CreateAnalysis />", () => {
     let props;
     const errorMessages = ["Workflow(s) must be selected", "Reference(s) must be selected"];
-
-    const reducer = value => console.log("Reducer was called with: ", value);
-
     const preloadedState = { hmm: { status: { installed: null } } };
+
+    const renderWithStore = component =>
+        renderWithProviders(
+            <Provider store={configureStore({ reducer: noop, preloadedState })}>
+                <Router history={createBrowserHistory()}>{component}</Router>
+            </Provider>
+        );
 
     beforeEach(() => {
         props = {
@@ -50,14 +55,8 @@ describe("<CreateAnalysis />", () => {
     });
 
     it("should show errors when required fields aren't selected", () => {
-        renderWithProviders(
-            <Provider store={configureStore({ reducer, preloadedState })}>
-                <Router history={createBrowserHistory()}>
-                    <CreateAnalysis {...props} />
-                </Router>
-            </Provider>
-        );
-        // Ensure that the error messages do not appear until the Start button has clicked
+        renderWithStore(<CreateAnalysis {...props} />);
+        // Ensure that no error messages appear until the Start button has clicked
         map(errorMessages, error => expect(screen.queryByText(error)).not.toBeInTheDocument());
         userEvent.click(screen.getByTestId("Start"));
         expect(props.onAnalyze).not.toHaveBeenCalled();
