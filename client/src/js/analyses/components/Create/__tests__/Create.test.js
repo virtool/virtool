@@ -23,6 +23,7 @@ describe("<CreateAnalysis />", () => {
 
     beforeEach(() => {
         props = {
+            accountId: 1,
             compatibleIndexes: [
                 {
                     id: "foo",
@@ -37,6 +38,7 @@ describe("<CreateAnalysis />", () => {
             dataType: "genome",
             defaultSubtraction: [],
             hasHmm: false,
+            sampleId: 0,
             show: true,
             subtractions: [
                 { id: "foo", name: "Foo" },
@@ -63,9 +65,39 @@ describe("<CreateAnalysis />", () => {
         map(errorMessages, error => expect(screen.queryByText(error)).toBeInTheDocument());
     });
 
-    // it("should submit with expected values", () => {
-    //     renderWithProviders(<CreateAnalysis {...props} />);
-    // });
+    it("should submit with expected values", () => {
+        renderWithStore(<CreateAnalysis {...props} />);
+        userEvent.click(screen.getByText("Pathoscope"));
+        userEvent.click(screen.getByText(props.subtractions[0].name));
+        userEvent.click(screen.getByText(props.compatibleIndexes[0].reference.name));
+        userEvent.click(screen.getByTestId("Start"));
+
+        expect(props.onAnalyze).toHaveBeenCalledWith(
+            props.sampleId,
+            [props.compatibleIndexes[0].reference.id],
+            [props.subtractions[0].id],
+            props.accountId,
+            ["pathoscope_bowtie"]
+        );
+    });
+
+    it("should automatically select default subtractions", () => {
+        // Set the default subtraction to the list of subtraction's ids
+        props.defaultSubtraction = props.subtractions.map(subtraction => subtraction.id);
+
+        renderWithStore(<CreateAnalysis {...props} />);
+        userEvent.click(screen.getByText("Pathoscope"));
+        userEvent.click(screen.getByText(props.compatibleIndexes[0].reference.name));
+        userEvent.click(screen.getByTestId("Start"));
+
+        expect(props.onAnalyze).toHaveBeenCalledWith(
+            props.sampleId,
+            [props.compatibleIndexes[0].reference.id],
+            props.defaultSubtraction,
+            props.accountId,
+            ["pathoscope_bowtie"]
+        );
+    });
 
     // Include mapStateToProps
 });
