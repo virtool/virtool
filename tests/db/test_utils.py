@@ -2,6 +2,7 @@ import pytest
 
 import virtool.db
 import virtool.db.utils
+from virtool.db.utils import buffered_bulk_writer
 
 
 class TestApplyProjection:
@@ -96,3 +97,14 @@ async def test_check_missing_ids(dbi):
 
     assert non_existent_subtractions == {"baz"}
 
+
+@pytest.mark.parametrize("batch_size", (60, 100))
+async def test_buffered_bulk_writer(batch_size, data_regression, snapshot, mocker):
+    collection = mocker.Mock()
+    collection.bulk_write = mocker.AsyncMock()
+
+    async with buffered_bulk_writer(collection, batch_size=batch_size) as writer:
+        for number in range(0, 372):
+            await writer.add(number)
+
+    snapshot.assert_match(collection.bulk_write.call_args_list)

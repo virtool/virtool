@@ -2,12 +2,67 @@
 Utilities for working with MongoDB.
 
 """
-from typing import Any, Dict, Optional, Sequence, Union, Set
+from contextlib import asynccontextmanager
+from typing import Any, Dict, List, Optional, Sequence, Union, Set
 
 from motor.motor_asyncio import AsyncIOMotorCollection
+from pymongo import InsertOne, UpdateOne
 
 import virtool.utils
 from virtool.types import Projection
+
+
+class BufferedBulkWriter:
+    """
+    Performs bulk writes against a MongoDB collection.
+
+    """
+    def __init__(self, collection, batch_size):
+        self.collection = collection
+        self.batch_size = batch_size
+        self._buffer = list()
+
+    async def add(self, request: Union[InsertOne, UpdateOne]):
+        """
+        Add a write request to the buffer.
+
+        If the buffer has reached ``batch_size`` all requests will be sent to MongoDB and the buffer will be emptied.
+
+        :param request: the request to add to the buffer
+
+        """
+        self._buffer.append(request)
+
+        if len(self._buffer) == self.batch_size:
+            await self.flush()
+
+    async def flush(self):
+        """
+        Flush the buffered write requests to MongoDB.
+
+        """
+        if self._buffer:
+            await self.collection.bulk_write(self._buffer)
+            self._buffer = list()
+
+
+@asynccontextmanager
+async def buffered_bulk_writer(collection, batch_size=100):
+    """
+    A context manager for bulk writing to MongoDB.
+
+    Returns a :class:``BufferedBulkWriter`` object. Automatically flushes the buffer when the context manager exits.
+
+    :param collection: the MongoDB collection to write against
+    :param batch_size: the number of requests to be sent in each bulk operation
+
+    """
+    writer = BufferedBulkWriter(collection, batch_size)
+
+    try:
+        yield writer
+    finally:
+        await writer.flush()
 
 
 def apply_projection(document: Dict, projection: Projection):
