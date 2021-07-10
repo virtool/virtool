@@ -51,7 +51,7 @@ pytest-cov = "^2.12.1"
 pytest-mock = "^3.6.1"
 pytest-regressions = "^2.2.0"
 pytest-xdist = "^2.2.1"
-snapshottest = "0.5.1"
+snapshottest = "^0.6.0"
 pytest-aiohttp = "^0.3.0"
 
 [tool.poetry.scripts]
