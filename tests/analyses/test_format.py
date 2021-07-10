@@ -3,6 +3,7 @@ import json
 import pytest
 
 import virtool.analyses.format
+from virtool.analyses.format import transform_coverage_to_coordinates
 
 
 @pytest.mark.parametrize("loadable", [True, False])
@@ -67,3 +68,21 @@ async def test_load_results(loadable, mocker, tmp_path):
             "id": "bar"
         }
     }
+
+
+@pytest.mark.parametrize("coverage,expected", [
+    (
+            [0, 0, 1, 1, 2, 3, 3, 3, 4, 4, 3, 2],
+            [(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 3), (7, 3), (8, 4), (9, 4), (10, 3), (11, 2)]
+    ),
+    (
+            [0, 0, 1, 1, 2, 3, 3, 3, 4, 4, 3, 2, 1, 1],
+            [(0, 0), (1, 0), (2, 1), (3, 1), (4, 2), (5, 3), (7, 3), (8, 4), (9, 4), (10, 3), (11, 2), (12, 1), (13, 1)]
+    )
+])
+def test_transform_coverage_to_coordinates(coverage, expected):
+    """
+    Test that two sample coverage data sets are correctly converted to coordinates.
+
+    """
+    assert transform_coverage_to_coordinates(coverage) == expected

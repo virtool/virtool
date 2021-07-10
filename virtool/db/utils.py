@@ -3,7 +3,7 @@ Utilities for working with MongoDB.
 
 """
 from contextlib import asynccontextmanager
-from typing import Any, Dict, List, Optional, Sequence, Union, Set
+from typing import Any, Dict, Optional, Sequence, Union, Set
 
 from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo import InsertOne, UpdateOne

@@ -8,11 +8,13 @@ import csv
 import io
 import json
 import statistics
+from asyncio import gather
 from collections import defaultdict
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import aiofiles
 import openpyxl.styles
+import visvalingamwyatt as vw
 
 import virtool.analyses.db
 import virtool.analyses.utils
@@ -22,6 +24,7 @@ import virtool.history.db
 import virtool.otus.db
 import virtool.otus.utils
 import virtool.types
+from virtool.types import App
 
 CSV_HEADERS = (
     "OTU",
@@ -34,20 +37,15 @@ CSV_HEADERS = (
 )
 
 
-def calculate_median_depths(document: Dict[str, Any]) -> Dict[str, int]:
+def calculate_median_depths(hits: List[dict]) -> Dict[str, int]:
     """
     Calculate the median depth for all hits (sequences) in a Pathoscope result document.
 
-    :param document: the pathoscope analysis document to calculate depths for
+    :param hits: the pathoscope analysis document to calculate depths for
     :return: a dict of median depths keyed by hit (sequence) ids
 
     """
-    depths = dict()
-
-    for hit in document["results"]:
-        depths[hit["id"]] = statistics.median(hit["align"])
-
-    return depths
+    return {hit["id"]: statistics.median(hit["align"]) for hit in hits}
 
 
 async def load_results(settings: Dict[str, Any], document: Dict[str, Any]) -> dict:
@@ -90,24 +88,29 @@ async def format_aodp(app: virtool.types.App, document: Dict[str, Any]) -> Dict[
     :return: the formatted document
 
     """
-    patched_otus = await gather_patched_otus(app, document["results"])
+    hits = document["results"]["hits"]
 
-    hits = defaultdict(list)
+    patched_otus = await gather_patched_otus(app, hits)
 
-    for hit in document["results"]:
-        hits[hit["sequence_id"]].append(hit)
+    hits_by_sequence_id = defaultdict(list)
+
+    for hit in hits:
+        hits_by_sequence_id[hit["sequence_id"]].append(hit)
 
     for otu in patched_otus.values():
         otu["id"] = otu.pop("_id")
 
         for isolate in otu["isolates"]:
             for sequence in isolate["sequences"]:
-                sequence["hits"] = hits[sequence["_id"]]
+                sequence["hits"] = hits_by_sequence_id[sequence["_id"]]
                 sequence["id"] = sequence.pop("_id")
 
     return {
         **document,
-        "results": list(patched_otus.values())
+        "results": {
+            **document["results"],
+            "hits": list(patched_otus.values())
+        }
     }
 
 
@@ -127,69 +130,103 @@ async def format_pathoscope(app: virtool.types.App, document: Dict[str, Any]) ->
         document
     )
 
-    patched_otus = await gather_patched_otus(app, document["results"])
+    hits_by_otu = defaultdict(list)
 
-    formatted = dict()
-
-    for hit in document["results"]:
-
+    for hit in document["results"]["hits"]:
         otu_id = hit["otu"]["id"]
+        otu_version = hit["otu"]["version"]
 
-        otu_document = patched_otus[otu_id]
+        hits_by_otu[(otu_id, otu_version)].append(hit)
 
-        max_ref_length = 0
+    coros = list()
 
-        for isolate in otu_document["isolates"]:
-            max_ref_length = max(max_ref_length,
-                                 max([len(s["sequence"]) for s in isolate["sequences"]]))
+    for otu_specifier, hits in hits_by_otu.items():
+        otu_id, otu_version = otu_specifier
+        coros.append(format_pathoscope_hits(app, otu_id, otu_version, hits))
 
-        otu = {
-            "id": otu_id,
-            "name": otu_document["name"],
-            "version": otu_document["version"],
-            "abbreviation": otu_document["abbreviation"],
-            "isolates": otu_document["isolates"],
-            "length": max_ref_length
+    return {
+        **document,
+        "results": {
+            **document["results"],
+            "hits": await gather(*coros)
         }
+    }
 
-        formatted[otu_id] = otu
 
-        for isolate in otu["isolates"]:
-            for sequence in isolate["sequences"]:
-                if sequence["_id"] == hit["id"]:
-                    sequence.update(hit)
-                    sequence["length"] = len(sequence["sequence"])
+async def format_pathoscope_hits(app: App, otu_id: str, otu_version, hits: List[Dict]):
+    _, patched_otu, _ = await virtool.history.db.patch_to_version(
+        app,
+        otu_id,
+        otu_version
+    )
 
-                    del sequence["otu"]
-                    del sequence["otu_id"]
-                    del sequence["isolate_id"]
+    max_sequence_length = 0
 
-    document["results"] = [formatted[otu_id] for otu_id in formatted]
+    for isolate in patched_otu["isolates"]:
+        max_sequence_length = max(
+            max_sequence_length,
+            max([len(s["sequence"]) for s in isolate["sequences"]])
+        )
 
-    for otu in document["results"]:
-        for isolate in list(otu["isolates"]):
-            if not any((key in sequence for sequence in isolate["sequences"]) for key in
-                       ("pi", "final")):
-                otu["isolates"].remove(isolate)
-                continue
+    otu = {
+        "id": otu_id,
+        "name": patched_otu["name"],
+        "version": patched_otu["version"],
+        "abbreviation": patched_otu["abbreviation"],
+        "isolates": patched_otu["isolates"],
+        "length": max_sequence_length
+    }
 
-            for sequence in isolate["sequences"]:
-                if "final" in sequence:
-                    sequence.update(sequence.pop("final"))
-                    del sequence["initial"]
-                if "pi" not in sequence:
-                    sequence.update({
-                        "pi": 0,
-                        "reads": 0,
-                        "coverage": 0,
-                        "best": 0,
-                        "length": len(sequence["sequence"])
-                    })
+    hits_by_sequence_id = {hit["id"]: hit for hit in hits}
 
-                sequence["id"] = sequence.pop("_id")
-                del sequence["sequence"]
+    return {
+        **otu,
+        "isolates": list(format_pathoscope_isolates(patched_otu["isolates"], hits_by_sequence_id))
+    }
 
-    return document
+
+def format_pathoscope_isolates(
+        isolates: List[Dict[str, Any]],
+        hits_by_sequence_ids: Dict[str, dict]
+) -> List[Dict[str, Any]]:
+    for isolate in isolates:
+        sequences = list(format_pathoscope_sequences(isolate["sequences"], hits_by_sequence_ids))
+
+        if any((key in sequence for sequence in sequences) for key in ("pi", "final")):
+            yield {
+                **isolate,
+                "sequences": sequences
+            }
+
+
+def format_pathoscope_sequences(sequences: List[Dict[str, Any]], hits_by_sequence_id: Dict[str, dict]):
+    for sequence in sequences:
+        try:
+            hit = hits_by_sequence_id[sequence["_id"]]
+        except KeyError:
+            continue
+
+        try:
+            final = hit["final"]
+        except KeyError:
+            final = dict()
+
+        align = hit.get("align")
+
+        if align:
+            align = transform_coverage_to_coordinates(align)
+
+        yield {
+            "id": sequence["_id"],
+            "accession": sequence["accession"],
+            "align": align,
+            "best": final.get("best", 0),
+            "coverage": hit.get("coverage", 0),
+            "definition": sequence["definition"],
+            "length": len(sequence["sequence"]),
+            "pi": final.get("pi", 0),
+            "reads": final.get("reads", 0),
+        }
 
 
 async def format_nuvs(app: virtool.types.App, document: Dict[str, Any]) -> Dict[str, Any]:
@@ -206,7 +243,9 @@ async def format_nuvs(app: virtool.types.App, document: Dict[str, Any]) -> Dict[
         document
     )
 
-    hit_ids = list({h["hit"] for s in document["results"] for o in s["orfs"] for h in o["hits"]})
+    hits = document["results"]["hits"]
+
+    hit_ids = list({h["hit"] for s in hits for o in s["orfs"] for h in o["hits"]})
 
     cursor = app["db"].hmm.find({"_id": {"$in": hit_ids}}, ["cluster", "families", "names"])
 
@@ -229,7 +268,7 @@ async def format_analysis_to_excel(app: virtool.types.App, document: Dict[str, A
     :return: the formatted Excel workbook
 
     """
-    depths = calculate_median_depths(document)
+    depths = calculate_median_depths(document["hits"])
 
     formatted = await format_analysis(app, document)
 
@@ -285,7 +324,7 @@ async def format_analysis_to_csv(app: virtool.types.App, document: Dict[str, Any
     :return: the formatted CSV data
 
     """
-    depths = calculate_median_depths(document)
+    depths = calculate_median_depths(document["hits"])
 
     formatted = await format_analysis(app, document)
 
@@ -359,3 +398,32 @@ async def gather_patched_otus(app: virtool.types.App, results: List[dict]) -> Di
     ])
 
     return {patched["_id"]: patched for _, patched, _ in patched_otus}
+
+
+def transform_coverage_to_coordinates(coverage_list: List[int]) -> List[Tuple[int, int]]:
+    """
+    Takes a list of read depths where the list index is equal to the read position + 1 and returns
+    a list of (x, y) coordinates.
+    The coordinates will be simplified using Visvalingham-Wyatt algorithm if the list exceeds 100
+    pairs.
+    :param coverage_list: a list of position-indexed depth values
+    :return: a list of (x, y) coordinates
+    """
+    previous_depth = coverage_list[0]
+    coordinates = {(0, previous_depth)}
+
+    last = len(coverage_list) - 1
+
+    for i, depth in enumerate(coverage_list):
+        if depth != previous_depth or i == last:
+            coordinates.add((i - 1, previous_depth))
+            coordinates.add((i, depth))
+
+            previous_depth = depth
+
+    coordinates = sorted(list(coordinates), key=lambda x: x[0])
+
+    if len(coordinates) > 100:
+        return vw.simplify(coordinates, ratio=0.4)
+
+    return coordinates
