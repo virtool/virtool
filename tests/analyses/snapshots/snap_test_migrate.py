@@ -7,46 +7,85 @@ from snapshottest import GenericRepr, Snapshot
 
 snapshots = Snapshot()
 
-snapshots['test_add_updated_at[uvloop] 1'] = [
+snapshots['test_nest_pathoscope_results[uvloop] 1'] = [
     {
         '_id': 'foo',
-        'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-        'updated_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)')
+        'results': {
+            'hits': [
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
+            'read_count': 1209,
+            'subtracted_count': 231
+        },
+        'workflow': 'pathoscope_bowtie'
+    },
+    {
+        '_id': 'fine',
+        'results': {
+            'hits': [
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
+            'read_count': 1209,
+            'subtracted_count': 231
+        },
+        'workflow': 'pathoscope_bowtie'
     },
     {
         '_id': 'bar',
-        'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-        'updated_at': GenericRepr('datetime.datetime(2015, 10, 7, 5, 0)')
+        'results': {
+            'hits': [
+                9,
+                8,
+                7,
+                6,
+                5
+            ],
+            'read_count': 7982,
+            'subtracted_count': 112
+        },
+        'workflow': 'pathoscope_bowtie'
     },
     {
         '_id': 'baz',
-        'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-        'updated_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)')
+        'results': {
+            'hits': [
+                9,
+                8,
+                7,
+                6,
+                5
+            ]
+        },
+        'workflow': 'nuvs'
     },
     {
         '_id': 'bad',
-        'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-        'updated_at': GenericRepr('datetime.datetime(2015, 10, 6, 22, 32)')
-    }
-]
-
-snapshots['test_change_to_subtractions_list[uvloop] 1'] = [
-    {
-        '_id': 'foo',
-        'subtractions': [
-            'prunus'
-        ]
-    },
-    {
-        '_id': 'bar',
-        'subtractions': [
-            'malus'
-        ]
-    },
-    {
-        '_id': 'baz',
-        'subtractions': [
-            'malus'
-        ]
+        'results': {
+            'hits': [
+                9,
+                8,
+                7,
+                6,
+                5
+            ],
+            'join_histogram': [
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
+            'joined_pair_count': 12345,
+            'remainder_pair_count': 54321
+        },
+        'workflow': 'aodp'
     }
 ]
