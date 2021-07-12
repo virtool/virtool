@@ -50,71 +50,6 @@ def calculate_median_depths(document: Dict[str, Any]) -> Dict[str, int]:
     return depths
 
 
-async def create_pathoscope_coverage_cache(db, document: dict) -> dict:
-    """
-    Create a pathoscope coverage cache document. This saves the costly recalculation of coverage
-    chart coordinates from raw coverage arrays each time the analysis is retrieved.
-
-    :param db: the application database object
-    :param document: the analysis document to create cache for
-    :return: the coverage cache document
-
-    """
-    cache = defaultdict(lambda: defaultdict(lambda: dict()))
-
-    for hit in document["results"]:
-        for isolate in hit["isolates"]:
-            for sequence in isolate["sequences"]:
-                otu_id = hit["id"]
-                isolate_id = isolate["id"]
-                sequence_id = sequence["id"]
-
-                if sequence.get("align"):
-                    cache[otu_id][isolate_id][
-                        sequence_id] = virtool.analyses.utils.transform_coverage_to_coordinates(
-                        sequence["align"]
-                    )
-
-    document = {
-        "analysis": {
-            "id": document["_id"]
-        },
-        "cache": cache
-    }
-
-    await db.coverage.insert_one(document)
-
-    return document
-
-
-async def ensure_pathoscope_coverage_cache(db, document: Dict[str, Any]):
-    """
-    Attach coverage values to the passed document. Either retrieve an existing coverage cache
-    document or generate a one if one doesn't exist.
-
-    Modifies the document in-place.
-
-
-    :param db: the application database object
-    :param document: the analysis document
-
-    """
-    cache = await db.coverage.find_one({"analysis.id": document["_id"]})
-
-    if cache is None:
-        cache = await create_pathoscope_coverage_cache(db, document)
-
-    for hit in document["results"]:
-        for isolate in hit["isolates"]:
-            for sequence in isolate["sequences"]:
-                otu_id = hit["id"]
-                isolate_id = isolate["id"]
-                sequence_id = sequence["id"]
-
-                if sequence.get("align"):
-                    sequence["align"] = cache["cache"][otu_id][isolate_id][sequence_id]
-
-
 async def load_results(settings: Dict[str, Any], document: Dict[str, Any]) -> dict:
     """
     Load the analysis results. Hide the alternative loading from a `results.json` file.
@@ -253,8 +188,6 @@ async def format_pathoscope(app: virtool.types.App, document: Dict[str, Any]) ->
 
                 sequence["id"] = sequence.pop("_id")
                 del sequence["sequence"]
-
-    await ensure_pathoscope_coverage_cache(app["db"], document)
 
     return document
 
