@@ -1,8 +1,7 @@
 import shutil
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
 
-import visvalingamwyatt as vw
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.future import select
 
@@ -128,35 +127,3 @@ async def move_nuvs_files(filename: str, run_in_thread: callable, file_path: Pat
         await run_in_thread(virtool.utils.compress_file,
                             file_path / filename,
                             target_path / f"{filename}.gz")
-
-
-def transform_coverage_to_coordinates(coverage_list: List[int]) -> List[Tuple[int, int]]:
-    """
-    Takes a list of read depths where the list index is equal to the read position + 1 and returns
-    a list of (x, y) coordinates.
-
-    The coordinates will be simplified using Visvalingham-Wyatt algorithm if the list exceeds 100
-    pairs.
-
-    :param coverage_list: a list of position-indexed depth values
-    :return: a list of (x, y) coordinates
-
-    """
-    previous_depth = coverage_list[0]
-    coordinates = {(0, previous_depth)}
-
-    last = len(coverage_list) - 1
-
-    for i, depth in enumerate(coverage_list):
-        if depth != previous_depth or i == last:
-            coordinates.add((i - 1, previous_depth))
-            coordinates.add((i, depth))
-
-            previous_depth = depth
-
-    coordinates = sorted(list(coordinates), key=lambda x: x[0])
-
-    if len(coordinates) > 100:
-        return vw.simplify(coordinates, ratio=0.4)
-
-    return coordinates

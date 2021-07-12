@@ -13,4 +13,3 @@ async def migrate_analyses(app: virtool.types.App):
     """
     await virtool.db.utils.delete_unready(app["db"].analyses)
     await virtool.db.migrate_shared.add_subtractions_field(app["db"].analyses)
-
