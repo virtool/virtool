@@ -1,6 +1,5 @@
 import React from "react";
 import { map } from "lodash";
-import { CreateAnalysis } from "../Create";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { configureStore } from "@reduxjs/toolkit";
@@ -8,6 +7,7 @@ import { Provider } from "react-redux";
 import { Router } from "react-router-dom";
 import { createBrowserHistory } from "history";
 import { noop } from "lodash-es";
+import { CreateAnalysis, mapDispatchToProps, mapStateToProps } from "../Create";
 
 describe("<CreateAnalysis />", () => {
     let props;
@@ -98,6 +98,48 @@ describe("<CreateAnalysis />", () => {
             ["pathoscope_bowtie"]
         );
     });
+});
 
-    // Include mapStateToProps
+describe("mapDispatchToProps()", () => {
+    let dispatch;
+    let props;
+
+    beforeEach(() => {
+        dispatch = jest.fn();
+        props = mapDispatchToProps(dispatch);
+    });
+
+    it("should return onAnalyze() in props", () => {
+        props.onAnalyze();
+        expect(dispatch).not.toHaveBeenCalled();
+
+        const references = [{ id: "bar", name: "Plant Viruses", data_type: "genome" }];
+        const sampleId = 0;
+        const userId = 0;
+        const workflows = ["workflow"];
+        const subtractionIds = [];
+
+        props.onAnalyze(sampleId, references, subtractionIds, userId, workflows);
+        expect(dispatch).toHaveBeenCalledWith({
+            type: "ANALYZE.REQUESTED",
+            refId: references[0],
+            sampleId,
+            subtractionIds,
+            type: "ANALYZE_REQUESTED",
+            userId,
+            workflow: workflows[0]
+        });
+    });
+
+    it("should return onHide() in props", () => {
+        props.onHide();
+        expect(dispatch).toHaveBeenCalledWith({ state: {}, type: "PUSH_STATE" });
+    });
+
+    it("should return onShortlistSubtractions() in props", () => {
+        props.onShortlistSubtractions();
+        expect(dispatch).toHaveBeenCalledWith({
+            type: "LIST_SUBTRACTION_IDS_REQUESTED"
+        });
+    });
 });
