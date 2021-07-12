@@ -87,6 +87,7 @@ async def find(req):
 
 
 @routes.get("/api/uploads/{id}")
+@routes.jobs_api.get("/api/uploads/{id}")
 async def get(req):
     """
     Downloads a file that corresponds to a row `id` in the `uploads` SQL table.
