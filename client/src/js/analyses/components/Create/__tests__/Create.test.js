@@ -100,6 +100,30 @@ describe("<CreateAnalysis />", () => {
     });
 });
 
+describe("mapStateToProps()", () => {
+    it("should return props", () => {
+        const state = {
+            account: { id: 0 },
+            samples: { detail: { library_type: "normal", subtractions: [], id: "foo" } },
+            analyses: { readyIndexes: [{ id: 0, reference: { id: 0, data_type: "genome", name: "name" } }] },
+            hmms: { total_count: 0 },
+            router: { location: { state: undefined } },
+            subtraction: { shortlist: null }
+        };
+        const props = mapStateToProps(state);
+        expect(props).toEqual({
+            accountId: 0,
+            compatibleIndexes: [{ id: 0, reference: { data_type: "genome", id: 0, name: "name" } }],
+            dataType: "genome",
+            defaultSubtraction: [],
+            hasHmm: false,
+            sampleId: "foo",
+            show: false,
+            subtractions: null
+        });
+    });
+});
+
 describe("mapDispatchToProps()", () => {
     let dispatch;
     let props;
