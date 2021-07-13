@@ -4,7 +4,6 @@ from aiohttp.test_utils import make_mocked_coro
 import virtool.indexes
 import virtool.indexes.db
 import virtool.errors
-import virtool.jobs.build_index
 from virtool.indexes.models import IndexFile
 
 
