@@ -4,7 +4,6 @@ from aiohttp.test_utils import make_mocked_coro
 import virtool.indexes
 import virtool.indexes.db
 import virtool.errors
-import virtool.jobs.build_index
 from virtool.indexes.models import IndexFile
 
 
@@ -167,28 +166,6 @@ async def test_processor(mocker, dbi):
         "change_count": 5,
         "modified_otu_count": 2
     }
-
-
-async def test_tag_unbuilt_changes(dbi, create_mock_history):
-    await create_mock_history(False)
-
-    async for document in dbi.history.find():
-        await dbi.history.insert_one({
-            **document,
-            "_id": "foo_" + document["_id"],
-            "reference": {
-                "id": "foobar"
-            }
-        })
-
-    assert await dbi.history.count_documents({"index.id": "unbuilt"}) == 8
-    assert await dbi.history.count_documents({"reference.id": "foobar", "index.id": "unbuilt"}) == 4
-    assert await dbi.history.count_documents({"reference.id": "hxn167", "index.id": "unbuilt"}) == 4
-
-    await virtool.indexes.db.tag_unbuilt_changes(dbi, "hxn167", "foo", 5)
-
-    assert await dbi.history.count_documents({"reference.id": "foobar", "index.id": "unbuilt"}) == 4
-    assert await dbi.history.count_documents({"reference.id": "hxn167", "index.id": "foo", "index.version": 5}) == 4
 
 
 async def test_get_patched_otus(mocker, dbi, tmp_path):

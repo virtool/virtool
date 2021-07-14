@@ -15,7 +15,6 @@ import virtool.http.routes
 import virtool.indexes.db
 import virtool.indexes.files
 import virtool.indexes.utils
-import virtool.jobs.build_index
 import virtool.jobs.db
 import virtool.pg.utils
 import virtool.references.db

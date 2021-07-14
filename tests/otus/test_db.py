@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
@@ -116,32 +114,6 @@ async def test_join(in_db, pass_document, mocker, dbi, test_otu, test_sequence, 
         assert joined == test_merged_otu
     else:
         assert joined is None
-
-
-async def test_update_last_indexed_version(dbi, test_otu):
-    """
-    Test that function works as expected.
-
-    """
-    otu_1 = test_otu
-    otu_2 = deepcopy(test_otu)
-
-    otu_2.update({
-        "_id": "foobar"
-    })
-
-    await dbi.otus.insert_many([otu_1, otu_2])
-
-    await virtool.otus.db.update_last_indexed_version(dbi, ["foobar"], 5)
-
-    otu_1 = await dbi.otus.find_one({"_id": "6116cba1"})
-    otu_2 = await dbi.otus.find_one({"_id": "foobar"})
-
-    assert otu_1["version"] == 0
-    assert otu_1["last_indexed_version"] == 0
-
-    assert otu_2["version"] == 5
-    assert otu_2["last_indexed_version"] == 5
 
 
 async def test_generate_otu_fasta(dbi, test_otu, test_sequence):
