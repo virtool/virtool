@@ -258,27 +258,6 @@ async def get_next_version(db, ref_id: str) -> int:
     return await db.indexes.count_documents({"reference.id": ref_id, "ready": True})
 
 
-async def tag_unbuilt_changes(db, ref_id: str, index_id: str, index_version: int):
-    """
-    Update the ``index`` field for all unbuilt history changes for a specific ref to be included in the index described
-    the passed ``index_id`` and ``index_version``.
-
-    :param db: the application database client
-    :param ref_id: the ref id to tag changes for
-    :param index_id: the index id to tag changes unbuilt with
-    :param index_version: the index version to tag unbuilt changes with
-
-    """
-    await db.history.update_many({"reference.id": ref_id, "index.id": "unbuilt"}, {
-        "$set": {
-            "index": {
-                "id": index_id,
-                "version": index_version
-            }
-        }
-    })
-
-
 async def get_unbuilt_stats(db, ref_id: Optional[str] = None) -> dict:
     """
     Get the number of unbuilt changes and number of OTUs affected by those changes. Used to populate the metadata for a
