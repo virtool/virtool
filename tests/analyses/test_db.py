@@ -228,4 +228,3 @@ async def test_create(analysis_id, dbi, static_time, test_random_alphanumeric):
             "id": "test_user"
         }
     }
-

@@ -144,10 +144,3 @@ class JobRights:
                 rights_dict[name] = rights_domain_dict
 
         return rights_dict
-
-
-def copy_or_decompress(path: Path, target: str, proc: int):
-    if virtool.utils.is_gzipped(path):
-        virtool.utils.decompress_file(path, target, proc)
-    else:
-        shutil.copyfile(path, target)

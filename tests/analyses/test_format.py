@@ -67,8 +67,3 @@ async def test_load_results(loadable, mocker, tmp_path):
             "id": "bar"
         }
     }
-
-
-
-
-

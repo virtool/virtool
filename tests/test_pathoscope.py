@@ -53,6 +53,7 @@ def test_build_matrix(tmp_path):
     assert sorted(expected[2]) == sorted(actual[2])
     assert sorted(expected[3]) == sorted(actual[3])
 
+
 @pytest.mark.parametrize("theta_prior", [0, 1e-5])
 @pytest.mark.parametrize("pi_prior", [0, 1e-5])
 @pytest.mark.parametrize("epsilon", [1e-6, 1e-7, 1e-8])
@@ -163,6 +164,3 @@ def test_write_report(tmp_path):
     )
 
     assert filecmp.cmp(report_path, TSV_PATH)
-
-
-
