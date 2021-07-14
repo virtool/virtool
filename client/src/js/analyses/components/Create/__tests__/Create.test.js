@@ -60,7 +60,7 @@ describe("<CreateAnalysis />", () => {
         renderWithStore(<CreateAnalysis {...props} />);
         // Ensure that no error messages appear until the Start button has clicked
         map(errorMessages, error => expect(screen.queryByText(error)).not.toBeInTheDocument());
-        userEvent.click(screen.getByTestId("Start"));
+        userEvent.click(screen.getByRole("button", { name: "Start" }));
         expect(props.onAnalyze).not.toHaveBeenCalled();
         map(errorMessages, error => expect(screen.queryByText(error)).toBeInTheDocument());
     });
@@ -70,7 +70,7 @@ describe("<CreateAnalysis />", () => {
         userEvent.click(screen.getByText("Pathoscope"));
         userEvent.click(screen.getByText(props.subtractions[0].name));
         userEvent.click(screen.getByText(props.compatibleIndexes[0].reference.name));
-        userEvent.click(screen.getByTestId("Start"));
+        userEvent.click(screen.getByRole("button", { name: "Start" }));
 
         expect(props.onAnalyze).toHaveBeenCalledWith(
             props.sampleId,
@@ -88,7 +88,7 @@ describe("<CreateAnalysis />", () => {
         renderWithStore(<CreateAnalysis {...props} />);
         userEvent.click(screen.getByText("Pathoscope"));
         userEvent.click(screen.getByText(props.compatibleIndexes[0].reference.name));
-        userEvent.click(screen.getByTestId("Start"));
+        userEvent.click(screen.getByRole("button", { name: "Start" }));
 
         expect(props.onAnalyze).toHaveBeenCalledWith(
             props.sampleId,

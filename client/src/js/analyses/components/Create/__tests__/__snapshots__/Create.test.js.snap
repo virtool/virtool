@@ -63,7 +63,6 @@ exports[`<CreateAnalysis /> should render 1`] = `
       />
       <Button
         color="blue"
-        data-testid="Start"
         disabled={false}
         icon="play"
         tipPlacement="top"
