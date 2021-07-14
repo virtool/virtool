@@ -4,8 +4,6 @@ Work with OTUs in the database.
 """
 from typing import Optional, Union, Dict, Any, List, Tuple
 
-import pymongo.results
-
 import virtool.db.utils
 import virtool.downloads.utils
 import virtool.errors
@@ -381,27 +379,6 @@ async def verify(db, otu_id: str, joined: dict = None) -> Optional[dict]:
         raise virtool.errors.DatabaseError(f"Could not find otu '{otu_id}'")
 
     return virtool.otus.utils.verify(joined)
-
-
-async def update_last_indexed_version(db, id_list: list, version: int) -> pymongo.results.UpdateResult:
-    """
-    Called from a index rebuild job. Updates the last indexed version and _version fields
-    of all otu involved in the rebuild when the build completes.
-
-    :param db: the application database client
-    :param id_list: a list the ``otu_id`` of each otu to update
-    :param version: the value to set for the otu ``version`` and ``last_indexed_version`` fields
-    :return: the Pymongo update result
-
-    """
-    result = await db.otus.update_many({"_id": {"$in": id_list}}, {
-        "$set": {
-            "last_indexed_version": version,
-            "version": version
-        }
-    })
-
-    return result
 
 
 async def update_sequence_segments(db, old: dict, new: dict):

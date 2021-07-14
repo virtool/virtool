@@ -35,25 +35,6 @@ def evaluate_changes(data: dict, document: dict) -> Tuple[str, str, str]:
     return name, abbreviation, schema
 
 
-def extract_default_sequences(joined: dict) -> List[dict]:
-    """
-    Return a list of sequences from the default isolate of the passed joined otu document.
-
-    :param joined: the joined otu document.
-    :return: a list of sequences associated with the default isolate.
-
-    """
-    for isolate in joined["isolates"]:
-        if isolate["default"]:
-            return isolate["sequences"]
-
-
-def extract_sequences(otu: dict):
-    for isolate in otu["isolates"]:
-        for sequence in isolate["sequences"]:
-            yield sequence
-
-
 def extract_sequence_ids(otu: dict) -> List[str]:
     """
     Extract all sequence ids from a merged otu.

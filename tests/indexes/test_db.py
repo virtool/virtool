@@ -168,28 +168,6 @@ async def test_processor(mocker, dbi):
     }
 
 
-async def test_tag_unbuilt_changes(dbi, create_mock_history):
-    await create_mock_history(False)
-
-    async for document in dbi.history.find():
-        await dbi.history.insert_one({
-            **document,
-            "_id": "foo_" + document["_id"],
-            "reference": {
-                "id": "foobar"
-            }
-        })
-
-    assert await dbi.history.count_documents({"index.id": "unbuilt"}) == 8
-    assert await dbi.history.count_documents({"reference.id": "foobar", "index.id": "unbuilt"}) == 4
-    assert await dbi.history.count_documents({"reference.id": "hxn167", "index.id": "unbuilt"}) == 4
-
-    await virtool.indexes.db.tag_unbuilt_changes(dbi, "hxn167", "foo", 5)
-
-    assert await dbi.history.count_documents({"reference.id": "foobar", "index.id": "unbuilt"}) == 4
-    assert await dbi.history.count_documents({"reference.id": "hxn167", "index.id": "foo", "index.version": 5}) == 4
-
-
 async def test_get_patched_otus(mocker, dbi, tmp_path):
     m = mocker.patch("virtool.history.db.patch_to_version", make_mocked_coro((None, {"_id": "foo"}, None)))
 

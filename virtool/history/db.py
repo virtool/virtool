@@ -204,46 +204,6 @@ async def get_most_recent_change(db, otu_id: str) -> dict:
     }, MOST_RECENT_PROJECTION, sort=[("otu.version", -1)])
 
 
-async def patch_to_verified(app, otu_id: str) -> Optional[dict]:
-    """
-    Patch the OTU identified by `otu_id` to the last verified version.
-
-    :param app: the application object
-    :param otu_id: the ID of the OTU to patch
-    :return: the patched otu
-
-    """
-    db = app["db"]
-
-    current = await virtool.otus.db.join(db, otu_id) or dict()
-
-    if current and current["verified"]:
-        return current
-
-    patched = deepcopy(current)
-
-    async for change in db.history.find({"otu.id": otu_id}, sort=[("otu.version", -1)]):
-        if change["diff"] == "file":
-            change["diff"] = await virtool.history.utils.read_diff_file(
-                app["settings"]["data_path"],
-                otu_id,
-                change["otu"]["version"]
-            )
-
-        if change["method_name"] == "remove":
-            patched = change["diff"]
-
-        elif change["method_name"] == "create":
-            return None
-
-        else:
-            diff = dictdiffer.swap(change["diff"])
-            patched = dictdiffer.patch(diff, patched)
-
-        if patched["verified"]:
-            return patched
-
-
 async def patch_to_version(app, otu_id: str, version: Union[str, int]) -> tuple:
     """
     Take a joined otu back in time to the passed ``version``. Uses the diffs in the change documents associated with
