@@ -8,7 +8,6 @@ import os
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-
 from multidict import MultiDictProxy
 from pymongo.results import DeleteResult
 from sqlalchemy import select
