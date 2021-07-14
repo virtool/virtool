@@ -28,7 +28,7 @@ export const CreateAnalysis = ({
     accountId,
     compatibleIndexes,
     dataType,
-    defaultSubtraction,
+    defaultSubtractions,
     hasHmm,
     sampleId,
     show,
@@ -52,7 +52,7 @@ export const CreateAnalysis = ({
         setReferences,
         setSubtraction,
         setWorkflows
-    } = useCreateAnalysis(dataType, defaultSubtraction);
+    } = useCreateAnalysis(dataType, defaultSubtractions);
 
     const handleSubmit = e => {
         e.preventDefault();
@@ -116,7 +116,7 @@ export const mapStateToProps = state => ({
     accountId: getAccountId(state),
     compatibleIndexes: getCompatibleIndexesWithLibraryType(state),
     dataType: getDataTypeFromLibraryType(getSampleLibraryType(state)),
-    defaultSubtraction: getDefaultSubtractions(state).map(subtraction => subtraction.id),
+    defaultSubtractions: getDefaultSubtractions(state).map(subtraction => subtraction.id),
     hasHmm: !!state.hmms.total_count,
     sampleId: getSampleDetailId(state),
     show: routerLocationHasState(state, "createAnalysis"),

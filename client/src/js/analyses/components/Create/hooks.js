@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
-export const useCreateAnalysis = (dataType, defaultSubtraction) => {
+export const useCreateAnalysis = (dataType, defaultSubtractions) => {
     const [errors, setErrors] = useState({});
     const [references, setReferences] = useState([]);
-    const [subtraction, setSubtraction] = useState(defaultSubtraction);
+    const [subtraction, setSubtraction] = useState(defaultSubtractions);
     const [workflows, setWorkflows] = useState([]);
 
     const setReferencesAndError = references => {

@@ -36,7 +36,7 @@ describe("<CreateAnalysis />", () => {
                 }
             ],
             dataType: "genome",
-            defaultSubtraction: [],
+            defaultSubtractions: [],
             hasHmm: false,
             sampleId: 0,
             show: true,
@@ -83,7 +83,7 @@ describe("<CreateAnalysis />", () => {
 
     it("should automatically select default subtractions", () => {
         // Set the default subtraction to the list of subtraction's ids
-        props.defaultSubtraction = props.subtractions.map(subtraction => subtraction.id);
+        props.defaultSubtractions = props.subtractions.map(subtraction => subtraction.id);
 
         renderWithStore(<CreateAnalysis {...props} />);
         userEvent.click(screen.getByText("Pathoscope"));
@@ -93,7 +93,7 @@ describe("<CreateAnalysis />", () => {
         expect(props.onAnalyze).toHaveBeenCalledWith(
             props.sampleId,
             [props.compatibleIndexes[0].reference.id],
-            props.defaultSubtraction,
+            props.defaultSubtractions,
             props.accountId,
             ["pathoscope_bowtie"]
         );
@@ -115,7 +115,7 @@ describe("mapStateToProps()", () => {
             accountId: 0,
             compatibleIndexes: [{ id: 0, reference: { data_type: "genome", id: 0, name: "name" } }],
             dataType: "genome",
-            defaultSubtraction: [],
+            defaultSubtractions: [],
             hasHmm: false,
             sampleId: "foo",
             show: false,
