@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro, make_mocked_request
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 import virtool.samples.db
@@ -559,34 +558,6 @@ async def test_finalize(tmp_path, dbi, pg: AsyncEngine, pg_session):
     assert not (await virtool.pg.utils.get_row_by_id(pg, SampleReads, 1)).upload
 
 
-async def test_create_sample_reads_record(tmp_path, example_path, pg, pg_session):
-    async def run_in_thread(func, *args):
-        return func(*args)
-
-    app = {
-        "pg": pg,
-        "run_in_thread": run_in_thread,
-        "settings": {
-            "data_path": tmp_path
-        }
-    }
-
-    test_dir = tmp_path / "samples" / "sample_1"
-
-    file_path = example_path / "reads" / "paired_1.fq.gz"
-
-    await virtool.samples.db.create_sample_reads_record(app, "sample_1", file_path,
-                                                        "reads_1.fq.gz")
-
-    async with pg_session as session:
-        sample_reads = (await session.execute(select(SampleReads).filter_by(id=1))).scalar()
-
-    assert sample_reads.name == "reads_1.fq.gz"
-    assert sample_reads.sample == "sample_1"
-
-    assert os.listdir(test_dir) == ["reads_1.fq.gz"]
-
-
 class TestComposeWorkflowQuery:
 
     @pytest.mark.parametrize("url", [
@@ -646,5 +617,3 @@ class TestComposeWorkflowQuery:
         )
 
         assert compose_sample_workflow_query(req.query) is None
-
-
