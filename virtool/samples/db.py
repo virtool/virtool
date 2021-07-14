@@ -5,12 +5,9 @@ Code for working with samples in the database and filesystem.
 import asyncio
 import logging
 import os
-import shutil
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-
-from aiohttp import web
 from multidict import MultiDictProxy
 from pymongo.results import DeleteResult
 from sqlalchemy import select
@@ -461,28 +458,6 @@ async def compress_sample_reads(app: App, sample: Dict[str, Any]):
 
     for path in paths:
         await app["run_in_thread"](os.remove, path)
-
-
-async def create_sample_reads_record(app: App,
-                                     sample_id: str,
-                                     path: Path,
-                                     name: str = None):
-    async with AsyncSession(app["pg"]) as session:
-        reads = SampleReads(
-            name=name or path.name,
-            name_on_disk=path.name,
-            size=path.stat().st_size,
-            sample=sample_id,
-        )
-
-        session.add(reads)
-
-        await session.commit()
-
-    reads_path = app["settings"]["data_path"] / "samples" / sample_id
-    reads_path.mkdir(parents=True, exist_ok=True)
-
-    await app["run_in_thread"](shutil.copy, path, reads_path / name)
 
 
 async def move_sample_files_to_pg(app: App, sample: Dict[str, any]):
