@@ -7,7 +7,6 @@ import virtool.types
 from virtool.analyses.migrate import migrate_analyses
 from virtool.caches.migrate import migrate_caches
 from virtool.groups.migrate import migrate_groups
-from virtool.jobs.migrate import migrate_jobs
 from virtool.references.migrate import migrate_references
 from virtool.samples.migrate import migrate_samples
 
@@ -27,7 +26,6 @@ async def migrate(app: virtool.types.App):
         migrate_analyses,
         migrate_caches,
         migrate_groups,
-        migrate_jobs,
         migrate_sessions,
         migrate_status,
         migrate_samples,

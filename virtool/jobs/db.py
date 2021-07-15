@@ -7,7 +7,6 @@ from typing import Any, Dict, Optional
 import virtool.jobs.runner
 import virtool.utils
 from virtool.jobs.utils import JobRights
-from virtool.utils import base_processor
 
 OR_COMPLETE = [
     {"status.state": "complete"}
@@ -128,64 +127,6 @@ async def create(
     document = await db.jobs.insert_one(document)
 
     return document
-
-
-async def acquire(db, job_id: str) -> Dict[str, Any]:
-    """
-    Set the `started` field on a job to `True` and return the complete document.
-
-    :param db: the application database object
-    :param job_id: the ID of the job to start
-    :return: the complete job document
-
-    """
-    key, hashed = virtool.utils.generate_key()
-
-    document = await db.jobs.find_one_and_update({"_id": job_id}, {
-        "$set": {
-            "acquired": True,
-            "key": hashed
-        }
-    }, projection=PROJECTION)
-
-    document["key"] = key
-
-    return base_processor(document)
-
-
-async def delete_zombies(db):
-    await db.jobs.delete_many({
-        "status.state": {
-            "$nin": [
-                "complete",
-                "cancelled",
-                "error"
-            ]
-        }
-    })
-
-
-async def get_waiting_and_running_ids(db):
-    cursor = db.jobs.aggregate([
-        {"$project": {
-            "status": {
-                "$arrayElemAt": ["$status", -1]
-            }
-        }},
-
-        {"$match": {
-            "$or": [
-                {"status.state": "waiting"},
-                {"status.state": "running"},
-            ]
-        }},
-
-        {"$project": {
-            "_id": True
-        }}
-    ])
-
-    return [a["_id"] async for a in cursor]
 
 
 async def processor(db, document: dict) -> dict:
