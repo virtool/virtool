@@ -284,17 +284,6 @@ class SubprocessError(Exception):
     pass
 
 
-class TerminationError(Exception):
-    """
-    This exception is raised when ``SIGTERM`` is handled in the job process. ``SIGTERM`` usually represents an attempt
-    at cancellation of the job as a result of the process's :meth:`~multiprocessing.Process.terminate` being called.
-
-    The exception is handled in the :meth:`.run` method and stops execution and leads the job into a cancelled state.
-
-    """
-    pass
-
-
 def handle_exception(max_tb: Optional[int] = 50) -> dict:
     """
     Transforms an exception into a :class:`dict` describing the error. The dict can be stored in MongoDB and used to
