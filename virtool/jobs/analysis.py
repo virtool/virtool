@@ -84,7 +84,8 @@ async def check_db(job: virtool.jobs.job.Job):
         "sample_read_length": int(sample["quality"]["length"][1]),
         "library_type": sample["library_type"],
         "reads_path": os.path.join(job.temp_dir.name, "reads"),
-        "subtraction_path": virtool.subtractions.utils.join_subtraction_index_path(job.settings, analysis["subtraction"]["id"]),
+        "subtraction_path": virtool.subtractions.utils.join_subtraction_index_path(job.settings,
+                                                                                   analysis["subtraction"]["id"]),
         "raw_path": os.path.join(job.temp_dir.name, "raw"),
         "temp_cache_path": os.path.join(job.temp_dir.name, "cache"),
         "temp_analysis_path": temp_analysis_path
@@ -236,7 +237,6 @@ async def fetch_legacy(job: virtool.jobs.job.Job):
     Copy the read data from a legacy sample and to the analysis job read paths.
 
     :param job: the job object
-    :param legacy_read_paths: the paths to the legacy reads
 
     """
     coros = list()
@@ -286,28 +286,6 @@ async def get_sequence_otu_map(db, settings: dict, manifest: dict) -> dict:
                 sequence_otu_map[sequence_id] = patched["_id"]
 
     return sequence_otu_map
-
-
-def copy_trimming_results(src: str, dest: str):
-    """
-    Copy FASTQ trimming results from the `src` directory to `dest`. Quietly handle paired and unpaired reads.
-
-    :param src: the src directory to copy from
-    :param dest: the dest directory to copy to
-
-    """
-    shutil.copy(
-        os.path.join(src, "reads_1.fq.gz"),
-        dest
-    )
-
-    try:
-        shutil.copy(
-            os.path.join(src, "reads_2.fq.gz"),
-            dest
-        )
-    except FileNotFoundError:
-        pass
 
 
 def get_trimming_min_length(library_type: str, sample_read_length: int) -> int:
