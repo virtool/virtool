@@ -14,7 +14,6 @@ from random import choice
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Iterable, Tuple, Any, Optional, List
 
-import aiofiles
 import arrow
 from aiohttp import web
 
@@ -179,16 +178,6 @@ def ensure_data_dir(data_path: Path):
         os.makedirs(data_path / subdir, exist_ok=True)
 
 
-async def file_length(path: Path):
-    length = 0
-
-    async with aiofiles.open(path) as f:
-        async for _ in f:
-            length += 1
-
-    return length
-
-
 def file_stats(path: Path) -> dict:
     """
     Return the size and last modification date for the file at `path`.
@@ -244,20 +233,6 @@ def get_static_hash(req: web.Request):
 
 def get_temp_dir():
     return tempfile.TemporaryDirectory()
-
-
-def is_gzipped(path: Path):
-    try:
-        with gzip.open(path, "rb") as f:
-            f.peek(1)
-
-    except OSError as err:
-        if "Not a gzipped file" in str(err):
-            return False
-
-        raise
-
-    return True
 
 
 def random_alphanumeric(
