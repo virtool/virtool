@@ -10,7 +10,6 @@ import shutil
 import aiofiles
 
 import virtool.bio
-import virtool.jobs.analysis
 import virtool.jobs.job
 import virtool.samples.db
 
@@ -298,40 +297,10 @@ async def vfam(job):
             sequences.remove(sequence)
 
 
-async def import_results(job: virtool.jobs.job.Job):
-    """
-    Save the results to the analysis document and set the ``ready`` field to ``True``.
-
-    After the import is complete, :meth:`.indexes.Collection.cleanup_index_files` is called to remove any otus
-    indexes that are no longer being used by an active analysis job.
-
-    TODO: Should be incorporated into generic result import functionality that occurs at the end of all analysis type
-          workflows.
-
-    """
-    analysis_id = job.params["analysis_id"]
-    sample_id = job.params["sample_id"]
-
-    await virtool.jobs.analysis.set_analysis_results(
-        job.db,
-        analysis_id,
-        job.params["analysis_path"],
-        job.results["sequences"]
-    )
-
-    await virtool.samples.db.recalculate_workflow_tags(job.db, sample_id)
-
-
 def create() -> virtool.jobs.job.Job:
     job = virtool.jobs.job.Job()
 
-    job.on_startup = [
-        virtool.jobs.analysis.check_db
-    ]
-
     job.steps = [
-        virtool.jobs.analysis.make_analysis_dir,
-        virtool.jobs.analysis.prepare_reads,
         eliminate_otus,
         eliminate_subtraction,
         reunite_pairs,
@@ -339,13 +308,6 @@ def create() -> virtool.jobs.job.Job:
         process_fasta,
         prepare_hmm,
         vfam,
-        virtool.jobs.analysis.upload,
-        import_results
-    ]
-
-    job.on_cleanup = [
-        virtool.jobs.analysis.delete_analysis,
-        virtool.jobs.analysis.delete_cache
     ]
 
     return job

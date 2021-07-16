@@ -260,16 +260,3 @@ async def test_pathoscope(snapshot, mock_job):
         snapshot.assert_match(data)
 
     snapshot.assert_match(mock_job.results)
-
-
-async def test_import_results(snapshot, dbi, mock_job):
-    mock_job.results = {
-        "results": "results will be here",
-        "read_count": 1337,
-        "ready": True
-    }
-
-    await virtool.jobs.pathoscope.import_results(mock_job)
-
-    snapshot.assert_match(await dbi.analyses.find_one())
-    snapshot.assert_match(await dbi.samples.find_one())

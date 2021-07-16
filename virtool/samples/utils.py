@@ -13,16 +13,6 @@ PATHOSCOPE_TASK_NAMES = [
     "pathoscope_barracuda"
 ]
 
-TRIM_PARAMETERS = {
-    "end_quality": "20",
-    "mode": "pe",
-    "max_error_rate": "0.1",
-    "max_indel_rate": "0.03",
-    "max_length": None,
-    "mean_quality": "25",
-    "min_length": "20"
-}
-
 
 def calculate_workflow_tags(analyses: list) -> dict:
     """

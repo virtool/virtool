@@ -9,7 +9,6 @@ import aiofiles
 
 import virtool.caches.db
 import virtool.history.db
-import virtool.jobs.analysis
 import virtool.jobs.job
 import virtool.jobs.utils
 import virtool.otus.utils
@@ -370,40 +369,6 @@ async def pathoscope(job: virtool.jobs.job.Job):
         job.results["results"].append(hit)
 
 
-async def import_results(self):
-    """
-    Commits the results to the database. Data includes the output of Pathoscope, final mapped read count,
-    and viral genome coverage maps.
-
-    Once the import is complete, :meth:`cleanup_index_files` is called to remove
-    any otu indexes that may become unused when this analysis completes.
-
-    TODO: Should be incorporated into a generic end-of-workflow result import functionality. This is going to require
-          of rethinking and restructuring of analysis documents in the database.
-
-    """
-    analysis_id = self.params["analysis_id"]
-    sample_id = self.params["sample_id"]
-
-    # Pop the main results from `self.results`, leaving small data (eg. read_count) that will easily fit in the DB
-    # document.
-    results = self.results.pop("results")
-
-    # Update the database document with the small data.
-    await self.db.analyses.update_one({"_id": analysis_id}, {
-        "$set": self.results
-    })
-
-    await virtool.jobs.analysis.set_analysis_results(
-        self.db,
-        analysis_id,
-        self.params["analysis_path"],
-        results
-    )
-
-    await virtool.samples.db.recalculate_workflow_tags(self.db, sample_id)
-
-
 def run_patho(vta_path, reassigned_path):
     """
     Run Pathoscope. This function is CPU-intensive and should be run in a separate process.
@@ -453,13 +418,7 @@ def run_patho(vta_path, reassigned_path):
 def create():
     job = virtool.jobs.job.Job()
 
-    job.on_startup = [
-        virtool.jobs.analysis.check_db
-    ]
-
     job.steps = [
-        virtool.jobs.analysis.make_analysis_dir,
-        virtool.jobs.analysis.prepare_reads,
         map_default_isolates,
         generate_isolate_fasta,
         build_isolate_index,
@@ -467,13 +426,6 @@ def create():
         map_subtraction,
         subtract_mapping,
         pathoscope,
-        virtool.jobs.analysis.upload,
-        import_results
-    ]
-
-    job.on_cleanup = [
-        virtool.jobs.analysis.delete_analysis,
-        virtool.jobs.analysis.delete_cache
     ]
 
     return job
