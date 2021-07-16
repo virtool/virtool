@@ -82,8 +82,8 @@ export const CreateSample = props => {
     };
 
     const handleSubmit = values => {
-        const { name, isolate, host, locale, libraryType, subtractionIds, selected } = values;
-        props.onCreate(name, isolate, host, locale, libraryType, subtractionIds, selected);
+        const { name, isolate, host, locale, libraryType, subtractionIds, files, group } = values;
+        props.onCreate(name, isolate, host, locale, libraryType, subtractionIds, files, group);
     };
 
     return (
@@ -205,8 +205,8 @@ export const mapDispatchToProps = dispatch => ({
         dispatch(findReadFiles());
     },
 
-    onCreate: (name, isolate, host, locale, libraryType, subtractionIds, files) => {
-        dispatch(createSample(name, isolate, host, locale, libraryType, subtractionIds, files));
+    onCreate: (name, isolate, host, locale, libraryType, subtractionIds, files, group) => {
+        dispatch(createSample(name, isolate, host, locale, libraryType, subtractionIds, files, group));
     },
 
     onClearError: () => {
