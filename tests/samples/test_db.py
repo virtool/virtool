@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro, make_mocked_request
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 import virtool.samples.db
@@ -618,5 +617,3 @@ class TestComposeWorkflowQuery:
         )
 
         assert compose_sample_workflow_query(req.query) is None
-
-
