@@ -7,7 +7,6 @@ import tempfile
 import pytest
 
 import virtool.jobs.analysis
-import virtool.jobs.pathoscope
 
 TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
 FASTQ_PATH = os.path.join(TEST_FILES_PATH, "test.fq")
@@ -28,7 +27,7 @@ class MockAnalysisJob:
 
 
 @pytest.fixture
-async def mock_job(tmp_path, mocker, request, dbi):
+async def mock_job(tmp_path, dbi):
     temp_dir = tempfile.TemporaryDirectory()
 
     await dbi.jobs.insert_one({
