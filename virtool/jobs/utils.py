@@ -1,12 +1,4 @@
-import os
-import shutil
-from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
-
-import virtool.caches.db
-import virtool.samples.db
-import virtool.samples.utils
-import virtool.utils
 from virtool.http.rights import MODIFY, READ, REMOVE, Right
 
 TASK_LG = "lg"
