@@ -153,41 +153,6 @@ async def acquire(db, job_id: str) -> Dict[str, Any]:
     return base_processor(document)
 
 
-async def delete_zombies(db):
-    await db.jobs.delete_many({
-        "status.state": {
-            "$nin": [
-                "complete",
-                "cancelled",
-                "error"
-            ]
-        }
-    })
-
-
-async def get_waiting_and_running_ids(db):
-    cursor = db.jobs.aggregate([
-        {"$project": {
-            "status": {
-                "$arrayElemAt": ["$status", -1]
-            }
-        }},
-
-        {"$match": {
-            "$or": [
-                {"status.state": "waiting"},
-                {"status.state": "running"},
-            ]
-        }},
-
-        {"$project": {
-            "_id": True
-        }}
-    ])
-
-    return [a["_id"] async for a in cursor]
-
-
 async def processor(db, document: dict) -> dict:
     """
     The default document processor for job documents. Transforms projected job documents to a structure that can be
