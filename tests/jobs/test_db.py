@@ -1,7 +1,7 @@
 import pytest
 
 import virtool.jobs.db
-from virtool.jobs.db import create
+from virtool.jobs.db import acquire, create
 from virtool.jobs.utils import JobRights
 
 status = {
@@ -52,3 +52,27 @@ async def test_create(with_job_id, mocker, snapshot, dbi, test_random_alphanumer
         await create(dbi, "create_sample", {"sample_id": "foo"}, "bob", rights)
 
     snapshot.assert_match(await dbi.jobs.find_one())
+
+
+async def test_acquire(dbi, mocker):
+    mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
+
+    await dbi.jobs.insert_one({
+        "_id": "foo",
+        "acquired": False,
+        "key": None
+    })
+
+    result = await acquire(dbi, "foo")
+
+    assert await dbi.jobs.find_one() == {
+        "_id": "foo",
+        "acquired": True,
+        "key": "hashed"
+    }
+
+    assert result == {
+        "id": "foo",
+        "acquired": True,
+        "key": "key"
+    }
