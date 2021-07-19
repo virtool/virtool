@@ -13,15 +13,6 @@ TASK_SIZES = {
     "pathoscope_bowtie": TASK_LG,
 }
 
-JOB_RIGHTS_NAMES = (
-    "analyses",
-    "indexes",
-    "samples",
-    "subtractions",
-    "uploads",
-    "references"
-)
-
 
 class JobRightsDomain:
     """

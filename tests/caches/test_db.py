@@ -18,53 +18,6 @@ def trim_parameters():
     }
 
 
-def test_calculate_cache_key(trim_parameters):
-    hashed = virtool.caches.db.calculate_cache_key(trim_parameters)
-    assert hashed == "68b60be51a667882d3aaa02a93259dd526e9c990"
-
-
-@pytest.mark.parametrize("exists", [True, False])
-@pytest.mark.parametrize("missing", [True, False])
-@pytest.mark.parametrize("returned_hash", ["abc123", "foobar"])
-async def test_find(exists, missing, returned_hash, mocker, dbi):
-    parameters = {
-        "a": 1,
-        "b": "hello",
-        "c": "world"
-    }
-
-    if exists:
-        await dbi.caches.insert_one({
-            "_id": "bar",
-            "program": "skewer-0.2.2",
-            "key": "abc123",
-            "missing": missing,
-            "sample": {
-                "id": "foo"
-            }
-        })
-
-    m_calculate_cache_key = mocker.patch("virtool.caches.db.calculate_cache_key", return_value=returned_hash)
-
-    result = await virtool.caches.db.find(dbi, "foo", "skewer-0.2.2", parameters)
-
-    m_calculate_cache_key.assert_called_with(parameters)
-
-    if missing or not exists or returned_hash == "foobar":
-        assert result is None
-        return
-
-    assert result == {
-        "id": "bar",
-        "program": "skewer-0.2.2",
-        "key": "abc123",
-        "missing": False,
-        "sample": {
-            "id": "foo"
-        }
-    }
-
-
 @pytest.mark.parametrize("paired", [True, False], ids=["paired", "unpaired"])
 async def test_create(paired, snapshot, dbi, static_time, test_random_alphanumeric, trim_parameters):
     """

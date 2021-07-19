@@ -3,10 +3,7 @@ Work with caches in the database. Caches are bundles of trimmed read and QC data
 analyses.
 
 """
-import asyncio
-import hashlib
-import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import pymongo.errors
 
@@ -23,76 +20,6 @@ PROJECTION = (
     "ready",
     "sample"
 )
-
-
-def calculate_cache_key(parameters: Dict[str, Any]) -> str:
-    """
-    Calculate a key from the parameters `dict` for a cache.
-
-    The parameters are arguments passed to a trimming program. Caches can be reused when the key
-    of the trim parameters for a a new analysis matches an existing cache.
-
-    :param parameters: the trimming parameters
-    :return: the cache key
-
-    """
-    string = json.dumps(parameters, sort_keys=True)
-    return hashlib.sha1(string.encode()).hexdigest()
-
-
-async def find(db, sample_id: str, program: str, parameters: Dict[str, Any]) -> Optional[dict]:
-    """
-    Find a cache matching the passed `sample_id`, `program` name and version, and set of trimming
-    `parameters`.
-
-    If no matching cache exists, `None` will be returned.
-
-    :param db: the application database interface
-    :param sample_id: the id of the parent sample
-    :param program: the program and version used to create the cache
-    :param parameters: the parameters used for the trim
-    :return: a cache document
-
-    """
-    document = await db.caches.find_one({
-        "key": virtool.caches.db.calculate_cache_key(parameters),
-        "missing": False,
-        "program": program,
-        "sample.id": sample_id
-    })
-
-    return virtool.utils.base_processor(document)
-
-
-async def find_and_wait(
-        db, sample_id: str,
-        program: str,
-        parameters: Dict[str, Any]
-) -> Optional[dict]:
-    """
-    Find a cache matching the passed `sample_id`, `program` name and version, and set of trimming
-    `parameters`.
-
-    Waits for the cache to be ready if it is still being created. If no matching cache exists,
-    `None` will be returned.
-
-    :param db: the application database interface
-    :param sample_id: the id of the parent sample
-    :param program: the program and version used to create the cache
-    :param parameters: the parameters used for the trim
-    :return: a cache document
-
-    """
-    document = await find(db, sample_id, program, parameters)
-
-    if document:
-        cache_id = document["id"]
-
-        while document["ready"] is False:
-            await asyncio.sleep(2)
-            document = virtool.utils.base_processor(await db.caches.find_one(cache_id))
-
-    return virtool.utils.base_processor(document)
 
 
 async def get(db, cache_id: str) -> Dict[str, Any]:

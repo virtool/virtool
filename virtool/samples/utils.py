@@ -117,35 +117,5 @@ def join_legacy_read_paths(settings: dict, sample):
         return [join_legacy_read_path(sample_path, 1)]
 
 
-def join_read_paths(base_path: Path, paired: bool) -> List[Path]:
-    """
-    Return a list of standard read paths given a base path and flag indicating whether the reads
-    are `paired`.
-
-    The list will contain two paths if the data is paired, and one if it is not.
-
-    :param base_path: a base path where the read files are located
-    :param paired: a boolean flag indicating whether the data is paired
-    :return: a list of read paths
-
-    """
-    if paired:
-        return [join_read_path(base_path, suffix) for suffix in (1, 2)]
-
-    return [join_read_path(base_path, 1)]
-
-
-def join_read_path(base_path: Path, suffix: int) -> Path:
-    """
-    Return a standard read path given a base path (eg. /mnt/data/samples/foo) and a read suffix.
-
-    :param base_path: a base path where the read file is located
-    :param suffix: the suffix number for the read file
-    :return: a read path
-
-    """
-    return base_path / f"reads_{suffix}.fq.gz"
-
-
 def join_sample_path(settings, sample_id) -> Path:
     return settings["data_path"] / "samples" / sample_id
