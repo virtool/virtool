@@ -17,7 +17,7 @@ import {
     ViewHeader,
     ViewHeaderTitle
 } from "../../../base";
-import { MultiSubtractionSelector } from "../../../subtraction/components/Selector";
+import { SampleSubtractionSelector } from "../../../subtraction/components/Selector";
 import { clearError } from "../../../errors/actions";
 import { shortlistSubtractions } from "../../../subtraction/actions";
 import { getSubtractionShortlist } from "../../../subtraction/selectors";
@@ -130,7 +130,7 @@ export const CreateSample = props => {
                             <InputGroup>
                                 <InputLabel>Default Subtraction</InputLabel>
                                 <Field
-                                    as={MultiSubtractionSelector}
+                                    as={SampleSubtractionSelector}
                                     name="subtractionIds"
                                     aria-label="Default Subtraction"
                                     noun="Default Subtraction"

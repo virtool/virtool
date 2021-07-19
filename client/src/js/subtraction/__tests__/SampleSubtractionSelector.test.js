@@ -1,9 +1,9 @@
 import React from "react";
-import { MultiSubtractionSelector } from "../components/MultiSubtractionSelector";
+import { SampleSubtractionSelector } from "../components/Selector";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-describe("<MultiSubtractionSelector />", () => {
+describe("<SampleSubtractionSelector />", () => {
     let props;
 
     beforeEach(() => {
@@ -20,12 +20,12 @@ describe("<MultiSubtractionSelector />", () => {
     });
 
     it("should render", () => {
-        const wrapper = shallow(<MultiSubtractionSelector {...props} />);
+        const wrapper = shallow(<SampleSubtractionSelector {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("should call onChange when a subtraction is clicked", () => {
-        renderWithProviders(<MultiSubtractionSelector {...props} />);
+        renderWithProviders(<SampleSubtractionSelector {...props} />);
         expect(props.onChange).not.toHaveBeenCalled();
         userEvent.click(screen.getByText(props.subtractions[0].name));
         expect(props.onChange).toHaveBeenCalled();
@@ -34,7 +34,7 @@ describe("<MultiSubtractionSelector />", () => {
     it("should return a subtraction is clicked", () => {
         let clickedValue = null;
         props.onChange = value => (clickedValue = value);
-        renderWithProviders(<MultiSubtractionSelector {...props} />);
+        renderWithProviders(<SampleSubtractionSelector {...props} />);
 
         expect(clickedValue).toEqual(null);
         userEvent.click(screen.getByText(props.subtractions[0].name));

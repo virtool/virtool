@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<MultiSubtractionSelector /> should render 1`] = `
+exports[`<SampleSubtractionSelector /> should render 1`] = `
 <MultiSelector
   name="Name"
   noun="Noun"

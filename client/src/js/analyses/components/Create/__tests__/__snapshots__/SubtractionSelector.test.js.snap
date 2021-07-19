@@ -5,7 +5,7 @@ exports[`<SubtractionSelector /> should render 1`] = `
   <Input__InputLabel>
     Subtraction
   </Input__InputLabel>
-  <MultiSubtractionSelector
+  <SampleSubtractionSelector
     name="Subtraction"
     noun="Subtractions"
     onChange={[MockFunction]}
