@@ -5,7 +5,6 @@ import virtool.db.core
 import virtool.db.utils
 import virtool.errors
 import virtool.indexes.db
-import virtool.jobs.classes
 import virtool.jobs.db
 import virtool.jobs.utils
 import virtool.otus.db
@@ -47,19 +46,6 @@ class JobRunner:
 
                 if document["state"] != "waiting":
                     logging.debug(f"Job is already running: {job_id}")
-
-                job_obj = virtool.jobs.classes.TASK_CREATORS[document["task"]]()
-
-                logging.info(f"Job starting: {job_id}")
-
-                await job_obj.run(
-                    self.db,
-                    self.redis,
-                    self.settings,
-                    job_id
-                )
-
-                logging.info(f"Job finished: {job_id}")
 
         except asyncio.CancelledError:
             logging.info("Stopped runner")
