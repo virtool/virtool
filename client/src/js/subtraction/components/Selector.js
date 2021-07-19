@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import React from "react";
 import { MultiSelector, MultiSelectorItem } from "../../base/MultiSelector";
 
-export const MultiSubtractionSelector = ({ name, noun, selected, subtractions, onChange }) => {
+export const SampleSubtractionSelector = ({ name, noun, selected, subtractions, onChange }) => {
     const subtractionComponents = map(subtractions, ({ name, id }) => (
         <MultiSelectorItem key={id} name={name} value={id} id={id}>
             <span>{name}</span>
@@ -17,7 +17,7 @@ export const MultiSubtractionSelector = ({ name, noun, selected, subtractions, o
     );
 };
 
-MultiSubtractionSelector.propTypes = {
+SampleSubtractionSelector.propTypes = {
     name: PropTypes.string.isRequired,
     noun: PropTypes.string.isRequired,
     subtractions: PropTypes.arrayOf(PropTypes.object),

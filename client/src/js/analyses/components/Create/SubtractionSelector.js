@@ -1,13 +1,13 @@
 import PropTypes from "prop-types";
 import React from "react";
 import { InputGroup, InputLabel } from "../../../base";
-import { MultiSubtractionSelector } from "../../../subtraction/components/Selector";
+import { SampleSubtractionSelector } from "../../../subtraction/components/Selector";
 
 export const SubtractionSelector = ({ subtractions, value, onChange }) => {
     return (
         <InputGroup>
             <InputLabel>Subtraction</InputLabel>
-            <MultiSubtractionSelector
+            <SampleSubtractionSelector
                 name="Subtraction"
                 noun="Subtractions"
                 subtractions={subtractions}
