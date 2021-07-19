@@ -87,7 +87,7 @@ export const CreateAnalysis = ({
                         <SubtractionSelector
                             subtractions={subtractions}
                             value={subtraction}
-                            onChange={selected => setSubtraction(selected)}
+                            onChange={setSubtraction}
                         />
                     )}
                     <ReferenceSelector
