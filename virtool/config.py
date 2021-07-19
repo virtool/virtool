@@ -12,7 +12,6 @@ import virtool.app
 import virtool.db.mongo
 import virtool.db.utils
 import virtool.jobs.classes
-import virtool.jobs.job
 import virtool.jobs.run
 import virtool.jobs.runner
 import virtool.jobs_api.main

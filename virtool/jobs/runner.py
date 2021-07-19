@@ -7,7 +7,6 @@ import virtool.errors
 import virtool.indexes.db
 import virtool.jobs.classes
 import virtool.jobs.db
-import virtool.jobs.job
 import virtool.jobs.utils
 import virtool.otus.db
 import virtool.redis
