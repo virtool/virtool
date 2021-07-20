@@ -128,12 +128,12 @@ export const CreateSample = props => {
                             </InputGroup>
 
                             <InputGroup>
-                                <InputLabel>Default Subtraction</InputLabel>
+                                <InputLabel>Default Subtractions</InputLabel>
                                 <Field
                                     as={SampleSubtractionSelector}
                                     name="subtractionIds"
-                                    aria-label="Default Subtraction"
-                                    noun="Default Subtraction"
+                                    aria-label="Default Subtractions"
+                                    noun="Default Subtractions"
                                     selected={values.subtractionIds}
                                     subtractions={props.subtractions}
                                     onChange={selected => setFieldValue("subtractionIds", selected)}

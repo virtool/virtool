@@ -71,7 +71,7 @@ describe("getCanModify()", () => {
 });
 
 describe("getDefaultSubtractions()", () => {
-    it("should return sample's default subtraction when defined", () => {
+    it("should return sample's default subtractions when defined", () => {
         const state = { samples: { detail: { subtractions: ["bar", "baz"] } } };
         const subtractionIds = getDefaultSubtractions(state);
         expect(subtractionIds).toStrictEqual(["bar", "baz"]);

@@ -82,7 +82,7 @@ describe("<CreateAnalysis />", () => {
     });
 
     it("should automatically select default subtractions", () => {
-        // Set the default subtraction to the list of subtraction's ids
+        // Set the default subtractions to the list of subtraction's ids
         props.defaultSubtractions = props.subtractions.map(subtraction => subtraction.id);
 
         renderWithStore(<CreateAnalysis {...props} />);

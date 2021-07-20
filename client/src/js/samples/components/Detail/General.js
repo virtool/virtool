@@ -103,7 +103,7 @@ export const SampleDetailGeneral = ({
 
             <BoxGroup>
                 <BoxGroupHeader>
-                    <h2>Default Subtraction</h2>
+                    <h2>Default Subtractions</h2>
                     <p>This subtraction will be the default selection when creating an analysis.</p>
                 </BoxGroupHeader>
                 <Table>
