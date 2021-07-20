@@ -11,7 +11,6 @@ import uvloop
 import virtool.app
 import virtool.db.mongo
 import virtool.db.utils
-import virtool.jobs.run
 import virtool.jobs.runner
 import virtool.jobs_api.main
 import virtool.logs
@@ -205,47 +204,6 @@ def start_server(ctx, host, port, no_check_db, no_check_files, no_client, no_fet
 
     logger.info("Starting in server mode")
     asyncio.get_event_loop().run_until_complete(virtool.app.run_app(config))
-
-
-@cli.command("runner", help="Start a runner that runs one job at a time")
-@click.option(
-    "--job-list", "-l",
-    default=["jobs_lg", "jobs_sm"],
-    help="A Redis list key to pull job IDs from",
-    multiple=True,
-    type=str
-)
-@click.option(
-    "--mem",
-    default=1,
-    help="The maximum memory (GB) the instance may use",
-    type=int
-)
-@click.option(
-    "--proc",
-    default=1,
-    help="The maximum number of processes the instance can use",
-    type=int
-)
-@click.option(
-    "--temp-path",
-    type=click.Path(),
-    help="The path to local directory for temporary files"
-)
-@click.pass_context
-def start_runner(ctx, job_list, mem, proc, temp_path):
-    virtool.logs.configure_runner(ctx.obj["dev"], ctx.obj["verbose"])
-
-    config = {
-        **ctx.obj,
-        "job_list": job_list,
-        "mem": mem,
-        "proc": proc,
-        "temp_path": temp_path
-    }
-
-    logger.info("Starting in runner mode")
-    asyncio.get_event_loop().run_until_complete(virtool.jobs.run.run(config, virtool.jobs.runner.JobRunner))
 
 
 @cli.command("jobsAPI")
