@@ -9,7 +9,7 @@ import uvloop
 import virtool.app
 import virtool.db.mongo
 import virtool.db.utils
-import virtool.jobs_api.main
+import virtool.jobs.main
 import virtool.logs
 import virtool.redis
 import virtool.utils
@@ -181,7 +181,7 @@ def start_jobs_api(ctx, fake, port, host):
     """Start a Virtool Jobs API server"""
     logger.info("Starting jobs API process")
     asyncio.get_event_loop().run_until_complete(
-        virtool.jobs_api.main.run(
+        virtool.jobs.main.run(
             fake=fake,
             host=host,
             port=port,
