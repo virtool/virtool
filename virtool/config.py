@@ -1,11 +1,9 @@
 import asyncio
 import json
 import logging
-import sys
 from pathlib import Path
 
 import click
-import psutil
 import uvloop
 
 import virtool.app
