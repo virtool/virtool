@@ -1,8 +1,3 @@
-import pytest
-
-import virtool.caches.db
-import virtool.caches.utils
-import virtool.jobs.utils
 from virtool.http.rights import MODIFY, READ, REMOVE
 from virtool.jobs.utils import JobRights, JobRightsDomain
 

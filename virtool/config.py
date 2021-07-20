@@ -1,11 +1,9 @@
 import asyncio
 import json
 import logging
-import sys
 from pathlib import Path
 
 import click
-import psutil
 import uvloop
 
 import virtool.app
@@ -19,15 +17,6 @@ import virtool.utils
 
 logger = logging.getLogger(__name__)
 
-CONFIG_PATH = Path.cwd() / "config.json"
-
-JOB_LIMIT_KEYS = (
-    "lg_proc",
-    "lg_mem",
-    "sm_proc",
-    "sm_mem"
-)
-
 
 def create_default_map():
     try:
@@ -35,43 +24,6 @@ def create_default_map():
             return json.load(f)
     except FileNotFoundError:
         return None
-
-
-def validate_limits(config: dict) -> tuple:
-    cpu_count = psutil.cpu_count()
-    mem_total = psutil.virtual_memory().total
-
-    proc = int(config["proc"])
-    mem = int(config["mem"])
-
-    fatal = False
-
-    if proc > cpu_count:
-        fatal = True
-        logger.fatal(f"Configured proc limit ({proc}) exceeds host CPU count ({cpu_count})")
-
-    in_bytes = mem * 1024 * 1024 * 1024
-
-    if in_bytes > mem_total:
-        fatal = True
-        logger.fatal(f"Configured mem limit ({in_bytes}) exceeds host memory ({mem_total})")
-
-    for job_limit_key in JOB_LIMIT_KEYS:
-        resource_key = job_limit_key.split("_")[1]
-
-        job_limit = int(config[job_limit_key])
-        host_limit = int(config[resource_key])
-
-        if job_limit > host_limit:
-            fatal = True
-            logger.fatal(
-                f"Configured {job_limit_key} ({job_limit}) exceeds instance {resource_key} limit ({host_limit})"
-            )
-
-    if fatal:
-        sys.exit(1)
-
-    return cpu_count, mem_total
 
 
 def entry():
@@ -153,57 +105,6 @@ def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_se
         "redis_connection_string": redis_connection_string,
         "verbose": verbose
     })
-
-
-@cli.command("server", help="Start a Virtool API and websocket server")
-@click.option(
-    "--host",
-    default="localhost",
-    help="The host to listen on",
-    type=str
-)
-@click.option(
-    "--port",
-    default=9950,
-    help="The port to listen on",
-    type=int
-)
-@click.option(
-    "--no-check-db",
-    help="Start without checking and repairing database",
-    is_flag=True
-)
-@click.option(
-    "--no-check-files",
-    help="Start without ensuring data directory is valid",
-    is_flag=True
-)
-@click.option(
-    "--no-client",
-    help="Start without serving client files",
-    is_flag=True
-)
-@click.option(
-    "--no-fetching",
-    help="Start with automatic fetching disabled",
-    is_flag=True
-)
-@click.pass_context
-def start_server(ctx, host, port, no_check_db, no_check_files, no_client, no_fetching):
-    virtool.logs.configure_server(ctx.obj["dev"], ctx.obj["verbose"])
-
-    config = {
-        **ctx.obj,
-        "host": host,
-        "port": port,
-        "no_check_db": no_check_db,
-        "no_check_files": no_check_files,
-        "no_client": no_client,
-        "no_fetching": no_fetching
-    }
-
-    logger.info("Starting in server mode")
-    asyncio.get_event_loop().run_until_complete(virtool.app.run_app(config))
 
 
 @cli.command("jobsAPI")

@@ -1,5 +1,3 @@
-import pytest
-
 import virtool.caches.utils
 
 

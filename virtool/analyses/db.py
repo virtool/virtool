@@ -3,7 +3,6 @@ Work with analyses in the database.
 
 """
 import asyncio
-import os
 from typing import List, Optional, Tuple
 
 import virtool.analyses.files
@@ -250,29 +249,3 @@ async def remove_nuvs_blast(db, analysis_id: str, sequence_index: int):
             "updated_at": virtool.utils.timestamp()
         }
     })
-
-
-async def remove_orphaned_directories(app: virtool.types.App):
-    """
-    Remove all analysis directories for which an analysis document does not exist in the database.
-
-    :param app: the application object
-
-    """
-    db = app["db"]
-
-    samples_path = app["settings"]["data_path"] / "samples"
-
-    existing_ids = set(await db.analyses.distinct("_id"))
-
-    for sample_id in os.listdir(samples_path):
-        analyses_path = samples_path / sample_id / "analysis"
-
-        to_delete = set(os.listdir(analyses_path)) - existing_ids
-
-        for analysis_id in to_delete:
-            analysis_path = analyses_path / analysis_id
-            try:
-                await app["run_in_thread"](virtool.utils.rm, analysis_path, True)
-            except FileNotFoundError:
-                pass

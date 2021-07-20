@@ -1,9 +1,8 @@
 import logging
 import os
 from pathlib import Path
-from typing import Tuple, List
+from typing import List
 
-import aiofiles
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
