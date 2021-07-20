@@ -107,6 +107,57 @@ def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_se
     })
 
 
+@cli.command("server", help="Start a Virtool API and websocket server")
+@click.option(
+    "--host",
+    default="localhost",
+    help="The host to listen on",
+    type=str
+)
+@click.option(
+    "--port",
+    default=9950,
+    help="The port to listen on",
+    type=int
+)
+@click.option(
+    "--no-check-db",
+    help="Start without checking and repairing database",
+    is_flag=True
+)
+@click.option(
+    "--no-check-files",
+    help="Start without ensuring data directory is valid",
+    is_flag=True
+)
+@click.option(
+    "--no-client",
+    help="Start without serving client files",
+    is_flag=True
+)
+@click.option(
+    "--no-fetching",
+    help="Start with automatic fetching disabled",
+    is_flag=True
+)
+@click.pass_context
+def start_server(ctx, host, port, no_check_db, no_check_files, no_client, no_fetching):
+    virtool.logs.configure_server(ctx.obj["dev"], ctx.obj["verbose"])
+
+    config = {
+        **ctx.obj,
+        "host": host,
+        "port": port,
+        "no_check_db": no_check_db,
+        "no_check_files": no_check_files,
+        "no_client": no_client,
+        "no_fetching": no_fetching
+    }
+
+    logger.info("Starting in server mode")
+    asyncio.get_event_loop().run_until_complete(virtool.app.run_app(config))
+
+
 @cli.command("jobsAPI")
 @click.option(
     "--host",

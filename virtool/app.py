@@ -1,8 +1,10 @@
+import asyncio
 import logging
 
 import aiohttp.web
 import aiojobs
 import aiojobs.aiohttp
+from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
 
 import virtool.db.core
 import virtool.db.migrate
@@ -83,3 +85,21 @@ def create_app(config):
     ])
 
     return app
+
+
+async def run_app(config):
+    app = create_app(config)
+
+    runner = await create_app_runner(
+        app,
+        config["host"],
+        config["port"]
+    )
+
+    _, pending = await asyncio.wait(
+        [wait_for_restart(runner, app["events"]), wait_for_shutdown(runner, app["events"])],
+        return_when=asyncio.FIRST_COMPLETED
+    )
+
+    for task in pending:
+        task.cancel()
