@@ -21,7 +21,6 @@ import virtool.dev.fake
 import virtool.dispatcher
 import virtool.hmm.db
 import virtool.jobs.interface
-import virtool.jobs.runner
 import virtool.pg.utils
 import virtool.redis
 import virtool.references.db

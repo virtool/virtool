@@ -74,20 +74,6 @@ class Collection:
         self.insert_many = self._collection.insert_many
         self.rename = self._collection.rename
 
-    def apply_projection(self, document: dict) -> dict:
-        """
-        Apply the collection projection to the given document and return a new `dict`. If the
-        collection `projection` attribute is not defined, the document will be returned unaltered.
-
-        :param document: the document to apply the projection to
-        :return: the projected document
-
-        """
-        if self.projection:
-            return virtool.db.utils.apply_projection(document, self.projection)
-
-        return document
-
     async def apply_processor(self, document):
         if self.processor:
             return await self.processor(self._collection.database, document)
@@ -414,9 +400,3 @@ class DB:
             projection,
             silent
         )
-
-    def get_processor(self, collection_name):
-        return self.__getattribute__(collection_name).apply_processor
-
-    def get_projection(self, collection_name):
-        return self.__getattribute__(collection_name).projection
