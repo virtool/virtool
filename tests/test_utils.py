@@ -14,29 +14,6 @@ def alphanumeric():
     return "abcdefghijklmnopqrstuvwxyz1234567890"
 
 
-class TestAverageList:
-
-    def test_default(self):
-        list1 = [2, 5, 6, 10, 14, 20]
-        list2 = [-1, 3, 0, 22, 12, 11]
-
-        expected = [0.5, 4, 3, 16, 13, 15.5]
-
-        assert virtool.utils.average_list(list1, list2) == expected
-
-    def test_mismatched(self):
-        with pytest.raises(TypeError):
-            virtool.utils.average_list([1, 3, 2, 4], [2, 3, 7])
-
-    def test_wrong_item_type(self):
-        with pytest.raises(TypeError):
-            virtool.utils.average_list([2, 5, 6], [8, "a", 5])
-
-    def test_wrong_arg_type(self):
-        with pytest.raises(TypeError):
-            virtool.utils.average_list([2, 5, 6], "a")
-
-
 @pytest.mark.parametrize("document,result", [
     (None, None),
     ({"_id": "foo"}, {"id": "foo"}),

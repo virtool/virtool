@@ -8,11 +8,10 @@ import shutil
 import subprocess
 import tarfile
 import tempfile
-from numbers import Number
 from pathlib import Path
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Iterable, Tuple, Any, Optional, List
+from typing import Iterable, Tuple, Any, Optional
 
 import arrow
 from aiohttp import web
@@ -29,16 +28,6 @@ SUB_DIRS = [
     "hmm",
     "logs/jobs"
 ]
-
-
-def average_list(list1: List[Number], list2: List[Number]) -> List[Number]:
-    if not isinstance(list1, list) or not isinstance(list2, list):
-        raise TypeError("Both arguments must be lists")
-
-    if len(list1) != len(list2):
-        raise TypeError("Both arguments must be lists of the same length")
-
-    return [(value + list2[i]) / 2 for i, value in enumerate(list1)]
 
 
 def base_processor(document: Optional[dict]) -> Optional[dict]:
