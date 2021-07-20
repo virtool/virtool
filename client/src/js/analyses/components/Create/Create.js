@@ -50,7 +50,7 @@ export const CreateAnalysis = ({
         workflows,
         setErrors,
         setReferences,
-        setSubtraction,
+        setSubtractions,
         setWorkflows
     } = useCreateAnalysis(dataType, defaultSubtractions);
 
@@ -87,7 +87,7 @@ export const CreateAnalysis = ({
                         <SubtractionSelector
                             subtractions={subtractions}
                             value={subtraction}
-                            onChange={setSubtraction}
+                            onChange={setSubtractions}
                         />
                     )}
                     <ReferenceSelector
