@@ -16,7 +16,6 @@ from typing import Optional
 import virtool.db.mongo
 import virtool.db.utils
 import virtool.jobs.db
-import virtool.jobs.runner
 import virtool.redis
 import virtool.settings.db
 import virtool.utils
