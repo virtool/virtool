@@ -17,7 +17,6 @@ import virtool.http.csp
 import virtool.http.errors
 import virtool.http.proxy
 import virtool.http.query
-import virtool.jobs.runner
 import virtool.logs
 import virtool.references.db
 import virtool.routes

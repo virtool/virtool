@@ -4,7 +4,6 @@ Constants and utility functions for interacting with the jobs collection in the 
 """
 from typing import Any, Dict, Optional
 
-import virtool.jobs.runner
 import virtool.utils
 from virtool.jobs.utils import JobRights
 from virtool.utils import base_processor

@@ -11,7 +11,6 @@ import uvloop
 import virtool.app
 import virtool.db.mongo
 import virtool.db.utils
-import virtool.jobs.runner
 import virtool.jobs_api.main
 import virtool.logs
 import virtool.redis

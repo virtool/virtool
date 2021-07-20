@@ -2,7 +2,7 @@
 Utilities for working with MongoDB.
 
 """
-from typing import Any, Dict, List, Optional, Sequence, Union, Set
+from typing import Any, Dict, Optional, Sequence, Union, Set
 
 from motor.motor_asyncio import AsyncIOMotorCollection
 
@@ -125,15 +125,3 @@ async def id_exists(collection, id_: str) -> bool:
 
     """
     return bool(await collection.count_documents({"_id": id_}))
-
-
-async def ids_exist(collection, id_list: List[str]) -> bool:
-    """
-    Check if all of the document IDs in ``id_list`` exist in the collection.
-
-    :param collection: the Mongo collection to check ``id_list`` against
-    :param id_list: the ids to check for
-    :return: do the IDs exist
-
-    """
-    return await collection.count_documents({"_id": {"$in": id_list}}) == len(id_list)

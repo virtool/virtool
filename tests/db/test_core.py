@@ -25,36 +25,6 @@ def create_test_collection(mocker, test_motor):
 
 class TestCollection:
 
-    @pytest.mark.parametrize("projection", [None, ["name"]], ids=["projection", "no projection"])
-    def test_apply_projection(self, projection, create_test_collection):
-        """
-        Test that :meth:`Collection.apply_projection` returns a projected version of the passed
-        document when :attr:`Collection.projection` is defined and returns the document untouched
-        when no projection is defined.
-
-        """
-        collection = create_test_collection(projection=projection)
-
-        document = {
-            "_id": "foo",
-            "name": "Foo",
-            "tags": [
-                "bar",
-                "baz"
-            ]
-        }
-
-        projected = collection.apply_projection(document)
-
-        if projection:
-            assert projected == {
-                "_id": "foo",
-                "name": "Foo"
-            }
-            return
-
-        assert projected == document
-
     @pytest.mark.parametrize("silent", [True, False])
     async def test_enqueue_change(self, silent, create_test_collection):
         """
