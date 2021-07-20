@@ -109,15 +109,15 @@ export const clearAnalysis = simpleActionCreator(CLEAR_ANALYSIS);
  * @param sampleId {string} unique sample id
  * @param refId {string} unique id for a reference
  * @param workflow {string} the workflow to run
- * @param subtractionId {string} the subtraction to use for the analysis
+ * @param subtractionIds {Array} string - the subtractions to use for the analysis
  * @param userId {string} the id of the requesting user
  * @returns {object}
  */
-export const analyze = (sampleId, refId, subtractionId, userId, workflow) => ({
+export const analyze = (sampleId, refId, subtractionIds, userId, workflow) => ({
     type: ANALYZE.REQUESTED,
     refId,
     sampleId,
-    subtractionId,
+    subtractionIds,
     userId,
     workflow
 });

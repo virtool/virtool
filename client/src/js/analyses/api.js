@@ -5,11 +5,11 @@ export const find = ({ sampleId, term, page = 1 }) =>
 
 export const get = ({ analysisId }) => Request.get(`/api/analyses/${analysisId}`);
 
-export const analyze = ({ sampleId, refId, subtractionId, workflow }) =>
+export const analyze = ({ sampleId, refId, subtractionIds, workflow }) =>
     Request.post(`/api/samples/${sampleId}/analyses`).send({
         workflow,
         ref_id: refId,
-        subtraction_id: subtractionId
+        subtraction_ids: subtractionIds
     });
 
 export const blastNuvs = ({ analysisId, sequenceIndex }) =>

@@ -1,4 +1,4 @@
-import { filter, find, get, map } from "lodash-es";
+import { filter, find, get } from "lodash-es";
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
@@ -17,7 +17,7 @@ import {
     ViewHeader,
     ViewHeaderTitle
 } from "../../../base";
-import { MultiSelector, MultiSelectorItem } from "../../../base/MultiSelector";
+import { SampleSubtractionSelector } from "../../../subtraction/components/Selector";
 import { clearError } from "../../../errors/actions";
 import { shortlistSubtractions } from "../../../subtraction/actions";
 import { getSubtractionShortlist } from "../../../subtraction/selectors";
@@ -74,12 +74,6 @@ export const CreateSample = props => {
         group: props.forceGroupChoice ? "none" : ""
     };
 
-    const subtractionComponents = map(props.subtractions, ({ name, id }) => (
-        <MultiSelectorItem key={id} name={name} value={id} id={id}>
-            <span>{name}</span>
-        </MultiSelectorItem>
-    ));
-
     const autofill = (selected, setFieldValue) => {
         const fileName = getFileNameFromId(selected[0], props.readyReads);
         if (fileName) {
@@ -134,17 +128,16 @@ export const CreateSample = props => {
                             </InputGroup>
 
                             <InputGroup>
-                                <InputLabel>Default Subtraction</InputLabel>
+                                <InputLabel>Default Subtractions</InputLabel>
                                 <Field
-                                    as={MultiSelector}
+                                    as={SampleSubtractionSelector}
                                     name="subtractionIds"
-                                    aria-label="Default Subtraction"
-                                    noun="Default Subtraction"
+                                    aria-label="Default Subtractions"
+                                    noun="Default Subtractions"
                                     selected={values.subtractionIds}
+                                    subtractions={props.subtractions}
                                     onChange={selected => setFieldValue("subtractionIds", selected)}
-                                >
-                                    {subtractionComponents}
-                                </Field>
+                                />
                             </InputGroup>
 
                             <InputGroup>

@@ -1,6 +1,6 @@
 import {
     getCanModify,
-    getDefaultSubtraction,
+    getDefaultSubtractions,
     getFilesUndersized,
     getSampleDetail,
     getSampleDetailId,
@@ -70,32 +70,11 @@ describe("getCanModify()", () => {
     });
 });
 
-describe("getDefaultSubtraction()", () => {
-    let state;
-
-    beforeEach(() => {
-        state = {
-            samples: { detail: { subtraction: { id: "bar" } } },
-            subtraction: { shortlist: [{ id: "foo", name: "Foo" }] }
-        };
-    });
-
-    it("should return sample's default subtraction when defined", () => {
-        const subtractionId = getDefaultSubtraction(state);
-        expect(subtractionId).toBe("bar");
-    });
-
-    it("should return first subtraction id sample has no default subtraction", () => {
-        state.samples.detail.subtraction = null;
-        const subtractionId = getDefaultSubtraction(state);
-        expect(subtractionId).toBe("foo");
-    });
-
-    it("should return undefined when no subtractions available", () => {
-        state.samples.detail.subtraction = null;
-        state.subtraction.shortlist = [];
-        const subtractionId = getDefaultSubtraction(state);
-        expect(subtractionId).toBeUndefined();
+describe("getDefaultSubtractions()", () => {
+    it("should return sample's default subtractions when defined", () => {
+        const state = { samples: { detail: { subtractions: ["bar", "baz"] } } };
+        const subtractionIds = getDefaultSubtractions(state);
+        expect(subtractionIds).toStrictEqual(["bar", "baz"]);
     });
 });
 

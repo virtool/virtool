@@ -113,7 +113,7 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
     <Box__BoxGroup>
       <Box__BoxGroupHeader>
         <h2>
-          Default Subtraction
+          Default Subtractions
         </h2>
         <p>
           This subtraction will be the default selection when creating an analysis.
@@ -270,7 +270,7 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
     <Box__BoxGroup>
       <Box__BoxGroupHeader>
         <h2>
-          Default Subtraction
+          Default Subtractions
         </h2>
         <p>
           This subtraction will be the default selection when creating an analysis.

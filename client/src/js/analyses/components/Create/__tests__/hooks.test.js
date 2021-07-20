@@ -35,7 +35,7 @@ describe("useCreateAnalysis()", () => {
         expect(result.current.subtraction).toEqual(defaultSubtraction);
 
         act(() => {
-            result.current.setSubtraction("foo");
+            result.current.setSubtractions("foo");
         });
 
         expect(result.current.subtraction).toEqual("foo");

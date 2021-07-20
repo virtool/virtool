@@ -116,15 +116,15 @@ it("analyze() should return action to analyze sample", () => {
     const workflow = "workflow";
     const refId = "123abc";
     const userId = "bob";
-    const subtractionId = "bar";
-    const result = analyze(sampleId, refId, subtractionId, userId, workflow);
+    const subtractionIds = ["bar"];
+    const result = analyze(sampleId, refId, subtractionIds, userId, workflow);
 
     expect(result).toEqual({
         type: ANALYZE.REQUESTED,
         userId,
         refId,
         sampleId,
-        subtractionId,
+        subtractionIds,
         workflow
     });
 

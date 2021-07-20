@@ -1,27 +1,25 @@
-import { map } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
-import { InputGroup, InputLabel, Select } from "../../../base";
+import { InputGroup, InputLabel } from "../../../base";
+import { SampleSubtractionSelector } from "../../../subtraction/components/Selector";
 
 export const SubtractionSelector = ({ subtractions, value, onChange }) => {
-    const optionComponents = map(subtractions, subtraction => (
-        <option key={subtraction.id} value={subtraction.id}>
-            {subtraction.name}
-        </option>
-    ));
-
     return (
         <InputGroup>
             <InputLabel>Subtraction</InputLabel>
-            <Select name="subtraction" value={value} onChange={onChange}>
-                {optionComponents}
-            </Select>
+            <SampleSubtractionSelector
+                name="Subtraction"
+                noun="Subtractions"
+                subtractions={subtractions}
+                selected={value}
+                onChange={onChange}
+            />
         </InputGroup>
     );
 };
 
 SubtractionSelector.propTypes = {
     subtractions: PropTypes.arrayOf(PropTypes.object),
-    value: PropTypes.string,
+    value: PropTypes.arrayOf(PropTypes.string),
     onChange: PropTypes.func
 };

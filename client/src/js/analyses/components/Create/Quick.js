@@ -88,7 +88,7 @@ export const QuickAnalyze = ({
         workflows,
         setError,
         setReferences,
-        setSubtraction,
+        setSubtractions,
         setWorkflows
     } = useCreateAnalysis(mode);
 
@@ -122,7 +122,7 @@ export const QuickAnalyze = ({
                         <SubtractionSelector
                             subtractions={subtractions}
                             value={subtraction}
-                            onChange={e => setSubtraction(e.target.value)}
+                            onChange={e => setSubtractions(e.target.value)}
                         />
                     )}
                     <ReferenceSelector

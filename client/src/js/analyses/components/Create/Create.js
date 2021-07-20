@@ -5,7 +5,7 @@ import styled from "styled-components";
 import { getAccountId } from "../../../account/selectors";
 import { pushState } from "../../../app/actions";
 import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from "../../../base";
-import { getDefaultSubtraction, getSampleDetailId, getSampleLibraryType } from "../../../samples/selectors";
+import { getDefaultSubtractions, getSampleDetailId, getSampleLibraryType } from "../../../samples/selectors";
 import { getDataTypeFromLibraryType } from "../../../samples/utils";
 import { shortlistSubtractions } from "../../../subtraction/actions";
 import { routerLocationHasState } from "../../../utils/utils";
@@ -28,7 +28,7 @@ export const CreateAnalysis = ({
     accountId,
     compatibleIndexes,
     dataType,
-    defaultSubtraction,
+    defaultSubtractions,
     hasHmm,
     sampleId,
     show,
@@ -50,9 +50,9 @@ export const CreateAnalysis = ({
         workflows,
         setErrors,
         setReferences,
-        setSubtraction,
+        setSubtractions,
         setWorkflows
-    } = useCreateAnalysis(dataType, defaultSubtraction);
+    } = useCreateAnalysis(dataType, defaultSubtractions);
 
     const handleSubmit = e => {
         e.preventDefault();
@@ -87,7 +87,7 @@ export const CreateAnalysis = ({
                         <SubtractionSelector
                             subtractions={subtractions}
                             value={subtraction}
-                            onChange={e => setSubtraction(e.target.value)}
+                            onChange={setSubtractions}
                         />
                     )}
                     <ReferenceSelector
@@ -116,7 +116,7 @@ export const mapStateToProps = state => ({
     accountId: getAccountId(state),
     compatibleIndexes: getCompatibleIndexesWithLibraryType(state),
     dataType: getDataTypeFromLibraryType(getSampleLibraryType(state)),
-    defaultSubtraction: getDefaultSubtraction(state),
+    defaultSubtractions: getDefaultSubtractions(state).map(subtraction => subtraction.id),
     hasHmm: !!state.hmms.total_count,
     sampleId: getSampleDetailId(state),
     show: routerLocationHasState(state, "createAnalysis"),
@@ -124,9 +124,9 @@ export const mapStateToProps = state => ({
 });
 
 export const mapDispatchToProps = dispatch => ({
-    onAnalyze: (sampleId, references, subtractionId, accountId, workflows) => {
+    onAnalyze: (sampleId, references, subtractionIds, accountId, workflows) => {
         forEach(references, refId => {
-            forEach(workflows, workflow => dispatch(analyze(sampleId, refId, subtractionId, accountId, workflow)));
+            forEach(workflows, workflow => dispatch(analyze(sampleId, refId, subtractionIds, accountId, workflow)));
         });
     },
     onHide: () => {
