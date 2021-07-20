@@ -263,7 +263,7 @@ async def upload(req):
     name = req.match_info["filename"]
 
     if name not in FILES:
-        return not_found(f"Index file not found")
+        return not_found("Index file not found")
 
     document = await db.indexes.find_one(index_id)
 

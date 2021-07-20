@@ -1,7 +1,6 @@
 from logging import getLogger
 
 from virtool.api.response import no_content
-from virtool.fake.wrapper import FakerWrapper
 from virtool.http.routes import Routes
 from virtool.samples.fake import create_fake_sample
 from virtool.subtractions.fake import create_fake_fasta_upload, create_fake_finalized_subtraction
@@ -10,8 +9,6 @@ from virtool.utils import random_alphanumeric
 logger = getLogger(__name__)
 
 routes = Routes()
-
-faker = FakerWrapper()
 
 
 @routes.post("/api/dev")

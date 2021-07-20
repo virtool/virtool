@@ -1,9 +1,6 @@
 import hashlib
 
 import bcrypt
-
-from virtool.utils import hash_key
-
 #: A list of the permission strings used by Virtool.
 PERMISSIONS = [
     "cancel_job",
@@ -26,17 +23,6 @@ def calculate_identicon(user_id: str) -> str:
 
     """
     return hashlib.sha256(user_id.encode()).hexdigest()
-
-
-def check_api_key(key: str, hashed: str) -> bool:
-    """
-    Check a API key string against a hashed one from the user database.
-
-    :param key: the API key to check
-    :param hashed: the hashed key to check against
-
-    """
-    return hash_key(key) == hashed
 
 
 def check_legacy_password(password: str, salt: str, hashed: str) -> bool:

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -90,20 +90,3 @@ async def delete_subtraction_file(pg: AsyncEngine, file_id: int):
 
         await session.delete(subtraction_file)
         await session.commit()
-
-
-async def get_subtraction_file(pg: AsyncEngine, file_id: int) -> Optional[SubtractionFile]:
-    """
-    Get a row that represents an subtraction file by its `id`
-
-    :param pg: PostgreSQL AsyncEngine object
-    :param file_id: Row `id` to get
-    :return: Row from the `subtraction_files` SQL table
-    """
-    async with AsyncSession(pg) as session:
-        upload = (await session.execute(select(SubtractionFile).filter_by(id=file_id))).scalar()
-
-        if not upload:
-            return None
-
-    return upload

@@ -17,18 +17,6 @@ def test_calculate_identicon(user_id, identicon):
     assert virtool.users.utils.calculate_identicon(user_id) == identicon
 
 
-@pytest.mark.parametrize("key,hashed,result", [
-    ("foobar", "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2", True),
-    ("foobar", "be9b4c9674ae3932cf382b362458d6107e9433d1d9e05bef3eef187bb7785c05", False)
-], ids=["success", "failure"])
-def test_check_api_key(key, hashed, result):
-    """
-    Test that API keys are validated against hashed ones correctly in success and failure cases.
-
-    """
-    assert virtool.users.utils.check_api_key(key, hashed) is result
-
-
 @pytest.mark.parametrize("password,salt,result", [
     (
         "hello_world",

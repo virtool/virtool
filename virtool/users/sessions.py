@@ -139,22 +139,6 @@ async def create_reset_code(db, session_id: str, user_id: str, remember: Optiona
     return reset_code
 
 
-async def check_reset_code(db, session_id: str, reset_code: int) -> bool:
-    session = await db.sessions.find_one(session_id, ["reset_code", "reset_user_id"])
-
-    await db.sessions.update_one({"_id": session_id}, {
-        "$unset": {
-            "reset_code": "",
-            "reset_remember": "",
-            "reset_user_id": ""
-        }
-    })
-
-    db_reset_code = session.get("reset_code")
-
-    return db_reset_code and db_reset_code == reset_code
-
-
 async def clear_reset_code(db: virtool.db.core.DB, session_id: str):
     """
     Clear the reset information attached to the session associated with the passed `session_id`.
@@ -195,7 +179,3 @@ async def replace_session(
     """
     await db.sessions.delete_one({"_id": session_id})
     return await create_session(db, ip, user_id, remember=remember)
-
-
-async def invalidate_sessions_by_user(db, user_id):
-    await db.sessions.delete_many({"user.id": user_id})

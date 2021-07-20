@@ -1,6 +1,7 @@
 import pytest
 
 import virtool.downloads
+import virtool.downloads.utils
 
 
 def test_format_fasta_entry():

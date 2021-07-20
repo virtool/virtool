@@ -4,6 +4,7 @@ import logging
 import aiohttp.web
 import aiojobs
 import aiojobs.aiohttp
+from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
 
 import virtool.db.core
 import virtool.db.migrate
@@ -27,7 +28,6 @@ import virtool.shutdown
 import virtool.startup
 import virtool.utils
 import virtool.version
-from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
 
 logger = logging.getLogger(__name__)
 

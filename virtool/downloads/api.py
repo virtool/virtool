@@ -2,8 +2,6 @@
 Provides request handlers for file downloads.
 
 """
-import os
-
 from aiohttp import web
 
 import virtool.analyses.db
@@ -86,4 +84,3 @@ async def download_sequence(req):
     return web.Response(text=fasta, headers={
         "Content-Disposition": f"attachment; filename={filename}"
     })
-
