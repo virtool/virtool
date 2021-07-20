@@ -53,7 +53,7 @@ const getFileNameFromId = (id, files) => {
 
 const validationSchema = Yup.object().shape({
     name: Yup.string().required("Required Field"),
-    selected: Yup.array().min(1, "At least one read file must be attached to the sample")
+    readFiles: Yup.array().min(1, "At least one read file must be attached to the sample")
 });
 
 export const CreateSample = props => {
@@ -70,7 +70,7 @@ export const CreateSample = props => {
         locale: "",
         libraryType: "normal",
         subtractionIds: [],
-        selected: [],
+        readFiles: [],
         group: props.forceGroupChoice ? "none" : ""
     };
 
@@ -110,8 +110,8 @@ export const CreateSample = props => {
                                     <InputIcon
                                         name="magic"
                                         data-testid="Auto Fill"
-                                        onClick={e => autofill(values.selected, setFieldValue, e)}
-                                        disabled={!values.selected.length}
+                                        onClick={e => autofill(values.readFiles, setFieldValue, e)}
+                                        disabled={!values.readFiles.length}
                                     />
                                 </InputContainer>
                                 {touched.name && <InputError>{errors.name}</InputError>}
@@ -152,7 +152,7 @@ export const CreateSample = props => {
                                     name="pairedness"
                                     aria-label="Pairedness"
                                     readOnly={true}
-                                    value={values.selected.length === 2 ? "Paired" : "Unpaired"}
+                                    value={values.readFiles.length === 2 ? "Paired" : "Unpaired"}
                                 />
                             </InputGroup>
                         </CreateSampleFields>
@@ -176,12 +176,12 @@ export const CreateSample = props => {
                         )}
 
                         <Field
-                            name="selected"
+                            name="readFiles"
                             as={ReadSelector}
                             files={props.readyReads}
-                            selected={values.selected}
-                            onSelect={selection => setFieldValue("selected", selection)}
-                            error={touched.selected ? errors.selected : null}
+                            selected={values.readFiles}
+                            onSelect={selection => setFieldValue("readFiles", selection)}
+                            error={touched.readFiles ? errors.readFiles : null}
                         />
                         <SaveButton />
                     </Form>
