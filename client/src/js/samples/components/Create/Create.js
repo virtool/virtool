@@ -82,8 +82,14 @@ export const CreateSample = props => {
     };
 
     const handleSubmit = values => {
-        const { name, isolate, host, locale, libraryType, subtractionIds, files, group } = values;
-        props.onCreate(name, isolate, host, locale, libraryType, subtractionIds, files, group);
+        const { name, isolate, host, locale, libraryType, subtractionIds, readFiles, group } = values;
+
+        // Only send the group if a group was selected
+        if (group && group !== "none") {
+            props.onCreate(name, isolate, host, locale, libraryType, subtractionIds, readFiles, group);
+        } else {
+            props.onCreate(name, isolate, host, locale, libraryType, subtractionIds, readFiles);
+        }
     };
 
     return (
@@ -206,7 +212,15 @@ export const mapDispatchToProps = dispatch => ({
     },
 
     onCreate: (name, isolate, host, locale, libraryType, subtractionIds, files, group) => {
-        dispatch(createSample(name, isolate, host, locale, libraryType, subtractionIds, files, group));
+        if (group) {
+            dispatch(createSample(name, isolate, host, locale, libraryType, subtractionIds, files, group));
+        } else {
+            dispatch(createSample(name, isolate, host, locale, libraryType, subtractionIds, files));
+        }
+    },
+
+    onCreateWithoutGroup: (name, isolate, host, locale, libraryType, subtractionIds, files) => {
+        dispatch(createSample(name, isolate, host, locale, libraryType, subtractionIds, files));
     },
 
     onClearError: () => {
