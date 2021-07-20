@@ -5,7 +5,7 @@ import pytest
 from aiohttp.web_routedef import RouteTableDef
 
 import virtool.app
-import virtool.jobs_api.main
+import virtool.jobs.main
 import virtool.users.utils
 from virtool.utils import hash_key
 
@@ -175,7 +175,7 @@ def spawn_job_client(
         else:
             auth = None
 
-        app = await virtool.jobs_api.main.create_app(
+        app = await virtool.jobs.main.create_app(
             db_connection_string=test_db_connection_string,
             db_name=test_db_name,
             dev=dev,

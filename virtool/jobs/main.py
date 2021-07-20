@@ -5,8 +5,8 @@ import aiohttp.web
 import aiojobs.aiohttp
 
 import virtool.http.accept
-import virtool.jobs_api.auth
-import virtool.jobs_api.routes
+import virtool.jobs.auth
+import virtool.jobs.routes
 import virtool.logs
 import virtool.shutdown
 import virtool.startup
@@ -19,7 +19,7 @@ async def create_app(**config):
     """Crate the :class:`aiohttp.web.Application` for the jobs API process."""
     middlewares = [
         virtool.http.accept.middleware,
-        virtool.jobs_api.auth.middleware,
+        virtool.jobs.auth.middleware,
     ]
 
     app: aiohttp.web.Application = aiohttp.web.Application(middlewares=middlewares)
@@ -38,7 +38,7 @@ async def create_app(**config):
         virtool.startup.init_executors,
         virtool.startup.init_fake,
         virtool.startup.init_events,
-        virtool.jobs_api.routes.init_routes,
+        virtool.jobs.routes.init_routes,
     ])
 
     app.on_shutdown.extend([
