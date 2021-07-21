@@ -13,11 +13,11 @@ import aiojobs
 import aiojobs.aiohttp
 import pymongo.errors
 
+import virtool.db.mongo
 import virtool.pg.utils
 import virtool.redis
 from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.db.migrate import migrate
-from virtool.db.mongo import create_indexes
 from virtool.dev.fake import create_fake_data_path, populate
 from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.dispatcher import Dispatcher
