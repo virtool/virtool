@@ -1,6 +1,6 @@
 import pytest
 
-import virtool.jobs.interface
+from virtool.jobs.client import JobsClient
 
 
 @pytest.fixture
@@ -10,33 +10,33 @@ def jobs_client(dbi, redis):
         "redis": redis
     }
 
-    return virtool.jobs.interface.JobsClient(app)
+    return JobsClient(app)
 
 
 async def test_init(dbi, redis, jobs_client):
     assert jobs_client.redis == redis
 
 
-@pytest.mark.parametrize("size", ["lg", "sm"])
-async def test_enqueue(size, dbi, redis, jobs_client):
+@pytest.mark.parametrize("workflow_name", ["nuvs", "create_sample"])
+async def test_enqueue(workflow_name, dbi, redis, jobs_client):
     await dbi.jobs.insert_one({
         "_id": "foo",
-        "task": "nuvs" if size == "lg" else "create_sample"
+        "task": workflow_name
     })
 
     await jobs_client.enqueue("foo")
 
-    key = f"jobs_{size}"
+    key = f"jobs_{workflow_name}"
 
     assert await redis.llen(key) == 1
     assert await redis.lpop(key, encoding="utf-8") == "foo"
 
 
-@pytest.mark.parametrize("size", ["lg", "sm"])
-async def test_cancel_waiting(size, dbi, redis, jobs_client, static_time):
-    await redis.rpush(f"jobs_{size}", "foo")
+@pytest.mark.parametrize("workflow_name", ["nuvs", "create_sample"])
+async def test_cancel_waiting(workflow_name, dbi, redis, jobs_client, static_time):
+    await redis.rpush(f"jobs_{workflow_name}", "foo")
 
-    list_keys = ["jobs_lg", "jobs_sm"]
+    list_keys = ["jobs_nuvs", "jobs_create_sample"]
 
     for key in list_keys:
         await redis.rpush(key, "bar", "foo", "baz", "boo")

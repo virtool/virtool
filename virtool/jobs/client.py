@@ -1,12 +1,20 @@
 import logging
 from asyncio import gather
 
-import virtool.db.utils
-import virtool.jobs.db
-import virtool.jobs.utils
-from virtool.jobs.db import PROJECTION
+from virtool.db.utils import get_one_field
+from virtool.jobs.db import PROJECTION, cancel
 
 logger = logging.getLogger(__name__)
+
+
+WORKFLOW_NAMES = (
+    "jobs_build_index",
+    "jobs_create_sample",
+    "jobs_create_subtraction",
+    "jobs_aodp",
+    "jobs_nuvs",
+    "jobs_pathoscope_bowtie"
+)
 
 
 class JobsClient:
@@ -16,10 +24,9 @@ class JobsClient:
         self.redis = app["redis"]
 
     async def enqueue(self, job_id):
-        task = await virtool.db.utils.get_one_field(self.db.jobs, "task", job_id)
-        size = virtool.jobs.utils.TASK_SIZES[task]
+        task = await get_one_field(self.db.jobs, "task", job_id)
 
-        await self.redis.rpush(f"jobs_{size}", job_id)
+        await self.redis.rpush(f"jobs_{task}", job_id)
 
         logger.debug(f"Enqueued job: {job_id}")
 
@@ -37,14 +44,12 @@ class JobsClient:
         :return: the updated job document
 
         """
-        counts = await gather(
-            self.redis.lrem("jobs_lg", 0, job_id),
-            self.redis.lrem("jobs_sm", 0, job_id)
-        )
+        lrem_calls = [self.redis.lrem(workflow_name, 0, job_id) for workflow_name in WORKFLOW_NAMES]
+        counts = await gather(*lrem_calls)
 
         if any(counts):
             logger.debug(f"Removed job from Redis job queue: {job_id}")
-            return await virtool.jobs.db.cancel(self.db, job_id)
+            return await cancel(self.db, job_id)
 
         document = await self.db.jobs.find_one_and_update({"_id": job_id}, {
             "$set": {

@@ -13,41 +13,34 @@ import aiojobs
 import aiojobs.aiohttp
 import pymongo.errors
 
-import virtool.analyses.db
-import virtool.config
-import virtool.db.migrate
 import virtool.db.mongo
-import virtool.dev.fake
-import virtool.dispatcher
-import virtool.hmm.db
-import virtool.jobs.interface
 import virtool.pg.utils
 import virtool.redis
-import virtool.references.db
-import virtool.routes
-import virtool.sentry
-import virtool.settings.db
-import virtool.subtractions.db
-import virtool.subtractions.utils
-import virtool.tasks.pg
-import virtool.utils
-import virtool.version
 from virtool.analyses.tasks import StoreNuvsFilesTask
-from virtool.dev.fake import create_fake_data_path
+from virtool.db.migrate import migrate
+from virtool.dev.fake import create_fake_data_path, populate
 from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.fake.wrapper import FakerWrapper
+from virtool.hmm.db import refresh
+from virtool.jobs.client import JobsClient
 from virtool.pg.testing import create_test_database
+from virtool.references.db import refresh_remotes
 from virtool.references.tasks import CreateIndexJSONTask, DeleteReferenceTask
+from virtool.routes import setup_routes
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
+from virtool.sentry import setup
+from virtool.settings.db import ensure
+from virtool.subtractions.db import check_subtraction_fasta_files
 from virtool.subtractions.tasks import AddSubtractionFilesTask, WriteSubtractionFASTATask
 from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
 from virtool.uploads.tasks import MigrateFilesTask
-from virtool.utils import random_alphanumeric
+from virtool.utils import random_alphanumeric, get_client_path, ensure_data_dir
+from virtool.version import determine_server_version
 
 logger = logging.getLogger("startup")
 
@@ -82,7 +75,7 @@ async def init_check_db(app: aiohttp.web_app.Application):
     db = app["db"]
 
     logger.info("Checking database")
-    await virtool.db.migrate.migrate(app)
+    await migrate(app)
 
     # Make sure the indexes collection exists before later trying to set an compound index on it.
     try:
@@ -96,7 +89,7 @@ async def init_check_db(app: aiohttp.web_app.Application):
 
 async def init_client_path(app: aiohttp.web_app.Application):
     if not app["settings"]["no_client"]:
-        app["client_path"] = await virtool.utils.get_client_path()
+        app["client_path"] = await get_client_path()
 
         if app["client_path"] is None:
             logger.critical("Client files not found")
@@ -190,7 +183,7 @@ async def init_executors(app: aiohttp.web.Application):
 async def init_fake(app: aiohttp.web_app.Application):
     if app["config"]["fake"]:
         app["fake"] = FakerWrapper()
-        await virtool.dev.fake.populate(app)
+        await populate(app)
 
 
 async def init_fake_config(app: App):
@@ -238,7 +231,7 @@ async def init_jobs_client(app: aiohttp.web_app.Application):
     :type app: :class:`aiohttp.aiohttp.web.Application`
 
     """
-    app["jobs"] = virtool.jobs.interface.JobsClient(app)
+    app["jobs"] = JobsClient(app)
 
 
 async def init_http_client(app: aiohttp.web.Application):
@@ -264,7 +257,7 @@ async def init_http_client(app: aiohttp.web.Application):
 async def init_paths(app: aiohttp.web_app.Application):
     if app["settings"]["no_check_files"] is False:
         logger.info("Checking files")
-        virtool.utils.ensure_data_dir(app["settings"]["data_path"])
+        ensure_data_dir(app["settings"]["data_path"])
 
 
 async def init_postgres(app: aiohttp.web_app.Application):
@@ -300,13 +293,13 @@ async def init_refresh(app: aiohttp.web.Application):
 
     scheduler = get_scheduler_from_app(app)
 
-    await scheduler.spawn(virtool.references.db.refresh_remotes(app))
-    await scheduler.spawn(virtool.hmm.db.refresh(app))
+    await scheduler.spawn(refresh_remotes(app))
+    await scheduler.spawn(refresh(app))
 
 
 async def init_routes(app: aiohttp.web_app.Application):
     logger.debug("Setting up routes")
-    virtool.routes.setup_routes(app)
+    setup_routes(app)
 
 
 async def init_sentry(app: typing.Union[dict, aiohttp.web_app.Application]):
@@ -314,7 +307,7 @@ async def init_sentry(app: typing.Union[dict, aiohttp.web_app.Application]):
             and app["settings"].get("enable_sentry", True)
             and not app["settings"]["dev"]):
         logger.info("Configuring Sentry")
-        virtool.sentry.setup(app["version"])
+        setup(app["version"])
 
     else:
         logger.info("Skipped configuring Sentry")
@@ -329,7 +322,7 @@ async def init_settings(app: typing.Union[dict, aiohttp.web.Application]):
     :param app: the app object
 
     """
-    from_db = await virtool.settings.db.ensure(app["db"])
+    from_db = await ensure(app["db"])
 
     app["settings"] = {
         **app["config"],
@@ -353,7 +346,7 @@ async def init_version(app: typing.Union[dict, aiohttp.web.Application]):
     if force_version:
         version = force_version
     else:
-        version = await virtool.version.determine_server_version(sys.path[0])
+        version = await determine_server_version(sys.path[0])
 
     logger.info(f"Virtool {version}")
     logger.info(f"Mode: {app['mode']}")
@@ -384,7 +377,7 @@ async def init_tasks(app: aiohttp.web.Application):
     scheduler = get_scheduler_from_app(app)
 
     logger.info("Checking subtraction FASTA files")
-    subtractions_without_fasta = await virtool.subtractions.db.check_subtraction_fasta_files(
+    subtractions_without_fasta = await check_subtraction_fasta_files(
         app["db"], app["settings"])
     for subtraction in subtractions_without_fasta:
         await app["tasks"].add(WriteSubtractionFASTATask, context={"subtraction": subtraction})

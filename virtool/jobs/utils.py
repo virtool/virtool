@@ -1,18 +1,6 @@
 from typing import Dict, List, Optional, Sequence, Union
 from virtool.http.rights import MODIFY, READ, REMOVE, Right
 
-TASK_LG = "lg"
-TASK_SM = "sm"
-
-TASK_SIZES = {
-    "build_index": TASK_SM,
-    "create_sample": TASK_SM,
-    "create_subtraction": TASK_SM,
-    "aodp": TASK_LG,
-    "nuvs": TASK_LG,
-    "pathoscope_bowtie": TASK_LG,
-}
-
 
 class JobRightsDomain:
     """
