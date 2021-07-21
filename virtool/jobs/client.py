@@ -17,9 +17,8 @@ class JobsClient:
 
     async def enqueue(self, job_id):
         task = await virtool.db.utils.get_one_field(self.db.jobs, "task", job_id)
-        size = virtool.jobs.utils.TASK_SIZES[task]
 
-        await self.redis.rpush(f"jobs_{size}", job_id)
+        await self.redis.rpush(f"jobs_{task}", job_id)
 
         logger.debug(f"Enqueued job: {job_id}")
 
@@ -38,8 +37,12 @@ class JobsClient:
 
         """
         counts = await gather(
-            self.redis.lrem("jobs_lg", 0, job_id),
-            self.redis.lrem("jobs_sm", 0, job_id)
+            self.redis.lrem("jobs_build_index", 0, job_id),
+            self.redis.lrem("jobs_create_sample", 0, job_id),
+            self.redis.lrem("jobs_create_subtraction", 0, job_id),
+            self.redis.lrem("jobs_aodp", 0, job_id),
+            self.redis.lrem("jobs_nuvs", 0, job_id),
+            self.redis.lrem("jobs_pathoscope_bowtie", 0, job_id)
         )
 
         if any(counts):

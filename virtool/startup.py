@@ -20,7 +20,7 @@ import virtool.db.mongo
 import virtool.dev.fake
 import virtool.dispatcher
 import virtool.hmm.db
-import virtool.jobs.interface
+import virtool.jobs.client
 import virtool.pg.utils
 import virtool.redis
 import virtool.references.db
@@ -238,7 +238,7 @@ async def init_jobs_client(app: aiohttp.web_app.Application):
     :type app: :class:`aiohttp.aiohttp.web.Application`
 
     """
-    app["jobs"] = virtool.jobs.interface.JobsClient(app)
+    app["jobs"] = virtool.jobs.client.JobsClient(app)
 
 
 async def init_http_client(app: aiohttp.web.Application):
