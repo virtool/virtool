@@ -2,16 +2,6 @@ from typing import Dict, List, Optional, Sequence, Union
 from virtool.http.rights import MODIFY, READ, REMOVE, Right
 
 
-WORKFLOW_NAMES = (
-    "build_index",
-    "create_sample",
-    "create_subtraction",
-    "aodp",
-    "nuvs",
-    "pathoscope_bowtie"
-)
-
-
 class JobRightsDomain:
     """
     Job rights that are specific to

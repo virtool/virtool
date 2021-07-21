@@ -1,6 +1,6 @@
 import pytest
 
-import virtool.jobs.client
+from virtool.jobs.client import JobsClient
 
 
 @pytest.fixture
@@ -10,7 +10,7 @@ def jobs_client(dbi, redis):
         "redis": redis
     }
 
-    return virtool.jobs.client.JobsClient(app)
+    return JobsClient(app)
 
 
 async def test_init(dbi, redis, jobs_client):
