@@ -154,7 +154,10 @@ async def create(req):
 
     task_args = {
         "subtraction_id": subtraction_id,
-        "upload_id": upload_id
+        "files": [{
+            "id": upload_id,
+            "name": filename
+        }]
     }
 
     rights = JobRights()
@@ -301,7 +304,7 @@ async def remove(req):
 @routes.jobs_api.patch("/api/subtractions/{subtraction_id}")
 @schema({
     "gc": {"type": "dict", "required": True},
-    "count": {"type": "int", "required": True}
+    "count": {"type": "integer", "required": True}
 })
 async def finalize_subtraction(req: aiohttp.web.Request):
     """
