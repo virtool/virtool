@@ -71,7 +71,7 @@ export const CreateSample = props => {
         libraryType: "normal",
         subtractionIds: [],
         readFiles: [],
-        group: props.forceGroupChoice ? "none" : ""
+        group: props.forceGroupChoice ? "none" : null
     };
 
     const autofill = (selected, setFieldValue) => {
@@ -84,9 +84,18 @@ export const CreateSample = props => {
     const handleSubmit = values => {
         const { name, isolate, host, locale, libraryType, subtractionIds, readFiles, group } = values;
 
-        // Only send the group if a group was selected
-        if (group && group !== "none") {
-            props.onCreate(name, isolate, host, locale, libraryType, subtractionIds, readFiles, group);
+        // Only send the group if forceGroupChoice is true
+        if (props.forceGroupChoice) {
+            props.onCreate(
+                name,
+                isolate,
+                host,
+                locale,
+                libraryType,
+                subtractionIds,
+                readFiles,
+                group === "none" ? "" : group
+            );
         } else {
             props.onCreate(name, isolate, host, locale, libraryType, subtractionIds, readFiles);
         }
@@ -212,10 +221,10 @@ export const mapDispatchToProps = dispatch => ({
     },
 
     onCreate: (name, isolate, host, locale, libraryType, subtractionIds, files, group) => {
-        if (group) {
-            dispatch(createSample(name, isolate, host, locale, libraryType, subtractionIds, files, group));
-        } else {
+        if (group === null) {
             dispatch(createSample(name, isolate, host, locale, libraryType, subtractionIds, files));
+        } else {
+            dispatch(createSample(name, isolate, host, locale, libraryType, subtractionIds, files, group));
         }
     },
 
