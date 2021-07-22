@@ -8,7 +8,6 @@ import virtool.http.accept
 import virtool.jobs.auth
 from virtool.dev.fake import drop_fake_mongo, remove_fake_data_path
 from virtool.jobs.routes import init_routes
-from virtool.logs import configure_jobs_api_server
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
 from virtool.shutdown import drop_fake_postgres
 from virtool.startup import init_fake_config, init_redis, init_db, init_postgres, init_settings, init_executors, \
@@ -73,7 +72,7 @@ async def start_aiohttp_server(
     return app, runner
 
 
-async def run(dev: bool, verbose: bool, **config):
+async def run(**config):
     """
     Run the jobs API server.
 
@@ -81,7 +80,6 @@ async def run(dev: bool, verbose: bool, **config):
     :param verbose: Same effect as :obj:`dev`
     :param config: Any other configuration options as keyword arguments
     """
-    logger = configure_jobs_api_server(dev, verbose)
     app, runner = await start_aiohttp_server(**config)
 
     _, pending = await asyncio.wait(
