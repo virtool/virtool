@@ -299,7 +299,10 @@ async def remove(req):
 
 
 @routes.jobs_api.patch("/api/subtractions/{subtraction_id}")
-@schema({"gc": {"type": "dict", "required": True}})
+@schema({
+    "gc": {"type": "dict", "required": True},
+    "count": {"type": "int", "required": True}
+})
 async def finalize_subtraction(req: aiohttp.web.Request):
     """
     Sets the gc field for an subtraction and marks it as ready.
@@ -319,7 +322,7 @@ async def finalize_subtraction(req: aiohttp.web.Request):
     if "ready" in document and document["ready"]:
         return conflict("Subtraction has already been finalized")
 
-    finalized = await virtool.subtractions.db.finalize(db, pg, subtraction_id, data["gc"])
+    finalized = await virtool.subtractions.db.finalize(db, pg, subtraction_id, data["gc"], data["count"])
     with_computed = await attach_computed(req.app, finalized)
 
     return json_response(virtool.utils.base_processor(with_computed))

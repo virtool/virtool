@@ -97,7 +97,8 @@ async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is, 
             "g": 0.18,
             "c": 0.18,
             "n": 0.002
-        }
+        },
+        "count": 100,
     }
 
     client = await spawn_job_client(authorize=True)

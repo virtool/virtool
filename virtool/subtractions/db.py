@@ -183,7 +183,13 @@ async def delete(app: App, subtraction_id: str) -> int:
     return update_result.modified_count
 
 
-async def finalize(db, pg: AsyncEngine, subtraction_id: str, gc: Dict[str, float]) -> dict:
+async def finalize(
+    db,
+    pg: AsyncEngine,
+    subtraction_id: str,
+    gc: Dict[str, float],
+    count: int,
+) -> dict:
     """
     Finalize a subtraction by setting `ready` to True and updating the `gc` and `files` fields.
 
@@ -197,7 +203,8 @@ async def finalize(db, pg: AsyncEngine, subtraction_id: str, gc: Dict[str, float
     updated_document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
         "$set": {
             "gc": gc,
-            "ready": True
+            "ready": True,
+            "count": count,
         }
     })
 
