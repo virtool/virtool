@@ -123,7 +123,7 @@ async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is, 
         return
 
     if error == "422":
-        assert await resp_is.invalid_input(resp, {'gc': ['required field']})
+        assert await resp_is.invalid_input(resp, {'gc': ['required field'], 'count': ['required field']})
         return
 
     assert resp.status == 200

@@ -117,6 +117,7 @@ snapshots['test_finalize_subtraction[uvloop-None] 1'] = {
         'n': 0.002,
         't': 0.319
     },
+    "count": 100,
     'id': 'foo',
     'linked_samples': [
     ],
@@ -151,5 +152,6 @@ snapshots['test_finalize_subtraction[uvloop-None] 2'] = {
     },
     'name': 'Foo',
     'nickname': 'Foo Subtraction',
+    "count": 100,
     'ready': True
 }
