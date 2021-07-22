@@ -51,7 +51,7 @@ snapshots['test_acquire[uvloop-None] 1'] = {
             'timestamp': '2015-10-06T20:00:00Z'
         }
     ],
-    'task': 'build_index',
+    'workflow': 'build_index',
     'user': {
         'id': 'igboyes'
     }
@@ -94,7 +94,7 @@ snapshots['test_cancel[uvloop] 1'] = {
             'timestamp': '2015-10-06T20:00:00Z'
         }
     ],
-    'task': 'build_index',
+    'workflow': 'build_index',
     'user': {
         'id': 'igboyes'
     }
@@ -143,7 +143,7 @@ snapshots['test_get[uvloop-None] 1'] = {
             'timestamp': '2015-10-06T20:00:00Z'
         }
     ],
-    'task': 'build_index',
+    'workflow': 'build_index',
     'user': {
         'id': 'igboyes'
     }

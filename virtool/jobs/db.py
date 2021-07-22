@@ -6,7 +6,6 @@ from typing import Any, Dict, Optional
 
 import virtool.utils
 from virtool.jobs.utils import JobRights
-from virtool.utils import base_processor
 
 OR_COMPLETE = [
     {"status.state": "complete"}
@@ -20,7 +19,7 @@ OR_FAILED = [
 #: A projection for minimal representations of jobs suitable for search results.
 LIST_PROJECTION = [
     "_id",
-    "task",
+    "workflow",
     "status",
     "proc",
     "mem",
@@ -56,7 +55,7 @@ async def cancel(db, job_id: str) -> dict:
                 "timestamp": virtool.utils.timestamp()
             }
         }
-    }, projection=virtool.jobs.db.PROJECTION)
+    }, projection=PROJECTION)
 
 
 async def clear(db, complete: bool = False, failed: bool = False):
@@ -83,7 +82,7 @@ async def clear(db, complete: bool = False, failed: bool = False):
 
 async def create(
         db,
-        workflow_name: str,
+        workflow: str,
         job_args: Dict[str, Any],
         user_id: str,
         rights: JobRights,
@@ -93,7 +92,7 @@ async def create(
     Create, insert, and return a job document.
 
     :param db: the application database object
-    :param workflow_name: the name of the workflow to run
+    :param workflow: the name of the workflow to run
     :param job_args: the arguments required to run the job
     :param user_id: the user that started the job
     :param rights: the rights the job will have on Virtool resources
@@ -102,7 +101,7 @@ async def create(
     """
     document = {
         "acquired": False,
-        "task": workflow_name,
+        "workflow": workflow,
         "args": job_args,
         "key": None,
         "rights": rights.as_dict(),
@@ -149,7 +148,7 @@ async def acquire(db, job_id: str) -> Dict[str, Any]:
 
     document["key"] = key
 
-    return base_processor(document)
+    return virtool.utils.base_processor(document)
 
 
 async def processor(db, document: dict) -> dict:

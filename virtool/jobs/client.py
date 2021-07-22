@@ -24,9 +24,9 @@ class JobsClient:
         self.redis = app["redis"]
 
     async def enqueue(self, job_id):
-        task = await get_one_field(self.db.jobs, "task", job_id)
+        workflow = await get_one_field(self.db.jobs, "workflow", job_id)
 
-        await self.redis.rpush(f"jobs_{task}", job_id)
+        await self.redis.rpush(f"jobs_{workflow}", job_id)
 
         logger.debug(f"Enqueued job: {job_id}")
 

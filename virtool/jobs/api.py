@@ -1,18 +1,17 @@
 import os
 
-import virtool.api.utils
-import virtool.http.routes
 import virtool.jobs.db
 import virtool.users.db
 import virtool.utils
 from virtool.api.response import bad_request, conflict, json_response, no_content, \
     not_found
+from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_one_field
+from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.db import PROJECTION
-from virtool.utils import base_processor
 
-routes = virtool.http.routes.Routes()
+routes = Routes()
 
 
 @routes.get("/api/jobs")
@@ -28,9 +27,9 @@ async def find(req):
     db_query = dict()
 
     if term:
-        db_query.update(virtool.api.utils.compose_regex_query(term, ["task", "user.id"]))
+        db_query.update(compose_regex_query(term, ["workflow", "user.id"]))
 
-    data = await virtool.api.utils.paginate(
+    data = await paginate(
         db.jobs,
         db_query,
         req.query,
@@ -85,7 +84,7 @@ async def acquire(req):
 
     document = await virtool.jobs.db.acquire(db, job_id)
 
-    return json_response(base_processor(document))
+    return json_response(virtool.utils.base_processor(document))
 
 
 @routes.put("/api/jobs/{job_id}/cancel", permission="cancel_job")

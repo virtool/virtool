@@ -58,7 +58,7 @@ snapshots['test_create[uvloop-False] 1'] = {
             'timestamp': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)')
         }
     ],
-    'task': 'create_sample',
+    'workflow': 'create_sample',
     'user': {
         'id': 'bob'
     }
@@ -94,7 +94,7 @@ snapshots['test_create[uvloop-True] 1'] = {
             'timestamp': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)')
         }
     ],
-    'task': 'create_sample',
+    'workflow': 'create_sample',
     'user': {
         'id': 'bob'
     }
@@ -118,7 +118,7 @@ snapshots['test_processor[uvloop] 1'] = {
     'progress': 1.0,
     'stage': 'import_results',
     'state': 'complete',
-    'task': 'build_index',
+    'workflow': 'build_index',
     'user': {
         'id': 'igboyes'
     }
