@@ -3,23 +3,23 @@ import shutil
 from typing import List
 
 import virtool.indexes.db
-import virtool.references.db
-import virtool.subtractions.db
 import virtool.jobs.db
-import virtool.utils
-from virtool.jobs.utils import JobRights
-from virtool.otus.fake import create_fake_otus
+import virtool.subtractions.db
 from virtool.analyses.files import create_analysis_file
 from virtool.example import example_path
+from virtool.fake.identifiers import USER_ID
 from virtool.fake.wrapper import FakerWrapper
 from virtool.hmm.fake import create_fake_hmms
 from virtool.indexes.fake import INDEX_FILES
 from virtool.indexes.files import create_index_file
+from virtool.jobs.utils import JobRights
+from virtool.otus.fake import create_fake_otus
+from virtool.references.db import create_document
 from virtool.samples.fake import create_fake_sample
 from virtool.subtractions.fake import (create_fake_fasta_upload,
                                        create_fake_finalized_subtraction)
-from virtool.fake.identifiers import USER_ID
 from virtool.types import App
+from virtool.utils import timestamp
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ class TestCaseDataFactory:
         document = {
             "_id": id_,
             "workflow": workflow,
-            "created_at": virtool.utils.timestamp(),
+            "created_at": timestamp(),
             "ready": ready,
             "job": {
                 "id": self.job_id
@@ -128,7 +128,7 @@ class TestCaseDataFactory:
 
     async def reference(self) -> dict:
         id_ = self.fake.get_mongo_id()
-        document = await virtool.references.db.create_document(
+        document = await create_document(
             db=self.db,
             settings=self.settings,
             ref_id=id_,

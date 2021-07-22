@@ -6,7 +6,6 @@ from typing import Any, Dict, Optional
 
 import virtool.utils
 from virtool.jobs.utils import JobRights
-from virtool.utils import base_processor
 
 OR_COMPLETE = [
     {"status.state": "complete"}
@@ -56,7 +55,7 @@ async def cancel(db, job_id: str) -> dict:
                 "timestamp": virtool.utils.timestamp()
             }
         }
-    }, projection=virtool.jobs.db.PROJECTION)
+    }, projection=PROJECTION)
 
 
 async def clear(db, complete: bool = False, failed: bool = False):
@@ -149,7 +148,7 @@ async def acquire(db, job_id: str) -> Dict[str, Any]:
 
     document["key"] = key
 
-    return base_processor(document)
+    return virtool.utils.base_processor(document)
 
 
 async def processor(db, document: dict) -> dict:

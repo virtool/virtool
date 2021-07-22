@@ -6,12 +6,13 @@ import aiojobs.aiohttp
 
 import virtool.http.accept
 import virtool.jobs.auth
-import virtool.jobs.routes
-import virtool.logs
-import virtool.shutdown
-import virtool.startup
 from virtool.dev.fake import drop_fake_mongo, remove_fake_data_path
+from virtool.jobs.routes import init_routes
+from virtool.logs import configure_jobs_api_server
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
+from virtool.shutdown import drop_fake_postgres
+from virtool.startup import init_fake_config, init_redis, init_db, init_postgres, init_settings, init_executors, \
+    init_fake, init_events
 from virtool.types import App
 
 
@@ -30,21 +31,21 @@ async def create_app(**config):
     aiojobs.aiohttp.setup(app)
 
     app.on_startup.extend([
-        virtool.startup.init_fake_config,
-        virtool.startup.init_redis,
-        virtool.startup.init_db,
-        virtool.startup.init_postgres,
-        virtool.startup.init_settings,
-        virtool.startup.init_executors,
-        virtool.startup.init_fake,
-        virtool.startup.init_events,
-        virtool.jobs.routes.init_routes,
+        init_fake_config,
+        init_redis,
+        init_db,
+        init_postgres,
+        init_settings,
+        init_executors,
+        init_fake,
+        init_events,
+        init_routes,
     ])
 
     app.on_shutdown.extend([
         shutdown,
         drop_fake_mongo,
-        virtool.shutdown.drop_fake_postgres,
+        drop_fake_postgres,
         remove_fake_data_path,
     ])
 
@@ -80,7 +81,7 @@ async def run(dev: bool, verbose: bool, **config):
     :param verbose: Same effect as :obj:`dev`
     :param config: Any other configuration options as keyword arguments
     """
-    logger = virtool.logs.configure_jobs_api_server(dev, verbose)
+    logger = configure_jobs_api_server(dev, verbose)
     app, runner = await start_aiohttp_server(**config)
 
     _, pending = await asyncio.wait(
