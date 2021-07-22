@@ -17,24 +17,24 @@ async def test_init(dbi, redis, jobs_client):
     assert jobs_client.redis == redis
 
 
-@pytest.mark.parametrize("workflow_name", ["nuvs", "create_sample"])
-async def test_enqueue(workflow_name, dbi, redis, jobs_client):
+@pytest.mark.parametrize("workflow", ["nuvs", "create_sample"])
+async def test_enqueue(workflow, dbi, redis, jobs_client):
     await dbi.jobs.insert_one({
         "_id": "foo",
-        "task": workflow_name
+        "workflow": workflow
     })
 
     await jobs_client.enqueue("foo")
 
-    key = f"jobs_{workflow_name}"
+    key = f"jobs_{workflow}"
 
     assert await redis.llen(key) == 1
     assert await redis.lpop(key, encoding="utf-8") == "foo"
 
 
-@pytest.mark.parametrize("workflow_name", ["nuvs", "create_sample"])
-async def test_cancel_waiting(workflow_name, dbi, redis, jobs_client, static_time):
-    await redis.rpush(f"jobs_{workflow_name}", "foo")
+@pytest.mark.parametrize("workflow", ["nuvs", "create_sample"])
+async def test_cancel_waiting(workflow, dbi, redis, jobs_client, static_time):
+    await redis.rpush(f"jobs_{workflow}", "foo")
 
     list_keys = ["jobs_nuvs", "jobs_create_sample"]
 

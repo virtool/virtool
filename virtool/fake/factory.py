@@ -186,7 +186,7 @@ class TestCaseDataFactory:
     async def job(self, workflow: str, args: dict, rights=JobRights()):
         return await virtool.jobs.db.create(
             db=self.db,
-            workflow_name=workflow,
+            workflow=workflow,
             job_args=args,
             user_id=self.user_id,
             job_id=self.job_id,

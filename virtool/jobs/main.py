@@ -89,5 +89,5 @@ async def run(dev: bool, verbose: bool, **config):
         return_when=asyncio.FIRST_COMPLETED,
     )
 
-    for task in pending:
-        task.cancel()
+    for job in pending:
+        job.cancel()

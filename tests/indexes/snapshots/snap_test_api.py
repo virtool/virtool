@@ -40,7 +40,7 @@ snapshots['TestCreate.test[True-uvloop] 1'] = {
             'timestamp': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)')
         }
     ],
-    'task': 'build_index',
+    'workflow': 'build_index',
     'user': {
         'id': 'test'
     }

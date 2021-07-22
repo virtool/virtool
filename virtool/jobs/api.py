@@ -28,7 +28,7 @@ async def find(req):
     db_query = dict()
 
     if term:
-        db_query.update(virtool.api.utils.compose_regex_query(term, ["task", "user.id"]))
+        db_query.update(virtool.api.utils.compose_regex_query(term, ["workflow", "user.id"]))
 
     data = await virtool.api.utils.paginate(
         db.jobs,

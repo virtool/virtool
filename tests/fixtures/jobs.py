@@ -81,7 +81,7 @@ def test_job(dbi, static_time):
                 "progress": 1.0
             }
         ],
-        "task": "build_index",
+        "workflow": "build_index",
         "user": {
             "id": "igboyes"
         }
