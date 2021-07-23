@@ -1,6 +1,9 @@
 import logging
 import shutil
+import yaml
+import aiofiles
 from typing import List
+from operator import itemgetter
 
 import virtool.indexes.db
 import virtool.jobs.db
@@ -20,9 +23,21 @@ from virtool.subtractions.fake import (create_fake_fasta_upload,
                                        create_fake_finalized_subtraction)
 from virtool.types import App
 from virtool.utils import timestamp
+from dataclasses import dataclass
+from types import SimpleNamespace
 
 logger = logging.getLogger(__name__)
 
+@dataclass
+class WorkflowTestCase:
+    """A collection of records required for a particular workflow run."""
+    job: SimpleNamespace
+    workflow: str
+    analysis: SimpleNamespace
+    index: SimpleNamespace
+    reference: SimpleNamespace
+    sample: SimpleNamespace
+    subtractions: List[SimpleNamespace]
 
 class TestCaseDataFactory:
     """Initialize the database with fake data for a test case."""
@@ -90,14 +105,14 @@ class TestCaseDataFactory:
 
         return document
 
-    async def sample(self, paired: bool, finalized: bool) -> dict:
+    async def sample(self, paired: bool, finalize: bool) -> dict:
         sample_id = self.fake.get_mongo_id()
         return await create_fake_sample(
             app=self.app,
             sample_id=sample_id,
             user_id=self.user_id,
             paired=paired,
-            finalized=finalized,
+            finalized=finalize,
         )
 
     async def subtraction(self, finalize=True) -> dict:
@@ -192,3 +207,72 @@ class TestCaseDataFactory:
             job_id=self.job_id,
             rights=rights,
         )
+
+
+async def load_test_case_from_yml(app: App, path: str) -> WorkflowTestCase:
+    """Load a test case from a YAML file."""
+    async with aiofiles.open(path) as f:
+        yml = yaml.safe_load(await f.read())
+
+    job_id, workflow, user_id = itemgetter(
+        "job_id",
+        "workflow",
+        "user_id"
+    )(yml)
+
+    job_args = {}
+
+    factory = TestCaseDataFactory(job_id=job_id, user_id=user_id, app=app)
+    test_case = SimpleNamespace()
+
+    test_case.reference = await factory.reference()
+    job_args["ref_id"] = test_case.reference["_id"]
+
+    if "include" in yml:
+        include = yml["include"]
+
+        if "otus" in include:
+            await factory.otus(ref_id=job_args["ref_id"])
+
+        if "hmms" in include:
+            await factory.hmms()
+
+
+    if "sample" in yml:
+        test_case.sample = await factory.sample(**yml["sample"])
+        job_args["sample_id"] = test_case.sample["_id"]
+
+    if "index" in yml:
+        test_case.index = await factory.index(**yml["index"], ref_id=job_args["ref_id"])
+        job_args["index_id"] = test_case.index["_id"]
+
+    if "subtractions" in yml:
+        test_case.subtractions = []
+        for subtraction in yml["subtractions"]:
+            test_case.subtractions.append(await factory.subtraction(**subtraction))
+
+        job_args["subtraction_ids"] = [subtraction["_id"] for subtraction in test_case.subtractions]
+
+    if "analysis" in yml:
+        kwargs = job_args.copy()
+        kwargs.update(yml["analysis"], workflow=workflow)
+        test_case.analysis = await factory.analysis(**kwargs)
+
+        job_args["analysis_id"] = test_case.analysis["_id"]
+
+
+    if "job_args" in yml:
+        job_args.update(yml["job_args"])
+
+
+    test_case.job = await factory.job(args=job_args, workflow=workflow)
+
+    # Convert `dict` to `SimpleNamspace`
+    # This will make it easier to switch to using models in the future.
+    for key, value in vars(test_case).items():
+        if isinstance(value, dict):
+            setattr(test_case, key, SimpleNamespace(**value))
+        elif isinstance(value, list):
+            setattr(test_case, key, [SimpleNamespace(**it) for it in value])
+
+    return WorkflowTestCase(**vars(test_case), workflow=workflow)

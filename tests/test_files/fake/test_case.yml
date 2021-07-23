@@ -1,0 +1,23 @@
+job_id: test_case_1
+job_args:
+  additional_arg: True
+workflow: null
+user_id: bob
+
+analysis:
+  ready: False
+
+sample:
+  paired: True
+  finalize: True
+
+subtractions:
+  - finalize: True
+
+index:
+  finalize: True
+
+include:
+  - reference
+  - hmms
+  - otus

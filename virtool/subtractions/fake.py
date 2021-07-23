@@ -100,8 +100,8 @@ async def create_fake_finalized_subtraction(
     })
 
     subtractions_path = (
-            app["settings"]["data_path"] 
-            / "subtractions" 
+            app["settings"]["data_path"]
+            / "subtractions"
             / subtraction_id.replace(" ", "_").lower()
     )
 
@@ -120,10 +120,11 @@ async def create_fake_finalized_subtraction(
         db,
         pg,
         subtraction_id,
-        {
+        gc={
             "a": 0.25,
             "t": 0.25,
             "g": 0.25,
             "c": 0.25
-        }
+        },
+        count=100,
     )

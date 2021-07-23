@@ -664,7 +664,7 @@ six = ">=1.5"
 name = "pyyaml"
 version = "5.4.1"
 description = "YAML parser and emitter for Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
 
@@ -879,7 +879,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "1b9679be8e798372fcd0e640b550c2b616243b484624d95b5d0de2dd9e92c7d7"
+content-hash = "89b78c263ba7664b4689c0a18223a145c6f69e08e235af9293e0808920d079c4"
 
 [metadata.files]
 aiodns = [
@@ -1091,6 +1091,11 @@ cffi = [
     {file = "cffi-1.14.6-cp27-cp27m-win_amd64.whl", hash = "sha256:7bcac9a2b4fdbed2c16fa5681356d7121ecabf041f18d97ed5b8e0dd38a80224"},
     {file = "cffi-1.14.6-cp27-cp27mu-manylinux1_i686.whl", hash = "sha256:ed38b924ce794e505647f7c331b22a693bee1538fdf46b0222c4717b42f744e7"},
     {file = "cffi-1.14.6-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:e22dcb48709fc51a7b58a927391b23ab37eb3737a98ac4338e2448bef8559b33"},
+    {file = "cffi-1.14.6-cp35-cp35m-macosx_10_9_x86_64.whl", hash = "sha256:aedb15f0a5a5949ecb129a82b72b19df97bbbca024081ed2ef88bd5c0a610534"},
+    {file = "cffi-1.14.6-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:48916e459c54c4a70e52745639f1db524542140433599e13911b2f329834276a"},
+    {file = "cffi-1.14.6-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:f627688813d0a4140153ff532537fbe4afea5a3dffce1f9deb7f91f848a832b5"},
+    {file = "cffi-1.14.6-cp35-cp35m-win32.whl", hash = "sha256:f0010c6f9d1a4011e429109fda55a225921e3206e7f62a0c22a35344bfd13cca"},
+    {file = "cffi-1.14.6-cp35-cp35m-win_amd64.whl", hash = "sha256:57e555a9feb4a8460415f1aac331a2dc833b1115284f7ded7278b54afc5bd218"},
     {file = "cffi-1.14.6-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:e8c6a99be100371dbb046880e7a282152aa5d6127ae01783e37662ef73850d8f"},
     {file = "cffi-1.14.6-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:19ca0dbdeda3b2615421d54bef8985f72af6e0c47082a8d26122adac81a95872"},
     {file = "cffi-1.14.6-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:d950695ae4381ecd856bcaf2b1e866720e4ab9a1498cba61c602e56630ca7195"},
@@ -1760,7 +1765,6 @@ wasmer = [
     {file = "wasmer-1.0.0-cp38-cp38-manylinux2010_x86_64.whl", hash = "sha256:a08be93aff695ce3be871994f726716b68bef36bd583bccad75778359cd273df"},
     {file = "wasmer-1.0.0-cp38-none-win_amd64.whl", hash = "sha256:8b13214b5dcc84d43f4c44e2309442497f19137561afada7f34babad89365355"},
     {file = "wasmer-1.0.0-cp39-cp39-macosx_10_7_x86_64.whl", hash = "sha256:1fada13fb536f44e12d7c98c557f5b7a55df94389d3cb90964193dcc8e16f0fa"},
-    {file = "wasmer-1.0.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:f390a54e26775456602f21d5d7d62dbad487f6a1022cab4379d7eac2c812d7ce"},
     {file = "wasmer-1.0.0-cp39-cp39-manylinux2010_x86_64.whl", hash = "sha256:04e5d51eed336be0e1bf1445aa032fc34466b77220c26732b8990df872f29e92"},
     {file = "wasmer-1.0.0-cp39-none-win_amd64.whl", hash = "sha256:690c5ed46a98e91bc638f52a25e5011c5baa1ef0581f414018eb7aa0e7f844bc"},
     {file = "wasmer-1.0.0-py3-none-any.whl", hash = "sha256:427e9c5e5301a453a09b8b9ceb8c793d85411b8f45e54c9c0d801566dd8d214e"},
