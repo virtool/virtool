@@ -261,11 +261,16 @@ async def load_test_case_from_yml(app: App, path: str) -> WorkflowTestCase:
         for subtraction in yml["subtractions"]:
             test_case.subtractions.append(await factory.subtraction(**subtraction))
 
-        job_args["subtraction_ids"] = [subtraction["_id"] for subtraction in test_case.subtractions]
+        job_args["subtraction_id"] = [subtraction["_id"] for subtraction in test_case.subtractions]
 
     if "analysis" in yml:
         kwargs = job_args.copy()
         kwargs.update(yml["analysis"], workflow=workflow)
+
+        if "subtraction_id" in kwargs:
+            kwargs["subtraction_ids"] = kwargs["subtraction_id"]
+            del kwargs["subtraction_id"]
+
         test_case.analysis = await factory.analysis(**kwargs)
 
         job_args["analysis_id"] = test_case.analysis["_id"]
