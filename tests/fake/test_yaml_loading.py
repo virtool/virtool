@@ -1,8 +1,15 @@
+import pytest
 from virtool.fake.factory import load_test_case_from_yml
+from virtool.dev.fake import populate
+from pathlib import Path
 
-async def test_load_yml(app, run_in_thread, test_files_path):
+@pytest.fixture
+def example_test_case(test_files_path) -> Path:
+    return test_files_path / "fake/test_case.yml"
+
+async def test_load_yml(app, run_in_thread, example_test_case):
     app["run_in_thread"] = run_in_thread
-    case = await load_test_case_from_yml(app, test_files_path/"fake/test_case.yml")
+    case = await load_test_case_from_yml(app, example_test_case)
 
     assert case.analysis.ready == False
     assert case.analysis._id == case.job.args["analysis_id"]
@@ -17,3 +24,13 @@ async def test_load_yml(app, run_in_thread, test_files_path):
         assert actual._id == expected
 
     assert case.job.args["additional_arg"] is True
+
+
+async def test_populate_does_load_yaml(app, run_in_thread, example_test_case):
+    app["run_in_thread"] = run_in_thread
+    app["config"] = {}
+    app["config"]["fake_path"] = example_test_case.parent
+    await populate(app)
+
+    job = await app["db"].jobs.find_one({"_id": "test_case_1"})
+    assert job["_id"] == "test_case_1"

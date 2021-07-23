@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from virtool.example import example_path
 from virtool.subtractions.files import create_subtraction_files
 from virtool.subtractions.utils import FILES
+from virtool.subtractions.db import finalize
 from virtool.types import App
 from virtool.uploads.models import Upload
 

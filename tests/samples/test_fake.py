@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from virtool.samples.fake import create_fake_sample, create_fake_samples, copy_reads_file, READ_FILES_PATH
+from virtool.samples.fake import create_fake_sample, copy_reads_file, READ_FILES_PATH
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import LIST_PROJECTION
 

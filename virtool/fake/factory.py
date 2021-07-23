@@ -13,7 +13,6 @@ from virtool.example import example_path
 from virtool.fake.identifiers import USER_ID
 from virtool.fake.wrapper import FakerWrapper
 from virtool.hmm.fake import create_fake_hmms
-from virtool.indexes.fake import INDEX_FILES
 from virtool.indexes.files import create_index_file
 from virtool.jobs.utils import JobRights
 from virtool.otus.fake import create_fake_otus
