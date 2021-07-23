@@ -44,11 +44,11 @@ class WorkflowTestCase:
     """A collection of records required for a particular workflow run."""
     job: SimpleNamespace
     workflow: str
-    analysis: SimpleNamespace
-    index: SimpleNamespace
-    reference: SimpleNamespace
-    sample: SimpleNamespace
-    subtractions: List[SimpleNamespace]
+    analysis: SimpleNamespace = None
+    index: SimpleNamespace = None
+    reference: SimpleNamespace = None
+    sample: SimpleNamespace = None
+    subtractions: List[SimpleNamespace] = None
 
 class TestCaseDataFactory:
     """Initialize the database with fake data for a test case."""
