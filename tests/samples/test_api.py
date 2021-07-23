@@ -298,10 +298,11 @@ class TestCreate:
 
         assert await resp_is.bad_request(resp, "Sample name is already in use")
 
-    async def test_force_choice(self, spawn_client, pg: AsyncEngine, resp_is):
+    @pytest.mark.parametrize("group", ["", "diagnostics", None])
+    async def test_force_choice(self, spawn_client, pg: AsyncEngine, resp_is, group):
         """
         Test that when ``force_choice`` is enabled, a request with no group field passed results in
-        an error response.
+        an error response, that "" is accepted as a valid user group and that valid user groups are accepted as expected
 
         """
         client = await spawn_client(authorize=True, permissions=["create_sample"])
@@ -320,13 +321,22 @@ class TestCreate:
             session.add(upload)
             await session.commit()
 
-        resp = await client.post("/api/samples", {
+        request_data = {
             "name": "Foobar",
             "files": [1],
             "subtractions": ["apple"]
-        })
+        }
+        await client.db.groups.insert_one(
+            {"_id": "diagnostics"},
+        )
 
-        assert await resp_is.bad_request(resp, "Group value required for sample creation")
+        if group is None:
+            resp = await client.post("/api/samples", request_data)
+            assert await resp_is.bad_request(resp, "Group value required for sample creation")
+        else:
+            request_data["group"] = group
+            resp = await client.post("/api/samples", request_data)
+            assert resp.status == 201
 
     async def test_group_dne(self, spawn_client, pg: AsyncEngine, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
