@@ -3,64 +3,13 @@ from shutil import copytree
 from typing import Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
-
-import virtool.subtractions.db
 from virtool.example import example_path
-from virtool.fake.identifiers import USER_ID
-from virtool.fake.wrapper import FakerWrapper
-from virtool.subtractions.db import finalize
 from virtool.subtractions.files import create_subtraction_files
 from virtool.subtractions.utils import FILES
 from virtool.types import App
 from virtool.uploads.models import Upload
 
 logger = getLogger(__name__)
-
-
-async def create_fake_subtractions(app: App):
-    """
-    Create fake subtractions and their associated uploads and subtraction files.
-
-    Two subtractions are ready for use. One has ``ready`` set to ``False`` and can be used for
-    testing subtraction finalization.
-
-    :param app: the application object
-
-    """
-    db = app["db"]
-    fake: FakerWrapper = app["fake"]
-
-    upload_id, upload_name = await create_fake_fasta_upload(app, USER_ID)
-
-    await create_fake_finalized_subtraction(
-        app,
-        upload_id,
-        upload_name,
-        fake.get_mongo_id(),
-        USER_ID
-    )
-
-    await virtool.subtractions.db.create(
-        db,
-        USER_ID,
-        upload_name,
-        "subtraction_2",
-        "",
-        upload_id,
-        fake.get_mongo_id()
-    )
-
-    await virtool.subtractions.db.create(
-        db,
-        USER_ID,
-        upload_name,
-        "subtraction_unready",
-        "",
-        upload_id,
-        fake.get_mongo_id(),
-    )
-
-    logger.debug("Created fake subtractions")
 
 
 async def create_fake_fasta_upload(app: App, user_id: str) -> Tuple[int, str]:

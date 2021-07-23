@@ -25,8 +25,20 @@ from virtool.types import App
 from virtool.utils import timestamp
 from dataclasses import dataclass
 from types import SimpleNamespace
-
 logger = logging.getLogger(__name__)
+
+
+INDEX_FILES = (
+    "reference.fa.gz",
+    "reference.1.bt2",
+    "reference.2.bt2",
+    "reference.3.bt2",
+    "reference.4.bt2",
+    "reference.rev.1.bt2",
+    "reference.rev.2.bt2"
+)
+
+
 
 @dataclass
 class WorkflowTestCase:

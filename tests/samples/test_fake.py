@@ -40,20 +40,6 @@ async def test_create_fake_unpaired(paired, finalized, app, snapshot,
     snapshot.assert_match(fake_sample)
 
 
-async def test_create_fake_samples(app, snapshot, dbi, static_time):
-    samples = await create_fake_samples(app)
-
-    assert len(samples) == 4
-
-    for sample in samples:
-        snapshot.assert_match(sample)
-
-    assert os.listdir(app["settings"]["data_path"] /
-                      "samples" / "sample_unpaired_finalized") == ["reads_1.fq.gz"]
-    assert set(os.listdir(app["settings"]["data_path"] /
-                          "samples" / "sample_paired_finalized")) == {"reads_1.fq.gz", "reads_2.fq.gz"}
-
-
 async def test_copy_reads_file(app):
     file_path = READ_FILES_PATH / "paired_1.fq.gz"
 
