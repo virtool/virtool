@@ -225,15 +225,14 @@ async def load_test_case_from_yml(app: App, path: str) -> WorkflowTestCase:
     async with aiofiles.open(path) as f:
         yml = yaml.safe_load(await f.read())
 
-    job_id, workflow, user_id = itemgetter(
+    job_id, workflow = itemgetter(
         "job_id",
         "workflow",
-        "user_id"
     )(yml)
 
     job_args = {}
 
-    factory = TestCaseDataFactory(job_id=job_id, user_id=user_id, app=app)
+    factory = TestCaseDataFactory(job_id=job_id, app=app)
     test_case = SimpleNamespace()
 
     test_case.reference = await factory.reference()
