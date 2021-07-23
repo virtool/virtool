@@ -10,6 +10,7 @@ snapshots = Snapshot()
 snapshots['test_create_fake_subtractions[uvloop] 1'] = [
     {
         '_id': '2x6YnyMt',
+        'count': 100,
         'deleted': False,
         'file': {
             'id': 1,

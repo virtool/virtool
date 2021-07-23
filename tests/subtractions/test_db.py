@@ -133,5 +133,6 @@ async def test_finalize(dbi, pg):
             "c": 0.18,
             "n": 0.002
         },
-        "ready": True
+        "ready": True,
+        "count": 100
     }
