@@ -298,7 +298,7 @@ class TestCreate:
 
         assert await resp_is.bad_request(resp, "Sample name is already in use")
 
-    @pytest.mark.parametrize("group", [None, "", "diagnostics"])
+    @pytest.mark.parametrize("group", ["", "diagnostics", None])
     async def test_force_choice(self, spawn_client, pg: AsyncEngine, resp_is, group):
         """
         Test that when ``force_choice`` is enabled, a request with no group field passed results in
@@ -330,13 +330,13 @@ class TestCreate:
             {"_id": "diagnostics"},
         )
 
-        if group:
+        if group is None:
+            resp = await client.post("/api/samples", request_data)
+            assert await resp_is.bad_request(resp, "Group value required for sample creation")
+        else:
             request_data["group"] = group
             resp = await client.post("/api/samples", request_data)
             assert resp.status == 201
-        else:
-            resp = await client.post("/api/samples", request_data)
-            assert await resp_is.bad_request(resp, "Group value required for sample creation")
 
     async def test_group_dne(self, spawn_client, pg: AsyncEngine, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
