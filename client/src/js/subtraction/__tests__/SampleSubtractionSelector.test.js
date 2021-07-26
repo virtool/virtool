@@ -31,7 +31,7 @@ describe("<SampleSubtractionSelector />", () => {
         expect(props.onChange).toHaveBeenCalled();
     });
 
-    it("should return a subtraction is clicked", () => {
+    it("should return the subtraction that is clicked", () => {
         let clickedValue = null;
         props.onChange = value => (clickedValue = value);
         renderWithProviders(<SampleSubtractionSelector {...props} />);
