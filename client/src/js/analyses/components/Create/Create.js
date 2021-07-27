@@ -32,7 +32,7 @@ export const CreateAnalysis = ({
     hasHmm,
     sampleId,
     show,
-    subtractions,
+    subtractionList,
     onAnalyze,
     onHide,
     onShortlistSubtractions
@@ -85,7 +85,7 @@ export const CreateAnalysis = ({
                     />
                     {dataType === "genome" && (
                         <SubtractionSelector
-                            subtractions={subtractions}
+                            subtractions={subtractionList}
                             value={subtraction}
                             onChange={setSubtractions}
                         />
@@ -120,7 +120,7 @@ export const mapStateToProps = state => ({
     hasHmm: !!state.hmms.total_count,
     sampleId: getSampleDetailId(state),
     show: routerLocationHasState(state, "createAnalysis"),
-    subtractions: state.subtraction.shortlist
+    subtractionList: state.subtraction.shortlist
 });
 
 export const mapDispatchToProps = dispatch => ({
