@@ -2,14 +2,14 @@ import { act, renderHook } from "@testing-library/react-hooks";
 import { useCreateAnalysis } from "../hooks";
 
 describe("useCreateAnalysis()", () => {
-    const defaultSubtraction = "baz";
+    const defaultSubtractions = ["baz"];
 
     let dataType = "genome";
     let rerender;
     let result;
 
     beforeEach(() => {
-        const renderObj = renderHook(() => useCreateAnalysis(dataType, defaultSubtraction));
+        const renderObj = renderHook(() => useCreateAnalysis(dataType, defaultSubtractions));
 
         result = renderObj.result;
         rerender = renderObj.rerender;
@@ -32,13 +32,13 @@ describe("useCreateAnalysis()", () => {
     });
 
     it("should set subtraction", () => {
-        expect(result.current.subtraction).toEqual(defaultSubtraction);
+        expect(result.current.subtractions).toEqual(defaultSubtractions);
 
         act(() => {
             result.current.setSubtractions("foo");
         });
 
-        expect(result.current.subtraction).toEqual("foo");
+        expect(result.current.subtractions).toEqual("foo");
     });
 
     it("should set references and unset error", () => {

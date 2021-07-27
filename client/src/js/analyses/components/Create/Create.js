@@ -46,7 +46,7 @@ export const CreateAnalysis = ({
     const {
         errors,
         references,
-        subtraction,
+        subtractions,
         workflows,
         setErrors,
         setReferences,
@@ -66,7 +66,7 @@ export const CreateAnalysis = ({
             return setErrors(errors);
         }
 
-        onAnalyze(sampleId, references, subtraction, accountId, workflows);
+        onAnalyze(sampleId, references, subtractions, accountId, workflows);
         onHide();
     };
 
@@ -86,7 +86,7 @@ export const CreateAnalysis = ({
                     {dataType === "genome" && (
                         <SubtractionSelector
                             subtractions={subtractionList}
-                            value={subtraction}
+                            value={subtractions}
                             onChange={setSubtractions}
                         />
                     )}
