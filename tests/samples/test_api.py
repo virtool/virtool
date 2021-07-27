@@ -312,7 +312,6 @@ class TestCreate:
 
         await client.db.subtraction.insert_one({
             "_id": "apple",
-            "is_host": True
         })
 
         upload = Upload(id=1, name="test.fq.gz", size=123456)
@@ -393,7 +392,6 @@ class TestCreate:
 
         await client.db.subtraction.insert_one({
             "_id": "apple",
-            "is_host": True
         })
 
         if one_exists:
