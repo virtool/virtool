@@ -93,7 +93,6 @@ async def create_fake_finalized_subtraction(
         "name": "subtraction_1",
         "nickname": "",
         "deleted": False,
-        "is_host": True,
         "ready": True,
         "file": {"id": upload_id, "name": upload_name},
         "user": {"id": user_id},
