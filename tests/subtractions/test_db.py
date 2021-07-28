@@ -121,7 +121,7 @@ async def test_finalize(dbi, pg):
         "n": 0.002
     }
 
-    document = await virtool.subtractions.db.finalize(dbi, pg, "foo", gc)
+    document = await virtool.subtractions.db.finalize(dbi, pg, "foo", gc, 100)
     assert document == {
         "_id": "foo",
         "name": "Foo",
@@ -132,5 +132,6 @@ async def test_finalize(dbi, pg):
             "c": 0.18,
             "n": 0.002
         },
-        "ready": True
+        "ready": True,
+        "count": 100
     }
