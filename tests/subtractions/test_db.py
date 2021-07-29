@@ -1,5 +1,4 @@
 import pytest
-
 import virtool.subtractions.db
 from virtool.subtractions.db import unlink_default_subtractions
 

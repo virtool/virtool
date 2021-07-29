@@ -171,18 +171,20 @@ def start_server(ctx, host, port, no_check_db, no_check_files, no_client, no_fet
     type=int
 )
 @click.option(
-    "--fake",
-    help="Start the jobs API with fake data for integration testing",
-    type=bool,
-    is_flag=True
+    "--fake-path",
+    help=("Start the jobs API with fake data for integration testing. "
+          "The data will be loaded from any YAML files under this path."),
+    type=click.Path(exists=True, dir_okay=True),
+    default=None
 )
 @click.pass_context
-def start_jobs_api(ctx, fake, port, host):
+def start_jobs_api(ctx, fake_path, port, host):
     """Start a Virtool Jobs API server"""
     logger.info("Starting jobs API process")
     asyncio.get_event_loop().run_until_complete(
         virtool.jobs.main.run(
-            fake=fake,
+            fake=fake_path is not None,
+            fake_path=fake_path,
             host=host,
             port=port,
             **ctx.obj

@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from virtool.samples.fake import create_fake_sample, create_fake_samples, copy_reads_file, READ_FILES_PATH
+from virtool.samples.fake import create_fake_sample, copy_reads_file, READ_FILES_PATH
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import LIST_PROJECTION
 
@@ -38,20 +38,6 @@ async def test_create_fake_unpaired(paired, finalized, app, snapshot,
         assert fake_sample["ready"] is True
 
     snapshot.assert_match(fake_sample)
-
-
-async def test_create_fake_samples(app, snapshot, dbi, static_time):
-    samples = await create_fake_samples(app)
-
-    assert len(samples) == 4
-
-    for sample in samples:
-        snapshot.assert_match(sample)
-
-    assert os.listdir(app["settings"]["data_path"] /
-                      "samples" / "sample_unpaired_finalized") == ["reads_1.fq.gz"]
-    assert set(os.listdir(app["settings"]["data_path"] /
-                          "samples" / "sample_paired_finalized")) == {"reads_1.fq.gz", "reads_2.fq.gz"}
 
 
 async def test_copy_reads_file(app):
