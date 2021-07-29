@@ -361,6 +361,9 @@ async def remove_samples(
 
 async def validate_force_choice_group(db, data: dict) -> Optional[str]:
     try:
+        if data["group"] == "":
+            return None
+
         if not await db.groups.count_documents({"_id": data["group"]}):
             return "Group does not exist"
 

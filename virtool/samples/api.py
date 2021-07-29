@@ -301,9 +301,6 @@ async def create(req):
         force_choice_error_message = await virtool.samples.db.validate_force_choice_group(db, data)
 
         if force_choice_error_message:
-            if "not found" in force_choice_error_message:
-                return bad_request(force_choice_error_message)
-
             return bad_request(force_choice_error_message)
 
         group = data["group"]

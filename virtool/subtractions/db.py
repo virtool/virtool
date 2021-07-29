@@ -149,7 +149,6 @@ async def create(
         "nickname": nickname,
         "deleted": False,
         "ready": False,
-        "is_host": True,
         "file": {
             "id": upload_id,
             "name": filename

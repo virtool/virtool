@@ -96,7 +96,6 @@ async def test_create(subtraction_id, dbi, test_random_alphanumeric):
         "nickname": "foo",
         "deleted": False,
         "ready": False,
-        "is_host": True,
         "file": {
             "id": 1,
             "name": "subtraction.fa.gz"

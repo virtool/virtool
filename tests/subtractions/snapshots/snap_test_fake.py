@@ -10,6 +10,7 @@ snapshots = Snapshot()
 snapshots['test_create_fake_subtractions[uvloop] 1'] = [
     {
         '_id': '2x6YnyMt',
+        'count': 100,
         'deleted': False,
         'file': {
             'id': 1,
@@ -21,7 +22,6 @@ snapshots['test_create_fake_subtractions[uvloop] 1'] = [
             'g': 0.25,
             't': 0.25
         },
-        'is_host': True,
         'name': 'subtraction_1',
         'nickname': '',
         'ready': True,
@@ -36,7 +36,6 @@ snapshots['test_create_fake_subtractions[uvloop] 1'] = [
             'id': 1,
             'name': 'test.fa.gz'
         },
-        'is_host': True,
         'name': 'subtraction_2',
         'nickname': '',
         'ready': False,
@@ -51,7 +50,6 @@ snapshots['test_create_fake_subtractions[uvloop] 1'] = [
             'id': 1,
             'name': 'test.fa.gz'
         },
-        'is_host': True,
         'name': 'subtraction_unready',
         'nickname': '',
         'ready': False,
