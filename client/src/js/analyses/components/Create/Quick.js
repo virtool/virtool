@@ -43,7 +43,7 @@ export const QuickAnalyze = ({
     hasHmm,
     mode,
     samples,
-    subtractionList,
+    subtractionOptions,
     onAnalyze,
     onHide,
     onShortlistSubtractions,
@@ -63,7 +63,7 @@ export const QuickAnalyze = ({
     }, [mode]);
 
     // Use this as the subtraction if none is selected.
-    const firstSubtractionId = get(subtractionList, [0, "id"]);
+    const firstSubtractionId = get(subtractionOptions, [0, "id"]);
 
     const handleSubmit = e => {
         e.preventDefault();
@@ -120,7 +120,7 @@ export const QuickAnalyze = ({
                     />
                     {mode === "genome" && (
                         <SubtractionSelector
-                            subtractions={subtractionList}
+                            subtractions={subtractionOptions}
                             value={subtractions}
                             onChange={e => setSubtractions(e.target.value)}
                         />
@@ -155,7 +155,7 @@ export const mapStateToProps = state => ({
     hasHmm: !!state.hmms.total_count,
     mode: getQuickAnalysisMode(state),
     samples: getSelectedSamples(state),
-    subtractionList: state.subtraction.shortlist
+    subtractionOptions: state.subtraction.shortlist
 });
 
 export const mapDispatchToProps = dispatch => ({
