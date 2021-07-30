@@ -101,7 +101,7 @@ export const SampleDetailGeneral = ({
                 </Table>
             </BoxGroup>
 
-            <BoxGroup>
+            {/* <BoxGroup>
                 <BoxGroupHeader>
                     <h2>Default Subtractions</h2>
                     <p>This subtraction will be the default selection when creating an analysis.</p>
@@ -120,7 +120,7 @@ export const SampleDetailGeneral = ({
                         </tr>
                     </tbody>
                 </Table>
-            </BoxGroup>
+            </BoxGroup> */}
 
             <BoxGroup>
                 <BoxGroupHeader>
