@@ -14,10 +14,12 @@ describe("<SampleDetailGeneral />", () => {
             name: "Foo",
             notes: "Example notes",
             paired: false,
-            subtraction: {
-                id: "baz",
-                name: "Arabidopsis thaliana"
-            },
+            subtractions: [
+                {
+                    id: "baz",
+                    name: "Arabidopsis thaliana"
+                }
+            ],
             libraryType: ""
         };
     });
@@ -50,7 +52,7 @@ describe("mapStateToProps()", () => {
                         length: [50, 100]
                     },
                     library_type: "normal",
-                    subtraction: { id: "baz", name: "Arabidopsis thaliana" }
+                    subtractions: [{ id: "baz", name: "Arabidopsis thaliana" }]
                 }
             }
         };
@@ -69,7 +71,7 @@ describe("mapStateToProps()", () => {
             gc: "31.2 %",
             count: "13.2 m",
             lengthRange: "50 - 100",
-            subtraction: { id: "baz", name: "Arabidopsis thaliana" },
+            subtractions: [{ id: "baz", name: "Arabidopsis thaliana" }],
             libraryType: "Normal"
         });
     });

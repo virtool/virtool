@@ -34,7 +34,7 @@ export const SampleDetailGeneral = ({
     name,
     notes,
     paired,
-    subtraction
+    subtractions
 }) => (
     <StyledSampleDetailGeneral>
         <NarrowContainer>
@@ -111,8 +111,8 @@ export const SampleDetailGeneral = ({
                         <tr>
                             <th>Subtraction</th>
                             <td>
-                                {subtraction ? (
-                                    <Link to={`/subtraction/${subtraction.id}`}>{subtraction.name}</Link>
+                                {subtractions ? (
+                                    <Link to={`/subtraction/${subtractions.id}`}>{subtractions.name}</Link>
                                 ) : (
                                     "None"
                                 )}
@@ -140,7 +140,7 @@ export const SampleDetailGeneral = ({
 );
 
 export const mapStateToProps = state => {
-    const { name, host, isolate, locale, paired, quality, library_type, subtraction, notes } = state.samples.detail;
+    const { name, host, isolate, locale, paired, quality, library_type, subtractions, notes } = state.samples.detail;
     const { count, encoding, gc, length } = quality;
 
     return {
@@ -155,7 +155,7 @@ export const mapStateToProps = state => {
         gc: numbro(gc / 100).format("0.0 %"),
         libraryType: getLibraryTypeDisplayName(library_type),
         lengthRange: length.join(" - "),
-        subtraction
+        subtractions
     };
 };
 

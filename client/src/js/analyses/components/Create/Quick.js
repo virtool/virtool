@@ -43,7 +43,7 @@ export const QuickAnalyze = ({
     hasHmm,
     mode,
     samples,
-    subtractions,
+    subtractionOptions,
     onAnalyze,
     onHide,
     onShortlistSubtractions,
@@ -63,7 +63,7 @@ export const QuickAnalyze = ({
     }, [mode]);
 
     // Use this as the subtraction if none is selected.
-    const firstSubtractionId = get(subtractions, [0, "id"]);
+    const firstSubtractionId = get(subtractionOptions, [0, "id"]);
 
     const handleSubmit = e => {
         e.preventDefault();
@@ -76,7 +76,7 @@ export const QuickAnalyze = ({
             return setError("Please select workflow(s)");
         }
 
-        onAnalyze(compatibleSamples, references, subtraction || firstSubtractionId, accountId, workflows);
+        onAnalyze(compatibleSamples, references, subtractions || firstSubtractionId, accountId, workflows);
         onUnselect(compatibleSamples.map(sample => sample.id));
     };
 
@@ -84,7 +84,7 @@ export const QuickAnalyze = ({
     const {
         error,
         references,
-        subtraction,
+        subtractions,
         workflows,
         setError,
         setReferences,
@@ -120,8 +120,8 @@ export const QuickAnalyze = ({
                     />
                     {mode === "genome" && (
                         <SubtractionSelector
-                            subtractions={subtractions}
-                            value={subtraction}
+                            subtractions={subtractionOptions}
+                            value={subtractions}
                             onChange={e => setSubtractions(e.target.value)}
                         />
                     )}
@@ -155,7 +155,7 @@ export const mapStateToProps = state => ({
     hasHmm: !!state.hmms.total_count,
     mode: getQuickAnalysisMode(state),
     samples: getSelectedSamples(state),
-    subtractions: state.subtraction.shortlist
+    subtractionOptions: state.subtraction.shortlist
 });
 
 export const mapDispatchToProps = dispatch => ({

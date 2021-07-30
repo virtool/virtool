@@ -13,13 +13,13 @@ exports[`<CreateSample> should render 1`] = `
   <Formik
     initialValues={
       Object {
-        "group": "",
+        "group": null,
         "host": "",
         "isolate": "",
         "libraryType": "normal",
         "locale": "",
         "name": "",
-        "selected": Array [],
+        "readFiles": Array [],
         "subtractionIds": Array [],
       }
     }
@@ -33,7 +33,7 @@ exports[`<CreateSample> should render 1`] = `
         "_blacklistError": undefined,
         "_excludedEdges": Array [],
         "_nodes": Array [
-          "selected",
+          "readFiles",
           "name",
         ],
         "_sortErrors": [Function],
@@ -81,7 +81,7 @@ exports[`<CreateSample> should render 1`] = `
             ],
             "type": "string",
           },
-          "selected": ArraySchema {
+          "readFiles": ArraySchema {
             "_blacklist": ReferenceSet {
               "list": Set {},
               "refs": Map {},

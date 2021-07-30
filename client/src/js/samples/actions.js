@@ -86,9 +86,10 @@ export const getSample = sampleId => ({
  * @param srna {boolean} does the sample contain sRNA reads
  * @param subtractions {Array} string - names of the associated subtraction host genomes
  * @param files {object} file ids of one or two files
+ * @param group {string} user group the sample will be assigned to
  * @returns {object}
  */
-export const createSample = (name, isolate, host, locale, libraryType, subtractions, files) => ({
+export const createSample = (name, isolate, host, locale, libraryType, subtractions, files, group) => ({
     type: CREATE_SAMPLE.REQUESTED,
     name,
     isolate,
@@ -96,7 +97,8 @@ export const createSample = (name, isolate, host, locale, libraryType, subtracti
     locale,
     libraryType,
     subtractions,
-    files
+    files,
+    group
 });
 
 /**

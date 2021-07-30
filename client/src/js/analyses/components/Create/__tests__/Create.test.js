@@ -40,7 +40,7 @@ describe("<CreateAnalysis />", () => {
             hasHmm: false,
             sampleId: 0,
             show: true,
-            subtractions: [
+            subtractionOptions: [
                 { id: "foo", name: "Foo" },
                 { id: "bar", name: "Bar" }
             ],
@@ -68,14 +68,14 @@ describe("<CreateAnalysis />", () => {
     it("should submit with expected values", () => {
         renderWithStore(<CreateAnalysis {...props} />);
         userEvent.click(screen.getByText("Pathoscope"));
-        userEvent.click(screen.getByText(props.subtractions[0].name));
+        userEvent.click(screen.getByText(props.subtractionOptions[0].name));
         userEvent.click(screen.getByText(props.compatibleIndexes[0].reference.name));
         userEvent.click(screen.getByRole("button", { name: "Start" }));
 
         expect(props.onAnalyze).toHaveBeenCalledWith(
             props.sampleId,
             [props.compatibleIndexes[0].reference.id],
-            [props.subtractions[0].id],
+            [props.subtractionOptions[0].id],
             props.accountId,
             ["pathoscope_bowtie"]
         );
@@ -83,7 +83,7 @@ describe("<CreateAnalysis />", () => {
 
     it("should automatically select default subtractions", () => {
         // Set the default subtractions to the list of subtraction's ids
-        props.defaultSubtractions = props.subtractions.map(subtraction => subtraction.id);
+        props.defaultSubtractions = props.subtractionOptions.map(subtraction => subtraction.id);
 
         renderWithStore(<CreateAnalysis {...props} />);
         userEvent.click(screen.getByText("Pathoscope"));
@@ -119,7 +119,7 @@ describe("mapStateToProps()", () => {
             hasHmm: false,
             sampleId: "foo",
             show: false,
-            subtractions: null
+            subtractionOptions: null
         });
     });
 });

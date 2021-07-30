@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 export const useCreateAnalysis = (dataType, defaultSubtractions) => {
     const [errors, setErrors] = useState({});
     const [references, setReferences] = useState([]);
-    const [subtraction, setSubtractions] = useState(defaultSubtractions);
+    const [subtractions, setSubtractions] = useState(defaultSubtractions);
     const [workflows, setWorkflows] = useState([]);
 
     const setReferencesAndError = references => {
@@ -31,7 +31,7 @@ export const useCreateAnalysis = (dataType, defaultSubtractions) => {
     return {
         errors,
         references,
-        subtraction,
+        subtractions,
         workflows,
         setErrors,
         setReferences: setReferencesAndError,

@@ -27,7 +27,7 @@ export const filter = ({ term }) => Request.get(`/api/samples?find=${term}`);
 export const get = ({ sampleId }) => Request.get(`/api/samples/${sampleId}`);
 
 export const create = action => {
-    const { name, isolate, host, locale, libraryType, subtractions, files } = action;
+    const { name, isolate, host, locale, libraryType, subtractions, files, group } = action;
     return Request.post("/api/samples").send({
         name,
         isolate,
@@ -35,7 +35,8 @@ export const create = action => {
         locale,
         subtractions,
         files,
-        library_type: libraryType
+        library_type: libraryType,
+        group
     });
 };
 
