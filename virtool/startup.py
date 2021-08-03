@@ -4,6 +4,7 @@ import logging
 import signal
 import sys
 import typing
+from pathlib import Path
 from urllib.parse import urlparse, urlunparse
 
 import aiohttp.client
@@ -346,7 +347,7 @@ async def init_version(app: typing.Union[dict, aiohttp.web.Application]):
     if force_version:
         version = force_version
     else:
-        version = await determine_server_version(sys.path[0])
+        version = await determine_server_version(Path(sys.path[0]))
 
     logger.info(f"Virtool {version}")
     logger.info(f"Mode: {app['mode']}")
