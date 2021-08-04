@@ -3,7 +3,7 @@ import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { getFontSize } from "../../../../app/theme";
-import { BoxGroupSection, Icon, Input } from "../../../../base";
+import { BoxGroupSection, Icon, Input, LoadingPlaceholder } from "../../../../base";
 import { useFuse } from "../../../../base/hooks";
 import { PopoverBody, usePopover } from "../../../../base/Popover";
 import { getLabels } from "../../../../labels/selectors";
@@ -53,6 +53,8 @@ export const SampleLabelsSelectorItem = ({ checked, color, description, id, name
 export const SampleLabelsSelector = ({ allLabels, sampleLabels, sampleId, onUpdate }) => {
     const [results, term, setTerm] = useFuse(allLabels, ["name"], [sampleId]);
 
+    const [attributes, show, styles, setPopperElement, setReferenceElement, setShow] = usePopover();
+
     const handleToggle = useCallback(
         labelId => {
             onUpdate(
@@ -68,6 +70,10 @@ export const SampleLabelsSelector = ({ allLabels, sampleLabels, sampleId, onUpda
 
     const sampleLabelIds = sampleLabels.map(label => label.id);
 
+    if (!results) {
+        return <LoadingPlaceholder />;
+    }
+
     const labelComponents = results.map(label => (
         <SampleLabelsSelectorItem
             key={label.id}
@@ -76,8 +82,6 @@ export const SampleLabelsSelector = ({ allLabels, sampleLabels, sampleId, onUpda
             onClick={handleToggle}
         />
     ));
-
-    const [attributes, show, styles, setPopperElement, setReferenceElement, setShow] = usePopover();
 
     return (
         <React.Fragment>
