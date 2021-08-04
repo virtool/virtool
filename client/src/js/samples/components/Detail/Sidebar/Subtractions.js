@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { getSampleDetailId } from "../../../selectors";
+import { routerLocationHasState } from "../../../../utils/utils";
+import { getDefaultSubtractions, getSampleDetailId } from "../../../selectors";
 import { SidebarHeader } from "./Header";
 
 // TODO: add a add/remove default subtraction function (If necessary)
