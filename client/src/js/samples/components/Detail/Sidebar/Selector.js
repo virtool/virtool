@@ -68,7 +68,7 @@ export const SampleLabelsSelector = ({ allLabels, sampleLabels, sampleId, onUpda
         [sampleId, sampleLabels, onUpdate]
     );
 
-    const sampleLabelIds = sampleLabels[0].id ? sampleLabels.map(label => label.id) : sampleLabels;
+    const sampleLabelIds = sampleLabels.map(label => label.id);
 
     if (!results) {
         return <LoadingPlaceholder />;
@@ -78,8 +78,6 @@ export const SampleLabelsSelector = ({ allLabels, sampleLabels, sampleId, onUpda
         <SampleLabelsSelectorItem
             key={label.id}
             checked={sampleLabelIds.includes(label.id)}
-            // color={label.color || "#1D4ED8"}
-            // description={label.description || "[Description Placeholder]"}
             {...label}
             onClick={handleToggle}
         />
@@ -112,15 +110,15 @@ export const SampleLabelsSelector = ({ allLabels, sampleLabels, sampleId, onUpda
 };
 
 export const mapStateToProps = state => ({
-    allLabels: getLabels(state),
-    sampleId: getSampleDetailId(state),
-    sampleLabels: getSampleLabels(state)
+    // allLabels: getLabels(state),
+    // sampleId: getSampleDetailId(state),
+    // sampleLabels: getSampleLabels(state)
 });
 
 export const mapDispatchToProps = dispatch => ({
-    onUpdate: (sampleId, labels) => {
-        dispatch(editSample(sampleId, { labels }));
-    }
+    // onUpdate: (sampleId, labels) => {
+    //     dispatch(editSample(sampleId, { labels }));
+    // }
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(SampleLabelsSelector);

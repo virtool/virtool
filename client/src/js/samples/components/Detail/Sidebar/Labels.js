@@ -2,10 +2,12 @@ import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { listLabels } from "../../../../labels/actions";
+import { getLabels } from "../../../../labels/selectors";
+import { editSample } from "../../../actions";
 import { getSampleDetailId, getSampleLabels } from "../../../selectors";
 import { SampleLabel } from "../../Label";
 import { SidebarHeader } from "./Header";
-import SampleLabelsSelector from "./Selector";
+import { SampleLabelsSelector } from "./Selector";
 
 const InlineSampleLabel = styled(SampleLabel)`
     background-color: ${props => props.theme.color.white};
@@ -18,7 +20,7 @@ const SampleLabelsList = styled.div`
     flex-flow: wrap;
 `;
 
-export const SampleLabels = ({ sampleLabels, sampleId, onListLabels }) => {
+export const SampleLabels = ({ allLabels, sampleLabels, sampleId, onListLabels, onUpdate }) => {
     useEffect(onListLabels, [sampleId]);
 
     const sampleLabelComponents = sampleLabels.map(label => (
@@ -29,7 +31,12 @@ export const SampleLabels = ({ sampleLabels, sampleId, onListLabels }) => {
         <React.Fragment>
             <SidebarHeader>
                 Labels
-                <SampleLabelsSelector />
+                <SampleLabelsSelector
+                    allLabels={allLabels}
+                    sampleLabels={sampleLabels}
+                    sampleId={sampleId}
+                    onUpdate={onUpdate}
+                />
             </SidebarHeader>
             <SampleLabelsList>{sampleLabelComponents}</SampleLabelsList>
         </React.Fragment>
@@ -37,6 +44,7 @@ export const SampleLabels = ({ sampleLabels, sampleId, onListLabels }) => {
 };
 
 export const mapStateToProps = state => ({
+    allLabels: getLabels(state),
     sampleId: getSampleDetailId(state),
     sampleLabels: getSampleLabels(state)
 });
@@ -44,6 +52,9 @@ export const mapStateToProps = state => ({
 export const mapDispatchToProps = dispatch => ({
     onListLabels: () => {
         dispatch(listLabels());
+    },
+    onUpdate: (sampleId, labels) => {
+        dispatch(editSample(sampleId, { labels }));
     }
 });
 
