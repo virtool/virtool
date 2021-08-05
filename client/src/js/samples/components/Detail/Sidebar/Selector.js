@@ -68,7 +68,7 @@ export const SampleLabelsSelector = ({ allLabels, sampleLabels, sampleId, onUpda
         [sampleId, sampleLabels, onUpdate]
     );
 
-    const sampleLabelIds = sampleLabels.map(label => label.id);
+    const sampleLabelIds = sampleLabels[0].id ? sampleLabels.map(label => label.id) : sampleLabels;
 
     if (!results) {
         return <LoadingPlaceholder />;
@@ -78,10 +78,15 @@ export const SampleLabelsSelector = ({ allLabels, sampleLabels, sampleId, onUpda
         <SampleLabelsSelectorItem
             key={label.id}
             checked={sampleLabelIds.includes(label.id)}
+            // color={label.color || "#1D4ED8"}
+            // description={label.description || "[Description Placeholder]"}
             {...label}
             onClick={handleToggle}
         />
     ));
+
+    // console.log("labelComponents", labelComponents);
+    console.log("results", results);
 
     return (
         <React.Fragment>
