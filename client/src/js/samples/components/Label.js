@@ -38,7 +38,7 @@ export const SampleLibraryTypeLabel = ({ libraryType }) => (
 
 export const SampleLabel = styled(({ className, color, name, role }) => (
     <StyledSampleLabel className={className} color={color} role={role}>
-        <Icon name="circle" />
+        {color && <Icon name="circle" />}
         {name}
     </StyledSampleLabel>
 ))``;
