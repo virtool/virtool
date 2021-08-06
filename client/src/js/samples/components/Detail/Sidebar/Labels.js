@@ -23,8 +23,26 @@ const SampleLabelsList = styled.div`
 export const SampleLabels = ({ allLabels, sampleLabels, sampleId, onListLabels, onUpdate }) => {
     useEffect(onListLabels, [sampleId]);
 
+    const onClose = (sampleId, selectedLabels, labelId) => {
+        let newList = [];
+
+        for (let i = 0; i < selectedLabels.length; i++) {
+            if (selectedLabels[i].id !== labelId) {
+                newList.push(selectedLabels[i].id);
+            }
+        }
+
+        console.log("Sending: ", newList);
+        onUpdate(sampleId, newList);
+    };
+
     const sampleLabelComponents = sampleLabels.map(label => (
-        <InlineSampleLabel key={label.id} color={label.color} name={label.name} />
+        <InlineSampleLabel
+            key={label.id}
+            color={label.color}
+            name={label.name}
+            onClose={() => onClose(sampleId, sampleLabels, label.id)}
+        />
     ));
 
     return (
