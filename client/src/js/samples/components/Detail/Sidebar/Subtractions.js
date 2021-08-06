@@ -4,7 +4,7 @@ import styled from "styled-components";
 import { getDefaultSubtractions, getSampleDetailId } from "../../../selectors";
 import { SampleLabel } from "../../Label";
 import { SidebarHeader } from "./Header";
-import { SampleLabelsSelector } from "./Selector";
+import { SampleSidebarSelector } from "./Selector";
 
 // TODO: add a add/remove default subtraction function (If necessary)
 
@@ -27,9 +27,9 @@ export const DefaultSubtractions = ({ defaultSubtractions, sampleId, subtraction
     return (
         <React.Fragment>
             <SidebarHeader>Default Subtractions</SidebarHeader>
-            <SampleLabelsSelector
-                allLabels={subtractionOptions}
-                sampleLabels={defaultSubtractions}
+            <SampleSidebarSelector
+                allItems={subtractionOptions}
+                selectedItems={defaultSubtractions}
                 sampleId={sampleId}
                 onUpdate={onUpdate}
             />

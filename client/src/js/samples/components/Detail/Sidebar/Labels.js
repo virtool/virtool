@@ -7,7 +7,7 @@ import { editSample } from "../../../actions";
 import { getSampleDetailId, getSampleLabels } from "../../../selectors";
 import { SampleLabel } from "../../Label";
 import { SidebarHeader } from "./Header";
-import { SampleLabelsSelector } from "./Selector";
+import { SampleSidebarSelector } from "./Selector";
 
 const InlineSampleLabel = styled(SampleLabel)`
     background-color: ${props => props.theme.color.white};
@@ -31,9 +31,9 @@ export const SampleLabels = ({ allLabels, sampleLabels, sampleId, onListLabels, 
         <React.Fragment>
             <SidebarHeader>
                 Labels
-                <SampleLabelsSelector
-                    allLabels={allLabels}
-                    sampleLabels={sampleLabels}
+                <SampleSidebarSelector
+                    allItems={allLabels}
+                    selectedItems={sampleLabels}
                     sampleId={sampleId}
                     onUpdate={onUpdate}
                 />

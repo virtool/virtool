@@ -12,7 +12,7 @@ import { getSampleDetailId, getSampleLabels } from "../../../selectors";
 import { SmallSampleLabel } from "../../Label";
 import { SidebarHeaderButton } from "./Header";
 
-const SampleLabelsSelectorItemCheck = styled.div`
+const SampleSidebarSelectorItemCheck = styled.div`
     align-items: start;
     color: ${props => props.theme.color.greyDark};
     display: flex;
@@ -21,11 +21,11 @@ const SampleLabelsSelectorItemCheck = styled.div`
     width: 32px;
 `;
 
-const SampleLabelsSelectorInputContainer = styled(BoxGroupSection)`
+const SampleSidebarSelectorInputContainer = styled(BoxGroupSection)`
     padding: 10px;
 `;
 
-const StyledSampleLabelsSelectorItem = styled(BoxGroupSection)`
+const StyledSampleSidebarSelectorItem = styled(BoxGroupSection)`
     align-items: stretch;
     display: flex;
     padding: 10px 10px 10px 5px;
@@ -36,22 +36,22 @@ const StyledSampleLabelsSelectorItem = styled(BoxGroupSection)`
     }
 `;
 
-export const SampleLabelsSelectorItem = ({ checked, color, description, id, name, onClick }) => {
+export const SampleSidebarSelectorItem = ({ checked, color, description, id, name, onClick }) => {
     const handleSelect = useCallback(() => onClick(id), [id, onClick]);
 
     return (
-        <StyledSampleLabelsSelectorItem as="button" onClick={handleSelect}>
-            <SampleLabelsSelectorItemCheck>{checked && <Icon name="check" />}</SampleLabelsSelectorItemCheck>
-            <div>
+        <StyledSampleSidebarSelectorItem as="button" onClick={handleSelect}>
+            <SampleSidebarSelectorItemCheck>{checked && <Icon name="check" />}</SampleSidebarSelectorItemCheck>
+            <React.Fragment>
                 <SmallSampleLabel color={color} name={name} />
                 <p>{description}</p>
-            </div>
-        </StyledSampleLabelsSelectorItem>
+            </React.Fragment>
+        </StyledSampleSidebarSelectorItem>
     );
 };
 
-export const SampleLabelsSelector = ({ allLabels, sampleLabels, sampleId, onUpdate }) => {
-    const [results, term, setTerm] = useFuse(allLabels, ["name"], [sampleId]);
+export const SampleSidebarSelector = ({ allItems, selectedItems, sampleId, onUpdate }) => {
+    const [results, term, setTerm] = useFuse(allItems, ["name"], [sampleId]);
 
     const [attributes, show, styles, setPopperElement, setReferenceElement, setShow] = usePopover();
 
@@ -60,22 +60,22 @@ export const SampleLabelsSelector = ({ allLabels, sampleLabels, sampleId, onUpda
             onUpdate(
                 sampleId,
                 xor(
-                    sampleLabels.map(label => label.id),
+                    selectedItems.map(label => label.id),
                     [labelId]
                 )
             );
         },
-        [sampleId, sampleLabels, onUpdate]
+        [sampleId, selectedItems, onUpdate]
     );
 
-    const sampleLabelIds = sampleLabels.map(label => label.id);
+    const sampleLabelIds = selectedItems.map(label => label.id);
 
     if (!results) {
         return <LoadingPlaceholder />;
     }
 
     const labelComponents = results.map(label => (
-        <SampleLabelsSelectorItem
+        <SampleSidebarSelectorItem
             key={label.id}
             checked={sampleLabelIds.includes(label.id)}
             {...label}
@@ -93,7 +93,7 @@ export const SampleLabelsSelector = ({ allLabels, sampleLabels, sampleId, onUpda
             </SidebarHeaderButton>
             {show && (
                 <PopoverBody ref={setPopperElement} show={show} style={styles.popper} {...attributes.popper}>
-                    <SampleLabelsSelectorInputContainer>
+                    <SampleSidebarSelectorInputContainer>
                         <Input
                             value={term}
                             placeholder="Filter labels"
@@ -101,7 +101,7 @@ export const SampleLabelsSelector = ({ allLabels, sampleLabels, sampleId, onUpda
                             onChange={e => setTerm(e.target.value)}
                             autoFocus
                         />
-                    </SampleLabelsSelectorInputContainer>
+                    </SampleSidebarSelectorInputContainer>
                     {labelComponents}
                 </PopoverBody>
             )}
@@ -121,4 +121,4 @@ export const mapDispatchToProps = dispatch => ({
     // }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(SampleLabelsSelector);
+export default connect(mapStateToProps, mapDispatchToProps)(SampleSidebarSelector);
