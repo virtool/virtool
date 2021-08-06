@@ -108,17 +108,3 @@ export const SampleSidebarSelector = ({ allItems, selectedItems, sampleId, onUpd
         </React.Fragment>
     );
 };
-
-export const mapStateToProps = state => ({
-    // allLabels: getLabels(state),
-    // sampleId: getSampleDetailId(state),
-    // sampleLabels: getSampleLabels(state)
-});
-
-export const mapDispatchToProps = dispatch => ({
-    // onUpdate: (sampleId, labels) => {
-    //     dispatch(editSample(sampleId, { labels }));
-    // }
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(SampleSidebarSelector);
