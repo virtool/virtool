@@ -8,7 +8,7 @@ import { SampleSidebarSelector } from "./Selector";
 
 // TODO: add a add/remove default subtraction function (If necessary)
 
-const InlineSampleLabel = styled(SampleLabel)`
+const InlineSampleSubtraction = styled(SampleLabel)`
     background-color: ${props => props.theme.color.white};
     display: inline;
     margin: 0 5px 5px 0;
@@ -21,18 +21,20 @@ const SampleLabelsList = styled.div`
 
 export const DefaultSubtractions = ({ defaultSubtractions, sampleId, subtractionOptions, onUpdate }) => {
     const sampleLabelComponents = defaultSubtractions.map(subtraction => (
-        <InlineSampleLabel key={subtraction.id} name={subtraction.name} />
+        <InlineSampleSubtraction key={subtraction.id} name={subtraction.name} />
     ));
 
     return (
         <React.Fragment>
-            <SidebarHeader>Default Subtractions</SidebarHeader>
-            <SampleSidebarSelector
-                allItems={subtractionOptions}
-                selectedItems={defaultSubtractions}
-                sampleId={sampleId}
-                onUpdate={onUpdate}
-            />
+            <SidebarHeader>
+                Default Subtractions
+                <SampleSidebarSelector
+                    allItems={subtractionOptions}
+                    selectedItems={defaultSubtractions}
+                    sampleId={sampleId}
+                    onUpdate={onUpdate}
+                />
+            </SidebarHeader>
             <SampleLabelsList>{sampleLabelComponents}</SampleLabelsList>
         </React.Fragment>
     );
