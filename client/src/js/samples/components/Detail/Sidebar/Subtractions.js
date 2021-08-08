@@ -1,42 +1,17 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
 import { getDefaultSubtractions, getSampleDetailId, getSubtractionOptions } from "../../../selectors";
-import { SampleLabel } from "../../Label";
-import { SidebarHeader } from "./Header";
-import { SampleSidebarSelector } from "./Selector";
-
-// TODO: add a add/remove default subtraction function (If necessary)
-
-const InlineSampleSubtraction = styled(SampleLabel)`
-    background-color: ${props => props.theme.color.white};
-    display: inline;
-    margin: 0 5px 5px 0;
-`;
-
-const SampleLabelsList = styled.div`
-    display: flex;
-    flex-flow: wrap;
-`;
+import { EditableProperty } from "./EditableProperty";
 
 export const DefaultSubtractions = ({ defaultSubtractions, sampleId, subtractionOptions, onUpdate }) => {
-    const sampleLabelComponents = defaultSubtractions.map(subtraction => (
-        <InlineSampleSubtraction key={subtraction.id} name={subtraction.name} />
-    ));
-
     return (
-        <React.Fragment>
-            <SidebarHeader>
-                Default Subtractions
-                <SampleSidebarSelector
-                    allItems={subtractionOptions}
-                    selectedItems={defaultSubtractions}
-                    sampleId={sampleId}
-                    onUpdate={onUpdate}
-                />
-            </SidebarHeader>
-            <SampleLabelsList>{sampleLabelComponents}</SampleLabelsList>
-        </React.Fragment>
+        <EditableProperty
+            header="Default Subtractions"
+            sampleItems={subtractionOptions}
+            selectedItems={defaultSubtractions}
+            sampleId={sampleId}
+            onUpdate={onUpdate}
+        ></EditableProperty>
     );
 };
 

@@ -50,8 +50,8 @@ export const SampleSidebarSelectorItem = ({ checked, color, description, id, nam
     );
 };
 
-export const SampleSidebarSelector = ({ allItems, selectedItems, sampleId, onUpdate }) => {
-    const [results, term, setTerm] = useFuse(allItems, ["name"], [sampleId]);
+export const SampleSidebarSelector = ({ sampleItems, selectedItems, sampleId, onUpdate }) => {
+    const [results, term, setTerm] = useFuse(sampleItems, ["name"], [sampleId]);
 
     const [attributes, show, styles, setPopperElement, setReferenceElement, setShow] = usePopover();
 
@@ -82,9 +82,6 @@ export const SampleSidebarSelector = ({ allItems, selectedItems, sampleId, onUpd
             onClick={handleToggle}
         />
     ));
-
-    // console.log("labelComponents", labelComponents);
-    console.log("results", results);
 
     return (
         <React.Fragment>
