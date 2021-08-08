@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { getDefaultSubtractions, getSampleDetailId } from "../../../selectors";
+import { getDefaultSubtractions, getSampleDetailId, getSubtractionOptions } from "../../../selectors";
 import { SampleLabel } from "../../Label";
 import { SidebarHeader } from "./Header";
 import { SampleSidebarSelector } from "./Selector";
@@ -43,7 +43,7 @@ export const DefaultSubtractions = ({ defaultSubtractions, sampleId, subtraction
 export const mapStateToProps = state => ({
     defaultSubtractions: getDefaultSubtractions(state),
     sampleId: getSampleDetailId(state),
-    subtractionOptions: state.subtraction.shortlist
+    subtractionOptions: getSubtractionOptions(state)
 });
 
 export const mapDispatchToProps = dispatch => ({
