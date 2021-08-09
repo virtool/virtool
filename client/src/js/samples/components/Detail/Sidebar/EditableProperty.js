@@ -28,12 +28,12 @@ export const EditableProperty = ({ header, sampleItems, selectedItems, sampleId,
         onUpdate(sampleId, newList);
     };
 
-    const sampleItemComponents = sampleItems.map(item => (
+    const sampleItemComponents = selectedItems.map(item => (
         <InlineSampleLabel
             key={item.id}
             color={item.color}
             name={item.name}
-            onClose={() => onClose(sampleId, sampleItems, item.id)}
+            onClose={() => onClose(sampleId, selectedItems, item.id)}
         />
     ));
 
