@@ -409,19 +409,16 @@ def transform_coverage_to_coordinates(coverage_list: List[int]) -> List[Tuple[in
     :param coverage_list: a list of position-indexed depth values
     :return: a list of (x, y) coordinates
     """
-    previous_depth = coverage_list[0]
-    coordinates = {(0, previous_depth)}
+    coordinates = [(0, coverage_list[0])]
 
     last = len(coverage_list) - 1
 
-    for i, depth in enumerate(coverage_list):
-        if depth != previous_depth or i == last:
-            coordinates.add((i - 1, previous_depth))
-            coordinates.add((i, depth))
+    for x in range(1, last):
+        y = coverage_list[x]
+        if y != coverage_list[x - 1] or y != coverage_list[x + 1]:
+            coordinates.append((x, y))
 
-            previous_depth = depth
-
-    coordinates = sorted(list(coordinates), key=lambda x: x[0])
+    coordinates.append((last, coverage_list[last]))
 
     if len(coordinates) > 100:
         return vw.simplify(coordinates, ratio=0.4)
