@@ -1,6 +1,6 @@
 from typing import Callable
+
 from aiohttp import web
-from aiohttp.web_exceptions import HTTPNotFound
 
 from virtool.api.response import json_response
 from virtool.templates import setup_template_env
@@ -11,10 +11,11 @@ from virtool.utils import get_static_hash
 async def middleware(req: web.Request, handler: Callable):
     try:
         resp = await handler(req)
-        return resp
 
-    except HTTPNotFound:
-        return handle_404(req)
+        if not req.path.startswith("/api") and resp.status == 404:
+            return handle_404(req)
+
+        return resp
 
     except web.HTTPException as ex:
         data = {
