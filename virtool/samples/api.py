@@ -81,8 +81,6 @@ async def find(req):
     if not v.validate(dict(req.query)):
         return invalid_query(v.errors)
 
-    query = v.document
-
     queries = list()
 
     term = req.query.get("find")
