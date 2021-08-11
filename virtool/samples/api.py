@@ -915,8 +915,57 @@ async def create_cache(req):
     return json_response(document, status=201, headers=headers)
 
 
+@routes.jobs_api.put("/api/samples/{sample_id}/caches/{key}/reads/{filename}")
+async def upload_cache_reads(req):
+    """
+    Upload reads files to cache using the Jobs API.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+
+    name = req.match_info["filename"]
+    sample_id = req.match_info["sample_id"]
+    key = req.match_info["key"]
+
+    if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
+        return bad_request("File name is not an accepted reads file")
+
+    cache_path = Path(virtool.caches.utils.join_cache_path(
+        req.app["settings"], key)) / name
+
+    if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
+        return not_found("Cache doesn't exist with given key")
+
+    try:
+        size = await virtool.uploads.utils.naive_writer(req, cache_path, is_gzip_compressed)
+    except OSError:
+        return bad_request("File is not compressed")
+    except exc.IntegrityError:
+        return conflict("File name is already uploaded for this cache")
+    except asyncio.CancelledError:
+        logger.debug(f"Reads cache file upload aborted for {key}")
+        return aiohttp.web.Response(status=499)
+
+    reads = await virtool.samples.files.create_reads_file(
+        pg,
+        size,
+        name,
+        name,
+        sample_id,
+        key=key,
+        cache=True
+    )
+
+    headers = {
+        "Location": f"/api/samples/{sample_id}/caches/{key}/reads/{reads['id']}"
+    }
+
+    return json_response(reads, status=201, headers=headers)
+
+
 @routes.jobs_api.post("/api/samples/{sample_id}/caches/{key}/artifacts")
-async def upload_artifacts_cache(req):
+async def upload_cache_artifact(req):
     """
     Upload sample artifacts to cache using the Jobs API.
 
@@ -967,55 +1016,6 @@ async def upload_artifacts_cache(req):
     }
 
     return json_response(artifact, status=201, headers=headers)
-
-
-@routes.jobs_api.put("/api/samples/{sample_id}/caches/{key}/reads/{filename}")
-async def upload_reads_cache(req):
-    """
-    Upload reads files to cache using the Jobs API.
-
-    """
-    db = req.app["db"]
-    pg = req.app["pg"]
-
-    name = req.match_info["filename"]
-    sample_id = req.match_info["sample_id"]
-    key = req.match_info["key"]
-
-    if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
-        return bad_request("File name is not an accepted reads file")
-
-    cache_path = Path(virtool.caches.utils.join_cache_path(
-        req.app["settings"], key)) / name
-
-    if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
-        return not_found("Cache doesn't exist with given key")
-
-    try:
-        size = await virtool.uploads.utils.naive_writer(req, cache_path, is_gzip_compressed)
-    except OSError:
-        return bad_request("File is not compressed")
-    except exc.IntegrityError:
-        return conflict("File name is already uploaded for this cache")
-    except asyncio.CancelledError:
-        logger.debug(f"Reads cache file upload aborted for {key}")
-        return aiohttp.web.Response(status=499)
-
-    reads = await virtool.samples.files.create_reads_file(
-        pg,
-        size,
-        name,
-        name,
-        sample_id,
-        key=key,
-        cache=True
-    )
-
-    headers = {
-        "Location": f"/api/samples/{sample_id}/caches/{key}/reads/{reads['id']}"
-    }
-
-    return json_response(reads, status=201, headers=headers)
 
 
 @routes.jobs_api.patch("/api/samples/{sample_id}/caches/{key}")
@@ -1123,7 +1123,7 @@ async def download_artifact(req: aiohttp.web.Request):
 
 
 @routes.jobs_api.get("/api/samples/{sample_id}/caches/{key}/reads/reads_{suffix}.fq.gz")
-async def download_reads_cache(req):
+async def download_cache_reads(req):
     """
     Download sample reads cache for a given key.
 
@@ -1162,7 +1162,7 @@ async def download_reads_cache(req):
 
 
 @routes.jobs_api.get("/api/samples/{sample_id}/caches/{key}/artifacts/{filename}")
-async def download_artifact_cache(req):
+async def download_cache_artifact(req):
     """
     Download sample artifact cache for a given key.
 
