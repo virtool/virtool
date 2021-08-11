@@ -4,6 +4,7 @@ from typing import Tuple
 import aiohttp.web
 import aiojobs.aiohttp
 
+import virtool.http.errors
 import virtool.http.accept
 import virtool.jobs.auth
 from virtool.dev.fake import drop_fake_mongo, remove_fake_data_path
@@ -16,10 +17,11 @@ from virtool.types import App
 
 
 async def create_app(**config):
-    """Crate the :class:`aiohttp.web.Application` for the jobs API process."""
+    """Create the :class:`aiohttp.web.Application` for the jobs API process."""
     middlewares = [
         virtool.http.accept.middleware,
         virtool.jobs.auth.middleware,
+        virtool.http.errors.middleware
     ]
 
     app: aiohttp.web.Application = aiohttp.web.Application(middlewares=middlewares)
