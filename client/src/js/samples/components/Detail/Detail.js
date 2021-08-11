@@ -1,8 +1,7 @@
-import { includes } from "lodash-es";
+import { get, includes } from "lodash-es";
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { Link, Redirect, Route, Switch } from "react-router-dom";
-
 import Analyses from "../../../analyses/components/Analyses";
 import {
     Icon,
@@ -18,6 +17,8 @@ import {
 } from "../../../base";
 import Cache from "../../../caches/components/Detail";
 import { getError } from "../../../errors/selectors";
+import { listLabels } from "../../../labels/actions";
+import { shortlistSubtractions } from "../../../subtraction/actions";
 import { getSample } from "../../actions";
 import { getCanModify } from "../../selectors";
 import { SampleDetailFiles } from "../Files/Files";
@@ -26,18 +27,31 @@ import General from "./General";
 import RemoveSample from "./Remove";
 import Rights from "./Rights";
 
-const SampleDetail = ({ canModify, detail, error, history, match, onGetSample }) => {
+const SampleDetail = ({
+    canModify,
+    detail,
+    error,
+    history,
+    labels,
+    match,
+    onGetSample,
+    onListLabels,
+    onShortlistSubtractions,
+    subtractionOptions
+}) => {
     const sampleId = match.params.sampleId;
 
     useEffect(() => {
         onGetSample(sampleId);
+        onShortlistSubtractions();
+        onListLabels();
     }, [sampleId]);
 
     if (error) {
         return <NotFound />;
     }
 
-    if (detail === null) {
+    if (detail === null || !labels || !subtractionOptions) {
         return <LoadingPlaceholder />;
     }
 
@@ -112,12 +126,20 @@ const SampleDetail = ({ canModify, detail, error, history, match, onGetSample })
 export const mapStateToProps = state => ({
     canModify: getCanModify(state),
     detail: state.samples.detail,
-    error: getError("GET_SAMPLE_ERROR")
+    error: getError("GET_SAMPLE_ERROR"),
+    labels: get(state, "samples.detail.labels", ""),
+    subtractionOptions: get(state, "subtraction.shortlist", "")
 });
 
 export const mapDispatchToProps = dispatch => ({
     onGetSample: sampleId => {
         dispatch(getSample(sampleId));
+    },
+    onShortlistSubtractions: () => {
+        dispatch(shortlistSubtractions());
+    },
+    onListLabels: () => {
+        dispatch(listLabels());
     }
 });
 

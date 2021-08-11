@@ -1,14 +1,10 @@
 import { xor } from "lodash-es";
 import React, { useCallback } from "react";
-import { connect } from "react-redux";
 import styled from "styled-components";
 import { getFontSize } from "../../../../app/theme";
-import { BoxGroupSection, Icon, Input, LoadingPlaceholder } from "../../../../base";
+import { BoxGroupSection, Icon, Input } from "../../../../base";
 import { useFuse } from "../../../../base/hooks";
 import { PopoverBody, usePopover } from "../../../../base/Popover";
-import { getLabels } from "../../../../labels/selectors";
-import { editSample } from "../../../actions";
-import { getSampleDetailId, getSampleLabels } from "../../../selectors";
 import { SmallSampleLabel } from "../../Label";
 import { SidebarHeaderButton } from "./Header";
 
@@ -69,10 +65,6 @@ export const SampleSidebarSelector = ({ sampleItems, selectedItems, sampleId, on
     );
 
     const sampleLabelIds = selectedItems.map(label => label.id);
-
-    if (!results) {
-        return <LoadingPlaceholder />;
-    }
 
     const labelComponents = results.map(label => (
         <SampleSidebarSelectorItem

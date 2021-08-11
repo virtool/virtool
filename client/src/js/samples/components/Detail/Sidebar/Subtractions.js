@@ -3,17 +3,15 @@ import { connect } from "react-redux";
 import { getDefaultSubtractions, getSampleDetailId, getSubtractionOptions } from "../../../selectors";
 import { EditableProperty } from "./EditableProperty";
 
-export const DefaultSubtractions = ({ defaultSubtractions, sampleId, subtractionOptions, onUpdate }) => {
-    return (
-        <EditableProperty
-            header="Default Subtractions"
-            sampleItems={subtractionOptions}
-            selectedItems={defaultSubtractions}
-            sampleId={sampleId}
-            onUpdate={onUpdate}
-        ></EditableProperty>
-    );
-};
+export const DefaultSubtractions = ({ defaultSubtractions, sampleId, subtractionOptions, onUpdate }) => (
+    <EditableProperty
+        header="Default Subtractions"
+        sampleItems={subtractionOptions}
+        selectedItems={defaultSubtractions}
+        sampleId={sampleId}
+        onUpdate={onUpdate}
+    />
+);
 
 export const mapStateToProps = state => ({
     defaultSubtractions: getDefaultSubtractions(state),
