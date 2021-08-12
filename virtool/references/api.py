@@ -379,7 +379,7 @@ async def create(req):
 
     elif remote_from:
         try:
-            release = await get_release(
+            release = await virtool.github.get_release(
                 settings,
                 req.app["client"],
                 remote_from,
