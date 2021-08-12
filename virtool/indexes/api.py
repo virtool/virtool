@@ -3,28 +3,28 @@ import json
 import logging
 
 import aiohttp.web
+from aiohttp.web_exceptions import HTTPNoContent
 from aiohttp.web_fileresponse import FileResponse
 from sqlalchemy import exc
 
-import virtool.api.json
-import virtool.api.utils
-import virtool.db.utils
-import virtool.history.db
-import virtool.history.utils
 import virtool.http.routes
 import virtool.indexes.db
-import virtool.indexes.files
-import virtool.indexes.utils
 import virtool.jobs.db
-import virtool.pg.utils
 import virtool.references.db
 import virtool.uploads.db
-import virtool.uploads.utils
 import virtool.utils
-from virtool.api.response import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
+from virtool.api.json import CustomEncoder
+from virtool.api.response import bad_request, conflict, insufficient_rights, json_response, not_found
+from virtool.api.utils import compose_regex_query, paginate
+from virtool.db.utils import get_new_id
+from virtool.history.db import LIST_PROJECTION
 from virtool.indexes.db import FILES, reset_history
+from virtool.indexes.files import create_index_file
 from virtool.indexes.models import IndexFile, IndexType
+from virtool.indexes.utils import check_index_file_type
 from virtool.jobs.utils import JobRights
+from virtool.pg.utils import delete_row, get_rows
+from virtool.uploads.utils import naive_writer
 from virtool.utils import compress_json_with_gzip
 
 logger = logging.getLogger("indexes")
@@ -148,7 +148,7 @@ async def download_otus_json(req):
             index["manifest"]
         )
 
-        json_string = json.dumps(patched_otus, cls=virtool.api.json.CustomEncoder)
+        json_string = json.dumps(patched_otus, cls=CustomEncoder)
 
         await req.app["run_in_thread"](compress_json_with_gzip, json_string, json_path)
 
@@ -214,7 +214,7 @@ async def create(req):
         return bad_request("There are no unbuilt changes")
 
     user_id = req["client"].user_id
-    job_id = await virtool.db.utils.get_new_id(db.jobs)
+    job_id = await get_new_id(db.jobs)
 
     document = await virtool.indexes.db.create(db, ref_id, user_id, job_id)
 
@@ -271,10 +271,10 @@ async def upload(req):
         return not_found()
 
     reference_id = document["reference"]["id"]
-    file_type = virtool.indexes.utils.check_index_file_type(name)
+    file_type = check_index_file_type(name)
 
     try:
-        index_file = await virtool.indexes.files.create_index_file(
+        index_file = await create_index_file(
             pg,
             index_id,
             file_type,
@@ -287,10 +287,10 @@ async def upload(req):
     path = req.app["settings"]["data_path"] / "references" / reference_id / index_id / name
 
     try:
-        size = await virtool.uploads.utils.naive_writer(req, path)
+        size = await naive_writer(req, path)
     except asyncio.CancelledError:
         logger.debug(f"Index file upload aborted: {upload_id}")
-        await virtool.pg.utils.delete_row(pg, upload_id, IndexFile)
+        await delete_row(pg, upload_id, IndexFile)
 
         return aiohttp.web.Response(status=499)
 
@@ -328,7 +328,7 @@ async def finalize(req):
     if reference is None:
         return not_found("Reference associated with index does not exist")
 
-    rows = await virtool.pg.utils.get_rows(pg, IndexFile, "index", index_id)
+    rows = await get_rows(pg, IndexFile, "index", index_id)
 
     results = {f.name: f.type for f in rows}
 
@@ -368,14 +368,14 @@ async def find_history(req):
     }
 
     if term:
-        db_query.update(virtool.api.utils.compose_regex_query(term, ["otu.name", "user.id"]))
+        db_query.update(compose_regex_query(term, ["otu.name", "user.id"]))
 
-    data = await virtool.api.utils.paginate(
+    data = await paginate(
         db.history,
         db_query,
         req.query,
         sort=[("otu.name", 1), ("otu.version", -1)],
-        projection=virtool.history.db.LIST_PROJECTION,
+        projection=LIST_PROJECTION,
         reverse=True
     )
 
@@ -396,4 +396,4 @@ async def delete_index(req: aiohttp.web.Request):
 
     await reset_history(db, index_id)
 
-    return no_content()
+    raise HTTPNoContent

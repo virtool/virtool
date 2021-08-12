@@ -6,32 +6,32 @@ from pathlib import Path
 
 import aiohttp.web
 import pymongo.errors
+from aiohttp.web_exceptions import HTTPNoContent
 from aiohttp.web_fileresponse import FileResponse
 from cerberus import Validator
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.analyses.db
-import virtool.analyses.utils
-import virtool.api.utils
 import virtool.caches.db
-import virtool.caches.utils
 import virtool.db.utils
-import virtool.errors
 import virtool.jobs.db
 import virtool.pg.utils
 import virtool.samples.db
 import virtool.samples.files
 import virtool.samples.utils
-import virtool.subtractions.db
 import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
 import virtool.validators
+from virtool.analyses.db import PROJECTION
+from virtool.analyses.utils import WORKFLOW_NAMES
 from virtool.api.response import bad_request, conflict, insufficient_rights, invalid_query, \
-    json_response, no_content, not_found
-from virtool.api.utils import compose_regex_query
+    json_response, not_found
+from virtool.api.utils import compose_regex_query, paginate
 from virtool.caches.models import SampleArtifactCache
+from virtool.caches.utils import join_cache_path
+from virtool.errors import DatabaseError
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
@@ -39,6 +39,7 @@ from virtool.samples.db import attach_labels, compose_sample_workflow_query, get
 from virtool.samples.files import create_artifact_file
 from virtool.samples.models import ArtifactType, SampleArtifact, SampleReads
 from virtool.samples.utils import bad_labels_response, check_labels
+from virtool.subtractions.db import attach_subtractions
 from virtool.uploads.utils import is_gzip_compressed
 
 logger = logging.getLogger("samples")
@@ -124,7 +125,7 @@ async def find(req):
         "$or": rights_filter
     }
 
-    data = await virtool.api.utils.paginate(
+    data = await paginate(
         db.samples,
         db_query,
         req.query,
@@ -545,7 +546,7 @@ async def remove(req):
     try:
         if not await virtool.samples.db.check_rights(db, sample_id, client):
             return insufficient_rights()
-    except virtool.errors.DatabaseError as err:
+    except DatabaseError as err:
         if "Sample does not exist" in str(err):
             return not_found()
 
@@ -557,7 +558,7 @@ async def remove(req):
         [sample_id]
     )
 
-    return no_content()
+    raise HTTPNoContent
 
 
 @routes.jobs_api.delete("/api/samples/{sample_id}")
@@ -592,7 +593,7 @@ async def job_remove(req):
         [sample_id]
     )
 
-    return no_content()
+    raise HTTPNoContent
 
 
 @routes.get("/api/samples/{sample_id}/analyses")
@@ -608,7 +609,7 @@ async def find_analyses(req):
     try:
         if not await virtool.samples.db.check_rights(db, sample_id, req["client"], write=False):
             return insufficient_rights()
-    except virtool.errors.DatabaseError as err:
+    except DatabaseError as err:
         if "Sample does not exist" in str(err):
             return not_found()
 
@@ -624,17 +625,17 @@ async def find_analyses(req):
         "sample.id": sample_id
     }
 
-    data = await virtool.api.utils.paginate(
+    data = await paginate(
         db.analyses,
         db_query,
         req.query,
         base_query=base_query,
-        projection=virtool.analyses.db.PROJECTION,
+        projection=PROJECTION,
         sort=[("created_at", -1)]
     )
 
     data["documents"] = await asyncio.tasks.gather(
-        *[virtool.subtractions.db.attach_subtractions(db, d) for d in data["documents"]]
+        *[attach_subtractions(db, d) for d in data["documents"]]
     )
 
     return json_response(data)
@@ -652,7 +653,7 @@ async def find_analyses(req):
     "workflow": {
         "type": "string",
         "required": True,
-        "allowed": virtool.analyses.utils.WORKFLOW_NAMES
+        "allowed": WORKFLOW_NAMES
     }
 })
 async def analyze(req):
@@ -669,7 +670,7 @@ async def analyze(req):
     try:
         if not await virtool.samples.db.check_rights(db, sample_id, req["client"]):
             return insufficient_rights()
-    except virtool.errors.DatabaseError as err:
+    except DatabaseError as err:
         if "Sample does not exist" in str(err):
             return not_found()
 
@@ -770,7 +771,7 @@ async def cache_job_remove(req: aiohttp.web.Request):
 
     await virtool.caches.db.remove(req.app, document["_id"])
 
-    return no_content()
+    raise HTTPNoContent
 
 
 @routes.jobs_api.post("/api/samples/{sample_id}/artifacts")
@@ -985,7 +986,7 @@ async def upload_cache_artifact(req):
 
     name = req.query.get("name")
 
-    cache_path = virtool.caches.utils.join_cache_path(
+    cache_path = join_cache_path(
         req.app["settings"], key) / name
 
     if artifact_type and artifact_type not in ArtifactType.to_list():
@@ -1063,8 +1064,7 @@ async def download_reads(req: aiohttp.web.Request):
     if file_name not in existing_reads:
         return not_found()
 
-    file_path = req.app["settings"]["data_path"] / \
-                "samples" / sample_id / file_name
+    file_path = req.app["settings"]["data_path"] / "samples" / sample_id / file_name
 
     if not os.path.isfile(file_path):
         return virtool.api.response.not_found()

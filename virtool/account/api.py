@@ -6,21 +6,22 @@ requests.
 
 """
 import aiohttp.web
+from aiohttp.web import HTTPNoContent
 
 import virtool.account.db
-import virtool.analyses.utils
-import virtool.db.utils
 import virtool.http.auth
 import virtool.http.routes
-import virtool.http.utils
-import virtool.users.checks
-import virtool.users.db
-import virtool.users.sessions
-import virtool.users.utils
-import virtool.utils
 import virtool.validators
-from virtool.api.response import bad_request, json_response, no_content, not_found
+from virtool.analyses.utils import WORKFLOW_NAMES
+from virtool.api.response import bad_request, json_response, not_found
+from virtool.db.utils import get_one_field
 from virtool.http.schema import schema
+from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
+from virtool.users.checks import check_password_length
+from virtool.users.db import validate_credentials, edit
+from virtool.users.sessions import create_reset_code, replace_session
+from virtool.users.utils import limit_permissions
+from virtool.utils import base_processor
 
 #: A MongoDB projection to use when returning API key documents to clients. The key should never be sent to client after
 #: its creation.
@@ -40,7 +41,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     """
     document = await virtool.account.db.get(req.app["db"], req["client"].user_id)
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(base_processor(document))
 
 
 @routes.patch("/api/account")
@@ -74,12 +75,12 @@ async def edit(req: aiohttp.web.Request) -> aiohttp.web.Response:
     update = dict()
 
     if password is not None:
-        error = await virtool.users.checks.check_password_length(req)
+        error = await check_password_length(req)
 
         if error:
             return bad_request(error)
 
-        if not await virtool.users.db.validate_credentials(db, user_id, old_password or ""):
+        if not await validate_credentials(db, user_id, old_password or ""):
             return bad_request("Invalid credentials")
 
         update = virtool.account.db.compose_password_update(password)
@@ -94,7 +95,7 @@ async def edit(req: aiohttp.web.Request) -> aiohttp.web.Response:
     else:
         document = await virtool.account.db.get(db, user_id)
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(base_processor(document))
 
 
 @routes.get("/api/account/settings")
@@ -103,7 +104,7 @@ async def get_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
     Get account settings
 
     """
-    account_settings = await virtool.db.utils.get_one_field(
+    account_settings = await get_one_field(
         req.app["db"].users,
         "settings",
         req["client"].user_id
@@ -124,7 +125,7 @@ async def get_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
     },
     "quick_analyze_workflow": {
         "type": "string",
-        "allowed": virtool.analyses.utils.WORKFLOW_NAMES,
+        "allowed": WORKFLOW_NAMES,
         "required": False
     }
 })
@@ -138,7 +139,7 @@ async def update_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     user_id = req["client"].user_id
 
-    settings_from_db = await virtool.db.utils.get_one_field(db.users, "settings", user_id)
+    settings_from_db = await get_one_field(db.users, "settings", user_id)
 
     settings = {
         **settings_from_db,
@@ -250,7 +251,7 @@ async def update_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     user = await db.users.find_one(user_id, ["administrator", "permissions"])
 
     # The permissions currently assigned to the API key.
-    permissions = await virtool.db.utils.get_one_field(
+    permissions = await get_one_field(
         db.keys,
         "permissions",
         {"id": key_id, "user.id": user_id}
@@ -259,7 +260,7 @@ async def update_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     permissions.update(data["permissions"])
 
     if not user["administrator"]:
-        permissions = virtool.users.utils.limit_permissions(permissions, user["permissions"])
+        permissions = limit_permissions(permissions, user["permissions"])
 
     document = await db.keys.find_one_and_update({"id": key_id}, {
         "$set": {
@@ -288,17 +289,17 @@ async def remove_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if delete_result.deleted_count == 0:
         return not_found()
 
-    return no_content()
+    raise HTTPNoContent
 
 
 @routes.delete("/api/account/keys")
-async def remove_all_api_keys(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def remove_all_api_keys(req: aiohttp.web.Request):
     """
     Remove all API keys for the account associated with the requesting session.
 
     """
     await req.app["db"].keys.delete_many({"user.id": req["client"].user_id})
-    return no_content()
+    raise HTTPNoContent
 
 
 @routes.post("/api/account/login", public=True)
@@ -333,20 +334,20 @@ async def login(req: aiohttp.web.Request) -> aiohttp.web.Response:
     remember = data["remember"]
 
     # Re-render the login page with an error message if the username and/or password are invalid.
-    if not await virtool.users.db.validate_credentials(db, user_id, password):
+    if not await validate_credentials(db, user_id, password):
         return bad_request("Invalid username or password")
 
     session_id = req.cookies.get("session_id")
 
     # If the user's password needs to be reset, redirect to the reset page without authorizing the session. A one-time
     # reset code is generated and added to the query string.
-    if await virtool.db.utils.get_one_field(db.users, "force_reset", user_id):
+    if await get_one_field(db.users, "force_reset", user_id):
         return json_response({
             "reset": True,
-            "reset_code": await virtool.users.sessions.create_reset_code(db, session_id, user_id, remember)
+            "reset_code": await create_reset_code(db, session_id, user_id, remember)
         }, status=200)
 
-    session, token = await virtool.users.sessions.replace_session(
+    session, token = await replace_session(
         db,
         session_id,
         virtool.http.auth.get_ip(req),
@@ -356,8 +357,8 @@ async def login(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     resp = json_response({"reset": False}, status=201)
 
-    virtool.http.utils.set_session_id_cookie(resp, session["_id"])
-    virtool.http.utils.set_session_token_cookie(resp, token)
+    set_session_id_cookie(resp, session["_id"])
+    set_session_token_cookie(resp, token)
 
     return resp
 
@@ -371,7 +372,7 @@ async def logout(req: aiohttp.web.Request) -> aiohttp.web.Response:
     db = req.app["db"]
     old_session_id = req.cookies.get("session_id")
 
-    session, _ = await virtool.users.sessions.replace_session(
+    session, _ = await replace_session(
         db,
         old_session_id,
         virtool.http.auth.get_ip(req)
@@ -379,7 +380,7 @@ async def logout(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     resp = aiohttp.web.Response(status=200)
 
-    virtool.http.utils.set_session_id_cookie(resp, session["_id"])
+    set_session_id_cookie(resp, session["_id"])
     resp.del_cookie("session_token")
 
     return resp
@@ -409,7 +410,7 @@ async def reset(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     session = await db.sessions.find_one(session_id)
 
-    error = await virtool.users.checks.check_password_length(req)
+    error = await check_password_length(req)
 
     if not session.get("reset_code") or not session.get("reset_user_id") or reset_code != session.get("reset_code"):
         error = "Invalid reset code"
@@ -419,13 +420,13 @@ async def reset(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if error:
         return json_response({
             "error": error,
-            "reset_code": await virtool.users.sessions.create_reset_code(db, session_id, user_id=user_id)
+            "reset_code": await create_reset_code(db, session_id, user_id=user_id)
         }, status=400)
 
     # Update the user password and disable the `force_reset`.
-    await virtool.users.db.edit(db, user_id, force_reset=False, password=password)
+    await edit(db, user_id, force_reset=False, password=password)
 
-    new_session, token = await virtool.users.sessions.replace_session(
+    new_session, token = await replace_session(
         db,
         session_id,
         virtool.http.auth.get_ip(req),
@@ -443,8 +444,8 @@ async def reset(req: aiohttp.web.Request) -> aiohttp.web.Response:
         "reset": False
     }, status=200)
 
-    virtool.http.utils.set_session_id_cookie(resp, new_session["_id"])
-    virtool.http.utils.set_session_token_cookie(resp, token)
+    set_session_id_cookie(resp, new_session["_id"])
+    set_session_token_cookie(resp, token)
 
     # Authenticate and return a redirect response to the `return_to` path. This is identical to the process used for
     # successful login requests.

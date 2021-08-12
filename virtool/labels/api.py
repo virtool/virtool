@@ -1,13 +1,13 @@
 import asyncio
 
+from aiohttp.web_exceptions import HTTPNoContent
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import virtool.db.utils
 import virtool.http.routes
 import virtool.validators
-from virtool.api.response import bad_request, empty_request, json_response, no_content, not_found
+from virtool.api.response import bad_request, empty_request, json_response, not_found
 from virtool.http.schema import schema
 from virtool.labels.db import attach_sample_count
 from virtool.labels.models import Label
@@ -162,4 +162,4 @@ async def remove(req):
         await session.delete(label)
         await session.commit()
 
-    return no_content()
+    raise HTTPNoContent

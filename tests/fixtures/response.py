@@ -22,14 +22,6 @@ class RespIs:
         }
 
     @staticmethod
-    async def no_content(resp):
-        """
-        Check whether a response object is a valid Virtool ``no_content``.
-
-        """
-        return resp.status == 204
-
-    @staticmethod
     async def bad_request(resp, message="Bad request"):
         """
         Check whether a response object is a valid Virtool ``bad_request``.

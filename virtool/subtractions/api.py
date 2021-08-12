@@ -3,30 +3,30 @@ import logging
 import os
 
 import aiohttp.web
+from aiohttp.web_exceptions import HTTPNoContent
 from aiohttp.web_fileresponse import FileResponse
 from sqlalchemy import select, exc
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import virtool.api.utils
-import virtool.db.utils
 import virtool.http.routes
 import virtool.jobs.db
-import virtool.pg.utils
-import virtool.samples.utils
 import virtool.subtractions.db
-import virtool.subtractions.files
 import virtool.uploads.db
-import virtool.uploads.utils
-import virtool.utils
 import virtool.validators
 from virtool.api.response import (bad_request, conflict,
-                                  json_response, no_content, not_found)
+                                  json_response, not_found)
+from virtool.api.utils import get_query_bool, paginate, compose_regex_query
+from virtool.db.utils import get_new_id
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
+from virtool.pg.utils import get_row_by_id
 from virtool.subtractions.db import attach_computed
+from virtool.subtractions.files import create_subtraction_file, delete_subtraction_file
 from virtool.subtractions.models import SubtractionFile
 from virtool.subtractions.utils import FILES
 from virtool.uploads.models import Upload
+from virtool.uploads.utils import naive_writer
+from virtool.utils import base_processor
 
 logger = logging.getLogger("subtractions")
 
@@ -41,8 +41,8 @@ BASE_QUERY = {
 async def find(req):
     db = req.app["db"]
 
-    ready = virtool.api.utils.get_query_bool(req, "ready")
-    short = virtool.api.utils.get_query_bool(req, "short")
+    ready = get_query_bool(req, "ready")
+    short = get_query_bool(req, "short")
 
     projection = ["name"] if short else virtool.subtractions.db.PROJECTION
 
@@ -51,20 +51,20 @@ async def find(req):
     term = req.query.get("find")
 
     if term:
-        db_query = virtool.api.utils.compose_regex_query(term, ["name", "nickname"])
+        db_query = compose_regex_query(term, ["name", "nickname"])
 
     if short:
         documents = list()
 
         async for document in db.subtraction.find({**db_query, **BASE_QUERY}, ["name"]):
-            documents.append(virtool.utils.base_processor(document))
+            documents.append(base_processor(document))
 
         return json_response(documents)
 
     if ready:
         db_query["ready"] = True
 
-    data = await virtool.api.utils.paginate(
+    data = await paginate(
         db.subtraction,
         db_query,
         req.query,
@@ -98,7 +98,7 @@ async def get(req):
 
     with_computed = await attach_computed(req.app, document)
 
-    return json_response(virtool.utils.base_processor(with_computed))
+    return json_response(base_processor(with_computed))
 
 
 @routes.post("/api/subtractions", permission="modify_subtraction")
@@ -132,7 +132,7 @@ async def create(req):
     nickname = data["nickname"]
     upload_id = data["upload_id"]
 
-    file = await virtool.pg.utils.get_row_by_id(pg, Upload, upload_id)
+    file = await get_row_by_id(pg, Upload, upload_id)
 
     if file is None:
         return bad_request("File does not exist")
@@ -167,7 +167,7 @@ async def create(req):
     rights.subtractions.can_remove(subtraction_id)
     rights.uploads.can_read(upload_id)
 
-    job_id = await virtool.db.utils.get_new_id(db.jobs)
+    job_id = await get_new_id(db.jobs)
     document["job"]["id"] = job_id
 
     await virtool.jobs.db.create(
@@ -187,7 +187,7 @@ async def create(req):
 
     with_computed = await attach_computed(req.app, document)
 
-    return json_response(virtool.utils.base_processor(with_computed), headers=headers, status=201)
+    return json_response(base_processor(with_computed), headers=headers, status=201)
 
 
 @routes.jobs_api.put("/api/subtractions/{subtraction_id}/files/{filename}")
@@ -214,7 +214,7 @@ async def upload(req):
     file_type = virtool.subtractions.utils.check_subtraction_file_type(filename)
 
     try:
-        subtraction_file = await virtool.subtractions.files.create_subtraction_file(
+        subtraction_file = await create_subtraction_file(
             pg,
             subtraction_id,
             file_type,
@@ -227,10 +227,10 @@ async def upload(req):
     path = req.app["settings"]["data_path"] / "subtractions" / subtraction_id / filename
 
     try:
-        size = await virtool.uploads.utils.naive_writer(req, path)
+        size = await naive_writer(req, path)
     except asyncio.CancelledError:
         logger.debug(f"Subtraction file upload aborted: {upload_id}")
-        await virtool.subtractions.files.delete_subtraction_file(pg, upload_id)
+        await delete_subtraction_file(pg, upload_id)
 
         return aiohttp.web.Response(status=499)
 
@@ -286,7 +286,7 @@ async def edit(req):
 
     with_computed = await attach_computed(req.app, document)
 
-    return json_response(virtool.utils.base_processor(with_computed))
+    return json_response(base_processor(with_computed))
 
 
 @routes.delete("/api/subtractions/{subtraction_id}", permission="modify_subtraction")
@@ -298,7 +298,7 @@ async def remove(req):
     if updated_count == 0:
         return not_found()
 
-    return no_content()
+    raise HTTPNoContent
 
 
 @routes.jobs_api.patch("/api/subtractions/{subtraction_id}")
@@ -328,7 +328,7 @@ async def finalize_subtraction(req: aiohttp.web.Request):
     finalized = await virtool.subtractions.db.finalize(db, pg, subtraction_id, data["gc"], data["count"])
     with_computed = await attach_computed(req.app, finalized)
 
-    return json_response(virtool.utils.base_processor(with_computed))
+    return json_response(base_processor(with_computed))
 
 
 @routes.jobs_api.delete("/api/subtractions/{subtraction_id}")
@@ -351,7 +351,7 @@ async def job_remove(req: aiohttp.web.Request):
 
     await virtool.subtractions.db.delete(req.app, subtraction_id)
 
-    return no_content()
+    raise HTTPNoContent
 
 
 @routes.get("/api/subtractions/{subtraction_id}/files/{filename}")
