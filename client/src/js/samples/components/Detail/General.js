@@ -1,7 +1,6 @@
 import numbro from "numbro";
 import React from "react";
 import { connect } from "react-redux";
-import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { BoxGroup, BoxGroupHeader, Markdown, NarrowContainer, SideContainer, Table } from "../../../base";
 import { getLibraryTypeDisplayName } from "../../utils";
@@ -33,8 +32,7 @@ export const SampleDetailGeneral = ({
     locale,
     name,
     notes,
-    paired,
-    subtractions
+    paired
 }) => (
     <StyledSampleDetailGeneral>
         <NarrowContainer>
@@ -101,27 +99,6 @@ export const SampleDetailGeneral = ({
                 </Table>
             </BoxGroup>
 
-            {/* <BoxGroup>
-                <BoxGroupHeader>
-                    <h2>Default Subtractions</h2>
-                    <p>This subtraction will be the default selection when creating an analysis.</p>
-                </BoxGroupHeader>
-                <Table>
-                    <tbody>
-                        <tr>
-                            <th>Subtraction</th>
-                            <td>
-                                {subtractions ? (
-                                    <Link to={`/subtraction/${subtractions.id}`}>{subtractions.name}</Link>
-                                ) : (
-                                    "None"
-                                )}
-                            </td>
-                        </tr>
-                    </tbody>
-                </Table>
-            </BoxGroup> */}
-
             <BoxGroup>
                 <BoxGroupHeader>
                     <h2>Notes</h2>
@@ -140,7 +117,7 @@ export const SampleDetailGeneral = ({
 );
 
 export const mapStateToProps = state => {
-    const { name, host, isolate, locale, paired, quality, library_type, subtractions, notes } = state.samples.detail;
+    const { name, host, isolate, locale, paired, quality, library_type, notes } = state.samples.detail;
     const { count, encoding, gc, length } = quality;
 
     return {
@@ -154,8 +131,7 @@ export const mapStateToProps = state => {
         count: numbro(count).format("0.0 a"),
         gc: numbro(gc / 100).format("0.0 %"),
         libraryType: getLibraryTypeDisplayName(library_type),
-        lengthRange: length.join(" - "),
-        subtractions
+        lengthRange: length.join(" - ")
     };
 };
 

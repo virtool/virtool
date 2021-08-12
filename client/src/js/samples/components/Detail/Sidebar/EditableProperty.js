@@ -18,9 +18,8 @@ const SampleItemsList = styled.div`
 `;
 
 export const EditableProperty = ({ header, sampleItems, selectedItems, sampleId, onUpdate }) => {
-    // Update the selected list to be all the items but the one to that was closed
     const onClose = (sampleId, selectedItems, itemId) => {
-        let newList = [];
+        const newList = [];
         forEach(selectedItems, item => {
             if (item.id !== itemId) {
                 newList.push(item.id);

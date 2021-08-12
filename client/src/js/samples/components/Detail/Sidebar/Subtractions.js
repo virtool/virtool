@@ -1,5 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
+import { editSample } from "../../../actions";
 import { getDefaultSubtractions, getSampleDetailId, getSubtractionOptions } from "../../../selectors";
 import { EditableProperty } from "./EditableProperty";
 
@@ -25,4 +26,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(mapStateToProps)(DefaultSubtractions);
+export default connect(mapStateToProps, mapDispatchToProps)(DefaultSubtractions);
