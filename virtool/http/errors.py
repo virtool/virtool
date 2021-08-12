@@ -9,15 +9,15 @@ from virtool.utils import get_static_hash
 
 @web.middleware
 async def middleware(req: web.Request, handler: Callable):
+
     try:
         resp = await handler(req)
-
-        if not req.path.startswith("/api") and resp.status == 404:
-            return handle_404(req)
-
         return resp
 
     except web.HTTPException as ex:
+        if not req.path.startswith("/api") and ex.status == 404:
+            return handle_404(req)
+
         data = {
             "id": "_".join(ex.reason.lower().split(" ")),
             "message": ex.text
