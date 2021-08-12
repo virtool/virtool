@@ -14,13 +14,14 @@ import virtool.validators
 from virtool.api.response import bad_gateway, bad_request, insufficient_rights, json_response, not_found
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.errors import GitHubError, DatabaseError
-from virtool.github import get_release, format_release
+import virtool.github
+from virtool.github import format_release
 from virtool.http.schema import schema
 from virtool.pg.utils import get_row
 from virtool.references.tasks import CloneReferenceTask, ImportReferenceTask, RemoteReferenceTask, \
     DeleteReferenceTask, UpdateRemoteReferenceTask
 from virtool.uploads.models import Upload
-from virtool.users.db import attach_identicons
+import virtool.users.db
 
 routes = virtool.http.routes.Routes()
 
