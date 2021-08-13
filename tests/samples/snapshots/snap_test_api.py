@@ -7,292 +7,19 @@ from snapshottest import GenericRepr, Snapshot
 
 snapshots = Snapshot()
 
-snapshots['test_find_analyses[uvloop-None-None] 1'] = {
-    'documents': [
-        {
-            'created_at': '2015-10-06T20:00:00Z',
-            'id': 'test_1',
-            'index': {
-                'id': 'foo',
-                'version': 2
-            },
-            'job': {
-                'id': 'test'
-            },
-            'ready': True,
-            'reference': {
-                'id': 'baz',
-                'name': 'Baz'
-            },
-            'sample': {
-                'id': 'test'
-            },
-            'user': {
-                'id': 'bob'
-            },
-            'workflow': 'pathoscope_bowtie'
-        },
-        {
-            'created_at': '2015-10-06T20:00:00Z',
-            'id': 'test_2',
-            'index': {
-                'id': 'foo',
-                'version': 2
-            },
-            'job': {
-                'id': 'test'
-            },
-            'ready': True,
-            'reference': {
-                'id': 'baz',
-                'name': 'Baz'
-            },
-            'sample': {
-                'id': 'test'
-            },
-            'user': {
-                'id': 'fred'
-            },
-            'workflow': 'pathoscope_bowtie'
-        },
-        {
-            'created_at': '2015-10-06T20:00:00Z',
-            'id': 'test_3',
-            'index': {
-                'id': 'foo',
-                'version': 2
-            },
-            'job': {
-                'id': 'test'
-            },
-            'ready': True,
-            'reference': {
-                'id': 'foo',
-                'name': 'Foo'
-            },
-            'sample': {
-                'id': 'test'
-            },
-            'user': {
-                'id': 'fred'
-            },
-            'workflow': 'pathoscope_bowtie'
-        }
-    ],
-    'found_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3
-}
-
-snapshots['test_find_analyses[uvloop-bob-None] 1'] = {
-    'documents': [
-        {
-            'created_at': '2015-10-06T20:00:00Z',
-            'id': 'test_1',
-            'index': {
-                'id': 'foo',
-                'version': 2
-            },
-            'job': {
-                'id': 'test'
-            },
-            'ready': True,
-            'reference': {
-                'id': 'baz',
-                'name': 'Baz'
-            },
-            'sample': {
-                'id': 'test'
-            },
-            'user': {
-                'id': 'bob'
-            },
-            'workflow': 'pathoscope_bowtie'
-        }
-    ],
-    'found_count': 1,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3
-}
-
-snapshots['test_get_cache[uvloop-None] 1'] = {
-    'id': 'bar',
-    'key': 'abc123',
-    'program': 'skewer-0.2.2',
-    'sample': {
-        'id': 'foo'
-    }
-}
-
-snapshots['test_upload_reads_cache[uvloop-True] 1'] = {
-    'id': 2,
-    'key': 'aodp-abcdefgh',
-    'name': 'reads_2.fq.gz',
-    'name_on_disk': 'reads_2.fq.gz',
-    'sample': 'test',
-    'size': 9081,
-    'uploaded_at': '2015-10-06T20:00:00Z'
-}
-
-snapshots['test_get[uvloop-False-None] 1'] = {
-    'artifacts': [
-        {
-            'id': 1,
-            'name': 'reference.fa.gz',
-            'name_on_disk': 'reference.fa.gz',
-            'sample': 'test',
-            'size': None,
-            'type': 'fasta',
-            'uploaded_at': None
-        }
-    ],
-    'caches': [
-    ],
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': [
-        {
-            'download_url': '/download/samples/files/file_1.fq.gz',
-            'id': 'foo',
-            'name': 'Bar.fq.gz'
-        }
-    ],
-    'id': 'test',
-    'labels': [
-        {
-            'color': '#a83432',
-            'description': 'This is a bug',
-            'id': 1,
-            'name': 'Bug'
-        }
-    ],
-    'name': 'Test',
-    'paired': False,
-    'reads': [
-        {
-            'id': 1,
-            'name': 'reads_1.fq.gz',
-            'name_on_disk': 'reads_1.fq.gz',
-            'sample': 'test',
-            'size': None,
-            'upload': {
-                'created_at': None,
-                'id': 1,
-                'name': 'test',
-                'name_on_disk': None,
-                'ready': False,
-                'removed': False,
-                'removed_at': None,
-                'reserved': False,
-                'size': None,
-                'type': None,
-                'uploaded_at': None,
-                'user': None
-            },
-            'uploaded_at': None
-        }
-    ],
-    'ready': False,
-    'subtractions': [
-        {
-            'id': 'foo',
-            'name': 'Foo'
-        },
-        {
-            'id': 'bar',
-            'name': 'Bar'
-        }
-    ]
-}
-
-snapshots['test_get[uvloop-True-None] 1'] = {
-    'artifacts': [
-        {
-            'download_url': '/api/samples/test/artifacts/reference.fa.gz',
-            'id': 1,
-            'name': 'reference.fa.gz',
-            'name_on_disk': 'reference.fa.gz',
-            'sample': 'test',
-            'size': None,
-            'type': 'fasta',
-            'uploaded_at': None
-        }
-    ],
-    'caches': [
-    ],
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': [
-        {
-            'download_url': '/download/samples/files/file_1.fq.gz',
-            'id': 'foo',
-            'name': 'Bar.fq.gz'
-        }
-    ],
-    'id': 'test',
-    'labels': [
-        {
-            'color': '#a83432',
-            'description': 'This is a bug',
-            'id': 1,
-            'name': 'Bug'
-        }
-    ],
-    'name': 'Test',
-    'paired': False,
-    'reads': [
-        {
-            'download_url': '/api/samples/test/reads/reads_1.fq.gz',
-            'id': 1,
-            'name': 'reads_1.fq.gz',
-            'name_on_disk': 'reads_1.fq.gz',
-            'sample': 'test',
-            'size': None,
-            'upload': {
-                'created_at': None,
-                'id': 1,
-                'name': 'test',
-                'name_on_disk': None,
-                'ready': False,
-                'removed': False,
-                'removed_at': None,
-                'reserved': False,
-                'size': None,
-                'type': None,
-                'uploaded_at': None,
-                'user': None
-            },
-            'uploaded_at': None
-        }
-    ],
-    'ready': True,
-    'subtractions': [
-        {
-            'id': 'foo',
-            'name': 'Foo'
-        },
-        {
-            'id': 'bar',
-            'name': 'Bar'
-        }
-    ]
-}
-
-snapshots['TestCreate.test[uvloop-none] 1'] = {
+snapshots['TestCreate.test[uvloop-force_choice] 1'] = {
     'all_read': True,
     'all_write': True,
+    'artifacts': [
+    ],
+    'caches': [
+    ],
     'created_at': '2015-10-06T20:00:00Z',
-    'format': 'fastq',
-    'group': 'none',
+    'group': 'diagnostics',
     'group_read': True,
     'group_write': True,
-    'hold': True,
-    'host': '',
     'id': '9pfsom1b',
     'is_legacy': False,
-    'isolate': '',
     'labels': [
         {
             'color': '#FF0000',
@@ -300,6 +27,35 @@ snapshots['TestCreate.test[uvloop-none] 1'] = {
             'id': 1,
             'name': 'bug'
         }
+    ],
+    'library_type': 'normal',
+    'name': 'Foobar',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'reads': [
+    ],
+    'ready': False,
+    'user': {
+        'id': 'test'
+    }
+}
+
+snapshots['TestCreate.test[uvloop-force_choice] 2'] = {
+    '_id': '9pfsom1b',
+    'all_read': True,
+    'all_write': True,
+    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
+    'format': 'fastq',
+    'group': 'diagnostics',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'labels': [
+        1
     ],
     'library_type': 'normal',
     'locale': '',
@@ -313,6 +69,40 @@ snapshots['TestCreate.test[uvloop-none] 1'] = {
     'subtractions': [
         'apple'
     ],
+    'user': {
+        'id': 'test'
+    }
+}
+
+snapshots['TestCreate.test[uvloop-none] 1'] = {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': [
+    ],
+    'caches': [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'id': '9pfsom1b',
+    'is_legacy': False,
+    'labels': [
+        {
+            'color': '#FF0000',
+            'description': None,
+            'id': 1,
+            'name': 'bug'
+        }
+    ],
+    'library_type': 'normal',
+    'name': 'Foobar',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'reads': [
+    ],
+    'ready': False,
     'user': {
         'id': 'test'
     }
@@ -354,16 +144,16 @@ snapshots['TestCreate.test[uvloop-none] 2'] = {
 snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
     'all_read': True,
     'all_write': True,
+    'artifacts': [
+    ],
+    'caches': [
+    ],
     'created_at': '2015-10-06T20:00:00Z',
-    'format': 'fastq',
     'group': 'technician',
     'group_read': True,
     'group_write': True,
-    'hold': True,
-    'host': '',
     'id': '9pfsom1b',
     'is_legacy': False,
-    'isolate': '',
     'labels': [
         {
             'color': '#FF0000',
@@ -373,17 +163,13 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
         }
     ],
     'library_type': 'normal',
-    'locale': '',
     'name': 'Foobar',
-    'notes': '',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'subtractions': [
-        'apple'
+    'reads': [
     ],
+    'ready': False,
     'user': {
         'id': 'test'
     }
@@ -422,232 +208,6 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 2'] = {
     }
 }
 
-snapshots['TestCreate.test[uvloop-force_choice] 1'] = {
-    'all_read': True,
-    'all_write': True,
-    'created_at': '2015-10-06T20:00:00Z',
-    'format': 'fastq',
-    'group': 'diagnostics',
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'host': '',
-    'id': '9pfsom1b',
-    'is_legacy': False,
-    'isolate': '',
-    'labels': [
-        {
-            'color': '#FF0000',
-            'description': None,
-            'id': 1,
-            'name': 'bug'
-        }
-    ],
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'subtractions': [
-        'apple'
-    ],
-    'user': {
-        'id': 'test'
-    }
-}
-
-snapshots['TestCreate.test[uvloop-force_choice] 2'] = {
-    '_id': '9pfsom1b',
-    'all_read': True,
-    'all_write': True,
-    'created_at': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),
-    'format': 'fastq',
-    'group': 'diagnostics',
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'host': '',
-    'is_legacy': False,
-    'isolate': '',
-    'labels': [
-        1
-    ],
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'subtractions': [
-        'apple'
-    ],
-    'user': {
-        'id': 'test'
-    }
-}
-
-snapshots['TestEdit.test[uvloop] 1'] = {
-    'id': 'test',
-    'labels': [
-        {
-            'color': '#a83432',
-            'description': 'This is a bug',
-            'id': 1,
-            'name': 'Bug'
-        }
-    ],
-    'name': 'test_sample',
-    'notes': 'This is a test.',
-    'subtractions': [
-        'foo'
-    ]
-}
-
-snapshots['TestEdit.test_name_exists[uvloop-False] 1'] = {
-    'id': 'foo',
-    'labels': [
-    ],
-    'name': 'Bar'
-}
-
-snapshots['TestEdit.test_label_exists[uvloop-True] 1'] = {
-    'id': 'foo',
-    'labels': [
-        {
-            'color': '#a83432',
-            'description': 'This is a bug',
-            'id': 1,
-            'name': 'Bug'
-        }
-    ],
-    'name': 'Foo'
-}
-
-snapshots['TestEdit.test_subtraction_exists[uvloop-True] 1'] = {
-    'id': 'test',
-    'labels': [
-    ],
-    'name': 'Test',
-    'subtractions': [
-        'foo',
-        'bar'
-    ]
-}
-
-snapshots['test_finalize[uvloop-quality] 1'] = {
-    'artifacts': [
-        {
-            'download_url': '/api/samples/test/artifacts/reference.fa.gz',
-            'id': 1,
-            'name': 'reference.fa.gz',
-            'name_on_disk': 'reference.fa.gz',
-            'sample': 'test',
-            'size': None,
-            'type': 'fasta',
-            'uploaded_at': None
-        }
-    ],
-    'id': 'test',
-    'quality': {
-    },
-    'reads': [
-        {
-            'download_url': '/api/samples/test/reads/reads_1.fq.gz',
-            'id': 1,
-            'name': 'reads_1.fq.gz',
-            'name_on_disk': 'reads_1.fq.gz',
-            'sample': 'test',
-            'size': None,
-            'upload': None,
-            'uploaded_at': None
-        }
-    ],
-    'ready': True
-}
-
-snapshots['test_find_analyses[uvloop-Baz-None] 1'] = {
-    'documents': [
-        {
-            'created_at': '2015-10-06T20:00:00Z',
-            'id': 'test_1',
-            'index': {
-                'id': 'foo',
-                'version': 2
-            },
-            'job': {
-                'id': 'test'
-            },
-            'ready': True,
-            'reference': {
-                'id': 'baz',
-                'name': 'Baz'
-            },
-            'sample': {
-                'id': 'test'
-            },
-            'user': {
-                'id': 'bob'
-            },
-            'workflow': 'pathoscope_bowtie'
-        },
-        {
-            'created_at': '2015-10-06T20:00:00Z',
-            'id': 'test_2',
-            'index': {
-                'id': 'foo',
-                'version': 2
-            },
-            'job': {
-                'id': 'test'
-            },
-            'ready': True,
-            'reference': {
-                'id': 'baz',
-                'name': 'Baz'
-            },
-            'sample': {
-                'id': 'test'
-            },
-            'user': {
-                'id': 'fred'
-            },
-            'workflow': 'pathoscope_bowtie'
-        }
-    ],
-    'found_count': 2,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3
-}
-
-snapshots['test_upload_artifact[uvloop-None] 1'] = {
-    'id': 1,
-    'name': 'small.fq',
-    'name_on_disk': 'small.fq',
-    'sample': 'test',
-    'size': 3130756,
-    'type': 'fastq',
-    'uploaded_at': '2015-10-06T20:00:00Z'
-}
-
-snapshots['TestUploadReads.test_upload_reads[uvloop-True] 1'] = {
-    'id': 1,
-    'name': 'reads_1.fq.gz',
-    'name_on_disk': 'reads_1.fq.gz',
-    'sample': 'test',
-    'size': 9081,
-    'upload': 1,
-    'uploaded_at': '2015-10-06T20:00:00Z'
-}
-
 snapshots['TestCreateCache.test[uvloop-key] 1'] = {
     'created_at': '2015-10-06T20:00:00Z',
     'files': [
@@ -663,25 +223,128 @@ snapshots['TestCreateCache.test[uvloop-key] 1'] = {
     }
 }
 
-snapshots['test_upload_artifact_cache[uvloop-None] 1'] = {
-    'id': 1,
-    'key': 'aodp-abcdefgh',
-    'name': 'small.fq',
-    'name_on_disk': 'small.fq',
-    'sample': 'test',
-    'size': 3130756,
-    'type': 'fastq',
-    'uploaded_at': '2015-10-06T20:00:00Z'
+snapshots['TestEdit.test[uvloop] 1'] = {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': [
+    ],
+    'caches': [
+    ],
+    'id': 'test',
+    'labels': [
+        {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug'
+        }
+    ],
+    'name': 'test_sample',
+    'paired': False,
+    'reads': [
+    ],
+    'ready': True
 }
 
-snapshots['test_upload_reads_cache[uvloop-False] 1'] = {
+snapshots['TestEdit.test_label_exists[uvloop-True] 1'] = {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': [
+    ],
+    'caches': [
+    ],
+    'id': 'foo',
+    'labels': [
+        {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug'
+        }
+    ],
+    'name': 'Foo',
+    'paired': False,
+    'reads': [
+    ],
+    'ready': True
+}
+
+snapshots['TestEdit.test_name_exists[uvloop-False] 1'] = {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': [
+    ],
+    'caches': [
+    ],
+    'id': 'foo',
+    'labels': [
+    ],
+    'name': 'Bar',
+    'paired': False,
+    'reads': [
+    ],
+    'ready': True
+}
+
+snapshots['TestEdit.test_subtraction_exists[uvloop-True] 1'] = {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': [
+    ],
+    'caches': [
+    ],
+    'id': 'test',
+    'labels': [
+    ],
+    'name': 'Test',
+    'paired': False,
+    'reads': [
+    ],
+    'ready': True
+}
+
+snapshots['TestUploadReads.test_upload_reads[uvloop-True] 1'] = {
     'id': 1,
-    'key': 'aodp-abcdefgh',
     'name': 'reads_1.fq.gz',
     'name_on_disk': 'reads_1.fq.gz',
     'sample': 'test',
     'size': 9081,
+    'upload': 1,
     'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
+snapshots['test_finalize[uvloop-quality] 1'] = {
+    'artifacts': [
+        {
+            'download_url': '/api/samples/test/artifacts/reference.fa.gz',
+            'id': 1,
+            'name': 'reference.fa.gz',
+            'name_on_disk': 'reference.fa.gz',
+            'sample': 'test',
+            'size': None,
+            'type': 'fasta',
+            'uploaded_at': None
+        }
+    ],
+    'caches': [
+    ],
+    'id': 'test',
+    'labels': [
+    ],
+    'paired': False,
+    'reads': [
+        {
+            'download_url': '/api/samples/test/reads/reads_1.fq.gz',
+            'id': 1,
+            'name': 'reads_1.fq.gz',
+            'name_on_disk': 'reads_1.fq.gz',
+            'sample': 'test',
+            'size': None,
+            'upload': None,
+            'uploaded_at': None
+        }
+    ],
+    'ready': True
 }
 
 snapshots['test_finalize_cache[uvloop-quality] 1'] = {
@@ -693,85 +356,6 @@ snapshots['test_finalize_cache[uvloop-quality] 1'] = {
     'sample': {
         'id': 'test'
     }
-}
-
-snapshots['test_find[uvloop-None-None-None-None] 1'] = {
-    'documents': [
-        {
-            'created_at': '2015-10-06T22:00:00Z',
-            'host': '',
-            'id': 'cb400e6d',
-            'isolate': '',
-            'labels': [
-                {
-                    'color': '#0d321d',
-                    'description': 'This is a question',
-                    'id': 3,
-                    'name': 'Question'
-                }
-            ],
-            'name': '16SPP044',
-            'nuvs': False,
-            'pathoscope': False,
-            'ready': True,
-            'user': {
-                'id': 'fred'
-            }
-        },
-        {
-            'created_at': '2015-10-06T21:00:00Z',
-            'host': '',
-            'id': 'beb1eb10',
-            'isolate': 'Thing',
-            'labels': [
-                {
-                    'color': '#a83432',
-                    'description': 'This is a bug',
-                    'id': 1,
-                    'name': 'Bug'
-                },
-                {
-                    'color': '#03fc20',
-                    'description': 'This is a info',
-                    'id': 2,
-                    'name': 'Info'
-                }
-            ],
-            'name': '16GVP042',
-            'nuvs': False,
-            'pathoscope': False,
-            'ready': True,
-            'user': {
-                'id': 'bob'
-            }
-        },
-        {
-            'created_at': '2015-10-06T20:00:00Z',
-            'host': '',
-            'id': '72bb8b31',
-            'isolate': 'Test',
-            'labels': [
-                {
-                    'color': '#a83432',
-                    'description': 'This is a bug',
-                    'id': 1,
-                    'name': 'Bug'
-                }
-            ],
-            'name': '16GVP043',
-            'nuvs': False,
-            'pathoscope': False,
-            'ready': True,
-            'user': {
-                'id': 'fred'
-            }
-        }
-    ],
-    'found_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3
 }
 
 snapshots['test_find[uvloop-None-2-1-None] 1'] = {
@@ -863,8 +447,29 @@ snapshots['test_find[uvloop-None-2-2-None] 1'] = {
     'total_count': 3
 }
 
-snapshots['test_find[uvloop-gv-None-None-None] 1'] = {
+snapshots['test_find[uvloop-None-None-None-None] 1'] = {
     'documents': [
+        {
+            'created_at': '2015-10-06T22:00:00Z',
+            'host': '',
+            'id': 'cb400e6d',
+            'isolate': '',
+            'labels': [
+                {
+                    'color': '#0d321d',
+                    'description': 'This is a question',
+                    'id': 3,
+                    'name': 'Question'
+                }
+            ],
+            'name': '16SPP044',
+            'nuvs': False,
+            'pathoscope': False,
+            'ready': True,
+            'user': {
+                'id': 'fred'
+            }
+        },
         {
             'created_at': '2015-10-06T21:00:00Z',
             'host': '',
@@ -914,90 +519,7 @@ snapshots['test_find[uvloop-gv-None-None-None] 1'] = {
             }
         }
     ],
-    'found_count': 2,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3
-}
-
-snapshots['test_find[uvloop-sp-None-None-None] 1'] = {
-    'documents': [
-        {
-            'created_at': '2015-10-06T22:00:00Z',
-            'host': '',
-            'id': 'cb400e6d',
-            'isolate': '',
-            'labels': [
-                {
-                    'color': '#0d321d',
-                    'description': 'This is a question',
-                    'id': 3,
-                    'name': 'Question'
-                }
-            ],
-            'name': '16SPP044',
-            'nuvs': False,
-            'pathoscope': False,
-            'ready': True,
-            'user': {
-                'id': 'fred'
-            }
-        }
-    ],
-    'found_count': 1,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3
-}
-
-snapshots['test_find[uvloop-fred-None-None-None] 1'] = {
-    'documents': [
-        {
-            'created_at': '2015-10-06T22:00:00Z',
-            'host': '',
-            'id': 'cb400e6d',
-            'isolate': '',
-            'labels': [
-                {
-                    'color': '#0d321d',
-                    'description': 'This is a question',
-                    'id': 3,
-                    'name': 'Question'
-                }
-            ],
-            'name': '16SPP044',
-            'nuvs': False,
-            'pathoscope': False,
-            'ready': True,
-            'user': {
-                'id': 'fred'
-            }
-        },
-        {
-            'created_at': '2015-10-06T20:00:00Z',
-            'host': '',
-            'id': '72bb8b31',
-            'isolate': 'Test',
-            'labels': [
-                {
-                    'color': '#a83432',
-                    'description': 'This is a bug',
-                    'id': 1,
-                    'name': 'Bug'
-                }
-            ],
-            'name': '16GVP043',
-            'nuvs': False,
-            'pathoscope': False,
-            'ready': True,
-            'user': {
-                'id': 'fred'
-            }
-        }
-    ],
-    'found_count': 2,
+    'found_count': 3,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -1132,4 +654,471 @@ snapshots['test_find[uvloop-None-None-None-labels9] 1'] = {
     'page_count': 1,
     'per_page': 25,
     'total_count': 3
+}
+
+snapshots['test_find[uvloop-fred-None-None-None] 1'] = {
+    'documents': [
+        {
+            'created_at': '2015-10-06T22:00:00Z',
+            'host': '',
+            'id': 'cb400e6d',
+            'isolate': '',
+            'labels': [
+                {
+                    'color': '#0d321d',
+                    'description': 'This is a question',
+                    'id': 3,
+                    'name': 'Question'
+                }
+            ],
+            'name': '16SPP044',
+            'nuvs': False,
+            'pathoscope': False,
+            'ready': True,
+            'user': {
+                'id': 'fred'
+            }
+        },
+        {
+            'created_at': '2015-10-06T20:00:00Z',
+            'host': '',
+            'id': '72bb8b31',
+            'isolate': 'Test',
+            'labels': [
+                {
+                    'color': '#a83432',
+                    'description': 'This is a bug',
+                    'id': 1,
+                    'name': 'Bug'
+                }
+            ],
+            'name': '16GVP043',
+            'nuvs': False,
+            'pathoscope': False,
+            'ready': True,
+            'user': {
+                'id': 'fred'
+            }
+        }
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3
+}
+
+snapshots['test_find[uvloop-gv-None-None-None] 1'] = {
+    'documents': [
+        {
+            'created_at': '2015-10-06T21:00:00Z',
+            'host': '',
+            'id': 'beb1eb10',
+            'isolate': 'Thing',
+            'labels': [
+                {
+                    'color': '#a83432',
+                    'description': 'This is a bug',
+                    'id': 1,
+                    'name': 'Bug'
+                },
+                {
+                    'color': '#03fc20',
+                    'description': 'This is a info',
+                    'id': 2,
+                    'name': 'Info'
+                }
+            ],
+            'name': '16GVP042',
+            'nuvs': False,
+            'pathoscope': False,
+            'ready': True,
+            'user': {
+                'id': 'bob'
+            }
+        },
+        {
+            'created_at': '2015-10-06T20:00:00Z',
+            'host': '',
+            'id': '72bb8b31',
+            'isolate': 'Test',
+            'labels': [
+                {
+                    'color': '#a83432',
+                    'description': 'This is a bug',
+                    'id': 1,
+                    'name': 'Bug'
+                }
+            ],
+            'name': '16GVP043',
+            'nuvs': False,
+            'pathoscope': False,
+            'ready': True,
+            'user': {
+                'id': 'fred'
+            }
+        }
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3
+}
+
+snapshots['test_find[uvloop-sp-None-None-None] 1'] = {
+    'documents': [
+        {
+            'created_at': '2015-10-06T22:00:00Z',
+            'host': '',
+            'id': 'cb400e6d',
+            'isolate': '',
+            'labels': [
+                {
+                    'color': '#0d321d',
+                    'description': 'This is a question',
+                    'id': 3,
+                    'name': 'Question'
+                }
+            ],
+            'name': '16SPP044',
+            'nuvs': False,
+            'pathoscope': False,
+            'ready': True,
+            'user': {
+                'id': 'fred'
+            }
+        }
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3
+}
+
+snapshots['test_find_analyses[uvloop-Baz-None] 1'] = {
+    'documents': [
+        {
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 'test_1',
+            'index': {
+                'id': 'foo',
+                'version': 2
+            },
+            'job': {
+                'id': 'test'
+            },
+            'ready': True,
+            'reference': {
+                'id': 'baz',
+                'name': 'Baz'
+            },
+            'sample': {
+                'id': 'test'
+            },
+            'user': {
+                'id': 'bob'
+            },
+            'workflow': 'pathoscope_bowtie'
+        },
+        {
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 'test_2',
+            'index': {
+                'id': 'foo',
+                'version': 2
+            },
+            'job': {
+                'id': 'test'
+            },
+            'ready': True,
+            'reference': {
+                'id': 'baz',
+                'name': 'Baz'
+            },
+            'sample': {
+                'id': 'test'
+            },
+            'user': {
+                'id': 'fred'
+            },
+            'workflow': 'pathoscope_bowtie'
+        }
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3
+}
+
+snapshots['test_find_analyses[uvloop-None-None] 1'] = {
+    'documents': [
+        {
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 'test_1',
+            'index': {
+                'id': 'foo',
+                'version': 2
+            },
+            'job': {
+                'id': 'test'
+            },
+            'ready': True,
+            'reference': {
+                'id': 'baz',
+                'name': 'Baz'
+            },
+            'sample': {
+                'id': 'test'
+            },
+            'user': {
+                'id': 'bob'
+            },
+            'workflow': 'pathoscope_bowtie'
+        },
+        {
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 'test_2',
+            'index': {
+                'id': 'foo',
+                'version': 2
+            },
+            'job': {
+                'id': 'test'
+            },
+            'ready': True,
+            'reference': {
+                'id': 'baz',
+                'name': 'Baz'
+            },
+            'sample': {
+                'id': 'test'
+            },
+            'user': {
+                'id': 'fred'
+            },
+            'workflow': 'pathoscope_bowtie'
+        },
+        {
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 'test_3',
+            'index': {
+                'id': 'foo',
+                'version': 2
+            },
+            'job': {
+                'id': 'test'
+            },
+            'ready': True,
+            'reference': {
+                'id': 'foo',
+                'name': 'Foo'
+            },
+            'sample': {
+                'id': 'test'
+            },
+            'user': {
+                'id': 'fred'
+            },
+            'workflow': 'pathoscope_bowtie'
+        }
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3
+}
+
+snapshots['test_find_analyses[uvloop-bob-None] 1'] = {
+    'documents': [
+        {
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 'test_1',
+            'index': {
+                'id': 'foo',
+                'version': 2
+            },
+            'job': {
+                'id': 'test'
+            },
+            'ready': True,
+            'reference': {
+                'id': 'baz',
+                'name': 'Baz'
+            },
+            'sample': {
+                'id': 'test'
+            },
+            'user': {
+                'id': 'bob'
+            },
+            'workflow': 'pathoscope_bowtie'
+        }
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3
+}
+
+snapshots['test_get[uvloop-False-None] 1'] = {
+    'artifacts': [
+        {
+            'id': 1,
+            'name': 'reference.fa.gz',
+            'name_on_disk': 'reference.fa.gz',
+            'sample': 'test',
+            'size': None,
+            'type': 'fasta',
+            'uploaded_at': None
+        }
+    ],
+    'caches': [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'id': 'test',
+    'labels': [
+        {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug'
+        }
+    ],
+    'name': 'Test',
+    'paired': False,
+    'reads': [
+        {
+            'id': 1,
+            'name': 'reads_1.fq.gz',
+            'name_on_disk': 'reads_1.fq.gz',
+            'sample': 'test',
+            'size': None,
+            'upload': {
+                'created_at': None,
+                'id': 1,
+                'name': 'test',
+                'name_on_disk': None,
+                'ready': False,
+                'removed': False,
+                'removed_at': None,
+                'reserved': False,
+                'size': None,
+                'type': None,
+                'uploaded_at': None,
+                'user': None
+            },
+            'uploaded_at': None
+        }
+    ],
+    'ready': False
+}
+
+snapshots['test_get[uvloop-True-None] 1'] = {
+    'artifacts': [
+        {
+            'download_url': '/api/samples/test/artifacts/reference.fa.gz',
+            'id': 1,
+            'name': 'reference.fa.gz',
+            'name_on_disk': 'reference.fa.gz',
+            'sample': 'test',
+            'size': None,
+            'type': 'fasta',
+            'uploaded_at': None
+        }
+    ],
+    'caches': [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'id': 'test',
+    'labels': [
+        {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug'
+        }
+    ],
+    'name': 'Test',
+    'paired': False,
+    'reads': [
+        {
+            'download_url': '/api/samples/test/reads/reads_1.fq.gz',
+            'id': 1,
+            'name': 'reads_1.fq.gz',
+            'name_on_disk': 'reads_1.fq.gz',
+            'sample': 'test',
+            'size': None,
+            'upload': {
+                'created_at': None,
+                'id': 1,
+                'name': 'test',
+                'name_on_disk': None,
+                'ready': False,
+                'removed': False,
+                'removed_at': None,
+                'reserved': False,
+                'size': None,
+                'type': None,
+                'uploaded_at': None,
+                'user': None
+            },
+            'uploaded_at': None
+        }
+    ],
+    'ready': True
+}
+
+snapshots['test_get_cache[uvloop-None] 1'] = {
+    'id': 'bar',
+    'key': 'abc123',
+    'program': 'skewer-0.2.2',
+    'sample': {
+        'id': 'foo'
+    }
+}
+
+snapshots['test_upload_artifact[uvloop-None] 1'] = {
+    'id': 1,
+    'name': 'small.fq',
+    'name_on_disk': 'small.fq',
+    'sample': 'test',
+    'size': 3130756,
+    'type': 'fastq',
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
+snapshots['test_upload_artifact_cache[uvloop-None] 1'] = {
+    'id': 1,
+    'key': 'aodp-abcdefgh',
+    'name': 'small.fq',
+    'name_on_disk': 'small.fq',
+    'sample': 'test',
+    'size': 3130756,
+    'type': 'fastq',
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
+snapshots['test_upload_reads_cache[uvloop-False] 1'] = {
+    'id': 1,
+    'key': 'aodp-abcdefgh',
+    'name': 'reads_1.fq.gz',
+    'name_on_disk': 'reads_1.fq.gz',
+    'sample': 'test',
+    'size': 9081,
+    'uploaded_at': '2015-10-06T20:00:00Z'
+}
+
+snapshots['test_upload_reads_cache[uvloop-True] 1'] = {
+    'id': 2,
+    'key': 'aodp-abcdefgh',
+    'name': 'reads_2.fq.gz',
+    'name_on_disk': 'reads_2.fq.gz',
+    'sample': 'test',
+    'size': 9081,
+    'uploaded_at': '2015-10-06T20:00:00Z'
 }

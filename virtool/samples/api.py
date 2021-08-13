@@ -338,8 +338,6 @@ async def create(req):
 
     await virtool.uploads.db.reserve(pg, data["files"])
 
-    document = await virtool.samples.db.attach_labels(pg, document)
-
     task_args = {
         "sample_id": sample_id,
         "files": files
@@ -364,10 +362,14 @@ async def create(req):
     await req.app["jobs"].enqueue(job["_id"])
 
     headers = {
-        "Location": "/api/samples/" + sample_id
+        "Location": f"/api/samples/{sample_id}"
     }
 
-    return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
+    return json_response(
+        await virtool.samples.db.get_sample(req.app, sample_id),
+        status=201,
+        headers=headers
+    )
 
 
 @routes.patch("/api/samples/{sample_id}")
@@ -440,15 +442,13 @@ async def edit(req):
         if non_existent_subtractions:
             return bad_request(f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
 
-    document = await db.samples.find_one_and_update({"_id": sample_id}, {
+    await db.samples.update_one({"_id": sample_id}, {
         "$set": data
-    }, projection=virtool.samples.db.LIST_PROJECTION)
+    })
 
-    document = await virtool.samples.db.attach_labels(pg, document)
-
-    processed = virtool.utils.base_processor(document)
-
-    return json_response(processed)
+    return json_response(
+        await virtool.samples.db.get_sample(req.app, sample_id)
+    )
 
 
 @routes.jobs_api.patch("/api/samples/{sample_id}")
@@ -468,15 +468,16 @@ async def finalize(req):
 
     sample_id = req.match_info["sample_id"]
 
-    document = await virtool.samples.db.finalize(
+    await virtool.samples.db.finalize(
         req.app["db"],
         req.app["pg"],
         sample_id,
         data["quality"],
         req.app["run_in_thread"],
-        req.app["settings"]["data_path"])
+        req.app["settings"]["data_path"]
+    )
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(await virtool.samples.db.get_sample(req.app, sample_id))
 
 
 @routes.patch("/api/samples/{sample_id}/rights")

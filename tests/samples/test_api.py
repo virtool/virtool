@@ -165,7 +165,7 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
                 }
             ],
             "labels": [1],
-            "subtractions": ["foo", "bar"]
+            "subtractions": ["foo", "bar"],
         })
 
         label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
@@ -287,7 +287,8 @@ class TestCreate:
             "lower_name": "foobar",
             "created_at": static_time.datetime,
             "nuvs": False,
-            "pathoscope": False
+            "pathoscope": False,
+            "ready": True,
         })
 
         resp = await client.post("/api/samples", {
@@ -448,7 +449,8 @@ class TestEdit:
             "all_read": True,
             "all_write": True,
             "labels": [2, 3],
-            "subtractions": ["apple"]
+            "ready": True,
+            "subtractions": ["apple"],
         })
 
         await client.db.subtraction.insert_one({
@@ -487,6 +489,7 @@ class TestEdit:
                 "name": "Foo",
                 "all_read": True,
                 "all_write": True,
+                "ready": True,
             }
         ]
 
@@ -494,7 +497,8 @@ class TestEdit:
             samples.append(
                 {
                     "_id": "bar",
-                    "name": "Bar"
+                    "name": "Bar",
+                    "ready": True,
                 }
             )
 
@@ -527,7 +531,8 @@ class TestEdit:
                 "name": "Foo",
                 "all_read": True,
                 "all_write": True,
-                "labels": [2, 3]
+                "labels": [2, 3],
+                "ready": True
             }
         )
         if exists:
@@ -562,6 +567,7 @@ class TestEdit:
             "name": "Test",
             "all_read": True,
             "all_write": True,
+            "ready": True,
             "subtractions": ["apple"]
         })
 
@@ -610,6 +616,7 @@ async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_sessi
 
     await client.db.samples.insert_one({
         "_id": "test",
+        "ready": True
     })
 
     async with pg_session as session:
@@ -652,7 +659,8 @@ async def test_remove(
         await client.db.samples.insert_one({
             "_id": "test",
             "all_read": True,
-            "all_write": True
+            "all_write": True,
+            "ready": True,
         })
 
     m = mocker.stub(name="remove_samples")
@@ -702,7 +710,7 @@ async def test_job_remove(
             "_id": "test",
             "all_read": True,
             "all_write": True,
-            "ready": ready
+            "ready": ready,
         })
 
     mocker.patch("virtool.utils.rm", return_value=True)
@@ -738,7 +746,8 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
             "_id": "test",
             "created_at": static_time.datetime,
             "all_read": True,
-            "all_write": True
+            "all_write": True,
+            "ready": True,
         })
 
     await client.db.analyses.insert_many([
@@ -896,7 +905,8 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is,
             "name": "Test",
             "created_at": static_time.datetime,
             "all_read": True,
-            "all_write": True
+            "all_write": True,
+            "ready": True,
         })
 
     m_create = mocker.patch("virtool.analyses.db.create", new=make_mocked_coro(test_analysis))
@@ -1005,6 +1015,7 @@ async def test_upload_artifact(
 
     await client.db.samples.insert_one({
         "_id": "test",
+        "ready": True,
     })
 
     resp = await client.post(f"/api/samples/test/artifacts?name=small.fq&type={artifact_type}",
@@ -1047,6 +1058,7 @@ class TestUploadReads:
 
         await client.db.samples.insert_one({
             "_id": "test",
+            "ready": True,
         })
 
         await virtool.uploads.db.create(pg, "test", "reads")
@@ -1082,6 +1094,7 @@ class TestUploadReads:
 
         await client.db.samples.insert_one({
             "_id": "test",
+            "ready": True,
         })
 
         resp = await client.put("/api/samples/test/reads/reads_1.fq.gz", data=data)
@@ -1149,6 +1162,7 @@ async def test_download_reads(suffix, error, tmp_path, spawn_client, spawn_job_c
     if error != "404_sample":
         await client.db.samples.insert_one({
             "_id": "foo",
+            "ready": True,
         })
 
     sample_reads = SampleReads(id=1, sample="foo", name=file_name, name_on_disk=file_name)
@@ -1186,6 +1200,7 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
     if error != "404_sample":
         await client.db.samples.insert_one({
             "_id": "foo",
+            "ready": True,
         })
 
     if error != "404_artifact":
@@ -1227,6 +1242,7 @@ class TestCreateCache:
         await client.db.samples.insert_one({
             "_id": "test",
             "paired": False,
+            "ready": True,
         })
 
         data = {key: "aodp-abcdefgh"}
@@ -1254,6 +1270,7 @@ class TestCreateCache:
         await client.db.samples.insert_one({
             "_id": "test",
             "paired": False,
+            "ready": True,
         })
 
         await client.db.caches.insert_one({
@@ -1299,6 +1316,7 @@ async def test_upload_artifact_cache(
 
     await client.db.samples.insert_one({
         "_id": "test",
+        "ready": True,
     })
 
     await client.db.caches.insert_one({
@@ -1349,6 +1367,7 @@ async def test_upload_reads_cache(paired, snapshot, static_time, spawn_job_clien
 
     await client.db.samples.insert_one({
         "_id": "test",
+        "ready": True,
     })
 
     await client.db.caches.insert_one({
@@ -1403,6 +1422,7 @@ async def test_download_reads_cache(error, spawn_job_client, pg, tmp_path):
     if error != "404_sample":
         await client.db.samples.insert_one({
             "_id": "foo",
+            "ready": True,
         })
 
     if error != "404_cache":
@@ -1458,6 +1478,7 @@ async def test_download_artifact_cache(error, spawn_job_client, pg: AsyncEngine,
     if error != "404_sample":
         await client.db.samples.insert_one({
             "_id": "foo",
+            "ready": True,
         })
 
     if error != "404_artifact":
@@ -1502,6 +1523,7 @@ async def test_finalize_cache(field, resp_is, snapshot, spawn_job_client):
 
     await client.db.samples.insert_one({
         "_id": "test",
+        "ready": True,
     })
 
     await client.db.caches.insert_one({

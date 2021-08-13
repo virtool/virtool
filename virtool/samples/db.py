@@ -561,7 +561,7 @@ async def get_sample(app, sample_id: str):
     db = app["db"]
     pg = app["pg"]
 
-    document = await db.samples.find_one({"_id": sample_id})
+    document = await db.samples.find_one({"_id": sample_id}, projection=PROJECTION)
 
     if not document:
         raise ValueError("Sample {sample_id} does not exist.")
