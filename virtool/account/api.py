@@ -7,13 +7,14 @@ requests.
 """
 import aiohttp.web
 from aiohttp.web import HTTPNoContent
+from aiohttp.web_exceptions import HTTPBadRequest
 
 import virtool.account.db
 import virtool.http.auth
 import virtool.http.routes
 import virtool.validators
 from virtool.analyses.utils import WORKFLOW_NAMES
-from virtool.api.response import bad_request, json_response, not_found
+from virtool.api.response import json_response, not_found
 from virtool.db.utils import get_one_field
 from virtool.http.schema import schema
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
@@ -78,10 +79,10 @@ async def edit(req: aiohttp.web.Request) -> aiohttp.web.Response:
         error = await check_password_length(req)
 
         if error:
-            return bad_request(error)
+            raise HTTPBadRequest(text=error)
 
         if not await validate_credentials(db, user_id, old_password or ""):
-            return bad_request("Invalid credentials")
+            raise HTTPBadRequest(text="Invalid credentials")
 
         update = virtool.account.db.compose_password_update(password)
 
@@ -335,7 +336,7 @@ async def login(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     # Re-render the login page with an error message if the username and/or password are invalid.
     if not await validate_credentials(db, user_id, password):
-        return bad_request("Invalid username or password")
+        raise HTTPBadRequest(text="Invalid username or password")
 
     session_id = req.cookies.get("session_id")
 

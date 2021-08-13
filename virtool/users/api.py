@@ -15,13 +15,13 @@ Schema:
 - settings (Object) user-specific settings - currently not used
 
 """
-from aiohttp.web_exceptions import HTTPNoContent
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
 
 import virtool.http.auth
 import virtool.http.routes
 import virtool.users.db
 import virtool.validators
-from virtool.api.response import bad_request, conflict, json_response, not_found
+from virtool.api.response import conflict, json_response, not_found
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import apply_projection
 from virtool.errors import DatabaseError
@@ -101,12 +101,12 @@ async def create(req):
     data = await req.json()
 
     if data["user_id"] == "virtool":
-        return bad_request("Reserved user name: virtool")
+        raise HTTPBadRequest(text="Reserved user name: virtool")
 
     error = await check_password_length(req)
 
     if error:
-        return bad_request(error)
+        raise HTTPBadRequest(text=error)
 
     user_id = data["user_id"]
 
@@ -118,7 +118,7 @@ async def create(req):
             data["force_reset"]
         )
     except DatabaseError:
-        return bad_request("User already exists")
+        raise HTTPBadRequest(text="User already exists")
 
     headers = {
         "Location": f"/api/users/{user_id}"
@@ -157,12 +157,12 @@ async def create_first(req):
         return conflict("Virtool already has at least one user")
 
     if data["user_id"] == "virtool":
-        return bad_request("Reserved user name: virtool")
+        raise HTTPBadRequest(text="Reserved user name: virtool")
 
     error = await check_password_length(req)
 
     if error:
-        return bad_request(error)
+        raise HTTPBadRequest(text=error)
 
     user_id = data["user_id"]
 
@@ -229,7 +229,7 @@ async def edit(req):
         error = await check_password_length(req)
 
         if error:
-            return bad_request(error)
+            raise HTTPBadRequest(text=error)
 
     groups = await db.groups.distinct("_id")
 
@@ -237,17 +237,17 @@ async def edit(req):
         missing = [g for g in data["groups"] if g not in groups]
 
         if missing:
-            return bad_request("Groups do not exist: " + ", ".join(missing))
+            raise HTTPBadRequest(text="Groups do not exist: " + ", ".join(missing))
 
     primary_group = data.get("primary_group")
 
     if primary_group and primary_group not in groups:
-        return bad_request("Primary group does not exist")
+        raise HTTPBadRequest(text="Primary group does not exist")
 
     user_id = req.match_info["user_id"]
 
     if "administrator" in data and user_id == req["client"].user_id:
-        return bad_request("Users cannot modify their own administrative status")
+        raise HTTPBadRequest(text="Users cannot modify their own administrative status")
 
     try:
         document = await virtool.users.db.edit(
@@ -280,7 +280,7 @@ async def remove(req):
     user_id = req.match_info["user_id"]
 
     if user_id == req["client"].user_id:
-        return bad_request("Cannot remove own account")
+        raise HTTPBadRequest(text="Cannot remove own account")
 
     delete_result = await db.users.delete_one({"_id": user_id})
 

@@ -150,11 +150,19 @@ async def test_create(error, spawn_client, create_user, resp_is, static_time):
     resp = await client.post("/api/users", data)
 
     if error == "400_exists":
-        assert await resp_is.bad_request(resp, "User already exists")
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "User already exists"
+        }
         return
 
     if error == "400_password":
-        assert await resp_is.bad_request(resp, "Password does not meet minimum length requirement (8)")
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Password does not meet minimum length requirement (8)"
+        }
         return
 
     assert resp.status == 201
@@ -230,7 +238,11 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
 
     if "primary_group" in data:
         if error == "group_dne":
-            assert await resp_is.bad_request(resp, "Primary group does not exist")
+            assert resp.status == 400
+            assert await resp.json() == {
+                "id": "bad_request",
+                "message": "Primary group does not exist"
+            }
 
         elif error == "not_group_member":
             assert await resp_is.conflict(resp, "User is not member of group")

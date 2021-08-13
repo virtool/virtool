@@ -41,21 +41,6 @@ def bad_gateway(message: str = "Bad gateway") -> web.Response:
     }, status=502)
 
 
-def bad_request(message: str = "Bad request") -> web.Response:
-    """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``400`` status the JSON
-    body ``{"message": "Bad request"}``.
-
-    :param message: text to send instead of 'Bad request'
-    :return: the response
-
-    """
-    return json_response({
-        "id": "bad_request",
-        "message": message
-    }, status=400)
-
-
 def insufficient_rights(message: str = "Insufficient rights") -> web.Response:
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``403`` status and the

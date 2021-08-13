@@ -1,10 +1,10 @@
 import os
 
-from aiohttp.web_exceptions import HTTPNoContent
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
 
 import virtool.jobs.db
 import virtool.utils
-from virtool.api.response import bad_request, conflict, json_response, not_found
+from virtool.api.response import conflict, json_response, not_found
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_one_field
 from virtool.http.routes import Routes
@@ -80,7 +80,7 @@ async def acquire(req):
     job_id = req.match_info["job_id"]
 
     if await get_one_field(db.jobs, "acquired", job_id) is True:
-        return bad_request("Job already acquired")
+        raise HTTPBadRequest(text="Job already acquired")
 
     document = await virtool.jobs.db.acquire(db, job_id)
 

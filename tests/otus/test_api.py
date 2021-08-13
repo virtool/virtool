@@ -72,7 +72,8 @@ class TestCreate:
 
     @pytest.mark.parametrize("exists", [True, False])
     @pytest.mark.parametrize("abbreviation", [None, "", "TMV"])
-    async def test(self, exists, abbreviation, mocker, snapshot, spawn_client, check_ref_right, resp_is, static_time, test_random_alphanumeric):
+    async def test(self, exists, abbreviation, mocker, snapshot, spawn_client, check_ref_right, resp_is, static_time,
+                   test_random_alphanumeric):
         """
         Test that a valid request results in the creation of a otu document and a ``201`` response.
 
@@ -163,7 +164,11 @@ class TestCreate:
         )
 
         if error:
-            assert await resp_is.bad_request(resp, message)
+            assert resp.status == 400
+            assert await resp.json() == {
+                "id": "bad_request",
+                "message": message
+            }
             return
 
         assert resp.status == 201
@@ -174,89 +179,89 @@ class TestEdit:
     @pytest.mark.parametrize("data, existing_abbreviation, description", [
         # Name, ONLY.
         (
-            {
-                "name": "Tobacco mosaic otu"
-            },
-            "TMV",
-            "Changed name to Tobacco mosaic otu"
+                {
+                    "name": "Tobacco mosaic otu"
+                },
+                "TMV",
+                "Changed name to Tobacco mosaic otu"
         ),
         # Name and abbreviation, BOTH CHANGE.
         (
-            {
-                "name": "Tobacco mosaic otu",
-                "abbreviation": "TMV"
-            },
-            "PVF",
-            "Changed name to Tobacco mosaic otu and changed abbreviation to TMV"
+                {
+                    "name": "Tobacco mosaic otu",
+                    "abbreviation": "TMV"
+                },
+                "PVF",
+                "Changed name to Tobacco mosaic otu and changed abbreviation to TMV"
         ),
         # Name and abbreviation, NO NAME CHANGE because old is same as new.
         (
-            {
-                "name": "Prunus virus F",
-                "abbreviation": "TMV"
-            },
-            "PVF",
-            "Changed abbreviation to TMV"
+                {
+                    "name": "Prunus virus F",
+                    "abbreviation": "TMV"
+                },
+                "PVF",
+                "Changed abbreviation to TMV"
         ),
         # Name and abbreviation, NO ABBR CHANGE because old is same as new.
         (
-            {
-                "name": "Tobacco mosaic otu",
-                "abbreviation": "TMV"
-            },
-            "TMV",
-            "Changed name to Tobacco mosaic otu"
+                {
+                    "name": "Tobacco mosaic otu",
+                    "abbreviation": "TMV"
+                },
+                "TMV",
+                "Changed name to Tobacco mosaic otu"
         ),
         # Name and abbreviation, ABBR REMOVED because old is "TMV" and new is "".
         (
-            {
-                "name": "Tobacco mosaic otu",
-                "abbreviation": ""
-            },
-            "TMV",
-            "Changed name to Tobacco mosaic otu and removed abbreviation TMV"
+                {
+                    "name": "Tobacco mosaic otu",
+                    "abbreviation": ""
+                },
+                "TMV",
+                "Changed name to Tobacco mosaic otu and removed abbreviation TMV"
         ),
         # Name and abbreviation, ABBR ADDED because old is "" and new is "TMV".
         (
-            {
-                "name": "Tobacco mosaic otu",
-                "abbreviation": "TMV"
-            },
-            "",
-            "Changed name to Tobacco mosaic otu and added abbreviation TMV"
+                {
+                    "name": "Tobacco mosaic otu",
+                    "abbreviation": "TMV"
+                },
+                "",
+                "Changed name to Tobacco mosaic otu and added abbreviation TMV"
         ),
         # Abbreviation, ONLY.
         (
-            {
-                "abbreviation": "TMV"
-            },
-            "PVF",
-            "Changed abbreviation to TMV"
+                {
+                    "abbreviation": "TMV"
+                },
+                "PVF",
+                "Changed abbreviation to TMV"
         ),
         # Abbreviation, ONLY because old name is same as new.
         (
-            {
-                "name": "Prunus virus F",
-                "abbreviation": "TMV"
-            },
-            "PVF",
-            "Changed abbreviation to TMV"
+                {
+                    "name": "Prunus virus F",
+                    "abbreviation": "TMV"
+                },
+                "PVF",
+                "Changed abbreviation to TMV"
         ),
         # Abbreviation, ADDED.
         (
-            {
-                "abbreviation": "TMV"
-            },
-            "",
-            "Added abbreviation TMV"
+                {
+                    "abbreviation": "TMV"
+                },
+                "",
+                "Added abbreviation TMV"
         ),
         # Abbreviation, REMOVED.
         (
-            {
-                "abbreviation": ""
-            },
-            "TMV",
-            "Removed abbreviation TMV"
+                {
+                    "abbreviation": ""
+                },
+                "TMV",
+                "Removed abbreviation TMV"
         )
     ])
     async def test(self, data, existing_abbreviation, description, snapshot, spawn_client, check_ref_right, resp_is,
@@ -287,25 +292,25 @@ class TestEdit:
 
     @pytest.mark.parametrize("data,message", [
         (
-            {
-                "name": "Tobacco mosaic virus",
-                "abbreviation": "FBV"
-            },
-            "Name already exists"
+                {
+                    "name": "Tobacco mosaic virus",
+                    "abbreviation": "FBV"
+                },
+                "Name already exists"
         ),
         (
-            {
-                "name": "Foobar virus",
-                "abbreviation": "TMV"
-            },
-            "Abbreviation already exists"
+                {
+                    "name": "Foobar virus",
+                    "abbreviation": "TMV"
+                },
+                "Abbreviation already exists"
         ),
         (
-            {
-                "name": "Tobacco mosaic virus",
-                "abbreviation": "TMV"
-            },
-            "Name and abbreviation already exist"
+                {
+                    "name": "Tobacco mosaic virus",
+                    "abbreviation": "TMV"
+                },
+                "Name and abbreviation already exist"
         )
     ])
     async def test_field_exists(self, data, message, spawn_client, check_ref_right, resp_is):
@@ -342,31 +347,34 @@ class TestEdit:
         if not check_ref_right:
             assert await resp_is.insufficient_rights(resp)
             return
-
-        assert await resp_is.bad_request(resp, message)
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": message
+        }
 
     @pytest.mark.parametrize("old_name,old_abbreviation,data", [
         (
-            "Tobacco mosaic otu",
-            "TMV",
-            {
-                "name": "Tobacco mosaic otu",
-                "abbreviation": "TMV"
-            }
+                "Tobacco mosaic otu",
+                "TMV",
+                {
+                    "name": "Tobacco mosaic otu",
+                    "abbreviation": "TMV"
+                }
         ),
         (
-            "Tobacco mosaic otu",
-            "TMV",
-            {
-                "name": "Tobacco mosaic otu"
-            }
+                "Tobacco mosaic otu",
+                "TMV",
+                {
+                    "name": "Tobacco mosaic otu"
+                }
         ),
         (
-            "Tobacco mosaic otu",
-            "TMV",
-            {
-                "abbreviation": "TMV"
-            }
+                "Tobacco mosaic otu",
+                "TMV",
+                {
+                    "abbreviation": "TMV"
+                }
         )
     ])
     async def test_no_change(self, old_name, old_abbreviation, data, snapshot, spawn_client, check_ref_right, resp_is):
@@ -560,7 +568,8 @@ class TestAddIsolate:
         snapshot.assert_match(await client.db.otus.find_one("6116cba1"), "otu")
         snapshot.assert_match(await client.db.history.find_one(), "history")
 
-    async def test_force_case(self, mocker, snapshot, spawn_client, check_ref_right, resp_is, test_otu, test_random_alphanumeric):
+    async def test_force_case(self, mocker, snapshot, spawn_client, check_ref_right, resp_is, test_otu,
+                              test_random_alphanumeric):
         """
         Test that the ``source_type`` value is forced to lower case.
 
@@ -590,7 +599,8 @@ class TestAddIsolate:
         snapshot.assert_match(await client.db.otus.find_one("6116cba1"), "otu")
         snapshot.assert_match(await client.db.history.find_one(), "history")
 
-    async def test_empty(self, mocker, snapshot, spawn_client, check_ref_right, resp_is, test_otu, test_random_alphanumeric):
+    async def test_empty(self, mocker, snapshot, spawn_client, check_ref_right, resp_is, test_otu,
+                         test_random_alphanumeric):
         """
         Test that an isolate can be added without any POST input. The resulting document should contain the defined
         default values.
@@ -732,7 +742,8 @@ class TestEditIsolate:
 
 class TestSetAsDefault:
 
-    async def test(self, snapshot, spawn_client, check_ref_right, resp_is, test_otu, test_random_alphanumeric, static_time):
+    async def test(self, snapshot, spawn_client, check_ref_right, resp_is, test_otu, test_random_alphanumeric,
+                   static_time):
         """
         Test changing the default isolate results in the correct changes, history, and response.
 
@@ -762,7 +773,8 @@ class TestSetAsDefault:
         snapshot.assert_match(new, "joined")
         snapshot.assert_match(await client.db.history.find_one(), "history")
 
-    async def test_no_change(self, snapshot, spawn_client, check_ref_right, resp_is, test_otu, static_time, test_random_alphanumeric):
+    async def test_no_change(self, snapshot, spawn_client, check_ref_right, resp_is, test_otu, static_time,
+                             test_random_alphanumeric):
         """
         Test that a call resulting in no change (calling endpoint on an already default isolate) results in no change.
         Specifically no increment in version.
@@ -933,7 +945,8 @@ async def test_get_sequence(error, snapshot, spawn_client, resp_is, test_otu, te
 
 
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
-async def test_create_sequence(error, snapshot, spawn_client, check_ref_right, resp_is, test_otu, test_random_alphanumeric):
+async def test_create_sequence(error, snapshot, spawn_client, check_ref_right, resp_is, test_otu,
+                               test_random_alphanumeric):
     client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
     if error == "404_isolate":

@@ -2,10 +2,10 @@ from pathlib import Path
 from typing import List
 
 from aiohttp.web import Response
+from aiohttp.web_exceptions import HTTPBadRequest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
-from virtool.api.response import bad_request
 from virtool.labels.models import Label
 
 PATHOSCOPE_TASK_NAMES = [
@@ -80,7 +80,7 @@ def bad_labels_response(labels: List[int]) -> Response:
     :param labels: A list of label IDs that do not exist
     :return: A `bad_request()` response
     """
-    return bad_request(f"Labels do not exist: {', '.join(str(label) for label in labels)}")
+    raise HTTPBadRequest(text=f"Labels do not exist: {', '.join(str(label) for label in labels)}")
 
 
 def join_legacy_read_path(sample_path: Path, suffix: int) -> Path:

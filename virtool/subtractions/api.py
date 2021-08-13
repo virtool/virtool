@@ -3,7 +3,7 @@ import logging
 import os
 
 import aiohttp.web
-from aiohttp.web_exceptions import HTTPNoContent
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
 from aiohttp.web_fileresponse import FileResponse
 from sqlalchemy import select, exc
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,8 +13,7 @@ import virtool.jobs.db
 import virtool.subtractions.db
 import virtool.uploads.db
 import virtool.validators
-from virtool.api.response import (bad_request, conflict,
-                                  json_response, not_found)
+from virtool.api.response import conflict, json_response, not_found
 from virtool.api.utils import get_query_bool, paginate, compose_regex_query
 from virtool.db.utils import get_new_id
 from virtool.http.schema import schema
@@ -135,7 +134,7 @@ async def create(req):
     file = await get_row_by_id(pg, Upload, upload_id)
 
     if file is None:
-        return bad_request("File does not exist")
+        raise HTTPBadRequest(text="File does not exist")
 
     filename = file.to_dict().get("name")
 
@@ -372,7 +371,7 @@ async def download_subtraction_files(req: aiohttp.web.Request):
         return virtool.api.response.not_found()
 
     if filename not in FILES:
-        return bad_request("Unsupported subtraction file name")
+        raise HTTPBadRequest(text="Unsupported subtraction file name")
 
     async with AsyncSession(pg) as session:
         result = (await session.execute(

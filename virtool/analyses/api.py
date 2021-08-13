@@ -8,7 +8,7 @@ from typing import Any, Dict, Union
 
 import aiohttp.web
 import aiojobs.aiohttp
-from aiohttp.web import HTTPNoContent
+from aiohttp.web import HTTPNoContent, HTTPBadRequest
 
 import virtool.analyses.format
 import virtool.bio
@@ -19,7 +19,7 @@ from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFormat, AnalysisFile
 from virtool.analyses.utils import attach_analysis_files, find_nuvs_sequence_by_index
 from virtool.api.json import isoformat
-from virtool.api.response import bad_request, conflict, insufficient_rights, \
+from virtool.api.response import conflict, insufficient_rights, \
     invalid_query, json_response, not_modified, not_found
 from virtool.api.utils import paginate
 from virtool.db.core import Collection, DB
@@ -105,7 +105,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     )
 
     if not sample:
-        return bad_request("Parent sample does not exist")
+        raise HTTPBadRequest(text="Parent sample does not exist")
 
     document = await attach_subtractions(db, document)
 
@@ -157,7 +157,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     )
 
     if not sample:
-        return bad_request("Parent sample does not exist")
+        raise HTTPBadRequest(text="Parent sample does not exist")
 
     read, _ = get_sample_rights(sample, req["client"])
 
@@ -203,7 +203,7 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     )
 
     if not sample:
-        return bad_request("Parent sample does not exist")
+        raise HTTPBadRequest(text="Parent sample does not exist")
 
     read, write = get_sample_rights(sample, req["client"])
 
@@ -216,11 +216,11 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     await db.analyses.delete_one({"_id": analysis_id})
 
     path = (
-        req.app["settings"]["data_path"]
-        / "samples"
-        / sample_id
-        / "analysis"
-        / analysis_id
+            req.app["settings"]["data_path"]
+            / "samples"
+            / sample_id
+            / "analysis"
+            / analysis_id
     )
 
     try:
@@ -255,11 +255,11 @@ async def delete_analysis(req):
     sample_id = document["sample"]["id"]
 
     path = (
-        req.app["settings"]["data_path"]
-        / "samples"
-        / sample_id
-        / "analysis"
-        / analysis_id
+            req.app["settings"]["data_path"]
+            / "samples"
+            / sample_id
+            / "analysis"
+            / analysis_id
     )
 
     try:
@@ -297,7 +297,7 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
     name = req.query.get("name")
 
     if analysis_format and analysis_format not in AnalysisFormat.to_list():
-        return bad_request("Unsupported analysis file format")
+        raise HTTPBadRequest(text="Unsupported analysis file format")
 
     analysis_file = await create_analysis_file(pg, analysis_id, analysis_format, name)
 
@@ -413,7 +413,7 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     )
 
     if not sample:
-        return bad_request("Parent sample does not exist")
+        raise HTTPBadRequest(text="Parent sample does not exist")
 
     _, write = get_sample_rights(sample, req["client"])
 
