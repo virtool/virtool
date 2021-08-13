@@ -71,58 +71,6 @@ async def find(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(data)
 
 
-@routes.jobs_api.get("/api/analyses/{analysis_id}")
-async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
-    """
-    Get a complete analysis document.
-
-    """
-    db = req.app["db"]
-    pg = req.app["pg"]
-
-    analysis_id = req.match_info["analysis_id"]
-
-    document = await db.analyses.find_one(analysis_id)
-
-    if document is None:
-        return not_found()
-
-    try:
-        iso = isoformat(document["updated_at"])
-    except KeyError:
-        iso = isoformat(document["created_at"])
-
-    if_modified_since = req.headers.get("If-Modified-Since")
-
-    if if_modified_since and if_modified_since == iso:
-        return not_modified()
-
-    document = await attach_analysis_files(pg, analysis_id, document)
-
-    sample = await db.samples.find_one(
-        {"_id": document["sample"]["id"]},
-        {"quality": False}
-    )
-
-    if not sample:
-        raise HTTPBadRequest(text="Parent sample does not exist")
-
-    document = await attach_subtractions(db, document)
-
-    if document["ready"]:
-        try:
-            document = await virtool.analyses.format.format_analysis(req.app, document)
-        except ValueError:
-            pass
-
-    headers = {
-        "Cache-Control": "no-cache",
-        "Last-Modified": isoformat(document["created_at"])
-    }
-
-    return json_response(base_processor(document), headers=headers)
-
-
 @routes.get("/api/analyses/{analysis_id}")
 async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
@@ -168,6 +116,58 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     if document["ready"]:
         document = await virtool.analyses.format.format_analysis(req.app, document)
+
+    headers = {
+        "Cache-Control": "no-cache",
+        "Last-Modified": isoformat(document["created_at"])
+    }
+
+    return json_response(base_processor(document), headers=headers)
+
+
+@routes.jobs_api.get("/api/analyses/{analysis_id}")
+async def get_for_jobs_api(req: aiohttp.web.Request) -> aiohttp.web.Response:
+    """
+    Get a complete analysis document.
+
+    """
+    db = req.app["db"]
+    pg = req.app["pg"]
+
+    analysis_id = req.match_info["analysis_id"]
+
+    document = await db.analyses.find_one(analysis_id)
+
+    if document is None:
+        return not_found()
+
+    try:
+        iso = isoformat(document["updated_at"])
+    except KeyError:
+        iso = isoformat(document["created_at"])
+
+    if_modified_since = req.headers.get("If-Modified-Since")
+
+    if if_modified_since and if_modified_since == iso:
+        return not_modified()
+
+    document = await attach_analysis_files(pg, analysis_id, document)
+
+    sample = await db.samples.find_one(
+        {"_id": document["sample"]["id"]},
+        {"quality": False}
+    )
+
+    if not sample:
+        raise HTTPBadRequest(text="Parent sample does not exist")
+
+    document = await attach_subtractions(db, document)
+
+    if document["ready"]:
+        try:
+            document = await virtool.analyses.format.format_analysis(req.app, document)
+        except ValueError:
+            pass
 
     headers = {
         "Cache-Control": "no-cache",
