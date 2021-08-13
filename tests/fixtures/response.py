@@ -67,17 +67,6 @@ class RespIs:
             "errors": errors
         }
 
-    @staticmethod
-    async def bad_gateway(resp, message="Bad gateway"):
-        """
-        Check whether a response object is a valid Virtool ``bad gateway``.
-
-        """
-        return resp.status == 502 and await resp.json() == {
-            "id": "bad_gateway",
-            "message": message
-        }
-
 
 @pytest.fixture(scope="session")
 def resp_is():
@@ -148,17 +137,6 @@ class AssertRespIs:
             "id": "invalid_query",
             "message": "Invalid query",
             "errors": errors
-        }
-
-    @staticmethod
-    async def bad_gateway(resp, message="Bad gateway"):
-        """
-        Check whether a response object is a valid Virtool ``bad gateway``.
-
-        """
-        assert resp.status == 502 and await resp.json() == {
-            "id": "bad_gateway",
-            "message": message
         }
 
 
