@@ -8,32 +8,29 @@ from typing import Any, Dict, Union
 
 import aiohttp.web
 import aiojobs.aiohttp
+from aiohttp.web import HTTPNoContent
 
-import virtool.analyses.db
-import virtool.analyses.files
 import virtool.analyses.format
-import virtool.analyses.utils
-import virtool.api.json
-import virtool.api.response
-import virtool.api.utils
 import virtool.bio
-import virtool.errors
 import virtool.http.routes
-import virtool.pg.utils
 import virtool.samples.db
-import virtool.samples.utils
-import virtool.subtractions.db
-import virtool.uploads.db
-import virtool.uploads.utils
-import virtool.utils
-import virtool.validators
+from virtool.analyses.db import update_nuvs_blast, PROJECTION
+from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFormat, AnalysisFile
+from virtool.analyses.utils import attach_analysis_files, find_nuvs_sequence_by_index
+from virtool.api.json import isoformat
 from virtool.api.response import bad_request, conflict, insufficient_rights, \
-    invalid_query, json_response, no_content, not_found
+    invalid_query, json_response, not_modified, not_found
+from virtool.api.utils import paginate
 from virtool.db.core import Collection, DB
 from virtool.http.schema import schema
+from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.samples.db import recalculate_workflow_tags
-from virtool.utils import base_processor
+from virtool.samples.utils import get_sample_rights
+from virtool.subtractions.db import attach_subtractions
+from virtool.uploads.db import finalize
+from virtool.uploads.utils import naive_writer, naive_validator
+from virtool.utils import base_processor, rm
 
 logger = logging.getLogger("analyses")
 
@@ -50,11 +47,11 @@ async def find(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     db_query = dict()
 
-    data = await virtool.api.utils.paginate(
+    data = await paginate(
         db.analyses,
         db_query,
         req.query,
-        projection=virtool.analyses.db.PROJECTION,
+        projection=PROJECTION,
         sort=[("created_at", -1)]
     )
 
@@ -69,7 +66,7 @@ async def find(req: aiohttp.web.Request) -> aiohttp.web.Response:
             checked_documents.append(document)
 
     data["documents"] = await asyncio.tasks.gather(
-        *[virtool.subtractions.db.attach_subtractions(db, d) for d in checked_documents])
+        *[attach_subtractions(db, d) for d in checked_documents])
 
     return json_response(data)
 
@@ -91,16 +88,16 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
         return not_found()
 
     try:
-        iso = virtool.api.json.isoformat(document["updated_at"])
+        iso = isoformat(document["updated_at"])
     except KeyError:
-        iso = virtool.api.json.isoformat(document["created_at"])
+        iso = isoformat(document["created_at"])
 
     if_modified_since = req.headers.get("If-Modified-Since")
 
     if if_modified_since and if_modified_since == iso:
-        return virtool.api.response.not_modified()
+        return not_modified()
 
-    document = await virtool.analyses.utils.attach_analysis_files(pg, analysis_id, document)
+    document = await attach_analysis_files(pg, analysis_id, document)
 
     sample = await db.samples.find_one(
         {"_id": document["sample"]["id"]},
@@ -110,7 +107,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if not sample:
         return bad_request("Parent sample does not exist")
 
-    document = await virtool.subtractions.db.attach_subtractions(db, document)
+    document = await attach_subtractions(db, document)
 
     if document["ready"]:
         try:
@@ -120,10 +117,10 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     headers = {
         "Cache-Control": "no-cache",
-        "Last-Modified": virtool.api.json.isoformat(document["created_at"])
+        "Last-Modified": isoformat(document["created_at"])
     }
 
-    return json_response(virtool.utils.base_processor(document), headers=headers)
+    return json_response(base_processor(document), headers=headers)
 
 
 @routes.get("/api/analyses/{analysis_id}")
@@ -143,16 +140,16 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
         return not_found()
 
     try:
-        iso = virtool.api.json.isoformat(document["updated_at"])
+        iso = isoformat(document["updated_at"])
     except KeyError:
-        iso = virtool.api.json.isoformat(document["created_at"])
+        iso = isoformat(document["created_at"])
 
     if_modified_since = req.headers.get("If-Modified-Since")
 
     if if_modified_since and if_modified_since == iso:
-        return virtool.api.response.not_modified()
+        return not_modified()
 
-    document = await virtool.analyses.utils.attach_analysis_files(pg, analysis_id, document)
+    document = await attach_analysis_files(pg, analysis_id, document)
 
     sample = await db.samples.find_one(
         {"_id": document["sample"]["id"]},
@@ -162,22 +159,22 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if not sample:
         return bad_request("Parent sample does not exist")
 
-    read, _ = virtool.samples.utils.get_sample_rights(sample, req["client"])
+    read, _ = get_sample_rights(sample, req["client"])
 
     if not read:
         return insufficient_rights()
 
-    document = await virtool.subtractions.db.attach_subtractions(db, document)
+    document = await attach_subtractions(db, document)
 
     if document["ready"]:
         document = await virtool.analyses.format.format_analysis(req.app, document)
 
     headers = {
         "Cache-Control": "no-cache",
-        "Last-Modified": virtool.api.json.isoformat(document["created_at"])
+        "Last-Modified": isoformat(document["created_at"])
     }
 
-    return json_response(virtool.utils.base_processor(document), headers=headers)
+    return json_response(base_processor(document), headers=headers)
 
 
 @routes.delete("/api/analyses/{analysis_id}")
@@ -208,7 +205,7 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if not sample:
         return bad_request("Parent sample does not exist")
 
-    read, write = virtool.samples.utils.get_sample_rights(sample, req["client"])
+    read, write = get_sample_rights(sample, req["client"])
 
     if not read or not write:
         return insufficient_rights()
@@ -227,13 +224,13 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     )
 
     try:
-        await req.app["run_in_thread"](virtool.utils.rm, path, True)
+        await req.app["run_in_thread"](rm, path, True)
     except FileNotFoundError:
         pass
 
     await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
 
-    return no_content()
+    raise HTTPNoContent
 
 
 @routes.jobs_api.delete("/api/analyses/{analysis_id}")
@@ -266,13 +263,13 @@ async def delete_analysis(req):
     )
 
     try:
-        await req.app["run_in_thread"](virtool.utils.rm, path, True)
+        await req.app["run_in_thread"](rm, path, True)
     except FileNotFoundError:
         pass
 
     await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
 
-    return no_content()
+    raise HTTPNoContent
 
 
 @routes.jobs_api.put("/api/analyses/{id}/files")
@@ -292,7 +289,7 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if document is None:
         return not_found()
 
-    errors = virtool.uploads.utils.naive_validator(req)
+    errors = naive_validator(req)
 
     if errors:
         return invalid_query(errors)
@@ -302,21 +299,21 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if analysis_format and analysis_format not in AnalysisFormat.to_list():
         return bad_request("Unsupported analysis file format")
 
-    analysis_file = await virtool.analyses.files.create_analysis_file(pg, analysis_id, analysis_format, name)
+    analysis_file = await create_analysis_file(pg, analysis_id, analysis_format, name)
 
     upload_id = analysis_file["id"]
 
     analysis_file_path = req.app["settings"]["data_path"] / "analyses" / analysis_file["name_on_disk"]
 
     try:
-        size = await virtool.uploads.utils.naive_writer(req, analysis_file_path)
+        size = await naive_writer(req, analysis_file_path)
     except asyncio.CancelledError:
         logger.debug(f"Analysis file upload aborted: {upload_id}")
-        await virtool.pg.utils.delete_row(pg, upload_id, AnalysisFile)
+        await delete_row(pg, upload_id, AnalysisFile)
 
         return aiohttp.web.Response(status=499)
 
-    analysis_file = await virtool.uploads.db.finalize(pg, size, upload_id, AnalysisFile)
+    analysis_file = await finalize(pg, size, upload_id, AnalysisFile)
 
     headers = {
         "Location": f"/api/analyses/{analysis_id}/files/{upload_id}"
@@ -334,7 +331,7 @@ async def download_analysis_result(req: aiohttp.web.Request) -> Union[aiohttp.we
     pg = req.app["pg"]
     upload_id = int(req.match_info["upload_id"])
 
-    analysis_file = await virtool.pg.utils.get_row_by_id(pg, AnalysisFile, upload_id)
+    analysis_file = await get_row_by_id(pg, AnalysisFile, upload_id)
 
     if not analysis_file:
         return not_found()
@@ -405,8 +402,7 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if not document["ready"]:
         return conflict("Analysis is still running")
 
-    sequence = virtool.analyses.utils.find_nuvs_sequence_by_index(document,
-                                                                  sequence_index)
+    sequence = find_nuvs_sequence_by_index(document, sequence_index)
 
     if sequence is None:
         return not_found("Sequence not found")
@@ -419,7 +415,7 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if not sample:
         return bad_request("Parent sample does not exist")
 
-    _, write = virtool.samples.utils.get_sample_rights(sample, req["client"])
+    _, write = get_sample_rights(sample, req["client"])
 
     if not write:
         return insufficient_rights()
@@ -428,7 +424,7 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     # the BLAST run.
     rid, _ = await virtool.bio.initialize_ncbi_blast(req.app["settings"], sequence)
 
-    blast_data, document = await virtool.analyses.db.update_nuvs_blast(
+    blast_data, document = await update_nuvs_blast(
         db,
         settings,
         analysis_id,

@@ -1,6 +1,7 @@
 from logging import getLogger
 
-from virtool.api.response import no_content
+from aiohttp.web_exceptions import HTTPNoContent
+
 from virtool.http.routes import Routes
 from virtool.samples.fake import create_fake_sample
 from virtool.subtractions.fake import create_fake_fasta_upload, create_fake_finalized_subtraction
@@ -47,4 +48,4 @@ async def dev(req):
             True
         )
 
-    return no_content()
+    raise HTTPNoContent

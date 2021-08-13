@@ -1,13 +1,13 @@
 import pymongo.errors
+from aiohttp.web_exceptions import HTTPNoContent
 
 import virtool.groups.db
 import virtool.http.routes
-import virtool.users.db
-import virtool.users.utils
-import virtool.utils
 import virtool.validators
-from virtool.api.response import bad_request, json_response, no_content, not_found
+from virtool.api.response import bad_request, json_response, not_found
 from virtool.http.schema import schema
+from virtool.users.utils import generate_base_permissions
+from virtool.utils import base_processor
 
 routes = virtool.http.routes.Routes()
 
@@ -19,7 +19,7 @@ async def find(req):
 
     """
     cursor = req.app["db"].groups.find()
-    return json_response([virtool.utils.base_processor(d) async for d in cursor])
+    return json_response([base_processor(d) async for d in cursor])
 
 
 @routes.post("/api/groups", admin=True)
@@ -40,7 +40,7 @@ async def create(req):
 
     document = {
         "_id": data["group_id"].lower(),
-        "permissions": virtool.users.utils.generate_base_permissions()
+        "permissions": generate_base_permissions()
     }
 
     try:
@@ -52,7 +52,7 @@ async def create(req):
         "Location": "/api/groups/" + data["group_id"]
     }
 
-    return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
+    return json_response(base_processor(document), status=201, headers=headers)
 
 
 @routes.get("/api/groups/{group_id}")
@@ -64,7 +64,7 @@ async def get(req):
     document = await req.app["db"].groups.find_one(req.match_info["group_id"])
 
     if document:
-        return json_response(virtool.utils.base_processor(document))
+        return json_response(base_processor(document))
 
     return not_found()
 
@@ -103,7 +103,7 @@ async def update_permissions(req):
 
     await virtool.groups.db.update_member_users(db, group_id)
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(base_processor(document))
 
 
 @routes.delete("/api/groups/{group_id}", admin=True)
@@ -123,4 +123,4 @@ async def remove(req):
 
     await virtool.groups.db.update_member_users(db, group_id, remove=True)
 
-    return no_content()
+    raise HTTPNoContent

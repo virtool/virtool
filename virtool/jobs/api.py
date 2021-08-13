@@ -1,15 +1,15 @@
 import os
 
+from aiohttp.web_exceptions import HTTPNoContent
+
 import virtool.jobs.db
-import virtool.users.db
 import virtool.utils
-from virtool.api.response import bad_request, conflict, json_response, no_content, \
-    not_found
+from virtool.api.response import bad_request, conflict, json_response, not_found
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_one_field
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
-from virtool.jobs.db import PROJECTION
+from virtool.jobs.db import PROJECTION, LIST_PROJECTION
 
 routes = Routes()
 
@@ -33,7 +33,7 @@ async def find(req):
         db.jobs,
         db_query,
         req.query,
-        projection=virtool.jobs.db.LIST_PROJECTION
+        projection=LIST_PROJECTION
     )
 
     data["documents"].sort(key=lambda d: d["created_at"])
@@ -219,4 +219,4 @@ async def remove(req):
     except OSError:
         pass
 
-    return no_content()
+    raise HTTPNoContent

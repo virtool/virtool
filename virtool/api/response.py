@@ -22,17 +22,6 @@ def json_response(data: object, status: int = 200, headers: Optional[dict] = Non
     return resp
 
 
-def no_content() -> web.Response:
-    """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``204`` status and no
-    body.
-
-    :return: the response
-
-    """
-    return web.Response(status=204)
-
-
 def not_modified() -> web.Response:
     return web.Response(status=304)
 

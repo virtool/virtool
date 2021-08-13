@@ -665,12 +665,12 @@ async def test_remove(
 
     resp = await client.delete("/api/samples/test")
 
-    assert await getattr(resp_is, resp_is_attr)(resp)
-
     if resp_is_attr == "no_content":
+        assert resp.status == 204
         m.assert_called_with(client.db, client.app["settings"], ["test"])
     else:
         assert not m.called
+        assert await getattr(resp_is, resp_is_attr)(resp)
 
 
 @pytest.mark.parametrize("ready", [True, False])
@@ -973,7 +973,7 @@ async def test_cache_job_remove(exists, ready, tmp_path, spawn_job_client, snaps
         assert await resp_is.conflict(resp, "Jobs cannot delete finalized caches")
         return
 
-    assert await resp_is.no_content(resp)
+    assert resp.status == 204
     assert await client.db.caches.find_one("foo") is None
     assert not (tmp_path / "caches" / "foo").is_dir()
 

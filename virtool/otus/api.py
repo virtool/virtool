@@ -1,22 +1,19 @@
 import asyncio
 
 from aiohttp import web
+from aiohttp.web_exceptions import HTTPNoContent
 
-import virtool.db.utils
-import virtool.downloads.db
-import virtool.history.db
-import virtool.history.utils
 import virtool.http.routes
 import virtool.otus.db
 import virtool.otus.isolates
 import virtool.otus.sequences
-import virtool.otus.utils
 import virtool.references.db
-import virtool.references.utils
-import virtool.utils
 import virtool.validators
-from virtool.api.response import bad_request, insufficient_rights, json_response, no_content, not_found
+from virtool.api.response import bad_request, insufficient_rights, json_response, not_found
+from virtool.history.db import LIST_PROJECTION
 from virtool.http.schema import schema
+from virtool.otus.utils import find_isolate, evaluate_changes
+from virtool.utils import base_processor
 
 SCHEMA_VALIDATOR = {
     "type": "list",
@@ -197,7 +194,7 @@ async def edit(req):
     if not await virtool.references.db.check_right(req, ref_id, "modify_otu"):
         return insufficient_rights()
 
-    name, abbreviation, schema = virtool.otus.utils.evaluate_changes(data, document)
+    name, abbreviation, schema = evaluate_changes(data, document)
 
     # Send ``200`` with the existing otu record if no change will be made.
     if name is None and abbreviation is None and schema is None:
@@ -282,7 +279,7 @@ async def get_isolate(req):
     if not document:
         return not_found()
 
-    isolate = dict(virtool.otus.utils.find_isolate(document["isolates"], isolate_id), sequences=[])
+    isolate = dict(find_isolate(document["isolates"], isolate_id), sequences=[])
 
     cursor = db.sequences.find({"otu_id": otu_id, "isolate_id": isolate_id}, {"otu_id": False, "isolate_id": False})
 
@@ -457,7 +454,7 @@ async def remove_isolate(req):
         req["client"].user_id
     ))
 
-    return no_content()
+    raise HTTPNoContent
 
 
 @routes.get("/api/otus/{otu_id}/isolates/{isolate_id}/sequences")
@@ -477,7 +474,7 @@ async def list_sequences(req):
 
     cursor = db.sequences.find({"otu_id": otu_id, "isolate_id": isolate_id}, projection)
 
-    return json_response([virtool.utils.base_processor(d) async for d in cursor])
+    return json_response([base_processor(d) async for d in cursor])
 
 
 @routes.get("/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
@@ -685,7 +682,7 @@ async def remove_sequence(req):
         req["client"].user_id
     ))
 
-    return no_content()
+    raise HTTPNoContent
 
 
 @routes.get("/api/otus/{otu_id}/history")
@@ -697,6 +694,6 @@ async def list_history(req):
     if not await db.otus.count_documents({"_id": otu_id}):
         return not_found()
 
-    cursor = db.history.find({"otu.id": otu_id}, projection=virtool.history.db.LIST_PROJECTION)
+    cursor = db.history.find({"otu.id": otu_id}, projection=LIST_PROJECTION)
 
     return json_response([d async for d in cursor])

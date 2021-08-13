@@ -1,28 +1,27 @@
 import asyncio
 
 import aiohttp
+from aiohttp.web_exceptions import HTTPNoContent
 
-import virtool.api.utils
 import virtool.db.utils
-import virtool.errors
-import virtool.github
 import virtool.history.db
 import virtool.http.routes
 import virtool.indexes.db
 import virtool.otus.db
-import virtool.otus.utils
-import virtool.pg.utils
 import virtool.references.db
-import virtool.references.utils
-import virtool.tasks.pg
-import virtool.users.db
 import virtool.utils
 import virtool.validators
-from virtool.api.response import bad_gateway, bad_request, insufficient_rights, json_response, no_content, not_found
-from virtool.uploads.models import Upload
+from virtool.api.response import bad_gateway, bad_request, insufficient_rights, json_response, not_found
+from virtool.api.utils import compose_regex_query, paginate
+from virtool.errors import GitHubError, DatabaseError
+import virtool.github
+from virtool.github import format_release
+from virtool.http.schema import schema
+from virtool.pg.utils import get_row
 from virtool.references.tasks import CloneReferenceTask, ImportReferenceTask, RemoteReferenceTask, \
     DeleteReferenceTask, UpdateRemoteReferenceTask
-from virtool.http.schema import schema
+from virtool.uploads.models import Upload
+import virtool.users.db
 
 routes = virtool.http.routes.Routes()
 
@@ -51,7 +50,7 @@ async def find(req):
     db_query = dict()
 
     if term:
-        db_query = virtool.api.utils.compose_regex_query(term, ["name", "data_type"])
+        db_query = compose_regex_query(term, ["name", "data_type"])
 
     base_query = virtool.references.db.compose_base_find_query(
         req["client"].user_id,
@@ -59,7 +58,7 @@ async def find(req):
         req["client"].groups
     )
 
-    data = await virtool.api.utils.paginate(
+    data = await paginate(
         db.references,
         db_query,
         req.query,
@@ -351,7 +350,7 @@ async def create(req):
         }
 
     elif import_from:
-        if not await virtool.pg.utils.get_row(pg, Upload, ("name_on_disk", import_from)):
+        if not await get_row(pg, Upload, ("name_on_disk", import_from)):
             return not_found("File not found")
 
         path = req.app["settings"]["data_path"] / "files" / import_from
@@ -391,13 +390,13 @@ async def create(req):
         except aiohttp.ClientConnectionError:
             return bad_gateway("Could not reach GitHub")
 
-        except virtool.errors.GitHubError as err:
+        except GitHubError as err:
             if "404" in str(err):
                 return bad_gateway("Could not retrieve latest GitHub release")
 
             raise
 
-        release = virtool.github.format_release(release)
+        release = format_release(release)
 
         document = await virtool.references.db.create_remote(
             db,
@@ -613,7 +612,7 @@ async def add_group(req):
 
     try:
         subdocument = await virtool.references.db.add_group_or_user(db, ref_id, "groups", data)
-    except virtool.errors.DatabaseError as err:
+    except DatabaseError as err:
         if "already exists" in str(err):
             return bad_request("Group already exists")
 
@@ -651,7 +650,7 @@ async def add_user(req):
 
     try:
         subdocument = await virtool.references.db.add_group_or_user(db, ref_id, "users", data)
-    except virtool.errors.DatabaseError as err:
+    except DatabaseError as err:
         if "already exists" in str(err):
             return bad_request("User already exists")
 
@@ -732,7 +731,7 @@ async def delete_group(req):
 
     await virtool.references.db.delete_group_or_user(db, ref_id, group_id, "groups")
 
-    return no_content()
+    raise HTTPNoContent
 
 
 @routes.delete("/api/refs/{ref_id}/users/{user_id}")
@@ -751,4 +750,4 @@ async def delete_user(req):
 
     await virtool.references.db.delete_group_or_user(db, ref_id, user_id, "users")
 
-    return no_content()
+    raise HTTPNoContent

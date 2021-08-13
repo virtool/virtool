@@ -374,7 +374,7 @@ async def test_remove_api_key(error, spawn_client, assert_resp_is):
         await assert_resp_is.not_found(resp)
         return
 
-    await assert_resp_is.no_content(resp)
+    assert resp.status == 204
     assert await client.db.keys.count_documents({}) == 0
 
 
