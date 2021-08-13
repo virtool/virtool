@@ -22,10 +22,6 @@ def json_response(data: object, status: int = 200, headers: Optional[dict] = Non
     return resp
 
 
-def not_modified() -> web.Response:
-    return web.Response(status=304)
-
-
 def bad_gateway(message: str = "Bad gateway") -> web.Response:
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``502`` status and the

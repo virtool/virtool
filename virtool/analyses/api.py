@@ -8,7 +8,7 @@ from typing import Any, Dict, Union
 
 import aiohttp.web
 import aiojobs.aiohttp
-from aiohttp.web import HTTPNoContent, HTTPBadRequest
+from aiohttp.web import HTTPNoContent, HTTPBadRequest, HTTPNotModified
 
 import virtool.analyses.format
 import virtool.bio
@@ -20,7 +20,7 @@ from virtool.analyses.models import AnalysisFormat, AnalysisFile
 from virtool.analyses.utils import attach_analysis_files, find_nuvs_sequence_by_index
 from virtool.api.json import isoformat
 from virtool.api.response import conflict, insufficient_rights, \
-    invalid_query, json_response, not_modified, not_found
+    invalid_query, json_response, not_found
 from virtool.api.utils import paginate
 from virtool.db.core import Collection, DB
 from virtool.http.schema import schema
@@ -95,7 +95,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if_modified_since = req.headers.get("If-Modified-Since")
 
     if if_modified_since and if_modified_since == iso:
-        return not_modified()
+        raise HTTPNotModified()
 
     document = await attach_analysis_files(pg, analysis_id, document)
 
@@ -147,7 +147,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if_modified_since = req.headers.get("If-Modified-Since")
 
     if if_modified_since and if_modified_since == iso:
-        return not_modified()
+        raise HTTPNotModified()
 
     document = await attach_analysis_files(pg, analysis_id, document)
 
