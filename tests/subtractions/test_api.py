@@ -163,7 +163,7 @@ async def test_job_remove(exists, ready, tmp_path, spawn_job_client, snapshot, r
         assert await resp_is.conflict(resp, "Only unfinalized subtractions can be deleted")
         return
 
-    assert await resp_is.no_content(resp)
+    assert resp.status == 204
 
     snapshot.assert_match(await client.db.subtraction.find_one("foo"))
     snapshot.assert_match(await client.db.samples.find_one("test"))

@@ -15,22 +15,21 @@ Schema:
 - settings (Object) user-specific settings - currently not used
 
 """
-import virtool.api.utils
-import virtool.db.utils
-import virtool.errors
-import virtool.groups.utils
-import virtool.hmm.db
+from aiohttp.web_exceptions import HTTPNoContent
+
 import virtool.http.auth
 import virtool.http.routes
-import virtool.http.utils
-import virtool.users.checks
 import virtool.users.db
-import virtool.users.sessions
-import virtool.users.utils
-import virtool.utils
 import virtool.validators
-from virtool.api.response import bad_request, conflict, json_response, no_content, not_found
+from virtool.api.response import bad_request, conflict, json_response, not_found
+from virtool.api.utils import compose_regex_query, paginate
+from virtool.db.utils import apply_projection
+from virtool.errors import DatabaseError
 from virtool.http.schema import schema
+from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
+from virtool.users.checks import check_password_length
+from virtool.users.sessions import create_session
+from virtool.utils import base_processor
 
 routes = virtool.http.routes.Routes()
 
@@ -48,9 +47,9 @@ async def find(req):
     db_query = dict()
 
     if term:
-        db_query.update(virtool.api.utils.compose_regex_query(term, ["_id"]))
+        db_query.update(compose_regex_query(term, ["_id"]))
 
-    data = await virtool.api.utils.paginate(
+    data = await paginate(
         db.users,
         db_query,
         req.query,
@@ -72,7 +71,7 @@ async def get(req):
     if not document:
         return not_found()
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(base_processor(document))
 
 
 @routes.post("/api/users", admin=True)
@@ -104,7 +103,7 @@ async def create(req):
     if data["user_id"] == "virtool":
         return bad_request("Reserved user name: virtool")
 
-    error = await virtool.users.checks.check_password_length(req)
+    error = await check_password_length(req)
 
     if error:
         return bad_request(error)
@@ -118,7 +117,7 @@ async def create(req):
             data["password"],
             data["force_reset"]
         )
-    except virtool.errors.DatabaseError:
+    except DatabaseError:
         return bad_request("User already exists")
 
     headers = {
@@ -126,7 +125,7 @@ async def create(req):
     }
 
     return json_response(
-        virtool.utils.base_processor({key: document[key] for key in virtool.users.db.PROJECTION}),
+        base_processor({key: document[key] for key in virtool.users.db.PROJECTION}),
         headers=headers,
         status=201
     )
@@ -160,7 +159,7 @@ async def create_first(req):
     if data["user_id"] == "virtool":
         return bad_request("Reserved user name: virtool")
 
-    error = await virtool.users.checks.check_password_length(req)
+    error = await check_password_length(req)
 
     if error:
         return bad_request(error)
@@ -184,7 +183,7 @@ async def create_first(req):
         "Location": f"/api/users/{user_id}"
     }
 
-    session, token = await virtool.users.sessions.create_session(
+    session, token = await create_session(
         db,
         virtool.http.auth.get_ip(req),
         user_id
@@ -193,13 +192,13 @@ async def create_first(req):
     req["client"].authorize(session, is_api=False)
 
     resp = json_response(
-        virtool.utils.base_processor({key: document[key] for key in virtool.users.db.PROJECTION}),
+        base_processor({key: document[key] for key in virtool.users.db.PROJECTION}),
         headers=headers,
         status=201
     )
 
-    virtool.http.utils.set_session_id_cookie(resp, session["_id"])
-    virtool.http.utils.set_session_token_cookie(resp, token)
+    set_session_id_cookie(resp, session["_id"])
+    set_session_token_cookie(resp, token)
 
     return resp
 
@@ -227,7 +226,7 @@ async def edit(req):
     data = await req.json()
 
     if "password" in data:
-        error = await virtool.users.checks.check_password_length(req)
+        error = await check_password_length(req)
 
         if error:
             return bad_request(error)
@@ -256,7 +255,7 @@ async def edit(req):
             user_id,
             **data
         )
-    except virtool.errors.DatabaseError as err:
+    except DatabaseError as err:
         if "User does not exist" in str(err):
             return not_found("User does not exist")
 
@@ -265,9 +264,9 @@ async def edit(req):
 
         raise
 
-    projected = virtool.db.utils.apply_projection(document, virtool.users.db.PROJECTION)
+    projected = apply_projection(document, virtool.users.db.PROJECTION)
 
-    return json_response(virtool.utils.base_processor(projected))
+    return json_response(base_processor(projected))
 
 
 @routes.delete("/api/users/{user_id}", admin=True)
@@ -297,4 +296,4 @@ async def remove(req):
     if delete_result.deleted_count == 0:
         return not_found()
 
-    return no_content()
+    raise HTTPNoContent

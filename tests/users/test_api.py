@@ -162,7 +162,7 @@ async def test_create(error, spawn_client, create_user, resp_is, static_time):
     assert resp.headers["Location"] == "/api/users/bob"
 
     expected = {
-        "id": "bob","administrator": False,
+        "id": "bob", "administrator": False,
         "force_reset": False,
         "groups": [],
         "last_password_change": static_time.iso,
@@ -284,4 +284,4 @@ async def test_remove(error, spawn_client, resp_is, create_user):
         assert await resp_is.not_found(resp)
         return
 
-    assert await resp_is.no_content(resp)
+    assert resp.status == 204

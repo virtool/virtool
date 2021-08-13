@@ -3,20 +3,20 @@ API request handlers for managing and querying HMM data.
 
 """
 import aiohttp
+from aiohttp.web_exceptions import HTTPNoContent
 from aiohttp.web_fileresponse import FileResponse
 
-import virtool.api.utils
-import virtool.db.utils
-import virtool.errors
-import virtool.github
 import virtool.hmm.db
 import virtool.http.routes
-import virtool.tasks.pg
-import virtool.utils
-from virtool.api.response import bad_gateway, bad_request, conflict, json_response, no_content, not_found
+from virtool.api.response import bad_gateway, bad_request, conflict, json_response, not_found
+from virtool.api.utils import compose_regex_query, paginate
+from virtool.db.utils import get_one_field
+from virtool.errors import GitHubError
+from virtool.github import create_update_subdocument
 from virtool.hmm.db import generate_annotations_json_file
 from virtool.hmm.tasks import HMMInstallTask
 from virtool.hmm.utils import hmm_data_exists
+from virtool.utils import base_processor, rm, compress_file_with_gzip
 
 routes = virtool.http.routes.Routes()
 
@@ -34,9 +34,9 @@ async def find(req):
     db_query = dict()
 
     if term:
-        db_query.update(virtool.api.utils.compose_regex_query(term, ["names"]))
+        db_query.update(compose_regex_query(term, ["names"]))
 
-    data = await virtool.api.utils.paginate(
+    data = await paginate(
         db.hmm,
         db_query,
         req.query,
@@ -79,7 +79,7 @@ async def get_release(req):
     """
     try:
         release = await virtool.hmm.db.fetch_and_update_release(req.app)
-    except virtool.errors.GitHubError as err:
+    except GitHubError as err:
         if "404" in str(err):
             return bad_gateway("GitHub repository does not exist")
 
@@ -102,7 +102,7 @@ async def list_updates(req):
     """
     db = req.app["db"]
 
-    updates = await virtool.db.utils.get_one_field(db.status, "updates", "hmm") or list()
+    updates = await get_one_field(db.status, "updates", "hmm") or list()
     updates.reverse()
 
     return json_response(updates)
@@ -121,7 +121,7 @@ async def install(req):
     if await db.status.count_documents({"_id": "hmm", "updates.ready": False}):
         return conflict("Install already in progress")
 
-    release = await virtool.db.utils.get_one_field(db.status, "release", "hmm")
+    release = await get_one_field(db.status, "release", "hmm")
 
     if release is None:
         return bad_request("Target release does not exist")
@@ -142,7 +142,7 @@ async def install(req):
         }
     })
 
-    update = virtool.github.create_update_subdocument(release, False, user_id)
+    update = create_update_subdocument(release, False, user_id)
 
     await db.status.update_one({"_id": "hmm"}, {
         "$push": {
@@ -165,7 +165,7 @@ async def get(req):
     if document is None:
         return not_found()
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(base_processor(document))
 
 
 @routes.delete("/api/hmms", permission="modify_hmm")
@@ -181,7 +181,7 @@ async def purge(req):
     hmm_path = req.app["settings"]["data_path"] / "hmm/profiles.hmm"
 
     try:
-        await req.app["run_in_thread"](virtool.utils.rm, hmm_path)
+        await req.app["run_in_thread"](rm, hmm_path)
     except FileNotFoundError:
         pass
 
@@ -195,7 +195,7 @@ async def purge(req):
 
     await virtool.hmm.db.fetch_and_update_release(req.app)
 
-    return no_content()
+    raise HTTPNoContent
 
 
 @routes.jobs_api.get("/api/hmms/files/annotations.json.gz")
@@ -206,7 +206,7 @@ async def get_hmm_annotations(request):
 
     if not annotation_path.exists():
         json_path = await generate_annotations_json_file(request.app)
-        await request.app["run_in_thread"](virtool.utils.compress_file_with_gzip,
+        await request.app["run_in_thread"](compress_file_with_gzip,
                                            json_path, annotation_path)
 
     return FileResponse(annotation_path)
