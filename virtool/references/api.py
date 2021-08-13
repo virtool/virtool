@@ -1,27 +1,27 @@
 import asyncio
 
 import aiohttp
-from aiohttp.web_exceptions import HTTPNoContent
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
 
 import virtool.db.utils
+import virtool.github
 import virtool.history.db
 import virtool.http.routes
 import virtool.indexes.db
 import virtool.otus.db
 import virtool.references.db
+import virtool.users.db
 import virtool.utils
 import virtool.validators
-from virtool.api.response import bad_gateway, bad_request, insufficient_rights, json_response, not_found
+from virtool.api.response import bad_gateway, insufficient_rights, json_response, not_found
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.errors import GitHubError, DatabaseError
-import virtool.github
 from virtool.github import format_release
 from virtool.http.schema import schema
 from virtool.pg.utils import get_row
 from virtool.references.tasks import CloneReferenceTask, ImportReferenceTask, RemoteReferenceTask, \
     DeleteReferenceTask, UpdateRemoteReferenceTask
 from virtool.uploads.models import Upload
-import virtool.users.db
 
 routes = virtool.http.routes.Routes()
 
@@ -108,7 +108,7 @@ async def get_release(req):
         return not_found()
 
     if not await db.references.count_documents({"_id": ref_id, "remotes_from": {"$exists": True}}):
-        return bad_request("Not a remote reference")
+        raise HTTPBadRequest(text="Not a remote reference")
 
     try:
         release = await virtool.references.db.fetch_and_update_release(req.app, ref_id)
@@ -158,7 +158,7 @@ async def update(req):
     release = await virtool.db.utils.get_one_field(db.references, "release", ref_id)
 
     if release is None:
-        return bad_request("Target release does not exist")
+        raise HTTPBadRequest(text="Target release does not exist")
 
     created_at = virtool.utils.timestamp()
 
@@ -323,7 +323,7 @@ async def create(req):
 
     if clone_from:
         if not await db.references.count_documents({"_id": clone_from}):
-            return bad_request("Source reference does not exist")
+            raise HTTPBadRequest(text="Source reference does not exist")
 
         manifest = await virtool.references.db.get_manifest(db, clone_from)
 
@@ -513,7 +513,7 @@ async def edit(req):
         names = [t["name"] for t in targets]
 
         if len(names) != len(set(names)):
-            return bad_request("The targets field may not contain duplicate names")
+            raise HTTPBadRequest(text="The targets field may not contain duplicate names")
 
     document = await virtool.references.db.edit(
         db,
@@ -614,10 +614,10 @@ async def add_group(req):
         subdocument = await virtool.references.db.add_group_or_user(db, ref_id, "groups", data)
     except DatabaseError as err:
         if "already exists" in str(err):
-            return bad_request("Group already exists")
+            raise HTTPBadRequest(text="Group already exists")
 
         if "does not exist" in str(err):
-            return bad_request("Group does not exist")
+            raise HTTPBadRequest(text="Group does not exist")
 
         raise
 
@@ -652,10 +652,10 @@ async def add_user(req):
         subdocument = await virtool.references.db.add_group_or_user(db, ref_id, "users", data)
     except DatabaseError as err:
         if "already exists" in str(err):
-            return bad_request("User already exists")
+            raise HTTPBadRequest(text="User already exists")
 
         if "does not exist" in str(err):
-            return bad_request("User does not exist")
+            raise HTTPBadRequest(text="User does not exist")
 
         raise
 

@@ -37,7 +37,11 @@ async def test_acquire(error, mocker, snapshot, assert_resp_is, dbi, test_job, s
     })
 
     if error == 404:
-        await assert_resp_is.bad_request(resp, "Job already acquired")
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Job already acquired"
+        }
         return
 
     assert resp.status == 200

@@ -59,7 +59,11 @@ async def test_edit(error, spawn_client, resp_is, static_time):
         await resp_is.invalid_input(resp, {"password": ["field 'old_password' is required"]})
 
     elif error == "credentials_error":
-        await resp_is.bad_request(resp, "Invalid credentials")
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Invalid credentials"
+        }
 
     else:
         assert resp.status == 200

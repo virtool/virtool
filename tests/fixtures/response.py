@@ -22,17 +22,6 @@ class RespIs:
         }
 
     @staticmethod
-    async def bad_request(resp, message="Bad request"):
-        """
-        Check whether a response object is a valid Virtool ``bad_request``.
-
-        """
-        return resp.status == 400 and await resp.json() == {
-            "id": "bad_request",
-            "message": message
-        }
-
-    @staticmethod
     async def not_found(resp, message="Not found"):
         """
         Check whether a response object is a valid Virtool ``not_found``.
@@ -112,17 +101,6 @@ class AssertRespIs:
     async def not_permitted(resp, message="Not permitted"):
         assert resp.status == 403 and await resp.json() == {
             "id": "not_permitted",
-            "message": message
-        }
-
-    @staticmethod
-    async def bad_request(resp, message="Bad request"):
-        """
-        Check whether a response object is a valid Virtool ``bad_request``.
-
-        """
-        assert resp.status == 400 and await resp.json() == {
-            "id": "bad_request",
             "message": message
         }
 

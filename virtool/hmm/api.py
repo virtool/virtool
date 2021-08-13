@@ -3,12 +3,12 @@ API request handlers for managing and querying HMM data.
 
 """
 import aiohttp
-from aiohttp.web_exceptions import HTTPNoContent
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
 from aiohttp.web_fileresponse import FileResponse
 
 import virtool.hmm.db
 import virtool.http.routes
-from virtool.api.response import bad_gateway, bad_request, conflict, json_response, not_found
+from virtool.api.response import bad_gateway, conflict, json_response, not_found
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_one_field
 from virtool.errors import GitHubError
@@ -124,7 +124,7 @@ async def install(req):
     release = await get_one_field(db.status, "release", "hmm")
 
     if release is None:
-        return bad_request("Target release does not exist")
+        raise HTTPBadRequest(text="Target release does not exist")
 
     task = await req.app["tasks"].add(
         HMMInstallTask,

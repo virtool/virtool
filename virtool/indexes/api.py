@@ -3,7 +3,7 @@ import json
 import logging
 
 import aiohttp.web
-from aiohttp.web_exceptions import HTTPNoContent
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
 from aiohttp.web_fileresponse import FileResponse
 from sqlalchemy import exc
 
@@ -14,7 +14,7 @@ import virtool.references.db
 import virtool.uploads.db
 import virtool.utils
 from virtool.api.json import CustomEncoder
-from virtool.api.response import bad_request, conflict, insufficient_rights, json_response, not_found
+from virtool.api.response import conflict, insufficient_rights, json_response, not_found
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_new_id
 from virtool.history.db import LIST_PROJECTION
@@ -208,10 +208,10 @@ async def create(req):
         return conflict("Index build already in progress")
 
     if await db.otus.count_documents({"reference.id": ref_id, "verified": False}):
-        return bad_request("There are unverified OTUs")
+        raise HTTPBadRequest(text="There are unverified OTUs")
 
     if not await db.history.count_documents({"reference.id": ref_id, "index.id": "unbuilt"}):
-        return bad_request("There are no unbuilt changes")
+        raise HTTPBadRequest(text="There are no unbuilt changes")
 
     user_id = req["client"].user_id
     job_id = await get_new_id(db.jobs)

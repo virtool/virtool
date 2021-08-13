@@ -1,13 +1,13 @@
 import asyncio
 
-from aiohttp.web_exceptions import HTTPNoContent
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.http.routes
 import virtool.validators
-from virtool.api.response import bad_request, empty_request, json_response, not_found
+from virtool.api.response import empty_request, json_response, not_found
 from virtool.http.schema import schema
 from virtool.labels.db import attach_sample_count
 from virtool.labels.models import Label
@@ -84,7 +84,7 @@ async def create(req):
             document = label.to_dict()
             await session.commit()
         except IntegrityError:
-            return bad_request("Label name already exists")
+            raise HTTPBadRequest(text="Label name already exists")
 
     document = await attach_sample_count(req.app["db"], document)
 
@@ -137,7 +137,7 @@ async def edit(req):
         try:
             await session.commit()
         except IntegrityError:
-            return bad_request("Label name already exists")
+            raise HTTPBadRequest(text="Label name already exists")
 
     document = await attach_sample_count(req.app["db"], document)
 

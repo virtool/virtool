@@ -6,7 +6,7 @@ from pathlib import Path
 
 import aiohttp.web
 import pymongo.errors
-from aiohttp.web_exceptions import HTTPNoContent
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
 from aiohttp.web_fileresponse import FileResponse
 from cerberus import Validator
 from sqlalchemy import exc, select
@@ -26,7 +26,7 @@ import virtool.utils
 import virtool.validators
 from virtool.analyses.db import PROJECTION
 from virtool.analyses.utils import WORKFLOW_NAMES
-from virtool.api.response import bad_request, conflict, insufficient_rights, invalid_query, \
+from virtool.api.response import conflict, insufficient_rights, invalid_query, \
     json_response, not_found
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.caches.models import SampleArtifactCache
@@ -269,7 +269,7 @@ async def create(req):
     name_error_message = await virtool.samples.db.check_name(db, req.app["settings"], data["name"])
 
     if name_error_message:
-        return bad_request(name_error_message)
+        raise HTTPBadRequest(text=name_error_message)
 
     subtractions = data.get("subtractions", list())
 
@@ -280,7 +280,7 @@ async def create(req):
     )
 
     if non_existent_subtractions:
-        return bad_request(f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
+        raise HTTPBadRequest(text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
 
     if "labels" in data:
         non_existent_labels = await check_labels(pg, data["labels"])
@@ -291,7 +291,7 @@ async def create(req):
     try:
         uploads = [(await virtool.uploads.db.get(pg, file_)).to_dict() for file_ in data["files"]]
     except AttributeError:
-        return bad_request("File does not exist")
+        raise HTTPBadRequest(text="File does not exist")
 
     sample_group_setting = settings["sample_group"]
 
@@ -300,7 +300,7 @@ async def create(req):
         force_choice_error_message = await virtool.samples.db.validate_force_choice_group(db, data)
 
         if force_choice_error_message:
-            return bad_request(force_choice_error_message)
+            raise HTTPBadRequest(text=force_choice_error_message)
 
         group = data["group"]
 
@@ -423,7 +423,7 @@ async def edit(req):
         )
 
         if message:
-            return bad_request(message)
+            raise HTTPBadRequest(text=message)
 
     if "labels" in data:
         non_existent_labels = await check_labels(pg, data["labels"])
@@ -438,7 +438,7 @@ async def edit(req):
         )
 
         if non_existent_subtractions:
-            return bad_request(f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
+            raise HTTPBadRequest(text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": data
@@ -522,7 +522,7 @@ async def set_rights(req):
         existing_group_ids = await db.groups.distinct("_id") + ["none"]
 
         if group not in existing_group_ids:
-            return bad_request("Group does not exist")
+            raise HTTPBadRequest(text="Group does not exist")
 
     # Update the sample document with the new rights.
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
@@ -579,7 +579,7 @@ async def job_remove(req):
         return not_found()
 
     if document["ready"]:
-        return bad_request("Only unfinalized samples can be deleted")
+        raise HTTPBadRequest(text="Only unfinalized samples can be deleted")
 
     reads_files = await virtool.pg.utils.get_rows(pg, SampleReads, "sample", sample_id)
     upload_ids = [upload for reads in reads_files if (upload := reads.upload)]
@@ -677,10 +677,10 @@ async def analyze(req):
         raise
 
     if not await db.references.count_documents({"_id": ref_id}):
-        return bad_request("Reference does not exist")
+        raise HTTPBadRequest(text="Reference does not exist")
 
     if not await db.indexes.count_documents({"reference.id": ref_id, "ready": True}):
-        return bad_request("No ready index")
+        raise HTTPBadRequest(text="No ready index")
 
     subtractions = data.get("subtractions")
 
@@ -692,7 +692,7 @@ async def analyze(req):
         )
 
         if non_existent_subtractions:
-            return bad_request(f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
+            raise HTTPBadRequest(text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
 
     job_id = await virtool.db.utils.get_new_id(db.jobs)
 
@@ -800,7 +800,7 @@ async def upload_artifact(req):
         req.app["settings"], sample_id) / name
 
     if artifact_type and artifact_type not in ArtifactType.to_list():
-        return bad_request("Unsupported sample artifact type")
+        raise HTTPBadRequest(text="Unsupported sample artifact type")
 
     try:
         artifact = await create_artifact_file(pg, name, name, sample_id, artifact_type)
@@ -844,7 +844,7 @@ async def upload_reads(req):
         upload = None
 
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
-        return bad_request("File name is not an accepted reads file")
+        raise HTTPBadRequest(text="File name is not an accepted reads file")
 
     reads_path = virtool.samples.utils.join_sample_path(
         req.app["settings"], sample_id) / name
@@ -855,7 +855,7 @@ async def upload_reads(req):
     try:
         size = await virtool.uploads.utils.naive_writer(req, reads_path, is_gzip_compressed)
     except OSError:
-        return bad_request("File is not compressed")
+        raise HTTPBadRequest(text="File is not compressed")
     except asyncio.CancelledError:
         logger.debug(f"Reads file upload aborted for {sample_id}")
         return aiohttp.web.Response(status=499)
@@ -928,7 +928,7 @@ async def upload_cache_reads(req):
     key = req.match_info["key"]
 
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
-        return bad_request("File name is not an accepted reads file")
+        raise HTTPBadRequest(text="File name is not an accepted reads file")
 
     cache_path = Path(virtool.caches.utils.join_cache_path(
         req.app["settings"], key)) / name
@@ -939,7 +939,7 @@ async def upload_cache_reads(req):
     try:
         size = await virtool.uploads.utils.naive_writer(req, cache_path, is_gzip_compressed)
     except OSError:
-        return bad_request("File is not compressed")
+        raise HTTPBadRequest(text="File is not compressed")
     except exc.IntegrityError:
         return conflict("File name is already uploaded for this cache")
     except asyncio.CancelledError:
@@ -990,7 +990,7 @@ async def upload_cache_artifact(req):
         req.app["settings"], key) / name
 
     if artifact_type and artifact_type not in ArtifactType.to_list():
-        return bad_request("Unsupported sample artifact type")
+        raise HTTPBadRequest(text="Unsupported sample artifact type")
 
     try:
         artifact = await create_artifact_file(pg, name, name, sample_id, artifact_type, key=key)

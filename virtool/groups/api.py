@@ -1,10 +1,10 @@
 import pymongo.errors
-from aiohttp.web_exceptions import HTTPNoContent
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
 
 import virtool.groups.db
 import virtool.http.routes
 import virtool.validators
-from virtool.api.response import bad_request, json_response, not_found
+from virtool.api.response import json_response, not_found
 from virtool.http.schema import schema
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
@@ -46,7 +46,7 @@ async def create(req):
     try:
         await db.groups.insert_one(document)
     except pymongo.errors.DuplicateKeyError:
-        return bad_request("Group already exists")
+        raise HTTPBadRequest(text="Group already exists")
 
     headers = {
         "Location": "/api/groups/" + data["group_id"]

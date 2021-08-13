@@ -295,8 +295,11 @@ class TestCreate:
             "files": [1],
             "subtractions": ["apple"]
         })
-
-        assert await resp_is.bad_request(resp, "Sample name is already in use")
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Sample name is already in use"
+        }
 
     @pytest.mark.parametrize("group", ["", "diagnostics", None])
     async def test_force_choice(self, spawn_client, pg: AsyncEngine, resp_is, group):
@@ -331,7 +334,11 @@ class TestCreate:
 
         if group is None:
             resp = await client.post("/api/samples", request_data)
-            assert await resp_is.bad_request(resp, "Group value required for sample creation")
+            assert resp.status == 400
+            assert await resp.json() == {
+                "id": "bad_request",
+                "message": "Group value required for sample creation"
+            }
         else:
             request_data["group"] = group
             resp = await client.post("/api/samples", request_data)
@@ -359,8 +366,11 @@ class TestCreate:
             "subtractions": ["apple"],
             "group": "foobar"
         })
-
-        assert await resp_is.bad_request(resp, "Group does not exist")
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Group does not exist"
+        }
 
     async def test_subtraction_dne(self, pg: AsyncEngine, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
@@ -376,8 +386,11 @@ class TestCreate:
             "files": [1],
             "subtractions": ["apple"]
         })
-
-        assert await resp_is.bad_request(resp, "Subtractions do not exist: apple")
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Subtractions do not exist: apple"
+        }
 
     @pytest.mark.parametrize("one_exists", [True, False])
     async def test_file_dne(self, one_exists, spawn_client, pg: AsyncEngine, resp_is):
@@ -407,8 +420,11 @@ class TestCreate:
             "files": [1, 2],
             "subtractions": ["apple"]
         })
-
-        assert await resp_is.bad_request(resp, "File does not exist")
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "File does not exist"
+        }
 
     @pytest.mark.parametrize("exists", [True, False])
     async def test_label_dne(self, exists, spawn_client, pg_session, resp_is):
@@ -431,7 +447,10 @@ class TestCreate:
         assert resp.status == 400
 
         if not exists:
-            assert await resp_is.bad_request(resp, "Labels do not exist: 1")
+            assert await resp.json() == {
+                "id": "bad_request",
+                "message": "Labels do not exist: 1"
+            }
 
 
 class TestEdit:
@@ -507,7 +526,11 @@ class TestEdit:
         resp = await client.patch("/api/samples/foo", data)
 
         if exists:
-            assert await resp_is.bad_request(resp, "Sample name is already in use")
+            assert resp.status == 400
+            assert await resp.json() == {
+                "id": "bad_request",
+                "message": "Sample name is already in use"
+            }
             return
 
         assert resp.status == 200
@@ -543,7 +566,11 @@ class TestEdit:
         resp = await client.patch("/api/samples/foo", data)
 
         if not exists:
-            assert await resp_is.bad_request(resp, "Labels do not exist: 1")
+            assert resp.status == 400
+            assert await resp.json() == {
+                "id": "bad_request",
+                "message": "Labels do not exist: 1"
+            }
             return
 
         assert resp.status == 200
@@ -589,7 +616,11 @@ class TestEdit:
         resp = await client.patch("/api/samples/test", data)
 
         if not exists:
-            assert await resp_is.bad_request(resp, "Subtractions do not exist: bar")
+            assert resp.status == 400
+            assert await resp.json() == {
+                "id": "bad_request",
+                "message": "Subtractions do not exist: bar"
+            }
             return
 
         assert resp.status == 200
@@ -908,15 +939,27 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is,
     })
 
     if error == "400_reference":
-        assert await resp_is.bad_request(resp, "Reference does not exist")
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Reference does not exist"
+        }
         return
 
     if error == "400_index" or error == "400_ready_index":
-        assert await resp_is.bad_request(resp, "No ready index")
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "No ready index"
+        }
         return
 
     if error == "400_subtraction":
-        assert await resp_is.bad_request(resp, "Subtractions do not exist: bar")
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Subtractions do not exist: bar"
+        }
         return
 
     if error == "404":
@@ -1023,7 +1066,11 @@ async def test_upload_artifact(
         snapshot.assert_match(await resp.json())
         assert os.listdir(sample_file_path) == ["small.fq"]
     elif error == 400:
-        assert await resp_is.bad_request(resp, "Unsupported sample artifact type")
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Unsupported sample artifact type"
+        }
 
 
 class TestUploadReads:
@@ -1061,7 +1108,11 @@ class TestUploadReads:
             assert resp.status == 201
             snapshot.assert_match(await resp.json())
         else:
-            assert await resp_is.bad_request(resp, "File is not compressed")
+            assert resp.status == 400
+            assert await resp.json() == {
+                "id": "bad_request",
+                "message": "File is not compressed"
+            }
 
     @pytest.mark.parametrize("conflict", [True, False])
     async def test_upload_paired_reads(self, conflict, resp_is, spawn_job_client, tmp_path):
@@ -1327,7 +1378,11 @@ async def test_upload_artifact_cache(
         snapshot.assert_match(await resp.json())
         assert os.listdir(cache_path) == ["small.fq"]
     elif error == 400:
-        assert await resp_is.bad_request(resp, "Unsupported sample artifact type")
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Unsupported sample artifact type"
+        }
 
 
 @pytest.mark.parametrize("paired", [True, False])

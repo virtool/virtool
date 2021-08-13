@@ -55,7 +55,11 @@ async def test_create(error, spawn_client, all_permissions, no_permissions, resp
     })
 
     if error:
-        assert await resp_is.bad_request(resp, "Group already exists")
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Group already exists"
+        }
         return
 
     assert resp.status == 201

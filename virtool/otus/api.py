@@ -1,7 +1,7 @@
 import asyncio
 
 from aiohttp import web
-from aiohttp.web_exceptions import HTTPNoContent
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
 
 import virtool.http.routes
 import virtool.otus.db
@@ -9,7 +9,7 @@ import virtool.otus.isolates
 import virtool.otus.sequences
 import virtool.references.db
 import virtool.validators
-from virtool.api.response import bad_request, insufficient_rights, json_response, not_found
+from virtool.api.response import insufficient_rights, json_response, not_found
 from virtool.history.db import LIST_PROJECTION
 from virtool.http.schema import schema
 from virtool.otus.utils import find_isolate, evaluate_changes
@@ -142,7 +142,7 @@ async def create(req):
     message = await virtool.otus.db.check_name_and_abbreviation(db, ref_id, name, abbreviation)
 
     if message:
-        return bad_request(message)
+        raise HTTPBadRequest(text=message)
 
     document = await asyncio.shield(virtool.otus.db.create_otu(
         req.app,
@@ -204,7 +204,7 @@ async def edit(req):
     message = await virtool.otus.db.check_name_and_abbreviation(db, ref_id, name, abbreviation)
 
     if message:
-        return bad_request(message)
+        raise HTTPBadRequest(text=message)
 
     document = await asyncio.shield(virtool.otus.db.edit(
         req.app,
@@ -329,7 +329,7 @@ async def add_isolate(req):
     data["source_type"] = data["source_type"].lower()
 
     if not await virtool.references.db.check_source_type(db, document["reference"]["id"], data["source_type"]):
-        return bad_request("Source type is not allowed")
+        raise HTTPBadRequest(text="Source type is not allowed")
 
     isolate = await asyncio.shield(virtool.otus.isolates.add(
         req.app,
@@ -386,7 +386,7 @@ async def edit_isolate(req):
         data["source_type"] = data["source_type"].lower()
 
         if not await virtool.references.db.check_source_type(db, ref_id, data["source_type"]):
-            return bad_request("Source type is not allowed")
+            raise HTTPBadRequest(text="Source type is not allowed")
 
     isolate = await asyncio.shield(virtool.otus.isolates.edit(
         req.app,
@@ -565,7 +565,7 @@ async def create_sequence(req):
     )
 
     if message:
-        return bad_request(message)
+        raise HTTPBadRequest(text=message)
 
     sequence_document = await asyncio.shield(virtool.otus.sequences.create(
         req.app,
@@ -637,7 +637,7 @@ async def edit_sequence(req):
     )
 
     if message:
-        return bad_request(message)
+        raise HTTPBadRequest(text=message)
 
     sequence_document = await asyncio.shield(virtool.otus.sequences.edit(
         req.app,

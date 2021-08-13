@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 import aiohttp.web
+from aiohttp.web_exceptions import HTTPBadRequest
 
 import virtool.db.utils
 import virtool.http.routes
@@ -11,7 +12,7 @@ import virtool.samples.db
 import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
-from virtool.api.response import invalid_query, json_response, bad_request, not_found
+from virtool.api.response import invalid_query, json_response, not_found
 from virtool.uploads.models import Upload, UploadType
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ async def create(req):
     name = req.query["name"]
 
     if upload_type and upload_type not in UploadType.to_list():
-        return bad_request("Unsupported upload type")
+        raise HTTPBadRequest(text="Unsupported upload type")
 
     upload = await virtool.uploads.db.create(pg, name, upload_type, user=req["client"].user_id)
 
