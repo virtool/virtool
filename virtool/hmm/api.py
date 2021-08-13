@@ -3,12 +3,12 @@ API request handlers for managing and querying HMM data.
 
 """
 import aiohttp
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPBadGateway
 from aiohttp.web_fileresponse import FileResponse
 
 import virtool.hmm.db
 import virtool.http.routes
-from virtool.api.response import bad_gateway, conflict, json_response, not_found
+from virtool.api.response import conflict, json_response, not_found
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_one_field
 from virtool.errors import GitHubError
@@ -81,12 +81,12 @@ async def get_release(req):
         release = await virtool.hmm.db.fetch_and_update_release(req.app)
     except GitHubError as err:
         if "404" in str(err):
-            return bad_gateway("GitHub repository does not exist")
+            raise HTTPBadGateway(text="GitHub repository does not exist")
 
         raise
 
     except aiohttp.ClientConnectorError:
-        return bad_gateway("Could not reach GitHub")
+        raise HTTPBadGateway(text="Could not reach GitHub")
 
     if release is None:
         return not_found("Release not found")

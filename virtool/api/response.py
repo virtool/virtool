@@ -26,21 +26,6 @@ def not_modified() -> web.Response:
     return web.Response(status=304)
 
 
-def bad_gateway(message: str = "Bad gateway") -> web.Response:
-    """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``502`` status and the
-    JSON body ``{"message": "Bad gateway"}``.
-
-    :param message: text to send instead of 'Bad gateway'
-    :return: the response
-
-    """
-    return json_response({
-        "id": "bad_gateway",
-        "message": message
-    }, status=502)
-
-
 def insufficient_rights(message: str = "Insufficient rights") -> web.Response:
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``403`` status and the

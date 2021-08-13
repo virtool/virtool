@@ -1,7 +1,7 @@
 import asyncio
 
 import aiohttp
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPBadGateway
 
 import virtool.db.utils
 import virtool.github
@@ -13,7 +13,7 @@ import virtool.references.db
 import virtool.users.db
 import virtool.utils
 import virtool.validators
-from virtool.api.response import bad_gateway, insufficient_rights, json_response, not_found
+from virtool.api.response import insufficient_rights, json_response, not_found
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.errors import GitHubError, DatabaseError
 from virtool.github import format_release
@@ -113,10 +113,10 @@ async def get_release(req):
     try:
         release = await virtool.references.db.fetch_and_update_release(req.app, ref_id)
     except aiohttp.ClientConnectorError:
-        return bad_gateway("Could not reach GitHub")
+        raise HTTPBadGateway(text="Could not reach GitHub")
 
     if release is None:
-        return bad_gateway("Release repository does not exist on GitHub")
+        raise HTTPBadGateway(text="Release repository does not exist on GitHub")
 
     return json_response(release)
 
@@ -388,11 +388,11 @@ async def create(req):
             )
 
         except aiohttp.ClientConnectionError:
-            return bad_gateway("Could not reach GitHub")
+            raise HTTPBadGateway(text="Could not reach GitHub")
 
         except GitHubError as err:
             if "404" in str(err):
-                return bad_gateway("Could not retrieve latest GitHub release")
+                raise HTTPBadGateway(text="Could not retrieve latest GitHub release")
 
             raise
 
