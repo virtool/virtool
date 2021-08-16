@@ -370,20 +370,11 @@ class TestCreate:
             return
 
         if error == "400_unverified":
-            assert resp.status == 400
-            assert await resp.json() == {
-                "id": "bad_request",
-                "message": "There are unverified OTUs"
-            }
+            await resp_is.bad_request(resp, "There are unverified OTUs")
             return
 
         if error == "400_unbuilt":
-            assert resp.status == 400
-            print(await resp.json())
-            assert await resp.json() == {
-                "id": "bad_request",
-                "message": "There are no unbuilt changes"
-            }
+            await resp_is.bad_request(resp, "There are no unbuilt changes")
             return
 
         if error == "409_running":

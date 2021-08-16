@@ -171,11 +171,7 @@ async def test_create(error, spawn_client, test_random_alphanumeric, pg_session,
     resp = await client.post("/api/labels", data)
 
     if error == "400_exists":
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "Label name already exists"
-        }
+        await resp_is.bad_request(resp, "Label name already exists")
         return
 
     if error == "422_color":
@@ -248,11 +244,7 @@ async def test_edit(error, spawn_client, pg_session, resp_is):
         return
 
     if error == "400_exists":
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "Label name already exists"
-        }
+        await resp_is.bad_request(resp, "Label name already exists")
         return
 
     if error == "422_color" or error == "422_data":

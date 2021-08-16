@@ -19,6 +19,17 @@ class RespIs:
         }
 
     @staticmethod
+    async def bad_request(resp, message="Bad request"):
+        """
+        Check whether a response object is a valid Virtool ``bad_request``.
+        """
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": message
+        }
+
+    @staticmethod
     async def insufficient_rights(resp, message="Insufficient rights"):
         """
         Check whether a response object is a valid Virtool ``insufficient_rights``.

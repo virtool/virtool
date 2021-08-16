@@ -64,11 +64,7 @@ class TestUpload:
 
         resp = await client.post_form("/api/uploads?type=foobar&name=Test.fq.gz", data=files)
 
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "Unsupported upload type"
-        }
+        await resp_is.bad_request(resp, "Unsupported upload type")
 
 
 class TestFind:

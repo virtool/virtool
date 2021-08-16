@@ -164,11 +164,7 @@ class TestCreate:
         )
 
         if error:
-            assert resp.status == 400
-            assert await resp.json() == {
-                "id": "bad_request",
-                "message": message
-            }
+            await resp_is.bad_request(resp, message)
             return
 
         assert resp.status == 201
@@ -347,11 +343,7 @@ class TestEdit:
         if not check_ref_right:
             assert await resp_is.insufficient_rights(resp)
             return
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": message
-        }
+        await resp_is.bad_request(resp, message)
 
     @pytest.mark.parametrize("old_name,old_abbreviation,data", [
         (

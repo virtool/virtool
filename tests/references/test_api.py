@@ -34,11 +34,7 @@ async def test_get_release(error, mocker, spawn_client, resp_is):
     resp = await client.get("/api/refs/foo/release")
 
     if error == "400":
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "Not a remote reference"
-        }
+        await resp_is.bad_request(resp, "Not a remote reference")
         return
 
     if error == "404":
@@ -147,11 +143,7 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
         return
 
     if error == "400":
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "Target release does not exist"
-        }
+        await resp_is.bad_request(resp, "Target release does not exist")
         return
 
     m_add_task.assert_called_with(
@@ -323,11 +315,7 @@ async def test_edit(data_type, error, mocker, snapshot, spawn_client, resp_is):
     resp = await client.patch("/api/refs/foo", data)
 
     if error == "400":
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "The targets field may not contain duplicate names"
-        }
+        await resp_is.bad_request(resp, "The targets field may not contain duplicate names")
         return
 
     if error == "422":
@@ -420,19 +408,11 @@ async def test_add_group_or_user(error, field, snapshot, spawn_client, check_ref
         return
 
     if error == "400_dne":
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "{} does not exist".format(field.capitalize())
-        }
+        await resp_is.bad_request(resp, "{} does not exist".format(field.capitalize()))
         return
 
     if error == "400_exists":
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "{} already exists".format(field.capitalize())
-        }
+        await resp_is.bad_request(resp, "{} already exists".format(field.capitalize()))
         return
 
     assert resp.status == 201
