@@ -259,7 +259,7 @@ async def test_remove(mocker, error, spawn_client, resp_is, tmp_path):
         assert await resp_is.conflict(resp, "Analysis is still running")
         return
 
-    assert resp.status == 204
+    await resp_is.no_content(resp)
 
     assert await client.db.analyses.find_one() is None
 

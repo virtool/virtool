@@ -296,4 +296,4 @@ async def test_remove(error, spawn_client, resp_is, create_user):
         assert await resp_is.not_found(resp)
         return
 
-    assert resp.status == 204
+    await resp_is.no_content(resp)

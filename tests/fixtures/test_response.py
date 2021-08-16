@@ -4,6 +4,10 @@ import pytest
 class RespIs:
 
     @staticmethod
+    async def no_content(resp):
+        assert resp.status == 204
+
+    @staticmethod
     async def insufficient_rights(resp, message="Insufficient rights"):
         """
         Check whether a response object is a valid Virtool ``insufficient_rights``.

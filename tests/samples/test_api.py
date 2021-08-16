@@ -705,11 +705,11 @@ async def test_remove(
     resp = await client.delete("/api/samples/test")
 
     if resp_is_attr == "no_content":
-        assert resp.status == 204
         m.assert_called_with(client.db, client.app["settings"], ["test"])
+        await getattr(resp_is, resp_is_attr)(resp)
     else:
-        assert not m.called
         assert await getattr(resp_is, resp_is_attr)(resp)
+        assert not m.called
 
 
 @pytest.mark.parametrize("ready", [True, False])
@@ -749,7 +749,7 @@ async def test_job_remove(
     resp = await client.delete("/api/samples/test")
 
     if exists and not ready:
-        assert resp.status == 204
+        await resp_is.no_content(resp)
         assert not await virtool.samples.db.check_name(
             client.app["db"],
             client.app["settings"],
@@ -1026,7 +1026,7 @@ async def test_cache_job_remove(exists, ready, tmp_path, spawn_job_client, snaps
         assert await resp_is.conflict(resp, "Jobs cannot delete finalized caches")
         return
 
-    assert resp.status == 204
+    await resp_is.no_content(resp)
     assert await client.db.caches.find_one("foo") is None
     assert not (tmp_path / "caches" / "foo").is_dir()
 

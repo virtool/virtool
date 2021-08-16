@@ -289,4 +289,4 @@ async def test_remove(error, spawn_client, pg_session, resp_is):
         assert await resp_is.not_found(resp)
         return
 
-    assert resp.status == 204
+    await resp_is.no_content(resp)

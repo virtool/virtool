@@ -378,11 +378,11 @@ async def test_remove_api_key(error, spawn_client, resp_is):
         await resp_is.not_found(resp)
         return
 
-    assert resp.status == 204
+    await resp_is.no_content(resp)
     assert await client.db.keys.count_documents({}) == 0
 
 
-async def test_remove_all_api_keys(spawn_client):
+async def test_remove_all_api_keys(spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
     await client.db.keys.insert_many([
@@ -411,7 +411,7 @@ async def test_remove_all_api_keys(spawn_client):
 
     resp = await client.delete("/api/account/keys")
 
-    assert resp.status == 204
+    await resp_is.no_content(resp)
 
     assert await client.db.keys.find().to_list(None) == [{
         "_id": "baz",

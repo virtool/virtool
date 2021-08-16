@@ -544,6 +544,6 @@ async def test_delete_group_or_user(error, field, snapshot, spawn_client, check_
         assert await resp_is.insufficient_rights(resp)
         return
 
-    assert resp.status == 204
+    await resp_is.no_content(resp)
 
     snapshot.assert_match(await client.db.references.find_one())

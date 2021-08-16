@@ -165,7 +165,7 @@ async def test_remove(error, mocker, spawn_client, no_permissions, resp_is):
         assert await resp_is.not_found(resp)
         return
 
-    assert resp.status == 204
+    await resp_is.no_content(resp)
 
     assert not await client.db.groups.count_documents({"_id": "test"})
 
