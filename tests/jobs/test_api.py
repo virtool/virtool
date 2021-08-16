@@ -22,7 +22,7 @@ async def test_get(error, snapshot, spawn_client, test_job, resp_is):
 
 
 @pytest.mark.parametrize("error", [None, 404])
-async def test_acquire(error, mocker, snapshot, assert_resp_is, dbi, test_job, spawn_client):
+async def test_acquire(error, mocker, snapshot, dbi, test_job, spawn_client):
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
     client = await spawn_client(authorize=True)
@@ -73,7 +73,7 @@ async def test_cancel(snapshot, dbi, test_job, spawn_client):
     404,
     409
 ])
-async def test_push_status(error, assert_resp_is, spawn_client, static_time, test_job):
+async def test_push_status(error, resp_is, spawn_client, static_time, test_job):
     client = await spawn_client(authorize=True)
 
     if error != 409:
@@ -96,7 +96,7 @@ async def test_push_status(error, assert_resp_is, spawn_client, static_time, tes
         return
 
     if error == 409:
-        await assert_resp_is.conflict(resp, "Job is finished")
+        await resp_is.conflict(resp, "Job is finished")
         return
 
     assert resp.status == 201
