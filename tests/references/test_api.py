@@ -139,7 +139,7 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
         return
 
     if not check_ref_right:
-        assert await resp_is.insufficient_rights(resp)
+        await resp_is.insufficient_rights(resp)
         return
 
     if error == "400":
@@ -338,7 +338,7 @@ async def test_edit(data_type, error, mocker, snapshot, spawn_client, resp_is):
         return
 
     if error == "403":
-        assert await resp_is.insufficient_rights(resp)
+        await resp_is.insufficient_rights(resp)
         return
 
     snapshot.assert_match(await resp.json())
@@ -404,7 +404,7 @@ async def test_add_group_or_user(error, field, snapshot, spawn_client, check_ref
         return
 
     if not check_ref_right:
-        assert await resp_is.insufficient_rights(resp)
+        await resp_is.insufficient_rights(resp)
         return
 
     if error == "400_dne":
@@ -470,7 +470,7 @@ async def test_edit_group_or_user(error, field, snapshot, spawn_client, check_re
         return
 
     if not check_ref_right:
-        assert await resp_is.insufficient_rights(resp)
+        await resp_is.insufficient_rights(resp)
         return
 
     assert resp.status == 200
@@ -521,7 +521,7 @@ async def test_delete_group_or_user(error, field, snapshot, spawn_client, check_
         return
 
     if not check_ref_right:
-        assert await resp_is.insufficient_rights(resp)
+        await resp_is.insufficient_rights(resp)
         return
 
     await resp_is.no_content(resp)

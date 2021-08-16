@@ -6,7 +6,7 @@ from pathlib import Path
 
 import aiohttp.web
 import pymongo.errors
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPForbidden
 from aiohttp.web_fileresponse import FileResponse
 from cerberus import Validator
 from sqlalchemy import exc, select
@@ -26,8 +26,7 @@ import virtool.utils
 import virtool.validators
 from virtool.analyses.db import PROJECTION
 from virtool.analyses.utils import WORKFLOW_NAMES
-from virtool.api.response import conflict, insufficient_rights, invalid_query, \
-    json_response, not_found
+from virtool.api.response import conflict, invalid_query, json_response, not_found
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.caches.models import SampleArtifactCache
 from virtool.caches.utils import join_cache_path
@@ -160,7 +159,7 @@ async def get(req):
         )[0]
 
         if not rights:
-            return insufficient_rights()
+            raise HTTPForbidden(text="Insufficient rights", reason="Insufficient rights")
 
         return json_response(sample)
     except ValueError:
@@ -414,7 +413,7 @@ async def edit(req):
     sample_id = req.match_info["sample_id"]
 
     if not await virtool.samples.db.check_rights(db, sample_id, req["client"]):
-        return insufficient_rights()
+        raise HTTPForbidden(text="Insufficient rights", reason="Insufficient rights")
 
     if "name" in data:
         message = await virtool.samples.db.check_name(
@@ -515,7 +514,7 @@ async def set_rights(req):
 
     # Only update the document if the connected user owns the samples or is an administrator.
     if not req["client"].administrator and user_id != await get_sample_owner(db, sample_id):
-        return insufficient_rights("Must be administrator or sample owner")
+        raise HTTPForbidden(text="Must be administrator or sample owner", reason="Insufficient rights")
 
     group = data.get("group")
 
@@ -546,7 +545,7 @@ async def remove(req):
 
     try:
         if not await virtool.samples.db.check_rights(db, sample_id, client):
-            return insufficient_rights()
+            raise HTTPForbidden(text="Insufficient rights", reason="Insufficient rights")
     except DatabaseError as err:
         if "Sample does not exist" in str(err):
             return not_found()
@@ -609,7 +608,7 @@ async def find_analyses(req):
 
     try:
         if not await virtool.samples.db.check_rights(db, sample_id, req["client"], write=False):
-            return insufficient_rights()
+            raise HTTPForbidden(text="Insufficient rights", reason="Insufficient rights")
     except DatabaseError as err:
         if "Sample does not exist" in str(err):
             return not_found()
@@ -670,7 +669,7 @@ async def analyze(req):
 
     try:
         if not await virtool.samples.db.check_rights(db, sample_id, req["client"]):
-            return insufficient_rights()
+            raise HTTPForbidden(text="Insufficient rights", reason="Insufficient rights")
     except DatabaseError as err:
         if "Sample does not exist" in str(err):
             return not_found()

@@ -1,7 +1,7 @@
 import asyncio
 
 from aiohttp import web
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPForbidden
 
 import virtool.http.routes
 import virtool.otus.db
@@ -9,7 +9,7 @@ import virtool.otus.isolates
 import virtool.otus.sequences
 import virtool.references.db
 import virtool.validators
-from virtool.api.response import insufficient_rights, json_response, not_found
+from virtool.api.response import json_response, not_found
 from virtool.history.db import LIST_PROJECTION
 from virtool.http.schema import schema
 from virtool.otus.utils import find_isolate, evaluate_changes
@@ -133,7 +133,7 @@ async def create(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, reference, "modify_otu"):
-        return insufficient_rights()
+        raise HTTPForbidden(text="Insufficient rights", reason="Insufficient rights")
 
     name = data["name"].strip()
     abbreviation = data["abbreviation"].strip()
@@ -192,7 +192,7 @@ async def edit(req):
     ref_id = document["reference"]["id"]
 
     if not await virtool.references.db.check_right(req, ref_id, "modify_otu"):
-        return insufficient_rights()
+        raise HTTPForbidden(text="Insufficient rights", reason="Insufficient rights")
 
     name, abbreviation, schema = evaluate_changes(data, document)
 
@@ -234,7 +234,7 @@ async def remove(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
-        return insufficient_rights()
+        raise HTTPForbidden(text="Insufficient rights", reason="Insufficient rights")
 
     await asyncio.shield(virtool.otus.db.remove(
         req.app,
@@ -323,7 +323,7 @@ async def add_isolate(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
-        return insufficient_rights()
+        raise HTTPForbidden(text="Insufficient rights", reason="Insufficient rights")
 
         # All source types are stored in lower case.
     data["source_type"] = data["source_type"].lower()
@@ -379,7 +379,7 @@ async def edit_isolate(req):
     ref_id = document["reference"]["id"]
 
     if not await virtool.references.db.check_right(req, ref_id, "modify_otu"):
-        return insufficient_rights()
+        raise HTTPForbidden(text="Insufficient rights", reason="Insufficient rights")
 
     # All source types are stored in lower case.
     if "source_type" in data:
@@ -416,7 +416,7 @@ async def set_as_default(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
-        return insufficient_rights()
+        raise HTTPForbidden(text="Insufficient rights", reason="Insufficient rights")
 
     isolate = await asyncio.shield(virtool.otus.isolates.set_default(
         req.app,
@@ -445,7 +445,7 @@ async def remove_isolate(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
-        return insufficient_rights()
+        raise HTTPForbidden(text="Insufficient rights", reason="Insufficient rights")
 
     await asyncio.shield(virtool.otus.isolates.remove(
         req.app,
@@ -553,7 +553,7 @@ async def create_sequence(req):
     ref_id = document["reference"]["id"]
 
     if not await virtool.references.db.check_right(req, ref_id, "modify_otu"):
-        return insufficient_rights()
+        raise HTTPForbidden(text="Insufficient rights", reason="Insufficient rights")
 
     message = await virtool.otus.sequences.check_segment_or_target(
         db,
@@ -625,7 +625,7 @@ async def edit_sequence(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
-        return insufficient_rights()
+        raise HTTPForbidden(text="Insufficient rights", reason="Insufficient rights")
 
     message = await virtool.otus.sequences.check_segment_or_target(
         db,
@@ -672,7 +672,7 @@ async def remove_sequence(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
-        return insufficient_rights()
+        raise HTTPForbidden(text="Insufficient rights", reason="Insufficient rights")
 
     await asyncio.shield(virtool.otus.sequences.remove(
         req.app,

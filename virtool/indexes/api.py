@@ -3,7 +3,7 @@ import json
 import logging
 
 import aiohttp.web
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPForbidden
 from aiohttp.web_fileresponse import FileResponse
 from sqlalchemy import exc
 
@@ -14,7 +14,7 @@ import virtool.references.db
 import virtool.uploads.db
 import virtool.utils
 from virtool.api.json import CustomEncoder
-from virtool.api.response import conflict, insufficient_rights, json_response, not_found
+from virtool.api.response import conflict, json_response, not_found
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_new_id
 from virtool.history.db import LIST_PROJECTION
@@ -202,7 +202,7 @@ async def create(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, reference, "build"):
-        return insufficient_rights()
+        raise HTTPForbidden(text="Insufficient rights", reason="Insufficient rights")
 
     if await db.indexes.count_documents({"reference.id": ref_id, "ready": False}):
         return conflict("Index build already in progress")

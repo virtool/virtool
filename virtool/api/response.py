@@ -21,21 +21,6 @@ def json_response(data: object, status: int = 200, headers: Optional[dict] = Non
 
     return resp
 
-  
-def insufficient_rights(message: str = "Insufficient rights") -> web.Response:
-    """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``403`` status and the
-    JSON body ``{"message": "Insufficient rights"}``.
-
-    :param message: text to send instead of 'Insufficient rights'
-    :return: the response
-
-    """
-    return json_response({
-        "id": "insufficient_rights",
-        "message": message
-    }, status=403)
-
 
 def unauthorized(message: str) -> web.Response:
     """

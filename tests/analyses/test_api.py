@@ -86,7 +86,7 @@ async def test_get(ready, files, error, mocker, snapshot, spawn_client, static_t
         return
 
     if error == "403":
-        assert await resp_is.insufficient_rights(resp)
+        await resp_is.insufficient_rights(resp)
         return
 
     if error == "404":
@@ -240,7 +240,7 @@ async def test_remove(mocker, error, spawn_client, resp_is, tmp_path):
         return
 
     if error == "403":
-        assert await resp_is.insufficient_rights(resp)
+        await resp_is.insufficient_rights(resp)
         return
 
     if error == "404":
@@ -437,7 +437,7 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
         return
 
     if error == "403":
-        assert await resp_is.insufficient_rights(resp)
+        await resp_is.insufficient_rights(resp)
         return
 
     if error == "404_analysis":

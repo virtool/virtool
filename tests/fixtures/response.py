@@ -35,7 +35,8 @@ class RespIs:
         Check whether a response object is a valid Virtool ``insufficient_rights``.
 
         """
-        return resp.status == 403 and await resp.json() == {
+        assert resp.status == 403
+        assert await resp.json() == {
             "id": "insufficient_rights",
             "message": message
         }

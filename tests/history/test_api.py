@@ -65,7 +65,7 @@ async def test_revert(error, remove, snapshot, create_mock_history, spawn_client
         return
 
     if not check_ref_right:
-        assert await resp_is.insufficient_rights(resp)
+        await resp_is.insufficient_rights(resp)
         return
 
     await resp_is.no_content(resp)
