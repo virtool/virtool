@@ -8,6 +8,17 @@ class RespIs:
         assert resp.status == 204
 
     @staticmethod
+    async def bad_gateway(resp, message="Bad gateway"):
+        """
+        Check whether a response object is a valid Virtool ``bad gateway``.
+        """
+        assert resp.status == 502
+        assert await resp.json() == {
+            "id": "bad_gateway",
+            "message": message
+        }
+
+    @staticmethod
     async def insufficient_rights(resp, message="Insufficient rights"):
         """
         Check whether a response object is a valid Virtool ``insufficient_rights``.

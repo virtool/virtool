@@ -99,19 +99,11 @@ async def test_get_release(error, mocker, spawn_client, resp_is):
         return
 
     if error == "502_repo":
-        assert resp.status == 502
-        assert await resp.json() == {
-            "id": "bad_gateway",
-            "message": "GitHub repository does not exist"
-        }
+        await resp_is.bad_gateway(resp, "GitHub repository does not exist")
         return
 
     if error == "502_github":
-        assert resp.status == 502
-        assert await resp.json() == {
-            "id": "bad_gateway",
-            "message": "Could not reach GitHub"
-        }
+        await resp_is.bad_gateway(resp, "GitHub repository does not exist")
         return
 
     assert resp.status == 200
