@@ -167,7 +167,6 @@ async def create(req):
     rights.uploads.can_read(upload_id)
 
     job_id = await get_new_id(db.jobs)
-    document["job"]["id"] = job_id
 
     await virtool.jobs.db.create(
         db,
