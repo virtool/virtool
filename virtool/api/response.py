@@ -43,21 +43,6 @@ def not_found(message: str = "Not found") -> web.Response:
     }, status=404)
 
 
-def conflict(message: str = "Conflict") -> web.Response:
-    """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``409`` status the JSON
-    body ``{"message": "Conflict"}``.
-
-    :param message: text to send instead of 'Not found'
-    :return: the response
-
-    """
-    return json_response({
-        "id": "conflict",
-        "message": message
-    }, status=409)
-
-
 def empty_request(message: str = "Empty request") -> web.Response:
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON

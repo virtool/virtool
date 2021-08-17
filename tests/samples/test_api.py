@@ -973,7 +973,7 @@ async def test_cache_job_remove(exists, ready, tmp_path, spawn_job_client, snaps
         return
 
     if ready:
-        assert await resp_is.conflict(resp, "Jobs cannot delete finalized caches")
+        await resp_is.conflict(resp, "Jobs cannot delete finalized caches")
         return
 
     await resp_is.no_content(resp)
@@ -1019,7 +1019,7 @@ async def test_upload_artifact(
         resp_2 = await client.post(
             f"/api/samples/test/artifacts?name=small.fq&type={artifact_type}", data=data)
 
-        assert await resp_is.conflict(resp_2,
+        await resp_is.conflict(resp_2,
                                       "Artifact file has already been uploaded for this sample")
 
     if not error:
@@ -1099,7 +1099,7 @@ class TestUploadReads:
             data["file"] = open(path / "reads_2.fq.gz", "rb")
             resp_3 = await client.put("/api/samples/test/reads/reads_2.fq.gz", data=data)
 
-            assert await resp_is.conflict(resp_3,
+            await resp_is.conflict(resp_3,
                                           "Reads file name is already uploaded for this sample")
 
         assert resp.status == 201
@@ -1330,7 +1330,7 @@ async def test_upload_artifact_cache(
             f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}",
             data=data)
 
-        assert await resp_is.conflict(resp_2,
+        await resp_is.conflict(resp_2,
                                       "Artifact file has already been uploaded for this sample cache")
 
     if not error:

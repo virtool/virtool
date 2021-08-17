@@ -3,7 +3,7 @@ import json
 import logging
 
 import aiohttp.web
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPConflict
 from aiohttp.web_fileresponse import FileResponse
 from sqlalchemy import exc
 
@@ -14,7 +14,7 @@ import virtool.references.db
 import virtool.uploads.db
 import virtool.utils
 from virtool.api.json import CustomEncoder
-from virtool.api.response import conflict, json_response, not_found, HTTPInsufficientRights
+from virtool.api.response import json_response, not_found, HTTPInsufficientRights
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_new_id
 from virtool.history.db import LIST_PROJECTION
@@ -205,7 +205,7 @@ async def create(req):
         raise HTTPInsufficientRights()
 
     if await db.indexes.count_documents({"reference.id": ref_id, "ready": False}):
-        return conflict("Index build already in progress")
+        raise HTTPConflict(text="Index build already in progress")
 
     if await db.otus.count_documents({"reference.id": ref_id, "verified": False}):
         raise HTTPBadRequest(text="There are unverified OTUs")
@@ -281,7 +281,7 @@ async def upload(req):
             name
         )
     except exc.IntegrityError:
-        return conflict("File name already exists")
+        raise HTTPConflict(text="File name already exists")
 
     upload_id = index_file["id"]
     path = req.app["settings"]["data_path"] / "references" / reference_id / index_id / name
@@ -333,13 +333,13 @@ async def finalize(req):
     results = {f.name: f.type for f in rows}
 
     if IndexType.fasta not in results.values():
-        return conflict("A FASTA file must be uploaded in order to finalize index")
+        raise HTTPConflict(text="A FASTA file must be uploaded in order to finalize index")
 
     if reference["data_type"] == "genome":
         required_files = [f for f in FILES if f != "reference.json.gz"]
 
         if missing_files := [f for f in required_files if f not in results]:
-            return conflict(
+            raise HTTPConflict(text=
                 f"Reference requires that all Bowtie2 index files have been uploaded. "
                 f"Missing files: {', '.join(missing_files)}")
 

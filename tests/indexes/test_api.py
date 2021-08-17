@@ -378,7 +378,7 @@ class TestCreate:
             return
 
         if error == "409_running":
-            assert await resp_is.conflict(resp, "Index build already in progress")
+            await resp_is.conflict(resp, "Index build already in progress")
             return
 
 
@@ -564,7 +564,7 @@ async def test_upload(error, tmp_path, spawn_job_client, snapshot, static_time, 
         return
 
     if error == "409":
-        assert await resp_is.conflict(resp, "File name already exists")
+        await resp_is.conflict(resp, "File name already exists")
         return
 
     assert resp.status == 201
