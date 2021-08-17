@@ -7,6 +7,24 @@ from snapshottest import GenericRepr, Snapshot
 
 snapshots = Snapshot()
 
+snapshots['test_compress_sample_reads[uvloop-False] 1'] = {
+    '_id': 'foo',
+    'files': [
+        {
+            'download_url': '/download/samples/foo/reads_1.fq.gz',
+            'from': {
+                'id': 'M_S11_R1_001.fastq',
+                'name': 'M_S11_R1_001.fastq',
+                'size': 3750821789
+            },
+            'name': 'reads_1.fq.gz',
+            'raw': False,
+            'size': 6586501
+        }
+    ],
+    'paired': False
+}
+
 snapshots['test_compress_sample_reads[uvloop-True] 1'] = {
     '_id': 'foo',
     'files': [
@@ -34,24 +52,6 @@ snapshots['test_compress_sample_reads[uvloop-True] 1'] = {
         }
     ],
     'paired': True
-}
-
-snapshots['test_compress_sample_reads[uvloop-False] 1'] = {
-    '_id': 'foo',
-    'files': [
-        {
-            'download_url': '/download/samples/foo/reads_1.fq.gz',
-            'from': {
-                'id': 'M_S11_R1_001.fastq',
-                'name': 'M_S11_R1_001.fastq',
-                'size': 3750821789
-            },
-            'name': 'reads_1.fq.gz',
-            'raw': False,
-            'size': 6586501
-        }
-    ],
-    'paired': False
 }
 
 snapshots['test_create_sample[uvloop] 1'] = {
