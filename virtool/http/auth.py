@@ -4,6 +4,7 @@ import aiofiles
 import aiohttp
 import jinja2
 from aiohttp import web
+from aiohttp.web_exceptions import HTTPUnauthorized
 
 import virtool.db.utils
 import virtool.errors
@@ -14,7 +15,6 @@ import virtool.users.db
 import virtool.users.sessions
 import virtool.users.utils
 import virtool.utils
-from virtool.api.response import unauthorized
 from virtool.http.client import UserClient
 
 AUTHORIZATION_PROJECTION = [
@@ -77,7 +77,7 @@ async def authenticate_with_key(req: web.Request, handler: Callable):
     try:
         holder_id, key = decode_authorization(req.headers.get("AUTHORIZATION"))
     except virtool.errors.AuthError:
-        return unauthorized("Malformed Authorization header")
+        raise HTTPUnauthorized(text="Malformed Authorization header")
 
     return await authenticate_with_api_key(req, handler, holder_id, key)
 
@@ -91,7 +91,7 @@ async def authenticate_with_api_key(req, handler, user_id: str, key: str):
     }, AUTHORIZATION_PROJECTION)
 
     if not document:
-        return unauthorized("Invalid authorization header")
+        raise HTTPUnauthorized(text="Invalid authorization header")
 
     req["client"] = UserClient(
         db,

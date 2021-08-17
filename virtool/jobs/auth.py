@@ -1,8 +1,8 @@
 import os
 
 import aiohttp.web
+from aiohttp.web_exceptions import HTTPUnauthorized
 
-from virtool.api.response import unauthorized
 from virtool.http.auth import get_ip
 from virtool.http.client import JobClient
 from virtool.jobs.utils import JobRights
@@ -38,16 +38,16 @@ async def middleware(request: aiohttp.web.Request, handler: RouteHandler):
         if job_prefix != "job":
             raise ValueError()
     except KeyError:
-        return unauthorized("No authorization header.")
+        raise HTTPUnauthorized(text="No authorization header.")
     except ValueError:
-        return unauthorized("Invalid authorization header.")
+        raise HTTPUnauthorized(text="Invalid authorization header.")
 
     db = request.app["db"]
 
     job = await db.jobs.find_one({"_id": job_id, "key": hash_key(key)})
 
     if not job:
-        return unauthorized("Invalid authorization header.")
+        raise HTTPUnauthorized(text="Invalid authorization header.")
 
     try:
         rights = job["rights"]

@@ -28,21 +28,6 @@ class HTTPInsufficientRights(HTTPForbidden):
         super().__init__(text=message, reason="insufficient_rights")
 
 
-def unauthorized(message: str) -> web.Response:
-    """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a `401` status and a JSON
-    body containing error details including the passed ``message``
-
-    :param message: text to send
-    :return: the response
-
-    """
-    return json_response({
-        "id": "unauthorized",
-        "message": message
-    }, status=401)
-
-
 def conflict(message: str = "Conflict") -> web.Response:
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``409`` status the JSON
