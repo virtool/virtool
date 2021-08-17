@@ -1,7 +1,9 @@
+from aiohttp.web_exceptions import HTTPNotFound
+
 import virtool.http.routes
 import virtool.tasks.pg
 import virtool.utils
-from virtool.api.response import json_response, not_found
+from virtool.api.response import json_response
 
 routes = virtool.http.routes.Routes()
 
@@ -28,6 +30,6 @@ async def get(req):
     document = await virtool.tasks.pg.get(req.app["pg"], int(task_id))
 
     if not document:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     return json_response(document)

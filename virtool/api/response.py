@@ -43,21 +43,6 @@ def unauthorized(message: str) -> web.Response:
     }, status=401)
 
 
-def not_found(message: str = "Not found") -> web.Response:
-    """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``404`` status the JSON
-    body ``{"message": "Not found"}``.
-
-    :param message: text to send instead of 'Not found'
-    :return: the response
-
-    """
-    return json_response({
-        "id": "not_found",
-        "message": message
-    }, status=404)
-
-
 def conflict(message: str = "Conflict") -> web.Response:
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``409`` status the JSON

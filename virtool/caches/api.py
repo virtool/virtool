@@ -3,6 +3,7 @@ API request handlers for sample caches.
 
 """
 import aiohttp.web
+from aiohttp.web_exceptions import HTTPNotFound
 
 import virtool.analyses.utils
 import virtool.caches.db
@@ -11,7 +12,7 @@ import virtool.http.routes
 import virtool.users.db
 import virtool.utils
 import virtool.validators
-from virtool.api.response import json_response, not_found
+from virtool.api.response import json_response
 
 routes = virtool.http.routes.Routes()
 
@@ -29,6 +30,6 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     cache = await virtool.caches.db.get(db, cache_id)
 
     if cache is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     return json_response(cache)

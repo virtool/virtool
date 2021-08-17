@@ -102,7 +102,7 @@ async def test_get(error, spawn_client, create_user, no_permissions, resp_is, st
     resp = await client.get("/api/users/fred")
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200
@@ -241,7 +241,7 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
         })
 
     elif error == "user_dne":
-        assert await resp_is.not_found(resp, "User does not exist")
+        await resp_is.not_found(resp, "User does not exist")
 
     else:
         expected = dict(bob, last_password_change=static_time.datetime)
@@ -281,7 +281,7 @@ async def test_remove(error, spawn_client, resp_is, create_user):
     resp = await client.delete("/api/users/bob")
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     await resp_is.no_content(resp)

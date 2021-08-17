@@ -95,7 +95,7 @@ async def test_get_release(error, mocker, spawn_client, resp_is):
     m_fetch.assert_called_with(client.app)
 
     if error == "404":
-        assert await resp_is.not_found(resp, "Release not found")
+        await resp_is.not_found(resp, "Release not found")
         return
 
     if error == "502_repo":
@@ -130,7 +130,7 @@ async def test_get(error, spawn_client, hmm_document, resp_is):
     resp = await client.get("/api/hmms/f8666902")
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200

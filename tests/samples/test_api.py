@@ -189,7 +189,7 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
     resp = await client.get("api/samples/test")
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200
@@ -666,11 +666,11 @@ async def test_remove(
 
     resp = await client.delete("/api/samples/test")
 
+    await getattr(resp_is, resp_is_attr)(resp)
+
     if resp_is_attr == "no_content":
         m.assert_called_with(client.db, client.app["settings"], ["test"])
-        await getattr(resp_is, resp_is_attr)(resp)
     else:
-        assert await getattr(resp_is, resp_is_attr)(resp)
         assert not m.called
 
 
@@ -826,7 +826,7 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
     resp = await client.get(url)
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200
@@ -923,7 +923,7 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is,
         return
 
     if error == "404":
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 201
@@ -1128,7 +1128,7 @@ async def test_get_cache(error, snapshot, spawn_job_client, resp_is, static_time
     resp = await client.get("api/samples/foo/caches/abc123")
 
     if error == "404":
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200

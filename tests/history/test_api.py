@@ -37,7 +37,7 @@ async def test_get(error, snapshot, resp_is, spawn_client, test_changes, static_
     resp = await client.get("/api/history/" + change_id)
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200
@@ -61,7 +61,7 @@ async def test_revert(error, remove, snapshot, create_mock_history, spawn_client
     resp = await client.delete("/api/history/" + change_id)
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     if not check_ref_right:

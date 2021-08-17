@@ -90,7 +90,7 @@ async def test_get(ready, files, error, mocker, snapshot, spawn_client, static_t
         return
 
     if error == "404":
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200
@@ -244,7 +244,7 @@ async def test_remove(mocker, error, spawn_client, resp_is, tmp_path):
         return
 
     if error == "404":
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     if error == "409":
@@ -441,11 +441,11 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
         return
 
     if error == "404_analysis":
-        assert await resp_is.not_found(resp, "Analysis not found")
+        await resp_is.not_found(resp, "Analysis not found")
         return
 
     if error == "404_sequence":
-        assert await resp_is.not_found(resp, "Sequence not found")
+        await resp_is.not_found(resp, "Sequence not found")
         return
 
     if error == "409_workflow":

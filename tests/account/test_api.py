@@ -351,7 +351,7 @@ class TestUpdateAPIKey:
             }
         })
 
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
 
 
 @pytest.mark.parametrize("error", [None, "404"])

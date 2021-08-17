@@ -1,7 +1,8 @@
 import asyncio
 
 from aiohttp import web
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
+
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPNotFound
 
 import virtool.http.routes
 import virtool.otus.db
@@ -9,7 +10,7 @@ import virtool.otus.isolates
 import virtool.otus.sequences
 import virtool.references.db
 import virtool.validators
-from virtool.api.response import json_response, not_found, HTTPInsufficientRights
+from virtool.api.response import json_response, HTTPInsufficientRights
 from virtool.history.db import LIST_PROJECTION
 from virtool.http.schema import schema
 from virtool.otus.utils import find_isolate, evaluate_changes
@@ -51,7 +52,7 @@ async def download_otu(req):
     otu_id = req.match_info["otu_id"]
 
     if not await db.otus.count_documents({"_id": otu_id}):
-        return virtool.api.response.not_found("OTU not found")
+        raise HTTPNotFound(text="OTU not found")
 
     filename, fasta = await virtool.otus.db.generate_otu_fasta(db, otu_id)
 
@@ -96,7 +97,7 @@ async def get(req):
     complete = await virtool.otus.db.join_and_format(db, otu_id)
 
     if not complete:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     return json_response(complete)
 
@@ -130,7 +131,7 @@ async def create(req):
     reference = await db.references.find_one(ref_id, ["groups", "users"])
 
     if reference is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await virtool.references.db.check_right(req, reference, "modify_otu"):
         raise HTTPInsufficientRights()
@@ -187,7 +188,7 @@ async def edit(req):
     document = await db.otus.find_one(otu_id, ["abbreviation", "name", "reference", "schema"])
 
     if not document:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     ref_id = document["reference"]["id"]
 
@@ -231,7 +232,7 @@ async def remove(req):
     document = await db.otus.find_one(otu_id, ["reference"])
 
     if document is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
         raise HTTPInsufficientRights()
@@ -258,7 +259,7 @@ async def list_isolates(req):
     document = await virtool.otus.db.join_and_format(db, otu_id)
 
     if not document:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     return json_response(document["isolates"])
 
@@ -277,7 +278,7 @@ async def get_isolate(req):
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["isolates"])
 
     if not document:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     isolate = dict(find_isolate(document["isolates"], isolate_id), sequences=[])
 
@@ -320,7 +321,7 @@ async def add_isolate(req):
     document = await db.otus.find_one(otu_id, ["reference"])
 
     if not document:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
         raise HTTPInsufficientRights()
@@ -374,7 +375,7 @@ async def edit_isolate(req):
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id})
 
     if not document:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     ref_id = document["reference"]["id"]
 
@@ -413,7 +414,7 @@ async def set_as_default(req):
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference"])
 
     if not document:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
         raise HTTPInsufficientRights()
@@ -442,7 +443,7 @@ async def remove_isolate(req):
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference"])
 
     if not document:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
         raise HTTPInsufficientRights()
@@ -465,7 +466,7 @@ async def list_sequences(req):
     isolate_id = req.match_info["isolate_id"]
 
     if not await db.otus.count_documents({"_id": otu_id, "isolates.id": isolate_id}):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     projection = list(virtool.otus.db.SEQUENCE_PROJECTION)
 
@@ -497,7 +498,7 @@ async def get_sequence(req):
     )
 
     if sequence is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     return json_response(sequence)
 
@@ -548,7 +549,7 @@ async def create_sequence(req):
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference", "schema"])
 
     if not document:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     ref_id = document["reference"]["id"]
 
@@ -622,7 +623,7 @@ async def edit_sequence(req):
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference", "segment"])
 
     if not document or not await db.sequences.count_documents({"_id": sequence_id}):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
         raise HTTPInsufficientRights()
@@ -664,12 +665,12 @@ async def remove_sequence(req):
     sequence_id = req.match_info["sequence_id"]
 
     if not await db.sequences.count_documents({"_id": sequence_id}):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference"])
 
     if document is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
         raise HTTPInsufficientRights()
@@ -692,7 +693,7 @@ async def list_history(req):
     otu_id = req.match_info["otu_id"]
 
     if not await db.otus.count_documents({"_id": otu_id}):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     cursor = db.history.find({"otu.id": otu_id}, projection=LIST_PROJECTION)
 

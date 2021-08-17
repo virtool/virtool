@@ -1,13 +1,13 @@
 import asyncio
 
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPNotFound
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.http.routes
 import virtool.validators
-from virtool.api.response import empty_request, json_response, not_found
+from virtool.api.response import empty_request, json_response
 from virtool.http.schema import schema
 from virtool.labels.db import attach_sample_count
 from virtool.labels.models import Label
@@ -42,7 +42,7 @@ async def get(req):
         label = result.scalar()
 
         if label is None:
-            return not_found()
+            raise HTTPNotFound(text="Not found")
 
     document = await attach_sample_count(req.app["db"], label.to_dict())
 
@@ -128,7 +128,7 @@ async def edit(req):
         label = result.scalar()
 
         if label is None:
-            return not_found()
+            raise HTTPNotFound(text="Not found")
 
         label.name = data["name"]
         label.color = data["color"]
@@ -157,7 +157,7 @@ async def remove(req):
         label = result.scalar()
 
         if label is None:
-            return not_found()
+            raise HTTPNotFound(text="Not found")
 
         await session.delete(label)
         await session.commit()

@@ -7,14 +7,14 @@ requests.
 """
 import aiohttp.web
 from aiohttp.web import HTTPNoContent
-from aiohttp.web_exceptions import HTTPBadRequest
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPNotFound
 
 import virtool.account.db
 import virtool.http.auth
 import virtool.http.routes
 import virtool.validators
 from virtool.analyses.utils import WORKFLOW_NAMES
-from virtool.api.response import json_response, not_found
+from virtool.api.response import json_response
 from virtool.db.utils import get_one_field
 from virtool.http.schema import schema
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
@@ -182,7 +182,7 @@ async def get_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     document = await db.keys.find_one({"id": key_id, "user.id": user_id}, API_KEY_PROJECTION)
 
     if document is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     return json_response(document, status=200)
 
@@ -245,7 +245,7 @@ async def update_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     key_id = req.match_info.get("key_id")
 
     if not await db.keys.count_documents({"id": key_id}):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     user_id = req["client"].user_id
 
@@ -288,7 +288,7 @@ async def remove_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     })
 
     if delete_result.deleted_count == 0:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     raise HTTPNoContent
 

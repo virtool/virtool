@@ -3,6 +3,7 @@ Provides request handlers for file downloads.
 
 """
 from aiohttp import web
+from aiohttp.web_exceptions import HTTPNotFound
 
 import virtool.analyses.db
 import virtool.analyses.format
@@ -42,10 +43,10 @@ async def download_isolate(req):
         filename, fasta = await virtool.downloads.db.generate_isolate_fasta(db, otu_id, isolate_id)
     except virtool.errors.DatabaseError as err:
         if "OTU does not exist" in str(err):
-            return virtool.api.response.not_found("OTU not found")
+            raise HTTPNotFound(text="OTU not found")
 
         if "Isolate does not exist" in str(err):
-            return virtool.api.response.not_found("Isolate not found")
+            raise HTTPNotFound(text="Isolate not found")
 
         raise
 
@@ -68,13 +69,13 @@ async def download_sequence(req):
         filename, fasta = await virtool.downloads.db.generate_sequence_fasta(db, sequence_id)
     except virtool.errors.DatabaseError as err:
         if "Sequence does not exist" in str(err):
-            return virtool.api.response.not_found("Sequence not found")
+            raise HTTPNotFound(text="Sequence not found")
 
         if "Isolate does not exist" in str(err):
-            return virtool.api.response.not_found("Isolate not found")
+            raise HTTPNotFound(text="Isolate not found")
 
         if "OTU does not exist" in str(err):
-            return virtool.api.response.not_found("OTU not found")
+            raise HTTPNotFound(text="OTU not found")
 
         raise
 

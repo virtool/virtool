@@ -1,7 +1,7 @@
 import asyncio
 
 import aiohttp
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPBadGateway
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPBadGateway, HTTPNotFound
 
 import virtool.db.utils
 import virtool.github
@@ -13,7 +13,7 @@ import virtool.references.db
 import virtool.users.db
 import virtool.utils
 import virtool.validators
-from virtool.api.response import json_response, not_found, HTTPInsufficientRights
+from virtool.api.response import json_response, HTTPInsufficientRights
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.errors import GitHubError, DatabaseError
 from virtool.github import format_release
@@ -87,7 +87,7 @@ async def get(req):
     document = await db.references.find_one(ref_id)
 
     if not document:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     document = await asyncio.shield(virtool.references.db.attach_computed(db, document))
 
@@ -105,7 +105,7 @@ async def get_release(req):
     ref_id = req.match_info["ref_id"]
 
     if not await virtool.db.utils.id_exists(db.references, ref_id):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await db.references.count_documents({"_id": ref_id, "remotes_from": {"$exists": True}}):
         raise HTTPBadRequest(text="Not a remote reference")
@@ -131,7 +131,7 @@ async def list_updates(req):
     ref_id = req.match_info["ref_id"]
 
     if not await virtool.db.utils.id_exists(db.references, ref_id):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     updates = await virtool.db.utils.get_one_field(db.references, "updates", ref_id)
 
@@ -150,7 +150,7 @@ async def update(req):
     user_id = req["client"].user_id
 
     if not await virtool.db.utils.id_exists(db.references, ref_id):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
         raise HTTPInsufficientRights()
@@ -190,7 +190,7 @@ async def find_otus(req):
     ref_id = req.match_info["ref_id"]
 
     if not await virtool.db.utils.id_exists(db.references, ref_id):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     term = req.query.get("find")
     verified = req.query.get("verified")
@@ -215,7 +215,7 @@ async def find_history(req):
     ref_id = req.match_info["ref_id"]
 
     if not await db.references.count_documents({"_id": ref_id}):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     base_query = {
         "reference.id": ref_id
@@ -247,7 +247,7 @@ async def find_indexes(req):
     ref_id = req.match_info["ref_id"]
 
     if not await virtool.db.utils.id_exists(db.references, ref_id):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     data = await virtool.indexes.db.find(
         db,
@@ -351,7 +351,7 @@ async def create(req):
 
     elif import_from:
         if not await get_row(pg, Upload, ("name_on_disk", import_from)):
-            return not_found("File not found")
+            raise HTTPNotFound(text="File not found")
 
         path = req.app["settings"]["data_path"] / "files" / import_from
 
@@ -502,7 +502,7 @@ async def edit(req):
     ref_id = req.match_info["ref_id"]
 
     if not await virtool.db.utils.id_exists(db.references, ref_id):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
         raise HTTPInsufficientRights()
@@ -535,7 +535,7 @@ async def remove(req):
     ref_id = req.match_info["ref_id"]
 
     if not await virtool.db.utils.id_exists(db.references, ref_id):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await virtool.references.db.check_right(req, ref_id, "remove"):
         raise HTTPInsufficientRights()
@@ -566,7 +566,7 @@ async def list_groups(req):
     ref_id = req.match_info["ref_id"]
 
     if not await db.references.count_documents({"_id": ref_id}):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     groups = await virtool.db.utils.get_one_field(db.references, "groups", ref_id)
 
@@ -582,7 +582,7 @@ async def get_group(req):
     document = await db.references.find_one({"_id": ref_id, "groups.id": group_id}, ["groups", "users"])
 
     if document is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if document is not None:
         for group in document.get("groups", list()):
@@ -605,7 +605,7 @@ async def add_group(req):
     document = await db.references.find_one(ref_id, ["groups", "users"])
 
     if document is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await virtool.references.db.check_right(req, document, "modify"):
         raise HTTPInsufficientRights()
@@ -643,7 +643,7 @@ async def add_user(req):
     document = await db.references.find_one(ref_id, ["groups", "users"])
 
     if document is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
         raise HTTPInsufficientRights()
@@ -679,7 +679,7 @@ async def edit_group(req):
     document = await db.references.find_one({"_id": ref_id, "groups.id": group_id}, ["groups", "users"])
 
     if document is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
         raise HTTPInsufficientRights()
@@ -700,7 +700,7 @@ async def edit_user(req):
     document = await db.references.find_one({"_id": ref_id, "users.id": user_id}, ["groups", "users"])
 
     if document is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
         raise HTTPInsufficientRights()
@@ -708,7 +708,7 @@ async def edit_user(req):
     subdocument = await virtool.references.db.edit_group_or_user(db, ref_id, user_id, "users", data)
 
     if subdocument is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     subdocument = await virtool.users.db.attach_identicons(db, subdocument)
 
@@ -724,7 +724,7 @@ async def delete_group(req):
     document = await db.references.find_one({"_id": ref_id, "groups.id": group_id}, ["groups", "users"])
 
     if document is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
         raise HTTPInsufficientRights()
@@ -743,7 +743,7 @@ async def delete_user(req):
     document = await db.references.find_one({"_id": ref_id, "users.id": user_id}, ["groups", "users"])
 
     if document is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
         raise HTTPInsufficientRights()

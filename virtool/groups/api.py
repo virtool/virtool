@@ -1,10 +1,10 @@
 import pymongo.errors
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPNotFound
 
 import virtool.groups.db
 import virtool.http.routes
 import virtool.validators
-from virtool.api.response import json_response, not_found
+from virtool.api.response import json_response
 from virtool.http.schema import schema
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
@@ -66,7 +66,7 @@ async def get(req):
     if document:
         return json_response(base_processor(document))
 
-    return not_found()
+    raise HTTPNotFound(text="Not found")
 
 
 @routes.patch("/api/groups/{group_id}", admin=True)
@@ -90,7 +90,7 @@ async def update_permissions(req):
     old_document = await db.groups.find_one({"_id": group_id}, ["permissions"])
 
     if not old_document:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     old_document["permissions"].update(data["permissions"])
 
@@ -119,7 +119,7 @@ async def remove(req):
     delete_result = await db.groups.delete_one({"_id": group_id})
 
     if not delete_result.deleted_count:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     await virtool.groups.db.update_member_users(db, group_id, remove=True)
 

@@ -3,12 +3,12 @@ API request handlers for managing and querying HMM data.
 
 """
 import aiohttp
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPBadGateway
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPBadGateway, HTTPNotFound
 from aiohttp.web_fileresponse import FileResponse
 
 import virtool.hmm.db
 import virtool.http.routes
-from virtool.api.response import conflict, json_response, not_found
+from virtool.api.response import conflict, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_one_field
 from virtool.errors import GitHubError
@@ -89,7 +89,7 @@ async def get_release(req):
         raise HTTPBadGateway(text="Could not reach GitHub")
 
     if release is None:
-        return not_found("Release not found")
+        raise HTTPNotFound(text="Release not found")
 
     return json_response(release)
 
@@ -163,7 +163,7 @@ async def get(req):
     document = await req.app["db"].hmm.find_one({"_id": req.match_info["hmm_id"]})
 
     if document is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     return json_response(base_processor(document))
 
@@ -221,7 +221,7 @@ async def get_hmm_profiles(req):
     file_path = req.app["settings"]["data_path"] / "hmm" / "profiles.hmm"
 
     if not await req.app["run_in_thread"](hmm_data_exists, file_path):
-        return virtool.api.response.not_found("Profiles file could not be found")
+        raise HTTPNotFound(text="Profiles file could not be found")
 
     headers = {
         "Content-Type": "application/gzip"

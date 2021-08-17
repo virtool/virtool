@@ -1,10 +1,10 @@
 import os
 
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPNotFound
 
 import virtool.jobs.db
 import virtool.utils
-from virtool.api.response import conflict, json_response, not_found
+from virtool.api.response import conflict, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_one_field
 from virtool.http.routes import Routes
@@ -53,7 +53,7 @@ async def get(req):
     document = await req.app["db"].jobs.find_one(job_id, projection=PROJECTION)
 
     if not document:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -100,7 +100,7 @@ async def cancel(req):
     document = await db.jobs.find_one(job_id, ["status"])
 
     if not document:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if not virtool.jobs.is_running_or_waiting(document):
         return conflict("Not cancellable")
@@ -149,7 +149,7 @@ async def push_status(req):
     status = await get_one_field(db.jobs, "status", job_id)
 
     if status is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if status[-1]["state"] in ("complete", "cancelled", "error"):
         return conflict("Job is finished")
@@ -204,7 +204,7 @@ async def remove(req):
     document = await db.jobs.find_one(job_id)
 
     if not document:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if virtool.jobs.is_running_or_waiting(document):
         return conflict("Job is running or waiting and cannot be removed")

@@ -89,7 +89,7 @@ async def test_get(error, spawn_client, all_permissions, resp_is):
     resp = await client.get("/api/groups/foo")
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200
@@ -121,7 +121,7 @@ async def test_update_permissions(error, spawn_client, no_permissions, resp_is):
     })
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200
@@ -158,7 +158,7 @@ async def test_remove(error, mocker, spawn_client, no_permissions, resp_is):
     resp = await client.delete("/api/groups/test")
 
     if error == "404":
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     await resp_is.no_content(resp)

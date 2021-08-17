@@ -6,7 +6,7 @@ from pathlib import Path
 
 import aiohttp.web
 import pymongo.errors
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPNotFound
 from aiohttp.web_fileresponse import FileResponse
 from cerberus import Validator
 from sqlalchemy import exc, select
@@ -26,7 +26,7 @@ import virtool.utils
 import virtool.validators
 from virtool.analyses.db import PROJECTION
 from virtool.analyses.utils import WORKFLOW_NAMES
-from virtool.api.response import conflict, invalid_query, json_response, not_found, HTTPInsufficientRights
+from virtool.api.response import conflict, invalid_query, json_response, HTTPInsufficientRights
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.caches.models import SampleArtifactCache
 from virtool.caches.utils import join_cache_path
@@ -163,7 +163,7 @@ async def get(req):
 
         return json_response(sample)
     except ValueError:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
 
 @routes.jobs_api.get("/api/samples/{sample_id}")
@@ -179,7 +179,7 @@ async def get_sample(req):
             await virtool.samples.db.get_sample(req.app, sample_id)
         )
     except ValueError:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
 
 @routes.jobs_api.get("/api/samples/{sample_id}/caches/{cache_key}")
@@ -199,7 +199,7 @@ async def get_cache(req):
     })
 
     if document is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -508,7 +508,7 @@ async def set_rights(req):
     sample_id = req.match_info["sample_id"]
 
     if not await db.samples.count_documents({"_id": sample_id}):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     user_id = req["client"].user_id
 
@@ -548,7 +548,7 @@ async def remove(req):
             raise HTTPInsufficientRights()
     except DatabaseError as err:
         if "Sample does not exist" in str(err):
-            return not_found()
+            raise HTTPNotFound(text="Not found")
 
         raise
 
@@ -576,7 +576,7 @@ async def job_remove(req):
     document = await db.samples.find_one({"_id": sample_id})
 
     if not document:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if document["ready"]:
         raise HTTPBadRequest(text="Only unfinalized samples can be deleted")
@@ -611,7 +611,7 @@ async def find_analyses(req):
             raise HTTPInsufficientRights()
     except DatabaseError as err:
         if "Sample does not exist" in str(err):
-            return not_found()
+            raise HTTPNotFound(text="Not found")
 
         raise
 
@@ -672,7 +672,7 @@ async def analyze(req):
             raise HTTPInsufficientRights()
     except DatabaseError as err:
         if "Sample does not exist" in str(err):
-            return not_found()
+            raise HTTPNotFound(text="Not found")
 
         raise
 
@@ -764,7 +764,7 @@ async def cache_job_remove(req: aiohttp.web.Request):
     })
 
     if document is None:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     if "ready" in document and document["ready"]:
         return conflict("Jobs cannot delete finalized caches")
@@ -787,7 +787,7 @@ async def upload_artifact(req):
     artifact_type = req.query.get("type")
 
     if not await db.samples.find_one(sample_id):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     errors = virtool.uploads.utils.naive_validator(req)
 
@@ -850,7 +850,7 @@ async def upload_reads(req):
         req.app["settings"], sample_id) / name
 
     if not await db.samples.find_one(sample_id):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, reads_path, is_gzip_compressed)
@@ -900,7 +900,7 @@ async def create_cache(req):
     )
 
     if not sample:
-        return not_found("Sample does not exist")
+        raise HTTPNotFound(text="Sample does not exist")
 
     try:
         document = await virtool.caches.db.create(db, sample_id, key, sample["paired"])
@@ -934,7 +934,7 @@ async def upload_cache_reads(req):
         req.app["settings"], key)) / name
 
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
-        return not_found("Cache doesn't exist with given key")
+        raise HTTPNotFound(text="Cache doesn't exist with given key")
 
     try:
         size = await virtool.uploads.utils.naive_writer(req, cache_path, is_gzip_compressed)
@@ -977,7 +977,7 @@ async def upload_cache_artifact(req):
     artifact_type = req.query.get("type")
 
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     errors = virtool.uploads.utils.naive_validator(req)
 
@@ -1057,17 +1057,17 @@ async def download_reads(req: aiohttp.web.Request):
     file_name = f"reads_{suffix}.fq.gz"
 
     if not await db.samples.find_one(sample_id):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id)
 
     if file_name not in existing_reads:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     file_path = req.app["settings"]["data_path"] / "samples" / sample_id / file_name
 
     if not os.path.isfile(file_path):
-        return virtool.api.response.not_found()
+        raise HTTPNotFound(text="Not found")
 
     file_stats = virtool.utils.file_stats(file_path)
 
@@ -1092,7 +1092,7 @@ async def download_artifact(req: aiohttp.web.Request):
     filename = req.match_info["filename"]
 
     if not await db.samples.find_one(sample_id):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     async with AsyncSession(pg) as session:
         result = (await session.execute(
@@ -1100,7 +1100,7 @@ async def download_artifact(req: aiohttp.web.Request):
         )).scalar()
 
     if not result:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     artifact = result.to_dict()
 
@@ -1108,7 +1108,7 @@ async def download_artifact(req: aiohttp.web.Request):
                     "data_path"] / f"samples/{sample_id}/{artifact['name_on_disk']}"
 
     if not os.path.isfile(file_path):
-        return virtool.api.response.not_found()
+        raise HTTPNotFound(text="Not found")
 
     file_stats = virtool.utils.file_stats(file_path)
 
@@ -1137,17 +1137,17 @@ async def download_cache_reads(req):
 
     if not await db.samples.count_documents(
             {"_id": sample_id}) or not await db.caches.count_documents({"key": key}):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id, key=key)
 
     if file_name not in existing_reads:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     file_path = req.app["settings"]["data_path"] / "caches" / key / file_name
 
     if not os.path.isfile(file_path):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     file_stats = virtool.utils.file_stats(file_path)
 
@@ -1174,7 +1174,7 @@ async def download_cache_artifact(req):
 
     if not await db.samples.count_documents(
             {"_id": sample_id}) or not await db.caches.count_documents({"key": key}):
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     async with AsyncSession(pg) as session:
         result = (
@@ -1184,14 +1184,14 @@ async def download_cache_artifact(req):
         ).scalar()
 
     if not result:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     artifact = result.to_dict()
 
     file_path = req.app["settings"]["data_path"] / "caches" / key / artifact["name_on_disk"]
 
     if not file_path.exists():
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     file_stats = virtool.utils.file_stats(file_path)
 

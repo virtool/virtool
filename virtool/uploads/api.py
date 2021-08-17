@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 import aiohttp.web
-from aiohttp.web_exceptions import HTTPBadRequest
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPNotFound
 
 import virtool.db.utils
 import virtool.http.routes
@@ -12,7 +12,7 @@ import virtool.samples.db
 import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
-from virtool.api.response import invalid_query, json_response, not_found
+from virtool.api.response import invalid_query, json_response
 from virtool.uploads.models import Upload, UploadType
 
 logger = logging.getLogger(__name__)
@@ -58,7 +58,7 @@ async def create(req):
     if not upload:
         await req.app["run_in_thread"](os.remove, file_path)
 
-        return not_found("Row not found in table after file upload")
+        raise HTTPNotFound(text="Row not found in table after file upload")
 
     logger.debug(f"Upload succeeded: {upload_id}")
 
@@ -100,7 +100,7 @@ async def get(req):
     upload = await virtool.uploads.db.get(pg, upload_id)
 
     if not upload:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     # check if the file has been removed as a result of a `DELETE` request
 
@@ -108,7 +108,7 @@ async def get(req):
 
     # check if the file has been manually removed by the user
     if not upload_path.exists():
-        return not_found("Uploaded file not found at expected location")
+        raise HTTPNotFound(text="Uploaded file not found at expected location")
 
     return aiohttp.web.FileResponse(upload_path)
 
@@ -125,6 +125,6 @@ async def delete(req):
     upload = await virtool.uploads.db.delete(req, pg, upload_id)
 
     if not upload:
-        return not_found()
+        raise HTTPNotFound(text="Not found")
 
     return aiohttp.web.Response(status=204)
