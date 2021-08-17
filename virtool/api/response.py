@@ -24,12 +24,8 @@ def json_response(data: object, status: int = 200, headers: Optional[dict] = Non
 
 
 class HTTPInsufficientRights(HTTPForbidden):
-    def __init__(self, message):
+    def __init__(self, message="Insufficient rights"):
         super().__init__(text=message, reason="insufficient_rights")
-
-
-def insufficient_rights(message="Insufficient rights"):
-    return HTTPInsufficientRights(message)
 
 
 def unauthorized(message: str) -> web.Response:

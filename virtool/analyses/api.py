@@ -19,7 +19,7 @@ from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFormat, AnalysisFile
 from virtool.analyses.utils import attach_analysis_files, find_nuvs_sequence_by_index
 from virtool.api.json import isoformat
-from virtool.api.response import conflict, invalid_query, json_response, not_found, insufficient_rights
+from virtool.api.response import conflict, invalid_query, json_response, not_found, HTTPInsufficientRights
 from virtool.api.utils import paginate
 from virtool.db.core import Collection, DB
 from virtool.http.schema import schema
@@ -109,7 +109,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     read, _ = get_sample_rights(sample, req["client"])
 
     if not read:
-        raise insufficient_rights()
+        raise HTTPInsufficientRights()
 
     document = await attach_subtractions(db, document)
 
@@ -207,7 +207,7 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     read, write = get_sample_rights(sample, req["client"])
 
     if not read or not write:
-        raise insufficient_rights()
+        raise HTTPInsufficientRights()
 
     if not document["ready"]:
         return conflict("Analysis is still running")
@@ -417,7 +417,7 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     _, write = get_sample_rights(sample, req["client"])
 
     if not write:
-        raise insufficient_rights()
+        raise HTTPInsufficientRights()
 
     # Start a BLAST at NCBI with the specified sequence. Return a RID that identifies
     # the BLAST run.
