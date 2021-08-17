@@ -319,7 +319,7 @@ class TestCreate:
         resp = await client.post("/api/refs/foo/indexes")
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
 
         assert resp.status == 201
@@ -366,7 +366,7 @@ class TestCreate:
         resp = await client.post("/api/refs/foo/indexes", {})
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
 
         if error == "400_unverified":

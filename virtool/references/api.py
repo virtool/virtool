@@ -13,7 +13,7 @@ import virtool.references.db
 import virtool.users.db
 import virtool.utils
 import virtool.validators
-from virtool.api.response import insufficient_rights, json_response, not_found
+from virtool.api.response import json_response, not_found, HTTPInsufficientRights
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.errors import GitHubError, DatabaseError
 from virtool.github import format_release
@@ -153,7 +153,7 @@ async def update(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
-        return insufficient_rights()
+        raise HTTPInsufficientRights()
 
     release = await virtool.db.utils.get_one_field(db.references, "release", ref_id)
 
@@ -505,7 +505,7 @@ async def edit(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
-        return insufficient_rights()
+        raise HTTPInsufficientRights()
 
     targets = data.get("targets")
 
@@ -538,7 +538,7 @@ async def remove(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, ref_id, "remove"):
-        return insufficient_rights()
+        raise HTTPInsufficientRights()
 
     user_id = req["client"].user_id
 
@@ -608,7 +608,7 @@ async def add_group(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, document, "modify"):
-        return insufficient_rights()
+        raise HTTPInsufficientRights()
 
     try:
         subdocument = await virtool.references.db.add_group_or_user(db, ref_id, "groups", data)
@@ -646,7 +646,7 @@ async def add_user(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
-        return insufficient_rights()
+        raise HTTPInsufficientRights()
 
     try:
         subdocument = await virtool.references.db.add_group_or_user(db, ref_id, "users", data)
@@ -682,7 +682,7 @@ async def edit_group(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
-        return insufficient_rights()
+        raise HTTPInsufficientRights()
 
     subdocument = await virtool.references.db.edit_group_or_user(db, ref_id, group_id, "groups", data)
 
@@ -703,7 +703,7 @@ async def edit_user(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
-        return insufficient_rights()
+        raise HTTPInsufficientRights()
 
     subdocument = await virtool.references.db.edit_group_or_user(db, ref_id, user_id, "users", data)
 
@@ -727,7 +727,7 @@ async def delete_group(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
-        return insufficient_rights()
+        raise HTTPInsufficientRights()
 
     await virtool.references.db.delete_group_or_user(db, ref_id, group_id, "groups")
 
@@ -746,7 +746,7 @@ async def delete_user(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
-        return insufficient_rights()
+        raise HTTPInsufficientRights()
 
     await virtool.references.db.delete_group_or_user(db, ref_id, user_id, "users")
 

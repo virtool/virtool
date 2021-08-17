@@ -102,7 +102,7 @@ class TestCreate:
             return
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
 
         assert resp.status == 201
@@ -152,7 +152,7 @@ class TestCreate:
             return
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
 
         # Abbreviation defaults to empty string for OTU creation.
@@ -277,7 +277,7 @@ class TestEdit:
         resp = await client.patch("/api/otus/6116cba1", data)
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
 
         assert resp.status == 200
@@ -341,7 +341,7 @@ class TestEdit:
         resp = await client.patch("/api/otus/test", data)
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
         await resp_is.bad_request(resp, message)
 
@@ -386,7 +386,7 @@ class TestEdit:
         resp = await client.patch("/api/otus/test", data)
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
 
         assert resp.status == 200
@@ -429,7 +429,7 @@ async def test_remove(abbreviation, exists, snapshot, spawn_client, check_ref_ri
         return
 
     if not check_ref_right:
-        assert await resp_is.insufficient_rights(resp)
+        await resp_is.insufficient_rights(resp)
         return
 
     await resp_is.no_content(resp)
@@ -516,7 +516,7 @@ class TestAddIsolate:
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
 
         assert resp.status == 201
@@ -550,7 +550,7 @@ class TestAddIsolate:
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
 
         assert resp.status == 201
@@ -581,7 +581,7 @@ class TestAddIsolate:
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
 
         assert resp.status == 201
@@ -607,7 +607,7 @@ class TestAddIsolate:
         resp = await client.post("/api/otus/6116cba1/isolates", {})
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
 
         assert resp.status == 201
@@ -666,7 +666,7 @@ class TestEditIsolate:
         resp = await client.patch("/api/otus/6116cba1/isolates/test", data)
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
 
         assert resp.status == 200
@@ -699,7 +699,7 @@ class TestEditIsolate:
         resp = await client.patch("/api/otus/6116cba1/isolates/cab8b360", data)
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
 
         assert resp.status == 200
@@ -754,7 +754,7 @@ class TestSetAsDefault:
         resp = await client.put("/api/otus/6116cba1/isolates/test/default", {})
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
 
         assert resp.status == 200
@@ -786,7 +786,7 @@ class TestSetAsDefault:
         resp = await client.put("/api/otus/6116cba1/isolates/cab8b360/default", {})
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
 
         assert resp.status == 200
@@ -836,7 +836,7 @@ class TestRemoveIsolate:
         resp = await client.delete("/api/otus/6116cba1/isolates/cab8b360")
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
 
         await resp_is.no_content(resp)
@@ -865,7 +865,7 @@ class TestRemoveIsolate:
         resp = await client.delete("/api/otus/6116cba1/isolates/cab8b360")
 
         if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
+            await resp_is.insufficient_rights(resp)
             return
 
         await resp_is.no_content(resp)
@@ -966,7 +966,7 @@ async def test_create_sequence(error, snapshot, spawn_client, check_ref_right, r
         return
 
     if not check_ref_right:
-        assert await resp_is.insufficient_rights(resp)
+        await resp_is.insufficient_rights(resp)
         return
 
     sequence_id = test_random_alphanumeric.history[0]
@@ -1011,7 +1011,7 @@ async def test_edit_sequence(error, snapshot, spawn_client, check_ref_right, res
         return
 
     if not check_ref_right:
-        assert await resp_is.insufficient_rights(resp)
+        await resp_is.insufficient_rights(resp)
         return
 
     assert resp.status == 200
@@ -1042,7 +1042,7 @@ async def test_remove_sequence(error, snapshot, spawn_client, check_ref_right, r
         return
 
     if not check_ref_right:
-        assert await resp_is.insufficient_rights(resp)
+        await resp_is.insufficient_rights(resp)
         return
 
     await resp_is.no_content(resp)

@@ -3,7 +3,7 @@ from aiohttp.web import HTTPNoContent
 import virtool.history.db
 import virtool.http.routes
 import virtool.references.db
-from virtool.api.response import conflict, insufficient_rights, json_response, not_found
+from virtool.api.response import conflict, json_response, not_found, HTTPInsufficientRights
 from virtool.errors import DatabaseError
 
 routes = virtool.http.routes.Routes()
@@ -54,7 +54,7 @@ async def revert(req):
         return not_found()
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
-        return insufficient_rights()
+        raise HTTPInsufficientRights()
 
     try:
         await virtool.history.db.revert(req.app, change_id)
