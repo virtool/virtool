@@ -15,11 +15,15 @@ snapshots['TestCreate.test[uvloop-force_choice] 1'] = {
     'caches': [
     ],
     'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
     'group': 'diagnostics',
     'group_read': True,
     'group_write': True,
+    'hold': True,
+    'host': '',
     'id': '9pfsom1b',
     'is_legacy': False,
+    'isolate': '',
     'labels': [
         {
             'color': '#FF0000',
@@ -29,13 +33,22 @@ snapshots['TestCreate.test[uvloop-force_choice] 1'] = {
         }
     ],
     'library_type': 'normal',
+    'locale': '',
     'name': 'Foobar',
+    'notes': '',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
+    'quality': None,
     'reads': [
     ],
     'ready': False,
+    'subtractions': [
+        {
+            'id': 'apple',
+            'name': None
+        }
+    ],
     'user': {
         'id': 'test'
     }
@@ -82,11 +95,15 @@ snapshots['TestCreate.test[uvloop-none] 1'] = {
     'caches': [
     ],
     'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
     'group': 'none',
     'group_read': True,
     'group_write': True,
+    'hold': True,
+    'host': '',
     'id': '9pfsom1b',
     'is_legacy': False,
+    'isolate': '',
     'labels': [
         {
             'color': '#FF0000',
@@ -96,13 +113,22 @@ snapshots['TestCreate.test[uvloop-none] 1'] = {
         }
     ],
     'library_type': 'normal',
+    'locale': '',
     'name': 'Foobar',
+    'notes': '',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
+    'quality': None,
     'reads': [
     ],
     'ready': False,
+    'subtractions': [
+        {
+            'id': 'apple',
+            'name': None
+        }
+    ],
     'user': {
         'id': 'test'
     }
@@ -149,11 +175,15 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
     'caches': [
     ],
     'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
     'group': 'technician',
     'group_read': True,
     'group_write': True,
+    'hold': True,
+    'host': '',
     'id': '9pfsom1b',
     'is_legacy': False,
+    'isolate': '',
     'labels': [
         {
             'color': '#FF0000',
@@ -163,13 +193,22 @@ snapshots['TestCreate.test[uvloop-users_primary_group] 1'] = {
         }
     ],
     'library_type': 'normal',
+    'locale': '',
     'name': 'Foobar',
+    'notes': '',
     'nuvs': False,
     'paired': False,
     'pathoscope': False,
+    'quality': None,
     'reads': [
     ],
     'ready': False,
+    'subtractions': [
+        {
+            'id': 'apple',
+            'name': None
+        }
+    ],
     'user': {
         'id': 'test'
     }
@@ -240,10 +279,17 @@ snapshots['TestEdit.test[uvloop] 1'] = {
         }
     ],
     'name': 'test_sample',
+    'notes': 'This is a test.',
     'paired': False,
     'reads': [
     ],
-    'ready': True
+    'ready': True,
+    'subtractions': [
+        {
+            'id': 'foo',
+            'name': 'Foo'
+        }
+    ]
 }
 
 snapshots['TestEdit.test_label_exists[uvloop-True] 1'] = {
@@ -300,7 +346,17 @@ snapshots['TestEdit.test_subtraction_exists[uvloop-True] 1'] = {
     'paired': False,
     'reads': [
     ],
-    'ready': True
+    'ready': True,
+    'subtractions': [
+        {
+            'id': 'foo',
+            'name': 'Foo'
+        },
+        {
+            'id': 'bar',
+            'name': 'Bar'
+        }
+    ]
 }
 
 snapshots['TestUploadReads.test_upload_reads[uvloop-True] 1'] = {
@@ -332,6 +388,8 @@ snapshots['test_finalize[uvloop-quality] 1'] = {
     'labels': [
     ],
     'paired': False,
+    'quality': {
+    },
     'reads': [
         {
             'download_url': '/api/samples/test/reads/reads_1.fq.gz',
@@ -980,6 +1038,13 @@ snapshots['test_get[uvloop-False-None] 1'] = {
     'caches': [
     ],
     'created_at': '2015-10-06T20:00:00Z',
+    'files': [
+        {
+            'download_url': '/download/samples/files/file_1.fq.gz',
+            'id': 'foo',
+            'name': 'Bar.fq.gz'
+        }
+    ],
     'id': 'test',
     'labels': [
         {
@@ -1015,7 +1080,17 @@ snapshots['test_get[uvloop-False-None] 1'] = {
             'uploaded_at': None
         }
     ],
-    'ready': False
+    'ready': False,
+    'subtractions': [
+        {
+            'id': 'foo',
+            'name': 'Foo'
+        },
+        {
+            'id': 'bar',
+            'name': 'Bar'
+        }
+    ]
 }
 
 snapshots['test_get[uvloop-True-None] 1'] = {
@@ -1034,6 +1109,13 @@ snapshots['test_get[uvloop-True-None] 1'] = {
     'caches': [
     ],
     'created_at': '2015-10-06T20:00:00Z',
+    'files': [
+        {
+            'download_url': '/download/samples/files/file_1.fq.gz',
+            'id': 'foo',
+            'name': 'Bar.fq.gz'
+        }
+    ],
     'id': 'test',
     'labels': [
         {
@@ -1070,7 +1152,17 @@ snapshots['test_get[uvloop-True-None] 1'] = {
             'uploaded_at': None
         }
     ],
-    'ready': True
+    'ready': True,
+    'subtractions': [
+        {
+            'id': 'foo',
+            'name': 'Foo'
+        },
+        {
+            'id': 'bar',
+            'name': 'Bar'
+        }
+    ]
 }
 
 snapshots['test_get_cache[uvloop-None] 1'] = {
