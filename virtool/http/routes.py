@@ -1,10 +1,11 @@
 from functools import wraps
 from typing import Callable
 
+from aiohttp.web_exceptions import HTTPUnauthorized
 from aiohttp.web_routedef import RouteTableDef
 
 import virtool.users.utils
-from virtool.api.response import json_response, unauthorized
+from virtool.api.response import json_response
 
 
 class Routes(RouteTableDef):
@@ -42,7 +43,7 @@ def protect(
             client = req["client"]
 
             if not public and client is None:
-                return unauthorized("Requires authorization")
+                raise HTTPUnauthorized(text="Requires authorization")
 
             if client is None or not client.administrator:
                 if admin:
