@@ -3,10 +3,10 @@ import { connect } from "react-redux";
 import { getLabels } from "../../../../labels/selectors";
 import { editSample } from "../../../actions";
 import { getSampleDetailId, getSampleLabels } from "../../../selectors";
-import { EditableProperty } from "./EditableProperty";
+import { SampleSidebarProperty } from "./Property";
 
 export const SampleLabels = ({ allLabels, sampleLabels, sampleId, onUpdate }) => (
-    <EditableProperty
+    <SampleSidebarProperty
         header="Labels"
         sampleItems={allLabels}
         selectedItems={sampleLabels}

@@ -1,4 +1,3 @@
-import { forEach } from "lodash-es";
 import React from "react";
 import PropTypes from "prop-types";
 import styled from "styled-components";
@@ -17,7 +16,7 @@ const SampleItemsList = styled.div`
     flex-flow: wrap;
 `;
 
-export const EditableProperty = ({ header, sampleItems, selectedItems, sampleId, onUpdate }) => {
+export const SampleSidebarProperty = ({ header, sampleItems, selectedItems, sampleId, onUpdate }) => {
     const sampleItemComponents = selectedItems.map(item => (
         <InlineSampleItem key={item.id} color={item.color} name={item.name} />
     ));
@@ -38,7 +37,7 @@ export const EditableProperty = ({ header, sampleItems, selectedItems, sampleId,
     );
 };
 
-EditableProperty.propTypes = {
+SampleSidebarProperty.propTypes = {
     header: PropTypes.string.isRequired,
     sampleItems: PropTypes.arrayOf(PropTypes.object).isRequired,
     selectedItems: PropTypes.arrayOf(PropTypes.object).isRequired,

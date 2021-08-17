@@ -2,10 +2,10 @@ import React from "react";
 import { connect } from "react-redux";
 import { editSample } from "../../../actions";
 import { getDefaultSubtractions, getSampleDetailId, getSubtractionOptions } from "../../../selectors";
-import { EditableProperty } from "./EditableProperty";
+import { SampleSidebarProperty } from "./Property";
 
 export const DefaultSubtractions = ({ defaultSubtractions, sampleId, subtractionOptions, onUpdate }) => (
-    <EditableProperty
+    <SampleSidebarProperty
         header="Default Subtractions"
         sampleItems={subtractionOptions}
         selectedItems={defaultSubtractions}
