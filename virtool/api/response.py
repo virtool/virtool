@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional
 
 from aiohttp import web
+from aiohttp.web_exceptions import HTTPForbidden
 
 
 def json_response(data: object, status: int = 200, headers: Optional[dict] = None) -> web.Response:
@@ -20,6 +21,15 @@ def json_response(data: object, status: int = 200, headers: Optional[dict] = Non
     resp["json_data"] = data
 
     return resp
+
+
+class HTTPInsufficientRights(HTTPForbidden):
+    def __init__(self, message):
+        super().__init__(text=message, reason="insufficient_rights")
+
+
+def insufficient_rights(message="Insufficient rights"):
+    return HTTPInsufficientRights(message)
 
 
 def unauthorized(message: str) -> web.Response:
