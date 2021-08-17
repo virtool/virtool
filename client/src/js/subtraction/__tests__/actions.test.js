@@ -85,13 +85,14 @@ describe("Subtraction Action Creators:", () => {
     });
 
     it("createSubtraction", () => {
-        const fileId = "foo.fa";
+        const uploadId = "foo.fa";
         const name = "Foo";
         const nickname = "nickname";
-        const result = createSubtraction(fileId, name, nickname);
+        const result = createSubtraction(uploadId, name, nickname);
+
         expect(result).toEqual({
             type: CREATE_SUBTRACTION.REQUESTED,
-            fileId,
+            uploadId,
             name,
             nickname
         });
