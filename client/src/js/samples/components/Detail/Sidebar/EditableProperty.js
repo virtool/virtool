@@ -18,23 +18,8 @@ const SampleItemsList = styled.div`
 `;
 
 export const EditableProperty = ({ header, sampleItems, selectedItems, sampleId, onUpdate }) => {
-    const onClose = (sampleId, selectedItems, itemId) => {
-        const newList = [];
-        forEach(selectedItems, item => {
-            if (item.id !== itemId) {
-                newList.push(item.id);
-            }
-        });
-        onUpdate(sampleId, newList);
-    };
-
     const sampleItemComponents = selectedItems.map(item => (
-        <InlineSampleItem
-            key={item.id}
-            color={item.color}
-            name={item.name}
-            onClose={() => onClose(sampleId, selectedItems, item.id)}
-        />
+        <InlineSampleItem key={item.id} color={item.color} name={item.name} />
     ));
 
     return (

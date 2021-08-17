@@ -29,11 +29,6 @@ const StyledSampleLibraryTypeLabel = styled(StyledSampleLabel)`
     }
 `;
 
-const CloseIcon = styled(Icon)`
-    color: "black";
-    margin-left: 5px;
-`;
-
 export const SampleLibraryTypeLabel = ({ libraryType }) => (
     <StyledSampleLibraryTypeLabel>
         <Icon name={libraryType === "amplicon" ? "barcode" : "dna"} />
@@ -41,11 +36,10 @@ export const SampleLibraryTypeLabel = ({ libraryType }) => (
     </StyledSampleLibraryTypeLabel>
 );
 
-export const SampleLabel = styled(({ className, color, name, role, onClose }) => (
+export const SampleLabel = styled(({ className, color, name, role }) => (
     <StyledSampleLabel className={className} color={color} role={role}>
         {color && <Icon name="circle" />}
         {name}
-        {onClose && <CloseIcon name="trash" onClick={onClose} />}
     </StyledSampleLabel>
 ))``;
 
