@@ -68,7 +68,7 @@ async def test_revert(error, remove, snapshot, create_mock_history, spawn_client
         assert await resp_is.insufficient_rights(resp)
         return
 
-    assert resp.status == 204
+    await resp_is.no_content(resp)
 
     snapshot.assert_match(await client.db.otus.find_one())
     snapshot.assert_match(await client.db.history.find().to_list(None))

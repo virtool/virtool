@@ -64,11 +64,7 @@ class TestUpload:
 
         resp = await client.post_form("/api/uploads?type=foobar&name=Test.fq.gz", data=files)
 
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "Unsupported upload type"
-        }
+        await resp_is.bad_request(resp, "Unsupported upload type")
 
 
 class TestFind:
@@ -133,7 +129,7 @@ class TestGet:
 
 
 class TestDelete:
-    async def test(self, files, spawn_client, snapshot, tmp_path):
+    async def test(self, files, spawn_client, snapshot, tmp_path, resp_is):
         """
         Test `DELETE /api/uploads/:id to assure that it properly deletes an existing `uploads` row and file.
 
@@ -144,13 +140,13 @@ class TestDelete:
         await client.post_form("/api/uploads?name=test.fq.gz", data=files)
 
         resp = await client.delete("/api/uploads/1")
-        assert resp.status == 204
+        await resp_is.no_content(resp)
 
         resp = await client.get("api/uploads/1")
         assert resp.status == 404
 
     @pytest.mark.parametrize("exists", [True, False])
-    async def test_already_removed(self, exists, spawn_client, tmp_path, pg_session):
+    async def test_already_removed(self, exists, spawn_client, tmp_path, pg_session, resp_is):
         """
         Test `DELETE /api/uploads/:id to assure that it doesn't try to delete a file that has already been removed.
 
@@ -169,10 +165,10 @@ class TestDelete:
         if exists:
             assert resp.status == 404
         else:
-            assert resp.status == 204
+            await resp_is.no_content(resp)
 
     @pytest.mark.parametrize("exists", [True, False])
-    async def test_record_dne(self, exists, spawn_client, pg_session, tmp_path):
+    async def test_record_dne(self, exists, spawn_client, pg_session, tmp_path, resp_is):
         """
         Test `DELETE /api/uploads/:id to assure that it doesn't try to delete a file that corresponds to a `upload`
         record that does not exist.
@@ -190,6 +186,6 @@ class TestDelete:
         resp = await client.delete("/api/uploads/1")
 
         if exists:
-            assert resp.status == 204
+            await resp_is.no_content(resp)
         else:
             assert resp.status == 404

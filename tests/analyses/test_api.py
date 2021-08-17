@@ -82,11 +82,7 @@ async def test_get(ready, files, error, mocker, snapshot, spawn_client, static_t
     resp = await client.get("/api/analyses/foobar")
 
     if error == "400":
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "Parent sample does not exist"
-        }
+        await resp_is.bad_request(resp, "Parent sample does not exist")
         return
 
     if error == "403":
@@ -240,11 +236,7 @@ async def test_remove(mocker, error, spawn_client, resp_is, tmp_path):
     resp = await client.delete("/api/analyses/foobar")
 
     if error == "400":
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "Parent sample does not exist"
-        }
+        await resp_is.bad_request(resp, "Parent sample does not exist")
         return
 
     if error == "403":
@@ -259,7 +251,7 @@ async def test_remove(mocker, error, spawn_client, resp_is, tmp_path):
         assert await resp_is.conflict(resp, "Analysis is still running")
         return
 
-    assert resp.status == 204
+    await resp_is.no_content(resp)
 
     assert await client.db.analyses.find_one() is None
 
@@ -305,11 +297,7 @@ async def test_upload_file(error, files, resp_is, spawn_job_client, static_time,
         assert await virtool.pg.utils.get_row_by_id(pg, AnalysisFile, 1)
 
     elif error == 400:
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "Unsupported analysis file format"
-        }
+        await resp_is.bad_request(resp, "Unsupported analysis file format")
 
     elif error == 404:
         assert resp.status == 404
@@ -445,11 +433,7 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
     resp = await client.put("/api/analyses/foobar/5/blast", {})
 
     if error == "400":
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "Parent sample does not exist"
-        }
+        await resp_is.bad_request(resp, "Parent sample does not exist")
         return
 
     if error == "403":

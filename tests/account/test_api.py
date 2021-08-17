@@ -59,11 +59,7 @@ async def test_edit(error, spawn_client, resp_is, static_time):
         await resp_is.invalid_input(resp, {"password": ["field 'old_password' is required"]})
 
     elif error == "credentials_error":
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "Invalid credentials"
-        }
+        await resp_is.bad_request(resp, "Invalid credentials")
 
     else:
         assert resp.status == 200
@@ -359,7 +355,7 @@ class TestUpdateAPIKey:
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_remove_api_key(error, spawn_client, assert_resp_is):
+async def test_remove_api_key(error, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
     if not error:
@@ -375,14 +371,14 @@ async def test_remove_api_key(error, spawn_client, assert_resp_is):
     resp = await client.delete("/api/account/keys/foobar_0")
 
     if error:
-        await assert_resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
-    assert resp.status == 204
+    await resp_is.no_content(resp)
     assert await client.db.keys.count_documents({}) == 0
 
 
-async def test_remove_all_api_keys(spawn_client, assert_resp_is):
+async def test_remove_all_api_keys(spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
     await client.db.keys.insert_many([
@@ -411,7 +407,7 @@ async def test_remove_all_api_keys(spawn_client, assert_resp_is):
 
     resp = await client.delete("/api/account/keys")
 
-    assert resp.status == 204
+    await resp_is.no_content(resp)
 
     assert await client.db.keys.find().to_list(None) == [{
         "_id": "baz",

@@ -164,11 +164,7 @@ class TestCreate:
         )
 
         if error:
-            assert resp.status == 400
-            assert await resp.json() == {
-                "id": "bad_request",
-                "message": message
-            }
+            await resp_is.bad_request(resp, message)
             return
 
         assert resp.status == 201
@@ -347,11 +343,7 @@ class TestEdit:
         if not check_ref_right:
             assert await resp_is.insufficient_rights(resp)
             return
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": message
-        }
+        await resp_is.bad_request(resp, message)
 
     @pytest.mark.parametrize("old_name,old_abbreviation,data", [
         (
@@ -440,7 +432,7 @@ async def test_remove(abbreviation, exists, snapshot, spawn_client, check_ref_ri
         assert await resp_is.insufficient_rights(resp)
         return
 
-    assert resp.status == 204
+    await resp_is.no_content(resp)
     assert await client.db.otus.count_documents({"_id": "6116cba1"}) == 0
     snapshot.assert_match(await client.db.history.find_one(), "history")
 
@@ -847,7 +839,7 @@ class TestRemoveIsolate:
             assert await resp_is.insufficient_rights(resp)
             return
 
-        assert resp.status == 204
+        await resp_is.no_content(resp)
         assert await client.db.otus.count_documents({"isolates.id": "cab8b360"}) == 0
         assert await client.db.sequences.count_documents({}) == 0
 
@@ -876,7 +868,7 @@ class TestRemoveIsolate:
             assert await resp_is.insufficient_rights(resp)
             return
 
-        assert resp.status == 204
+        await resp_is.no_content(resp)
         assert await client.db.otus.count_documents({"isolates.id": "cab8b360"}) == 0
         assert not await client.db.sequences.count_documents({})
 
@@ -1053,7 +1045,7 @@ async def test_remove_sequence(error, snapshot, spawn_client, check_ref_right, r
         assert await resp_is.insufficient_rights(resp)
         return
 
-    assert resp.status == 204
+    await resp_is.no_content(resp)
 
     snapshot.assert_match(await client.db.otus.find_one("6116cba1"), "otu")
     snapshot.assert_match(await client.db.history.find_one(), "history")
