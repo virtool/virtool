@@ -8,6 +8,7 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-20.04
+    if: github.repository_owner == 'Virtool'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
