@@ -11,7 +11,7 @@ from tests.fixtures.jobs import *
 from tests.fixtures.postgres import *
 from tests.fixtures.redis import *
 from tests.fixtures.references import *
-from tests.fixtures.test_response import *
+from tests.fixtures.response import *
 from tests.fixtures.setup import *
 from tests.fixtures.users import *
 from tests.fixtures.otus import *
