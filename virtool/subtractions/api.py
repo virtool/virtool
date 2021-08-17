@@ -3,7 +3,7 @@ import logging
 import os
 
 import aiohttp.web
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPConflict
 from aiohttp.web_fileresponse import FileResponse
 from sqlalchemy import select, exc
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +13,7 @@ import virtool.jobs.db
 import virtool.subtractions.db
 import virtool.uploads.db
 import virtool.validators
-from virtool.api.response import conflict, json_response, not_found
+from virtool.api.response import json_response, not_found
 from virtool.api.utils import get_query_bool, paginate, compose_regex_query
 from virtool.db.utils import get_new_id
 from virtool.http.schema import schema
@@ -220,7 +220,7 @@ async def upload(req):
             filename
         )
     except exc.IntegrityError:
-        return conflict("File name already exists")
+        raise HTTPConflict(text="File name already exists")
 
     upload_id = subtraction_file["id"]
     path = req.app["settings"]["data_path"] / "subtractions" / subtraction_id / filename
@@ -322,7 +322,7 @@ async def finalize_subtraction(req: aiohttp.web.Request):
         return not_found()
 
     if "ready" in document and document["ready"]:
-        return conflict("Subtraction has already been finalized")
+        raise HTTPConflict(text="Subtraction has already been finalized")
 
     finalized = await virtool.subtractions.db.finalize(db, pg, subtraction_id, data["gc"], data["count"])
     with_computed = await attach_computed(req.app, finalized)
@@ -346,7 +346,7 @@ async def job_remove(req: aiohttp.web.Request):
         return not_found()
 
     if "ready" in document and document["ready"]:
-        return conflict("Only unfinalized subtractions can be deleted")
+        raise HTTPConflict(text="Only unfinalized subtractions can be deleted")
 
     await virtool.subtractions.db.delete(req.app, subtraction_id)
 

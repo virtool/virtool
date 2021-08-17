@@ -1,9 +1,10 @@
 from aiohttp.web import HTTPNoContent
+from aiohttp.web_exceptions import HTTPConflict
 
 import virtool.history.db
 import virtool.http.routes
 import virtool.references.db
-from virtool.api.response import conflict, json_response, not_found, HTTPInsufficientRights
+from virtool.api.response import json_response, not_found, HTTPInsufficientRights
 from virtool.errors import DatabaseError
 
 routes = virtool.http.routes.Routes()
@@ -59,6 +60,6 @@ async def revert(req):
     try:
         await virtool.history.db.revert(req.app, change_id)
     except DatabaseError:
-        return conflict("Change is already built")
+        raise HTTPConflict(text="Change is already built")
 
     raise HTTPNoContent

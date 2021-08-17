@@ -3,12 +3,12 @@ API request handlers for managing and querying HMM data.
 
 """
 import aiohttp
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPBadGateway
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPBadGateway, HTTPConflict
 from aiohttp.web_fileresponse import FileResponse
 
 import virtool.hmm.db
 import virtool.http.routes
-from virtool.api.response import conflict, json_response, not_found
+from virtool.api.response import json_response, not_found
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_one_field
 from virtool.errors import GitHubError
@@ -119,7 +119,7 @@ async def install(req):
     user_id = req["client"].user_id
 
     if await db.status.count_documents({"_id": "hmm", "updates.ready": False}):
-        return conflict("Install already in progress")
+        raise HTTPConflict(text="Install already in progress")
 
     release = await get_one_field(db.status, "release", "hmm")
 
