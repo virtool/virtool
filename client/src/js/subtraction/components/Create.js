@@ -56,9 +56,9 @@ const SubtractionFileList = styled(BoxGroup)`
 const getInitialState = () => ({
     errorName: "",
     errorFile: "",
-    fileId: "",
     name: "",
-    nickname: ""
+    nickname: "",
+    uploadId: ""
 });
 
 export class CreateSubtraction extends React.Component {
@@ -80,9 +80,9 @@ export class CreateSubtraction extends React.Component {
         this.setState(getInitialState());
     };
 
-    handleSelectFile = fileId => {
+    handleSelectFile = uploadId => {
         this.setState({
-            fileId: fileId === this.state.fileId ? "" : fileId,
+            uploadId: uploadId === this.state.uploadId ? "" : uploadId,
             errorFile: ""
         });
     };
@@ -96,7 +96,7 @@ export class CreateSubtraction extends React.Component {
             update.errorName = "A name is required";
         }
 
-        if (!this.state.fileId) {
+        if (!this.state.uploadId) {
             update.errorFile = "Please select a file";
         }
 
@@ -112,7 +112,7 @@ export class CreateSubtraction extends React.Component {
             <SubtractionFileItem
                 key={file.id}
                 {...file}
-                active={file.id === this.state.fileId}
+                active={file.id === this.state.uploadId}
                 onClick={this.handleSelectFile}
             />
         ));
@@ -169,8 +169,8 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-    onCreate: ({ fileId, name, nickname }) => {
-        dispatch(createSubtraction(fileId, name, nickname));
+    onCreate: ({ uploadId, name, nickname }) => {
+        dispatch(createSubtraction(uploadId, name, nickname));
     },
 
     onListFiles: () => {

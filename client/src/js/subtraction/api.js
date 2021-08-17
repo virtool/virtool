@@ -6,11 +6,11 @@ export const shortlist = () => Request.get("/api/subtractions?short=true");
 
 export const get = ({ subtractionId }) => Request.get(`/api/subtractions/${subtractionId}`);
 
-export const create = ({ fileId, name, nickname }) =>
+export const create = ({ name, nickname, uploadId }) =>
     Request.post("/api/subtractions").send({
-        file_id: fileId,
         name,
-        nickname
+        nickname,
+        upload_id: uploadId
     });
 
 export const edit = ({ subtractionId, name, nickname }) =>

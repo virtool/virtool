@@ -51,16 +51,16 @@ export const getSubtraction = subtractionId => ({
  * Returns action that can trigger an API call to create a new subtraction.
  *
  * @func
- * @param fileId {string} the unique id of the host FASTA file
+ * @param uploadId {string} the unique id of uploaded FASTA file to build the subtraction from
  * @param name {string} display name for the subtraction
  * @param nickname {string} common or nickname for the subtraction host
  * @returns {object}
  */
-export const createSubtraction = (fileId, name, nickname) => ({
+export const createSubtraction = (uploadId, name, nickname) => ({
     type: CREATE_SUBTRACTION.REQUESTED,
-    fileId,
     name,
-    nickname
+    nickname,
+    uploadId
 });
 
 /**
