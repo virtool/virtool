@@ -190,7 +190,7 @@ export const stepDescriptions = {
     nuvs: nuvsDescriptions
 };
 
-export const getStepDescription = (stage, state, task) => {
+export const getStepDescription = (stage, state, workflow) => {
     if (state === "waiting") {
         return {
             title: "Waiting",
@@ -212,7 +212,7 @@ export const getStepDescription = (stage, state, task) => {
         };
     }
 
-    return get(stepDescriptions, [task, stage], {
+    return get(stepDescriptions, [workflow, stage], {
         description: "",
         title: startCase(stage)
     });

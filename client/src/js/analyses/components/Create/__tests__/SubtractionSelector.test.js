@@ -1,7 +1,7 @@
 import React from "react";
-import { SubtractionSelector } from "../SubtractionSelector";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { SubtractionSelector } from "../SubtractionSelector";
 
 describe("<SubtractionSelector />", () => {
     let props;

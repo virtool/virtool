@@ -44,11 +44,11 @@ describe("Job Reducer", () => {
             documents: [
                 {
                     id: "foo",
-                    task: "test_job"
+                    workflow: "test_job"
                 },
                 {
                     id: "bar",
-                    task: "running_job"
+                    workflow: "running_job"
                 }
             ]
         };
@@ -56,7 +56,7 @@ describe("Job Reducer", () => {
             type: WS_UPDATE_JOB,
             data: {
                 id: "bar",
-                task: "finish_job"
+                workflow: "finish_job"
             }
         };
         const result = reducer(state, action);
@@ -65,11 +65,11 @@ describe("Job Reducer", () => {
             documents: [
                 {
                     id: "foo",
-                    task: "test_job"
+                    workflow: "test_job"
                 },
                 {
                     id: "bar",
-                    task: "finish_job"
+                    workflow: "finish_job"
                 }
             ]
         });

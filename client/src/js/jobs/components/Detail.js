@@ -13,11 +13,11 @@ import {
     ViewHeaderIcons,
     ViewHeaderTitle
 } from "../../base";
-import { getTaskDisplayName } from "../../utils/utils";
+import { getWorkflowDisplayName } from "../../utils/utils";
 import { getJob, removeJob } from "../actions";
 import JobError from "./Error";
 import JobSteps from "./Steps";
-import { TaskArgs } from "./TaskArgs";
+import { JobArgs } from "./JobArgs";
 
 const JobDetailBadge = styled(Badge)`
     text-transform: capitalize;
@@ -55,13 +55,13 @@ class JobDetail extends React.Component {
             color = "red";
         }
 
-        const taskName = getTaskDisplayName(detail.task);
+        const workflow = getWorkflowDisplayName(detail.workflow);
 
         return (
             <div>
-                <ViewHeader title={taskName}>
+                <ViewHeader title={workflow}>
                     <ViewHeaderTitle>
-                        {taskName} <JobDetailBadge color={color}>{latest.state}</JobDetailBadge>
+                        {workflow} <JobDetailBadge color={color}>{latest.state}</JobDetailBadge>
                         <ViewHeaderIcons>
                             <Icon color="red" name="trash" style={{ fontSize: "18px" }} onClick={this.handleClick} />
                         </ViewHeaderIcons>
@@ -69,7 +69,7 @@ class JobDetail extends React.Component {
                     <ViewHeaderAttribution time={detail.status[0].timestamp} user={detail.user.id} />
                 </ViewHeader>
 
-                <TaskArgs taskType={detail.task} taskArgs={detail.args} />
+                <JobArgs workflow={detail.workflow} args={detail.args} />
 
                 <JobSteps />
 

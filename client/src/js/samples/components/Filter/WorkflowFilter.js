@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import styled from "styled-components";
 import { getBorder, getFontSize } from "../../../app/theme";
 import { Box, BoxTitle, Icon } from "../../../base";
-import { getTaskDisplayName } from "../../../utils/utils";
+import { getWorkflowDisplayName } from "../../../utils/utils";
 import { updateSearch } from "../../actions";
 import { getWorkflowsFromURL } from "../../selectors";
 import { workflowStates } from "../../utils";
@@ -67,7 +67,7 @@ const WorkflowFilterControl = ({ workflow, states, onChange }) => {
 
     return (
         <StyledWorkflowFilterControl>
-            <WorkflowFilterLabel>{getTaskDisplayName(workflow)}</WorkflowFilterLabel>
+            <WorkflowFilterLabel>{getWorkflowDisplayName(workflow)}</WorkflowFilterLabel>
             <WorkflowFilterControlButtons>
                 <WorkflowFilterControlButton
                     active={states.includes(workflowStates.NONE)}

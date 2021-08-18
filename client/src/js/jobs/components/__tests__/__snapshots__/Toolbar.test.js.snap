@@ -4,7 +4,7 @@ exports[`<JobsToolbar /> should render when [canRemove=false] 1`] = `
 <Toolbar>
   <SearchInput
     onChange={[MockFunction]}
-    placeholder="User or task"
+    placeholder="User or workflow"
     value="foo"
   />
 </Toolbar>
@@ -14,7 +14,7 @@ exports[`<JobsToolbar /> should render when [canRemove=true] 1`] = `
 <Toolbar>
   <SearchInput
     onChange={[MockFunction]}
-    placeholder="User or task"
+    placeholder="User or workflow"
     value="foo"
   />
   <Button

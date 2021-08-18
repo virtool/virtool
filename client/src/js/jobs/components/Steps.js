@@ -4,21 +4,21 @@ import { connect } from "react-redux";
 import { BoxGroup } from "../../base";
 import JobStep from "./Step";
 
-export const JobSteps = ({ status, task }) => {
+export const JobSteps = ({ status, workflow }) => {
     const currentIndex = status.length - 1;
 
     const stepComponents = map(status, (step, index) => (
-        <JobStep key={index} complete={index < currentIndex} step={step} task={task} />
+        <JobStep key={index} complete={index < currentIndex} step={step} workflow={workflow} />
     ));
 
     return <BoxGroup>{stepComponents}</BoxGroup>;
 };
 
 export const mapStateToProps = state => {
-    const { status, task } = state.jobs.detail;
+    const { status, workflow } = state.jobs.detail;
     return {
         status,
-        task
+        workflow
     };
 };
 

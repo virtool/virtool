@@ -2,7 +2,7 @@ import { map } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import { MultiSelector, MultiSelectorItem } from "../../../base/MultiSelector";
-import { getTaskDisplayName } from "../../../utils/utils";
+import { getWorkflowDisplayName } from "../../../utils/utils";
 
 export const getCompatibleWorkflows = (dataType, hasHmm) => {
     if (dataType === "barcode") {
@@ -19,7 +19,7 @@ export const getCompatibleWorkflows = (dataType, hasHmm) => {
 export const WorkflowSelector = ({ dataType, hasError, hasHmm, workflows, onSelect }) => {
     const workflowItems = map(getCompatibleWorkflows(dataType, hasHmm), workflow => (
         <MultiSelectorItem key={workflow} name={workflow} value={workflow}>
-            {getTaskDisplayName(workflow)}
+            {getWorkflowDisplayName(workflow)}
         </MultiSelectorItem>
     ));
 

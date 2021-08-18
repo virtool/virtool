@@ -10,7 +10,7 @@ import {
     SubviewHeaderAttribution,
     SubviewHeaderTitle
 } from "../../base/index";
-import { getTaskDisplayName } from "../../utils/utils";
+import { getWorkflowDisplayName } from "../../utils/utils";
 import { clearAnalysis, getAnalysis } from "../actions";
 import AODPViewer from "./AODP/Viewer";
 import AnalysisCache from "./CacheLink";
@@ -57,7 +57,7 @@ export const AnalysisDetail = props => {
         <div>
             <SubviewHeader>
                 <SubviewHeaderTitle>
-                    {getTaskDisplayName(detail.workflow)} for {sampleName}
+                    {getWorkflowDisplayName(detail.workflow)} for {sampleName}
                     <AnalysisCache />
                 </SubviewHeaderTitle>
                 <SubviewHeaderAttribution>

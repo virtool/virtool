@@ -5,7 +5,7 @@ import styled from "styled-components";
 import { getFontSize, getFontWeight } from "../../app/theme";
 import { Attribution, Icon, SlashList, SpacedBox } from "../../base";
 import { getCanModify } from "../../samples/selectors";
-import { getTaskDisplayName } from "../../utils/utils";
+import { getWorkflowDisplayName } from "../../utils/utils";
 import { removeAnalysis } from "../actions";
 import { AnalysisItemRightIcon } from "./RightIcon";
 
@@ -74,7 +74,7 @@ export const AnalysisItem = props => {
     return (
         <StyledAnalysisItem>
             <AnalysisItemTop>
-                <Link to={`/samples/${sampleId}/analyses/${id}`}>{getTaskDisplayName(workflow)}</Link>
+                <Link to={`/samples/${sampleId}/analyses/${id}`}>{getWorkflowDisplayName(workflow)}</Link>
                 <AnalysisItemRightIcon canModify={canModify} onRemove={onRemove} ready={ready} />
             </AnalysisItemTop>
             <Attribution user={user.id} time={created_at} />

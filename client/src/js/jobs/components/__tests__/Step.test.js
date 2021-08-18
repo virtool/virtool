@@ -15,14 +15,14 @@ describe("<JobStepDescription />", () => {
         props = {
             stage: "bowtie_build",
             state: "running",
-            task: "create_subtraction"
+            workflow: "create_subtraction"
         };
     });
 
     it("renders and calls getStepDescription", () => {
         const wrapper = shallow(<JobStepDescription {...props} />);
-        const { stage, state, task } = props;
-        expect(getStepDescription).toHaveBeenCalledWith(stage, state, task);
+        const { stage, state, workflow } = props;
+        expect(getStepDescription).toHaveBeenCalledWith(stage, state, workflow);
         expect(wrapper).toMatchSnapshot();
     });
 });
