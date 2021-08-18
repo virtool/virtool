@@ -216,7 +216,7 @@ async def test_get(error, mocker, snapshot, resp_is, spawn_client, static_time):
     resp = await client.get("/api/indexes/foobar")
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     m_get_contributors.assert_called_with(
@@ -474,7 +474,7 @@ async def test(error, snapshot, spawn_client, resp_is):
     resp = await client.get("/api/indexes/foobar/history")
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200
@@ -556,11 +556,11 @@ async def test_upload(error, tmp_path, spawn_job_client, snapshot, static_time, 
     resp = await client.put(url, data=files)
 
     if error == "404_file":
-        assert await resp_is.not_found(resp, "Index file not found")
+        await resp_is.not_found(resp, "Index file not found")
         return
 
     if error == "404_index":
-        assert await resp_is.not_found(resp, "Not found")
+        await resp_is.not_found(resp, "Not found")
         return
 
     if error == "409":

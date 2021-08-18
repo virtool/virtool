@@ -76,7 +76,7 @@ async def test_get(error, spawn_client, all_permissions, pg_session, static_time
     resp = await client.get("/api/tasks/1")
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200

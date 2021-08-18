@@ -70,7 +70,7 @@ async def test_upload(error, tmp_path, spawn_job_client, snapshot, resp_is, pg_s
     resp = await client.put(url, data=files)
 
     if error == "404_name":
-        assert await resp_is.not_found(resp, "Unsupported subtraction file name")
+        await resp_is.not_found(resp, "Unsupported subtraction file name")
         return
 
     if error == "409":
@@ -115,7 +115,7 @@ async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is, 
     resp = await client.patch("/api/subtractions/foo", json=data)
 
     if error == "404":
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     if error == "409":

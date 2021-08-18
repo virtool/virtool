@@ -113,7 +113,7 @@ async def test_get(error, spawn_client, all_permissions, pg_session, resp_is):
     resp = await client.get("/api/labels/1")
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200
@@ -240,7 +240,7 @@ async def test_edit(error, spawn_client, pg_session, resp_is):
     resp = await client.patch("/api/labels/1", data=data)
 
     if error == "404":
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     if error == "400_exists":
@@ -278,7 +278,7 @@ async def test_remove(error, spawn_client, pg_session, resp_is):
     resp = await client.delete("/api/labels/1")
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     await resp_is.no_content(resp)

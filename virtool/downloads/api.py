@@ -23,6 +23,7 @@ import virtool.references.db
 import virtool.samples.utils
 import virtool.subtractions.utils
 import virtool.utils
+from virtool.api.response import NotFound
 
 routes = virtool.http.routes.Routes()
 
@@ -42,10 +43,10 @@ async def download_isolate(req):
         filename, fasta = await virtool.downloads.db.generate_isolate_fasta(db, otu_id, isolate_id)
     except virtool.errors.DatabaseError as err:
         if "OTU does not exist" in str(err):
-            return virtool.api.response.not_found("OTU not found")
+            raise NotFound("OTU not found")
 
         if "Isolate does not exist" in str(err):
-            return virtool.api.response.not_found("Isolate not found")
+            raise NotFound("Isolate not found")
 
         raise
 
@@ -68,13 +69,13 @@ async def download_sequence(req):
         filename, fasta = await virtool.downloads.db.generate_sequence_fasta(db, sequence_id)
     except virtool.errors.DatabaseError as err:
         if "Sequence does not exist" in str(err):
-            return virtool.api.response.not_found("Sequence not found")
+            raise NotFound("Sequence not found")
 
         if "Isolate does not exist" in str(err):
-            return virtool.api.response.not_found("Isolate not found")
+            raise NotFound("Isolate not found")
 
         if "OTU does not exist" in str(err):
-            return virtool.api.response.not_found("OTU not found")
+            raise NotFound("OTU not found")
 
         raise
 

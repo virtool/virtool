@@ -13,7 +13,7 @@ import virtool.jobs.db
 import virtool.subtractions.db
 import virtool.uploads.db
 import virtool.validators
-from virtool.api.response import json_response, not_found
+from virtool.api.response import json_response, NotFound
 from virtool.api.utils import get_query_bool, paginate, compose_regex_query
 from virtool.db.utils import get_new_id
 from virtool.http.schema import schema
@@ -93,7 +93,7 @@ async def get(req):
     document = await db.subtraction.find_one(subtraction_id)
 
     if not document:
-        return not_found()
+        raise NotFound()
 
     with_computed = await attach_computed(req.app, document)
 
@@ -204,10 +204,10 @@ async def upload(req):
     document = await db.subtraction.find_one(subtraction_id)
 
     if document is None:
-        return not_found()
+        raise NotFound()
 
     if filename not in FILES:
-        return not_found("Unsupported subtraction file name")
+        raise NotFound("Unsupported subtraction file name")
 
     file_type = virtool.subtractions.utils.check_subtraction_file_type(filename)
 
@@ -280,7 +280,7 @@ async def edit(req):
     })
 
     if document is None:
-        return not_found()
+        raise NotFound()
 
     with_computed = await attach_computed(req.app, document)
 
@@ -294,7 +294,7 @@ async def remove(req):
     updated_count = await asyncio.shield(virtool.subtractions.db.delete(req.app, subtraction_id))
 
     if updated_count == 0:
-        return not_found()
+        raise NotFound()
 
     raise HTTPNoContent
 
@@ -318,7 +318,7 @@ async def finalize_subtraction(req: aiohttp.web.Request):
     document = await db.subtraction.find_one(subtraction_id)
 
     if document is None:
-        return not_found()
+        raise NotFound()
 
     if "ready" in document and document["ready"]:
         raise HTTPConflict(text="Subtraction has already been finalized")
@@ -342,7 +342,7 @@ async def job_remove(req: aiohttp.web.Request):
     document = await db.subtraction.find_one(subtraction_id)
 
     if document is None:
-        return not_found()
+        raise NotFound()
 
     if "ready" in document and document["ready"]:
         raise HTTPConflict(text="Only unfinalized subtractions can be deleted")
@@ -367,7 +367,7 @@ async def download_subtraction_files(req: aiohttp.web.Request):
     document = await db.subtraction.find_one(subtraction_id)
 
     if document is None:
-        return virtool.api.response.not_found()
+        raise NotFound()
 
     if filename not in FILES:
         raise HTTPBadRequest(text="Unsupported subtraction file name")
@@ -378,7 +378,7 @@ async def download_subtraction_files(req: aiohttp.web.Request):
         )).scalar()
 
     if not result:
-        return not_found()
+        raise NotFound()
 
     file = result.to_dict()
 
@@ -388,7 +388,7 @@ async def download_subtraction_files(req: aiohttp.web.Request):
     )
 
     if not os.path.isfile(file_path):
-        return virtool.api.response.not_found()
+        raise NotFound()
 
     return FileResponse(file_path, headers={
         "Content-Length": file["size"],

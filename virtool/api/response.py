@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional
 
 from aiohttp import web
-from aiohttp.web_exceptions import HTTPForbidden
+from aiohttp.web_exceptions import HTTPForbidden, HTTPNotFound
 
 
 def json_response(data: object, status: int = 200, headers: Optional[dict] = None) -> web.Response:
@@ -23,24 +23,14 @@ def json_response(data: object, status: int = 200, headers: Optional[dict] = Non
     return resp
 
 
-class HTTPInsufficientRights(HTTPForbidden):
+class InsufficientRights(HTTPForbidden):
     def __init__(self, message="Insufficient rights"):
         super().__init__(text=message, reason="insufficient_rights")
 
 
-def not_found(message: str = "Not found") -> web.Response:
-    """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``404`` status the JSON
-    body ``{"message": "Not found"}``.
-
-    :param message: text to send instead of 'Not found'
-    :return: the response
-
-    """
-    return json_response({
-        "id": "not_found",
-        "message": message
-    }, status=404)
+class NotFound(HTTPNotFound):
+    def __init__(self, message="Not found"):
+        super().__init__(text=message, reason="not_found")
 
 
 def empty_request(message: str = "Empty request") -> web.Response:

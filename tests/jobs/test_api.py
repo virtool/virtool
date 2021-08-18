@@ -11,7 +11,7 @@ async def test_get(error, snapshot, spawn_client, test_job, resp_is):
     resp = await client.get("/api/jobs/4c530449")
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200

@@ -38,7 +38,7 @@ async def test_get_release(error, mocker, spawn_client, resp_is):
         return
 
     if error == "404":
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200
@@ -74,7 +74,7 @@ async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is):
     )
 
     if not id_exists:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200
@@ -135,7 +135,7 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
     )
 
     if not id_exists:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     if not check_ref_right:
@@ -191,7 +191,7 @@ async def test_find_indexes(mocker, spawn_client, id_exists, md_proxy, resp_is):
     resp = await client.get("/api/refs/foo/indexes")
 
     if not id_exists:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200
@@ -334,7 +334,7 @@ async def test_edit(data_type, error, mocker, snapshot, spawn_client, resp_is):
         return
 
     if error == "404":
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     if error == "403":
@@ -400,7 +400,7 @@ async def test_add_group_or_user(error, field, snapshot, spawn_client, check_ref
     })
 
     if error == "404":
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     if not check_ref_right:
@@ -466,7 +466,7 @@ async def test_edit_group_or_user(error, field, snapshot, spawn_client, check_re
     })
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     if not check_ref_right:
@@ -517,7 +517,7 @@ async def test_delete_group_or_user(error, field, snapshot, spawn_client, check_
     resp = await client.delete(url)
 
     if error:
-        assert await resp_is.not_found(resp)
+        await resp_is.not_found(resp)
         return
 
     if not check_ref_right:

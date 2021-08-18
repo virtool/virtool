@@ -54,7 +54,8 @@ class RespIs:
         Check whether a response object is a valid Virtool ``not_found``.
 
         """
-        return resp.status == 404 and await resp.json() == {
+        assert resp.status == 404
+        assert await resp.json() == {
             "id": "not_found",
             "message": message
         }
