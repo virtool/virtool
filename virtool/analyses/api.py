@@ -8,8 +8,7 @@ from typing import Any, Dict, Union
 
 import aiohttp.web
 import aiojobs.aiohttp
-from aiohttp.web import HTTPNoContent, HTTPBadRequest, HTTPNotModified, HTTPNotFound, HTTPConflict
-
+from aiohttp.web import HTTPNoContent, HTTPBadRequest, HTTPNotModified, HTTPConflict
 
 import virtool.analyses.format
 import virtool.bio
@@ -20,7 +19,7 @@ from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFormat, AnalysisFile
 from virtool.analyses.utils import attach_analysis_files, find_nuvs_sequence_by_index
 from virtool.api.json import isoformat
-from virtool.api.response import invalid_query, json_response, HTTPInsufficientRights
+from virtool.api.response import invalid_query, json_response, InsufficientRights, NotFound
 from virtool.api.utils import paginate
 from virtool.db.core import Collection, DB
 from virtool.http.schema import schema
@@ -85,7 +84,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     document = await db.analyses.find_one(analysis_id)
 
     if document is None:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     try:
         iso = isoformat(document["updated_at"])
@@ -110,7 +109,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     read, _ = get_sample_rights(sample, req["client"])
 
     if not read:
-        raise HTTPInsufficientRights()
+        raise InsufficientRights()
 
     document = await attach_subtractions(db, document)
 
@@ -139,7 +138,7 @@ async def get_for_jobs_api(req: aiohttp.web.Request) -> aiohttp.web.Response:
     document = await db.analyses.find_one(analysis_id)
 
     if document is None:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     try:
         iso = isoformat(document["updated_at"])
@@ -193,7 +192,7 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     )
 
     if not document:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     sample_id = document["sample"]["id"]
 
@@ -208,7 +207,7 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     read, write = get_sample_rights(sample, req["client"])
 
     if not read or not write:
-        raise HTTPInsufficientRights()
+        raise InsufficientRights()
 
     if not document["ready"]:
         raise HTTPConflict(text="Analysis is still running")
@@ -245,7 +244,7 @@ async def delete_analysis(req):
     )
 
     if not document:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     if document["ready"]:
         raise HTTPConflict(text="Analysis is finalized")
@@ -287,7 +286,7 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
     document = await db.analyses.find_one(analysis_id)
 
     if document is None:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     errors = naive_validator(req)
 
@@ -334,12 +333,12 @@ async def download_analysis_result(req: aiohttp.web.Request) -> Union[aiohttp.we
     analysis_file = await get_row_by_id(pg, AnalysisFile, upload_id)
 
     if not analysis_file:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     analysis_file_path = req.app["settings"]["data_path"] / "analyses" / analysis_file.name_on_disk
 
     if not analysis_file_path.exists():
-        raise HTTPNotFound(text="Uploaded file not found at expected location")
+        raise NotFound("Uploaded file not found at expected location")
 
     return aiohttp.web.FileResponse(analysis_file_path)
 
@@ -358,7 +357,7 @@ async def download_analysis_document(req: aiohttp.web.Request) -> aiohttp.web.Re
     document = await db.analyses.find_one(analysis_id)
 
     if not document:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     if extension == "xlsx":
         formatted = await virtool.analyses.format.format_analysis_to_excel(req.app, document)
@@ -394,7 +393,7 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     )
 
     if not document:
-        raise HTTPNotFound(text="Analysis not found")
+        raise NotFound("Analysis not found")
 
     if document["workflow"] != "nuvs":
         raise HTTPConflict(text="Not a NuVs analysis")
@@ -405,7 +404,7 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     sequence = find_nuvs_sequence_by_index(document, sequence_index)
 
     if sequence is None:
-        raise HTTPNotFound(text="Sequence not found")
+        raise NotFound("Sequence not found")
 
     sample = await db.samples.find_one(
         {"_id": document["sample"]["id"]},
@@ -418,7 +417,7 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
     _, write = get_sample_rights(sample, req["client"])
 
     if not write:
-        raise HTTPInsufficientRights()
+        raise InsufficientRights()
 
     # Start a BLAST at NCBI with the specified sequence. Return a RID that identifies
     # the BLAST run.
@@ -459,7 +458,7 @@ async def patch_analysis(req: aiohttp.web.Request):
     analysis_document: Dict[str, Any] = await analyses.find_one({"_id": analysis_id})
 
     if not analysis_document:
-        raise HTTPNotFound(text=f"There is no analysis with id {analysis_id}")
+        raise NotFound(f"There is no analysis with id {analysis_id}")
 
     if "ready" in analysis_document and analysis_document["ready"]:
         raise HTTPConflict(text="There is already a result for this analysis.")

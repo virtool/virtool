@@ -15,13 +15,13 @@ Schema:
 - settings (Object) user-specific settings - currently not used
 
 """
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPNotFound, HTTPConflict
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPConflict
 
 import virtool.http.auth
 import virtool.http.routes
 import virtool.users.db
 import virtool.validators
-from virtool.api.response import json_response
+from virtool.api.response import json_response, NotFound
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import apply_projection
 from virtool.errors import DatabaseError
@@ -69,7 +69,7 @@ async def get(req):
     document = await req.app["db"].users.find_one(req.match_info["user_id"], virtool.users.db.PROJECTION)
 
     if not document:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     return json_response(base_processor(document))
 
@@ -257,7 +257,7 @@ async def edit(req):
         )
     except DatabaseError as err:
         if "User does not exist" in str(err):
-            raise HTTPNotFound(text="User does not exist")
+            raise NotFound("User does not exist")
 
         if "User is not member of group" in str(err):
             raise HTTPConflict(text="User is not member of group")
@@ -294,6 +294,6 @@ async def remove(req):
     })
 
     if delete_result.deleted_count == 0:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     raise HTTPNoContent

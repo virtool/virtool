@@ -1,10 +1,9 @@
-from aiohttp.web import HTTPNoContent, HTTPNotFound, HTTPConflict
-
+from aiohttp.web import HTTPNoContent, HTTPConflict
 
 import virtool.history.db
 import virtool.http.routes
 import virtool.references.db
-from virtool.api.response import json_response, HTTPInsufficientRights
+from virtool.api.response import json_response, InsufficientRights, NotFound
 from virtool.errors import DatabaseError
 
 routes = virtool.http.routes.Routes()
@@ -36,7 +35,7 @@ async def get(req):
     if document:
         return json_response(document)
 
-    raise HTTPNotFound(text="Not found")
+    raise NotFound()
 
 
 @routes.delete("/api/history/{change_id}")
@@ -52,10 +51,10 @@ async def revert(req):
     document = await db.history.find_one(change_id, ["reference"])
 
     if not document:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
-        raise HTTPInsufficientRights()
+        raise InsufficientRights()
 
     try:
         await virtool.history.db.revert(req.app, change_id)

@@ -3,7 +3,7 @@ import json
 import logging
 
 import aiohttp.web
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPNotFound, HTTPConflict
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPConflict
 from aiohttp.web_fileresponse import FileResponse
 from sqlalchemy import exc
 
@@ -14,7 +14,7 @@ import virtool.references.db
 import virtool.uploads.db
 import virtool.utils
 from virtool.api.json import CustomEncoder
-from virtool.api.response import json_response, HTTPInsufficientRights
+from virtool.api.response import json_response, InsufficientRights, NotFound
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_new_id
 from virtool.history.db import LIST_PROJECTION
@@ -102,7 +102,7 @@ async def get(req):
     document = await db.indexes.find_one(index_id)
 
     if not document:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     contributors, otus = await asyncio.gather(
         virtool.indexes.db.get_contributors(db, index_id),
@@ -134,7 +134,7 @@ async def download_otus_json(req):
     index = await db.indexes.find_one(index_id)
 
     if index is None:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     ref_id = index["reference"]["id"]
 
@@ -167,19 +167,19 @@ async def download_index_file(req: aiohttp.web.Request):
     filename = req.match_info["filename"]
 
     if filename not in FILES:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     index_document = await req.app["db"].indexes.find_one(index_id)
 
     if index_document is None:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     reference_id = index_document["reference"]["id"]
 
     path = req.app["settings"]["data_path"] / "references" / reference_id / index_id / filename
 
     if not path.exists():
-        raise HTTPNotFound(text="File not found")
+        raise NotFound("File not found")
 
     return aiohttp.web.FileResponse(path)
 
@@ -199,10 +199,10 @@ async def create(req):
     reference = await db.references.find_one(ref_id, ["groups", "users"])
 
     if reference is None:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     if not await virtool.references.db.check_right(req, reference, "build"):
-        raise HTTPInsufficientRights()
+        raise InsufficientRights()
 
     if await db.indexes.count_documents({"reference.id": ref_id, "ready": False}):
         raise HTTPConflict(text="Index build already in progress")
@@ -263,12 +263,12 @@ async def upload(req):
     name = req.match_info["filename"]
 
     if name not in FILES:
-        raise HTTPNotFound(text="Index file not found")
+        raise NotFound("Index file not found")
 
     document = await db.indexes.find_one(index_id)
 
     if document is None:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     reference_id = document["reference"]["id"]
     file_type = check_index_file_type(name)
@@ -319,14 +319,14 @@ async def finalize(req):
     index = await db.indexes.find_one(index_id)
 
     if index is None:
-        raise HTTPNotFound(text="Index does not exist")
+        raise NotFound("Index does not exist")
 
     ref_id = index["reference"]["id"]
 
     reference = await db.references.find_one(ref_id)
 
     if reference is None:
-        raise HTTPNotFound(text="Reference associated with index does not exist")
+        raise NotFound("Reference associated with index does not exist")
 
     rows = await get_rows(pg, IndexFile, "index", index_id)
 
@@ -359,7 +359,7 @@ async def find_history(req):
     index_id = req.match_info["index_id"]
 
     if not await db.indexes.count_documents({"_id": index_id}):
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     term = req.query.get("term")
 
@@ -392,7 +392,7 @@ async def delete_index(req: aiohttp.web.Request):
 
     if delete_result.deleted_count != 1:
         # Document could not be deleted.
-        raise HTTPNotFound(text=f"There is no index with id: {index_id}.")
+        raise NotFound(f"There is no index with id: {index_id}.")
 
     await reset_history(db, index_id)
 

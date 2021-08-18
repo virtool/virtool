@@ -3,12 +3,12 @@ Provides request handlers for accessing GenBank through the web server.
 
 """
 import aiohttp
-from aiohttp.web import HTTPBadGateway, HTTPNotFound
+from aiohttp.web import HTTPBadGateway
 
 import virtool.genbank.http
 import virtool.http.proxy
 import virtool.http.routes
-from virtool.api.response import json_response
+from virtool.api.response import json_response, NotFound
 
 routes = virtool.http.routes.Routes()
 
@@ -28,7 +28,7 @@ async def get(req):
         data = await virtool.genbank.http.fetch(settings, session, accession)
 
         if data is None:
-            raise HTTPNotFound(text="Not found")
+            raise NotFound()
 
         return json_response(data)
 

@@ -1,8 +1,7 @@
 import asyncio
 
 from aiohttp import web
-
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPNotFound
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
 
 import virtool.http.routes
 import virtool.otus.db
@@ -10,7 +9,7 @@ import virtool.otus.isolates
 import virtool.otus.sequences
 import virtool.references.db
 import virtool.validators
-from virtool.api.response import json_response, HTTPInsufficientRights
+from virtool.api.response import json_response, InsufficientRights, NotFound
 from virtool.history.db import LIST_PROJECTION
 from virtool.http.schema import schema
 from virtool.otus.utils import find_isolate, evaluate_changes
@@ -52,7 +51,7 @@ async def download_otu(req):
     otu_id = req.match_info["otu_id"]
 
     if not await db.otus.count_documents({"_id": otu_id}):
-        raise HTTPNotFound(text="OTU not found")
+        raise NotFound("OTU not found")
 
     filename, fasta = await virtool.otus.db.generate_otu_fasta(db, otu_id)
 
@@ -97,7 +96,7 @@ async def get(req):
     complete = await virtool.otus.db.join_and_format(db, otu_id)
 
     if not complete:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     return json_response(complete)
 
@@ -131,10 +130,10 @@ async def create(req):
     reference = await db.references.find_one(ref_id, ["groups", "users"])
 
     if reference is None:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     if not await virtool.references.db.check_right(req, reference, "modify_otu"):
-        raise HTTPInsufficientRights()
+        raise InsufficientRights()
 
     name = data["name"].strip()
     abbreviation = data["abbreviation"].strip()
@@ -188,12 +187,12 @@ async def edit(req):
     document = await db.otus.find_one(otu_id, ["abbreviation", "name", "reference", "schema"])
 
     if not document:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     ref_id = document["reference"]["id"]
 
     if not await virtool.references.db.check_right(req, ref_id, "modify_otu"):
-        raise HTTPInsufficientRights()
+        raise InsufficientRights()
 
     name, abbreviation, schema = evaluate_changes(data, document)
 
@@ -232,10 +231,10 @@ async def remove(req):
     document = await db.otus.find_one(otu_id, ["reference"])
 
     if document is None:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
-        raise HTTPInsufficientRights()
+        raise InsufficientRights()
 
     await asyncio.shield(virtool.otus.db.remove(
         req.app,
@@ -259,7 +258,7 @@ async def list_isolates(req):
     document = await virtool.otus.db.join_and_format(db, otu_id)
 
     if not document:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     return json_response(document["isolates"])
 
@@ -278,7 +277,7 @@ async def get_isolate(req):
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["isolates"])
 
     if not document:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     isolate = dict(find_isolate(document["isolates"], isolate_id), sequences=[])
 
@@ -321,10 +320,10 @@ async def add_isolate(req):
     document = await db.otus.find_one(otu_id, ["reference"])
 
     if not document:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
-        raise HTTPInsufficientRights()
+        raise InsufficientRights()
 
         # All source types are stored in lower case.
     data["source_type"] = data["source_type"].lower()
@@ -375,12 +374,12 @@ async def edit_isolate(req):
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id})
 
     if not document:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     ref_id = document["reference"]["id"]
 
     if not await virtool.references.db.check_right(req, ref_id, "modify_otu"):
-        raise HTTPInsufficientRights()
+        raise InsufficientRights()
 
     # All source types are stored in lower case.
     if "source_type" in data:
@@ -414,10 +413,10 @@ async def set_as_default(req):
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference"])
 
     if not document:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
-        raise HTTPInsufficientRights()
+        raise InsufficientRights()
 
     isolate = await asyncio.shield(virtool.otus.isolates.set_default(
         req.app,
@@ -443,10 +442,10 @@ async def remove_isolate(req):
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference"])
 
     if not document:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
-        raise HTTPInsufficientRights()
+        raise InsufficientRights()
 
     await asyncio.shield(virtool.otus.isolates.remove(
         req.app,
@@ -466,7 +465,7 @@ async def list_sequences(req):
     isolate_id = req.match_info["isolate_id"]
 
     if not await db.otus.count_documents({"_id": otu_id, "isolates.id": isolate_id}):
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     projection = list(virtool.otus.db.SEQUENCE_PROJECTION)
 
@@ -498,7 +497,7 @@ async def get_sequence(req):
     )
 
     if sequence is None:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     return json_response(sequence)
 
@@ -549,12 +548,12 @@ async def create_sequence(req):
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference", "schema"])
 
     if not document:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     ref_id = document["reference"]["id"]
 
     if not await virtool.references.db.check_right(req, ref_id, "modify_otu"):
-        raise HTTPInsufficientRights()
+        raise InsufficientRights()
 
     message = await virtool.otus.sequences.check_segment_or_target(
         db,
@@ -623,10 +622,10 @@ async def edit_sequence(req):
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference", "segment"])
 
     if not document or not await db.sequences.count_documents({"_id": sequence_id}):
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
-        raise HTTPInsufficientRights()
+        raise InsufficientRights()
 
     message = await virtool.otus.sequences.check_segment_or_target(
         db,
@@ -665,15 +664,15 @@ async def remove_sequence(req):
     sequence_id = req.match_info["sequence_id"]
 
     if not await db.sequences.count_documents({"_id": sequence_id}):
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference"])
 
     if document is None:
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
-        raise HTTPInsufficientRights()
+        raise InsufficientRights()
 
     await asyncio.shield(virtool.otus.sequences.remove(
         req.app,
@@ -693,7 +692,7 @@ async def list_history(req):
     otu_id = req.match_info["otu_id"]
 
     if not await db.otus.count_documents({"_id": otu_id}):
-        raise HTTPNotFound(text="Not found")
+        raise NotFound()
 
     cursor = db.history.find({"otu.id": otu_id}, projection=LIST_PROJECTION)
 
