@@ -51,7 +51,7 @@ class TestUpload:
 
         resp = await client.post_form("/api/uploads", data=files)
 
-        assert await resp_is.invalid_query(resp, {
+        await resp_is.invalid_query(resp, {
             "name": ["required field"]
         })
 

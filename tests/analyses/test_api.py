@@ -303,7 +303,7 @@ async def test_upload_file(error, files, resp_is, spawn_job_client, static_time,
         assert resp.status == 404
 
     elif error == 422:
-        assert await resp_is.invalid_query(resp, {
+        await resp_is.invalid_query(resp, {
             "name": ["required field"]
         })
 

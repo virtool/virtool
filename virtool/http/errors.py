@@ -2,7 +2,7 @@ from typing import Callable
 
 from aiohttp import web
 
-from virtool.api.response import json_response
+from virtool.api.response import json_response, InvalidQuery
 from virtool.templates import setup_template_env
 from virtool.utils import get_static_hash
 
@@ -20,6 +20,9 @@ async def middleware(req: web.Request, handler: Callable):
             "id": "_".join(ex.reason.lower().split(" ")),
             "message": ex.text
         }
+        if type(ex) == InvalidQuery:
+            data["errors"] = ex.errors
+
         return json_response(data, ex.status)
 
 

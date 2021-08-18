@@ -12,7 +12,7 @@ import virtool.samples.db
 import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
-from virtool.api.response import invalid_query, json_response, NotFound
+from virtool.api.response import json_response, NotFound, InvalidQuery
 from virtool.uploads.models import Upload, UploadType
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ async def create(req):
     errors = virtool.uploads.utils.naive_validator(req)
 
     if errors:
-        return invalid_query(errors)
+        raise InvalidQuery(errors)
 
     name = req.query["name"]
 
