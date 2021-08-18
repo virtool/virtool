@@ -26,22 +26,7 @@ def json_response(data: object, status: int = 200, headers: Optional[dict] = Non
 class HTTPInsufficientRights(HTTPForbidden):
     def __init__(self, message="Insufficient rights"):
         super().__init__(text=message, reason="insufficient_rights")
-
-
-def conflict(message: str = "Conflict") -> web.Response:
-    """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``409`` status the JSON
-    body ``{"message": "Conflict"}``.
-
-    :param message: text to send instead of 'Not found'
-    :return: the response
-
-    """
-    return json_response({
-        "id": "conflict",
-        "message": message
-    }, status=409)
-
+        
 
 def empty_request(message: str = "Empty request") -> web.Response:
     """

@@ -15,13 +15,13 @@ Schema:
 - settings (Object) user-specific settings - currently not used
 
 """
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPNotFound
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPNotFound, HTTPConflict
 
 import virtool.http.auth
 import virtool.http.routes
 import virtool.users.db
 import virtool.validators
-from virtool.api.response import conflict, json_response
+from virtool.api.response import json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import apply_projection
 from virtool.errors import DatabaseError
@@ -154,7 +154,7 @@ async def create_first(req):
     data = await req.json()
 
     if await db.users.count_documents({}):
-        return conflict("Virtool already has at least one user")
+        raise HTTPConflict(text="Virtool already has at least one user")
 
     if data["user_id"] == "virtool":
         raise HTTPBadRequest(text="Reserved user name: virtool")
@@ -260,7 +260,7 @@ async def edit(req):
             raise HTTPNotFound(text="User does not exist")
 
         if "User is not member of group" in str(err):
-            return conflict("User is not member of group")
+            raise HTTPConflict(text="User is not member of group")
 
         raise
 

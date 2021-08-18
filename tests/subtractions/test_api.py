@@ -74,7 +74,7 @@ async def test_upload(error, tmp_path, spawn_job_client, snapshot, resp_is, pg_s
         return
 
     if error == "409":
-        assert await resp_is.conflict(resp, "File name already exists")
+        await resp_is.conflict(resp, "File name already exists")
         return
 
     assert resp.status == 201
@@ -119,7 +119,7 @@ async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is, 
         return
 
     if error == "409":
-        assert await resp_is.conflict(resp, "Subtraction has already been finalized")
+        await resp_is.conflict(resp, "Subtraction has already been finalized")
         return
 
     if error == "422":
@@ -160,7 +160,7 @@ async def test_job_remove(exists, ready, tmp_path, spawn_job_client, snapshot, r
         return
 
     if ready:
-        assert await resp_is.conflict(resp, "Only unfinalized subtractions can be deleted")
+        await resp_is.conflict(resp, "Only unfinalized subtractions can be deleted")
         return
 
     await resp_is.no_content(resp)

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import aiohttp.web
 import pymongo.errors
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPNotFound
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPNotFound, HTTPConflict
 from aiohttp.web_fileresponse import FileResponse
 from cerberus import Validator
 from sqlalchemy import exc, select
@@ -26,7 +26,7 @@ import virtool.utils
 import virtool.validators
 from virtool.analyses.db import PROJECTION
 from virtool.analyses.utils import WORKFLOW_NAMES
-from virtool.api.response import conflict, invalid_query, json_response, HTTPInsufficientRights
+from virtool.api.response import invalid_query, json_response, HTTPInsufficientRights
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.caches.models import SampleArtifactCache
 from virtool.caches.utils import join_cache_path
@@ -767,7 +767,7 @@ async def cache_job_remove(req: aiohttp.web.Request):
         raise HTTPNotFound(text="Not found")
 
     if "ready" in document and document["ready"]:
-        return conflict("Jobs cannot delete finalized caches")
+        raise HTTPConflict(text="Jobs cannot delete finalized caches")
 
     await virtool.caches.db.remove(req.app, document["_id"])
 
@@ -805,7 +805,7 @@ async def upload_artifact(req):
     try:
         artifact = await create_artifact_file(pg, name, name, sample_id, artifact_type)
     except exc.IntegrityError:
-        return conflict("Artifact file has already been uploaded for this sample")
+        raise HTTPConflict(text="Artifact file has already been uploaded for this sample")
 
     upload_id = artifact["id"]
 
@@ -869,7 +869,7 @@ async def upload_reads(req):
             upload_id=upload
         )
     except exc.IntegrityError:
-        return conflict("Reads file name is already uploaded for this sample")
+        raise HTTPConflict(text="Reads file name is already uploaded for this sample")
 
     headers = {
         "Location": f"/api/samples/{sample_id}/reads/{reads['name_on_disk']}"
@@ -905,7 +905,7 @@ async def create_cache(req):
     try:
         document = await virtool.caches.db.create(db, sample_id, key, sample["paired"])
     except pymongo.errors.DuplicateKeyError:
-        return conflict(f"Cache with key {key} already exists for this sample")
+        raise HTTPConflict(text=f"Cache with key {key} already exists for this sample")
 
     headers = {
         "Location": f"/api/samples/{sample_id}/caches/{document['id']}"
@@ -941,7 +941,7 @@ async def upload_cache_reads(req):
     except OSError:
         raise HTTPBadRequest(text="File is not compressed")
     except exc.IntegrityError:
-        return conflict("File name is already uploaded for this cache")
+        raise HTTPConflict(text="File name is already uploaded for this cache")
     except asyncio.CancelledError:
         logger.debug(f"Reads cache file upload aborted for {key}")
         return aiohttp.web.Response(status=499)
@@ -995,7 +995,7 @@ async def upload_cache_artifact(req):
     try:
         artifact = await create_artifact_file(pg, name, name, sample_id, artifact_type, key=key)
     except exc.IntegrityError:
-        return conflict("Artifact file has already been uploaded for this sample cache")
+        raise HTTPConflict(text="Artifact file has already been uploaded for this sample cache")
 
     upload_id = artifact["id"]
 

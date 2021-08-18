@@ -233,7 +233,7 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
             await resp_is.bad_request(resp, "Primary group does not exist")
 
         elif error == "not_group_member":
-            assert await resp_is.conflict(resp, "User is not member of group")
+            await resp_is.conflict(resp, "User is not member of group")
 
     elif error == "invalid_input":
         assert await resp_is.invalid_input(resp, {

@@ -1,10 +1,10 @@
 import os
 
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPNotFound
+from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPNotFound, HTTPConflict
 
 import virtool.jobs.db
 import virtool.utils
-from virtool.api.response import conflict, json_response
+from virtool.api.response import json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_one_field
 from virtool.http.routes import Routes
@@ -103,7 +103,7 @@ async def cancel(req):
         raise HTTPNotFound(text="Not found")
 
     if not virtool.jobs.is_running_or_waiting(document):
-        return conflict("Not cancellable")
+        raise HTTPConflict(text="Not cancellable")
 
     document = await req.app["jobs"].cancel(job_id)
 
@@ -152,7 +152,7 @@ async def push_status(req):
         raise HTTPNotFound(text="Not found")
 
     if status[-1]["state"] in ("complete", "cancelled", "error"):
-        return conflict("Job is finished")
+        raise HTTPConflict(text="Job is finished")
 
     document = await db.jobs.find_one_and_update({"_id": job_id}, {
         "$set": {
@@ -207,7 +207,7 @@ async def remove(req):
         raise HTTPNotFound(text="Not found")
 
     if virtool.jobs.is_running_or_waiting(document):
-        return conflict("Job is running or waiting and cannot be removed")
+        raise HTTPConflict(text="Job is running or waiting and cannot be removed")
 
     # Removed the documents associated with the job ids from the database.
     await db.jobs.delete_one({"_id": job_id})

@@ -248,7 +248,7 @@ async def test_remove(mocker, error, spawn_client, resp_is, tmp_path):
         return
 
     if error == "409":
-        assert await resp_is.conflict(resp, "Analysis is still running")
+        await resp_is.conflict(resp, "Analysis is still running")
         return
 
     await resp_is.no_content(resp)
@@ -449,11 +449,11 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
         return
 
     if error == "409_workflow":
-        assert await resp_is.conflict(resp, "Not a NuVs analysis")
+        await resp_is.conflict(resp, "Not a NuVs analysis")
         return
 
     if error == "409_ready":
-        assert await resp_is.conflict(resp, "Analysis is still running")
+        await resp_is.conflict(resp, "Analysis is still running")
         return
 
     assert resp.status == 201

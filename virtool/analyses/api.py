@@ -8,7 +8,8 @@ from typing import Any, Dict, Union
 
 import aiohttp.web
 import aiojobs.aiohttp
-from aiohttp.web import HTTPNoContent, HTTPBadRequest, HTTPNotModified, HTTPNotFound
+from aiohttp.web import HTTPNoContent, HTTPBadRequest, HTTPNotModified, HTTPNotFound, HTTPConflict
+
 
 import virtool.analyses.format
 import virtool.bio
@@ -19,7 +20,7 @@ from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFormat, AnalysisFile
 from virtool.analyses.utils import attach_analysis_files, find_nuvs_sequence_by_index
 from virtool.api.json import isoformat
-from virtool.api.response import conflict, invalid_query, json_response, HTTPInsufficientRights
+from virtool.api.response import invalid_query, json_response, HTTPInsufficientRights
 from virtool.api.utils import paginate
 from virtool.db.core import Collection, DB
 from virtool.http.schema import schema
@@ -210,7 +211,7 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
         raise HTTPInsufficientRights()
 
     if not document["ready"]:
-        return conflict("Analysis is still running")
+        raise HTTPConflict(text="Analysis is still running")
 
     await db.analyses.delete_one({"_id": analysis_id})
 
@@ -247,7 +248,7 @@ async def delete_analysis(req):
         raise HTTPNotFound(text="Not found")
 
     if document["ready"]:
-        return conflict("Analysis is finalized")
+        raise HTTPConflict(text="Analysis is finalized")
 
     await db.analyses.delete_one({"_id": analysis_id})
 
@@ -396,10 +397,10 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
         raise HTTPNotFound(text="Analysis not found")
 
     if document["workflow"] != "nuvs":
-        return conflict("Not a NuVs analysis")
+        raise HTTPConflict(text="Not a NuVs analysis")
 
     if not document["ready"]:
-        return conflict("Analysis is still running")
+        raise HTTPConflict(text="Analysis is still running")
 
     sequence = find_nuvs_sequence_by_index(document, sequence_index)
 
@@ -461,7 +462,7 @@ async def patch_analysis(req: aiohttp.web.Request):
         raise HTTPNotFound(text=f"There is no analysis with id {analysis_id}")
 
     if "ready" in analysis_document and analysis_document["ready"]:
-        return conflict("There is already a result for this analysis.")
+        raise HTTPConflict(text="There is already a result for this analysis.")
 
     request_json = await req.json()
 
