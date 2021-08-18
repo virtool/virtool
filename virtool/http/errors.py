@@ -20,7 +20,7 @@ async def middleware(req: web.Request, handler: Callable):
             "id": "_".join(ex.reason.lower().split(" ")),
             "message": ex.text
         }
-        if type(ex) == InvalidQuery:
+        if isinstance(ex, InvalidQuery):
             data["errors"] = ex.errors
 
         return json_response(data, ex.status)
