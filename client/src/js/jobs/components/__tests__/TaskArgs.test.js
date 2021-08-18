@@ -3,11 +3,11 @@ import {
     BuildIndexRows,
     CreateSampleRows,
     CreateSubtractionRows,
-    TaskArgsRows,
+    JobArgsRows,
     UpdateSampleRows
-} from "../TaskArgs";
+} from "../JobArgs";
 
-const taskTypes = [
+const workflows = [
     "aodp",
     "build_index",
     "create_sample",
@@ -17,18 +17,14 @@ const taskTypes = [
     "update_sample"
 ];
 
-describe("<TaskArgs />", () => {
-    let props;
-
-    it.each(taskTypes)("renders <TaskArgsRows /> correctly when task type is %p", taskType => {
-        props = {
-            taskType,
-            taskArgs: {
-                sample_id: "123abc",
-                analysis_id: "test-analysis"
-            }
+describe("<JobArgs />", () => {
+    it.each(workflows)("renders <JobArgsRows /> correctly when workflow is %p", workflow => {
+        const args = {
+            sample_id: "123abc",
+            analysis_id: "test-analysis"
         };
-        const wrapper = shallow(<TaskArgsRows {...props} />);
+
+        const wrapper = shallow(<JobArgsRows workflow={workflow} args={args} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

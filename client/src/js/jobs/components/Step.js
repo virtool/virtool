@@ -47,8 +47,8 @@ const StyledJobStepDescription = styled.div`
     }
 `;
 
-export const JobStepDescription = ({ stage, state, task, timestamp }) => {
-    const { description, title } = getStepDescription(stage, state, task);
+export const JobStepDescription = ({ stage, state, workflow, timestamp }) => {
+    const { description, title } = getStepDescription(stage, state, workflow);
 
     return (
         <StyledJobStepDescription>
@@ -99,12 +99,12 @@ const StyledJobStep = styled(BoxGroupSection)`
     display: flex;
 `;
 
-const JobStep = ({ complete, step, task }) => (
+const JobStep = ({ complete, step, workflow }) => (
     <StyledJobStep>
         <JobStepIconContainer>
             <JobStepIcon state={step.state} complete={complete} />
         </JobStepIconContainer>
-        <JobStepDescription {...step} task={task} />
+        <JobStepDescription {...step} workflow={workflow} />
     </StyledJobStep>
 );
 

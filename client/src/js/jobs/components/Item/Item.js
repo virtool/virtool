@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import styled from "styled-components";
 import { getFontSize, getFontWeight } from "../../../app/theme";
 import { AffixedProgressBar, Attribution, LinkBox } from "../../../base";
-import { getTaskDisplayName } from "../../../utils/utils";
+import { getWorkflowDisplayName } from "../../../utils/utils";
 import { cancelJob, removeJob } from "../../actions";
 import { JobAction } from "./Action";
 import { JobStatus } from "./Status";
@@ -32,7 +32,18 @@ const JobItemLinkBox = styled(LinkBox)`
     z-index: 10;
 `;
 
-export const JobItem = ({ id, task, state, progress, created_at, user, canCancel, canRemove, onCancel, onRemove }) => {
+export const JobItem = ({
+    id,
+    workflow,
+    state,
+    progress,
+    created_at,
+    user,
+    canCancel,
+    canRemove,
+    onCancel,
+    onRemove
+}) => {
     const handleCancel = useCallback(() => onCancel(id), [id, onCancel]);
     const handleRemove = useCallback(() => onRemove(id), [id, onRemove]);
 
@@ -56,7 +67,7 @@ export const JobItem = ({ id, task, state, progress, created_at, user, canCancel
 
                 <JobItemBody>
                     <JobItemHeader>
-                        <span>{getTaskDisplayName(task)}</span>
+                        <span>{getWorkflowDisplayName(workflow)}</span>
                         <JobStatus state={state} pad={canCancel || canRemove} />
                     </JobItemHeader>
                     <Attribution time={created_at} user={user.id} />

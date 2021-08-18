@@ -3,7 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { BoxGroup, BoxGroupHeader, Table } from "../../base";
 
-const TaskArgsRow = ({ children, title }) => (
+const JobArgsRow = ({ children, title }) => (
     <tr>
         <th>{title}</th>
         <td>{children}</td>
@@ -12,68 +12,68 @@ const TaskArgsRow = ({ children, title }) => (
 
 export const AnalysisRows = ({ sample_id, analysis_id }) => (
     <React.Fragment>
-        <TaskArgsRow title="Sample">
+        <JobArgsRow title="Sample">
             <Link to={`/samples/${sample_id}`}>{sample_id}</Link>
-        </TaskArgsRow>
-        <TaskArgsRow title="Analysis">
+        </JobArgsRow>
+        <JobArgsRow title="Analysis">
             <Link to={`/samples/${sample_id}/analyses/${analysis_id}`}>{analysis_id}</Link>
-        </TaskArgsRow>
+        </JobArgsRow>
     </React.Fragment>
 );
 
 export const BuildIndexRows = ({ index_id, ref_id }) => (
     <React.Fragment>
-        <TaskArgsRow title="Reference">
+        <JobArgsRow title="Reference">
             <Link to={`/refs/${ref_id}`}>{ref_id}</Link>
-        </TaskArgsRow>
-        <TaskArgsRow title="Index">
+        </JobArgsRow>
+        <JobArgsRow title="Index">
             <Link to={`/refs/${ref_id}/indexes/${index_id}`}>{index_id}</Link>
-        </TaskArgsRow>
+        </JobArgsRow>
     </React.Fragment>
 );
 
 export const CreateSampleRows = ({ sample_id }) => (
     <React.Fragment>
-        <TaskArgsRow title="Sample">
+        <JobArgsRow title="Sample">
             <Link to={`/samples/${sample_id}`}>{sample_id}</Link>
-        </TaskArgsRow>
+        </JobArgsRow>
     </React.Fragment>
 );
 
 export const CreateSubtractionRows = ({ subtraction_id }) => (
-    <TaskArgsRow title="Subtraction">
+    <JobArgsRow title="Subtraction">
         <Link to={`/subtraction/${subtraction_id}`}>{subtraction_id}</Link>
-    </TaskArgsRow>
+    </JobArgsRow>
 );
 
 export const UpdateSampleRows = ({ sample_id }) => (
-    <TaskArgsRow title="Subtraction">
+    <JobArgsRow title="Subtraction">
         <Link to={`/samples/${sample_id}`}>{sample_id}</Link>
-    </TaskArgsRow>
+    </JobArgsRow>
 );
 
-export const TaskArgsRows = ({ taskType, taskArgs }) => {
-    switch (taskType) {
+export const JobArgsRows = ({ workflow, args }) => {
+    switch (workflow) {
         case "build_index":
-            return <BuildIndexRows {...taskArgs} />;
+            return <BuildIndexRows {...args} />;
 
         case "create_sample":
-            return <CreateSampleRows {...taskArgs} />;
+            return <CreateSampleRows {...args} />;
 
         case "create_subtraction":
-            return <CreateSubtractionRows {...taskArgs} />;
+            return <CreateSubtractionRows {...args} />;
 
         case "aodp":
         case "nuvs":
         case "pathoscope_bowtie":
-            return <AnalysisRows {...taskArgs} />;
+            return <AnalysisRows {...args} />;
 
         case "update_sample":
-            return <UpdateSampleRows {...taskArgs} />;
+            return <UpdateSampleRows {...args} />;
     }
 };
 
-export const TaskArgs = props => (
+export const JobArgs = props => (
     <BoxGroup>
         <BoxGroupHeader>
             <h2>Arguments</h2>
@@ -81,13 +81,13 @@ export const TaskArgs = props => (
         </BoxGroupHeader>
         <Table>
             <tbody>
-                <TaskArgsRows {...props} />
+                <JobArgsRows {...props} />
             </tbody>
         </Table>
     </BoxGroup>
 );
 
-TaskArgs.propTypes = {
-    taskType: PropTypes.string.isRequired,
-    taskArgs: PropTypes.object.isRequired
+JobArgs.propTypes = {
+    workflow: PropTypes.string.isRequired,
+    args: PropTypes.object.isRequired
 };

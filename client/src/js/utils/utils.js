@@ -123,13 +123,13 @@ export const formatIsolateName = isolate => {
 };
 
 /**
- * Transforms a plain taskName (eg. pathoscope_bowtie) to a human-readable name (eg. PathoscopeBowtie).
+ * Transforms a plain workflow ID (eg. pathoscope_bowtie) to a human-readable name (eg. PathoscopeBowtie).
  *
  * @func
- * @param taskName {string} plain task name
- * @returns {string}
+ * @param workflow {string} plain workflow ID
+ * @returns {string} human-readable workflow name
  */
-export const getTaskDisplayName = taskName => get(taskDisplayNames, taskName, startCase(taskName));
+export const getWorkflowDisplayName = workflow => get(workflowDisplayNames, workflow, startCase(workflow));
 
 export const reportAPIError = action => window.captureException(action.error);
 
@@ -156,11 +156,11 @@ export const getTargetChange = target => ({
 });
 
 /**
- * Object that maps algorithm names (task names) to human-readable names.
+ * Object that maps workflow IDs to human-readable names.
  *
  * @type {object}
  */
-export const taskDisplayNames = {
+export const workflowDisplayNames = {
     aodp: "AODP",
     create_sample: "Create Sample",
     create_subtraction: "Create Subtraction",

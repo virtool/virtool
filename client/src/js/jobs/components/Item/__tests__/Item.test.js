@@ -7,7 +7,7 @@ describe("<JobItem />", () => {
         props = {
             id: "foo",
             progress: 1,
-            task: "build_index",
+            workflow: "build_index",
             created_at: "Foo",
             user: {
                 id: "bob"
