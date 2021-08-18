@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional
 
 from aiohttp import web
-from aiohttp.web_exceptions import HTTPForbidden, HTTPNotFound
+from aiohttp.web_exceptions import HTTPForbidden, HTTPNotFound, HTTPUnprocessableEntity
 
 
 def json_response(data: object, status: int = 200, headers: Optional[dict] = None) -> web.Response:
@@ -33,19 +33,9 @@ class NotFound(HTTPNotFound):
         super().__init__(text=message, reason="not_found")
 
 
-def empty_request(message: str = "Empty request") -> web.Response:
-    """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON
-    body ``{"message": "Empty request"}``.
-
-    :param message: text to send instead of 'Empty request'
-    :return: the response
-
-    """
-    return json_response({
-        "id": "empty_request",
-        "message": message
-    }, status=422)
+class EmptyRequest(HTTPUnprocessableEntity):
+    def __init__(self, message="Empty request"):
+        super().__init__(text=message, reason="empty_request")
 
 
 def invalid_input(errors: Dict[str, Any]) -> web.Response:

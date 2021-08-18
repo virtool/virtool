@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.http.routes
 import virtool.validators
-from virtool.api.response import empty_request, json_response, NotFound
+from virtool.api.response import json_response, NotFound, EmptyRequest
 from virtool.http.schema import schema
 from virtool.labels.db import attach_sample_count
 from virtool.labels.models import Label
@@ -121,7 +121,7 @@ async def edit(req):
     label_id = int(req.match_info["label_id"])
 
     if not data:
-        return empty_request()
+        raise EmptyRequest()
 
     async with AsyncSession(req.app["pg"]) as session:
         result = await session.execute(select(Label).filter_by(id=label_id))
