@@ -52,8 +52,11 @@ export function* getOTUHistory(action) {
 }
 
 export function* createOTU(action) {
-    const extraFunc = { closeModal: put(push({ state: { createOTU: false } })) };
-    yield apiCall(otusAPI.create, action, CREATE_OTU, {}, extraFunc);
+    const resp = yield apiCall(otusAPI.create, action, CREATE_OTU);
+
+    if (resp.ok) {
+        yield put(push({ state: { createOTU: false } }));
+    }
 }
 
 export function* editOTU(action) {
@@ -65,10 +68,11 @@ export function* setIsolateAsDefault(action) {
 }
 
 export function* removeOTU(action) {
-    const extraFunc = {
-        goBack: put(push(`/refs/${action.refId}/otus`))
-    };
-    yield apiCall(otusAPI.remove, action, REMOVE_OTU, {}, extraFunc);
+    const resp = yield apiCall(otusAPI.remove, action, REMOVE_OTU);
+
+    if (resp.ok) {
+        yield put(push(`/refs/${action.refId}/otus`));
+    }
 }
 
 export function* addIsolate(action) {

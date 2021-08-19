@@ -1,6 +1,5 @@
 import { push } from "connected-react-router";
 import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
-import { pushState } from "../app/actions";
 import {
     ADD_REFERENCE_GROUP,
     ADD_REFERENCE_USER,
@@ -22,6 +21,19 @@ import {
 import { apiCall, pushFindTerm } from "../utils/sagas";
 import * as referenceAPI from "./api";
 
+export function* afterReferenceCreation() {
+    yield put(
+        push({
+            pathname: "/refs",
+            state: {
+                cloneReference: false,
+                emptyReference: false,
+                importReference: false
+            }
+        })
+    );
+}
+
 export function* findReferences(action) {
     yield apiCall(referenceAPI.find, action, FIND_REFERENCES);
     yield pushFindTerm(action.term);
@@ -32,11 +44,11 @@ export function* getReference(action) {
 }
 
 export function* emptyReference(action) {
-    const extraFunc = {
-        closeModal: put(push({ state: { emptyReference: false } }))
-    };
-    yield apiCall(referenceAPI.create, action, EMPTY_REFERENCE, {}, extraFunc);
-    yield put(push("/refs"));
+    const resp = yield apiCall(referenceAPI.create, action, EMPTY_REFERENCE);
+
+    if (resp.ok) {
+        yield afterReferenceCreation();
+    }
 }
 
 export function* editReference(action) {
@@ -44,30 +56,39 @@ export function* editReference(action) {
 }
 
 export function* removeReference(action) {
-    yield apiCall(referenceAPI.remove, action, REMOVE_REFERENCE);
-    yield put(push("/refs"));
+    const resp = yield apiCall(referenceAPI.remove, action, REMOVE_REFERENCE);
+
+    if (resp.ok) {
+        yield put(push("/refs"));
+    }
 }
 
 export function* importReference(action) {
-    const extraFunc = {
-        closeModal: put(pushState({ importReference: false }))
-    };
-    yield apiCall(referenceAPI.importReference, action, IMPORT_REFERENCE, {}, extraFunc);
-    yield put(push("/refs"));
+    const resp = yield apiCall(referenceAPI.importReference, action, IMPORT_REFERENCE);
+
+    if (resp.ok) {
+        yield afterReferenceCreation();
+    }
 }
 
 export function* cloneReference(action) {
-    const extraFunc = {
-        closeModal: put(pushState({ cloneReference: false }))
-    };
-    yield apiCall(referenceAPI.cloneReference, action, CLONE_REFERENCE, {}, extraFunc);
-    yield put(push("/refs"));
+    const resp = yield apiCall(referenceAPI.cloneReference, action, CLONE_REFERENCE);
+
+    if (resp.ok) {
+        yield afterReferenceCreation();
+    }
 }
 
 export function* remoteReference() {
-    yield apiCall(referenceAPI.remoteReference, { remote_from: "virtool/ref-plant-viruses" }, REMOTE_REFERENCE);
-    yield put(push({ pathname: "/refs" }));
-    yield put({ type: FIND_REFERENCES.REQUESTED });
+    const resp = yield apiCall(
+        referenceAPI.remoteReference,
+        { remote_from: "virtool/ref-plant-viruses" },
+        REMOTE_REFERENCE
+    );
+
+    if (resp.ok) {
+        yield afterReferenceCreation();
+    }
 }
 
 export function* addRefUser(action) {

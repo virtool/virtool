@@ -6,7 +6,7 @@
 import { replace } from "connected-react-router";
 import { get, includes } from "lodash-es";
 import { matchPath } from "react-router-dom";
-import { all, put } from "redux-saga/effects";
+import { put } from "redux-saga/effects";
 import { LOGOUT } from "../app/actionTypes";
 import { createFindURL } from "./utils";
 
@@ -21,16 +21,12 @@ import { createFindURL } from "./utils";
  * @param apiMethod {function} the function to call with ``action``
  * @param action {object} an action to pass to ``apiMethod``
  * @param actionType {object} a request-style action type
- * @param extra {object} extra properties to assign to the SUCCEEDED action
+ * @param context {object} data to assign to the `context` property of the action
  */
-export function* apiCall(apiMethod, action, actionType, extra = {}, extraFunctions) {
+export function* apiCall(apiMethod, action, actionType, context = {}) {
     try {
         const response = yield apiMethod(action);
-        yield put({ type: actionType.SUCCEEDED, data: response.body, ...extra });
-        if (extraFunctions) {
-            yield all(extraFunctions);
-        }
-
+        yield put({ type: actionType.SUCCEEDED, data: response.body, context });
         return response;
     } catch (error) {
         const statusCode = get(error, "response.statusCode");

@@ -108,6 +108,7 @@ export function* getSample(action) {
 
 export function* createSample(action) {
     const resp = yield apiCall(samplesAPI.create, action, CREATE_SAMPLE);
+
     if (resp.ok) {
         yield put(push("/samples"));
     }
@@ -126,6 +127,9 @@ export function* updateSampleRights(action) {
 }
 
 export function* removeSample(action) {
-    yield apiCall(samplesAPI.remove, action, REMOVE_SAMPLE);
-    yield put(push("/samples"));
+    const resp = yield apiCall(samplesAPI.remove, action, REMOVE_SAMPLE);
+
+    if (resp.ok) {
+        yield put(push("/samples"));
+    }
 }

@@ -86,13 +86,13 @@ describe("filesReducer()", () => {
         const action = {
             type: FIND_FILES.SUCCEEDED,
             data: { documents: [] },
-            fileType: "test"
+            context: { fileType: "test" }
         };
         const result = reducer(state, action);
         expect(result).toEqual({
             ...state,
             ...action.data,
-            fileType: action.fileType
+            fileType: "test"
         });
     });
 
