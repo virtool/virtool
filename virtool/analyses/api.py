@@ -19,7 +19,7 @@ from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFormat, AnalysisFile
 from virtool.analyses.utils import attach_analysis_files, find_nuvs_sequence_by_index
 from virtool.api.json import isoformat
-from virtool.api.response import invalid_query, json_response, InsufficientRights, NotFound
+from virtool.api.response import json_response, InsufficientRights, NotFound, InvalidQuery
 from virtool.api.utils import paginate
 from virtool.db.core import Collection, DB
 from virtool.http.schema import schema
@@ -291,7 +291,7 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
     errors = naive_validator(req)
 
     if errors:
-        return invalid_query(errors)
+        raise InvalidQuery(errors)
 
     name = req.query.get("name")
 

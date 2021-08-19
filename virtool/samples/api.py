@@ -26,7 +26,7 @@ import virtool.utils
 import virtool.validators
 from virtool.analyses.db import PROJECTION
 from virtool.analyses.utils import WORKFLOW_NAMES
-from virtool.api.response import invalid_query, json_response, InsufficientRights, NotFound
+from virtool.api.response import json_response, InsufficientRights, NotFound, InvalidQuery
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.caches.models import SampleArtifactCache
 from virtool.caches.utils import join_cache_path
@@ -79,7 +79,7 @@ async def find(req):
     v = Validator(QUERY_SCHEMA, allow_unknown=True)
 
     if not v.validate(dict(req.query)):
-        return invalid_query(v.errors)
+        raise InvalidQuery(v.errors)
 
     queries = list()
 
@@ -792,7 +792,7 @@ async def upload_artifact(req):
     errors = virtool.uploads.utils.naive_validator(req)
 
     if errors:
-        return invalid_query(errors)
+        raise InvalidQuery(errors)
 
     name = req.query.get("name")
 
@@ -982,7 +982,7 @@ async def upload_cache_artifact(req):
     errors = virtool.uploads.utils.naive_validator(req)
 
     if errors:
-        return invalid_query(errors)
+        raise InvalidQuery(errors)
 
     name = req.query.get("name")
 
