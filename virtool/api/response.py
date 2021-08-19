@@ -44,17 +44,7 @@ class InvalidQuery(HTTPUnprocessableEntity):
         self.errors = errors
 
 
-def invalid_input(errors: Dict[str, Any]) -> web.Response:
-    """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON
-    body ``{"message": "Invalid input", "errors": <errors>}``.
-
-    :param errors: error output from a :class:`cerberus.Validator` that led to the error response
-    :return: the response
-
-    """
-    return json_response({
-        "id": "invalid_input",
-        "message": "Invalid input",
-        "errors": errors
-    }, status=422)
+class InvalidInput(HTTPUnprocessableEntity):
+    def __init__(self, errors, message="Invalid input"):
+        super().__init__(text=message, reason="invalid_input")
+        self.errors = errors

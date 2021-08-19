@@ -236,7 +236,7 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
             await resp_is.conflict(resp, "User is not member of group")
 
     elif error == "invalid_input":
-        assert await resp_is.invalid_input(resp, {
+        await resp_is.invalid_input(resp, {
             "force_reset": ["must be of boolean type"]
         })
 

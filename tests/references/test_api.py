@@ -319,7 +319,7 @@ async def test_edit(data_type, error, mocker, snapshot, spawn_client, resp_is):
         return
 
     if error == "422":
-        assert await resp_is.invalid_input(resp, {
+        await resp_is.invalid_input(resp, {
             "targets": [
                 {
                     "0": [
