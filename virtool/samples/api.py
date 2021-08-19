@@ -982,7 +982,7 @@ async def upload_cache_artifact(req):
     errors = virtool.uploads.utils.naive_validator(req)
 
     if errors:
-        return InvalidQuery(errors)
+        raise InvalidQuery(errors)
 
     name = req.query.get("name")
 
