@@ -28,9 +28,3 @@ exports[`<Welcome /> should render 1`] = `
   </Welcome__StyledWelcome>
 </Container>
 `;
-
-exports[`<Welcome /> should render LoadingPlaceholder when version information is ("3.6.3", null) 1`] = `<LoadingPlaceholder />`;
-
-exports[`<Welcome /> should render LoadingPlaceholder when version information is (null, "v1.2.3") 1`] = `<LoadingPlaceholder />`;
-
-exports[`<Welcome /> should render LoadingPlaceholder when version information is (null, null) 1`] = `<LoadingPlaceholder />`;
