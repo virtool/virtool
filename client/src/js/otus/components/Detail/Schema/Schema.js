@@ -33,6 +33,7 @@ const reorder = (list, startIndex, endIndex) => {
 };
 
 const getItemStyle = (isDragging, draggableStyle) => ({
+    backgroundColor: "white",
     userSelect: "none",
     margin: "0 0 10px 0",
     ...draggableStyle
