@@ -5,7 +5,6 @@
  */
 import { replace } from "connected-react-router";
 import { get, includes } from "lodash-es";
-import { matchPath } from "react-router-dom";
 import { put } from "redux-saga/effects";
 import { LOGOUT } from "../app/actionTypes";
 import { createFindURL } from "./utils";
@@ -44,31 +43,6 @@ export function* apiCall(apiMethod, action, actionType, context = {}) {
         }
 
         throw error;
-    }
-}
-
-/**
- * Executes an API call that uses Virtool's find implementation when the browser URL matches to ``path``.
- *
- * This generator is intended to be used in a saga triggered by ``LOCATION_CHANGE`` from ``connected-react-router``. If the
- * ``path`` matches the current browser URL and API request will be sent to the server with the search parameter
- * (if any) appended to the request URL.
- *
- * The actual API call is made using {@link apiCall}.
- *
- * @generator
- * @param path {string} the path that, when matched, will allow find calls
- * @param apiMethod {function} the API function to call
- * @param action {object} the action to pass to the ``apiMethod``
- * @param actionType {object} the request-style action type to dispatch when the call completes
- */
-export function* apiFind(path, apiMethod, action, actionType) {
-    const { pathname } = action.payload;
-
-    const match = matchPath(pathname, { path, exact: true });
-
-    if (match) {
-        yield apiCall(apiMethod, {}, actionType);
     }
 }
 
