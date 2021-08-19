@@ -72,7 +72,7 @@ async def create_fake_sample(
     db = app["db"]
     pg = app["pg"]
 
-    subtraction_ids = [doc["_id"] async for doc in db.subtraction.find()]
+    subtraction_ids = [doc["_id"] async for doc in db.subtraction.find()][:2]
 
     if finalized is True:
         with suppress(IntegrityError):
