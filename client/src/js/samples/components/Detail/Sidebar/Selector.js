@@ -38,10 +38,10 @@ export const SampleSidebarSelectorItem = ({ checked, color, description, id, nam
     return (
         <StyledSampleSidebarSelectorItem as="button" onClick={handleSelect}>
             <SampleSidebarSelectorItemCheck>{checked && <Icon name="check" />}</SampleSidebarSelectorItemCheck>
-            <React.Fragment>
+            <div>
                 <SmallSampleLabel color={color} name={name} />
                 <p>{description}</p>
-            </React.Fragment>
+            </div>
         </StyledSampleSidebarSelectorItem>
     );
 };
