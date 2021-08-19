@@ -6,10 +6,10 @@ import {
     ADD_REFERENCE_USER,
     CHECK_REMOTE_UPDATES,
     CLONE_REFERENCE,
-    EMPTY_REFERENCE,
     EDIT_REFERENCE,
     EDIT_REFERENCE_GROUP,
     EDIT_REFERENCE_USER,
+    EMPTY_REFERENCE,
     FIND_REFERENCES,
     GET_REFERENCE,
     IMPORT_REFERENCE,
@@ -19,7 +19,7 @@ import {
     REMOVE_REFERENCE_USER,
     UPDATE_REMOTE_REFERENCE
 } from "../app/actionTypes";
-import { apiCall, pushFindTerm, setPending } from "../utils/sagas";
+import { apiCall, pushFindTerm } from "../utils/sagas";
 import * as referenceAPI from "./api";
 
 export function* findReferences(action) {
@@ -44,7 +44,7 @@ export function* editReference(action) {
 }
 
 export function* removeReference(action) {
-    yield setPending(apiCall(referenceAPI.remove, action, REMOVE_REFERENCE));
+    yield apiCall(referenceAPI.remove, action, REMOVE_REFERENCE);
     yield put(push("/refs"));
 }
 
@@ -52,7 +52,7 @@ export function* importReference(action) {
     const extraFunc = {
         closeModal: put(pushState({ importReference: false }))
     };
-    yield setPending(apiCall(referenceAPI.importReference, action, IMPORT_REFERENCE, {}, extraFunc));
+    yield apiCall(referenceAPI.importReference, action, IMPORT_REFERENCE, {}, extraFunc);
     yield put(push("/refs"));
 }
 
@@ -60,7 +60,7 @@ export function* cloneReference(action) {
     const extraFunc = {
         closeModal: put(pushState({ cloneReference: false }))
     };
-    yield setPending(apiCall(referenceAPI.cloneReference, action, CLONE_REFERENCE, {}, extraFunc));
+    yield apiCall(referenceAPI.cloneReference, action, CLONE_REFERENCE, {}, extraFunc);
     yield put(push("/refs"));
 }
 

@@ -7,7 +7,7 @@ import { replace } from "connected-react-router";
 import { get, includes } from "lodash-es";
 import { matchPath } from "react-router-dom";
 import { all, put } from "redux-saga/effects";
-import { LOGOUT, SET_APP_PENDING, UNSET_APP_PENDING } from "../app/actionTypes";
+import { LOGOUT } from "../app/actionTypes";
 import { createFindURL } from "./utils";
 
 /**
@@ -101,17 +101,4 @@ export function* putGenericError(actionType, error) {
         error,
         status
     });
-}
-
-/**
- * Dispatches actions while yielding the passed ``generator`` that result in a GitHub-style loading bar progressing
- * across the page just below the navigation bar.
- *
- * @generator
- * @param generator {generator} the generator to yield while the bar is progressing *
- */
-export function* setPending(generator) {
-    yield put({ type: SET_APP_PENDING });
-    yield generator;
-    yield put({ type: UNSET_APP_PENDING });
 }

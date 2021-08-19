@@ -2,7 +2,7 @@ import { noop } from "lodash-es";
 import { buffers, END, eventChannel } from "redux-saga";
 import { call, put, take, takeEvery, throttle } from "redux-saga/effects";
 import { FIND_FILES, REMOVE_FILE, UPLOAD } from "../app/actionTypes";
-import { apiCall, putGenericError, setPending } from "../utils/sagas";
+import { apiCall, putGenericError } from "../utils/sagas";
 import { uploadProgress } from "./actions";
 import * as filesAPI from "./api";
 
@@ -19,7 +19,7 @@ export function* findFiles(action) {
 }
 
 export function* removeFile(action) {
-    yield setPending(apiCall(filesAPI.remove, action, REMOVE_FILE));
+    yield apiCall(filesAPI.remove, action, REMOVE_FILE);
 }
 
 export function* upload(action) {

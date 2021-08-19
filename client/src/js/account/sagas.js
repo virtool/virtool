@@ -13,7 +13,7 @@ import {
     UPDATE_ACCOUNT_SETTINGS,
     UPDATE_API_KEY
 } from "../app/actionTypes";
-import { apiCall, setPending } from "../utils/sagas";
+import { apiCall } from "../utils/sagas";
 import * as accountAPI from "./api";
 
 export function* watchAccount() {
@@ -40,15 +40,15 @@ export function* getAccountSettings() {
 }
 
 export function* updateAccount(action) {
-    yield setPending(apiCall(accountAPI.update, action, UPDATE_ACCOUNT));
+    yield apiCall(accountAPI.update, action, UPDATE_ACCOUNT);
 }
 
 export function* updateAccountSettings(action) {
-    yield setPending(apiCall(accountAPI.updateSettings, action, UPDATE_ACCOUNT_SETTINGS));
+    yield apiCall(accountAPI.updateSettings, action, UPDATE_ACCOUNT_SETTINGS);
 }
 
 export function* changeAccountPassword(action) {
-    yield setPending(apiCall(accountAPI.changePassword, action, CHANGE_ACCOUNT_PASSWORD));
+    yield apiCall(accountAPI.changePassword, action, CHANGE_ACCOUNT_PASSWORD);
     yield put({ type: GET_ACCOUNT.REQUESTED });
 }
 
@@ -62,12 +62,12 @@ export function* createAPIKey(action) {
 }
 
 export function* updateAPIKey(action) {
-    yield setPending(apiCall(accountAPI.updateAPIKey, action, UPDATE_API_KEY));
+    yield apiCall(accountAPI.updateAPIKey, action, UPDATE_API_KEY);
     yield put({ type: GET_API_KEYS.REQUESTED });
 }
 
 export function* removeAPIKey(action) {
-    yield setPending(apiCall(accountAPI.removeAPIKey, action, REMOVE_API_KEY));
+    yield apiCall(accountAPI.removeAPIKey, action, REMOVE_API_KEY);
     yield put({ type: GET_API_KEYS.REQUESTED });
 }
 
