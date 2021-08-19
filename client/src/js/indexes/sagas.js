@@ -66,7 +66,7 @@ export function* listReadyIndexes(action) {
 }
 
 export function* createIndex(action) {
-    const response = yield apiCall(indexesAPI.create, action, CREATE_INDEX, {});
+    const response = yield apiCall(indexesAPI.create, action, CREATE_INDEX);
 
     if (response.ok) {
         yield put(pushState({ rebuild: false }));

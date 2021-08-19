@@ -235,8 +235,10 @@ describe("References Reducer", () => {
         beforeEach(() => {
             action = {
                 type: REMOVE_REFERENCE_USER.SUCCEEDED,
-                refId: "foo",
-                userId: "bar"
+                context: {
+                    refId: "foo",
+                    userId: "bar"
+                }
             };
             state = {
                 detail: {
@@ -256,7 +258,7 @@ describe("References Reducer", () => {
         });
 
         it("when store and action ref ids don't match", () => {
-            action.refId = "boo";
+            action.context.refId = "boo";
             const result = reducer(state, action);
             expect(result).toEqual(state);
         });
@@ -330,8 +332,10 @@ describe("References Reducer", () => {
         beforeEach(() => {
             action = {
                 type: REMOVE_REFERENCE_GROUP.SUCCEEDED,
-                refId: "foobar",
-                groupId: "bar"
+                context: {
+                    refId: "foobar",
+                    groupId: "bar"
+                }
             };
 
             state = {
@@ -355,7 +359,7 @@ describe("References Reducer", () => {
         });
 
         it("when store and action ref ids don't match", () => {
-            action.refId = "bid";
+            action.context.refId = "bid";
             const result = reducer(state, action);
             expect(result).toEqual(state);
         });

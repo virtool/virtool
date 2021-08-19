@@ -194,7 +194,8 @@ export default function analysesReducer(state = initialState, action) {
             });
 
         case BLAST_NUVS.SUCCEEDED:
-            return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, action.data);
+            const { analysisId, sequenceIndex } = action.context;
+            return setNuvsBLAST(state, analysisId, sequenceIndex, action.data);
 
         default:
             return state;

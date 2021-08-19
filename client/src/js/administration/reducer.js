@@ -12,7 +12,7 @@ export default function settingsReducer(state = initialState, action) {
         case UPDATE_SETTINGS.SUCCEEDED:
             return {
                 ...state,
-                data: { ...state.data, ...action.update }
+                data: { ...state.data, ...action.context.update }
             };
 
         default:

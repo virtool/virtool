@@ -15,11 +15,11 @@ function* getUser(action) {
 }
 
 function* createUser(action) {
-    const extraFunc = {
-        closeModal: put(pushState({ createUser: false }))
-    };
+    const resp = yield apiCall(usersAPI.create, action, CREATE_USER);
 
-    yield apiCall(usersAPI.create, action, CREATE_USER, {}, extraFunc);
+    if (resp.ok) {
+        yield put(pushState({ createUser: false }));
+    }
 }
 
 function* createFirstUser(action) {
@@ -31,10 +31,11 @@ function* editUser(action) {
 }
 
 function* removeUser(action) {
-    const extraFunc = {
-        goBack: put(push("/administration/users"))
-    };
-    yield apiCall(usersAPI.remove, action, REMOVE_USER, {}, extraFunc);
+    const resp = yield apiCall(usersAPI.remove, action, REMOVE_USER);
+
+    if (resp.ok) {
+        yield put(push("/administration/users"));
+    }
 }
 
 export function* watchUsers() {

@@ -174,13 +174,15 @@ export default function referenceReducer(state = initialState, action) {
             return state;
 
         case REMOVE_REFERENCE_USER.SUCCEEDED:
-            if (action.refId === state.detail.id) {
+            if (action.context.refId === state.detail.id) {
+                const userId = action.context.userId;
+
                 return {
                     ...state,
-                    pendingRemoveUsers: without(state.pendingRemoveUsers, action.userId),
+                    pendingRemoveUsers: without(state.pendingRemoveUsers, userId),
                     detail: {
                         ...state.detail,
-                        users: reject(state.detail.users, { id: action.userId })
+                        users: reject(state.detail.users, { id: userId })
                     }
                 };
             }
@@ -216,14 +218,16 @@ export default function referenceReducer(state = initialState, action) {
             return state;
 
         case REMOVE_REFERENCE_GROUP.SUCCEEDED:
-            if (action.refId === state.detail.id) {
+            if (action.context.refId === state.detail.id) {
+                const groupId = action.context.groupId;
+
                 return {
                     ...state,
-                    pendingRemoveGroups: without(state.pendingRemoveGroups, action.groupId),
+                    pendingRemoveGroups: without(state.pendingRemoveGroups, groupId),
                     detail: {
                         ...state.detail,
                         groups: reject(state.detail.groups, {
-                            id: action.groupId
+                            id: groupId
                         })
                     }
                 };

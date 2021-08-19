@@ -30,7 +30,7 @@ export function* getHmm(action) {
 }
 
 export function* purgeHmms(action) {
-    const resp = yield apiCall(hmmsAPI.purge, action, PURGE_HMMS, {}, extraFunc);
+    const resp = yield apiCall(hmmsAPI.purge, action, PURGE_HMMS);
 
     if (resp.ok) {
         yield put(push("/hmm"));

@@ -33,9 +33,11 @@ describe("Settings Reducer", () => {
         const state = { data: { boo: 1, foo: "bar" } };
         const action = {
             type: UPDATE_SETTINGS.SUCCEEDED,
-            update: {
-                foo: "baz",
-                bar: "baz"
+            context: {
+                update: {
+                    foo: "baz",
+                    bar: "baz"
+                }
             }
         };
         const result = reducer(state, action);

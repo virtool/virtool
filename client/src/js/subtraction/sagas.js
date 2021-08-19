@@ -22,8 +22,11 @@ export function* getSubtraction(action) {
 }
 
 export function* createSubtraction(action) {
-    yield apiCall(subtractionAPI.create, action, CREATE_SUBTRACTION, {});
-    yield put(pushState({ createSubtraction: false }));
+    const resp = yield apiCall(subtractionAPI.create, action, CREATE_SUBTRACTION);
+
+    if (resp.ok) {
+        yield put(pushState({ createSubtraction: false }));
+    }
 }
 
 export function* shortlistSubtractions(action) {
@@ -31,13 +34,19 @@ export function* shortlistSubtractions(action) {
 }
 
 export function* editSubtraction(action) {
-    yield apiCall(subtractionAPI.edit, action, EDIT_SUBTRACTION);
-    yield put(pushState({ editSubtraction: false }));
+    const resp = yield apiCall(subtractionAPI.edit, action, EDIT_SUBTRACTION);
+
+    if (resp.ok) {
+        yield put(pushState({ editSubtraction: false }));
+    }
 }
 
 export function* removeSubtraction(action) {
-    yield apiCall(subtractionAPI.remove, action, REMOVE_SUBTRACTION);
-    yield put(push("/subtraction"));
+    const resp = yield apiCall(subtractionAPI.remove, action, REMOVE_SUBTRACTION);
+
+    if (resp.ok) {
+        yield put(push("/subtraction"));
+    }
 }
 
 export function* watchSubtraction() {
