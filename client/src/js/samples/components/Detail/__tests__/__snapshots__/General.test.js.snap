@@ -113,30 +113,6 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
     <Box__BoxGroup>
       <Box__BoxGroupHeader>
         <h2>
-          Default Subtractions
-        </h2>
-        <p>
-          This subtraction will be the default selection when creating an analysis.
-        </p>
-      </Box__BoxGroupHeader>
-      <Table>
-        <tbody>
-          <tr>
-            <th>
-              Subtraction
-            </th>
-            <td>
-              <Link
-                to="/subtraction/undefined"
-              />
-            </td>
-          </tr>
-        </tbody>
-      </Table>
-    </Box__BoxGroup>
-    <Box__BoxGroup>
-      <Box__BoxGroupHeader>
-        <h2>
           Notes
         </h2>
         <p>
@@ -260,30 +236,6 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
             </th>
             <td>
               Yes
-            </td>
-          </tr>
-        </tbody>
-      </Table>
-    </Box__BoxGroup>
-    <Box__BoxGroup>
-      <Box__BoxGroupHeader>
-        <h2>
-          Default Subtractions
-        </h2>
-        <p>
-          This subtraction will be the default selection when creating an analysis.
-        </p>
-      </Box__BoxGroupHeader>
-      <Table>
-        <tbody>
-          <tr>
-            <th>
-              Subtraction
-            </th>
-            <td>
-              <Link
-                to="/subtraction/undefined"
-              />
             </td>
           </tr>
         </tbody>
