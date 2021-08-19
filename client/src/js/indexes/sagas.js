@@ -16,7 +16,7 @@ import {
 } from "../app/actionTypes";
 import * as otusAPI from "../otus/api";
 import * as refsAPI from "../references/api";
-import { apiCall, setPending } from "../utils/sagas";
+import { apiCall } from "../utils/sagas";
 import * as indexesAPI from "./api";
 
 export function* watchIndexes() {
@@ -66,7 +66,7 @@ export function* listReadyIndexes(action) {
 }
 
 export function* createIndex(action) {
-    const response = yield apiCall(indexesAPI.create, action, CREATE_INDEX, {});
+    const response = yield apiCall(indexesAPI.create, action, CREATE_INDEX);
 
     if (response.ok) {
         yield put(pushState({ rebuild: false }));
@@ -74,5 +74,5 @@ export function* createIndex(action) {
 }
 
 export function* getIndexHistory(action) {
-    yield setPending(apiCall(indexesAPI.getHistory, action, GET_INDEX_HISTORY));
+    yield apiCall(indexesAPI.getHistory, action, GET_INDEX_HISTORY);
 }

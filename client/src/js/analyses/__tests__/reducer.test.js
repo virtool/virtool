@@ -307,8 +307,10 @@ describe("Analyses Reducer", () => {
         };
         const action = {
             type: BLAST_NUVS.SUCCEEDED,
-            analysisId: "testid",
-            sequenceIndex: 3,
+            context: {
+                analysisId: "testid",
+                sequenceIndex: 3
+            },
             data: {}
         };
         const result = reducer(state, action);

@@ -101,7 +101,7 @@ export default function fileReducer(state = initialState, action) {
         case FIND_FILES.SUCCEEDED:
             return {
                 ...updateDocuments(state, action, "uploaded_at", true),
-                fileType: action.fileType
+                fileType: action.context.fileType
             };
 
         case UPLOAD.REQUESTED:

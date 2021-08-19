@@ -17,7 +17,7 @@ import {
     REVERT,
     SET_ISOLATE_AS_DEFAULT
 } from "../app/actionTypes";
-import { apiCall, pushFindTerm, putGenericError, setPending } from "../utils/sagas";
+import { apiCall, pushFindTerm, putGenericError } from "../utils/sagas";
 import * as otusAPI from "./api";
 
 const getCurrentOTUsPath = state => `/refs/${state.references.detail.id}/otus`;
@@ -52,12 +52,15 @@ export function* getOTUHistory(action) {
 }
 
 export function* createOTU(action) {
-    const extraFunc = { closeModal: put(push({ state: { createOTU: false } })) };
-    yield setPending(apiCall(otusAPI.create, action, CREATE_OTU, {}, extraFunc));
+    const resp = yield apiCall(otusAPI.create, action, CREATE_OTU);
+
+    if (resp.ok) {
+        yield put(push({ state: { createOTU: false } }));
+    }
 }
 
 export function* editOTU(action) {
-    yield setPending(apiCall(otusAPI.edit, action, EDIT_OTU));
+    yield apiCall(otusAPI.edit, action, EDIT_OTU);
 }
 
 export function* setIsolateAsDefault(action) {
@@ -65,10 +68,11 @@ export function* setIsolateAsDefault(action) {
 }
 
 export function* removeOTU(action) {
-    const extraFunc = {
-        goBack: put(push(`/refs/${action.refId}/otus`))
-    };
-    yield setPending(apiCall(otusAPI.remove, action, REMOVE_OTU, {}, extraFunc));
+    const resp = yield apiCall(otusAPI.remove, action, REMOVE_OTU);
+
+    if (resp.ok) {
+        yield put(push(`/refs/${action.refId}/otus`));
+    }
 }
 
 export function* addIsolate(action) {

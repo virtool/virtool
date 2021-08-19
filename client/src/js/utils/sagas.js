@@ -5,9 +5,8 @@
  */
 import { replace } from "connected-react-router";
 import { get, includes } from "lodash-es";
-import { matchPath } from "react-router-dom";
-import { all, put } from "redux-saga/effects";
-import { LOGOUT, SET_APP_PENDING, UNSET_APP_PENDING } from "../app/actionTypes";
+import { put } from "redux-saga/effects";
+import { LOGOUT } from "../app/actionTypes";
 import { createFindURL } from "./utils";
 
 /**
@@ -21,16 +20,12 @@ import { createFindURL } from "./utils";
  * @param apiMethod {function} the function to call with ``action``
  * @param action {object} an action to pass to ``apiMethod``
  * @param actionType {object} a request-style action type
- * @param extra {object} extra properties to assign to the SUCCEEDED action
+ * @param context {object} data to assign to the `context` property of the action
  */
-export function* apiCall(apiMethod, action, actionType, extra = {}, extraFunctions) {
+export function* apiCall(apiMethod, action, actionType, context = {}) {
     try {
         const response = yield apiMethod(action);
-        yield put({ type: actionType.SUCCEEDED, data: response.body, ...extra });
-        if (extraFunctions) {
-            yield all(extraFunctions);
-        }
-
+        yield put({ type: actionType.SUCCEEDED, data: response.body, context });
         return response;
     } catch (error) {
         const statusCode = get(error, "response.statusCode");
@@ -48,31 +43,6 @@ export function* apiCall(apiMethod, action, actionType, extra = {}, extraFunctio
         }
 
         throw error;
-    }
-}
-
-/**
- * Executes an API call that uses Virtool's find implementation when the browser URL matches to ``path``.
- *
- * This generator is intended to be used in a saga triggered by ``LOCATION_CHANGE`` from ``connected-react-router``. If the
- * ``path`` matches the current browser URL and API request will be sent to the server with the search parameter
- * (if any) appended to the request URL.
- *
- * The actual API call is made using {@link apiCall}.
- *
- * @generator
- * @param path {string} the path that, when matched, will allow find calls
- * @param apiMethod {function} the API function to call
- * @param action {object} the action to pass to the ``apiMethod``
- * @param actionType {object} the request-style action type to dispatch when the call completes
- */
-export function* apiFind(path, apiMethod, action, actionType) {
-    const { pathname } = action.payload;
-
-    const match = matchPath(pathname, { path, exact: true });
-
-    if (match) {
-        yield apiCall(apiMethod, {}, actionType);
     }
 }
 
@@ -101,17 +71,4 @@ export function* putGenericError(actionType, error) {
         error,
         status
     });
-}
-
-/**
- * Dispatches actions while yielding the passed ``generator`` that result in a GitHub-style loading bar progressing
- * across the page just below the navigation bar.
- *
- * @generator
- * @param generator {generator} the generator to yield while the bar is progressing *
- */
-export function* setPending(generator) {
-    yield put({ type: SET_APP_PENDING });
-    yield generator;
-    yield put({ type: UNSET_APP_PENDING });
 }

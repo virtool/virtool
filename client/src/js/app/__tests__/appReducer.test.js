@@ -10,7 +10,6 @@ describe("App Reducer", () => {
             first: "bar",
             login: true,
             reset: false,
-            pending: false,
             resetCode: true
         };
     });
@@ -23,38 +22,12 @@ describe("App Reducer", () => {
         expect(result).toEqual(state);
     });
 
-    it("should return pending true", () => {
-        const action = {
-            type: "SET_APP_PENDING"
-        };
-        const result = appReducer(state, action);
-        expect(result).toEqual({
-            ...state,
-            pending: true
-        });
-    });
-
-    it("should return pending false", () => {
-        state.pending = true;
-        const action = {
-            type: "UNSET_APP_PENDING"
-        };
-        const result = appReducer(state, action);
-        expect(result).toEqual({
-            ...state,
-            pending: false
-        });
-    });
-
     it.each([
         [
             { type: LOGIN.SUCCEEDED, data: { reset: true, reset_code: false } },
-            { dev: "foo", first: "bar", pending: false, login: false, reset: true, resetCode: false }
+            { dev: "foo", first: "bar", login: false, reset: true, resetCode: false }
         ],
-        [
-            { type: LOGIN.FAILED },
-            { dev: "foo", first: "bar", pending: false, reset: false, resetCode: true, login: true }
-        ]
+        [{ type: LOGIN.FAILED }, { dev: "foo", first: "bar", reset: false, resetCode: true, login: true }]
     ])(".match(%o, %o)", (action, expected) => {
         const result = appReducer(state, action);
         expect(result).toEqual(expected);
@@ -78,7 +51,6 @@ describe("App Reducer", () => {
             {
                 dev: "foo",
                 first: "bar",
-                pending: false,
                 login: false,
                 reset: false,
                 resetCode: null,
@@ -90,7 +62,6 @@ describe("App Reducer", () => {
             {
                 dev: "foo",
                 first: "bar",
-                pending: false,
                 login: false,
                 reset: true,
                 resetCode: true,

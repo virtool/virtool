@@ -2,7 +2,7 @@ import { push } from "connected-react-router";
 import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 import { pushState } from "../app/actions";
 import { CREATE_FIRST_USER, CREATE_USER, EDIT_USER, FIND_USERS, GET_USER, REMOVE_USER } from "../app/actionTypes";
-import { apiCall, pushFindTerm, setPending } from "../utils/sagas";
+import { apiCall, pushFindTerm } from "../utils/sagas";
 import * as usersAPI from "./api";
 
 function* findUsers(action) {
@@ -15,11 +15,11 @@ function* getUser(action) {
 }
 
 function* createUser(action) {
-    const extraFunc = {
-        closeModal: put(pushState({ createUser: false }))
-    };
+    const resp = yield apiCall(usersAPI.create, action, CREATE_USER);
 
-    yield setPending(apiCall(usersAPI.create, action, CREATE_USER, {}, extraFunc));
+    if (resp.ok) {
+        yield put(pushState({ createUser: false }));
+    }
 }
 
 function* createFirstUser(action) {
@@ -27,14 +27,15 @@ function* createFirstUser(action) {
 }
 
 function* editUser(action) {
-    yield setPending(apiCall(usersAPI.edit, action, EDIT_USER));
+    yield apiCall(usersAPI.edit, action, EDIT_USER);
 }
 
 function* removeUser(action) {
-    const extraFunc = {
-        goBack: put(push("/administration/users"))
-    };
-    yield setPending(apiCall(usersAPI.remove, action, REMOVE_USER, {}, extraFunc));
+    const resp = yield apiCall(usersAPI.remove, action, REMOVE_USER);
+
+    if (resp.ok) {
+        yield put(push("/administration/users"));
+    }
 }
 
 export function* watchUsers() {

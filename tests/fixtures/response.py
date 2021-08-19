@@ -91,7 +91,8 @@ class RespIs:
         Check whether a response object is a valid Virtool ``invalid_query``.
 
         """
-        return resp.status == 422 and await resp.json() == {
+        assert resp.status == 422
+        assert await resp.json() == {
             "id": "invalid_query",
             "message": "Invalid query",
             "errors": errors

@@ -18,7 +18,7 @@ import labelsReducer from "../labels/reducer";
 import subtractionReducer from "../subtraction/reducer";
 import tasksReducer from "../tasks/reducer";
 import usersReducer from "../users/reducer";
-import { CREATE_FIRST_USER, LOGIN, LOGOUT, RESET_PASSWORD, SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
+import { CREATE_FIRST_USER, LOGIN, LOGOUT, RESET_PASSWORD } from "./actionTypes";
 import rootSaga from "./sagas";
 
 export const getInitialState = () => {
@@ -28,19 +28,12 @@ export const getInitialState = () => {
         dev,
         first,
         login,
-        reset: false,
-        pending: false
+        reset: false
     };
 };
 
 export const appReducer = (state = getInitialState(), action) => {
     switch (action.type) {
-        case SET_APP_PENDING:
-            return { ...state, pending: true };
-
-        case UNSET_APP_PENDING:
-            return { ...state, pending: false };
-
         case LOGIN.SUCCEEDED:
             if (action.data.reset) {
                 return {

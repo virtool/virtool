@@ -38,6 +38,12 @@ class EmptyRequest(HTTPUnprocessableEntity):
         super().__init__(text=message, reason="empty_request")
 
 
+class InvalidQuery(HTTPUnprocessableEntity):
+    def __init__(self, errors, message="Invalid query"):
+        super().__init__(text=message, reason="invalid_query")
+        self.errors = errors
+
+
 def invalid_input(errors: Dict[str, Any]) -> web.Response:
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON
@@ -50,21 +56,5 @@ def invalid_input(errors: Dict[str, Any]) -> web.Response:
     return json_response({
         "id": "invalid_input",
         "message": "Invalid input",
-        "errors": errors
-    }, status=422)
-
-
-def invalid_query(errors: Dict[str, Any]) -> web.Response:
-    """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON
-    body ``{"message": "Invalid query", "errors": <errors>}``.
-
-    :param errors: error output from a :class:`cerberus.Validator` that led to the error response
-    :return: the response
-
-    """
-    return json_response({
-        "id": "invalid_query",
-        "message": "Invalid query",
         "errors": errors
     }, status=422)

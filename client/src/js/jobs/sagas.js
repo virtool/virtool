@@ -8,7 +8,7 @@ import {
     REMOVE_JOB,
     WS_UPDATE_JOB
 } from "../app/actionTypes";
-import { apiCall, pushFindTerm, setPending } from "../utils/sagas";
+import { apiCall, pushFindTerm } from "../utils/sagas";
 import * as jobsAPI from "./api";
 import { getJobDetailId, getLinkedJobs } from "./selectors";
 
@@ -43,7 +43,7 @@ export function* findJobs(action) {
 }
 
 export function* getJob(action) {
-    yield setPending(apiCall(jobsAPI.get, action, GET_JOB));
+    yield apiCall(jobsAPI.get, action, GET_JOB);
 }
 
 export function* getLinkedJob(action) {
@@ -51,13 +51,13 @@ export function* getLinkedJob(action) {
 }
 
 export function* cancelJob(action) {
-    yield setPending(apiCall(jobsAPI.cancel, action, CANCEL_JOB));
+    yield apiCall(jobsAPI.cancel, action, CANCEL_JOB);
 }
 
 export function* removeJob(action) {
-    yield setPending(apiCall(jobsAPI.remove, action, REMOVE_JOB));
+    yield apiCall(jobsAPI.remove, action, REMOVE_JOB);
 }
 
 export function* clearJobs(action) {
-    yield setPending(apiCall(jobsAPI.clear, action, REMOVE_JOB));
+    yield apiCall(jobsAPI.clear, action, REMOVE_JOB);
 }

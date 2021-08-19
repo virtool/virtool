@@ -49,7 +49,5 @@ export function* blastNuvs(action) {
 }
 
 export function* removeAnalysis(action) {
-    yield apiCall(analysesAPI.remove, action, REMOVE_ANALYSIS, {
-        id: action.analysisId
-    });
+    yield apiCall(analysesAPI.remove, action, REMOVE_ANALYSIS);
 }

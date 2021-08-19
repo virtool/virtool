@@ -1,6 +1,6 @@
 import { takeEvery, takeLatest, throttle } from "redux-saga/effects";
 import { CREATE_GROUP, LIST_GROUPS, REMOVE_GROUP, SET_GROUP_PERMISSION } from "../app/actionTypes";
-import { apiCall, setPending } from "../utils/sagas";
+import { apiCall } from "../utils/sagas";
 import * as groupsAPI from "./api";
 
 export function* watchGroups() {
@@ -15,13 +15,13 @@ function* listGroups(action) {
 }
 
 function* createGroup(action) {
-    yield setPending(apiCall(groupsAPI.create, action, CREATE_GROUP));
+    yield apiCall(groupsAPI.create, action, CREATE_GROUP);
 }
 
 function* setGroupPermission(action) {
-    yield setPending(apiCall(groupsAPI.setPermission, action, SET_GROUP_PERMISSION));
+    yield apiCall(groupsAPI.setPermission, action, SET_GROUP_PERMISSION);
 }
 
 function* removeGroup(action) {
-    yield setPending(apiCall(groupsAPI.remove, action, REMOVE_GROUP));
+    yield apiCall(groupsAPI.remove, action, REMOVE_GROUP);
 }
