@@ -50,10 +50,11 @@ async def test_edit(error, spawn_client, resp_is, static_time):
     resp = await client.patch("/api/account", data)
 
     if error == "email_error":
-        await resp_is.invalid_input(resp, {"dev-at-virtool.ca": ["unknown field"]})
+        await resp_is.invalid_input(resp,  {'email': ["value does not match regex '^[a-zA-Z0-9_.+-]+@["
+                                                      "a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$'"]})
 
     elif error == "password_length_error":
-        await resp_is.invalid_input(resp, {"dev-at-virtool.ca": ["unknown field"]})
+        await resp_is.bad_request(resp, f"Password does not meet minimum length requirement (8)")
 
     elif error == "missing_old_password":
         await resp_is.invalid_input(resp, {"password": ["field 'old_password' is required"]})
@@ -132,7 +133,7 @@ async def test_update_settings(invalid_input, spawn_client, resp_is):
     resp = await client.patch("/api/account/settings", data)
 
     if invalid_input:
-        assert await resp_is.invalid_input(resp, {
+        await resp_is.invalid_input(resp, {
             "show_ids": ["must be of boolean type"]
         })
     else:

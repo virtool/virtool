@@ -78,7 +78,8 @@ class RespIs:
         Check whether a response object is a valid Virtool ``invalid_input``.
 
         """
-        return resp.status == 422 and await resp.json() == {
+        assert resp.status == 422
+        assert await resp.json() == {
             "id": "invalid_input",
             "message": "Invalid input",
             "errors": errors

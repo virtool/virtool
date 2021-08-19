@@ -632,7 +632,7 @@ async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_sessi
         assert not (await virtool.pg.utils.get_row_by_id(pg, SampleReads, 1)).upload
     else:
         assert resp.status == 422
-        assert await resp_is.invalid_input(resp, {"quality": ['required field']})
+        await resp_is.invalid_input(resp, {"quality": ['required field']})
 
 
 @pytest.mark.parametrize("delete_result,resp_is_attr", [(1, "no_content"), (0, "not_found")])
@@ -1251,7 +1251,7 @@ class TestCreateCache:
             snapshot.assert_match(document)
             assert await virtool.caches.db.get(dbi, document["id"])
         else:
-            assert await resp_is.invalid_input(resp, {"key": ['required field']})
+            await resp_is.invalid_input(resp, {"key": ['required field']})
 
     async def test_duplicate_cache(self, dbi, spawn_job_client, static_time):
         """
@@ -1534,4 +1534,4 @@ async def test_finalize_cache(field, resp_is, snapshot, spawn_job_client):
         snapshot.assert_match(await resp.json())
     else:
         assert resp.status == 422
-        assert await resp_is.invalid_input(resp, {"quality": ["required field"]})
+        await resp_is.invalid_input(resp, {"quality": ["required field"]})
