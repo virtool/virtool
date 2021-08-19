@@ -136,7 +136,7 @@ class Schema extends React.Component {
         return (
             <div>
                 {addButton}
-                <DragDropContext onDragEnd={this.onDragEnd}>
+                <DragDropContext nonce={window.__webpack_nonce__} onDragEnd={this.onDragEnd}>
                     <Droppable droppableId="droppable" direction="vertical">
                         {provided => (
                             <div ref={provided.innerRef}>
