@@ -1,6 +1,6 @@
 import { takeEvery, takeLatest } from "redux-saga/effects";
 import { GET_SETTINGS, UPDATE_SETTINGS } from "../app/actionTypes";
-import { apiCall, setPending } from "../utils/sagas";
+import { apiCall } from "../utils/sagas";
 import * as settingsAPI from "./api";
 
 export function* watchSettings() {
@@ -13,9 +13,7 @@ function* getSettings(action) {
 }
 
 function* updateSettings(action) {
-    yield setPending(
-        apiCall(settingsAPI.update, action, UPDATE_SETTINGS, {
-            update: action.update
-        })
-    );
+    yield apiCall(settingsAPI.update, action, UPDATE_SETTINGS, {
+        update: action.update
+    });
 }
