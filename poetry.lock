@@ -51,6 +51,21 @@ python-versions = ">=3.5"
 aiohttp = ["aiohttp (>=3.2.0)"]
 
 [[package]]
+name = "aioredis"
+version = "2.0.0"
+description = "asyncio (PEP 3156) Redis support"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+async-timeout = "*"
+typing-extensions = "*"
+
+[package.extras]
+hiredis = ["hiredis (>=1.0)"]
+
+[[package]]
 name = "arrow"
 version = "1.1.1"
 description = "Better dates & times for Python"
@@ -859,7 +874,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "8f0620f97231d1ec1215bd4dd65470f70da0b18f8800f0e87ab2c4bdf37fcd63"
+content-hash = "01b3c4f7177bbfe49d3b1ca174a76db11167b7612452aa60abcecb1800fbf674"
 
 [metadata.files]
 aiodns = [
@@ -912,6 +927,10 @@ aiohttp = [
 aiojobs = [
     {file = "aiojobs-0.3.0-py3-none-any.whl", hash = "sha256:ed49e9ea1be0261fde99305c84691b440f69172016c7b372f9c411dac082a65f"},
     {file = "aiojobs-0.3.0.tar.gz", hash = "sha256:f6631d42dc4308f7d883abbd70d4e976f3fcc35a3ba1e8eae5d4af4940a1e0c3"},
+]
+aioredis = [
+    {file = "aioredis-2.0.0-py3-none-any.whl", hash = "sha256:9921d68a3df5c5cdb0d5b49ad4fc88a4cfdd60c108325df4f0066e8410c55ffb"},
+    {file = "aioredis-2.0.0.tar.gz", hash = "sha256:3a2de4b614e6a5f8e104238924294dc4e811aefbe17ddf52c04a93cbf06e67db"},
 ]
 arrow = [
     {file = "arrow-1.1.1-py3-none-any.whl", hash = "sha256:77a60a4db5766d900a2085ce9074c5c7b8e2c99afeaa98ad627637ff6f292510"},
