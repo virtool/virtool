@@ -1,9 +1,10 @@
 import re
 
+from email_validator import validate_email, EmailSyntaxError
+
 import virtool.users.utils
 
 RE_HEX_COLOR = re.compile("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")
-RE_EMAIL = re.compile("^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
 
 
 def strip(value: str) -> str:
@@ -33,5 +34,7 @@ def is_valid_hex_color(field, value, error):
 
 
 def is_valid_email(field, value, error):
-    if not RE_EMAIL.match(value):
+    try:
+        validate_email(value)
+    except EmailSyntaxError:
         error(field, "Not a valid email")
