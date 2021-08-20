@@ -20,6 +20,9 @@ jobs:
         image: redis:6.0
       mongo:
         image: mongo:4.4
+        environment:
+          MONGO_INITDB_ROOT_USERNAME: virtool
+          MONGO_INITDB_ROOT_PASSWORD: virtool
       postgres:
         image: postgres:13.1
         env:
@@ -48,7 +51,7 @@ jobs:
           poetry run
           pytest
           -x
-          --db-connection-string mongodb://mongo:27017
+          --db-connection-string mongodb://virtool:virtool@mongo:27017
           --redis-connection-string redis://redis:6379
           --postgres-connection-string postgresql+asyncpg://virtool:virtool@postgres
           --cov
