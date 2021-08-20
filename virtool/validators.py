@@ -3,6 +3,7 @@ import re
 import virtool.users.utils
 
 RE_HEX_COLOR = re.compile("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")
+RE_EMAIL = re.compile("^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
 
 
 def strip(value: str) -> str:
@@ -29,3 +30,8 @@ def has_unique_segment_names(field, value, error):
 def is_valid_hex_color(field, value, error):
     if not RE_HEX_COLOR.match(value):
         error(field, "This is not a valid Hexadecimal color")
+
+
+def is_valid_email(field, value, error):
+    if not RE_EMAIL.match(value):
+        error(field, "Not a valid email")

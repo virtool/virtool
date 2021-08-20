@@ -50,7 +50,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     "email": {
         "type": "string",
         "coerce": virtool.validators.strip,
-        "regex": r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+        "check_with": virtool.validators.is_valid_email
     },
     "old_password": {
         "type": "string"
