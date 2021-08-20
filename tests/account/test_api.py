@@ -50,8 +50,7 @@ async def test_edit(error, spawn_client, resp_is, static_time):
     resp = await client.patch("/api/account", data)
 
     if error == "email_error":
-        await resp_is.invalid_input(resp,  {'email': ["value does not match regex '^[a-zA-Z0-9_.+-]+@["
-                                                      "a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$'"]})
+        await resp_is.invalid_input(resp,  {'dev-at-virtool.ca': ['Not a valid email']})
 
     elif error == "password_length_error":
         await resp_is.bad_request(resp, f"Password does not meet minimum length requirement (8)")

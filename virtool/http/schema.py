@@ -30,6 +30,8 @@ def schema(schema_dict: dict):
 
             request["data"] = validator.validated(data)
             if not request["data"]:
+                if "email" in validator.errors:
+                    raise InvalidInput({data["email"]: ["Not a valid email"]})
                 raise InvalidInput(validator.errors)
 
             return await handler(request)
