@@ -2,7 +2,7 @@ import logging
 import sys
 from typing import Optional
 
-from aioredis import Redis, create_redis_pool
+from aioredis import Redis, from_url
 
 logger = logging.getLogger(__name__)
 
@@ -17,12 +17,15 @@ async def connect(redis_connection_string: str) -> Redis:
     :return: a Redis connection object
 
     """
-    if not redis_connection_string.startswith("redis://"):
+    if all(
+        not redis_connection_string.startswith(protocol)
+        for protocol in ("redis://", "rediss://")
+    ):
         logger.fatal("Invalid Redis connection string")
         sys.exit(1)
 
     try:
-        redis = await create_redis_pool(redis_connection_string)
+        redis = await from_url(redis_connection_string)
         await check_version(redis)
 
         return redis
