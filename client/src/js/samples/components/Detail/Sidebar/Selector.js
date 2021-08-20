@@ -32,14 +32,24 @@ const StyledSampleSidebarSelectorItem = styled(BoxGroupSection)`
     }
 `;
 
+const SmallSampleSubtraction = styled(SmallSampleLabel)`
+    border: none;
+`;
+
 export const SampleSidebarSelectorItem = ({ checked, color, description, id, name, onClick }) => {
     const handleSelect = useCallback(() => onClick(id), [id, onClick]);
+
+    const smallSampleItem = color ? (
+        <SmallSampleLabel color={color} name={name} />
+    ) : (
+        <SmallSampleSubtraction name={name} />
+    );
 
     return (
         <StyledSampleSidebarSelectorItem as="button" onClick={handleSelect}>
             <SampleSidebarSelectorItemCheck>{checked && <Icon name="check" />}</SampleSidebarSelectorItemCheck>
             <div>
-                <SmallSampleLabel color={color} name={name} />
+                {smallSampleItem}
                 <p>{description}</p>
             </div>
         </StyledSampleSidebarSelectorItem>
