@@ -20,7 +20,7 @@ jobs:
         image: redis:6.0
       mongo:
         image: mongo:4.4
-        environment:
+        env:
           MONGO_INITDB_ROOT_USERNAME: virtool
           MONGO_INITDB_ROOT_PASSWORD: virtool
       postgres:
