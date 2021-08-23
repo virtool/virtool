@@ -473,3 +473,53 @@ async def test_requires_authorization(method, path, spawn_client):
     }
 
     assert resp.status == 401
+
+
+@pytest.mark.parametrize("value", ["valid_permissions", "invalid_permissions"])
+async def test_is_permission_dict(value, spawn_client, resp_is):
+    """
+    Tests that when an invalid permission is used, validators.is_permission_dict raises a 422 error.
+    """
+    client = await spawn_client(authorize=True)
+
+    permissions = {
+        "cancel_job": True,
+        "create_ref": True,
+        "create_sample": True,
+        "modify_hmm": True,
+    }
+
+    if value == "invalid_permissions":
+        permissions["foo"] = True
+
+    data = {
+        "permissions": permissions
+    }
+
+    resp = await client.patch("/api/account/keys/foo", data=data)
+
+    if value == "valid_permissions":
+        await resp_is.not_found(resp)
+    else:
+        await resp_is.invalid_input(resp, {'permissions': ['keys must be valid permissions']})
+
+
+@pytest.mark.parametrize("value", ["valid_email", "invalid_email"])
+async def test_is_valid_email(value, spawn_client, resp_is):
+    """
+    Tests that when an invalid email is used, validators.is_valid_email raises a 422 error.
+    """
+    client = await spawn_client(authorize=True)
+
+    data = {
+        "email": "valid@email.ca" if value == "valid_email" else "-foo-bar-@baz!.ca",
+        "old_password": "old_password",
+        "password": "password"
+    }
+
+    resp = await client.patch("/api/account", data=data)
+
+    if value == "valid_email":
+        await resp_is.bad_request(resp, "Invalid credentials")
+    else:
+        await resp_is.invalid_input(resp, {"email": ["Not a valid email"]})

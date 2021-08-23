@@ -282,3 +282,24 @@ async def test_remove(error, spawn_client, pg_session, resp_is):
         return
 
     await resp_is.no_content(resp)
+
+
+@pytest.mark.parametrize("value", ["valid_hex_color", "invalid_hex_color"])
+async def test_is_valid_hex_color(value, spawn_client, resp_is):
+    """
+    Tests that when an invalid hex color is used, validators.is_valid_hex_color raises a 422 error.
+    """
+    client = await spawn_client(authorize=True)
+
+    data = {
+        "name": "test",
+        "color": "#fc5203" if value == "valid_hex_color" else "foo",
+        "description": "test"
+    }
+
+    resp = await client.patch("/api/labels/00", data=data)
+
+    if value == "valid_hex_color":
+        await resp_is.not_found(resp)
+    else:
+        await resp_is.invalid_input(resp, {'color': ['This is not a valid Hexadecimal color']})
