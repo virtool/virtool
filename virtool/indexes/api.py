@@ -178,8 +178,7 @@ async def download_index_file(req: aiohttp.web.Request):
         raise NotFound()
 
     # check the requesting user has read access to the parent reference
-    has_read_access = await check_right(req, index_document["reference"], "read")
-    if not has_read_access:
+    if not await check_right(req, index_document["reference"], "read"):
         raise InsufficientRights()
 
     reference_id = index_document["reference"]["id"]
