@@ -26,6 +26,7 @@ from virtool.jobs.utils import JobRights
 from virtool.pg.utils import delete_row, get_rows
 from virtool.uploads.utils import naive_writer
 from virtool.utils import compress_json_with_gzip
+from virtool.references.db import check_right
 
 logger = logging.getLogger("indexes")
 routes = virtool.http.routes.Routes()
@@ -160,9 +161,39 @@ async def download_otus_json(req):
     return FileResponse(json_path, headers=headers)
 
 
-@routes.jobs_api.get("/api/indexes/{index_id}/files/{filename}")
+@routes.get("/api/indexes/{index_id}/files/{filename}")
 async def download_index_file(req: aiohttp.web.Request):
-    """Download files relating to a given index."""
+    """
+    Download files relating to a given index.
+    """
+    index_id = req.match_info["index_id"]
+    filename = req.match_info["filename"]
+
+    if filename not in FILES:
+        raise NotFound()
+
+    index_document = await req.app["db"].indexes.find_one(index_id)
+
+    if index_document is None:
+        raise NotFound()
+
+    # check the requesting user has read access to the parent reference
+    has_read_access = await check_right(req, index_document["reference"], "read")
+    if not has_read_access:
+        raise InsufficientRights()
+
+    reference_id = index_document["reference"]["id"]
+    path = req.app["settings"]["data_path"] / "references" / reference_id / index_id / filename
+
+    if not path.exists():
+        raise NotFound("File not found")
+
+    return aiohttp.web.FileResponse(path)
+
+
+@routes.jobs_api.get("/api/indexes/{index_id}/files/{filename}")
+async def download_index_file_for_jobs(req: aiohttp.web.Request):
+    """Download files relating to a given index for jobs."""
     index_id = req.match_info["index_id"]
     filename = req.match_info["filename"]
 
@@ -340,8 +371,8 @@ async def finalize(req):
 
         if missing_files := [f for f in required_files if f not in results]:
             raise HTTPConflict(text=
-                f"Reference requires that all Bowtie2 index files have been uploaded. "
-                f"Missing files: {', '.join(missing_files)}")
+                               f"Reference requires that all Bowtie2 index files have been uploaded. "
+                               f"Missing files: {', '.join(missing_files)}")
 
     document = await virtool.indexes.db.finalize(db, pg, ref_id, index_id)
 
