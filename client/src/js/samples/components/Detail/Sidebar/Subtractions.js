@@ -2,16 +2,26 @@ import React from "react";
 import { connect } from "react-redux";
 import { editSample } from "../../../actions";
 import { getDefaultSubtractions, getSampleDetailId, getSubtractionOptions } from "../../../selectors";
-import { SampleSidebarProperty } from "./Property";
+import { SidebarHeader } from "./Header";
+import { SampleSidebarList } from "./List";
+import { SampleSidebarSelector } from "./Selector";
+
+const SubtractionInner = ({ name }) => <React.Fragment>{name}</React.Fragment>;
 
 export const DefaultSubtractions = ({ defaultSubtractions, sampleId, subtractionOptions, onUpdate }) => (
-    <SampleSidebarProperty
-        header="Default Subtractions"
-        sampleItems={subtractionOptions}
-        selectedItems={defaultSubtractions}
-        sampleId={sampleId}
-        onUpdate={onUpdate}
-    />
+    <React.Fragment>
+        <SidebarHeader>
+            Default Subtractions
+            <SampleSidebarSelector
+                render={({ name }) => <SubtractionInner name={name} />}
+                sampleItems={subtractionOptions}
+                selectedItems={defaultSubtractions}
+                sampleId={sampleId}
+                onUpdate={onUpdate}
+            />
+        </SidebarHeader>
+        <SampleSidebarList items={defaultSubtractions} />
+    </React.Fragment>
 );
 
 export const mapStateToProps = state => ({

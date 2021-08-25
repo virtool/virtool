@@ -3,16 +3,34 @@ import { connect } from "react-redux";
 import { getLabels } from "../../../../labels/selectors";
 import { editSample } from "../../../actions";
 import { getSampleDetailId, getSampleLabels } from "../../../selectors";
-import { SampleSidebarProperty } from "./Property";
+import { SmallSampleLabel } from "../../Label";
+import { SidebarHeader } from "./Header";
+import { SampleSidebarSelector } from "./Selector";
+import { SampleSidebarList } from "./List";
+
+const SampleLabelInner = ({ name, color, description }) => (
+    <React.Fragment>
+        <SmallSampleLabel color={color} name={name} />
+        <p>{description}</p>
+    </React.Fragment>
+);
 
 export const SampleLabels = ({ allLabels, sampleLabels, sampleId, onUpdate }) => (
-    <SampleSidebarProperty
-        header="Labels"
-        sampleItems={allLabels}
-        selectedItems={sampleLabels}
-        sampleId={sampleId}
-        onUpdate={onUpdate}
-    />
+    <React.Fragment>
+        <SidebarHeader>
+            Labels
+            <SampleSidebarSelector
+                render={({ name, color, description }) => (
+                    <SampleLabelInner name={name} color={color} description={description} />
+                )}
+                sampleItems={allLabels}
+                selectedItems={sampleLabels}
+                sampleId={sampleId}
+                onUpdate={onUpdate}
+            />
+        </SidebarHeader>
+        <SampleSidebarList items={sampleLabels} />
+    </React.Fragment>
 );
 
 export const mapStateToProps = state => ({

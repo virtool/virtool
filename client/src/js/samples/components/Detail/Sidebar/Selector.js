@@ -1,88 +1,45 @@
 import { xor } from "lodash-es";
 import React, { useCallback } from "react";
 import styled from "styled-components";
-import { getFontSize } from "../../../../app/theme";
 import { BoxGroupSection, Icon, Input } from "../../../../base";
 import { useFuse } from "../../../../base/hooks";
 import { PopoverBody, usePopover } from "../../../../base/Popover";
-import { SmallSampleLabel } from "../../Label";
 import { SidebarHeaderButton } from "./Header";
-
-const SampleSidebarSelectorItemCheck = styled.div`
-    align-items: start;
-    color: ${props => props.theme.color.greyDark};
-    display: flex;
-    justify-content: center;
-    margin-right: 5px;
-    width: 32px;
-`;
+import { SampleSidebarSelectorItem } from "./SelectorItem";
 
 const SampleSidebarSelectorInputContainer = styled(BoxGroupSection)`
     padding: 10px;
 `;
 
-const StyledSampleSidebarSelectorItem = styled(BoxGroupSection)`
-    align-items: stretch;
-    display: flex;
-    padding: 10px 10px 10px 5px;
-
-    p {
-        font-size: ${getFontSize("md")};
-        margin: 5px 0 0;
-    }
-`;
-
-const SmallSampleSubtraction = styled(SmallSampleLabel)`
-    border: none;
-`;
-
-export const SampleSidebarSelectorItem = ({ checked, color, description, id, name, onClick }) => {
-    const handleSelect = useCallback(() => onClick(id), [id, onClick]);
-
-    const smallSampleItem = color ? (
-        <SmallSampleLabel color={color} name={name} />
-    ) : (
-        <SmallSampleSubtraction name={name} />
-    );
-
-    return (
-        <StyledSampleSidebarSelectorItem as="button" onClick={handleSelect}>
-            <SampleSidebarSelectorItemCheck>{checked && <Icon name="check" />}</SampleSidebarSelectorItemCheck>
-            <div>
-                {smallSampleItem}
-                <p>{description}</p>
-            </div>
-        </StyledSampleSidebarSelectorItem>
-    );
-};
-
-export const SampleSidebarSelector = ({ sampleItems, selectedItems, sampleId, onUpdate }) => {
+export const SampleSidebarSelector = ({ render, sampleItems, selectedItems, sampleId, onUpdate }) => {
     const [results, term, setTerm] = useFuse(sampleItems, ["name"], [sampleId]);
 
     const [attributes, show, styles, setPopperElement, setReferenceElement, setShow] = usePopover();
 
     const handleToggle = useCallback(
-        labelId => {
+        itemId => {
             onUpdate(
                 sampleId,
                 xor(
-                    selectedItems.map(label => label.id),
-                    [labelId]
+                    selectedItems.map(item => item.id),
+                    [itemId]
                 )
             );
         },
         [sampleId, selectedItems, onUpdate]
     );
 
-    const sampleLabelIds = selectedItems.map(label => label.id);
+    const sampleItemIds = selectedItems.map(item => item.id);
 
-    const labelComponents = results.map(label => (
+    const sampleItemComponents = results.map(item => (
         <SampleSidebarSelectorItem
-            key={label.id}
-            checked={sampleLabelIds.includes(label.id)}
-            {...label}
+            key={item.id}
+            checked={sampleItemIds.includes(item.id)}
+            {...item}
             onClick={handleToggle}
-        />
+        >
+            {render(item)}
+        </SampleSidebarSelectorItem>
     ));
 
     return (
@@ -95,13 +52,13 @@ export const SampleSidebarSelector = ({ sampleItems, selectedItems, sampleId, on
                     <SampleSidebarSelectorInputContainer>
                         <Input
                             value={term}
-                            placeholder="Filter labels"
-                            aria-label="Filter labels"
+                            placeholder="Filter items"
+                            aria-label="Filter items"
                             onChange={e => setTerm(e.target.value)}
                             autoFocus
                         />
                     </SampleSidebarSelectorInputContainer>
-                    {labelComponents}
+                    {sampleItemComponents}
                 </PopoverBody>
             )}
         </React.Fragment>
