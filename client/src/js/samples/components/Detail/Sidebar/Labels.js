@@ -1,49 +1,47 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
-import { listLabels } from "../../../../labels/actions";
+import { getLabels } from "../../../../labels/selectors";
+import { editSample } from "../../../actions";
 import { getSampleDetailId, getSampleLabels } from "../../../selectors";
-import { SampleLabel } from "../../Label";
+import { SmallSampleLabel } from "../../Label";
 import { SidebarHeader } from "./Header";
-import SampleLabelsSelector from "./Selector";
+import { SampleSidebarSelector } from "./Selector";
+import { SampleSidebarList } from "./List";
 
-const InlineSampleLabel = styled(SampleLabel)`
-    background-color: ${props => props.theme.color.white};
-    display: inline;
-    margin: 0 5px 5px 0;
-`;
+const SampleLabelInner = ({ name, color, description }) => (
+    <React.Fragment>
+        <SmallSampleLabel color={color} name={name} />
+        <p>{description}</p>
+    </React.Fragment>
+);
 
-const SampleLabelsList = styled.div`
-    display: flex;
-    flex-flow: wrap;
-`;
-
-export const SampleLabels = ({ sampleLabels, sampleId, onListLabels }) => {
-    useEffect(onListLabels, [sampleId]);
-
-    const sampleLabelComponents = sampleLabels.map(label => (
-        <InlineSampleLabel key={label.id} color={label.color} name={label.name} />
-    ));
-
-    return (
-        <React.Fragment>
-            <SidebarHeader>
-                Labels
-                <SampleLabelsSelector />
-            </SidebarHeader>
-            <SampleLabelsList>{sampleLabelComponents}</SampleLabelsList>
-        </React.Fragment>
-    );
-};
+export const SampleLabels = ({ allLabels, sampleLabels, sampleId, onUpdate }) => (
+    <React.Fragment>
+        <SidebarHeader>
+            Labels
+            <SampleSidebarSelector
+                render={({ name, color, description }) => (
+                    <SampleLabelInner name={name} color={color} description={description} />
+                )}
+                sampleItems={allLabels}
+                selectedItems={sampleLabels}
+                sampleId={sampleId}
+                onUpdate={onUpdate}
+            />
+        </SidebarHeader>
+        <SampleSidebarList items={sampleLabels} />
+    </React.Fragment>
+);
 
 export const mapStateToProps = state => ({
+    allLabels: getLabels(state),
     sampleId: getSampleDetailId(state),
     sampleLabels: getSampleLabels(state)
 });
 
 export const mapDispatchToProps = dispatch => ({
-    onListLabels: () => {
-        dispatch(listLabels());
+    onUpdate: (sampleId, labels) => {
+        dispatch(editSample(sampleId, { labels }));
     }
 });
 

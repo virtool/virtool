@@ -71,7 +71,6 @@ describe("mapStateToProps()", () => {
             gc: "31.2 %",
             count: "13.2 m",
             lengthRange: "50 - 100",
-            subtractions: [{ id: "baz", name: "Arabidopsis thaliana" }],
             libraryType: "Normal"
         });
     });

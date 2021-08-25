@@ -104,10 +104,10 @@ class SampleItem extends React.Component {
         } else {
             endIcon = (
                 <SampleIconContainer>
-                    <div>
+                    <React.Fragment>
                         <Loader size="14px" color="primary" />
                         <strong>Creating</strong>
-                    </div>
+                    </React.Fragment>
                 </SampleIconContainer>
             );
         }
@@ -145,23 +145,19 @@ class SampleItem extends React.Component {
     }
 }
 
-export function mapStateToProps(state, ownProps) {
-    return {
-        ...find(state.samples.documents, { id: ownProps.id }),
-        checked: getIsSelected(state, ownProps.id)
-    };
-}
+export const mapStateToProps = (state, ownProps) => ({
+    ...find(state.samples.documents, { id: ownProps.id }),
+    checked: getIsSelected(state, ownProps.id)
+});
 
-export function mapDispatchToProps(dispatch, ownProps) {
-    return {
-        onSelect: () => {
-            dispatch(selectSample(ownProps.id));
-        },
-        onQuickAnalyze: id => {
-            dispatch(selectSample(id));
-            dispatch(pushState({ quickAnalysis: true }));
-        }
-    };
-}
+export const mapDispatchToProps = (dispatch, ownProps) => ({
+    onSelect: () => {
+        dispatch(selectSample(ownProps.id));
+    },
+    onQuickAnalyze: id => {
+        dispatch(selectSample(id));
+        dispatch(pushState({ quickAnalysis: true }));
+    }
+});
 
 export default connect(mapStateToProps, mapDispatchToProps)(SampleItem);

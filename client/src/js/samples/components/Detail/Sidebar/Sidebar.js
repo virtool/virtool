@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { borderRadius, boxShadow } from "../../../../app/theme";
 import { Box } from "../../../../base";
 import SampleLabels from "./Labels";
+import DefaultSubtractions from "./Subtractions";
 
 const StyledSidebar = styled(Box)`
     align-items: stretch;
@@ -18,5 +19,6 @@ const StyledSidebar = styled(Box)`
 export const Sidebar = () => (
     <StyledSidebar>
         <SampleLabels />
+        <DefaultSubtractions />
     </StyledSidebar>
 );

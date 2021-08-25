@@ -1,86 +1,45 @@
 import { xor } from "lodash-es";
 import React, { useCallback } from "react";
-import { connect } from "react-redux";
 import styled from "styled-components";
-import { getFontSize } from "../../../../app/theme";
-import { BoxGroupSection, Icon, Input, LoadingPlaceholder } from "../../../../base";
+import { BoxGroupSection, Icon, Input } from "../../../../base";
 import { useFuse } from "../../../../base/hooks";
 import { PopoverBody, usePopover } from "../../../../base/Popover";
-import { getLabels } from "../../../../labels/selectors";
-import { editSample } from "../../../actions";
-import { getSampleDetailId, getSampleLabels } from "../../../selectors";
-import { SmallSampleLabel } from "../../Label";
 import { SidebarHeaderButton } from "./Header";
+import { SampleSidebarSelectorItem } from "./SelectorItem";
 
-const SampleLabelsSelectorItemCheck = styled.div`
-    align-items: start;
-    color: ${props => props.theme.color.greyDark};
-    display: flex;
-    justify-content: center;
-    margin-right: 5px;
-    width: 32px;
-`;
-
-const SampleLabelsSelectorInputContainer = styled(BoxGroupSection)`
+const SampleSidebarSelectorInputContainer = styled(BoxGroupSection)`
     padding: 10px;
 `;
 
-const StyledSampleLabelsSelectorItem = styled(BoxGroupSection)`
-    align-items: stretch;
-    display: flex;
-    padding: 10px 10px 10px 5px;
-
-    p {
-        font-size: ${getFontSize("md")};
-        margin: 5px 0 0;
-    }
-`;
-
-export const SampleLabelsSelectorItem = ({ checked, color, description, id, name, onClick }) => {
-    const handleSelect = useCallback(() => onClick(id), [id, onClick]);
-
-    return (
-        <StyledSampleLabelsSelectorItem as="button" onClick={handleSelect}>
-            <SampleLabelsSelectorItemCheck>{checked && <Icon name="check" />}</SampleLabelsSelectorItemCheck>
-            <div>
-                <SmallSampleLabel color={color} name={name} />
-                <p>{description}</p>
-            </div>
-        </StyledSampleLabelsSelectorItem>
-    );
-};
-
-export const SampleLabelsSelector = ({ allLabels, sampleLabels, sampleId, onUpdate }) => {
-    const [results, term, setTerm] = useFuse(allLabels, ["name"], [sampleId]);
+export const SampleSidebarSelector = ({ render, sampleItems, selectedItems, sampleId, onUpdate }) => {
+    const [results, term, setTerm] = useFuse(sampleItems, ["name"], [sampleId]);
 
     const [attributes, show, styles, setPopperElement, setReferenceElement, setShow] = usePopover();
 
     const handleToggle = useCallback(
-        labelId => {
+        itemId => {
             onUpdate(
                 sampleId,
                 xor(
-                    sampleLabels.map(label => label.id),
-                    [labelId]
+                    selectedItems.map(item => item.id),
+                    [itemId]
                 )
             );
         },
-        [sampleId, sampleLabels, onUpdate]
+        [sampleId, selectedItems, onUpdate]
     );
 
-    const sampleLabelIds = sampleLabels.map(label => label.id);
+    const sampleItemIds = selectedItems.map(item => item.id);
 
-    if (!results) {
-        return <LoadingPlaceholder />;
-    }
-
-    const labelComponents = results.map(label => (
-        <SampleLabelsSelectorItem
-            key={label.id}
-            checked={sampleLabelIds.includes(label.id)}
-            {...label}
+    const sampleItemComponents = results.map(item => (
+        <SampleSidebarSelectorItem
+            key={item.id}
+            checked={sampleItemIds.includes(item.id)}
+            {...item}
             onClick={handleToggle}
-        />
+        >
+            {render(item)}
+        </SampleSidebarSelectorItem>
     ));
 
     return (
@@ -90,32 +49,18 @@ export const SampleLabelsSelector = ({ allLabels, sampleLabels, sampleId, onUpda
             </SidebarHeaderButton>
             {show && (
                 <PopoverBody ref={setPopperElement} show={show} style={styles.popper} {...attributes.popper}>
-                    <SampleLabelsSelectorInputContainer>
+                    <SampleSidebarSelectorInputContainer>
                         <Input
                             value={term}
-                            placeholder="Filter labels"
-                            aria-label="Filter labels"
+                            placeholder="Filter items"
+                            aria-label="Filter items"
                             onChange={e => setTerm(e.target.value)}
                             autoFocus
                         />
-                    </SampleLabelsSelectorInputContainer>
-                    {labelComponents}
+                    </SampleSidebarSelectorInputContainer>
+                    {sampleItemComponents}
                 </PopoverBody>
             )}
         </React.Fragment>
     );
 };
-
-export const mapStateToProps = state => ({
-    allLabels: getLabels(state),
-    sampleId: getSampleDetailId(state),
-    sampleLabels: getSampleLabels(state)
-});
-
-export const mapDispatchToProps = dispatch => ({
-    onUpdate: (sampleId, labels) => {
-        dispatch(editSample(sampleId, { labels }));
-    }
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(SampleLabelsSelector);

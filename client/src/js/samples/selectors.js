@@ -37,6 +37,7 @@ export const getCanModifyRights = createSelector(
 );
 
 export const getDefaultSubtractions = state => state.samples.detail.subtractions;
+export const getSubtractionOptions = state => state.subtraction.shortlist;
 
 export const getMaxReadLength = state => state.samples.detail.quality.length[1];
 
