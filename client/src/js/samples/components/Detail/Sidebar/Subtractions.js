@@ -2,6 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { editSample } from "../../../actions";
 import { getDefaultSubtractions, getSampleDetailId, getSubtractionOptions } from "../../../selectors";
+import { SidebarProperty } from "./Property";
 import { SidebarHeader } from "./Header";
 import { SampleSidebarList } from "./List";
 import { SampleSidebarSelector } from "./Selector";
@@ -9,7 +10,7 @@ import { SampleSidebarSelector } from "./Selector";
 const SubtractionInner = ({ name }) => <React.Fragment>{name}</React.Fragment>;
 
 export const DefaultSubtractions = ({ defaultSubtractions, sampleId, subtractionOptions, onUpdate }) => (
-    <React.Fragment>
+    <SidebarProperty>
         <SidebarHeader>
             Default Subtractions
             <SampleSidebarSelector
@@ -21,7 +22,7 @@ export const DefaultSubtractions = ({ defaultSubtractions, sampleId, subtraction
             />
         </SidebarHeader>
         <SampleSidebarList items={defaultSubtractions} />
-    </React.Fragment>
+    </SidebarProperty>
 );
 
 export const mapStateToProps = state => ({
