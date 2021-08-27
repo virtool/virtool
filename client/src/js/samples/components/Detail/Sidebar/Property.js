@@ -8,4 +8,5 @@ export const SidebarProperty = styled(Box)`
     border-radius: ${borderRadius.md};
     box-shadow: ${boxShadow.sm};
     margin-bottom: 15px;
+    position: static;
 `;
