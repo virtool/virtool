@@ -9,7 +9,7 @@ import SampleFileSizeWarning from "./FileSizeWarning.js";
 import { Sidebar } from "./Sidebar/Sidebar";
 
 const SampleDetailSidebarContainer = styled(SideContainer)`
-    padding-left: 5px;
+    padding-left: 15px;
 `;
 
 const StyledSampleDetailGeneral = styled.div`

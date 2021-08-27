@@ -4,13 +4,12 @@ import { Box } from "../../../../base";
 import SampleLabels from "./Labels";
 import DefaultSubtractions from "./Subtractions";
 
-const StyledSidebar = styled(Box)`
+const StyledSidebar = styled.div`
     align-items: stretch;
-    border: none;
     flex-direction: column;
     display: flex;
     width: 320px;
-    padding-top: 0px;
+    z-index: 0;
 `;
 
 export const Sidebar = () => (
