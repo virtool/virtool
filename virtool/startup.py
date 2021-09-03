@@ -26,6 +26,7 @@ from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.fake.wrapper import FakerWrapper
 from virtool.hmm.db import refresh
+from virtool.indexes.tasks import AddIndexFilesTask
 from virtool.jobs.client import JobsClient
 from virtool.pg.testing import create_test_database
 from virtool.references.db import refresh_remotes
@@ -388,6 +389,7 @@ async def init_tasks(app: aiohttp.web.Application):
     await app["tasks"].add(CreateIndexJSONTask)
     await app["tasks"].add(DeleteReferenceTask, context={"user_id": "virtool"})
     await app["tasks"].add(AddSubtractionFilesTask)
+    await app["tasks"].add(AddIndexFilesTask)
     await app["tasks"].add(StoreNuvsFilesTask)
     await app["tasks"].add(CompressSamplesTask)
     await app["tasks"].add(MoveSampleFilesTask)
