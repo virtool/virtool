@@ -20,6 +20,7 @@ from virtool.http.schema import schema
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.users.checks import check_password_length
 from virtool.users.db import validate_credentials
+from virtool.users.jwt import create_reset_code_with_jwt, create_access_token
 from virtool.users.sessions import create_reset_code, replace_session
 from virtool.users.utils import limit_permissions
 from virtool.utils import base_processor
@@ -360,6 +361,35 @@ async def login(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     set_session_id_cookie(resp, session["_id"])
     set_session_token_cookie(resp, token)
+
+    return resp
+
+
+async def login_with_jwt(req: aiohttp.web.Request) -> aiohttp.web.Response:
+    db = req.app["db"]
+    data = req["data"]
+
+    user_id = data["username"]
+    password = data["password"]
+
+    # Re-render the login page with an error message if the username and/or password are invalid.
+    if not await validate_credentials(db, user_id, password):
+        raise HTTPBadRequest(text="Invalid username or password")
+
+    # When this value is set, the jwt will last for 1 month instead of the 1 hour default.
+    remember = data["remember"]
+
+    # Look into how this works with refresh tokens...
+    if await get_one_field(db.users, "force_reset", user_id):
+        return json_response({
+            "reset": True,
+            "reset_code": await create_reset_code_with_jwt()
+        })
+
+    # eventually should be replace_jwt to replace access token and refresh token
+    access_token = create_access_token(db, virtool.http.auth.get_ip(req), user_id, remember)
+    headers = {"AUTHORIZATION": f"Bearer {access_token}"}
+    resp = json_response({"reset": False}, status=201, headers=headers)
 
     return resp
 
