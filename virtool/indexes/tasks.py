@@ -29,26 +29,31 @@ class AddIndexFilesTask(Task):
         )
 
         async for index in self.db.indexes.find():
-            index_id = index["_id"]
+            try:
+                if index["ready"] and not index["files"]:
+                    raise KeyError
 
-            path = self.app["settings"]["data_path"] / "references" / index_id
+            except KeyError:
+                index_id = index["_id"]
 
-            async with AsyncSession(self.app["pg"]) as session:
-                for file_path in sorted(path.iterdir()):
+                path = self.app["settings"]["data_path"] / "references" / index_id
 
-                    if file_path.name in FILES:
-                        size = file_stats(path)["size"]
+                async with AsyncSession(self.app["pg"]) as session:
+                    for file_path in sorted(path.iterdir()):
 
-                        session.add(
-                            IndexFile(
-                                name=file_path.name,
-                                index=index_id,
-                                type=get_index_file_type_from_name(file_path.name),
-                                size=size
+                        if file_path.name in FILES:
+                            size = file_stats(path)["size"]
+
+                            session.add(
+                                IndexFile(
+                                    name=file_path.name,
+                                    index=index_id,
+                                    type=get_index_file_type_from_name(file_path.name),
+                                    size=size
+                                )
                             )
-                        )
 
-                await session.commit()
+                    await session.commit()
 
 
 def get_index_file_type_from_name(name: str) -> IndexType:

@@ -1,11 +1,19 @@
-from virtool.indexes.models import IndexFile
+import pytest
 from sqlalchemy import select
 
+from virtool.indexes.models import IndexFile
 from virtool.indexes.tasks import AddIndexFilesTask
 from virtool.tasks.models import Task
 
 
-async def test_add_index_files(spawn_client, pg_session, static_time, tmp_path):
+@pytest.mark.parametrize("files", ["DNE", "empty", "full", "not_ready"])
+async def test_add_index_files(spawn_client, pg_session, static_time, tmp_path, files):
+    """
+    Test that "files" field is populated for index documents in the following cases:
+    - Index document has no existing "files" field
+    - "files" field is an empty list
+    - index document is ready to be populated
+    """
     client = await spawn_client(authorize=True, administrator=True)
     client.app["settings"]["data_path"] = tmp_path
 
@@ -18,8 +26,18 @@ async def test_add_index_files(spawn_client, pg_session, static_time, tmp_path):
         "_id": "foo",
         "name": "Foo",
         "nickname": "Foo Index",
-        "deleted": False
+        "deleted": False,
+        "ready": True
     }
+
+    if files == "empty":
+        index["files"] = list()
+
+    if files == "full":
+        index["files"] = ["full"]
+
+    if files == "not_ready":
+        index["ready"] = False
 
     await client.db.indexes.insert_one(index)
 
@@ -30,7 +48,7 @@ async def test_add_index_files(spawn_client, pg_session, static_time, tmp_path):
         count=0,
         progress=0,
         step="rename_index_files",
-        type="add_subtraction_files",
+        type="add_index_files",
         created_at=static_time.datetime
     )
 
@@ -44,23 +62,27 @@ async def test_add_index_files(spawn_client, pg_session, static_time, tmp_path):
 
     rows = list()
     async with pg_session as session:
-        files = (await session.execute(select(IndexFile))).scalars().all()
-        for file in files:
+        index_files = (await session.execute(select(IndexFile))).scalars().all()
+        for file in index_files:
             rows.append(file.to_dict())
 
-    assert rows == [
-        {
-            "id": 1,
-            "name": "reference.1.bt2",
-            "index": "foo",
-            "type": "bowtie2",
-            "size": 4096
-        },
-        {
-            "id": 2,
-            "name": "reference.fa.gz",
-            "index": "foo",
-            "type": "fasta",
-            "size": 4096
-        }
-    ]
+    if files == "DNE" or files == "empty":
+        assert rows == [
+            {
+                "id": 1,
+                "name": "reference.1.bt2",
+                "index": "foo",
+                "type": "bowtie2",
+                "size": 4096
+            },
+            {
+                "id": 2,
+                "name": "reference.fa.gz",
+                "index": "foo",
+                "type": "fasta",
+                "size": 4096
+            }
+        ]
+
+    else:
+        assert rows == []
