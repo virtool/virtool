@@ -7,7 +7,7 @@ from virtool.tasks.models import Task
 
 
 @pytest.mark.parametrize("files", ["DNE", "empty", "full", "not_ready"])
-async def test_add_index_files(spawn_client, pg_session, static_time, tmp_path, files):
+async def test_add_index_files(spawn_client, pg_session, static_time, tmp_path, snapshot, files):
     """
     Test that "files" field is populated for index documents in the following cases:
     - Index document has no existing "files" field
@@ -66,23 +66,4 @@ async def test_add_index_files(spawn_client, pg_session, static_time, tmp_path, 
         for file in index_files:
             rows.append(file.to_dict())
 
-    if files == "DNE" or files == "empty":
-        assert rows == [
-            {
-                "id": 1,
-                "name": "reference.1.bt2",
-                "index": "foo",
-                "type": "bowtie2",
-                "size": 4096
-            },
-            {
-                "id": 2,
-                "name": "reference.fa.gz",
-                "index": "foo",
-                "type": "fasta",
-                "size": 4096
-            }
-        ]
-
-    else:
-        assert rows == []
+    snapshot.assert_match(rows)
