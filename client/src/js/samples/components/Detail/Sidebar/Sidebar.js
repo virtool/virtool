@@ -1,6 +1,5 @@
 import React from "react";
 import styled from "styled-components";
-import { Box } from "../../../../base";
 import SampleLabels from "./Labels";
 import DefaultSubtractions from "./Subtractions";
 
