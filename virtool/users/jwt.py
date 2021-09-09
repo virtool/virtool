@@ -1,20 +1,20 @@
-import secrets
+from secrets import token_hex
 
-from jwt import encode
 from arrow import utcnow
+from jwt import encode
 
 from virtool.utils import timestamp
 
 
 async def create_reset_code_with_jwt():
-    return secrets.token_hex(32)
+    return token_hex(32)
 
 
 async def create_access_token(db, ip, user_id, remember):
     """
     HS256 - HMAC using SHA-256 hash algorithm (default) - this is what we used before
 
-    TODO: Use RS56
+    TODO: Use RS256
     """
     payload = await create_access_token_payload(db, ip, user_id, remember)
     secret = await fetch_access_token_secret()
@@ -59,6 +59,9 @@ async def fetch_access_token_secret():
 
 
 async def create_refresh_token():
+    """
+    TODO: look into how to implement refresh tokens ourselves/ if we want to wait to have OAuth2.0 auth server
+    """
     return encode({"refresh": "info"}, fetch_refresh_token_secret(), algorithm="HS256")
 
 

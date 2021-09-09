@@ -1,8 +1,9 @@
-from aiohttp.web import Response
 from aiohttp.test_utils import make_mocked_request
+from aiohttp.web import Response
 from jwt import encode, decode
 
 from virtool.users.jwt import create_access_token, fetch_access_token_secret
+from virtool.users.utils import hash_password
 
 
 async def handler(request, auth):
@@ -51,7 +52,7 @@ async def test_create_access_token(spawn_client):
 
     assert document == {
         "user": {
-            "id": "foobar"
+            "id": "foobar",
         },
         "ip": "ip",
         "administrator": False,
@@ -59,3 +60,36 @@ async def test_create_access_token(spawn_client):
         "permissions": [],
         "force_reset": False
     }
+
+
+async def test_login_with_jwt(spawn_client):
+    client = await spawn_client()
+
+    await client.db.users.insert_one({
+        "_id": "username",
+        "administrator": False,
+        "groups": [],
+        "permissions": [],
+        "force_reset": False,
+        "password": hash_password("p@ssw0rd123")
+    })
+
+    resp = await client.post("/api/account/login_with_jwt", {
+        "username": "username",
+        "password": "p@ssw0rd123",
+    })
+
+    assert resp.status == 201
+    encoded = resp.headers["AUTHORIZATION"].split(" ")[1]
+    decoded = decode(encoded, await fetch_access_token_secret(), algorithms="HS256")
+
+    decoded.pop("iat")
+    decoded.pop("exp")
+    decoded.pop("ip")
+
+    assert decoded == {
+        'administrator': False,
+        'force_reset': False,
+        'groups': [],
+        'permissions': [],
+        'user': {'id': 'username'}}
