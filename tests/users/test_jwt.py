@@ -2,7 +2,7 @@ from aiohttp.test_utils import make_mocked_request
 from aiohttp.web import Response
 from jwt import encode, decode
 
-from virtool.users.jwt import create_access_token, fetch_access_token_secret
+from virtool.users.jwt import create_access_token, ACCESS_SECRET, ENCODING_ALGORITHM
 from virtool.users.utils import hash_password
 
 
@@ -15,7 +15,7 @@ async def test_auth_header():
     """
     Test that jwt in authorization header remains unchanged when sent/return in a request and response
     """
-    jwt = encode({"user": "info"}, "secret", algorithm="HS256")
+    jwt = encode({"user": "info"}, "secret", algorithm=ENCODING_ALGORITHM)
     auth = f"Bearer {jwt}"
     headers = {
         "AUTHORIZATION": auth
@@ -40,11 +40,11 @@ async def test_create_access_token(spawn_client):
         "force_reset": False
     })
 
-    encoded = await create_access_token(client.app["db"], "ip", "foobar", False)
+    encoded = await create_access_token(client.app["db"], "ip", "foobar")
 
-    secret = await fetch_access_token_secret()
+    secret = ACCESS_SECRET
 
-    document = decode(encoded, secret, algorithms="HS256")
+    document = decode(encoded, secret, algorithms=ENCODING_ALGORITHM)
 
     # find a way to check these are valid times
     assert document.pop("iat")
@@ -81,7 +81,7 @@ async def test_login_with_jwt(spawn_client):
 
     assert resp.status == 201
     encoded = resp.headers["AUTHORIZATION"].split(" ")[1]
-    decoded = decode(encoded, await fetch_access_token_secret(), algorithms="HS256")
+    decoded = decode(encoded, ACCESS_SECRET, algorithms=ENCODING_ALGORITHM)
 
     decoded.pop("iat")
     decoded.pop("exp")

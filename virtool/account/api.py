@@ -404,7 +404,7 @@ async def login_with_jwt(req: aiohttp.web.Request) -> aiohttp.web.Response:
         })
 
     # eventually should be replace_jwt to replace access token and refresh token
-    access_token = await create_access_token(db, virtool.http.auth.get_ip(req), user_id, remember)
+    access_token = await create_access_token(db, virtool.http.auth.get_ip(req), user_id)
     headers = {"AUTHORIZATION": f"Bearer {access_token}"}
     resp = json_response({"reset": False}, status=201, headers=headers)
 
