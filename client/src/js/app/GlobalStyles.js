@@ -16,7 +16,7 @@ export const GlobalStyles = createGlobalStyle`
     }
 
     html {
-        font-family: "Roboto", sans-serif;
+        font-family: -apple-system, system-ui, "Segoe UI Variable", "Segoe UI", system-ui, ui-sans-serif, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
         font-size: ${props => props.theme.fontSize.md};
         line-height: 1.428571429;
     }
@@ -47,6 +47,10 @@ export const GlobalStyles = createGlobalStyle`
         &:focus {
             ${tabFocus}
         }
+    }
+    
+    code {
+        font-family: ${props => props.theme.fontFamily.monospace};
     }  
     
     p {

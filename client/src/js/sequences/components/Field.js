@@ -4,7 +4,7 @@ import styled from "styled-components";
 import { Badge, InputContainer, InputError, InputGroup, InputLabel, TextArea } from "../../base";
 
 export const SequenceFieldTextArea = styled(TextArea)`
-    font-family: "Roboto Mono", monospace;
+    font-family: ${props => props.theme.fontFamily.monospace};
 `;
 
 const SequenceField = ({ sequence = "", readOnly = false, onChange, error }) => (
