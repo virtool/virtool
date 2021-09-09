@@ -4,7 +4,7 @@ import styled from "styled-components";
 import { BoxGroup, BoxGroupHeader, Table } from "../../base";
 
 const CacheParameterKey = styled.th`
-    font-family: "Roboto Mono", monospace;
+    font-family: ${props => props.theme.fontFamily.monospace};
     padding-left: 15px !important;
 `;
 

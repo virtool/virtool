@@ -61,6 +61,9 @@ export const theme = {
         yellowDark: "#DBBC23",
         yellowDarkest: "#B79A18"
     },
+    fontFamily: {
+        monospace: "ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace"
+    },
     fontSize: {
         xs: "10px",
         sm: "12px",

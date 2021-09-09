@@ -5,7 +5,7 @@ import { Badge, Table } from "../../../base";
 
 const SequenceCell = styled.td`
     padding: 0 !important;
-    font-family: "Roboto Mono", monospace;
+    font-family: ${props => props.theme.fontFamily.monospace};
 
     textarea {
         width: 100%;
