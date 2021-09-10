@@ -3,17 +3,6 @@ from aiohttp import BasicAuth
 from virtool.utils import hash_key
 
 
-async def test_receives_session_id(mocker, spawn_client):
-    mocker.patch("secrets.token_hex", return_value="foobar")
-
-    client = await spawn_client()
-
-    resp = await client.get("/api")
-
-    assert resp.status == 401
-    assert client.has_cookie("session_id", "foobar")
-
-
 class TestJobAuthentication:
 
     async def test_root_succeeds(self, dbi, spawn_job_client):
