@@ -1,15 +1,11 @@
 import { xor } from "lodash-es";
 import React, { useState } from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
 import { updateSearch } from "../../actions";
 import { getLabelsFromURL } from "../../selectors";
 import { LabelFilterItem } from "./LabelFilterItem";
-
-const StyledLabelFilter = styled.div`
-    display: flex;
-    flex-wrap: wrap;
-`;
+import { SidebarHeader, SideBarSection } from "../../../base";
+import { Link } from "react-router-dom";
 
 export const LabelFilter = ({ initialLabels, labels, onFind }) => {
     const [selected, setSelected] = useState(initialLabels);
@@ -23,7 +19,14 @@ export const LabelFilter = ({ initialLabels, labels, onFind }) => {
         <LabelFilterItem key={label.id} {...label} pressed={selected.includes(label.id)} onClick={handleClick} />
     ));
 
-    return <StyledLabelFilter>{labelComponents}</StyledLabelFilter>;
+    return (
+        <SideBarSection>
+            <SidebarHeader>
+                Labels <Link to="/samples/labels">Manage</Link>
+            </SidebarHeader>
+            {labelComponents}
+        </SideBarSection>
+    );
 };
 
 export const mapStateToProps = state => ({

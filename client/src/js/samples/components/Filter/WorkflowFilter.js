@@ -3,7 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { getBorder, getFontSize } from "../../../app/theme";
-import { Box, BoxTitle, Icon } from "../../../base";
+import { Box, Icon, SidebarHeader, SideBarSection } from "../../../base";
 import { getWorkflowDisplayName } from "../../../utils/utils";
 import { updateSearch } from "../../actions";
 import { getWorkflowsFromURL } from "../../selectors";
@@ -59,6 +59,7 @@ const WorkflowFilterControlButtons = styled.div`
 `;
 
 const StyledWorkflowFilterControl = styled(Box)`
+    background: ${props => props.theme.color.white};
     padding: 0;
 `;
 
@@ -94,15 +95,6 @@ const WorkflowFilterControl = ({ workflow, states, onChange }) => {
     );
 };
 
-const WorkflowFilterTitle = styled(BoxTitle)`
-    align-items: center;
-    display: flex;
-
-    i {
-        margin-left: auto;
-    }
-`;
-
 const WorkflowFilter = ({ workflows, onUpdate }) => {
     const handleClick = (workflow, state) => {
         onUpdate({
@@ -113,12 +105,12 @@ const WorkflowFilter = ({ workflows, onUpdate }) => {
     const { aodp, nuvs, pathoscope } = workflows;
 
     return (
-        <Box>
-            <WorkflowFilterTitle>Workflows</WorkflowFilterTitle>
+        <SideBarSection>
+            <SidebarHeader>Workflows</SidebarHeader>
             <WorkflowFilterControl workflow="pathoscope" states={pathoscope} onChange={handleClick} />
             <WorkflowFilterControl workflow="nuvs" states={nuvs} onChange={handleClick} />
             <WorkflowFilterControl workflow="aodp" states={aodp} onChange={handleClick} />
-        </Box>
+        </SideBarSection>
     );
 };
 

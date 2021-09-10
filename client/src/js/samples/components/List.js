@@ -3,16 +3,7 @@ import { connect } from "react-redux";
 import styled from "styled-components";
 import { getAccountId } from "../../account/selectors";
 import QuickAnalysis from "../../analyses/components/Create/Quick";
-import {
-    Badge,
-    LoadingPlaceholder,
-    NarrowContainer,
-    NoneFoundBox,
-    ScrollList,
-    SideContainer,
-    ViewHeader,
-    ViewHeaderTitle
-} from "../../base";
+import { Badge, LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader, ViewHeaderTitle } from "../../base";
 import { findHmms } from "../../hmm/actions";
 import { listReadyIndexes } from "../../indexes/actions";
 import { listLabels } from "../../labels/actions";
@@ -21,13 +12,18 @@ import { SampleFilters } from "./Filter/Filters";
 import SampleItem from "./Item/Item";
 import SampleToolbar from "./Toolbar";
 
-const StyledSamplesList = styled.div`
-    align-items: stretch;
-    display: flex;
+const SamplesListHeader = styled.div`
+    grid-column: 1;
+`;
 
-    th {
-        width: 220px;
-    }
+const SamplesListContent = styled.div`
+    grid-row: 2;
+`;
+
+const StyledSamplesList = styled.div`
+    display: grid;
+    grid-column-gap: ${props => props.theme.gap.column};
+    grid-template-columns: minmax(auto, 1150px) max(320px, 10%);
 `;
 
 export const SamplesList = ({ documents, loading, match, page, pageCount, totalCount, onFindSamples, onFindOther }) => {
@@ -36,10 +32,6 @@ export const SamplesList = ({ documents, loading, match, page, pageCount, totalC
     useEffect(() => {
         onFindSamples(1);
     }, [match]);
-
-    const renderRow = index => {
-        return <SampleItem key={documents[index].id} id={documents[index].id} />;
-    };
 
     if (loading) {
         return <LoadingPlaceholder />;
@@ -53,30 +45,28 @@ export const SamplesList = ({ documents, loading, match, page, pageCount, totalC
 
     return (
         <React.Fragment>
-            <NarrowContainer>
-                <ViewHeader title="Samples">
-                    <ViewHeaderTitle>
-                        Samples <Badge>{totalCount}</Badge>
-                    </ViewHeaderTitle>
-                </ViewHeader>
-                <SampleToolbar />
-            </NarrowContainer>
+            <QuickAnalysis />
             <StyledSamplesList>
-                <NarrowContainer>
+                <SamplesListHeader>
+                    <ViewHeader title="Samples">
+                        <ViewHeaderTitle>
+                            Samples <Badge>{totalCount}</Badge>
+                        </ViewHeaderTitle>
+                    </ViewHeader>
+                    <SampleToolbar />
+                </SamplesListHeader>
+                <SamplesListContent>
                     {noneFound || (
                         <ScrollList
                             documents={documents}
                             page={page}
                             pageCount={pageCount}
                             onLoadNextPage={page => onFindSamples(page)}
-                            renderRow={renderRow}
+                            renderRow={index => <SampleItem key={documents[index].id} id={documents[index].id} />}
                         />
                     )}
-                    <QuickAnalysis />
-                </NarrowContainer>
-                <SideContainer>
-                    <SampleFilters />
-                </SideContainer>
+                </SamplesListContent>
+                <SampleFilters />
             </StyledSamplesList>
         </React.Fragment>
     );

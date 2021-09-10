@@ -1,10 +1,9 @@
 import { xor } from "lodash-es";
 import React, { useCallback } from "react";
 import styled from "styled-components";
-import { BoxGroupSection, Icon, Input } from "../../../../base";
+import { BoxGroupSection, Icon, Input, SidebarHeaderButton } from "../../../../base";
 import { useFuse } from "../../../../base/hooks";
 import { PopoverBody, usePopover } from "../../../../base/Popover";
-import { SidebarHeaderButton } from "./Header";
 import { SampleSidebarSelectorItem } from "./SelectorItem";
 
 const SampleSidebarSelectorInputContainer = styled(BoxGroupSection)`

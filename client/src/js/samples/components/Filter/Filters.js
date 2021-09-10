@@ -1,20 +1,16 @@
 import React from "react";
 import styled from "styled-components";
-import { Box, BoxTitle } from "../../../base";
 import LabelFilter from "./LabelFilter";
 import WorkflowFilter from "./WorkflowFilter";
 
 const StyledSampleFilters = styled.div`
-    padding-left: 15px;
-    width: 320px;
+    grid-column: 2;
+    grid-row: 2;
 `;
 
 export const SampleFilters = () => (
     <StyledSampleFilters>
-        <Box>
-            <BoxTitle>Labels</BoxTitle>
-            <LabelFilter />
-        </Box>
+        <LabelFilter />
         <WorkflowFilter />
     </StyledSampleFilters>
 );

@@ -1,5 +1,15 @@
 import styled from "styled-components";
-import { boxShadow, fontWeight, getFontSize } from "../../../../app/theme";
+import { Box } from "./Box";
+import { borderRadius, boxShadow, fontWeight, getFontSize } from "../app/theme";
+
+export const SideBarSection = styled(Box)`
+    background-color: #f8fafc;
+    border: none;
+    border-radius: ${borderRadius.md};
+    box-shadow: ${boxShadow.sm};
+    margin-bottom: 15px;
+    position: static;
+`;
 
 export const SidebarHeaderButton = styled.button`
     align-items: center;
@@ -34,7 +44,11 @@ export const SidebarHeader = styled.h3`
     font-weight: ${fontWeight.thick};
     margin: 5px 0 10px;
 
-    ${SidebarHeaderButton} {
+    ${SidebarHeaderButton}, a {
         margin-left: auto;
+    }
+
+    a {
+        font-size: ${getFontSize("md")};
     }
 `;
