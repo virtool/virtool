@@ -1,7 +1,9 @@
 from secrets import token_hex
+from typing import Optional
 
+import jwt
 from arrow import utcnow
-from jwt import encode, decode, ExpiredSignatureError
+from jwt import encode, decode, ExpiredSignatureError, InvalidTokenError
 
 from virtool.utils import timestamp
 
@@ -14,7 +16,7 @@ async def create_reset_code_with_jwt():
     return token_hex(32)
 
 
-async def create_access_token(db, ip, user_id):
+async def create_access_token(db, ip: str, user_id: str) -> jwt:
     """
     Create JWT access token encoded using ENCODING ALGORITHM and ACCESS_SECRET.
 
@@ -49,7 +51,7 @@ async def create_access_token(db, ip, user_id):
     return encoded_jwt
 
 
-async def create_refresh_token(db, user_id, remember=None, exp=None):
+async def create_refresh_token(db, user_id: str, remember=False, exp=None) -> jwt:
     """
     Create a refresh token encoded using ENCODING_ALGORITHM and REFRESH_SECRET.
 
@@ -81,23 +83,23 @@ async def create_refresh_token(db, user_id, remember=None, exp=None):
     return encode(payload, REFRESH_SECRET + password, algorithm=ENCODING_ALGORITHM)
 
 
-async def refresh_tokens(access_token, refresh_token, db):
+async def refresh_tokens(access_token: jwt, refresh_token: jwt, db) -> Optional[jwt, jwt]:
     """
-    Replaces access token and refresh token as long as refresh token hasn't expired.
+    Replaces access token if refresh token hasn't expired
     """
     access_token_payload = decode(access_token, ACCESS_SECRET, ENCODING_ALGORITHM, verify_exp=False)
     user_id = access_token_payload["user"]["id"]
-
-    new_access_token = create_access_token(db, access_token_payload["ip"], user_id)
 
     user_data = await db.users.find_one(user_id)
     password = user_data["password"]
 
     try:
-        decoded_refresh_token = decode(refresh_token, REFRESH_SECRET + password, algorithms=ENCODING_ALGORITHM)
-        new_refresh_token = create_refresh_token(db, user_id, exp=decoded_refresh_token["exp"])
+        # verify refresh token hasn't expired
+        decode(refresh_token, REFRESH_SECRET + password, algorithms=ENCODING_ALGORITHM)
 
-        return new_access_token, new_refresh_token
-    except ExpiredSignatureError:
-        # log out user
+        new_access_token = create_access_token(db, access_token_payload["ip"], user_id)
+
+        return new_access_token
+    except (ExpiredSignatureError, InvalidTokenError):
+        # both tokens have expired, essentially logging out user
         pass

@@ -20,7 +20,7 @@ from virtool.http.schema import schema
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.users.checks import check_password_length
 from virtool.users.db import validate_credentials
-from virtool.users.jwt import create_reset_code_with_jwt, create_access_token
+from virtool.users.jwt import create_reset_code_with_jwt, create_access_token, create_refresh_token
 from virtool.users.sessions import create_reset_code, replace_session
 from virtool.users.utils import limit_permissions
 from virtool.utils import base_processor
@@ -383,6 +383,9 @@ async def login(req: aiohttp.web.Request) -> aiohttp.web.Response:
     }
 })
 async def login_with_jwt(req: aiohttp.web.Request) -> aiohttp.web.Response:
+    """
+    Create a new access token and refresh token for the user with "username" if username and password are valid
+    """
     db = req.app["db"]
     data = req["data"]
 
@@ -405,6 +408,7 @@ async def login_with_jwt(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     # eventually should be replace_jwt to replace access token and refresh token
     access_token = await create_access_token(db, virtool.http.auth.get_ip(req), user_id)
+    refresh_token = await create_refresh_token(db, user_id)
     headers = {"AUTHORIZATION": f"Bearer {access_token}"}
     resp = json_response({"reset": False}, status=201, headers=headers)
 
