@@ -63,7 +63,6 @@
 
     // Import
     "import/named": [2],
-    "import/order": [2],
 
     // React
     "react/prop-types": [1, { "skipUndeclared": true }],
