@@ -36,6 +36,7 @@ export * from "./RemoveModal";
 export * from "./SaveButton";
 export * from "./SectionHeader";
 export * from "./SelectBox";
+export * from "./SideBar";
 export * from "./SlashList";
 export * from "./Table";
 export * from "./Tabs";
