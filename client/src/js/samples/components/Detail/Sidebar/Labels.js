@@ -4,10 +4,9 @@ import { getLabels } from "../../../../labels/selectors";
 import { editSample } from "../../../actions";
 import { getSampleDetailId, getSampleLabels } from "../../../selectors";
 import { SmallSampleLabel } from "../../Label";
-import { SidebarProperty } from "./Property";
-import { SidebarHeader } from "./Header";
 import { SampleSidebarSelector } from "./Selector";
 import { SampleSidebarList } from "./List";
+import { SidebarHeader, SideBarSection } from "../../../../base";
 
 const SampleLabelInner = ({ name, color, description }) => (
     <React.Fragment>
@@ -17,7 +16,7 @@ const SampleLabelInner = ({ name, color, description }) => (
 );
 
 export const SampleLabels = ({ allLabels, sampleLabels, sampleId, onUpdate }) => (
-    <SidebarProperty>
+    <SideBarSection>
         <SidebarHeader>
             Labels
             <SampleSidebarSelector
@@ -31,7 +30,7 @@ export const SampleLabels = ({ allLabels, sampleLabels, sampleId, onUpdate }) =>
             />
         </SidebarHeader>
         <SampleSidebarList items={sampleLabels} />
-    </SidebarProperty>
+    </SideBarSection>
 );
 
 export const mapStateToProps = state => ({
