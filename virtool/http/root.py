@@ -13,8 +13,7 @@ async def get(req):
     Returns a generic message. Used during testing for acquiring a ``session_id``.
 
     """
-    return json_response({
-        "endpoints": {
+    app_data = {"endpoints": {
             "account": {
                 "url": "/api/account",
                 "doc": f"{API_URL_ROOT}_account.html"
@@ -74,7 +73,11 @@ async def get(req):
             "users": {
                 "url": "/api/users",
                 "doc": f"{API_URL_ROOT}_users.html"
-            }
-        },
-        "version": req.app["version"]
-    })
+            }}}
+
+    try:
+        app_data["version"] = req.app["version"]
+    except KeyError:
+        pass
+
+    return json_response(app_data)
