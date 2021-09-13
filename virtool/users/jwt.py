@@ -15,7 +15,7 @@ async def create_reset_code_with_jwt():
 
 async def create_access_token(db, ip: str, user_id: str) -> jwt:
     """
-    Create JWT access token encoded using ENCODING ALGORITHM and ACCESS_SECRET.
+    Create JWT access token encoded using JWT_ALGORITHM and ACCESS_SECRET.
 
     Access token includes user ID, IP address, expiration time, issued at time, admin status, user groups,
     user permissions, and force reset status.
@@ -49,7 +49,7 @@ async def create_access_token(db, ip: str, user_id: str) -> jwt:
 
 async def create_refresh_token(db, user_id: str, remember=False):
     """
-    Create a refresh token encoded using ENCODING_ALGORITHM and REFRESH_SECRET and attach it to the user document.
+    Create a refresh token encoded using JWT_ALGORITHM and REFRESH_SECRET and attach it to the user document.
 
     Hashed user password is added as a salt to REFRESH_SECRET to invalidate refresh tokens if password is changed.
 
@@ -74,7 +74,10 @@ async def create_refresh_token(db, user_id: str, remember=False):
     user_document = await db.users.find_one(user_id)
     password = user_document["password"]
 
-    user_document["refresh_token"] = encode(payload, REFRESH_SECRET + str(password), algorithm=JWT_ALGORITHM)
+    return await db.users.find_one_and_update(
+        {"_id": user_id},
+        {"$set": {"refresh_token": encode(payload, REFRESH_SECRET + str(password), algorithm=JWT_ALGORITHM)}}
+    )
 
 
 async def refresh_tokens(access_token: jwt, db) -> jwt:
@@ -94,8 +97,8 @@ async def refresh_tokens(access_token: jwt, db) -> jwt:
         refresh_token = user_document["refresh_token"]
         decode(refresh_token, REFRESH_SECRET + str(password), algorithms=JWT_ALGORITHM)
 
-        new_access_token = create_access_token(db, access_token_payload["ip"], user_id)
+        new_access_token = await create_access_token(db, access_token_payload["ip"], user_id)
 
         return new_access_token
     except (ExpiredSignatureError, InvalidTokenError):
-        pass
+        return None
