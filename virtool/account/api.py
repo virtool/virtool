@@ -396,19 +396,17 @@ async def login_with_jwt(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if not await validate_credentials(db, user_id, password):
         raise HTTPBadRequest(text="Invalid username or password")
 
-    # When this value is set, the jwt will last for 1 month instead of the 1 hour default.
-    remember = data["remember"]
-
-    # Look into how this works with refresh tokens...
     if await get_one_field(db.users, "force_reset", user_id):
         return json_response({
             "reset": True,
             "reset_code": await create_reset_code_with_jwt()
         })
 
-    # eventually should be replace_jwt to replace access token and refresh token
+    # When this value is set the refresh token will last for 30 days if True, 60 minutes otherwise
+    remember = data["remember"]
     access_token = await create_access_token(db, virtool.http.auth.get_ip(req), user_id)
-    refresh_token = await create_refresh_token(db, user_id)
+    await create_refresh_token(db, user_id, remember=remember)
+
     headers = {"AUTHORIZATION": f"Bearer {access_token}"}
     resp = json_response({"reset": False}, status=201, headers=headers)
 

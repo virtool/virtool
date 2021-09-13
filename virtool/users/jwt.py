@@ -1,6 +1,3 @@
-from secrets import token_hex
-from typing import Optional
-
 import jwt
 from arrow import utcnow
 from jwt import encode, decode, ExpiredSignatureError, InvalidTokenError
@@ -9,11 +6,11 @@ from virtool.utils import timestamp
 
 ACCESS_SECRET = "access_secret"
 REFRESH_SECRET = "refresh_secret"
-ENCODING_ALGORITHM = "HS256"
+JWT_ALGORITHM = "HS256"
 
 
 async def create_reset_code_with_jwt():
-    return token_hex(32)
+    pass
 
 
 async def create_access_token(db, ip: str, user_id: str) -> jwt:
@@ -24,7 +21,7 @@ async def create_access_token(db, ip: str, user_id: str) -> jwt:
     user permissions, and force reset status.
 
     Access tokens expire 5 minutes after creation and are replaced in the refresh_tokens() function until refresh token
-    expires or is invalidated.
+    expires or is invalidated by a password change.
     """
     payload = {
         "user": {
@@ -45,21 +42,20 @@ async def create_access_token(db, ip: str, user_id: str) -> jwt:
     payload["permissions"] = user_document["permissions"]
     payload["force_reset"] = user_document["force_reset"]
 
-    secret = ACCESS_SECRET
+    encoded_jwt = encode(payload, ACCESS_SECRET, algorithm=JWT_ALGORITHM)
 
-    encoded_jwt = encode(payload, secret, algorithm=ENCODING_ALGORITHM)
     return encoded_jwt
 
 
-async def create_refresh_token(db, user_id: str, remember=False, exp=None) -> jwt:
+async def create_refresh_token(db, user_id: str, remember=False):
     """
-    Create a refresh token encoded using ENCODING_ALGORITHM and REFRESH_SECRET.
+    Create a refresh token encoded using ENCODING_ALGORITHM and REFRESH_SECRET and attach it to the user document.
 
     Hashed user password is added as a salt to REFRESH_SECRET to invalidate refresh tokens if password is changed.
 
     Refresh tokens expire 30 days after creation if "remember" is True, 60 minutes otherwise.
 
-    When refresh token expires user is logged out.
+    When refresh token expires no more access tokens are provided until user repeats login process.
     """
     payload = {
         "user": {
@@ -68,9 +64,7 @@ async def create_refresh_token(db, user_id: str, remember=False, exp=None) -> jw
     }
 
     utc = utcnow()
-    if exp:
-        payload["exp"] = exp
-    elif remember:
+    if remember:
         payload["exp"] = utc.shift(days=30).datetime
     else:
         payload["exp"] = utc.shift(minutes=60).datetime
@@ -80,26 +74,28 @@ async def create_refresh_token(db, user_id: str, remember=False, exp=None) -> jw
     user_document = await db.users.find_one(user_id)
     password = user_document["password"]
 
-    return encode(payload, REFRESH_SECRET + password, algorithm=ENCODING_ALGORITHM)
+    user_document["refresh_token"] = encode(payload, REFRESH_SECRET + str(password), algorithm=JWT_ALGORITHM)
 
 
-async def refresh_tokens(access_token: jwt, refresh_token: jwt, db) -> Optional[jwt, jwt]:
+async def refresh_tokens(access_token: jwt, db) -> jwt:
     """
-    Replaces access token if refresh token hasn't expired
+    Replaces access token if refresh token hasn't expired and password hasn't been changed.
+
+    If password has changed, tokens that rely on the previous password are invalidated because hashed password is used
+    as a salt in the decoding secret for refresh tokens.
     """
-    access_token_payload = decode(access_token, ACCESS_SECRET, ENCODING_ALGORITHM, verify_exp=False)
+    access_token_payload = decode(access_token, ACCESS_SECRET, algorithms=JWT_ALGORITHM, verify_exp=False)
     user_id = access_token_payload["user"]["id"]
 
-    user_data = await db.users.find_one(user_id)
-    password = user_data["password"]
+    user_document = await db.users.find_one(user_id)
+    password = user_document["password"]
 
     try:
-        # verify refresh token hasn't expired
-        decode(refresh_token, REFRESH_SECRET + password, algorithms=ENCODING_ALGORITHM)
+        refresh_token = user_document["refresh_token"]
+        decode(refresh_token, REFRESH_SECRET + str(password), algorithms=JWT_ALGORITHM)
 
         new_access_token = create_access_token(db, access_token_payload["ip"], user_id)
 
         return new_access_token
     except (ExpiredSignatureError, InvalidTokenError):
-        # both tokens have expired, essentially logging out user
         pass
