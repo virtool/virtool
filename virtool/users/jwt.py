@@ -22,6 +22,10 @@ async def create_access_token(db, ip: str, user_id: str) -> jwt:
 
     Access tokens expire 5 minutes after creation and are replaced in the refresh_tokens() function until refresh token
     expires or is invalidated by a password change.
+
+    :param db: The application database client
+    :param ip: The user's IP address
+    :param user_id: The user's username
     """
     payload = {
         "user": {
@@ -56,6 +60,10 @@ async def create_refresh_token(db, user_id: str, remember=False):
     Refresh tokens expire 30 days after creation if "remember" is True, 60 minutes otherwise.
 
     When refresh token expires no more access tokens are provided until user repeats login process.
+
+    :param db: The application database client
+    :param user_id: The user's username
+    :param remember: Flag used to determine expiration time of refresh token
     """
     payload = {
         "user": {
@@ -86,6 +94,9 @@ async def refresh_tokens(access_token: jwt, db) -> jwt:
 
     If password has changed, tokens that rely on the previous password are invalidated because hashed password is used
     as a salt in the decoding secret for refresh tokens.
+
+    :param access_token: jwt access token
+    :param db: The application database client
     """
     access_token_payload = decode(access_token, ACCESS_SECRET, algorithms=JWT_ALGORITHM, verify_exp=False)
     user_id = access_token_payload["user"]["id"]
