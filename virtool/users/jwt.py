@@ -2,15 +2,10 @@ import jwt
 from arrow import utcnow
 from jwt import encode, decode, ExpiredSignatureError, InvalidTokenError
 
-from virtool.utils import timestamp
-
+import virtool.utils
 ACCESS_SECRET = "access_secret"
 REFRESH_SECRET = "refresh_secret"
 JWT_ALGORITHM = "HS256"
-
-
-async def create_reset_code_with_jwt():
-    pass
 
 
 async def create_access_token(db, ip: str, user_id: str) -> jwt:
@@ -34,21 +29,21 @@ async def create_access_token(db, ip: str, user_id: str) -> jwt:
         "ip": ip
     }
 
-    utc = utcnow()
-    payload["exp"] = utc.shift(minutes=5).datetime
+    payload.update({
+        "exp": utcnow().shift(minutes=5).datetime,
+        "iat": virtool.utils.timestamp()
+    })
 
-    payload["iat"] = timestamp()
+    user_document = await db.users.find_one(user_id, ["administrator", "groups", "permissions", "force_reset"])
 
-    user_document = await db.users.find_one(user_id)
+    payload.update({
+        "administrator": user_document["administrator"],
+        "groups": user_document["groups"],
+        "permissions": user_document["permissions"],
+        "force_reset": user_document["force_reset"]
+    })
 
-    payload["administrator"] = user_document["administrator"]
-    payload["groups"] = user_document["groups"]
-    payload["permissions"] = user_document["permissions"]
-    payload["force_reset"] = user_document["force_reset"]
-
-    encoded_jwt = encode(payload, ACCESS_SECRET, algorithm=JWT_ALGORITHM)
-
-    return encoded_jwt
+    return encode(payload, ACCESS_SECRET, algorithm=JWT_ALGORITHM)
 
 
 async def create_refresh_token(db, user_id: str, remember=False):
@@ -77,14 +72,14 @@ async def create_refresh_token(db, user_id: str, remember=False):
     else:
         payload["exp"] = utc.shift(minutes=60).datetime
 
-    payload["iat"] = timestamp()
+    payload["iat"] = virtool.utils.timestamp()
 
-    user_document = await db.users.find_one(user_id)
+    user_document = await db.users.find_one(user_id, ["password"])
     password = user_document["password"]
 
     return await db.users.find_one_and_update(
         {"_id": user_id},
-        {"$set": {"refresh_token": encode(payload, REFRESH_SECRET + str(password), algorithm=JWT_ALGORITHM)}}
+        {"$set": {"refresh_token": encode(payload, f"{REFRESH_SECRET}{str(password)}", algorithm=JWT_ALGORITHM)}}
     )
 
 
@@ -101,12 +96,12 @@ async def refresh_tokens(access_token: jwt, db) -> jwt:
     access_token_payload = decode(access_token, ACCESS_SECRET, algorithms=JWT_ALGORITHM, verify_exp=False)
     user_id = access_token_payload["user"]["id"]
 
-    user_document = await db.users.find_one(user_id)
+    user_document = await db.users.find_one(user_id, ["password", "refresh_token"])
     password = user_document["password"]
 
     try:
         refresh_token = user_document["refresh_token"]
-        decode(refresh_token, REFRESH_SECRET + str(password), algorithms=JWT_ALGORITHM)
+        decode(refresh_token, f"{REFRESH_SECRET}{str(password)}", algorithms=JWT_ALGORITHM)
 
         new_access_token = await create_access_token(db, access_token_payload["ip"], user_id)
 

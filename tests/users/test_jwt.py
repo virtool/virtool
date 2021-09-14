@@ -28,13 +28,18 @@ async def test_auth_header():
     assert resp.headers["AUTHORIZATION"] == auth
 
 
-async def test_create_access_token(spawn_client):
+@pytest.fixture()
+def iat_time(mocker):
+    mocker.patch("virtool.utils.timestamp", return_value=0)
+
+
+async def test_create_access_token(dbi, static_time, iat_time):
     """
     Test that access token is created and decoded as expected
     """
-    client = await spawn_client(authorize=True)
+    db = dbi
 
-    await client.db.users.insert_one({
+    await db.users.insert_one({
         "_id": "foobar",
         "administrator": False,
         "groups": [],
@@ -42,13 +47,11 @@ async def test_create_access_token(spawn_client):
         "force_reset": False
     })
 
-    encoded = await create_access_token(client.app["db"], "ip", "foobar")
+    encoded = await create_access_token(db, "ip", "foobar")
 
     document = decode(encoded, ACCESS_SECRET, algorithms=JWT_ALGORITHM)
 
-    assert document.pop("iat")
-    assert document.pop("exp")
-
+    assert isinstance(document.pop("exp"), int)
     assert document == {
         "user": {
             "id": "foobar",
@@ -57,15 +60,17 @@ async def test_create_access_token(spawn_client):
         "administrator": False,
         "groups": [],
         "permissions": [],
-        "force_reset": False
+        "force_reset": False,
+        "iat": 0,
     }
 
 
-async def test_login_with_jwt(spawn_client):
+async def test_login_with_jwt(spawn_client, mocker, iat_time):
     """
     Test that access token is created and attached to AUTHORIZATION header as expected during login.
     """
     client = await spawn_client()
+    mocker.patch("virtool.http.auth.get_ip", return_value="ip")
 
     await client.db.users.insert_one({
         "_id": "username",
@@ -85,25 +90,25 @@ async def test_login_with_jwt(spawn_client):
     encoded = resp.headers["AUTHORIZATION"].split(" ")[1]
     decoded = decode(encoded, ACCESS_SECRET, algorithms=JWT_ALGORITHM)
 
-    decoded.pop("iat")
-    decoded.pop("exp")
-    decoded.pop("ip")
-
+    assert isinstance(decoded.pop("exp"), int)
     assert decoded == {
-        'administrator': False,
-        'force_reset': False,
-        'groups': [],
-        'permissions': [],
-        'user': {'id': 'username'}}
+        "administrator": False,
+        "force_reset": False,
+        "groups": [],
+        "permissions": [],
+        "user": {'id': 'username'},
+        "iat": 0,
+        "ip": "ip"
+    }
 
 
-async def test_create_refresh_token(spawn_client):
+async def test_create_refresh_token(dbi, iat_time):
     """
     Test that refresh token is created and attached to user document as expected
     """
-    client = await spawn_client(authorize=True)
+    db = dbi
 
-    await client.db.users.insert_one({
+    await db.users.insert_one({
         "_id": "foobar",
         "administrator": False,
         "groups": [],
@@ -112,23 +117,30 @@ async def test_create_refresh_token(spawn_client):
         "password": "p@ssw0rd123"
     })
 
-    await create_refresh_token(client.db, "foobar")
+    await create_refresh_token(db, "foobar")
 
-    user_document = await client.db.users.find_one("foobar")
+    user_document = await db.users.find_one("foobar")
     refresh_token = user_document["refresh_token"]
 
     decoded = decode(refresh_token, REFRESH_SECRET + "p@ssw0rd123", algorithms=JWT_ALGORITHM)
-    decoded.pop("exp", "iat")
+
+    assert isinstance(decoded.pop("exp"), int)
+    assert decoded == {
+        "user": {
+            "id": "foobar"
+        },
+        "iat": 0,
+    }
 
 
 @pytest.mark.parametrize("password_change", [True, False])
-async def test_refresh_tokens(spawn_client, password_change):
+async def test_refresh_tokens(dbi, password_change, iat_time):
     """
     Test that refresh_tokens returns a valid access token if password hasn't been changed
     """
-    client = await spawn_client(authorize=True)
+    db = dbi
 
-    await client.db.users.insert_one({
+    await db.users.insert_one({
         "_id": "foobar",
         "administrator": False,
         "groups": [],
@@ -137,30 +149,30 @@ async def test_refresh_tokens(spawn_client, password_change):
         "password": "p@ssw0rd123"
     })
 
-    encoded = await create_access_token(client.app["db"], "ip", "foobar")
+    encoded = await create_access_token(db, "ip", "foobar")
 
-    await create_refresh_token(client.db, "foobar")
+    await create_refresh_token(db, "foobar")
 
     if password_change:
-        await client.db.users.find_one_and_update(
+        await db.users.find_one_and_update(
             {"_id": "foobar"},
             {"$set": {"password": "new_password"}}
         )
 
-    new_token = await refresh_tokens(encoded, client.db)
+    new_token = await refresh_tokens(encoded, db)
 
     if password_change:
         assert new_token is None
     else:
         decoded = decode(encoded, ACCESS_SECRET, algorithms=JWT_ALGORITHM)
 
-        decoded.pop("iat")
-        decoded.pop("exp")
-        decoded.pop("ip")
-
+        assert isinstance(decoded.pop("exp"), int)
         assert decoded == {
-            'administrator': False,
-            'force_reset': False,
-            'groups': [],
-            'permissions': [],
-            'user': {'id': 'foobar'}}
+            "administrator": False,
+            "force_reset": False,
+            "groups": [],
+            "permissions": [],
+            "user": {"id": "foobar"},
+            "iat": 0,
+            "ip": "ip"
+        }

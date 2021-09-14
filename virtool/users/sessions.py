@@ -139,6 +139,10 @@ async def create_reset_code(db, session_id: str, user_id: str, remember: Optiona
     return reset_code
 
 
+async def create_reset_code_with_jwt():
+    pass
+
+
 async def clear_reset_code(db: virtool.db.core.DB, session_id: str):
     """
     Clear the reset information attached to the session associated with the passed `session_id`.

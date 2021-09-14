@@ -20,8 +20,8 @@ from virtool.http.schema import schema
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.users.checks import check_password_length
 from virtool.users.db import validate_credentials
-from virtool.users.jwt import create_reset_code_with_jwt, create_access_token, create_refresh_token
-from virtool.users.sessions import create_reset_code, replace_session
+from virtool.users.jwt import create_access_token, create_refresh_token
+from virtool.users.sessions import create_reset_code, replace_session, create_reset_code_with_jwt
 from virtool.users.utils import limit_permissions
 from virtool.utils import base_processor
 
