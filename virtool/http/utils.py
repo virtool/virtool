@@ -2,6 +2,7 @@ from typing import Callable, Union
 
 import aiofiles
 import aiohttp.web_response
+import jwt
 
 import virtool.errors
 import virtool.http.proxy
@@ -46,3 +47,7 @@ def set_session_id_cookie(resp: aiohttp.web_response.Response, session_id: str):
 
 def set_session_token_cookie(resp: aiohttp.web_response.Response, session_token: str):
     resp.set_cookie("session_token", session_token, httponly=True, max_age=2600000)
+
+
+def set_access_token_cookie(resp: aiohttp.web_response.Response, access_token: jwt):
+    resp.set_cookie("access_token", access_token, httponly=True)

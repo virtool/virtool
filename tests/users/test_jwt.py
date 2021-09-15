@@ -1,31 +1,9 @@
 import pytest
-from aiohttp.test_utils import make_mocked_request
-from aiohttp.web import Response
-from jwt import encode, decode
+from jwt import decode
 
 from virtool.users.jwt import create_access_token, ACCESS_SECRET, JWT_ALGORITHM, create_refresh_token, REFRESH_SECRET, \
     refresh_tokens
 from virtool.users.utils import hash_password
-
-
-async def handler(request, auth):
-    assert request.headers["AUTHORIZATION"] == auth
-    return Response(headers={"AUTHORIZATION": auth})
-
-
-async def test_auth_header():
-    """
-    Test that jwt in authorization header remains unchanged when sent/returned in a request and response
-    """
-    jwt = encode({"user": "info"}, "secret", algorithm=JWT_ALGORITHM)
-    auth = f"Bearer {jwt}"
-    headers = {
-        "AUTHORIZATION": auth
-    }
-    req = make_mocked_request("GET", "/", headers=headers)
-
-    resp = await handler(req, auth)
-    assert resp.headers["AUTHORIZATION"] == auth
 
 
 @pytest.fixture()
@@ -87,7 +65,7 @@ async def test_login_with_jwt(spawn_client, mocker, iat_time):
     })
 
     assert resp.status == 201
-    encoded = resp.headers["AUTHORIZATION"].split(" ")[1]
+    encoded = resp.cookies.get("access_token").value
     decoded = decode(encoded, ACCESS_SECRET, algorithms=JWT_ALGORITHM)
 
     assert isinstance(decoded.pop("exp"), int)

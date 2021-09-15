@@ -17,11 +17,11 @@ from virtool.analyses.utils import WORKFLOW_NAMES
 from virtool.api.response import json_response, NotFound
 from virtool.db.utils import get_one_field
 from virtool.http.schema import schema
-from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
+from virtool.http.utils import set_session_id_cookie, set_session_token_cookie, set_access_token_cookie
 from virtool.users.checks import check_password_length
 from virtool.users.db import validate_credentials
 from virtool.users.jwt import create_access_token, create_refresh_token
-from virtool.users.sessions import create_reset_code, replace_session, create_reset_code_with_jwt
+from virtool.users.sessions import create_reset_code, replace_session
 from virtool.users.utils import limit_permissions
 from virtool.utils import base_processor
 
@@ -398,8 +398,7 @@ async def login_with_jwt(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     if await get_one_field(db.users, "force_reset", user_id):
         return json_response({
-            "reset": True,
-            "reset_code": await create_reset_code_with_jwt()
+            "reset": True
         })
 
     # When this value is set the refresh token will last for 30 days if True, 60 minutes otherwise
@@ -407,8 +406,8 @@ async def login_with_jwt(req: aiohttp.web.Request) -> aiohttp.web.Response:
     access_token = await create_access_token(db, virtool.http.auth.get_ip(req), user_id)
     await create_refresh_token(db, user_id, remember=remember)
 
-    headers = {"AUTHORIZATION": f"Bearer {access_token}"}
-    resp = json_response({"reset": False}, status=201, headers=headers)
+    resp = json_response({"reset": False}, status=201)
+    set_access_token_cookie(resp, access_token)
 
     return resp
 
