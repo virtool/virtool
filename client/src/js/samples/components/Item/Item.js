@@ -94,7 +94,7 @@ class SampleItem extends React.Component {
                     <Icon
                         color="green"
                         name="chart-area"
-                        style={{ fontSize: "17px", zIndex: 10000 }}
+                        style={{ fontSize: "17px"}}
                         tip="Quick Analyze"
                         tipPlacement="left"
                         onClick={this.handleQuickAnalyze}
