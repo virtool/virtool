@@ -2,8 +2,8 @@ import { map } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import { MultiSelector, MultiSelectorItem } from "../../base/MultiSelector";
-import { Box, Icon } from "../../base";
 import { Link, BrowserRouter } from "react-router-dom";
+import { Box, Icon } from "../../base";
 
 export const SampleSubtractionSelector = ({ name, noun, selected, subtractions, onChange }) => {
     const subtractionComponents = map(subtractions, ({ name, id }) => (

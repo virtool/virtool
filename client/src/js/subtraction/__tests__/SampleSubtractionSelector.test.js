@@ -1,5 +1,5 @@
 import React from "react";
-import {getByText, screen} from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SampleSubtractionSelector } from "../components/Selector";
 
@@ -43,13 +43,12 @@ describe("<SampleSubtractionSelector />", () => {
 
     it("should render no subtractions found message iff appropriate", () => {
         const modProps = { ...props, subtractions: [] };
-        const testMessage = "No Subtractions Found."
+        const testMessage = "No Subtractions Found.";
 
         renderWithProviders(<SampleSubtractionSelector {...props} />);
         expect(screen.queryByText(testMessage)).toBeNull();
 
         renderWithProviders(<SampleSubtractionSelector {...modProps} />);
         expect(screen.queryByText(testMessage)).toBeInTheDocument();
-
     });
 });
