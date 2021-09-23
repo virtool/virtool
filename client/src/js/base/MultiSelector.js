@@ -18,7 +18,7 @@ const StyledMultiSelectorItem = styled(SelectBoxGroupSection)`
     user-select: none;
 `;
 
-export const MultiSelectorItem = ({ children, className, name, value, disabled }) => {
+export const MultiSelectorItem = ({ children, className, name, value }) => {
     const { selected, onSelect } = useContext(MultiSelectorContext);
     const active = selected.includes(value);
 
@@ -30,7 +30,6 @@ export const MultiSelectorItem = ({ children, className, name, value, disabled }
             name={name}
             type="button"
             onClick={() => onSelect(value)}
-            disabled={disabled}
         >
             <Checkbox checked={active} /> {children}
         </StyledMultiSelectorItem>
