@@ -35,7 +35,7 @@ export const getReferenceItemProgress = createSelector([getReferenceItemTaskId, 
         const task = find(tasks, { id });
 
         if (task) {
-            return task.progress * 100;
+            return task.progress;
         }
     }
 
