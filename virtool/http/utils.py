@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Callable, Union
 
 import aiofiles
@@ -11,7 +12,7 @@ from virtool.types import App
 async def download_file(
         app: App,
         url: str,
-        target_path: str,
+        target_path: Path,
         progress_handler: Callable[[Union[float, int]], int] = None
 ):
     """

@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import shutil
+from pathlib import Path
 
 import aiohttp
 
@@ -505,9 +506,7 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
 
         try:
             with virtool.utils.get_temp_dir() as tempdir:
-                temp_path = str(tempdir)
-
-                download_path = temp_path / "reference.tar.gz"
+                download_path = Path(tempdir) / "reference.tar.gz"
 
                 await virtool.http.utils.download_file(
                     self.app,
