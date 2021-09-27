@@ -57,6 +57,7 @@ Schema:
 import asyncio
 import datetime
 import logging
+from pathlib import Path
 from typing import List, Union, Optional
 
 import aiohttp
@@ -715,13 +716,11 @@ async def create_remote(db, settings: dict, release: dict, remote_from: str, use
     }
 
 
-async def download_and_parse_release(app, url: str, task_id: str, progress_handler: callable):
+async def download_and_parse_release(app, url: str, task_id: int, progress_handler: callable):
     pg = app["pg"]
 
     with virtool.utils.get_temp_dir() as tempdir:
-        temp_path = str(tempdir)
-
-        download_path = temp_path / "reference.tar.gz"
+        download_path = Path(tempdir) / "reference.tar.gz"
 
         await virtool.http.utils.download_file(
             app,
