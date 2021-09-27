@@ -56,7 +56,7 @@ export const MultiSelector = ({ children, error, noun, selected, onChange }) => 
                 onSelect: handleSelect
             }}
         >
-            {children ? <MultiSelectorList error={error}>{children}</MultiSelectorList> : content}
+            {!!children.length ? <MultiSelectorList error={error}>{children}</MultiSelectorList> : content}
             {error && <MultiSelectorError>{error}</MultiSelectorError>}
         </MultiSelectorContext.Provider>
     );
