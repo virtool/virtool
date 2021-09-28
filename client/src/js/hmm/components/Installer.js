@@ -41,7 +41,7 @@ const StyledHMMInstaller = styled(Box)`
 
 export const HMMInstaller = ({ installed, task }) => {
     if (task && !installed) {
-        const progress = task.progress * 100;
+        const progress = task.progress;
         const step = replace(task.step, "_", " ");
 
         return (

@@ -111,7 +111,7 @@ const StyledUpgrade = styled(BoxGroupSection)`
 
 const Upgrade = ({ progress }) => (
     <StyledUpgrade>
-        <AffixedProgressBar color="green" now={progress * 100} />
+        <AffixedProgressBar color="green" now={progress} />
         <Icon name="arrow-alt-circle-up" />
         <strong>Updating</strong>
     </StyledUpgrade>
