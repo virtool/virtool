@@ -2,7 +2,7 @@ import { map } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import { MultiSelector, MultiSelectorItem } from "../../base/MultiSelector";
-import { Link } from "react-router-dom";
+import { Link, BrowserRouter } from "react-router-dom";
 import { NoneFoundBox } from "../../base/NoneFound";
 
 export const SampleSubtractionSelector = ({ name, noun, selected, subtractions, onChange }) => {
@@ -13,8 +13,10 @@ export const SampleSubtractionSelector = ({ name, noun, selected, subtractions, 
     ));
     if (!subtractions.length) {
         return (
-            <NoneFoundBox noun={noun}>
-                <Link to="/subtraction"> Create one</Link>.
+            <NoneFoundBox noun={"subtractions"}>
+                <BrowserRouter>
+                    <Link to="/subtraction"> Create one</Link>.
+                </BrowserRouter>
             </NoneFoundBox>
         );
     }

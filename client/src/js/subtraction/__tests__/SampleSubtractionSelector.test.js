@@ -43,7 +43,7 @@ describe("<SampleSubtractionSelector />", () => {
 
     it("should render no subtractions found message iff appropriate", () => {
         const modProps = { ...props, subtractions: [] };
-        const testMessage = "No Subtractions Found.";
+        const testMessage = /No subtractions Found/i;
 
         renderWithProviders(<SampleSubtractionSelector {...props} />);
         expect(screen.queryByText(testMessage)).toBeNull();
