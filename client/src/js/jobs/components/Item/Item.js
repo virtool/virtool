@@ -47,8 +47,6 @@ export const JobItem = ({
     const handleCancel = useCallback(() => onCancel(id), [id, onCancel]);
     const handleRemove = useCallback(() => onRemove(id), [id, onRemove]);
 
-    const progressValue = progress * 100;
-
     let progressColor = "green";
 
     if (state === "running") {
@@ -63,7 +61,7 @@ export const JobItem = ({
     return (
         <JobItemContainer>
             <JobItemLinkBox to={`/jobs/${id}`}>
-                <AffixedProgressBar now={progressValue} color={progressColor} />
+                <AffixedProgressBar now={progress} color={progressColor} />
 
                 <JobItemBody>
                     <JobItemHeader>

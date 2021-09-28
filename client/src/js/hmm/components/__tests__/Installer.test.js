@@ -6,7 +6,7 @@ describe("<HMMInstaller />", () => {
     beforeEach(() => {
         props = {
             releaseId: "foo",
-            task: { progress: "foo", step: "bar" },
+            task: { progress: 45, step: "bar" },
             installed: false
         };
     });

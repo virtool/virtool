@@ -6,7 +6,7 @@ describe("<JobItem />", () => {
     beforeEach(() => {
         props = {
             id: "foo",
-            progress: 1,
+            progress: 100,
             workflow: "build_index",
             created_at: "Foo",
             user: {

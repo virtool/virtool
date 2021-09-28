@@ -1,30 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<HMMInstaller /> should render when [this.props.task exists] and [this.props.installed=true] 1`] = `
-<Installer__StyledHMMInstaller>
-  <Icon
-    faStyle="fas"
-    fixedWidth={false}
-    name="info-circle"
-  />
-  <div>
-    <h3>
-      No HMM data available.
-    </h3>
-    <p>
-      You can download and install the official HMM data automatically from our
-      <ExternalLink
-        href="https://github.com/virtool/virtool-hmm"
-      >
-         GitHub repository
-      </ExternalLink>
-      .
-    </p>
-    <Connect(InstallOption) />
-  </div>
-</Installer__StyledHMMInstaller>
-`;
-
 exports[`<HMMInstaller /> should render when [this.props.task = undefined] and [this.props.installed = false] 1`] = `
 <Installer__StyledHMMInstaller>
   <Icon
@@ -79,7 +54,7 @@ exports[`<HMMInstaller /> should render when [this.props.task exists] and [this.
 <Installer__HMMInstalling>
   <ProgressBar__AffixedProgressBar
     color="blue"
-    now={NaN}
+    now={45}
   />
   <div>
     <h3>
