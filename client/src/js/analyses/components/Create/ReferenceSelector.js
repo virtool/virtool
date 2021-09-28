@@ -2,8 +2,9 @@ import { map } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import styled from "styled-components";
-import { Label } from "../../../base";
+import { Label, NoneFoundBox } from "../../../base";
 import { MultiSelector, MultiSelectorItem } from "../../../base/MultiSelector";
+import { Link } from "react-router-dom";
 
 const StyledReferenceSelectorItem = styled(MultiSelectorItem)`
     > span:last-child {
@@ -29,6 +30,14 @@ export const ReferenceSelector = ({ hasError, indexes, selected, onChange }) => 
             version={index.version}
         />
     ));
+
+    if (!referenceComponents.length) {
+        return (
+            <NoneFoundBox noun={"references"}>
+                <Link to="/subtraction">Import one</Link>.
+            </NoneFoundBox>
+        );
+    }
 
     return (
         <React.Fragment>
