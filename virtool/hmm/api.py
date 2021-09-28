@@ -121,6 +121,8 @@ async def install(req):
     if await db.status.count_documents({"_id": "hmm", "updates.ready": False}):
         raise HTTPConflict(text="Install already in progress")
 
+    await virtool.hmm.db.fetch_and_update_release(req.app)
+
     release = await get_one_field(db.status, "release", "hmm")
 
     if release is None:
