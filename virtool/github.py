@@ -123,4 +123,4 @@ async def get_release(
             return None
 
         else:
-            raise virtool.errors.GitHubError(f"Encountered error {resp.status}")
+            raise virtool.errors.GitHubError(f"Encountered error {resp.status} {await resp.json()}")
