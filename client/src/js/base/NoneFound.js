@@ -53,6 +53,7 @@ export const NoneFoundBox = ({ noun, children }) => (
 );
 
 NoneFoundBox.propTypes = {
+    children: PropTypes.node,
     noun: PropTypes.string.isRequired
 };
 
