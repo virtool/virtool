@@ -7,9 +7,7 @@ export const StyledSelectBox = styled(Box)`
     border-radius: ${props => props.theme.borderRadius.sm};
     box-shadow: ${props => (props.active ? props.theme.boxShadow.inset : "none")};
     background: white;
-    width: 100%;
     text-align: left;
-    white-space: normal;
     div {
         font-weight: ${props => props.theme.fontWeight.thick};
         padding-bottom: 5px;
