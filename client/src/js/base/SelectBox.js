@@ -20,7 +20,7 @@ export const StyledSelectBox = styled(Box)`
 `;
 
 export const SelectBox = props => {
-    let buttonType = props.type ? props.type : "button";
+    const buttonType = props.type ? props.type : "button";
     return (
         <StyledSelectBox {...props} type={buttonType} as="button">
             {props.children}
