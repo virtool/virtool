@@ -33,7 +33,7 @@ export const ReferenceSelector = ({ hasError, indexes, selected, onChange }) => 
 
     if (!referenceComponents.length) {
         return (
-            <NoneFoundBox noun={"references"}>
+            <NoneFoundBox noun="references">
                 <Link to="/subtraction">Import one</Link>.
             </NoneFoundBox>
         );
