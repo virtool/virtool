@@ -13,7 +13,7 @@ export const SampleSubtractionSelector = ({ name, noun, selected, subtractions, 
     ));
     if (!subtractions.length) {
         return (
-            <NoneFoundBox noun={"subtractions"}>
+            <NoneFoundBox noun="subtractions">
                 <BrowserRouter>
                     <Link to="/subtraction"> Create one</Link>.
                 </BrowserRouter>
