@@ -2,6 +2,7 @@ import React from "react";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SampleSubtractionSelector } from "../components/Selector";
+import { BrowserRouter } from "react-router-dom";
 
 describe("<SampleSubtractionSelector />", () => {
     let props;
@@ -41,14 +42,22 @@ describe("<SampleSubtractionSelector />", () => {
         expect(clickedValue).toEqual([props.subtractions[0].id]);
     });
 
+    const WrappedSampleSubtractionSelector = props => {
+        return (
+            <BrowserRouter>
+                <SampleSubtractionSelector {...props}> </SampleSubtractionSelector>
+            </BrowserRouter>
+        );
+    };
+
     it("should render no subtractions found message iff appropriate", () => {
         const modProps = { ...props, subtractions: [] };
         const testMessage = /No subtractions Found/i;
 
-        renderWithProviders(<SampleSubtractionSelector {...props} />);
+        renderWithProviders(<WrappedSampleSubtractionSelector {...props} />);
         expect(screen.queryByText(testMessage)).toBeNull();
 
-        renderWithProviders(<SampleSubtractionSelector {...modProps} />);
+        renderWithProviders(<WrappedSampleSubtractionSelector {...modProps} />);
         expect(screen.queryByText(testMessage)).toBeInTheDocument();
     });
 });
