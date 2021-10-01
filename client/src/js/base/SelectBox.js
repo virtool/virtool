@@ -2,7 +2,10 @@ import styled from "styled-components";
 import { Box } from "./Box";
 import React from "react";
 
-export const StyledSelectBox = styled(Box)`
+export const SelectBox = styled(Box).attrs(props => ({
+    type: "button",
+    as: "button"
+}))`
     border: 1px ${props => (props.active ? props.theme.color.blue : props.theme.color.greyLight)} solid;
     border-radius: ${props => props.theme.borderRadius.sm};
     box-shadow: ${props => (props.active ? props.theme.boxShadow.inset : "none")};
@@ -18,11 +21,3 @@ export const StyledSelectBox = styled(Box)`
         padding-top: 5px;
     }
 `;
-
-export const SelectBox = props => {
-    return (
-        <StyledSelectBox {...props} type="button" as="button">
-            {props.children}
-        </StyledSelectBox>
-    );
-};
