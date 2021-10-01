@@ -6,7 +6,7 @@ export const StyledSelectBox = styled(Box)`
     border: 1px ${props => (props.active ? props.theme.color.blue : props.theme.color.greyLight)} solid;
     border-radius: ${props => props.theme.borderRadius.sm};
     box-shadow: ${props => (props.active ? props.theme.boxShadow.inset : "none")};
-    background: white;
+    background-color: ${props => props.theme.color.white};
     text-align: left;
     div {
         font-weight: ${props => props.theme.fontWeight.thick};
@@ -20,9 +20,8 @@ export const StyledSelectBox = styled(Box)`
 `;
 
 export const SelectBox = props => {
-    const buttonType = props.type ? props.type : "button";
     return (
-        <StyledSelectBox {...props} type={buttonType} as="button">
+        <StyledSelectBox {...props} type="button" as="button">
             {props.children}
         </StyledSelectBox>
     );
