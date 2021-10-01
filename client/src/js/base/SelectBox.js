@@ -1,8 +1,7 @@
 import styled from "styled-components";
 import { Box } from "./Box";
-import React from "react";
 
-export const SelectBox = styled(Box).attrs(props => ({
+export const SelectBox = styled(Box).attrs(() => ({
     type: "button",
     as: "button"
 }))`
