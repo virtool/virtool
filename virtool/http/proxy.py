@@ -1,8 +1,12 @@
+from logging import getLogger
+
 import aiohttp
 from aiohttp import web
 
 import virtool.errors
 from virtool.api.response import json_response
+
+logger = getLogger(__name__)
 
 
 class ProxyRequest:
@@ -23,6 +27,11 @@ class ProxyRequest:
 
         if self.resp.status == 407:
             raise virtool.errors.ProxyError("Proxy authentication failed")
+
+        if self.resp.status > 400:
+            logger.warning(
+                f"Error while making request to {self.resp.url}. {self.resp.status} - {await self.resp.text()}"
+            )
 
         return self.resp
 
