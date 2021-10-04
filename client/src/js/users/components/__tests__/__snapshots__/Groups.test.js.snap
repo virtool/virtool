@@ -35,6 +35,11 @@ exports[`<UserGroups /> should render NoneFound when [documents=[]] 1`] = `
   <label>
     Groups
   </label>
-  <Groups__UserGroupsList />
+  <Groups__UserGroupsList>
+    <NoneFoundSection
+      key="noneFound"
+      noun="groups"
+    />
+  </Groups__UserGroupsList>
 </div>
 `;
