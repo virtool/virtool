@@ -56,7 +56,7 @@ exports[`<NoneFoundBox /> should render with [noun='boxes' 1`] = `
   />
    No 
   boxes
-   found
+   found.   
 </NoneFound__StyledNoneFoundBox>
 `;
 

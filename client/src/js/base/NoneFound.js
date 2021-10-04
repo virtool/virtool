@@ -46,13 +46,14 @@ const StyledNoneFoundBox = styled(Box)`
     min-height: 30px;
 `;
 
-export const NoneFoundBox = ({ noun }) => (
+export const NoneFoundBox = ({ noun, children }) => (
     <StyledNoneFoundBox as={Box}>
-        <Icon name="info-circle" /> No {noun} found
+        <Icon name="info-circle" /> No {noun} found. &nbsp; {children}
     </StyledNoneFoundBox>
 );
 
 NoneFoundBox.propTypes = {
+    children: PropTypes.node,
     noun: PropTypes.string.isRequired
 };
 
