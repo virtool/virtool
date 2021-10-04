@@ -25,7 +25,7 @@ export class UserGroups extends React.Component {
             <UserGroup key={id} id={id} toggled={includes(this.props.memberGroups, id)} onClick={this.handleEdit} />
         ));
 
-        if (!groupComponents) {
+        if (!groupComponents.length) {
             groupComponents = <NoneFoundSection key="noneFound" noun="groups" />;
         }
 
