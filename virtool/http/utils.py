@@ -1,11 +1,12 @@
 from pathlib import Path
-from typing import Callable, Union
+from typing import Callable, Union, Awaitable
 
 import aiofiles
 import aiohttp.web_response
 
 import virtool.errors
 import virtool.http.proxy
+from virtool.errors import GitHubError
 from virtool.types import App
 
 
@@ -13,7 +14,7 @@ async def download_file(
         app: App,
         url: str,
         target_path: Path,
-        progress_handler: Callable[[Union[float, int]], int] = None
+        progress_handler: Callable[[Union[float, int]], Awaitable[int]] = None
 ):
     """
     Download the GitHub release at ``url`` to the location specified by ``target_path``.
@@ -26,7 +27,7 @@ async def download_file(
     """
     async with virtool.http.proxy.ProxyRequest(app["settings"], app["client"].get, url) as resp:
         if resp.status != 200:
-            raise virtool.errors.GitHubError("Could not download file")
+            raise GitHubError("Could not download file")
 
         async with aiofiles.open(target_path, "wb") as handle:
             while True:
