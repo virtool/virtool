@@ -66,13 +66,9 @@ class HMMInstallTask(virtool.tasks.task.Task):
                 path,
                 tracker.add
             )
-        except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
-            await virtool.tasks.pg.update(
-                self.pg,
-                self.id,
-                error="Could not download HMM data",
-                step="unpack"
-            )
+        except Exception as err:
+            logger.warning(f"Request for HMM release encountered exception: {err}")
+            await self.error("Could not download HMM data.")
 
     async def decompress(self):
         tracker = await self.get_tracker()
@@ -139,5 +135,5 @@ class HMMInstallTask(virtool.tasks.task.Task):
             }
         })
 
-        logger.debug("Update HMM status")
-        logger.debug("Finished HMM install task")
+    async def cleanup(self):
+        await purge(self.db, self.app["settings"])
