@@ -28,7 +28,7 @@ class ProxyRequest:
         if self.resp.status == 407:
             raise virtool.errors.ProxyError("Proxy authentication failed")
 
-        if self.resp.status > 400:
+        if self.resp.status >= 400:
             logger.warning(
                 f"Error while making request to {self.resp.url}. {self.resp.status} - {await self.resp.text()}"
             )
