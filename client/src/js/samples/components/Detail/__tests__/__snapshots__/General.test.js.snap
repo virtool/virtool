@@ -125,7 +125,7 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
     </Box__BoxGroup>
   </Container__NarrowContainer>
   <General__SampleDetailSidebarContainer>
-    <Sidebar />
+    <Connect(Sidebar) />
   </General__SampleDetailSidebarContainer>
   <Connect(EditSample) />
 </General__StyledSampleDetailGeneral>
@@ -256,7 +256,7 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
     </Box__BoxGroup>
   </Container__NarrowContainer>
   <General__SampleDetailSidebarContainer>
-    <Sidebar />
+    <Connect(Sidebar) />
   </General__SampleDetailSidebarContainer>
   <Connect(EditSample) />
 </General__StyledSampleDetailGeneral>

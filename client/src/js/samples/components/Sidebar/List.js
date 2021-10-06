@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { SampleLabel } from "../../Label";
+import { SampleLabel } from "../Label";
 
 const SampleSidebarListItem = styled(SampleLabel)`
     background-color: ${props => props.theme.color.white};
