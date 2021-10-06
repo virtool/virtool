@@ -87,9 +87,10 @@ export const getSample = sampleId => ({
  * @param subtractions {Array} string - names of the associated subtraction host genomes
  * @param files {object} file ids of one or two files
  * @param group {string} user group the sample will be assigned to
+ * @param label {Array} Array of ids(int) of the labels selected
  * @returns {object}
  */
-export const createSample = (name, isolate, host, locale, libraryType, subtractions, files, group) => ({
+export const createSample = (name, isolate, host, locale, libraryType, subtractions, files, labels, group) => ({
     type: CREATE_SAMPLE.REQUESTED,
     name,
     isolate,
@@ -98,6 +99,7 @@ export const createSample = (name, isolate, host, locale, libraryType, subtracti
     libraryType,
     subtractions,
     files,
+    labels,
     group
 });
 
