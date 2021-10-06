@@ -6,7 +6,7 @@ import { BoxGroup, BoxGroupHeader, Markdown, NarrowContainer, SideContainer, Tab
 import { getLibraryTypeDisplayName } from "../../utils";
 import EditSample from "../Edit/Edit";
 import SampleFileSizeWarning from "./FileSizeWarning.js";
-import { Sidebar } from "./Sidebar/Sidebar";
+import Sidebar from "./Sidebar";
 
 const SampleDetailSidebarContainer = styled(SideContainer)`
     padding-left: 15px;

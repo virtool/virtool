@@ -1,13 +1,14 @@
-import React from "react";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import React from "react";
+import { createStore } from "redux";
+import { LIST_LABELS } from "../../../../app/actionTypes";
 import { CreateSample, mapDispatchToProps, mapStateToProps } from "../Create";
 
 describe("<CreateSample>", () => {
     const readFileName = "large";
     let props;
     let values;
-
     beforeEach(() => {
         props = {
             error: "",
@@ -31,7 +32,8 @@ describe("<CreateSample>", () => {
                 })),
             forceGroupChoice: false,
             onCreate: jest.fn(),
-            onLoadSubtractionsAndFiles: jest.fn()
+            onLoadSubtractionsAndFiles: jest.fn(),
+            onListLabels: jest.fn()
         };
         values = {
             name: "Sample 1",
@@ -70,7 +72,7 @@ describe("<CreateSample>", () => {
     });
 
     it("should fail to submit and show errors on empty submission", async () => {
-        renderWithProviders(<CreateSample {...props} />);
+        renderWithProviders(<CreateSample {...props} />, createAppStore);
         // Ensure errors aren't shown prematurely
         expect(screen.queryByText("Required Field")).not.toBeInTheDocument();
         expect(screen.queryByText("At least one read file must be attached to the sample")).not.toBeInTheDocument();
@@ -86,15 +88,15 @@ describe("<CreateSample>", () => {
 
     it("should submit when required fields are completed", async () => {
         const { name } = values;
-        renderWithProviders(<CreateSample {...props} />);
+        renderWithProviders(<CreateSample {...props} />, createAppStore);
         inputFormRequirements(name);
         submitForm();
 
-        await waitFor(() => expect(props.onCreate).toHaveBeenCalledWith(name, "", "", "", "normal", [], [0, 1]));
+        await waitFor(() => expect(props.onCreate).toHaveBeenCalledWith(name, "", "", "", "normal", [], [0, 1], []));
     });
 
     it("should submit expected results when form is fully completed", async () => {
-        renderWithProviders(<CreateSample {...props} />);
+        renderWithProviders(<CreateSample {...props} />, createAppStore);
         const { name, isolate, host, locale, libraryType } = values;
         inputFormRequirements(name);
 
@@ -114,24 +116,54 @@ describe("<CreateSample>", () => {
                 locale,
                 libraryType.toLowerCase(),
                 [props.subtractions[1].id],
-                [0, 1]
+                [0, 1],
+                []
+            )
+        );
+    });
+
+    it("should include labels when submitting a completed form", async () => {
+        renderWithProviders(<CreateSample {...props} />, createAppStore);
+        const { name, isolate, host, locale, libraryType } = values;
+        inputFormRequirements(name);
+
+        // Fill out the rest of the form and submit
+        userEvent.type(screen.getByLabelText("Isolate"), isolate);
+        userEvent.type(screen.getByLabelText("Host"), host);
+        userEvent.type(screen.getByLabelText("Locale"), locale);
+        userEvent.click(screen.getByText(props.subtractions[1].name));
+        userEvent.click(screen.getByText(libraryType));
+        userEvent.click(screen.getByTestId("labelButton"));
+        userEvent.click(screen.getByText("testlabel1"));
+        submitForm();
+
+        await waitFor(() =>
+            expect(props.onCreate).toHaveBeenCalledWith(
+                name,
+                isolate,
+                host,
+                locale,
+                libraryType.toLowerCase(),
+                [props.subtractions[1].id],
+                [0, 1],
+                [2]
             )
         );
     });
 
     it("should render userGroup when [props.forcedGroup=true]", () => {
-        renderWithProviders(<CreateSample {...props} />);
+        renderWithProviders(<CreateSample {...props} />, createAppStore);
         expect(screen.queryByText("User Group")).not.toBeInTheDocument();
     });
 
     it("should render userGroup when [props.forcedGroup=false]", () => {
         props.forceGroupChoice = true;
-        renderWithProviders(<CreateSample {...props} />);
+        renderWithProviders(<CreateSample {...props} />, createAppStore);
         expect(screen.getByText("User Group")).toBeInTheDocument();
     });
 
     it("should update the sample name when the magic icon is pressed", async () => {
-        renderWithProviders(<CreateSample {...props} />);
+        renderWithProviders(<CreateSample {...props} />, createAppStore);
         const nameInput = screen.getByRole("textbox", { name: /Sample Name/i });
         expect(nameInput.value).toBe("");
 
@@ -140,6 +172,22 @@ describe("<CreateSample>", () => {
         expect(nameInput.value).toBe(readFileName);
     });
 });
+
+const createAppStore = () => {
+    const mockReducer = state => {
+        return state;
+    };
+    const state = {
+        labels: {
+            documents: [
+                { color: "#3B82F6", count: 0, description: "", id: 2, name: "testlabel1" },
+                { color: "#3C8786", count: 0, description: "", id: 3, name: "testlabel2" }
+            ]
+        }
+    };
+
+    return createStore(mockReducer, state);
+};
 
 describe("mapStateToProps()", () => {
     it("should return props", () => {
@@ -185,6 +233,12 @@ describe("mapStateToProps()", () => {
                         name: "Bar Subtraction"
                     }
                 ]
+            },
+            labels: {
+                documents: [
+                    { color: "#3B82F6", count: 0, description: "", id: 2, name: "testlabel1" },
+                    { color: "#3C8786", count: 0, description: "", id: 3, name: "testlabel2" }
+                ]
             }
         };
         const props = mapStateToProps(state);
@@ -198,7 +252,11 @@ describe("mapStateToProps()", () => {
                     reserved: false
                 }
             ],
-            subtractions
+            subtractions,
+            allLabels: [
+                { color: "#3B82F6", count: 0, description: "", id: 2, name: "testlabel1" },
+                { color: "#3C8786", count: 0, description: "", id: 3, name: "testlabel2" }
+            ]
         });
     });
 });
@@ -229,5 +287,10 @@ describe("mapDispatchToProps()", () => {
     it("should return onClearError() in props", () => {
         props.onClearError();
         expect(dispatch).toHaveBeenCalledWith({ error: "CREATE_SAMPLE_ERROR", type: "CLEAR_ERROR" });
+    });
+
+    it("should return onListLabels() in props", () => {
+        props.onListLabels();
+        expect(dispatch).toHaveBeenCalledWith({ type: LIST_LABELS.REQUESTED });
     });
 });

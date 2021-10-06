@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import styled from "styled-components";
-import { getFontSize } from "../../../../app/theme";
-import { BoxGroupSection, Icon } from "../../../../base";
+import { getFontSize } from "../../../app/theme";
+import { BoxGroupSection, Icon } from "../../../base";
 
 const StyledSampleSidebarSelectorItem = styled(BoxGroupSection)`
     align-items: stretch;
@@ -27,7 +27,7 @@ export const SampleSidebarSelectorItem = ({ checked, children, id, onClick }) =>
     const handleSelect = useCallback(() => onClick(id), [id, onClick]);
 
     return (
-        <StyledSampleSidebarSelectorItem as="button" onClick={handleSelect}>
+        <StyledSampleSidebarSelectorItem as="button" type={"button"} onClick={handleSelect}>
             <SampleSidebarSelectorItemCheck>{checked && <Icon name="check" />}</SampleSidebarSelectorItemCheck>
             <div>{children}</div>
         </StyledSampleSidebarSelectorItem>
