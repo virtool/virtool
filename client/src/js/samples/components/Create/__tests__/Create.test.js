@@ -203,7 +203,7 @@ describe("<CreateSample>", () => {
 });
 
 const createAppStore = () => {
-    const mockReducer = (state, action) => {
+    const mockReducer = state => {
         return state;
     };
     const state = {
