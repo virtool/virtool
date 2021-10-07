@@ -1,9 +1,9 @@
-import React from "react";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CreateSample, mapDispatchToProps, mapStateToProps } from "../Create";
-import { createStore } from "redux";
+import React from "react";
 import { Provider } from "react-redux";
+import { createStore } from "redux";
+import { CreateSample, mapDispatchToProps, mapStateToProps } from "../Create";
 
 describe("<CreateSample>", () => {
     const readFileName = "large";

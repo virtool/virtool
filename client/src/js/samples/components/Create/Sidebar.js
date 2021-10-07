@@ -1,7 +1,8 @@
 import React from "react";
 import styled from "styled-components";
-import SampleLabels from "../LabelSidebar/Labels";
 import { SideContainer } from "../../../base";
+import SampleLabels from "../LabelSidebar/Labels";
+
 const StyledSidebar = styled(SideContainer)`
     align-items: stretch;
     flex-direction: column;

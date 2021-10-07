@@ -24,8 +24,8 @@ import { getSubtractionShortlist } from "../../../subtraction/selectors";
 import { createSample, findReadFiles } from "../../actions";
 import { LibraryTypeSelector } from "./LibraryTypeSelector";
 import ReadSelector from "./ReadSelector";
-import { SampleUserGroup } from "./UserGroup";
 import { Sidebar } from "./Sidebar";
+import { SampleUserGroup } from "./UserGroup";
 
 const CreateSampleFields = styled.div`
     grid-template-columns: 1fr 1fr;

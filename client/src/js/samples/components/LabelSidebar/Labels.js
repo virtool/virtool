@@ -1,10 +1,10 @@
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
-import { SmallSampleLabel } from "../Label";
-import { SampleSidebarSelector } from "./Selector";
-import { SampleSidebarList } from "./List";
 import { LoadingPlaceholder, SidebarHeader, SideBarSection } from "../../../base";
 import { listLabels } from "../../../labels/actions";
+import { SmallSampleLabel } from "../Label";
+import { SampleSidebarList } from "./List";
+import { SampleSidebarSelector } from "./Selector";
 
 const SampleLabelInner = ({ name, color, description }) => (
     <React.Fragment>
