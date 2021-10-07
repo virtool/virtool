@@ -1,11 +1,12 @@
 import datetime
+import gzip
+import json
 import os
 import shutil
 from pathlib import Path
 
 import arrow
 import pytest
-
 import virtool.utils
 
 
@@ -154,3 +155,25 @@ def test_to_bool(value, result):
 
     """
     assert virtool.utils.to_bool(value) == result
+
+
+def test_compress_json_with_gzip(tmpdir):
+    """
+    Test that `utils.compress_json_with_gzip` correctly compresses a JSON string.
+
+    """
+    data = json.dumps({"foo": "bar"})
+
+    target = Path(tmpdir) / "data.json.gz"
+    target_with_sub_paths = target.parent / "foo/bar/data.json.gz"
+
+    virtool.utils.compress_json_with_gzip(data, target)
+    virtool.utils.compress_json_with_gzip(data, target_with_sub_paths)
+
+    assert target.exists()
+    assert target_with_sub_paths.exists()
+
+    for _target in (target, target_with_sub_paths):
+        with gzip.open(_target, 'r') as f:
+            json_data = f.read().decode('utf-8')
+            assert json_data == data

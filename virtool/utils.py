@@ -93,6 +93,9 @@ def compress_json_with_gzip(json_string: str, target: str):
     Compress the JSON string to a gzipped file at `target`.
 
     """
+    # gzip will fail to open the file if it's parent directory doesn't exist.
+    target = Path(target)
+    target.parent.mkdir(exist_ok=True, parents=True)
     with gzip.open(target, "wb") as f:
         f.write(bytes(json_string, "utf-8"))
 
