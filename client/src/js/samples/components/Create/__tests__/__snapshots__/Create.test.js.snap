@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<CreateSample> should render 1`] = `
-<Container__NarrowContainer>
+<Fragment>
   <ViewHeader
     title="Create Sample"
   >
@@ -16,6 +16,7 @@ exports[`<CreateSample> should render 1`] = `
         "group": null,
         "host": "",
         "isolate": "",
+        "labels": Array [],
         "libraryType": "normal",
         "locale": "",
         "name": "",
@@ -134,7 +135,7 @@ exports[`<CreateSample> should render 1`] = `
   >
     <Component />
   </Formik>
-</Container__NarrowContainer>
+</Fragment>
 `;
 
 exports[`<CreateSample> should render LoadingPlaceholder when [props.readyReads=null] 1`] = `

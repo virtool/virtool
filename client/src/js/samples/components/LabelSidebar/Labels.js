@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
-import { getSampleLabels } from "../../selectors";
 import { SmallSampleLabel } from "../Label";
 import { SampleSidebarSelector } from "./Selector";
 import { SampleSidebarList } from "./List";

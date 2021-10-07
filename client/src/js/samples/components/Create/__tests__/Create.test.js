@@ -2,12 +2,14 @@ import React from "react";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CreateSample, mapDispatchToProps, mapStateToProps } from "../Create";
+import { createStore } from "redux";
+import { Provider } from "react-redux";
 
 describe("<CreateSample>", () => {
     const readFileName = "large";
     let props;
     let values;
-
+    let store;
     beforeEach(() => {
         props = {
             error: "",
@@ -42,6 +44,7 @@ describe("<CreateSample>", () => {
             subtractionId: "sub_bar",
             libraryType: "sRNA"
         };
+        store = createAppStore();
     });
 
     const submitForm = () => userEvent.click(screen.getByRole("button", { name: /Save/i }));
@@ -70,7 +73,11 @@ describe("<CreateSample>", () => {
     });
 
     it("should fail to submit and show errors on empty submission", async () => {
-        renderWithProviders(<CreateSample {...props} />);
+        renderWithProviders(
+            <Provider store={store}>
+                <CreateSample {...props} />
+            </Provider>
+        );
         // Ensure errors aren't shown prematurely
         expect(screen.queryByText("Required Field")).not.toBeInTheDocument();
         expect(screen.queryByText("At least one read file must be attached to the sample")).not.toBeInTheDocument();
@@ -86,15 +93,23 @@ describe("<CreateSample>", () => {
 
     it("should submit when required fields are completed", async () => {
         const { name } = values;
-        renderWithProviders(<CreateSample {...props} />);
+        renderWithProviders(
+            <Provider store={store}>
+                <CreateSample {...props} />
+            </Provider>
+        );
         inputFormRequirements(name);
         submitForm();
 
-        await waitFor(() => expect(props.onCreate).toHaveBeenCalledWith(name, "", "", "", "normal", [], [0, 1]));
+        await waitFor(() => expect(props.onCreate).toHaveBeenCalledWith(name, "", "", "", "normal", [], [0, 1], []));
     });
 
     it("should submit expected results when form is fully completed", async () => {
-        renderWithProviders(<CreateSample {...props} />);
+        renderWithProviders(
+            <Provider store={store}>
+                <CreateSample {...props} />
+            </Provider>
+        );
         const { name, isolate, host, locale, libraryType } = values;
         inputFormRequirements(name);
 
@@ -114,24 +129,70 @@ describe("<CreateSample>", () => {
                 locale,
                 libraryType.toLowerCase(),
                 [props.subtractions[1].id],
-                [0, 1]
+                [0, 1],
+                []
+            )
+        );
+    });
+
+    it("should include labels when submitting a completed form", async () => {
+        renderWithProviders(
+            <Provider store={store}>
+                <CreateSample {...props} />
+            </Provider>
+        );
+        const { name, isolate, host, locale, libraryType } = values;
+        inputFormRequirements(name);
+
+        // Fill out the rest of the form and submit
+        userEvent.type(screen.getByLabelText("Isolate"), isolate);
+        userEvent.type(screen.getByLabelText("Host"), host);
+        userEvent.type(screen.getByLabelText("Locale"), locale);
+        userEvent.click(screen.getByText(props.subtractions[1].name));
+        userEvent.click(screen.getByText(libraryType));
+        userEvent.click(screen.getByTestId("labelButton"));
+        userEvent.click(screen.getByText("testlabel1"));
+        submitForm();
+
+        await waitFor(() =>
+            expect(props.onCreate).toHaveBeenCalledWith(
+                name,
+                isolate,
+                host,
+                locale,
+                libraryType.toLowerCase(),
+                [props.subtractions[1].id],
+                [0, 1],
+                [2]
             )
         );
     });
 
     it("should render userGroup when [props.forcedGroup=true]", () => {
-        renderWithProviders(<CreateSample {...props} />);
+        renderWithProviders(
+            <Provider store={store}>
+                <CreateSample {...props} />
+            </Provider>
+        );
         expect(screen.queryByText("User Group")).not.toBeInTheDocument();
     });
 
     it("should render userGroup when [props.forcedGroup=false]", () => {
         props.forceGroupChoice = true;
-        renderWithProviders(<CreateSample {...props} />);
+        renderWithProviders(
+            <Provider store={store}>
+                <CreateSample {...props} />
+            </Provider>
+        );
         expect(screen.getByText("User Group")).toBeInTheDocument();
     });
 
     it("should update the sample name when the magic icon is pressed", async () => {
-        renderWithProviders(<CreateSample {...props} />);
+        renderWithProviders(
+            <Provider store={store}>
+                <CreateSample {...props} />
+            </Provider>
+        );
         const nameInput = screen.getByRole("textbox", { name: /Sample Name/i });
         expect(nameInput.value).toBe("");
 
@@ -140,6 +201,22 @@ describe("<CreateSample>", () => {
         expect(nameInput.value).toBe(readFileName);
     });
 });
+
+const createAppStore = () => {
+    const mockReducer = (state, action) => {
+        return state;
+    };
+    const state = {
+        labels: {
+            documents: [
+                { color: "#3B82F6", count: 0, description: "", id: 2, name: "testlabel1" },
+                { color: "#3C8786", count: 0, description: "", id: 3, name: "testlabel2" }
+            ]
+        }
+    };
+
+    return createStore(mockReducer, state);
+};
 
 describe("mapStateToProps()", () => {
     it("should return props", () => {

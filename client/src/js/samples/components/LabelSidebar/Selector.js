@@ -12,7 +12,6 @@ const SampleSidebarSelectorInputContainer = styled(BoxGroupSection)`
 
 export const SampleSidebarSelector = ({ render, sampleItems, selectedItems, sampleId, onUpdate }) => {
     const [results, term, setTerm] = useFuse(sampleItems, ["name"], [sampleId]);
-    // console.log("results", results);
     const [attributes, show, styles, setPopperElement, setReferenceElement, setShow] = usePopover();
 
     const handleToggle = useCallback(
@@ -21,11 +20,6 @@ export const SampleSidebarSelector = ({ render, sampleItems, selectedItems, samp
         },
         [sampleId, selectedItems, onUpdate]
     );
-    const selectedLabels = selectedItems.map(item => sampleItems[item.id]);
-    // console.log(results);
-    // console.log(sampleItems);
-    // console.log(selectedItems);
-    // console.log(selectedLabels);
     const sampleItemComponents = results.map(item => (
         <SampleSidebarSelectorItem
             key={item.id}
@@ -39,7 +33,7 @@ export const SampleSidebarSelector = ({ render, sampleItems, selectedItems, samp
 
     return (
         <React.Fragment>
-            <SidebarHeaderButton type="button" ref={setReferenceElement} onClick={setShow}>
+            <SidebarHeaderButton data-testid="labelButton" type="button" ref={setReferenceElement} onClick={setShow}>
                 <Icon name="pen" />
             </SidebarHeaderButton>
             {show && (
