@@ -14,9 +14,9 @@ import { theme } from "../js/app/theme";
 // jest configuration settings specified in package.json instead of here.
 Enzyme.configure({ adapter: new Adapter() });
 
-const renderWithProviders = (ui, store) => {
+const renderWithProviders = (ui, createAppStore) => {
     let wrappedUi = <ThemeProvider theme={theme}>{ui}</ThemeProvider>;
-    if (store) wrappedUi = <Provider store={store}> {wrappedUi} </Provider>;
+    if (createAppStore) wrappedUi = <Provider store={createAppStore()}> {wrappedUi} </Provider>;
     return rtlRender(wrappedUi);
 };
 

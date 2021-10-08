@@ -8,7 +8,6 @@ describe("<CreateSample>", () => {
     const readFileName = "large";
     let props;
     let values;
-    let store;
     beforeEach(() => {
         props = {
             error: "",
@@ -43,7 +42,6 @@ describe("<CreateSample>", () => {
             subtractionId: "sub_bar",
             libraryType: "sRNA"
         };
-        store = createAppStore();
     });
 
     const submitForm = () => userEvent.click(screen.getByRole("button", { name: /Save/i }));
@@ -72,7 +70,7 @@ describe("<CreateSample>", () => {
     });
 
     it("should fail to submit and show errors on empty submission", async () => {
-        renderWithProviders(<CreateSample {...props} />, store);
+        renderWithProviders(<CreateSample {...props} />, createAppStore);
         // Ensure errors aren't shown prematurely
         expect(screen.queryByText("Required Field")).not.toBeInTheDocument();
         expect(screen.queryByText("At least one read file must be attached to the sample")).not.toBeInTheDocument();
@@ -88,7 +86,7 @@ describe("<CreateSample>", () => {
 
     it("should submit when required fields are completed", async () => {
         const { name } = values;
-        renderWithProviders(<CreateSample {...props} />, store);
+        renderWithProviders(<CreateSample {...props} />, createAppStore);
         inputFormRequirements(name);
         submitForm();
 
@@ -96,7 +94,7 @@ describe("<CreateSample>", () => {
     });
 
     it("should submit expected results when form is fully completed", async () => {
-        renderWithProviders(<CreateSample {...props} />, store);
+        renderWithProviders(<CreateSample {...props} />, createAppStore);
         const { name, isolate, host, locale, libraryType } = values;
         inputFormRequirements(name);
 
@@ -123,7 +121,7 @@ describe("<CreateSample>", () => {
     });
 
     it("should include labels when submitting a completed form", async () => {
-        renderWithProviders(<CreateSample {...props} />, store);
+        renderWithProviders(<CreateSample {...props} />, createAppStore);
         const { name, isolate, host, locale, libraryType } = values;
         inputFormRequirements(name);
 
@@ -152,18 +150,18 @@ describe("<CreateSample>", () => {
     });
 
     it("should render userGroup when [props.forcedGroup=true]", () => {
-        renderWithProviders(<CreateSample {...props} />, store);
+        renderWithProviders(<CreateSample {...props} />, createAppStore);
         expect(screen.queryByText("User Group")).not.toBeInTheDocument();
     });
 
     it("should render userGroup when [props.forcedGroup=false]", () => {
         props.forceGroupChoice = true;
-        renderWithProviders(<CreateSample {...props} />, store);
+        renderWithProviders(<CreateSample {...props} />, createAppStore);
         expect(screen.getByText("User Group")).toBeInTheDocument();
     });
 
     it("should update the sample name when the magic icon is pressed", async () => {
-        renderWithProviders(<CreateSample {...props} />, store);
+        renderWithProviders(<CreateSample {...props} />, createAppStore);
         const nameInput = screen.getByRole("textbox", { name: /Sample Name/i });
         expect(nameInput.value).toBe("");
 
