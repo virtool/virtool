@@ -1,7 +1,10 @@
+from unittest.mock import call
+
 import pytest
 
 import virtool.jobs.db
-from virtool.jobs.db import acquire, create
+from virtool.jobs.client import JobsClient
+from virtool.jobs.db import acquire, create, force_delete_jobs
 from virtool.jobs.utils import JobRights
 
 status = {
@@ -76,3 +79,20 @@ async def test_acquire(dbi, mocker):
         "acquired": True,
         "key": "key"
     }
+
+
+async def test_force_delete_jobs(dbi, mocker, tmp_path):
+    app = {
+        "db": dbi,
+        "jobs": mocker.Mock(spec=JobsClient)
+    }
+
+    await dbi.jobs.insert_many([
+        {"_id": "foo"},
+        {"_id": "bar"}
+    ])
+
+    await force_delete_jobs(app)
+
+    app["jobs"].cancel.assert_has_calls([call("foo"), call("bar")], any_order=True)
+    assert await dbi.jobs.count_documents({}) == 0

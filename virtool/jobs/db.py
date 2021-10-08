@@ -2,10 +2,12 @@
 Constants and utility functions for interacting with the jobs collection in the application database.
 
 """
+from asyncio import gather
 from typing import Any, Dict, Optional
 
 import virtool.utils
 from virtool.jobs.utils import JobRights
+from virtool.types import App
 
 OR_COMPLETE = [
     {"status.state": "complete"}
@@ -178,3 +180,20 @@ async def processor(db, document: dict) -> dict:
     })
 
     return virtool.utils.base_processor(document)
+
+
+async def delete(app: App, job_id: str):
+    await app["db"].jobs.delete_one({"_id": job_id})
+
+
+async def force_delete_jobs(app: App):
+    """
+    Force cancellation and deletion of all jobs.
+
+    :param app: the application object
+
+    """
+    job_ids = await app["db"].jobs.distinct("_id")
+
+    await gather(*[app["jobs"].cancel(job_id) for job_id in job_ids])
+    await gather(*[delete(app, job_id) for job_id in job_ids])

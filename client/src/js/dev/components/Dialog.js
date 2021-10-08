@@ -62,6 +62,28 @@ export const DeveloperDialog = ({ show, onCommand, onHide }) => (
                 </Button>
             </DeveloperCommandControl>
         </DeveloperCommand>
+        <DeveloperCommand>
+            <DeveloperCommandLabel>
+                <h3>Create Subtraction</h3>
+                <p>Creates a subtraction that is ready for use.</p>
+            </DeveloperCommandLabel>
+            <DeveloperCommandControl>
+                <Button color="red" onClick={() => onCommand("create_subtraction")}>
+                    Create Subtraction
+                </Button>
+            </DeveloperCommandControl>
+        </DeveloperCommand>
+        <DeveloperCommand>
+            <DeveloperCommandLabel>
+                <h3>Force Delete Jobs</h3>
+                <p>Forces cancellation, then deletion of all jobs regardless of status.</p>
+            </DeveloperCommandLabel>
+            <DeveloperCommandControl>
+                <Button color="red" onClick={() => onCommand("force_delete_jobs")}>
+                    Force Delete Jobs
+                </Button>
+            </DeveloperCommandControl>
+        </DeveloperCommand>
     </Modal>
 );
 
