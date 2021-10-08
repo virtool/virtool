@@ -1,9 +1,9 @@
 import { xor } from "lodash-es";
 import React, { useCallback } from "react";
 import styled from "styled-components";
-import { BoxGroupSection, Icon, Input, SidebarHeaderButton } from "../../../../base";
-import { useFuse } from "../../../../base/hooks";
-import { PopoverBody, usePopover } from "../../../../base/Popover";
+import { BoxGroupSection, Icon, Input, SidebarHeaderButton } from "../../../base";
+import { useFuse } from "../../../base/hooks";
+import { PopoverBody, usePopover } from "../../../base/Popover";
 import { SampleSidebarSelectorItem } from "./SelectorItem";
 
 const SampleSidebarSelectorInputContainer = styled(BoxGroupSection)`
@@ -12,38 +12,27 @@ const SampleSidebarSelectorInputContainer = styled(BoxGroupSection)`
 
 export const SampleSidebarSelector = ({ render, sampleItems, selectedItems, sampleId, onUpdate }) => {
     const [results, term, setTerm] = useFuse(sampleItems, ["name"], [sampleId]);
-
     const [attributes, show, styles, setPopperElement, setReferenceElement, setShow] = usePopover();
 
     const handleToggle = useCallback(
         itemId => {
-            onUpdate(
-                sampleId,
-                xor(
-                    selectedItems.map(item => item.id),
-                    [itemId]
-                )
-            );
+            onUpdate(xor(selectedItems, [itemId]));
         },
         [sampleId, selectedItems, onUpdate]
     );
-
-    const sampleItemIds = selectedItems.map(item => item.id);
-
     const sampleItemComponents = results.map(item => (
         <SampleSidebarSelectorItem
             key={item.id}
-            checked={sampleItemIds.includes(item.id)}
+            checked={selectedItems.includes(item.id)}
             {...item}
             onClick={handleToggle}
         >
             {render(item)}
         </SampleSidebarSelectorItem>
     ));
-
     return (
         <React.Fragment>
-            <SidebarHeaderButton type="button" ref={setReferenceElement} onClick={setShow}>
+            <SidebarHeaderButton data-testid="labelButton" type="button" ref={setReferenceElement} onClick={setShow}>
                 <Icon name="pen" />
             </SidebarHeaderButton>
             {show && (
