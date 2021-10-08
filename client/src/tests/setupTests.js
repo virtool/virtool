@@ -1,9 +1,10 @@
 import "@testing-library/jest-dom";
-import "jest-styled-components";
 import { fireEvent, render as rtlRender } from "@testing-library/react";
 import Enzyme, { mount, render, shallow } from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
+import "jest-styled-components";
 import React from "react";
+import { Provider } from "react-redux";
 import { ThemeProvider } from "styled-components";
 import { theme } from "../js/app/theme";
 
@@ -13,7 +14,11 @@ import { theme } from "../js/app/theme";
 // jest configuration settings specified in package.json instead of here.
 Enzyme.configure({ adapter: new Adapter() });
 
-const renderWithProviders = ui => rtlRender(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
+const renderWithProviders = (ui, store) => {
+    let wrappedUi = <ThemeProvider theme={theme}>{ui}</ThemeProvider>;
+    if (store) wrappedUi = <Provider store={store}> {wrappedUi} </Provider>;
+    return rtlRender(wrappedUi);
+};
 
 // Globals are defined here to limit import redundancies.
 global.fireEvent = fireEvent;
