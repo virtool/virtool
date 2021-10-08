@@ -9,7 +9,8 @@ from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_one_field
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
-from virtool.jobs.db import PROJECTION, LIST_PROJECTION
+from virtool.jobs import is_running_or_waiting
+from virtool.jobs.db import PROJECTION, LIST_PROJECTION, delete
 
 routes = Routes()
 
@@ -197,26 +198,16 @@ async def remove(req):
     Remove a job.
 
     """
-    db = req.app["db"]
-
     job_id = req.match_info["job_id"]
 
-    document = await db.jobs.find_one(job_id)
+    document = await req.app["db"].jobs.find_one(job_id)
 
     if not document:
         raise NotFound()
 
-    if virtool.jobs.is_running_or_waiting(document):
+    if is_running_or_waiting(document):
         raise HTTPConflict(text="Job is running or waiting and cannot be removed")
 
-    # Removed the documents associated with the job ids from the database.
-    await db.jobs.delete_one({"_id": job_id})
-
-    try:
-        # Calculate the log path and remove the log file. If it exists, return True.
-        path = os.path.join(req.app["settings"]["data_path"], "logs", "jobs", job_id + ".log")
-        await req.app["run_in_thread"](virtool.utils.rm, path)
-    except OSError:
-        pass
+    await delete(req.app, job_id)
 
     raise HTTPNoContent
