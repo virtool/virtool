@@ -31,7 +31,8 @@ describe("<CreateSample>", () => {
                 })),
             forceGroupChoice: false,
             onCreate: jest.fn(),
-            onLoadSubtractionsAndFiles: jest.fn()
+            onLoadSubtractionsAndFiles: jest.fn(),
+            onListLabels: jest.fn()
         };
         values = {
             name: "Sample 1",

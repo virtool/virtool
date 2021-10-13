@@ -1,7 +1,6 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { connect } from "react-redux";
 import { LoadingPlaceholder, SidebarHeader, SideBarSection } from "../../../base";
-import { listLabels } from "../../../labels/actions";
 import { SmallSampleLabel } from "../Label";
 import { SampleSidebarList } from "./List";
 import { SampleSidebarSelector } from "./Selector";
@@ -13,8 +12,7 @@ const SampleLabelInner = ({ name, color, description }) => (
     </React.Fragment>
 );
 
-export const SampleLabels = ({ allLabels, sampleLabels, sampleId, onInit, onUpdate }) => {
-    useEffect(() => onInit(), [null]);
+export const SampleLabels = ({ allLabels, sampleLabels, sampleId, onUpdate }) => {
     if (allLabels === null) {
         return <LoadingPlaceholder margin="36px" />;
     }
@@ -42,10 +40,4 @@ export const mapStateToProps = state => ({
     allLabels: state.labels.documents
 });
 
-export const mapDispatchToProps = dispatch => ({
-    onInit: () => {
-        dispatch(listLabels());
-    }
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(SampleLabels);
+export default connect(mapStateToProps)(SampleLabels);

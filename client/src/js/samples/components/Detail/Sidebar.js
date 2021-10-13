@@ -14,24 +14,22 @@ const StyledSidebar = styled.div`
     z-index: 0;
 `;
 
-export const Sidebar = ({ sampleId, sampleLabels, onLabelUpdate, defaultSubtractions, onSubtractionUpdate }) => {
-    return (
-        <StyledSidebar>
-            <SampleLabels
-                onUpdate={labels => {
-                    onLabelUpdate(sampleId, labels);
-                }}
-                sampleLabels={sampleLabels.map(label => label.id)}
-            />
-            <DefaultSubtractions
-                onUpdate={subtractions => {
-                    onSubtractionUpdate(sampleId, subtractions);
-                }}
-                defaultSubtractions={defaultSubtractions.map(subtraction => subtraction.id)}
-            />
-        </StyledSidebar>
-    );
-};
+export const Sidebar = ({ sampleId, sampleLabels, onLabelUpdate, defaultSubtractions, onSubtractionUpdate }) => (
+    <StyledSidebar>
+        <SampleLabels
+            onUpdate={labels => {
+                onLabelUpdate(sampleId, labels);
+            }}
+            sampleLabels={sampleLabels.map(label => label.id)}
+        />
+        <DefaultSubtractions
+            onUpdate={subtractions => {
+                onSubtractionUpdate(sampleId, subtractions);
+            }}
+            defaultSubtractions={defaultSubtractions.map(subtraction => subtraction.id)}
+        />
+    </StyledSidebar>
+);
 
 export const mapStateToProps = state => ({
     sampleId: getSampleDetailId(state),

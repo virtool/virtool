@@ -1,8 +1,8 @@
+import { Field, Form, Formik } from "formik";
 import { filter, find, get } from "lodash-es";
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import {
     Input,
@@ -17,9 +17,10 @@ import {
     ViewHeader,
     ViewHeaderTitle
 } from "../../../base";
-import { SampleSubtractionSelector } from "../../../subtraction/components/Selector";
 import { clearError } from "../../../errors/actions";
+import { listLabels } from "../../../labels/actions";
 import { shortlistSubtractions } from "../../../subtraction/actions";
+import { SampleSubtractionSelector } from "../../../subtraction/components/Selector";
 import { getSubtractionShortlist } from "../../../subtraction/selectors";
 import { createSample, findReadFiles } from "../../actions";
 import { LibraryTypeSelector } from "./LibraryTypeSelector";
@@ -64,9 +65,12 @@ const validationSchema = Yup.object().shape({
 });
 
 export const CreateSample = props => {
-    useEffect(props.onLoadSubtractionsAndFiles, []);
+    useEffect(() => {
+        props.onLoadSubtractionsAndFiles();
+        props.onListLabels();
+    }, []);
 
-    if (props.subtractions === null || props.readyReads === null) {
+    if (props.subtractions === null || props.readyReads === null || props.allLabels === null) {
         return <LoadingPlaceholder margin="36px" />;
     }
 
@@ -232,7 +236,8 @@ export const mapStateToProps = state => ({
     forceGroupChoice: state.settings.data.sample_group === "force_choice",
     groups: state.account.groups,
     readyReads: filter(state.samples.readFiles, { reserved: false }),
-    subtractions: getSubtractionShortlist(state)
+    subtractions: getSubtractionShortlist(state),
+    allLabels: state.labels.documents
 });
 
 export const mapDispatchToProps = dispatch => ({
@@ -251,6 +256,10 @@ export const mapDispatchToProps = dispatch => ({
 
     onClearError: () => {
         dispatch(clearError("CREATE_SAMPLE_ERROR"));
+    },
+
+    onListLabels: () => {
+        dispatch(listLabels());
     }
 });
 
