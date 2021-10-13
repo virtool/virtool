@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { LoadingPlaceholder, SidebarHeader, SideBarSection } from "../../../base";
+import { SidebarHeader, SideBarSection } from "../../../base";
 import { SmallSampleLabel } from "../Label";
 import { SampleSidebarList } from "./List";
 import { SampleSidebarSelector } from "./Selector";
