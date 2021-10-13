@@ -12,29 +12,22 @@ const SampleLabelInner = ({ name, color, description }) => (
     </React.Fragment>
 );
 
-export const SampleLabels = ({ allLabels, sampleLabels, sampleId, onUpdate }) => {
-    if (allLabels === null) {
-        return <LoadingPlaceholder margin="36px" />;
-    }
-
-    return (
-        <SideBarSection>
-            <SidebarHeader>
-                Labels
-                <SampleSidebarSelector
-                    render={({ name, color, description }) => (
-                        <SampleLabelInner name={name} color={color} description={description} />
-                    )}
-                    sampleItems={allLabels}
-                    selectedItems={sampleLabels}
-                    sampleId={sampleId}
-                    onUpdate={onUpdate}
-                />
-            </SidebarHeader>
-            <SampleSidebarList items={allLabels.filter(item => sampleLabels.includes(item.id))} />
-        </SideBarSection>
-    );
-};
+export const SampleLabels = ({ allLabels, sampleLabels, onUpdate }) => (
+    <SideBarSection>
+        <SidebarHeader>
+            Labels
+            <SampleSidebarSelector
+                render={({ name, color, description }) => (
+                    <SampleLabelInner name={name} color={color} description={description} />
+                )}
+                sampleItems={allLabels}
+                selectedItems={sampleLabels}
+                onUpdate={onUpdate}
+            />
+        </SidebarHeader>
+        <SampleSidebarList items={allLabels.filter(item => sampleLabels.includes(item.id))} />
+    </SideBarSection>
+);
 
 export const mapStateToProps = state => ({
     allLabels: state.labels.documents
