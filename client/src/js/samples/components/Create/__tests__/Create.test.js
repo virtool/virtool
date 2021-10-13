@@ -2,6 +2,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 import { createStore } from "redux";
+import { LIST_LABELS } from "../../../../app/actionTypes";
 import { CreateSample, mapDispatchToProps, mapStateToProps } from "../Create";
 
 describe("<CreateSample>", () => {
@@ -232,6 +233,12 @@ describe("mapStateToProps()", () => {
                         name: "Bar Subtraction"
                     }
                 ]
+            },
+            labels: {
+                documents: [
+                    { color: "#3B82F6", count: 0, description: "", id: 2, name: "testlabel1" },
+                    { color: "#3C8786", count: 0, description: "", id: 3, name: "testlabel2" }
+                ]
             }
         };
         const props = mapStateToProps(state);
@@ -245,7 +252,11 @@ describe("mapStateToProps()", () => {
                     reserved: false
                 }
             ],
-            subtractions
+            subtractions,
+            allLabels: [
+                { color: "#3B82F6", count: 0, description: "", id: 2, name: "testlabel1" },
+                { color: "#3C8786", count: 0, description: "", id: 3, name: "testlabel2" }
+            ]
         });
     });
 });
@@ -276,5 +287,10 @@ describe("mapDispatchToProps()", () => {
     it("should return onClearError() in props", () => {
         props.onClearError();
         expect(dispatch).toHaveBeenCalledWith({ error: "CREATE_SAMPLE_ERROR", type: "CLEAR_ERROR" });
+    });
+
+    it("should return onListLabels() in props", () => {
+        props.onListLabels();
+        expect(dispatch).toHaveBeenCalledWith({ type: LIST_LABELS.REQUESTED });
     });
 });
