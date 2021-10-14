@@ -3,16 +3,23 @@ name: ci
 on:
   push:
     branches:
-      - develop
-      - feature/**
-      - release/**
+      - "main"
+      - "alpha"
+      - "beta"
   pull_request:
     branches:
-      - develop
-      - feature/**
-      - release/**
+      - "main"
+      - "alpha"
+      - "beta"
 
 jobs:
+  commitlint:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@v4
   server:
     runs-on: ubuntu-20.04
     services:
@@ -33,19 +40,15 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     container:
       image: virtool/external-tools:0.2.0
-
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
       - name: Poetry Setup
         run: |
           pip install poetry
           poetry install
-
       - name: Run
         run: >-
           poetry run
@@ -56,15 +59,12 @@ jobs:
           --postgres-connection-string postgresql+asyncpg://virtool:virtool@postgres
           --cov
           --cov-report xml
-
       - name: Run codacy-coverage-reporter
         if: ${{ github.event_name == 'push' }}
         uses: codacy/codacy-coverage-reporter-action@master
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: $GITHUB_WORKSPACE/coverage.xml
-
-
   client:
     runs-on: ubuntu-20.04
     steps:
@@ -79,17 +79,22 @@ jobs:
           cd client
           npm i
           npx jest --coverage
-
-  build:
+          npx webpack --config webpack.production.config.babel.js
+  release:
     runs-on: ubuntu-20.04
-    container:
-      image: node:14-stretch
+    needs: [server, client, commitlint]
+    if: github.event_name == 'push'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Test
-        run: |
-          cd client
-          npm i
-          npx webpack --config webpack.production.config.babel.js
-
+      - name: Setup NodeJS
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14
+      - name: Install semantic-release
+        run: npm i semantic-release@v18.0.0 conventional-changelog-conventionalcommits@4.6.1
+      - name: Run semantic-release
+        env:
+          GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npx semantic-release

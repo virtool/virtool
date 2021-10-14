@@ -1,0 +1,114 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - "4.0.0"
+  pull_request:
+    branches:
+      - "4.0.0"
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@v4
+  test-server:
+    runs-on: ubuntu-20.04
+    services:
+      mongo:
+        image: mongo:3.6
+        ports:
+          - 27017:27017
+    container:
+      image: virtool/external-tools:0.2.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Test
+        run: |
+          pip install -qr requirements.txt
+          pytest  -x --db-connection-string mongodb://mongo:27017 --cov --cov-report xml
+      - name: Report Coverage
+        if: github.event_name == 'push'
+        uses: codacy/codacy-coverage-reporter-action@master
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: $GITHUB_WORKSPACE/coverage.xml
+  test-client:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup NodeJS
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12'
+      - name: Test
+        run: |
+          cd client
+          npm i
+          npx jest --coverage
+          npx webpack --config webpack.production.config.babel.js
+  build:
+    runs-on: ubuntu-20.04
+    needs: [test-client, test-server, commitlint]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup NodeJS
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12'
+      name: Use Python 3.6
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+      - name: Set Version
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Build Client
+        run: |
+          cd client
+          npm i
+          npx webpack --config webpack.production.config.babel.js
+      - name: Build Server
+        env:
+          RELEASE_VERSION: ${{ steps.set_version.outputs.tag }}
+        run: |
+          pip install -r requirements.txt
+          mkdir gh_build
+          mkdir gh_build/virtool
+          python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
+          python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); print(flags&os.O_NONBLOCK);'
+          python setup.py build
+          cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
+          if [ "$RELEASE_VERSION" ]; then echo $RELEASE_VERSION > version.txt; else echo "v0.0.0" > version.txt; fi
+          cd gh_build
+          tar -czf virtool.tar.gz virtool
+      - name: Save Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: virtool.tar.gz
+          path: gh_build/virtool.tar.gz
+  release:
+    runs-on: ubuntu-20.04
+    needs: [build]
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup NodeJS
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14
+      - name: Install semantic-release
+        run: npm i semantic-release@v18.0.0 conventional-changelog-conventionalcommits@4.6.1
+      - name: Run semantic-release
+        env:
+          GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npx semantic-release
