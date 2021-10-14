@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: '12'
         name: Use Python 3.6
-          uses: actions/setup-python@v2
+        uses: actions/setup-python@v2
           with:
             python-version: 3.6
       - name: Build Client
@@ -45,8 +45,6 @@ jobs:
           npm i
           npx webpack --config webpack.production.config.babel.js
       - name: Build Server
-        env:
-          RELEASE_VERSION: ${{ steps.set_version.outputs.tag }}
         run: |
           pip install -r requirements.txt
           mkdir gh_build
