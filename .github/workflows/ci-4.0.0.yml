@@ -11,6 +11,7 @@ on:
 jobs:
   commitlint:
     runs-on: ubuntu-20.04
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v2
         with:
@@ -64,9 +65,9 @@ jobs:
         with:
           node-version: '12'
       - name: Use Python 3.6
-          uses: actions/setup-python@v2
-          with:
-            python-version: 3.6
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
       - name: Build Client
         run: |
           cd client
