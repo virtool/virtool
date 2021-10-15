@@ -23,8 +23,6 @@ jobs:
           file: "docker/Dockerfile"
           push: true
           tags: virtool/virtool:${{ github.event.release.tag_name }}
-      - name: Image Digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
   github:
     runs-on: ubuntu-20.04
     if: github.repository_owner == 'Virtool' && startsWith(github.event.release.tag_name, "4")
@@ -34,8 +32,8 @@ jobs:
       - name: Setup NodeJS
         uses: actions/setup-node@v1
         with:
-          node-version: '12'
-        name: Use Python 3.6
+          node-version: "12"
+      - name: Use Python 3.6
         uses: actions/setup-python@v2
         with:
           python-version: 3.6
