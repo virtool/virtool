@@ -1,6 +1,9 @@
 # Virtool
 
 Virtool is a web-based application for diagnosing pathogen infections in using high-throughput sequencing. 
+
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/1388b43207ae407c891744a4d70dde35)](https://www.codacy.com/gh/virtool/virtool?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=virtool/virtool&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/1388b43207ae407c891744a4d70dde35)](https://www.codacy.com/gh/virtool/virtool?utm_source=github.com&utm_medium=referral&utm_content=virtool/virtool&utm_campaign=Badge_Coverage)
   
 Website: https://www.virtool.ca
 Gitter: https://gitter.im/virtool
@@ -19,15 +22,10 @@ work across multiple hosts and run natively in Kubernetes and public cloud provi
 
 For current users and administrators:
 
-1. **Virtool 4.0.0 series should be used for now.**
-2. **Virtool 4.0.0 series will continue to receive bug and security fixes for the forseeable future**,
-even when Virtool 5.0.0 is released.
+1. **Virtool 4.0.0 series should be used for now**.
+2. Virtool 4.0.0 series will continue to receive bug and security fixes for the forseeable future.
 3. Virtool 5.0.0 will comprise multiple containerized services that need to run together. A deployment
 and migration guide will be provided.
-
-| Version | Build Status | Quality | Test Coverage |
-| ------- | ------------ | ------- | ------------- |
-| [![Build Status](https://cloud.drone.io/api/badges/virtool/virtool/status.svg)](https://cloud.drone.io/virtool/virtool) | [![Codacy Badge](https://app.codacy.com/project/badge/Grade/1388b43207ae407c891744a4d70dde35)](https://www.codacy.com/gh/virtool/virtool?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=virtool/virtool&amp;utm_campaign=Badge_Grade) | [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/1388b43207ae407c891744a4d70dde35)](https://www.codacy.com/gh/virtool/virtool?utm_source=github.com&utm_medium=referral&utm_content=virtool/virtool&utm_campaign=Badge_Coverage) |
 
 ## Contributing
 
