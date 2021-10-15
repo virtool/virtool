@@ -1,171 +1,88 @@
-import { filter, map, values } from "lodash-es";
-import React from "react";
+import { Field, Form, Formik } from "formik";
+import { filter } from "lodash-es";
+import React, { useEffect } from "react";
 import { connect } from "react-redux";
-import { Link } from "react-router-dom";
-import styled from "styled-components";
-import { pushState } from "../../app/actions";
+import * as Yup from "yup";
 import {
-    Attribution,
-    BoxGroup,
-    Button,
     Input,
     InputError,
     InputGroup,
     InputLabel,
-    Modal,
-    ModalBody,
-    ModalFooter,
-    ModalHeader,
-    NoneFoundSection,
-    SelectBoxGroupSection
+    LoadingPlaceholder,
+    SaveButton,
+    ViewHeader,
+    ViewHeaderTitle
 } from "../../base";
 
 import { findFiles } from "../../files/actions";
-import { getTargetChange, routerLocationHasState } from "../../utils/utils";
 import { createSubtraction } from "../actions";
+import SubtractionFileSelector from "./FileSelector";
 
-const StyledSubtractionFileItem = styled(SelectBoxGroupSection)`
-    display: flex;
-
-    ${Attribution} {
-        margin-left: auto;
-    }
-`;
-
-export class SubtractionFileItem extends React.Component {
-    handleClick = () => {
-        this.props.onClick(this.props.id);
-    };
-
-    render() {
-        const { active, name, uploaded_at, user } = this.props;
-
-        return (
-            <StyledSubtractionFileItem active={active} onClick={this.handleClick}>
-                <strong>{name}</strong>
-                <Attribution user={user.id} time={uploaded_at} />
-            </StyledSubtractionFileItem>
-        );
-    }
-}
-
-const SubtractionFileList = styled(BoxGroup)`
-    margin-bottom: 5px;
-`;
-
-const getInitialState = () => ({
-    errorName: "",
-    errorFile: "",
-    name: "",
-    nickname: "",
-    uploadId: ""
+const validationSchema = Yup.object().shape({
+    name: Yup.string().required("A name is required"),
+    uploadId: Yup.string().required("Please select a file")
 });
 
-export class CreateSubtraction extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = getInitialState();
+export const CreateSubtraction = ({ onListFiles, onCreate, files }) => {
+    useEffect(onListFiles, []);
+
+    if (!files) {
+        return <LoadingPlaceholder margin="36px" />;
     }
 
-    handleChange = e => {
-        const { name, value, error } = getTargetChange(e.target);
-        this.setState({ [name]: value, [error]: "" });
+    const initialValues = {
+        name: "",
+        nickname: "",
+        uploadId: ""
     };
 
-    handleModalEnter = () => {
-        this.props.onListFiles();
+    const handleSubmit = ({ uploadId, name, nickname }) => {
+        onCreate({ uploadId, name, nickname });
     };
 
-    handleModalExited = () => {
-        this.setState(getInitialState());
-    };
-
-    handleSelectFile = uploadId => {
-        this.setState({
-            uploadId: uploadId === this.state.uploadId ? "" : uploadId,
-            errorFile: ""
-        });
-    };
-
-    handleSubmit = e => {
-        e.preventDefault();
-
-        const update = {};
-
-        if (!this.state.name) {
-            update.errorName = "A name is required";
-        }
-
-        if (!this.state.uploadId) {
-            update.errorFile = "Please select a file";
-        }
-
-        if (values(update).length) {
-            return this.setState(update);
-        }
-
-        this.props.onCreate(this.state);
-    };
-
-    render() {
-        let fileComponents = map(this.props.files, file => (
-            <SubtractionFileItem
-                key={file.id}
-                {...file}
-                active={file.id === this.state.uploadId}
-                onClick={this.handleSelectFile}
-            />
-        ));
-
-        if (!fileComponents.length) {
-            fileComponents = (
-                <NoneFoundSection noun="files">
-                    <Link to="/subtraction/files">Upload some</Link>
-                </NoneFoundSection>
-            );
-        }
-
-        return (
-            <Modal
-                label="Create Subtraction"
-                show={this.props.show}
-                onHide={this.props.onHide}
-                onEnter={this.handleModalEnter}
-                onExited={this.handleModalExited}
-            >
-                <ModalHeader>Create Subtraction</ModalHeader>
-                <form onSubmit={this.handleSubmit}>
-                    <ModalBody>
+    return (
+        <React.Fragment>
+            <ViewHeader title="Create Subtraction">
+                <ViewHeaderTitle>Create Subtraction</ViewHeaderTitle>
+            </ViewHeader>
+            <Formik initialValues={initialValues} onSubmit={handleSubmit} validationSchema={validationSchema}>
+                {({ errors, setFieldValue, touched }) => (
+                    <Form>
                         <InputGroup>
                             <InputLabel>Name</InputLabel>
-                            <Input name="name" value={this.state.name} onChange={this.handleChange} />
-                            <InputError>{this.state.errorName}</InputError>
+                            <Field
+                                aria-label={"name"}
+                                as={Input}
+                                name="name"
+                                type="text"
+                                error={touched.name ? errors.name : null}
+                            />
+                            {touched.name && <InputError>{errors.name}</InputError>}
                         </InputGroup>
 
                         <InputGroup>
                             <InputLabel>Nickname</InputLabel>
-                            <Input name="nickname" value={this.state.nickname} onChange={this.handleChange} />
+                            <Field aria-label={"nickname"} as={Input} name="nickname" type="text" />
                         </InputGroup>
 
                         <label>Files</label>
-                        <SubtractionFileList>{fileComponents}</SubtractionFileList>
-                        <InputError>{this.state.errorFile}</InputError>
-                    </ModalBody>
+                        <Field
+                            as={SubtractionFileSelector}
+                            name="uploadId"
+                            onClick={id => setFieldValue("uploadId", id)}
+                            error={touched.uploadId && errors.uploadId}
+                        />
 
-                    <ModalFooter>
-                        <Button type="submit" color="blue" icon="play">
-                            Start
-                        </Button>
-                    </ModalFooter>
-                </form>
-            </Modal>
-        );
-    }
-}
+                        <SaveButton />
+                    </Form>
+                )}
+            </Formik>
+        </React.Fragment>
+    );
+};
 
 const mapStateToProps = state => ({
-    show: routerLocationHasState(state, "createSubtraction"),
-    files: filter(state.files.documents, { type: "subtraction" })
+    files: state.files.fileType === "subtraction" ? filter(state.files.documents, { type: "subtraction" }) : null
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -175,10 +92,6 @@ const mapDispatchToProps = dispatch => ({
 
     onListFiles: () => {
         dispatch(findFiles("subtraction"));
-    },
-
-    onHide: () => {
-        dispatch(pushState({ createSubtraction: false }));
     }
 });
 

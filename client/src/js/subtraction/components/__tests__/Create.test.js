@@ -1,5 +1,14 @@
-import { Input } from "../../../base";
-import { CreateSubtraction, SubtractionFileItem } from "../Create";
+import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { BrowserRouter } from "react-router-dom";
+import { createStore } from "redux";
+import { CreateSubtraction } from "../Create";
+import { SubtractionFileItem } from "../FileSelector";
+
+const routerRenderWithProviders = (ui, store) => {
+    const routerUi = <BrowserRouter> {ui} </BrowserRouter>;
+    return renderWithProviders(routerUi, store);
+};
 
 describe("<SubtractionFileItem />", () => {
     it.each([true, false])("should render when [active=%p]", active => {
@@ -15,14 +24,10 @@ describe("<SubtractionFileItem />", () => {
 });
 
 describe("<CreateSubtraction />", () => {
-    let e;
     let props;
+    let state;
 
     beforeEach(() => {
-        e = {
-            preventDefault: jest.fn()
-        };
-
         props = {
             show: true,
             files: [{ id: "test" }],
@@ -32,6 +37,30 @@ describe("<CreateSubtraction />", () => {
             onHide: jest.fn(),
             onClearError: jest.fn()
         };
+        state = {
+            files: {
+                documents: [
+                    {
+                        count: 0,
+                        description: "",
+                        id: 2,
+                        name: "testSubtraction1",
+                        type: "subtraction",
+                        user: "testUser",
+                        uploaded_at: "2021-10-14T20:57:36.558000Z"
+                    },
+                    {
+                        count: 0,
+                        description: "",
+                        id: 3,
+                        name: "testSubtraction2",
+                        type: "subtraction",
+                        user: "testUser",
+                        uploaded_at: "2021-10-14T20:57:36.558000Z"
+                    }
+                ]
+            }
+        };
     });
 
     it("should render", () => {
@@ -40,34 +69,37 @@ describe("<CreateSubtraction />", () => {
     });
 
     it("should render when no files available", () => {
-        props.files = [];
-        const wrapper = shallow(<CreateSubtraction {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("should render with request error", () => {
-        props.error = "Subtraction ID already exists";
-        const wrapper = shallow(<CreateSubtraction {...props} />);
-        expect(wrapper).toMatchSnapshot();
+        state.files.documents = [];
+        routerRenderWithProviders(<CreateSubtraction {...props} />, createAppStore(state));
+        expect(screen.getByText(/no files found/i)).toBeInTheDocument();
     });
 
     it.each([
         ["name", "Foo"],
         ["nickname", "Bar"]
     ])("should render after %p input changes", (name, value) => {
-        const wrapper = shallow(<CreateSubtraction {...props} />);
-        wrapper
-            .find(Input)
-            .at(name === "subtraction" ? 0 : 1)
-            .simulate("change", { target: { name, value } });
-        expect(wrapper).toMatchSnapshot();
+        routerRenderWithProviders(<CreateSubtraction {...props} />, createAppStore(state));
+        userEvent.type(screen.getByRole("textbox", { name: "name" }), value);
+        expect(screen.getByDisplayValue(value)).toBeInTheDocument();
     });
 
-    it("should render error when submitted with no unique name or file entered", () => {
-        const wrapper = shallow(<CreateSubtraction {...props} />);
-        wrapper.find("form").simulate("submit", e);
-        expect(e.preventDefault).toHaveBeenCalledWith();
-        expect(wrapper).toMatchSnapshot();
+    it("should render error when submitted with no name or file entered", async () => {
+        routerRenderWithProviders(
+            <BrowserRouter>
+                <CreateSubtraction {...props} />
+            </BrowserRouter>,
+            createAppStore(state)
+        );
+        const name = "testSubtractionname";
+        const nickname = "testSubtractionNickname";
+        userEvent.type(screen.getByRole("textbox", { name: "name" }), name);
+        userEvent.type(screen.getByRole("textbox", { name: "nickname" }), nickname);
+        userEvent.click(screen.getByText(/testsubtraction1/i));
+        userEvent.click(screen.getByText(/save/i));
+
+        const uploadId = state.files.documents[0].id;
+
+        await waitFor(() => expect(props.onCreate).toHaveBeenCalledWith({ uploadId, name, nickname }));
     });
 
     it("should call onListFiles() when modal enters", () => {
@@ -80,3 +112,12 @@ describe("<CreateSubtraction />", () => {
         setTimeout(() => expect(props.onListFiles).toHaveBeenCalledWith(), 500);
     });
 });
+
+const createAppStore = state => {
+    return () => {
+        const mockReducer = state => {
+            return state;
+        };
+        return createStore(mockReducer, state);
+    };
+};

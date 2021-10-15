@@ -3,7 +3,6 @@ import { connect } from "react-redux";
 import { Badge, LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader, ViewHeaderTitle } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { findSubtractions } from "../actions";
-import CreateSubtraction from "./Create";
 import SubtractionItem from "./Item";
 import SubtractionToolbar from "./Toolbar";
 
@@ -18,7 +17,6 @@ export class SubtractionList extends React.Component {
 
     render() {
         let subtractionComponents;
-
         if (this.props.documents === null) {
             return <LoadingPlaceholder />;
         }
@@ -48,8 +46,6 @@ export class SubtractionList extends React.Component {
                 <SubtractionToolbar />
 
                 {subtractionComponents}
-
-                <CreateSubtraction />
             </React.Fragment>
         );
     }

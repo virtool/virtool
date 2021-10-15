@@ -95,7 +95,9 @@ export default function fileReducer(state = initialState, action) {
         case FIND_FILES.REQUESTED:
             return {
                 ...state,
-                term: action.term
+                term: action.term,
+                documents: state.fileType === action.fileType ? state.documents : null,
+                fileType: ""
             };
 
         case FIND_FILES.SUCCEEDED:

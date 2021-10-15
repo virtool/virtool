@@ -6,8 +6,8 @@ import {
     EDIT_SUBTRACTION,
     FIND_SUBTRACTIONS,
     GET_SUBTRACTION,
-    SHORTLIST_SUBTRACTIONS,
-    REMOVE_SUBTRACTION
+    REMOVE_SUBTRACTION,
+    SHORTLIST_SUBTRACTIONS
 } from "../app/actionTypes";
 import { apiCall, pushFindTerm } from "../utils/sagas";
 import * as subtractionAPI from "./api";
@@ -25,7 +25,7 @@ export function* createSubtraction(action) {
     const resp = yield apiCall(subtractionAPI.create, action, CREATE_SUBTRACTION);
 
     if (resp.ok) {
-        yield put(pushState({ createSubtraction: false }));
+        yield put(push("/subtraction"));
     }
 }
 
