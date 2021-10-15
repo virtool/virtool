@@ -22,13 +22,7 @@ exports[`<SubtractionToolbar /> should render create button when [canModify=true
     icon="plus-square"
     tip="Create"
     tipPlacement="top"
-    to={
-      Object {
-        "state": Object {
-          "createSubtraction": true,
-        },
-      }
-    }
+    to="subtraction/create"
   />
 </Toolbar>
 `;

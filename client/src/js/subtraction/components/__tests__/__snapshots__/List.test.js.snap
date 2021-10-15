@@ -26,6 +26,5 @@ exports[`<SubtractionList /> renders correctly 1`] = `
     pageCount={1}
     renderRow={[Function]}
   />
-  <Connect(CreateSubtraction) />
 </Fragment>
 `;

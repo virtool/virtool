@@ -77,7 +77,8 @@ describe("filesReducer()", () => {
         };
         const result = reducer(state, action);
         expect(result).toEqual({
-            term: "foo"
+            term: "foo",
+            fileType: ""
         });
     });
 
