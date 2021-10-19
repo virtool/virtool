@@ -1,7 +1,8 @@
 from sqlalchemy import Column, DateTime, Enum, Integer, String
 from sqlalchemy.sql.schema import ForeignKey, UniqueConstraint
 
-from virtool.pg.utils import Base, SQLEnum
+from virtool.pg.base import Base
+from virtool.pg.utils import SQLEnum
 
 
 class ArtifactType(str, SQLEnum):

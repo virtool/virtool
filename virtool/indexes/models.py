@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Enum, Integer, String, UniqueConstraint
 
-from virtool.pg.utils import Base, SQLEnum
+from virtool.pg.base import Base
+from virtool.pg.utils import SQLEnum
 
 
 class IndexType(str, SQLEnum):

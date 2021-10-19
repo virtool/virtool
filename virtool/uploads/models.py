@@ -1,7 +1,8 @@
 from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, String, BigInteger
 from sqlalchemy.orm import relationship
 
-from virtool.pg.utils import Base, SQLEnum
+from virtool.pg.base import Base
+from virtool.pg.utils import SQLEnum
 
 
 class UploadType(str, SQLEnum):
