@@ -1,7 +1,7 @@
 from sqlalchemy import Column, DateTime, Enum, Integer, String
 from sqlalchemy.sql.schema import UniqueConstraint
 
-from virtool.pg.utils import Base
+from virtool.pg.base import Base
 from virtool.samples.models import ArtifactType
 
 

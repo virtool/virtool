@@ -1,8 +1,9 @@
 from enum import Enum
 
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.declarative import as_declarative
 
 
+@as_declarative()
 class Base:
 
     def __repr__(self):
@@ -20,6 +21,3 @@ class Base:
             row[column.name] = value if not isinstance(value, Enum) else value.value
 
         return row
-
-
-Base = declarative_base(cls=Base)
