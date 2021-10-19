@@ -39,8 +39,8 @@ const StyledCreateAPIKey = styled(ModalBody)`
     display: flex;
     flex-direction: column;
     justify-content: center;
-    margin-left: 90px;
-    margin-right: 90px;
+    padding-left: 10px;
+    padding-right: 10px;
     text-align: center;
 
     strong {
