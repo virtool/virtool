@@ -1,5 +1,5 @@
 import logging
-from typing import Union, Optional, List, Dict
+from typing import Union, Optional, List, Dict, Type
 from virtool.pg.base import Base
 
 from sqlalchemy import select, update
@@ -63,7 +63,7 @@ async def create(pg: AsyncEngine, name: str, upload_type: str, reserved: bool = 
         return upload
 
 
-async def finalize(pg, size: int, id_: int, model: Base) -> Optional[dict]:
+async def finalize(pg, size: int, id_: int, model: Type[Base]) -> Optional[dict]:
     """
     Finalize row creation for tables that store uploaded files. Updates table with file information and sets `ready`
     to `True`.
@@ -71,7 +71,7 @@ async def finalize(pg, size: int, id_: int, model: Base) -> Optional[dict]:
     :param pg: PostgreSQL AsyncEngine object
     :param size: Size of a newly uploaded file in bytes
     :param id_: Row `id` corresponding to the recently created `upload` entry
-    :param table: SQL table to retrieve row from
+    :param model: model for uploaded file
     :return: Dictionary representation of new row in `table`
     """
     async with AsyncSession(pg) as session:
