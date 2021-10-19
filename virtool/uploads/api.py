@@ -1,23 +1,20 @@
-import asyncio
-import logging
-import os
+from asyncio import CancelledError
+from logging import getLogger
 from pathlib import Path
 
-import aiohttp.web
 from aiohttp.web_exceptions import HTTPBadRequest
+from aiohttp.web_fileresponse import FileResponse
+from aiohttp.web_response import Response
 
-import virtool.db.utils
-import virtool.http.routes
-import virtool.samples.db
 import virtool.uploads.db
-import virtool.uploads.utils
-import virtool.utils
 from virtool.api.response import json_response, NotFound, InvalidQuery
+from virtool.http.routes import Routes
 from virtool.uploads.models import Upload, UploadType
+from virtool.uploads.utils import naive_validator, naive_writer
 
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 
-routes = virtool.http.routes.Routes()
+routes = Routes()
 
 
 @routes.post("/api/uploads", permission="upload_file")
@@ -29,7 +26,7 @@ async def create(req):
     pg = req.app["pg"]
     upload_type = req.query.get("type")
 
-    errors = virtool.uploads.utils.naive_validator(req)
+    errors = naive_validator(req)
 
     if errors:
         raise InvalidQuery(errors)
@@ -46,19 +43,24 @@ async def create(req):
     file_path = req.app["settings"]["data_path"] / "files" / upload["name_on_disk"]
 
     try:
-        size = await virtool.uploads.utils.naive_writer(req, file_path)
-    except asyncio.CancelledError:
+        size = await naive_writer(req, file_path)
+
+        upload = await virtool.uploads.db.finalize(
+            pg,
+            size,
+            upload_id,
+            Upload
+        )
+    except CancelledError:
         logger.debug(f"Upload aborted: {upload_id}")
-        await virtool.uploads.db.delete_row(pg, upload_id)
 
-        return aiohttp.web.Response(status=499)
+        await virtool.uploads.db.delete(
+            req,
+            pg,
+            upload_id
+        )
 
-    upload = await virtool.uploads.db.finalize(pg, size, upload_id, Upload)
-
-    if not upload:
-        await req.app["run_in_thread"](os.remove, file_path)
-
-        raise NotFound("Row not found in table after file upload")
+        return Response(status=499)
 
     logger.debug(f"Upload succeeded: {upload_id}")
 
@@ -110,7 +112,7 @@ async def get(req):
     if not upload_path.exists():
         raise NotFound("Uploaded file not found at expected location")
 
-    return aiohttp.web.FileResponse(upload_path)
+    return FileResponse(upload_path)
 
 
 @routes.delete("/api/uploads/{id}", permission="remove_file")
@@ -127,4 +129,4 @@ async def delete(req):
     if not upload:
         raise NotFound()
 
-    return aiohttp.web.Response(status=204)
+    return Response(status=204)
