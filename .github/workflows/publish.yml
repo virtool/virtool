@@ -7,7 +7,7 @@ on:
 jobs:
   dockerhub:
     runs-on: ubuntu-20.04
-    if: github.repository_owner == 'Virtool' && !startsWith(github.event.release.tag_name, "4")
+    if: github.repository_owner == 'Virtool' && !startsWith(github.event.release.tag_name, '4')
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -25,14 +25,14 @@ jobs:
           tags: virtool/virtool:${{ github.event.release.tag_name }}
   github:
     runs-on: ubuntu-20.04
-    if: github.repository_owner == 'Virtool' && startsWith(github.event.release.tag_name, "4")
+    if: github.repository_owner == 'Virtool' && startsWith(github.event.release.tag_name, '4')
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Setup NodeJS
         uses: actions/setup-node@v1
         with:
-          node-version: "12"
+          node-version: '12'
       - name: Use Python 3.6
         uses: actions/setup-python@v2
         with:
