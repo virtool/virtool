@@ -16,12 +16,14 @@ exports[`<CreateSample> should render 1`] = `
         "group": null,
         "host": "",
         "isolate": "",
-        "labels": Array [],
         "libraryType": "normal",
         "locale": "",
         "name": "",
         "readFiles": Array [],
-        "subtractionIds": Array [],
+        "sidebar": Object {
+          "labels": Array [],
+          "subtractionIds": Array [],
+        },
       }
     }
     onSubmit={[Function]}

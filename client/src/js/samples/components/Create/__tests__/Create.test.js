@@ -9,19 +9,11 @@ describe("<CreateSample>", () => {
     const readFileName = "large";
     let props;
     let values;
+    let state;
+
     beforeEach(() => {
         props = {
             error: "",
-            subtractions: [
-                {
-                    id: "sub_foo",
-                    name: "Sub Foo"
-                },
-                {
-                    id: "sub_bar",
-                    name: "Sub Bar"
-                }
-            ],
             readyReads: Array(3)
                 .fill(0)
                 .map((_, id) => ({
@@ -43,6 +35,20 @@ describe("<CreateSample>", () => {
             locale: "Timbuktu",
             subtractionId: "sub_bar",
             libraryType: "sRNA"
+        };
+        state = {
+            labels: {
+                documents: [
+                    { color: "#3B82F6", count: 0, description: "", id: 2, name: "testlabel1" },
+                    { color: "#3C8786", count: 0, description: "", id: 3, name: "testlabel2" }
+                ]
+            },
+            subtraction: {
+                shortlist: [
+                    { name: "Foo Subtraction", id: "foo_subtraction" },
+                    { name: "Bar Subtraction", id: "bar_subtraction" }
+                ]
+            }
         };
     });
 
@@ -72,7 +78,7 @@ describe("<CreateSample>", () => {
     });
 
     it("should fail to submit and show errors on empty submission", async () => {
-        renderWithProviders(<CreateSample {...props} />, createAppStore);
+        renderWithProviders(<CreateSample {...props} />, createAppStore(state));
         // Ensure errors aren't shown prematurely
         expect(screen.queryByText("Required Field")).not.toBeInTheDocument();
         expect(screen.queryByText("At least one read file must be attached to the sample")).not.toBeInTheDocument();
@@ -88,7 +94,7 @@ describe("<CreateSample>", () => {
 
     it("should submit when required fields are completed", async () => {
         const { name } = values;
-        renderWithProviders(<CreateSample {...props} />, createAppStore);
+        renderWithProviders(<CreateSample {...props} />, createAppStore(state));
         inputFormRequirements(name);
         submitForm();
 
@@ -96,7 +102,7 @@ describe("<CreateSample>", () => {
     });
 
     it("should submit expected results when form is fully completed", async () => {
-        renderWithProviders(<CreateSample {...props} />, createAppStore);
+        renderWithProviders(<CreateSample {...props} />, createAppStore(state));
         const { name, isolate, host, locale, libraryType } = values;
         inputFormRequirements(name);
 
@@ -104,7 +110,9 @@ describe("<CreateSample>", () => {
         userEvent.type(screen.getByLabelText("Isolate"), isolate);
         userEvent.type(screen.getByLabelText("Host"), host);
         userEvent.type(screen.getByLabelText("Locale"), locale);
-        userEvent.click(screen.getByText(props.subtractions[1].name));
+        userEvent.click(screen.getByRole("button", { name: "select default subtractions" }));
+        userEvent.click(screen.getByText(state.subtraction.shortlist[0].name));
+
         userEvent.click(screen.getByText(libraryType));
         submitForm();
 
@@ -115,7 +123,7 @@ describe("<CreateSample>", () => {
                 host,
                 locale,
                 libraryType.toLowerCase(),
-                [props.subtractions[1].id],
+                [state.subtraction.shortlist[0].id],
                 [0, 1],
                 []
             )
@@ -123,7 +131,7 @@ describe("<CreateSample>", () => {
     });
 
     it("should include labels when submitting a completed form", async () => {
-        renderWithProviders(<CreateSample {...props} />, createAppStore);
+        renderWithProviders(<CreateSample {...props} />, createAppStore(state));
         const { name, isolate, host, locale, libraryType } = values;
         inputFormRequirements(name);
 
@@ -131,10 +139,11 @@ describe("<CreateSample>", () => {
         userEvent.type(screen.getByLabelText("Isolate"), isolate);
         userEvent.type(screen.getByLabelText("Host"), host);
         userEvent.type(screen.getByLabelText("Locale"), locale);
-        userEvent.click(screen.getByText(props.subtractions[1].name));
         userEvent.click(screen.getByText(libraryType));
-        userEvent.click(screen.getByTestId("labelButton"));
-        userEvent.click(screen.getByText("testlabel1"));
+        userEvent.click(screen.getByRole("button", { name: "select default subtractions" }));
+        userEvent.click(screen.getByText(state.subtraction.shortlist[0].name));
+        userEvent.click(screen.getByRole("button", { name: "select labels" }));
+        userEvent.click(screen.getByText(state.labels.documents[0].name));
         submitForm();
 
         await waitFor(() =>
@@ -144,26 +153,26 @@ describe("<CreateSample>", () => {
                 host,
                 locale,
                 libraryType.toLowerCase(),
-                [props.subtractions[1].id],
+                [state.subtraction.shortlist[0].id],
                 [0, 1],
-                [2]
+                [state.labels.documents[0].id]
             )
         );
     });
 
     it("should render userGroup when [props.forcedGroup=true]", () => {
-        renderWithProviders(<CreateSample {...props} />, createAppStore);
+        renderWithProviders(<CreateSample {...props} />, createAppStore(state));
         expect(screen.queryByText("User Group")).not.toBeInTheDocument();
     });
 
     it("should render userGroup when [props.forcedGroup=false]", () => {
         props.forceGroupChoice = true;
-        renderWithProviders(<CreateSample {...props} />, createAppStore);
+        renderWithProviders(<CreateSample {...props} />, createAppStore(state));
         expect(screen.getByText("User Group")).toBeInTheDocument();
     });
 
     it("should update the sample name when the magic icon is pressed", async () => {
-        renderWithProviders(<CreateSample {...props} />, createAppStore);
+        renderWithProviders(<CreateSample {...props} />, createAppStore(state));
         const nameInput = screen.getByRole("textbox", { name: /Sample Name/i });
         expect(nameInput.value).toBe("");
 
@@ -173,20 +182,8 @@ describe("<CreateSample>", () => {
     });
 });
 
-const createAppStore = () => {
-    const mockReducer = state => {
-        return state;
-    };
-    const state = {
-        labels: {
-            documents: [
-                { color: "#3B82F6", count: 0, description: "", id: 2, name: "testlabel1" },
-                { color: "#3C8786", count: 0, description: "", id: 3, name: "testlabel2" }
-            ]
-        }
-    };
-
-    return createStore(mockReducer, state);
+const createAppStore = state => {
+    return () => createStore(state => state, state);
 };
 
 describe("mapStateToProps()", () => {

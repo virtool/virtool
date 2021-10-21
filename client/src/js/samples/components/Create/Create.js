@@ -20,7 +20,6 @@ import {
 import { clearError } from "../../../errors/actions";
 import { listLabels } from "../../../labels/actions";
 import { shortlistSubtractions } from "../../../subtraction/actions";
-import { SampleSubtractionSelector } from "../../../subtraction/components/Selector";
 import { getSubtractionShortlist } from "../../../subtraction/selectors";
 import { createSample, findReadFiles } from "../../actions";
 import { LibraryTypeSelector } from "./LibraryTypeSelector";
@@ -80,10 +79,9 @@ export const CreateSample = props => {
         host: "",
         locale: "",
         libraryType: "normal",
-        subtractionIds: [],
         readFiles: [],
         group: props.forceGroupChoice ? "none" : null,
-        labels: []
+        sidebar: { labels: [], subtractionIds: [] }
     };
 
     const autofill = (selected, setFieldValue) => {
@@ -94,8 +92,8 @@ export const CreateSample = props => {
     };
 
     const handleSubmit = values => {
-        const { name, isolate, host, locale, libraryType, subtractionIds, readFiles, group, labels } = values;
-
+        const { name, isolate, host, locale, libraryType, readFiles, group, sidebar } = values;
+        const { subtractionIds, labels } = sidebar;
         // Only send the group if forceGroupChoice is true
         if (props.forceGroupChoice) {
             props.onCreate(
@@ -158,19 +156,6 @@ export const CreateSample = props => {
                                     </InputGroup>
 
                                     <InputGroup>
-                                        <InputLabel>Default Subtractions</InputLabel>
-                                        <Field
-                                            as={SampleSubtractionSelector}
-                                            name="subtractionIds"
-                                            aria-label="Default Subtractions"
-                                            noun="Default Subtractions"
-                                            selected={values.subtractionIds}
-                                            subtractions={props.subtractions}
-                                            onChange={selected => setFieldValue("subtractionIds", selected)}
-                                        />
-                                    </InputGroup>
-
-                                    <InputGroup>
                                         <InputLabel>Host</InputLabel>
                                         <Field as={Input} name="host" aria-label="Host" />
                                     </InputGroup>
@@ -216,12 +201,10 @@ export const CreateSample = props => {
                                 <SaveButton />
                             </NarrowContainer>
                             <Field
-                                name="labels"
                                 as={Sidebar}
-                                onUpdate={selection => {
-                                    setFieldValue("labels", selection);
-                                }}
-                                sampleLabels={values.labels}
+                                onUpdate={(type, value) => setFieldValue(`sidebar.${type}`, value)}
+                                sampleLabels={values.sidebar.labels}
+                                defaultSubtractions={values.sidebar.subtractionIds}
                             />
                         </StyledFormContainer>
                     </Form>

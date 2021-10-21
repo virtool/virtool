@@ -10,7 +10,7 @@ const SampleSidebarSelectorInputContainer = styled(BoxGroupSection)`
     padding: 10px;
 `;
 
-export const SampleSidebarSelector = ({ render, sampleItems, selectedItems, sampleId, onUpdate }) => {
+export const SampleSidebarSelector = ({ render, sampleItems, selectedItems, sampleId, onUpdate, selectionType }) => {
     const [results, term, setTerm] = useFuse(sampleItems, ["name"], [sampleId]);
     const [attributes, show, styles, setPopperElement, setReferenceElement, setShow] = usePopover();
 
@@ -30,9 +30,15 @@ export const SampleSidebarSelector = ({ render, sampleItems, selectedItems, samp
             {render(item)}
         </SampleSidebarSelectorItem>
     ));
+
     return (
         <React.Fragment>
-            <SidebarHeaderButton data-testid="labelButton" type="button" ref={setReferenceElement} onClick={setShow}>
+            <SidebarHeaderButton
+                aria-label={"select " + selectionType}
+                type="button"
+                ref={setReferenceElement}
+                onClick={setShow}
+            >
                 <Icon name="pen" />
             </SidebarHeaderButton>
             {show && (
