@@ -71,6 +71,51 @@ class TestSimpleMongoFetcher:
             (ws, message)
         ]
 
+    @pytest.mark.parametrize("use_processor", [True, False])
+    async def test_processor(self, use_processor, connections, dbi, ws):
+        await dbi.hmm.insert_many([
+            {"_id": "foo", "name": "Foo", "include": True},
+            {"_id": "bar", "name": "Bar", "include": True}
+        ])
+
+        if use_processor:
+            async def processor(db, document):
+                return {
+                    **document,
+                    "processed": True
+                }
+
+            fetcher = SimpleMongoFetcher(dbi.hmm, processor=processor)
+        else:
+            fetcher = SimpleMongoFetcher(dbi.hmm)
+
+        pairs = list()
+
+        async for pair in fetcher.fetch(Change("hmm", UPDATE, ["foo"]), connections):
+            pairs.append(pair)
+
+        message = {
+            "interface": "hmm",
+            "operation": UPDATE,
+            "data": {
+                "id": "foo",
+                "name": "Foo",
+                "include": True,
+            }
+        }
+
+        if use_processor:
+            message["data"].update({
+                "_id": message["data"].pop("id"),
+                "processed": True
+            })
+
+        assert pairs == [
+            (ws, message),
+            (ws, message),
+            (ws, message)
+        ]
+
 
 class TestIndexesFetcher:
 
