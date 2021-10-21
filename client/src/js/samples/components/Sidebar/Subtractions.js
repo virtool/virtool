@@ -16,6 +16,7 @@ export const DefaultSubtractions = ({ defaultSubtractions, subtractionOptions, o
                 sampleItems={subtractionOptions}
                 selectedItems={defaultSubtractions}
                 onUpdate={onUpdate}
+                selectionType="default subtractions"
             />
         </SidebarHeader>
         <SampleSidebarList

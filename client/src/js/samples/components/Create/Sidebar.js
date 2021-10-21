@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { SideContainer } from "../../../base";
 import SampleLabels from "../Sidebar/Labels";
+import DefaultSubtractions from "../Sidebar/Subtractions";
 
 const StyledSidebar = styled(SideContainer)`
     align-items: stretch;
@@ -12,8 +13,12 @@ const StyledSidebar = styled(SideContainer)`
     padding-left: 15px;
 `;
 
-export const Sidebar = ({ sampleLabels, onUpdate }) => (
+export const Sidebar = ({ sampleLabels, defaultSubtractions, onUpdate }) => (
     <StyledSidebar>
-        <SampleLabels sampleId="0" onUpdate={onUpdate} sampleLabels={sampleLabels} />
+        <SampleLabels onUpdate={selection => onUpdate("labels", selection)} sampleLabels={sampleLabels} />
+        <DefaultSubtractions
+            onUpdate={selection => onUpdate("subtractionIds", selection)}
+            defaultSubtractions={defaultSubtractions}
+        />
     </StyledSidebar>
 );

@@ -23,6 +23,7 @@ export const SampleLabels = ({ allLabels, sampleLabels, onUpdate }) => (
                 sampleItems={allLabels}
                 selectedItems={sampleLabels}
                 onUpdate={onUpdate}
+                selectionType="labels"
             />
         </SidebarHeader>
         <SampleSidebarList items={allLabels.filter(item => sampleLabels.includes(item.id))} />
