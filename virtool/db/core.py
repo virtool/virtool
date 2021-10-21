@@ -54,6 +54,7 @@ class Collection:
     ):
         self.name = name
         self._collection = collection
+        self.database = collection.database
         self._enqueue_change = enqueue_change
         self.processor = processor
         self.projection = projection

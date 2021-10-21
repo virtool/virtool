@@ -65,7 +65,7 @@ class Dispatcher:
             SimpleMongoFetcher(db.history, virtool.history.db.LIST_PROJECTION),
             SimpleMongoFetcher(db.hmm, virtool.hmm.db.PROJECTION),
             IndexesFetcher(db),
-            SimpleMongoFetcher(db.jobs, virtool.jobs.db.PROJECTION),
+            SimpleMongoFetcher(db.jobs, virtool.jobs.db.PROJECTION, virtool.jobs.db.processor),
             LabelsFetcher(pg, db),
             SimpleMongoFetcher(db.otus, virtool.otus.db.PROJECTION),
             TasksFetcher(pg),

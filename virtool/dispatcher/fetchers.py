@@ -3,8 +3,9 @@ Fetchers provide a get() method
 """
 from abc import ABC, abstractmethod
 from asyncio import gather
-from typing import AsyncIterable, List, Optional, Tuple
+from typing import AsyncIterable, List, Optional, Tuple, Callable, Any, Dict, Awaitable
 
+from motor.motor_asyncio import AsyncIOMotorDatabase
 from sqlalchemy import inspect, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -79,9 +80,25 @@ class AbstractFetcher(ABC):
 
 class SimpleMongoFetcher(AbstractFetcher):
 
-    def __init__(self, collection: Collection, projection: Optional[Projection] = None):
+    def __init__(
+            self,
+            collection: Collection,
+            projection: Optional[Projection] = None,
+            processor: Optional[Callable[[None, dict], Awaitable[dict]]] = None
+    ):
         self._collection = collection
+        self._db: AsyncIOMotorDatabase = collection.database
         self._projection = projection
+
+        if processor:
+            async def process(document: Dict[str, Any]) -> Dict[str, Any]:
+                return await processor(self._db, document)
+
+        else:
+            async def process(document: Dict[str, Any]) -> Dict[str, Any]:
+                return base_processor(document)
+
+        self._process = process
 
     async def prepare(self, change: Change, connections: List[Connection]):
         """
@@ -100,7 +117,7 @@ class SimpleMongoFetcher(AbstractFetcher):
             message = {
                 "interface": change.interface,
                 "operation": change.operation,
-                "data": base_processor(document)
+                "data": await self._process(document)
             }
 
             for connection in connections:
