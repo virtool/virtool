@@ -104,4 +104,4 @@ async def create_indexes(db):
     await db.sequences.create_index("otu_id")
     await db.sequences.create_index("name")
     await db.users.create_index("ad_oid", unique=True, sparse=True)
-    await db.users.create_index("handle", unique=True)
+    await db.users.create_index("handle", unique=True, sparse=True)
