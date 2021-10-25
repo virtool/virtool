@@ -1,3 +1,4 @@
 """Shared fake data IDs."""
 
-USER_ID = "bob"
+USER_ID = "abc123"
+USER_HANDLE = "bob"

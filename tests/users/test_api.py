@@ -10,9 +10,8 @@ async def test_find(spawn_client, create_user, static_time):
     """
     client = await spawn_client(authorize=True, administrator=True, permissions=["create_sample"])
 
-    user_ids = ["bob", "fred"]
-
-    await client.db.users.insert_many([create_user(user_id) for user_id in user_ids])
+    await client.db.users.insert_one(create_user(user_id="foo", handle="bar"))
+    await client.db.users.insert_one(create_user(user_id="bar", handle="baz"))
 
     resp = await client.get("/api/users")
 
@@ -24,7 +23,8 @@ async def test_find(spawn_client, create_user, static_time):
                 "administrator": False,
                 "force_reset": False,
                 "groups": [],
-                "id": "bob",
+                "id": "bar",
+                "handle": "baz",
                 "identicon": "identicon",
                 "last_password_change": static_time.iso,
                 "permissions": {
@@ -41,7 +41,8 @@ async def test_find(spawn_client, create_user, static_time):
                 "administrator": False,
                 "force_reset": False,
                 "groups": [],
-                "id": "fred",
+                "id": "foo",
+                "handle": "bar",
                 "identicon": "identicon",
                 "last_password_change": static_time.iso,
                 "permissions": {
@@ -61,6 +62,7 @@ async def test_find(spawn_client, create_user, static_time):
                 "force_reset": False,
                 "groups": [],
                 "id": "test",
+                "handle": "bob",
                 "identicon": "identicon",
                 "last_password_change": static_time.iso,
                 "permissions": {
@@ -92,14 +94,14 @@ async def test_get(error, spawn_client, create_user, no_permissions, resp_is, st
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    users = [create_user("bob")]
+    users = [create_user(user_id="foo", handle="bar")]
 
     if not error:
-        users.append(create_user("fred"))
+        users.append(create_user(user_id="bar", handle="baz"))
 
     await client.db.users.insert_many(users)
 
-    resp = await client.get("/api/users/fred")
+    resp = await client.get("/api/users/bar")
 
     if error:
         await resp_is.not_found(resp)
@@ -108,7 +110,8 @@ async def test_get(error, spawn_client, create_user, no_permissions, resp_is, st
     assert resp.status == 200
 
     assert await resp.json() == {
-        "id": "fred",
+        "id": "bar",
+        "handle": "baz",
         "administrator": False,
         "force_reset": False,
         "groups": [],
@@ -120,7 +123,7 @@ async def test_get(error, spawn_client, create_user, no_permissions, resp_is, st
 
 
 @pytest.mark.parametrize("error", [None, "400_exists", "400_password"])
-async def test_create(error, spawn_client, create_user, resp_is, static_time):
+async def test_create(error, spawn_client, create_user, resp_is, static_time, mocker):
     """
     Test that a valid request results in a user document being properly inserted.
 
@@ -130,16 +133,17 @@ async def test_create(error, spawn_client, create_user, resp_is, static_time):
 
     """
     client = await spawn_client(authorize=True, administrator=True)
+    mocker.patch("virtool.db.utils.get_new_id", return_value="abc123")
 
     if error == "400_exists":
         await client.db.users.insert_one({
-            "_id": "bob"
+            "_id": "abc123"
         })
 
     client.app["settings"]["minimum_password_length"] = 8
 
     data = {
-        "user_id": "bob",
+        "handle": "fred",
         "password": "hello_world",
         "force_reset": False
     }
@@ -159,14 +163,16 @@ async def test_create(error, spawn_client, create_user, resp_is, static_time):
 
     assert resp.status == 201
 
-    assert resp.headers["Location"] == "/api/users/bob"
+    assert resp.headers["Location"] == "/api/users/abc123"
 
     expected = {
-        "id": "bob", "administrator": False,
+        "id": "abc123",
+        "handle": "fred",
+        "administrator": False,
         "force_reset": False,
         "groups": [],
         "last_password_change": static_time.iso,
-        "identicon": "81b637d8fcd2c6da6359e6963113a1170de795e4b725b84d1e0b4cfd9ec58ce9",
+        "identicon": "d0cfc2e5319b82cdc71a33873e826c93d7ee11363f8ac91c4fa3a2cfcd2286e5",
         "permissions": create_user()["permissions"],
         "primary_group": ""
     }
@@ -178,9 +184,9 @@ async def test_create(error, spawn_client, create_user, resp_is, static_time):
         "last_password_change": static_time.datetime
     })
 
-    assert await client.db.users.find_one("bob", list(expected.keys())) == expected
+    assert await client.db.users.find_one("abc123", list(expected.keys())) == expected
 
-    document = await client.db.users.find_one("bob", ["password"])
+    document = await client.db.users.find_one("abc123", ["password"])
 
     assert check_password("hello_world", document["password"])
 
@@ -205,7 +211,7 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
 
     if error != "user_dne":
         groups = [] if error == "not_group_member" else ["tech"]
-        bob = dict(create_user("bob", groups=groups))
+        bob = dict(create_user(user_id="bob", handle="fred", groups=groups))
         await client.db.users.insert_one(bob)
 
     groups_to_insert = [{
@@ -276,7 +282,7 @@ async def test_remove(error, spawn_client, resp_is, create_user):
     client = await spawn_client(authorize=True, administrator=True)
 
     if not error:
-        await client.db.users.insert_one(create_user("bob"))
+        await client.db.users.insert_one(create_user(user_id="bob", handle="fred"))
 
     resp = await client.delete("/api/users/bob")
 

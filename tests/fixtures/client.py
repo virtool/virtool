@@ -109,7 +109,7 @@ def spawn_client(
     ):
         app = create_app(dev)
 
-        user_document = create_user("test", administrator, groups, permissions)
+        user_document = create_user(user_id="test", administrator=administrator, groups=groups, permissions=permissions)
         await dbi.users.insert_one(user_document)
 
         if authorize:

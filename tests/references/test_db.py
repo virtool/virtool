@@ -21,8 +21,8 @@ async def test_add_group_or_user(error, field, rights, dbi, static_time):
     ref_id = "foo"
 
     subdocuments = [
-        {**RIGHTS, "id": "bar"},
-        {**RIGHTS, "id": "baz"}
+        {**RIGHTS, "id": "bar", "handle": "foo"},
+        {**RIGHTS, "id": "baz", "handle": "boo"}
     ]
 
     if error != "missing":
@@ -33,9 +33,9 @@ async def test_add_group_or_user(error, field, rights, dbi, static_time):
         })
 
     if error != "missing_member":
-        for _id in ["bar", "buzz"]:
+        for (_id, handle) in [("bar", "foo"), ("buzz", "boo")]:
             await dbi.groups.insert_one({"_id": _id})
-            await dbi.users.insert_one({"_id": _id})
+            await dbi.users.insert_one({"_id": _id, "handle": handle})
 
     subdocument_id = "bar" if error == "duplicate" else "buzz"
 
