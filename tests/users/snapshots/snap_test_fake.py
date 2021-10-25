@@ -8,11 +8,12 @@ from snapshottest import GenericRepr, Snapshot
 snapshots = Snapshot()
 
 snapshots['test_create_fake_bob_user[uvloop] 1'] = {
-    '_id': 'bob',
+    '_id': 'abc123',
     'administrator': True,
     'force_reset': False,
     'groups': [
     ],
+    'handle': 'bob',
     'identicon': '81b637d8fcd2c6da6359e6963113a1170de795e4b725b84d1e0b4cfd9ec58ce9',
     'invalidate_sessions': True,
     'last_password_change': GenericRepr('datetime.datetime(2015, 10, 6, 20, 0)'),

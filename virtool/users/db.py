@@ -1,3 +1,5 @@
+import random
+from dataclasses import dataclass
 from typing import Union, List, Optional
 
 import virtool.db.utils
@@ -8,6 +10,7 @@ import virtool.utils
 
 PROJECTION = [
     "_id",
+    "handle",
     "administrator",
     "force_reset",
     "groups",
@@ -16,6 +19,25 @@ PROJECTION = [
     "permissions",
     "primary_group"
 ]
+
+
+@dataclass
+class ADUserAttributes:
+    """
+    Class to store ID token claims from Azure AD B2C
+    """
+    oid: str
+    display_name: str
+    given_name: str
+    family_name: str
+    email: str
+
+    def __init__(self, oid: str, display_name: str, given_name: str, family_name: str, email: str):
+        self.ad_oid = oid
+        self.ad_display_name = display_name
+        self.ad_given_name = given_name
+        self.ad_family_name = family_name
+        self.ad_email = email
 
 
 async def attach_identicons(db, users: Union[dict, list]) -> Union[dict, List[dict]]:
@@ -131,23 +153,49 @@ async def compose_primary_group_update(db, user_id: Optional[str], primary_group
     }
 
 
-async def create(db, user_id: str, password: str, force_reset: bool = True) -> dict:
+async def generate_handle(collection, given_name: str, family_name: str):
     """
-    Insert a new user document into the database.
+    Create handle for new AD users in Virtool using values from ID token and random int
+
+    :param collection: the mongo collection to check for existing usernames
+    :param given_name: user's first name collected from Azure AD
+    :param family_name: user's last name collected from Azure AD
+
+    :return: user handle created from AD user info
+    """
+    handle = f"{given_name}-{family_name}-{random.randint(1,100)}"
+    if await virtool.db.utils.handle_exists(collection, handle):
+        return await generate_handle(collection, given_name, family_name)
+
+    return handle
+
+
+async def create(
+        db,
+        password: str,
+        handle: str = None,
+        force_reset: bool = True,
+        ad_user_attributes: ADUserAttributes = None
+) -> dict:
+    """
+    Insert a new user document into the database. If Azure AD information is given, add it to user document.
 
     :param db: the application database client
-    :param user_id: the requested id for the user
+    :param handle: the requested handle for the user
     :param password: a password
     :param force_reset: force the user to reset password on next login
+    :param ad_user_attributes: arguments gathered from Azure AD B2C ID token
 
     :return: the user document
-
     """
-    if await virtool.db.utils.id_exists(db.users, user_id):
+    user_id = await virtool.db.utils.get_new_id(db.users)
+
+    if await virtool.db.utils.handle_exists(db.users, handle) or await virtool.db.utils.id_exists(db.users, user_id):
         raise virtool.errors.DatabaseError("User already exists")
 
     document = {
         "_id": user_id,
+        "handle": handle,
         "administrator": False,
         "groups": list(),
         "settings": {
@@ -156,7 +204,7 @@ async def create(db, user_id: str, password: str, force_reset: bool = True) -> d
             "show_versions": True,
             "quick_analyze_workflow": "pathoscope_bowtie"
         },
-        "identicon": virtool.users.utils.calculate_identicon(user_id),
+        "identicon": virtool.users.utils.calculate_identicon(handle),
         "permissions": virtool.users.utils.generate_base_permissions(),
         "password": virtool.users.utils.hash_password(password),
         "primary_group": "",
@@ -168,6 +216,16 @@ async def create(db, user_id: str, password: str, force_reset: bool = True) -> d
         # download the client.
         "invalidate_sessions": False
     }
+    if ad_user_attributes:
+        if await virtool.db.utils.oid_exists(db.users, ad_user_attributes.oid):
+            raise virtool.errors.DatabaseError("User already exists")
+        document.update({
+            "ad_oid": ad_user_attributes.oid,
+            "ad_display_name": ad_user_attributes.display_name,
+            "ad_given_name": ad_user_attributes.given_name,
+            "ad_family_name": ad_user_attributes.family_name,
+            "ad_email": ad_user_attributes.email
+        })
 
     await db.users.insert_one(document)
 
@@ -177,7 +235,7 @@ async def create(db, user_id: str, password: str, force_reset: bool = True) -> d
 async def edit(
         db,
         user_id: str,
-        administrator: Optional[str] = None,
+        administrator: Optional[bool] = None,
         force_reset: Optional[bool] = None,
         groups: Optional[list] = None,
         password: Optional[str] = None,

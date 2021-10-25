@@ -6,7 +6,8 @@ from virtool.users.utils import PERMISSIONS
 @pytest.fixture
 def bob(no_permissions, static_time):
     return {
-        "_id": "bob",
+        "_id": "abc123",
+        "handle": "bob",
         "administrator": False,
         "force_reset": False,
         "groups": [
@@ -29,12 +30,13 @@ def bob(no_permissions, static_time):
 
 @pytest.fixture
 def create_user(static_time):
-    def func(name="test", administrator=False, groups=None, permissions=None):
+    def func(user_id="test", handle="bob", administrator=False, groups=None, permissions=None):
 
         permissions = permissions or list()
 
         return {
-            "_id": name,
+            "_id": user_id,
+            "handle": handle,
             "administrator": administrator,
             "identicon": "identicon",
             "permissions": {perm: perm in permissions for perm in PERMISSIONS},

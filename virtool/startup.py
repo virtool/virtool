@@ -41,6 +41,7 @@ from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
 from virtool.uploads.tasks import MigrateFilesTask
+from virtool.users.tasks import UpdateUserDocumentsTask
 from virtool.utils import random_alphanumeric, get_client_path, ensure_data_dir
 from virtool.version import determine_server_version
 
@@ -393,5 +394,6 @@ async def init_tasks(app: aiohttp.web.Application):
     await app["tasks"].add(StoreNuvsFilesTask)
     await app["tasks"].add(CompressSamplesTask)
     await app["tasks"].add(MoveSampleFilesTask)
+    await app["tasks"].add(UpdateUserDocumentsTask)
 
     await scheduler.spawn(app["tasks"].add_periodic(MigrateFilesTask, 3600))

@@ -177,6 +177,27 @@ async def id_exists(collection, id_: str) -> bool:
     :param collection: the Mongo collection to check the _id against
     :param id_: the _id to check for
     :return: does the id exist
-
     """
     return bool(await collection.count_documents({"_id": id_}))
+
+
+async def handle_exists(collection, handle: str) -> bool:
+    """
+    Check if the document handle exists in the collection.
+
+    :param collection: the Mongo collection to check the handle against
+    :param handle: the handle to check for
+    :return: does the id exist
+    """
+    return bool(await collection.count_documents({"handle": handle}))
+
+
+async def oid_exists(collection, ad_oid: str) -> bool:
+    """
+    Check if the Azure AD oid exists in the collection.
+
+    :param collection: the Mongo collection to check the oid against
+    :param ad_oid: the Azure AD oid to check for
+    :return: does the oid exist
+    """
+    return bool(await collection.count_documents({"ad_oid": ad_oid}))

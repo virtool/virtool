@@ -76,7 +76,7 @@ async def get(req):
 
 @routes.post("/api/users", admin=True)
 @schema({
-    "user_id": {
+    "handle": {
         "type": "string",
         "coerce": virtool.validators.strip,
         "empty": False,
@@ -100,7 +100,8 @@ async def create(req):
     db = req.app["db"]
     data = await req.json()
 
-    if data["user_id"] == "virtool":
+    handle = data["handle"]
+    if handle == "virtool":
         raise HTTPBadRequest(text="Reserved user name: virtool")
 
     error = await check_password_length(req)
@@ -108,18 +109,17 @@ async def create(req):
     if error:
         raise HTTPBadRequest(text=error)
 
-    user_id = data["user_id"]
-
     try:
         document = await virtool.users.db.create(
             db,
-            user_id,
             data["password"],
-            data["force_reset"]
+            handle=handle,
+            force_reset=data["force_reset"]
         )
     except DatabaseError:
         raise HTTPBadRequest(text="User already exists")
 
+    user_id = document["_id"]
     headers = {
         "Location": f"/api/users/{user_id}"
     }
@@ -133,7 +133,7 @@ async def create(req):
 
 @routes.put("/api/users/first", public=True)
 @schema({
-    "user_id": {
+    "handle": {
         "type": "string",
         "coerce": virtool.validators.strip,
         "empty": False,
@@ -156,7 +156,7 @@ async def create_first(req):
     if await db.users.count_documents({}):
         raise HTTPConflict(text="Virtool already has at least one user")
 
-    if data["user_id"] == "virtool":
+    if data["handle"] == "virtool":
         raise HTTPBadRequest(text="Reserved user name: virtool")
 
     error = await check_password_length(req)
@@ -164,14 +164,15 @@ async def create_first(req):
     if error:
         raise HTTPBadRequest(text=error)
 
-    user_id = data["user_id"]
+    handle = data["handle"]
 
-    await virtool.users.db.create(
+    document = await virtool.users.db.create(
         db,
-        user_id,
         data["password"],
+        handle=handle,
         force_reset=False
     )
+    user_id = document["_id"]
 
     document = await virtool.users.db.edit(
         db,
