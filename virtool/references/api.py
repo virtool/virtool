@@ -663,8 +663,6 @@ async def add_user(req):
         "Location": f"/api/refs/{ref_id}/users/{subdocument['id']}"
     }
 
-    subdocument = await virtool.users.db.attach_identicons(db, subdocument)
-
     return json_response(subdocument, headers=headers, status=201)
 
 
@@ -709,8 +707,6 @@ async def edit_user(req):
 
     if subdocument is None:
         raise NotFound()
-
-    subdocument = await virtool.users.db.attach_identicons(db, subdocument)
 
     return json_response(subdocument)
 

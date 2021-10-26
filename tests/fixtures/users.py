@@ -14,7 +14,6 @@ def bob(no_permissions, static_time):
             "peasants"
         ],
         "last_password_change": static_time.datetime,
-        "identicon": "81b637d8fcd2c6da6359e6963113a1170de795e4b725b84d1e0b4cfd9ec58ce9",
         "invalidate_sessions": False,
         "password": "hashed_password",
         "permissions": no_permissions,
@@ -38,7 +37,6 @@ def create_user(static_time):
             "_id": user_id,
             "handle": handle,
             "administrator": administrator,
-            "identicon": "identicon",
             "permissions": {perm: perm in permissions for perm in PERMISSIONS},
             "groups": groups or list(),
             "invalidate_sessions": False,

@@ -7,7 +7,6 @@ Schema:
 - email (str) the user's email address
 - force_reset (bool) the user must reset their password on next login
 - groups (List[str]) a list of group IDs the user is a member of
-- identicon (str) a string used to render identicons for the user
 - last_password_change (datetime) a timestamp for the last time the password was changed
 - password (str) a salted and bcrypt-hashed password for the user
 - permissions (Object) a object of permissions keys with boolean values indicating if the user has that permission

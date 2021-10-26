@@ -14,7 +14,6 @@ async def test_get(spawn_client, static_time):
         "groups": [],
         "id": "test",
         "administrator": False,
-        "identicon": "identicon",
         "last_password_change": static_time.iso,
         "permissions": {p: False for p in virtool.users.utils.PERMISSIONS},
         "primary_group": "technician",
@@ -76,7 +75,6 @@ async def test_edit(error, spawn_client, resp_is, static_time):
                 "upload_file": False
             },
             "groups": [],
-            "identicon": "identicon",
             "administrator": False,
             "last_password_change": static_time.iso,
             "primary_group": "technician",

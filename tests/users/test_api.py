@@ -25,7 +25,6 @@ async def test_find(spawn_client, create_user, static_time):
                 "groups": [],
                 "id": "bar",
                 "handle": "baz",
-                "identicon": "identicon",
                 "last_password_change": static_time.iso,
                 "permissions": {
                     "cancel_job": False,
@@ -43,7 +42,6 @@ async def test_find(spawn_client, create_user, static_time):
                 "groups": [],
                 "id": "foo",
                 "handle": "bar",
-                "identicon": "identicon",
                 "last_password_change": static_time.iso,
                 "permissions": {
                     "cancel_job": False,
@@ -63,7 +61,6 @@ async def test_find(spawn_client, create_user, static_time):
                 "groups": [],
                 "id": "test",
                 "handle": "bob",
-                "identicon": "identicon",
                 "last_password_change": static_time.iso,
                 "permissions": {
                     "cancel_job": False,
@@ -115,7 +112,6 @@ async def test_get(error, spawn_client, create_user, no_permissions, resp_is, st
         "administrator": False,
         "force_reset": False,
         "groups": [],
-        "identicon": "identicon",
         "last_password_change": static_time.iso,
         "permissions": no_permissions,
         "primary_group": "technician"
@@ -172,7 +168,6 @@ async def test_create(error, spawn_client, create_user, resp_is, static_time, mo
         "force_reset": False,
         "groups": [],
         "last_password_change": static_time.iso,
-        "identicon": "d0cfc2e5319b82cdc71a33873e826c93d7ee11363f8ac91c4fa3a2cfcd2286e5",
         "permissions": create_user()["permissions"],
         "primary_group": ""
     }

@@ -1,6 +1,6 @@
 import random
 from dataclasses import dataclass
-from typing import Union, List, Optional
+from typing import Optional
 
 import virtool.db.utils
 import virtool.errors
@@ -14,7 +14,6 @@ PROJECTION = [
     "administrator",
     "force_reset",
     "groups",
-    "identicon",
     "last_password_change",
     "permissions",
     "primary_group"
@@ -38,33 +37,6 @@ class ADUserAttributes:
         self.ad_given_name = given_name
         self.ad_family_name = family_name
         self.ad_email = email
-
-
-async def attach_identicons(db, users: Union[dict, list]) -> Union[dict, List[dict]]:
-    """
-    Attach identicon fields to a list of user documents.
-
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param users: user documents to attach identicons to
-
-    :return: the user documents with identicon fields
-    :rtype: Union[dict,list]
-
-    """
-    if isinstance(users, list):
-        user_ids = [u["id"] for u in users]
-
-        cursor = db.users.find({"_id": {"$in": user_ids}}, ["identicon"])
-
-        lookup = {d["_id"]: d["identicon"] async for d in cursor}
-
-        return [dict(u, identicon=lookup[u["id"]]) for u in users]
-
-    identicon = await virtool.db.utils.get_one_field(db.users, "identicon", users["id"])
-
-    return dict(users, identicon=identicon)
 
 
 def compose_force_reset_update(force_reset: Optional[bool]) -> dict:
@@ -204,7 +176,6 @@ async def create(
             "show_versions": True,
             "quick_analyze_workflow": "pathoscope_bowtie"
         },
-        "identicon": virtool.users.utils.calculate_identicon(handle),
         "permissions": virtool.users.utils.generate_base_permissions(),
         "password": virtool.users.utils.hash_password(password),
         "primary_group": "",
