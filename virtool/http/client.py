@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Dict, Optional, Sequence
 
+from virtool.db.core import DB
 from virtool.http.rights import MODIFY, READ, REMOVE, Right
 from virtool.jobs.utils import JobRights
+from virtool.users.utils import generate_base_permissions
 
 
 class AbstractClient(ABC):
@@ -45,6 +48,16 @@ class AbstractClient(ABC):
         ...
 
 
+@dataclass
+class UnauthenticatedClient:
+    db: DB
+    ip: str
+    administrator = False
+    groups = list()
+    permissions = generate_base_permissions()
+    user_id = "unauthenticated"
+
+
 class UserClient(AbstractClient):
 
     def __init__(
@@ -52,10 +65,10 @@ class UserClient(AbstractClient):
             db,
             ip,
             administrator: bool,
-            force_reset: bool,
             groups: Sequence[str],
             permissions: Dict[str, bool],
             user_id: str,
+            force_reset: bool = False,
             session_id: Optional[str] = None
     ):
         self._db = db

@@ -97,10 +97,10 @@ async def authenticate_with_api_key(req, handler, user_id: str, key: str):
         db,
         get_ip(req),
         document["administrator"],
-        document["force_reset"],
         document["groups"],
         document["permissions"],
-        user_id
+        user_id,
+        force_reset=document["force_reset"]
     )
 
     return await handler(req)
@@ -140,11 +140,11 @@ async def middleware(req, handler):
             db,
             ip,
             session["administrator"],
-            session["force_reset"],
             session["groups"],
             session["permissions"],
             session["user"]["id"],
-            session_id
+            force_reset=session["force_reset"],
+            session_id=session_id
         )
     else:
         req["client"] = None
