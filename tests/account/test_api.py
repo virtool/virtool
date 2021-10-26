@@ -523,3 +523,35 @@ async def test_is_valid_email(value, spawn_client, resp_is):
         await resp_is.bad_request(resp, "Invalid credentials")
     else:
         await resp_is.invalid_input(resp, {"email": ["Not a valid email"]})
+
+
+@pytest.mark.parametrize("error", [None, "wrong_handle", "wrong_password"])
+async def test_login(spawn_client, create_user, resp_is, error, mocker):
+    client = await spawn_client()
+
+    await client.db.users.insert_one({
+        "user_id": "abc123",
+        "handle": "foobar",
+        "password": virtool.users.utils.hash_password("p@ssword123")
+    })
+
+    data = {
+        "username": "foobar",
+        "password": "p@ssword123",
+        "remember": False
+    }
+
+    if error == "wrong_password":
+        data["password"] = "wr0ngp@ssword"
+
+    if error == "wrong_handle":
+        data["username"] = "oops"
+
+    mocker.patch("virtool.users.sessions.replace_session", return_value=[{"_id": None}, None])
+
+    resp = await client.post("/api/account/login", data=data)
+
+    if error == "wrong_handle" or error == "wrong_password":
+        await resp_is.bad_request(resp, "Invalid username or password")
+        return
+    assert resp.status == 201
