@@ -47,6 +47,8 @@ module.exports = {
     },
   },
 
+  devtool: "source-map",
+
   output: {
     path: path.resolve(__dirname, "./dist"),
     filename: "app.[hash:8].js",
