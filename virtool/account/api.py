@@ -328,14 +328,16 @@ async def login(req: aiohttp.web.Request) -> aiohttp.web.Response:
     db = req.app["db"]
     data = req["data"]
 
-    user_id = data["username"]
+    handle = data["username"]
     password = data["password"]
 
     # When this value is set, the session will last for 1 month instead of the 1 hour default.
     remember = data["remember"]
 
-    # Re-render the login page with an error message if the username and/or password are invalid.
-    if not await validate_credentials(db, user_id, password):
+    # Re-render the login page with an error message if the username doesn't correlate to a user_id value in the
+    # database and/or password are invalid.
+    user_id = await db.users.find_one({"handle": handle})
+    if not user_id or not await validate_credentials(db, user_id, password):
         raise HTTPBadRequest(text="Invalid username or password")
 
     session_id = req.cookies.get("session_id")
@@ -348,7 +350,7 @@ async def login(req: aiohttp.web.Request) -> aiohttp.web.Response:
             "reset_code": await create_reset_code(db, session_id, user_id, remember)
         }, status=200)
 
-    session, token = await replace_session(
+    session, token = await virtool.users.sessions.replace_session(
         db,
         session_id,
         virtool.http.auth.get_ip(req),
