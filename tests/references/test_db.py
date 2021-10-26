@@ -168,8 +168,7 @@ class TestEdit:
 
         """
         await dbi.users.insert_one({
-            "_id": "bob",
-            "identicon": "abc123"
+            "_id": "bob"
         })
 
         await dbi.references.insert_one({
@@ -214,8 +213,7 @@ class TestEdit:
 
         """
         await dbi.users.insert_one({
-            "_id": "bob",
-            "identicon": "abc123"
+            "_id": "bob"
         })
 
         await dbi.references.insert_one({

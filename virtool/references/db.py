@@ -441,8 +441,6 @@ async def attach_computed(db, document: dict) -> dict:
         get_unbuilt_count(db, ref_id)
     )
 
-    users = await virtool.users.db.attach_identicons(db, document["users"])
-
     return {
         **document,
         "contributors": contributors,
@@ -450,7 +448,6 @@ async def attach_computed(db, document: dict) -> dict:
         "latest_build": latest_build,
         "otu_count": otu_count,
         "unbuilt_change_count": unbuilt_count,
-        "users": users
     }
 
 

@@ -14,17 +14,6 @@ PERMISSIONS = [
 ]
 
 
-def calculate_identicon(user_id: str) -> str:
-    """
-    Calculate an identicon hash string based on a user name.
-
-    :param user_id: the user name
-    :return: an identicon string
-
-    """
-    return hashlib.sha256(user_id.encode()).hexdigest()
-
-
 def check_legacy_password(password: str, salt: str, hashed: str) -> bool:
     """
     Check if a unicode ``password`` and ``salt`` match a ``hashed`` password from the database.

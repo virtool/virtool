@@ -278,8 +278,7 @@ async def test_edit(data_type, error, mocker, snapshot, spawn_client, resp_is):
         })
 
     await client.db.users.insert_one({
-        "_id": "bob",
-        "identicon": "abc123"
+        "_id": "bob"
     })
 
     data = {
@@ -384,8 +383,7 @@ async def test_add_group_or_user(error, field, snapshot, spawn_client, check_ref
         })
 
         await client.db.users.insert_one({
-            "_id": "fred",
-            "identicon": "foo_identicon"
+            "_id": "fred"
         })
 
     # Don't insert the ref document if we want to trigger a 404.
@@ -453,8 +451,7 @@ async def test_edit_group_or_user(error, field, snapshot, spawn_client, check_re
         await client.db.references.insert_one(document)
 
     await client.db.users.insert_one({
-        "_id": "fred",
-        "identicon": "foo_identicon"
+        "_id": "fred"
     })
 
     subdocument_id = "tech" if field == "group" else "fred"

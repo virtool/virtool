@@ -13,7 +13,6 @@ PROJECTION = (
     "administrator",
     "email",
     "groups",
-    "identicon",
     "last_password_change",
     "permissions",
     "primary_group",

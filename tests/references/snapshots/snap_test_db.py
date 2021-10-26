@@ -80,8 +80,7 @@ snapshots['TestEdit.test_control[uvloop-None-True] 2'] = {
     'unbuilt_change_count': 0,
     'users': [
         {
-            'id': 'bob',
-            'identicon': 'abc123'
+            'id': 'bob'
         }
     ]
 }
@@ -99,8 +98,7 @@ snapshots['TestEdit.test_control[uvloop-None-False] 2'] = {
     'unbuilt_change_count': 0,
     'users': [
         {
-            'id': 'bob',
-            'identicon': 'abc123'
+            'id': 'bob'
         }
     ]
 }
@@ -120,8 +118,7 @@ snapshots['TestEdit.test_control[uvloop-baz-True] 2'] = {
     'unbuilt_change_count': 0,
     'users': [
         {
-            'id': 'bob',
-            'identicon': 'abc123'
+            'id': 'bob'
         }
     ]
 }
@@ -139,8 +136,7 @@ snapshots['TestEdit.test_control[uvloop-baz-False] 2'] = {
     'unbuilt_change_count': 0,
     'users': [
         {
-            'id': 'bob',
-            'identicon': 'abc123'
+            'id': 'bob'
         }
     ]
 }
@@ -204,8 +200,7 @@ snapshots['TestEdit.test_control[uvloop--True] 2'] = {
     'unbuilt_change_count': 0,
     'users': [
         {
-            'id': 'bob',
-            'identicon': 'abc123'
+            'id': 'bob'
         }
     ]
 }
@@ -236,8 +231,7 @@ snapshots['TestEdit.test_control[uvloop--False] 2'] = {
     'unbuilt_change_count': 0,
     'users': [
         {
-            'id': 'bob',
-            'identicon': 'abc123'
+            'id': 'bob'
         }
     ]
 }

@@ -134,7 +134,6 @@ snapshots['test_edit_group_or_user[True-uvloop-group-None] 2'] = {
 snapshots['test_edit_group_or_user[True-uvloop-user-None] 1'] = {
     'build': False,
     'id': 'fred',
-    'identicon': 'foo_identicon',
     'modify': False,
     'modify_otu': False,
     'remove': True
@@ -221,7 +220,6 @@ snapshots['test_add_group_or_user[True-uvloop-user-None] 1'] = {
     'build': False,
     'created_at': '2015-10-06T20:00:00Z',
     'id': 'fred',
-    'identicon': 'foo_identicon',
     'modify': True,
     'modify_otu': False,
     'remove': False
@@ -256,8 +254,7 @@ snapshots['test_edit[uvloop-None-genome] 1'] = {
     'unbuilt_change_count': 0,
     'users': [
         {
-            'id': 'bob',
-            'identicon': 'abc123'
+            'id': 'bob'
         }
     ]
 }
@@ -294,8 +291,7 @@ snapshots['test_edit[uvloop-None-barcode] 1'] = {
     'unbuilt_change_count': 0,
     'users': [
         {
-            'id': 'bob',
-            'identicon': 'abc123'
+            'id': 'bob'
         }
     ]
 }

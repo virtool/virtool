@@ -5,18 +5,6 @@ import virtool.users.utils
 import virtool.utils
 
 
-@pytest.mark.parametrize("user_id,identicon", [
-    ("bob", "81b637d8fcd2c6da6359e6963113a1170de795e4b725b84d1e0b4cfd9ec58ce9"),
-    ("martha", "7dbef27a673fea6454664f4fbe9685f3bc3cf1813eea89267bc99641e4d59517")
-], ids=["bob", "martha"])
-def test_calculate_identicon(user_id, identicon):
-    """
-    Test that identicon strings are calculated as expected for two different user names.
-
-    """
-    assert virtool.users.utils.calculate_identicon(user_id) == identicon
-
-
 @pytest.mark.parametrize("password,salt,result", [
     (
         "hello_world",
