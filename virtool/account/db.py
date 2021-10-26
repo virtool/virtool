@@ -10,6 +10,7 @@ import virtool.utils
 
 PROJECTION = (
     "_id",
+    "handle",
     "administrator",
     "email",
     "groups",
