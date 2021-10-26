@@ -12,6 +12,7 @@ async def test_get(spawn_client, static_time):
 
     assert await resp.json() == {
         "groups": [],
+        "handle": "bob",
         "id": "test",
         "administrator": False,
         "last_password_change": static_time.iso,
@@ -75,6 +76,7 @@ async def test_edit(error, spawn_client, resp_is, static_time):
                 "upload_file": False
             },
             "groups": [],
+            "handle": "bob",
             "administrator": False,
             "last_password_change": static_time.iso,
             "primary_group": "technician",
