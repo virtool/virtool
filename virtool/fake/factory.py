@@ -38,7 +38,6 @@ INDEX_FILES = (
 )
 
 
-
 @dataclass
 class WorkflowTestCase:
     """A collection of records required for a particular workflow run."""
@@ -49,6 +48,7 @@ class WorkflowTestCase:
     reference: SimpleNamespace = None
     sample: SimpleNamespace = None
     subtractions: List[SimpleNamespace] = None
+
 
 class TestCaseDataFactory:
     """Initialize the database with fake data for a test case."""
@@ -71,7 +71,7 @@ class TestCaseDataFactory:
             self,
             index_id: str = None,
             ref_id: str = None,
-            subtraction_ids: List[str] = None,
+            subtractions: List[str] = None,
             sample_id: str = None,
             workflow: str = "test",
             ready=False
@@ -98,7 +98,7 @@ class TestCaseDataFactory:
             "reference": {
                 "id": ref_id
             },
-            "subtractions": subtraction_ids,
+            "subtractions": subtractions,
         }
 
         if ready:
@@ -261,15 +261,11 @@ async def load_test_case_from_yml(app: App, path: str) -> WorkflowTestCase:
         for subtraction in yml["subtractions"]:
             test_case.subtractions.append(await factory.subtraction(**subtraction))
 
-        job_args["subtraction_id"] = [subtraction["_id"] for subtraction in test_case.subtractions]
+        job_args["subtractions"] = [subtraction["_id"] for subtraction in test_case.subtractions]
 
     if "analysis" in yml:
         kwargs = job_args.copy()
         kwargs.update(yml["analysis"], workflow=workflow)
-
-        if "subtraction_id" in kwargs:
-            kwargs["subtraction_ids"] = kwargs["subtraction_id"]
-            del kwargs["subtraction_id"]
 
         test_case.analysis = await factory.analysis(**kwargs)
 

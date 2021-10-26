@@ -20,7 +20,7 @@ async def test_load_yml(app, run_in_thread, example_test_case):
     assert case.index._id == case.job.args["index_id"]
     assert case.reference._id == case.job.args["ref_id"]
 
-    for actual, expected in zip(case.subtractions, case.job.args["subtraction_id"]):
+    for actual, expected in zip(case.subtractions, case.job.args["subtractions"]):
         assert actual._id == expected
 
     assert case.job.args["additional_arg"] is True
