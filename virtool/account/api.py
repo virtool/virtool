@@ -336,9 +336,11 @@ async def login(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     # Re-render the login page with an error message if the username doesn't correlate to a user_id value in the
     # database and/or password are invalid.
-    user_id = await db.users.find_one({"handle": handle})
-    if not user_id or not await validate_credentials(db, user_id, password):
+    document = await db.users.find_one({"handle": handle})
+    if not document or not await validate_credentials(db, document["_id"], password):
         raise HTTPBadRequest(text="Invalid username or password")
+
+    user_id = document["_id"]
 
     session_id = req.cookies.get("session_id")
 

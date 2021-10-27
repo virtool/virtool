@@ -554,4 +554,6 @@ async def test_login(spawn_client, create_user, resp_is, error, mocker):
     if error == "wrong_handle" or error == "wrong_password":
         await resp_is.bad_request(resp, "Invalid username or password")
         return
+
     assert resp.status == 201
+    assert await resp.json() == {"reset": False}
