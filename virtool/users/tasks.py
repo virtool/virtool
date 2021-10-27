@@ -12,6 +12,7 @@ class UpdateUserDocumentsTask(Task):
     For AD users with ad_given_name and ad_family_name included in their user document, generate handle.
 
     For all other users use existing _id values as handle.
+
     """
     task_type = "update_user_documents"
 
@@ -23,16 +24,9 @@ class UpdateUserDocumentsTask(Task):
         ]
 
     async def update_user_documents(self):
-        tracker = await self.get_tracker()
-
-        await update(
-            self.pg,
-            self.id,
-            step="update_user_documents"
-        )
-
         async for document in self.db.users.find({"handle": {"$exists": False}}):
             user_id = document["_id"]
+
             if "ad_given_name" in document and "ad_family_name" in document:
                 handle = await virtool.users.db.generate_handle(
                     self.db,
@@ -48,11 +42,4 @@ class UpdateUserDocumentsTask(Task):
                     }
                 },
                 projection=PROJECTION
-            )
-
-            await update(
-                self.pg,
-                self.id,
-                progress=tracker.step_completed,
-                step="update_user_documents"
             )

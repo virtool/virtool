@@ -48,7 +48,10 @@ class Task:
                 step=self.step.__name__
             )
 
-            await func()
+            try:
+                await func()
+            except Exception as err:
+                await self.error(str(err))
 
         if not self.errored:
             await virtool.tasks.pg.complete(self.pg, self.id)
