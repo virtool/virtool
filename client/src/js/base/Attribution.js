@@ -2,12 +2,10 @@ import { capitalize } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
 import { RelativeTime } from "./RelativeTime";
-import { Identicon } from "./Identicon";
 
-export const UnstyledAttribution = ({ className, time, user, identicon, verb = "created" }) => {
+export const UnstyledAttribution = ({ className, time, user, verb = "created" }) => {
     return (
         <span className={className}>
-            {identicon ? <Identicon size={12} hash={identicon} /> : null}
             <span>{user}</span>
             <span>{user ? verb : capitalize(verb)}</span>
             <RelativeTime time={time} />

@@ -1,10 +1,15 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`<MemberItem /> should render 1`] = `
+<MemberItem__StyledMemberItem>
+  <MemberItemIcon />
+  bob
+</MemberItem__StyledMemberItem>
+`;
+
 exports[`<MemberItem /> should render with [canModify=true] 1`] = `
 <MemberItem__StyledMemberItem>
-  <MemberItemIcon
-    identicon="6be6d0a72a16cb633144ec03cdaef77804c6f94770184f83e0899fe6bdcb77ee"
-  />
+  <MemberItemIcon />
   bob
   <MemberItem__MemberItemIcons>
     <Icon
@@ -24,21 +29,5 @@ exports[`<MemberItem /> should render with [canModify=true] 1`] = `
       tip="Remove"
     />
   </MemberItem__MemberItemIcons>
-</MemberItem__StyledMemberItem>
-`;
-
-exports[`<MemberItem /> should render with identicon 1`] = `
-<MemberItem__StyledMemberItem>
-  <MemberItemIcon
-    identicon="6be6d0a72a16cb633144ec03cdaef77804c6f94770184f83e0899fe6bdcb77ee"
-  />
-  bob
-</MemberItem__StyledMemberItem>
-`;
-
-exports[`<MemberItem /> should render without identicon 1`] = `
-<MemberItem__StyledMemberItem>
-  <MemberItemIcon />
-  bob
 </MemberItem__StyledMemberItem>
 `;

@@ -6,7 +6,6 @@ describe("<AccountProfile />", () => {
     beforeEach(() => {
         props = {
             id: "foo",
-            identicon: "randomhashof15c",
             groups: ["test"],
             administrator: false
         };
@@ -28,14 +27,12 @@ describe("mapStateToProps()", () => {
     const state = {
         account: {
             id: "foo",
-            identicon: "randomhashof15c",
             groups: ["test"],
             administrator: true
         }
     };
     const expected = {
         id: "foo",
-        identicon: "randomhashof15c",
         groups: ["test"],
         administrator: true
     };

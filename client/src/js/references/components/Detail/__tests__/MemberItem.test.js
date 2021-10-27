@@ -8,19 +8,12 @@ describe("<MemberItem />", () => {
         props = {
             canModify: false,
             id: "bob",
-            identicon: "6be6d0a72a16cb633144ec03cdaef77804c6f94770184f83e0899fe6bdcb77ee",
             onEdit: jest.fn(),
             onRemove: jest.fn()
         };
     });
 
-    it("should render with identicon", () => {
-        const wrapper = shallow(<MemberItem {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("should render without identicon", () => {
-        props.identicon = undefined;
+    it("should render", () => {
         const wrapper = shallow(<MemberItem {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
