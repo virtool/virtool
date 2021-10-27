@@ -3,10 +3,6 @@
 exports[`<UserDetail /> should render 1`] = `
 <div>
   <Detail__UserDetailHeader>
-    <Identicon
-      hash="foo"
-      size={56}
-    />
     <Detail__UserDetailTitle>
       <span>
         bob
@@ -42,10 +38,6 @@ exports[`<UserDetail /> should render 1`] = `
 exports[`<UserDetail /> should render when [administrator=false] 1`] = `
 <div>
   <Detail__UserDetailHeader>
-    <Identicon
-      hash="foo"
-      size={56}
-    />
     <Detail__UserDetailTitle>
       <span>
         bob
@@ -77,10 +69,6 @@ exports[`<UserDetail /> should render when [administrator=false] 1`] = `
 exports[`<UserDetail /> should render when [canModifyUser=false] 1`] = `
 <div>
   <Detail__UserDetailHeader>
-    <Identicon
-      hash="foo"
-      size={56}
-    />
     <Detail__UserDetailTitle>
       <span>
         bob

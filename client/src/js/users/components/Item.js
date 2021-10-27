@@ -3,7 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { getFontSize, getFontWeight } from "../../app/theme";
-import { Icon, Identicon, Label, LinkBox } from "../../base";
+import { Icon, Label, LinkBox } from "../../base";
 
 const StyledUserItem = styled(LinkBox)`
     display: flex;
@@ -21,9 +21,8 @@ const StyledUserItem = styled(LinkBox)`
     }
 `;
 
-export const UserItem = ({ id, identicon, administrator }) => (
+export const UserItem = ({ id, administrator }) => (
     <StyledUserItem to={`/administration/users/${id}`}>
-        <Identicon size={32} hash={identicon} />
         <strong>{id}</strong>
         {administrator && (
             <Label color="purple">
@@ -34,11 +33,10 @@ export const UserItem = ({ id, identicon, administrator }) => (
 );
 
 export const mapStateToProps = (state, ownProps) => {
-    const { id, identicon, administrator } = get(state, `users.documents[${ownProps.index}]`, null);
+    const { id, administrator } = get(state, `users.documents[${ownProps.index}]`, null);
 
     return {
         id,
-        identicon,
         administrator
     };
 };

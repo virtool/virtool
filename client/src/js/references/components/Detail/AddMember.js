@@ -6,7 +6,6 @@ import {
     BoxGroup,
     BoxGroupSection,
     ModalBody,
-    Identicon,
     Input,
     InputContainer,
     InputGroup,
@@ -44,12 +43,7 @@ const StyledAddMemberItem = styled(BoxGroupSection)`
     }
 `;
 
-const AddMemberItem = ({ id, identicon, onClick }) => (
-    <StyledAddMemberItem onClick={onClick}>
-        {identicon ? <Identicon size={24} hash={identicon} /> : null}
-        {id}
-    </StyledAddMemberItem>
-);
+const AddMemberItem = ({ id, onClick }) => <StyledAddMemberItem onClick={onClick}>{id}</StyledAddMemberItem>;
 
 const AddReferenceMemberHeader = styled(ModalHeader)`
     text-transform: capitalize;
@@ -84,12 +78,7 @@ export class AddReferenceMember extends React.Component {
 
         if (this.props.documents.length) {
             addMemberComponents = map(this.props.documents, document => (
-                <AddMemberItem
-                    key={document.id}
-                    id={document.id}
-                    identicon={document.identicon}
-                    onClick={() => this.handleAdd(document.id)}
-                />
+                <AddMemberItem key={document.id} id={document.id} onClick={() => this.handleAdd(document.id)} />
             ));
         } else {
             addMemberComponents = <NoneFoundSection noun={`other ${this.props.noun}s`} />;

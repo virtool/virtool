@@ -123,7 +123,6 @@ describe("Users Reducer", () => {
                 force_reset: false,
                 groups: [],
                 id: "testUser",
-                identicon: "123hash",
                 last_password_change: "2018-01-01T00:00:00.000000Z",
                 permissions: {},
                 primary_group: ""

@@ -23,7 +23,6 @@
     "formik": "^2.2.6",
     "fuse.js": "^3.6.1",
     "history": "^4.10.1",
-    "identicon.js": "^2.3.3",
     "identity-obj-proxy": "^3.0.0",
     "lodash-es": "^4.17.15",
     "marked": "^3.0.7",

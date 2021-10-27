@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { getFontSize, getFontWeight } from "../../app/theme";
-import { Alert, device, Icon, Identicon, LoadingPlaceholder, RemoveBanner } from "../../base";
+import { Alert, device, Icon, LoadingPlaceholder, RemoveBanner } from "../../base";
 import { listGroups } from "../../groups/actions";
 import { getUser, removeUser } from "../actions";
 import { getCanModifyUser } from "../selectors";
@@ -74,12 +74,11 @@ export class UserDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const { id, identicon, administrator } = this.props.detail;
+        const { id, administrator } = this.props.detail;
 
         return (
             <div>
                 <UserDetailHeader>
-                    <Identicon size={56} hash={identicon} />
                     <UserDetailTitle>
                         <span>{id}</span>
                         {administrator ? <AdminIcon name="user-shield" color="blue" /> : null}

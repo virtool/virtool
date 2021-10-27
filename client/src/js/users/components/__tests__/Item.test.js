@@ -6,7 +6,6 @@ describe("<UserItem />", () => {
     beforeEach(() => {
         props = {
             id: "bob",
-            identicon: "foobar",
             administrator: false
         };
     });
@@ -22,7 +21,7 @@ describe("mapStateToProps()", () => {
     it("should return props", () => {
         const state = {
             users: {
-                documents: [{ id: "foo", identicon: "bar", administrator: true }]
+                documents: [{ id: "foo", administrator: true }]
             }
         };
         const ownProps = {
@@ -31,7 +30,6 @@ describe("mapStateToProps()", () => {
         const result = mapStateToProps(state, ownProps);
         expect(result).toEqual({
             id: "foo",
-            identicon: "bar",
             administrator: true
         });
     });

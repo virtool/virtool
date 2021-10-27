@@ -17,8 +17,7 @@ describe("<UserDetail />", () => {
             error: [],
             detail: {
                 id: "bob",
-                administrator: true,
-                identicon: "foo"
+                administrator: true
             },
             onGetUser: jest.fn(),
             onRemoveUser: jest.fn(),

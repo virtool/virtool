@@ -4,10 +4,6 @@ exports[`<UserItem /> should render when administrator=false] 1`] = `
 <Item__StyledUserItem
   to="/administration/users/bob"
 >
-  <Identicon
-    hash="foobar"
-    size={32}
-  />
   <strong>
     bob
   </strong>
@@ -18,10 +14,6 @@ exports[`<UserItem /> should render when administrator=true] 1`] = `
 <Item__StyledUserItem
   to="/administration/users/bob"
 >
-  <Identicon
-    hash="foobar"
-    size={32}
-  />
   <strong>
     bob
   </strong>
