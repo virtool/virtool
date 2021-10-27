@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.tasks.task
+from virtool.pg.utils import get_row_by_id
 from virtool.tasks.models import Task
 
 
@@ -22,7 +23,6 @@ class TaskRunner:
                 await asyncio.sleep(0.3)
 
                 task_id = await self._channel.get_json()
-                logging.info(f"Task starting: {task_id}")
 
                 await self.run_task(task_id)
 
@@ -38,16 +38,13 @@ class TaskRunner:
         :param task_id: ID of the task
 
         """
-        async with AsyncSession(self.app["pg"]) as session:
-            result = await session.execute(select(Task).filter_by(id=task_id))
-            document = result.scalar().to_dict()
+        task: Task = await get_row_by_id(self.app["pg"], Task, task_id)
+
+        logging.info(f"Task starting: {task.id} {task.type}")
 
         loop = asyncio.get_event_loop()
 
         for task_class in virtool.tasks.task.Task.__subclasses__():
-            if document["type"] == task_class.task_type:
+            if task.type == task_class.task_type:
                 current_task = task_class(self.app, task_id)
-
-        task = loop.create_task(current_task.run())
-
-        await task
+                await loop.create_task(current_task.run())
