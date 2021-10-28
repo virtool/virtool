@@ -2,15 +2,22 @@ import { map, sortBy } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Badge, BoxGroup, BoxGroupHeader, BoxGroupSection, NoneFoundSection } from "../../base";
+import { Badge, BoxGroup, BoxGroupHeader, BoxGroupSection, InitialIcon, NoneFoundSection } from "../../base";
 
 const StyledContributor = styled(BoxGroupSection)`
     display: flex;
-    justify-content: space-between;
+    align-items: center;
+    .InitialIcon {
+        margin-right: 5px;
+    }
+    ${Badge} {
+        margin-left: auto;
+    }
 `;
 
 export const Contributor = ({ id, count }) => (
     <StyledContributor key={id}>
+        <InitialIcon handle={id} size="md" />
         {id}
         <Badge>
             {count} change{count === 1 ? "" : "s"}

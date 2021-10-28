@@ -2,17 +2,29 @@
 
 exports[`<UserItem /> should render when administrator=false] 1`] = `
 <Item__StyledUserItem
-  to="/administration/users/bob"
+  to="/administration/users/b8vkclwp"
 >
-  <strong />
+  <InitialIcon
+    handle="bob"
+    size="md"
+  />
+  <strong>
+    bob
+  </strong>
 </Item__StyledUserItem>
 `;
 
 exports[`<UserItem /> should render when administrator=true] 1`] = `
 <Item__StyledUserItem
-  to="/administration/users/bob"
+  to="/administration/users/b8vkclwp"
 >
-  <strong />
+  <InitialIcon
+    handle="bob"
+    size="md"
+  />
+  <strong>
+    bob
+  </strong>
   <Label
     color="purple"
   >

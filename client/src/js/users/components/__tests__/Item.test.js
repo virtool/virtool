@@ -5,8 +5,9 @@ describe("<UserItem />", () => {
 
     beforeEach(() => {
         props = {
-            id: "bob",
-            administrator: false
+            id: "b8vkclwp",
+            administrator: false,
+            handle: "bob"
         };
     });
 

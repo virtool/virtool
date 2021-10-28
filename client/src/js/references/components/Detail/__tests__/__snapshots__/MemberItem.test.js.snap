@@ -2,14 +2,18 @@
 
 exports[`<MemberItem /> should render 1`] = `
 <MemberItem__StyledMemberItem>
-  <MemberItemIcon />
+  <MemberItemIcon
+    id="bob"
+  />
   bob
 </MemberItem__StyledMemberItem>
 `;
 
 exports[`<MemberItem /> should render with [canModify=true] 1`] = `
 <MemberItem__StyledMemberItem>
-  <MemberItemIcon />
+  <MemberItemIcon
+    id="bob"
+  />
   bob
   <MemberItem__MemberItemIcons>
     <Icon

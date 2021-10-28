@@ -16,6 +16,7 @@ export * from "./Dropdown";
 export * from "./Dropdown";
 export * from "./ExternalLink";
 export * from "./Icon";
+export * from "./InitialIcon";
 export * from "./Input";
 export * from "./Key";
 export * from "./Label";

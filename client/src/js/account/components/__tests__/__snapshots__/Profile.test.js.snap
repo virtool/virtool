@@ -3,6 +3,10 @@
 exports[`<AccountProfile /> should render when administrator 1`] = `
 <div>
   <Profile__AccountProfileHeader>
+    <InitialIcon
+      handle="foo"
+      size="xxl"
+    />
     <div>
       <h3>
         foo
@@ -41,6 +45,10 @@ exports[`<AccountProfile /> should render when administrator 1`] = `
 exports[`<AccountProfile /> should render when not administrator 1`] = `
 <div>
   <Profile__AccountProfileHeader>
+    <InitialIcon
+      handle="foo"
+      size="xxl"
+    />
     <div>
       <h3>
         foo
