@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { getFontSize, getFontWeight } from "../../app/theme";
-import { Alert, device, Icon, LoadingPlaceholder, RemoveBanner } from "../../base";
+import { Alert, device, Icon, InitialIcon, LoadingPlaceholder, RemoveBanner } from "../../base";
 import { listGroups } from "../../groups/actions";
 import { getUser, removeUser } from "../actions";
 import { getCanModifyUser } from "../selectors";
@@ -40,7 +40,9 @@ const UserDetailTitle = styled.div`
     font-size: ${getFontSize("xl")};
     font-weight: ${getFontWeight("bold")};
     margin-left: 15px;
-
+    .InitialIcon {
+        margin-right: 8px;
+    }
     a {
         font-size: ${getFontSize("md")};
         margin-left: auto;
@@ -74,13 +76,14 @@ export class UserDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const { id, administrator } = this.props.detail;
+        const { handle, administrator } = this.props.detail;
 
         return (
             <div>
                 <UserDetailHeader>
                     <UserDetailTitle>
-                        <span>{id}</span>
+                        <InitialIcon size="xl" handle={handle} />
+                        <span>{handle}</span>
                         {administrator ? <AdminIcon name="user-shield" color="blue" /> : null}
                         <Link to="/administration/users">Back To List</Link>
                     </UserDetailTitle>

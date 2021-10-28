@@ -4,6 +4,10 @@ exports[`<Contributor /> should render when count is 1 1`] = `
 <Contributors__StyledContributor
   key="bob"
 >
+  <InitialIcon
+    handle="bob"
+    size="md"
+  />
   bob
   <Badge>
     1
@@ -16,6 +20,10 @@ exports[`<Contributor /> should render when count is 5 1`] = `
 <Contributors__StyledContributor
   key="bob"
 >
+  <InitialIcon
+    handle="bob"
+    size="md"
+  />
   bob
   <Badge>
     5

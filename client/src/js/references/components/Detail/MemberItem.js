@@ -1,18 +1,17 @@
 import PropTypes from "prop-types";
 import React, { useCallback } from "react";
 import styled from "styled-components";
-import { BoxGroupSection, FlexItem, Icon } from "../../../base";
-import GroupIcon from "../../../groups/components/Icon";
+import { BoxGroupSection, FlexItem, Icon, InitialIcon } from "../../../base";
 
 const StyledMemberItem = styled(BoxGroupSection)`
     align-items: center;
     display: flex;
 `;
 
-const MemberItemIcon = () => {
+const MemberItemIcon = ({ id }) => {
     return (
         <FlexItem grow={0} shrink={0} style={{ paddingRight: "8px" }}>
-            <GroupIcon />
+            <InitialIcon handle={id} size="md" />
         </FlexItem>
     );
 };
@@ -44,7 +43,7 @@ const MemberItem = ({ canModify, id, onEdit, onRemove }) => {
 
     return (
         <StyledMemberItem>
-            <MemberItemIcon />
+            <MemberItemIcon id={id} />
             {id}
             {icons}
         </StyledMemberItem>

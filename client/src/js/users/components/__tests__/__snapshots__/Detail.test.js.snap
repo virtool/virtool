@@ -4,6 +4,10 @@ exports[`<UserDetail /> should render 1`] = `
 <div>
   <Detail__UserDetailHeader>
     <Detail__UserDetailTitle>
+      <InitialIcon
+        handle="bob"
+        size="xl"
+      />
       <span>
         bob
       </span>
@@ -39,6 +43,10 @@ exports[`<UserDetail /> should render when [administrator=false] 1`] = `
 <div>
   <Detail__UserDetailHeader>
     <Detail__UserDetailTitle>
+      <InitialIcon
+        handle="bob"
+        size="xl"
+      />
       <span>
         bob
       </span>
@@ -70,6 +78,10 @@ exports[`<UserDetail /> should render when [canModifyUser=false] 1`] = `
 <div>
   <Detail__UserDetailHeader>
     <Detail__UserDetailTitle>
+      <InitialIcon
+        handle="bob"
+        size="xl"
+      />
       <span>
         bob
       </span>

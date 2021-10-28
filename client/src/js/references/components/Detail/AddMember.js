@@ -5,14 +5,15 @@ import styled from "styled-components";
 import {
     BoxGroup,
     BoxGroupSection,
-    ModalBody,
+    InitialIcon,
     Input,
     InputContainer,
     InputGroup,
     InputIcon,
     Modal,
-    NoneFoundSection,
-    ModalHeader
+    ModalBody,
+    ModalHeader,
+    NoneFoundSection
 } from "../../../base";
 import { listGroups } from "../../../groups/actions";
 import { findUsers } from "../../../users/actions";
@@ -37,13 +38,20 @@ const getInitialState = () => ({
 
 const StyledAddMemberItem = styled(BoxGroupSection)`
     display: flex;
-
-    img {
+    align-items: center;
+    div {
         margin-right: 8px;
+    }
+    .InitialIcon {
+        margin-right: 3px;
     }
 `;
 
-const AddMemberItem = ({ id, onClick }) => <StyledAddMemberItem onClick={onClick}>{id}</StyledAddMemberItem>;
+const AddMemberItem = ({ id, onClick }) => (
+    <StyledAddMemberItem onClick={onClick}>
+        <InitialIcon size="md" handle={id} /> {id}
+    </StyledAddMemberItem>
+);
 
 const AddReferenceMemberHeader = styled(ModalHeader)`
     text-transform: capitalize;

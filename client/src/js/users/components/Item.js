@@ -3,7 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { getFontSize, getFontWeight } from "../../app/theme";
-import { Icon, Label, LinkBox } from "../../base";
+import { Icon, InitialIcon, Label, LinkBox } from "../../base";
 
 const StyledUserItem = styled(LinkBox)`
     display: flex;
@@ -23,6 +23,7 @@ const StyledUserItem = styled(LinkBox)`
 
 export const UserItem = ({ id, handle, administrator }) => (
     <StyledUserItem to={`/administration/users/${id}`}>
+        <InitialIcon size="md" handle={handle} />
         <strong>{handle}</strong>
         {administrator && (
             <Label color="purple">

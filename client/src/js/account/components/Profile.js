@@ -3,7 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { getFontSize, getFontWeight } from "../../app/theme";
-import { Icon, Label } from "../../base";
+import { Icon, InitialIcon, Label, StyledInitialIcon } from "../../base";
 import { getAccountAdministrator, getAccountHandle } from "../selectors";
 import Email from "./Email";
 import ChangePassword from "./Password";
@@ -24,7 +24,9 @@ const AccountProfileHeader = styled.div`
     align-items: center;
     display: flex;
     margin-bottom: 15px;
-
+    > ${StyledInitialIcon} {
+        flex: 0 0 auto;
+    }
     > div {
         flex: 2 0 auto;
         margin-left: 15px;
@@ -66,6 +68,7 @@ export const AccountProfile = ({ handle, groups, administrator }) => {
     return (
         <div>
             <AccountProfileHeader>
+                <InitialIcon handle={handle} size="xxl" />
                 <div>
                     <h3>
                         {handle}
