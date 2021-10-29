@@ -21,9 +21,9 @@ const StyledUserItem = styled(LinkBox)`
     }
 `;
 
-export const UserItem = ({ id, administrator }) => (
+export const UserItem = ({ id, handle, administrator }) => (
     <StyledUserItem to={`/administration/users/${id}`}>
-        <strong>{id}</strong>
+        <strong>{handle}</strong>
         {administrator && (
             <Label color="purple">
                 <Icon name="user-shield" /> Administrator
@@ -33,10 +33,11 @@ export const UserItem = ({ id, administrator }) => (
 );
 
 export const mapStateToProps = (state, ownProps) => {
-    const { id, administrator } = get(state, `users.documents[${ownProps.index}]`, null);
+    const { id, handle, administrator } = get(state, `users.documents[${ownProps.index}]`, null);
 
     return {
         id,
+        handle,
         administrator
     };
 };

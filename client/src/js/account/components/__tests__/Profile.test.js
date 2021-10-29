@@ -5,7 +5,7 @@ describe("<AccountProfile />", () => {
 
     beforeEach(() => {
         props = {
-            id: "foo",
+            handle: "foo",
             groups: ["test"],
             administrator: false
         };
@@ -26,13 +26,13 @@ describe("<AccountProfile />", () => {
 describe("mapStateToProps()", () => {
     const state = {
         account: {
-            id: "foo",
+            handle: "foo",
             groups: ["test"],
             administrator: true
         }
     };
     const expected = {
-        id: "foo",
+        handle: "foo",
         groups: ["test"],
         administrator: true
     };

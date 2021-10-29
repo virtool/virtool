@@ -19,7 +19,7 @@ exports[`<CreateUser /> should render 1`] = `
           Username
         </Input__InputLabel>
         <Input
-          name="userId"
+          name="handle"
           onChange={[Function]}
           value=""
         />
@@ -69,7 +69,7 @@ exports[`<CreateUser /> should render when name has changed 1`] = `
           Username
         </Input__InputLabel>
         <Input
-          name="userId"
+          name="handle"
           onChange={[Function]}
           value=""
         />
@@ -121,7 +121,7 @@ exports[`<CreateUser /> should render when name has changed 2`] = `
           Username
         </Input__InputLabel>
         <Input
-          name="userId"
+          name="handle"
           onChange={[Function]}
           value="bob"
         />
@@ -173,7 +173,7 @@ exports[`<CreateUser /> should render when password has changed 1`] = `
           Username
         </Input__InputLabel>
         <Input
-          name="userId"
+          name="handle"
           onChange={[Function]}
           value=""
         />
@@ -225,7 +225,7 @@ exports[`<CreateUser /> should render when password has changed 2`] = `
           Username
         </Input__InputLabel>
         <Input
-          name="userId"
+          name="handle"
           onChange={[Function]}
           value=""
         />
@@ -277,7 +277,7 @@ exports[`<CreateUser /> should render with error 1`] = `
           Username
         </Input__InputLabel>
         <Input
-          name="userId"
+          name="handle"
           onChange={[Function]}
           value=""
         />

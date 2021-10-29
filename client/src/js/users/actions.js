@@ -60,9 +60,9 @@ export const createUser = data => ({
     ...data
 });
 
-export const createFirstUser = (userId, password) => ({
+export const createFirstUser = (handle, password) => ({
     type: CREATE_FIRST_USER.REQUESTED,
-    userId,
+    handle,
     password
 });
 
