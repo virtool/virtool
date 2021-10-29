@@ -13,6 +13,7 @@ import virtool.jobs.main
 import virtool.logs
 import virtool.redis
 import virtool.utils
+from virtool.logs import configure_logs
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +142,7 @@ def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_se
 )
 @click.pass_context
 def start_server(ctx, host, port, no_check_db, no_check_files, no_client, no_fetching):
-    virtool.logs.configure_server(ctx.obj["dev"], ctx.obj["verbose"])
+    configure_logs(ctx.obj["dev"], ctx.obj["verbose"])
 
     config = {
         **ctx.obj,
@@ -180,7 +181,10 @@ def start_server(ctx, host, port, no_check_db, no_check_files, no_client, no_fet
 @click.pass_context
 def start_jobs_api(ctx, fake_path, port, host):
     """Start a Virtool Jobs API server"""
+    configure_logs(ctx.obj["dev"], ctx.obj["verbose"])
+
     logger.info("Starting jobs API process")
+
     asyncio.get_event_loop().run_until_complete(
         virtool.jobs.main.run(
             fake=fake_path is not None,
