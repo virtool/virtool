@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import styled from "styled-components";
 import { getFontSize, getFontWeight } from "../../app/theme";
 import { Icon, Label } from "../../base";
-import { getAccountAdministrator, getAccountId } from "../selectors";
+import { getAccountAdministrator, getAccountHandle } from "../selectors";
 import Email from "./Email";
 import ChangePassword from "./Password";
 
@@ -46,7 +46,7 @@ const AccountProfileHeader = styled.div`
     }
 `;
 
-export const AccountProfile = ({ id, groups, administrator }) => {
+export const AccountProfile = ({ handle, groups, administrator }) => {
     const groupLabels = map(groups, groupId => (
         <Label key={groupId}>
             <Icon name="users" /> {groupId}
@@ -68,7 +68,7 @@ export const AccountProfile = ({ id, groups, administrator }) => {
             <AccountProfileHeader>
                 <div>
                     <h3>
-                        {id}
+                        {handle}
                         {adminLabel}
                     </h3>
                     <AccountProfileGroups>{groupLabels}</AccountProfileGroups>
@@ -82,7 +82,7 @@ export const AccountProfile = ({ id, groups, administrator }) => {
 };
 
 export const mapStateToProps = state => ({
-    id: getAccountId(state),
+    handle: getAccountHandle(state),
     groups: state.account.groups,
     administrator: getAccountAdministrator(state)
 });

@@ -20,10 +20,10 @@ import { getTargetChange, routerLocationHasState } from "../../utils/utils";
 import { createUser } from "../actions";
 
 const getInitialState = () => ({
-    userId: "",
+    handle: "",
     password: "",
     forceReset: false,
-    errorUserId: "",
+    errorHandle: "",
     errorPassword: ""
 });
 
@@ -34,8 +34,8 @@ export class CreateUser extends React.PureComponent {
     }
 
     static getDerivedStateFromProps(nextProps, prevState) {
-        if (!prevState.errorUserId && nextProps.error) {
-            return { errorUserId: nextProps.error };
+        if (!prevState.errorHandle && nextProps.error) {
+            return { errorHandle: nextProps.error };
         }
         return null;
     }
@@ -68,9 +68,9 @@ export class CreateUser extends React.PureComponent {
 
         let hasError = false;
 
-        if (!this.state.userId) {
+        if (!this.state.handle) {
             hasError = true;
-            this.setState({ errorUserId: "Please specify a username" });
+            this.setState({ errorHandle: "Please specify a username" });
         }
 
         if (this.state.password.length < this.props.minimumPasswordLength) {
@@ -81,7 +81,7 @@ export class CreateUser extends React.PureComponent {
         }
 
         if (!hasError) {
-            this.props.onCreate(pick(this.state, ["userId", "password", "confirm", "forceReset"]));
+            this.props.onCreate(pick(this.state, ["handle", "password", "confirm", "forceReset"]));
         }
     };
 
@@ -98,8 +98,8 @@ export class CreateUser extends React.PureComponent {
                     <ModalBody>
                         <InputGroup>
                             <InputLabel>Username</InputLabel>
-                            <Input name="userId" value={this.state.userId} onChange={this.handleChange} />
-                            <InputError>{this.state.errorUserId}</InputError>
+                            <Input name="handle" value={this.state.handle} onChange={this.handleChange} />
+                            <InputError>{this.state.errorHandle}</InputError>
                         </InputGroup>
                         <InputGroup>
                             <InputLabel>Password</InputLabel>

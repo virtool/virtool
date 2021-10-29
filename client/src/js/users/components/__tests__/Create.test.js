@@ -17,10 +17,10 @@ describe("<CreateUser />", () => {
 
         state = {
             errorPassword: "",
-            errorUserId: "",
+            errorHandle: "",
             forceReset: false,
             password: "",
-            userId: ""
+            handle: ""
         };
     });
 
@@ -39,7 +39,7 @@ describe("<CreateUser />", () => {
 
     it("should render when name has changed", () => {
         const e = {
-            target: { name: "userId", value: "bob" }
+            target: { name: "handle", value: "bob" }
         };
         const wrapper = shallow(<CreateUser {...props} error="Error" />);
         expect(wrapper).toMatchSnapshot();
@@ -72,13 +72,13 @@ describe("<CreateUser />", () => {
         expect(wrapper.state()).toEqual({ ...state, forceReset: true });
     });
 
-    it("should call handleSubmit when form is submitted and [!this.state.userId=true]", () => {
+    it("should call handleSubmit when form is submitted and [!this.state.Handle=true]", () => {
         const e = {
             preventDefault: jest.fn()
         };
         const wrapper = shallow(<CreateUser {...props} />);
         wrapper.find("form").simulate("submit", e);
-        expect(wrapper.state()).toEqual({ ...state, errorUserId: "Please specify a username" });
+        expect(wrapper.state()).toEqual({ ...state, errorHandle: "Please specify a username" });
     });
 
     it("should call handleSubmit when form is submitted and [this.state.password.length < this.props.minimumPasswordLength]", () => {
@@ -87,11 +87,11 @@ describe("<CreateUser />", () => {
         };
         props.minimumPasswordLength = 2;
         const wrapper = shallow(<CreateUser {...props} />);
-        wrapper.setState({ userId: "foo", password: "f", confirm: "f" });
+        wrapper.setState({ handle: "foo", password: "f", confirm: "f" });
         wrapper.find("form").simulate("submit", e);
         expect(wrapper.state()).toEqual({
             ...state,
-            userId: "foo",
+            handle: "foo",
             password: "f",
             confirm: "f",
             errorPassword: "Passwords must contain at least 2 characters"

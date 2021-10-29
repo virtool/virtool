@@ -4,9 +4,7 @@ exports[`<UserItem /> should render when administrator=false] 1`] = `
 <Item__StyledUserItem
   to="/administration/users/bob"
 >
-  <strong>
-    bob
-  </strong>
+  <strong />
 </Item__StyledUserItem>
 `;
 
@@ -14,9 +12,7 @@ exports[`<UserItem /> should render when administrator=true] 1`] = `
 <Item__StyledUserItem
   to="/administration/users/bob"
 >
-  <strong>
-    bob
-  </strong>
+  <strong />
   <Label
     color="purple"
   >

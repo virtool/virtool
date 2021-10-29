@@ -64,7 +64,7 @@ describe("mapDispatchToProps", () => {
         props.onSubmit("foo", "bar");
 
         expect(dispatch).toHaveBeenCalledWith({
-            userId: "foo",
+            handle: "foo",
             password: "bar",
             type: "CREATE_FIRST_USER_REQUESTED"
         });
