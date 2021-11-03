@@ -9,7 +9,7 @@ import virtool.tasks.pg
 from virtool.tasks.models import Task
 
 
-class TestTask(virtool.tasks.task.Task):
+class DummyTask(virtool.tasks.task.Task):
 
     def __init__(self, app, task_id):
         super().__init__(app, task_id)
@@ -61,7 +61,7 @@ async def task(spawn_client, pg_session, static_time):
         session.add(task)
         await session.commit()
 
-    return TestTask(client.app, 1)
+    return DummyTask(client.app, 1)
 
 
 async def test_init_db(task, static_time):
