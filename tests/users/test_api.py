@@ -136,7 +136,7 @@ async def test_create(error, spawn_client, create_user, resp_is, static_time, mo
             "_id": "abc123"
         })
 
-    client.app["settings"]["minimum_password_length"] = 8
+    client.app["settings"].minimum_password_length = 8
 
     data = {
         "handle": "fred",
@@ -200,7 +200,7 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
 
     client = await spawn_client(authorize=True, administrator=True)
 
-    client.app["settings"]["minimum_password_length"] = 8
+    client.app["settings"].minimum_password_length = 8
 
     bob = None
 

@@ -1,9 +1,10 @@
 import json
-import pytest
-from aiohttp import web
 from pathlib import Path
 
-import virtool.bio
+import pytest
+from aiohttp import web
+
+from virtool.bio import format_blast_hit, initialize_ncbi_blast, extract_blast_info, check_rid, get_ncbi_blast_result
 
 TEST_FILES_PATH = Path.cwd() / "tests" / "test_files"
 TEST_BIO_PATH = TEST_FILES_PATH / "bio"
@@ -103,7 +104,7 @@ def test_format_blast_hit(missing, sciname):
     if sciname:
         hit["description"][0]["sciname"] = sciname
 
-    formatted = virtool.bio.format_blast_hit(hit)
+    formatted = format_blast_hit(hit)
 
     assert formatted == {
         "accession": "" if missing == "accession" else "ABC123",
@@ -120,14 +121,14 @@ def test_format_blast_hit(missing, sciname):
     }
 
 
-async def test_initialize_ncbi_blast(mock_blast_server):
+async def test_initialize_ncbi_blast(mock_blast_server, config):
     """
     Using a mock BLAST server, test that a BLAST initialization request works properly.
 
     """
     seq = "ATGTACAGGATCAGCATCGAGCTACGAT"
-
-    assert await virtool.bio.initialize_ncbi_blast({"proxy": ""}, seq) == ("YA40WNN5014", 19)
+    config.proxy = ""
+    assert await initialize_ncbi_blast(config, seq) == ("YA40WNN5014", 19)
 
 
 def test_extract_blast_info():
@@ -136,25 +137,27 @@ def test_extract_blast_info():
 
     """
     with open(TEST_BIO_PATH / "initialize_blast.html", "r") as f: \
-            assert virtool.bio.extract_blast_info(f.read()) == ("YA40WNN5014", 19)
+            assert extract_blast_info(f.read()) == ("YA40WNN5014", 19)
 
 
 @pytest.mark.parametrize("rid,expected", [
     ("YA27F0T6015", True),
     ("5106T0F27AY", False)
 ])
-async def test_check_rid(rid, expected, mock_blast_server):
+async def test_check_rid(rid, expected, mock_blast_server, config):
     """
     Test that check_rid() returns the correct result given HTML for a ready BLAST request and a waiting BLAST request.
 
     """
-    assert await virtool.bio.check_rid({"proxy": ""}, rid) == expected
+    config.proxy = ""
+    assert await check_rid(config, rid) == expected
 
 
-async def test_get_ncbi_blast_result(mock_blast_server):
+async def test_get_ncbi_blast_result(mock_blast_server, config):
     async def run_in_process(func, *args):
         return func(*args)
 
     with open(TEST_BIO_PATH / "unformatted_blast.json", "r") as f:
-        result = await virtool.bio.get_ncbi_blast_result({"proxy": ""}, run_in_process, "YA6M9135015")
+        config.proxy = ""
+        result = await get_ncbi_blast_result(config, run_in_process, "YA6M9135015")
         assert result == json.load(f)

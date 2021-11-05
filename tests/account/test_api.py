@@ -1,6 +1,6 @@
 import pytest
 
-import virtool.users.utils
+from virtool.users.utils import PERMISSIONS, hash_password
 
 
 async def test_get(spawn_client, static_time):
@@ -16,7 +16,7 @@ async def test_get(spawn_client, static_time):
         "id": "test",
         "administrator": False,
         "last_password_change": static_time.iso,
-        "permissions": {p: False for p in virtool.users.utils.PERMISSIONS},
+        "permissions": {p: False for p in PERMISSIONS},
         "primary_group": "technician",
         "settings": {
             "quick_analyze_workflow": "pathoscope_bowtie",
@@ -37,7 +37,7 @@ async def test_get(spawn_client, static_time):
 async def test_edit(error, spawn_client, resp_is, static_time):
     client = await spawn_client(authorize=True)
 
-    client.app["settings"]["minimum_password_length"] = 8
+    client.app["settings"].minimum_password_length = 8
 
     data = {
         "email": "dev-at-virtool.ca" if error == "email_error" else "dev@virtool.ca",
@@ -274,7 +274,7 @@ class TestCreateAPIKey:
                 "id": "test"
             },
             "groups": [],
-            "permissions": {p: False for p in virtool.users.utils.PERMISSIONS}
+            "permissions": {p: False for p in PERMISSIONS}
         }
 
         assert await client.db.keys.find_one({"id": "foobar_1"}) == expected
@@ -314,7 +314,7 @@ class TestUpdateAPIKey:
                 "id": "test"
             },
             "groups": [],
-            "permissions": {p: False for p in virtool.users.utils.PERMISSIONS}
+            "permissions": {p: False for p in PERMISSIONS}
         }
 
         await client.db.keys.insert_one(expected)
@@ -532,7 +532,7 @@ async def test_login(spawn_client, create_user, resp_is, error, mocker):
     await client.db.users.insert_one({
         "user_id": "abc123",
         "handle": "foobar",
-        "password": virtool.users.utils.hash_password("p@ssword123")
+        "password": hash_password("p@ssword123")
     })
 
     data = {

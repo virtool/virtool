@@ -4,21 +4,18 @@ import shutil
 from pathlib import Path
 
 import aiofiles
-import aiohttp
 
-import virtool.errors
-import virtool.github
-import virtool.http.utils
 import virtool.tasks.pg
-import virtool.tasks.task
-import virtool.utils
-
+from virtool.github import create_update_subdocument
 from virtool.hmm.db import purge
+from virtool.http.utils import download_file
+from virtool.tasks.task import Task
+from virtool.utils import decompress_tgz
 
 logger = logging.getLogger(__name__)
 
 
-class HMMInstallTask(virtool.tasks.task.Task):
+class HMMInstallTask(Task):
     """
     Runs a background Task that:
         - downloads the official profiles.hmm.gz file
@@ -60,7 +57,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
         path = self.temp_path / "hmm.tar.gz"
 
         try:
-            await virtool.http.utils.download_file(
+            await download_file(
                 self.app,
                 release["download_url"],
                 path,
@@ -81,7 +78,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
         )
 
         await self.run_in_thread(
-            virtool.utils.decompress_tgz,
+            decompress_tgz,
             self.temp_path / "hmm.tar.gz",
             self.temp_path
         )
@@ -98,7 +95,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
 
         decompressed_path = self.temp_path / "hmm"
 
-        install_path = self.app["settings"]["data_path"] / "hmm" / "profiles.hmm"
+        install_path = self.app["config"].data_path / "hmm" / "profiles.hmm"
 
         await self.run_in_thread(shutil.move, decompressed_path / "profiles.hmm", install_path)
 
@@ -113,7 +110,7 @@ class HMMInstallTask(virtool.tasks.task.Task):
         async with aiofiles.open(self.temp_path / "hmm" / "annotations.json", "r") as f:
             annotations = json.loads(await f.read())
 
-        await purge(self.db, self.app["settings"])
+        await purge(self.db, self.app["config"])
 
         tracker = await self.get_tracker(len(annotations))
 
@@ -130,10 +127,10 @@ class HMMInstallTask(virtool.tasks.task.Task):
 
         await self.db.status.update_one({"_id": "hmm", "updates.id": release_id}, {
             "$set": {
-                "installed": virtool.github.create_update_subdocument(release, True, self.context["user_id"]),
+                "installed": create_update_subdocument(release, True, self.context["user_id"]),
                 "updates.$.ready": True
             }
         })
 
     async def cleanup(self):
-        await purge(self.db, self.app["settings"])
+        await purge(self.db, self.app["config"])

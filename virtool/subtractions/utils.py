@@ -35,12 +35,12 @@ def check_subtraction_file_type(file_name: str) -> str:
         return "bowtie2"
 
 
-def join_subtraction_path(settings: dict, subtraction_id: str) -> Path:
-    return settings["data_path"] / "subtractions" / subtraction_id.replace(" ", "_").lower()
+def join_subtraction_path(config, subtraction_id: str) -> Path:
+    return config.data_path / "subtractions" / subtraction_id.replace(" ", "_").lower()
 
 
-def join_subtraction_index_path(settings: dict, subtraction_id: str) -> Path:
-    return join_subtraction_path(settings, subtraction_id) / "reference"
+def join_subtraction_index_path(config, subtraction_id: str) -> Path:
+    return join_subtraction_path(config, subtraction_id) / "reference"
 
 
 async def get_subtraction_files(pg: AsyncEngine, subtraction: str) -> List[dict]:

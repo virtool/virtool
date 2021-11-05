@@ -1,9 +1,12 @@
 import json
 import os
-import pytest
 from pathlib import Path
 
-import virtool.history.utils
+import pytest
+
+from virtool.history.utils import calculate_diff, compose_create_description, compose_edit_description, \
+    compose_remove_description, derive_otu_information, join_diff_path, json_encoder, json_object_hook, \
+    read_diff_file, remove_diff_files, write_diff_file
 
 TEST_DIFF_PATH = Path.cwd() / "tests" / "test_files" / "diff.json"
 
@@ -16,7 +19,7 @@ def test_calculate_diff(test_otu_edit):
     """
     old, new = test_otu_edit
 
-    diff = virtool.history.utils.calculate_diff(old, new)
+    diff = calculate_diff(old, new)
 
     assert diff.sort() == [
         ("change", "name", ("Prunus virus F", "Prunus virus E")),
@@ -38,7 +41,7 @@ def test_calculate_diff(test_otu_edit):
     }, "Created Tobacco mosaic virus")
 ])
 def test_compose_create_description(document, description):
-    assert virtool.history.utils.compose_create_description(document) == description
+    assert compose_create_description(document) == description
 
 
 @pytest.mark.parametrize("name,abbreviation,old_abbreviation,schema,description", [
@@ -85,7 +88,7 @@ def test_compose_create_description(document, description):
     # Modify schema, change name, and add abbreviation
 ])
 def test_compose_edit_description(name, abbreviation, old_abbreviation, schema, description):
-    assert virtool.history.utils.compose_edit_description(name, abbreviation, old_abbreviation, schema) == description
+    assert compose_edit_description(name, abbreviation, old_abbreviation, schema) == description
 
 
 @pytest.mark.parametrize("has_abbreviation", [True, False])
@@ -97,7 +100,7 @@ def test_compose_remove_description(has_abbreviation):
     if has_abbreviation:
         document["abbreviation"] = "TMV"
 
-    description = virtool.history.utils.compose_remove_description(document)
+    description = compose_remove_description(document)
 
     expected = "Removed Tobacco mosaic virus"
 
@@ -138,7 +141,7 @@ def test_derive_otu_information(version, missing):
         if version:
             new["version"] = version
 
-    otu_id, otu_name, otu_version, ref_id = virtool.history.utils.derive_otu_information(
+    otu_id, otu_name, otu_version, ref_id = derive_otu_information(
         old,
         new
     )
@@ -161,7 +164,7 @@ def test_derive_otu_information(version, missing):
 
 
 def test_join_diff_path(tmp_path):
-    path = virtool.history.utils.join_diff_path(
+    path = join_diff_path(
         tmp_path,
         "foo",
         "2"
@@ -181,7 +184,7 @@ def test_json_encoder(is_datetime, static_time):
     if is_datetime:
         o = static_time.datetime
 
-    result = virtool.history.utils.json_encoder(o)
+    result = json_encoder(o)
 
     assert result == "foo" if o == "foo" else static_time.iso
 
@@ -196,7 +199,7 @@ def test_json_object_hook(static_time):
         "created_at": static_time.iso
     }
 
-    result = virtool.history.utils.json_object_hook(o)
+    result = json_object_hook(o)
 
     assert result == {
         "foo": "bar",
@@ -211,13 +214,13 @@ async def test_read_diff_file(mocker, snapshot):
     """
     m = mocker.patch("virtool.history.utils.join_diff_path", return_value=TEST_DIFF_PATH)
 
-    diff = await virtool.history.utils.read_diff_file("foo", "bar", "baz")
+    diff = await read_diff_file("foo", "bar", "baz")
 
     m.assert_called_with("foo", "bar", "baz")
     snapshot.assert_match(diff)
 
 
-async def test_remove_diff_files(loop, tmp_path):
+async def test_remove_diff_files(loop, tmp_path, config):
     """
     Test that diff files are removed correctly and the function can handle a non-existent diff file.
 
@@ -242,12 +245,10 @@ async def test_remove_diff_files(loop, tmp_path):
 
     app = {
         "run_in_thread": run_in_thread,
-        "settings": {
-            "data_path": tmp_path
-        }
+        "config": config
     }
 
-    await virtool.history.utils.remove_diff_files(
+    await remove_diff_files(
         app,
         id_list
     )
@@ -265,7 +266,7 @@ async def test_write_diff_file(snapshot, tmp_path):
     with open(TEST_DIFF_PATH, "r") as f:
         diff = json.load(f)
 
-    await virtool.history.utils.write_diff_file(tmp_path, "foo", "1", diff)
+    await write_diff_file(tmp_path, "foo", "1", diff)
 
     path = tmp_path / "history" / "foo_1.json"
 

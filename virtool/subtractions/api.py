@@ -8,7 +8,6 @@ from aiohttp.web_fileresponse import FileResponse
 from sqlalchemy import select, exc
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import virtool.http.routes
 import virtool.jobs.db
 import virtool.subtractions.db
 import virtool.uploads.db
@@ -16,10 +15,11 @@ import virtool.validators
 from virtool.api.response import json_response, NotFound
 from virtool.api.utils import get_query_bool, paginate, compose_regex_query
 from virtool.db.utils import get_new_id
+from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
 from virtool.pg.utils import get_row_by_id
-from virtool.subtractions.db import attach_computed
+from virtool.subtractions.db import attach_computed, PROJECTION
 from virtool.subtractions.files import create_subtraction_file, delete_subtraction_file
 from virtool.subtractions.models import SubtractionFile
 from virtool.subtractions.utils import FILES
@@ -29,7 +29,7 @@ from virtool.utils import base_processor
 
 logger = logging.getLogger("subtractions")
 
-routes = virtool.http.routes.Routes()
+routes = Routes()
 
 BASE_QUERY = {
     "deleted": False
@@ -43,7 +43,7 @@ async def find(req):
     ready = get_query_bool(req, "ready")
     short = get_query_bool(req, "short")
 
-    projection = ["name"] if short else virtool.subtractions.db.PROJECTION
+    projection = ["name"] if short else PROJECTION
 
     db_query = dict()
 
@@ -222,7 +222,7 @@ async def upload(req):
         raise HTTPConflict(text="File name already exists")
 
     upload_id = subtraction_file["id"]
-    path = req.app["settings"]["data_path"] / "subtractions" / subtraction_id / filename
+    path = req.app["config"].data_path / "subtractions" / subtraction_id / filename
 
     try:
         size = await naive_writer(req, path)
@@ -383,7 +383,7 @@ async def download_subtraction_files(req: aiohttp.web.Request):
     file = result.to_dict()
 
     file_path = (
-        virtool.subtractions.utils.join_subtraction_path(req.app["settings"], subtraction_id)
+        virtool.subtractions.utils.join_subtraction_path(req.app["config"], subtraction_id)
         / filename
     )
 

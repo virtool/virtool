@@ -1,6 +1,6 @@
 import pytest
 
-import virtool.otus.sequences
+from virtool.otus.sequences import check_segment_or_target, create, edit, get, increment_otu_version, remove
 
 
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
@@ -49,7 +49,7 @@ async def test_check_segment_or_target(data_type, defined, missing, used, sequen
     if missing:
         data = dict()
 
-    message = await virtool.otus.sequences.check_segment_or_target(
+    message = await check_segment_or_target(
         dbi,
         "foo",
         "baz",
@@ -83,14 +83,8 @@ async def test_check_segment_or_target(data_type, defined, missing, used, sequen
 @pytest.mark.parametrize("segment", [True, False])
 @pytest.mark.parametrize("sequence_id", ["foobar", None])
 async def test_create(host, segment, sequence_id, snapshot, dbi, static_time, test_random_alphanumeric, tmp_path):
-    """
-
-    """
     app = {
         "db": dbi,
-        "settings": {
-            "data_path": tmp_path
-        }
     }
 
     data = {
@@ -123,7 +117,7 @@ async def test_create(host, segment, sequence_id, snapshot, dbi, static_time, te
         "version": 3
     })
 
-    await virtool.otus.sequences.create(
+    await create(
         app,
         "foo",
         "bar",
@@ -145,10 +139,7 @@ async def test_edit(sequence, snapshot, dbi, static_time, tmp_path):
 
     """
     app = {
-        "db": dbi,
-        "settings": {
-            "data_path": tmp_path
-        }
+        "db": dbi
     }
 
     await dbi.otus.insert_one({
@@ -189,7 +180,7 @@ async def test_edit(sequence, snapshot, dbi, static_time, tmp_path):
     if sequence:
         data["sequence"] = "ATAGAG GAGTA\nAGAGTGA"
 
-    await virtool.otus.sequences.edit(
+    await edit(
         app,
         "foo",
         "bar",
@@ -228,7 +219,7 @@ async def test_get(missing, snapshot, dbi):
             "comment": "hello world"
         })
 
-    document = await virtool.otus.sequences.get(
+    document = await get(
         dbi,
         "foo",
         "bar",
@@ -245,7 +236,7 @@ async def test_increment_otu_version(dbi, snapshot):
         "verified": True
     })
 
-    await virtool.otus.sequences.increment_otu_version(dbi, "foo")
+    await increment_otu_version(dbi, "foo")
 
     otu = await dbi.otus.find_one()
     snapshot.assert_match(otu)
@@ -253,10 +244,7 @@ async def test_increment_otu_version(dbi, snapshot):
 
 async def test_remove(snapshot, dbi, test_otu, static_time, tmp_path):
     app = {
-        "db": dbi,
-        "settings": {
-            "data_path": tmp_path
-        }
+        "db": dbi
     }
 
     await dbi.otus.insert_one(test_otu)
@@ -272,7 +260,7 @@ async def test_remove(snapshot, dbi, test_otu, static_time, tmp_path):
         "isolate_id": "cab8b360"
     })
 
-    await virtool.otus.sequences.remove(
+    await remove(
         app,
         "6116cba1",
         "cab8b360",

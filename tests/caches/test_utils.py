@@ -1,11 +1,7 @@
-import virtool.caches.utils
+from virtool.caches.utils import join_cache_path
 
 
-def test_join_cache_path(tmp_path):
-    settings = {
-        "data_path": tmp_path
-    }
-
+def test_join_cache_path(tmp_path, config):
     cache_id = "bar"
 
-    assert virtool.caches.utils.join_cache_path(settings, cache_id) == tmp_path / "caches" / "bar"
+    assert join_cache_path(config, cache_id) == tmp_path / "caches" / "bar"

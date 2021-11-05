@@ -2,21 +2,16 @@ import json
 
 import pytest
 
-import virtool.analyses.format
-from virtool.analyses.format import transform_coverage_to_coordinates
+from virtool.analyses.format import transform_coverage_to_coordinates, load_results
 
 
 @pytest.mark.parametrize("loadable", [True, False])
-async def test_load_results(loadable, mocker, tmp_path):
+async def test_load_results(loadable, mocker, tmp_path, config):
     """
     Test that results are loaded from a `results.json` as expected. Check that the file loading action is not pursued
     if the results are stored in the analysis document.
 
     """
-    settings = {
-        "data_path": tmp_path
-    }
-
     results = {
         "foo": "bar",
         "bar": "baz"
@@ -38,7 +33,7 @@ async def test_load_results(loadable, mocker, tmp_path):
         return_value=str(results_file)
     )
 
-    result = await virtool.analyses.format.load_results(settings, document)
+    result = await load_results(config, document)
 
     if loadable:
         m_join_analysis_json_path.assert_called_with(

@@ -1,10 +1,10 @@
-from typing import Any, Dict, Optional
+from typing import Optional
 
-from aiohttp import web
+from aiohttp.web import Response
 from aiohttp.web_exceptions import HTTPForbidden, HTTPNotFound, HTTPUnprocessableEntity
 
 
-def json_response(data: object, status: int = 200, headers: Optional[dict] = None) -> web.Response:
+def json_response(data: object, status: int = 200, headers: Optional[dict] = None) -> Response:
     """
     Return a response object whose attached JSON dict will be formatted by middleware depending on
     the request's `Accept` header.
@@ -17,7 +17,7 @@ def json_response(data: object, status: int = 200, headers: Optional[dict] = Non
     """
     headers = headers or {}
 
-    resp = web.Response(status=status, headers=headers)
+    resp = Response(status=status, headers=headers)
     resp["json_data"] = data
 
     return resp

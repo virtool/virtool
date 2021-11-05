@@ -1,7 +1,7 @@
 import logging
+from dataclasses import asdict
+from dataclasses import dataclass, field
 from typing import Any, Dict
-
-import virtool.settings.schema
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +10,23 @@ PROJECTION = {
 }
 
 
-async def ensure(db) -> Dict[str, Any]:
+@dataclass
+class Settings:
+    sample_group: str = None
+    sample_group_read: bool = True
+    sample_group_write: bool = False
+    sample_all_read: bool = True
+    sample_all_write: bool = False
+    sample_unique_names: bool = True
+    hmm_slug: str = "virtool/virtool-hmm"
+    enable_api: bool = False
+    enable_sentry: bool = True
+    software_channel: str = "stable"
+    minimum_password_length: int = 8
+    default_source_types: list = field(default_factory=lambda: ["isolate", "strain"])
+
+
+async def ensure(db):
     """
     Ensure the settings document is updated and filled with default values.
 
@@ -20,18 +36,18 @@ async def ensure(db) -> Dict[str, Any]:
 
     """
     existing = await db.settings.find_one({"_id": "settings"}, {"_id": False}) or dict()
-    defaults = virtool.settings.schema.get_defaults()
 
-    ensure_update = {
-        **defaults,
+    settings = {
+        **asdict(Settings()),
         **existing
     }
+    settings.pop("_id", None)
 
     await db.settings.update_one({"_id": "settings"}, {
-        "$set": ensure_update
+        "$set": settings
     }, upsert=True)
 
-    return ensure_update
+    return Settings(**settings)
 
 
 async def get(db) -> Dict[str, Any]:
@@ -43,9 +59,10 @@ async def get(db) -> Dict[str, Any]:
     :return: the settings document or an empty dictionary
 
     """
-    settings = await db.settings.find_one("settings", projection=PROJECTION)
+    settings = await db.settings.find_one({"_id": "settings"}, projection=PROJECTION)
 
     if settings:
+        settings.pop("_id", None)
         return settings
 
     return dict()
@@ -61,6 +78,9 @@ async def update(db, updates: dict) -> Dict[str, Any]:
     :return: the settings document after updating
 
     """
-    return await db.settings.find_one_and_update({"_id": "settings"}, {
+    updated = await db.settings.find_one_and_update({"_id": "settings"}, {
         "$set": updates
     })
+
+    updated.pop("_id", None)
+    return updated

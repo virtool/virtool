@@ -65,7 +65,7 @@ class TestCaseDataFactory:
         self.db = app["db"]
         self.pg = app["pg"]
         self.settings = app["settings"]
-        self.data_path = self.settings["data_path"]
+        self.data_path = app["config"].data_path
 
     async def analysis(
             self,
@@ -247,7 +247,6 @@ async def load_test_case_from_yml(app: App, path: str) -> WorkflowTestCase:
         if "hmms" in include:
             await factory.hmms()
 
-
     if "sample" in yml:
         test_case.sample = await factory.sample(**yml["sample"])
         job_args["sample_id"] = test_case.sample["_id"]
@@ -271,10 +270,8 @@ async def load_test_case_from_yml(app: App, path: str) -> WorkflowTestCase:
 
         job_args["analysis_id"] = test_case.analysis["_id"]
 
-
     if "job_args" in yml:
         job_args.update(yml["job_args"])
-
 
     test_case.job = await factory.job(args=job_args, workflow=workflow)
 

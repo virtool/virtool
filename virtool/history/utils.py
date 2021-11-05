@@ -143,7 +143,7 @@ def derive_otu_information(old: Optional[dict], new: Optional[dict]) -> Tuple[st
 
 def join_diff_path(data_path: Path, otu_id: str, otu_version: Union[int, str]) -> Path:
     """
-    Derive the path to a diff file based on the application `data_path` setting and the OTU ID and version.
+    Derive the path to a diff file based on the application `data_path` configuration and the OTU ID and version.
 
     :param data_path: the application data path
     :param otu_id: the OTU ID to join a diff path for
@@ -202,7 +202,7 @@ async def remove_diff_files(app, id_list: List[str]):
     :param id_list: a list of change IDs to remove diff files for
 
     """
-    data_path = app["settings"]["data_path"]
+    data_path = app["config"].data_path
 
     for change_id in id_list:
         otu_id, otu_version = change_id.split(".")

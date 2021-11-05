@@ -7,13 +7,9 @@ import click
 import uvloop
 
 import virtool.app
-import virtool.db.mongo
-import virtool.db.utils
 import virtool.jobs.main
-import virtool.logs
-import virtool.redis
-import virtool.utils
 from virtool.logs import configure_logs
+from virtool.configuration.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -144,15 +140,24 @@ def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_se
 def start_server(ctx, host, port, no_check_db, no_check_files, no_client, no_fetching):
     configure_logs(ctx.obj["dev"], ctx.obj["verbose"])
 
-    config = {
-        **ctx.obj,
-        "host": host,
-        "port": port,
-        "no_check_db": no_check_db,
-        "no_check_files": no_check_files,
-        "no_client": no_client,
-        "no_fetching": no_fetching
-    }
+    config = Config(
+        no_check_db=no_check_db,
+        no_check_files=no_check_files,
+        no_fetching=no_fetching,
+        db_connection_string=ctx.obj["db_connection_string"],
+        db_name=ctx.obj["db_name"],
+        dev=ctx.obj["dev"],
+        force_version=ctx.obj["force_version"],
+        no_sentry=ctx.obj["no_sentry"],
+        postgres_connection_string=ctx.obj["postgres_connection_string"],
+        redis_connection_string=ctx.obj["redis_connection_string"],
+        verbose=ctx.obj["verbose"],
+        data_path=ctx.obj["data_path"],
+        proxy=ctx.obj["proxy"],
+        host=host,
+        no_client=no_client,
+        port=port
+    )
 
     logger.info("Starting in server mode")
     asyncio.get_event_loop().run_until_complete(virtool.app.run_app(config))
@@ -184,13 +189,26 @@ def start_jobs_api(ctx, fake_path, port, host):
     configure_logs(ctx.obj["dev"], ctx.obj["verbose"])
 
     logger.info("Starting jobs API process")
-
+    config = Config(
+        no_check_db=ctx.obj["no_check_db"],
+        no_check_files=ctx.obj["no_check_files"],
+        no_fetching=ctx.obj["no_fetching"],
+        db_connection_string=ctx.obj["db_connection_string"],
+        db_name=ctx.obj["db_name"],
+        dev=ctx.obj["dev"],
+        force_version=ctx.obj["force_version"],
+        no_sentry=ctx.obj["no_sentry"],
+        postgres_connection_string=ctx.obj["postgres_connection_string"],
+        redis_connection_string=ctx.obj["redis_connection_string"],
+        verbose=ctx.obj["verbose"],
+        data_path=ctx.obj["data_path"],
+        proxy=ctx.obj["proxy"],
+        host=host,
+        no_client=ctx.obj["no_client"],
+        port=port,
+        fake=fake_path is not None,
+        fake_path=fake_path
+    )
     asyncio.get_event_loop().run_until_complete(
-        virtool.jobs.main.run(
-            fake=fake_path is not None,
-            fake_path=fake_path,
-            host=host,
-            port=port,
-            **ctx.obj
-        )
+        virtool.jobs.main.run(config)
     )

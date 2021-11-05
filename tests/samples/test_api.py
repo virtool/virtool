@@ -7,12 +7,12 @@ from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.caches.db
-import virtool.caches.utils
-import virtool.pg.utils
-import virtool.samples.db
 import virtool.uploads.db
 from virtool.caches.models import SampleArtifactCache, SampleReadsCache
+from virtool.caches.utils import join_cache_path
 from virtool.labels.models import Label
+from virtool.pg.utils import get_row_by_id
+from virtool.samples.db import check_name
 from virtool.samples.files import create_reads_file
 from virtool.samples.models import SampleReads, SampleArtifact
 from virtool.uploads.models import Upload
@@ -208,14 +208,15 @@ class TestCreate:
             spawn_client,
             pg: AsyncEngine,
             static_time,
-            test_random_alphanumeric
+            test_random_alphanumeric,
+            settings
     ):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
-        client.app["settings"].update({
-            "sm_proc": 2,
-            "sm_mem": 4,
-        })
+        client.app["settings"] = settings
+
+        client.app["settings"].sm_proc = 2
+        client.app["settings"].sm_mem = 4
 
         await client.db.subtraction.insert_one({
             "_id": "apple"
@@ -233,14 +234,9 @@ class TestCreate:
             {"_id": "technician"}
         ])
 
-        client.app["settings"].update({
-            "sample_group": group_setting,
-            "sample_all_read": True,
-            "sample_all_write": True,
-            "sample_group_read": True,
-            "sample_group_write": True,
-            "sample_unique_names": True
-        })
+        client.app["settings"].sample_group = group_setting
+        client.app["settings"].sample_all_write = True
+        client.app["settings"].sample_group_write = True
 
         m_reserve = mocker.patch("virtool.uploads.db.reserve", make_mocked_coro())
 
@@ -279,7 +275,7 @@ class TestCreate:
     async def test_name_exists(self, spawn_client, static_time, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
-        client.app["settings"]["sample_unique_names"] = True
+        client.app["settings"].sample_unique_names = True
 
         await client.db.samples.insert_one({
             "_id": "foobar",
@@ -307,8 +303,8 @@ class TestCreate:
         """
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
-        client.app["settings"]["sample_group"] = "force_choice"
-        client.app["settings"]["sample_unique_names"] = True
+        client.app["settings"].sample_group = "force_choice"
+        client.app["settings"].sample_unique_names = True
 
         await client.db.subtraction.insert_one({
             "_id": "apple",
@@ -340,8 +336,8 @@ class TestCreate:
     async def test_group_dne(self, spawn_client, pg: AsyncEngine, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
-        client.app["settings"]["sample_group"] = "force_choice"
-        client.app["settings"]["sample_unique_names"] = True
+        client.app["settings"].sample_group = "force_choice"
+        client.app["settings"].sample_unique_names = True
 
         await client.db.subtraction.insert_one({
             "_id": "apple"
@@ -386,7 +382,7 @@ class TestCreate:
         """
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
-        client.app["settings"]["sample_unique_names"] = True
+        client.app["settings"].sample_unique_names = True
 
         await client.db.subtraction.insert_one({
             "_id": "apple",
@@ -411,7 +407,7 @@ class TestCreate:
     async def test_label_dne(self, exists, spawn_client, pg_session, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
-        client.app["settings"]["sample_unique_names"] = True
+        client.app["settings"].sample_unique_names = True
 
         if exists:
             label = Label(id=1, name="Orange", color="#FFA500", description="An orange")
@@ -603,7 +599,7 @@ async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_sessi
     """
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     data = {field: {}}
 
@@ -669,7 +665,7 @@ async def test_remove(
     await getattr(resp_is, resp_is_attr)(resp)
 
     if resp_is_attr == "no_content":
-        m.assert_called_with(client.db, client.app["settings"], ["test"])
+        m.assert_called_with(client.db, client.app["config"], ["test"])
     else:
         assert not m.called
 
@@ -691,7 +687,7 @@ async def test_job_remove(
 
     """
     client = await spawn_job_client(authorize=True)
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
@@ -712,7 +708,7 @@ async def test_job_remove(
 
     if exists and not ready:
         await resp_is.no_content(resp)
-        assert not await virtool.samples.db.check_name(
+        assert not await check_name(
             client.app["db"],
             client.app["settings"],
             "test",
@@ -950,7 +946,7 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is,
 async def test_cache_job_remove(exists, ready, tmp_path, spawn_job_client, snapshot, resp_is):
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     path = tmp_path / "caches" / "foo"
     path.mkdir(parents=True)
@@ -1003,8 +999,8 @@ async def test_upload_artifact(
 
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = tmp_path
-    sample_file_path = client.app["settings"]["data_path"] / "samples" / "test"
+    client.app["config"].data_path = tmp_path
+    sample_file_path = tmp_path / "samples" / "test"
 
     await client.db.samples.insert_one({
         "_id": "test",
@@ -1047,7 +1043,7 @@ class TestUploadReads:
 
         client = await spawn_job_client(authorize=True)
 
-        client.app["settings"]["data_path"] = tmp_path
+        client.app["config"].data_path = tmp_path
 
         await client.db.samples.insert_one({
             "_id": "test",
@@ -1082,8 +1078,8 @@ class TestUploadReads:
 
         client = await spawn_job_client(authorize=True)
 
-        client.app["settings"]["data_path"] = tmp_path
-        sample_file_path = client.app["settings"]["data_path"] / "samples" / "test"
+        client.app["config"].data_path = tmp_path
+        sample_file_path = tmp_path / "samples" / "test"
 
         await client.db.samples.insert_one({
             "_id": "test",
@@ -1142,8 +1138,8 @@ async def test_download_reads(suffix, error, tmp_path, spawn_client, spawn_job_c
     client = await spawn_client(authorize=True)
     job_client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = tmp_path
-    job_client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
+    job_client.app["config"].data_path = tmp_path
 
     file_name = f"reads_{suffix}.fq.gz"
 
@@ -1169,7 +1165,7 @@ async def test_download_reads(suffix, error, tmp_path, spawn_client, spawn_job_c
     resp = await client.get(f"/api/samples/foo/reads/{file_name}")
     job_resp = await job_client.get(f"/api/samples/foo/reads/{file_name}")
 
-    expected_path = client.app["settings"]["data_path"] / "samples" / "foo" / file_name
+    expected_path = client.app["config"].data_path / "samples" / "foo" / file_name
 
     if error:
         assert resp.status == job_resp.status == 404
@@ -1183,7 +1179,7 @@ async def test_download_reads(suffix, error, tmp_path, spawn_client, spawn_job_c
 async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     if error != "404_file":
         path = (tmp_path / "samples" / "foo")
@@ -1212,7 +1208,7 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
 
     resp = await client.get("/api/samples/foo/artifacts/fastqc.txt")
 
-    expected_path = client.app["settings"]["data_path"] / "samples" / "foo" / "fastqc.txt"
+    expected_path = client.app["config"].data_path / "samples" / "foo" / "fastqc.txt"
 
     if error:
         assert resp.status == 404
@@ -1303,9 +1299,9 @@ async def test_upload_artifact_cache(
 
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
-    cache_path = virtool.caches.utils.join_cache_path(client.app["settings"], "aodp-abcdefgh")
+    cache_path = join_cache_path(client.app["config"], "aodp-abcdefgh")
 
     await client.db.samples.insert_one({
         "_id": "test",
@@ -1355,8 +1351,8 @@ async def test_upload_reads_cache(paired, snapshot, static_time, spawn_job_clien
 
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = tmp_path
-    cache_path = virtool.caches.utils.join_cache_path(client.app["settings"], "aodp-abcdefgh")
+    client.app["config"].data_path = tmp_path
+    cache_path = join_cache_path(client.app["config"], "aodp-abcdefgh")
 
     await client.db.samples.insert_one({
         "_id": "test",
@@ -1402,7 +1398,7 @@ async def test_download_reads_cache(error, spawn_job_client, pg, tmp_path):
     """
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     filename = "reads_1.fq.gz"
     key = "aodp-abcdefgh"
@@ -1440,7 +1436,7 @@ async def test_download_reads_cache(error, spawn_job_client, pg, tmp_path):
 
     resp = await client.get(f"/api/samples/foo/caches/{key}/reads/{filename}")
 
-    expected_path = client.app["settings"]["data_path"] / "caches" / key / filename
+    expected_path = client.app["config"].data_path / "caches" / key / filename
 
     if error:
         assert resp.status == 404
@@ -1456,8 +1452,7 @@ async def test_download_artifact_cache(error, spawn_job_client, pg: AsyncEngine,
 
     """
     client = await spawn_job_client(authorize=True)
-
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     key = "aodp-abcdefgh"
     name = "fastqc.txt"
@@ -1498,8 +1493,7 @@ async def test_download_artifact_cache(error, spawn_job_client, pg: AsyncEngine,
         })
 
     resp = await client.get(f"/api/samples/foo/caches/{key}/artifacts/{name}")
-
-    expected_path = client.app["settings"]["data_path"] / "caches" / key / name_on_disk
+    expected_path = client.app["config"].data_path / "caches" / key / name_on_disk
 
     if error:
         assert resp.status == 404

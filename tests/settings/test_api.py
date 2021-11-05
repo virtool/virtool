@@ -35,7 +35,6 @@ async def test_update(spawn_client, test_settings):
     assert resp.status == 200
 
     assert await resp.json() == {
-        "_id": "settings",
         "default_source_types": ["isolate", "strain"],
         "enable_api": False,
         "enable_sentry": False,

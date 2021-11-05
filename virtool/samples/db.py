@@ -8,21 +8,21 @@ import os
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
 from multidict import MultiDictProxy
 from pymongo.results import DeleteResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-import virtool.db.utils
 import virtool.errors
-import virtool.jobs.db
-import virtool.pg.utils
 import virtool.samples.utils
-import virtool.tasks.pg
 import virtool.utils
+from virtool.db.utils import get_new_id
 from virtool.labels.models import Label
 from virtool.samples.models import SampleReads, SampleArtifact
 from virtool.samples.utils import join_legacy_read_paths
+from virtool.settings.db import Settings
+from virtool.configuration.config import Config
 from virtool.subtractions.db import attach_subtractions
 from virtool.types import App
 from virtool.uploads.models import Upload
@@ -147,11 +147,11 @@ async def attach_labels(pg: AsyncEngine, document: dict) -> dict:
 
 async def check_name(
         db,
-        settings: dict,
+        settings: Settings,
         name: str,
         sample_id: Optional[str] = None
 ) -> Optional[str]:
-    if settings["sample_unique_names"]:
+    if settings.sample_unique_names:
         query = {"name": name}
 
         if sample_id:
@@ -229,7 +229,7 @@ async def create_sample(
         notes: str,
         labels: List[int],
         user_id: str,
-        settings: Dict[str, any],
+        settings: Settings,
         paired=False,
         _id=None,
 ) -> Dict[str, any]:
@@ -268,10 +268,10 @@ async def create_sample(
         "ready": False,
         "quality": None,
         "hold": True,
-        "group_read": settings.get("sample_group_read"),
-        "group_write": settings.get("sample_group_write"),
-        "all_read": settings.get("sample_all_read"),
-        "all_write": settings.get("sample_all_write"),
+        "group_read": settings.sample_group_read,
+        "group_write": settings.sample_group_write,
+        "all_read": settings.sample_all_read,
+        "all_write": settings.sample_all_write,
         "labels": labels,
         "library_type": library_type,
         "subtractions": subtractions,
@@ -328,7 +328,7 @@ async def recalculate_workflow_tags(db, sample_id: str) -> dict:
 
 
 async def remove_samples(
-        db, settings: Dict[str, Any], id_list: List[str]
+        db, config: Config, id_list: List[str]
 ) -> DeleteResult:
     """
     Complete removes the samples identified by the document ids in ``id_list``. In order, it:
@@ -338,7 +338,7 @@ async def remove_samples(
     - removes the sample directory from the file system
 
     :param db: a Motor client
-    :param settings: the application settings object
+    :param config: the application config object
     :param id_list: a list sample ids to remove
     :return: the result from the samples collection remove operation
 
@@ -351,7 +351,7 @@ async def remove_samples(
 
     for sample_id in id_list:
         try:
-            path = virtool.samples.utils.join_sample_path(settings, sample_id)
+            path = virtool.samples.utils.join_sample_path(config, sample_id)
             virtool.utils.rm(path, recursive=True)
         except FileNotFoundError:
             pass
@@ -426,9 +426,9 @@ async def compress_sample_reads(app: App, sample: Dict[str, Any]):
     if not check_is_legacy(sample):
         return
 
-    paths = join_legacy_read_paths(app["settings"], sample)
+    paths = join_legacy_read_paths(app["config"], sample)
 
-    data_path = app["settings"]["data_path"]
+    data_path = app["config"].data_path
     sample_id = sample["_id"]
 
     files = list()

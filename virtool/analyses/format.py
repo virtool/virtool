@@ -16,14 +16,10 @@ import aiofiles
 import openpyxl.styles
 import visvalingamwyatt as vw
 
-import virtool.analyses.db
 import virtool.analyses.utils
-import virtool.db.core
-import virtool.db.utils
-import virtool.history.db
-import virtool.otus.db
-import virtool.otus.utils
-import virtool.types
+from virtool.history.db import patch_to_version
+from virtool.otus.utils import format_isolate_name
+from virtool.configuration.config import Config
 from virtool.types import App
 
 CSV_HEADERS = (
@@ -48,7 +44,7 @@ def calculate_median_depths(hits: List[dict]) -> Dict[str, int]:
     return {hit["id"]: statistics.median(hit["align"]) for hit in hits}
 
 
-async def load_results(settings: Dict[str, Any], document: Dict[str, Any]) -> dict:
+async def load_results(config: Config, document: Dict[str, Any]) -> dict:
     """
     Load the analysis results. Hide the alternative loading from a `results.json` file.
     These files are only generated if the analysis data would have exceeded the MongoDB size
@@ -56,14 +52,14 @@ async def load_results(settings: Dict[str, Any], document: Dict[str, Any]) -> di
 
     The document is returned unmodified if loading from file is not required.
 
-    :param settings: the application settings
+    :param config: the application configuration
     :param document: the document to load results for
     :return: a complete analysis document
 
     """
     if document["results"] == "file":
         path = virtool.analyses.utils.join_analysis_json_path(
-            settings["data_path"],
+            config.data_path,
             document["_id"],
             document["sample"]["id"]
         )
@@ -78,7 +74,7 @@ async def load_results(settings: Dict[str, Any], document: Dict[str, Any]) -> di
     return document
 
 
-async def format_aodp(app: virtool.types.App, document: Dict[str, Any]) -> Dict[str, Any]:
+async def format_aodp(app: App, document: Dict[str, Any]) -> Dict[str, Any]:
     """
     Format an AODP analysis document by retrieving the detected OTUs and incorporating them into
     the returned document.
@@ -114,7 +110,7 @@ async def format_aodp(app: virtool.types.App, document: Dict[str, Any]) -> Dict[
     }
 
 
-async def format_pathoscope(app: virtool.types.App, document: Dict[str, Any]) -> Dict[str, Any]:
+async def format_pathoscope(app: App, document: Dict[str, Any]) -> Dict[str, Any]:
     """
     Format a Pathoscope analysis document by retrieving the detected OTUs and incorporating them
     into the returned document. Calculate metrics for different organizational levels: OTU,
@@ -126,7 +122,7 @@ async def format_pathoscope(app: virtool.types.App, document: Dict[str, Any]) ->
 
     """
     document = await load_results(
-        app["settings"],
+        app["config"],
         document
     )
 
@@ -154,7 +150,7 @@ async def format_pathoscope(app: virtool.types.App, document: Dict[str, Any]) ->
 
 
 async def format_pathoscope_hits(app: App, otu_id: str, otu_version, hits: List[Dict]):
-    _, patched_otu, _ = await virtool.history.db.patch_to_version(
+    _, patched_otu, _ = await patch_to_version(
         app,
         otu_id,
         otu_version
@@ -229,7 +225,7 @@ def format_pathoscope_sequences(sequences: List[Dict[str, Any]], hits_by_sequenc
         }
 
 
-async def format_nuvs(app: virtool.types.App, document: Dict[str, Any]) -> Dict[str, Any]:
+async def format_nuvs(app: App, document: Dict[str, Any]) -> Dict[str, Any]:
     """
     Format a NuVs analysis document by attaching the HMM annotation data to the results.
 
@@ -239,7 +235,7 @@ async def format_nuvs(app: virtool.types.App, document: Dict[str, Any]) -> Dict[
 
     """
     document = await load_results(
-        app["settings"],
+        app["config"],
         document
     )
 
@@ -259,7 +255,7 @@ async def format_nuvs(app: virtool.types.App, document: Dict[str, Any]) -> Dict[
     return document
 
 
-async def format_analysis_to_excel(app: virtool.types.App, document: Dict[str, Any]) -> bytes:
+async def format_analysis_to_excel(app: App, document: Dict[str, Any]) -> bytes:
     """
     Convert a pathoscope analysis document to byte-encoded Excel format for download.
 
@@ -293,7 +289,7 @@ async def format_analysis_to_excel(app: virtool.types.App, document: Dict[str, A
             for sequence in isolate["sequences"]:
                 row = [
                     otu["name"],
-                    virtool.otus.utils.format_isolate_name(isolate),
+                    format_isolate_name(isolate),
                     sequence["accession"],
                     sequence["length"],
                     sequence["pi"],
@@ -315,7 +311,7 @@ async def format_analysis_to_excel(app: virtool.types.App, document: Dict[str, A
     return output.getvalue()
 
 
-async def format_analysis_to_csv(app: virtool.types.App, document: Dict[str, Any]) -> str:
+async def format_analysis_to_csv(app: App, document: Dict[str, Any]) -> str:
     """
     Convert a pathoscope analysis document to CSV format for download.
 
@@ -339,7 +335,7 @@ async def format_analysis_to_csv(app: virtool.types.App, document: Dict[str, Any
             for sequence in isolate["sequences"]:
                 row = [
                     otu["name"],
-                    virtool.otus.utils.format_isolate_name(isolate),
+                    format_isolate_name(isolate),
                     sequence["accession"],
                     sequence["length"],
                     sequence["pi"],
@@ -352,7 +348,7 @@ async def format_analysis_to_csv(app: virtool.types.App, document: Dict[str, Any
     return output.getvalue()
 
 
-async def format_analysis(app: virtool.types.App, document: Dict[str, Any]) -> Dict[str, any]:
+async def format_analysis(app: App, document: Dict[str, Any]) -> Dict[str, any]:
     """
     Format an analysis document to be returned by the API.
 
@@ -376,7 +372,7 @@ async def format_analysis(app: virtool.types.App, document: Dict[str, Any]) -> D
     raise ValueError("Could not determine analysis workflow")
 
 
-async def gather_patched_otus(app: virtool.types.App, results: List[dict]) -> Dict[str, dict]:
+async def gather_patched_otus(app: App, results: List[dict]) -> Dict[str, dict]:
     """
     Gather patched OTUs for each result item. Only fetch each id-version combination once. Make
     database requests concurrently to save time.
@@ -390,7 +386,7 @@ async def gather_patched_otus(app: virtool.types.App, results: List[dict]) -> Di
     otu_specifiers = {(hit["otu"]["id"], hit["otu"]["version"]) for hit in results}
 
     patched_otus = await asyncio.gather(*[
-        virtool.history.db.patch_to_version(
+        patch_to_version(
             app,
             otu_id,
             version

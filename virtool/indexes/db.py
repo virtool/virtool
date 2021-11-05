@@ -9,13 +9,13 @@ from typing import Optional, List, Tuple, Dict
 import pymongo
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-import virtool.api.utils
-import virtool.db.utils
-import virtool.history
 import virtool.history.db
 import virtool.pg.utils
 import virtool.references.db
 import virtool.utils
+from virtool.api.utils import paginate
+from virtool.db.utils import get_new_id
+from virtool.history.db import get_contributors
 from virtool.indexes.models import IndexFile
 
 PROJECTION = [
@@ -56,7 +56,7 @@ async def create(db, ref_id: str, user_id: str, job_id: str, index_id: Optional[
 
     :return: the new index document
     """
-    index_id = index_id or await virtool.db.utils.get_new_id(db.indexes)
+    index_id = index_id or await get_new_id(db.indexes)
 
     index_version = await get_next_version(db, ref_id)
 
@@ -139,7 +139,7 @@ async def find(db, req_query: dict, ref_id:  Optional[str] = None) -> dict:
             "reference.id": ref_id
         }
 
-    data = await virtool.api.utils.paginate(
+    data = await paginate(
         db.indexes,
         {},
         req_query,
@@ -186,7 +186,7 @@ async def get_contributors(db, index_id: str) -> List[dict]:
     :return: a list of contributors to the index
 
     """
-    return await virtool.history.db.get_contributors(db, {"index.id": index_id})
+    return await get_contributors(db, {"index.id": index_id})
 
 
 async def get_current_id_and_version(db, ref_id: str) -> Tuple[str, int]:
@@ -312,18 +312,18 @@ async def reset_history(db, index_id: str):
     })
 
 
-async def get_patched_otus(db, settings: dict, manifest: Dict[str, int]) -> List[dict]:
+async def get_patched_otus(db, config, manifest: Dict[str, int]) -> List[dict]:
     """
     Get joined OTUs patched to a specific version based on a manifest of OTU ids and versions.
 
     :param db: the job database client
-    :param settings: the application settings
+    :param config: the application configuration
     :param manifest: the manifest
 
     """
     app_dict = {
         "db": db,
-        "settings": settings
+        "config": config
     }
 
     coros = list()

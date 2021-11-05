@@ -36,7 +36,7 @@ class TestJobAuthentication:
         key = "bar"
 
         client = await spawn_client(auth=BasicAuth("job-foo", key))
-        client.settings["enable_api"] = True
+        client.settings.enable_api = True
 
         await dbi.jobs.insert_one({
             "_id": "foo",

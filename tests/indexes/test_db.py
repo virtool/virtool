@@ -1,9 +1,9 @@
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
-import virtool.indexes
 import virtool.indexes.db
-import virtool.errors
+from virtool.indexes.db import get_current_id_and_version, get_next_version, update_last_indexed_versions, \
+    get_patched_otus, attach_files
 from virtool.indexes.models import IndexFile
 
 
@@ -72,7 +72,7 @@ async def test_get_current_id_and_version(exists, has_ref, test_indexes, dbi):
 
     ref_id = "hxn167" if has_ref else "foobar"
 
-    index_id, index_version = await virtool.indexes.db.get_current_id_and_version(dbi, ref_id)
+    index_id, index_version = await get_current_id_and_version(dbi, ref_id)
 
     if has_ref and exists:
         assert index_id == "ptlrcefm"
@@ -94,7 +94,7 @@ async def test_get_next_version(empty, has_ref, test_indexes, dbi):
     if empty or not has_ref:
         expected = 0
 
-    assert await virtool.indexes.db.get_next_version(dbi, "hxn167" if has_ref else "foobar") == expected
+    assert await get_next_version(dbi, "hxn167" if has_ref else "foobar") == expected
 
 
 async def test_processor(mocker, dbi):
@@ -168,7 +168,7 @@ async def test_processor(mocker, dbi):
     }
 
 
-async def test_get_patched_otus(mocker, dbi, tmp_path):
+async def test_get_patched_otus(mocker, dbi, tmp_path, config):
     m = mocker.patch("virtool.history.db.patch_to_version", make_mocked_coro((None, {"_id": "foo"}, None)))
 
     manifest = {
@@ -177,13 +177,9 @@ async def test_get_patched_otus(mocker, dbi, tmp_path):
         "baz": 4
     }
 
-    settings = {
-        "data_path": tmp_path
-    }
-
-    patched_otus = await virtool.indexes.db.get_patched_otus(
+    patched_otus = await get_patched_otus(
         dbi,
-        settings,
+        config,
         manifest
     )
 
@@ -195,7 +191,7 @@ async def test_get_patched_otus(mocker, dbi, tmp_path):
 
     app_dict = {
         "db": dbi,
-        "settings": settings
+        "config": config
     }
 
     m.assert_has_calls([
@@ -211,7 +207,7 @@ async def test_update_last_indexed_versions(dbi, test_otu, spawn_client):
 
     await client.db.otus.insert_one(test_otu)
 
-    await virtool.indexes.db.update_last_indexed_versions(dbi, "hxn167")
+    await update_last_indexed_versions(dbi, "hxn167")
 
     document = await client.db.otus.find_one({"reference.id": "hxn167"})
 
@@ -236,7 +232,7 @@ async def test_attach_files(pg, pg_session):
         }
     }
 
-    document = await virtool.indexes.db.attach_files(pg, document)
+    document = await attach_files(pg, document)
     assert document == {
         "_id": "foo",
         "reference": {

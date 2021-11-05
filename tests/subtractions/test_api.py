@@ -1,7 +1,7 @@
 import os
 
-import aiohttp.test_utils
 import pytest
+from aiohttp.test_utils import make_mocked_coro
 
 from virtool.subtractions.models import SubtractionFile
 
@@ -13,7 +13,7 @@ from virtool.subtractions.models import SubtractionFile
     {"name": "Bar", "nickname": "Bar Subtraction"}
 ])
 async def test_edit(data, mocker, snapshot, spawn_client):
-    mocker.patch("virtool.subtractions.db.get_linked_samples", aiohttp.test_utils.make_mocked_coro(12))
+    mocker.patch("virtool.subtractions.db.get_linked_samples", make_mocked_coro(12))
 
     client = await spawn_client(authorize=True, permissions=["modify_subtraction"])
 
@@ -43,7 +43,7 @@ async def test_upload(error, tmp_path, spawn_job_client, snapshot, resp_is, pg_s
         "file": open(path, "rb")
     }
 
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     subtraction = {
         "_id": "foo",
@@ -136,7 +136,7 @@ async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is, 
 @pytest.mark.parametrize("exists", [True, False])
 async def test_job_remove(exists, ready, tmp_path, spawn_job_client, snapshot, resp_is):
     client = await spawn_job_client(authorize=True)
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     if exists:
         await client.db.subtraction.insert_one({
@@ -173,7 +173,7 @@ async def test_job_remove(exists, ready, tmp_path, spawn_job_client, snapshot, r
 async def test_download_subtraction_files(error, tmp_path, spawn_job_client, pg_session):
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     test_dir = tmp_path / "subtractions" / "foo"
     test_dir.mkdir(parents=True)
@@ -218,8 +218,8 @@ async def test_download_subtraction_files(error, tmp_path, spawn_job_client, pg_
         assert fasta_resp.status == bowtie_resp.status == 404
         return
 
-    fasta_expected_path = client.app["settings"]["data_path"] / "subtractions" / "foo" / "subtraction.fa.gz"
-    bowtie_expected_path = client.app["settings"]["data_path"] / "subtractions" / "foo" / "subtraction.1.bt2"
+    fasta_expected_path = client.app["config"].data_path / "subtractions" / "foo" / "subtraction.fa.gz"
+    bowtie_expected_path = client.app["config"].data_path / "subtractions" / "foo" / "subtraction.1.bt2"
 
     assert fasta_expected_path.read_bytes() == await fasta_resp.content.read()
     assert bowtie_expected_path.read_bytes() == await bowtie_resp.content.read()

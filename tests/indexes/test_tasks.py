@@ -15,7 +15,7 @@ async def test_add_index_files(spawn_client, pg_session, static_time, tmp_path, 
     - index document is ready to be populated
     """
     client = await spawn_client(authorize=True, administrator=True)
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     test_dir = tmp_path / "references" / "foo"
     test_dir.mkdir(parents=True)

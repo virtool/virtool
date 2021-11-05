@@ -71,7 +71,7 @@ def setup_routes(app):
 
     app.router.add_get("/ws", virtool.http.ws.root)
 
-    if app["config"]["dev"]:
+    if app["config"].dev:
         logger.info("Enabling development API")
         app.router.add_routes(virtool.dev.api.routes)
 

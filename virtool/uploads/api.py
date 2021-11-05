@@ -40,7 +40,7 @@ async def create(req):
 
     upload_id = upload["id"]
 
-    file_path = req.app["settings"]["data_path"] / "files" / upload["name_on_disk"]
+    file_path = req.app["config"].data_path / "files" / upload["name_on_disk"]
 
     try:
         size = await naive_writer(req, file_path)
@@ -106,7 +106,7 @@ async def get(req):
 
     # check if the file has been removed as a result of a `DELETE` request
 
-    upload_path = Path(req.app["settings"]["data_path"]) / "files" / upload.name_on_disk
+    upload_path = Path(req.app["config"].data_path / "files" / upload.name_on_disk)
 
     # check if the file has been manually removed by the user
     if not upload_path.exists():

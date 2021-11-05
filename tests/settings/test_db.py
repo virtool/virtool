@@ -1,10 +1,10 @@
-import virtool.settings.db
+from virtool.settings.db import Settings, ensure
 
 
 async def test_ensure(dbi, test_settings):
-    settings = await virtool.settings.db.ensure(dbi)
+    settings = await ensure(dbi)
 
-    assert settings == {
+    assert settings == Settings(**{
         "default_source_types": ["isolate", "strain"],
         "enable_api": True,
         "enable_sentry": True,
@@ -17,4 +17,4 @@ async def test_ensure(dbi, test_settings):
         "sample_group_write": False,
         "sample_unique_names": True,
         "software_channel": "stable"
-    }
+    })

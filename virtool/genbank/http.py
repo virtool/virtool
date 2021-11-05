@@ -9,7 +9,7 @@ from typing import Union, Optional
 import Bio.SeqIO
 import aiohttp
 
-import virtool.http.proxy
+from virtool.http.proxy import ProxyRequest
 
 logger = logging.getLogger(__name__)
 
@@ -19,11 +19,11 @@ TOOL = "virtool"
 FETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 
 
-async def fetch(settings: dict, session: aiohttp.ClientSession, accession: Union[int, str]) -> Optional[dict]:
+async def fetch(config, session: aiohttp.ClientSession, accession: Union[int, str]) -> Optional[dict]:
     """
     Fetch the Genbank record for the passed `accession`. Returns `None` if the Genbank record can not be found.
 
-    :param settings: the application settings object
+    :param config: the application configuration object
     :param session: an aiohttp client session
     :param accession: the accession to fetch
     :return: parsed Genbank data
@@ -38,7 +38,7 @@ async def fetch(settings: dict, session: aiohttp.ClientSession, accession: Union
         "tool": TOOL
     }
 
-    async with virtool.http.proxy.ProxyRequest(settings, session.get, FETCH_URL, params=params) as resp:
+    async with ProxyRequest(config, session.get, FETCH_URL, params=params) as resp:
 
         body = await resp.text()
 

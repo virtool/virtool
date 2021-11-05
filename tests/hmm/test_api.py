@@ -7,7 +7,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.errors
-import virtool.utils
+from virtool.utils import decompress_file
 
 
 async def test_find(mocker, spawn_client, hmm_document):
@@ -143,7 +143,7 @@ async def test_get(error, spawn_client, hmm_document, resp_is):
 
 async def test_get_hmm_annotations(spawn_job_client, tmp_path):
     client = await spawn_job_client(authorize=True)
-    client.settings["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
     db = client.app["db"]
 
     await db.hmm.insert_one({"_id": "foo"})
@@ -158,7 +158,7 @@ async def test_get_hmm_annotations(spawn_job_client, tmp_path):
         async with aiofiles.open(compressed_hmm_annotations, "wb") as f:
             await f.write(await response.read())
 
-        virtool.utils.decompress_file(compressed_hmm_annotations, decompressed_hmm_annotations)
+        decompress_file(compressed_hmm_annotations, decompressed_hmm_annotations)
 
         async with aiofiles.open(decompressed_hmm_annotations, "r") as f:
             hmms = json.loads(await f.read())
@@ -183,8 +183,8 @@ async def test_get_hmm_profiles(
     """
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = tmp_path
-    hmms_path = client.app["settings"]["data_path"] / "hmm"
+    client.app["config"].data_path = tmp_path
+    hmms_path = tmp_path / "hmm"
     profiles_path = hmms_path / "profiles.hmm"
 
     if data_exists:

@@ -1,14 +1,14 @@
 import logging
 
-import aiohttp.web
+from aiohttp.web import Application
 
-import virtool.startup
 from virtool.pg.base import Base
+from virtool.startup import get_scheduler_from_app
 
 logger = logging.getLogger(__name__)
 
 
-async def exit_client(app: aiohttp.web.Application):
+async def exit_client(app: Application):
     """
     Attempt to close the async HTTP client session.
 
@@ -22,7 +22,7 @@ async def exit_client(app: aiohttp.web.Application):
         pass
 
 
-async def exit_dispatcher(app: aiohttp.web.Application):
+async def exit_dispatcher(app: Application):
     """
     Attempt to close the app's `Dispatcher` object.
 
@@ -36,7 +36,7 @@ async def exit_dispatcher(app: aiohttp.web.Application):
         pass
 
 
-async def exit_executors(app: aiohttp.web.Application):
+async def exit_executors(app: Application):
     """
     Attempt to close the `ThreadPoolExecutor` and `ProcessPoolExecutor`.
 
@@ -53,17 +53,17 @@ async def exit_executors(app: aiohttp.web.Application):
         pass
 
 
-async def exit_scheduler(app: aiohttp.web.Application):
+async def exit_scheduler(app: Application):
     """
     Attempt to the close the app's `aiojobs` scheduler.
 
     :param app: The application object
     """
-    scheduler = virtool.startup.get_scheduler_from_app(app)
+    scheduler = get_scheduler_from_app(app)
     await scheduler.close()
 
 
-async def exit_redis(app: aiohttp.web.Application):
+async def exit_redis(app: Application):
     """
     Attempt to close the app's `redis` instance.
 
@@ -78,14 +78,14 @@ async def exit_redis(app: aiohttp.web.Application):
         pass
 
 
-async def drop_fake_postgres(app: aiohttp.web.Application):
+async def drop_fake_postgres(app: Application):
     """
     Drop a fake PostgreSQL database if the instance was run with the ``--fake`` option.
 
     :param app: the application object
 
     """
-    if app["config"]["fake"] and "fake_" in app["config"]["postgres_connection_string"]:
+    if app["config"].fake and "fake_" in app["config"].postgres_connection_string:
         async with app["pg"].begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
             logger.debug("Dropped fake PostgreSQL database.")

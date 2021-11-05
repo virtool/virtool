@@ -8,7 +8,7 @@ from virtool.tasks.models import Task
 async def test_add_subtraction_files_task(tmp_path, spawn_client, dbi, pg_session,
                                           static_time):
     client = await spawn_client(authorize=True)
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     test_dir = tmp_path / "subtractions" / "foo"
     test_dir.mkdir(parents=True)

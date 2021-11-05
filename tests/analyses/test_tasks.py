@@ -16,7 +16,7 @@ async def test_store_nuvs_files_task(tmp_path, spawn_client, dbi, pg, pg_session
     test_dir.joinpath("hmm.tsv").write_text("HMM file")
     test_dir.joinpath("unmapped_otus.fq").write_text("FASTQ file")
 
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     await dbi.analyses.insert_one({
         "_id": "bar",
@@ -80,4 +80,5 @@ async def test_store_nuvs_files_task(tmp_path, spawn_client, dbi, pg, pg_session
         }
     ]
     assert set(os.listdir(tmp_path / "analyses" / "bar")) == {"assembly.fa.gz", "hmm.tsv", "unmapped_otus.fq.gz"}
+
     assert not (tmp_path / "samples" / "foo" / "analysis" / "bar").is_dir()

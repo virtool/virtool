@@ -11,7 +11,8 @@ from virtool.types import App
 async def create_fake_hmms(app: App):
     fake: FakerWrapper = app["fake"]
 
-    data_path = app["settings"]["data_path"]
+    data_path = app["config"].data_path
+
     hmms_path = data_path / "hmm"
 
     copy(example_path / "hmms/profiles.hmm", hmms_path)

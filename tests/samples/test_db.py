@@ -7,13 +7,13 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro, make_mocked_request
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-import virtool.samples.db
-import virtool.samples.utils
 import virtool.uploads.db
-import virtool.pg.utils
 from virtool.labels.models import Label
-from virtool.samples.db import compose_sample_workflow_query
+from virtool.pg.utils import get_row_by_id
+from virtool.samples.db import compose_sample_workflow_query, recalculate_workflow_tags, get_sample_owner, \
+    remove_samples, attach_labels, create_sample, check_is_legacy, update_is_compressed, finalize, compress_sample_reads
 from virtool.samples.models import SampleReads
+from virtool.samples.utils import calculate_workflow_tags
 from virtool.uploads.models import Upload
 
 FASTQ_PATH = Path(__file__).parent.parent / "test_files/test.fq"
@@ -73,7 +73,7 @@ class TestCalculateWorkflowTags:
             }
         ]
 
-        tags = virtool.samples.utils.calculate_workflow_tags(documents)
+        tags = calculate_workflow_tags(documents)
 
         assert tags == {
             "pathoscope": path_tag,
@@ -133,7 +133,7 @@ class TestRecalculateWorkflowTags:
             "nuvs": "ip"
         })
 
-        await virtool.samples.db.recalculate_workflow_tags(dbi, "test")
+        await recalculate_workflow_tags(dbi, "test")
 
         for document in analysis_documents:
             del document["sample"]
@@ -169,14 +169,14 @@ class TestGetSampleOwner:
             },
         ])
 
-        assert await virtool.samples.db.get_sample_owner(dbi, "test") == "foobar"
+        assert await get_sample_owner(dbi, "test") == "foobar"
 
     async def test_none(self, dbi):
         """
         Test that ``None`` is returned if the sample id does not exist.
 
         """
-        assert await virtool.samples.db.get_sample_owner(dbi, "foobar") is None
+        assert await get_sample_owner(dbi, "foobar") is None
 
 
 class TestRemoveSamples:
@@ -208,7 +208,7 @@ class TestRemoveSamples:
                 ]
         )
     ])
-    async def test(self, id_list, ls, samples, analyses, tmp_path, dbi):
+    async def test(self, id_list, ls, samples, analyses, tmp_path, dbi, config):
         """
         Test that the function can remove one or more samples, their analysis documents, and files.
 
@@ -243,18 +243,14 @@ class TestRemoveSamples:
             {"_id": "a_9", "sample": {"id": "test_3"}}
         ])
 
-        settings = {
-            "data_path": tmp_path
-        }
-
-        await virtool.samples.db.remove_samples(dbi, settings, id_list)
+        await remove_samples(dbi, config, id_list)
 
         assert set(ls) == set(os.listdir(samples_dir))
 
         assert await dbi.samples.find().to_list(None) == samples
         assert await dbi.analyses.find().to_list(None) == analyses
 
-    async def test_file_not_found(self, tmp_path, dbi):
+    async def test_file_not_found(self, tmp_path, dbi, config):
         """
         Test that the function does not fail when a sample folder is missing.
 
@@ -269,11 +265,7 @@ class TestRemoveSamples:
             {"_id": "test_2"}
         ])
 
-        settings = {
-            "data_path": tmp_path
-        }
-
-        await virtool.samples.db.remove_samples(dbi, settings, ["test_1", "test_2"])
+        await remove_samples(dbi, config, ["test_1", "test_2"])
 
         assert not samples_dir.exists()
 
@@ -294,7 +286,7 @@ async def test_attach_labels(spawn_client, pg_session, pg: AsyncEngine):
         "labels": [1, 2]
     }
 
-    result = await virtool.samples.db.attach_labels(pg, document)
+    result = await attach_labels(pg, document)
 
     assert result == {
         "id": "foo",
@@ -315,8 +307,8 @@ async def test_create_sample(dbi, mocker, snapshot, static_time, spawn_client):
 
     mocker.patch("virtool.db.utils.get_new_id", return_value="a2oj3gfd")
 
-    document = await virtool.samples.db.create_sample(dbi, "foo", "", "", "", "", "", [], "test",
-                                                      [], "bob", client.app["settings"])
+    document = await create_sample(dbi, "foo", "", "", "", "", "", [], "test",
+                                                      [], "bob", settings=client.app["settings"])
 
     snapshot.assert_match(document)
 
@@ -347,7 +339,7 @@ class TestCheckIsLegacy:
             "files": files
         }
 
-        assert virtool.samples.db.check_is_legacy(sample) is is_legacy
+        assert check_is_legacy(sample) is is_legacy
 
     @pytest.mark.parametrize("paired", [True, False])
     def test_names(self, paired):
@@ -372,7 +364,7 @@ class TestCheckIsLegacy:
             "paired": paired
         }
 
-        assert virtool.samples.db.check_is_legacy(sample) is False
+        assert check_is_legacy(sample) is False
 
 
 async def test_update_is_compressed(dbi):
@@ -405,7 +397,7 @@ async def test_update_is_compressed(dbi):
     await dbi.samples.insert_many(samples)
 
     for sample in samples:
-        await virtool.samples.db.update_is_compressed(dbi, sample)
+        await update_is_compressed(dbi, sample)
 
     assert await dbi.samples.find().to_list(None) == [
         {
@@ -433,7 +425,7 @@ async def test_update_is_compressed(dbi):
 
 
 @pytest.mark.parametrize("paired", [True, False])
-async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path):
+async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, config):
     m_update_is_compressed = mocker.patch(
         "virtool.samples.db.update_is_compressed",
         make_mocked_coro()
@@ -453,9 +445,7 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path):
     app_dict = {
         "db": dbi,
         "run_in_thread": run_in_thread,
-        "settings": {
-            "data_path": tmp_path
-        }
+        "config": config
     }
 
     sample_id = "foo"
@@ -489,7 +479,7 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path):
 
     await dbi.samples.insert_one(sample)
 
-    await virtool.samples.db.compress_sample_reads(app_dict, sample)
+    await compress_sample_reads(app_dict, sample)
 
     expected_listdir = ["reads_1.fq.gz", "reads_2.fq.gz"] if paired else ["reads_1.fq.gz"]
 
@@ -531,7 +521,7 @@ async def test_finalize(tmp_path, dbi, pg: AsyncEngine, pg_session):
 
     m_run_in_thread = make_mocked_coro()
 
-    document = await virtool.samples.db.finalize(dbi, pg, "test", quality, m_run_in_thread,
+    document = await finalize(dbi, pg, "test", quality, m_run_in_thread,
                                                  tmp_path)
     assert document == {
         "_id": "test",
@@ -555,7 +545,7 @@ async def test_finalize(tmp_path, dbi, pg: AsyncEngine, pg_session):
         ]
     }
     assert not await virtool.uploads.db.get(pg, 1)
-    assert not (await virtool.pg.utils.get_row_by_id(pg, SampleReads, 1)).upload
+    assert not (await get_row_by_id(pg, SampleReads, 1)).upload
 
 
 class TestComposeWorkflowQuery:

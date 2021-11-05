@@ -39,8 +39,6 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         Change Bowtie2 index name from 'reference' to 'subtraction'
 
         """
-        settings = self.app["settings"]
-
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
@@ -48,7 +46,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         )
 
         async for subtraction in self.db.subtraction.find(ADD_SUBTRACTION_FILES_QUERY):
-            path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
+            path = virtool.subtractions.utils.join_subtraction_path(self.app["config"], subtraction["_id"])
             await self.app["run_in_thread"](virtool.subtractions.utils.rename_bowtie_files, path)
 
     async def store_subtraction_files(self):
@@ -57,8 +55,6 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         subtraction
 
         """
-        settings = self.app["settings"]
-
         await virtool.tasks.pg.update(
             self.pg,
             self.id,
@@ -66,7 +62,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         )
 
         async for subtraction in self.db.subtraction.find(ADD_SUBTRACTION_FILES_QUERY):
-            path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
+            path = virtool.subtractions.utils.join_subtraction_path(self.app["config"], subtraction["_id"])
             subtraction_files = list()
 
             for filename in sorted(os.listdir(path)):
@@ -101,12 +97,12 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
         ]
 
     async def generate_fasta_file(self):
-        settings = self.app["settings"]
+        config = self.app["config"]
         subtraction = self.context["subtraction"]
 
-        index_path = virtool.subtractions.utils.join_subtraction_index_path(settings, subtraction)
+        index_path = virtool.subtractions.utils.join_subtraction_index_path(config, subtraction)
         fasta_path = (
-            virtool.subtractions.utils.join_subtraction_path(settings, subtraction)
+            virtool.subtractions.utils.join_subtraction_path(config, subtraction)
             / "subtraction.fa"
         )
 
@@ -120,7 +116,7 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
         await proc.communicate()
 
         target_path = (
-            virtool.subtractions.utils.join_subtraction_path(settings, subtraction)
+            virtool.subtractions.utils.join_subtraction_path(config, subtraction)
             / "subtraction.fa.gz"
         )
 

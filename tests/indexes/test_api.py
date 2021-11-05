@@ -10,7 +10,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy import select
 
-import virtool.indexes.files
+from virtool.indexes.files import create_index_file
 from virtool.indexes.db import FILES
 from virtool.indexes.models import IndexFile
 from virtool.indexes.utils import check_index_file_type
@@ -245,7 +245,7 @@ async def test_download_otus_json(file_exists, mocker, tmp_path, dbi, spawn_job_
 
     client = await spawn_job_client(authorize=True)
 
-    client.settings["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     index_dir = tmp_path / "references" / "foo" / "bar"
     index_dir.mkdir(parents=True)
@@ -275,7 +275,7 @@ async def test_download_otus_json(file_exists, mocker, tmp_path, dbi, spawn_job_
     assert expected == result
 
     if not file_exists:
-        m_get_patched_otus.assert_called_with(client.app["db"], client.settings, manifest)
+        m_get_patched_otus.assert_called_with(client.app["db"], client.app["config"], manifest)
 
 
 class TestCreate:
@@ -286,10 +286,8 @@ class TestCreate:
 
         client = await spawn_client(authorize=True)
 
-        client.app["settings"].update({
-            "sm_proc": 1,
-            "sm_mem": 2
-        })
+        client.app["settings"].sm_proc = 1
+        client.app["settings"].sm_mem = 2
 
         await client.db.references.insert_one({
             "_id": "foo"
@@ -523,7 +521,7 @@ async def test_upload(error, tmp_path, spawn_job_client, snapshot, static_time, 
         "file": open(path, "rb")
     }
 
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     index = {
         "_id": "foo",
@@ -617,7 +615,7 @@ async def test_finalize(error, snapshot, spawn_job_client, test_otu, pg):
     await client.db.otus.insert_one(test_otu)
 
     for file_name in files:
-        await virtool.indexes.files.create_index_file(pg, "test_index", check_index_file_type(file_name), file_name)
+        await create_index_file(pg, "test_index", check_index_file_type(file_name), file_name)
 
     resp = await client.patch("/api/indexes/test_index")
 
@@ -634,7 +632,7 @@ async def test_finalize(error, snapshot, spawn_job_client, test_otu, pg):
 async def test_download(status, spawn_job_client, tmp_path):
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     await client.db.indexes.insert_one({
         "_id": "test_index",

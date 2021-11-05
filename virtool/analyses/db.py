@@ -5,19 +5,11 @@ Work with analyses in the database.
 import asyncio
 from typing import List, Optional, Tuple
 
-import virtool.analyses.files
-import virtool.analyses.utils
 import virtool.bio
 import virtool.db.utils
-import virtool.history.db
-import virtool.indexes.db
-import virtool.jobs.db
-import virtool.otus.utils
-import virtool.samples.db
-import virtool.tasks.pg
-import virtool.tasks.task
-import virtool.types
 import virtool.utils
+from virtool.indexes.db import get_current_id_and_version
+from virtool.configuration.config import Config
 
 PROJECTION = (
     "_id",
@@ -48,9 +40,9 @@ class BLAST:
 
     """
 
-    def __init__(self, db, settings: dict, analysis_id: str, sequence_index: int, rid: str):
+    def __init__(self, db, config: Config, analysis_id: str, sequence_index: int, rid: str):
         self.db = db
-        self.settings = settings
+        self.config = config
         self.analysis_id = analysis_id
         self.sequence_index = sequence_index
         self.rid = rid
@@ -92,7 +84,7 @@ class BLAST:
         self.result = result
 
         if ready is None:
-            self.ready = await virtool.bio.check_rid(self.settings, self.rid)
+            self.ready = await virtool.bio.check_rid(self.config, self.rid)
         else:
             self.ready = ready
 
@@ -148,7 +140,7 @@ async def create(
 
     """
     # Get the current id and version of the otu index currently being used for analysis.
-    index_id, index_version = await virtool.indexes.db.get_current_id_and_version(db, ref_id)
+    index_id, index_version = await get_current_id_and_version(db, ref_id)
 
     analysis_id = analysis_id or await virtool.db.utils.get_new_id(db.analyses)
 
@@ -188,7 +180,7 @@ async def create(
 
 async def update_nuvs_blast(
         db,
-        settings: dict,
+        config: Config,
         analysis_id: str,
         sequence_index: int,
         rid: str,
@@ -201,7 +193,7 @@ async def update_nuvs_blast(
     Update the BLAST data for a sequence in a NuVs analysis.
 
     :param db: the application database object
-    :param settings: the application settings
+    :param config: the application configuration
     :param analysis_id: the id of the analysis the BLAST is for
     :param sequence_index: the index of the NuVs sequence the BLAST is for
     :param rid: the id of the request
@@ -213,7 +205,7 @@ async def update_nuvs_blast(
 
     """
     if ready is None:
-        ready = await virtool.bio.check_rid(settings, rid)
+        ready = await virtool.bio.check_rid(config, rid)
 
     data = {
         "interval": interval,
