@@ -21,10 +21,10 @@ REF_ID = "reference_1"
 
 async def populate(app: App):
     await create_fake_bob_user(app)
-    for yml_file in Path(app["config"]["fake_path"]).iterdir():
+    for yml_file in Path(app["config"].fake_path).iterdir():
+        print(yml_file)
         if yml_file.suffix in (".yml", ".yaml"):
             await load_test_case_from_yml(app, yml_file)
-
 
 
 async def remove_fake_data_path(app: App):
@@ -35,10 +35,10 @@ async def remove_fake_data_path(app: App):
     :param app: the application object
 
     """
-    data_path = app["config"].get("data_path")
+    data_path = app["config"].data_path
 
     # Be extra sure this is a fake application directory we should remove.
-    if data_path and app["config"]["fake"] and "virtool_fake_" in data_path:
+    if data_path and app["config"].fake and "virtool_fake_" in data_path:
         rmtree(data_path)
         logger.debug(f"Removed fake data directory: {data_path}")
 
@@ -50,10 +50,10 @@ async def drop_fake_mongo(app: App):
     :param app: the application object
 
     """
-    db_name = app["config"]["db_name"]
+    db_name = app["config"].db_name
 
     # Be extra sure this is a fake database we should drop.
-    if "fake-" in db_name and app["config"]["fake"]:
+    if "fake-" in db_name and app["config"].fake:
         await app["db"].motor_client.client.drop_database(db_name)
         logger.debug(f"Dropped fake Mongo database: {db_name}")
 

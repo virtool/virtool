@@ -2,21 +2,19 @@ import os
 
 import pytest
 
-from virtool.samples.fake import create_fake_sample, copy_reads_file, READ_FILES_PATH
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import LIST_PROJECTION
+from virtool.samples.fake import create_fake_sample, copy_reads_file, READ_FILES_PATH
 
 
 @pytest.fixture
-def app(dbi, pg, run_in_thread, tmp_path):
+def app(dbi, pg, run_in_thread, tmp_path, config):
     return {
         "db": dbi,
         "fake": FakerWrapper(),
         "pg": pg,
         "run_in_thread": run_in_thread,
-        "settings": {
-            "data_path": tmp_path
-        },
+        "config": config
     }
 
 
@@ -45,5 +43,5 @@ async def test_copy_reads_file(app):
 
     await copy_reads_file(app, file_path, "reads_1.fq.gz", "sample_1")
 
-    assert os.listdir(app["settings"]["data_path"] /
+    assert os.listdir(app["config"].data_path /
                       "samples" / "sample_1") == ["reads_1.fq.gz"]

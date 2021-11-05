@@ -9,12 +9,10 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-import virtool.db.utils
-import virtool.subtractions.files
-import virtool.subtractions.utils
-import virtool.tasks.pg
-import virtool.tasks.task
 import virtool.utils
+from virtool.db.utils import get_one_field, get_new_id
+from virtool.configuration.config import Config
+from virtool.subtractions.utils import join_subtraction_path, get_subtraction_files
 from virtool.types import App
 
 PROJECTION = [
@@ -48,7 +46,7 @@ async def attach_computed(app: App, subtraction: Dict[str, Any]) -> Dict[str, An
     subtraction_id = subtraction["_id"]
 
     files, linked_samples = await asyncio.gather(
-        virtool.subtractions.utils.get_subtraction_files(app["pg"], subtraction_id),
+        get_subtraction_files(app["pg"], subtraction_id),
         virtool.subtractions.db.get_linked_samples(app["db"], subtraction_id)
     )
 
@@ -72,7 +70,7 @@ async def attach_subtractions(db, document: Dict[str, Any]) -> Dict[str, Any]:
         subtractions = list()
 
         for subtraction_id in document["subtractions"]:
-            subtraction_name = await virtool.db.utils.get_one_field(
+            subtraction_name = await get_one_field(
                 db.subtraction,
                 "name",
                 subtraction_id
@@ -91,20 +89,20 @@ async def attach_subtractions(db, document: Dict[str, Any]) -> Dict[str, Any]:
     return document
 
 
-async def check_subtraction_fasta_files(db, settings: dict) -> list:
+async def check_subtraction_fasta_files(db, config: Config) -> list:
     """
     Check subtraction directories for files and set 'has_file' to boolean based on whether .fa.gz
     exists.
 
     :param db: the application database client
-    :param settings: the application settings
+    :param config: the application configuration
     :return: a list of subtraction IDs without FASTA files
 
     """
     subtractions_without_fasta = list()
 
     async for subtraction in db.subtraction.find({"deleted": False}):
-        path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction["_id"])
+        path = join_subtraction_path(config, subtraction["_id"])
         has_file = True
 
         if not glob.glob(f'{path}/*.fa.gz'):
@@ -144,7 +142,7 @@ async def create(
 
     """
     document = {
-        "_id": subtraction_id or await virtool.db.utils.get_new_id(db.subtraction),
+        "_id": subtraction_id or await get_new_id(db.subtraction),
         "name": name,
         "nickname": nickname,
         "deleted": False,
@@ -165,7 +163,7 @@ async def create(
 
 async def delete(app: App, subtraction_id: str) -> int:
     db = app["db"]
-    settings = app["settings"]
+    config = app["config"]
 
     update_result = await db.subtraction.update_one({"_id": subtraction_id, "deleted": False}, {
         "$set": {
@@ -176,7 +174,7 @@ async def delete(app: App, subtraction_id: str) -> int:
     await unlink_default_subtractions(db, subtraction_id)
 
     if update_result.modified_count:
-        path = virtool.subtractions.utils.join_subtraction_path(settings, subtraction_id)
+        path = join_subtraction_path(config, subtraction_id)
         await app["run_in_thread"](shutil.rmtree, path, True)
 
     return update_result.modified_count

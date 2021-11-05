@@ -6,7 +6,7 @@ from aiohttp.web_routedef import RouteTableDef
 
 import virtool.app
 import virtool.jobs.main
-import virtool.users.utils
+from virtool.configuration.config import Config
 from virtool.utils import hash_key
 
 
@@ -69,20 +69,22 @@ def create_app(
     def _create_app(
             dev=False,
     ):
-        return virtool.app.create_app({
-            "dev": dev,
-            "db_connection_string": test_db_connection_string,
-            "redis_connection_string": redis_connection_string,
-            "postgres_connection_string": pg_connection_string,
-            "db_name": test_db_name,
-            "fake": False,
-            "force_version": "v0.0.0",
-            "no_client": True,
-            "no_check_db": True,
-            "no_check_files": True,
-            "no_fetching": True,
-            "no_sentry": True
-        })
+        config = Config(
+            db_connection_string=test_db_connection_string,
+            db_name=test_db_name,
+            dev=dev,
+            force_version="v0.0.0",
+            no_check_db=True,
+            no_check_files=True,
+            no_fetching=True,
+            no_sentry=True,
+            no_client=True,
+            postgres_connection_string=pg_connection_string,
+            redis_connection_string=redis_connection_string,
+            fake=False,
+
+        )
+        return virtool.app.create_app(config)
 
     return _create_app
 
@@ -176,12 +178,14 @@ def spawn_job_client(
             auth = None
 
         app = await virtool.jobs.main.create_app(
-            db_connection_string=test_db_connection_string,
-            db_name=test_db_name,
-            dev=dev,
-            fake=False,
-            postgres_connection_string=pg_connection_string,
-            redis_connection_string=redis_connection_string,
+            Config(
+                db_connection_string=test_db_connection_string,
+                db_name=test_db_name,
+                dev=dev,
+                fake=False,
+                postgres_connection_string=pg_connection_string,
+                redis_connection_string=redis_connection_string
+            )
         )
 
         if add_route_table:

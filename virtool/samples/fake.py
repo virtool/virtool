@@ -8,6 +8,7 @@ from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import create_sample, finalize
 from virtool.samples.files import create_reads_file
+from virtool.settings.db import Settings
 from virtool.types import App
 
 READ_FILES_PATH = example_path / "reads"
@@ -65,7 +66,7 @@ async def create_fake_sample(
         sample_id: str,
         user_id: str,
         paired=False,
-        finalized=False
+        finalized=False,
 ) -> dict:
     fake = app.get("fake", FakerWrapper())
 
@@ -102,6 +103,12 @@ async def create_fake_sample(
                     sample_id,
                 )
 
+    settings = Settings()
+    settings.sample_group_read = True
+    settings.sample_group_write = True
+    settings.sample_all_read = True
+    settings.sample_all_write = True
+
     sample = await create_sample(
         _id=sample_id,
         db=db,
@@ -115,14 +122,7 @@ async def create_fake_sample(
         labels=[],
         user_id=user_id,
         group="none",
-        settings={
-            "app": app,
-            "db": db,
-            "sample_group_read": True,
-            "sample_group_write": True,
-            "sample_all_read": True,
-            "sample_all_write": True,
-        },
+        settings=settings
     )
 
     if finalized is True:
@@ -132,7 +132,7 @@ async def create_fake_sample(
             sample_id=sample_id,
             quality=await create_fake_quality(fake),
             run_in_thread=app["run_in_thread"],
-            data_path=app["settings"]["data_path"],
+            data_path=app["config"].data_path,
         )
 
     return sample
@@ -148,7 +148,7 @@ async def copy_reads_file(app: App, file_path: Path, filename: str, sample_id: s
     :param sample_id: the id of the sample
 
     """
-    reads_path = app["settings"]["data_path"] / "samples" / sample_id
+    reads_path = app["config"].data_path / "samples" / sample_id
     reads_path.mkdir(parents=True, exist_ok=True)
 
     await app["run_in_thread"](shutil.copy, file_path, reads_path / filename)

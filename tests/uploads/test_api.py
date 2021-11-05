@@ -29,7 +29,7 @@ class TestUpload:
         """
         client = await spawn_client(authorize=True, permissions=["upload_file"])
 
-        client.app["settings"]["data_path"] = tmp_path
+        client.app["config"].data_path = tmp_path
 
         if upload_type:
             resp = await client.post_form(f"/api/uploads?type={upload_type}&name=Test.fq.gz", data=files)
@@ -96,7 +96,7 @@ class TestGet:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        client.app["settings"]["data_path"] = tmp_path
+        client.app["config"].data_path = tmp_path
 
         if exists:
             await client.post_form("/api/uploads?name=test.fq.gz", data=files)
@@ -116,7 +116,7 @@ class TestGet:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        client.app["settings"]["data_path"] = tmp_path
+        client.app["config"].data_path = tmp_path
 
         async with pg_session as session:
             session.add(Upload(name_on_disk="1-test.fq.gz", removed=exists))
@@ -136,7 +136,7 @@ class TestDelete:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        client.app["settings"]["data_path"] = tmp_path
+        client.app["config"].data_path = tmp_path
         await client.post_form("/api/uploads?name=test.fq.gz", data=files)
 
         resp = await client.delete("/api/uploads/1")
@@ -153,7 +153,7 @@ class TestDelete:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        client.app["settings"]["data_path"] = tmp_path
+        client.app["config"].data_path = tmp_path
 
         async with pg_session as session:
             session.add(Upload(name_on_disk="1-test.fq.gz", removed=exists))
@@ -176,7 +176,7 @@ class TestDelete:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        client.app["settings"]["data_path"] = tmp_path
+        client.app["config"].data_path = tmp_path
 
         if exists:
             async with pg_session as session:

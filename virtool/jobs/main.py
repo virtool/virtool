@@ -1,22 +1,23 @@
 import asyncio
 from typing import Tuple
 
-import aiohttp.web
+from aiohttp.web import Application, AppRunner
 import aiojobs.aiohttp
 
-import virtool.http.errors
 import virtool.http.accept
+import virtool.http.errors
 import virtool.jobs.auth
 from virtool.dev.fake import drop_fake_mongo, remove_fake_data_path
 from virtool.jobs.routes import init_routes
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
+from virtool.configuration.config import Config
 from virtool.shutdown import drop_fake_postgres
 from virtool.startup import init_fake_config, init_redis, init_db, init_postgres, init_settings, init_executors, \
     init_fake, init_events
 from virtool.types import App
 
 
-async def create_app(**config):
+async def create_app(config: Config):
     """Create the :class:`aiohttp.web.Application` for the jobs API process."""
     middlewares = [
         virtool.http.accept.middleware,
@@ -24,7 +25,7 @@ async def create_app(**config):
         virtool.http.errors.middleware
     ]
 
-    app: aiohttp.web.Application = aiohttp.web.Application(middlewares=middlewares)
+    app: Application = Application(middlewares=middlewares)
 
     app["config"] = config
     app["mode"] = "jobs_api_server"
@@ -62,27 +63,25 @@ async def shutdown(app: App):
 
 
 async def start_aiohttp_server(
-        host: str, port: int, **config
-) -> Tuple[aiohttp.web.Application, aiohttp.web.AppRunner]:
+        config: Config
+) -> Tuple[Application, AppRunner]:
     """
     Create the :class:`aiohttp.web.Application` and start the aiohttp server
     for the jobs API process.
     """
-    app = await create_app(**config)
-    runner = await create_app_runner(app, host, port)
+    app = await create_app(config)
+    runner = await create_app_runner(app, config.host, config.port)
 
     return app, runner
 
 
-async def run(**config):
+async def run(config: Config):
     """
     Run the jobs API server.
 
-    :param dev: If True, the log level will be set to DEBUG
-    :param verbose: Same effect as :obj:`dev`
     :param config: Any other configuration options as keyword arguments
     """
-    app, runner = await start_aiohttp_server(**config)
+    app, runner = await start_aiohttp_server(config)
 
     _, pending = await asyncio.wait(
         [wait_for_restart(runner, app["events"]),

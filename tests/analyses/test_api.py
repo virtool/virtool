@@ -5,9 +5,8 @@ from pathlib import Path
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
-import virtool.analyses.db
-import virtool.analyses.files
-import virtool.pg.utils
+from virtool.analyses.files import create_analysis_file
+from virtool.pg.utils import get_row_by_id
 from virtool.analyses.models import AnalysisFile
 from virtool.utils import base_processor
 
@@ -68,7 +67,7 @@ async def test_get(ready, files, error, mocker, snapshot, spawn_client, static_t
     if error != "404":
         await client.db.analyses.insert_one(document)
 
-        await virtool.analyses.files.create_analysis_file(pg, "foobar", "fasta", "reference.fa")
+        await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
 
     m_format_analysis = mocker.patch(
         "virtool.analyses.format.format_analysis",
@@ -203,7 +202,7 @@ async def test_find(snapshot, mocker, spawn_client, resp_is, static_time):
 async def test_remove(mocker, error, spawn_client, resp_is, tmp_path):
     client = await spawn_client(authorize=True)
 
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     if error != "400":
         await client.db.samples.insert_one({
@@ -266,7 +265,7 @@ async def test_upload_file(error, files, resp_is, spawn_job_client, static_time,
     """
     client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
 
     if error == 400:
         format_ = "foo"
@@ -294,7 +293,7 @@ async def test_upload_file(error, files, resp_is, spawn_job_client, static_time,
 
         assert os.listdir(tmp_path / "analyses") == ["1-reference.fa"]
 
-        assert await virtool.pg.utils.get_row_by_id(pg, AnalysisFile, 1)
+        assert await get_row_by_id(pg, AnalysisFile, 1)
 
     elif error == 400:
         await resp_is.bad_request(resp, "Unsupported analysis file format")
@@ -319,10 +318,10 @@ async def test_download_analysis_result(file_exists, row_exists, files, spawn_cl
     client = await spawn_client(authorize=True, administrator=True)
     job_client = await spawn_job_client(authorize=True)
 
-    client.app["settings"]["data_path"] = tmp_path
-    job_client.app["settings"]["data_path"] = tmp_path
+    client.app["config"].data_path = tmp_path
+    job_client.app["config"].data_path = tmp_path
 
-    expected_path = client.app["settings"]["data_path"] / "analyses" / "1-reference.fa"
+    expected_path = client.app["config"].data_path / "analyses" / "1-reference.fa"
 
     await client.db.analyses.insert_one({
         "_id": "foobar",
@@ -470,12 +469,12 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
     assert await resp.json() == blast
 
     m_initialize_ncbi_blast.assert_called_with(
-        client.app["settings"],
+        client.app["config"],
         "GGAGTTAGATTGG"
     )
 
     m_check_rid.assert_called_with(
-        client.app["settings"],
+        client.app["config"],
         "FOOBAR1337"
     )
 

@@ -96,16 +96,16 @@ def join_legacy_read_path(sample_path: Path, suffix: int) -> Path:
     return sample_path / f"reads_{suffix}.fastq"
 
 
-def join_legacy_read_paths(settings: dict, sample):
+def join_legacy_read_paths(config, sample):
     """
     Create a list of paths for the read files associated with the `sample`.
 
-    :param settings: the application settings
+    :param config: the application configuration
     :param sample: the sample document
     :return: a list of sample read paths
 
     """
-    sample_path = join_sample_path(settings, sample["_id"])
+    sample_path = join_sample_path(config, sample["_id"])
 
     if not all(f["raw"] for f in sample["files"]):
         if sample["paired"]:
@@ -117,5 +117,5 @@ def join_legacy_read_paths(settings: dict, sample):
         return [join_legacy_read_path(sample_path, 1)]
 
 
-def join_sample_path(settings, sample_id) -> Path:
-    return settings["data_path"] / "samples" / sample_id
+def join_sample_path(config, sample_id) -> Path:
+    return config.data_path / "samples" / sample_id

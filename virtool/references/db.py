@@ -60,28 +60,24 @@ import logging
 from pathlib import Path
 from typing import List, Union, Optional
 
-import aiohttp
 import pymongo
-from aiohttp import web
+from aiohttp import ClientConnectorError
+from aiohttp.web import Request
 from semver import VersionInfo
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 
-import virtool.api
-import virtool.api.json
 import virtool.db.utils
 import virtool.errors
 import virtool.github
 import virtool.history.db
-import virtool.history.utils
-import virtool.http.utils
-import virtool.otus.db
-import virtool.otus.utils
-import virtool.pg.utils
-import virtool.references.utils
 import virtool.tasks.pg
-import virtool.tasks.task
-import virtool.users.db
 import virtool.utils
+from virtool.http.utils import download_file
+from virtool.otus.db import join
+from virtool.otus.utils import verify
+from virtool.pg.utils import get_row
+from virtool.references.utils import RIGHTS, get_owner_user, load_reference_file, clean_export_list, check_will_change
+from virtool.settings.db import Settings
 from virtool.types import App
 from virtool.uploads.models import Upload
 
@@ -162,7 +158,7 @@ async def add_group_or_user(db, ref_id: str, field: str, data: dict) -> Optional
     if subdocument_id in [s["id"] for s in document[field]]:
         raise virtool.errors.DatabaseError(field[:-1] + " already exists")
 
-    rights = {key: data.get(key, False) for key in virtool.references.utils.RIGHTS}
+    rights = {key: data.get(key, False) for key in RIGHTS}
 
     subdocument = {
         "id": subdocument_id,
@@ -179,7 +175,7 @@ async def add_group_or_user(db, ref_id: str, field: str, data: dict) -> Optional
     return subdocument
 
 
-async def check_right(req: web.Request, reference: dict, right: str) -> bool:
+async def check_right(req: Request, reference: dict, right: str) -> bool:
     """
     pass
 
@@ -330,7 +326,7 @@ async def edit_group_or_user(db, ref_id: str, subdocument_id: str, field: str, d
 
     for subdocument in document[field]:
         if subdocument["id"] == subdocument_id:
-            rights = {key: data.get(key, subdocument[key]) for key in virtool.references.utils.RIGHTS}
+            rights = {key: data.get(key, subdocument[key]) for key in RIGHTS}
             subdocument.update(rights)
 
             await db.references.update_one({"_id": ref_id}, {
@@ -375,7 +371,7 @@ async def fetch_and_update_release(app, ref_id: str, ignore_errors: bool = False
 
     try:
         updated = await virtool.github.get_release(
-            app["settings"],
+            app["config"],
             app["client"],
             document["remotes_from"]["slug"],
             etag
@@ -384,7 +380,7 @@ async def fetch_and_update_release(app, ref_id: str, ignore_errors: bool = False
         if updated:
             updated = virtool.github.format_release(updated)
 
-    except (aiohttp.ClientConnectorError, virtool.errors.GitHubError) as err:
+    except (ClientConnectorError, virtool.errors.GitHubError) as err:
         if "ClientConnectorError" in str(err):
             errors = ["Could not reach GitHub"]
 
@@ -567,7 +563,7 @@ async def get_unbuilt_count(db, ref_id: str) -> int:
     })
 
 
-async def create_clone(db, settings: dict, name: str, clone_from: str, description: str, user_id: str) -> dict:
+async def create_clone(db, settings: Settings, name: str, clone_from: str, description: str, user_id: str) -> dict:
     source = await db.references.find_one(clone_from)
 
     name = name or "Clone of " + source["name"]
@@ -593,7 +589,7 @@ async def create_clone(db, settings: dict, name: str, clone_from: str, descripti
 
 async def create_document(
         db,
-        settings: dict,
+        settings: Settings,
         name: str,
         organism: Optional[str],
         description: str,
@@ -616,7 +612,7 @@ async def create_document(
         }
 
     if not users:
-        users = [virtool.references.utils.get_owner_user(user_id)]
+        users = [get_owner_user(user_id)]
 
     document = {
         "_id": ref_id,
@@ -627,7 +623,7 @@ async def create_document(
         "organism": organism,
         "internal_control": None,
         "restrict_source_types": False,
-        "source_types": settings["default_source_types"],
+        "source_types": settings.default_source_types,
         "groups": list(),
         "users": users,
         "user": user
@@ -639,7 +635,7 @@ async def create_document(
     return document
 
 
-async def create_import(db, pg: AsyncEngine, settings: dict, name: str, description: str, import_from: str, user_id: str) -> dict:
+async def create_import(db, pg: AsyncEngine, settings: Settings, name: str, description: str, import_from: str, user_id: str) -> dict:
     """
     Import a previously exported Virtool reference.
 
@@ -666,14 +662,14 @@ async def create_import(db, pg: AsyncEngine, settings: dict, name: str, descript
         user_id=user_id
     )
 
-    upload = await virtool.pg.utils.get_row(pg, Upload, ("name_on_disk", import_from))
+    upload = await get_row(pg, Upload, ("name_on_disk", import_from))
 
     document["imported_from"] = upload.to_dict()
 
     return document
 
 
-async def create_remote(db, settings: dict, release: dict, remote_from: str, user_id: str) -> dict:
+async def create_remote(db, settings: Settings, release: dict, remote_from: str, user_id: str) -> dict:
     """
     Create a remote reference document in the database.
 
@@ -719,7 +715,7 @@ async def download_and_parse_release(app, url: str, task_id: int, progress_handl
     with virtool.utils.get_temp_dir() as tempdir:
         download_path = Path(tempdir) / "reference.tar.gz"
 
-        await virtool.http.utils.download_file(
+        await download_file(
             app,
             url,
             download_path,
@@ -728,7 +724,7 @@ async def download_and_parse_release(app, url: str, task_id: int, progress_handl
 
         await virtool.tasks.pg.update(pg, task_id, step="unpack")
 
-        return await app["run_in_thread"](virtool.references.utils.load_reference_file, download_path)
+        return await app["run_in_thread"](load_reference_file, download_path)
 
 
 async def edit(db, ref_id: str, data: dict) -> dict:
@@ -798,7 +794,7 @@ async def export(app: App, ref_id: str) -> list:
 
         otu_list.append(joined)
 
-    return virtool.references.utils.clean_export_list(otu_list)
+    return clean_export_list(otu_list)
 
 
 async def insert_change(app, otu_id: str, verb: str, user_id: str, old: Optional[dict] = None):
@@ -815,7 +811,7 @@ async def insert_change(app, otu_id: str, verb: str, user_id: str, old: Optional
     db = app["db"]
 
     # Join the otu document into a complete otu record. This will be used for recording history.
-    joined = await virtool.otus.db.join(db, otu_id)
+    joined = await join(db, otu_id)
 
     name = joined["name"]
 
@@ -851,7 +847,7 @@ async def insert_joined_otu(
 ) -> str:
     all_sequences = list()
 
-    issues = virtool.otus.utils.verify(otu)
+    issues = verify(otu)
 
     otu.update({
         "created_at": created_at,
@@ -930,7 +926,7 @@ async def refresh_remotes(app: App):
 
 
 async def update(
-        req: web.Request,
+        req: Request,
         created_at: datetime.datetime,
         task_id: int,
         ref_id: str,
@@ -970,10 +966,10 @@ async def update_joined_otu(
 ) -> Union[dict, str, None]:
     remote_id = otu["_id"]
 
-    old = await virtool.otus.db.join(db, {"reference.id": ref_id, "remote.id": remote_id})
+    old = await join(db, {"reference.id": ref_id, "remote.id": remote_id})
 
     if old:
-        if not virtool.references.utils.check_will_change(old, otu):
+        if not check_will_change(old, otu):
             return None
 
         sequence_updates = list()

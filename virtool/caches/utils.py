@@ -3,16 +3,17 @@ Utilities used for working with cache files within analysis workflows.
 
 """
 from pathlib import Path
-from typing import Any, Dict
+
+from virtool.configuration.config import Config
 
 
-def join_cache_path(settings: Dict[str, Any], cache_id: str) -> Path:
+def join_cache_path(config: Config, cache_id: str) -> Path:
     """
-    Create a cache path string given the application settings and cache id.
+    Create a cache path string given the application configuration and cache id.
 
-    :param settings: the application settings
+    :param config: the application configuration
     :param cache_id: the id of the cache
     :return: a cache path
 
     """
-    return settings["data_path"] / "caches" / cache_id
+    return config.data_path / "caches" / cache_id

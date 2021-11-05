@@ -49,7 +49,7 @@ async def create_fake_finalized_subtraction(
     })
 
     subtractions_path = (
-            app["settings"]["data_path"]
+            app["config"].data_path
             / "subtractions"
             / subtraction_id.replace(" ", "_").lower()
     )

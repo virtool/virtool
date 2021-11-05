@@ -6,23 +6,22 @@ from pathlib import Path
 
 import aiohttp
 
-import virtool.api.json
 import virtool.errors
-import virtool.github
-import virtool.history.db
-import virtool.history.utils
-import virtool.http.utils
 import virtool.otus.db
-import virtool.references.utils
 import virtool.tasks.pg
-import virtool.tasks.task
-import virtool.utils
-
+from virtool.api.json import CustomEncoder
+from virtool.github import create_update_subdocument
+from virtool.history.db import patch_to_version
+from virtool.history.utils import remove_diff_files
+from virtool.http.utils import download_file
 from virtool.references.db import insert_joined_otu, insert_change, download_and_parse_release, \
     fetch_and_update_release, update_joined_otu
+from virtool.references.utils import load_reference_file, check_import_data
+from virtool.tasks.task import Task
+from virtool.utils import get_temp_dir, compress_json_with_gzip
 
 
-class CloneReferenceTask(virtool.tasks.task.Task):
+class CloneReferenceTask(Task):
     task_type = "clone_reference"
 
     def __init__(self, app, task_id):
@@ -50,7 +49,7 @@ class CloneReferenceTask(virtool.tasks.task.Task):
         )
 
         for source_otu_id, version in manifest.items():
-            _, patched, _ = await virtool.history.db.patch_to_version(
+            _, patched, _ = await patch_to_version(
                 self.app,
                 source_otu_id,
                 version
@@ -109,11 +108,11 @@ class CloneReferenceTask(virtool.tasks.task.Task):
             self.db.history.delete_many(query),
             self.db.otus.delete_many(query),
             self.db.sequences.delete_many(query),
-            virtool.history.utils.remove_diff_files(self.app, diff_file_change_ids)
+            remove_diff_files(self.app, diff_file_change_ids)
         )
 
 
-class ImportReferenceTask(virtool.tasks.task.Task):
+class ImportReferenceTask(Task):
     task_type = "import_reference"
 
     def __init__(self, app, task_id):
@@ -133,7 +132,7 @@ class ImportReferenceTask(virtool.tasks.task.Task):
         path = self.context["path"]
         tracker = await self.get_tracker()
         try:
-            self.import_data = await self.run_in_thread(virtool.references.utils.load_reference_file, path)
+            self.import_data = await self.run_in_thread(load_reference_file, path)
         except json.decoder.JSONDecodeError as err:
             return await self.error(str(err).split("JSONDecodeError: ")[1])
         except OSError as err:
@@ -190,7 +189,7 @@ class ImportReferenceTask(virtool.tasks.task.Task):
     async def validate(self):
         tracker = await self.get_tracker()
 
-        errors = virtool.references.utils.check_import_data(
+        errors = check_import_data(
             self.import_data,
             strict=False,
             verify=True
@@ -255,7 +254,7 @@ class ImportReferenceTask(virtool.tasks.task.Task):
         )
 
 
-class RemoteReferenceTask(virtool.tasks.task.Task):
+class RemoteReferenceTask(Task):
     task_type = "remote_reference"
 
     def __init__(self, app, task_id):
@@ -303,7 +302,7 @@ class RemoteReferenceTask(virtool.tasks.task.Task):
             }
         })
 
-        error = virtool.references.utils.check_import_data(
+        error = check_import_data(
             self.import_data,
             strict=True,
             verify=True
@@ -356,7 +355,7 @@ class RemoteReferenceTask(virtool.tasks.task.Task):
 
         await self.db.references.update_one({"_id": self.context["ref_id"], "updates.id": self.context["release"]["id"]}, {
             "$set": {
-                "installed": virtool.github.create_update_subdocument(self.context["release"], True, self.context["user_id"]),
+                "installed": create_update_subdocument(self.context["release"], True, self.context["user_id"]),
                 "updates.$.ready": True,
                 "updating": False
             }
@@ -371,7 +370,7 @@ class RemoteReferenceTask(virtool.tasks.task.Task):
         )
 
 
-class DeleteReferenceTask(virtool.tasks.task.Task):
+class DeleteReferenceTask(Task):
     task_type = "delete_reference"
 
     def __init__(self, app, task_id):
@@ -389,7 +388,7 @@ class DeleteReferenceTask(virtool.tasks.task.Task):
     async def remove_directory(self):
         tracker = await self.get_tracker()
 
-        path = self.app["settings"]["data_path"] / "references"
+        path = self.app["config"].data_path / "references"
 
         reference_ids = os.listdir(path)
         existent_references = await self.db.references.distinct("_id", {
@@ -451,7 +450,7 @@ class DeleteReferenceTask(virtool.tasks.task.Task):
                 self.db.otus.delete_many({"_id": {"$in": unreferenced_otu_ids}}),
                 self.db.history.delete_many({"otu.id": {"$in": unreferenced_otu_ids}}),
                 self.db.sequences.delete_many({"otu_id": {"$in": unreferenced_otu_ids}}),
-                virtool.history.utils.remove_diff_files(self.app, diff_file_change_ids)
+                remove_diff_files(self.app, diff_file_change_ids)
             )
 
             await virtool.tasks.pg.update(
@@ -484,7 +483,7 @@ class DeleteReferenceTask(virtool.tasks.task.Task):
         )
 
 
-class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
+class UpdateRemoteReferenceTask(Task):
     task_type = "update_remote_reference"
 
     def __init__(self, *args):
@@ -505,10 +504,10 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
         tracker = await self.get_tracker(file_size)
 
         try:
-            with virtool.utils.get_temp_dir() as tempdir:
+            with get_temp_dir() as tempdir:
                 download_path = Path(tempdir) / "reference.tar.gz"
 
-                await virtool.http.utils.download_file(
+                await download_file(
                     self.app,
                     url,
                     download_path,
@@ -516,7 +515,7 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
                 )
 
                 self.intermediate["update_data"] = await self.run_in_thread(
-                    virtool.references.utils.load_reference_file,
+                    load_reference_file,
                     download_path
                 )
 
@@ -626,7 +625,7 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
 
         await self.db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
             "$set": {
-                "installed": virtool.github.create_update_subdocument(release, True, self.context["user_id"]),
+                "installed": create_update_subdocument(release, True, self.context["user_id"]),
                 "updates.$.ready": True
             }
         })
@@ -647,7 +646,7 @@ class UpdateRemoteReferenceTask(virtool.tasks.task.Task):
         )
 
 
-class CreateIndexJSONTask(virtool.tasks.task.Task):
+class CreateIndexJSONTask(Task):
     task_type = "create_index_json"
 
     def __init__(self, app, task_id):
@@ -682,17 +681,17 @@ class CreateIndexJSONTask(virtool.tasks.task.Task):
                 pass
 
             file_path = (
-                self.app["settings"]["data_path"]
+                self.app["config"].data_path
                 / "references"
                 / ref_id
                 / index_id
                 / "reference.json.gz")
 
             # Convert the list of OTUs to a JSON-formatted string.
-            json_string = json.dumps(data, cls=virtool.api.json.CustomEncoder)
+            json_string = json.dumps(data, cls=CustomEncoder)
 
             # Compress the JSON string to a gzip file.
-            await self.run_in_thread(virtool.utils.compress_json_with_gzip,
+            await self.run_in_thread(compress_json_with_gzip,
                                      json_string,
                                      file_path)
 

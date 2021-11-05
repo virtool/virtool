@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 
-import aiohttp.web
+from aiohttp.web import Response, Request, FileResponse
 from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPConflict
 from aiohttp.web_fileresponse import FileResponse
 from sqlalchemy import exc
@@ -139,13 +139,13 @@ async def download_otus_json(req):
 
     ref_id = index["reference"]["id"]
 
-    data_path = req.app["settings"]["data_path"]
+    data_path = req.app["config"].data_path
     json_path = data_path / f"references/{ref_id}/{index_id}/otus.json.gz"
 
     if not json_path.exists():
         patched_otus = await virtool.indexes.db.get_patched_otus(
             db,
-            req.app["settings"],
+            req.app["config"],
             index["manifest"]
         )
 
@@ -162,7 +162,7 @@ async def download_otus_json(req):
 
 
 @routes.get("/api/indexes/{index_id}/files/{filename}")
-async def download_index_file(req: aiohttp.web.Request):
+async def download_index_file(req: Request):
     """
     Download files relating to a given index.
     """
@@ -182,16 +182,16 @@ async def download_index_file(req: aiohttp.web.Request):
         raise InsufficientRights()
 
     reference_id = index_document["reference"]["id"]
-    path = req.app["settings"]["data_path"] / "references" / reference_id / index_id / filename
+    path = req.app["config"].data_path / "references" / reference_id / index_id / filename
 
     if not path.exists():
         raise NotFound("File not found")
 
-    return aiohttp.web.FileResponse(path)
+    return FileResponse(path)
 
 
 @routes.jobs_api.get("/api/indexes/{index_id}/files/{filename}")
-async def download_index_file_for_jobs(req: aiohttp.web.Request):
+async def download_index_file_for_jobs(req: Request):
     """Download files relating to a given index for jobs."""
     index_id = req.match_info["index_id"]
     filename = req.match_info["filename"]
@@ -206,12 +206,12 @@ async def download_index_file_for_jobs(req: aiohttp.web.Request):
 
     reference_id = index_document["reference"]["id"]
 
-    path = req.app["settings"]["data_path"] / "references" / reference_id / index_id / filename
+    path = req.app["config"].data_path / "references" / reference_id / index_id / filename
 
     if not path.exists():
         raise NotFound("File not found")
 
-    return aiohttp.web.FileResponse(path)
+    return FileResponse(path)
 
 
 @routes.post("/api/refs/{ref_id}/indexes")
@@ -314,7 +314,7 @@ async def upload(req):
         raise HTTPConflict(text="File name already exists")
 
     upload_id = index_file["id"]
-    path = req.app["settings"]["data_path"] / "references" / reference_id / index_id / name
+    path = req.app["config"].data_path / "references" / reference_id / index_id / name
 
     try:
         size = await naive_writer(req, path)
@@ -322,7 +322,7 @@ async def upload(req):
         logger.debug(f"Index file upload aborted: {upload_id}")
         await delete_row(pg, upload_id, IndexFile)
 
-        return aiohttp.web.Response(status=499)
+        return Response(status=499)
 
     index_file = await virtool.uploads.db.finalize(pg, size, upload_id, IndexFile)
 
@@ -413,7 +413,7 @@ async def find_history(req):
 
 
 @routes.jobs_api.delete("/api/indexes/{index_id}")
-async def delete_index(req: aiohttp.web.Request):
+async def delete_index(req: Request):
     """Delete the index with the given id and reset history relating to that index."""
     index_id = req.match_info["index_id"]
     db = req.app["db"]

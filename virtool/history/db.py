@@ -28,6 +28,7 @@ import pymongo.errors
 
 import virtool.errors
 import virtool.history.utils
+from virtool.history.utils import derive_otu_information, calculate_diff, write_diff_file
 import virtool.otus.db
 import virtool.otus.utils
 import virtool.utils
@@ -82,7 +83,7 @@ async def add(
     """
     db = app["db"]
 
-    otu_id, otu_name, otu_version, ref_id = virtool.history.utils.derive_otu_information(old, new)
+    otu_id, otu_name, otu_version, ref_id = derive_otu_information(old, new)
 
     document = {
         "_id": ".".join([str(otu_id), str(otu_version)]),
@@ -113,13 +114,13 @@ async def add(
         document["diff"] = old
 
     else:
-        document["diff"] = virtool.history.utils.calculate_diff(old, new)
+        document["diff"] = calculate_diff(old, new)
 
     try:
         await db.history.insert_one(document, silent=silent)
     except pymongo.errors.DocumentTooLarge:
-        await virtool.history.utils.write_diff_file(
-            app["settings"]["data_path"],
+        await write_diff_file(
+            app["config"].data_path,
             otu_id,
             otu_version,
             document["diff"]
@@ -161,7 +162,7 @@ async def get(app, change_id: str) -> dict:
         otu_id, otu_version = change_id.split(".")
 
         document["diff"] = await virtool.history.utils.read_diff_file(
-            app["settings"]["data_path"],
+            app["config"].data_path,
             otu_id,
             otu_version
         )
@@ -234,7 +235,7 @@ async def patch_to_version(app, otu_id: str, version: Union[str, int]) -> tuple:
 
             if change["diff"] == "file":
                 change["diff"] = await virtool.history.utils.read_diff_file(
-                    app["settings"]["data_path"],
+                    app["config"].data_path,
                     otu_id,
                     change["otu"]["version"]
                 )

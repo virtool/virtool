@@ -7,18 +7,18 @@ from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPBadGateway
 from aiohttp.web_fileresponse import FileResponse
 
 import virtool.hmm.db
-import virtool.http.routes
 from virtool.api.response import json_response, NotFound
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_one_field
 from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument
-from virtool.hmm.db import generate_annotations_json_file
+from virtool.hmm.db import generate_annotations_json_file, PROJECTION
 from virtool.hmm.tasks import HMMInstallTask
 from virtool.hmm.utils import hmm_data_exists
+from virtool.http.routes import Routes
 from virtool.utils import base_processor, rm, compress_file_with_gzip
 
-routes = virtool.http.routes.Routes()
+routes = Routes()
 
 
 @routes.get("/api/hmms")
@@ -41,7 +41,7 @@ async def find(req):
         db_query,
         req.query,
         sort="cluster",
-        projection=virtool.hmm.db.PROJECTION,
+        projection=PROJECTION,
         base_query={"hidden": False}
     )
 
@@ -178,9 +178,9 @@ async def purge(req):
     """
     db = req.app["db"]
 
-    await virtool.hmm.db.purge(db, req.app["settings"])
+    await virtool.hmm.db.purge(db, req.app["config"])
 
-    hmm_path = req.app["settings"]["data_path"] / "hmm/profiles.hmm"
+    hmm_path = req.app["config"].data_path / "hmm/profiles.hmm"
 
     try:
         await req.app["run_in_thread"](rm, hmm_path)
@@ -203,7 +203,7 @@ async def purge(req):
 @routes.jobs_api.get("/api/hmms/files/annotations.json.gz")
 async def get_hmm_annotations(request):
     """Get a compressed json file containing the database documents for all HMMs."""
-    data_path = request.app["settings"]["data_path"]
+    data_path = request.app["config"].data_path
     annotation_path = data_path / "hmm/annotations.json.gz"
 
     if not annotation_path.exists():
@@ -220,7 +220,7 @@ async def get_hmm_profiles(req):
     Download the HMM profiles file if HMM data is available.
 
     """
-    file_path = req.app["settings"]["data_path"] / "hmm" / "profiles.hmm"
+    file_path = req.app["config"].data_path / "hmm" / "profiles.hmm"
 
     if not await req.app["run_in_thread"](hmm_data_exists, file_path):
         raise NotFound("Profiles file could not be found")

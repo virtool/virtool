@@ -9,19 +9,19 @@ import aiohttp
 
 import virtool.analyses.db
 import virtool.errors
-import virtool.http.proxy
 import virtool.utils
+from virtool.http.proxy import ProxyRequest
 
 logger = logging.getLogger(__name__)
 
 BLAST_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"
 
 
-async def initialize_ncbi_blast(settings: dict, sequence: dict) -> tuple:
+async def initialize_ncbi_blast(config, sequence: dict) -> tuple:
     """
     Send a request to NCBI to BLAST the passed sequence. Return the RID and RTOE from the response.
 
-    :param settings: the application settings object
+    :param config: the application configuration object
     :param sequence: the nucleotide sequence to BLAST
     :return: the RID and RTOE for the request
 
@@ -43,7 +43,7 @@ async def initialize_ncbi_blast(settings: dict, sequence: dict) -> tuple:
     }
 
     async with aiohttp.ClientSession() as session:
-        async with virtool.http.proxy.ProxyRequest(settings, session.post, BLAST_URL, params=params, data=data) as resp:
+        async with ProxyRequest(config, session.post, BLAST_URL, params=params, data=data) as resp:
             if resp.status != 200:
                 raise virtool.errors.NCBIError(f"BLAST request returned status: {resp.status}")
 
@@ -74,12 +74,12 @@ def extract_blast_info(html: str) -> tuple:
     return rid, int(rtoe)
 
 
-async def check_rid(settings: dict, rid: str) -> bool:
+async def check_rid(config, rid: str) -> bool:
     """
     Check if the BLAST process identified by the passed RID is ready.
 
     :param rid: the RID to check
-    :param settings: the application settings object
+    :param config: the application configuration object
     :return: ``True`` if ready, ``False`` otherwise
 
     """
@@ -90,7 +90,7 @@ async def check_rid(settings: dict, rid: str) -> bool:
     }
 
     async with aiohttp.ClientSession() as session:
-        async with virtool.http.proxy.ProxyRequest(settings, session.get, BLAST_URL, params=params) as resp:
+        async with ProxyRequest(config, session.get, BLAST_URL, params=params) as resp:
             if resp.status != 200:
                 raise virtool.errors.NCBIError(f"RID check request returned status {resp.status}")
 
@@ -138,11 +138,11 @@ def format_blast_hit(hit: dict) -> dict:
     }
 
 
-async def get_ncbi_blast_result(settings: dict, run_in_process: callable, rid: str) -> dict:
+async def get_ncbi_blast_result(config, run_in_process: callable, rid: str) -> dict:
     """
     Retrieve the BLAST result with the given `rid` from NCBI.
 
-    :param settings: the application settings
+    :param config: the application configuration
     :param run_in_process: the application processing running function
     :param rid: the rid to retrieve a result for
     :return: the BLAST result
@@ -156,7 +156,7 @@ async def get_ncbi_blast_result(settings: dict, run_in_process: callable, rid: s
     }
 
     async with aiohttp.ClientSession() as session:
-        async with virtool.http.proxy.ProxyRequest(settings, session.get, BLAST_URL, params=params) as resp:
+        async with virtool.http.proxy.ProxyRequest(config, session.get, BLAST_URL, params=params) as resp:
             data = await resp.read()
             return await run_in_process(extract_ncbi_blast_zip, data, rid)
 
@@ -203,11 +203,11 @@ async def wait_for_blast_result(app, analysis_id, sequence_index, rid):
 
     """
     db = app["db"]
-    settings = app["settings"]
+    config = app["config"]
 
     blast = virtool.analyses.db.BLAST(
         db,
-        settings,
+        app["config"],
         analysis_id,
         sequence_index,
         rid
@@ -217,14 +217,14 @@ async def wait_for_blast_result(app, analysis_id, sequence_index, rid):
         while not blast.ready:
             await blast.sleep()
 
-            blast.ready = await check_rid(settings, rid)
+            blast.ready = await check_rid(app["config"], rid)
 
             logger.debug(f"Checked BLAST {rid} ({blast.interval}s)")
 
             if blast.ready:
                 try:
                     result_json = await get_ncbi_blast_result(
-                        settings,
+                        config,
                         app["run_in_process"],
                         rid
                     )

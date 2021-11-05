@@ -16,14 +16,11 @@ import virtool.analyses.db
 import virtool.caches.db
 import virtool.db.utils
 import virtool.jobs.db
-import virtool.pg.utils
 import virtool.samples.db
-import virtool.samples.files
 import virtool.samples.utils
 import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
-import virtool.validators
 from virtool.analyses.db import PROJECTION
 from virtool.analyses.utils import WORKFLOW_NAMES
 from virtool.api.response import json_response, InsufficientRights, NotFound, InvalidQuery
@@ -34,12 +31,15 @@ from virtool.errors import DatabaseError
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
-from virtool.samples.db import attach_labels, compose_sample_workflow_query, get_sample_owner
-from virtool.samples.files import create_artifact_file
+from virtool.pg.utils import get_rows, delete_row
+from virtool.samples.db import attach_labels, compose_sample_workflow_query, get_sample_owner, LIST_PROJECTION, \
+    check_name, validate_force_choice_group, create_sample, check_rights, RIGHTS_PROJECTION, recalculate_workflow_tags
+from virtool.samples.files import create_artifact_file, create_reads_file, get_existing_reads
 from virtool.samples.models import ArtifactType, SampleArtifact, SampleReads
 from virtool.samples.utils import bad_labels_response, check_labels
 from virtool.subtractions.db import attach_subtractions
 from virtool.uploads.utils import is_gzip_compressed
+from virtool.validators import strip
 
 logger = logging.getLogger("samples")
 
@@ -47,7 +47,7 @@ QUERY_SCHEMA = {
     "find": {
         "type": "string",
         "default": "",
-        "coerce": (str, virtool.validators.strip)
+        "coerce": (str, strip)
     },
     "page": {
         "type": "integer",
@@ -129,7 +129,7 @@ async def find(req):
         db_query,
         req.query,
         sort="created_at",
-        projection=virtool.samples.db.LIST_PROJECTION,
+        projection=LIST_PROJECTION,
         base_query=base_query,
         reverse=True
     )
@@ -208,18 +208,18 @@ async def get_cache(req):
 @schema({
     "name": {
         "type": "string",
-        "coerce": virtool.validators.strip,
+        "coerce": strip,
         "empty": False,
         "required": True
     },
     "host": {
         "type": "string",
-        "coerce": virtool.validators.strip,
+        "coerce": strip,
         "default": ''
     },
     "isolate": {
         "type": "string",
-        "coerce": virtool.validators.strip,
+        "coerce": strip,
         "default": ''
     },
     "group": {
@@ -227,7 +227,7 @@ async def get_cache(req):
     },
     "locale": {
         "type": "string",
-        "coerce": virtool.validators.strip,
+        "coerce": strip,
         "default": ''
     },
     "library_type": {
@@ -265,7 +265,7 @@ async def create(req):
     user_id = req["client"].user_id
     settings = req.app["settings"]
 
-    name_error_message = await virtool.samples.db.check_name(db, req.app["settings"], data["name"])
+    name_error_message = await check_name(db, req.app["settings"], data["name"])
 
     if name_error_message:
         raise HTTPBadRequest(text=name_error_message)
@@ -292,11 +292,11 @@ async def create(req):
     except AttributeError:
         raise HTTPBadRequest(text="File does not exist")
 
-    sample_group_setting = settings["sample_group"]
+    sample_group_setting = settings.sample_group
 
     # Require a valid ``group`` field if the ``sample_group`` setting is ``users_primary_group``.
     if sample_group_setting == "force_choice":
-        force_choice_error_message = await virtool.samples.db.validate_force_choice_group(db, data)
+        force_choice_error_message = await validate_force_choice_group(db, data)
 
         if force_choice_error_message:
             raise HTTPBadRequest(text=force_choice_error_message)
@@ -317,7 +317,7 @@ async def create(req):
         for upload in uploads
     ]
 
-    document = await virtool.samples.db.create_sample(
+    document = await create_sample(
         db,
         data["name"],
         data["host"],
@@ -375,24 +375,24 @@ async def create(req):
 @schema({
     "name": {
         "type": "string",
-        "coerce": virtool.validators.strip,
+        "coerce": strip,
         "empty": False
     },
     "host": {
         "type": "string",
-        "coerce": virtool.validators.strip,
+        "coerce": strip,
     },
     "isolate": {
         "type": "string",
-        "coerce": virtool.validators.strip,
+        "coerce": strip,
     },
     "locale": {
         "type": "string",
-        "coerce": virtool.validators.strip,
+        "coerce": strip,
     },
     "notes": {
         "type": "string",
-        "coerce": virtool.validators.strip,
+        "coerce": strip,
     },
     "labels": {
         "type": "list"
@@ -412,11 +412,11 @@ async def edit(req):
 
     sample_id = req.match_info["sample_id"]
 
-    if not await virtool.samples.db.check_rights(db, sample_id, req["client"]):
+    if not await check_rights(db, sample_id, req["client"]):
         raise InsufficientRights()
 
     if "name" in data:
-        message = await virtool.samples.db.check_name(
+        message = await check_name(
             db,
             req.app["settings"],
             data["name"],
@@ -473,7 +473,7 @@ async def finalize(req):
         sample_id,
         data["quality"],
         req.app["run_in_thread"],
-        req.app["settings"]["data_path"]
+        req.app["config"].data_path
     )
 
     return json_response(await virtool.samples.db.get_sample(req.app, sample_id))
@@ -527,7 +527,7 @@ async def set_rights(req):
     # Update the sample document with the new rights.
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": data
-    }, projection=virtool.samples.db.RIGHTS_PROJECTION)
+    }, projection=RIGHTS_PROJECTION)
 
     return json_response(document)
 
@@ -544,7 +544,7 @@ async def remove(req):
     sample_id = req.match_info["sample_id"]
 
     try:
-        if not await virtool.samples.db.check_rights(db, sample_id, client):
+        if not await check_rights(db, sample_id, client):
             raise InsufficientRights()
     except DatabaseError as err:
         if "Sample does not exist" in str(err):
@@ -554,7 +554,7 @@ async def remove(req):
 
     await virtool.samples.db.remove_samples(
         db,
-        req.app["settings"],
+        req.app["config"],
         [sample_id]
     )
 
@@ -581,7 +581,7 @@ async def job_remove(req):
     if document["ready"]:
         raise HTTPBadRequest(text="Only unfinalized samples can be deleted")
 
-    reads_files = await virtool.pg.utils.get_rows(pg, SampleReads, "sample", sample_id)
+    reads_files = await get_rows(pg, SampleReads, "sample", sample_id)
     upload_ids = [upload for reads in reads_files if (upload := reads.upload)]
 
     if upload_ids:
@@ -589,7 +589,7 @@ async def job_remove(req):
 
     await virtool.samples.db.remove_samples(
         db,
-        req.app["settings"],
+        req.app["config"],
         [sample_id]
     )
 
@@ -607,7 +607,7 @@ async def find_analyses(req):
     sample_id = req.match_info["sample_id"]
 
     try:
-        if not await virtool.samples.db.check_rights(db, sample_id, req["client"], write=False):
+        if not await check_rights(db, sample_id, req["client"], write=False):
             raise InsufficientRights()
     except DatabaseError as err:
         if "Sample does not exist" in str(err):
@@ -668,7 +668,7 @@ async def analyze(req):
     ref_id = data["ref_id"]
 
     try:
-        if not await virtool.samples.db.check_rights(db, sample_id, req["client"]):
+        if not await check_rights(db, sample_id, req["client"]):
             raise InsufficientRights()
     except DatabaseError as err:
         if "Sample does not exist" in str(err):
@@ -738,7 +738,7 @@ async def analyze(req):
 
     await req.app["jobs"].enqueue(job["_id"])
 
-    await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
+    await recalculate_workflow_tags(db, sample_id)
 
     return json_response(
         virtool.utils.base_processor(document),
@@ -797,7 +797,7 @@ async def upload_artifact(req):
     name = req.query.get("name")
 
     artifact_file_path = virtool.samples.utils.join_sample_path(
-        req.app["settings"], sample_id) / name
+        req.app["config"], sample_id) / name
 
     if artifact_type and artifact_type not in ArtifactType.to_list():
         raise HTTPBadRequest(text="Unsupported sample artifact type")
@@ -813,7 +813,7 @@ async def upload_artifact(req):
         size = await virtool.uploads.utils.naive_writer(req, artifact_file_path)
     except asyncio.CancelledError:
         logger.debug(f"Artifact file upload aborted for sample: {sample_id}")
-        await virtool.pg.utils.delete_row(pg, upload_id, SampleArtifact)
+        await delete_row(pg, upload_id, SampleArtifact)
         await req.app["run_in_thread"](os.remove, artifact_file_path)
         return aiohttp.web.Response(status=499)
 
@@ -847,7 +847,7 @@ async def upload_reads(req):
         raise HTTPBadRequest(text="File name is not an accepted reads file")
 
     reads_path = virtool.samples.utils.join_sample_path(
-        req.app["settings"], sample_id) / name
+        req.app["config"], sample_id) / name
 
     if not await db.samples.find_one(sample_id):
         raise NotFound()
@@ -860,7 +860,7 @@ async def upload_reads(req):
         logger.debug(f"Reads file upload aborted for {sample_id}")
         return aiohttp.web.Response(status=499)
     try:
-        reads = await virtool.samples.files.create_reads_file(
+        reads = await create_reads_file(
             pg,
             size,
             name,
@@ -931,7 +931,7 @@ async def upload_cache_reads(req):
         raise HTTPBadRequest(text="File name is not an accepted reads file")
 
     cache_path = Path(virtool.caches.utils.join_cache_path(
-        req.app["settings"], key)) / name
+        req.app["config"], key)) / name
 
     if not await db.caches.count_documents({"key": key, "sample.id": sample_id}):
         raise NotFound("Cache doesn't exist with given key")
@@ -946,7 +946,7 @@ async def upload_cache_reads(req):
         logger.debug(f"Reads cache file upload aborted for {key}")
         return aiohttp.web.Response(status=499)
 
-    reads = await virtool.samples.files.create_reads_file(
+    reads = await create_reads_file(
         pg,
         size,
         name,
@@ -987,7 +987,7 @@ async def upload_cache_artifact(req):
     name = req.query.get("name")
 
     cache_path = join_cache_path(
-        req.app["settings"], key) / name
+        req.app["config"], key) / name
 
     if artifact_type and artifact_type not in ArtifactType.to_list():
         raise HTTPBadRequest(text="Unsupported sample artifact type")
@@ -1004,7 +1004,7 @@ async def upload_cache_artifact(req):
     except asyncio.CancelledError:
         logger.debug(
             f"Artifact file cache upload aborted for sample: {sample_id}")
-        await virtool.pg.utils.delete_row(pg, upload_id, SampleArtifact)
+        await delete_row(pg, upload_id, SampleArtifact)
         await req.app["run_in_thread"](os.remove, cache_path)
         return aiohttp.web.Response(status=499)
 
@@ -1059,12 +1059,12 @@ async def download_reads(req: aiohttp.web.Request):
     if not await db.samples.find_one(sample_id):
         raise NotFound()
 
-    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id)
+    existing_reads = await get_existing_reads(pg, sample_id)
 
     if file_name not in existing_reads:
         raise NotFound()
 
-    file_path = req.app["settings"]["data_path"] / "samples" / sample_id / file_name
+    file_path = req.app["config"].data_path / "samples" / sample_id / file_name
 
     if not os.path.isfile(file_path):
         raise NotFound()
@@ -1104,8 +1104,7 @@ async def download_artifact(req: aiohttp.web.Request):
 
     artifact = result.to_dict()
 
-    file_path = req.app["settings"][
-                    "data_path"] / f"samples/{sample_id}/{artifact['name_on_disk']}"
+    file_path = req.app["config"].data_path / f"samples/{sample_id}/{artifact['name_on_disk']}"
 
     if not os.path.isfile(file_path):
         raise NotFound()
@@ -1139,12 +1138,12 @@ async def download_cache_reads(req):
             {"_id": sample_id}) or not await db.caches.count_documents({"key": key}):
         raise NotFound()
 
-    existing_reads = await virtool.samples.files.get_existing_reads(pg, sample_id, key=key)
+    existing_reads = await get_existing_reads(pg, sample_id, key=key)
 
     if file_name not in existing_reads:
         raise NotFound()
 
-    file_path = req.app["settings"]["data_path"] / "caches" / key / file_name
+    file_path = req.app["config"].data_path / "caches" / key / file_name
 
     if not os.path.isfile(file_path):
         raise NotFound()
@@ -1188,7 +1187,7 @@ async def download_cache_artifact(req):
 
     artifact = result.to_dict()
 
-    file_path = req.app["settings"]["data_path"] / "caches" / key / artifact["name_on_disk"]
+    file_path = req.app["config"].data_path / "caches" / key / artifact["name_on_disk"]
 
     if not file_path.exists():
         raise NotFound()

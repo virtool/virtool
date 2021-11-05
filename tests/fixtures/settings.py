@@ -1,5 +1,7 @@
 import pytest
 
+from virtool.settings.db import Settings
+
 
 @pytest.fixture()
 async def test_settings(dbi):
@@ -24,3 +26,8 @@ async def test_settings(dbi):
     }
 
     await dbi.settings.insert_one(settings)
+
+
+@pytest.fixture()
+def settings():
+    return Settings()

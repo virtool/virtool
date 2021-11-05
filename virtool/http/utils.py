@@ -2,11 +2,10 @@ from pathlib import Path
 from typing import Callable, Union, Awaitable
 
 import aiofiles
-import aiohttp.web_response
+from aiohttp.web_response import Response
 
-import virtool.errors
-import virtool.http.proxy
 from virtool.errors import GitHubError
+from virtool.http.proxy import ProxyRequest
 from virtool.types import App
 
 
@@ -25,7 +24,7 @@ async def download_file(
     :param progress_handler: a callable that will be called with the current progress when it changes.
 
     """
-    async with virtool.http.proxy.ProxyRequest(app["settings"], app["client"].get, url) as resp:
+    async with ProxyRequest(app["config"], app["client"].get, url) as resp:
         if resp.status != 200:
             raise GitHubError("Could not download file")
 
@@ -42,9 +41,9 @@ async def download_file(
                     await progress_handler(len(chunk))
 
 
-def set_session_id_cookie(resp: aiohttp.web_response.Response, session_id: str):
+def set_session_id_cookie(resp: Response, session_id: str):
     resp.set_cookie("session_id", session_id, httponly=True, max_age=2600000)
 
 
-def set_session_token_cookie(resp: aiohttp.web_response.Response, session_token: str):
+def set_session_token_cookie(resp: Response, session_token: str):
     resp.set_cookie("session_token", session_token, httponly=True, max_age=2600000)

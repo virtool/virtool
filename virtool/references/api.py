@@ -4,26 +4,24 @@ import aiohttp
 from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPBadGateway
 
 import virtool.db.utils
-import virtool.github
 import virtool.history.db
-import virtool.http.routes
 import virtool.indexes.db
 import virtool.otus.db
 import virtool.references.db
-import virtool.users.db
 import virtool.utils
-import virtool.validators
 from virtool.api.response import json_response, InsufficientRights, NotFound
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.errors import GitHubError, DatabaseError
 from virtool.github import format_release
+from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.pg.utils import get_row
 from virtool.references.tasks import CloneReferenceTask, ImportReferenceTask, RemoteReferenceTask, \
     DeleteReferenceTask, UpdateRemoteReferenceTask
 from virtool.uploads.models import Upload
+from virtool.validators import strip
 
-routes = virtool.http.routes.Routes()
+routes = Routes()
 
 RIGHTS_SCHEMA = {
     "build": {
@@ -262,12 +260,12 @@ async def find_indexes(req):
 @schema({
     "name": {
         "type": "string",
-        "coerce": virtool.validators.strip,
+        "coerce": strip,
         "default": ""
     },
     "description": {
         "type": "string",
-        "coerce": virtool.validators.strip,
+        "coerce": strip,
         "default": ""
     },
     "data_type": {
@@ -353,7 +351,7 @@ async def create(req):
         if not await get_row(pg, Upload, ("name_on_disk", import_from)):
             raise NotFound("File not found")
 
-        path = req.app["settings"]["data_path"] / "files" / import_from
+        path = req.app["config"].data_path / "files" / import_from
 
         document = await virtool.references.db.create_import(
             db,
@@ -380,8 +378,8 @@ async def create(req):
 
     elif remote_from:
         try:
-            release = await virtool.github.get_release(
-                settings,
+            release = await get_release(
+                req.app["config"],
                 req.app["client"],
                 remote_from,
                 release_id=release_id
@@ -445,16 +443,16 @@ async def create(req):
 @schema({
     "name": {
         "type": "string",
-        "coerce": virtool.validators.strip,
+        "coerce": strip,
         "empty": False
     },
     "description": {
         "type": "string",
-        "coerce": virtool.validators.strip
+        "coerce": strip
     },
     "organism": {
         "type": "string",
-        "coerce": virtool.validators.strip
+        "coerce": strip
     },
     "internal_control": {
         "type": "string"
@@ -466,7 +464,7 @@ async def create(req):
         "type": "list",
         "schema": {
             "type": "string",
-            "coerce": virtool.validators.strip,
+            "coerce": strip,
             "empty": False
         }
     },

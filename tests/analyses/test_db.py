@@ -2,19 +2,16 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.analyses.db
+from virtool.analyses.db import BLAST, remove_nuvs_blast
 import virtool.analyses.format
 import virtool.tasks.pg
 
 
 @pytest.fixture
-def test_blast_obj(dbi, tmp_path):
-    settings = {
-        "data_path": tmp_path
-    }
-
-    return virtool.analyses.db.BLAST(
+def test_blast_obj(dbi, tmp_path, config):
+    return BLAST(
         dbi,
-        settings,
+        config,
         "foo",
         5,
         "ABC123"
@@ -25,7 +22,7 @@ class TestBLAST:
 
     def test_init(self, dbi, test_blast_obj, tmp_path):
         assert test_blast_obj.db == dbi
-        assert test_blast_obj.settings == {"data_path": tmp_path}
+        assert test_blast_obj.config.data_path == tmp_path
         assert test_blast_obj.analysis_id == "foo"
         assert test_blast_obj.sequence_index == 5
         assert test_blast_obj.rid == "ABC123"
@@ -79,7 +76,7 @@ class TestBLAST:
         await test_blast_obj.update(ready, result, error)
 
         if ready is None:
-            m_check_rid.assert_called_with(test_blast_obj.settings, test_blast_obj.rid)
+            m_check_rid.assert_called_with(test_blast_obj.config, test_blast_obj.rid)
         else:
             assert not m_check_rid.called
 
@@ -165,7 +162,7 @@ async def test_remove_nuvs_blast(snapshot, dbi, static_time):
         }
     ])
 
-    await virtool.analyses.db.remove_nuvs_blast(
+    await remove_nuvs_blast(
         dbi,
         "foo",
         5

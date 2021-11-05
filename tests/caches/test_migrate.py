@@ -1,5 +1,6 @@
-import virtool.caches.migrate
 from aiohttp.test_utils import make_mocked_coro
+
+from virtool.caches.migrate import migrate_caches, add_missing_field, rename_hash_field
 
 
 async def test_migrate_caches(mocker, dbi):
@@ -13,18 +14,16 @@ async def test_migrate_caches(mocker, dbi):
         }
     }
 
-    await virtool.caches.migrate.migrate_caches(app)
+    await migrate_caches(app)
 
     m_add_missing_field.assert_called_with(app)
     m_rename_hash_field.assert_called_with(app)
 
 
-async def test_add_missing_field(snapshot, tmp_path, dbi):
+async def test_add_missing_field(snapshot, tmp_path, dbi, config):
     app = {
         "db": dbi,
-        "settings": {
-            "data_path": tmp_path
-        }
+        "config": config
     }
 
     caches_dir = tmp_path / "caches"
@@ -57,7 +56,7 @@ async def test_add_missing_field(snapshot, tmp_path, dbi):
         }
     ])
 
-    await virtool.caches.migrate.add_missing_field(app)
+    await add_missing_field(app)
 
     snapshot.assert_match(await dbi.caches.find().to_list(None))
 
@@ -84,6 +83,6 @@ async def test_rename_hash_field(snapshot, dbi):
         }
     ])
 
-    await virtool.caches.migrate.rename_hash_field(app)
+    await rename_hash_field(app)
 
     snapshot.assert_match(await dbi.caches.find().to_list(None))

@@ -62,13 +62,11 @@ async def test_get(exists, dbi):
 
 
 @pytest.mark.parametrize("exception", [False, True])
-async def test_remove(exception, dbi, tmp_path):
+async def test_remove(exception, dbi, tmp_path, config):
     app = {
         "db": dbi,
         "run_in_thread": make_mocked_coro(raise_exception=FileNotFoundError) if exception else make_mocked_coro(),
-        "settings": {
-            "data_path": tmp_path
-        }
+        "config": config
     }
 
     await dbi.caches.insert_one({"_id": "baz"})

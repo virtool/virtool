@@ -6,13 +6,11 @@ import asyncio
 import logging
 from typing import Any, Dict, Union
 
-import aiohttp.web
 import aiojobs.aiohttp
-from aiohttp.web import HTTPNoContent, HTTPBadRequest, HTTPNotModified, HTTPConflict
+from aiohttp.web import HTTPNoContent, HTTPBadRequest, HTTPNotModified, HTTPConflict, Request, Response, FileResponse
 
 import virtool.analyses.format
 import virtool.bio
-import virtool.http.routes
 import virtool.samples.db
 from virtool.analyses.db import update_nuvs_blast, PROJECTION
 from virtool.analyses.files import create_analysis_file
@@ -22,6 +20,7 @@ from virtool.api.json import isoformat
 from virtool.api.response import json_response, InsufficientRights, NotFound, InvalidQuery
 from virtool.api.utils import paginate
 from virtool.db.core import Collection, DB
+from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.samples.db import recalculate_workflow_tags
@@ -33,11 +32,11 @@ from virtool.utils import base_processor, rm
 
 logger = logging.getLogger("analyses")
 
-routes = virtool.http.routes.Routes()
+routes = Routes()
 
 
 @routes.get("/api/analyses")
-async def find(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def find(req: Request) -> Response:
     """
     Find and list all analyses.
 
@@ -71,7 +70,7 @@ async def find(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.get("/api/analyses/{analysis_id}")
-async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def get(req: Request) -> Response:
     """
     Get a complete analysis document.
 
@@ -125,7 +124,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.jobs_api.get("/api/analyses/{analysis_id}")
-async def get_for_jobs_api(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def get_for_jobs_api(req: Request) -> Response:
     """
     Get a complete analysis document.
 
@@ -177,7 +176,7 @@ async def get_for_jobs_api(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.delete("/api/analyses/{analysis_id}")
-async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def remove(req: Request) -> Response:
     """
     Remove an analysis document by its id.
 
@@ -215,7 +214,7 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     await db.analyses.delete_one({"_id": analysis_id})
 
     path = (
-            req.app["settings"]["data_path"]
+            req.app["config"].data_path
             / "samples"
             / sample_id
             / "analysis"
@@ -227,7 +226,7 @@ async def remove(req: aiohttp.web.Request) -> aiohttp.web.Response:
     except FileNotFoundError:
         pass
 
-    await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
+    await recalculate_workflow_tags(db, sample_id)
 
     raise HTTPNoContent
 
@@ -254,7 +253,7 @@ async def delete_analysis(req):
     sample_id = document["sample"]["id"]
 
     path = (
-            req.app["settings"]["data_path"]
+            req.app["config"].data_path
             / "samples"
             / sample_id
             / "analysis"
@@ -266,13 +265,13 @@ async def delete_analysis(req):
     except FileNotFoundError:
         pass
 
-    await virtool.samples.db.recalculate_workflow_tags(db, sample_id)
+    await recalculate_workflow_tags(db, sample_id)
 
     raise HTTPNoContent
 
 
 @routes.jobs_api.put("/api/analyses/{id}/files")
-async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def upload(req: Request) -> Response:
     """
     Upload a new analysis result file to the `analysis_files` SQL table and the `analyses` folder in the Virtool
     data path.
@@ -302,7 +301,7 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     upload_id = analysis_file["id"]
 
-    analysis_file_path = req.app["settings"]["data_path"] / "analyses" / analysis_file["name_on_disk"]
+    analysis_file_path = req.app["config"].data_path / "analyses" / analysis_file["name_on_disk"]
 
     try:
         size = await naive_writer(req, analysis_file_path)
@@ -310,7 +309,7 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
         logger.debug(f"Analysis file upload aborted: {upload_id}")
         await delete_row(pg, upload_id, AnalysisFile)
 
-        return aiohttp.web.Response(status=499)
+        return Response(status=499)
 
     analysis_file = await finalize(pg, size, upload_id, AnalysisFile)
 
@@ -322,7 +321,7 @@ async def upload(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.get("/api/analyses/{analysis_id}/files/{upload_id}")
-async def download_analysis_result(req: aiohttp.web.Request) -> Union[aiohttp.web.FileResponse, aiohttp.web.Response]:
+async def download_analysis_result(req: Request) -> Union[FileResponse, Response]:
     """
     Download an analysis result file.
 
@@ -335,16 +334,16 @@ async def download_analysis_result(req: aiohttp.web.Request) -> Union[aiohttp.we
     if not analysis_file:
         raise NotFound()
 
-    analysis_file_path = req.app["settings"]["data_path"] / "analyses" / analysis_file.name_on_disk
+    analysis_file_path = req.app["config"].data_path / "analyses" / analysis_file.name_on_disk
 
     if not analysis_file_path.exists():
         raise NotFound("Uploaded file not found at expected location")
 
-    return aiohttp.web.FileResponse(analysis_file_path)
+    return FileResponse(analysis_file_path)
 
 
 @routes.get("/api/analyses/documents/{analysis_id}.{extension}")
-async def download_analysis_document(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def download_analysis_document(req: Request) -> Response:
     """
     Download an analysis document.
 
@@ -371,18 +370,17 @@ async def download_analysis_document(req: aiohttp.web.Request) -> aiohttp.web.Re
         "Content-Type": content_type
     }
 
-    return aiohttp.web.Response(text=formatted, headers=headers)
+    return Response(text=formatted, headers=headers)
 
 
 @routes.put("/api/analyses/{analysis_id}/{sequence_index}/blast")
-async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def blast(req: Request) -> Response:
     """
     BLAST a contig sequence that is part of a NuVs result record. The resulting BLAST
     data will be attached to that sequence.
 
     """
     db = req.app["db"]
-    settings = req.app["settings"]
 
     analysis_id = req.match_info["analysis_id"]
     sequence_index = int(req.match_info["sequence_index"])
@@ -421,11 +419,11 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     # Start a BLAST at NCBI with the specified sequence. Return a RID that identifies
     # the BLAST run.
-    rid, _ = await virtool.bio.initialize_ncbi_blast(req.app["settings"], sequence)
+    rid, _ = await virtool.bio.initialize_ncbi_blast(req.app["config"], sequence)
 
     blast_data, document = await update_nuvs_blast(
         db,
-        settings,
+        req.app["config"],
         analysis_id,
         sequence_index,
         rid
@@ -449,7 +447,7 @@ async def blast(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 @routes.jobs_api.patch("/api/analyses/{analysis_id}")
 @schema({"results": {"type": "dict", "required": True}})
-async def patch_analysis(req: aiohttp.web.Request):
+async def patch_analysis(req: Request):
     """Sets the result for an analysis and marks it as ready."""
     db: DB = req.app["db"]
     analyses: Collection = db.analyses

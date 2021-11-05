@@ -7,7 +7,6 @@ from typing import Any, Dict
 
 import pymongo.errors
 
-import virtool.caches
 import virtool.utils
 from virtool.types import App
 
@@ -90,13 +89,13 @@ async def remove(app: App, cache_id: str):
 
     """
     db = app["db"]
-    settings = app["settings"]
+    config = app["config"]
 
     await db.caches.delete_one({
         "_id": cache_id
     })
 
-    path = settings["data_path"] / "caches" / cache_id
+    path = config.data_path / "caches" / cache_id
 
     try:
         await app["run_in_thread"](virtool.utils.rm, path, True)

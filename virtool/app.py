@@ -4,30 +4,18 @@ import logging
 import aiohttp.web
 import aiojobs
 import aiojobs.aiohttp
-from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
 
-import virtool.db.core
-import virtool.db.migrate
-import virtool.db.utils
-import virtool.dispatcher
-import virtool.errors
-import virtool.hmm.db
 import virtool.http.accept
 import virtool.http.auth
 import virtool.http.csp
 import virtool.http.errors
 import virtool.http.proxy
 import virtool.http.query
-import virtool.logs
-import virtool.references.db
-import virtool.routes
-import virtool.sentry
-import virtool.settings.db
-import virtool.settings.schema
-import virtool.shutdown
-import virtool.startup
-import virtool.utils
-import virtool.version
+from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
+from virtool.shutdown import exit_redis, exit_executors, exit_client, exit_scheduler, exit_dispatcher
+from virtool.startup import init_executors, init_db, init_events, init_redis, init_refresh, init_routes, init_sentry, \
+    init_settings, init_paths, init_tasks, init_postgres, init_version, init_dispatcher, init_client_path, \
+    init_http_client, init_jobs_client, init_task_runner, init_check_db
 
 logger = logging.getLogger(__name__)
 
@@ -54,34 +42,34 @@ def create_app(config):
     aiojobs.aiohttp.setup(app)
 
     app.on_startup.extend([
-        virtool.startup.init_version,
-        virtool.startup.init_events,
-        virtool.startup.init_redis,
-        virtool.startup.init_db,
-        virtool.startup.init_postgres,
-        virtool.startup.init_dispatcher,
-        virtool.startup.init_settings,
-        virtool.startup.init_client_path,
-        virtool.startup.init_http_client,
-        virtool.startup.init_paths,
-        virtool.startup.init_routes,
-        virtool.startup.init_executors,
-        virtool.startup.init_task_runner,
-        virtool.startup.init_tasks,
-        virtool.startup.init_sentry,
-        virtool.startup.init_check_db,
-        virtool.startup.init_jobs_client,
-        virtool.startup.init_refresh
+        init_version,
+        init_events,
+        init_redis,
+        init_db,
+        init_postgres,
+        init_dispatcher,
+        init_settings,
+        init_client_path,
+        init_http_client,
+        init_paths,
+        init_routes,
+        init_executors,
+        init_task_runner,
+        init_tasks,
+        init_sentry,
+        init_check_db,
+        init_jobs_client,
+        init_refresh
     ])
 
     app.on_response_prepare.append(virtool.http.csp.on_prepare)
 
     app.on_shutdown.extend([
-        virtool.shutdown.exit_client,
-        virtool.shutdown.exit_dispatcher,
-        virtool.shutdown.exit_executors,
-        virtool.shutdown.exit_scheduler,
-        virtool.shutdown.exit_redis
+        exit_client,
+        exit_dispatcher,
+        exit_executors,
+        exit_scheduler,
+        exit_redis
     ])
 
     return app
@@ -92,8 +80,8 @@ async def run_app(config):
 
     runner = await create_app_runner(
         app,
-        config["host"],
-        config["port"]
+        config.host,
+        config.port
     )
 
     _, pending = await asyncio.wait(

@@ -1,13 +1,13 @@
 import logging
 import sys
-from typing import Any, Callable, Dict, List
+from typing import Callable, List
 
 import pymongo.errors
 from motor.motor_asyncio import AsyncIOMotorClient
 from semver import VersionInfo
 
 import virtool.db.core
-import virtool.db.utils
+from virtool.configuration.config import Config
 
 MINIMUM_MONGO_VERSION = "3.6.0"
 
@@ -15,18 +15,18 @@ logger = logging.getLogger("mongo")
 
 
 async def connect(
-        config: Dict[str, Any],
+        config: Config,
         enqueue_change: Callable[[str, str, List[str]], None]
 ):
     """
     Connect to a MongoDB server and return an application database object.
 
-    :param config: the application's configuration dictionary
+    :param config: the application's configuration object
     :param enqueue_change: a function that can to report change to the database
 
     """
     db_client = AsyncIOMotorClient(
-        config["db_connection_string"],
+        config.db_connection_string,
         serverSelectionTimeoutMS=6000
     )
 
@@ -38,7 +38,7 @@ async def connect(
 
     await check_mongo_version(db_client)
 
-    db = db_client[config["db_name"]]
+    db = db_client[config.db_name]
 
     return virtool.db.core.DB(
         db,

@@ -1,17 +1,14 @@
+from concurrent.futures import ThreadPoolExecutor
+
 import pytest
-import concurrent.futures
+from aiohttp.client import ClientSession
+from aiohttp.web import Application
 
-import aiohttp.client
-import aiohttp.web
-
-import virtool.app
-import virtool.dispatcher
-import virtool.startup
-import virtool.settings.schema
+from virtool.startup import init_executors, init_http_client
 
 
 @pytest.fixture
-async def app():
+async def fake_app():
     version = "v1.2.3"
 
     app = {
@@ -31,11 +28,11 @@ async def test_init_executors():
     """
     Test that an instance of :class:`.ThreadPoolExecutor` is added to ``app`` state and that it works.
     """
-    app = aiohttp.web.Application()
+    app = Application()
 
-    await virtool.startup.init_executors(app)
+    await init_executors(app)
 
-    assert isinstance(app["executor"], concurrent.futures.ThreadPoolExecutor)
+    assert isinstance(app["executor"], ThreadPoolExecutor)
 
     def func(*args):
         return sum(args)
@@ -45,18 +42,18 @@ async def test_init_executors():
     assert result == 14
 
 
-async def test_init_http_client(loop, app):
-    await virtool.startup.init_http_client(app)
+async def test_init_http_client(loop, fake_app):
+    await init_http_client(fake_app)
 
-    assert app["version"] == "v1.2.3"
+    assert fake_app["version"] == "v1.2.3"
 
-    assert isinstance(app["client"], aiohttp.client.ClientSession)
+    assert isinstance(fake_app["client"], ClientSession)
 
 
-async def test_init_http_client_headers(loop, mocker, app):
+async def test_init_http_client_headers(loop, mocker, fake_app):
     m = mocker.patch("aiohttp.client.ClientSession")
 
-    await virtool.startup.init_http_client(app)
+    await init_http_client(fake_app)
 
     headers = {
         "User-Agent": "virtool/v1.2.3"

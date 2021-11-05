@@ -36,7 +36,7 @@ class AddIndexFilesTask(Task):
             except KeyError:
                 index_id = index["_id"]
 
-                path = self.app["settings"]["data_path"] / "references" / index_id
+                path = self.app["config"].data_path / "references" / index_id
 
                 async with AsyncSession(self.app["pg"]) as session:
                     for file_path in sorted(path.iterdir()):

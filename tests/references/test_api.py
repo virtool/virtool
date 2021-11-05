@@ -1,6 +1,7 @@
-import aiohttp.web
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from aiohttp.web import Request
+
 from virtool.references.tasks import UpdateRemoteReferenceTask
 
 
@@ -169,7 +170,7 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
         "test"
     )
 
-    assert isinstance(m_update.call_args[0][0], aiohttp.web.Request)
+    assert isinstance(m_update.call_args[0][0], Request)
 
     assert resp.status == 201
 
@@ -214,7 +215,7 @@ async def test_create(data_type, mocker, snapshot, spawn_client, test_random_alp
         "isolate"
     ]
 
-    client.app["settings"]["default_source_types"] = default_source_type
+    client.app["settings"].default_source_types = default_source_type
 
     data = {
         "name": "Test Viruses",

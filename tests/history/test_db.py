@@ -1,19 +1,18 @@
 import datetime
-from aiohttp.test_utils import make_mocked_coro
 
 import pytest
+from aiohttp.test_utils import make_mocked_coro
 
 import virtool.history.db
 
 
 class TestAdd:
 
-    async def test(self, snapshot, dbi, static_time, test_otu_edit, test_change, tmp_path):
+    async def test(self, snapshot, dbi, static_time, test_otu_edit, test_change, tmp_path, config):
+
         app = {
             "db": dbi,
-            "settings": {
-                "data_path": tmp_path
-            }
+            "config": config
         }
 
         old, new = test_otu_edit
@@ -32,12 +31,10 @@ class TestAdd:
         snapshot.assert_match(change, "change")
         snapshot.assert_match(document, "document")
 
-    async def test_create(self, snapshot, dbi, static_time, test_otu_edit, test_change, tmp_path):
+    async def test_create(self, snapshot, dbi, static_time, test_otu_edit, test_change, tmp_path, config):
         app = {
             "db": dbi,
-            "settings": {
-                "data_path": tmp_path
-            }
+            "config": config
         }
 
         # There is no old document because this is a change document for a otu creation operation.
@@ -61,16 +58,14 @@ class TestAdd:
         snapshot.assert_match(change)
         snapshot.assert_match(document)
 
-    async def test_remove(self, snapshot, dbi, static_time, test_otu_edit, test_change, tmp_path):
+    async def test_remove(self, snapshot, dbi, static_time, test_otu_edit, test_change, tmp_path, config):
         """
         Test that the addition of a change due to otu removal inserts the expected change document.
 
         """
         app = {
             "db": dbi,
-            "settings": {
-                "data_path": tmp_path
-            }
+            "config": config
         }
 
         # There is no new document because this is a change document for a otu removal operation.
@@ -96,7 +91,7 @@ class TestAdd:
 
 
 @pytest.mark.parametrize("file", [True, False])
-async def test_get(file, mocker, snapshot, dbi, tmp_path):
+async def test_get(file, mocker, snapshot, dbi, tmp_path, config):
     await dbi.history.insert_one({
         "_id": "baz.2",
         "diff": "file" if file else {
@@ -108,9 +103,7 @@ async def test_get(file, mocker, snapshot, dbi, tmp_path):
 
     app = {
         "db": dbi,
-        "settings": {
-            "data_path": tmp_path
-        }
+        "config": config
     }
 
     document = await virtool.history.db.get(app, "baz.2")

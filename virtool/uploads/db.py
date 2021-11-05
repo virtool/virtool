@@ -1,15 +1,11 @@
 import logging
 from typing import Union, Optional, List, Dict, Type
-from virtool.pg.base import Base
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
-import virtool.tasks.pg
-import virtool.tasks.task
-import virtool.uploads.utils
 import virtool.utils
-
+from virtool.pg.base import Base
 from virtool.uploads.models import Upload
 
 logger = logging.getLogger("uploads")
@@ -153,7 +149,7 @@ async def delete(req, pg: AsyncEngine, upload_id: int) -> Optional[dict]:
     try:
         await req.app["run_in_thread"](
             virtool.utils.rm,
-            req.app["settings"]["data_path"] / "files" / upload["name_on_disk"]
+            req.app["config"].data_path / "files" / upload["name_on_disk"]
         )
     except FileNotFoundError:
         pass

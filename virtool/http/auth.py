@@ -6,16 +6,11 @@ import jinja2
 from aiohttp import web
 from aiohttp.web_exceptions import HTTPUnauthorized
 
-import virtool.db.utils
 import virtool.errors
-import virtool.http.utils
-import virtool.routes
-import virtool.templates
-import virtool.users.db
 import virtool.users.sessions
-import virtool.users.utils
-import virtool.utils
 from virtool.http.client import UserClient
+from virtool.http.utils import set_session_id_cookie
+from virtool.utils import hash_key
 
 AUTHORIZATION_PROJECTION = [
     "user",
@@ -34,7 +29,7 @@ def can_use_key(req: web.Request) -> bool:
 
     """
     path = req.path
-    enable_api = req.app["settings"]["enable_api"]
+    enable_api = req.app["settings"].enable_api
 
     return (path.startswith("/api") or path.startswith("/download")) and enable_api
 
@@ -154,7 +149,7 @@ async def middleware(req, handler):
     if req.path != "/api/account/reset":
         await virtool.users.sessions.clear_reset_code(db, session["_id"])
 
-    virtool.http.utils.set_session_id_cookie(resp, session_id)
+    set_session_id_cookie(resp, session_id)
 
     if req.path == "/api/":
         resp.del_cookie("session_token")
@@ -180,7 +175,7 @@ async def index_handler(req: web.Request) -> web.Response:
         template = jinja2.Template(await f.read(), autoescape=True)
 
     html = template.render(
-        dev=req.app["settings"]["dev"],
+        dev=req.app["config"].dev,
         first=requires_first_user,
         login=requires_login,
         nonce=req["nonce"],

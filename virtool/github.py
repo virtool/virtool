@@ -5,7 +5,7 @@ from typing import Optional
 import aiohttp
 
 import virtool.errors
-import virtool.http.proxy
+from virtool.http.proxy import ProxyRequest
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ def get_etag(release: Optional[dict]) -> Optional[str]:
 
 
 async def get_release(
-        settings: dict,
+        config,
         session: aiohttp.ClientSession,
         slug: str,
         etag: Optional[str] = None,
@@ -90,7 +90,7 @@ async def get_release(
     """
     GET data from a GitHub API url.
 
-    :param settings: the application settings object
+    :param config: the application config object
     :param session: the application HTTP client session
     :param slug: the slug for the GitHub repo
     :param etag: an ETag for the resource to be used with the `If-None-Match` header
@@ -105,7 +105,7 @@ async def get_release(
     if etag:
         headers["If-None-Match"] = etag
 
-    async with virtool.http.proxy.ProxyRequest(settings, session.get, url, headers=headers) as resp:
+    async with ProxyRequest(config, session.get, url, headers=headers) as resp:
         rate_limit_remaining = resp.headers.get("X-RateLimit-Remaining", "00")
         rate_limit = resp.headers.get("X-RateLimit-Limit", "00")
 

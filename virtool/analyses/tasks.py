@@ -4,17 +4,16 @@ import shutil
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import virtool.analyses.files
-import virtool.analyses.utils
 import virtool.tasks.pg
-import virtool.tasks.task
-
 from virtool.analyses.db import TARGET_FILES
+from virtool.analyses.files import create_nuvs_analysis_files
 from virtool.analyses.models import AnalysisFile
+from virtool.analyses.utils import move_nuvs_files, join_analysis_path
+from virtool.tasks.task import Task
 from virtool.types import App
 
 
-class StoreNuvsFilesTask(virtool.tasks.task.Task):
+class StoreNuvsFilesTask(Task):
     task_type = "store_nuvs_file_task"
 
     def __init__(self, app: App, task_id: int):
@@ -33,19 +32,19 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
 
         """
         db = self.db
-        settings = self.app["settings"]
+        config = self.app["config"]
 
         async for analysis in db.analyses.find({"workflow": "nuvs"}):
             analysis_id = analysis["_id"]
             sample_id = analysis["sample"]["id"]
 
-            path = virtool.analyses.utils.join_analysis_path(
-                settings["data_path"],
+            path = join_analysis_path(
+                config.data_path,
                 analysis_id,
                 sample_id
             )
 
-            target_path = settings["data_path"] / "analyses" / analysis_id
+            target_path = config.data_path / "analyses" / analysis_id
 
             async with AsyncSession(self.app["pg"]) as session:
                 exists = (
@@ -64,14 +63,14 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
                     if filename in TARGET_FILES:
                         analysis_files.append(filename)
 
-                        await virtool.analyses.utils.move_nuvs_files(
+                        await move_nuvs_files(
                             filename,
                             self.run_in_thread,
                             path,
                             target_path
                         )
 
-                await virtool.analyses.files.create_nuvs_analysis_files(
+                await create_nuvs_analysis_files(
                     self.app["pg"],
                     analysis_id,
                     analysis_files,
@@ -90,19 +89,19 @@ class StoreNuvsFilesTask(virtool.tasks.task.Task):
         `<data_path>`/analyses/:id>.
 
         """
-        settings = self.app["settings"]
+        config = self.app["config"]
 
         async for analysis in self.db.analyses.find({"workflow": "nuvs"}):
             analysis_id = analysis["_id"]
             sample_id = analysis["sample"]["id"]
 
-            path = virtool.analyses.utils.join_analysis_path(
-                settings["data_path"],
+            path = join_analysis_path(
+                config.data_path,
                 analysis_id,
                 sample_id
             )
 
-            if (settings["data_path"] / "analyses" / analysis_id).is_dir():
+            if (config.data_path / "analyses" / analysis_id).is_dir():
                 await self.app["run_in_thread"](shutil.rmtree, path, True)
 
         await virtool.tasks.pg.update(

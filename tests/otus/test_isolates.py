@@ -1,6 +1,6 @@
 import pytest
 
-import virtool.otus.isolates
+from virtool.otus.isolates import add, edit, set_default, remove
 
 
 @pytest.mark.parametrize("default", [True, False])
@@ -25,10 +25,7 @@ async def test_add(
 
     """
     app = {
-        "db": dbi,
-        "settings": {
-            "data_path": tmp_path
-        }
+        "db": dbi
     }
 
     test_otu["isolates"][0]["default"] = existing_default
@@ -38,7 +35,7 @@ async def test_add(
 
     await dbi.otus.insert_one(test_otu)
 
-    return_value = await virtool.otus.isolates.add(
+    return_value = await add(
         app,
         "6116cba1",
         {
@@ -57,15 +54,12 @@ async def test_add(
 
 async def test_edit(dbi, snapshot, test_otu, static_time, tmp_path):
     app = {
-        "db": dbi,
-        "settings": {
-            "data_path": tmp_path
-        }
+        "db": dbi
     }
 
     await dbi.otus.insert_one(test_otu)
 
-    await virtool.otus.isolates.edit(
+    await edit(
         app,
         "6116cba1",
         "cab8b360",
@@ -87,10 +81,7 @@ async def test_remove(isolate_id, dbi, snapshot, test_otu, test_sequence, static
 
     """
     app = {
-        "db": dbi,
-        "settings": {
-            "data_path": tmp_path
-        }
+        "db": dbi
     }
 
     test_otu["isolates"].append({
@@ -103,7 +94,7 @@ async def test_remove(isolate_id, dbi, snapshot, test_otu, test_sequence, static
     await dbi.otus.insert_one(test_otu)
     await dbi.sequences.insert_one(test_sequence)
 
-    await virtool.otus.isolates.remove(
+    await remove(
         app,
         "6116cba1",
         isolate_id,
@@ -117,10 +108,7 @@ async def test_remove(isolate_id, dbi, snapshot, test_otu, test_sequence, static
 
 async def test_set_default(dbi, snapshot, test_otu, static_time, tmp_path):
     app = {
-        "db": dbi,
-        "settings": {
-            "data_path": tmp_path
-        }
+        "db": dbi
     }
 
     test_otu["isolates"].append({
@@ -132,7 +120,7 @@ async def test_set_default(dbi, snapshot, test_otu, static_time, tmp_path):
 
     await dbi.otus.insert_one(test_otu)
 
-    return_value = await virtool.otus.isolates.set_default(
+    return_value = await set_default(
         app,
         "6116cba1",
         "bar",

@@ -6,11 +6,10 @@ import aiohttp
 from aiohttp.web import HTTPBadGateway
 
 import virtool.genbank.http
-import virtool.http.proxy
-import virtool.http.routes
+from virtool.http.routes import Routes
 from virtool.api.response import json_response, NotFound
 
-routes = virtool.http.routes.Routes()
+routes = Routes()
 
 
 @routes.get("/api/genbank/{accession}")
@@ -22,10 +21,10 @@ async def get(req):
     """
     accession = req.match_info["accession"]
     session = req.app["client"]
-    settings = req.app["settings"]
+    config = req.app["config"]
 
     try:
-        data = await virtool.genbank.http.fetch(settings, session, accession)
+        data = await virtool.genbank.http.fetch(config, session, accession)
 
         if data is None:
             raise NotFound()

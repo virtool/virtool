@@ -27,20 +27,15 @@ from typing import List
 
 import aiofiles
 import aiohttp.client_exceptions
-import aiohttp.web
 import pymongo.results
+from aiohttp.web import Application
 
 import virtool.analyses.utils
-import virtool.db.core
-import virtool.db.utils
 import virtool.errors
-import virtool.github
-import virtool.hmm.utils
-import virtool.http.utils
-import virtool.tasks.pg
-import virtool.tasks.task
-import virtool.types
 import virtool.utils
+from virtool.github import get_etag, get_release
+from virtool.hmm.utils import format_hmm_release
+from virtool.types import App
 
 logger = logging.getLogger(__name__)
 
@@ -55,17 +50,17 @@ PROJECTION = [
 ]
 
 
-async def delete_unreferenced_hmms(db, settings: dict) -> pymongo.results.DeleteResult:
+async def delete_unreferenced_hmms(db, config) -> pymongo.results.DeleteResult:
     """
     Deletes all HMM documents that are not used in analyses.
 
     :param db: the application database client
-    :param settings: the application settings
+    :param config: the application configuration
     :return: the delete result
 
     """
     in_db = await get_hmms_referenced_in_db(db)
-    in_files = await get_hmms_referenced_in_files(db, settings)
+    in_files = await get_hmms_referenced_in_files(db, config)
 
     referenced_ids = list(in_db.union(in_files))
 
@@ -76,13 +71,13 @@ async def delete_unreferenced_hmms(db, settings: dict) -> pymongo.results.Delete
     return delete_result
 
 
-async def get_hmms_referenced_in_files(db, settings: dict) -> set:
+async def get_hmms_referenced_in_files(db, config) -> set:
     """
     Parse all NuVs JSON results files and return a set of found HMM profile ids. Used for removing unreferenced HMMs
     when purging the collection.
 
     :param db: the application database object
-    :param settings: the application settings
+    :param config: the application configuration
     :return: HMM ids referenced in NuVs result files
 
     """
@@ -90,7 +85,7 @@ async def get_hmms_referenced_in_files(db, settings: dict) -> set:
 
     async for document in db.analyses.find({"workflow": "nuvs", "results": "file"}, ["_id", "sample"]):
         path = virtool.analyses.utils.join_analysis_json_path(
-            settings["data_path"],
+            config.data_path,
             document["_id"],
             document["sample"]["id"]
         )
@@ -137,7 +132,7 @@ async def get_hmms_referenced_in_db(db) -> set:
     return {a["_id"] async for a in cursor}
 
 
-async def fetch_and_update_release(app: aiohttp.web.Application, ignore_errors: bool = False) -> dict:
+async def fetch_and_update_release(app: Application, ignore_errors: bool = False) -> dict:
     """
     Return the HMM install status document or create one if none exists.
 
@@ -147,7 +142,6 @@ async def fetch_and_update_release(app: aiohttp.web.Application, ignore_errors: 
 
     """
     db = app["db"]
-    settings = app["settings"]
     session = app["client"]
 
     document = await db.status.find_one("hmm", ["installed", "release", "updates"])
@@ -156,7 +150,7 @@ async def fetch_and_update_release(app: aiohttp.web.Application, ignore_errors: 
     release = document.get("release")
 
     # The ETag for the latest stored release.
-    etag = virtool.github.get_etag(release)
+    etag = get_etag(release)
 
     # The currently installed release.
     installed = document.get("installed")
@@ -167,16 +161,16 @@ async def fetch_and_update_release(app: aiohttp.web.Application, ignore_errors: 
     try:
         # The release dict will only be replaced if there is a 200 response from GitHub. A 304 indicates the release
         # has not changed and `None` is returned from `get_release()`.
-        updated = await virtool.github.get_release(
-            settings,
+        updated = await get_release(
+            app["config"],
             session,
-            settings["hmm_slug"],
+            app["settings"].hmm_slug,
             etag
         )
 
         # Release is replace with updated release if an update was found on GitHub.
         if updated:
-            release = virtool.hmm.utils.format_hmm_release(
+            release = format_hmm_release(
                 updated,
                 release,
                 installed
@@ -237,17 +231,17 @@ async def get_status(db) -> dict:
     return virtool.utils.base_processor(status)
 
 
-async def purge(db, settings: dict):
+async def purge(db, config):
     """
     Delete HMMs that are not used in analyses. Set `hidden` flag on used HMM documents.
 
     Hidden HMM documents will not be returned in HMM API requests. They are retained only to populate NuVs results.
 
     :param db: the application database object
-    :param settings: the application settings
+    :param config: the application configuration
 
     """
-    await delete_unreferenced_hmms(db, settings)
+    await delete_unreferenced_hmms(db, config)
 
     await db.hmm.update_many({}, {
         "$set": {
@@ -256,7 +250,7 @@ async def purge(db, settings: dict):
     })
 
 
-async def refresh(app: virtool.types.App):
+async def refresh(app: App):
     """
     Periodically refreshes the release information for HMMs. Intended to be submitted as a job to
     :class:`aiojobs.Scheduler`.
@@ -286,16 +280,16 @@ async def get_hmm_documents(db) -> List[dict]:
     return [virtool.utils.base_processor(document) async for document in all_documents]
 
 
-async def generate_annotations_json_file(app: virtool.types.App) -> Path:
+async def generate_annotations_json_file(app: App) -> Path:
     """
-    Generate the HMMs annotation file at `settings["data_path"]/hmm/annotations.json.gz
+    Generate the HMMs annotation file at `config.data_path/hmm/annotations.json.gz
 
     :param app: The app object.
     :return: The path to the compressed annotations json file.
     """
-    settings, db = app["settings"], app["db"]
+    config, db = app["config"], app["db"]
 
-    annotations_path = settings["data_path"] / "hmm/annotations.json"
+    annotations_path = config.data_path / "hmm/annotations.json"
     annotations_path.parent.mkdir(parents=True, exist_ok=True)
 
     hmm_documents = await get_hmm_documents(db)

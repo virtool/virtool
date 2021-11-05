@@ -5,14 +5,15 @@ from aiohttp import web
 
 import virtool.errors
 from virtool.api.response import json_response
+from virtool.configuration.config import Config
 
 logger = getLogger(__name__)
 
 
 class ProxyRequest:
 
-    def __init__(self, settings, method, url, **kwargs):
-        self.proxy = settings["proxy"] or None
+    def __init__(self, config: Config, method, url, **kwargs):
+        self.proxy = config.proxy or None
         self.method = method
         self.url = url
         self.resp = None

@@ -1,7 +1,7 @@
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
-import virtool.otus.db
+from virtool.otus.db import check_name_and_abbreviation, create_otu, generate_otu_fasta, join, edit
 
 
 @pytest.mark.parametrize("name,abbreviation,return_value", [
@@ -17,7 +17,7 @@ async def test_check_name_and_abbreviation(name, abbreviation, return_value, dbi
     """
     await dbi.otus.insert_one(test_otu)
 
-    result = await virtool.otus.db.check_name_and_abbreviation(dbi, "hxn167", name, abbreviation)
+    result = await check_name_and_abbreviation(dbi, "hxn167", name, abbreviation)
 
     assert result == return_value
 
@@ -36,14 +36,11 @@ async def test_create_otu(
         tmp_path
 ):
     app = {
-        "db": dbi,
-        "settings": {
-            "data_path": tmp_path
-        }
+        "db": dbi
     }
 
     if otu_id:
-        await virtool.otus.db.create_otu(
+        await create_otu(
             app,
             "foo",
             "Bar",
@@ -52,7 +49,7 @@ async def test_create_otu(
             otu_id
         )
     else:
-        await virtool.otus.db.create_otu(
+        await create_otu(
             app,
             "foo",
             "Bar",
@@ -67,15 +64,12 @@ async def test_create_otu(
 @pytest.mark.parametrize("abbreviation", [None, "", "TMV"])
 async def test_edit(abbreviation, snapshot, dbi, test_otu, static_time, test_random_alphanumeric, tmp_path):
     app = {
-        "db": dbi,
-        "settings": {
-            "data_path": tmp_path
-        }
+        "db": dbi
     }
 
     await dbi.otus.insert_one(test_otu)
 
-    await virtool.otus.db.edit(
+    await edit(
         app,
         "6116cba1",
         "Foo Virus",
@@ -106,7 +100,7 @@ async def test_join(in_db, pass_document, mocker, dbi, test_otu, test_sequence, 
 
     kwargs = dict(document=test_otu) if pass_document else dict()
 
-    joined = await virtool.otus.db.join(dbi, "6116cba1", **kwargs)
+    joined = await join(dbi, "6116cba1", **kwargs)
 
     assert m_find_one.called != pass_document
 
@@ -139,4 +133,4 @@ async def test_generate_otu_fasta(dbi, test_otu, test_sequence):
         ">Prunus virus F|Isolate A|AX12345|12\nATAGAGGAGTTA"
     )
 
-    assert await virtool.otus.db.generate_otu_fasta(dbi, test_otu["_id"]) == expected
+    assert await generate_otu_fasta(dbi, test_otu["_id"]) == expected
