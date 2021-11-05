@@ -9,7 +9,7 @@ export const analyze = ({ sampleId, refId, subtractionIds, workflow }) =>
     Request.post(`/api/samples/${sampleId}/analyses`).send({
         workflow,
         ref_id: refId,
-        subtraction_ids: subtractionIds
+        subtractions: subtractionIds
     });
 
 export const blastNuvs = ({ analysisId, sequenceIndex }) =>
