@@ -714,7 +714,8 @@ async def analyze(req):
         "ref_id": ref_id,
         "sample_id": sample_id,
         "sample_name": sample["name"],
-        "index_id": document["index"]["id"]
+        "index_id": document["index"]["id"],
+        "subtractions": subtractions
     }
 
     rights = JobRights()
