@@ -10,6 +10,7 @@ import aiohttp
 import virtool.analyses.db
 import virtool.errors
 import virtool.utils
+from virtool.configuration.config import Config
 from virtool.http.proxy import ProxyRequest
 
 logger = logging.getLogger(__name__)
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 BLAST_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"
 
 
-async def initialize_ncbi_blast(config, sequence: dict) -> tuple:
+async def initialize_ncbi_blast(config: Config, sequence: dict) -> tuple:
     """
     Send a request to NCBI to BLAST the passed sequence. Return the RID and RTOE from the response.
 
@@ -74,7 +75,7 @@ def extract_blast_info(html: str) -> tuple:
     return rid, int(rtoe)
 
 
-async def check_rid(config, rid: str) -> bool:
+async def check_rid(config: Config, rid: str) -> bool:
     """
     Check if the BLAST process identified by the passed RID is ready.
 
@@ -138,7 +139,7 @@ def format_blast_hit(hit: dict) -> dict:
     }
 
 
-async def get_ncbi_blast_result(config, run_in_process: callable, rid: str) -> dict:
+async def get_ncbi_blast_result(config: Config, run_in_process: callable, rid: str) -> dict:
     """
     Retrieve the BLAST result with the given `rid` from NCBI.
 

@@ -33,6 +33,7 @@ from aiohttp.web import Application
 import virtool.analyses.utils
 import virtool.errors
 import virtool.utils
+from virtool.configuration.config import Config
 from virtool.github import get_etag, get_release
 from virtool.hmm.utils import format_hmm_release
 from virtool.types import App
@@ -50,7 +51,7 @@ PROJECTION = [
 ]
 
 
-async def delete_unreferenced_hmms(db, config) -> pymongo.results.DeleteResult:
+async def delete_unreferenced_hmms(db, config: Config) -> pymongo.results.DeleteResult:
     """
     Deletes all HMM documents that are not used in analyses.
 
@@ -71,7 +72,7 @@ async def delete_unreferenced_hmms(db, config) -> pymongo.results.DeleteResult:
     return delete_result
 
 
-async def get_hmms_referenced_in_files(db, config) -> set:
+async def get_hmms_referenced_in_files(db, config: Config) -> set:
     """
     Parse all NuVs JSON results files and return a set of found HMM profile ids. Used for removing unreferenced HMMs
     when purging the collection.
@@ -231,7 +232,7 @@ async def get_status(db) -> dict:
     return virtool.utils.base_processor(status)
 
 
-async def purge(db, config):
+async def purge(db, config: Config):
     """
     Delete HMMs that are not used in analyses. Set `hidden` flag on used HMM documents.
 

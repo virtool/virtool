@@ -18,6 +18,7 @@ from virtool.jobs.utils import JobRights
 from virtool.otus.fake import create_fake_otus
 from virtool.references.db import create_document
 from virtool.samples.fake import create_fake_sample
+from virtool.settings.db import Settings
 from virtool.subtractions.fake import (create_fake_fasta_upload,
                                        create_fake_finalized_subtraction)
 from virtool.types import App
@@ -64,7 +65,7 @@ class TestCaseDataFactory:
         self.app = app
         self.db = app["db"]
         self.pg = app["pg"]
-        self.settings = app["settings"]
+        self.settings: Settings = app["settings"]
         self.data_path = app["config"].data_path
 
     async def analysis(

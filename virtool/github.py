@@ -5,6 +5,7 @@ from typing import Optional
 import aiohttp
 
 import virtool.errors
+from virtool.configuration.config import Config
 from virtool.http.proxy import ProxyRequest
 import virtool.utils
 
@@ -81,7 +82,7 @@ def get_etag(release: Optional[dict]) -> Optional[str]:
 
 
 async def get_release(
-        config,
+        config: Config,
         session: aiohttp.ClientSession,
         slug: str,
         etag: Optional[str] = None,

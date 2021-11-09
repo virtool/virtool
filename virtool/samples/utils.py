@@ -6,6 +6,7 @@ from aiohttp.web_exceptions import HTTPBadRequest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
+from virtool.configuration.config import Config
 from virtool.labels.models import Label
 
 PATHOSCOPE_TASK_NAMES = [
@@ -96,7 +97,7 @@ def join_legacy_read_path(sample_path: Path, suffix: int) -> Path:
     return sample_path / f"reads_{suffix}.fastq"
 
 
-def join_legacy_read_paths(config, sample):
+def join_legacy_read_paths(config: Config, sample):
     """
     Create a list of paths for the read files associated with the `sample`.
 
@@ -117,5 +118,5 @@ def join_legacy_read_paths(config, sample):
         return [join_legacy_read_path(sample_path, 1)]
 
 
-def join_sample_path(config, sample_id) -> Path:
+def join_sample_path(config: Config, sample_id) -> Path:
     return config.data_path / "samples" / sample_id

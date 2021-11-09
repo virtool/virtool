@@ -6,6 +6,7 @@ from typing import List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.configuration.config import Config
 from virtool.subtractions.models import SubtractionFile
 
 FILES = (
@@ -35,11 +36,11 @@ def check_subtraction_file_type(file_name: str) -> str:
         return "bowtie2"
 
 
-def join_subtraction_path(config, subtraction_id: str) -> Path:
+def join_subtraction_path(config: Config, subtraction_id: str) -> Path:
     return config.data_path / "subtractions" / subtraction_id.replace(" ", "_").lower()
 
 
-def join_subtraction_index_path(config, subtraction_id: str) -> Path:
+def join_subtraction_index_path(config: Config, subtraction_id: str) -> Path:
     return join_subtraction_path(config, subtraction_id) / "reference"
 
 

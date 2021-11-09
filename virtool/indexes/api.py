@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 
-from aiohttp.web import Response, Request, FileResponse
+from aiohttp.web import Response, Request
 from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPConflict
 from aiohttp.web_fileresponse import FileResponse
 from sqlalchemy import exc
@@ -24,9 +24,9 @@ from virtool.indexes.models import IndexFile, IndexType
 from virtool.indexes.utils import check_index_file_type
 from virtool.jobs.utils import JobRights
 from virtool.pg.utils import delete_row, get_rows
+from virtool.references.db import check_right
 from virtool.uploads.utils import naive_writer
 from virtool.utils import compress_json_with_gzip
-from virtool.references.db import check_right
 
 logger = logging.getLogger("indexes")
 routes = virtool.http.routes.Routes()

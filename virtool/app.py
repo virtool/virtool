@@ -11,6 +11,7 @@ import virtool.http.csp
 import virtool.http.errors
 import virtool.http.proxy
 import virtool.http.query
+from virtool.configuration.config import Config
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
 from virtool.shutdown import exit_redis, exit_executors, exit_client, exit_scheduler, exit_dispatcher
 from virtool.startup import init_executors, init_db, init_events, init_redis, init_refresh, init_routes, init_sentry, \
@@ -20,7 +21,7 @@ from virtool.startup import init_executors, init_db, init_events, init_redis, in
 logger = logging.getLogger(__name__)
 
 
-def create_app(config):
+def create_app(config: Config):
     """
     Creates the Virtool application.
 
@@ -75,7 +76,7 @@ def create_app(config):
     return app
 
 
-async def run_app(config):
+async def run_app(config: Config):
     app = create_app(config)
 
     runner = await create_app_runner(
