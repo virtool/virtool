@@ -14,6 +14,7 @@ import virtool.pg.utils
 import virtool.references.db
 import virtool.utils
 from virtool.api.utils import paginate
+from virtool.configuration.config import Config
 from virtool.db.utils import get_new_id
 from virtool.history.db import get_contributors
 from virtool.indexes.models import IndexFile
@@ -312,7 +313,7 @@ async def reset_history(db, index_id: str):
     })
 
 
-async def get_patched_otus(db, config, manifest: Dict[str, int]) -> List[dict]:
+async def get_patched_otus(db, config: Config, manifest: Dict[str, int]) -> List[dict]:
     """
     Get joined OTUs patched to a specific version based on a manifest of OTU ids and versions.
 
