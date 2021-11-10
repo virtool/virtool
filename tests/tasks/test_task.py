@@ -1,11 +1,10 @@
 import os
-import pytest
 from pathlib import Path
 
-from sqlalchemy import select
-
-import virtool.tasks.task
+import pytest
 import virtool.tasks.pg
+import virtool.tasks.task
+from sqlalchemy import select
 from virtool.tasks.models import Task
 
 
@@ -64,22 +63,11 @@ async def task(spawn_client, pg_session, static_time):
     return DummyTask(client.app, 1)
 
 
-async def test_init_db(task, static_time):
+async def test_init_db(snapshot, task, static_time):
     await task.init_db()
 
-    assert task.document == {
-        'id': 1,
-        'complete': False,
-        'context': {'user_id': 'test'},
-        'count': 0,
-        'created_at': static_time.datetime,
-        'error': None,
-        'file_size': None,
-        'progress': 0,
-        'step': 'create_file',
-        'type': 'test_task'}
-
-    assert task.context == {"user_id": "test"}
+    assert task.document == snapshot
+    assert task.context == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "error"])

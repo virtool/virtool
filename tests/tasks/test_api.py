@@ -1,5 +1,4 @@
 import pytest
-
 from virtool.tasks.models import Task
 
 
@@ -42,9 +41,9 @@ async def test_find(spawn_client, pg_session, snapshot, static_time):
         await session.commit()
 
     resp = await client.get("/api/tasks")
-    assert resp.status == 200
 
-    snapshot.assert_match(await resp.json())
+    assert resp.status == 200
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404"])
@@ -56,21 +55,20 @@ async def test_get(error, spawn_client, all_permissions, pg_session, static_time
     client = await spawn_client(authorize=True, administrator=True)
 
     if not error:
-        task = Task(
-            id=1,
-            complete=True,
-            context={
-                "user_id": "test_1"
-            },
-            count=40,
-            created_at=static_time.datetime,
-            file_size=1024,
-            progress=100,
-            step="download",
-            type="clone_reference"
-        )
         async with pg_session as session:
-            session.add(task)
+            session.add(Task(
+                id=1,
+                complete=True,
+                context={
+                    "user_id": "test_1"
+                },
+                count=40,
+                created_at=static_time.datetime,
+                file_size=1024,
+                progress=100,
+                step="download",
+                type="clone_reference"
+            ))
             await session.commit()
 
     resp = await client.get("/api/tasks/1")
@@ -80,5 +78,4 @@ async def test_get(error, spawn_client, all_permissions, pg_session, static_time
         return
 
     assert resp.status == 200
-
-    snapshot.assert_match(await resp.json())
+    assert await resp.json() == snapshot

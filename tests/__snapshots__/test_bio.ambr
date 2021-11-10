@@ -1,0 +1,120 @@
+# name: test_format_blast_hit[None-None]
+  <class 'dict'> {
+    'accession': 'ABC123',
+    'align_len': 231,
+    'bit_score': 1092,
+    'evalue': 1.23e-08,
+    'gaps': 3,
+    'identity': 0.86,
+    'len': 4321,
+    'name': 'No name',
+    'score': 98,
+    'taxid': '1234',
+    'title': 'Foo',
+  }
+---
+# name: test_format_blast_hit[None-accession]
+  <class 'dict'> {
+    'accession': '',
+    'align_len': 231,
+    'bit_score': 1092,
+    'evalue': 1.23e-08,
+    'gaps': 3,
+    'identity': 0.86,
+    'len': 4321,
+    'name': 'No name',
+    'score': 98,
+    'taxid': '1234',
+    'title': 'Foo',
+  }
+---
+# name: test_format_blast_hit[None-taxid]
+  <class 'dict'> {
+    'accession': 'ABC123',
+    'align_len': 231,
+    'bit_score': 1092,
+    'evalue': 1.23e-08,
+    'gaps': 3,
+    'identity': 0.86,
+    'len': 4321,
+    'name': 'No name',
+    'score': 98,
+    'taxid': '',
+    'title': 'Foo',
+  }
+---
+# name: test_format_blast_hit[None-title]
+  <class 'dict'> {
+    'accession': 'ABC123',
+    'align_len': 231,
+    'bit_score': 1092,
+    'evalue': 1.23e-08,
+    'gaps': 3,
+    'identity': 0.86,
+    'len': 4321,
+    'name': 'No name',
+    'score': 98,
+    'taxid': '1234',
+    'title': '',
+  }
+---
+# name: test_format_blast_hit[Vitis-None]
+  <class 'dict'> {
+    'accession': 'ABC123',
+    'align_len': 231,
+    'bit_score': 1092,
+    'evalue': 1.23e-08,
+    'gaps': 3,
+    'identity': 0.86,
+    'len': 4321,
+    'name': 'Vitis',
+    'score': 98,
+    'taxid': '1234',
+    'title': 'Foo',
+  }
+---
+# name: test_format_blast_hit[Vitis-accession]
+  <class 'dict'> {
+    'accession': '',
+    'align_len': 231,
+    'bit_score': 1092,
+    'evalue': 1.23e-08,
+    'gaps': 3,
+    'identity': 0.86,
+    'len': 4321,
+    'name': 'Vitis',
+    'score': 98,
+    'taxid': '1234',
+    'title': 'Foo',
+  }
+---
+# name: test_format_blast_hit[Vitis-taxid]
+  <class 'dict'> {
+    'accession': 'ABC123',
+    'align_len': 231,
+    'bit_score': 1092,
+    'evalue': 1.23e-08,
+    'gaps': 3,
+    'identity': 0.86,
+    'len': 4321,
+    'name': 'Vitis',
+    'score': 98,
+    'taxid': '',
+    'title': 'Foo',
+  }
+---
+# name: test_format_blast_hit[Vitis-title]
+  <class 'dict'> {
+    'accession': 'ABC123',
+    'align_len': 231,
+    'bit_score': 1092,
+    'evalue': 1.23e-08,
+    'gaps': 3,
+    'identity': 0.86,
+    'len': 4321,
+    'name': 'Vitis',
+    'score': 98,
+    'taxid': '1234',
+    'title': '',
+  }
+---

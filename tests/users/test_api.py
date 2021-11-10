@@ -1,9 +1,8 @@
 import pytest
-
 from virtool.users.utils import check_password
 
 
-async def test_find(spawn_client, create_user, static_time):
+async def test_find(snapshot, spawn_client, create_user, static_time):
     """
     Test that a ``GET /users`` returns a list of users.
 
@@ -16,75 +15,11 @@ async def test_find(spawn_client, create_user, static_time):
     resp = await client.get("/api/users")
 
     assert resp.status == 200
-
-    assert await resp.json() == {
-        "documents": [
-            {
-                "administrator": False,
-                "force_reset": False,
-                "groups": [],
-                "id": "bar",
-                "handle": "baz",
-                "last_password_change": static_time.iso,
-                "permissions": {
-                    "cancel_job": False,
-                    "create_ref": False,
-                    "create_sample": False,
-                    "modify_hmm": False,
-                    "modify_subtraction": False,
-                    "remove_file": False,
-                    "remove_job": False,
-                    "upload_file": False},
-                "primary_group": "technician"},
-            {
-                "administrator": False,
-                "force_reset": False,
-                "groups": [],
-                "id": "foo",
-                "handle": "bar",
-                "last_password_change": static_time.iso,
-                "permissions": {
-                    "cancel_job": False,
-                    "create_ref": False,
-                    "create_sample": False,
-                    "modify_hmm": False,
-                    "modify_subtraction": False,
-                    "remove_file": False,
-                    "remove_job": False,
-                    "upload_file": False
-                },
-                "primary_group": "technician"
-            },
-            {
-                "administrator": True,
-                "force_reset": False,
-                "groups": [],
-                "id": "test",
-                "handle": "bob",
-                "last_password_change": static_time.iso,
-                "permissions": {
-                    "cancel_job": False,
-                    "create_ref": False,
-                    "create_sample": True,
-                    "modify_hmm": False,
-                    "modify_subtraction": False,
-                    "remove_file": False,
-                    "remove_job": False,
-                    "upload_file": False
-                },
-                "primary_group": "technician"
-            }
-        ],
-        "found_count": 3,
-        "page": 1,
-        "page_count": 1,
-        "per_page": 25,
-        "total_count": 3
-    }
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, spawn_client, create_user, no_permissions, resp_is, static_time):
+async def test_get(error, snapshot, spawn_client, create_user, no_permissions, resp_is, static_time):
     """
     Test that a ``GET /api/users`` returns a list of users.
 
@@ -105,21 +40,11 @@ async def test_get(error, spawn_client, create_user, no_permissions, resp_is, st
         return
 
     assert resp.status == 200
-
-    assert await resp.json() == {
-        "id": "bar",
-        "handle": "baz",
-        "administrator": False,
-        "force_reset": False,
-        "groups": [],
-        "last_password_change": static_time.iso,
-        "permissions": no_permissions,
-        "primary_group": "technician"
-    }
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "400_exists", "400_password"])
-async def test_create(error, spawn_client, create_user, resp_is, static_time, mocker):
+async def test_create(error, snapshot, spawn_client, create_user, resp_is, static_time, mocker):
     """
     Test that a valid request results in a user document being properly inserted.
 
@@ -158,32 +83,14 @@ async def test_create(error, spawn_client, create_user, resp_is, static_time, mo
         return
 
     assert resp.status == 201
-
     assert resp.headers["Location"] == "/api/users/abc123"
+    assert await resp.json() == snapshot
 
-    expected = {
-        "id": "abc123",
-        "handle": "fred",
-        "administrator": False,
-        "force_reset": False,
-        "groups": [],
-        "last_password_change": static_time.iso,
-        "permissions": create_user()["permissions"],
-        "primary_group": ""
-    }
+    document = await client.db.users.find_one("abc123")
+    password = document.pop("password")
 
-    assert await resp.json() == expected
-
-    expected.update({
-        "_id": expected.pop("id"),
-        "last_password_change": static_time.datetime
-    })
-
-    assert await client.db.users.find_one("abc123", list(expected.keys())) == expected
-
-    document = await client.db.users.find_one("abc123", ["password"])
-
-    assert check_password("hello_world", document["password"])
+    assert document == snapshot
+    assert check_password("hello_world", password)
 
 
 @pytest.mark.parametrize("data", [
@@ -196,31 +103,30 @@ async def test_create(error, spawn_client, create_user, resp_is, static_time, mo
     {"primary_group": "tech"}
 ])
 @pytest.mark.parametrize("error", [None, "invalid_input", "user_dne", "group_dne", "not_group_member"])
-async def test_edit(data, error, spawn_client, resp_is, static_time, create_user, no_permissions):
+async def test_edit(data, error, snapshot, spawn_client, resp_is, static_time, create_user, no_permissions):
 
     client = await spawn_client(authorize=True, administrator=True)
 
     client.app["settings"].minimum_password_length = 8
 
-    bob = None
-
     if error != "user_dne":
-        groups = [] if error == "not_group_member" else ["tech"]
-        bob = dict(create_user(user_id="bob", handle="fred", groups=groups))
-        await client.db.users.insert_one(bob)
+        await client.db.users.insert_one(create_user(
+            user_id="bob",
+            handle="fred",
+            groups=[] if error == "not_group_member" else ["tech"]
+        ))
 
-    groups_to_insert = [{
-        "_id": "test",
-        "permissions": dict(no_permissions, build_index=True)
-    }]
-
-    if error != "group_dne":
-        groups_to_insert.append({
-            "_id": "tech",
+    # Don't insert the 'tech' group when we are checking for failure when group is missing.
+    await client.db.groups.insert_many([
+        {
+            "_id": "test",
+            "permissions": dict(no_permissions, build_index=True)
+        },
+        {
+            "_id": "manager" if error == "group_dne" else "tech",
             "permissions": dict(no_permissions)
-        })
-
-    await client.db.groups.insert_many(groups_to_insert)
+        }
+    ])
 
     payload = dict(data)
 
@@ -232,40 +138,24 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
     if "primary_group" in data:
         if error == "group_dne":
             await resp_is.bad_request(resp, "Primary group does not exist")
+            return
 
         elif error == "not_group_member":
             await resp_is.conflict(resp, "User is not member of group")
+            return
 
-    elif error == "invalid_input":
+    if error == "invalid_input":
         await resp_is.invalid_input(resp, {
             "force_reset": ["must be of boolean type"]
         })
+        return
 
-    elif error == "user_dne":
+    if error == "user_dne":
         await resp_is.not_found(resp, "User does not exist")
+        return
 
-    else:
-        expected = dict(bob, last_password_change=static_time.datetime)
-        expected.update(payload)
-
-        expected.pop("password")
-
-        if "password" in data or data.get("force_reset", False):
-            expected["invalidate_sessions"] = True
-
-        assert await client.db.users.find_one({"_id": "bob"}, {"password": False}) == expected
-
-        expected.update({
-            "id": expected["_id"],
-            "last_password_change": static_time.iso
-        })
-
-        for key in ["_id", "api_keys", "invalidate_sessions", "settings"]:
-            expected.pop(key)
-
-        assert resp.status == 200
-
-        assert await resp.json() == expected
+    assert resp.status == 200
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "400"])

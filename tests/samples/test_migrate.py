@@ -19,4 +19,4 @@ async def test_add_is_legacy(snapshot, dbi):
 
     await virtool.samples.migrate.add_is_legacy(dbi)
 
-    snapshot.assert_match(await dbi.samples.find().to_list(None))
+    assert await dbi.samples.find().to_list(None) == snapshot

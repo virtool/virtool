@@ -1,0 +1,546 @@
+# name: test_create[uvloop-False-False]
+  <class 'dict'> {
+    '_id': 'abc123',
+    'administrator': False,
+    'force_reset': False,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'bob',
+    'invalidate_sessions': False,
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'password': 'hashed_password',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': '',
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
+---
+# name: test_create[uvloop-None-False]
+  <class 'dict'> {
+    '_id': 'abc123',
+    'administrator': False,
+    'force_reset': True,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'bob',
+    'invalidate_sessions': False,
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'password': 'hashed_password',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': '',
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
+---
+# name: test_create[uvloop-True-False]
+  <class 'dict'> {
+    '_id': 'abc123',
+    'administrator': False,
+    'force_reset': True,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'bob',
+    'invalidate_sessions': False,
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'password': 'hashed_password',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': '',
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
+---
+# name: test_edit[uvloop-False-True]
+  <class 'dict'> {
+    '_id': 'abc123',
+    'administrator': False,
+    'force_reset': True,
+    'groups': <class 'dict'> {
+      'groups': <class 'list'> [
+        'peasants',
+        'kings',
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': True,
+        'create_ref': True,
+        'create_sample': True,
+        'modify_hmm': True,
+        'modify_subtraction': True,
+        'remove_file': True,
+        'remove_job': True,
+        'upload_file': True,
+      },
+    },
+    'handle': 'bob',
+    'invalidate_sessions': True,
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'password': 'new_hashed_password',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': 'peasants',
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
+---
+# name: test_edit[uvloop-True-True]
+  <class 'dict'> {
+    '_id': 'abc123',
+    'administrator': True,
+    'force_reset': True,
+    'groups': <class 'dict'> {
+      'groups': <class 'list'> [
+        'peasants',
+        'kings',
+      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': True,
+        'create_ref': True,
+        'create_sample': True,
+        'modify_hmm': True,
+        'modify_subtraction': True,
+        'remove_file': True,
+        'remove_job': True,
+        'upload_file': True,
+      },
+    },
+    'handle': 'bob',
+    'invalidate_sessions': True,
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'password': 'new_hashed_password',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': 'peasants',
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
+---
+# name: test_update_sessions_and_keys[uvloop-False-False-False]
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': False,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_update_sessions_and_keys[uvloop-False-False-False].1
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': False,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_update_sessions_and_keys[uvloop-False-False-True]
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': True,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_update_sessions_and_keys[uvloop-False-False-True].1
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': True,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_update_sessions_and_keys[uvloop-False-True-False]
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': False,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'permissions': <class 'dict'> {
+      'cancel_job': True,
+      'create_ref': True,
+      'create_sample': True,
+      'modify_hmm': True,
+      'modify_subtraction': True,
+      'remove_file': True,
+      'remove_job': True,
+      'upload_file': True,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_update_sessions_and_keys[uvloop-False-True-False].1
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': False,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_update_sessions_and_keys[uvloop-False-True-True]
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': True,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'permissions': <class 'dict'> {
+      'cancel_job': True,
+      'create_ref': True,
+      'create_sample': True,
+      'modify_hmm': True,
+      'modify_subtraction': True,
+      'remove_file': True,
+      'remove_job': True,
+      'upload_file': True,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_update_sessions_and_keys[uvloop-False-True-True].1
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': True,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_update_sessions_and_keys[uvloop-True-False-False]
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': False,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_update_sessions_and_keys[uvloop-True-False-False].1
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': False,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_update_sessions_and_keys[uvloop-True-False-True]
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': True,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_update_sessions_and_keys[uvloop-True-False-True].1
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': True,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_update_sessions_and_keys[uvloop-True-True-False]
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': False,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'permissions': <class 'dict'> {
+      'cancel_job': True,
+      'create_ref': True,
+      'create_sample': True,
+      'modify_hmm': True,
+      'modify_subtraction': True,
+      'remove_file': True,
+      'remove_job': True,
+      'upload_file': True,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_update_sessions_and_keys[uvloop-True-True-False].1
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': False,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_update_sessions_and_keys[uvloop-True-True-True]
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': True,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'permissions': <class 'dict'> {
+      'cancel_job': True,
+      'create_ref': True,
+      'create_sample': True,
+      'modify_hmm': True,
+      'modify_subtraction': True,
+      'remove_file': True,
+      'remove_job': True,
+      'upload_file': True,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_update_sessions_and_keys[uvloop-True-True-True].1
+  <class 'dict'> {
+    '_id': 'foobar',
+    'administrator': True,
+    'groups': <class 'list'> [
+      'peasants',
+      'kings',
+    ],
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---

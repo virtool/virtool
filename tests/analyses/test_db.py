@@ -1,10 +1,9 @@
 import pytest
-from aiohttp.test_utils import make_mocked_coro
-
 import virtool.analyses.db
-from virtool.analyses.db import BLAST, remove_nuvs_blast
 import virtool.analyses.format
 import virtool.tasks.pg
+from aiohttp.test_utils import make_mocked_coro
+from virtool.analyses.db import BLAST, remove_nuvs_blast
 
 
 @pytest.fixture
@@ -37,8 +36,13 @@ class TestBLAST:
         BLAST object attributes.
 
         """
-        m_remove_nuvs_blast = mocker.patch("virtool.analyses.db.remove_nuvs_blast", make_mocked_coro())
+        m_remove_nuvs_blast = mocker.patch(
+            "virtool.analyses.db.remove_nuvs_blast",
+            make_mocked_coro()
+        )
+
         await test_blast_obj.remove()
+
         m_remove_nuvs_blast.assert_called_with(dbi, "foo", 5)
 
     async def test_sleep(self, mocker, dbi, test_blast_obj):
@@ -61,7 +65,8 @@ class TestBLAST:
     @pytest.mark.parametrize("ready", [None, True, False])
     @pytest.mark.parametrize("result", [None, {"foo": "bar"}])
     async def test_update(self, snapshot, check, ready, result, error, mocker, dbi, test_blast_obj, static_time):
-        m_check_rid = mocker.patch("virtool.bio.check_rid", make_mocked_coro(check))
+        m_check_rid = mocker.patch(
+            "virtool.bio.check_rid", make_mocked_coro(check))
 
         await dbi.analyses.insert_one({
             "_id": "foo",
@@ -76,11 +81,13 @@ class TestBLAST:
         await test_blast_obj.update(ready, result, error)
 
         if ready is None:
-            m_check_rid.assert_called_with(test_blast_obj.config, test_blast_obj.rid)
+            m_check_rid.assert_called_with(
+                test_blast_obj.config, test_blast_obj.rid
+            )
         else:
             assert not m_check_rid.called
 
-        snapshot.assert_match(await dbi.analyses.find_one())
+        assert await dbi.analyses.find_one() == snapshot
 
 
 @pytest.mark.parametrize("workflow", [None, "foobar", "nuvs", "pathoscope"])
@@ -101,7 +108,8 @@ async def test_format_analysis(workflow, mocker):
     })
 
     mocker.patch("virtool.analyses.format.format_nuvs", new=m_format_nuvs)
-    mocker.patch("virtool.analyses.format.format_pathoscope", new=m_format_pathoscope)
+    mocker.patch("virtool.analyses.format.format_pathoscope",
+                 new=m_format_pathoscope)
 
     document = dict()
 
@@ -168,11 +176,11 @@ async def test_remove_nuvs_blast(snapshot, dbi, static_time):
         5
     )
 
-    snapshot.assert_match(await dbi.analyses.find().to_list(None))
+    assert await dbi.analyses.find().to_list(None) == snapshot
 
 
 @pytest.mark.parametrize("analysis_id", [None, "test_analysis"])
-async def test_create(analysis_id, dbi, static_time, test_random_alphanumeric):
+async def test_create(analysis_id, snapshot, dbi, static_time, test_random_alphanumeric):
     subtractions = ["subtraction_1", "subtraction_2"]
 
     await dbi.indexes.insert_one(
@@ -197,31 +205,8 @@ async def test_create(analysis_id, dbi, static_time, test_random_alphanumeric):
         analysis_id=analysis_id
     )
 
-    expected_analysis_id = test_random_alphanumeric.history[0] if analysis_id is None else "test_analysis"
+    assert document == snapshot
+    assert await dbi.analyses.find_one() == snapshot
 
-    assert document == {
-        "_id": expected_analysis_id,
-        "ready": False,
-        "created_at": static_time.datetime,
-        "updated_at": static_time.datetime,
-        "job": {
-            "id": "test_job"
-        },
-        "files": [],
-        "workflow": "nuvs",
-        "sample": {
-            "id": "test_sample"
-        },
-        "index": {
-            "id": "test_index",
-            "version": 11
-        },
-        "reference": {
-            "id": "test_ref",
-            "name": None
-        },
-        "subtractions": ["subtraction_1", "subtraction_2"],
-        "user": {
-            "id": "test_user"
-        }
-    }
+    expected_analysis_id = test_random_alphanumeric.history[
+        0] if analysis_id is None else "test_analysis"

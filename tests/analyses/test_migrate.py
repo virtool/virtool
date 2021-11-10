@@ -73,4 +73,4 @@ async def test_nest_pathoscope_results(snapshot, dbi):
 
     await nest_results(dbi)
 
-    snapshot.assert_match(await dbi.analyses.find().to_list(None))
+    assert await dbi.analyses.find().to_list(None) == snapshot

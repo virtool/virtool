@@ -15,5 +15,5 @@ async def test_create_fake_otus(dbi, snapshot, tmp_path):
         "bob"
     )
 
-    snapshot.assert_match(await dbi.otus.find().to_list(None), "otus")
-    snapshot.assert_match(await dbi.sequences.find().to_list(None), "sequences")
+    assert await dbi.otus.find().to_list(None) == snapshot
+    assert await dbi.sequences.find().to_list(None) == snapshot

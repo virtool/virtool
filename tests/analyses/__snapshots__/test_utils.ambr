@@ -1,0 +1,26 @@
+# name: test_attach_analysis_files[uvloop-False]
+  <class 'dict'> {
+    '_id': 'foobar',
+    'files': <class 'list'> [
+    ],
+    'ready': True,
+  }
+---
+# name: test_attach_analysis_files[uvloop-True]
+  <class 'dict'> {
+    '_id': 'foobar',
+    'files': <class 'list'> [
+      <class 'dict'> {
+        'analysis': 'foobar',
+        'description': None,
+        'format': 'fasta',
+        'id': 1,
+        'name': 'reference-fa',
+        'name_on_disk': '1-reference-fa',
+        'size': None,
+        'uploaded_at': None,
+      },
+    ],
+    'ready': True,
+  }
+---

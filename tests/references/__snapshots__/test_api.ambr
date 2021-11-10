@@ -1,0 +1,330 @@
+# name: test_add_group_or_user[True-uvloop-group-None]
+  <class 'dict'> {
+    'build': False,
+    'created_at': '2015-10-06T20:00:00Z',
+    'id': 'tech',
+    'modify': True,
+    'modify_otu': False,
+    'remove': False,
+  }
+---
+# name: test_add_group_or_user[True-uvloop-group-None].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'build': False,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 'tech',
+        'modify': True,
+        'modify_otu': False,
+        'remove': False,
+      },
+    ],
+    'users': <class 'list'> [
+    ],
+  }
+---
+# name: test_add_group_or_user[True-uvloop-user-None]
+  <class 'dict'> {
+    'build': False,
+    'created_at': '2015-10-06T20:00:00Z',
+    'id': 'fred',
+    'modify': True,
+    'modify_otu': False,
+    'remove': False,
+  }
+---
+# name: test_add_group_or_user[True-uvloop-user-None].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'groups': <class 'list'> [
+    ],
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'build': False,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 'fred',
+        'modify': True,
+        'modify_otu': False,
+        'remove': False,
+      },
+    ],
+  }
+---
+# name: test_create[uvloop-barcode]
+  '/api/refs/9pfsom1b'
+---
+# name: test_create[uvloop-barcode].1
+  <class 'dict'> {
+    'contributors': <class 'list'> [
+      <class 'dict'> {
+        'bob': 4,
+      },
+      <class 'dict'> {
+        'fred': 10,
+      },
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'barcode',
+    'description': 'A bunch of viruses used for testing',
+    'groups': <class 'list'> [
+    ],
+    'id': '9pfsom1b',
+    'internal_control': <class 'dict'> {
+      'id': 'foo',
+      'name': 'Foo virus',
+    },
+    'latest_build': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'foo',
+    },
+    'name': 'Test Viruses',
+    'organism': 'virus',
+    'otu_count': 22,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'strain',
+      'isolate',
+    ],
+    'targets': <class 'list'> [
+    ],
+    'unbuilt_change_count': 5,
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'build': True,
+        'id': 'test',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---
+# name: test_create[uvloop-genome]
+  '/api/refs/9pfsom1b'
+---
+# name: test_create[uvloop-genome].1
+  <class 'dict'> {
+    'contributors': <class 'list'> [
+      <class 'dict'> {
+        'bob': 4,
+      },
+      <class 'dict'> {
+        'fred': 10,
+      },
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'genome',
+    'description': 'A bunch of viruses used for testing',
+    'groups': <class 'list'> [
+    ],
+    'id': '9pfsom1b',
+    'internal_control': <class 'dict'> {
+      'id': 'foo',
+      'name': 'Foo virus',
+    },
+    'latest_build': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 'foo',
+    },
+    'name': 'Test Viruses',
+    'organism': 'virus',
+    'otu_count': 22,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'strain',
+      'isolate',
+    ],
+    'unbuilt_change_count': 5,
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'build': True,
+        'id': 'test',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---
+# name: test_delete_group_or_user[True-uvloop-group-None]
+  <class 'dict'> {
+    '_id': 'foo',
+    'groups': <class 'list'> [
+    ],
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'build': False,
+        'id': 'fred',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+    ],
+  }
+---
+# name: test_delete_group_or_user[True-uvloop-user-None]
+  <class 'dict'> {
+    '_id': 'foo',
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'build': False,
+        'id': 'tech',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+    ],
+    'users': <class 'list'> [
+    ],
+  }
+---
+# name: test_edit[uvloop-None-barcode]
+  <class 'dict'> {
+    'contributors': <class 'list'> [
+    ],
+    'data_type': 'barcode',
+    'description': 'This is a test reference.',
+    'id': 'foo',
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Bar',
+    'otu_count': 0,
+    'targets': <class 'list'> [
+      <class 'dict'> {
+        'description': '',
+        'name': 'CPN60',
+        'required': True,
+      },
+    ],
+    'unbuilt_change_count': 0,
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: test_edit[uvloop-None-barcode].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'data_type': 'barcode',
+    'description': 'This is a test reference.',
+    'name': 'Bar',
+    'targets': <class 'list'> [
+      <class 'dict'> {
+        'description': '',
+        'name': 'CPN60',
+        'required': True,
+      },
+    ],
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: test_edit[uvloop-None-genome]
+  <class 'dict'> {
+    'contributors': <class 'list'> [
+    ],
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'id': 'foo',
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Bar',
+    'otu_count': 0,
+    'unbuilt_change_count': 0,
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: test_edit[uvloop-None-genome].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'name': 'Bar',
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: test_edit_group_or_user[True-uvloop-group-None]
+  <class 'dict'> {
+    'build': False,
+    'id': 'tech',
+    'modify': False,
+    'modify_otu': False,
+    'remove': True,
+  }
+---
+# name: test_edit_group_or_user[True-uvloop-group-None].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'build': False,
+        'id': 'tech',
+        'modify': False,
+        'modify_otu': False,
+        'remove': True,
+      },
+    ],
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'build': False,
+        'id': 'fred',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+    ],
+  }
+---
+# name: test_edit_group_or_user[True-uvloop-user-None]
+  <class 'dict'> {
+    'build': False,
+    'id': 'fred',
+    'modify': False,
+    'modify_otu': False,
+    'remove': True,
+  }
+---
+# name: test_edit_group_or_user[True-uvloop-user-None].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'build': False,
+        'id': 'tech',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+    ],
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'build': False,
+        'id': 'fred',
+        'modify': False,
+        'modify_otu': False,
+        'remove': True,
+      },
+    ],
+  }
+---

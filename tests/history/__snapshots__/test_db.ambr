@@ -1,0 +1,458 @@
+# name: TestAdd.test[uvloop]
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Edited Prunus virus E',
+    'diff': <class 'list'> [
+      <class 'tuple'> (
+        'change',
+        'abbreviation',
+        <class 'tuple'> (
+          'PVF',
+          '',
+        ),
+      ),
+      <class 'tuple'> (
+        'change',
+        'name',
+        <class 'tuple'> (
+          'Prunus virus F',
+          'Prunus virus E',
+        ),
+      ),
+      <class 'tuple'> (
+        'change',
+        'version',
+        <class 'tuple'> (
+          0,
+          1,
+        ),
+      ),
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestAdd.test[uvloop].1
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Edited Prunus virus E',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'abbreviation',
+        <class 'list'> [
+          'PVF',
+          '',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'name',
+        <class 'list'> [
+          'Prunus virus F',
+          'Prunus virus E',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestAdd.test_create[uvloop]
+  <class 'dict'> {
+    '_id': '6116cba1.0',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Created Prunus virus F',
+    'diff': <class 'dict'> {
+      '_id': '6116cba1',
+      'abbreviation': 'PVF',
+      'imported': True,
+      'isolates': <class 'list'> [
+        <class 'dict'> {
+          'default': True,
+          'isolate_id': 'cab8b360',
+          'sequences': <class 'list'> [
+            <class 'dict'> {
+              '_id': 'KX269872',
+              'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+              'host': 'sweet cherry',
+              'isolate_id': 'cab8b360',
+              'segment': None,
+              'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+            },
+          ],
+          'source_name': '8816-v2',
+          'source_type': 'isolate',
+        },
+      ],
+      'last_indexed_version': 0,
+      'lower_name': 'prunus virus f',
+      'name': 'Prunus virus F',
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
+      },
+      'schema': <class 'list'> [
+      ],
+      'version': 0,
+    },
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'create',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 0,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestAdd.test_create[uvloop].1
+  <class 'dict'> {
+    '_id': '6116cba1.0',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Created Prunus virus F',
+    'diff': <class 'dict'> {
+      '_id': '6116cba1',
+      'abbreviation': 'PVF',
+      'imported': True,
+      'isolates': <class 'list'> [
+        <class 'dict'> {
+          'default': True,
+          'isolate_id': 'cab8b360',
+          'sequences': <class 'list'> [
+            <class 'dict'> {
+              '_id': 'KX269872',
+              'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+              'host': 'sweet cherry',
+              'isolate_id': 'cab8b360',
+              'segment': None,
+              'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+            },
+          ],
+          'source_name': '8816-v2',
+          'source_type': 'isolate',
+        },
+      ],
+      'last_indexed_version': 0,
+      'lower_name': 'prunus virus f',
+      'name': 'Prunus virus F',
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
+      },
+      'schema': <class 'list'> [
+      ],
+      'version': 0,
+    },
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'create',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 0,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestAdd.test_remove[uvloop]
+  <class 'dict'> {
+    '_id': '6116cba1.removed',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Removed Prunus virus F',
+    'diff': <class 'dict'> {
+      '_id': '6116cba1',
+      'abbreviation': 'PVF',
+      'imported': True,
+      'isolates': <class 'list'> [
+        <class 'dict'> {
+          'default': True,
+          'isolate_id': 'cab8b360',
+          'sequences': <class 'list'> [
+            <class 'dict'> {
+              '_id': 'KX269872',
+              'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+              'host': 'sweet cherry',
+              'isolate_id': 'cab8b360',
+              'segment': None,
+              'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+            },
+          ],
+          'source_name': '8816-v2',
+          'source_type': 'isolate',
+        },
+      ],
+      'last_indexed_version': 0,
+      'lower_name': 'prunus virus f',
+      'name': 'Prunus virus F',
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
+      },
+      'schema': <class 'list'> [
+      ],
+      'version': 0,
+    },
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'remove',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 'removed',
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestAdd.test_remove[uvloop].1
+  <class 'dict'> {
+    '_id': '6116cba1.removed',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Removed Prunus virus F',
+    'diff': <class 'dict'> {
+      '_id': '6116cba1',
+      'abbreviation': 'PVF',
+      'imported': True,
+      'isolates': <class 'list'> [
+        <class 'dict'> {
+          'default': True,
+          'isolate_id': 'cab8b360',
+          'sequences': <class 'list'> [
+            <class 'dict'> {
+              '_id': 'KX269872',
+              'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+              'host': 'sweet cherry',
+              'isolate_id': 'cab8b360',
+              'segment': None,
+              'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+            },
+          ],
+          'source_name': '8816-v2',
+          'source_type': 'isolate',
+        },
+      ],
+      'last_indexed_version': 0,
+      'lower_name': 'prunus virus f',
+      'name': 'Prunus virus F',
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
+      },
+      'schema': <class 'list'> [
+      ],
+      'version': 0,
+    },
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'remove',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 'removed',
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: test_get[uvloop-False]
+  <class 'dict'> {
+    'diff': <class 'dict'> {
+      'foo': 'bar',
+    },
+    'id': 'baz.2',
+  }
+---
+# name: test_get[uvloop-True]
+  <class 'dict'> {
+    'diff': 'loaded',
+    'id': 'baz.2',
+  }
+---
+# name: test_get_most_recent_change[uvloop-False]
+  None
+---
+# name: test_get_most_recent_change[uvloop-True]
+  <class 'dict'> {
+    '_id': '6116cba1.2',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Description number 2',
+    'method_name': 'update',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 2,
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: test_patch_to_version[uvloop-False]
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'TST',
+    'imported': True,
+    'isolates': <class 'list'> [
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Test Virus',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 3,
+  }
+---
+# name: test_patch_to_version[uvloop-False].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'TST',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+          <class 'dict'> {
+            '_id': 'KX269872',
+            'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+            'host': 'sweet cherry',
+            'isolate_id': 'cab8b360',
+            'otu_id': '6116cba1',
+            'segment': None,
+            'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+          },
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: test_patch_to_version[uvloop-False].2
+  <class 'list'> [
+    '6116cba1.3',
+    '6116cba1.2',
+  ]
+---
+# name: test_patch_to_version[uvloop-True]
+  None
+---
+# name: test_patch_to_version[uvloop-True].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'TST',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+          <class 'dict'> {
+            '_id': 'KX269872',
+            'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+            'host': 'sweet cherry',
+            'isolate_id': 'cab8b360',
+            'otu_id': '6116cba1',
+            'segment': None,
+            'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+          },
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: test_patch_to_version[uvloop-True].2
+  <class 'list'> [
+    '6116cba1.removed',
+    '6116cba1.3',
+    '6116cba1.2',
+  ]
+---

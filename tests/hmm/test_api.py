@@ -4,18 +4,18 @@ import shutil
 import aiofiles
 import aiohttp
 import pytest
-from aiohttp.test_utils import make_mocked_coro
-
 import virtool.errors
+from aiohttp.test_utils import make_mocked_coro
 from virtool.utils import decompress_file
 
 
-async def test_find(mocker, spawn_client, hmm_document):
+async def test_find(mocker, snapshot, spawn_client, hmm_document):
     """
     Check that a request with no URL parameters returns a list of HMM annotation documents.
 
     """
-    m = mocker.patch("virtool.hmm.db.get_status", make_mocked_coro({"id": "hmm"}))
+    m = mocker.patch("virtool.hmm.db.get_status",
+                     make_mocked_coro({"id": "hmm"}))
 
     client = await spawn_client(authorize=True)
 
@@ -26,32 +26,7 @@ async def test_find(mocker, spawn_client, hmm_document):
     resp = await client.get("/api/hmms")
 
     assert resp.status == 200
-
-    assert await resp.json() == {
-        "total_count": 1,
-        "found_count": 1,
-        "page": 1,
-        "page_count": 1,
-        "per_page": 25,
-        "documents": [
-            {
-                "names": [
-                    "ORF-63",
-                    "ORF67",
-                    "hypothetical protein"
-                ],
-                "id": "f8666902",
-                "cluster": 3463,
-                "count": 4,
-                "families": {
-                    "Baculoviridae": 3
-                }
-            }
-        ],
-        "status": {
-            "id": "hmm"
-        }
-    }
+    assert await resp.json() == snapshot
 
     m.assert_called_with(client.db)
 
@@ -59,7 +34,8 @@ async def test_find(mocker, spawn_client, hmm_document):
 async def test_get_status(mocker, spawn_client):
     client = await spawn_client(authorize=True)
 
-    mocker.patch("virtool.hmm.db.get_status", make_mocked_coro({"id": "hmm", "updating": True}))
+    mocker.patch("virtool.hmm.db.get_status",
+                 make_mocked_coro({"id": "hmm", "updating": True}))
 
     resp = await client.get("/api/hmms/status")
 
@@ -80,7 +56,8 @@ async def test_get_release(error, mocker, spawn_client, resp_is):
     """
     client = await spawn_client(authorize=True)
 
-    m_fetch = make_mocked_coro(None if error == "404" else {"name": "v2.0.1", "newer": False})
+    m_fetch = make_mocked_coro(None if error == "404" else {
+                               "name": "v2.0.1", "newer": False})
 
     mocker.patch("virtool.hmm.db.fetch_and_update_release", new=m_fetch)
 
@@ -88,7 +65,8 @@ async def test_get_release(error, mocker, spawn_client, resp_is):
         m_fetch.side_effect = virtool.errors.GitHubError("404 Not found")
 
     if error == "502_github":
-        m_fetch.side_effect = aiohttp.ClientConnectorError("foo", OSError("Bar"))
+        m_fetch.side_effect = aiohttp.ClientConnectorError(
+            "foo", OSError("Bar"))
 
     resp = await client.get("/api/hmms/status/release")
 
@@ -158,7 +136,8 @@ async def test_get_hmm_annotations(spawn_job_client, tmp_path):
         async with aiofiles.open(compressed_hmm_annotations, "wb") as f:
             await f.write(await response.read())
 
-        decompress_file(compressed_hmm_annotations, decompressed_hmm_annotations)
+        decompress_file(compressed_hmm_annotations,
+                        decompressed_hmm_annotations)
 
         async with aiofiles.open(decompressed_hmm_annotations, "r") as f:
             hmms = json.loads(await f.read())

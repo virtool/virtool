@@ -1,0 +1,27 @@
+# name: test_find[uvloop]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'cluster': 3463,
+        'count': 4,
+        'families': <class 'dict'> {
+          'Baculoviridae': 3,
+        },
+        'id': 'f8666902',
+        'names': <class 'list'> [
+          'ORF-63',
+          'ORF67',
+          'hypothetical protein',
+        ],
+      },
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'status': <class 'dict'> {
+      'id': 'hmm',
+    },
+    'total_count': 1,
+  }
+---

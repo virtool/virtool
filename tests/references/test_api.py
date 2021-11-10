@@ -1,7 +1,6 @@
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from aiohttp.web import Request
-
 from virtool.references.tasks import UpdateRemoteReferenceTask
 
 
@@ -13,7 +12,7 @@ async def test_get_release(error, mocker, spawn_client, resp_is):
         document = {
             "_id": "foo",
             "release": {
-               "id": "foo_release"
+                "id": "foo_release"
             },
             "remotes_from": {
                 "slug": "virtool/virtool"
@@ -250,15 +249,14 @@ async def test_create(data_type, mocker, snapshot, spawn_client, test_random_alp
             }]
         }
 
-    m_attach_computed = mocker.patch("virtool.references.db.attach_computed", m_attach_computed)
+    m_attach_computed = mocker.patch(
+        "virtool.references.db.attach_computed", m_attach_computed)
 
     resp = await client.post("/api/refs", data)
 
     assert resp.status == 201
-
-    assert resp.headers["Location"] == f"/api/refs/{test_random_alphanumeric.history[0]}"
-
-    snapshot.assert_match(await resp.json())
+    assert resp.headers["Location"] == snapshot
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
@@ -310,7 +308,10 @@ async def test_edit(data_type, error, mocker, snapshot, spawn_client, resp_is):
 
     can_modify = error != "403"
 
-    mocker.patch("virtool.references.db.check_right", make_mocked_coro(return_value=can_modify))
+    mocker.patch(
+        "virtool.references.db.check_right",
+        make_mocked_coro(return_value=can_modify)
+    )
 
     resp = await client.patch("/api/refs/foo", data)
 
@@ -341,8 +342,8 @@ async def test_edit(data_type, error, mocker, snapshot, spawn_client, resp_is):
         await resp_is.insufficient_rights(resp)
         return
 
-    snapshot.assert_match(await resp.json())
-    snapshot.assert_match(await client.db.references.find_one())
+    assert await resp.json() == snapshot
+    assert await client.db.references.find_one() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
@@ -415,9 +416,8 @@ async def test_add_group_or_user(error, field, snapshot, spawn_client, check_ref
         return
 
     assert resp.status == 201
-
-    snapshot.assert_match(await resp.json())
-    snapshot.assert_match(await client.db.references.find_one())
+    assert await resp.json() == snapshot
+    assert await client.db.references.find_one() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404_field", "404_ref"])
@@ -472,9 +472,9 @@ async def test_edit_group_or_user(error, field, snapshot, spawn_client, check_re
         return
 
     assert resp.status == 200
+    assert await resp.json() == snapshot
 
-    snapshot.assert_match(await resp.json())
-    snapshot.assert_match(await client.db.references.find_one())
+    assert await client.db.references.find_one() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404_field", "404_ref"])
@@ -524,4 +524,4 @@ async def test_delete_group_or_user(error, field, snapshot, spawn_client, check_
 
     await resp_is.no_content(resp)
 
-    snapshot.assert_match(await client.db.references.find_one())
+    assert await client.db.references.find_one() == snapshot

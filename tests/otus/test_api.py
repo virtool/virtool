@@ -1,8 +1,7 @@
 import pytest
-from aiohttp.test_utils import make_mocked_coro
-
 import virtool.otus.db
 import virtool.otus.utils
+from aiohttp.test_utils import make_mocked_coro
 
 
 @pytest.mark.parametrize("find", [None, "tobacco"])
@@ -65,7 +64,7 @@ async def test_get(error, snapshot, spawn_client, resp_is, test_otu, test_sequen
         return
 
     assert resp.status == 200
-    snapshot.assert_match(await resp.json())
+    assert await resp.json() == snapshot
 
 
 class TestCreate:
@@ -107,12 +106,12 @@ class TestCreate:
 
         assert resp.status == 201
         assert resp.headers["Location"] == "/api/otus/9pfsom1b"
+        assert await resp.json() == snapshot
 
-        snapshot.assert_match(await resp.json(), "json")
-        snapshot.assert_match(await client.db.otus.find_one(), "otu")
-        snapshot.assert_match(await client.db.history.find_one(), "history")
+        assert await client.db.otus.find_one() == snapshot
+        assert await client.db.history.find_one() == snapshot
 
-    @pytest.mark.parametrize("error,message", [
+    @ pytest.mark.parametrize("error,message", [
         (None, None),
         ("400_name_exists", "Name already exists"),
         ("400_abbr_exists", "Abbreviation already exists"),
@@ -172,92 +171,92 @@ class TestCreate:
 
 class TestEdit:
 
-    @pytest.mark.parametrize("data, existing_abbreviation, description", [
+    @ pytest.mark.parametrize("data, existing_abbreviation, description", [
         # Name, ONLY.
         (
-                {
-                    "name": "Tobacco mosaic otu"
-                },
-                "TMV",
-                "Changed name to Tobacco mosaic otu"
+            {
+                "name": "Tobacco mosaic otu"
+            },
+            "TMV",
+            "Changed name to Tobacco mosaic otu"
         ),
         # Name and abbreviation, BOTH CHANGE.
         (
-                {
-                    "name": "Tobacco mosaic otu",
-                    "abbreviation": "TMV"
-                },
-                "PVF",
-                "Changed name to Tobacco mosaic otu and changed abbreviation to TMV"
+            {
+                "name": "Tobacco mosaic otu",
+                "abbreviation": "TMV"
+            },
+            "PVF",
+            "Changed name to Tobacco mosaic otu and changed abbreviation to TMV"
         ),
         # Name and abbreviation, NO NAME CHANGE because old is same as new.
         (
-                {
-                    "name": "Prunus virus F",
-                    "abbreviation": "TMV"
-                },
-                "PVF",
-                "Changed abbreviation to TMV"
+            {
+                "name": "Prunus virus F",
+                "abbreviation": "TMV"
+            },
+            "PVF",
+            "Changed abbreviation to TMV"
         ),
         # Name and abbreviation, NO ABBR CHANGE because old is same as new.
         (
-                {
-                    "name": "Tobacco mosaic otu",
-                    "abbreviation": "TMV"
-                },
-                "TMV",
-                "Changed name to Tobacco mosaic otu"
+            {
+                "name": "Tobacco mosaic otu",
+                "abbreviation": "TMV"
+            },
+            "TMV",
+            "Changed name to Tobacco mosaic otu"
         ),
         # Name and abbreviation, ABBR REMOVED because old is "TMV" and new is "".
         (
-                {
-                    "name": "Tobacco mosaic otu",
-                    "abbreviation": ""
-                },
-                "TMV",
-                "Changed name to Tobacco mosaic otu and removed abbreviation TMV"
+            {
+                "name": "Tobacco mosaic otu",
+                "abbreviation": ""
+            },
+            "TMV",
+            "Changed name to Tobacco mosaic otu and removed abbreviation TMV"
         ),
         # Name and abbreviation, ABBR ADDED because old is "" and new is "TMV".
         (
-                {
-                    "name": "Tobacco mosaic otu",
-                    "abbreviation": "TMV"
-                },
-                "",
-                "Changed name to Tobacco mosaic otu and added abbreviation TMV"
+            {
+                "name": "Tobacco mosaic otu",
+                "abbreviation": "TMV"
+            },
+            "",
+            "Changed name to Tobacco mosaic otu and added abbreviation TMV"
         ),
         # Abbreviation, ONLY.
         (
-                {
-                    "abbreviation": "TMV"
-                },
-                "PVF",
-                "Changed abbreviation to TMV"
+            {
+                "abbreviation": "TMV"
+            },
+            "PVF",
+            "Changed abbreviation to TMV"
         ),
         # Abbreviation, ONLY because old name is same as new.
         (
-                {
-                    "name": "Prunus virus F",
-                    "abbreviation": "TMV"
-                },
-                "PVF",
-                "Changed abbreviation to TMV"
+            {
+                "name": "Prunus virus F",
+                "abbreviation": "TMV"
+            },
+            "PVF",
+            "Changed abbreviation to TMV"
         ),
         # Abbreviation, ADDED.
         (
-                {
-                    "abbreviation": "TMV"
-                },
-                "",
-                "Added abbreviation TMV"
+            {
+                "abbreviation": "TMV"
+            },
+            "",
+            "Added abbreviation TMV"
         ),
         # Abbreviation, REMOVED.
         (
-                {
-                    "abbreviation": ""
-                },
-                "TMV",
-                "Removed abbreviation TMV"
+            {
+                "abbreviation": ""
+            },
+            "TMV",
+            "Removed abbreviation TMV"
         )
     ])
     async def test(self, data, existing_abbreviation, description, snapshot, spawn_client, check_ref_right, resp_is,
@@ -281,32 +280,32 @@ class TestEdit:
             return
 
         assert resp.status == 200
+        assert await resp.json() == snapshot
 
-        snapshot.assert_match(await resp.json(), "json")
-        snapshot.assert_match(await client.db.otus.find_one(), "otu")
-        snapshot.assert_match(await client.db.history.find_one(), "history")
+        assert await client.db.otus.find_one() == snapshot
+        assert await client.db.history.find_one() == snapshot
 
-    @pytest.mark.parametrize("data,message", [
+    @ pytest.mark.parametrize("data,message", [
         (
-                {
-                    "name": "Tobacco mosaic virus",
-                    "abbreviation": "FBV"
-                },
-                "Name already exists"
+            {
+                "name": "Tobacco mosaic virus",
+                "abbreviation": "FBV"
+            },
+            "Name already exists"
         ),
         (
-                {
-                    "name": "Foobar virus",
-                    "abbreviation": "TMV"
-                },
-                "Abbreviation already exists"
+            {
+                "name": "Foobar virus",
+                "abbreviation": "TMV"
+            },
+            "Abbreviation already exists"
         ),
         (
-                {
-                    "name": "Tobacco mosaic virus",
-                    "abbreviation": "TMV"
-                },
-                "Name and abbreviation already exist"
+            {
+                "name": "Tobacco mosaic virus",
+                "abbreviation": "TMV"
+            },
+            "Name and abbreviation already exist"
         )
     ])
     async def test_field_exists(self, data, message, spawn_client, check_ref_right, resp_is):
@@ -343,30 +342,31 @@ class TestEdit:
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
             return
+
         await resp_is.bad_request(resp, message)
 
-    @pytest.mark.parametrize("old_name,old_abbreviation,data", [
+    @ pytest.mark.parametrize("old_name,old_abbreviation,data", [
         (
-                "Tobacco mosaic otu",
-                "TMV",
-                {
-                    "name": "Tobacco mosaic otu",
-                    "abbreviation": "TMV"
-                }
+            "Tobacco mosaic otu",
+            "TMV",
+            {
+                "name": "Tobacco mosaic otu",
+                "abbreviation": "TMV"
+            }
         ),
         (
-                "Tobacco mosaic otu",
-                "TMV",
-                {
-                    "name": "Tobacco mosaic otu"
-                }
+            "Tobacco mosaic otu",
+            "TMV",
+            {
+                "name": "Tobacco mosaic otu"
+            }
         ),
         (
-                "Tobacco mosaic otu",
-                "TMV",
-                {
-                    "abbreviation": "TMV"
-                }
+            "Tobacco mosaic otu",
+            "TMV",
+            {
+                "abbreviation": "TMV"
+            }
         )
     ])
     async def test_no_change(self, old_name, old_abbreviation, data, snapshot, spawn_client, check_ref_right, resp_is):
@@ -390,7 +390,7 @@ class TestEdit:
             return
 
         assert resp.status == 200
-        snapshot.assert_match(await resp.json())
+        assert await resp.json() == snapshot
         assert await client.db.history.count_documents({}) == 0
 
     async def test_not_found(self, spawn_client, resp_is):
@@ -434,7 +434,7 @@ async def test_remove(abbreviation, exists, snapshot, spawn_client, check_ref_ri
 
     await resp_is.no_content(resp)
     assert await client.db.otus.count_documents({"_id": "6116cba1"}) == 0
-    snapshot.assert_match(await client.db.history.find_one(), "history")
+    assert await client.db.history.find_one() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404"])
@@ -462,7 +462,7 @@ async def test_list_isolates(error, snapshot, spawn_client, resp_is, test_otu):
         return
 
     assert resp.status == 200
-    snapshot.assert_match(await resp.json(), "json")
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
@@ -488,12 +488,12 @@ async def test_get_isolate(error, snapshot, spawn_client, resp_is, test_otu, tes
         return
 
     assert resp.status == 200
-    snapshot.assert_match(await resp.json())
+    assert await resp.json() == snapshot
 
 
 class TestAddIsolate:
 
-    @pytest.mark.parametrize("default", [True, False])
+    @ pytest.mark.parametrize("default", [True, False])
     async def test_default(self, default, mocker, snapshot, spawn_client, check_ref_right, resp_is, test_otu,
                            test_random_alphanumeric):
         """
@@ -511,7 +511,8 @@ class TestAddIsolate:
             "default": default
         }
 
-        mocker.patch("virtool.references.db.check_source_type", make_mocked_coro(True))
+        mocker.patch("virtool.references.db.check_source_type",
+                     make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
@@ -520,11 +521,11 @@ class TestAddIsolate:
             return
 
         assert resp.status == 201
-        assert resp.headers["Location"] == f"/api/otus/6116cba1/isolates/{test_random_alphanumeric.history[0]}"
+        assert resp.headers["Location"] == snapshot
+        await resp.json() == snapshot
 
-        snapshot.assert_match(await resp.json(), "json")
-        snapshot.assert_match(await client.db.otus.find_one("6116cba1"), "otu")
-        snapshot.assert_match(await client.db.history.find_one(), "history")
+        assert await client.db.otus.find_one("6116cba1") == snapshot
+        assert await client.db.history.find_one() == snapshot
 
     async def test_first(self, mocker, snapshot, spawn_client, check_ref_right, resp_is, test_otu,
                          test_random_alphanumeric):
@@ -545,7 +546,8 @@ class TestAddIsolate:
             "default": False
         }
 
-        mocker.patch("virtool.references.db.check_source_type", make_mocked_coro(True))
+        mocker.patch("virtool.references.db.check_source_type",
+                     make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
@@ -554,11 +556,11 @@ class TestAddIsolate:
             return
 
         assert resp.status == 201
-        assert resp.headers["Location"] == f"/api/otus/6116cba1/isolates/{test_random_alphanumeric.history[0]}"
+        assert resp.headers["Location"] == snapshot
+        assert await resp.json() == snapshot
 
-        snapshot.assert_match(await resp.json(), "json")
-        snapshot.assert_match(await client.db.otus.find_one("6116cba1"), "otu")
-        snapshot.assert_match(await client.db.history.find_one(), "history")
+        assert await client.db.otus.find_one("6116cba1") == snapshot
+        assert await client.db.history.find_one() == snapshot
 
     async def test_force_case(self, mocker, snapshot, spawn_client, check_ref_right, resp_is, test_otu,
                               test_random_alphanumeric):
@@ -576,7 +578,8 @@ class TestAddIsolate:
             "default": False
         }
 
-        mocker.patch("virtool.references.db.check_source_type", make_mocked_coro(True))
+        mocker.patch("virtool.references.db.check_source_type",
+                     make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
@@ -585,11 +588,11 @@ class TestAddIsolate:
             return
 
         assert resp.status == 201
-        assert resp.headers["Location"] == f"/api/otus/6116cba1/isolates/{test_random_alphanumeric.history[0]}"
+        assert resp.headers["Location"] == snapshot
+        assert await resp.json() == snapshot
 
-        snapshot.assert_match(await resp.json(), "json")
-        snapshot.assert_match(await client.db.otus.find_one("6116cba1"), "otu")
-        snapshot.assert_match(await client.db.history.find_one(), "history")
+        assert await client.db.otus.find_one("6116cba1") == snapshot
+        assert await client.db.history.find_one() == snapshot
 
     async def test_empty(self, mocker, snapshot, spawn_client, check_ref_right, resp_is, test_otu,
                          test_random_alphanumeric):
@@ -602,7 +605,8 @@ class TestAddIsolate:
 
         await client.db.otus.insert_one(test_otu)
 
-        mocker.patch("virtool.references.db.check_source_type", make_mocked_coro(True))
+        mocker.patch("virtool.references.db.check_source_type",
+                     make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", {})
 
@@ -611,11 +615,11 @@ class TestAddIsolate:
             return
 
         assert resp.status == 201
-        assert resp.headers["Location"] == f"/api/otus/6116cba1/isolates/{test_random_alphanumeric.history[0]}"
+        assert resp.headers["Location"] == snapshot
+        assert await resp.json() == snapshot
 
-        snapshot.assert_match(await resp.json(), "json")
-        snapshot.assert_match(await client.db.otus.find_one("6116cba1"), "otu")
-        snapshot.assert_match(await client.db.history.find_one(), "history")
+        assert await client.db.otus.find_one("6116cba1") == snapshot
+        assert await client.db.history.find_one() == snapshot
 
     async def test_not_found(self, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
@@ -636,7 +640,8 @@ class TestEditIsolate:
     @pytest.mark.parametrize("data,description", [
         ({"source_type": "variant"}, "Renamed Isolate b to Variant b"),
         ({"source_type": "variant"}, "Renamed Isolate b to Variant b"),
-        ({"source_type": "variant", "source_name": "A"}, "Renamed Isolate b to Variant A"),
+        ({"source_type": "variant", "source_name": "A"},
+         "Renamed Isolate b to Variant A"),
         ({"source_name": "A"}, "Renamed Isolate b to Isolate A")
     ])
     async def test(self, data, description, snapshot, spawn_client, check_ref_right, resp_is, test_otu):
@@ -670,10 +675,10 @@ class TestEditIsolate:
             return
 
         assert resp.status == 200
+        assert await resp.json() == snapshot
 
-        snapshot.assert_match(await resp.json(), "json")
-        snapshot.assert_match(await client.db.otus.find_one("6116cba1"), "otu")
-        snapshot.assert_match(await client.db.history.find_one(), "history")
+        assert await client.db.otus.find_one("6116cba1") == snapshot
+        assert await client.db.history.find_one() == snapshot
 
     async def test_force_case(self, snapshot, spawn_client, check_ref_right, resp_is, test_otu):
         """
@@ -703,10 +708,10 @@ class TestEditIsolate:
             return
 
         assert resp.status == 200
+        assert await resp.json() == snapshot
 
-        snapshot.assert_match(await resp.json(), "json")
-        snapshot.assert_match(await client.db.otus.find_one("6116cba1"), "otu")
-        snapshot.assert_match(await client.db.history.find_one(), "history")
+        assert await client.db.otus.find_one("6116cba1") == snapshot
+        assert await client.db.history.find_one() == snapshot
 
     @pytest.mark.parametrize("otu_id,isolate_id", [
         ("6116cba1", "test"),
@@ -758,12 +763,10 @@ class TestSetAsDefault:
             return
 
         assert resp.status == 200
+        assert await resp.json() == snapshot
 
-        new = await virtool.otus.db.join(client.db, "6116cba1")
-
-        snapshot.assert_match(await resp.json(), "json")
-        snapshot.assert_match(new, "joined")
-        snapshot.assert_match(await client.db.history.find_one(), "history")
+        assert await virtool.otus.db.join(client.db, "6116cba1") == snapshot
+        await client.db.history.find_one() == snapshot
 
     async def test_no_change(self, snapshot, spawn_client, check_ref_right, resp_is, test_otu, static_time,
                              test_random_alphanumeric):
@@ -790,13 +793,9 @@ class TestSetAsDefault:
             return
 
         assert resp.status == 200
+        assert await resp.json() == snapshot
 
-        snapshot.assert_match(await resp.json(), "response")
-
-        new = await virtool.otus.db.join(client.db, "6116cba1")
-
-        snapshot.assert_match(new, "joined")
-
+        assert await virtool.otus.db.join(client.db, "6116cba1") == snapshot
         assert await client.db.history.count_documents({}) == 0
 
     @pytest.mark.parametrize("otu_id,isolate_id", [
@@ -840,10 +839,10 @@ class TestRemoveIsolate:
             return
 
         await resp_is.no_content(resp)
+
         assert await client.db.otus.count_documents({"isolates.id": "cab8b360"}) == 0
         assert await client.db.sequences.count_documents({}) == 0
-
-        snapshot.assert_match(await client.db.history.find_one(), "history")
+        assert await client.db.history.find_one() == snapshot
 
     async def test_change_default(self, snapshot, spawn_client, check_ref_right, resp_is, test_otu, test_sequence):
         """
@@ -872,8 +871,8 @@ class TestRemoveIsolate:
         assert await client.db.otus.count_documents({"isolates.id": "cab8b360"}) == 0
         assert not await client.db.sequences.count_documents({})
 
-        snapshot.assert_match(await client.db.otus.find_one({"isolates.id": "bcb9b352"}), "otu")
-        snapshot.assert_match(await client.db.history.find_one(), "history")
+        assert await client.db.otus.find_one({"isolates.id": "bcb9b352"}) == snapshot
+        assert await client.db.history.find_one() == snapshot
 
     @pytest.mark.parametrize("url", ["/api/otus/foobar/isolates/cab8b360", "/api/otus/test/isolates/foobar"])
     async def test_not_found(self, url, spawn_client, test_otu, resp_is):
@@ -909,8 +908,7 @@ async def test_list_sequences(error, snapshot, spawn_client, resp_is, test_otu, 
         return
 
     assert resp.status == 200
-
-    snapshot.assert_match(await resp.json(), "json")
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate", "404_sequence"])
@@ -933,7 +931,7 @@ async def test_get_sequence(error, snapshot, spawn_client, resp_is, test_otu, te
         return
 
     assert resp.status == 200
-    snapshot.assert_match(await resp.json(), "json")
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
@@ -972,12 +970,12 @@ async def test_create_sequence(error, snapshot, spawn_client, check_ref_right, r
     sequence_id = test_random_alphanumeric.history[0]
 
     assert resp.status == 201
-    assert resp.headers["Location"] == f"/api/otus/6116cba1/isolates/cab8b360/sequences/{sequence_id}"
+    assert resp.headers["Location"] == snapshot
+    assert await resp.json() == snapshot
 
-    snapshot.assert_match(await resp.json(), "json")
-    snapshot.assert_match(await client.db.otus.find_one("6116cba1"), "otu")
-    snapshot.assert_match(await client.db.sequences.find_one(sequence_id), "sequence")
-    snapshot.assert_match(await client.db.history.find_one(), "history")
+    assert await client.db.otus.find_one("6116cba1") == snapshot
+    assert await client.db.sequences.find_one(sequence_id) == snapshot
+    assert await client.db.history.find_one() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate", "404_sequence"])
@@ -1015,11 +1013,11 @@ async def test_edit_sequence(error, snapshot, spawn_client, check_ref_right, res
         return
 
     assert resp.status == 200
+    assert await resp.json() == snapshot
 
-    snapshot.assert_match(await resp.json(), "json")
-    snapshot.assert_match(await client.db.otus.find_one("6116cba1"), "otu")
-    snapshot.assert_match(await client.db.sequences.find_one("KX269872"), "sequence")
-    snapshot.assert_match(await client.db.history.find_one(), "history")
+    assert await client.db.otus.find_one("6116cba1") == snapshot
+    assert await client.db.sequences.find_one("KX269872") == snapshot
+    assert await client.db.history.find_one() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate", "404_sequence"])
@@ -1047,8 +1045,8 @@ async def test_remove_sequence(error, snapshot, spawn_client, check_ref_right, r
 
     await resp_is.no_content(resp)
 
-    snapshot.assert_match(await client.db.otus.find_one("6116cba1"), "otu")
-    snapshot.assert_match(await client.db.history.find_one(), "history")
+    assert await client.db.otus.find_one("6116cba1") == snapshot
+    assert await client.db.history.find_one() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404"])

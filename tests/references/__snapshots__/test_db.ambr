@@ -1,0 +1,487 @@
+# name: TestEdit.test_control[uvloop--False]
+  <class 'dict'> {
+    'contributors': <class 'list'> [
+    ],
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'id': 'foo',
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Tester',
+    'otu_count': 0,
+    'unbuilt_change_count': 0,
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: TestEdit.test_control[uvloop--False].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'internal_control': None,
+    'name': 'Tester',
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: TestEdit.test_control[uvloop--True]
+  <class 'dict'> {
+    'contributors': <class 'list'> [
+    ],
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'id': 'foo',
+    'internal_control': <class 'dict'> {
+      'id': 'baz',
+    },
+    'latest_build': None,
+    'name': 'Tester',
+    'otu_count': 0,
+    'unbuilt_change_count': 0,
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: TestEdit.test_control[uvloop--True].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'internal_control': None,
+    'name': 'Tester',
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: TestEdit.test_control[uvloop-None-False]
+  <class 'dict'> {
+    'contributors': <class 'list'> [
+    ],
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'id': 'foo',
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Tester',
+    'otu_count': 0,
+    'unbuilt_change_count': 0,
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: TestEdit.test_control[uvloop-None-False].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'internal_control': <class 'dict'> {
+      'id': 'bar',
+    },
+    'name': 'Tester',
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: TestEdit.test_control[uvloop-None-True]
+  <class 'dict'> {
+    'contributors': <class 'list'> [
+    ],
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'id': 'foo',
+    'internal_control': <class 'dict'> {
+      'id': 'baz',
+    },
+    'latest_build': None,
+    'name': 'Tester',
+    'otu_count': 0,
+    'unbuilt_change_count': 0,
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: TestEdit.test_control[uvloop-None-True].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'internal_control': <class 'dict'> {
+      'id': 'bar',
+    },
+    'name': 'Tester',
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: TestEdit.test_control[uvloop-baz-False]
+  <class 'dict'> {
+    'contributors': <class 'list'> [
+    ],
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'id': 'foo',
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Tester',
+    'otu_count': 0,
+    'unbuilt_change_count': 0,
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: TestEdit.test_control[uvloop-baz-False].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'internal_control': None,
+    'name': 'Tester',
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: TestEdit.test_control[uvloop-baz-True]
+  <class 'dict'> {
+    'contributors': <class 'list'> [
+    ],
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'id': 'foo',
+    'internal_control': <class 'dict'> {
+      'id': 'baz',
+    },
+    'latest_build': None,
+    'name': 'Tester',
+    'otu_count': 0,
+    'unbuilt_change_count': 0,
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: TestEdit.test_control[uvloop-baz-True].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'internal_control': <class 'dict'> {
+      'id': 'baz',
+    },
+    'name': 'Tester',
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: TestEdit.test_reference_name[uvloop]
+  <class 'dict'> {
+    'contributors': <class 'list'> [
+    ],
+    'data_type': 'genome',
+    'id': 'foo',
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Bar',
+    'otu_count': 0,
+    'unbuilt_change_count': 0,
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: TestEdit.test_reference_name[uvloop].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'data_type': 'genome',
+    'internal_control': <class 'dict'> {
+      'id': 'bar',
+    },
+    'name': 'Bar',
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bob',
+      },
+    ],
+  }
+---
+# name: TestEdit.test_reference_name[uvloop].2
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'baz',
+      'reference': <class 'dict'> {
+        'id': 'foo',
+        'name': 'Bar',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'boo',
+      'reference': <class 'dict'> {
+        'id': 'foo',
+        'name': 'Bar',
+      },
+    },
+  ]
+---
+# name: test_delete_member[uvloop-groups]
+  'bar'
+---
+# name: test_delete_member[uvloop-groups].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'baz',
+      },
+    ],
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bar',
+      },
+      <class 'dict'> {
+        'id': 'baz',
+      },
+    ],
+  }
+---
+# name: test_delete_member[uvloop-users]
+  'bar'
+---
+# name: test_delete_member[uvloop-users].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'bar',
+      },
+      <class 'dict'> {
+        'id': 'baz',
+      },
+    ],
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'baz',
+      },
+    ],
+  }
+---
+# name: test_edit_member[uvloop-group-None]
+  <class 'dict'> {
+    'build': True,
+    'id': 'baz',
+    'modify': False,
+    'modify_otu': False,
+    'remove': True,
+  }
+---
+# name: test_edit_member[uvloop-group-None].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'build': False,
+        'id': 'bar',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+      <class 'dict'> {
+        'build': True,
+        'id': 'baz',
+        'modify': False,
+        'modify_otu': False,
+        'remove': True,
+      },
+    ],
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'build': False,
+        'id': 'bar',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+      <class 'dict'> {
+        'build': False,
+        'id': 'baz',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+    ],
+  }
+---
+# name: test_edit_member[uvloop-group-reference]
+  None
+---
+# name: test_edit_member[uvloop-group-reference].1
+  None
+---
+# name: test_edit_member[uvloop-group-subdocument]
+  None
+---
+# name: test_edit_member[uvloop-group-subdocument].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'build': False,
+        'id': 'bar',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+      <class 'dict'> {
+        'build': False,
+        'id': 'baz',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+    ],
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'build': False,
+        'id': 'bar',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+      <class 'dict'> {
+        'build': False,
+        'id': 'baz',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+    ],
+  }
+---
+# name: test_edit_member[uvloop-user-None]
+  <class 'dict'> {
+    'build': True,
+    'id': 'baz',
+    'modify': False,
+    'modify_otu': False,
+    'remove': True,
+  }
+---
+# name: test_edit_member[uvloop-user-None].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'build': False,
+        'id': 'bar',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+      <class 'dict'> {
+        'build': False,
+        'id': 'baz',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+    ],
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'build': False,
+        'id': 'bar',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+      <class 'dict'> {
+        'build': True,
+        'id': 'baz',
+        'modify': False,
+        'modify_otu': False,
+        'remove': True,
+      },
+    ],
+  }
+---
+# name: test_edit_member[uvloop-user-reference]
+  None
+---
+# name: test_edit_member[uvloop-user-reference].1
+  None
+---
+# name: test_edit_member[uvloop-user-subdocument]
+  None
+---
+# name: test_edit_member[uvloop-user-subdocument].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'build': False,
+        'id': 'bar',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+      <class 'dict'> {
+        'build': False,
+        'id': 'baz',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+    ],
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'build': False,
+        'id': 'bar',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+      <class 'dict'> {
+        'build': False,
+        'id': 'baz',
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      },
+    ],
+  }
+---

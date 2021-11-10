@@ -1,0 +1,3376 @@
+# name: TestAddIsolate.test_default[True-uvloop-False]
+  '/api/otus/6116cba1/isolates/9pf'
+---
+# name: TestAddIsolate.test_default[True-uvloop-False].1
+  <class 'dict'> {
+    'default': False,
+    'id': '9pf',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': 'b',
+    'source_type': 'isolate',
+  }
+---
+# name: TestAddIsolate.test_default[True-uvloop-False].2
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+      <class 'dict'> {
+        'default': False,
+        'id': '9pf',
+        'source_name': 'b',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestAddIsolate.test_default[True-uvloop-False].3
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Added Isolate b',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'add',
+        'isolates',
+        <class 'list'> [
+          <class 'list'> [
+            1,
+            <class 'dict'> {
+              'default': False,
+              'id': '9pf',
+              'sequences': <class 'list'> [
+              ],
+              'source_name': 'b',
+              'source_type': 'isolate',
+            },
+          ],
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'add_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestAddIsolate.test_default[True-uvloop-True]
+  '/api/otus/6116cba1/isolates/9pf'
+---
+# name: TestAddIsolate.test_default[True-uvloop-True].1
+  <class 'dict'> {
+    'default': True,
+    'id': '9pf',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': 'b',
+    'source_type': 'isolate',
+  }
+---
+# name: TestAddIsolate.test_default[True-uvloop-True].2
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': False,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+      <class 'dict'> {
+        'default': True,
+        'id': '9pf',
+        'source_name': 'b',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestAddIsolate.test_default[True-uvloop-True].3
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Added Isolate b as default',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          0,
+          'default',
+        ],
+        <class 'list'> [
+          True,
+          False,
+        ],
+      ],
+      <class 'list'> [
+        'add',
+        'isolates',
+        <class 'list'> [
+          <class 'list'> [
+            1,
+            <class 'dict'> {
+              'default': True,
+              'id': '9pf',
+              'sequences': <class 'list'> [
+              ],
+              'source_name': 'b',
+              'source_type': 'isolate',
+            },
+          ],
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'add_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestAddIsolate.test_empty[True-uvloop]
+  '/api/otus/6116cba1/isolates/9pf'
+---
+# name: TestAddIsolate.test_empty[True-uvloop].1
+  <class 'dict'> {
+    'default': False,
+    'id': '9pf',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': '',
+    'source_type': '',
+  }
+---
+# name: TestAddIsolate.test_empty[True-uvloop].2
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+      <class 'dict'> {
+        'default': False,
+        'id': '9pf',
+        'source_name': '',
+        'source_type': '',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestAddIsolate.test_empty[True-uvloop].3
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Added Unnamed Isolate',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'add',
+        'isolates',
+        <class 'list'> [
+          <class 'list'> [
+            1,
+            <class 'dict'> {
+              'default': False,
+              'id': '9pf',
+              'sequences': <class 'list'> [
+              ],
+              'source_name': '',
+              'source_type': '',
+            },
+          ],
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'add_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestAddIsolate.test_first[True-uvloop]
+  '/api/otus/6116cba1/isolates/9pf'
+---
+# name: TestAddIsolate.test_first[True-uvloop].1
+  <class 'dict'> {
+    'default': True,
+    'id': '9pf',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': 'b',
+    'source_type': 'isolate',
+  }
+---
+# name: TestAddIsolate.test_first[True-uvloop].2
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': '9pf',
+        'source_name': 'b',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestAddIsolate.test_first[True-uvloop].3
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Added Isolate b as default',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'add',
+        'isolates',
+        <class 'list'> [
+          <class 'list'> [
+            0,
+            <class 'dict'> {
+              'default': True,
+              'id': '9pf',
+              'sequences': <class 'list'> [
+              ],
+              'source_name': 'b',
+              'source_type': 'isolate',
+            },
+          ],
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'add_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestAddIsolate.test_force_case[True-uvloop]
+  '/api/otus/6116cba1/isolates/9pf'
+---
+# name: TestAddIsolate.test_force_case[True-uvloop].1
+  <class 'dict'> {
+    'default': False,
+    'id': '9pf',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': 'Beta',
+    'source_type': 'isolate',
+  }
+---
+# name: TestAddIsolate.test_force_case[True-uvloop].2
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+      <class 'dict'> {
+        'default': False,
+        'id': '9pf',
+        'source_name': 'Beta',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestAddIsolate.test_force_case[True-uvloop].3
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Added Isolate Beta',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'add',
+        'isolates',
+        <class 'list'> [
+          <class 'list'> [
+            1,
+            <class 'dict'> {
+              'default': False,
+              'id': '9pf',
+              'sequences': <class 'list'> [
+              ],
+              'source_name': 'Beta',
+              'source_type': 'isolate',
+            },
+          ],
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'add_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestCreate.test[True-uvloop--True]
+  <class 'dict'> {
+    'abbreviation': '',
+    'id': '9pfsom1b',
+    'isolates': <class 'list'> [
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': None,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Created Tobacco mosaic virus',
+      'diff': <class 'dict'> {
+        '_id': '9pfsom1b',
+        'abbreviation': '',
+        'isolates': <class 'list'> [
+        ],
+        'last_indexed_version': None,
+        'lower_name': 'tobacco mosaic virus',
+        'name': 'Tobacco mosaic virus',
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
+        'schema': <class 'list'> [
+        ],
+        'verified': False,
+        'version': 0,
+      },
+      'id': '9pfsom1b.0',
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      },
+      'method_name': 'create',
+      'otu': <class 'dict'> {
+        'id': '9pfsom1b',
+        'name': 'Tobacco mosaic virus',
+        'version': 0,
+      },
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+    'name': 'Tobacco mosaic virus',
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: TestCreate.test[True-uvloop--True].1
+  <class 'dict'> {
+    '_id': '9pfsom1b',
+    'abbreviation': '',
+    'isolates': <class 'list'> [
+    ],
+    'last_indexed_version': None,
+    'lower_name': 'tobacco mosaic virus',
+    'name': 'Tobacco mosaic virus',
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: TestCreate.test[True-uvloop--True].2
+  <class 'dict'> {
+    '_id': '9pfsom1b.0',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Created Tobacco mosaic virus',
+    'diff': <class 'dict'> {
+      '_id': '9pfsom1b',
+      'abbreviation': '',
+      'isolates': <class 'list'> [
+      ],
+      'last_indexed_version': None,
+      'lower_name': 'tobacco mosaic virus',
+      'name': 'Tobacco mosaic virus',
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'schema': <class 'list'> [
+      ],
+      'verified': False,
+      'version': 0,
+    },
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'create',
+    'otu': <class 'dict'> {
+      'id': '9pfsom1b',
+      'name': 'Tobacco mosaic virus',
+      'version': 0,
+    },
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestCreate.test[True-uvloop-None-True]
+  <class 'dict'> {
+    'abbreviation': '',
+    'id': '9pfsom1b',
+    'isolates': <class 'list'> [
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': None,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Created Tobacco mosaic virus',
+      'diff': <class 'dict'> {
+        '_id': '9pfsom1b',
+        'abbreviation': '',
+        'isolates': <class 'list'> [
+        ],
+        'last_indexed_version': None,
+        'lower_name': 'tobacco mosaic virus',
+        'name': 'Tobacco mosaic virus',
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
+        'schema': <class 'list'> [
+        ],
+        'verified': False,
+        'version': 0,
+      },
+      'id': '9pfsom1b.0',
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      },
+      'method_name': 'create',
+      'otu': <class 'dict'> {
+        'id': '9pfsom1b',
+        'name': 'Tobacco mosaic virus',
+        'version': 0,
+      },
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+    'name': 'Tobacco mosaic virus',
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: TestCreate.test[True-uvloop-None-True].1
+  <class 'dict'> {
+    '_id': '9pfsom1b',
+    'abbreviation': '',
+    'isolates': <class 'list'> [
+    ],
+    'last_indexed_version': None,
+    'lower_name': 'tobacco mosaic virus',
+    'name': 'Tobacco mosaic virus',
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: TestCreate.test[True-uvloop-None-True].2
+  <class 'dict'> {
+    '_id': '9pfsom1b.0',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Created Tobacco mosaic virus',
+    'diff': <class 'dict'> {
+      '_id': '9pfsom1b',
+      'abbreviation': '',
+      'isolates': <class 'list'> [
+      ],
+      'last_indexed_version': None,
+      'lower_name': 'tobacco mosaic virus',
+      'name': 'Tobacco mosaic virus',
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'schema': <class 'list'> [
+      ],
+      'verified': False,
+      'version': 0,
+    },
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'create',
+    'otu': <class 'dict'> {
+      'id': '9pfsom1b',
+      'name': 'Tobacco mosaic virus',
+      'version': 0,
+    },
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestCreate.test[True-uvloop-TMV-True]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': '9pfsom1b',
+    'isolates': <class 'list'> [
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': None,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Created Tobacco mosaic virus (TMV)',
+      'diff': <class 'dict'> {
+        '_id': '9pfsom1b',
+        'abbreviation': 'TMV',
+        'isolates': <class 'list'> [
+        ],
+        'last_indexed_version': None,
+        'lower_name': 'tobacco mosaic virus',
+        'name': 'Tobacco mosaic virus',
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
+        'schema': <class 'list'> [
+        ],
+        'verified': False,
+        'version': 0,
+      },
+      'id': '9pfsom1b.0',
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      },
+      'method_name': 'create',
+      'otu': <class 'dict'> {
+        'id': '9pfsom1b',
+        'name': 'Tobacco mosaic virus',
+        'version': 0,
+      },
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+    'name': 'Tobacco mosaic virus',
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: TestCreate.test[True-uvloop-TMV-True].1
+  <class 'dict'> {
+    '_id': '9pfsom1b',
+    'abbreviation': 'TMV',
+    'isolates': <class 'list'> [
+    ],
+    'last_indexed_version': None,
+    'lower_name': 'tobacco mosaic virus',
+    'name': 'Tobacco mosaic virus',
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: TestCreate.test[True-uvloop-TMV-True].2
+  <class 'dict'> {
+    '_id': '9pfsom1b.0',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Created Tobacco mosaic virus (TMV)',
+    'diff': <class 'dict'> {
+      '_id': '9pfsom1b',
+      'abbreviation': 'TMV',
+      'isolates': <class 'list'> [
+      ],
+      'last_indexed_version': None,
+      'lower_name': 'tobacco mosaic virus',
+      'name': 'Tobacco mosaic virus',
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'schema': <class 'list'> [
+      ],
+      'verified': False,
+      'version': 0,
+    },
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'create',
+    'otu': <class 'dict'> {
+      'id': '9pfsom1b',
+      'name': 'Tobacco mosaic virus',
+      'version': 0,
+    },
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestEdit.test[True-uvloop-data0-TMV-Changed name to Tobacco mosaic otu]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': '6116cba1',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': <class 'list'> [
+        'cab8b360',
+      ],
+      'empty_otu': False,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': 0,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Changed name to Tobacco mosaic otu',
+      'id': '6116cba1.1',
+      'method_name': 'edit',
+      'otu': <class 'dict'> {
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'version': 1,
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+    'name': 'Tobacco mosaic otu',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data0-TMV-Changed name to Tobacco mosaic otu].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'TMV',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'tobacco mosaic otu',
+    'name': 'Tobacco mosaic otu',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data0-TMV-Changed name to Tobacco mosaic otu].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Changed name to Tobacco mosaic otu',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'lower_name',
+        <class 'list'> [
+          'prunus virus f',
+          'tobacco mosaic otu',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'name',
+        <class 'list'> [
+          'Prunus virus F',
+          'Tobacco mosaic otu',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestEdit.test[True-uvloop-data1-PVF-Changed name to Tobacco mosaic otu and changed abbreviation to TMV]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': '6116cba1',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': <class 'list'> [
+        'cab8b360',
+      ],
+      'empty_otu': False,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': 0,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Changed name to Tobacco mosaic otu and changed abbreviation to TMV',
+      'id': '6116cba1.1',
+      'method_name': 'edit',
+      'otu': <class 'dict'> {
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'version': 1,
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+    'name': 'Tobacco mosaic otu',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data1-PVF-Changed name to Tobacco mosaic otu and changed abbreviation to TMV].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'TMV',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'tobacco mosaic otu',
+    'name': 'Tobacco mosaic otu',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data1-PVF-Changed name to Tobacco mosaic otu and changed abbreviation to TMV].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Changed name to Tobacco mosaic otu and changed abbreviation to TMV',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'abbreviation',
+        <class 'list'> [
+          'PVF',
+          'TMV',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'lower_name',
+        <class 'list'> [
+          'prunus virus f',
+          'tobacco mosaic otu',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'name',
+        <class 'list'> [
+          'Prunus virus F',
+          'Tobacco mosaic otu',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestEdit.test[True-uvloop-data2-PVF-Changed abbreviation to TMV]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': '6116cba1',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': <class 'list'> [
+        'cab8b360',
+      ],
+      'empty_otu': False,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': 0,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Changed abbreviation to TMV',
+      'id': '6116cba1.1',
+      'method_name': 'edit',
+      'otu': <class 'dict'> {
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'version': 1,
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data2-PVF-Changed abbreviation to TMV].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'TMV',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data2-PVF-Changed abbreviation to TMV].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Changed abbreviation to TMV',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'abbreviation',
+        <class 'list'> [
+          'PVF',
+          'TMV',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestEdit.test[True-uvloop-data3-TMV-Changed name to Tobacco mosaic otu]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': '6116cba1',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': <class 'list'> [
+        'cab8b360',
+      ],
+      'empty_otu': False,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': 0,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Changed name to Tobacco mosaic otu',
+      'id': '6116cba1.1',
+      'method_name': 'edit',
+      'otu': <class 'dict'> {
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'version': 1,
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+    'name': 'Tobacco mosaic otu',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data3-TMV-Changed name to Tobacco mosaic otu].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'TMV',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'tobacco mosaic otu',
+    'name': 'Tobacco mosaic otu',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data3-TMV-Changed name to Tobacco mosaic otu].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Changed name to Tobacco mosaic otu',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'lower_name',
+        <class 'list'> [
+          'prunus virus f',
+          'tobacco mosaic otu',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'name',
+        <class 'list'> [
+          'Prunus virus F',
+          'Tobacco mosaic otu',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestEdit.test[True-uvloop-data4-TMV-Changed name to Tobacco mosaic otu and removed abbreviation TMV]
+  <class 'dict'> {
+    'abbreviation': '',
+    'id': '6116cba1',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': <class 'list'> [
+        'cab8b360',
+      ],
+      'empty_otu': False,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': 0,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Changed name to Tobacco mosaic otu and removed abbreviation TMV',
+      'id': '6116cba1.1',
+      'method_name': 'edit',
+      'otu': <class 'dict'> {
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'version': 1,
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+    'name': 'Tobacco mosaic otu',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data4-TMV-Changed name to Tobacco mosaic otu and removed abbreviation TMV].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': '',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'tobacco mosaic otu',
+    'name': 'Tobacco mosaic otu',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data4-TMV-Changed name to Tobacco mosaic otu and removed abbreviation TMV].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Changed name to Tobacco mosaic otu and removed abbreviation TMV',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'abbreviation',
+        <class 'list'> [
+          'TMV',
+          '',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'lower_name',
+        <class 'list'> [
+          'prunus virus f',
+          'tobacco mosaic otu',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'name',
+        <class 'list'> [
+          'Prunus virus F',
+          'Tobacco mosaic otu',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestEdit.test[True-uvloop-data5--Changed name to Tobacco mosaic otu and added abbreviation TMV]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': '6116cba1',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': <class 'list'> [
+        'cab8b360',
+      ],
+      'empty_otu': False,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': 0,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Changed name to Tobacco mosaic otu and added abbreviation TMV',
+      'id': '6116cba1.1',
+      'method_name': 'edit',
+      'otu': <class 'dict'> {
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'version': 1,
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+    'name': 'Tobacco mosaic otu',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data5--Changed name to Tobacco mosaic otu and added abbreviation TMV].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'TMV',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'tobacco mosaic otu',
+    'name': 'Tobacco mosaic otu',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data5--Changed name to Tobacco mosaic otu and added abbreviation TMV].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Changed name to Tobacco mosaic otu and added abbreviation TMV',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'abbreviation',
+        <class 'list'> [
+          '',
+          'TMV',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'lower_name',
+        <class 'list'> [
+          'prunus virus f',
+          'tobacco mosaic otu',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'name',
+        <class 'list'> [
+          'Prunus virus F',
+          'Tobacco mosaic otu',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestEdit.test[True-uvloop-data6-PVF-Changed abbreviation to TMV]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': '6116cba1',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': <class 'list'> [
+        'cab8b360',
+      ],
+      'empty_otu': False,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': 0,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Changed abbreviation to TMV',
+      'id': '6116cba1.1',
+      'method_name': 'edit',
+      'otu': <class 'dict'> {
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'version': 1,
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data6-PVF-Changed abbreviation to TMV].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'TMV',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data6-PVF-Changed abbreviation to TMV].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Changed abbreviation to TMV',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'abbreviation',
+        <class 'list'> [
+          'PVF',
+          'TMV',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestEdit.test[True-uvloop-data7-PVF-Changed abbreviation to TMV]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': '6116cba1',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': <class 'list'> [
+        'cab8b360',
+      ],
+      'empty_otu': False,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': 0,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Changed abbreviation to TMV',
+      'id': '6116cba1.1',
+      'method_name': 'edit',
+      'otu': <class 'dict'> {
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'version': 1,
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data7-PVF-Changed abbreviation to TMV].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'TMV',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data7-PVF-Changed abbreviation to TMV].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Changed abbreviation to TMV',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'abbreviation',
+        <class 'list'> [
+          'PVF',
+          'TMV',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestEdit.test[True-uvloop-data8--Added abbreviation TMV]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': '6116cba1',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': <class 'list'> [
+        'cab8b360',
+      ],
+      'empty_otu': False,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': 0,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Added abbreviation TMV',
+      'id': '6116cba1.1',
+      'method_name': 'edit',
+      'otu': <class 'dict'> {
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'version': 1,
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data8--Added abbreviation TMV].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'TMV',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data8--Added abbreviation TMV].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Added abbreviation TMV',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'abbreviation',
+        <class 'list'> [
+          '',
+          'TMV',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestEdit.test[True-uvloop-data9-TMV-Removed abbreviation TMV]
+  <class 'dict'> {
+    'abbreviation': '',
+    'id': '6116cba1',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': <class 'list'> [
+        'cab8b360',
+      ],
+      'empty_otu': False,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': 0,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Removed abbreviation TMV',
+      'id': '6116cba1.1',
+      'method_name': 'edit',
+      'otu': <class 'dict'> {
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'version': 1,
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data9-TMV-Removed abbreviation TMV].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': '',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEdit.test[True-uvloop-data9-TMV-Removed abbreviation TMV].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Removed abbreviation TMV',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'abbreviation',
+        <class 'list'> [
+          'TMV',
+          '',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestEdit.test_no_change[True-uvloop-Tobacco mosaic otu-TMV-data0]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': 'test',
+    'isolates': <class 'list'> [
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'most_recent_change': None,
+    'name': 'Tobacco mosaic otu',
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+  }
+---
+# name: TestEdit.test_no_change[True-uvloop-Tobacco mosaic otu-TMV-data1]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': 'test',
+    'isolates': <class 'list'> [
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'most_recent_change': None,
+    'name': 'Tobacco mosaic otu',
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+  }
+---
+# name: TestEdit.test_no_change[True-uvloop-Tobacco mosaic otu-TMV-data2]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': 'test',
+    'isolates': <class 'list'> [
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'most_recent_change': None,
+    'name': 'Tobacco mosaic otu',
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+  }
+---
+# name: TestEditIsolate.test[True-uvloop-data0-Renamed Isolate b to Variant b]
+  <class 'dict'> {
+    'default': False,
+    'id': 'test',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': 'b',
+    'source_type': 'variant',
+  }
+---
+# name: TestEditIsolate.test[True-uvloop-data0-Renamed Isolate b to Variant b].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+      <class 'dict'> {
+        'default': False,
+        'id': 'test',
+        'source_name': 'b',
+        'source_type': 'variant',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEditIsolate.test[True-uvloop-data0-Renamed Isolate b to Variant b].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Renamed Isolate b to Variant b',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          1,
+          'source_type',
+        ],
+        <class 'list'> [
+          'isolate',
+          'variant',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestEditIsolate.test[True-uvloop-data1-Renamed Isolate b to Variant b]
+  <class 'dict'> {
+    'default': False,
+    'id': 'test',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': 'b',
+    'source_type': 'variant',
+  }
+---
+# name: TestEditIsolate.test[True-uvloop-data1-Renamed Isolate b to Variant b].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+      <class 'dict'> {
+        'default': False,
+        'id': 'test',
+        'source_name': 'b',
+        'source_type': 'variant',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEditIsolate.test[True-uvloop-data1-Renamed Isolate b to Variant b].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Renamed Isolate b to Variant b',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          1,
+          'source_type',
+        ],
+        <class 'list'> [
+          'isolate',
+          'variant',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestEditIsolate.test[True-uvloop-data2-Renamed Isolate b to Variant A]
+  <class 'dict'> {
+    'default': False,
+    'id': 'test',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': 'A',
+    'source_type': 'variant',
+  }
+---
+# name: TestEditIsolate.test[True-uvloop-data2-Renamed Isolate b to Variant A].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+      <class 'dict'> {
+        'default': False,
+        'id': 'test',
+        'source_name': 'A',
+        'source_type': 'variant',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEditIsolate.test[True-uvloop-data2-Renamed Isolate b to Variant A].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Renamed Isolate b to Variant A',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          1,
+          'source_name',
+        ],
+        <class 'list'> [
+          'b',
+          'A',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          1,
+          'source_type',
+        ],
+        <class 'list'> [
+          'isolate',
+          'variant',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestEditIsolate.test[True-uvloop-data3-Renamed Isolate b to Isolate A]
+  <class 'dict'> {
+    'default': False,
+    'id': 'test',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': 'A',
+    'source_type': 'isolate',
+  }
+---
+# name: TestEditIsolate.test[True-uvloop-data3-Renamed Isolate b to Isolate A].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+      <class 'dict'> {
+        'default': False,
+        'id': 'test',
+        'source_name': 'A',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEditIsolate.test[True-uvloop-data3-Renamed Isolate b to Isolate A].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Renamed Isolate b to Isolate A',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          1,
+          'source_name',
+        ],
+        <class 'list'> [
+          'b',
+          'A',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestEditIsolate.test_force_case[True-uvloop]
+  <class 'dict'> {
+    'default': True,
+    'id': 'cab8b360',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': '8816-v2',
+    'source_type': 'variant',
+  }
+---
+# name: TestEditIsolate.test_force_case[True-uvloop].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'variant',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestEditIsolate.test_force_case[True-uvloop].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Renamed Isolate 8816-v2 to Variant 8816-v2',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          0,
+          'source_type',
+        ],
+        <class 'list'> [
+          'isolate',
+          'variant',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestRemoveIsolate.test[True-uvloop]
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Removed Isolate 8816-v2',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'remove',
+        'isolates',
+        <class 'list'> [
+          <class 'list'> [
+            0,
+            <class 'dict'> {
+              'default': True,
+              'id': 'cab8b360',
+              'sequences': <class 'list'> [
+                <class 'dict'> {
+                  '_id': 'KX269872',
+                  'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+                  'host': 'sweet cherry',
+                  'isolate_id': 'cab8b360',
+                  'otu_id': '6116cba1',
+                  'segment': None,
+                  'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+                },
+              ],
+              'source_name': '8816-v2',
+              'source_type': 'isolate',
+            },
+          ],
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'remove_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestRemoveIsolate.test_change_default[True-uvloop]
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'bcb9b352',
+        'source_name': '7865',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestRemoveIsolate.test_change_default[True-uvloop].1
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Removed Isolate 8816-v2 and set Isolate 7865 as default',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          0,
+          'id',
+        ],
+        <class 'list'> [
+          'cab8b360',
+          'bcb9b352',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          0,
+          'source_name',
+        ],
+        <class 'list'> [
+          '8816-v2',
+          '7865',
+        ],
+      ],
+      <class 'list'> [
+        'remove',
+        <class 'list'> [
+          'isolates',
+          0,
+          'sequences',
+        ],
+        <class 'list'> [
+          <class 'list'> [
+            0,
+            <class 'dict'> {
+              '_id': 'KX269872',
+              'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+              'host': 'sweet cherry',
+              'isolate_id': 'cab8b360',
+              'otu_id': '6116cba1',
+              'segment': None,
+              'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+            },
+          ],
+        ],
+      ],
+      <class 'list'> [
+        'remove',
+        'isolates',
+        <class 'list'> [
+          <class 'list'> [
+            1,
+            <class 'dict'> {
+              'default': False,
+              'id': 'bcb9b352',
+              'sequences': <class 'list'> [
+              ],
+              'source_name': '7865',
+              'source_type': 'isolate',
+            },
+          ],
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'remove_isolate',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestSetAsDefault.test[True-uvloop]
+  <class 'dict'> {
+    'default': True,
+    'id': 'test',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': 'b',
+    'source_type': 'isolate',
+  }
+---
+# name: TestSetAsDefault.test[True-uvloop].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': False,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+      <class 'dict'> {
+        'default': True,
+        'id': 'test',
+        'sequences': <class 'list'> [
+        ],
+        'source_name': 'b',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: TestSetAsDefault.test[True-uvloop].2
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Set Isolate b as default',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          0,
+          'default',
+        ],
+        <class 'list'> [
+          True,
+          False,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          1,
+          'default',
+        ],
+        <class 'list'> [
+          False,
+          True,
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'set_as_default',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestSetAsDefault.test_no_change[True-uvloop]
+  <class 'dict'> {
+    'default': True,
+    'id': 'cab8b360',
+    'sequences': <class 'list'> [
+    ],
+    'source_name': '8816-v2',
+    'source_type': 'isolate',
+  }
+---
+# name: TestSetAsDefault.test_no_change[True-uvloop].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+      <class 'dict'> {
+        'default': False,
+        'id': 'test',
+        'sequences': <class 'list'> [
+        ],
+        'source_name': 'b',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: test_create_sequence[True-uvloop-None]
+  '/api/otus/6116cba1/isolates/cab8b360/sequences/9pfsom1b'
+---
+# name: test_create_sequence[True-uvloop-None].1
+  <class 'dict'> {
+    'accession': 'foobar',
+    'definition': 'A made up sequence',
+    'host': 'Plant',
+    'id': '9pfsom1b',
+    'isolate_id': 'cab8b360',
+    'otu_id': '6116cba1',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'segment': None,
+    'sequence': 'ATGCGTGTACTG',
+  }
+---
+# name: test_create_sequence[True-uvloop-None].2
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': True,
+    'version': 1,
+  }
+---
+# name: test_create_sequence[True-uvloop-None].3
+  <class 'dict'> {
+    '_id': '9pfsom1b',
+    'accession': 'foobar',
+    'definition': 'A made up sequence',
+    'host': 'Plant',
+    'isolate_id': 'cab8b360',
+    'otu_id': '6116cba1',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'segment': None,
+    'sequence': 'ATGCGTGTACTG',
+  }
+---
+# name: test_create_sequence[True-uvloop-None].4
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Created new sequence foobar in Isolate 8816-v2',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'add',
+        <class 'list'> [
+          'isolates',
+          0,
+          'sequences',
+        ],
+        <class 'list'> [
+          <class 'list'> [
+            0,
+            <class 'dict'> {
+              '_id': '9pfsom1b',
+              'accession': 'foobar',
+              'definition': 'A made up sequence',
+              'host': 'Plant',
+              'isolate_id': 'cab8b360',
+              'otu_id': '6116cba1',
+              'reference': <class 'dict'> {
+                'id': 'hxn167',
+              },
+              'segment': None,
+              'sequence': 'ATGCGTGTACTG',
+            },
+          ],
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'verified',
+        <class 'list'> [
+          False,
+          True,
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'create_sequence',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: test_edit_sequence[True-uvloop-None]
+  <class 'dict'> {
+    'definition': 'A made up sequence',
+    'host': 'Grapevine',
+    'id': 'KX269872',
+    'isolate_id': 'cab8b360',
+    'otu_id': '6116cba1',
+    'segment': None,
+    'sequence': 'ATGCGTGTACTG',
+  }
+---
+# name: test_edit_sequence[True-uvloop-None].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': True,
+    'version': 1,
+  }
+---
+# name: test_edit_sequence[True-uvloop-None].2
+  <class 'dict'> {
+    '_id': 'KX269872',
+    'definition': 'A made up sequence',
+    'host': 'Grapevine',
+    'isolate_id': 'cab8b360',
+    'otu_id': '6116cba1',
+    'segment': None,
+    'sequence': 'ATGCGTGTACTG',
+  }
+---
+# name: test_edit_sequence[True-uvloop-None].3
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Edited sequence KX269872 in Isolate 8816-v2',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          0,
+          'sequences',
+          0,
+          'definition',
+        ],
+        <class 'list'> [
+          'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+          'A made up sequence',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          0,
+          'sequences',
+          0,
+          'host',
+        ],
+        <class 'list'> [
+          'sweet cherry',
+          'Grapevine',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          0,
+          'sequences',
+          0,
+          'sequence',
+        ],
+        <class 'list'> [
+          'TGTTTAAGAGATTAAACAACCGCTTTC',
+          'ATGCGTGTACTG',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'verified',
+        <class 'list'> [
+          False,
+          True,
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit_sequence',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: test_get[uvloop-None]
+  <class 'dict'> {
+    'abbreviation': 'PVF',
+    'id': '6116cba1',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'sequences': <class 'list'> [
+          <class 'dict'> {
+            'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+            'host': 'sweet cherry',
+            'id': 'KX269872',
+            'segment': None,
+            'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+          },
+        ],
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'issues': None,
+    'last_indexed_version': 0,
+    'most_recent_change': None,
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: test_get_isolate[uvloop-None]
+  <class 'dict'> {
+    'default': True,
+    'id': 'cab8b360',
+    'sequences': <class 'list'> [
+      <class 'dict'> {
+        'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+        'host': 'sweet cherry',
+        'id': 'KX269872',
+        'segment': None,
+        'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+      },
+    ],
+    'source_name': '8816-v2',
+    'source_type': 'isolate',
+  }
+---
+# name: test_get_sequence[uvloop-None]
+  <class 'dict'> {
+    'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+    'host': 'sweet cherry',
+    'id': 'KX269872',
+    'isolate_id': 'cab8b360',
+    'otu_id': '6116cba1',
+    'segment': None,
+    'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+  }
+---
+# name: test_list_isolates[uvloop-None]
+  <class 'list'> [
+    <class 'dict'> {
+      'default': True,
+      'id': 'cab8b360',
+      'sequences': <class 'list'> [
+      ],
+      'source_name': '8816-v2',
+      'source_type': 'isolate',
+    },
+    <class 'dict'> {
+      'default': False,
+      'id': 'bcb9b352',
+      'sequences': <class 'list'> [
+      ],
+      'source_name': '7865',
+      'source_type': 'isolate',
+    },
+  ]
+---
+# name: test_list_sequences[uvloop-None]
+  <class 'list'> [
+    <class 'dict'> {
+      'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+      'host': 'sweet cherry',
+      'id': 'KX269872',
+      'segment': None,
+      'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+    },
+  ]
+---
+# name: test_remove[True-uvloop--True]
+  <class 'dict'> {
+    '_id': '6116cba1.removed',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Removed Prunus virus F',
+    'diff': <class 'dict'> {
+      '_id': '6116cba1',
+      'abbreviation': '',
+      'imported': True,
+      'isolates': <class 'list'> [
+        <class 'dict'> {
+          'default': True,
+          'id': 'cab8b360',
+          'sequences': <class 'list'> [
+          ],
+          'source_name': '8816-v2',
+          'source_type': 'isolate',
+        },
+      ],
+      'last_indexed_version': 0,
+      'lower_name': 'prunus virus f',
+      'name': 'Prunus virus F',
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
+      },
+      'schema': <class 'list'> [
+      ],
+      'verified': False,
+      'version': 0,
+    },
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'remove',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 'removed',
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: test_remove[True-uvloop-PVF-True]
+  <class 'dict'> {
+    '_id': '6116cba1.removed',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Removed Prunus virus F (PVF)',
+    'diff': <class 'dict'> {
+      '_id': '6116cba1',
+      'abbreviation': 'PVF',
+      'imported': True,
+      'isolates': <class 'list'> [
+        <class 'dict'> {
+          'default': True,
+          'id': 'cab8b360',
+          'sequences': <class 'list'> [
+          ],
+          'source_name': '8816-v2',
+          'source_type': 'isolate',
+        },
+      ],
+      'last_indexed_version': 0,
+      'lower_name': 'prunus virus f',
+      'name': 'Prunus virus F',
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
+      },
+      'schema': <class 'list'> [
+      ],
+      'verified': False,
+      'version': 0,
+    },
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'remove',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 'removed',
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: test_remove_sequence[True-uvloop-None]
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: test_remove_sequence[True-uvloop-None].1
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Removed sequence KX269872 from Isolate 8816-v2',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'remove',
+        <class 'list'> [
+          'isolates',
+          0,
+          'sequences',
+        ],
+        <class 'list'> [
+          <class 'list'> [
+            0,
+            <class 'dict'> {
+              '_id': 'KX269872',
+              'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+              'host': 'sweet cherry',
+              'isolate_id': 'cab8b360',
+              'otu_id': '6116cba1',
+              'segment': None,
+              'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+            },
+          ],
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'remove_sequence',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---

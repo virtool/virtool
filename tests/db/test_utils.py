@@ -1,5 +1,4 @@
 import pytest
-
 import virtool.db
 import virtool.db.utils
 from virtool.db.utils import buffered_bulk_writer
@@ -43,7 +42,8 @@ class TestApplyProjection:
             "age": 25
         }
 
-        assert virtool.db.utils.apply_projection(document, projection) == expected
+        assert virtool.db.utils.apply_projection(
+            document, projection) == expected
 
     def test_type_error(self):
         """
@@ -53,7 +53,8 @@ class TestApplyProjection:
         with pytest.raises(TypeError) as excinfo:
             virtool.db.utils.apply_projection({}, "_id")
 
-        assert "Invalid type for projection: <class 'str'>" in str(excinfo.value)
+        assert "Invalid type for projection: <class 'str'>" in str(
+            excinfo.value)
 
 
 async def test_delete_unready(dbi):
@@ -107,4 +108,4 @@ async def test_buffered_bulk_writer(batch_size, data_regression, snapshot, mocke
         for number in range(0, 372):
             await writer.add(number)
 
-    snapshot.assert_match(collection.bulk_write.call_args_list)
+    assert collection.bulk_write.call_args_list == snapshot

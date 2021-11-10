@@ -1,0 +1,1278 @@
+# name: TestCreate.test[uvloop-force_choice]
+  '/api/samples/9pfsom1b'
+---
+# name: TestCreate.test[uvloop-force_choice].1
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': 'diagnostics',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'id': '9pfsom1b',
+    'is_legacy': False,
+    'isolate': '',
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#FF0000',
+        'description': None,
+        'id': 1,
+        'name': 'bug',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'reads': <class 'list'> [
+    ],
+    'ready': False,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': None,
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestCreate.test[uvloop-force_choice].2
+  <class 'dict'> {
+    '_id': '9pfsom1b',
+    'all_read': True,
+    'all_write': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'format': 'fastq',
+    'group': 'diagnostics',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'labels': <class 'list'> [
+      1,
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'subtractions': <class 'list'> [
+      'apple',
+    ],
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestCreate.test[uvloop-none]
+  '/api/samples/9pfsom1b'
+---
+# name: TestCreate.test[uvloop-none].1
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'id': '9pfsom1b',
+    'is_legacy': False,
+    'isolate': '',
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#FF0000',
+        'description': None,
+        'id': 1,
+        'name': 'bug',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'reads': <class 'list'> [
+    ],
+    'ready': False,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': None,
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestCreate.test[uvloop-none].2
+  <class 'dict'> {
+    '_id': '9pfsom1b',
+    'all_read': True,
+    'all_write': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'labels': <class 'list'> [
+      1,
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'subtractions': <class 'list'> [
+      'apple',
+    ],
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestCreate.test[uvloop-users_primary_group]
+  '/api/samples/9pfsom1b'
+---
+# name: TestCreate.test[uvloop-users_primary_group].1
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': 'technician',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'id': '9pfsom1b',
+    'is_legacy': False,
+    'isolate': '',
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#FF0000',
+        'description': None,
+        'id': 1,
+        'name': 'bug',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'reads': <class 'list'> [
+    ],
+    'ready': False,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': None,
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestCreate.test[uvloop-users_primary_group].2
+  <class 'dict'> {
+    '_id': '9pfsom1b',
+    'all_read': True,
+    'all_write': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'format': 'fastq',
+    'group': 'technician',
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'labels': <class 'list'> [
+      1,
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'subtractions': <class 'list'> [
+      'apple',
+    ],
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestCreateCache.test[uvloop-key]
+  '/api/samples/test/caches/a1b2c3d4'
+---
+# name: TestCreateCache.test[uvloop-key].1
+  <class 'dict'> {
+    'created_at': '2015-10-06T20:00:00Z',
+    'files': <class 'list'> [
+    ],
+    'id': 'a1b2c3d4',
+    'key': 'aodp-abcdefgh',
+    'legacy': False,
+    'missing': False,
+    'paired': False,
+    'ready': False,
+    'sample': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestEdit.test[uvloop]
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+    ],
+    'caches': <class 'list'> [
+    ],
+    'id': 'test',
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#a83432',
+        'description': 'This is a bug',
+        'id': 1,
+        'name': 'Bug',
+      },
+    ],
+    'name': 'test_sample',
+    'notes': 'This is a test.',
+    'paired': False,
+    'reads': <class 'list'> [
+    ],
+    'ready': True,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'foo',
+        'name': 'Foo',
+      },
+    ],
+  }
+---
+# name: TestEdit.test_label_exists[uvloop-True]
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+    ],
+    'caches': <class 'list'> [
+    ],
+    'id': 'foo',
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#a83432',
+        'description': 'This is a bug',
+        'id': 1,
+        'name': 'Bug',
+      },
+    ],
+    'name': 'Foo',
+    'paired': False,
+    'reads': <class 'list'> [
+    ],
+    'ready': True,
+  }
+---
+# name: TestEdit.test_name_exists[uvloop-False]
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+    ],
+    'caches': <class 'list'> [
+    ],
+    'id': 'foo',
+    'labels': <class 'list'> [
+    ],
+    'name': 'Bar',
+    'paired': False,
+    'reads': <class 'list'> [
+    ],
+    'ready': True,
+  }
+---
+# name: TestEdit.test_subtraction_exists[uvloop-True]
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+    ],
+    'caches': <class 'list'> [
+    ],
+    'id': 'test',
+    'labels': <class 'list'> [
+    ],
+    'name': 'Test',
+    'paired': False,
+    'reads': <class 'list'> [
+    ],
+    'ready': True,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'foo',
+        'name': 'Foo',
+      },
+      <class 'dict'> {
+        'id': 'bar',
+        'name': 'Bar',
+      },
+    ],
+  }
+---
+# name: TestUploadReads.test_upload_reads[uvloop-True]
+  <class 'dict'> {
+    'id': 1,
+    'name': 'reads_1.fq.gz',
+    'name_on_disk': 'reads_1.fq.gz',
+    'sample': 'test',
+    'size': 9081,
+    'upload': 1,
+    'uploaded_at': '2015-10-06T20:00:00Z',
+  }
+---
+# name: test_analyze[uvloop-None]
+  <class 'dict'> {
+    'created_at': '2015-10-06T20:00:00Z',
+    'id': 'test_analysis',
+    'index': <class 'dict'> {
+      'id': 'foobar',
+      'version': 3,
+    },
+    'job': <class 'dict'> {
+      'id': 'baz',
+    },
+    'ready': False,
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'sample': <class 'dict'> {
+      'id': 'test',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+    'workflow': 'pathoscope_bowtie',
+  }
+---
+# name: test_finalize[uvloop-quality]
+  <class 'dict'> {
+    'artifacts': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/api/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'name_on_disk': 'reference.fa.gz',
+        'sample': 'test',
+        'size': None,
+        'type': 'fasta',
+        'uploaded_at': None,
+      },
+    ],
+    'caches': <class 'list'> [
+    ],
+    'id': 'test',
+    'labels': <class 'list'> [
+    ],
+    'paired': False,
+    'quality': <class 'dict'> {
+    },
+    'reads': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/api/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': None,
+        'upload': None,
+        'uploaded_at': None,
+      },
+    ],
+    'ready': True,
+  }
+---
+# name: test_finalize_cache[uvloop-quality]
+  <class 'dict'> {
+    'id': 'test',
+    'key': 'aodp-abcdefgh',
+    'quality': <class 'dict'> {
+    },
+    'ready': True,
+    'sample': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: test_find[uvloop-None-2-1-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#0d321d',
+            'description': 'This is a question',
+            'id': 3,
+            'name': 'Question',
+          },
+        ],
+        'name': '16SPP044',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'id': 'fred',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug',
+          },
+          <class 'dict'> {
+            'color': '#03fc20',
+            'description': 'This is a info',
+            'id': 2,
+            'name': 'Info',
+          },
+        ],
+        'name': '16GVP042',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'id': 'bob',
+        },
+      },
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 2,
+    'per_page': 2,
+    'total_count': 3,
+  }
+---
+# name: test_find[uvloop-None-2-2-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug',
+          },
+        ],
+        'name': '16GVP043',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'id': 'fred',
+        },
+      },
+    ],
+    'found_count': 3,
+    'page': 2,
+    'page_count': 2,
+    'per_page': 2,
+    'total_count': 3,
+  }
+---
+# name: test_find[uvloop-None-None-None-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#0d321d',
+            'description': 'This is a question',
+            'id': 3,
+            'name': 'Question',
+          },
+        ],
+        'name': '16SPP044',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'id': 'fred',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug',
+          },
+          <class 'dict'> {
+            'color': '#03fc20',
+            'description': 'This is a info',
+            'id': 2,
+            'name': 'Info',
+          },
+        ],
+        'name': '16GVP042',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'id': 'bob',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug',
+          },
+        ],
+        'name': '16GVP043',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'id': 'fred',
+        },
+      },
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find[uvloop-None-None-None-labels6]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#0d321d',
+            'description': 'This is a question',
+            'id': 3,
+            'name': 'Question',
+          },
+        ],
+        'name': '16SPP044',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'id': 'fred',
+        },
+      },
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find[uvloop-None-None-None-labels7]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#0d321d',
+            'description': 'This is a question',
+            'id': 3,
+            'name': 'Question',
+          },
+        ],
+        'name': '16SPP044',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'id': 'fred',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug',
+          },
+          <class 'dict'> {
+            'color': '#03fc20',
+            'description': 'This is a info',
+            'id': 2,
+            'name': 'Info',
+          },
+        ],
+        'name': '16GVP042',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'id': 'bob',
+        },
+      },
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find[uvloop-None-None-None-labels8]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+    ],
+    'found_count': 0,
+    'page': 1,
+    'page_count': 0,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find[uvloop-None-None-None-labels9]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#0d321d',
+            'description': 'This is a question',
+            'id': 3,
+            'name': 'Question',
+          },
+        ],
+        'name': '16SPP044',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'id': 'fred',
+        },
+      },
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find[uvloop-fred-None-None-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#0d321d',
+            'description': 'This is a question',
+            'id': 3,
+            'name': 'Question',
+          },
+        ],
+        'name': '16SPP044',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'id': 'fred',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug',
+          },
+        ],
+        'name': '16GVP043',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'id': 'fred',
+        },
+      },
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find[uvloop-gv-None-None-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug',
+          },
+          <class 'dict'> {
+            'color': '#03fc20',
+            'description': 'This is a info',
+            'id': 2,
+            'name': 'Info',
+          },
+        ],
+        'name': '16GVP042',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'id': 'bob',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug',
+          },
+        ],
+        'name': '16GVP043',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'id': 'fred',
+        },
+      },
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find[uvloop-sp-None-None-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#0d321d',
+            'description': 'This is a question',
+            'id': 3,
+            'name': 'Question',
+          },
+        ],
+        'name': '16SPP044',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'id': 'fred',
+        },
+      },
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find_analyses[uvloop-Baz-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_1',
+        'index': <class 'dict'> {
+          'id': 'foo',
+          'version': 2,
+        },
+        'job': <class 'dict'> {
+          'id': 'test',
+        },
+        'ready': True,
+        'reference': <class 'dict'> {
+          'id': 'baz',
+          'name': 'Baz',
+        },
+        'sample': <class 'dict'> {
+          'id': 'test',
+        },
+        'user': <class 'dict'> {
+          'id': 'bob',
+        },
+        'workflow': 'pathoscope_bowtie',
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_2',
+        'index': <class 'dict'> {
+          'id': 'foo',
+          'version': 2,
+        },
+        'job': <class 'dict'> {
+          'id': 'test',
+        },
+        'ready': True,
+        'reference': <class 'dict'> {
+          'id': 'baz',
+          'name': 'Baz',
+        },
+        'sample': <class 'dict'> {
+          'id': 'test',
+        },
+        'user': <class 'dict'> {
+          'id': 'fred',
+        },
+        'workflow': 'pathoscope_bowtie',
+      },
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find_analyses[uvloop-None-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_1',
+        'index': <class 'dict'> {
+          'id': 'foo',
+          'version': 2,
+        },
+        'job': <class 'dict'> {
+          'id': 'test',
+        },
+        'ready': True,
+        'reference': <class 'dict'> {
+          'id': 'baz',
+          'name': 'Baz',
+        },
+        'sample': <class 'dict'> {
+          'id': 'test',
+        },
+        'user': <class 'dict'> {
+          'id': 'bob',
+        },
+        'workflow': 'pathoscope_bowtie',
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_2',
+        'index': <class 'dict'> {
+          'id': 'foo',
+          'version': 2,
+        },
+        'job': <class 'dict'> {
+          'id': 'test',
+        },
+        'ready': True,
+        'reference': <class 'dict'> {
+          'id': 'baz',
+          'name': 'Baz',
+        },
+        'sample': <class 'dict'> {
+          'id': 'test',
+        },
+        'user': <class 'dict'> {
+          'id': 'fred',
+        },
+        'workflow': 'pathoscope_bowtie',
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_3',
+        'index': <class 'dict'> {
+          'id': 'foo',
+          'version': 2,
+        },
+        'job': <class 'dict'> {
+          'id': 'test',
+        },
+        'ready': True,
+        'reference': <class 'dict'> {
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        'sample': <class 'dict'> {
+          'id': 'test',
+        },
+        'user': <class 'dict'> {
+          'id': 'fred',
+        },
+        'workflow': 'pathoscope_bowtie',
+      },
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find_analyses[uvloop-bob-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_1',
+        'index': <class 'dict'> {
+          'id': 'foo',
+          'version': 2,
+        },
+        'job': <class 'dict'> {
+          'id': 'test',
+        },
+        'ready': True,
+        'reference': <class 'dict'> {
+          'id': 'baz',
+          'name': 'Baz',
+        },
+        'sample': <class 'dict'> {
+          'id': 'test',
+        },
+        'user': <class 'dict'> {
+          'id': 'bob',
+        },
+        'workflow': 'pathoscope_bowtie',
+      },
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_get[uvloop-False-None]
+  <class 'dict'> {
+    'artifacts': <class 'list'> [
+      <class 'dict'> {
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'name_on_disk': 'reference.fa.gz',
+        'sample': 'test',
+        'size': None,
+        'type': 'fasta',
+        'uploaded_at': None,
+      },
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'files': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/download/samples/files/file_1.fq.gz',
+        'id': 'foo',
+        'name': 'Bar.fq.gz',
+      },
+    ],
+    'id': 'test',
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#a83432',
+        'description': 'This is a bug',
+        'id': 1,
+        'name': 'Bug',
+      },
+    ],
+    'name': 'Test',
+    'paired': False,
+    'reads': <class 'list'> [
+      <class 'dict'> {
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': None,
+        'upload': <class 'dict'> {
+          'created_at': None,
+          'id': 1,
+          'name': 'test',
+          'name_on_disk': None,
+          'ready': False,
+          'removed': False,
+          'removed_at': None,
+          'reserved': False,
+          'size': None,
+          'type': None,
+          'uploaded_at': None,
+          'user': None,
+        },
+        'uploaded_at': None,
+      },
+    ],
+    'ready': False,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'foo',
+        'name': 'Foo',
+      },
+      <class 'dict'> {
+        'id': 'bar',
+        'name': 'Bar',
+      },
+    ],
+  }
+---
+# name: test_get[uvloop-True-None]
+  <class 'dict'> {
+    'artifacts': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/api/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'name_on_disk': 'reference.fa.gz',
+        'sample': 'test',
+        'size': None,
+        'type': 'fasta',
+        'uploaded_at': None,
+      },
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'files': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/download/samples/files/file_1.fq.gz',
+        'id': 'foo',
+        'name': 'Bar.fq.gz',
+      },
+    ],
+    'id': 'test',
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#a83432',
+        'description': 'This is a bug',
+        'id': 1,
+        'name': 'Bug',
+      },
+    ],
+    'name': 'Test',
+    'paired': False,
+    'reads': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/api/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': None,
+        'upload': <class 'dict'> {
+          'created_at': None,
+          'id': 1,
+          'name': 'test',
+          'name_on_disk': None,
+          'ready': False,
+          'removed': False,
+          'removed_at': None,
+          'reserved': False,
+          'size': None,
+          'type': None,
+          'uploaded_at': None,
+          'user': None,
+        },
+        'uploaded_at': None,
+      },
+    ],
+    'ready': True,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'foo',
+        'name': 'Foo',
+      },
+      <class 'dict'> {
+        'id': 'bar',
+        'name': 'Bar',
+      },
+    ],
+  }
+---
+# name: test_get_cache[uvloop-None]
+  <class 'dict'> {
+    'id': 'bar',
+    'key': 'abc123',
+    'program': 'skewer-0.2.2',
+    'sample': <class 'dict'> {
+      'id': 'foo',
+    },
+  }
+---
+# name: test_upload_artifact[uvloop-None]
+  <class 'dict'> {
+    'id': 1,
+    'name': 'small.fq',
+    'name_on_disk': 'small.fq',
+    'sample': 'test',
+    'size': 3130756,
+    'type': 'fastq',
+    'uploaded_at': '2015-10-06T20:00:00Z',
+  }
+---
+# name: test_upload_artifact_cache[uvloop-None]
+  <class 'dict'> {
+    'id': 1,
+    'key': 'aodp-abcdefgh',
+    'name': 'small.fq',
+    'name_on_disk': 'small.fq',
+    'sample': 'test',
+    'size': 3130756,
+    'type': 'fastq',
+    'uploaded_at': '2015-10-06T20:00:00Z',
+  }
+---
+# name: test_upload_reads_cache[uvloop-False]
+  <class 'dict'> {
+    'id': 1,
+    'key': 'aodp-abcdefgh',
+    'name': 'reads_1.fq.gz',
+    'name_on_disk': 'reads_1.fq.gz',
+    'sample': 'test',
+    'size': 9081,
+    'uploaded_at': '2015-10-06T20:00:00Z',
+  }
+---
+# name: test_upload_reads_cache[uvloop-True]
+  <class 'dict'> {
+    'id': 2,
+    'key': 'aodp-abcdefgh',
+    'name': 'reads_2.fq.gz',
+    'name_on_disk': 'reads_2.fq.gz',
+    'sample': 'test',
+    'size': 9081,
+    'uploaded_at': '2015-10-06T20:00:00Z',
+  }
+---

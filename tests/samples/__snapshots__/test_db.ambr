@@ -1,0 +1,405 @@
+# name: TestRemoveSamples.test[uvloop-id_list0-ls0-samples0-analyses0]
+  <class 'set'> {
+    'test_2',
+    'test_3',
+  }
+---
+# name: TestRemoveSamples.test[uvloop-id_list0-ls0-samples0-analyses0].1
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test_2',
+    },
+    <class 'dict'> {
+      '_id': 'test_3',
+    },
+  ]
+---
+# name: TestRemoveSamples.test[uvloop-id_list0-ls0-samples0-analyses0].2
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'a_3',
+      'sample': <class 'dict'> {
+        'id': 'test_2',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_4',
+      'sample': <class 'dict'> {
+        'id': 'test_2',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_5',
+      'sample': <class 'dict'> {
+        'id': 'test_2',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_6',
+      'sample': <class 'dict'> {
+        'id': 'test_3',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_7',
+      'sample': <class 'dict'> {
+        'id': 'test_3',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_8',
+      'sample': <class 'dict'> {
+        'id': 'test_3',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_9',
+      'sample': <class 'dict'> {
+        'id': 'test_3',
+      },
+    },
+  ]
+---
+# name: TestRemoveSamples.test[uvloop-id_list0]
+  <class 'set'> {
+    'test_2',
+    'test_3',
+  }
+---
+# name: TestRemoveSamples.test[uvloop-id_list0].1
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test_2',
+    },
+    <class 'dict'> {
+      '_id': 'test_3',
+    },
+  ]
+---
+# name: TestRemoveSamples.test[uvloop-id_list0].2
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'a_3',
+      'sample': <class 'dict'> {
+        'id': 'test_2',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_4',
+      'sample': <class 'dict'> {
+        'id': 'test_2',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_5',
+      'sample': <class 'dict'> {
+        'id': 'test_2',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_6',
+      'sample': <class 'dict'> {
+        'id': 'test_3',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_7',
+      'sample': <class 'dict'> {
+        'id': 'test_3',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_8',
+      'sample': <class 'dict'> {
+        'id': 'test_3',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_9',
+      'sample': <class 'dict'> {
+        'id': 'test_3',
+      },
+    },
+  ]
+---
+# name: TestRemoveSamples.test[uvloop-id_list1-ls1-samples1-analyses1]
+  <class 'set'> {
+    'test_3',
+  }
+---
+# name: TestRemoveSamples.test[uvloop-id_list1-ls1-samples1-analyses1].1
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test_3',
+    },
+  ]
+---
+# name: TestRemoveSamples.test[uvloop-id_list1-ls1-samples1-analyses1].2
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'a_6',
+      'sample': <class 'dict'> {
+        'id': 'test_3',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_7',
+      'sample': <class 'dict'> {
+        'id': 'test_3',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_8',
+      'sample': <class 'dict'> {
+        'id': 'test_3',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_9',
+      'sample': <class 'dict'> {
+        'id': 'test_3',
+      },
+    },
+  ]
+---
+# name: TestRemoveSamples.test[uvloop-id_list1]
+  <class 'set'> {
+    'test_3',
+  }
+---
+# name: TestRemoveSamples.test[uvloop-id_list1].1
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test_3',
+    },
+  ]
+---
+# name: TestRemoveSamples.test[uvloop-id_list1].2
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'a_6',
+      'sample': <class 'dict'> {
+        'id': 'test_3',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_7',
+      'sample': <class 'dict'> {
+        'id': 'test_3',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_8',
+      'sample': <class 'dict'> {
+        'id': 'test_3',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'a_9',
+      'sample': <class 'dict'> {
+        'id': 'test_3',
+      },
+    },
+  ]
+---
+# name: test_attach_labels[uvloop]
+  <class 'dict'> {
+    'id': 'foo',
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#a83432',
+        'description': 'This is a bug',
+        'id': 1,
+        'name': 'Bug',
+      },
+      <class 'dict'> {
+        'color': '#03fc20',
+        'description': 'This is a question',
+        'id': 2,
+        'name': 'Question',
+      },
+    ],
+    'name': 'Foo',
+  }
+---
+# name: test_compress_sample_reads[uvloop-False]
+  <class 'set'> {
+    'reads_1.fq.gz',
+  }
+---
+# name: test_compress_sample_reads[uvloop-False].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'files': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/download/samples/foo/reads_1.fq.gz',
+        'from': <class 'dict'> {
+          'id': 'M_S11_R1_001.fastq',
+          'name': 'M_S11_R1_001.fastq',
+          'size': 3750821789,
+        },
+        'name': 'reads_1.fq.gz',
+        'raw': False,
+        'size': 6586501,
+      },
+    ],
+    'paired': False,
+  }
+---
+# name: test_compress_sample_reads[uvloop-True]
+  <class 'set'> {
+    'reads_1.fq.gz',
+    'reads_2.fq.gz',
+  }
+---
+# name: test_compress_sample_reads[uvloop-True].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'files': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/download/samples/foo/reads_1.fq.gz',
+        'from': <class 'dict'> {
+          'id': 'M_S11_R1_001.fastq',
+          'name': 'M_S11_R1_001.fastq',
+          'size': 3750821789,
+        },
+        'name': 'reads_1.fq.gz',
+        'raw': False,
+        'size': 6586501,
+      },
+      <class 'dict'> {
+        'download_url': '/download/samples/foo/reads_2.fq.gz',
+        'from': <class 'dict'> {
+          'id': 'M_S11_R1_001.fastq',
+          'name': 'M_S11_R1_001.fastq',
+          'size': 3750821789,
+        },
+        'name': 'reads_2.fq.gz',
+        'raw': False,
+        'size': 6586501,
+      },
+    ],
+    'paired': True,
+  }
+---
+# name: test_create_sample[uvloop]
+  <class 'dict'> {
+    '_id': 'a2oj3gfd',
+    'all_read': True,
+    'all_write': False,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'format': 'fastq',
+    'group': '',
+    'group_read': True,
+    'group_write': False,
+    'hold': True,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'labels': <class 'list'> [
+    ],
+    'library_type': '',
+    'locale': '',
+    'name': 'foo',
+    'notes': 'test',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'subtractions': <class 'list'> [
+    ],
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_create_sample[uvloop].1
+  <class 'dict'> {
+    '_id': 'a2oj3gfd',
+    'all_read': True,
+    'all_write': False,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'format': 'fastq',
+    'group': '',
+    'group_read': True,
+    'group_write': False,
+    'hold': True,
+    'host': '',
+    'is_legacy': False,
+    'isolate': '',
+    'labels': <class 'list'> [
+    ],
+    'library_type': '',
+    'locale': '',
+    'name': 'foo',
+    'notes': 'test',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'ready': False,
+    'subtractions': <class 'list'> [
+    ],
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_finalize[uvloop]
+  <class 'dict'> {
+    '_id': 'test',
+    'artifacts': <class 'list'> [
+    ],
+    'quality': <class 'dict'> {
+      'count': 10000000,
+      'gc': 43,
+    },
+    'reads': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/api/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': None,
+        'upload': None,
+        'uploaded_at': None,
+      },
+    ],
+    'ready': True,
+  }
+---
+# name: test_update_is_compressed[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'foo',
+      'files': <class 'list'> [
+        <class 'dict'> {
+          'name': 'reads_1.fq.gz',
+        },
+        <class 'dict'> {
+          'name': 'reads_2.fq.gz',
+        },
+      ],
+      'is_compressed': True,
+    },
+    <class 'dict'> {
+      '_id': 'baz',
+      'files': <class 'list'> [
+        <class 'dict'> {
+          'name': 'reads_1.fastq',
+        },
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'bar',
+      'files': <class 'list'> [
+        <class 'dict'> {
+          'name': 'reads_1.fq.gz',
+        },
+      ],
+      'is_compressed': True,
+    },
+  ]
+---

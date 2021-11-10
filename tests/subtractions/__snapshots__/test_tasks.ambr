@@ -1,0 +1,6 @@
+# name: test_add_subtraction_files_task[uvloop]
+  <class 'list'> [
+    <SubtractionFile(id=1, name=subtraction.1.bt2, subtraction=foo, type=bowtie2, size=12)>,
+    <SubtractionFile(id=2, name=subtraction.fa.gz, subtraction=foo, type=fasta, size=10)>,
+  ]
+---

@@ -1,0 +1,154 @@
+# name: test_acquire[uvloop-None]
+  <class 'dict'> {
+    'acquired': True,
+    'args': <class 'dict'> {
+      'analysis_id': 'e410429b',
+      'index_id': '465428b0',
+      'name': None,
+      'sample_id': '1e01a382',
+      'username': 'igboyes',
+      'workflow': 'nuvs',
+    },
+    'id': '4c530449',
+    'key': 'key',
+    'mem': 16,
+    'proc': 10,
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'timestamp': '2015-10-06T20:00:00Z',
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'running',
+        'timestamp': '2015-10-06T20:00:00Z',
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 0.091,
+        'stage': 'mk_analysis_dir',
+        'state': 'running',
+        'timestamp': '2015-10-06T20:00:00Z',
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 1.0,
+        'stage': 'import_results',
+        'state': 'complete',
+        'timestamp': '2015-10-06T20:00:00Z',
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': 'igboyes',
+    },
+    'workflow': 'build_index',
+  }
+---
+# name: test_cancel[uvloop]
+  <class 'dict'> {
+    'acquired': False,
+    'args': <class 'dict'> {
+      'analysis_id': 'e410429b',
+      'index_id': '465428b0',
+      'name': None,
+      'sample_id': '1e01a382',
+      'username': 'igboyes',
+      'workflow': 'nuvs',
+    },
+    'id': '4c530449',
+    'mem': 16,
+    'proc': 10,
+    'state': 'cancelling',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'timestamp': '2015-10-06T20:00:00Z',
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'running',
+        'timestamp': '2015-10-06T20:00:00Z',
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 0.091,
+        'stage': 'mk_analysis_dir',
+        'state': 'running',
+        'timestamp': '2015-10-06T20:00:00Z',
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': 'igboyes',
+    },
+    'workflow': 'build_index',
+  }
+---
+# name: test_get[uvloop-None]
+  <class 'dict'> {
+    'acquired': False,
+    'args': <class 'dict'> {
+      'analysis_id': 'e410429b',
+      'index_id': '465428b0',
+      'name': None,
+      'sample_id': '1e01a382',
+      'username': 'igboyes',
+      'workflow': 'nuvs',
+    },
+    'id': '4c530449',
+    'mem': 16,
+    'proc': 10,
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'timestamp': '2015-10-06T20:00:00Z',
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'running',
+        'timestamp': '2015-10-06T20:00:00Z',
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 0.091,
+        'stage': 'mk_analysis_dir',
+        'state': 'running',
+        'timestamp': '2015-10-06T20:00:00Z',
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 1.0,
+        'stage': 'import_results',
+        'state': 'complete',
+        'timestamp': '2015-10-06T20:00:00Z',
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': 'igboyes',
+    },
+    'workflow': 'build_index',
+  }
+---
+# name: test_push_status[uvloop-None]
+  <class 'dict'> {
+    'error': None,
+    'progress': 23,
+    'stage': 'build',
+    'state': 'running',
+    'timestamp': '2015-10-06T20:00:00Z',
+  }
+---

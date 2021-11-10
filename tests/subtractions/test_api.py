@@ -2,7 +2,6 @@ import os
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-
 from virtool.subtractions.models import SubtractionFile
 
 
@@ -13,7 +12,10 @@ from virtool.subtractions.models import SubtractionFile
     {"name": "Bar", "nickname": "Bar Subtraction"}
 ])
 async def test_edit(data, mocker, snapshot, spawn_client):
-    mocker.patch("virtool.subtractions.db.get_linked_samples", make_mocked_coro(12))
+    mocker.patch(
+        "virtool.subtractions.db.get_linked_samples",
+        make_mocked_coro(12)
+    )
 
     client = await spawn_client(authorize=True, permissions=["modify_subtraction"])
 
@@ -26,9 +28,8 @@ async def test_edit(data, mocker, snapshot, spawn_client):
     resp = await client.patch("/api/subtractions/foo", data)
 
     assert resp.status == 200
-
-    snapshot.assert_match(await resp.json(), "json")
-    snapshot.assert_match(await client.db.subtraction.find_one(), "db")
+    assert await resp.json() == snapshot
+    await client.db.subtraction.find_one() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404_name", "404", "409"])
@@ -51,11 +52,11 @@ async def test_upload(error, tmp_path, spawn_job_client, snapshot, resp_is, pg_s
     }
 
     if error == "409":
-        subtraction_file = SubtractionFile(name="subtraction.1.bt2", subtraction="foo")
-
         async with pg_session as session:
-            session.add(subtraction_file)
-
+            session.add(SubtractionFile(
+                name="subtraction.1.bt2",
+                subtraction="foo")
+            )
             await session.commit()
 
     await client.db.subtraction.insert_one(subtraction)
@@ -78,8 +79,9 @@ async def test_upload(error, tmp_path, spawn_job_client, snapshot, resp_is, pg_s
         return
 
     assert resp.status == 201
-    assert os.listdir(tmp_path / "subtractions" / "foo") == ["subtraction.1.bt2"]
-    snapshot.assert_match(await resp.json())
+    assert await resp.json() == snapshot
+    assert os.listdir(tmp_path / "subtractions" /
+                      "foo") == ["subtraction.1.bt2"]
 
 
 @pytest.mark.parametrize("error", [None, "404", "409", "422"])
@@ -127,9 +129,8 @@ async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is, 
         return
 
     assert resp.status == 200
-    snapshot.assert_match(await resp.json())
-
-    snapshot.assert_match(await client.db.subtraction.find_one("foo"))
+    assert await resp.json() == snapshot
+    assert await client.db.subtraction.find_one("foo") == snapshot
 
 
 @pytest.mark.parametrize("ready", [True, False])
@@ -164,9 +165,8 @@ async def test_job_remove(exists, ready, tmp_path, spawn_job_client, snapshot, r
         return
 
     await resp_is.no_content(resp)
-
-    snapshot.assert_match(await client.db.subtraction.find_one("foo"))
-    snapshot.assert_match(await client.db.samples.find_one("test"))
+    assert await client.db.subtraction.find_one("foo") == snapshot
+    assert await client.db.samples.find_one("test") == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "400_subtraction", "400_file", "400_path"])
@@ -218,8 +218,10 @@ async def test_download_subtraction_files(error, tmp_path, spawn_job_client, pg_
         assert fasta_resp.status == bowtie_resp.status == 404
         return
 
-    fasta_expected_path = client.app["config"].data_path / "subtractions" / "foo" / "subtraction.fa.gz"
-    bowtie_expected_path = client.app["config"].data_path / "subtractions" / "foo" / "subtraction.1.bt2"
+    fasta_expected_path = client.app["config"].data_path / \
+        "subtractions" / "foo" / "subtraction.fa.gz"
+    bowtie_expected_path = client.app["config"].data_path / \
+        "subtractions" / "foo" / "subtraction.1.bt2"
 
     assert fasta_expected_path.read_bytes() == await fasta_resp.content.read()
     assert bowtie_expected_path.read_bytes() == await bowtie_resp.content.read()

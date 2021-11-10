@@ -1,18 +1,19 @@
 import pytest
-
 from virtool.labels.models import Label
 
 
 class TestFind:
-    async def test_find(self, spawn_client, pg_session):
+    async def test_find(self, snapshot, spawn_client, pg_session):
         """
         Test that a ``GET /api/labels`` return a complete list of labels.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
-        label_2 = Label(id=2, name="Question", color="#03fc20", description="This is a question")
+        label_1 = Label(id=1, name="Bug", color="#a83432",
+                        description="This is a bug")
+        label_2 = Label(id=2, name="Question", color="#03fc20",
+                        description="This is a question")
 
         await client.db.samples.insert_many([
             {
@@ -37,24 +38,9 @@ class TestFind:
             await session.commit()
 
         resp = await client.get("/api/labels")
-        assert resp.status == 200
 
-        assert await resp.json() == [
-            {
-                "id": 1,
-                "name": "Bug",
-                "color": "#a83432",
-                "description": "This is a bug",
-                "count": 1
-            },
-            {
-                "id": 2,
-                "name": "Question",
-                "color": "#03fc20",
-                "description": "This is a question",
-                "count": 2
-            }
-        ]
+        assert resp.status == 200
+        assert await resp.json() == snapshot
 
     async def test_find_by_name(self, snapshot, spawn_client, pg_session):
         """
@@ -63,19 +49,26 @@ class TestFind:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+        label = Label(
+            id=1,
+            name="Bug",
+            color="#a83432",
+            description="This is a bug"
+        )
 
         async with pg_session as session:
             session.add(label)
             await session.commit()
 
         resp = await client.get("/api/labels?find=b")
-        resp_2 = await client.get("/api/labels?find=Question")
 
-        assert resp.status, resp_2.status == 200
+        assert resp.status == 200
+        assert await resp.json() == snapshot
 
-        snapshot.assert_match(await resp.json())
-        assert await resp_2.json() == []
+        resp = await client.get("/api/labels?find=Question")
+
+        assert resp.status == 200
+        assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404"])
@@ -105,9 +98,13 @@ async def test_get(error, spawn_client, all_permissions, pg_session, resp_is):
     ])
 
     if not error:
-        label = Label(id=1, name="Bug", color="#a83432", description="This is a test")
         async with pg_session as session:
-            session.add(label)
+            session.add(Label(
+                id=1,
+                name="Bug",
+                color="#a83432",
+                description="This is a test"
+            ))
             await session.commit()
 
     resp = await client.get("/api/labels/1")
@@ -117,7 +114,6 @@ async def test_get(error, spawn_client, all_permissions, pg_session, resp_is):
         return
 
     assert resp.status == 200
-
     assert await resp.json() == {
         "id": 1,
         "name": "Bug",
@@ -154,9 +150,8 @@ async def test_create(error, spawn_client, test_random_alphanumeric, pg_session,
     ])
 
     if error == "400_exists":
-        label = Label(id=1, name="Bug")
         async with pg_session as session:
-            session.add(label)
+            session.add(Label(id=1, name="Bug"))
             await session.commit()
 
     data = {
@@ -192,7 +187,7 @@ async def test_create(error, spawn_client, test_random_alphanumeric, pg_session,
 @pytest.mark.parametrize("error", [None, "404", "400_exists", "422_color", "422_data"])
 async def test_edit(error, spawn_client, pg_session, resp_is):
     """
-        Test that a label can be edited to the database at ``PATCH /api/labels/:label_id``.
+    Test that a label can be edited to the database at ``PATCH /api/labels/:label_id``.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
@@ -216,8 +211,20 @@ async def test_edit(error, spawn_client, pg_session, resp_is):
     ])
 
     if error != "404":
-        label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
-        label_2 = Label(id=2, name="Question", color="#03fc20", description="Question from a user")
+        label_1 = Label(
+            id=1,
+            name="Bug",
+            color="#a83432",
+            description="This is a bug"
+        )
+
+        label_2 = Label(
+            id=2,
+            name="Question",
+            color="#03fc20",
+            description="Question from a user"
+        )
+
         async with pg_session as session:
             session.add_all([label_1, label_2])
             await session.commit()
@@ -264,15 +271,19 @@ async def test_edit(error, spawn_client, pg_session, resp_is):
 @pytest.mark.parametrize("error", [None, "400"])
 async def test_remove(error, spawn_client, pg_session, resp_is):
     """
-        Test that a label can be deleted to the database at ``DELETE /api/labels/:label_id``.
+    Test that a label can be deleted to the database at ``DELETE /api/labels/:label_id``.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
 
     if not error:
-        label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
         async with pg_session as session:
-            session.add(label)
+            session.add(Label(
+                id=1,
+                name="Bug",
+                color="#a83432",
+                description="This is a bug"
+            ))
             await session.commit()
 
     resp = await client.delete("/api/labels/1")

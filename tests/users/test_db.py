@@ -1,12 +1,11 @@
 import hashlib
 
 import pytest
-from aiohttp.test_utils import make_mocked_coro
-
 import virtool.errors
 import virtool.users.db
 import virtool.users.utils
 import virtool.utils
+from aiohttp.test_utils import make_mocked_coro
 from virtool.users.db import generate_handle
 
 
@@ -49,7 +48,8 @@ async def test_compose_groups_update(groups, dbi, kings, all_permissions, no_per
 
 @pytest.mark.parametrize("password", [None, "another_password"])
 async def test_compose_password_update(password, mocker, static_time):
-    mocker.patch("virtool.users.utils.hash_password", return_value="new_hashed_password")
+    mocker.patch("virtool.users.utils.hash_password",
+                 return_value="new_hashed_password")
 
     update = virtool.users.db.compose_password_update(password)
 
@@ -69,7 +69,8 @@ async def test_compose_primary_group_update(primary_group, dbi, bob, kings, peas
 
     await dbi.groups.insert_many([kings, peasants])
 
-    coroutine = virtool.users.db.compose_primary_group_update(dbi, bob["_id"], primary_group)
+    coroutine = virtool.users.db.compose_primary_group_update(
+        dbi, bob["_id"], primary_group)
 
     if primary_group == "lords" or primary_group == "kings":
         with pytest.raises(virtool.errors.DatabaseError) as excinfo:
@@ -97,19 +98,29 @@ async def test_compose_primary_group_update(primary_group, dbi, bob, kings, peas
 
 @pytest.mark.parametrize("exists", [True, False])
 @pytest.mark.parametrize("force_reset", [None, True, False])
-async def test_create(exists, force_reset, mocker, dbi, bob):
+async def test_create(exists, force_reset, snapshot, mocker, dbi, bob):
     handle = "bob"
     password = "hello_world"
 
     mocker.patch("virtool.db.utils.get_new_id", return_value="abc123")
-    mocker.patch("virtool.db.utils.id_exists", new=make_mocked_coro(return_value=exists))
-    mocker.patch("virtool.users.utils.hash_password", return_value="hashed_password")
+
+    mocker.patch(
+        "virtool.db.utils.id_exists",
+        new=make_mocked_coro(return_value=exists)
+    )
+
+    mocker.patch(
+        "virtool.users.utils.hash_password",
+        return_value="hashed_password"
+    )
 
     # Ensure the force_reset is set to True by default.
     if force_reset is None:
-        coroutine = virtool.users.db.create(dbi, password=password, handle=handle)
+        coroutine = virtool.users.db.create(
+            dbi, password=password, handle=handle)
     else:
-        coroutine = virtool.users.db.create(dbi, password=password, handle=handle, force_reset=force_reset)
+        coroutine = virtool.users.db.create(
+            dbi, password=password, handle=handle, force_reset=force_reset)
 
     # Ensure an exception is raised if the user_id is already in use.
     if exists:
@@ -120,66 +131,47 @@ async def test_create(exists, force_reset, mocker, dbi, bob):
 
     # Ensure the new user document is created and returned if the user_id is valid.
     else:
-        document = await coroutine
-
-        bob.update({
-            "force_reset": force_reset is not False,
-            "groups": []
-        })
-
-        assert await dbi.users.find_one() == document == bob
+        assert await coroutine == snapshot
 
 
 @pytest.mark.parametrize("exists", [True, False])
 @pytest.mark.parametrize("administrator", [True, False])
-async def test_edit(exists, administrator, mocker, dbi, all_permissions, bob, static_time):
+async def test_edit(exists, administrator, snapshot, mocker, dbi, all_permissions, bob, static_time):
     """
     Test editing an existing user.
 
     """
-    administrator_update = {
-        "administrator": administrator
-    }
-
-    force_reset_update = {
-        "force_reset": True
-    }
-
-    groups_update = {
-        "groups": {
-            "groups": ["peasants", "kings"],
-            "permissions": all_permissions
-        }
-    }
-
-    password_update = {
-        "password": "new_hashed_password",
-        "last_password_change": static_time.datetime,
-        "invalidate_sessions": True
-    }
-
-    primary_group_update = {
-        "primary_group": "peasants"
-    }
-
     m_compose_force_reset_update = mocker.patch(
         "virtool.users.db.compose_force_reset_update",
-        return_value=force_reset_update
+        return_value={
+            "force_reset": True
+        }
     )
 
     m_compose_groups_update = mocker.patch(
         "virtool.users.db.compose_groups_update",
-        new=make_mocked_coro(groups_update)
+        new=make_mocked_coro({
+            "groups": {
+                "groups": ["peasants", "kings"],
+                "permissions": all_permissions
+            }
+        })
     )
 
     m_compose_password_update = mocker.patch(
         "virtool.users.db.compose_password_update",
-        return_value=password_update
+        return_value={
+            "password": "new_hashed_password",
+            "last_password_change": static_time.datetime,
+            "invalidate_sessions": True
+        }
     )
 
     m_compose_primary_group_update = mocker.patch(
         "virtool.users.db.compose_primary_group_update",
-        new=make_mocked_coro(primary_group_update)
+        new=make_mocked_coro({
+            "primary_group": "peasants"
+        })
     )
 
     if exists:
@@ -203,24 +195,13 @@ async def test_edit(exists, administrator, mocker, dbi, all_permissions, bob, st
 
         return
 
-    document = await coroutine
-
-    assert document == await dbi.users.find_one(bob["_id"]) == {
-        **bob,
-        **administrator_update,
-        **force_reset_update,
-        **groups_update,
-        **password_update,
-        **primary_group_update
-    }
+    assert await coroutine == snapshot
 
     m_compose_force_reset_update.assert_called_with(True)
-
     m_compose_groups_update.assert_called_with(dbi, ["peasants", "kings"])
-
     m_compose_password_update.assert_called_with("hello_world")
-
-    m_compose_primary_group_update.assert_called_with(dbi, bob["_id"], "peasants")
+    m_compose_primary_group_update.assert_called_with(
+        dbi, bob["_id"], "peasants")
 
 
 @pytest.mark.parametrize("user_id,password,result", [
@@ -257,7 +238,7 @@ async def test_validate_credentials(legacy, user_id, password, result, dbi):
 @pytest.mark.parametrize("administrator", [True, False])
 @pytest.mark.parametrize("elevate", [True, False])
 @pytest.mark.parametrize("missing", [True, False])
-async def test_update_sessions_and_keys(administrator, elevate, missing, dbi, all_permissions, no_permissions):
+async def test_update_sessions_and_keys(administrator, elevate, missing, snapshot, dbi, all_permissions, no_permissions):
     """
     Test that permissions assigned to keys and sessions are updated correctly.
 
@@ -305,28 +286,8 @@ async def test_update_sessions_and_keys(administrator, elevate, missing, dbi, al
         target_permissions
     )
 
-    assert await dbi.sessions.find_one() == {
-        "_id": "foobar",
-        "administrator": administrator,
-        "groups": ["peasants", "kings"],
-        "permissions": target_permissions,
-        "user": {
-            "id": "bob"
-        }
-    }
-
-    for key, value in permissions.items():
-        permissions[key] = value and target_permissions[key]
-
-    assert await dbi.keys.find_one() == {
-        "_id": "foobar",
-        "administrator": administrator,
-        "groups": ["peasants", "kings"],
-        "permissions": permissions,
-        "user": {
-            "id": "bob"
-        }
-    }
+    assert await dbi.sessions.find_one() == snapshot
+    assert await dbi.keys.find_one() == snapshot
 
 
 async def test_generate_handle(mocker, dbi):

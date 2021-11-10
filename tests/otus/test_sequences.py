@@ -1,6 +1,6 @@
 import pytest
-
-from virtool.otus.sequences import check_segment_or_target, create, edit, get, increment_otu_version, remove
+from virtool.otus.sequences import (check_segment_or_target, create, edit, get,
+                                    increment_otu_version, remove)
 
 
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
@@ -127,9 +127,9 @@ async def test_create(host, segment, sequence_id, snapshot, dbi, static_time, te
         sequence_id
     )
 
-    snapshot.assert_match(await dbi.otus.find_one(), "otus")
-    snapshot.assert_match(await dbi.sequences.find_one(), "sequences")
-    snapshot.assert_match(await dbi.history.find_one(), "history")
+    assert await dbi.otus.find_one() == snapshot
+    assert await dbi.sequences.find_one() == snapshot
+    assert await dbi.history.find_one() == snapshot
 
 
 @pytest.mark.parametrize("sequence", [True, False])
@@ -189,9 +189,9 @@ async def test_edit(sequence, snapshot, dbi, static_time, tmp_path):
         "bob"
     )
 
-    snapshot.assert_match(await dbi.otus.find_one())
-    snapshot.assert_match(await dbi.history.find_one())
-    snapshot.assert_match(await dbi.sequences.find_one())
+    assert await dbi.otus.find_one() == snapshot
+    await dbi.history.find_one() == snapshot
+    await dbi.sequences.find_one() == snapshot
 
 
 @pytest.mark.parametrize("missing", [None, "otu", "isolate", "sequence"])
@@ -219,14 +219,14 @@ async def test_get(missing, snapshot, dbi):
             "comment": "hello world"
         })
 
-    document = await get(
+    return_value = await get(
         dbi,
         "foo",
         "bar",
         "baz"
     )
 
-    snapshot.assert_match(document)
+    assert return_value == snapshot
 
 
 async def test_increment_otu_version(dbi, snapshot):
@@ -238,8 +238,7 @@ async def test_increment_otu_version(dbi, snapshot):
 
     await increment_otu_version(dbi, "foo")
 
-    otu = await dbi.otus.find_one()
-    snapshot.assert_match(otu)
+    assert await dbi.otus.find_one() == snapshot
 
 
 async def test_remove(snapshot, dbi, test_otu, static_time, tmp_path):
@@ -268,7 +267,6 @@ async def test_remove(snapshot, dbi, test_otu, static_time, tmp_path):
         "bob"
     )
 
-    snapshot.assert_match(await dbi.otus.find_one())
-    snapshot.assert_match(await dbi.history.find_one())
-
+    assert await dbi.otus.find_one() == snapshot
+    assert await dbi.history.find_one() == snapshot
     assert await dbi.sequences.count_documents({}) == 0
