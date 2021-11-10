@@ -1,9 +1,9 @@
 import os
-
-import aiohttp.web
+from aiohttp import web
+from aiohttp import BasicAuth
+from aiohttp.web import Request
 from aiohttp.web_exceptions import HTTPUnauthorized
 
-from virtool.http.auth import get_ip
 from virtool.http.client import JobClient
 from virtool.jobs.utils import JobRights
 from virtool.types import RouteHandler
@@ -12,8 +12,8 @@ from virtool.utils import hash_key
 PUBLIC_ROUTES = [("PATCH", "/api/jobs")]
 
 
-@aiohttp.web.middleware
-async def middleware(request: aiohttp.web.Request, handler: RouteHandler):
+@web.middleware
+async def middleware(request: Request, handler: RouteHandler):
     """
     Ensure that the request was sent as part of an active job.
 
@@ -31,7 +31,7 @@ async def middleware(request: aiohttp.web.Request, handler: RouteHandler):
 
     try:
         auth_header = request.headers["AUTHORIZATION"]
-        basic_auth = aiohttp.BasicAuth.decode(auth_header)
+        basic_auth = BasicAuth.decode(auth_header)
         holder_id, key = basic_auth.login, basic_auth.password
 
         job_prefix, job_id = holder_id.split("-")
@@ -55,7 +55,6 @@ async def middleware(request: aiohttp.web.Request, handler: RouteHandler):
         rights = None
 
     request["client"] = JobClient(
-        get_ip(request),
         job_id,
         JobRights(rights)
     )

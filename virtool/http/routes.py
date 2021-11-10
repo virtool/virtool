@@ -4,8 +4,8 @@ from typing import Callable
 from aiohttp.web_exceptions import HTTPUnauthorized
 from aiohttp.web_routedef import RouteTableDef
 
-import virtool.users.utils
 from virtool.api.response import json_response
+from virtool.users.utils import PERMISSIONS
 
 
 class Routes(RouteTableDef):
@@ -35,14 +35,14 @@ def protect(
         permission: str,
         public: bool,
 ):
-    if permission and permission not in virtool.users.utils.PERMISSIONS:
+    if permission and permission not in PERMISSIONS:
         raise ValueError("Invalid permission: " + permission)
 
     def decorator(handler):
         async def wrapped(req):
             client = req["client"]
 
-            if not public and client is None:
+            if not public and not client.authenticated:
                 raise HTTPUnauthorized(text="Requires authorization")
 
             if client is None or not client.administrator:
