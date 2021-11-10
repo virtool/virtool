@@ -74,8 +74,8 @@ async def test_unlink_default_subtractions(dbi):
     ]
 
 
-@pytest.mark.parametrize("subtraction_id", [None, "abc"])
-async def test_create(subtraction_id, dbi, test_random_alphanumeric):
+@ pytest.mark.parametrize("subtraction_id", [None, "abc"])
+async def test_create(subtraction_id, snapshot, dbi, test_random_alphanumeric):
     user_id = "test"
     filename = "subtraction.fa.gz"
 
@@ -88,25 +88,11 @@ async def test_create(subtraction_id, dbi, test_random_alphanumeric):
         1,
         subtraction_id=subtraction_id)
 
-    expected_subtraction_id = test_random_alphanumeric.history[0] if subtraction_id is None else "abc"
-
-    assert document == {
-        "_id": expected_subtraction_id,
-        "name": "Foo",
-        "nickname": "foo",
-        "deleted": False,
-        "ready": False,
-        "file": {
-            "id": 1,
-            "name": "subtraction.fa.gz"
-        },
-        "user": {
-            "id": "test"
-        }
-    }
+    assert document == snapshot
+    assert await dbi.subtraction.find_one() == snapshot
 
 
-async def test_finalize(dbi, pg):
+async def test_finalize(snapshot, dbi, pg):
     await dbi.subtraction.insert_one({
         "_id": "foo",
         "name": "Foo",
@@ -120,17 +106,7 @@ async def test_finalize(dbi, pg):
         "n": 0.002
     }
 
-    document = await virtool.subtractions.db.finalize(dbi, pg, "foo", gc, 100)
-    assert document == {
-        "_id": "foo",
-        "name": "Foo",
-        "gc": {
-            "a": 0.319,
-            "t": 0.319,
-            "g": 0.18,
-            "c": 0.18,
-            "n": 0.002
-        },
-        "ready": True,
-        "count": 100
-    }
+    result = await virtool.subtractions.db.finalize(dbi, pg, "foo", gc, 100)
+
+    assert result == snapshot
+    assert await dbi.subtraction.find_one() == snapshot

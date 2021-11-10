@@ -1,0 +1,17 @@
+# name: test_migrate_groups[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'foobar',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': True,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+  ]
+---

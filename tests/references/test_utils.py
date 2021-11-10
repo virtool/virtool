@@ -1,5 +1,4 @@
 import pytest
-
 import virtool.references.utils
 
 
@@ -15,7 +14,8 @@ def test_detect_duplicate_abbreviation(in_seen, empty, test_otu):
     if empty:
         test_otu["abbreviation"] = ""
 
-    virtool.references.utils.detect_duplicate_abbreviation(test_otu, duplicates, seen)
+    virtool.references.utils.detect_duplicate_abbreviation(
+        test_otu, duplicates, seen)
 
     if in_seen or not empty:
         assert seen == {"PVF"}
@@ -36,7 +36,8 @@ def test_detect_duplicate_ids(seen, test_otu):
     if seen:
         seen_ids.add("6116cba1")
 
-    virtool.references.utils.detect_duplicate_ids(test_otu, duplicate_ids, seen_ids)
+    virtool.references.utils.detect_duplicate_ids(
+        test_otu, duplicate_ids, seen_ids)
 
     assert duplicate_ids == ({"6116cba1"} if seen else set())
     assert seen_ids == {"6116cba1"}
@@ -53,7 +54,8 @@ def test_detect_duplicate_isolate_ids(has_dups, test_otu):
 
     duplicate_isolate_ids = dict()
 
-    virtool.references.utils.detect_duplicate_isolate_ids(test_otu, duplicate_isolate_ids)
+    virtool.references.utils.detect_duplicate_isolate_ids(
+        test_otu, duplicate_isolate_ids)
 
     if has_dups:
         assert duplicate_isolate_ids == {
@@ -80,7 +82,8 @@ def test_detect_duplicate_name(seen, transform, test_otu):
 
     duplicates = set()
 
-    virtool.references.utils.detect_duplicate_name(test_otu, duplicates, seen_names)
+    virtool.references.utils.detect_duplicate_name(
+        test_otu, duplicates, seen_names)
 
     if seen:
         assert duplicates == {test_otu["name"]}
@@ -125,7 +128,8 @@ def test_detect_duplicates(strict, test_merged_otu):
 
     otu_list[0]["isolates"].append(otu_list[0]["isolates"][0])
 
-    result = virtool.references.utils.detect_duplicates(otu_list, strict=strict)
+    result = virtool.references.utils.detect_duplicates(
+        otu_list, strict=strict)
 
     if strict:
         assert result == [

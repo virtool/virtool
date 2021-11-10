@@ -1,8 +1,7 @@
 import pytest
-from aiohttp.test_utils import make_mocked_coro
-
 import virtool.caches.db
 import virtool.utils
+from aiohttp.test_utils import make_mocked_coro
 
 
 @pytest.fixture
@@ -26,8 +25,8 @@ async def test_create(paired, snapshot, dbi, static_time, test_random_alphanumer
     """
     cache = await virtool.caches.db.create(dbi, "foo", "aodp-abcdefgh", paired)
 
-    snapshot.assert_match(cache, "return")
-    snapshot.assert_match(await dbi.caches.find_one(), "db")
+    assert cache == snapshot
+    assert await dbi.caches.find_one() == snapshot
 
 
 async def test_create_duplicate(snapshot, dbi, static_time, test_random_alphanumeric, trim_parameters):
@@ -39,8 +38,8 @@ async def test_create_duplicate(snapshot, dbi, static_time, test_random_alphanum
 
     cache = await virtool.caches.db.create(dbi, "foo", "aodp-abcdefgh", False)
 
-    snapshot.assert_match(cache, "return")
-    snapshot.assert_match(await dbi.caches.find_one({"_id": test_random_alphanumeric.last_choice}), "db")
+    assert cache == snapshot
+    assert await dbi.caches.find_one({"_id": test_random_alphanumeric.last_choice}) == snapshot
 
 
 @pytest.mark.parametrize("exists", [True, False])

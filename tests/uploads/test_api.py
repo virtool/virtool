@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from virtool.uploads.models import Upload, UploadType
 
 
@@ -37,8 +36,7 @@ class TestUpload:
             resp = await client.post_form("/api/uploads?name=Test.fq.gz", data=files)
 
         assert resp.status == 201
-
-        snapshot.assert_match(await resp.json())
+        assert await resp.json() == snapshot
 
         assert os.listdir(tmp_path / "files") == ["1-Test.fq.gz"]
 
@@ -70,7 +68,7 @@ class TestUpload:
 class TestFind:
     @pytest.mark.parametrize("type_", ["reads", "reference", None])
     @pytest.mark.parametrize("user", ["danny", "lester", "jake"])
-    async def test(self, spawn_client, resp_is, snapshot, type_, user, test_uploads):
+    async def test(self, spawn_client, snapshot, type_, user, test_uploads):
         """
         Test `GET /api/uploads` to assure that it returns the correct `upload` documents.
 
@@ -83,8 +81,7 @@ class TestFind:
             resp = await client.get(f"/api/uploads?user={user}")
 
         assert resp.status == 200
-
-        snapshot.assert_match(await resp.json())
+        assert await resp.json() == snapshot
 
 
 class TestGet:
@@ -120,7 +117,6 @@ class TestGet:
 
         async with pg_session as session:
             session.add(Upload(name_on_disk="1-test.fq.gz", removed=exists))
-
             await session.commit()
 
         resp = await client.get("/api/uploads/1")
@@ -129,7 +125,7 @@ class TestGet:
 
 
 class TestDelete:
-    async def test(self, files, spawn_client, snapshot, tmp_path, resp_is):
+    async def test(self, files, spawn_client, tmp_path, resp_is):
         """
         Test `DELETE /api/uploads/:id to assure that it properly deletes an existing `uploads` row and file.
 

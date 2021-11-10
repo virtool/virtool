@@ -1,7 +1,7 @@
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-
-from virtool.otus.db import check_name_and_abbreviation, create_otu, generate_otu_fasta, join, edit
+from virtool.otus.db import (check_name_and_abbreviation, create_otu, edit,
+                             generate_otu_fasta, join)
 
 
 @pytest.mark.parametrize("name,abbreviation,return_value", [
@@ -57,8 +57,8 @@ async def test_create_otu(
             "bob"
         )
 
-    snapshot.assert_match(await dbi.otus.find_one(), "otu")
-    snapshot.assert_match(await dbi.history.find_one(), "history")
+    assert await dbi.otus.find_one() == snapshot
+    assert await dbi.history.find_one() == snapshot
 
 
 @pytest.mark.parametrize("abbreviation", [None, "", "TMV"])
@@ -78,8 +78,8 @@ async def test_edit(abbreviation, snapshot, dbi, test_otu, static_time, test_ran
         "bob"
     )
 
-    snapshot.assert_match(await dbi.otus.find_one(), "otu")
-    snapshot.assert_match(await dbi.history.find_one(), "history")
+    assert await dbi.otus.find_one() == snapshot
+    assert await dbi.history.find_one() == snapshot
 
 
 @pytest.mark.parametrize("in_db", [True, False])
@@ -124,7 +124,8 @@ async def test_generate_otu_fasta(dbi, test_otu, test_sequence):
 
     await dbi.sequences.insert_many([
         test_sequence,
-        dict(test_sequence, _id="AX12345", sequence="ATAGAGGAGTTA", isolate_id="baz")
+        dict(test_sequence, _id="AX12345",
+             sequence="ATAGAGGAGTTA", isolate_id="baz")
     ])
 
     expected = (

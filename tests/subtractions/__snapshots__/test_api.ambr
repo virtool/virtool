@@ -1,0 +1,163 @@
+# name: test_edit[uvloop-data0]
+  <class 'dict'> {
+    'files': <class 'list'> [
+    ],
+    'id': 'foo',
+    'linked_samples': 12,
+    'name': 'Bar',
+    'nickname': 'Foo Subtraction',
+  }
+---
+# name: test_edit[uvloop-data0].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'name': 'Bar',
+    'nickname': 'Foo Subtraction',
+  }
+---
+# name: test_edit[uvloop-data1]
+  <class 'dict'> {
+    'files': <class 'list'> [
+    ],
+    'id': 'foo',
+    'linked_samples': 12,
+    'name': 'Foo',
+    'nickname': 'Bar Subtraction',
+  }
+---
+# name: test_edit[uvloop-data1].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'name': 'Foo',
+    'nickname': 'Bar Subtraction',
+  }
+---
+# name: test_edit[uvloop-data2]
+  <class 'dict'> {
+    'files': <class 'list'> [
+    ],
+    'id': 'foo',
+    'linked_samples': 12,
+    'name': 'Foo',
+    'nickname': '',
+  }
+---
+# name: test_edit[uvloop-data2].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'name': 'Foo',
+    'nickname': '',
+  }
+---
+# name: test_edit[uvloop-data3]
+  <class 'dict'> {
+    'files': <class 'list'> [
+    ],
+    'id': 'foo',
+    'linked_samples': 12,
+    'name': 'Bar',
+    'nickname': 'Bar Subtraction',
+  }
+---
+# name: test_edit[uvloop-data3].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'name': 'Bar',
+    'nickname': 'Bar Subtraction',
+  }
+---
+# name: test_finalize_subtraction[uvloop-None]
+  <class 'dict'> {
+    'count': 100,
+    'files': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/api/subtractions/foo/files/subtraction.fq.gz',
+        'id': 1,
+        'name': 'subtraction.fq.gz',
+        'size': 12345,
+        'subtraction': 'foo',
+        'type': 'fasta',
+      },
+      <class 'dict'> {
+        'download_url': '/api/subtractions/foo/files/subtraction.1.bt2',
+        'id': 2,
+        'name': 'subtraction.1.bt2',
+        'size': 56437,
+        'subtraction': 'foo',
+        'type': 'bowtie2',
+      },
+      <class 'dict'> {
+        'download_url': '/api/subtractions/foo/files/subtraction.2.bt2',
+        'id': 3,
+        'name': 'subtraction.2.bt2',
+        'size': 93845,
+        'subtraction': 'foo',
+        'type': 'bowtie2',
+      },
+    ],
+    'gc': <class 'dict'> {
+      'a': 0.319,
+      'c': 0.18,
+      'g': 0.18,
+      'n': 0.002,
+      't': 0.319,
+    },
+    'id': 'foo',
+    'linked_samples': <class 'list'> [
+    ],
+    'name': 'Foo',
+    'nickname': 'Foo Subtraction',
+    'ready': True,
+  }
+---
+# name: test_finalize_subtraction[uvloop-None].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'count': 100,
+    'gc': <class 'dict'> {
+      'a': 0.319,
+      'c': 0.18,
+      'g': 0.18,
+      'n': 0.002,
+      't': 0.319,
+    },
+    'name': 'Foo',
+    'nickname': 'Foo Subtraction',
+    'ready': True,
+  }
+---
+# name: test_job_remove[uvloop-True-False]
+  <class 'dict'> {
+    '_id': 'foo',
+    'deleted': True,
+    'name': 'Foo',
+    'nickname': 'Foo Subtraction',
+    'ready': False,
+  }
+---
+# name: test_job_remove[uvloop-True-False].1
+  <class 'dict'> {
+    '_id': 'test',
+    'name': 'Test',
+    'subtractions': <class 'list'> [
+    ],
+  }
+---
+# name: test_upload[uvloop-404]
+  <class 'dict'> {
+    'id': 1,
+    'name': 'subtraction.1.bt2',
+    'size': 12,
+    'subtraction': 'foo',
+    'type': 'bowtie2',
+  }
+---
+# name: test_upload[uvloop-None]
+  <class 'dict'> {
+    'id': 1,
+    'name': 'subtraction.1.bt2',
+    'size': 12,
+    'subtraction': 'foo',
+    'type': 'bowtie2',
+  }
+---

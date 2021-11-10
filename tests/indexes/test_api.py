@@ -9,9 +9,8 @@ from pathlib import Path
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy import select
-
-from virtool.indexes.files import create_index_file
 from virtool.indexes.db import FILES
+from virtool.indexes.files import create_index_file
 from virtool.indexes.models import IndexFile
 from virtool.indexes.utils import check_index_file_type
 
@@ -134,7 +133,7 @@ async def test_find(mocker, snapshot, spawn_client, static_time):
     resp = await client.get("/api/indexes")
 
     assert resp.status == 200
-    snapshot.assert_match(await resp.json())
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404"])
@@ -210,8 +209,15 @@ async def test_get(error, mocker, snapshot, resp_is, spawn_client, static_time):
         }
     ]
 
-    m_get_contributors = mocker.patch("virtool.indexes.db.get_contributors", make_mocked_coro(contributors))
-    m_get_otus = mocker.patch("virtool.indexes.db.get_otus", make_mocked_coro(otus))
+    m_get_contributors = mocker.patch(
+        "virtool.indexes.db.get_contributors",
+        make_mocked_coro(contributors)
+    )
+
+    m_get_otus = mocker.patch(
+        "virtool.indexes.db.get_otus",
+        make_mocked_coro(otus)
+    )
 
     resp = await client.get("/api/indexes/foobar")
 
@@ -230,7 +236,7 @@ async def test_get(error, mocker, snapshot, resp_is, spawn_client, static_time):
     )
 
     assert resp.status == 200
-    snapshot.assert_match(await resp.json())
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("file_exists", [True, False])
@@ -275,7 +281,8 @@ async def test_download_otus_json(file_exists, mocker, tmp_path, dbi, spawn_job_
     assert expected == result
 
     if not file_exists:
-        m_get_patched_otus.assert_called_with(client.app["db"], client.app["config"], manifest)
+        m_get_patched_otus.assert_called_with(
+            client.app["db"], client.app["config"], manifest)
 
 
 class TestCreate:
@@ -307,11 +314,14 @@ class TestCreate:
         # Define mocks.
         m_job_manager = client.app["jobs"] = mocker.Mock()
         mocker.patch.object(m_job_manager, "close", make_mocked_coro())
-        m_enqueue = mocker.patch.object(m_job_manager, "enqueue", make_mocked_coro())
+        m_enqueue = mocker.patch.object(
+            m_job_manager, "enqueue", make_mocked_coro())
 
-        m_get_next_version = mocker.patch("virtool.indexes.db.get_next_version", new=make_mocked_coro(9))
+        m_get_next_version = mocker.patch(
+            "virtool.indexes.db.get_next_version", new=make_mocked_coro(9))
 
-        m_create_manifest = mocker.patch("virtool.references.db.get_manifest", new=make_mocked_coro("manifest"))
+        m_create_manifest = mocker.patch(
+            "virtool.references.db.get_manifest", new=make_mocked_coro("manifest"))
 
         # Make API call.
         resp = await client.post("/api/refs/foo/indexes")
@@ -321,15 +331,17 @@ class TestCreate:
             return
 
         assert resp.status == 201
+        assert await resp.json() == snapshot
 
         expected_job_id = test_random_alphanumeric.history[1]
         expected_id = test_random_alphanumeric.history[2]
 
-        assert resp.headers["Location"] == "/api/indexes/{}".format(expected_id)
+        assert resp.headers["Location"] == "/api/indexes/{}".format(
+            expected_id
+        )
 
-        snapshot.assert_match(await client.db.jobs.find_one())
-        snapshot.assert_match(await client.db.indexes.find_one())
-        snapshot.assert_match(await resp.json())
+        assert await client.db.jobs.find_one() == snapshot
+        assert await client.db.indexes.find_one() == snapshot
 
         m_get_next_version.assert_called_with(client.db, "foo")
         m_create_manifest.assert_called_with(client.db, "foo")
@@ -381,7 +393,7 @@ class TestCreate:
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test(error, snapshot, spawn_client, resp_is):
+async def test_find_history(error, snapshot, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
     if not error:
@@ -476,12 +488,13 @@ async def test(error, snapshot, spawn_client, resp_is):
         return
 
     assert resp.status == 200
-    snapshot.assert_match(await resp.json())
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, 404])
 async def test_delete_index(spawn_job_client, error):
     index_id = "index1"
+
     index_document = {
         "_id": index_id,
     }
@@ -534,11 +547,8 @@ async def test_upload(error, tmp_path, spawn_job_client, snapshot, static_time, 
     }
 
     if error == "409":
-        index_file = IndexFile(name="reference.1.bt2", index="foo")
-
         async with pg_session as session:
-            session.add(index_file)
-
+            session.add(IndexFile(name="reference.1.bt2", index="foo"))
             await session.commit()
 
     if not error == "404_index":
@@ -566,20 +576,14 @@ async def test_upload(error, tmp_path, spawn_job_client, snapshot, static_time, 
         return
 
     assert resp.status == 201
-    assert os.listdir(tmp_path / "references" / "bar" / "foo") == ["reference.1.bt2"]
-    snapshot.assert_match(await resp.json())
-    snapshot.assert_match(await client.db.indexes.find_one("foo"))
+    assert os.listdir(tmp_path / "references" / "bar" /
+                      "foo") == ["reference.1.bt2"]
+
+    assert await resp.json() == snapshot
+    assert await client.db.indexes.find_one("foo") == snapshot
 
     async with pg_session as session:
-        result = (await session.execute(select(IndexFile).filter_by(id=1))).scalar()
-
-    assert result.to_dict() == {
-        'id': 1,
-        'name': 'reference.1.bt2',
-        'index': 'foo',
-        'type': 'bowtie2',
-        'size': os.stat(path).st_size
-    }
+        assert (await session.execute(select(IndexFile).filter_by(id=1))).scalar() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "409_genome", "409_fasta", "404_reference"])
@@ -619,13 +623,11 @@ async def test_finalize(error, snapshot, spawn_job_client, test_otu, pg):
 
     resp = await client.patch("/api/indexes/test_index")
 
-    snapshot.assert_match(await resp.json())
+    assert await resp.json() == snapshot
 
     if not error:
         assert resp.status == 200
-
-        otu = await client.db.otus.find_one("6116cba1", ["version", "last_indexed_version"])
-        assert otu["version"] == otu["last_indexed_version"]
+        assert await client.db.otus.find_one("6116cba1") == snapshot
 
 
 @pytest.mark.parametrize("status", [200, 404])

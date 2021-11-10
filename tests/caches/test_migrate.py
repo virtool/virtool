@@ -4,8 +4,10 @@ from virtool.caches.migrate import migrate_caches, add_missing_field, rename_has
 
 
 async def test_migrate_caches(mocker, dbi):
-    m_add_missing_field = mocker.patch("virtool.caches.migrate.add_missing_field", make_mocked_coro())
-    m_rename_hash_field = mocker.patch("virtool.caches.migrate.rename_hash_field", make_mocked_coro())
+    m_add_missing_field = mocker.patch(
+        "virtool.caches.migrate.add_missing_field", make_mocked_coro())
+    m_rename_hash_field = mocker.patch(
+        "virtool.caches.migrate.rename_hash_field", make_mocked_coro())
 
     app = {
         "db": dbi,
@@ -58,7 +60,7 @@ async def test_add_missing_field(snapshot, tmp_path, dbi, config):
 
     await add_missing_field(app)
 
-    snapshot.assert_match(await dbi.caches.find().to_list(None))
+    assert await dbi.caches.find().to_list(None) == snapshot
 
 
 async def test_rename_hash_field(snapshot, dbi):
@@ -85,4 +87,4 @@ async def test_rename_hash_field(snapshot, dbi):
 
     await rename_hash_field(app)
 
-    snapshot.assert_match(await dbi.caches.find().to_list(None))
+    assert await dbi.caches.find().to_list(None) == snapshot

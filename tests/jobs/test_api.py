@@ -17,7 +17,9 @@ async def test_get(error, snapshot, spawn_client, test_job, resp_is):
     assert resp.status == 200
 
     body = await resp.json()
-    snapshot.assert_match(body)
+    assert body == snapshot
+
+    # Explicitly make sure the secret API key is not returned in the response
     assert "key" not in body
 
 
@@ -43,8 +45,9 @@ async def test_acquire(error, mocker, snapshot, dbi, test_job, spawn_client, res
     assert resp.status == 200
 
     body = await resp.json()
+    assert body == snapshot
 
-    snapshot.assert_match(body)
+    # Explicitly make sure the API key IS in the body.
     assert "key" in body
 
 
@@ -60,7 +63,9 @@ async def test_cancel(snapshot, dbi, test_job, spawn_client):
     assert resp.status == 200
 
     body = await resp.json()
-    snapshot.assert_match(body)
+    assert body == snapshot
+
+    # Explicitly make sure the secret API key is not returned in the response
     assert "key" not in body
 
 
@@ -69,7 +74,7 @@ async def test_cancel(snapshot, dbi, test_job, spawn_client):
     404,
     409
 ])
-async def test_push_status(error, resp_is, spawn_client, static_time, test_job):
+async def test_push_status(error, snapshot, resp_is, spawn_client, static_time, test_job):
     client = await spawn_client(authorize=True)
 
     if error != 409:
@@ -96,11 +101,4 @@ async def test_push_status(error, resp_is, spawn_client, static_time, test_job):
         return
 
     assert resp.status == 201
-
-    assert await resp.json() == {
-        "error": None,
-        "progress": 23,
-        "stage": "build",
-        "state": "running",
-        "timestamp": "2015-10-06T20:00:00Z"
-    }
+    assert await resp.json() == snapshot

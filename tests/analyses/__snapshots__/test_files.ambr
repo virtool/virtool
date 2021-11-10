@@ -1,0 +1,6 @@
+# name: test_create_nuvs_analysis_files[uvloop]
+  <class 'list'> [
+    <AnalysisFile(id=1, analysis=foo, description=None, format=fasta, name=assembly.fa.gz, name_on_disk=1-assembly.fa.gz, size=10, uploaded_at=None)>,
+    <AnalysisFile(id=2, analysis=foo, description=None, format=tsv, name=hmm.tsv, name_on_disk=2-hmm.tsv, size=8, uploaded_at=None)>,
+  ]
+---

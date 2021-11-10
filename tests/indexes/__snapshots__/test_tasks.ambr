@@ -1,0 +1,20 @@
+# name: test_add_index_files[uvloop-DNE]
+  <class 'list'> [
+    <IndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=4096)>,
+    <IndexFile(id=2, name=reference.fa.gz, index=foo, type=fasta, size=4096)>,
+  ]
+---
+# name: test_add_index_files[uvloop-empty]
+  <class 'list'> [
+    <IndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=4096)>,
+    <IndexFile(id=2, name=reference.fa.gz, index=foo, type=fasta, size=4096)>,
+  ]
+---
+# name: test_add_index_files[uvloop-full]
+  <class 'list'> [
+  ]
+---
+# name: test_add_index_files[uvloop-not_ready]
+  <class 'list'> [
+  ]
+---

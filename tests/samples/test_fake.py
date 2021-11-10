@@ -1,10 +1,10 @@
 import os
 
 import pytest
-
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import LIST_PROJECTION
-from virtool.samples.fake import create_fake_sample, copy_reads_file, READ_FILES_PATH
+from virtool.samples.fake import (READ_FILES_PATH, copy_reads_file,
+                                  create_fake_sample)
 
 
 @pytest.fixture
@@ -20,28 +20,39 @@ def app(dbi, pg, run_in_thread, tmp_path, config):
 
 @pytest.mark.parametrize("paired", [True, False])
 @pytest.mark.parametrize("finalized", [True, False])
-async def test_create_fake_unpaired(paired, finalized, app, snapshot,
-                                    static_time):
-    fake_sample = await create_fake_sample(app,
-                                           "sample_1",
-                                           "bob",
-                                           paired=paired,
-                                           finalized=finalized)
+async def test_create_fake_unpaired(
+    paired,
+    finalized,
+    app,
+    snapshot,
+    static_time
+):
+    fake_sample = await create_fake_sample(
+        app,
+        "sample_1",
+        "bob",
+        paired=paired,
+        finalized=finalized
+    )
 
-    for key in LIST_PROJECTION:
-        assert key in fake_sample
+    assert set(LIST_PROJECTION) <= set(fake_sample.keys())
 
     if finalized is True:
         assert len(fake_sample["reads"]) == (2 if paired else 1)
         assert fake_sample["ready"] is True
 
-    snapshot.assert_match(fake_sample)
+    assert fake_sample == snapshot
 
 
 async def test_copy_reads_file(app):
     file_path = READ_FILES_PATH / "paired_1.fq.gz"
 
-    await copy_reads_file(app, file_path, "reads_1.fq.gz", "sample_1")
+    await copy_reads_file(
+        app,
+        file_path,
+        "reads_1.fq.gz",
+        "sample_1"
+    )
 
     assert os.listdir(app["config"].data_path /
                       "samples" / "sample_1") == ["reads_1.fq.gz"]

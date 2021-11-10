@@ -4,11 +4,9 @@ from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-
 from virtool.analyses.files import create_analysis_file
-from virtool.pg.utils import get_row_by_id
 from virtool.analyses.models import AnalysisFile
-from virtool.utils import base_processor
+from virtool.pg.utils import get_row_by_id
 
 
 @pytest.fixture
@@ -24,7 +22,7 @@ def files(tmp_path):
 
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("error", [None, "400", "403", "404"])
-async def test_get(ready, files, error, mocker, snapshot, spawn_client, static_time, resp_is, pg):
+async def test_get(ready, error, mocker, snapshot, spawn_client, static_time, resp_is, pg):
     client = await spawn_client(authorize=True)
 
     document = {
@@ -66,7 +64,6 @@ async def test_get(ready, files, error, mocker, snapshot, spawn_client, static_t
 
     if error != "404":
         await client.db.analyses.insert_one(document)
-
         await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
 
     m_format_analysis = mocker.patch(
@@ -93,19 +90,19 @@ async def test_get(ready, files, error, mocker, snapshot, spawn_client, static_t
         return
 
     assert resp.status == 200
-
-    snapshot.assert_match(await resp.json())
+    assert await resp.json() == snapshot
 
     if ready:
         args = m_format_analysis.call_args[0]
         assert args[0] == client.app
-        snapshot.assert_match(args[1], "format_analysis")
+        assert args[1] == snapshot
     else:
         assert not m_format_analysis.called
 
 
 async def test_find(snapshot, mocker, spawn_client, resp_is, static_time):
-    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
+    mocker.patch("virtool.samples.utils.get_sample_rights",
+                 return_value=(True, True))
 
     client = await spawn_client(authorize=True)
 
@@ -113,7 +110,10 @@ async def test_find(snapshot, mocker, spawn_client, resp_is, static_time):
         "_id": "test",
         "created_at": static_time.datetime,
         "all_read": True,
-        "all_write": True
+        "all_write": True,
+        "user": {
+            "id": "bill"
+        }
     })
 
     await client.db.analyses.insert_many([
@@ -194,8 +194,7 @@ async def test_find(snapshot, mocker, spawn_client, resp_is, static_time):
     resp = await client.get("/api/analyses")
 
     assert resp.status == 200
-
-    snapshot.assert_match(await resp.json())
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "400", "403", "404", "409"])
@@ -288,11 +287,8 @@ async def test_upload_file(error, files, resp_is, spawn_job_client, static_time,
 
     if error is None:
         assert resp.status == 201
-
-        snapshot.assert_match(await resp.json())
-
+        assert await resp.json() == snapshot
         assert os.listdir(tmp_path / "analyses") == ["1-reference.fa"]
-
         assert await get_row_by_id(pg, AnalysisFile, 1)
 
     elif error == 400:
@@ -321,7 +317,8 @@ async def test_download_analysis_result(file_exists, row_exists, files, spawn_cl
     client.app["config"].data_path = tmp_path
     job_client.app["config"].data_path = tmp_path
 
-    expected_path = client.app["config"].data_path / "analyses" / "1-reference.fa"
+    expected_path = client.app["config"].data_path / \
+        "analyses" / "1-reference.fa"
 
     await client.db.analyses.insert_one({
         "_id": "foobar",
@@ -333,7 +330,6 @@ async def test_download_analysis_result(file_exists, row_exists, files, spawn_cl
 
     if row_exists:
         await job_client.put("/api/analyses/foobar/files?name=reference.fa&format=fasta", data=files)
-
         assert expected_path.is_file()
 
     if not file_exists and row_exists:
@@ -346,7 +342,7 @@ async def test_download_analysis_result(file_exists, row_exists, files, spawn_cl
         assert expected_path.read_bytes() == await resp.content.read()
     else:
         assert resp.status == 404
-        snapshot.assert_match(await resp.json())
+        assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("extension", ["csv", "xlsx"])
@@ -367,10 +363,7 @@ async def test_download_analysis_document(extension, exists, mocker, spawn_clien
 
     resp = await client.get(f"/api/analyses/documents/foobar.{extension}")
 
-    if exists:
-        assert resp.status == 200
-    else:
-        assert resp.status == 404
+    assert resp.status == 200 if exists else 400
 
 
 @pytest.mark.parametrize("error", [None, "400", "403", "404_analysis", "404_sequence", "409_workflow", "409_ready"])
@@ -421,11 +414,14 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
 
         await client.db.analyses.insert_one(analysis_document)
 
-    m_initialize_ncbi_blast = mocker.patch("virtool.bio.initialize_ncbi_blast", make_mocked_coro(("FOOBAR1337", 23)))
+    m_initialize_ncbi_blast = mocker.patch(
+        "virtool.bio.initialize_ncbi_blast", make_mocked_coro(("FOOBAR1337", 23)))
 
-    m_check_rid = mocker.patch("virtool.bio.check_rid", make_mocked_coro(return_value=False))
+    m_check_rid = mocker.patch(
+        "virtool.bio.check_rid", make_mocked_coro(return_value=False))
 
-    m_wait_for_blast_result = mocker.patch("virtool.bio.wait_for_blast_result", make_mocked_coro())
+    m_wait_for_blast_result = mocker.patch(
+        "virtool.bio.wait_for_blast_result", make_mocked_coro())
 
     await client.put("/api/analyses/foobar/5/blast", {})
 
@@ -487,11 +483,14 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
 
 
 @pytest.mark.parametrize("error", [None, 422, 404, 409])
-async def test_patch_to_set_result(spawn_job_client, error, resp_is):
+async def test_finalize(snapshot, spawn_job_client, error):
     analysis_document = {
         "_id": "analysis1",
-        "sample": {"id": "sample1"},
+        "sample": {
+            "id": "sample1"
+        },
         "workflow": "test_workflow",
+        "ready": error == 409
     }
 
     patch_json = {
@@ -500,28 +499,20 @@ async def test_patch_to_set_result(spawn_job_client, error, resp_is):
         }
     }
 
-    client = await spawn_job_client(authorize=True)
+    if error == 422:
+        del patch_json["results"]
 
-    if error == 409:
-        analysis_document["ready"] = True
-    elif error == 422:
-        patch_json = {}
+    client = await spawn_job_client(authorize=True)
 
     if error != 404:
         insert_result = await client.db.analyses.insert_one(analysis_document)
         assert insert_result["_id"] == analysis_document["_id"]
 
-    response = await client.patch(f"/api/analyses/{analysis_document['_id']}", json=patch_json)
+    resp = await client.patch(f"/api/analyses/{analysis_document['_id']}", json=patch_json)
 
     if error:
-        assert response.status == error
+        assert resp.status == error
     else:
-        assert response.status == 200
-        document = await client.db.analyses.find_one({"_id": analysis_document["_id"]})
-
-        assert document["results"] == patch_json["results"]
-        assert document["ready"] is True
-
-        response_json = await response.json()
-
-        assert response_json == base_processor(document)
+        assert resp.status == 200
+        assert await resp.json() == snapshot
+        assert await client.db.analyses.find_one() == snapshot

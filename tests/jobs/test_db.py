@@ -1,7 +1,6 @@
 from unittest.mock import call
 
 import pytest
-
 import virtool.jobs.db
 from virtool.jobs.client import JobsClient
 from virtool.jobs.db import acquire, create, force_delete_jobs
@@ -18,8 +17,7 @@ async def test_processor(snapshot, dbi, static_time, test_job):
     Test that the dispatch processor properly formats a raw job document into a dispatchable format.
 
     """
-    processed = await virtool.jobs.db.processor(dbi, test_job)
-    snapshot.assert_match(processed)
+    assert await virtool.jobs.db.processor(dbi, test_job) == snapshot
 
 
 async def test_cancel(snapshot, dbi, static_time):
@@ -37,7 +35,7 @@ async def test_cancel(snapshot, dbi, static_time):
 
     await virtool.jobs.db.cancel(dbi, "foo")
 
-    snapshot.assert_match(await dbi.jobs.find_one())
+    assert await dbi.jobs.find_one() == snapshot
 
 
 @pytest.mark.parametrize("with_job_id", [False, True])
@@ -54,7 +52,7 @@ async def test_create(with_job_id, mocker, snapshot, dbi, test_random_alphanumer
     else:
         await create(dbi, "create_sample", {"sample_id": "foo"}, "bob", rights)
 
-    snapshot.assert_match(await dbi.jobs.find_one())
+    assert await dbi.jobs.find_one() == snapshot
 
 
 async def test_acquire(dbi, mocker):
@@ -94,5 +92,9 @@ async def test_force_delete_jobs(dbi, mocker, tmp_path):
 
     await force_delete_jobs(app)
 
-    app["jobs"].cancel.assert_has_calls([call("foo"), call("bar")], any_order=True)
+    app["jobs"].cancel.assert_has_calls(
+        [call("foo"), call("bar")],
+        any_order=True
+    )
+
     assert await dbi.jobs.count_documents({}) == 0

@@ -1,0 +1,25 @@
+# name: test_attach_sample_count[uvloop]
+  <class 'tuple'> (
+    <class 'dict'> {
+      'color': '#a83432',
+      'count': 1,
+      'description': 'This is a bug',
+      'id': 1,
+      'name': 'Bug',
+    },
+    <class 'dict'> {
+      'color': '#03fc20',
+      'count': 2,
+      'description': 'This is a question',
+      'id': 2,
+      'name': 'Question',
+    },
+    <class 'dict'> {
+      'color': '#02db21',
+      'count': 0,
+      'description': 'This is a info',
+      'id': 3,
+      'name': 'Info',
+    },
+  )
+---

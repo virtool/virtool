@@ -2,7 +2,6 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine
-
 from virtool.samples.models import SampleReads
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.tasks.models import Task
@@ -130,7 +129,7 @@ async def test_move_sample_files_task(legacy, compressed, paired, dbi, pg, pg_se
     await dbi.samples.insert_one(sample)
 
     async with pg_session as session:
-        task = Task(
+        session.add(Task(
             id=1,
             complete=False,
             context={},
@@ -139,18 +138,14 @@ async def test_move_sample_files_task(legacy, compressed, paired, dbi, pg, pg_se
             step="move_sample_files",
             type="migrate_files",
             created_at=static_time.datetime
-        )
-
-        session.add(task)
+        ))
         await session.commit()
 
     task = MoveSampleFilesTask(app_dict, 1)
 
     await task.run()
 
-    document = await dbi.samples.find_one({"_id": "foo"})
-
-    snapshot.assert_match(document)
+    assert await dbi.samples.find_one({"_id": "foo"}) == snapshot
 
     if not legacy or (legacy and compressed):
         async with pg_session as session:

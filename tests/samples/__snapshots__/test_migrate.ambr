@@ -1,0 +1,24 @@
+# name: test_add_is_legacy[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'foo',
+      'files': <class 'list'> [
+        <class 'dict'> {
+          'id': 1,
+          'raw': False,
+        },
+      ],
+      'is_legacy': True,
+    },
+    <class 'dict'> {
+      '_id': 'bar',
+      'files': <class 'list'> [
+        <class 'dict'> {
+          'id': 1,
+          'raw': True,
+        },
+      ],
+      'is_legacy': False,
+    },
+  ]
+---

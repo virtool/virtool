@@ -1,0 +1,164 @@
+# name: test_migrate_status[uvloop-False-False-False]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'hmm',
+      'installed': None,
+      'release': None,
+      'task': None,
+      'updates': <class 'list'> [
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'software',
+      'installed': None,
+      'mongo_version': '3.6.3',
+      'releases': <class 'list'> [
+      ],
+      'task': None,
+      'updating': False,
+      'version': 'v3.0.0',
+    },
+  ]
+---
+# name: test_migrate_status[uvloop-False-False-True]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'hmm',
+      'installed': None,
+      'release': None,
+      'task': None,
+      'updates': <class 'list'> [
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'software',
+      'mongo_version': '3.6.3',
+      'task': None,
+      'updating': False,
+      'version': 'v3.0.0',
+    },
+  ]
+---
+# name: test_migrate_status[uvloop-False-True-False]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'hmm',
+      'installed': None,
+      'release': None,
+      'task': None,
+      'updates': <class 'list'> [
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'software',
+      'installed': None,
+      'mongo_version': '3.6.3',
+      'releases': <class 'list'> [
+      ],
+      'task': None,
+      'updating': False,
+      'version': 'v3.0.0',
+    },
+  ]
+---
+# name: test_migrate_status[uvloop-False-True-True]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'hmm',
+      'installed': None,
+      'release': None,
+      'task': None,
+      'updates': <class 'list'> [
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'software',
+      'mongo_version': '3.6.3',
+      'task': None,
+      'updating': False,
+      'version': 'v3.0.0',
+    },
+  ]
+---
+# name: test_migrate_status[uvloop-True-False-False]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'hmm',
+      'installed': None,
+      'release': None,
+      'task': None,
+      'updates': <class 'list'> [
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'software',
+      'installed': None,
+      'mongo_version': '3.6.3',
+      'releases': <class 'list'> [
+      ],
+      'task': None,
+      'updating': False,
+      'version': 'v3.0.0',
+    },
+  ]
+---
+# name: test_migrate_status[uvloop-True-False-True]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'hmm',
+      'installed': None,
+      'release': None,
+      'task': None,
+      'updates': <class 'list'> [
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'software',
+      'mongo_version': '3.6.3',
+      'task': None,
+      'updating': False,
+      'version': 'v3.0.0',
+    },
+  ]
+---
+# name: test_migrate_status[uvloop-True-True-False]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'hmm',
+      'installed': None,
+      'release': None,
+      'task': None,
+      'updates': <class 'list'> [
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'software',
+      'installed': None,
+      'mongo_version': '3.6.3',
+      'releases': <class 'list'> [
+      ],
+      'task': None,
+      'updating': False,
+      'version': 'v3.0.0',
+    },
+  ]
+---
+# name: test_migrate_status[uvloop-True-True-True]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'hmm',
+      'installed': None,
+      'release': None,
+      'task': None,
+      'updates': <class 'list'> [
+      ],
+    },
+    <class 'dict'> {
+      '_id': 'software',
+      'mongo_version': '3.6.3',
+      'task': None,
+      'updating': False,
+      'version': 'v3.0.0',
+    },
+  ]
+---

@@ -3,18 +3,17 @@ from pathlib import Path
 
 import arrow
 import pytest
-from aiohttp.test_utils import make_mocked_coro
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-
 import virtool.caches.db
 import virtool.uploads.db
+from aiohttp.test_utils import make_mocked_coro
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.caches.models import SampleArtifactCache, SampleReadsCache
 from virtool.caches.utils import join_cache_path
 from virtool.labels.models import Label
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.db import check_name
 from virtool.samples.files import create_reads_file
-from virtool.samples.models import SampleReads, SampleArtifact
+from virtool.samples.models import SampleArtifact, SampleReads
 from virtool.uploads.models import Upload
 
 
@@ -50,9 +49,24 @@ async def test_find(
 
     async with pg_session as session:
         session.add_all([
-            Label(id=1, name="Bug", color="#a83432", description="This is a bug"),
-            Label(id=2, name="Info", color="#03fc20", description="This is a info"),
-            Label(id=3, name="Question", color="#0d321d", description="This is a question")
+            Label(
+                id=1,
+                name="Bug",
+                color="#a83432",
+                description="This is a bug"
+            ),
+            Label(
+                id=2,
+                name="Info",
+                color="#03fc20",
+                description="This is a info"
+            ),
+            Label(
+                id=3,
+                name="Question",
+                color="#0d321d",
+                description="This is a question"
+            )
         ])
         await session.commit()
 
@@ -129,14 +143,14 @@ async def test_find(
     resp = await client.get(path)
 
     assert resp.status == 200
-
-    snapshot.assert_match(await resp.json())
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("ready", [True, False])
 async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static_time, pg_session):
-    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
+    mocker.patch("virtool.samples.utils.get_sample_rights",
+                 return_value=(True, True))
 
     client = await spawn_client(authorize=True)
 
@@ -168,7 +182,12 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
             "subtractions": ["foo", "bar"],
         })
 
-        label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+        label = Label(
+            id=1,
+            name="Bug",
+            color="#a83432",
+            description="This is a bug"
+        )
 
         artifact = SampleArtifact(
             name="reference.fa.gz",
@@ -177,7 +196,11 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
             name_on_disk="reference.fa.gz"
         )
 
-        reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
+        reads = SampleReads(
+            name="reads_1.fq.gz",
+            name_on_disk="reads_1.fq.gz",
+            sample="test"
+        )
 
         upload = Upload(name="test")
         upload.reads.append(reads)
@@ -193,8 +216,7 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
         return
 
     assert resp.status == 200
-
-    snapshot.assert_match(await resp.json())
+    assert await resp.json() == snapshot
 
 
 class TestCreate:
@@ -214,7 +236,6 @@ class TestCreate:
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         client.app["settings"] = settings
-
         client.app["settings"].sm_proc = 2
         client.app["settings"].sm_mem = 4
 
@@ -222,11 +243,19 @@ class TestCreate:
             "_id": "apple"
         })
 
-        upload = Upload(id=1, name="test.fq.gz", size=123456)
-        label = Label(id=1, name="bug", color="#FF0000")
-
         async with AsyncSession(pg) as session:
-            session.add_all([upload, label])
+            session.add_all([
+                Upload(
+                    id=1,
+                    name="test.fq.gz",
+                    size=123456
+                ),
+                Label(
+                    id=1,
+                    name="bug",
+                    color="#FF0000"
+                )
+            ])
             await session.commit()
 
         await client.db.groups.insert_many([
@@ -238,11 +267,18 @@ class TestCreate:
         client.app["settings"].sample_all_write = True
         client.app["settings"].sample_group_write = True
 
-        m_reserve = mocker.patch("virtool.uploads.db.reserve", make_mocked_coro())
+        m_reserve = mocker.patch(
+            "virtool.uploads.db.reserve",
+            make_mocked_coro()
+        )
 
         client.app["jobs"] = mocker.Mock()
 
-        m_enqueue = mocker.patch.object(client.app["jobs"], "enqueue", make_mocked_coro())
+        m_enqueue = mocker.patch.object(
+            client.app["jobs"],
+            "enqueue",
+            make_mocked_coro()
+        )
 
         request_data = {
             "name": "Foobar",
@@ -257,12 +293,10 @@ class TestCreate:
         resp = await client.post("/api/samples", request_data)
 
         assert resp.status == 201
+        assert resp.headers["Location"] == snapshot
+        assert await resp.json() == snapshot
 
-        assert resp.headers["Location"] == "/api/samples/" + test_random_alphanumeric.history[0]
-
-        snapshot.assert_match(await resp.json())
-
-        snapshot.assert_match(await client.db.samples.find_one())
+        assert await client.db.samples.find_one() == snapshot
 
         # Check call to file.reserve.
         m_reserve.assert_called_with(
@@ -410,7 +444,8 @@ class TestCreate:
         client.app["settings"].sample_unique_names = True
 
         if exists:
-            label = Label(id=1, name="Orange", color="#FFA500", description="An orange")
+            label = Label(id=1, name="Orange", color="#FFA500",
+                          description="An orange")
             async with pg_session as session:
                 session.add(label)
                 await session.commit()
@@ -425,6 +460,7 @@ class TestCreate:
 
 
 class TestEdit:
+
     async def test(self, snapshot, spawn_client, pg: AsyncEngine, pg_session):
         """
         Test that an existing sample can be edited correctly.
@@ -447,7 +483,8 @@ class TestEdit:
             "name": "Foo"
         })
 
-        label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+        label = Label(id=1, name="Bug", color="#a83432",
+                      description="This is a bug")
         async with pg_session as session:
             session.add(label)
             await session.commit()
@@ -462,7 +499,7 @@ class TestEdit:
         resp = await client.patch("/api/samples/test", data)
 
         assert resp.status == 200
-        snapshot.assert_match(await resp.json())
+        assert await resp.json() == snapshot
 
     @pytest.mark.parametrize("exists", [True, False])
     async def test_name_exists(self, exists, snapshot, spawn_client, resp_is):
@@ -525,7 +562,8 @@ class TestEdit:
             }
         )
         if exists:
-            label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+            label = Label(id=1, name="Bug", color="#a83432",
+                          description="This is a bug")
             async with pg_session as session:
                 session.add(label)
                 await session.commit()
@@ -588,7 +626,7 @@ class TestEdit:
             return
 
         assert resp.status == 200
-        snapshot.assert_match(await resp.json())
+        assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
@@ -609,10 +647,23 @@ async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_sessi
     })
 
     async with pg_session as session:
-        upload = Upload(name="test", name_on_disk="test.fq.gz")
-        artifact = SampleArtifact(name="reference.fa.gz", sample="test", type="fasta",
-                                  name_on_disk="reference.fa.gz")
-        reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
+        upload = Upload(
+            name="test",
+            name_on_disk="test.fq.gz"
+        )
+
+        artifact = SampleArtifact(
+            name="reference.fa.gz",
+            sample="test",
+            type="fasta",
+            name_on_disk="reference.fa.gz"
+        )
+
+        reads = SampleReads(
+            name="reads_1.fq.gz",
+            name_on_disk="reads_1.fq.gz",
+            sample="test"
+        )
 
         upload.reads.append(reads)
         session.add_all([upload, artifact, reads])
@@ -623,7 +674,7 @@ async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_sessi
 
     if field == "quality":
         assert resp.status == 200
-        snapshot.assert_match(await resp.json())
+        assert await resp.json() == snapshot
         assert not await virtool.uploads.db.get(pg, 1)
         assert not (await virtool.pg.utils.get_row_by_id(pg, SampleReads, 1)).upload
     else:
@@ -642,7 +693,8 @@ async def test_remove(
 ):
     client = await spawn_client(authorize=True)
 
-    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
+    mocker.patch("virtool.samples.utils.get_sample_rights",
+                 return_value=(True, True))
 
     if resp_is_attr == "no_content":
         await client.db.samples.insert_one({
@@ -689,7 +741,8 @@ async def test_job_remove(
     client = await spawn_job_client(authorize=True)
     client.app["config"].data_path = tmp_path
 
-    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
+    mocker.patch("virtool.samples.utils.get_sample_rights",
+                 return_value=(True, True))
 
     if exists:
         file = await virtool.uploads.db.create(pg, "test", "reads", reserved=True)
@@ -726,7 +779,8 @@ async def test_job_remove(
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("term", [None, "bob", "Baz"])
 async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_is, static_time):
-    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
+    mocker.patch("virtool.samples.utils.get_sample_rights",
+                 return_value=(True, True))
 
     client = await spawn_client(authorize=True)
 
@@ -826,8 +880,7 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
         return
 
     assert resp.status == 200
-
-    snapshot.assert_match(await resp.json())
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [
@@ -838,9 +891,17 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
     "400_subtraction",
     "404"
 ])
-async def test_analyze(error, mocker, spawn_client, static_time, resp_is,
-                       test_random_alphanumeric):
-    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
+async def test_analyze(
+    error,
+    mocker,
+    snapshot,
+    spawn_client,
+    static_time,
+    resp_is,
+    test_random_alphanumeric
+):
+    mocker.patch("virtool.samples.utils.get_sample_rights",
+                 return_value=(True, True))
 
     client = await spawn_client(authorize=True)
 
@@ -898,7 +959,8 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is,
             "ready": True,
         })
 
-    m_create = mocker.patch("virtool.analyses.db.create", new=make_mocked_coro(test_analysis))
+    m_create = mocker.patch("virtool.analyses.db.create",
+                            new=make_mocked_coro(test_analysis))
 
     resp = await client.post("/api/samples/test/analyses", data={
         "workflow": "pathoscope_bowtie",
@@ -923,12 +985,8 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is,
         return
 
     assert resp.status == 201
-
     assert resp.headers["Location"] == "/api/analyses/test_analysis"
-
-    test_analysis["id"] = test_analysis.pop("_id")
-
-    assert await resp.json() == test_analysis
+    assert await resp.json() == snapshot
 
     m_create.assert_called_with(
         client.db,
@@ -943,7 +1001,7 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is,
 
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("exists", [True, False])
-async def test_cache_job_remove(exists, ready, tmp_path, spawn_job_client, snapshot, resp_is):
+async def test_cache_job_remove(exists, ready, tmp_path, spawn_job_client, resp_is):
     client = await spawn_job_client(authorize=True)
 
     client.app["config"].data_path = tmp_path
@@ -991,11 +1049,6 @@ async def test_upload_artifact(
 
     """
     path = Path.cwd() / "tests" / "test_files" / "nuvs" / "reads_1.fq"
-    artifact_type = "fastq" if error != 400 else "foo"
-
-    data = {
-        "file": open(path, "rb")
-    }
 
     client = await spawn_job_client(authorize=True)
 
@@ -1007,30 +1060,53 @@ async def test_upload_artifact(
         "ready": True,
     })
 
-    resp = await client.post(f"/api/samples/test/artifacts?name=small.fq&type={artifact_type}",
-                             data=data)
+    artifact_type = "fastq" if error != 400 else "foo"
+
+    data = {
+        "file": open(path, "rb")
+    }
+
+    resp = await client.post(
+        f"/api/samples/test/artifacts?name=small.fq&type={artifact_type}",
+        data=data
+    )
 
     if error == 409:
-        data["file"] = open(path, "rb")
         resp_2 = await client.post(
-            f"/api/samples/test/artifacts?name=small.fq&type={artifact_type}", data=data)
+            f"/api/samples/test/artifacts?name=small.fq&type={artifact_type}",
+            data={
+                **data,
+                "file": open(path, "rb")
+            }
+        )
 
-        await resp_is.conflict(resp_2,
-                                      "Artifact file has already been uploaded for this sample")
+        await resp_is.conflict(
+            resp_2,
+            "Artifact file has already been uploaded for this sample"
+        )
 
     if not error:
         assert resp.status == 201
-        snapshot.assert_match(await resp.json())
+        assert await resp.json() == snapshot
         assert os.listdir(sample_file_path) == ["small.fq"]
     elif error == 400:
         await resp_is.bad_request(resp, "Unsupported sample artifact type")
 
 
 class TestUploadReads:
+
     @pytest.mark.parametrize("compressed", [True, False])
-    async def test_upload_reads(self, compressed, mocker, snapshot, spawn_job_client, static_time,
-                                resp_is, pg,
-                                tmp_path):
+    async def test_upload_reads(
+        self,
+        compressed,
+        mocker,
+        snapshot,
+        spawn_job_client,
+        static_time,
+        resp_is,
+        pg,
+        tmp_path
+    ):
         """
         Test that new sample reads can be uploaded using the Jobs API.
 
@@ -1053,14 +1129,16 @@ class TestUploadReads:
         await virtool.uploads.db.create(pg, "test", "reads")
 
         if not compressed:
-            mocker.patch("virtool.uploads.utils.naive_writer",
-                         side_effect=OSError("Not a gzipped file"))
+            mocker.patch(
+                "virtool.uploads.utils.naive_writer",
+                side_effect=OSError("Not a gzipped file")
+            )
 
         resp = await client.put("/api/samples/test/reads/reads_1.fq.gz?upload=1", data=data)
 
         if compressed:
             assert resp.status == 201
-            snapshot.assert_match(await resp.json())
+            assert await resp.json() == snapshot
         else:
             await resp_is.bad_request(resp, "File is not compressed")
 
@@ -1095,12 +1173,15 @@ class TestUploadReads:
             data["file"] = open(path / "reads_2.fq.gz", "rb")
             resp_3 = await client.put("/api/samples/test/reads/reads_2.fq.gz", data=data)
 
-            await resp_is.conflict(resp_3,
-                                          "Reads file name is already uploaded for this sample")
+            await resp_is.conflict(
+                resp_3,
+                "Reads file name is already uploaded for this sample"
+            )
 
         assert resp.status == 201
         assert resp_2.status == 201
-        assert set(os.listdir(sample_file_path)) == {"reads_1.fq.gz", "reads_2.fq.gz"}
+        assert set(os.listdir(sample_file_path)) == {
+            "reads_1.fq.gz", "reads_2.fq.gz"}
 
 
 @pytest.mark.parametrize("error", [None, "404"])
@@ -1110,14 +1191,11 @@ async def test_get_cache(error, snapshot, spawn_job_client, resp_is, static_time
     cache = {
         "_id": "bar",
         "program": "skewer-0.2.2",
-        "key": "abc123",
+        "key": "test" if error == "404" else "abc123",
         "sample": {
             "id": "foo"
         }
     }
-
-    if error == "404":
-        cache["key"] = "test"
 
     await client.db.caches.insert_one(cache)
 
@@ -1128,8 +1206,7 @@ async def test_get_cache(error, snapshot, spawn_job_client, resp_is, static_time
         return
 
     assert resp.status == 200
-
-    snapshot.assert_match(await resp.json())
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("suffix", ["1", "2"])
@@ -1154,18 +1231,19 @@ async def test_download_reads(suffix, error, tmp_path, spawn_client, spawn_job_c
             "ready": True,
         })
 
-    sample_reads = SampleReads(id=1, sample="foo", name=file_name, name_on_disk=file_name)
+    sample_reads = SampleReads(
+        id=1, sample="foo", name=file_name, name_on_disk=file_name)
 
     if error != "404_reads":
         async with AsyncSession(pg) as session:
             session.add(sample_reads)
-
             await session.commit()
 
     resp = await client.get(f"/api/samples/foo/reads/{file_name}")
     job_resp = await job_client.get(f"/api/samples/foo/reads/{file_name}")
 
-    expected_path = client.app["config"].data_path / "samples" / "foo" / file_name
+    expected_path = client.app["config"].data_path / \
+        "samples" / "foo" / file_name
 
     if error:
         assert resp.status == job_resp.status == 404
@@ -1208,7 +1286,8 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
 
     resp = await client.get("/api/samples/foo/artifacts/fastqc.txt")
 
-    expected_path = client.app["config"].data_path / "samples" / "foo" / "fastqc.txt"
+    expected_path = client.app["config"].data_path / \
+        "samples" / "foo" / "fastqc.txt"
 
     if error:
         assert resp.status == 404
@@ -1236,16 +1315,20 @@ class TestCreateCache:
 
         data = {key: "aodp-abcdefgh"}
 
-        mocker.patch("virtool.utils.random_alphanumeric", return_value="a1b2c3d4")
+        mocker.patch(
+            "virtool.utils.random_alphanumeric",
+            return_value="a1b2c3d4"
+        )
 
         resp = await client.post("/api/samples/test/caches", json=data)
 
         if key == "key":
             assert resp.status == 201
-            document = await resp.json()
+            assert resp.headers["Location"] == snapshot
 
-            snapshot.assert_match(document)
-            assert await virtool.caches.db.get(dbi, document["id"])
+            resp_json = await resp.json()
+            assert resp_json == snapshot
+            assert await virtool.caches.db.get(dbi, resp_json["id"])
         else:
             await resp_is.invalid_input(resp, {"key": ['required field']})
 
@@ -1318,20 +1401,24 @@ async def test_upload_artifact_cache(
 
     resp = await client.post(
         f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}",
-        data=data)
+        data=data
+    )
 
     if error == 409:
         data["file"] = open(path, "rb")
         resp_2 = await client.post(
             f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}",
-            data=data)
+            data=data
+        )
 
-        await resp_is.conflict(resp_2,
-                                      "Artifact file has already been uploaded for this sample cache")
+        await resp_is.conflict(
+            resp_2,
+            "Artifact file has already been uploaded for this sample cache"
+        )
 
     if not error:
         assert resp.status == 201
-        snapshot.assert_match(await resp.json())
+        assert await resp.json() == snapshot
         assert os.listdir(cache_path) == ["small.fq"]
     elif error == 400:
         await resp_is.bad_request(resp, "Unsupported sample artifact type")
@@ -1377,16 +1464,20 @@ async def test_upload_reads_cache(paired, snapshot, static_time, spawn_job_clien
     if paired:
         data["file"] = open(path / "reads_2.fq.gz", "rb")
 
-        resp_2 = await client.put(
+        resp = await client.put(
             "/api/samples/test/caches/aodp-abcdefgh/reads/reads_2.fq.gz",
             data=data
         )
 
-        assert resp.status, resp_2.status == 201
-        snapshot.assert_match(await resp_2.json())
-        assert set(os.listdir(cache_path)) == {"reads_1.fq.gz", "reads_2.fq.gz"}
+        assert resp.status == 201
+        assert await resp.json() == snapshot
+
+        assert set(os.listdir(cache_path)) == {
+            "reads_1.fq.gz",
+            "reads_2.fq.gz"
+        }
     else:
-        snapshot.assert_match(await resp.json())
+        assert await resp.json() == snapshot
         assert os.listdir(cache_path) == ["reads_1.fq.gz"]
 
 
@@ -1493,7 +1584,8 @@ async def test_download_artifact_cache(error, spawn_job_client, pg: AsyncEngine,
         })
 
     resp = await client.get(f"/api/samples/foo/caches/{key}/artifacts/{name}")
-    expected_path = client.app["config"].data_path / "caches" / key / name_on_disk
+    expected_path = client.app["config"].data_path / \
+        "caches" / key / name_on_disk
 
     if error:
         assert resp.status == 404
@@ -1525,7 +1617,7 @@ async def test_finalize_cache(field, resp_is, snapshot, spawn_job_client):
 
     if field == "quality":
         assert resp.status == 200
-        snapshot.assert_match(await resp.json())
+        assert await resp.json() == snapshot
     else:
         assert resp.status == 422
         await resp_is.invalid_input(resp, {"quality": ["required field"]})

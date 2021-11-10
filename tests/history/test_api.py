@@ -1,5 +1,6 @@
-import pytest
 from operator import itemgetter
+
+import pytest
 
 
 async def test_find(snapshot, spawn_client, test_changes, static_time):
@@ -14,12 +15,7 @@ async def test_find(snapshot, spawn_client, test_changes, static_time):
     resp = await client.get("/api/history")
 
     assert resp.status == 200
-
-    resp_json = await resp.json()
-
-    documents = sorted(resp_json["documents"], key=itemgetter("id"))
-
-    snapshot.assert_match(documents)
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404"])
@@ -41,8 +37,7 @@ async def test_get(error, snapshot, resp_is, spawn_client, test_changes, static_
         return
 
     assert resp.status == 200
-
-    snapshot.assert_match(await resp.json(), "json")
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404"])
@@ -70,6 +65,6 @@ async def test_revert(error, remove, snapshot, create_mock_history, spawn_client
 
     await resp_is.no_content(resp)
 
-    snapshot.assert_match(await client.db.otus.find_one())
-    snapshot.assert_match(await client.db.history.find().to_list(None))
-    snapshot.assert_match(await client.db.sequences.find().to_list(None))
+    assert await client.db.otus.find_one() == snapshot
+    assert await client.db.history.find().to_list(None) == snapshot
+    assert await client.db.sequences.find().to_list(None) == snapshot

@@ -1,0 +1,3 @@
+# name: test_migrate_files_task[uvloop]
+  <Upload(id=1, created_at=None, name=17NR001b_S23_R1_001.fastq.gz, name_on_disk=07a7zbv6-17NR001b_S23_R1_001.fastq.gz, ready=True, removed=False, removed_at=None, reserved=False, size=1234567, type=reads, user=test, uploaded_at=2015-10-06 20:00:00)>
+---

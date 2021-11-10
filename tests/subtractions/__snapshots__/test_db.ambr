@@ -1,0 +1,94 @@
+# name: test_create[uvloop-None]
+  <class 'dict'> {
+    '_id': '9pfsom1b',
+    'deleted': False,
+    'file': <class 'dict'> {
+      'id': 1,
+      'name': 'subtraction.fa.gz',
+    },
+    'name': 'Foo',
+    'nickname': 'foo',
+    'ready': False,
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: test_create[uvloop-None].1
+  <class 'dict'> {
+    '_id': '9pfsom1b',
+    'deleted': False,
+    'file': <class 'dict'> {
+      'id': 1,
+      'name': 'subtraction.fa.gz',
+    },
+    'name': 'Foo',
+    'nickname': 'foo',
+    'ready': False,
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: test_create[uvloop-abc]
+  <class 'dict'> {
+    '_id': 'abc',
+    'deleted': False,
+    'file': <class 'dict'> {
+      'id': 1,
+      'name': 'subtraction.fa.gz',
+    },
+    'name': 'Foo',
+    'nickname': 'foo',
+    'ready': False,
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: test_create[uvloop-abc].1
+  <class 'dict'> {
+    '_id': 'abc',
+    'deleted': False,
+    'file': <class 'dict'> {
+      'id': 1,
+      'name': 'subtraction.fa.gz',
+    },
+    'name': 'Foo',
+    'nickname': 'foo',
+    'ready': False,
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: test_finalize[uvloop]
+  <class 'dict'> {
+    '_id': 'foo',
+    'count': 100,
+    'gc': <class 'dict'> {
+      'a': 0.319,
+      'c': 0.18,
+      'g': 0.18,
+      'n': 0.002,
+      't': 0.319,
+    },
+    'name': 'Foo',
+    'ready': True,
+  }
+---
+# name: test_finalize[uvloop].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'count': 100,
+    'gc': <class 'dict'> {
+      'a': 0.319,
+      'c': 0.18,
+      'g': 0.18,
+      'n': 0.002,
+      't': 0.319,
+    },
+    'name': 'Foo',
+    'ready': True,
+  }
+---

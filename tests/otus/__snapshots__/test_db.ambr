@@ -1,0 +1,352 @@
+# name: test_create_otu[uvloop--TMV]
+  <class 'dict'> {
+    '_id': 'TMV',
+    'abbreviation': '',
+    'isolates': <class 'list'> [
+    ],
+    'last_indexed_version': None,
+    'lower_name': 'bar',
+    'name': 'Bar',
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: test_create_otu[uvloop--TMV].1
+  <class 'dict'> {
+    '_id': 'TMV.0',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Created Bar',
+    'diff': <class 'dict'> {
+      '_id': 'TMV',
+      'abbreviation': '',
+      'isolates': <class 'list'> [
+      ],
+      'last_indexed_version': None,
+      'lower_name': 'bar',
+      'name': 'Bar',
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'schema': <class 'list'> [
+      ],
+      'verified': False,
+      'version': 0,
+    },
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'create',
+    'otu': <class 'dict'> {
+      'id': 'TMV',
+      'name': 'Bar',
+      'version': 0,
+    },
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_create_otu[uvloop-None-otu]
+  <class 'dict'> {
+    '_id': 'otu',
+    'abbreviation': None,
+    'isolates': <class 'list'> [
+    ],
+    'last_indexed_version': None,
+    'lower_name': 'bar',
+    'name': 'Bar',
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
+  }
+---
+# name: test_create_otu[uvloop-None-otu].1
+  <class 'dict'> {
+    '_id': 'otu.0',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Created Bar',
+    'diff': <class 'dict'> {
+      '_id': 'otu',
+      'abbreviation': None,
+      'isolates': <class 'list'> [
+      ],
+      'last_indexed_version': None,
+      'lower_name': 'bar',
+      'name': 'Bar',
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'schema': <class 'list'> [
+      ],
+      'verified': False,
+      'version': 0,
+    },
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'create',
+    'otu': <class 'dict'> {
+      'id': 'otu',
+      'name': 'Bar',
+      'version': 0,
+    },
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_edit[uvloop-None]
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'foo virus',
+    'name': 'Foo Virus',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: test_edit[uvloop-None].1
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Changed name to Foo Virus',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'lower_name',
+        <class 'list'> [
+          'prunus virus f',
+          'foo virus',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'name',
+        <class 'list'> [
+          'Prunus virus F',
+          'Foo Virus',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_edit[uvloop-TMV]
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'TMV',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'foo virus',
+    'name': 'Foo Virus',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: test_edit[uvloop-TMV].1
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Changed name to Foo Virus and changed abbreviation to TMV',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'abbreviation',
+        <class 'list'> [
+          'PVF',
+          'TMV',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'lower_name',
+        <class 'list'> [
+          'prunus virus f',
+          'foo virus',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'name',
+        <class 'list'> [
+          'Prunus virus F',
+          'Foo Virus',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---
+# name: test_edit[uvloop-]
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': '',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'foo virus',
+    'name': 'Foo Virus',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 1,
+  }
+---
+# name: test_edit[uvloop-].1
+  <class 'dict'> {
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Changed name to Foo Virus and removed abbreviation PVF',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          0,
+          1,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'abbreviation',
+        <class 'list'> [
+          'PVF',
+          '',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'lower_name',
+        <class 'list'> [
+          'prunus virus f',
+          'foo virus',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'name',
+        <class 'list'> [
+          'Prunus virus F',
+          'Foo Virus',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+  }
+---

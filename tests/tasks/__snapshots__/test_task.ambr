@@ -1,0 +1,21 @@
+# name: test_init_db[uvloop]
+  <class 'dict'> {
+    'complete': False,
+    'context': <class 'dict'> {
+      'user_id': 'test',
+    },
+    'count': 0,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': None,
+    'file_size': None,
+    'id': 1,
+    'progress': 0,
+    'step': 'create_file',
+    'type': 'test_task',
+  }
+---
+# name: test_init_db[uvloop].1
+  <class 'dict'> {
+    'user_id': 'test',
+  }
+---

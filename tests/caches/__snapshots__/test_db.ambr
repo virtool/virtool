@@ -1,0 +1,96 @@
+# name: test_create[uvloop-paired]
+  <class 'dict'> {
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': <class 'list'> [
+    ],
+    'id': '9pfsom1b',
+    'key': 'aodp-abcdefgh',
+    'legacy': False,
+    'missing': False,
+    'paired': True,
+    'ready': False,
+    'sample': <class 'dict'> {
+      'id': 'foo',
+    },
+  }
+---
+# name: test_create[uvloop-paired].1
+  <class 'dict'> {
+    '_id': '9pfsom1b',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': <class 'list'> [
+    ],
+    'key': 'aodp-abcdefgh',
+    'legacy': False,
+    'missing': False,
+    'paired': True,
+    'ready': False,
+    'sample': <class 'dict'> {
+      'id': 'foo',
+    },
+  }
+---
+# name: test_create[uvloop-unpaired]
+  <class 'dict'> {
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': <class 'list'> [
+    ],
+    'id': '9pfsom1b',
+    'key': 'aodp-abcdefgh',
+    'legacy': False,
+    'missing': False,
+    'paired': False,
+    'ready': False,
+    'sample': <class 'dict'> {
+      'id': 'foo',
+    },
+  }
+---
+# name: test_create[uvloop-unpaired].1
+  <class 'dict'> {
+    '_id': '9pfsom1b',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': <class 'list'> [
+    ],
+    'key': 'aodp-abcdefgh',
+    'legacy': False,
+    'missing': False,
+    'paired': False,
+    'ready': False,
+    'sample': <class 'dict'> {
+      'id': 'foo',
+    },
+  }
+---
+# name: test_create_duplicate[uvloop]
+  <class 'dict'> {
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': <class 'list'> [
+    ],
+    'id': 'u3cuwaoq',
+    'key': 'aodp-abcdefgh',
+    'legacy': False,
+    'missing': False,
+    'paired': False,
+    'ready': False,
+    'sample': <class 'dict'> {
+      'id': 'foo',
+    },
+  }
+---
+# name: test_create_duplicate[uvloop].1
+  <class 'dict'> {
+    '_id': 'u3cuwaoq',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': <class 'list'> [
+    ],
+    'key': 'aodp-abcdefgh',
+    'legacy': False,
+    'missing': False,
+    'paired': False,
+    'ready': False,
+    'sample': <class 'dict'> {
+      'id': 'foo',
+    },
+  }
+---
