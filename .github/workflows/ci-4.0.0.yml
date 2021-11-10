@@ -59,7 +59,7 @@ jobs:
 
   build:
     runs-on: ubuntu-20.04
-    needs: [test-client, test-server, commitlint]
+    needs: [client, server]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
