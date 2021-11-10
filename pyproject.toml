@@ -45,7 +45,6 @@ aiojobs = "^0.3.0"
 Cerberus = "^1.3.4"
 PyYAML = "^5.4.1"
 email-validator = "^1.1.3"
-syrupy = "^1.5.0"
 
 
 [tool.poetry.dev-dependencies]
@@ -55,6 +54,7 @@ pytest-mock = "^3.6.1"
 pytest-regressions = "^2.2.0"
 pytest-xdist = "^2.2.1"
 pytest-aiohttp = "^0.3.0"
+syrupy = "^1.5.0"
 
 [tool.poetry.scripts]
 virtool = "virtool.config:entry"
