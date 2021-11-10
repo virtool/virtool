@@ -1,0 +1,13 @@
+version: "3.1"
+services:
+  mongo:
+    image: mongo:4.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - vt_mongo:/data/db
+    logging:
+      driver: none
+
+volumes:
+  vt_mongo:
