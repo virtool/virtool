@@ -22,7 +22,8 @@ HEADERS = {
 
 
 def create_update_subdocument(release, ready, user_id, created_at=None):
-    update = {k: release[k] for k in release if k not in EXCLUDED_UPDATE_FIELDS}
+    update = {k: release[k]
+              for k in release if k not in EXCLUDED_UPDATE_FIELDS}
 
     return {
         **update,
@@ -106,7 +107,9 @@ async def get_release(settings, session, slug, etag=None, release_id="latest"):
         rate_limit_remaining = resp.headers.get("X-RateLimit-Remaining", "00")
         rate_limit = resp.headers.get("X-RateLimit-Limit", "00")
 
-        logger.debug(f"Fetched release: {slug}/{release_id} ({resp.status} - {rate_limit_remaining}/{rate_limit})")
+        logger.info(
+            f"Fetched release: {slug}/{release_id} status={resp.status} rate_limit_remaining={rate_limit_remaining} rate_limit={rate_limit})"
+        )
 
         if resp.status == 200:
             data = await resp.json()
@@ -120,4 +123,14 @@ async def get_release(settings, session, slug, etag=None, release_id="latest"):
             return None
 
         else:
-            raise virtool.errors.GitHubError(f"Encountered error {resp.status}")
+            resp_json = await resp.json()
+            warning_values = " ".join(
+                [f"{key}='{value}'" for key, value in resp_json.items()]
+            )
+
+            logger.warning(
+                f"Encountered error during GitHub Request: status={resp.status} {warning_values}"
+            )
+            raise virtool.errors.GitHubError(
+                f"Encountered error: status={resp.status} {warning_values}"
+            )

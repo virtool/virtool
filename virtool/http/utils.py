@@ -1,8 +1,11 @@
+from logging import getLogger
+
 import aiofiles
 import aiohttp.web_response
-
 import virtool.errors
 import virtool.http.proxy
+
+logger = getLogger(__name__)
 
 
 async def download_file(app, url, target_path, progress_handler=None):
@@ -24,6 +27,9 @@ async def download_file(app, url, target_path, progress_handler=None):
     """
     async with virtool.http.proxy.ProxyRequest(app["settings"], app["client"].get, url) as resp:
         if resp.status != 200:
+            logger.warning(
+                f"Error encountered while downloading file: url='{url}' status={resp.status} body='{await resp.text()}'"
+            )
             raise virtool.errors.GitHubError("Could not download file")
 
         async with aiofiles.open(target_path, "wb") as handle:
@@ -44,4 +50,5 @@ def set_session_id_cookie(resp: aiohttp.web_response.Response, session_id: str):
 
 
 def set_session_token_cookie(resp: aiohttp.web_response.Response, session_token: str):
-    resp.set_cookie("session_token", session_token, httponly=True, max_age=2600000)
+    resp.set_cookie("session_token", session_token,
+                    httponly=True, max_age=2600000)
