@@ -1,0 +1,33 @@
+# name: TestFind.test_find[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      'color': '#a83432',
+      'count': 1,
+      'description': 'This is a bug',
+      'id': 1,
+      'name': 'Bug',
+    },
+    <class 'dict'> {
+      'color': '#03fc20',
+      'count': 2,
+      'description': 'This is a question',
+      'id': 2,
+      'name': 'Question',
+    },
+  ]
+---
+# name: TestFind.test_find_by_name[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      'color': '#a83432',
+      'count': 0,
+      'description': 'This is a bug',
+      'id': 1,
+      'name': 'Bug',
+    },
+  ]
+---
+# name: TestFind.test_find_by_name[uvloop].1
+  <class 'list'> [
+  ]
+---

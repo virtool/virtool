@@ -1,0 +1,38 @@
+# name: test_get[uvloop]
+  <class 'dict'> {
+    'default_source_types': <class 'list'> [
+      'isolate',
+      'strain',
+    ],
+    'enable_api': True,
+    'enable_sentry': True,
+    'hmm_slug': 'virtool/virtool-hmm',
+    'minimum_password_length': 8,
+    'sample_all_read': True,
+    'sample_all_write': False,
+    'sample_group': 'none',
+    'sample_group_read': True,
+    'sample_group_write': False,
+    'sample_unique_names': True,
+    'software_channel': 'stable',
+  }
+---
+# name: test_update[uvloop]
+  <class 'dict'> {
+    'default_source_types': <class 'list'> [
+      'isolate',
+      'strain',
+    ],
+    'enable_api': False,
+    'enable_sentry': False,
+    'hmm_slug': 'virtool/virtool-hmm',
+    'minimum_password_length': 10,
+    'sample_all_read': True,
+    'sample_all_write': False,
+    'sample_group': 'none',
+    'sample_group_read': True,
+    'sample_group_write': False,
+    'sample_unique_names': True,
+    'software_channel': 'stable',
+  }
+---

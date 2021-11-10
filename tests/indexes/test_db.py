@@ -2,13 +2,14 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.indexes.db
-from virtool.indexes.db import get_current_id_and_version, get_next_version, update_last_indexed_versions, \
-    get_patched_otus, attach_files
+from virtool.indexes.db import (attach_files, get_current_id_and_version,
+                                get_next_version, get_patched_otus,
+                                update_last_indexed_versions)
 from virtool.indexes.models import IndexFile
 
 
 @pytest.mark.parametrize("index_id", [None, "abc"])
-async def test_create(index_id, mocker, dbi, test_random_alphanumeric, static_time):
+async def test_create(index_id, mocker, snapshot, dbi, test_random_alphanumeric, static_time):
     await dbi.references.insert_one({
         "_id": "foo"
     })
@@ -24,49 +25,23 @@ async def test_create(index_id, mocker, dbi, test_random_alphanumeric, static_ti
         }
     })
 
-    mocker.patch("virtool.references.db.get_manifest", new=make_mocked_coro("manifest"))
+    mocker.patch(
+        "virtool.references.db.get_manifest",
+        make_mocked_coro("manifest")
+    )
 
     document = await virtool.indexes.db.create(dbi, "foo", "test", "bar", index_id=index_id)
 
-    expected_index_id = test_random_alphanumeric.history[0] if index_id is None else "abc"
-
-    assert document == {
-        "_id": expected_index_id,
-        "version": 0,
-        "created_at": static_time.datetime,
-        "manifest": "manifest",
-        "ready": False,
-        "has_files": True,
-        "has_json": False,
-        "reference": {
-            "id": "foo"
-        },
-        "job": {
-            "id": "bar"
-        },
-        "user": {
-            "id": "test"
-        }
-    }
-
-    history = await dbi.history.find_one("abc")
-    assert history == {
-        "_id": "abc",
-        "index": {
-            "id": expected_index_id,
-            "version": 0
-        },
-        "reference": {
-            "id": "foo"
-        }
-    }
+    assert document == snapshot
+    assert await dbi.history.find_one("abc") == snapshot
 
 
-@pytest.mark.parametrize("exists", [True, False])
-@pytest.mark.parametrize("has_ref", [True, False])
+@ pytest.mark.parametrize("exists", [True, False])
+@ pytest.mark.parametrize("has_ref", [True, False])
 async def test_get_current_id_and_version(exists, has_ref, test_indexes, dbi):
     if not exists:
-        test_indexes = [dict(i, ready=False, has_files=False) for i in test_indexes]
+        test_indexes = [dict(i, ready=False, has_files=False)
+                        for i in test_indexes]
 
     await dbi.indexes.insert_many(test_indexes)
 
@@ -83,8 +58,8 @@ async def test_get_current_id_and_version(exists, has_ref, test_indexes, dbi):
         assert index_version == -1
 
 
-@pytest.mark.parametrize("empty", [False, True])
-@pytest.mark.parametrize("has_ref", [True, False])
+@ pytest.mark.parametrize("empty", [False, True])
+@ pytest.mark.parametrize("has_ref", [True, False])
 async def test_get_next_version(empty, has_ref, test_indexes, dbi):
     if not empty:
         await dbi.indexes.insert_many(test_indexes)
@@ -168,8 +143,11 @@ async def test_processor(mocker, dbi):
     }
 
 
-async def test_get_patched_otus(mocker, dbi, tmp_path, config):
-    m = mocker.patch("virtool.history.db.patch_to_version", make_mocked_coro((None, {"_id": "foo"}, None)))
+async def test_get_patched_otus(mocker, dbi, config):
+    m = mocker.patch(
+        "virtool.history.db.patch_to_version",
+        make_mocked_coro((None, {"_id": "foo"}, None))
+    )
 
     manifest = {
         "foo": 2,
@@ -214,9 +192,21 @@ async def test_update_last_indexed_versions(dbi, test_otu, spawn_client):
     assert document["last_indexed_version"] == document["version"]
 
 
-async def test_attach_files(pg, pg_session):
-    index_1 = IndexFile(id=1, name="reference.1.bt2", index="foo", type="bowtie2", size=1234567)
-    index_2 = IndexFile(id=2, name="reference.2.bt2", index="foo", type="bowtie2", size=1234567)
+async def test_attach_files(snapshot, pg, pg_session):
+    index_1 = IndexFile(
+        id=1,
+        name="reference.1.bt2",
+        index="foo",
+        type="bowtie2",
+        size=1234567
+    )
+    index_2 = IndexFile(
+        id=2,
+        name="reference.2.bt2",
+        index="foo",
+        type="bowtie2",
+        size=1234567
+    )
 
     async with pg_session as session:
         session.add_all([index_1, index_2])
@@ -226,43 +216,13 @@ async def test_attach_files(pg, pg_session):
         "_id": "foo",
         "reference": {
             "id": "bar"
-        },
-        "user": {
-            "id": "test"
         }
     }
 
-    document = await attach_files(pg, document)
-    assert document == {
-        "_id": "foo",
-        "reference": {
-            "id": "bar"
-        },
-        "user": {
-            "id": "test"
-        },
-        "files": [
-            {
-                "id": 1,
-                "name": "reference.1.bt2",
-                "index": "foo",
-                "type": "bowtie2",
-                "size": 1234567,
-                'download_url': '/api/indexes/foo/files/reference.1.bt2'
-            },
-            {
-                "id": 2,
-                "name": "reference.2.bt2",
-                "index": "foo",
-                "type": "bowtie2",
-                "size": 1234567,
-                'download_url': '/api/indexes/foo/files/reference.2.bt2'
-            }
-        ]
-    }
+    assert await attach_files(pg, document) == snapshot
 
 
-async def test_finalize(dbi, pg, pg_session):
+async def test_finalize(snapshot, dbi, pg, pg_session):
     await dbi.indexes.insert_one({
         "_id": "foo",
         "reference": {
@@ -270,36 +230,28 @@ async def test_finalize(dbi, pg, pg_session):
         }
     })
 
-    index_1 = IndexFile(id=1, name="reference.1.bt2", index="foo", type="bowtie2", size=1234567)
-    index_2 = IndexFile(id=2, name="reference.2.bt2", index="foo", type="bowtie2", size=1234567)
+    index_1 = IndexFile(
+        id=1,
+        name="reference.1.bt2",
+        index="foo",
+        type="bowtie2",
+        size=1234567
+    )
+
+    index_2 = IndexFile(
+        id=2,
+        name="reference.2.bt2",
+        index="foo",
+        type="bowtie2",
+        size=1234567
+    )
 
     async with pg_session as session:
         session.add_all([index_1, index_2])
         await session.commit()
 
-    document = await virtool.indexes.db.finalize(dbi, pg, "bar", "foo")
-    assert document == {
-        '_id': 'foo',
-        "reference": {
-            "id": "bar"
-        },
-        'ready': True,
-        'files': [
-            {
-                'id': 1,
-                'name': 'reference.1.bt2',
-                'index': 'foo',
-                'type': 'bowtie2',
-                'size': 1234567,
-                'download_url': '/api/indexes/foo/files/reference.1.bt2'
-            },
-            {
-                'id': 2,
-                'name': 'reference.2.bt2',
-                'index': 'foo',
-                'type': 'bowtie2',
-                'size': 1234567,
-                'download_url': '/api/indexes/foo/files/reference.2.bt2'
-            }
-        ]
-    }
+    # Ensure return value is correct.
+    assert await virtool.indexes.db.finalize(dbi, pg, "bar", "foo") == snapshot
+
+    # Ensure document in database is correct.
+    assert await dbi.indexes.find_one() == snapshot

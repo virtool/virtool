@@ -1,9 +1,8 @@
+import pytest
 from aiohttp.test_utils import make_mocked_coro
 
-import pytest
-
-import virtool.references.db
 import virtool.errors
+import virtool.references.db
 
 RIGHTS = {
     "build": False,
@@ -46,7 +45,8 @@ async def test_add_group_or_user(error, field, rights, dbi, static_time):
     if rights:
         payload["build"] = True
 
-    task = virtool.references.db.add_group_or_user(dbi, ref_id, field + "s", payload)
+    task = virtool.references.db.add_group_or_user(
+        dbi, ref_id, field + "s", payload)
 
     if error == "duplicate" or error == "missing_member":
         with pytest.raises(virtool.errors.DatabaseError) as excinfo:
@@ -203,8 +203,8 @@ class TestEdit:
             update
         )
 
-        snapshot.assert_match(await dbi.references.find_one())
-        snapshot.assert_match(document)
+        assert document == snapshot
+        assert await dbi.references.find_one() == snapshot
 
     async def test_reference_name(self, snapshot, dbi):
         """
@@ -251,19 +251,20 @@ class TestEdit:
             "name": "Bar"
         }
 
-        await virtool.references.db.edit(
+        document = await virtool.references.db.edit(
             dbi,
             "foo",
             update
         )
 
-        snapshot.assert_match(await dbi.references.find_one())
-        snapshot.assert_match(await dbi.analyses.find().to_list(None))
+        assert document == snapshot
+        assert await dbi.references.find_one() == snapshot
+        assert await dbi.analyses.find().to_list(None) == snapshot
 
 
 @pytest.mark.parametrize("missing", [None, "reference", "subdocument"])
 @pytest.mark.parametrize("field", ["group", "user"])
-async def test_edit_group_or_user(field, missing, dbi, static_time):
+async def test_edit_member(field, missing, snapshot, dbi, static_time):
 
     ref_id = "foo"
 
@@ -286,27 +287,12 @@ async def test_edit_group_or_user(field, missing, dbi, static_time):
         "remove": True
     })
 
-    if missing:
-        assert subdocument is None
-
-    else:
-        expected = {
-            "id": subdocument_id,
-            "build": True,
-            "modify": False,
-            "modify_otu": False,
-            "remove": True
-        }
-
-        assert await dbi.references.find_one() == {
-            "_id": ref_id,
-            "groups": (subdocuments[:1] + [expected]) if field == "group" else subdocuments,
-            "users": (subdocuments[:1] + [expected]) if field == "user" else subdocuments
-        }
+    assert subdocument == snapshot
+    assert await dbi.references.find_one() == snapshot
 
 
-@pytest.mark.parametrize("field", ["groups", "users"])
-async def test_delete_group_or_user(field, dbi):
+@ pytest.mark.parametrize("field", ["groups", "users"])
+async def test_delete_member(field, snapshot, dbi):
 
     ref_id = "foo"
 
@@ -325,10 +311,7 @@ async def test_delete_group_or_user(field, dbi):
         "users": subdocuments
     })
 
-    await virtool.references.db.delete_group_or_user(dbi, "foo", "bar", field)
+    subdocument_id = await virtool.references.db.delete_group_or_user(dbi, "foo", "bar", field)
 
-    assert await dbi.references.find_one() == {
-        "_id": ref_id,
-        "groups": [subdocuments[1]] if field == "groups" else subdocuments,
-        "users": [subdocuments[1]] if field == "users" else subdocuments
-    }
+    assert subdocument_id == snapshot
+    assert await dbi.references.find_one() == snapshot

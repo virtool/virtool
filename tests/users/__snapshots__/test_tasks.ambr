@@ -1,0 +1,20 @@
+# name: test_update_user_document_task[uvloop-ad_user]
+  <class 'dict'> {
+    '_id': 'abc123',
+    'ad_family_name': 'bar',
+    'ad_given_name': 'foo',
+    'handle': 'foo',
+  }
+---
+# name: test_update_user_document_task[uvloop-existing_user]
+  <class 'dict'> {
+    '_id': 'abc123',
+    'handle': 'abc123',
+  }
+---
+# name: test_update_user_document_task[uvloop-user_with_handle]
+  <class 'dict'> {
+    '_id': 'abc123',
+    'handle': 'bar',
+  }
+---

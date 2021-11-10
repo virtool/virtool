@@ -1,0 +1,121 @@
+# name: test_cancel[uvloop]
+  <class 'dict'> {
+    '_id': 'foo',
+    'state': 'waiting',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0.33,
+        'stage': 'foo',
+        'state': 'running',
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 0.33,
+        'stage': 'foo',
+        'state': 'cancelled',
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+  }
+---
+# name: test_create[uvloop-False]
+  <class 'dict'> {
+    '_id': '9pfsom1b',
+    'acquired': False,
+    'args': <class 'dict'> {
+      'sample_id': 'foo',
+    },
+    'key': None,
+    'rights': <class 'dict'> {
+      'samples': <class 'dict'> {
+        'modify': <class 'list'> [
+          'foo',
+        ],
+        'read': <class 'list'> [
+          'foo',
+        ],
+        'remove': <class 'list'> [
+          'foo',
+        ],
+      },
+    },
+    'state': 'waiting',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+    'workflow': 'create_sample',
+  }
+---
+# name: test_create[uvloop-True]
+  <class 'dict'> {
+    '_id': 'bar',
+    'acquired': False,
+    'args': <class 'dict'> {
+      'sample_id': 'foo',
+    },
+    'key': None,
+    'rights': <class 'dict'> {
+      'samples': <class 'dict'> {
+        'modify': <class 'list'> [
+          'foo',
+        ],
+        'read': <class 'list'> [
+          'foo',
+        ],
+        'remove': <class 'list'> [
+          'foo',
+        ],
+      },
+    },
+    'state': 'waiting',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+    'workflow': 'create_sample',
+  }
+---
+# name: test_processor[uvloop]
+  <class 'dict'> {
+    'acquired': False,
+    'args': <class 'dict'> {
+      'analysis_id': 'e410429b',
+      'index_id': '465428b0',
+      'name': None,
+      'sample_id': '1e01a382',
+      'username': 'igboyes',
+      'workflow': 'nuvs',
+    },
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'id': '4c530449',
+    'key': 'bar',
+    'mem': 16,
+    'proc': 10,
+    'progress': 1.0,
+    'stage': 'import_results',
+    'state': 'complete',
+    'user': <class 'dict'> {
+      'id': 'igboyes',
+    },
+    'workflow': 'build_index',
+  }
+---

@@ -1,0 +1,15 @@
+# name: test_client[uvloop]
+  <class 'dict'> {
+    'complete': False,
+    'context': <class 'dict'> {
+    },
+    'count': 0,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': None,
+    'file_size': None,
+    'id': 1,
+    'progress': 0,
+    'step': None,
+    'type': 'add_subtraction_files',
+  }
+---

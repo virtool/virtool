@@ -4,27 +4,21 @@ from pathlib import Path
 import pytest
 
 import virtool.analyses.db
-import virtool.analyses.utils
 import virtool.analyses.files
+import virtool.analyses.utils
 
 
 @pytest.mark.parametrize("exists", [True, False])
-async def test_attach_analysis_files(exists, dbi, spawn_client, snapshot, pg):
-    client = await spawn_client(authorize=True)
-
-    await client.db.analyses.insert_one({
-        "_id": "foobar",
-        "ready": True,
-    })
-
+async def test_attach_analysis_files(exists, snapshot, pg):
     if exists:
         await virtool.analyses.files.create_analysis_file(pg, "foobar", "fasta", "reference-fa")
 
-    document = await dbi.analyses.find_one("foobar")
+    document = {
+        "_id": "foobar",
+        "ready": True
+    }
 
-    document = await virtool.analyses.utils.attach_analysis_files(pg, "foobar", document)
-
-    snapshot.assert_match(document)
+    assert await virtool.analyses.utils.attach_analysis_files(pg, "foobar", document) == snapshot
 
 
 @pytest.mark.parametrize("name", ["nuvs", "pathoscope"])
@@ -34,7 +28,9 @@ def test_get_json_path(name):
     and `analysis_id` arguments.
 
     """
-    path = virtool.analyses.utils.join_analysis_json_path(Path("data"), "bar", "foo")
+    path = virtool.analyses.utils.join_analysis_json_path(
+        Path("data"), "bar", "foo")
+
     assert path == Path("data/samples/foo/analysis/bar/results.json")
 
 
@@ -45,7 +41,8 @@ async def test_check_nuvs_file_type(file_type):
         assert result == "fasta"
 
     if file_type == "fastq":
-        result = virtool.analyses.utils.check_nuvs_file_type("unmapped_hosts.fq")
+        result = virtool.analyses.utils.check_nuvs_file_type(
+            "unmapped_hosts.fq")
         assert result == "fastq"
 
     if file_type == "tsv":

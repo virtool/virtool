@@ -1,0 +1,416 @@
+# name: test_transform_coverage_to_coordinates[coverage0]
+  <class 'list'> [
+    <class 'tuple'> (
+      0,
+      0,
+    ),
+    <class 'tuple'> (
+      1,
+      0,
+    ),
+    <class 'tuple'> (
+      2,
+      1,
+    ),
+    <class 'tuple'> (
+      3,
+      1,
+    ),
+    <class 'tuple'> (
+      4,
+      2,
+    ),
+    <class 'tuple'> (
+      5,
+      3,
+    ),
+    <class 'tuple'> (
+      7,
+      3,
+    ),
+    <class 'tuple'> (
+      8,
+      4,
+    ),
+    <class 'tuple'> (
+      9,
+      4,
+    ),
+    <class 'tuple'> (
+      10,
+      3,
+    ),
+    <class 'tuple'> (
+      11,
+      2,
+    ),
+  ]
+---
+# name: test_transform_coverage_to_coordinates[coverage1]
+  <class 'list'> [
+    <class 'tuple'> (
+      0,
+      0,
+    ),
+    <class 'tuple'> (
+      1,
+      0,
+    ),
+    <class 'tuple'> (
+      2,
+      1,
+    ),
+    <class 'tuple'> (
+      3,
+      1,
+    ),
+    <class 'tuple'> (
+      4,
+      2,
+    ),
+    <class 'tuple'> (
+      5,
+      3,
+    ),
+    <class 'tuple'> (
+      7,
+      3,
+    ),
+    <class 'tuple'> (
+      8,
+      4,
+    ),
+    <class 'tuple'> (
+      9,
+      4,
+    ),
+    <class 'tuple'> (
+      10,
+      3,
+    ),
+    <class 'tuple'> (
+      11,
+      2,
+    ),
+    <class 'tuple'> (
+      12,
+      1,
+    ),
+    <class 'tuple'> (
+      13,
+      1,
+    ),
+  ]
+---
+# name: test_transform_coverage_to_coordinates[coverage2]
+  <class 'list'> [
+    <class 'tuple'> (
+      0,
+      0,
+    ),
+    <class 'tuple'> (
+      2,
+      0,
+    ),
+    <class 'tuple'> (
+      3,
+      1,
+    ),
+    <class 'tuple'> (
+      5,
+      1,
+    ),
+    <class 'tuple'> (
+      6,
+      0,
+    ),
+    <class 'tuple'> (
+      7,
+      0,
+    ),
+    <class 'tuple'> (
+      8,
+      1,
+    ),
+    <class 'tuple'> (
+      10,
+      1,
+    ),
+    <class 'tuple'> (
+      11,
+      2,
+    ),
+    <class 'tuple'> (
+      15,
+      2,
+    ),
+    <class 'tuple'> (
+      16,
+      3,
+    ),
+    <class 'tuple'> (
+      18,
+      3,
+    ),
+    <class 'tuple'> (
+      19,
+      2,
+    ),
+    <class 'tuple'> (
+      21,
+      2,
+    ),
+    <class 'tuple'> (
+      22,
+      5,
+    ),
+    <class 'tuple'> (
+      23,
+      5,
+    ),
+    <class 'tuple'> (
+      24,
+      4,
+    ),
+    <class 'tuple'> (
+      25,
+      4,
+    ),
+    <class 'tuple'> (
+      26,
+      3,
+    ),
+    <class 'tuple'> (
+      27,
+      3,
+    ),
+    <class 'tuple'> (
+      28,
+      2,
+    ),
+    <class 'tuple'> (
+      29,
+      2,
+    ),
+    <class 'tuple'> (
+      30,
+      1,
+    ),
+    <class 'tuple'> (
+      31,
+      1,
+    ),
+    <class 'tuple'> (
+      32,
+      5,
+    ),
+    <class 'tuple'> (
+      34,
+      5,
+    ),
+    <class 'tuple'> (
+      35,
+      6,
+    ),
+    <class 'tuple'> (
+      37,
+      6,
+    ),
+    <class 'tuple'> (
+      38,
+      7,
+    ),
+    <class 'tuple'> (
+      39,
+      8,
+    ),
+    <class 'tuple'> (
+      40,
+      7,
+    ),
+    <class 'tuple'> (
+      41,
+      6,
+    ),
+    <class 'tuple'> (
+      42,
+      5,
+    ),
+    <class 'tuple'> (
+      45,
+      5,
+    ),
+    <class 'tuple'> (
+      46,
+      4,
+    ),
+    <class 'tuple'> (
+      47,
+      3,
+    ),
+    <class 'tuple'> (
+      48,
+      2,
+    ),
+    <class 'tuple'> (
+      49,
+      6,
+    ),
+    <class 'tuple'> (
+      50,
+      7,
+    ),
+    <class 'tuple'> (
+      51,
+      9,
+    ),
+    <class 'tuple'> (
+      52,
+      0,
+    ),
+    <class 'tuple'> (
+      56,
+      0,
+    ),
+    <class 'tuple'> (
+      57,
+      1,
+    ),
+    <class 'tuple'> (
+      58,
+      1,
+    ),
+    <class 'tuple'> (
+      59,
+      2,
+    ),
+    <class 'tuple'> (
+      60,
+      2,
+    ),
+    <class 'tuple'> (
+      61,
+      3,
+    ),
+    <class 'tuple'> (
+      62,
+      3,
+    ),
+    <class 'tuple'> (
+      63,
+      4,
+    ),
+    <class 'tuple'> (
+      64,
+      4,
+    ),
+    <class 'tuple'> (
+      65,
+      5,
+    ),
+    <class 'tuple'> (
+      67,
+      5,
+    ),
+    <class 'tuple'> (
+      68,
+      6,
+    ),
+    <class 'tuple'> (
+      70,
+      6,
+    ),
+    <class 'tuple'> (
+      71,
+      7,
+    ),
+    <class 'tuple'> (
+      72,
+      7,
+    ),
+    <class 'tuple'> (
+      73,
+      8,
+    ),
+    <class 'tuple'> (
+      74,
+      7,
+    ),
+    <class 'tuple'> (
+      75,
+      7,
+    ),
+    <class 'tuple'> (
+      76,
+      6,
+    ),
+    <class 'tuple'> (
+      77,
+      6,
+    ),
+    <class 'tuple'> (
+      78,
+      5,
+    ),
+    <class 'tuple'> (
+      85,
+      5,
+    ),
+    <class 'tuple'> (
+      86,
+      4,
+    ),
+    <class 'tuple'> (
+      91,
+      4,
+    ),
+    <class 'tuple'> (
+      92,
+      3,
+    ),
+    <class 'tuple'> (
+      95,
+      3,
+    ),
+    <class 'tuple'> (
+      96,
+      4,
+    ),
+    <class 'tuple'> (
+      97,
+      3,
+    ),
+    <class 'tuple'> (
+      98,
+      2,
+    ),
+    <class 'tuple'> (
+      105,
+      2,
+    ),
+    <class 'tuple'> (
+      106,
+      1,
+    ),
+    <class 'tuple'> (
+      107,
+      1,
+    ),
+    <class 'tuple'> (
+      108,
+      2,
+    ),
+    <class 'tuple'> (
+      109,
+      3,
+    ),
+    <class 'tuple'> (
+      110,
+      2,
+    ),
+    <class 'tuple'> (
+      111,
+      3,
+    ),
+  ]
+---

@@ -1,0 +1,12 @@
+# name: test_create_index_file[uvloop]
+  <class 'dict'> {
+    'id': 1,
+    'index': 'foo',
+    'name': 'reference.1.bt2',
+    'size': None,
+    'type': 'bowtie2',
+  }
+---
+# name: test_create_index_file[uvloop].1
+  <IndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=None)>
+---

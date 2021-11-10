@@ -1,0 +1,46 @@
+# name: test_add_missing_field[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'foo',
+      'key': '1',
+      'missing': False,
+      'sample': <class 'dict'> {
+        'id': 'abc',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'bar',
+      'key': '2',
+      'missing': True,
+      'sample': <class 'dict'> {
+        'id': 'dfg',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'baz',
+      'key': '3',
+      'missing': False,
+      'sample': <class 'dict'> {
+        'id': 'zxc',
+      },
+    },
+  ]
+---
+# name: test_rename_hash_field[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'foo',
+      'key': 'a97439e170adc4365c5b92bd2c148ed57d75e566',
+      'sample': <class 'dict'> {
+        'id': 'abc',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'bar',
+      'key': 'd7fh3ee170adc4365c5b92bd2c1f3fd5745te566',
+      'sample': <class 'dict'> {
+        'id': 'dfg',
+      },
+    },
+  ]
+---

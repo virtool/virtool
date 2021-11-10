@@ -3,10 +3,13 @@ import os
 from pathlib import Path
 
 import pytest
-
-from virtool.history.utils import calculate_diff, compose_create_description, compose_edit_description, \
-    compose_remove_description, derive_otu_information, join_diff_path, json_encoder, json_object_hook, \
-    read_diff_file, remove_diff_files, write_diff_file
+from virtool.history.utils import (calculate_diff, compose_create_description,
+                                   compose_edit_description,
+                                   compose_remove_description,
+                                   derive_otu_information, join_diff_path,
+                                   json_encoder, json_object_hook,
+                                   read_diff_file, remove_diff_files,
+                                   write_diff_file)
 
 TEST_DIFF_PATH = Path.cwd() / "tests" / "test_files" / "diff.json"
 
@@ -88,7 +91,8 @@ def test_compose_create_description(document, description):
     # Modify schema, change name, and add abbreviation
 ])
 def test_compose_edit_description(name, abbreviation, old_abbreviation, schema, description):
-    assert compose_edit_description(name, abbreviation, old_abbreviation, schema) == description
+    assert compose_edit_description(
+        name, abbreviation, old_abbreviation, schema) == description
 
 
 @pytest.mark.parametrize("has_abbreviation", [True, False])
@@ -212,12 +216,12 @@ async def test_read_diff_file(mocker, snapshot):
     Test that a diff is parsed to a `dict` correctly. ISO format dates must be converted to `datetime` objects.
 
     """
-    m = mocker.patch("virtool.history.utils.join_diff_path", return_value=TEST_DIFF_PATH)
+    m = mocker.patch("virtool.history.utils.join_diff_path",
+                     return_value=TEST_DIFF_PATH)
 
-    diff = await read_diff_file("foo", "bar", "baz")
+    assert await read_diff_file("foo", "bar", "baz") == snapshot
 
     m.assert_called_with("foo", "bar", "baz")
-    snapshot.assert_match(diff)
 
 
 async def test_remove_diff_files(loop, tmp_path, config):
@@ -271,4 +275,4 @@ async def test_write_diff_file(snapshot, tmp_path):
     path = tmp_path / "history" / "foo_1.json"
 
     with open(path, "r") as f:
-        snapshot.assert_match(json.load(f))
+        assert json.load(f) == snapshot

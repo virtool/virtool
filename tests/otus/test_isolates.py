@@ -1,6 +1,5 @@
 import pytest
-
-from virtool.otus.isolates import add, edit, set_default, remove
+from virtool.otus.isolates import add, edit, remove, set_default
 
 
 @pytest.mark.parametrize("default", [True, False])
@@ -35,7 +34,7 @@ async def test_add(
 
     await dbi.otus.insert_one(test_otu)
 
-    return_value = await add(
+    result = await add(
         app,
         "6116cba1",
         {
@@ -47,9 +46,9 @@ async def test_add(
         isolate_id=isolate_id
     )
 
-    snapshot.assert_match(await dbi.otus.find_one(), "otu")
-    snapshot.assert_match(await dbi.history.find_one(), "history")
-    snapshot.assert_match(return_value, "return_value")
+    assert result == snapshot
+    assert await dbi.otus.find_one() == snapshot
+    assert await dbi.history.find_one() == snapshot
 
 
 async def test_edit(dbi, snapshot, test_otu, static_time, tmp_path):
@@ -70,8 +69,8 @@ async def test_edit(dbi, snapshot, test_otu, static_time, tmp_path):
         "bob"
     )
 
-    snapshot.assert_match(await dbi.otus.find_one(), "otu")
-    snapshot.assert_match(await dbi.history.find_one(), "history")
+    assert await dbi.otus.find_one() == snapshot
+    assert await dbi.history.find_one() == snapshot
 
 
 @pytest.mark.parametrize("isolate_id", ["cab8b360", "bar"])
@@ -101,9 +100,9 @@ async def test_remove(isolate_id, dbi, snapshot, test_otu, test_sequence, static
         "bob"
     )
 
-    snapshot.assert_match(await dbi.otus.find_one(), "otu")
-    snapshot.assert_match(await dbi.history.find_one(), "history")
-    snapshot.assert_match(await dbi.sequences.find().to_list(None), "sequences")
+    assert await dbi.otus.find_one() == snapshot
+    assert await dbi.history.find_one() == snapshot
+    assert await dbi.sequences.find().to_list(None) == snapshot
 
 
 async def test_set_default(dbi, snapshot, test_otu, static_time, tmp_path):
@@ -126,7 +125,7 @@ async def test_set_default(dbi, snapshot, test_otu, static_time, tmp_path):
         "bar",
         "bob"
     )
+    assert return_value == snapshot
 
-    snapshot.assert_match(await dbi.otus.find_one(), "otu")
-    snapshot.assert_match(await dbi.history.find_one(), "history")
-    snapshot.assert_match(return_value, "return_value")
+    assert await dbi.otus.find_one() == snapshot
+    assert await dbi.history.find_one() == snapshot

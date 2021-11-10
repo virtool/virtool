@@ -1,6 +1,7 @@
 import gzip
 import os
 import shutil
+from asyncio import gather
 from pathlib import Path
 
 import pytest
@@ -10,8 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 import virtool.uploads.db
 from virtool.labels.models import Label
 from virtool.pg.utils import get_row_by_id
-from virtool.samples.db import compose_sample_workflow_query, recalculate_workflow_tags, get_sample_owner, \
-    remove_samples, attach_labels, create_sample, check_is_legacy, update_is_compressed, finalize, compress_sample_reads
+from virtool.samples.db import (attach_labels, check_is_legacy,
+                                compose_sample_workflow_query,
+                                compress_sample_reads, create_sample, finalize,
+                                get_sample_owner, recalculate_workflow_tags,
+                                remove_samples, update_is_compressed)
 from virtool.samples.models import SampleReads
 from virtool.samples.utils import calculate_workflow_tags
 from virtool.uploads.models import Upload
@@ -181,34 +185,11 @@ class TestGetSampleOwner:
 
 class TestRemoveSamples:
 
-    @pytest.mark.parametrize("id_list,ls,samples,analyses", [
-        (
-                ["test_1"],
-                ["test_2", "test_3"],
-                [{"_id": "test_2"}, {"_id": "test_3"}],
-                [
-                    {"_id": "a_3", "sample": {"id": "test_2"}},
-                    {"_id": "a_4", "sample": {"id": "test_2"}},
-                    {"_id": "a_5", "sample": {"id": "test_2"}},
-                    {"_id": "a_6", "sample": {"id": "test_3"}},
-                    {"_id": "a_7", "sample": {"id": "test_3"}},
-                    {"_id": "a_8", "sample": {"id": "test_3"}},
-                    {"_id": "a_9", "sample": {"id": "test_3"}}
-                ]
-        ),
-        (
-                ["test_1", "test_2"],
-                ["test_3"],
-                [{"_id": "test_3"}],
-                [
-                    {"_id": "a_6", "sample": {"id": "test_3"}},
-                    {"_id": "a_7", "sample": {"id": "test_3"}},
-                    {"_id": "a_8", "sample": {"id": "test_3"}},
-                    {"_id": "a_9", "sample": {"id": "test_3"}}
-                ]
-        )
+    @pytest.mark.parametrize("id_list", [
+        ["test_1"],
+        ["test_1", "test_2"],
     ])
-    async def test(self, id_list, ls, samples, analyses, tmp_path, dbi, config):
+    async def test(self, id_list, snapshot, tmp_path, dbi, config):
         """
         Test that the function can remove one or more samples, their analysis documents, and files.
 
@@ -245,10 +226,9 @@ class TestRemoveSamples:
 
         await remove_samples(dbi, config, id_list)
 
-        assert set(ls) == set(os.listdir(samples_dir))
-
-        assert await dbi.samples.find().to_list(None) == samples
-        assert await dbi.analyses.find().to_list(None) == analyses
+        assert set(os.listdir(samples_dir)) == snapshot
+        assert await dbi.samples.find().to_list(None) == snapshot
+        assert await dbi.analyses.find().to_list(None) == snapshot
 
     async def test_file_not_found(self, tmp_path, dbi, config):
         """
@@ -268,13 +248,23 @@ class TestRemoveSamples:
         await remove_samples(dbi, config, ["test_1", "test_2"])
 
         assert not samples_dir.exists()
-
         assert not await dbi.samples.count_documents({})
 
 
-async def test_attach_labels(spawn_client, pg_session, pg: AsyncEngine):
-    label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
-    label_2 = Label(id=2, name="Question", color="#03fc20", description="This is a question")
+async def test_attach_labels(snapshot, pg: AsyncEngine, pg_session):
+    label_1 = Label(
+        id=1,
+        name="Bug",
+        color="#a83432",
+        description="This is a bug"
+    )
+
+    label_2 = Label(
+        id=2,
+        name="Question",
+        color="#03fc20",
+        description="This is a question"
+    )
 
     async with pg_session as session:
         session.add_all([label_1, label_2])
@@ -286,16 +276,7 @@ async def test_attach_labels(spawn_client, pg_session, pg: AsyncEngine):
         "labels": [1, 2]
     }
 
-    result = await attach_labels(pg, document)
-
-    assert result == {
-        "id": "foo",
-        "name": "Foo",
-        "labels": [
-            {"id": 1, "name": "Bug", "color": "#a83432", "description": "This is a bug"},
-            {"id": 2, "name": "Question", "color": "#03fc20", "description": "This is a question"}
-        ]
-    }
+    assert await attach_labels(pg, document) == snapshot
 
 
 async def test_create_sample(dbi, mocker, snapshot, static_time, spawn_client):
@@ -307,10 +288,23 @@ async def test_create_sample(dbi, mocker, snapshot, static_time, spawn_client):
 
     mocker.patch("virtool.db.utils.get_new_id", return_value="a2oj3gfd")
 
-    document = await create_sample(dbi, "foo", "", "", "", "", "", [], "test",
-                                                      [], "bob", settings=client.app["settings"])
+    result = await create_sample(
+        dbi,
+        "foo",
+        "",
+        "",
+        "",
+        "",
+        "",
+        [],
+        "test",
+        [],
+        "bob",
+        settings=client.app["settings"]
+    )
 
-    snapshot.assert_match(document)
+    assert result == snapshot
+    assert await dbi.samples.find_one() == snapshot
 
 
 class TestCheckIsLegacy:
@@ -367,7 +361,7 @@ class TestCheckIsLegacy:
         assert check_is_legacy(sample) is False
 
 
-async def test_update_is_compressed(dbi):
+async def test_update_is_compressed(snapshot, dbi):
     """
     Test that samples with both files gzipped are flagged with ``is_compressed``.
 
@@ -395,33 +389,9 @@ async def test_update_is_compressed(dbi):
     ]
 
     await dbi.samples.insert_many(samples)
+    await gather(*[update_is_compressed(dbi, s) for s in samples])
 
-    for sample in samples:
-        await update_is_compressed(dbi, sample)
-
-    assert await dbi.samples.find().to_list(None) == [
-        {
-            "_id": "foo",
-            "is_compressed": True,
-            "files": [
-                {"name": "reads_1.fq.gz"},
-                {"name": "reads_2.fq.gz"},
-            ]
-        },
-        {
-            "_id": "baz",
-            "files": [
-                {"name": "reads_1.fastq"}
-            ]
-        },
-        {
-            "_id": "bar",
-            "is_compressed": True,
-            "files": [
-                {"name": "reads_1.fq.gz"}
-            ]
-        }
-    ]
+    assert await dbi.samples.find().to_list(None) == snapshot
 
 
 @pytest.mark.parametrize("paired", [True, False])
@@ -450,7 +420,7 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
 
     sample_id = "foo"
 
-    file = {
+    reads_file = {
         "name": "reads_1.fastq",
         "download_url": f"/download/samples/{sample_id}/reads_1.fastq",
         "size": 3750821789,
@@ -462,11 +432,11 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
         }
     }
 
-    files = [file]
+    files = [reads_file]
 
     if paired:
         files.append({
-            **file,
+            **reads_file,
             "name": "reads_2.fastq",
             "download_url": f"/download/samples/{sample_id}/reads_2.fastq"
         })
@@ -481,9 +451,7 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
 
     await compress_sample_reads(app_dict, sample)
 
-    expected_listdir = ["reads_1.fq.gz", "reads_2.fq.gz"] if paired else ["reads_1.fq.gz"]
-
-    assert sorted(os.listdir(sample_dir)) == expected_listdir
+    assert set(os.listdir(sample_dir)) == snapshot
 
     with open(FASTQ_PATH, "r") as f:
         expected_content = f.read()
@@ -495,12 +463,12 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
         with gzip.open(sample_dir / "reads_2.fq.gz", "rt") as f:
             assert expected_content == f.read()
 
-    snapshot.assert_match(await dbi.samples.find_one())
+    assert await dbi.samples.find_one() == snapshot
 
     m_update_is_compressed.assert_called_with(app_dict["db"], sample)
 
 
-async def test_finalize(tmp_path, dbi, pg: AsyncEngine, pg_session):
+async def test_finalize(snapshot, tmp_path, dbi, pg: AsyncEngine, pg_session):
     quality = {
         "count": 10000000,
         "gc": 43
@@ -511,8 +479,16 @@ async def test_finalize(tmp_path, dbi, pg: AsyncEngine, pg_session):
     })
 
     async with pg_session as session:
-        upload = Upload(name="test", name_on_disk="test.fq.gz")
-        reads = SampleReads(name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test")
+        upload = Upload(
+            name="test",
+            name_on_disk="test.fq.gz"
+        )
+
+        reads = SampleReads(
+            name="reads_1.fq.gz",
+            name_on_disk="reads_1.fq.gz",
+            sample="test"
+        )
 
         upload.reads.append(reads)
         session.add_all([upload, reads])
@@ -521,9 +497,18 @@ async def test_finalize(tmp_path, dbi, pg: AsyncEngine, pg_session):
 
     m_run_in_thread = make_mocked_coro()
 
-    document = await finalize(dbi, pg, "test", quality, m_run_in_thread,
-                                                 tmp_path)
-    assert document == {
+    result = await finalize(
+        dbi,
+        pg,
+        "test",
+        quality,
+        m_run_in_thread,
+        tmp_path
+    )
+
+    assert result == snapshot
+
+    assert result == {
         "_id": "test",
         "quality": {
             "count": 10000000,
@@ -544,6 +529,7 @@ async def test_finalize(tmp_path, dbi, pg: AsyncEngine, pg_session):
             }
         ]
     }
+
     assert not await virtool.uploads.db.get(pg, 1)
     assert not (await get_row_by_id(pg, SampleReads, 1)).upload
 

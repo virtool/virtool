@@ -1,14 +1,14 @@
 import pytest
-
 from virtool.users.utils import PERMISSIONS, hash_password
 
 
-async def test_get(spawn_client, static_time):
+async def test_get(snapshot, spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
     resp = await client.get("/api/account")
 
     assert resp.status == 200
+    assert await resp.json() == snapshot
 
     assert await resp.json() == {
         "groups": [],
@@ -34,7 +34,7 @@ async def test_get(spawn_client, static_time):
     "missing_old_password",
     "credentials_error"
 ])
-async def test_edit(error, spawn_client, resp_is, static_time):
+async def test_edit(error, snapshot, spawn_client, resp_is, static_time):
     client = await spawn_client(authorize=True)
 
     client.app["settings"].minimum_password_length = 8
@@ -63,6 +63,7 @@ async def test_edit(error, spawn_client, resp_is, static_time):
 
     else:
         assert resp.status == 200
+        assert await resp.json() == snapshot
 
         assert await resp.json() == {
             "permissions": {
@@ -186,12 +187,15 @@ class TestCreateAPIKey:
 
     @pytest.mark.parametrize("has_perm", [True, False])
     @pytest.mark.parametrize("req_perm", [True, False])
-    async def test(self, has_perm, req_perm, mocker, spawn_client, static_time, no_permissions):
+    async def test(self, has_perm, req_perm, mocker, snapshot, spawn_client, static_time, no_permissions):
         """
         Test that creation of an API key functions properly. Check that different permission inputs work.
 
         """
-        mocker.patch("virtool.utils.generate_key", return_value=("raw_key", "hashed_key"))
+        mocker.patch(
+            "virtool.utils.generate_key",
+            return_value=("raw_key", "hashed_key")
+        )
 
         client = await spawn_client(authorize=True)
 
@@ -217,37 +221,16 @@ class TestCreateAPIKey:
         resp = await client.post("/api/account/keys", body)
 
         assert resp.status == 201
+        assert await resp.json() == snapshot
+        assert await client.db.keys.find_one() == snapshot
 
-        expected = {
-            "_id": "hashed_key",
-            "id": "foobar_0",
-            "name": "Foobar",
-            "created_at": static_time.datetime,
-            "user": {
-                "id": "test"
-            },
-            "groups": [],
-            "permissions": {**no_permissions, "create_sample": has_perm and req_perm}
-        }
-
-        assert await client.db.keys.find_one() == expected
-
-        expected.update({
-            "key": "raw_key",
-            "created_at": static_time.iso
-        })
-
-        del expected["_id"]
-        del expected["user"]
-
-        assert await resp.json() == expected
-
-    async def test_naming(self, mocker, spawn_client, static_time):
+    async def test_naming(self, mocker, snapshot, spawn_client, static_time):
         """
         Test that uniqueness is ensured on the ``id`` field.
 
         """
-        mocker.patch("virtool.utils.generate_key", return_value=("raw_key", "hashed_key"))
+        mocker.patch("virtool.utils.generate_key",
+                     return_value=("raw_key", "hashed_key"))
 
         client = await spawn_client(authorize=True)
 
@@ -264,37 +247,15 @@ class TestCreateAPIKey:
         resp = await client.post("/api/account/keys", body)
 
         assert resp.status == 201
-
-        expected = {
-            "_id": "hashed_key",
-            "id": "foobar_1",
-            "name": "Foobar",
-            "created_at": static_time.datetime,
-            "user": {
-                "id": "test"
-            },
-            "groups": [],
-            "permissions": {p: False for p in PERMISSIONS}
-        }
-
-        assert await client.db.keys.find_one({"id": "foobar_1"}) == expected
-
-        expected.update({
-            "key": "raw_key",
-            "created_at": static_time.iso
-        })
-
-        del expected["_id"]
-        del expected["user"]
-
-        assert await resp.json() == expected
+        assert await resp.json() == snapshot
+        assert await client.db.keys.find_one({"id": "foobar_1"}) == snapshot
 
 
 class TestUpdateAPIKey:
 
     @pytest.mark.parametrize("has_admin", [True, False])
     @pytest.mark.parametrize("has_perm", [True, False])
-    async def test(self, has_admin, has_perm, spawn_client, static_time):
+    async def test(self, has_admin, has_perm, snapshot, spawn_client, static_time):
         client = await spawn_client(authorize=True)
 
         await client.db.users.update_one({"_id": "test"}, {
@@ -305,7 +266,7 @@ class TestUpdateAPIKey:
             }
         })
 
-        expected = {
+        await client.db.keys.insert_one({
             "_id": "foobar",
             "id": "foobar_0",
             "name": "Foobar",
@@ -315,9 +276,7 @@ class TestUpdateAPIKey:
             },
             "groups": [],
             "permissions": {p: False for p in PERMISSIONS}
-        }
-
-        await client.db.keys.insert_one(expected)
+        })
 
         resp = await client.patch("/api/account/keys/foobar_0", {
             "permissions": {
@@ -327,20 +286,8 @@ class TestUpdateAPIKey:
         })
 
         assert resp.status == 200
-
-        expected["permissions"].update({
-            "create_sample": True,
-            "modify_subtraction": has_admin or has_perm
-        })
-
-        assert await client.db.keys.find_one() == expected
-
-        del expected["_id"]
-        del expected["user"]
-
-        expected["created_at"] = static_time.iso
-
-        assert await resp.json() == expected
+        assert await resp.json() == snapshot
+        assert await client.db.keys.find_one() == snapshot
 
     async def test_not_found(self, spawn_client, resp_is):
         client = await spawn_client(authorize=True)
@@ -547,7 +494,8 @@ async def test_login(spawn_client, create_user, resp_is, error, mocker):
     if error == "wrong_handle":
         data["username"] = "oops"
 
-    mocker.patch("virtool.users.sessions.replace_session", return_value=[{"_id": None}, None])
+    mocker.patch("virtool.users.sessions.replace_session",
+                 return_value=[{"_id": None}, None])
 
     resp = await client.post("/api/account/login", data=data)
 

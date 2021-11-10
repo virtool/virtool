@@ -1,11 +1,10 @@
 from sqlalchemy import select
-
 from virtool.tasks.models import Task
 from virtool.uploads.models import Upload
 from virtool.uploads.tasks import MigrateFilesTask
 
 
-async def test_migrate_files_task(dbi, spawn_client, static_time, pg, pg_session):
+async def test_migrate_files_task(snapshot, dbi, spawn_client, static_time, pg, pg_session):
     client = await spawn_client(authorize=True)
     await client.db.files.insert_one(
         {
@@ -40,20 +39,6 @@ async def test_migrate_files_task(dbi, spawn_client, static_time, pg, pg_session
     await files_task.run()
 
     async with pg_session as session:
-        upload = (await session.execute(select(Upload).filter_by(id=1))).scalar().to_dict()
+        assert (await session.execute(select(Upload).filter_by(id=1))).scalar() == snapshot
 
     assert await dbi.files.find().to_list(None) == []
-    assert upload == {
-        'id': 1,
-        'created_at': None,
-        'name': '17NR001b_S23_R1_001.fastq.gz',
-        'name_on_disk': '07a7zbv6-17NR001b_S23_R1_001.fastq.gz',
-        'ready': True,
-        'removed': False,
-        'removed_at': None,
-        'reserved': False,
-        'size': 1234567,
-        'type': 'reads',
-        'user': 'test',
-        'uploaded_at': static_time.datetime
-    }

@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 from aiohttp import web
-
-from virtool.bio import format_blast_hit, initialize_ncbi_blast, extract_blast_info, check_rid, get_ncbi_blast_result
+from virtool.bio import (check_rid, extract_blast_info, format_blast_hit,
+                         get_ncbi_blast_result, initialize_ncbi_blast)
 
 TEST_FILES_PATH = Path.cwd() / "tests" / "test_files"
 TEST_BIO_PATH = TEST_FILES_PATH / "bio"
@@ -69,14 +69,17 @@ def mock_blast_server(monkeypatch, loop, aiohttp_server):
 
     server = loop.run_until_complete(aiohttp_server(app))
 
-    monkeypatch.setattr("virtool.bio.BLAST_URL", "http://{}:{}/blast".format(server.host, server.port))
+    monkeypatch.setattr(
+        "virtool.bio.BLAST_URL",
+        "http://{}:{}/blast".format(server.host, server.port)
+    )
 
     return server
 
 
 @pytest.mark.parametrize("missing", ["accession", "taxid", "title", None])
 @pytest.mark.parametrize("sciname", ["Vitis", None])
-def test_format_blast_hit(missing, sciname):
+def test_format_blast_hit(missing, sciname, snapshot):
     hit = {
         "description": [
             {
@@ -104,21 +107,7 @@ def test_format_blast_hit(missing, sciname):
     if sciname:
         hit["description"][0]["sciname"] = sciname
 
-    formatted = format_blast_hit(hit)
-
-    assert formatted == {
-        "accession": "" if missing == "accession" else "ABC123",
-        "len": 4321,
-        "taxid": "" if missing == "taxid" else "1234",
-        "title": "" if missing == "title" else "Foo",
-        "name": sciname if sciname else "No name",
-        "identity": 0.86,
-        "evalue": 0.0000000123,
-        "align_len": 231,
-        "score": 98,
-        "bit_score": 1092,
-        "gaps": 3
-    }
+    assert format_blast_hit(hit) == snapshot
 
 
 async def test_initialize_ncbi_blast(mock_blast_server, config):
@@ -136,8 +125,8 @@ def test_extract_blast_info():
     Test that the function returns the correct RID and RTOE from the stored test HTML file.
 
     """
-    with open(TEST_BIO_PATH / "initialize_blast.html", "r") as f: \
-            assert extract_blast_info(f.read()) == ("YA40WNN5014", 19)
+    with open(TEST_BIO_PATH / "initialize_blast.html", "r") as f:
+        assert extract_blast_info(f.read()) == ("YA40WNN5014", 19)
 
 
 @pytest.mark.parametrize("rid,expected", [

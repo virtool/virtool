@@ -1,0 +1,213 @@
+# name: test_download_analysis_result[uvloop-False-False]
+  <class 'dict'> {
+    'id': 'not_found',
+    'message': 'Not found',
+  }
+---
+# name: test_download_analysis_result[uvloop-False-True]
+  <class 'dict'> {
+    'id': 'not_found',
+    'message': 'Not found',
+  }
+---
+# name: test_download_analysis_result[uvloop-True-False]
+  <class 'dict'> {
+    'id': 'not_found',
+    'message': 'Uploaded file not found at expected location',
+  }
+---
+# name: test_finalize[uvloop-None]
+  <class 'dict'> {
+    'id': 'analysis1',
+    'ready': True,
+    'results': <class 'dict'> {
+      'result': 'TEST_RESULT',
+    },
+    'sample': <class 'dict'> {
+      'id': 'sample1',
+    },
+    'workflow': 'test_workflow',
+  }
+---
+# name: test_finalize[uvloop-None].1
+  <class 'dict'> {
+    '_id': 'analysis1',
+    'ready': True,
+    'results': <class 'dict'> {
+      'result': 'TEST_RESULT',
+    },
+    'sample': <class 'dict'> {
+      'id': 'sample1',
+    },
+    'workflow': 'test_workflow',
+  }
+---
+# name: test_find[uvloop]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_1',
+        'index': <class 'dict'> {
+          'id': 'foo',
+          'version': 2,
+        },
+        'job': <class 'dict'> {
+          'id': 'test',
+        },
+        'ready': True,
+        'reference': <class 'dict'> {
+          'id': 'baz',
+          'name': 'Baz',
+        },
+        'sample': <class 'dict'> {
+          'id': 'test',
+        },
+        'user': <class 'dict'> {
+          'id': 'bob',
+        },
+        'workflow': 'pathoscope_bowtie',
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_2',
+        'index': <class 'dict'> {
+          'id': 'foo',
+          'version': 2,
+        },
+        'job': <class 'dict'> {
+          'id': 'test',
+        },
+        'ready': True,
+        'reference': <class 'dict'> {
+          'id': 'baz',
+          'name': 'Baz',
+        },
+        'sample': <class 'dict'> {
+          'id': 'test',
+        },
+        'user': <class 'dict'> {
+          'id': 'fred',
+        },
+        'workflow': 'pathoscope_bowtie',
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'test_3',
+        'index': <class 'dict'> {
+          'id': 'foo',
+          'version': 2,
+        },
+        'job': <class 'dict'> {
+          'id': 'test',
+        },
+        'ready': True,
+        'reference': <class 'dict'> {
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        'sample': <class 'dict'> {
+          'id': 'test',
+        },
+        'user': <class 'dict'> {
+          'id': 'fred',
+        },
+        'workflow': 'pathoscope_bowtie',
+      },
+    ],
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_get[uvloop-None-False]
+  <class 'dict'> {
+    'created_at': '2015-10-06T20:00:00Z',
+    'files': <class 'list'> [
+      <class 'dict'> {
+        'analysis': 'foobar',
+        'description': None,
+        'format': 'fasta',
+        'id': 1,
+        'name': 'reference.fa',
+        'name_on_disk': '1-reference.fa',
+        'size': None,
+        'uploaded_at': None,
+      },
+    ],
+    'id': 'foobar',
+    'ready': False,
+    'results': <class 'dict'> {
+    },
+    'sample': <class 'dict'> {
+      'id': 'baz',
+    },
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'plum',
+        'name': 'Plum',
+      },
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+    ],
+    'workflow': 'pathoscope_bowtie',
+  }
+---
+# name: test_get[uvloop-None-True]
+  <class 'dict'> {
+    'created_at': '2015-10-06T20:00:00Z',
+    'formatted': True,
+    'id': 'foo',
+  }
+---
+# name: test_get[uvloop-None-True].1
+  <class 'dict'> {
+    '_id': 'foobar',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': <class 'list'> [
+      <class 'dict'> {
+        'analysis': 'foobar',
+        'description': None,
+        'format': 'fasta',
+        'id': 1,
+        'name': 'reference.fa',
+        'name_on_disk': '1-reference.fa',
+        'size': None,
+        'uploaded_at': None,
+      },
+    ],
+    'ready': True,
+    'results': <class 'dict'> {
+    },
+    'sample': <class 'dict'> {
+      'id': 'baz',
+    },
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'plum',
+        'name': 'Plum',
+      },
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+    ],
+    'workflow': 'pathoscope_bowtie',
+  }
+---
+# name: test_upload_file[uvloop-None]
+  <class 'dict'> {
+    'analysis': 'foobar',
+    'description': None,
+    'format': 'fasta',
+    'id': 1,
+    'name': 'reference.fa',
+    'name_on_disk': '1-reference.fa',
+    'size': 20466,
+    'uploaded_at': '2015-10-06T20:00:00Z',
+  }
+---

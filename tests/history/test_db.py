@@ -1,9 +1,8 @@
 import datetime
 
 import pytest
-from aiohttp.test_utils import make_mocked_coro
-
 import virtool.history.db
+from aiohttp.test_utils import make_mocked_coro
 
 
 class TestAdd:
@@ -26,10 +25,8 @@ class TestAdd:
             "test"
         )
 
-        document = await dbi.history.find_one()
-
-        snapshot.assert_match(change, "change")
-        snapshot.assert_match(document, "document")
+        assert change == snapshot
+        assert await dbi.history.find_one() == snapshot
 
     async def test_create(self, snapshot, dbi, static_time, test_otu_edit, test_change, tmp_path, config):
         app = {
@@ -53,10 +50,8 @@ class TestAdd:
             "test"
         )
 
-        document = await dbi.history.find_one()
-
-        snapshot.assert_match(change)
-        snapshot.assert_match(document)
+        assert change == snapshot
+        assert await dbi.history.find_one() == snapshot
 
     async def test_remove(self, snapshot, dbi, static_time, test_otu_edit, test_change, tmp_path, config):
         """
@@ -84,10 +79,8 @@ class TestAdd:
             "test"
         )
 
-        document = await dbi.history.find_one()
-
-        snapshot.assert_match(change)
-        snapshot.assert_match(document)
+        assert change == snapshot
+        assert await dbi.history.find_one() == snapshot
 
 
 @pytest.mark.parametrize("file", [True, False])
@@ -99,21 +92,15 @@ async def test_get(file, mocker, snapshot, dbi, tmp_path, config):
         }
     })
 
-    mocker.patch("virtool.history.utils.read_diff_file", make_mocked_coro(return_value="loaded"))
+    mocker.patch("virtool.history.utils.read_diff_file",
+                 make_mocked_coro(return_value="loaded"))
 
     app = {
         "db": dbi,
         "config": config
     }
 
-    document = await virtool.history.db.get(app, "baz.2")
-
-    assert document == {
-        "id": "baz.2",
-        "diff": "loaded" if file else {
-            "foo": "bar"
-        }
-    }
+    assert await virtool.history.db.get(app, "baz.2") == snapshot
 
 
 @pytest.mark.parametrize("exists", [True, False])
@@ -163,9 +150,8 @@ async def test_get_most_recent_change(exists, snapshot, dbi, static_time):
             }
         ])
 
-    most_recent = await virtool.history.db.get_most_recent_change(dbi, "6116cba1")
-
-    snapshot.assert_match(most_recent)
+    return_value = await virtool.history.db.get_most_recent_change(dbi, "6116cba1")
+    assert return_value == snapshot
 
 
 @pytest.mark.parametrize("remove", [True, False])
@@ -182,6 +168,6 @@ async def test_patch_to_version(remove, snapshot, dbi,  create_mock_history):
         1
     )
 
-    snapshot.assert_match(current)
-    snapshot.assert_match(patched)
-    snapshot.assert_match(reverted_change_ids)
+    assert current == snapshot
+    assert patched == snapshot
+    assert reverted_change_ids == snapshot

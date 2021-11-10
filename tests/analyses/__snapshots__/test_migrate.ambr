@@ -1,0 +1,84 @@
+# name: test_nest_pathoscope_results[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'foo',
+      'results': <class 'dict'> {
+        'hits': <class 'list'> [
+          1,
+          2,
+          3,
+          4,
+          5,
+        ],
+        'read_count': 1209,
+        'subtracted_count': 231,
+      },
+      'workflow': 'pathoscope_bowtie',
+    },
+    <class 'dict'> {
+      '_id': 'fine',
+      'results': <class 'dict'> {
+        'hits': <class 'list'> [
+          1,
+          2,
+          3,
+          4,
+          5,
+        ],
+        'read_count': 1209,
+        'subtracted_count': 231,
+      },
+      'workflow': 'pathoscope_bowtie',
+    },
+    <class 'dict'> {
+      '_id': 'bar',
+      'results': <class 'dict'> {
+        'hits': <class 'list'> [
+          9,
+          8,
+          7,
+          6,
+          5,
+        ],
+        'read_count': 7982,
+        'subtracted_count': 112,
+      },
+      'workflow': 'pathoscope_bowtie',
+    },
+    <class 'dict'> {
+      '_id': 'baz',
+      'results': <class 'dict'> {
+        'hits': <class 'list'> [
+          9,
+          8,
+          7,
+          6,
+          5,
+        ],
+      },
+      'workflow': 'nuvs',
+    },
+    <class 'dict'> {
+      '_id': 'bad',
+      'results': <class 'dict'> {
+        'hits': <class 'list'> [
+          9,
+          8,
+          7,
+          6,
+          5,
+        ],
+        'join_histogram': <class 'list'> [
+          1,
+          2,
+          3,
+          4,
+          5,
+        ],
+        'joined_pair_count': 12345,
+        'remainder_pair_count': 54321,
+      },
+      'workflow': 'aodp',
+    },
+  ]
+---

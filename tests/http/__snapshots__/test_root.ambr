@@ -1,0 +1,68 @@
+# name: test_get[uvloop]
+  <class 'dict'> {
+    'dev': False,
+    'endpoints': <class 'dict'> {
+      'account': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/developer/api/account',
+        'url': '/api/account',
+      },
+      'analyses': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/developer/api/analyses',
+        'url': '/api/analyses',
+      },
+      'genbank': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/developer/api/genbank',
+        'url': '/api/genbank',
+      },
+      'groups': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/developer/api/groups',
+        'url': '/api/groups',
+      },
+      'history': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/developer/api/history',
+        'url': '/api/history',
+      },
+      'hmm': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/developer/api/hmm',
+        'url': '/api/hmm',
+      },
+      'indexes': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/developer/api/indexes',
+        'url': '/api/indexes',
+      },
+      'jobs': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/developer/api/jobs',
+        'url': '/api/jobs',
+      },
+      'otus': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/developer/api/otus',
+        'url': '/api/otus',
+      },
+      'references': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/developer/api/refs',
+        'url': '/api/references',
+      },
+      'samples': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/developer/api/samples',
+        'url': '/api/samples',
+      },
+      'settings': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/developer/api/settings',
+        'url': '/api/settings',
+      },
+      'subtraction': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/developer/api/subtraction',
+        'url': '/api/subtraction',
+      },
+      'tasks': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/developer/api/tasks',
+        'url': '/api/tasks',
+      },
+      'users': <class 'dict'> {
+        'doc': 'https://www.virtool.ca/docs/developer/api/users',
+        'url': '/api/users',
+      },
+    },
+    'version': 'v0.0.0',
+  }
+---

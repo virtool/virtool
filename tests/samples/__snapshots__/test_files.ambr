@@ -1,0 +1,3 @@
+# name: test_create_reads_file[uvloop]
+  <SampleReads(id=1, sample=sample_1, name=reads_1.fq.gz, name_on_disk=reads_1.fq.gz, size=123456, upload=None, uploaded_at=2015-10-06 20:00:00)>
+---

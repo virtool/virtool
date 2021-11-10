@@ -10,4 +10,4 @@ async def test_dev_mode(dev, spawn_client):
 
     resp = await client.post("/api/dev", {"command": "foo"})
 
-    assert resp.status == (204 if dev else 404)
+    assert resp.status == 204 if dev else 404
