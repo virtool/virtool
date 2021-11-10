@@ -1,15 +1,16 @@
 from typing import Callable, Tuple
 
 import aiofiles
-import aiohttp
 import jinja2
+from aiohttp import BasicAuth
 from aiohttp import web
+from aiohttp.web import Request, Response
 from aiohttp.web_exceptions import HTTPUnauthorized
 
 import virtool.errors
-import virtool.users.sessions
 from virtool.http.client import UserClient
 from virtool.http.utils import set_session_id_cookie
+from virtool.users.sessions import get_session, create_session, clear_reset_code
 from virtool.utils import hash_key
 
 AUTHORIZATION_PROJECTION = [
@@ -20,7 +21,7 @@ AUTHORIZATION_PROJECTION = [
 ]
 
 
-def can_use_key(req: web.Request) -> bool:
+def can_use_key(req: Request) -> bool:
     """
     Check if the passed :class:`.Request` object can be authenticated using an API key.
 
@@ -34,7 +35,7 @@ def can_use_key(req: web.Request) -> bool:
     return (path.startswith("/api") or path.startswith("/download")) and enable_api
 
 
-def get_ip(req: web.Request) -> str:
+def get_ip(req: Request) -> str:
     """
     A convenience function for getting the client IP address from a :class:`~web.Request` object.
 
@@ -54,14 +55,14 @@ def decode_authorization(authorization: str) -> Tuple[str, str]:
 
     """
     try:
-        auth: aiohttp.BasicAuth = aiohttp.BasicAuth.decode(authorization)
+        auth: BasicAuth = BasicAuth.decode(authorization)
     except ValueError as error:
         raise virtool.errors.AuthError(str(error))
 
     return auth.login, auth.password
 
 
-async def authenticate_with_key(req: web.Request, handler: Callable):
+async def authenticate_with_key(req: Request, handler: Callable):
     """
     Authenticate the request with an API key or job key.
 
@@ -77,7 +78,7 @@ async def authenticate_with_key(req: web.Request, handler: Callable):
     return await authenticate_with_api_key(req, handler, holder_id, key)
 
 
-async def authenticate_with_api_key(req, handler, user_id: str, key: str):
+async def authenticate_with_api_key(req: Request, handler: Callable, user_id: str, key: str):
     db = req.app["db"]
 
     document = await db.keys.find_one({
@@ -89,13 +90,13 @@ async def authenticate_with_api_key(req, handler, user_id: str, key: str):
         raise HTTPUnauthorized(text="Invalid authorization header")
 
     req["client"] = UserClient(
-        db,
-        get_ip(req),
-        document["administrator"],
-        document["force_reset"],
-        document["groups"],
-        document["permissions"],
-        user_id
+        db=db,
+        administrator=document["administrator"],
+        force_reset=document["force_reset"],
+        groups=document["groups"],
+        permissions=document["permissions"],
+        user_id=user_id,
+        authenticated=True
     )
 
     return await handler(req)
@@ -106,7 +107,16 @@ async def middleware(req, handler):
     db = req.app["db"]
 
     if req.path == "/api/account/login" or req.path == "/api/account/logout":
-        req["client"] = None
+        req["client"] = UserClient(
+            db=db,
+            administrator=False,
+            force_reset=False,
+            groups=list(),
+            permissions=dict(),
+            user_id=None,
+            authenticated=False
+        )
+
         return await handler(req)
 
     if req.headers.get("AUTHORIZATION"):
@@ -117,7 +127,7 @@ async def middleware(req, handler):
     session_id = req.cookies.get("session_id")
     session_token = req.cookies.get("session_token")
 
-    session, session_token = await virtool.users.sessions.get_session(
+    session, session_token = await get_session(
         db,
         session_id,
         session_token
@@ -126,28 +136,37 @@ async def middleware(req, handler):
     ip = get_ip(req)
 
     if session is None:
-        session, session_token = await virtool.users.sessions.create_session(db, ip)
+        session, session_token = await create_session(db, ip)
 
     session_id = session["_id"]
 
     if session_token:
         req["client"] = UserClient(
             db,
-            ip,
             session["administrator"],
             session["force_reset"],
             session["groups"],
             session["permissions"],
             session["user"]["id"],
-            session_id
+            authenticated=True,
+            session_id=session_id
         )
+
     else:
-        req["client"] = None
+        req["client"] = UserClient(
+            db=db,
+            administrator=False,
+            force_reset=False,
+            groups=list(),
+            permissions=dict(),
+            user_id=None,
+            authenticated=False,
+        )
 
     resp = await handler(req)
 
     if req.path != "/api/account/reset":
-        await virtool.users.sessions.clear_reset_code(db, session["_id"])
+        await clear_reset_code(db, session["_id"])
 
     set_session_id_cookie(resp, session_id)
 
@@ -157,7 +176,7 @@ async def middleware(req, handler):
     return resp
 
 
-async def index_handler(req: web.Request) -> web.Response:
+async def index_handler(req: Request) -> Response:
     """
     A request handler for requests where the `index.html` should be returned.
 
@@ -167,7 +186,7 @@ async def index_handler(req: web.Request) -> web.Response:
     """
     requires_first_user = not await req.app["db"].users.count_documents({})
 
-    requires_login = req["client"] is None
+    requires_login = req["client"].authenticated is False
 
     path = req.app["client_path"] / "index.html"
 
@@ -182,4 +201,4 @@ async def index_handler(req: web.Request) -> web.Response:
         version=req.app["version"]
     )
 
-    return web.Response(body=html, content_type="text/html")
+    return Response(body=html, content_type="text/html")
