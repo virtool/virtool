@@ -3,7 +3,6 @@ from typing import Callable
 
 from aiohttp.web_exceptions import HTTPUnauthorized
 from aiohttp.web_routedef import RouteTableDef
-
 from virtool.api.response import json_response
 from virtool.users.utils import PERMISSIONS
 
