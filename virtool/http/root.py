@@ -1,19 +1,24 @@
-import virtool.http.routes
 from virtool.api.response import json_response
+from virtool.http.routes import Routes
 
 API_URL_ROOT = "https://www.virtool.ca/docs/developer/api"
 
-routes = virtool.http.routes.Routes()
+routes = Routes()
 
 
-@routes.get("/api")
+@routes.get("/api", public=True)
 @routes.jobs_api.get("/api")
 async def get(req):
     """
     Returns a generic message. Used during testing for acquiring a ``session_id``.
 
     """
-    app_data = {"endpoints": {
+    first_user = await req.app["db"].users.count_documents({}) == 0
+
+    app_data = {
+        "dev": req.app["config"].dev,
+        "first_user": first_user,
+        "endpoints": {
             "account": {
                 "url": "/api/account",
                 "doc": f"{API_URL_ROOT}/account"
@@ -73,8 +78,8 @@ async def get(req):
             "users": {
                 "url": "/api/users",
                 "doc": f"{API_URL_ROOT}/users"
-            }},
-        "dev": req.app["config"].dev
+            }
+        },
     }
 
     try:
