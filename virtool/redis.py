@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import sys
 from typing import Optional
@@ -29,6 +30,21 @@ async def connect(redis_connection_string: str) -> Redis:
     except ConnectionRefusedError:
         logger.fatal("Could not connect to Redis: Connection refused")
         sys.exit(1)
+
+
+async def periodically_ping_redis(redis: Redis):
+    """
+    Ping the Redis server every two minutes.
+
+    When using Azure Cache for Redis, connections that are inactive for more than 10 minutes
+    are dropped. Regular pings prevent this from happening.
+
+    :param redis: the Redis client
+
+    """
+    while True:
+        await asyncio.sleep(120)
+        await redis.ping()
 
 
 async def check_version(redis: Redis) -> Optional[str]:

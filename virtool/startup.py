@@ -28,6 +28,7 @@ from virtool.hmm.db import refresh
 from virtool.indexes.tasks import AddIndexFilesTask
 from virtool.jobs.client import JobsClient
 from virtool.pg.testing import create_test_database
+from virtool.redis import periodically_ping_redis
 from virtool.references.db import refresh_remotes
 from virtool.references.tasks import CreateIndexJSONTask, DeleteReferenceTask
 from virtool.routes import setup_routes
@@ -35,13 +36,14 @@ from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.sentry import setup
 from virtool.settings.db import ensure
 from virtool.subtractions.db import check_subtraction_fasta_files
-from virtool.subtractions.tasks import AddSubtractionFilesTask, WriteSubtractionFASTATask
+from virtool.subtractions.tasks import (AddSubtractionFilesTask,
+                                        WriteSubtractionFASTATask)
 from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
 from virtool.uploads.tasks import MigrateFilesTask
 from virtool.users.tasks import UpdateUserDocumentsTask
-from virtool.utils import random_alphanumeric, get_client_path, ensure_data_dir
+from virtool.utils import ensure_data_dir, get_client_path, random_alphanumeric
 from virtool.version import determine_server_version
 
 logger = logging.getLogger("startup")
@@ -131,7 +133,9 @@ async def init_dispatcher(app: Application):
 
     channel, = await app["redis"].subscribe("channel:dispatch")
 
-    event_watcher = DispatcherSQLEvents(app["dispatcher_interface"].enqueue_change)
+    DispatcherSQLEvents(
+        app["dispatcher_interface"].enqueue_change
+    )
 
     app["dispatcher"] = Dispatcher(
         app["pg"],
@@ -278,7 +282,12 @@ async def init_postgres(app: Application):
 async def init_redis(app: typing.Union[dict, Application]):
     redis_connection_string = app["config"].redis_connection_string
     logger.info("Connecting to Redis")
-    app["redis"] = await virtool.redis.connect(redis_connection_string)
+    redis = await virtool.redis.connect(redis_connection_string)
+
+    scheduler = get_scheduler_from_app(app)
+    await scheduler.spawn(periodically_ping_redis(redis))
+
+    app["redis"] = redis
 
 
 async def init_refresh(app: Application):
