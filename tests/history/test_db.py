@@ -84,16 +84,23 @@ class TestAdd:
 
 
 @pytest.mark.parametrize("file", [True, False])
-async def test_get(file, mocker, snapshot, dbi, tmp_path, config):
+async def test_get(file, mocker, snapshot, dbi, fake, tmp_path, config):
+    user = await fake.users.insert()
+
     await dbi.history.insert_one({
         "_id": "baz.2",
         "diff": "file" if file else {
             "foo": "bar"
+        },
+        "user": {
+            "id": user["_id"]
         }
     })
 
-    mocker.patch("virtool.history.utils.read_diff_file",
-                 make_mocked_coro(return_value="loaded"))
+    mocker.patch(
+        "virtool.history.utils.read_diff_file",
+        make_mocked_coro(return_value="loaded")
+    )
 
     app = {
         "db": dbi,

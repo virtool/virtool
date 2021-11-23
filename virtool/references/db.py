@@ -58,28 +58,30 @@ import asyncio
 import datetime
 import logging
 from pathlib import Path
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 
 import pymongo
-from aiohttp import ClientConnectorError
-from aiohttp.web import Request
-from semver import VersionInfo
-from sqlalchemy.ext.asyncio.engine import AsyncEngine
-
 import virtool.db.utils
 import virtool.errors
 import virtool.github
 import virtool.history.db
 import virtool.tasks.pg
 import virtool.utils
+from aiohttp import ClientConnectorError
+from aiohttp.web import Request
+from semver import VersionInfo
+from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from virtool.http.utils import download_file
 from virtool.otus.db import join
 from virtool.otus.utils import verify
 from virtool.pg.utils import get_row
-from virtool.references.utils import RIGHTS, get_owner_user, load_reference_file, clean_export_list, check_will_change
+from virtool.references.utils import (RIGHTS, check_will_change,
+                                      clean_export_list, get_owner_user,
+                                      load_reference_file)
 from virtool.settings.db import Settings
 from virtool.types import App
 from virtool.uploads.models import Upload
+from virtool.users.db import attach_user
 
 PROJECTION = [
     "_id",
@@ -115,7 +117,7 @@ async def processor(db, document: dict) -> dict:
 
     """
     try:
-        ref_id = document["_id"]
+        ref_id = document.pop("_id")
     except KeyError:
         ref_id = document["id"]
 
@@ -138,7 +140,7 @@ async def processor(db, document: dict) -> dict:
 
     document["id"] = ref_id
 
-    return document
+    return await attach_user(db, document)
 
 
 async def add_group_or_user(db, ref_id: str, field: str, data: dict) -> Optional[dict]:
@@ -176,10 +178,6 @@ async def add_group_or_user(db, ref_id: str, field: str, data: dict) -> Optional
 
 
 async def check_right(req: Request, reference: dict, right: str) -> bool:
-    """
-    pass
-
-    """
     if req["client"].administrator:
         return True
 
@@ -398,7 +396,8 @@ async def fetch_and_update_release(app, ref_id: str, ignore_errors: bool = False
 
         release["newer"] = bool(
             installed and
-            VersionInfo.parse(release["name"].lstrip("v")) > VersionInfo.parse(installed["name"].lstrip("v"))
+            VersionInfo.parse(release["name"].lstrip("v")) > VersionInfo.parse(
+                installed["name"].lstrip("v"))
         )
 
         release["retrieved_at"] = retrieved_at
@@ -742,21 +741,6 @@ async def edit(db, ref_id: str, data: dict) -> dict:
     if document["data_type"] != "barcode":
         data.pop("targets", None)
 
-    internal_control_id = data.get("internal_control")
-
-    if internal_control_id == "":
-        data["internal_control"] = None
-
-    elif internal_control_id:
-        internal_control = await virtool.references.db.get_internal_control(db, internal_control_id, ref_id)
-
-        if internal_control is None:
-            data["internal_control"] = None
-        else:
-            data["internal_control"] = {
-                "id": internal_control_id
-            }
-
     document = await db.references.find_one_and_update({"_id": ref_id}, {
         "$set": data
     })
@@ -770,7 +754,7 @@ async def edit(db, ref_id: str, data: dict) -> dict:
             }
         })
 
-    return virtool.utils.base_processor(document)
+    return await processor(db, document)
 
 
 async def export(app: App, ref_id: str) -> list:

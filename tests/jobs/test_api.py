@@ -2,8 +2,14 @@ import pytest
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, snapshot, spawn_client, test_job, resp_is):
+async def test_get(error, fake, snapshot, spawn_client, test_job, resp_is):
     client = await spawn_client(authorize=True)
+
+    user = await fake.users.insert()
+
+    test_job["user"] = {
+        "id": user["_id"]
+    }
 
     if not error:
         await client.db.jobs.insert_one(test_job)
@@ -23,23 +29,34 @@ async def test_get(error, snapshot, spawn_client, test_job, resp_is):
     assert "key" not in body
 
 
-@pytest.mark.parametrize("error", [None, 404])
-async def test_acquire(error, mocker, snapshot, dbi, test_job, spawn_client, resp_is):
+@pytest.mark.parametrize("error", [None, 400, 404])
+async def test_acquire(error, mocker, snapshot, dbi, fake, test_job, spawn_client, resp_is):
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
+
+    user = await fake.users.insert()
+
+    test_job["user"] = {
+        "id": user["_id"]
+    }
 
     client = await spawn_client(authorize=True)
 
-    if error == 404:
+    if error == 400:
         test_job["acquired"] = True
 
-    await dbi.jobs.insert_one(test_job)
+    if error != 404:
+        await dbi.jobs.insert_one(test_job)
 
     resp = await client.patch("/api/jobs/4c530449", {
         "acquired": True
     })
 
-    if error == 404:
+    if error == 400:
         await resp_is.bad_request(resp, "Job already acquired")
+        return
+
+    if error == 404:
+        await resp_is.not_found(resp)
         return
 
     assert resp.status == 200
@@ -51,14 +68,45 @@ async def test_acquire(error, mocker, snapshot, dbi, test_job, spawn_client, res
     assert "key" in body
 
 
-async def test_cancel(snapshot, dbi, test_job, spawn_client):
+@pytest.mark.parametrize("error", [None, 404, "409_complete", "409_errored", "409_cancelled"])
+async def test_cancel(error, snapshot, dbi, fake, resp_is, spawn_client, test_job):
     client = await spawn_client(authorize=True, permissions=["cancel_job"])
 
-    test_job["status"].pop()
+    user = await fake.users.insert()
 
-    await dbi.jobs.insert_one(test_job)
+    test_job["user"] = {
+        "id": user["_id"]
+    }
+
+    complete_status = test_job["status"].pop(-1)
+
+    if error == "409_complete":
+        test_job["status"].append(complete_status)
+
+    if error == "409_cancelled":
+        test_job["status"].append({
+            **complete_status,
+            "state": "cancelled"
+        })
+
+    if error == "409_errored":
+        test_job["status"].append({
+            **complete_status,
+            "state": "errored"
+        })
+
+    if error != 404:
+        await dbi.jobs.insert_one(test_job)
 
     resp = await client.put("/api/jobs/4c530449/cancel", {})
+
+    if error == 404:
+        await resp_is.not_found(resp)
+        return
+
+    if str(error).startswith("409"):
+        await resp_is.conflict(resp, "Not cancellable")
+        return
 
     assert resp.status == 200
 

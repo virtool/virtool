@@ -58,12 +58,6 @@
 # name: test_create[uvloop-barcode].1
   <class 'dict'> {
     'contributors': <class 'list'> [
-      <class 'dict'> {
-        'bob': 4,
-      },
-      <class 'dict'> {
-        'fred': 10,
-      },
     ],
     'created_at': '2015-10-06T20:00:00Z',
     'data_type': 'barcode',
@@ -71,17 +65,11 @@
     'groups': <class 'list'> [
     ],
     'id': '9pfsom1b',
-    'internal_control': <class 'dict'> {
-      'id': 'foo',
-      'name': 'Foo virus',
-    },
-    'latest_build': <class 'dict'> {
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 'foo',
-    },
+    'internal_control': None,
+    'latest_build': None,
     'name': 'Test Viruses',
     'organism': 'virus',
-    'otu_count': 22,
+    'otu_count': 0,
     'restrict_source_types': False,
     'source_types': <class 'list'> [
       'strain',
@@ -89,8 +77,10 @@
     ],
     'targets': <class 'list'> [
     ],
-    'unbuilt_change_count': 5,
+    'unbuilt_change_count': 0,
     'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
       'id': 'test',
     },
     'users': <class 'list'> [
@@ -110,12 +100,6 @@
 # name: test_create[uvloop-genome].1
   <class 'dict'> {
     'contributors': <class 'list'> [
-      <class 'dict'> {
-        'bob': 4,
-      },
-      <class 'dict'> {
-        'fred': 10,
-      },
     ],
     'created_at': '2015-10-06T20:00:00Z',
     'data_type': 'genome',
@@ -123,24 +107,20 @@
     'groups': <class 'list'> [
     ],
     'id': '9pfsom1b',
-    'internal_control': <class 'dict'> {
-      'id': 'foo',
-      'name': 'Foo virus',
-    },
-    'latest_build': <class 'dict'> {
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 'foo',
-    },
+    'internal_control': None,
+    'latest_build': None,
     'name': 'Test Viruses',
     'organism': 'virus',
-    'otu_count': 22,
+    'otu_count': 0,
     'restrict_source_types': False,
     'source_types': <class 'list'> [
       'strain',
       'isolate',
     ],
-    'unbuilt_change_count': 5,
+    'unbuilt_change_count': 0,
     'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
       'id': 'test',
     },
     'users': <class 'list'> [
@@ -205,6 +185,11 @@
       },
     ],
     'unbuilt_change_count': 0,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
         'id': 'bob',
@@ -225,6 +210,9 @@
         'required': True,
       },
     ],
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
         'id': 'bob',
@@ -244,6 +232,11 @@
     'name': 'Bar',
     'otu_count': 0,
     'unbuilt_change_count': 0,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
         'id': 'bob',
@@ -257,6 +250,9 @@
     'data_type': 'genome',
     'description': 'This is a test reference.',
     'name': 'Bar',
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
         'id': 'bob',

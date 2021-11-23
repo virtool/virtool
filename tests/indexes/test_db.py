@@ -1,7 +1,6 @@
 import pytest
-from aiohttp.test_utils import make_mocked_coro
-
 import virtool.indexes.db
+from aiohttp.test_utils import make_mocked_coro
 from virtool.indexes.db import (attach_files, get_current_id_and_version,
                                 get_next_version, get_patched_otus,
                                 update_last_indexed_versions)
@@ -36,8 +35,8 @@ async def test_create(index_id, mocker, snapshot, dbi, test_random_alphanumeric,
     assert await dbi.history.find_one("abc") == snapshot
 
 
-@ pytest.mark.parametrize("exists", [True, False])
-@ pytest.mark.parametrize("has_ref", [True, False])
+@pytest.mark.parametrize("exists", [True, False])
+@pytest.mark.parametrize("has_ref", [True, False])
 async def test_get_current_id_and_version(exists, has_ref, test_indexes, dbi):
     if not exists:
         test_indexes = [dict(i, ready=False, has_files=False)
@@ -58,8 +57,8 @@ async def test_get_current_id_and_version(exists, has_ref, test_indexes, dbi):
         assert index_version == -1
 
 
-@ pytest.mark.parametrize("empty", [False, True])
-@ pytest.mark.parametrize("has_ref", [True, False])
+@pytest.mark.parametrize("empty", [False, True])
+@pytest.mark.parametrize("has_ref", [True, False])
 async def test_get_next_version(empty, has_ref, test_indexes, dbi):
     if not empty:
         await dbi.indexes.insert_many(test_indexes)
@@ -72,7 +71,9 @@ async def test_get_next_version(empty, has_ref, test_indexes, dbi):
     assert await get_next_version(dbi, "hxn167" if has_ref else "foobar") == expected
 
 
-async def test_processor(mocker, dbi):
+async def test_processor(mocker, snapshot, fake, dbi):
+    user = await fake.users.insert()
+
     await dbi.history.insert_many([
         {
             "_id": "foo.0",
@@ -131,16 +132,15 @@ async def test_processor(mocker, dbi):
     ])
 
     document = {
-        "_id": "baz"
+        "_id": "baz",
+        "user": {
+            "id": user["_id"]
+        }
     }
 
     result = await virtool.indexes.db.processor(dbi, document)
 
-    assert result == {
-        "id": "baz",
-        "change_count": 5,
-        "modified_otu_count": 2
-    }
+    assert result == snapshot
 
 
 async def test_get_patched_otus(mocker, dbi, config):

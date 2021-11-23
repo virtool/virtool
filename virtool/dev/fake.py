@@ -9,10 +9,11 @@ from logging import getLogger
 from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
+
+from virtool.fake.factory import load_test_case_from_yml
 from virtool.types import App
 from virtool.users.fake import create_fake_bob_user
 from virtool.utils import ensure_data_dir, random_alphanumeric
-from virtool.fake.factory import load_test_case_from_yml
 
 logger = getLogger(__name__)
 
@@ -22,7 +23,6 @@ REF_ID = "reference_1"
 async def populate(app: App):
     await create_fake_bob_user(app)
     for yml_file in Path(app["config"].fake_path).iterdir():
-        print(yml_file)
         if yml_file.suffix in (".yml", ".yaml"):
             await load_test_case_from_yml(app, yml_file)
 

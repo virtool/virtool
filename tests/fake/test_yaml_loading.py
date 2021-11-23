@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from virtool.dev.fake import populate
 from virtool.fake.factory import load_test_case_from_yml
 
@@ -11,7 +10,9 @@ def example_test_case(test_files_path) -> Path:
     return test_files_path / "fake/test_case.yml"
 
 
-async def test_load_yml(app, run_in_thread, example_test_case):
+async def test_load_yml(app, fake, run_in_thread, example_test_case):
+    await fake.users.insert()
+
     app["run_in_thread"] = run_in_thread
     case = await load_test_case_from_yml(app, example_test_case)
 

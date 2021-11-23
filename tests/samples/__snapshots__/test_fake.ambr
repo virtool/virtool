@@ -26,7 +26,7 @@
     'subtractions': <class 'list'> [
     ],
     'user': <class 'dict'> {
-      'id': 'bob',
+      'id': '7CtBo2yG',
     },
   }
 ---
@@ -58,7 +58,7 @@
     'subtractions': <class 'list'> [
     ],
     'user': <class 'dict'> {
-      'id': 'bob',
+      'id': '7CtBo2yG',
     },
   }
 ---
@@ -219,7 +219,9 @@
     'subtractions': <class 'list'> [
     ],
     'user': <class 'dict'> {
-      'id': 'bob',
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
     },
   }
 ---
@@ -390,7 +392,9 @@
     'subtractions': <class 'list'> [
     ],
     'user': <class 'dict'> {
-      'id': 'bob',
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
     },
   }
 ---

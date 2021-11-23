@@ -1,13 +1,15 @@
 import logging
 import shutil
-import yaml
-import aiofiles
-from typing import List
+from dataclasses import dataclass
 from operator import itemgetter
+from types import SimpleNamespace
+from typing import List
 
+import aiofiles
 import virtool.indexes.db
 import virtool.jobs.db
 import virtool.subtractions.db
+import yaml
 from virtool.analyses.files import create_analysis_file
 from virtool.example import example_path
 from virtool.fake.identifiers import USER_ID
@@ -23,8 +25,7 @@ from virtool.subtractions.fake import (create_fake_fasta_upload,
                                        create_fake_finalized_subtraction)
 from virtool.types import App
 from virtool.utils import timestamp
-from dataclasses import dataclass
-from types import SimpleNamespace
+
 logger = logging.getLogger(__name__)
 
 
@@ -118,7 +119,15 @@ class TestCaseDataFactory:
         return document
 
     async def sample(self, paired: bool, finalize: bool) -> dict:
+        await self.db.users.update_one({"_id": self.user_id}, {
+            "$set": {
+                "handle": self.user_id,
+                "administrator": False
+            }
+        }, upsert=True)
+
         sample_id = self.fake.get_mongo_id()
+
         return await create_fake_sample(
             app=self.app,
             sample_id=sample_id,
@@ -261,7 +270,8 @@ async def load_test_case_from_yml(app: App, path: str) -> WorkflowTestCase:
         for subtraction in yml["subtractions"]:
             test_case.subtractions.append(await factory.subtraction(**subtraction))
 
-        job_args["subtractions"] = [subtraction["_id"] for subtraction in test_case.subtractions]
+        job_args["subtractions"] = [subtraction["_id"]
+                                    for subtraction in test_case.subtractions]
 
     if "analysis" in yml:
         kwargs = job_args.copy()

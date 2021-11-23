@@ -12,11 +12,17 @@ status = {
 }
 
 
-async def test_processor(snapshot, dbi, static_time, test_job):
+async def test_processor(snapshot, dbi, fake, static_time, test_job):
     """
     Test that the dispatch processor properly formats a raw job document into a dispatchable format.
 
     """
+    user = await fake.users.insert()
+
+    test_job["user"] = {
+        "id": user["_id"]
+    }
+
     assert await virtool.jobs.db.processor(dbi, test_job) == snapshot
 
 

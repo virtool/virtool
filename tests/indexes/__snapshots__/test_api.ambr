@@ -1,5 +1,6 @@
 # name: TestCreate.test[True-uvloop]
   <class 'dict'> {
+    'change_count': 1,
     'created_at': '2015-10-06T20:00:00Z',
     'has_files': True,
     'has_json': False,
@@ -8,11 +9,14 @@
       'id': 'u3cuwaoq',
     },
     'manifest': 'manifest',
+    'modified_otu_count': 0,
     'ready': False,
     'reference': <class 'dict'> {
       'id': 'foo',
     },
     'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
       'id': 'test',
     },
     'version': 9,
@@ -98,6 +102,7 @@
 ---
 # name: test_finalize[uvloop-None]
   <class 'dict'> {
+    'change_count': 0,
     'files': <class 'list'> [
       <class 'dict'> {
         'download_url': '/api/indexes/test_index/files/reference.json.gz',
@@ -165,9 +170,15 @@
       },
     ],
     'id': 'test_index',
+    'modified_otu_count': 0,
     'ready': True,
     'reference': <class 'dict'> {
       'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
     },
   }
 ---
@@ -214,7 +225,9 @@
           'id': 'bar',
         },
         'user': <class 'dict'> {
-          'id': 'bob',
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
         },
         'version': 1,
       },
@@ -232,7 +245,9 @@
           'id': 'foo',
         },
         'user': <class 'dict'> {
-          'id': 'bob',
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
         },
         'version': 0,
       },
@@ -356,7 +371,9 @@
     ],
     'ready': False,
     'user': <class 'dict'> {
-      'id': 'test',
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
     },
     'version': 0,
   }
@@ -378,7 +395,7 @@
       'id': 'bar',
     },
     'user': <class 'dict'> {
-      'id': 'test',
+      'id': '7CtBo2yG',
     },
   }
 ---

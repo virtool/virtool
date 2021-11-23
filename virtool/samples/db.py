@@ -9,23 +9,22 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import virtool.errors
+import virtool.samples.utils
+import virtool.utils
 from multidict import MultiDictProxy
 from pymongo.results import DeleteResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-
-import virtool.errors
-import virtool.samples.utils
-import virtool.utils
-from virtool.db.utils import get_new_id
+from virtool.configuration.config import Config
 from virtool.labels.models import Label
-from virtool.samples.models import SampleReads, SampleArtifact
+from virtool.samples.models import SampleArtifact, SampleReads
 from virtool.samples.utils import join_legacy_read_paths
 from virtool.settings.db import Settings
-from virtool.configuration.config import Config
 from virtool.subtractions.db import attach_subtractions
 from virtool.types import App
 from virtool.uploads.models import Upload
+from virtool.users.db import attach_user
 from virtool.utils import compress_file, file_stats
 
 logger = logging.getLogger(__name__)
@@ -383,9 +382,9 @@ def check_is_legacy(sample: Dict[str, Any]) -> bool:
     files = sample["files"]
 
     return (
-            all(file.get("raw", False) is False for file in files)
-            and files[0]["name"] == "reads_1.fastq"
-            and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
+        all(file.get("raw", False) is False for file in files)
+        and files[0]["name"] == "reads_1.fastq"
+        and (sample["paired"] is False or files[1]["name"] == "reads_2.fastq")
     )
 
 
@@ -553,7 +552,10 @@ async def finalize(
 
         await session.commit()
 
-    return await virtool.samples.db.attach_artifacts_and_reads(pg, document)
+    document = await virtool.samples.db.attach_artifacts_and_reads(pg, document)
+    document = await attach_user(db, document)
+
+    return document
 
 
 async def get_sample(app, sample_id: str):
@@ -576,6 +578,7 @@ async def get_sample(app, sample_id: str):
     document = await attach_subtractions(db, document)
     document = await attach_labels(pg, document)
     document = await attach_artifacts_and_reads(pg, document)
+    document = await attach_user(db, document)
 
     document["paired"] = (len(document["reads"]) == 2)
 

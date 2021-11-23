@@ -223,35 +223,6 @@ async def test_create(data_type, mocker, snapshot, spawn_client, test_random_alp
         "organism": "virus"
     }
 
-    async def m_attach_computed(dbi, document):
-        return {
-            **document,
-            "contributors": [
-                {"bob": 4},
-                {"fred": 10}
-            ],
-            "internal_control": {
-                "id": "foo",
-                "name": "Foo virus"
-            },
-            "latest_build": {
-                "id": "foo",
-                "created_at": static_time.datetime
-            },
-            "otu_count": 22,
-            "unbuilt_change_count": 5,
-            "users": [{
-                "id": "test",
-                "build": True,
-                "modify": True,
-                "modify_otu": True,
-                "remove": True
-            }]
-        }
-
-    m_attach_computed = mocker.patch(
-        "virtool.references.db.attach_computed", m_attach_computed)
-
     resp = await client.post("/api/refs", data)
 
     assert resp.status == 201
@@ -261,14 +232,19 @@ async def test_create(data_type, mocker, snapshot, spawn_client, test_random_alp
 
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
 @pytest.mark.parametrize("error", [None, "403", "404", "422", "400"])
-async def test_edit(data_type, error, mocker, snapshot, spawn_client, resp_is):
+async def test_edit(data_type, error, mocker, snapshot, fake, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
+
+    user = await fake.users.insert()
 
     if error != "404":
         await client.db.references.insert_one({
             "_id": "foo",
             "data_type": data_type,
             "name": "Foo",
+            "user": {
+                "id": user["_id"]
+            },
             "users": [
                 {
                     "id": "bob"

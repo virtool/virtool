@@ -1,12 +1,15 @@
 import random
+from asyncio.tasks import gather
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import virtool.utils
-from virtool.db.utils import id_exists, handle_exists, get_non_existent_ids, oid_exists
+from virtool.db.utils import (get_non_existent_ids, handle_exists, id_exists,
+                              oid_exists)
 from virtool.errors import DatabaseError
 from virtool.groups.db import get_merged_permissions
-from virtool.users.utils import generate_base_permissions, check_password, check_legacy_password, limit_permissions
+from virtool.users.utils import (check_legacy_password, check_password,
+                                 generate_base_permissions, limit_permissions)
 
 PROJECTION = [
     "_id",
@@ -18,6 +21,12 @@ PROJECTION = [
     "permissions",
     "primary_group"
 ]
+
+ATTACH_PROJECTION = {
+    "_id": False,
+    "administrator": True,
+    "handle": True,
+}
 
 
 @dataclass
@@ -35,6 +44,60 @@ class B2CUserAttributes:
         self.display_name = display_name
         self.given_name = given_name
         self.family_name = family_name
+
+
+class AttachUsers:
+
+    def __init__(self, db):
+        self._db = db
+        self._cache = dict()
+
+    def __call__(self, documents):
+        pass
+
+
+async def attach_user(db, document: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Attach more complete user data to a document with a `user.id` field.
+
+    :param db: the application database client
+    :param document: a document to attach user data to
+    :return: a document with user data attached
+
+    """
+    try:
+        user = document["user"]
+
+        try:
+            user_id = user["id"]
+        except TypeError:
+            user_id = user
+    except KeyError:
+        raise KeyError("Document needs a value at user or user.id")
+
+    user_data = await db.users.find_one(user_id, ATTACH_PROJECTION)
+
+    return {
+        **document,
+        "user": {
+            **user_data,
+            "id": user_id
+        }
+    }
+
+
+async def attach_users(db, documents: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Attach more complete user data to a list of documents each containing a `user.id` field.
+
+    :param db: the application database client
+    :param documents: a list of documents to attach user data to
+    :return: a list of documents with user data attached
+
+    """
+    return await gather(
+        *[attach_user(db, document) for document in documents]
+    )
 
 
 def compose_force_reset_update(force_reset: Optional[bool]) -> dict:
@@ -68,7 +131,8 @@ async def compose_groups_update(db, groups: Optional[list]) -> dict:
     non_existent_groups = await get_non_existent_ids(db.groups, groups)
 
     if non_existent_groups:
-        raise DatabaseError("Non-existent groups: " + ", ".join(non_existent_groups))
+        raise DatabaseError("Non-existent groups: " +
+                            ", ".join(non_existent_groups))
 
     update = {
         "groups": groups,
@@ -186,7 +250,8 @@ async def create(
     }
 
     if password is not None:
-        document.update({"password": virtool.users.utils.hash_password(password)})
+        document.update(
+            {"password": virtool.users.utils.hash_password(password)})
     else:
         if await oid_exists(db.users, b2c_user_attributes.oid):
             raise DatabaseError("User already exists")

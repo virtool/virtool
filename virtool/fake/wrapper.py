@@ -3,7 +3,7 @@ A wrapper for the `fake` package that adds some Virtool-specific functionality.
 
 """
 from faker import Faker
-from faker.providers import address, misc, lorem, python
+from faker.providers import address, date_time, lorem, misc, profile, python
 
 
 class FakerWrapper:
@@ -14,6 +14,8 @@ class FakerWrapper:
         self.fake.add_provider(misc)
         self.fake.add_provider(lorem)
         self.fake.add_provider(python)
+        self.fake.add_provider(date_time)
+        self.fake.add_provider(profile)
 
         self.country = self.fake.country
 
@@ -24,6 +26,9 @@ class FakerWrapper:
         self.integer = self.fake.pyint
         self.list = self.fake.pylist
         self.boolean = self.fake.pybool
+        self.profile = self.fake.profile
+        self.date_time = self.fake.date_time
+        self.random_element = self.fake.random_element
 
     def get_mongo_id(self) -> str:
         """

@@ -2,19 +2,18 @@ import asyncio
 import json
 import logging
 
-from aiohttp.web import Response, Request
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPConflict
-from aiohttp.web_fileresponse import FileResponse
-from sqlalchemy import exc
-
 import virtool.http.routes
 import virtool.indexes.db
 import virtool.jobs.db
 import virtool.references.db
 import virtool.uploads.db
 import virtool.utils
+from aiohttp.web import Request, Response
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
+from aiohttp.web_fileresponse import FileResponse
+from sqlalchemy import exc
 from virtool.api.json import CustomEncoder
-from virtool.api.response import json_response, InsufficientRights, NotFound
+from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_new_id
 from virtool.history.db import LIST_PROJECTION
@@ -117,7 +116,6 @@ async def get(req):
     })
 
     document = await virtool.indexes.db.attach_files(pg, document)
-
     document = await virtool.indexes.db.processor(db, document)
 
     return json_response(document)
@@ -182,7 +180,8 @@ async def download_index_file(req: Request):
         raise InsufficientRights()
 
     reference_id = index_document["reference"]["id"]
-    path = req.app["config"].data_path / "references" / reference_id / index_id / filename
+    path = req.app["config"].data_path / "references" / \
+        reference_id / index_id / filename
 
     if not path.exists():
         raise NotFound("File not found")
@@ -206,7 +205,8 @@ async def download_index_file_for_jobs(req: Request):
 
     reference_id = index_document["reference"]["id"]
 
-    path = req.app["config"].data_path / "references" / reference_id / index_id / filename
+    path = req.app["config"].data_path / "references" / \
+        reference_id / index_id / filename
 
     if not path.exists():
         raise NotFound("File not found")
@@ -274,10 +274,14 @@ async def create(req):
     await req.app["jobs"].enqueue(job["_id"])
 
     headers = {
-        "Location": "/api/indexes/" + document["_id"]
+        "Location": f"/api/indexes/{document['_id']}"
     }
 
-    return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
+    return json_response(
+        await virtool.indexes.db.processor(db, document),
+        status=201,
+        headers=headers
+    )
 
 
 @routes.jobs_api.put("/api/indexes/{index_id}/files/{filename}")
@@ -314,17 +318,22 @@ async def upload(req):
         raise HTTPConflict(text="File name already exists")
 
     upload_id = index_file["id"]
-    path = req.app["config"].data_path / "references" / reference_id / index_id / name
+    path = req.app["config"].data_path / \
+        "references" / reference_id / index_id / name
 
     try:
         size = await naive_writer(req, path)
     except asyncio.CancelledError:
         logger.debug(f"Index file upload aborted: {upload_id}")
         await delete_row(pg, upload_id, IndexFile)
-
         return Response(status=499)
 
-    index_file = await virtool.uploads.db.finalize(pg, size, upload_id, IndexFile)
+    index_file = await virtool.uploads.db.finalize(
+        pg,
+        size,
+        upload_id,
+        IndexFile
+    )
 
     headers = {
         "Location": f"/api/indexes/{index_id}/files/{name}"
@@ -363,19 +372,24 @@ async def finalize(req):
     results = {f.name: f.type for f in rows}
 
     if IndexType.fasta not in results.values():
-        raise HTTPConflict(text="A FASTA file must be uploaded in order to finalize index")
+        raise HTTPConflict(
+            text="A FASTA file must be uploaded in order to finalize index")
 
     if reference["data_type"] == "genome":
         required_files = [f for f in FILES if f != "reference.json.gz"]
 
         if missing_files := [f for f in required_files if f not in results]:
-            raise HTTPConflict(text=
-                               f"Reference requires that all Bowtie2 index files have been uploaded. "
+            raise HTTPConflict(text=f"Reference requires that all Bowtie2 index files have been uploaded. "
                                f"Missing files: {', '.join(missing_files)}")
 
-    document = await virtool.indexes.db.finalize(db, pg, ref_id, index_id)
+    document = await virtool.indexes.db.finalize(
+        db,
+        pg,
+        ref_id,
+        index_id
+    )
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(await virtool.indexes.db.processor(db, document))
 
 
 @routes.get("/api/indexes/{index_id}/history")

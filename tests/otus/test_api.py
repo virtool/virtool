@@ -111,7 +111,7 @@ class TestCreate:
         assert await client.db.otus.find_one() == snapshot
         assert await client.db.history.find_one() == snapshot
 
-    @ pytest.mark.parametrize("error,message", [
+    @pytest.mark.parametrize("error,message", [
         (None, None),
         ("400_name_exists", "Name already exists"),
         ("400_abbr_exists", "Abbreviation already exists"),
@@ -171,7 +171,7 @@ class TestCreate:
 
 class TestEdit:
 
-    @ pytest.mark.parametrize("data, existing_abbreviation, description", [
+    @pytest.mark.parametrize("data, existing_abbreviation, description", [
         # Name, ONLY.
         (
             {
@@ -285,7 +285,7 @@ class TestEdit:
         assert await client.db.otus.find_one() == snapshot
         assert await client.db.history.find_one() == snapshot
 
-    @ pytest.mark.parametrize("data,message", [
+    @pytest.mark.parametrize("data,message", [
         (
             {
                 "name": "Tobacco mosaic virus",
@@ -345,7 +345,7 @@ class TestEdit:
 
         await resp_is.bad_request(resp, message)
 
-    @ pytest.mark.parametrize("old_name,old_abbreviation,data", [
+    @pytest.mark.parametrize("old_name,old_abbreviation,data", [
         (
             "Tobacco mosaic otu",
             "TMV",
@@ -493,7 +493,7 @@ async def test_get_isolate(error, snapshot, spawn_client, resp_is, test_otu, tes
 
 class TestAddIsolate:
 
-    @ pytest.mark.parametrize("default", [True, False])
+    @pytest.mark.parametrize("default", [True, False])
     async def test_default(self, default, mocker, snapshot, spawn_client, check_ref_right, resp_is, test_otu,
                            test_random_alphanumeric):
         """

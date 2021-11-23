@@ -29,7 +29,7 @@ class MockJobInterface:
     (None, 2, 2, None),
     ("gv", None, None, None),
     ("sp", None, None, None),
-    ("fred", None, None, None),
+    ("LB1U", None, None, None),
     (None, None, None, [3]),
     (None, None, None, [2, 3]),
     (None, None, None, [0]),
@@ -41,10 +41,14 @@ async def test_find(
         page,
         labels,
         snapshot,
+        fake,
         spawn_client,
         static_time,
         pg_session
 ):
+    user_1 = await fake.users.insert()
+    user_2 = await fake.users.insert()
+
     client = await spawn_client(authorize=True)
 
     async with pg_session as session:
@@ -73,7 +77,7 @@ async def test_find(
     await client.db.samples.insert_many([
         {
             "user": {
-                "id": "bob"
+                "id": user_1["_id"]
             },
             "nuvs": False,
             "host": "",
@@ -89,7 +93,7 @@ async def test_find(
         },
         {
             "user": {
-                "id": "fred"
+                "id": user_2["_id"]
             },
             "nuvs": False,
             "host": "",
@@ -105,7 +109,7 @@ async def test_find(
         },
         {
             "user": {
-                "id": "fred"
+                "id": user_2["_id"]
             },
             "nuvs": False,
             "host": "",
@@ -148,9 +152,13 @@ async def test_find(
 
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("ready", [True, False])
-async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static_time, pg_session):
-    mocker.patch("virtool.samples.utils.get_sample_rights",
-                 return_value=(True, True))
+async def test_get(error, ready, mocker, snapshot, fake, spawn_client, resp_is, static_time, pg_session):
+    mocker.patch(
+        "virtool.samples.utils.get_sample_rights",
+        return_value=(True, True)
+    )
+
+    user = await fake.users.insert()
 
     client = await spawn_client(authorize=True)
 
@@ -180,6 +188,9 @@ async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static
             ],
             "labels": [1],
             "subtractions": ["foo", "bar"],
+            "user": {
+                "id": user["_id"]
+            }
         })
 
         label = Label(
@@ -461,12 +472,14 @@ class TestCreate:
 
 class TestEdit:
 
-    async def test(self, snapshot, spawn_client, pg: AsyncEngine, pg_session):
+    async def test(self, snapshot, fake, spawn_client, pg: AsyncEngine, pg_session):
         """
         Test that an existing sample can be edited correctly.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
+
+        user = await fake.users.insert()
 
         await client.db.samples.insert_one({
             "_id": "test",
@@ -476,6 +489,9 @@ class TestEdit:
             "labels": [2, 3],
             "ready": True,
             "subtractions": ["apple"],
+            "user": {
+                "id": user["_id"],
+            }
         })
 
         await client.db.subtraction.insert_one({
@@ -483,31 +499,33 @@ class TestEdit:
             "name": "Foo"
         })
 
-        label = Label(id=1, name="Bug", color="#a83432",
-                      description="This is a bug")
         async with pg_session as session:
-            session.add(label)
+            session.add(Label(
+                name="Bug",
+                color="#a83432",
+                description="This is a bug"
+            ))
             await session.commit()
 
-        data = {
+        resp = await client.patch("/api/samples/test", {
             "name": "test_sample",
             "subtractions": ["foo"],
             "labels": [1],
             "notes": "This is a test."
-        }
-
-        resp = await client.patch("/api/samples/test", data)
+        })
 
         assert resp.status == 200
         assert await resp.json() == snapshot
 
     @pytest.mark.parametrize("exists", [True, False])
-    async def test_name_exists(self, exists, snapshot, spawn_client, resp_is):
+    async def test_name_exists(self, exists, snapshot, fake, spawn_client, resp_is):
         """
         Test that a ``bad_request`` is returned if the sample name passed in ``name`` already exists.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
+
+        user = await fake.users.insert()
 
         samples = [
             {
@@ -516,6 +534,9 @@ class TestEdit:
                 "all_read": True,
                 "all_write": True,
                 "ready": True,
+                "user": {
+                    "id": user["_id"],
+                }
             }
         ]
 
@@ -525,6 +546,9 @@ class TestEdit:
                     "_id": "bar",
                     "name": "Bar",
                     "ready": True,
+                    "user": {
+                        "id": user["_id"],
+                    }
                 }
             )
 
@@ -544,12 +568,14 @@ class TestEdit:
         snapshot.assert_match(await resp.json())
 
     @pytest.mark.parametrize("exists", [True, False])
-    async def test_label_exists(self, exists, snapshot, spawn_client, resp_is, pg_session):
+    async def test_label_exists(self, exists, snapshot, fake, spawn_client, resp_is, pg_session):
         """
         Test that a ``bad_request`` is returned if the label passed in ``labels`` does not exist.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
+
+        user = await fake.users.insert()
 
         await client.db.samples.insert_one(
             {
@@ -557,6 +583,9 @@ class TestEdit:
                 "name": "Foo",
                 "all_read": True,
                 "all_write": True,
+                "user": {
+                    "id": user["_id"]
+                },
                 "labels": [2, 3],
                 "ready": True
             }
@@ -582,12 +611,14 @@ class TestEdit:
         snapshot.assert_match(await resp.json())
 
     @pytest.mark.parametrize("exists", [True, False])
-    async def test_subtraction_exists(self, exists, snapshot, spawn_client, resp_is):
+    async def test_subtraction_exists(self, exists, fake, snapshot, spawn_client, resp_is):
         """
         Test that a ``bad_request`` is returned if the subtraction passed in ``subtractions`` does not exist.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
+
+        user = await fake.users.insert()
 
         await client.db.samples.insert_one({
             "_id": "test",
@@ -595,7 +626,10 @@ class TestEdit:
             "all_read": True,
             "all_write": True,
             "ready": True,
-            "subtractions": ["apple"]
+            "subtractions": ["apple"],
+            "user": {
+                "id": user["_id"]
+            }
         })
 
         subtractions = [
@@ -630,11 +664,13 @@ class TestEdit:
 
 
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
-async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_session, tmp_path):
+async def test_finalize(field, snapshot, fake, spawn_job_client, resp_is, pg, pg_session, tmp_path):
     """
     Test that sample can be finalized using the Jobs API.
 
     """
+    user = await fake.users.insert()
+
     client = await spawn_job_client(authorize=True)
 
     client.app["config"].data_path = tmp_path
@@ -643,7 +679,10 @@ async def test_finalize(field, snapshot, spawn_job_client, resp_is, pg, pg_sessi
 
     await client.db.samples.insert_one({
         "_id": "test",
-        "ready": True
+        "ready": True,
+        "user": {
+            "id": user["_id"]
+        }
     })
 
     async with pg_session as session:
@@ -777,10 +816,12 @@ async def test_job_remove(
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-@pytest.mark.parametrize("term", [None, "bob", "Baz"])
-async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_is, static_time):
-    mocker.patch("virtool.samples.utils.get_sample_rights",
-                 return_value=(True, True))
+@pytest.mark.parametrize("term", [None, "Baz"])
+async def test_find_analyses(error, term, snapshot, mocker, fake, spawn_client, resp_is, static_time):
+    mocker.patch(
+        "virtool.samples.utils.get_sample_rights",
+        return_value=(True, True)
+    )
 
     client = await spawn_client(authorize=True)
 
@@ -792,6 +833,9 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
             "all_write": True,
             "ready": True,
         })
+
+    user_1 = await fake.users.insert()
+    user_2 = await fake.users.insert()
 
     await client.db.analyses.insert_many([
         {
@@ -807,7 +851,7 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
                 "id": "foo"
             },
             "user": {
-                "id": "bob"
+                "id": user_1["_id"]
             },
             "sample": {
                 "id": "test"
@@ -831,7 +875,7 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
                 "id": "foo"
             },
             "user": {
-                "id": "fred"
+                "id": user_1["_id"]
             },
             "sample": {
                 "id": "test"
@@ -855,7 +899,7 @@ async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_i
                 "id": "foo"
             },
             "user": {
-                "id": "fred"
+                "id": user_2["_id"]
             },
             "sample": {
                 "id": "test"
@@ -900,11 +944,12 @@ async def test_analyze(
     resp_is,
     test_random_alphanumeric
 ):
-    mocker.patch("virtool.samples.utils.get_sample_rights",
-                 return_value=(True, True))
+    mocker.patch(
+        "virtool.samples.utils.get_sample_rights",
+        return_value=(True, True)
+    )
 
     client = await spawn_client(authorize=True)
-
     client.app["jobs"] = MockJobInterface()
 
     test_analysis = {
@@ -959,8 +1004,10 @@ async def test_analyze(
             "ready": True,
         })
 
-    m_create = mocker.patch("virtool.analyses.db.create",
-                            new=make_mocked_coro(test_analysis))
+    m_create = mocker.patch(
+        "virtool.analyses.db.create",
+        make_mocked_coro(test_analysis)
+    )
 
     resp = await client.post("/api/samples/test/analyses", data={
         "workflow": "pathoscope_bowtie",

@@ -4,20 +4,20 @@ Work with indexes in the database.
 """
 import asyncio
 import asyncio.tasks
-from typing import Optional, List, Tuple, Dict
+from typing import Dict, List, Optional, Tuple
 
 import pymongo
-from sqlalchemy.ext.asyncio import AsyncEngine
-
 import virtool.history.db
 import virtool.pg.utils
 import virtool.references.db
 import virtool.utils
+from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool.api.utils import paginate
 from virtool.configuration.config import Config
 from virtool.db.utils import get_new_id
 from virtool.history.db import get_contributors
 from virtool.indexes.models import IndexFile
+from virtool.users.db import attach_user
 
 PROJECTION = [
     "_id",
@@ -116,11 +116,11 @@ async def processor(db, document: dict) -> dict:
         db.history.distinct("otu.id", query)
     )
 
-    return {
+    return await attach_user(db, {
         **document,
         "change_count": change_count,
         "modified_otu_count": len(otu_ids)
-    }
+    })
 
 
 async def find(db, req_query: dict, ref_id:  Optional[str] = None) -> dict:
@@ -150,16 +150,18 @@ async def find(db, req_query: dict, ref_id:  Optional[str] = None) -> dict:
         sort="version"
     )
 
-    data["documents"] = [await processor(db, d) for d in data["documents"]]
+    unbuilt_stats = await get_unbuilt_stats(db, ref_id)
 
-    data.update(await get_unbuilt_stats(db, ref_id))
-
-    return data
+    return {
+        **data,
+        **unbuilt_stats,
+        "documents": [await processor(db, d) for d in data["documents"]]
+    }
 
 
 async def finalize(db, pg: AsyncEngine, ref_id: str, index_id: str) -> dict:
     """
-    Finalize an index document by setting `ready` to `True` and attach files.
+    Finalize an index document by setting `ready` to `True`.
 
     :param db: the application database client
     :param pg: the PostgreSQL AsyncEngine object
