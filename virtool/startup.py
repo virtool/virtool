@@ -4,6 +4,7 @@ import logging
 import signal
 import sys
 import typing
+from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlparse, urlunparse
 
@@ -12,6 +13,7 @@ import aiojobs
 import aiojobs.aiohttp
 import pymongo.errors
 from aiohttp.web import Application
+from msal import ClientApplication
 
 import virtool.db.mongo
 import virtool.pg.utils
@@ -27,6 +29,7 @@ from virtool.fake.wrapper import FakerWrapper
 from virtool.hmm.db import refresh
 from virtool.indexes.tasks import AddIndexFilesTask
 from virtool.jobs.client import JobsClient
+from virtool.oidc.utils import JWKArgs
 from virtool.pg.testing import create_test_database
 from virtool.redis import periodically_ping_redis
 from virtool.references.db import refresh_remotes
@@ -47,6 +50,14 @@ from virtool.utils import ensure_data_dir, get_client_path, random_alphanumeric
 from virtool.version import determine_server_version
 
 logger = logging.getLogger("startup")
+
+
+@dataclass
+class B2C:
+    msal: ClientApplication
+    authority: str
+    jwk_args: JWKArgs = None
+    auth_code_flow: dict = None
 
 
 def create_events() -> dict:
@@ -356,6 +367,35 @@ async def init_version(app: typing.Union[dict, Application]):
     logger.info(f"Mode: {app['mode']}")
 
     app["version"] = version
+
+
+async def init_b2c(app: Application):
+    """
+    Initiate connection to Azure AD B2C tenant.
+
+    :param app: Application object
+    """
+    b2c_tenant = app["config"].b2c_tenant
+    b2c_user_flow = app["config"].b2c_user_flow
+
+    if not all([
+        app["config"].b2c_client_id,
+        app["config"].b2c_client_secret,
+        b2c_tenant,
+        b2c_user_flow
+    ]):
+        logger.fatal("Required B2C client information not provided for --use-b2c option")
+        sys.exit(1)
+
+    authority = f"https://{b2c_tenant}.b2clogin.com/{b2c_tenant}.onmicrosoft.com/{b2c_user_flow}"
+
+    msal = ClientApplication(
+        client_id=app["config"].b2c_client_id,
+        authority=authority,
+        client_credential=app["config"].b2c_client_secret
+    )
+
+    app["b2c"] = B2C(msal, authority)
 
 
 async def init_task_runner(app: Application):

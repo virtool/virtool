@@ -22,3 +22,8 @@ class Config(object):
     port: int = 9950
     fake: bool = False
     fake_path: Path = None
+    b2c_client_id: str = None
+    b2c_client_secret: str = None
+    b2c_tenant: str = None
+    b2c_user_flow: str = None
+    use_b2c: bool = False

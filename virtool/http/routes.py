@@ -4,6 +4,7 @@ from typing import Callable
 from aiohttp.web_exceptions import HTTPUnauthorized
 from aiohttp.web_routedef import RouteTableDef
 from virtool.api.response import json_response
+from virtool.http.auth import PUBLIC_ROUTES
 from virtool.users.utils import PERMISSIONS
 
 
@@ -41,10 +42,10 @@ def protect(
         async def wrapped(req):
             client = req["client"]
 
-            if not public and not client.authenticated:
+            if not public and not client.authenticated and req.path not in PUBLIC_ROUTES:
                 raise HTTPUnauthorized(text="Requires authorization")
 
-            if client is None or not client.administrator:
+            if not client.authenticated or not client.administrator:
                 if admin:
                     return json_response({
                         "id": "not_permitted",

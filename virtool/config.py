@@ -8,8 +8,8 @@ import uvloop
 
 import virtool.app
 import virtool.jobs.main
-from virtool.logs import configure_logs
 from virtool.configuration.config import Config
+from virtool.logs import configure_logs
 
 logger = logging.getLogger(__name__)
 
@@ -136,8 +136,46 @@ def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_se
     help="Start with automatic fetching disabled",
     is_flag=True
 )
+@click.option(
+    "--b2c-client-id",
+    help="Azure AD B2C client ID, required for --use-b2c",
+    type=str
+)
+@click.option(
+    "--b2c-client-secret",
+    help="Azure AD B2C client secret, required for --use-b2c",
+    type=str
+)
+@click.option(
+    "--b2c-tenant",
+    help="Azure AD B2C tenant name",
+    type=str
+)
+@click.option(
+    "--b2c-user-flow",
+    help="Azure AD B2C signupsignin user flow, required for --use-b2c",
+    type=str,
+)
+@click.option(
+    "--use-b2c",
+    help="Use Azure AD B2C for authentication",
+    is_flag=True
+)
 @click.pass_context
-def start_server(ctx, host, port, no_check_db, no_check_files, no_client, no_fetching):
+def start_server(
+        ctx,
+        host,
+        port,
+        no_check_db,
+        no_check_files,
+        no_client,
+        no_fetching,
+        b2c_client_id,
+        b2c_client_secret,
+        b2c_tenant,
+        b2c_user_flow,
+        use_b2c
+):
     configure_logs(ctx.obj["dev"], ctx.obj["verbose"])
 
     config = Config(
@@ -156,7 +194,12 @@ def start_server(ctx, host, port, no_check_db, no_check_files, no_client, no_fet
         proxy=ctx.obj["proxy"],
         host=host,
         no_client=no_client,
-        port=port
+        port=port,
+        b2c_client_id=b2c_client_id,
+        b2c_client_secret=b2c_client_secret,
+        b2c_tenant=b2c_tenant,
+        b2c_user_flow=b2c_user_flow,
+        use_b2c=use_b2c
     )
 
     logger.info("Starting in server mode")

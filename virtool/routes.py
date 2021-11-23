@@ -16,6 +16,7 @@ import virtool.http.ws
 import virtool.indexes.api
 import virtool.jobs.api
 import virtool.labels.api
+import virtool.oidc.api
 import virtool.otus.api
 import virtool.references.api
 import virtool.samples.api
@@ -61,7 +62,8 @@ ROUTES = (
     virtool.settings.api.routes,
     virtool.subtractions.api.routes,
     virtool.uploads.api.routes,
-    virtool.users.api.routes
+    virtool.users.api.routes,
+    virtool.oidc.api.routes
 )
 
 

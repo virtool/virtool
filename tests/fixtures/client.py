@@ -64,7 +64,7 @@ def create_app(
         pg_connection_string,
         redis_connection_string,
         test_db_connection_string,
-        test_db_name,
+        test_db_name
 ):
     def _create_app(
             dev=False,
@@ -81,9 +81,9 @@ def create_app(
             no_client=True,
             postgres_connection_string=pg_connection_string,
             redis_connection_string=redis_connection_string,
-            fake=False,
-
+            fake=False
         )
+
         return virtool.app.create_app(config)
 
     return _create_app
@@ -107,7 +107,8 @@ def spawn_client(
             dev=False,
             enable_api=False,
             groups=None,
-            permissions=None
+            permissions=None,
+            use_b2c=False
     ):
         app = create_app(dev)
 
@@ -135,6 +136,12 @@ def spawn_client(
                 "session_id": "foobar",
                 "session_token": "bar"
             }
+
+        elif use_b2c:
+            cookies = {
+                "id_token": "foobar"
+            }
+
         else:
             cookies = {
                 "session_id": "dne"

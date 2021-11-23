@@ -1,12 +1,12 @@
 import random
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union
 
-import virtool.db.utils
-import virtool.errors
-import virtool.groups.db
-import virtool.users.utils
 import virtool.utils
+from virtool.db.utils import id_exists, handle_exists, get_non_existent_ids, oid_exists
+from virtool.errors import DatabaseError
+from virtool.groups.db import get_merged_permissions
+from virtool.users.utils import generate_base_permissions, check_password, check_legacy_password, limit_permissions
 
 PROJECTION = [
     "_id",
@@ -21,7 +21,7 @@ PROJECTION = [
 
 
 @dataclass
-class ADUserAttributes:
+class B2CUserAttributes:
     """
     Class to store ID token claims from Azure AD B2C
     """
@@ -29,14 +29,12 @@ class ADUserAttributes:
     display_name: str
     given_name: str
     family_name: str
-    email: str
 
-    def __init__(self, oid: str, display_name: str, given_name: str, family_name: str, email: str):
-        self.ad_oid = oid
-        self.ad_display_name = display_name
-        self.ad_given_name = given_name
-        self.ad_family_name = family_name
-        self.ad_email = email
+    def __init__(self, oid: str, display_name: str, given_name: str, family_name: str):
+        self.oid = oid
+        self.display_name = display_name
+        self.given_name = given_name
+        self.family_name = family_name
 
 
 def compose_force_reset_update(force_reset: Optional[bool]) -> dict:
@@ -67,14 +65,14 @@ async def compose_groups_update(db, groups: Optional[list]) -> dict:
     if groups is None:
         return dict()
 
-    non_existent_groups = await virtool.db.utils.get_non_existent_ids(db.groups, groups)
+    non_existent_groups = await get_non_existent_ids(db.groups, groups)
 
     if non_existent_groups:
-        raise virtool.errors.DatabaseError("Non-existent groups: " + ", ".join(non_existent_groups))
+        raise DatabaseError("Non-existent groups: " + ", ".join(non_existent_groups))
 
     update = {
         "groups": groups,
-        "permissions": await virtool.groups.db.get_merged_permissions(db, groups)
+        "permissions": await get_merged_permissions(db, groups)
     }
 
     return update
@@ -114,29 +112,29 @@ async def compose_primary_group_update(db, user_id: Optional[str], primary_group
 
     # 'none' is a valid primary group regardless of user membership or existence of the group in the db
     if primary_group != "none":
-        if not await virtool.db.utils.id_exists(db.groups, primary_group):
-            raise virtool.errors.DatabaseError("Non-existent group: " + primary_group)
+        if not await id_exists(db.groups, primary_group):
+            raise DatabaseError("Non-existent group: " + primary_group)
 
         if not await is_member_of_group(db, user_id, primary_group):
-            raise virtool.errors.DatabaseError("User is not member of group")
+            raise DatabaseError("User is not member of group")
 
     return {
         "primary_group": primary_group
     }
 
 
-async def generate_handle(collection, given_name: str, family_name: str):
+async def generate_handle(collection, given_name: str, family_name: str) -> str:
     """
-    Create handle for new AD users in Virtool using values from ID token and random int
+    Create handle for new B2C users in Virtool using values from ID token and random int
 
     :param collection: the mongo collection to check for existing usernames
-    :param given_name: user's first name collected from Azure AD
-    :param family_name: user's last name collected from Azure AD
+    :param given_name: user's first name collected from Azure AD B2C
+    :param family_name: user's last name collected from Azure AD B2C
 
-    :return: user handle created from AD user info
+    :return: user handle created from B2C user info
     """
     handle = f"{given_name}-{family_name}-{random.randint(1,100)}"
-    if await virtool.db.utils.handle_exists(collection, handle):
+    if await handle_exists(collection, handle):
         return await generate_handle(collection, given_name, family_name)
 
     return handle
@@ -144,26 +142,26 @@ async def generate_handle(collection, given_name: str, family_name: str):
 
 async def create(
         db,
-        password: str,
-        handle: str = None,
+        password: Union[str, None],
+        handle: str,
         force_reset: bool = True,
-        ad_user_attributes: ADUserAttributes = None
+        b2c_user_attributes: B2CUserAttributes = None
 ) -> dict:
     """
-    Insert a new user document into the database. If Azure AD information is given, add it to user document.
+    Insert a new user document into the database. If Azure AD B2C information is given, add it to user document.
 
     :param db: the application database client
     :param handle: the requested handle for the user
     :param password: a password
     :param force_reset: force the user to reset password on next login
-    :param ad_user_attributes: arguments gathered from Azure AD B2C ID token
+    :param b2c_user_attributes: arguments gathered from Azure AD B2C ID token
 
     :return: the user document
     """
     user_id = await virtool.db.utils.get_new_id(db.users)
 
     if await virtool.db.utils.handle_exists(db.users, handle) or await virtool.db.utils.id_exists(db.users, user_id):
-        raise virtool.errors.DatabaseError("User already exists")
+        raise DatabaseError("User already exists")
 
     document = {
         "_id": user_id,
@@ -176,8 +174,7 @@ async def create(
             "show_versions": True,
             "quick_analyze_workflow": "pathoscope_bowtie"
         },
-        "permissions": virtool.users.utils.generate_base_permissions(),
-        "password": virtool.users.utils.hash_password(password),
+        "permissions": generate_base_permissions(),
         "primary_group": "",
         # Should the user be forced to reset their password on their next login?
         "force_reset": force_reset,
@@ -187,15 +184,17 @@ async def create(
         # download the client.
         "invalidate_sessions": False
     }
-    if ad_user_attributes:
-        if await virtool.db.utils.oid_exists(db.users, ad_user_attributes.oid):
-            raise virtool.errors.DatabaseError("User already exists")
+
+    if password is not None:
+        document.update({"password": virtool.users.utils.hash_password(password)})
+    else:
+        if await oid_exists(db.users, b2c_user_attributes.oid):
+            raise DatabaseError("User already exists")
         document.update({
-            "ad_oid": ad_user_attributes.oid,
-            "ad_display_name": ad_user_attributes.display_name,
-            "ad_given_name": ad_user_attributes.given_name,
-            "ad_family_name": ad_user_attributes.family_name,
-            "ad_email": ad_user_attributes.email
+            "b2c_oid": b2c_user_attributes.oid,
+            "b2c_display_name": b2c_user_attributes.display_name,
+            "b2c_given_name": b2c_user_attributes.given_name,
+            "b2c_family_name": b2c_user_attributes.family_name
         })
 
     await db.users.insert_one(document)
@@ -212,8 +211,8 @@ async def edit(
         password: Optional[str] = None,
         primary_group: Optional[str] = None
 ) -> dict:
-    if not await virtool.db.utils.id_exists(db.users, user_id):
-        raise virtool.errors.DatabaseError("User does not exist")
+    if not await id_exists(db.users, user_id):
+        raise DatabaseError("User does not exist")
 
     update = dict()
 
@@ -275,12 +274,12 @@ async def validate_credentials(db, user_id: str, password: str) -> bool:
 
     # Return True if the attempted password matches the stored password.
     try:
-        if virtool.users.utils.check_password(password, document["password"]):
+        if check_password(password, document["password"]):
             return True
     except TypeError:
         pass
 
-    if "salt" in document and virtool.users.utils.check_legacy_password(
+    if "salt" in document and check_legacy_password(
             password,
             document["salt"],
             document["password"]
@@ -309,7 +308,7 @@ async def update_sessions_and_keys(db, user_id: str, administrator: bool, groups
             "$set": {
                 "administrator": administrator,
                 "groups": groups,
-                "permissions": virtool.users.utils.limit_permissions(document["permissions"], permissions)
+                "permissions": limit_permissions(document["permissions"], permissions)
             }
         })
 
@@ -320,3 +319,34 @@ async def update_sessions_and_keys(db, user_id: str, administrator: bool, groups
             "permissions": permissions
         }
     })
+
+
+async def find_or_create_b2c_user(db, b2c_user_attributes: B2CUserAttributes) -> dict:
+    """
+    search for existing user using oid value found in user_attributes.
+
+    If not found, create new user with oid value, generated handle and user_attribute information.
+
+    :param b2c_user_attributes: User attributes collected from ID token claims
+    :param db: a database client
+
+    :return: found or created user document
+    """
+    document = await db.users.find_one({"b2c_oid": b2c_user_attributes.oid})
+
+    if document is None:
+        handle = await virtool.users.db.generate_handle(
+            db.users,
+            b2c_user_attributes.given_name,
+            b2c_user_attributes.family_name
+        )
+
+        document = await virtool.users.db.create(
+            db,
+            password=None,
+            handle=handle,
+            force_reset=False,
+            b2c_user_attributes=b2c_user_attributes
+        )
+
+    return document

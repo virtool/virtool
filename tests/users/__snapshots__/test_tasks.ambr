@@ -1,8 +1,8 @@
 # name: test_update_user_document_task[uvloop-ad_user]
   <class 'dict'> {
     '_id': 'abc123',
-    'ad_family_name': 'bar',
-    'ad_given_name': 'foo',
+    'b2c_family_name': 'bar',
+    'b2c_given_name': 'foo',
     'handle': 'foo',
   }
 ---
