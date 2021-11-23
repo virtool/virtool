@@ -6,12 +6,6 @@ from pathlib import Path
 
 import aiohttp.web
 import pymongo.errors
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPConflict
-from aiohttp.web_fileresponse import FileResponse
-from cerberus import Validator
-from sqlalchemy import exc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 import virtool.analyses.db
 import virtool.caches.db
 import virtool.db.utils
@@ -21,9 +15,15 @@ import virtool.samples.utils
 import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
+from aiohttp.web_fileresponse import FileResponse
+from cerberus import Validator
+from sqlalchemy import exc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from virtool.analyses.db import PROJECTION
 from virtool.analyses.utils import WORKFLOW_NAMES
-from virtool.api.response import json_response, InsufficientRights, NotFound, InvalidQuery
+from virtool.api.response import (InsufficientRights, InvalidQuery, NotFound,
+                                  json_response)
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.caches.models import SampleArtifactCache
 from virtool.caches.utils import join_cache_path
@@ -31,14 +31,19 @@ from virtool.errors import DatabaseError
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
-from virtool.pg.utils import get_rows, delete_row
-from virtool.samples.db import attach_labels, compose_sample_workflow_query, get_sample_owner, LIST_PROJECTION, \
-    check_name, validate_force_choice_group, create_sample, check_rights, RIGHTS_PROJECTION, recalculate_workflow_tags
-from virtool.samples.files import create_artifact_file, create_reads_file, get_existing_reads
+from virtool.pg.utils import delete_row, get_rows
+from virtool.samples.db import (LIST_PROJECTION, RIGHTS_PROJECTION,
+                                attach_labels, check_name, check_rights,
+                                compose_sample_workflow_query, create_sample,
+                                get_sample_owner, recalculate_workflow_tags,
+                                validate_force_choice_group)
+from virtool.samples.files import (create_artifact_file, create_reads_file,
+                                   get_existing_reads)
 from virtool.samples.models import ArtifactType, SampleArtifact, SampleReads
 from virtool.samples.utils import bad_labels_response, check_labels
 from virtool.subtractions.db import attach_subtractions
 from virtool.uploads.utils import is_gzip_compressed
+from virtool.users.db import attach_users
 from virtool.validators import strip
 
 logger = logging.getLogger("samples")
@@ -134,7 +139,8 @@ async def find(req):
         reverse=True
     )
 
-    documents = await gather(*[attach_labels(pg, document) for document in data["documents"]])
+    documents = await gather(*[attach_labels(pg, d) for d in data["documents"]])
+    documents = await attach_users(db, documents)
 
     return json_response({
         **data,
@@ -279,7 +285,8 @@ async def create(req):
     )
 
     if non_existent_subtractions:
-        raise HTTPBadRequest(text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
+        raise HTTPBadRequest(
+            text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
 
     if "labels" in data:
         non_existent_labels = await check_labels(pg, data["labels"])
@@ -439,7 +446,8 @@ async def edit(req):
         )
 
         if non_existent_subtractions:
-            raise HTTPBadRequest(text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
+            raise HTTPBadRequest(
+                text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
 
     await db.samples.update_one({"_id": sample_id}, {
         "$set": data
@@ -620,7 +628,8 @@ async def find_analyses(req):
     db_query = dict()
 
     if term:
-        db_query.update(compose_regex_query(term, ["reference.name", "user.id"]))
+        db_query.update(compose_regex_query(
+            term, ["reference.name", "user.id"]))
     base_query = {
         "sample.id": sample_id
     }
@@ -634,11 +643,16 @@ async def find_analyses(req):
         sort=[("created_at", -1)]
     )
 
-    data["documents"] = await asyncio.tasks.gather(
+    documents = await asyncio.tasks.gather(
         *[attach_subtractions(db, d) for d in data["documents"]]
     )
 
-    return json_response(data)
+    documents = await attach_users(db, documents)
+
+    return json_response({
+        **data,
+        "documents": documents
+    })
 
 
 @routes.post("/api/samples/{sample_id}/analyses")
@@ -692,7 +706,8 @@ async def analyze(req):
         )
 
         if non_existent_subtractions:
-            raise HTTPBadRequest(text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
+            raise HTTPBadRequest(
+                text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}")
 
     job_id = await virtool.db.utils.get_new_id(db.jobs)
 
@@ -806,7 +821,8 @@ async def upload_artifact(req):
     try:
         artifact = await create_artifact_file(pg, name, name, sample_id, artifact_type)
     except exc.IntegrityError:
-        raise HTTPConflict(text="Artifact file has already been uploaded for this sample")
+        raise HTTPConflict(
+            text="Artifact file has already been uploaded for this sample")
 
     upload_id = artifact["id"]
 
@@ -870,7 +886,8 @@ async def upload_reads(req):
             upload_id=upload
         )
     except exc.IntegrityError:
-        raise HTTPConflict(text="Reads file name is already uploaded for this sample")
+        raise HTTPConflict(
+            text="Reads file name is already uploaded for this sample")
 
     headers = {
         "Location": f"/api/samples/{sample_id}/reads/{reads['name_on_disk']}"
@@ -906,7 +923,8 @@ async def create_cache(req):
     try:
         document = await virtool.caches.db.create(db, sample_id, key, sample["paired"])
     except pymongo.errors.DuplicateKeyError:
-        raise HTTPConflict(text=f"Cache with key {key} already exists for this sample")
+        raise HTTPConflict(
+            text=f"Cache with key {key} already exists for this sample")
 
     headers = {
         "Location": f"/api/samples/{sample_id}/caches/{document['id']}"
@@ -996,7 +1014,8 @@ async def upload_cache_artifact(req):
     try:
         artifact = await create_artifact_file(pg, name, name, sample_id, artifact_type, key=key)
     except exc.IntegrityError:
-        raise HTTPConflict(text="Artifact file has already been uploaded for this sample cache")
+        raise HTTPConflict(
+            text="Artifact file has already been uploaded for this sample cache")
 
     upload_id = artifact["id"]
 
@@ -1105,7 +1124,8 @@ async def download_artifact(req: aiohttp.web.Request):
 
     artifact = result.to_dict()
 
-    file_path = req.app["config"].data_path / f"samples/{sample_id}/{artifact['name_on_disk']}"
+    file_path = req.app["config"].data_path / \
+        f"samples/{sample_id}/{artifact['name_on_disk']}"
 
     if not os.path.isfile(file_path):
         raise NotFound()
@@ -1179,7 +1199,8 @@ async def download_cache_artifact(req):
     async with AsyncSession(pg) as session:
         result = (
             await session.execute(
-                select(SampleArtifactCache).filter_by(name=filename, key=key, sample=sample_id)
+                select(SampleArtifactCache).filter_by(
+                    name=filename, key=key, sample=sample_id)
             )
         ).scalar()
 
@@ -1188,7 +1209,8 @@ async def download_cache_artifact(req):
 
     artifact = result.to_dict()
 
-    file_path = req.app["config"].data_path / "caches" / key / artifact["name_on_disk"]
+    file_path = req.app["config"].data_path / \
+        "caches" / key / artifact["name_on_disk"]
 
     if not file_path.exists():
         raise NotFound()

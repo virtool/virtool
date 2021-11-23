@@ -266,6 +266,11 @@
       },
     ],
     'ready': True,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
   }
 ---
 # name: test_update_is_compressed[uvloop]

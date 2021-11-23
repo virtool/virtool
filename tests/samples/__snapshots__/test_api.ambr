@@ -45,6 +45,8 @@
       },
     ],
     'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
       'id': 'test',
     },
   }
@@ -130,6 +132,8 @@
       },
     ],
     'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
       'id': 'test',
     },
   }
@@ -215,6 +219,8 @@
       },
     ],
     'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
       'id': 'test',
     },
   }
@@ -301,6 +307,11 @@
         'name': 'Foo',
       },
     ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
   }
 ---
 # name: TestEdit.test_label_exists[uvloop-True]
@@ -325,6 +336,11 @@
     'reads': <class 'list'> [
     ],
     'ready': True,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
   }
 ---
 # name: TestEdit.test_name_exists[uvloop-False]
@@ -343,6 +359,11 @@
     'reads': <class 'list'> [
     ],
     'ready': True,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
   }
 ---
 # name: TestEdit.test_subtraction_exists[uvloop-True]
@@ -371,6 +392,11 @@
         'name': 'Bar',
       },
     ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
   }
 ---
 # name: TestUploadReads.test_upload_reads[uvloop-True]
@@ -443,6 +469,11 @@
       },
     ],
     'ready': True,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
   }
 ---
 # name: test_finalize_cache[uvloop-quality]
@@ -455,6 +486,63 @@
     'sample': <class 'dict'> {
       'id': 'test',
     },
+  }
+---
+# name: test_find[uvloop-LB1U-None-None-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#0d321d',
+            'description': 'This is a question',
+            'id': 3,
+            'name': 'Question',
+          },
+        ],
+        'name': '16SPP044',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'johnsoncynthia',
+          'id': 'LB1U6zCj',
+        },
+      },
+      <class 'dict'> {
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#a83432',
+            'description': 'This is a bug',
+            'id': 1,
+            'name': 'Bug',
+          },
+        ],
+        'name': '16GVP043',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'johnsoncynthia',
+          'id': 'LB1U6zCj',
+        },
+      },
+    ],
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
   }
 ---
 # name: test_find[uvloop-None-2-1-None]
@@ -478,7 +566,9 @@
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
-          'id': 'fred',
+          'administrator': False,
+          'handle': 'johnsoncynthia',
+          'id': 'LB1U6zCj',
         },
       },
       <class 'dict'> {
@@ -505,7 +595,9 @@
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
-          'id': 'bob',
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
         },
       },
     ],
@@ -537,7 +629,9 @@
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
-          'id': 'fred',
+          'administrator': False,
+          'handle': 'johnsoncynthia',
+          'id': 'LB1U6zCj',
         },
       },
     ],
@@ -569,7 +663,9 @@
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
-          'id': 'fred',
+          'administrator': False,
+          'handle': 'johnsoncynthia',
+          'id': 'LB1U6zCj',
         },
       },
       <class 'dict'> {
@@ -596,7 +692,9 @@
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
-          'id': 'bob',
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
         },
       },
       <class 'dict'> {
@@ -617,7 +715,9 @@
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
-          'id': 'fred',
+          'administrator': False,
+          'handle': 'johnsoncynthia',
+          'id': 'LB1U6zCj',
         },
       },
     ],
@@ -649,7 +749,9 @@
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
-          'id': 'fred',
+          'administrator': False,
+          'handle': 'johnsoncynthia',
+          'id': 'LB1U6zCj',
         },
       },
     ],
@@ -681,7 +783,9 @@
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
-          'id': 'fred',
+          'administrator': False,
+          'handle': 'johnsoncynthia',
+          'id': 'LB1U6zCj',
         },
       },
       <class 'dict'> {
@@ -708,7 +812,9 @@
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
-          'id': 'bob',
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
         },
       },
     ],
@@ -751,64 +857,13 @@
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
-          'id': 'fred',
+          'administrator': False,
+          'handle': 'johnsoncynthia',
+          'id': 'LB1U6zCj',
         },
       },
     ],
     'found_count': 1,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  }
----
-# name: test_find[uvloop-fred-None-None-None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#0d321d',
-            'description': 'This is a question',
-            'id': 3,
-            'name': 'Question',
-          },
-        ],
-        'name': '16SPP044',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': <class 'dict'> {
-          'id': 'fred',
-        },
-      },
-      <class 'dict'> {
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#a83432',
-            'description': 'This is a bug',
-            'id': 1,
-            'name': 'Bug',
-          },
-        ],
-        'name': '16GVP043',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': <class 'dict'> {
-          'id': 'fred',
-        },
-      },
-    ],
-    'found_count': 2,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -842,7 +897,9 @@
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
-          'id': 'bob',
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
         },
       },
       <class 'dict'> {
@@ -863,7 +920,9 @@
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
-          'id': 'fred',
+          'administrator': False,
+          'handle': 'johnsoncynthia',
+          'id': 'LB1U6zCj',
         },
       },
     ],
@@ -895,7 +954,9 @@
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
-          'id': 'fred',
+          'administrator': False,
+          'handle': 'johnsoncynthia',
+          'id': 'LB1U6zCj',
         },
       },
     ],
@@ -928,7 +989,9 @@
           'id': 'test',
         },
         'user': <class 'dict'> {
-          'id': 'bob',
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -951,7 +1014,9 @@
           'id': 'test',
         },
         'user': <class 'dict'> {
-          'id': 'fred',
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -985,7 +1050,9 @@
           'id': 'test',
         },
         'user': <class 'dict'> {
-          'id': 'bob',
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -1008,7 +1075,9 @@
           'id': 'test',
         },
         'user': <class 'dict'> {
-          'id': 'fred',
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -1031,46 +1100,14 @@
           'id': 'test',
         },
         'user': <class 'dict'> {
-          'id': 'fred',
+          'administrator': False,
+          'handle': 'johnsoncynthia',
+          'id': 'LB1U6zCj',
         },
         'workflow': 'pathoscope_bowtie',
       },
     ],
     'found_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  }
----
-# name: test_find_analyses[uvloop-bob-None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 'test_1',
-        'index': <class 'dict'> {
-          'id': 'foo',
-          'version': 2,
-        },
-        'job': <class 'dict'> {
-          'id': 'test',
-        },
-        'ready': True,
-        'reference': <class 'dict'> {
-          'id': 'baz',
-          'name': 'Baz',
-        },
-        'sample': <class 'dict'> {
-          'id': 'test',
-        },
-        'user': <class 'dict'> {
-          'id': 'bob',
-        },
-        'workflow': 'pathoscope_bowtie',
-      },
-    ],
-    'found_count': 1,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -1146,6 +1183,11 @@
         'name': 'Bar',
       },
     ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
   }
 ---
 # name: test_get[uvloop-True-None]
@@ -1219,6 +1261,11 @@
         'name': 'Bar',
       },
     ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
   }
 ---
 # name: test_get_cache[uvloop-None]

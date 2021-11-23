@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from tests.fixtures.fake import FakeGenerator
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile
 from virtool.pg.utils import get_row_by_id
@@ -20,10 +21,111 @@ def files(tmp_path):
     return data
 
 
+async def test_find(snapshot, mocker, fake, spawn_client, resp_is, static_time):
+    mocker.patch("virtool.samples.utils.get_sample_rights",
+                 return_value=(True, True))
+
+    client = await spawn_client(authorize=True)
+
+    user = await fake.users.insert()
+
+    await client.db.samples.insert_one({
+        "_id": "test",
+        "created_at": static_time.datetime,
+        "all_read": True,
+        "all_write": True,
+        "user": {
+            "id": user["_id"]
+        }
+    })
+
+    await client.db.analyses.insert_many([
+        {
+            "_id": "test_1",
+            "workflow": "pathoscope_bowtie",
+            "created_at": static_time.datetime,
+            "ready": True,
+            "job": {
+                "id": "test"
+            },
+            "index": {
+                "version": 2,
+                "id": "foo"
+            },
+            "user": {
+                "id": user["_id"]
+            },
+            "sample": {
+                "id": "test"
+            },
+            "reference": {
+                "id": "baz",
+                "name": "Baz"
+            },
+            "foobar": True
+        },
+        {
+            "_id": "test_2",
+            "workflow": "pathoscope_bowtie",
+            "created_at": static_time.datetime,
+            "ready": True,
+            "job": {
+                "id": "test"
+            },
+            "index": {
+                "version": 2,
+                "id": "foo"
+            },
+            "user": {
+                "id": user["_id"]
+            },
+            "sample": {
+                "id": "test"
+            },
+            "reference": {
+                "id": "baz",
+                "name": "Baz"
+            },
+            "foobar": True
+        },
+        {
+            "_id": "test_3",
+            "workflow": "pathoscope_bowtie",
+            "created_at": static_time.datetime,
+            "ready": True,
+            "job": {
+                "id": "test"
+            },
+            "index": {
+                "version": 2,
+                "id": "foo"
+            },
+            "user": {
+                "id": user["_id"]
+            },
+            "sample": {
+                "id": "test"
+            },
+            "reference": {
+                "id": "foo",
+                "name": "Foo"
+            },
+            "foobar": False
+        },
+    ])
+
+    resp = await client.get("/api/analyses")
+
+    assert resp.status == 200
+    assert await resp.json() == snapshot
+
+
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("error", [None, "400", "403", "404"])
-async def test_get(ready, error, mocker, snapshot, spawn_client, static_time, resp_is, pg):
+async def test_get(ready, fake: FakeGenerator, error, mocker, snapshot, spawn_client, static_time, resp_is, pg):
     client = await spawn_client(authorize=True)
+
+    user = await fake.users.insert()
 
     document = {
         "_id": "foobar",
@@ -34,7 +136,10 @@ async def test_get(ready, error, mocker, snapshot, spawn_client, static_time, re
         "sample": {
             "id": "baz"
         },
-        "subtractions": ["plum", "apple"]
+        "subtractions": ["plum", "apple"],
+        "user": {
+            "id": user["_id"]
+        }
     }
 
     await client.db.subtraction.insert_many([
@@ -71,7 +176,10 @@ async def test_get(ready, error, mocker, snapshot, spawn_client, static_time, re
         make_mocked_coro({
             "_id": "foo",
             "created_at": static_time.datetime,
-            "formatted": True
+            "formatted": True,
+            "user": {
+                "id": user["_id"]
+            }
         })
     )
 
@@ -100,108 +208,13 @@ async def test_get(ready, error, mocker, snapshot, spawn_client, static_time, re
         assert not m_format_analysis.called
 
 
-async def test_find(snapshot, mocker, spawn_client, resp_is, static_time):
-    mocker.patch("virtool.samples.utils.get_sample_rights",
-                 return_value=(True, True))
-
-    client = await spawn_client(authorize=True)
-
-    await client.db.samples.insert_one({
-        "_id": "test",
-        "created_at": static_time.datetime,
-        "all_read": True,
-        "all_write": True,
-        "user": {
-            "id": "bill"
-        }
-    })
-
-    await client.db.analyses.insert_many([
-        {
-            "_id": "test_1",
-            "workflow": "pathoscope_bowtie",
-            "created_at": static_time.datetime,
-            "ready": True,
-            "job": {
-                "id": "test"
-            },
-            "index": {
-                "version": 2,
-                "id": "foo"
-            },
-            "user": {
-                "id": "bob"
-            },
-            "sample": {
-                "id": "test"
-            },
-            "reference": {
-                "id": "baz",
-                "name": "Baz"
-            },
-            "foobar": True
-        },
-        {
-            "_id": "test_2",
-            "workflow": "pathoscope_bowtie",
-            "created_at": static_time.datetime,
-            "ready": True,
-            "job": {
-                "id": "test"
-            },
-            "index": {
-                "version": 2,
-                "id": "foo"
-            },
-            "user": {
-                "id": "fred"
-            },
-            "sample": {
-                "id": "test"
-            },
-            "reference": {
-                "id": "baz",
-                "name": "Baz"
-            },
-            "foobar": True
-        },
-        {
-            "_id": "test_3",
-            "workflow": "pathoscope_bowtie",
-            "created_at": static_time.datetime,
-            "ready": True,
-            "job": {
-                "id": "test"
-            },
-            "index": {
-                "version": 2,
-                "id": "foo"
-            },
-            "user": {
-                "id": "fred"
-            },
-            "sample": {
-                "id": "test"
-            },
-            "reference": {
-                "id": "foo",
-                "name": "Foo"
-            },
-            "foobar": False
-        },
-    ])
-
-    resp = await client.get("/api/analyses")
-
-    assert resp.status == 200
-    assert await resp.json() == snapshot
-
-
 @pytest.mark.parametrize("error", [None, "400", "403", "404", "409"])
-async def test_remove(mocker, error, spawn_client, resp_is, tmp_path):
+async def test_remove(mocker, error, fake, spawn_client, resp_is, tmp_path):
     client = await spawn_client(authorize=True)
 
     client.app["config"].data_path = tmp_path
+
+    user = await fake.users.insert()
 
     if error != "400":
         await client.db.samples.insert_one({
@@ -212,7 +225,7 @@ async def test_remove(mocker, error, spawn_client, resp_is, tmp_path):
             "group_read": True,
             "group_write": True,
             "user": {
-                "id": "fred"
+                "id": user["_id"]
             }
         })
 
@@ -305,8 +318,15 @@ async def test_upload_file(error, files, resp_is, spawn_job_client, static_time,
 
 @pytest.mark.parametrize("file_exists", [True, False])
 @pytest.mark.parametrize("row_exists", [True, False])
-async def test_download_analysis_result(file_exists, row_exists, files, spawn_client, spawn_job_client, snapshot,
-                                        tmp_path):
+async def test_download_analysis_result(
+    file_exists,
+    row_exists,
+    files,
+    spawn_client,
+    spawn_job_client,
+    snapshot,
+    tmp_path
+):
     """
     Test that you can properly download an analysis result file using details from the `analysis_files` SQL table
 
@@ -483,13 +503,18 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
 
 
 @pytest.mark.parametrize("error", [None, 422, 404, 409])
-async def test_finalize(snapshot, spawn_job_client, error):
+async def test_finalize(fake, snapshot, spawn_job_client, faker, error, resp_is):
+    user = await fake.users.insert()
+
     analysis_document = {
         "_id": "analysis1",
         "sample": {
             "id": "sample1"
         },
         "workflow": "test_workflow",
+        "user": {
+            "id": user["_id"]
+        },
         "ready": error == 409
     }
 
@@ -515,4 +540,8 @@ async def test_finalize(snapshot, spawn_job_client, error):
     else:
         assert resp.status == 200
         assert await resp.json() == snapshot
-        assert await client.db.analyses.find_one() == snapshot
+
+        document = await client.db.analyses.find_one()
+
+        assert document == snapshot
+        assert document["ready"] is True

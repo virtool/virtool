@@ -9,10 +9,14 @@
       'username': 'igboyes',
       'workflow': 'nuvs',
     },
+    'created_at': '2015-10-06T20:00:00Z',
     'id': '4c530449',
     'key': 'key',
     'mem': 16,
     'proc': 10,
+    'progress': 1.0,
+    'stage': 'import_results',
+    'state': 'complete',
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
@@ -44,12 +48,14 @@
       },
     ],
     'user': <class 'dict'> {
-      'id': 'igboyes',
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
     },
     'workflow': 'build_index',
   }
 ---
-# name: test_cancel[uvloop]
+# name: test_cancel[uvloop-None]
   <class 'dict'> {
     'acquired': False,
     'args': <class 'dict'> {
@@ -60,10 +66,13 @@
       'username': 'igboyes',
       'workflow': 'nuvs',
     },
+    'created_at': '2015-10-06T20:00:00Z',
     'id': '4c530449',
     'mem': 16,
     'proc': 10,
-    'state': 'cancelling',
+    'progress': 0.091,
+    'stage': 'mk_analysis_dir',
+    'state': 'running',
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
@@ -88,7 +97,9 @@
       },
     ],
     'user': <class 'dict'> {
-      'id': 'igboyes',
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
     },
     'workflow': 'build_index',
   }
@@ -104,9 +115,13 @@
       'username': 'igboyes',
       'workflow': 'nuvs',
     },
+    'created_at': '2015-10-06T20:00:00Z',
     'id': '4c530449',
     'mem': 16,
     'proc': 10,
+    'progress': 1.0,
+    'stage': 'import_results',
+    'state': 'complete',
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
@@ -138,7 +153,9 @@
       },
     ],
     'user': <class 'dict'> {
-      'id': 'igboyes',
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
     },
     'workflow': 'build_index',
   }

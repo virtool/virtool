@@ -21,18 +21,19 @@ Schema:
 
 """
 from copy import deepcopy
-from typing import Union, List, Optional
+from typing import List, Optional, Union
 
 import dictdiffer
 import pymongo.errors
-
 import virtool.errors
 import virtool.history.utils
-from virtool.history.utils import derive_otu_information, calculate_diff, write_diff_file
 import virtool.otus.db
 import virtool.otus.utils
 import virtool.utils
 from virtool.api.utils import paginate
+from virtool.history.utils import (calculate_diff, derive_otu_information,
+                                   write_diff_file)
+from virtool.users.db import ATTACH_PROJECTION, attach_user, attach_users
 
 MOST_RECENT_PROJECTION = [
     "_id",
@@ -142,7 +143,10 @@ async def find(db, req_query, base_query=None):
         reverse=True
     )
 
-    return data
+    return {
+        **data,
+        "documents": await attach_users(db, data["documents"])
+    }
 
 
 async def get(app, change_id: str) -> dict:
@@ -158,14 +162,17 @@ async def get(app, change_id: str) -> dict:
     """
     document = await app["db"].history.find_one(change_id, PROJECTION)
 
-    if document and document["diff"] == "file":
-        otu_id, otu_version = change_id.split(".")
+    if document:
+        document = await attach_user(app["db"], document)
 
-        document["diff"] = await virtool.history.utils.read_diff_file(
-            app["config"].data_path,
-            otu_id,
-            otu_version
-        )
+        if document["diff"] == "file":
+            otu_id, otu_version = change_id.split(".")
+
+            document["diff"] = await virtool.history.utils.read_diff_file(
+                app["config"].data_path,
+                otu_id,
+                otu_version
+            )
 
     return virtool.utils.base_processor(document)
 
@@ -187,7 +194,16 @@ async def get_contributors(db, query: dict) -> List[dict]:
         }}
     ])
 
-    return [{"id": c["_id"], "count": c["count"]} async for c in cursor]
+    contributors = [{"id": c["_id"], "count": c["count"]} async for c in cursor]
+
+    users = await db.users.find(
+        {"_id": {"$in": [c["id"] for c in contributors]}},
+        projection=ATTACH_PROJECTION
+    ).to_list(None)
+
+    users = {u.pop("_id"): u for u in users}
+
+    return [{**u, **users[u["id"]]} for u in contributors]
 
 
 async def get_most_recent_change(db, otu_id: str) -> dict:
@@ -272,7 +288,8 @@ async def revert(app, change_id: str) -> dict:
     change = await db.history.find_one({"_id": change_id}, ["index"])
 
     if change["index"]["id"] != "unbuilt" or change["index"]["version"] != "unbuilt":
-        raise virtool.errors.DatabaseError("Change is included in a build an not revertible")
+        raise virtool.errors.DatabaseError(
+            "Change is included in a build an not revertible")
 
     otu_id, otu_version = change_id.split(".")
 

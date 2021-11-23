@@ -1,10 +1,9 @@
 import logging
-from typing import Union, Optional, List, Dict, Type
-
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from typing import Dict, List, Optional, Type, Union
 
 import virtool.utils
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.pg.base import Base
 from virtool.uploads.models import Upload
 
@@ -197,9 +196,9 @@ async def release(pg: AsyncEngine, upload_ids: Union[int, List[int]]):
     async with AsyncSession(pg) as session:
         await session.execute(
             update(Upload)
-                .where(query)
-                .values(reserved=False)
-                .execution_options(synchronize_session="fetch")
+            .where(query)
+            .values(reserved=False)
+            .execution_options(synchronize_session="fetch")
         )
 
         await session.commit()
@@ -218,9 +217,9 @@ async def reserve(pg: AsyncEngine, upload_ids: Union[int, List[int]]):
         query = Upload.id.in_(upload_ids)
 
     async with AsyncSession(pg) as session:
-        await session.execute(update(Upload).
-                              where(query).values(reserved=True).
-                              execution_options(synchronize_session="fetch")
-                              )
-
+        await session.execute(
+            update(Upload).
+            where(query).values(reserved=True).
+            execution_options(synchronize_session="fetch")
+        )
         await session.commit()

@@ -322,12 +322,22 @@
       'foo': 'bar',
     },
     'id': 'baz.2',
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
   }
 ---
 # name: test_get[uvloop-True]
   <class 'dict'> {
     'diff': 'loaded',
     'id': 'baz.2',
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
   }
 ---
 # name: test_get_most_recent_change[uvloop-False]

@@ -1,9 +1,8 @@
-from aiohttp.web import HTTPNoContent, HTTPConflict
-
 import virtool.history.db
 import virtool.http.routes
 import virtool.references.db
-from virtool.api.response import json_response, InsufficientRights, NotFound
+from aiohttp.web import HTTPConflict, HTTPNoContent
+from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.errors import DatabaseError
 
 routes = virtool.http.routes.Routes()

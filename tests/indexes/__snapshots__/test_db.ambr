@@ -124,3 +124,15 @@
     },
   }
 ---
+# name: test_processor[uvloop]
+  <class 'dict'> {
+    'change_count': 5,
+    'id': 'baz',
+    'modified_otu_count': 2,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
+  }
+---

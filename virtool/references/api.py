@@ -1,24 +1,31 @@
 import asyncio
+from asyncio.tasks import gather
 
 import aiohttp
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPBadGateway
-
 import virtool.db.utils
 import virtool.history.db
 import virtool.indexes.db
 import virtool.otus.db
 import virtool.references.db
 import virtool.utils
-from virtool.api.response import json_response, InsufficientRights, NotFound
+from aiohttp.web_exceptions import (HTTPBadGateway, HTTPBadRequest,
+                                    HTTPNoContent)
+from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.errors import GitHubError, DatabaseError
+from virtool.errors import DatabaseError, GitHubError
 from virtool.github import format_release
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.pg.utils import get_row
-from virtool.references.tasks import CloneReferenceTask, ImportReferenceTask, RemoteReferenceTask, \
-    DeleteReferenceTask, UpdateRemoteReferenceTask
+from virtool.references.db import (attach_computed, compose_base_find_query,
+                                   create_clone, create_document,
+                                   create_import, create_remote, get_manifest,
+                                   get_official_installed)
+from virtool.references.tasks import (CloneReferenceTask, DeleteReferenceTask,
+                                      ImportReferenceTask, RemoteReferenceTask,
+                                      UpdateRemoteReferenceTask)
 from virtool.uploads.models import Upload
+from virtool.users.db import attach_user
 from virtool.validators import strip
 
 routes = Routes()
@@ -50,7 +57,7 @@ async def find(req):
     if term:
         db_query = compose_regex_query(term, ["name", "data_type"])
 
-    base_query = virtool.references.db.compose_base_find_query(
+    base_query = compose_base_find_query(
         req["client"].user_id,
         req["client"].administrator,
         req["client"].groups
@@ -65,10 +72,18 @@ async def find(req):
         projection=virtool.references.db.PROJECTION
     )
 
-    data["documents"] = [await virtool.references.db.processor(db, d) for d in data["documents"]]
-    data["official_installed"] = await virtool.references.db.get_official_installed(db)
+    documents, official_installed = await gather(
+        gather(
+            *[virtool.references.db.processor(db, d) for d in data["documents"]]
+        ),
+        get_official_installed(db)
+    )
 
-    return json_response(data)
+    return json_response({
+        **data,
+        "documents": documents,
+        "official_installed": official_installed
+    })
 
 
 @routes.get("/api/refs/{ref_id}")
@@ -87,7 +102,7 @@ async def get(req):
     if not document:
         raise NotFound()
 
-    document = await asyncio.shield(virtool.references.db.attach_computed(db, document))
+    document = await attach_computed(db, document)
 
     return json_response(await virtool.references.db.processor(db, document))
 
@@ -114,7 +129,8 @@ async def get_release(req):
         raise HTTPBadGateway(text="Could not reach GitHub")
 
     if release is None:
-        raise HTTPBadGateway(text="Release repository does not exist on GitHub")
+        raise HTTPBadGateway(
+            text="Release repository does not exist on GitHub")
 
     return json_response(release)
 
@@ -323,9 +339,9 @@ async def create(req):
         if not await db.references.count_documents({"_id": clone_from}):
             raise HTTPBadRequest(text="Source reference does not exist")
 
-        manifest = await virtool.references.db.get_manifest(db, clone_from)
+        manifest = await get_manifest(db, clone_from)
 
-        document = await virtool.references.db.create_clone(
+        document = await create_clone(
             db,
             settings,
             data["name"],
@@ -353,7 +369,7 @@ async def create(req):
 
         path = req.app["config"].data_path / "files" / import_from
 
-        document = await virtool.references.db.create_import(
+        document = await create_import(
             db,
             pg,
             settings,
@@ -378,7 +394,7 @@ async def create(req):
 
     elif remote_from:
         try:
-            release = await get_release(
+            release = await virtool.github.get_release(
                 req.app["config"],
                 req.app["client"],
                 remote_from,
@@ -390,13 +406,14 @@ async def create(req):
 
         except GitHubError as err:
             if "404" in str(err):
-                raise HTTPBadGateway(text="Could not retrieve latest GitHub release")
+                raise HTTPBadGateway(
+                    text="Could not retrieve latest GitHub release")
 
             raise
 
         release = format_release(release)
 
-        document = await virtool.references.db.create_remote(
+        document = await create_remote(
             db,
             settings,
             release,
@@ -418,7 +435,7 @@ async def create(req):
         }
 
     else:
-        document = await virtool.references.db.create_document(
+        document = await create_document(
             db,
             settings,
             data["name"],
@@ -431,10 +448,11 @@ async def create(req):
     await db.references.insert_one(document)
 
     headers = {
-        "Location": "/api/refs/" + document["_id"]
+        "Location": f"/api/refs/{document['_id']}"
     }
 
-    document = await virtool.references.db.attach_computed(db, document)
+    document = await attach_computed(db, document)
+    document = await attach_user(db, document)
 
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 
@@ -511,7 +529,8 @@ async def edit(req):
         names = [t["name"] for t in targets]
 
         if len(names) != len(set(names)):
-            raise HTTPBadRequest(text="The targets field may not contain duplicate names")
+            raise HTTPBadRequest(
+                text="The targets field may not contain duplicate names")
 
     document = await virtool.references.db.edit(
         db,

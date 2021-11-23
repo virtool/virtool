@@ -1,8 +1,7 @@
 import pytest
-from aiohttp.test_utils import make_mocked_coro
-
 import virtool.errors
 import virtool.references.db
+from aiohttp.test_utils import make_mocked_coro
 
 RIGHTS = {
     "build": False,
@@ -159,7 +158,7 @@ class TestEdit:
 
     @pytest.mark.parametrize("control_exists", [True, False])
     @pytest.mark.parametrize("control_id", [None, "", "baz"])
-    async def test_control(self, control_exists, control_id, mocker, snapshot, dbi):
+    async def test_control(self, control_exists, fake, control_id, mocker, snapshot, dbi):
         """
         Test that the `internal_control` field is correctly set with various `internal_control` input value and the case
         where the internal control ID refers to a non-existent OTU.
@@ -167,9 +166,8 @@ class TestEdit:
         The field should only be set when the input value is truthy and the control ID exists.
 
         """
-        await dbi.users.insert_one({
-            "_id": "bob"
-        })
+        user_1 = await fake.users.insert()
+        user_2 = await fake.users.insert()
 
         await dbi.references.insert_one({
             "_id": "foo",
@@ -177,10 +175,11 @@ class TestEdit:
             "internal_control": {
                 "id": "bar"
             },
+            "user": {
+                "id": user_1["_id"]
+            },
             "users": [
-                {
-                    "id": "bob"
-                }
+                {"id": user_2["_id"]}
             ]
         })
 
@@ -206,12 +205,14 @@ class TestEdit:
         assert document == snapshot
         assert await dbi.references.find_one() == snapshot
 
-    async def test_reference_name(self, snapshot, dbi):
+    async def test_reference_name(self, snapshot, dbi, fake):
         """
         Test that analyses that are linked to the edited reference have their `reference.name` fields changed when
         the `name` field of the reference changes.
 
         """
+        user = await fake.users.insert()
+
         await dbi.users.insert_one({
             "_id": "bob"
         })
@@ -222,6 +223,9 @@ class TestEdit:
             "data_type": "genome",
             "internal_control": {
                 "id": "bar"
+            },
+            "user": {
+                "id": user["_id"]
             },
             "users": [
                 {
@@ -291,7 +295,7 @@ async def test_edit_member(field, missing, snapshot, dbi, static_time):
     assert await dbi.references.find_one() == snapshot
 
 
-@ pytest.mark.parametrize("field", ["groups", "users"])
+@pytest.mark.parametrize("field", ["groups", "users"])
 async def test_delete_member(field, snapshot, dbi):
 
     ref_id = "foo"

@@ -113,8 +113,40 @@
     'progress': 1.0,
     'stage': 'import_results',
     'state': 'complete',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'running',
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 0.091,
+        'stage': 'mk_analysis_dir',
+        'state': 'running',
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 1.0,
+        'stage': 'import_results',
+        'state': 'complete',
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
     'user': <class 'dict'> {
-      'id': 'igboyes',
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
     },
     'workflow': 'build_index',
   }

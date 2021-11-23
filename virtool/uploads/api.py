@@ -2,15 +2,15 @@ from asyncio import CancelledError
 from logging import getLogger
 from pathlib import Path
 
+import virtool.uploads.db
 from aiohttp.web_exceptions import HTTPBadRequest
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp.web_response import Response
-
-import virtool.uploads.db
-from virtool.api.response import json_response, NotFound, InvalidQuery
+from virtool.api.response import InvalidQuery, NotFound, json_response
 from virtool.http.routes import Routes
 from virtool.uploads.models import Upload, UploadType
 from virtool.uploads.utils import naive_validator, naive_writer
+from virtool.users.db import attach_user, attach_users
 
 logger = getLogger(__name__)
 
@@ -36,7 +36,12 @@ async def create(req):
     if upload_type and upload_type not in UploadType.to_list():
         raise HTTPBadRequest(text="Unsupported upload type")
 
-    upload = await virtool.uploads.db.create(pg, name, upload_type, user=req["client"].user_id)
+    upload = await virtool.uploads.db.create(
+        pg,
+        name,
+        upload_type,
+        user=req["client"].user_id
+    )
 
     upload_id = upload["id"]
 
@@ -68,7 +73,7 @@ async def create(req):
         "Location": f"/api/uploads/{upload_id}"
     }
 
-    return json_response(upload, status=201, headers=headers)
+    return json_response(await attach_user(req.app["db"], upload), status=201, headers=headers)
 
 
 @routes.get("/api/uploads")
@@ -83,10 +88,11 @@ async def find(req):
     response = dict()
 
     uploads = await virtool.uploads.db.find(pg, user, upload_type)
+    uploads = await attach_users(req.app["db"], uploads)
 
-    response["documents"] = uploads
-
-    return json_response(response)
+    return json_response({
+        "documents": uploads
+    })
 
 
 @routes.get("/api/uploads/{id}")
@@ -104,9 +110,7 @@ async def get(req):
     if not upload:
         raise NotFound()
 
-    # check if the file has been removed as a result of a `DELETE` request
-
-    upload_path = Path(req.app["config"].data_path / "files" / upload.name_on_disk)
+    upload_path = req.app["config"].data_path / "files" / upload.name_on_disk
 
     # check if the file has been manually removed by the user
     if not upload_path.exists():

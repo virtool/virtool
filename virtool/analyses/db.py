@@ -3,13 +3,15 @@ Work with analyses in the database.
 
 """
 import asyncio
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import virtool.bio
 import virtool.db.utils
 import virtool.utils
-from virtool.indexes.db import get_current_id_and_version
 from virtool.configuration.config import Config
+from virtool.indexes.db import get_current_id_and_version
+from virtool.subtractions.db import attach_subtractions
+from virtool.users.db import attach_user
 
 PROJECTION = (
     "_id",
@@ -108,6 +110,21 @@ class BLAST:
         })
 
         return data, document
+
+
+async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Process an analysis document by attaching user and subtraction data.
+
+    :param db: the application database object
+    :param document: the analysis document
+    :return: the processed analysis document
+
+    """
+    processed = await attach_subtractions(db, document)
+    processed = await attach_user(db, processed)
+
+    return virtool.utils.base_processor(processed)
 
 
 async def create(

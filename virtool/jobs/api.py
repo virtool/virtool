@@ -1,16 +1,16 @@
 import os
 
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPConflict
-
 import virtool.jobs.db
 import virtool.utils
-from virtool.api.response import json_response, NotFound
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
+from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_one_field
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs import is_running_or_waiting
-from virtool.jobs.db import PROJECTION, LIST_PROJECTION, delete
+from virtool.jobs.db import LIST_PROJECTION, PROJECTION, delete, processor
+from virtool.users.db import attach_users
 
 routes = Routes()
 
@@ -34,12 +34,16 @@ async def find(req):
         db.jobs,
         db_query,
         req.query,
-        projection=LIST_PROJECTION
+        projection=LIST_PROJECTION,
+        sort="created_at"
     )
 
-    data["documents"].sort(key=lambda d: d["created_at"])
+    documents = await attach_users(db, data["documents"])
 
-    return json_response(data)
+    return json_response({
+        **data,
+        "documents": documents
+    })
 
 
 @routes.get("/api/jobs/{job_id}")
@@ -49,14 +53,15 @@ async def get(req):
     Return the complete document for a given job.
 
     """
+    db = req.app["db"]
     job_id = req.match_info["job_id"]
 
-    document = await req.app["db"].jobs.find_one(job_id, projection=PROJECTION)
+    document = await db.jobs.find_one(job_id, projection=PROJECTION)
 
     if not document:
         raise NotFound()
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(await processor(db, document))
 
 
 @routes.patch("/api/jobs/{job_id}")
@@ -80,12 +85,17 @@ async def acquire(req):
 
     job_id = req.match_info["job_id"]
 
-    if await get_one_field(db.jobs, "acquired", job_id) is True:
+    acquired = await get_one_field(db.jobs, "acquired", job_id)
+
+    if acquired is True:
         raise HTTPBadRequest(text="Job already acquired")
+
+    if acquired is None:
+        raise NotFound()
 
     document = await virtool.jobs.db.acquire(db, job_id)
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(await processor(db, document))
 
 
 @routes.put("/api/jobs/{job_id}/cancel", permission="cancel_job")
@@ -108,7 +118,7 @@ async def cancel(req):
 
     document = await req.app["jobs"].cancel(job_id)
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(await processor(db, document))
 
 
 @routes.post("/api/jobs/{job_id}/status")
@@ -206,7 +216,8 @@ async def remove(req):
         raise NotFound()
 
     if is_running_or_waiting(document):
-        raise HTTPConflict(text="Job is running or waiting and cannot be removed")
+        raise HTTPConflict(
+            text="Job is running or waiting and cannot be removed")
 
     await delete(req.app, job_id)
 

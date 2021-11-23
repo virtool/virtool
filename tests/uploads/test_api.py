@@ -66,19 +66,21 @@ class TestUpload:
 
 
 class TestFind:
-    @pytest.mark.parametrize("type_", ["reads", "reference", None])
-    @pytest.mark.parametrize("user", ["danny", "lester", "jake"])
-    async def test(self, spawn_client, snapshot, type_, user, test_uploads):
+
+    @pytest.mark.parametrize("upload_type", ["reads", "reference", None])
+    async def test(self, upload_type, spawn_client, snapshot, test_uploads):
         """
         Test `GET /api/uploads` to assure that it returns the correct `upload` documents.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        if type_:
-            resp = await client.get(f"/api/uploads?type={type_}&user={user}")
-        else:
-            resp = await client.get(f"/api/uploads?user={user}")
+        url = f"/api/uploads"
+
+        if upload_type:
+            url += f"?type={upload_type}"
+
+        resp = await client.get(url)
 
         assert resp.status == 200
         assert await resp.json() == snapshot

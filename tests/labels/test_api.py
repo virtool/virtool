@@ -10,10 +10,19 @@ class TestFind:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        label_1 = Label(id=1, name="Bug", color="#a83432",
-                        description="This is a bug")
-        label_2 = Label(id=2, name="Question", color="#03fc20",
-                        description="This is a question")
+        label_1 = Label(
+            id=1,
+            name="Bug",
+            color="#a83432",
+            description="This is a bug"
+        )
+
+        label_2 = Label(
+            id=2,
+            name="Question",
+            color="#03fc20",
+            description="This is a question"
+        )
 
         await client.db.samples.insert_many([
             {

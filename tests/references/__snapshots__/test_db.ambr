@@ -10,9 +10,14 @@
     'name': 'Tester',
     'otu_count': 0,
     'unbuilt_change_count': 0,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'id': 'LB1U6zCj',
       },
     ],
   }
@@ -22,11 +27,14 @@
     '_id': 'foo',
     'data_type': 'genome',
     'description': 'This is a test reference.',
-    'internal_control': None,
+    'internal_control': '',
     'name': 'Tester',
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'id': 'LB1U6zCj',
       },
     ],
   }
@@ -45,9 +53,14 @@
     'name': 'Tester',
     'otu_count': 0,
     'unbuilt_change_count': 0,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'id': 'LB1U6zCj',
       },
     ],
   }
@@ -57,11 +70,14 @@
     '_id': 'foo',
     'data_type': 'genome',
     'description': 'This is a test reference.',
-    'internal_control': None,
+    'internal_control': '',
     'name': 'Tester',
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'id': 'LB1U6zCj',
       },
     ],
   }
@@ -78,9 +94,14 @@
     'name': 'Tester',
     'otu_count': 0,
     'unbuilt_change_count': 0,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'id': 'LB1U6zCj',
       },
     ],
   }
@@ -94,9 +115,12 @@
       'id': 'bar',
     },
     'name': 'Tester',
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'id': 'LB1U6zCj',
       },
     ],
   }
@@ -115,9 +139,14 @@
     'name': 'Tester',
     'otu_count': 0,
     'unbuilt_change_count': 0,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'id': 'LB1U6zCj',
       },
     ],
   }
@@ -131,9 +160,12 @@
       'id': 'bar',
     },
     'name': 'Tester',
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'id': 'LB1U6zCj',
       },
     ],
   }
@@ -150,9 +182,14 @@
     'name': 'Tester',
     'otu_count': 0,
     'unbuilt_change_count': 0,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'id': 'LB1U6zCj',
       },
     ],
   }
@@ -162,11 +199,14 @@
     '_id': 'foo',
     'data_type': 'genome',
     'description': 'This is a test reference.',
-    'internal_control': None,
+    'internal_control': 'baz',
     'name': 'Tester',
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'id': 'LB1U6zCj',
       },
     ],
   }
@@ -185,9 +225,14 @@
     'name': 'Tester',
     'otu_count': 0,
     'unbuilt_change_count': 0,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'id': 'LB1U6zCj',
       },
     ],
   }
@@ -197,13 +242,14 @@
     '_id': 'foo',
     'data_type': 'genome',
     'description': 'This is a test reference.',
-    'internal_control': <class 'dict'> {
-      'id': 'baz',
-    },
+    'internal_control': 'baz',
     'name': 'Tester',
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'id': 'LB1U6zCj',
       },
     ],
   }
@@ -219,6 +265,11 @@
     'name': 'Bar',
     'otu_count': 0,
     'unbuilt_change_count': 0,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
         'id': 'bob',
@@ -234,6 +285,9 @@
       'id': 'bar',
     },
     'name': 'Bar',
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
     'users': <class 'list'> [
       <class 'dict'> {
         'id': 'bob',

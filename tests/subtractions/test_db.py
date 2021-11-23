@@ -74,7 +74,7 @@ async def test_unlink_default_subtractions(dbi):
     ]
 
 
-@ pytest.mark.parametrize("subtraction_id", [None, "abc"])
+@pytest.mark.parametrize("subtraction_id", [None, "abc"])
 async def test_create(subtraction_id, snapshot, dbi, test_random_alphanumeric):
     user_id = "test"
     filename = "subtraction.fa.gz"

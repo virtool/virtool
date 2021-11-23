@@ -5,10 +5,9 @@ from asyncio import gather
 from pathlib import Path
 
 import pytest
+import virtool.uploads.db
 from aiohttp.test_utils import make_mocked_coro, make_mocked_request
 from sqlalchemy.ext.asyncio import AsyncEngine
-
-import virtool.uploads.db
 from virtool.labels.models import Label
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.db import (attach_labels, check_is_legacy,
@@ -468,14 +467,19 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
     m_update_is_compressed.assert_called_with(app_dict["db"], sample)
 
 
-async def test_finalize(snapshot, tmp_path, dbi, pg: AsyncEngine, pg_session):
+async def test_finalize(snapshot, tmp_path, dbi, fake, pg: AsyncEngine, pg_session):
     quality = {
         "count": 10000000,
         "gc": 43
     }
 
+    user = await fake.users.insert()
+
     await dbi.samples.insert_one({
         "_id": "test",
+        "user": {
+            "id": user["_id"]
+        }
     })
 
     async with pg_session as session:
@@ -507,29 +511,6 @@ async def test_finalize(snapshot, tmp_path, dbi, pg: AsyncEngine, pg_session):
     )
 
     assert result == snapshot
-
-    assert result == {
-        "_id": "test",
-        "quality": {
-            "count": 10000000,
-            "gc": 43
-        },
-        "ready": True,
-        "artifacts": [],
-        "reads": [
-            {
-                "download_url": '/api/samples/test/reads/reads_1.fq.gz',
-                "id": 1,
-                "sample": "test",
-                "name": "reads_1.fq.gz",
-                "name_on_disk": "reads_1.fq.gz",
-                "size": None,
-                "upload": None,
-                "uploaded_at": None
-            }
-        ]
-    }
-
     assert not await virtool.uploads.db.get(pg, 1)
     assert not (await get_row_by_id(pg, SampleReads, 1)).upload
 

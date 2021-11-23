@@ -26,6 +26,11 @@
     'sample': <class 'dict'> {
       'id': 'sample1',
     },
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
     'workflow': 'test_workflow',
   }
 ---
@@ -38,6 +43,9 @@
     },
     'sample': <class 'dict'> {
       'id': 'sample1',
+    },
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
     },
     'workflow': 'test_workflow',
   }
@@ -64,7 +72,9 @@
           'id': 'test',
         },
         'user': <class 'dict'> {
-          'id': 'bob',
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -87,7 +97,9 @@
           'id': 'test',
         },
         'user': <class 'dict'> {
-          'id': 'fred',
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -110,7 +122,9 @@
           'id': 'test',
         },
         'user': <class 'dict'> {
-          'id': 'fred',
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -154,6 +168,11 @@
         'name': 'Apple',
       },
     ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
     'workflow': 'pathoscope_bowtie',
   }
 ---
@@ -162,6 +181,11 @@
     'created_at': '2015-10-06T20:00:00Z',
     'formatted': True,
     'id': 'foo',
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
   }
 ---
 # name: test_get[uvloop-None-True].1
@@ -187,15 +211,12 @@
       'id': 'baz',
     },
     'subtractions': <class 'list'> [
-      <class 'dict'> {
-        'id': 'plum',
-        'name': 'Plum',
-      },
-      <class 'dict'> {
-        'id': 'apple',
-        'name': 'Apple',
-      },
+      'plum',
+      'apple',
     ],
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
     'workflow': 'pathoscope_bowtie',
   }
 ---

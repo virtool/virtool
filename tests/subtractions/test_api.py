@@ -11,19 +11,29 @@ from virtool.subtractions.models import SubtractionFile
     {"nickname": ""},
     {"name": "Bar", "nickname": "Bar Subtraction"}
 ])
-async def test_edit(data, mocker, snapshot, spawn_client):
+@pytest.mark.parametrize("has_user", [True, False])
+async def test_edit(data, has_user, mocker, snapshot, fake, spawn_client):
     mocker.patch(
         "virtool.subtractions.db.get_linked_samples",
         make_mocked_coro(12)
     )
 
-    client = await spawn_client(authorize=True, permissions=["modify_subtraction"])
-
-    await client.db.subtraction.insert_one({
+    document = {
         "_id": "foo",
         "name": "Foo",
         "nickname": "Foo Subtraction"
-    })
+    }
+
+    if has_user:
+        user = await fake.users.insert()
+
+        document["user"] = {
+            "id": user["_id"]
+        }
+
+    client = await spawn_client(authorize=True, permissions=["modify_subtraction"])
+
+    await client.db.subtraction.insert_one(document)
 
     resp = await client.patch("/api/subtractions/foo", data)
 
@@ -85,11 +95,16 @@ async def test_upload(error, tmp_path, spawn_job_client, snapshot, resp_is, pg_s
 
 
 @pytest.mark.parametrize("error", [None, "404", "409", "422"])
-async def test_finalize_subtraction(error, spawn_job_client, snapshot, resp_is, test_subtraction_files):
+async def test_finalize_subtraction(error, fake, spawn_job_client, snapshot, resp_is, test_subtraction_files):
+    user = await fake.users.insert()
+
     subtraction = {
         "_id": "foo",
         "name": "Foo",
-        "nickname": "Foo Subtraction"
+        "nickname": "Foo Subtraction",
+        "user": {
+            "id": user["_id"]
+        }
     }
 
     data = {

@@ -30,7 +30,7 @@ async def test_get(error, snapshot, resp_is, spawn_client, test_changes, static_
 
     change_id = "baz.1" if error else "6116cba1.1"
 
-    resp = await client.get("/api/history/" + change_id)
+    resp = await client.get(f"/api/history/{change_id}")
 
     if error:
         await resp_is.not_found(resp)

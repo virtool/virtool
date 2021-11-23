@@ -1,6 +1,24 @@
-# name: TestFind.test[uvloop-danny-None]
+# name: TestFind.test[uvloop-None]
   <class 'dict'> {
     'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': None,
+        'id': 2,
+        'name': 'test.fq.gz',
+        'name_on_disk': None,
+        'ready': False,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': None,
+        'type': 'reference',
+        'uploaded_at': None,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
+        },
+      },
       <class 'dict'> {
         'created_at': None,
         'id': 1,
@@ -13,40 +31,12 @@
         'size': None,
         'type': 'reads',
         'uploaded_at': None,
-        'user': 'danny',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
+        },
       },
-    ],
-  }
----
-# name: TestFind.test[uvloop-danny-reads]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': None,
-        'id': 1,
-        'name': 'test.fq.gz',
-        'name_on_disk': None,
-        'ready': False,
-        'removed': False,
-        'removed_at': None,
-        'reserved': False,
-        'size': None,
-        'type': 'reads',
-        'uploaded_at': None,
-        'user': 'danny',
-      },
-    ],
-  }
----
-# name: TestFind.test[uvloop-danny-reference]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-    ],
-  }
----
-# name: TestFind.test[uvloop-jake-None]
-  <class 'dict'> {
-    'documents': <class 'list'> [
       <class 'dict'> {
         'created_at': None,
         'id': 3,
@@ -59,24 +49,40 @@
         'size': None,
         'type': None,
         'uploaded_at': None,
-        'user': 'jake',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'johnsoncynthia',
+          'id': 'LB1U6zCj',
+        },
       },
     ],
   }
 ---
-# name: TestFind.test[uvloop-jake-reads]
+# name: TestFind.test[uvloop-reads]
   <class 'dict'> {
     'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': None,
+        'id': 1,
+        'name': 'test.fq.gz',
+        'name_on_disk': None,
+        'ready': False,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': None,
+        'type': 'reads',
+        'uploaded_at': None,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
+        },
+      },
     ],
   }
 ---
-# name: TestFind.test[uvloop-jake-reference]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-    ],
-  }
----
-# name: TestFind.test[uvloop-lester-None]
+# name: TestFind.test[uvloop-reference]
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
@@ -91,33 +97,11 @@
         'size': None,
         'type': 'reference',
         'uploaded_at': None,
-        'user': 'lester',
-      },
-    ],
-  }
----
-# name: TestFind.test[uvloop-lester-reads]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-    ],
-  }
----
-# name: TestFind.test[uvloop-lester-reference]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': None,
-        'id': 2,
-        'name': 'test.fq.gz',
-        'name_on_disk': None,
-        'ready': False,
-        'removed': False,
-        'removed_at': None,
-        'reserved': False,
-        'size': None,
-        'type': 'reference',
-        'uploaded_at': None,
-        'user': 'lester',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
+        },
       },
     ],
   }
@@ -135,7 +119,11 @@
     'size': 9081,
     'type': 'hmm',
     'uploaded_at': '2015-10-06T20:00:00Z',
-    'user': 'test',
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'test',
+    },
   }
 ---
 # name: TestUpload.test[uvloop-reads]
@@ -151,7 +139,11 @@
     'size': 9081,
     'type': 'reads',
     'uploaded_at': '2015-10-06T20:00:00Z',
-    'user': 'test',
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'test',
+    },
   }
 ---
 # name: TestUpload.test[uvloop-reference]
@@ -167,7 +159,11 @@
     'size': 9081,
     'type': 'reference',
     'uploaded_at': '2015-10-06T20:00:00Z',
-    'user': 'test',
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'test',
+    },
   }
 ---
 # name: TestUpload.test[uvloop-subtraction]
@@ -183,6 +179,10 @@
     'size': 9081,
     'type': 'subtraction',
     'uploaded_at': '2015-10-06T20:00:00Z',
-    'user': 'test',
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'test',
+    },
   }
 ---

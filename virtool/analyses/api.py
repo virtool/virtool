@@ -4,31 +4,35 @@ Provides request handlers for managing and viewing analyses.
 """
 import asyncio
 import logging
-from typing import Any, Dict, Union
+from typing import Union
 
 import aiojobs.aiohttp
-from aiohttp.web import HTTPNoContent, HTTPBadRequest, HTTPNotModified, HTTPConflict, Request, Response, FileResponse
-
 import virtool.analyses.format
 import virtool.bio
 import virtool.samples.db
-from virtool.analyses.db import update_nuvs_blast, PROJECTION
+import virtool.uploads.db
+from aiohttp.web import (FileResponse, HTTPBadRequest, HTTPConflict,
+                         HTTPNoContent, HTTPNotModified, Request, Response)
+from sqlalchemy.ext.asyncio.engine import AsyncEngine
+from virtool.analyses.db import PROJECTION, processor, update_nuvs_blast
 from virtool.analyses.files import create_analysis_file
-from virtool.analyses.models import AnalysisFormat, AnalysisFile
-from virtool.analyses.utils import attach_analysis_files, find_nuvs_sequence_by_index
+from virtool.analyses.models import AnalysisFile, AnalysisFormat
+from virtool.analyses.utils import (attach_analysis_files,
+                                    find_nuvs_sequence_by_index)
 from virtool.api.json import isoformat
-from virtool.api.response import json_response, InsufficientRights, NotFound, InvalidQuery
+from virtool.api.response import (InsufficientRights, InvalidQuery, NotFound,
+                                  json_response)
 from virtool.api.utils import paginate
-from virtool.db.core import Collection, DB
+from virtool.db.core import DB, Collection
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import attach_subtractions
-from virtool.uploads.db import finalize
-from virtool.uploads.utils import naive_writer, naive_validator
-from virtool.utils import base_processor, rm
+from virtool.uploads.utils import naive_validator, naive_writer
+from virtool.users.db import attach_users
+from virtool.utils import rm
 
 logger = logging.getLogger("analyses")
 
@@ -53,7 +57,8 @@ async def find(req: Request) -> Response:
         sort=[("created_at", -1)]
     )
 
-    checked_documents = []
+    documents = []
+
     for document in data["documents"]:
         if await virtool.samples.db.check_rights(
                 db,
@@ -61,12 +66,18 @@ async def find(req: Request) -> Response:
                 req["client"],
                 write=False
         ):
-            checked_documents.append(document)
+            documents.append(document)
 
-    data["documents"] = await asyncio.tasks.gather(
-        *[attach_subtractions(db, d) for d in checked_documents])
+    documents = await attach_users(db, documents)
 
-    return json_response(data)
+    documents = await asyncio.tasks.gather(
+        *[attach_subtractions(db, d) for d in documents]
+    )
+
+    return json_response({
+        **data,
+        "documents": documents
+    })
 
 
 @routes.get("/api/analyses/{analysis_id}")
@@ -110,8 +121,6 @@ async def get(req: Request) -> Response:
     if not read:
         raise InsufficientRights()
 
-    document = await attach_subtractions(db, document)
-
     if document["ready"]:
         document = await virtool.analyses.format.format_analysis(req.app, document)
 
@@ -120,7 +129,10 @@ async def get(req: Request) -> Response:
         "Last-Modified": isoformat(document["created_at"])
     }
 
-    return json_response(base_processor(document), headers=headers)
+    return json_response(
+        await processor(db, document),
+        headers=headers
+    )
 
 
 @routes.jobs_api.get("/api/analyses/{analysis_id}")
@@ -159,8 +171,6 @@ async def get_for_jobs_api(req: Request) -> Response:
     if not sample:
         raise HTTPBadRequest(text="Parent sample does not exist")
 
-    document = await attach_subtractions(db, document)
-
     if document["ready"]:
         try:
             document = await virtool.analyses.format.format_analysis(req.app, document)
@@ -172,7 +182,7 @@ async def get_for_jobs_api(req: Request) -> Response:
         "Last-Modified": isoformat(document["created_at"])
     }
 
-    return json_response(base_processor(document), headers=headers)
+    return json_response(await processor(db, document), headers=headers)
 
 
 @routes.delete("/api/analyses/{analysis_id}")
@@ -214,11 +224,11 @@ async def remove(req: Request) -> Response:
     await db.analyses.delete_one({"_id": analysis_id})
 
     path = (
-            req.app["config"].data_path
-            / "samples"
-            / sample_id
-            / "analysis"
-            / analysis_id
+        req.app["config"].data_path
+        / "samples"
+        / sample_id
+        / "analysis"
+        / analysis_id
     )
 
     try:
@@ -253,11 +263,11 @@ async def delete_analysis(req):
     sample_id = document["sample"]["id"]
 
     path = (
-            req.app["config"].data_path
-            / "samples"
-            / sample_id
-            / "analysis"
-            / analysis_id
+        req.app["config"].data_path
+        / "samples"
+        / sample_id
+        / "analysis"
+        / analysis_id
     )
 
     try:
@@ -301,7 +311,8 @@ async def upload(req: Request) -> Response:
 
     upload_id = analysis_file["id"]
 
-    analysis_file_path = req.app["config"].data_path / "analyses" / analysis_file["name_on_disk"]
+    analysis_file_path = req.app["config"].data_path / \
+        "analyses" / analysis_file["name_on_disk"]
 
     try:
         size = await naive_writer(req, analysis_file_path)
@@ -311,7 +322,7 @@ async def upload(req: Request) -> Response:
 
         return Response(status=499)
 
-    analysis_file = await finalize(pg, size, upload_id, AnalysisFile)
+    analysis_file = await virtool.uploads.db.finalize(pg, size, upload_id, AnalysisFile)
 
     headers = {
         "Location": f"/api/analyses/{analysis_id}/files/{upload_id}"
@@ -334,7 +345,8 @@ async def download_analysis_result(req: Request) -> Union[FileResponse, Response
     if not analysis_file:
         raise NotFound()
 
-    analysis_file_path = req.app["config"].data_path / "analyses" / analysis_file.name_on_disk
+    analysis_file_path = req.app["config"].data_path / \
+        "analyses" / analysis_file.name_on_disk
 
     if not analysis_file_path.exists():
         raise NotFound("Uploaded file not found at expected location")
@@ -447,13 +459,14 @@ async def blast(req: Request) -> Response:
 
 @routes.jobs_api.patch("/api/analyses/{analysis_id}")
 @schema({"results": {"type": "dict", "required": True}})
-async def patch_analysis(req: Request):
+async def finalize(req: Request):
     """Sets the result for an analysis and marks it as ready."""
     db: DB = req.app["db"]
+    pg: AsyncEngine = req.app["pg"]
     analyses: Collection = db.analyses
     analysis_id: str = req.match_info["analysis_id"]
 
-    analysis_document: Dict[str, Any] = await analyses.find_one({"_id": analysis_id})
+    analysis_document = await analyses.find_one({"_id": analysis_id}, ["ready"])
 
     if not analysis_document:
         raise NotFound(f"There is no analysis with id {analysis_id}")
@@ -461,15 +474,16 @@ async def patch_analysis(req: Request):
     if "ready" in analysis_document and analysis_document["ready"]:
         raise HTTPConflict(text="There is already a result for this analysis.")
 
-    request_json = await req.json()
+    data = await req.json()
 
-    updated_analysis_document = await analyses.find_one_and_update({"_id": analysis_id}, {
+    document = await analyses.find_one_and_update({"_id": analysis_id}, {
         "$set": {
-            "results": request_json["results"],
+            "results": data["results"],
             "ready": True
         }
     })
 
-    await recalculate_workflow_tags(db, analysis_document["sample"]["id"])
+    await recalculate_workflow_tags(db, document["sample"]["id"])
+    await attach_analysis_files(pg, analysis_id, document)
 
-    return json_response(base_processor(updated_analysis_document))
+    return json_response(await processor(db, document))

@@ -1,7 +1,8 @@
 import pytest
-
 from virtool.dispatcher.change import Change
-from virtool.dispatcher.fetchers import IndexesFetcher, SimpleMongoFetcher, LabelsFetcher, UploadsFetcher, TasksFetcher
+from virtool.dispatcher.fetchers import (IndexesFetcher, LabelsFetcher,
+                                         SimpleMongoFetcher, TasksFetcher,
+                                         UploadsFetcher)
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
 from virtool.uploads.models import UploadType
 
@@ -42,7 +43,8 @@ class TestSimpleMongoFetcher:
         ])
 
         if use_projection:
-            fetcher = SimpleMongoFetcher(dbi.hmm, projection=["name", "include"])
+            fetcher = SimpleMongoFetcher(
+                dbi.hmm, projection=["name", "include"])
         else:
             fetcher = SimpleMongoFetcher(dbi.hmm)
 
@@ -311,7 +313,7 @@ class TestUploadsFetcher:
                 'reserved': False,
                 "size": None,
                 "type": UploadType.reads,
-                "user": "danny",
+                "user": "7CtBo2yG",
                 "uploaded_at": None
             },
             "interface": "uploads",

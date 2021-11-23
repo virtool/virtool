@@ -24,13 +24,16 @@ async def test_create_fake_unpaired(
     paired,
     finalized,
     app,
+    fake,
     snapshot,
     static_time
 ):
+    user = await fake.users.insert()
+
     fake_sample = await create_fake_sample(
         app,
         "sample_1",
-        "bob",
+        user["_id"],
         paired=paired,
         finalized=finalized
     )

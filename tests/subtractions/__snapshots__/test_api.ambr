@@ -1,4 +1,4 @@
-# name: test_edit[uvloop-data0]
+# name: test_edit[uvloop-False-data0]
   <class 'dict'> {
     'files': <class 'list'> [
     ],
@@ -8,14 +8,14 @@
     'nickname': 'Foo Subtraction',
   }
 ---
-# name: test_edit[uvloop-data0].1
+# name: test_edit[uvloop-False-data0].1
   <class 'dict'> {
     '_id': 'foo',
     'name': 'Bar',
     'nickname': 'Foo Subtraction',
   }
 ---
-# name: test_edit[uvloop-data1]
+# name: test_edit[uvloop-False-data1]
   <class 'dict'> {
     'files': <class 'list'> [
     ],
@@ -25,14 +25,14 @@
     'nickname': 'Bar Subtraction',
   }
 ---
-# name: test_edit[uvloop-data1].1
+# name: test_edit[uvloop-False-data1].1
   <class 'dict'> {
     '_id': 'foo',
     'name': 'Foo',
     'nickname': 'Bar Subtraction',
   }
 ---
-# name: test_edit[uvloop-data2]
+# name: test_edit[uvloop-False-data2]
   <class 'dict'> {
     'files': <class 'list'> [
     ],
@@ -42,14 +42,14 @@
     'nickname': '',
   }
 ---
-# name: test_edit[uvloop-data2].1
+# name: test_edit[uvloop-False-data2].1
   <class 'dict'> {
     '_id': 'foo',
     'name': 'Foo',
     'nickname': '',
   }
 ---
-# name: test_edit[uvloop-data3]
+# name: test_edit[uvloop-False-data3]
   <class 'dict'> {
     'files': <class 'list'> [
     ],
@@ -59,11 +59,111 @@
     'nickname': 'Bar Subtraction',
   }
 ---
-# name: test_edit[uvloop-data3].1
+# name: test_edit[uvloop-False-data3].1
   <class 'dict'> {
     '_id': 'foo',
     'name': 'Bar',
     'nickname': 'Bar Subtraction',
+  }
+---
+# name: test_edit[uvloop-True-data0]
+  <class 'dict'> {
+    'files': <class 'list'> [
+    ],
+    'id': 'foo',
+    'linked_samples': 12,
+    'name': 'Bar',
+    'nickname': 'Foo Subtraction',
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
+  }
+---
+# name: test_edit[uvloop-True-data0].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'name': 'Bar',
+    'nickname': 'Foo Subtraction',
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
+  }
+---
+# name: test_edit[uvloop-True-data1]
+  <class 'dict'> {
+    'files': <class 'list'> [
+    ],
+    'id': 'foo',
+    'linked_samples': 12,
+    'name': 'Foo',
+    'nickname': 'Bar Subtraction',
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
+  }
+---
+# name: test_edit[uvloop-True-data1].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'name': 'Foo',
+    'nickname': 'Bar Subtraction',
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
+  }
+---
+# name: test_edit[uvloop-True-data2]
+  <class 'dict'> {
+    'files': <class 'list'> [
+    ],
+    'id': 'foo',
+    'linked_samples': 12,
+    'name': 'Foo',
+    'nickname': '',
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
+  }
+---
+# name: test_edit[uvloop-True-data2].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'name': 'Foo',
+    'nickname': '',
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
+  }
+---
+# name: test_edit[uvloop-True-data3]
+  <class 'dict'> {
+    'files': <class 'list'> [
+    ],
+    'id': 'foo',
+    'linked_samples': 12,
+    'name': 'Bar',
+    'nickname': 'Bar Subtraction',
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
+  }
+---
+# name: test_edit[uvloop-True-data3].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'name': 'Bar',
+    'nickname': 'Bar Subtraction',
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
   }
 ---
 # name: test_finalize_subtraction[uvloop-None]
@@ -108,6 +208,11 @@
     'name': 'Foo',
     'nickname': 'Foo Subtraction',
     'ready': True,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
   }
 ---
 # name: test_finalize_subtraction[uvloop-None].1
@@ -124,6 +229,9 @@
     'name': 'Foo',
     'nickname': 'Foo Subtraction',
     'ready': True,
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
   }
 ---
 # name: test_job_remove[uvloop-True-False]
