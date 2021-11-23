@@ -16,7 +16,7 @@ from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_
 from virtool.shutdown import exit_redis, exit_executors, exit_client, exit_scheduler, exit_dispatcher
 from virtool.startup import init_executors, init_db, init_events, init_redis, init_refresh, init_routes, init_sentry, \
     init_settings, init_paths, init_tasks, init_postgres, init_version, init_dispatcher, init_client_path, \
-    init_http_client, init_jobs_client, init_task_runner, init_check_db
+    init_http_client, init_jobs_client, init_task_runner, init_check_db, init_b2c
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +62,9 @@ def create_app(config: Config):
         init_jobs_client,
         init_refresh
     ])
+
+    if config.use_b2c:
+        app.on_startup.append(init_b2c)
 
     app.on_response_prepare.append(virtool.http.csp.on_prepare)
 

@@ -1,17 +1,19 @@
 import hashlib
 
 import pytest
-import virtool.errors
-import virtool.users.db
-import virtool.users.utils
-import virtool.utils
 from aiohttp.test_utils import make_mocked_coro
-from virtool.users.db import generate_handle
+
+import virtool.errors
+from virtool.users.db import compose_force_reset_update, compose_groups_update, compose_password_update, \
+    compose_primary_group_update, validate_credentials, update_sessions_and_keys, create, edit
+from virtool.users.db import generate_handle, find_or_create_b2c_user, B2CUserAttributes
+from virtool.users.utils import hash_password
+from virtool.utils import random_alphanumeric
 
 
 @pytest.mark.parametrize("force_reset", [None, True, False])
 async def test_compose_force_reset_update(force_reset):
-    update = virtool.users.db.compose_force_reset_update(force_reset)
+    update = compose_force_reset_update(force_reset)
 
     if force_reset is None:
         assert update == {}
@@ -26,7 +28,7 @@ async def test_compose_force_reset_update(force_reset):
 async def test_compose_groups_update(groups, dbi, kings, all_permissions, no_permissions):
     await dbi.groups.insert_many([kings])
 
-    coroutine = virtool.users.db.compose_groups_update(dbi, groups)
+    coroutine = compose_groups_update(dbi, groups)
 
     if groups == ["kings", "peasants"]:
         with pytest.raises(virtool.errors.DatabaseError) as excinfo:
@@ -51,7 +53,7 @@ async def test_compose_password_update(password, mocker, static_time):
     mocker.patch("virtool.users.utils.hash_password",
                  return_value="new_hashed_password")
 
-    update = virtool.users.db.compose_password_update(password)
+    update = compose_password_update(password)
 
     if password is None:
         assert update == {}
@@ -69,7 +71,7 @@ async def test_compose_primary_group_update(primary_group, dbi, bob, kings, peas
 
     await dbi.groups.insert_many([kings, peasants])
 
-    coroutine = virtool.users.db.compose_primary_group_update(
+    coroutine = compose_primary_group_update(
         dbi, bob["_id"], primary_group)
 
     if primary_group == "lords" or primary_group == "kings":
@@ -116,11 +118,9 @@ async def test_create(exists, force_reset, snapshot, mocker, dbi, bob):
 
     # Ensure the force_reset is set to True by default.
     if force_reset is None:
-        coroutine = virtool.users.db.create(
-            dbi, password=password, handle=handle)
+        coroutine = create(dbi, password=password, handle=handle)
     else:
-        coroutine = virtool.users.db.create(
-            dbi, password=password, handle=handle, force_reset=force_reset)
+        coroutine = create(dbi, password=password, handle=handle, force_reset=force_reset)
 
     # Ensure an exception is raised if the user_id is already in use.
     if exists:
@@ -177,7 +177,7 @@ async def test_edit(exists, administrator, snapshot, mocker, dbi, all_permission
     if exists:
         await dbi.users.insert_one(bob)
 
-    coroutine = virtool.users.db.edit(
+    coroutine = edit(
         dbi,
         bob["_id"],
         administrator,
@@ -221,24 +221,32 @@ async def test_validate_credentials(legacy, user_id, password, result, dbi):
     }
 
     if legacy:
-        salt = virtool.utils.random_alphanumeric(24)
+        salt = random_alphanumeric(24)
 
         document.update({
             "salt": salt,
             "password": hashlib.sha512(salt.encode("utf-8") + "foobar".encode("utf-8")).hexdigest()
         })
     else:
-        document["password"] = virtool.users.utils.hash_password("foobar")
+        document["password"] = hash_password("foobar")
 
     await dbi.users.insert_one(document)
 
-    assert await virtool.users.db.validate_credentials(dbi, user_id, password) is result
+    assert await validate_credentials(dbi, user_id, password) is result
 
 
 @pytest.mark.parametrize("administrator", [True, False])
 @pytest.mark.parametrize("elevate", [True, False])
 @pytest.mark.parametrize("missing", [True, False])
-async def test_update_sessions_and_keys(administrator, elevate, missing, snapshot, dbi, all_permissions, no_permissions):
+async def test_update_sessions_and_keys(
+        administrator,
+        elevate,
+        missing,
+        snapshot,
+        dbi,
+        all_permissions,
+        no_permissions
+):
     """
     Test that permissions assigned to keys and sessions are updated correctly.
 
@@ -278,7 +286,7 @@ async def test_update_sessions_and_keys(administrator, elevate, missing, snapsho
 
     target_permissions = all_permissions if elevate else no_permissions
 
-    await virtool.users.db.update_sessions_and_keys(
+    await update_sessions_and_keys(
         dbi,
         "bob",
         administrator,
@@ -303,3 +311,45 @@ async def test_generate_handle(mocker, dbi):
     })
 
     assert "foo-bar-2" == await generate_handle(dbi.users, "foo", "bar")
+
+
+@pytest.mark.parametrize("exists", [None, "handle", "user_id", "oid"])
+async def test_find_or_create_b2c_user(exists, dbi, mocker, snapshot, static_time):
+    user_attributes = B2CUserAttributes(
+        oid="abc123",
+        display_name="bobby",
+        given_name="bob",
+        family_name="bobbert"
+    )
+
+    if exists == "handle":
+        mocker.patch("virtool.users.db.generate_handle", return_value="bob123")
+        await dbi.users.insert_one({"handle": "bob123"})
+
+    if exists == "user_id":
+        mocker.patch("virtool.db.utils.get_new_id", return_value="foobar")
+        await dbi.users.insert_one({"_id": "foobar"})
+
+    if exists == "oid":
+        await dbi.users.insert_one({
+            "_id": "foobar",
+            "b2c_oid": "abc123"
+        })
+
+    if exists is None:
+        mocker.patch("virtool.users.db.generate_handle", return_value="bob123")
+        mocker.patch("virtool.db.utils.get_new_id", return_value="foobar")
+        mocker.patch("virtool.utils.timestamp", return_value=static_time.datetime)
+
+    coroutine = find_or_create_b2c_user(dbi, user_attributes)
+
+    if exists == "handle" or exists == "user_id":
+        with pytest.raises(virtool.errors.DatabaseError) as excinfo:
+            await coroutine
+
+        assert "User already exists" == str(excinfo.value)
+
+        return
+
+    if exists == "oid" or exists is None:
+        assert await coroutine == snapshot

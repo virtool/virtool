@@ -192,12 +192,12 @@ async def handle_exists(collection, handle: str) -> bool:
     return bool(await collection.count_documents({"handle": handle}))
 
 
-async def oid_exists(collection, ad_oid: str) -> bool:
+async def oid_exists(collection, b2c_oid: str) -> bool:
     """
-    Check if the Azure AD oid exists in the collection.
+    Check if the oid from Azure AD B2C exists in the collection.
 
     :param collection: the Mongo collection to check the oid against
-    :param ad_oid: the Azure AD oid to check for
+    :param b2c_oid: the Azure AD B2C oid to check for
     :return: does the oid exist
     """
-    return bool(await collection.count_documents({"ad_oid": ad_oid}))
+    return bool(await collection.count_documents({"b2c_oid": b2c_oid}))

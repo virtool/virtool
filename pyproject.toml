@@ -45,6 +45,9 @@ aiojobs = "^0.3.0"
 Cerberus = "^1.3.4"
 PyYAML = "^5.4.1"
 email-validator = "^1.1.3"
+PyJWT = "^2.3.0"
+msal = "^1.16.0"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 
 
 [tool.poetry.dev-dependencies]

@@ -10,8 +10,8 @@ async def test_update_user_document_task(spawn_client, snapshot, pg_session, sta
     if user == "ad_user":
         document = {
             "_id": "abc123",
-            "ad_given_name": "foo",
-            "ad_family_name": "bar"
+            "b2c_given_name": "foo",
+            "b2c_family_name": "bar"
         }
 
     elif user == "existing_user":
