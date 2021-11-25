@@ -105,7 +105,7 @@ async def get(req):
     document = await attach_computed(req.app, document)
 
     if "user" in document:
-        document = attach_user(db, document)
+        document = await attach_user(db, document)
 
     return json_response(base_processor(document))
 
