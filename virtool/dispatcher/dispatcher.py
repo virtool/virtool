@@ -6,8 +6,6 @@ from dataclasses import dataclass
 from logging import getLogger
 from typing import List
 
-from sqlalchemy.ext.asyncio import AsyncEngine
-
 import virtool.analyses.db
 import virtool.caches.db
 import virtool.history.db
@@ -19,11 +17,14 @@ import virtool.references.db
 import virtool.samples.db
 import virtool.subtractions.db
 import virtool.users.db
+from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool.db.core import DB
 from virtool.dispatcher.change import Change
 from virtool.dispatcher.connection import Connection
-from virtool.dispatcher.fetchers import IndexesFetcher, LabelsFetcher, ReferencesFetcher, \
-    SamplesFetcher, SimpleMongoFetcher, UploadsFetcher, TasksFetcher
+from virtool.dispatcher.fetchers import (IndexesFetcher, LabelsFetcher,
+                                         ReferencesFetcher, SamplesFetcher,
+                                         SimpleMongoFetcher, TasksFetcher,
+                                         UploadsFetcher)
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
 
@@ -59,24 +60,24 @@ class Dispatcher:
         self.db = db
         self._listener = listener
         self._fetchers = Fetchers(
-            SimpleMongoFetcher(db.analyses, virtool.analyses.db.PROJECTION),
-            SimpleMongoFetcher(db.caches, virtool.caches.db.PROJECTION),
-            SimpleMongoFetcher(db.groups),
-            SimpleMongoFetcher(db.history, virtool.history.db.LIST_PROJECTION),
-            SimpleMongoFetcher(db.hmm, virtool.hmm.db.PROJECTION),
-            IndexesFetcher(db),
-            SimpleMongoFetcher(db.jobs, virtool.jobs.db.PROJECTION, virtool.jobs.db.processor),
-            LabelsFetcher(pg, db),
-            SimpleMongoFetcher(db.otus, virtool.otus.db.PROJECTION),
-            TasksFetcher(pg),
-            ReferencesFetcher(db),
-            SamplesFetcher(pg, db),
-            SimpleMongoFetcher(db.sequences),
-            SimpleMongoFetcher(db.settings),
-            SimpleMongoFetcher(db.status),
-            SimpleMongoFetcher(db.subtraction, virtool.subtractions.db.PROJECTION),
-            UploadsFetcher(pg),
-            SimpleMongoFetcher(db.users, virtool.users.db.PROJECTION)
+            analyses=SimpleMongoFetcher(db.analyses, virtool.analyses.db.PROJECTION, virtool.analyses.db.processor),
+            caches=SimpleMongoFetcher(db.caches, virtool.caches.db.PROJECTION),
+            groups=SimpleMongoFetcher(db.groups),
+            history=SimpleMongoFetcher(db.history, virtool.history.db.LIST_PROJECTION, processor=virtool.history.db.processor),
+            hmm=SimpleMongoFetcher(db.hmm, virtool.hmm.db.PROJECTION),
+            indexes=IndexesFetcher(db),
+            jobs=SimpleMongoFetcher(db.jobs, virtool.jobs.db.PROJECTION, virtool.jobs.db.processor),
+            labels=LabelsFetcher(pg, db),
+            otus=SimpleMongoFetcher(db.otus, virtool.otus.db.PROJECTION),
+            tasks=TasksFetcher(pg),
+            references=ReferencesFetcher(db),
+            samples=SamplesFetcher(pg, db),
+            sequences=SimpleMongoFetcher(db.sequences),
+            settings=SimpleMongoFetcher(db.settings),
+            status=SimpleMongoFetcher(db.status),
+            subtraction=SimpleMongoFetcher(db.subtraction, virtool.subtractions.db.PROJECTION),
+            uploads=UploadsFetcher(db, pg),
+            users=SimpleMongoFetcher(db.users, virtool.users.db.PROJECTION)
         )
 
         #: All active client connections.

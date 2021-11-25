@@ -263,8 +263,8 @@ class TestLabelsFetcher:
 
 class TestUploadsFetcher:
 
-    async def test_auto_delete(self, connections, pg, ws):
-        fetcher = UploadsFetcher(pg)
+    async def test_auto_delete(self, connections, dbi, pg, ws):
+        fetcher = UploadsFetcher(dbi, pg)
 
         pairs = list()
 
@@ -288,43 +288,23 @@ class TestUploadsFetcher:
             self,
             operation,
             connections,
+            snapshot,
+            dbi,
             pg,
             reference,
             static_time,
             test_uploads,
             ws
     ):
-        fetcher = UploadsFetcher(pg)
+        fetcher = UploadsFetcher(dbi, pg)
 
-        pairs = list()
+        messages = list()
 
-        async for pair in fetcher.fetch(Change("uploads", operation, [1]), connections):
-            pairs.append(pair)
+        async for conn, message in fetcher.fetch(Change("uploads", operation, [1]), connections):
+            assert conn == ws
+            messages.append(message)
 
-        message = {
-            "data": {
-                "id": 1,
-                "created_at": None,
-                "name": "test.fq.gz",
-                "name_on_disk": None,
-                "ready": False,
-                "removed": False,
-                "removed_at": None,
-                'reserved': False,
-                "size": None,
-                "type": UploadType.reads,
-                "user": "7CtBo2yG",
-                "uploaded_at": None
-            },
-            "interface": "uploads",
-            "operation": operation
-        }
-
-        assert pairs == [
-            (ws, message),
-            (ws, message),
-            (ws, message)
-        ]
+        assert messages == snapshot
 
 
 class TestTasksFetcher:
