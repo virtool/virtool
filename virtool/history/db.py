@@ -20,8 +20,9 @@ Schema:
   - id (str) the user ID
 
 """
+from asyncio.tasks import gather
 from copy import deepcopy
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import dictdiffer
 import pymongo.errors
@@ -33,7 +34,7 @@ import virtool.utils
 from virtool.api.utils import paginate
 from virtool.history.utils import (calculate_diff, derive_otu_information,
                                    write_diff_file)
-from virtool.users.db import ATTACH_PROJECTION, attach_user, attach_users
+from virtool.users.db import ATTACH_PROJECTION, attach_user
 
 MOST_RECENT_PROJECTION = [
     "_id",
@@ -58,6 +59,22 @@ LIST_PROJECTION = [
 PROJECTION = LIST_PROJECTION + [
     "diff"
 ]
+
+
+async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Process a history document before it is returned to the client.
+
+    :param db: the application object
+    :param document: the document to process
+    :return: the processed document
+    """
+    processed = virtool.utils.base_processor(document)
+
+    if processed.get("user"):
+        processed = await attach_user(db, processed)
+
+    return processed
 
 
 async def add(
@@ -145,7 +162,7 @@ async def find(db, req_query, base_query=None):
 
     return {
         **data,
-        "documents": await attach_users(db, data["documents"])
+        "documents": await gather(*[processor(db, d) for d in data["documents"]])
     }
 
 
@@ -160,10 +177,12 @@ async def get(app, change_id: str) -> dict:
     :return: the change
 
     """
-    document = await app["db"].history.find_one(change_id, PROJECTION)
+    db = app["db"]
+
+    document = await db.history.find_one(change_id, PROJECTION)
 
     if document:
-        document = await attach_user(app["db"], document)
+        document = await attach_user(db, document)
 
         if document["diff"] == "file":
             otu_id, otu_version = change_id.split(".")
@@ -174,7 +193,9 @@ async def get(app, change_id: str) -> dict:
                 otu_version
             )
 
-    return virtool.utils.base_processor(document)
+        return await processor(db, document)
+
+    return None
 
 
 async def get_contributors(db, query: dict) -> List[dict]:

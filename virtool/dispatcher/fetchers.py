@@ -3,16 +3,16 @@ Fetchers provide a get() method
 """
 from abc import ABC, abstractmethod
 from asyncio import gather
-from typing import AsyncIterable, List, Optional, Tuple, Callable, Any, Dict, Awaitable
-
-from motor.motor_asyncio import AsyncIOMotorDatabase
-from sqlalchemy import inspect, select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from typing import (Any, AsyncIterable, Awaitable, Callable, Dict, List,
+                    Optional, Tuple)
 
 import virtool.indexes.db
 import virtool.references.db
 import virtool.samples.db
-from virtool.db.core import Collection, DB
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from sqlalchemy import inspect, select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool.db.core import DB, Collection
 from virtool.dispatcher.change import Change
 from virtool.dispatcher.connection import Connection
 from virtool.dispatcher.operations import DELETE
@@ -22,6 +22,7 @@ from virtool.samples.db import attach_labels
 from virtool.tasks.models import Task
 from virtool.types import Projection
 from virtool.uploads.models import Upload
+from virtool.users.db import attach_users
 from virtool.utils import base_processor
 
 
@@ -250,6 +251,7 @@ class SamplesFetcher(AbstractFetcher):
         ).to_list(None)
 
         await gather(*[attach_labels(self._pg, d) for d in documents])
+        await attach_users(self._db, documents)
 
         for document in documents:
             user = document["user"]["id"]
@@ -266,7 +268,8 @@ class SamplesFetcher(AbstractFetcher):
 
 class UploadsFetcher(AbstractFetcher):
 
-    def __init__(self, pg: AsyncEngine):
+    def __init__(self, db, pg: AsyncEngine):
+        self._db = db
         self._pg = pg
         self._interface = "uploads"
 
@@ -285,11 +288,12 @@ class UploadsFetcher(AbstractFetcher):
         async with AsyncSession(self._pg) as session:
             result = await session.execute(select(Upload).filter(Upload.id.in_(change.id_list)))
 
-        records = list(result.unique().scalars())
+        records = [object_as_dict(r) for r in result.unique().scalars()]
+        records = await attach_users(self._db, records)
 
         for record in records:
             for connection in connections:
-                if record.removed:
+                if record["removed"]:
                     yield connection, {
                         "interface": change.interface,
                         "operation": DELETE,
@@ -299,7 +303,7 @@ class UploadsFetcher(AbstractFetcher):
                     yield connection, {
                         "interface": change.interface,
                         "operation": change.operation,
-                        "data": object_as_dict(record)
+                        "data": record
                     }
 
 
@@ -320,12 +324,12 @@ class TasksFetcher(AbstractFetcher):
         async with AsyncSession(self._pg) as session:
             result = await session.execute(select(Task).filter(Task.id.in_(change.id_list)))
 
-        records = list(result.scalars())
+        records = [object_as_dict(r) for r in result.scalars()]
 
         for record in records:
             for connection in connections:
                 yield connection, {
                     "interface": change.interface,
                     "operation": change.operation,
-                    "data": object_as_dict(record)
+                    "data": record
                 }
