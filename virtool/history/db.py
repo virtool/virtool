@@ -217,9 +217,14 @@ async def get_contributors(db, query: dict) -> List[dict]:
 
     contributors = [{"id": c["_id"], "count": c["count"]} async for c in cursor]
 
+    projection = {
+        **ATTACH_PROJECTION,
+        "_id": True
+    }
+
     users = await db.users.find(
         {"_id": {"$in": [c["id"] for c in contributors]}},
-        projection=ATTACH_PROJECTION
+        projection=projection
     ).to_list(None)
 
     users = {u.pop("_id"): u for u in users}
