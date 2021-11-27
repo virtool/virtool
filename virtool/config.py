@@ -179,27 +179,21 @@ def start_server(
     configure_logs(ctx.obj["dev"], ctx.obj["verbose"])
 
     config = Config(
-        no_check_db=no_check_db,
-        no_check_files=no_check_files,
-        no_fetching=no_fetching,
-        db_connection_string=ctx.obj["db_connection_string"],
-        db_name=ctx.obj["db_name"],
-        dev=ctx.obj["dev"],
-        force_version=ctx.obj["force_version"],
-        no_sentry=ctx.obj["no_sentry"],
-        postgres_connection_string=ctx.obj["postgres_connection_string"],
-        redis_connection_string=ctx.obj["redis_connection_string"],
-        verbose=ctx.obj["verbose"],
-        data_path=ctx.obj["data_path"],
-        proxy=ctx.obj["proxy"],
-        host=host,
-        no_client=no_client,
-        port=port,
+        **ctx.obj,
         b2c_client_id=b2c_client_id,
         b2c_client_secret=b2c_client_secret,
         b2c_tenant=b2c_tenant,
-        b2c_user_flow=b2c_user_flow,
-        use_b2c=use_b2c
+        b2c_user_flow=b2c_user_flow,        
+        data_path=ctx.obj["data_path"],
+        host=host,        
+        no_check_db=no_check_db,
+        no_check_files=no_check_files,
+        no_client=no_client,
+        no_fetching=no_fetching,
+        port=port,
+        proxy=ctx.obj["proxy"],
+        use_b2c=use_b2c,
+        verbose=ctx.obj["verbose"]
     )
 
     logger.info("Starting in server mode")
@@ -232,26 +226,15 @@ def start_jobs_api(ctx, fake_path, port, host):
     configure_logs(ctx.obj["dev"], ctx.obj["verbose"])
 
     logger.info("Starting jobs API process")
+
     config = Config(
-        no_check_db=ctx.obj["no_check_db"],
-        no_check_files=ctx.obj["no_check_files"],
-        no_fetching=ctx.obj["no_fetching"],
-        db_connection_string=ctx.obj["db_connection_string"],
-        db_name=ctx.obj["db_name"],
-        dev=ctx.obj["dev"],
-        force_version=ctx.obj["force_version"],
-        no_sentry=ctx.obj["no_sentry"],
-        postgres_connection_string=ctx.obj["postgres_connection_string"],
-        redis_connection_string=ctx.obj["redis_connection_string"],
-        verbose=ctx.obj["verbose"],
-        data_path=ctx.obj["data_path"],
-        proxy=ctx.obj["proxy"],
+        **ctx.obj,
         host=host,
-        no_client=ctx.obj["no_client"],
-        port=port,
         fake=fake_path is not None,
-        fake_path=fake_path
+        fake_path=fake_path,
+        port=port,        
     )
+
     asyncio.get_event_loop().run_until_complete(
         virtool.jobs.main.run(config)
     )

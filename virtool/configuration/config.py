@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 @dataclass
-class Config(object):
+class Config:
     db_connection_string: str
     db_name: str
     dev: bool
