@@ -15,7 +15,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool.api.utils import paginate
 from virtool.configuration.config import Config
 from virtool.db.utils import get_new_id
-from virtool.history.db import get_contributors
 from virtool.indexes.models import IndexFile
 from virtool.users.db import attach_user
 
@@ -189,7 +188,7 @@ async def get_contributors(db, index_id: str) -> List[dict]:
     :return: a list of contributors to the index
 
     """
-    return await get_contributors(db, {"index.id": index_id})
+    return await virtool.history.db.get_contributors(db, {"index.id": index_id})
 
 
 async def get_current_id_and_version(db, ref_id: str) -> Tuple[str, int]:
