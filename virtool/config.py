@@ -183,17 +183,14 @@ def start_server(
         b2c_client_id=b2c_client_id,
         b2c_client_secret=b2c_client_secret,
         b2c_tenant=b2c_tenant,
-        b2c_user_flow=b2c_user_flow,        
-        data_path=ctx.obj["data_path"],
+        b2c_user_flow=b2c_user_flow,   
         host=host,        
         no_check_db=no_check_db,
         no_check_files=no_check_files,
         no_client=no_client,
         no_fetching=no_fetching,
         port=port,
-        proxy=ctx.obj["proxy"],
         use_b2c=use_b2c,
-        verbose=ctx.obj["verbose"]
     )
 
     logger.info("Starting in server mode")
