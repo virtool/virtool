@@ -301,6 +301,8 @@ async def create(req):
 
     sample_group_setting = settings.sample_group
 
+    group = "none"
+
     # Require a valid ``group`` field if the ``sample_group`` setting is ``users_primary_group``.
     if sample_group_setting == "force_choice":
         force_choice_error_message = await validate_force_choice_group(db, data)
@@ -314,10 +316,6 @@ async def create(req):
     # ``users_primary_group``.
     elif sample_group_setting == "users_primary_group":
         group = await virtool.db.utils.get_one_field(db.users, "primary_group", user_id)
-
-    # Make the owner group none if the setting is none.
-    elif sample_group_setting == "none":
-        group = "none"
 
     files = [
         {"id": upload["id"], "name": upload["name"], "size": upload["size"]}
