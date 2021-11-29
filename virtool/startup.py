@@ -83,7 +83,7 @@ def get_scheduler_from_app(app: Application) -> aiojobs.Scheduler:
     return scheduler
 
 
-async def init_check_db(app: Application):
+async def startup_check_db(app: Application):
     if app["config"].no_check_db:
         return logger.info("Skipping database checks")
 
@@ -102,7 +102,7 @@ async def init_check_db(app: Application):
     await virtool.db.mongo.create_indexes(db)
 
 
-async def init_client_path(app: Application):
+async def startup_client_path(app: Application):
     if not app["config"].no_client:
         app["client_path"] = await get_client_path()
 
@@ -113,7 +113,7 @@ async def init_client_path(app: Application):
         app.router.add_static("/static", app["client_path"])
 
 
-async def init_db(app: App):
+async def startup_db(app: App):
     """
     An application ``on_startup`` callback that attaches an instance of
     :class:`~AsyncIOMotorClient` and the ``db_name`` to the Virtool ``app`` object. Also
@@ -132,7 +132,7 @@ async def init_db(app: App):
     app["dispatcher_interface"] = dispatcher_interface
 
 
-async def init_dispatcher(app: Application):
+async def startup_dispatcher(app: Application):
     """
     An application ``on_startup`` callback that initializes a Virtool :class:`~.Dispatcher` object
     and attaches it to the ``app`` object.
@@ -157,7 +157,7 @@ async def init_dispatcher(app: Application):
     await get_scheduler_from_app(app).spawn(app["dispatcher"].run())
 
 
-async def init_events(app: Application):
+async def startup_events(app: Application):
     events = create_events()
 
     loop = asyncio.get_event_loop()
@@ -168,7 +168,7 @@ async def init_events(app: Application):
     app["events"] = events
 
 
-async def init_executors(app: Application):
+async def startup_executors(app: Application):
     """
     An application ``on_startup`` callback that initializes a :class:`~ThreadPoolExecutor` and
     attaches it to the ``app`` object.
@@ -197,13 +197,13 @@ async def init_executors(app: Application):
     app["process_executor"] = process_executor
 
 
-async def init_fake(app: Application):
+async def startup_fake(app: Application):
     if app["config"].fake:
         app["fake"] = FakerWrapper()
         await populate(app)
 
 
-async def init_fake_config(app: App):
+async def startup_fake_config(app: App):
     """
     If the ``fake`` config flag is set, patch the config so that the MongoDB and Postgres databases
     and the data directory are faked.
@@ -237,7 +237,7 @@ async def init_fake_config(app: App):
         app["config"].postgres_connection_string = f"{base_connection_string}/{name}"
 
 
-async def init_jobs_client(app: Application):
+async def startup_jobs_client(app: Application):
     """
     An application `on_startup` callback that initializes a Virtool
     :class:`virtool.job_manager.Manager` object and puts it in app state.
@@ -249,7 +249,7 @@ async def init_jobs_client(app: Application):
     app["jobs"] = JobsClient(app)
 
 
-async def init_http_client(app: Application):
+async def startup_http_client(app: Application):
     """
     Create an async HTTP client session for the server.
 
@@ -269,13 +269,13 @@ async def init_http_client(app: Application):
     app["client"] = aiohttp.client.ClientSession(headers=headers)
 
 
-async def init_paths(app: Application):
+async def startup_paths(app: Application):
     if app["config"].no_check_files is False:
         logger.info("Checking files")
         ensure_data_dir(app["config"].data_path)
 
 
-async def init_postgres(app: Application):
+async def startup_postgres(app: Application):
     """
      An application ``on_startup`` callback that attaches an instance of :class:`~AsyncConnection`
      to the Virtool ``app`` object.
@@ -290,7 +290,7 @@ async def init_postgres(app: Application):
     app["pg"] = await virtool.pg.utils.connect(postgres_connection_string)
 
 
-async def init_redis(app: typing.Union[dict, Application]):
+async def startup_redis(app: typing.Union[dict, Application]):
     redis_connection_string = app["config"].redis_connection_string
     logger.info("Connecting to Redis")
     redis = await virtool.redis.connect(redis_connection_string)
@@ -301,7 +301,7 @@ async def init_redis(app: typing.Union[dict, Application]):
     app["redis"] = redis
 
 
-async def init_refresh(app: Application):
+async def startup_refresh(app: Application):
     """
     Start async jobs for checking for new remote reference and HMM releases.
 
@@ -317,12 +317,12 @@ async def init_refresh(app: Application):
     await scheduler.spawn(refresh(app))
 
 
-async def init_routes(app: Application):
+async def startup_routes(app: Application):
     logger.debug("Setting up routes")
     setup_routes(app)
 
 
-async def init_sentry(app: typing.Union[dict, Application]):
+async def startup_sentry(app: typing.Union[dict, Application]):
     if (not app["config"].no_sentry
             and app["settings"].enable_sentry is not False
             and not app["config"].dev):
@@ -333,7 +333,7 @@ async def init_sentry(app: typing.Union[dict, Application]):
         logger.info("Skipped configuring Sentry")
 
 
-async def init_settings(app: typing.Union[dict, Application]):
+async def startup_settings(app: typing.Union[dict, Application]):
     """
     Draws settings from the settings database collection and populates `app["settings"`.
 
@@ -345,7 +345,7 @@ async def init_settings(app: typing.Union[dict, Application]):
     app["settings"] = await ensure(app["db"])
 
 
-async def init_version(app: typing.Union[dict, Application]):
+async def startup_version(app: typing.Union[dict, Application]):
     """
     Bind the application version to the application state `dict`.
 
@@ -369,7 +369,7 @@ async def init_version(app: typing.Union[dict, Application]):
     app["version"] = version
 
 
-async def init_b2c(app: Application):
+async def startup_b2c(app: Application):
     """
     Initiate connection to Azure AD B2C tenant.
 
@@ -398,7 +398,7 @@ async def init_b2c(app: Application):
     app["b2c"] = B2C(msal, authority)
 
 
-async def init_task_runner(app: Application):
+async def startup_task_runner(app: Application):
     """
     An application `on_startup` callback that initializes a Virtool
     :class:`virtool.tasks.runner.TaskRunner` object and puts it in app state.
@@ -414,7 +414,7 @@ async def init_task_runner(app: Application):
     await scheduler.spawn(TaskRunner(channel, app).run())
 
 
-async def init_tasks(app: Application):
+async def startup_tasks(app: Application):
     if app["config"].no_check_db:
         return logger.info("Skipping subtraction FASTA files checks")
 

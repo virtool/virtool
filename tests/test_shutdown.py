@@ -1,10 +1,10 @@
 from sqlalchemy import text
 
 from virtool.startup import get_scheduler_from_app
-from virtool.shutdown import exit_client, exit_dispatcher, exit_executors, exit_scheduler, exit_redis, drop_fake_postgres
+from virtool.shutdown import shutdown_client, shutdown_dispatcher, shutdown_executors, shutdown_scheduler, shutdown_redis, drop_fake_postgres
 
 
-async def test_exit_client(spawn_client):
+async def test_shutdown_client(spawn_client):
     """
     Test that the HTTP async client is properly closed on shutdown.
 
@@ -12,12 +12,12 @@ async def test_exit_client(spawn_client):
     client = await spawn_client(authorize=True)
     app = client.app
 
-    await exit_client(app)
+    await shutdown_client(app)
 
     assert app["client"].closed
 
 
-async def test_exit_dispatcher(mocker, spawn_client):
+async def test_shutdown_dispatcher(mocker, spawn_client):
     """
     Test that the app's `Dispatcher` object is properly closed on shutdown.
 
@@ -27,12 +27,12 @@ async def test_exit_dispatcher(mocker, spawn_client):
 
     mock = mocker.patch('virtool.dispatcher.dispatcher.Dispatcher.close')
 
-    await exit_dispatcher(app)
+    await shutdown_dispatcher(app)
 
     assert mock.called
 
 
-async def test_exit_executors(mocker, spawn_client):
+async def test_shutdown_executors(mocker, spawn_client):
     """
     Test that the app's `ThreadPoolExecutor` is properly closed on shutdown.
 
@@ -42,13 +42,13 @@ async def test_exit_executors(mocker, spawn_client):
 
     mock = mocker.patch('concurrent.futures.process.ProcessPoolExecutor.shutdown')
 
-    await exit_executors(app)
+    await shutdown_executors(app)
 
     assert app["executor"]._shutdown
     assert mock.called
 
 
-async def test_exit_scheduler(spawn_client):
+async def test_shutdown_scheduler(spawn_client):
     """
     Test that the app's `aiojobs` scheduler is properly closed on shutdown.
 
@@ -58,16 +58,16 @@ async def test_exit_scheduler(spawn_client):
 
     scheduler = get_scheduler_from_app(app)
 
-    await exit_scheduler(app)
+    await shutdown_scheduler(app)
 
     assert scheduler.closed
 
 
-async def test_exit_redis(spawn_client):
+async def test_shutdown_redis(spawn_client):
     client = await spawn_client(authorize=True)
     app = client.app
 
-    await exit_redis(app)
+    await shutdown_redis(app)
 
     assert app["redis"].closed
 

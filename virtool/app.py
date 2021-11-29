@@ -13,10 +13,10 @@ import virtool.http.proxy
 import virtool.http.query
 from virtool.configuration.config import Config
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
-from virtool.shutdown import exit_redis, exit_executors, exit_client, exit_scheduler, exit_dispatcher
-from virtool.startup import init_executors, init_db, init_events, init_redis, init_refresh, init_routes, init_sentry, \
-    init_settings, init_paths, init_tasks, init_postgres, init_version, init_dispatcher, init_client_path, \
-    init_http_client, init_jobs_client, init_task_runner, init_check_db, init_b2c
+from virtool.shutdown import shutdown_redis, shutdown_executors, shutdown_client, shutdown_scheduler, shutdown_dispatcher
+from virtool.startup import startup_executors, startup_db, startup_events, startup_redis, startup_refresh, startup_routes, startup_sentry, \
+    startup_settings, startup_paths, startup_tasks, startup_postgres, startup_version, startup_dispatcher, startup_client_path, \
+    startup_http_client, startup_jobs_client, startup_task_runner, startup_check_db, startup_b2c
 
 logger = logging.getLogger(__name__)
 
@@ -43,37 +43,37 @@ def create_app(config: Config):
     aiojobs.aiohttp.setup(app)
 
     app.on_startup.extend([
-        init_version,
-        init_events,
-        init_redis,
-        init_db,
-        init_postgres,
-        init_dispatcher,
-        init_settings,
-        init_client_path,
-        init_http_client,
-        init_paths,
-        init_routes,
-        init_executors,
-        init_task_runner,
-        init_tasks,
-        init_sentry,
-        init_check_db,
-        init_jobs_client,
-        init_refresh
+        startup_version,
+        startup_events,
+        startup_redis,
+        startup_db,
+        startup_postgres,
+        startup_dispatcher,
+        startup_settings,
+        startup_client_path,
+        startup_http_client,
+        startup_paths,
+        startup_routes,
+        startup_executors,
+        startup_task_runner,
+        startup_tasks,
+        startup_sentry,
+        startup_check_db,
+        startup_jobs_client,
+        startup_refresh
     ])
 
     if config.use_b2c:
-        app.on_startup.append(init_b2c)
+        app.on_startup.append(startup_b2c)
 
     app.on_response_prepare.append(virtool.http.csp.on_prepare)
 
     app.on_shutdown.extend([
-        exit_client,
-        exit_dispatcher,
-        exit_executors,
-        exit_scheduler,
-        exit_redis
+        shutdown_client,
+        shutdown_dispatcher,
+        shutdown_executors,
+        shutdown_scheduler,
+        shutdown_redis
     ])
 
     return app

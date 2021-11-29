@@ -8,7 +8,7 @@ from virtool.startup import get_scheduler_from_app
 logger = logging.getLogger(__name__)
 
 
-async def exit_client(app: Application):
+async def shutdown_client(app: Application):
     """
     Attempt to close the async HTTP client session.
 
@@ -22,7 +22,7 @@ async def exit_client(app: Application):
         pass
 
 
-async def exit_dispatcher(app: Application):
+async def shutdown_dispatcher(app: Application):
     """
     Attempt to close the app's `Dispatcher` object.
 
@@ -36,7 +36,7 @@ async def exit_dispatcher(app: Application):
         pass
 
 
-async def exit_executors(app: Application):
+async def shutdown_executors(app: Application):
     """
     Attempt to close the `ThreadPoolExecutor` and `ProcessPoolExecutor`.
 
@@ -53,7 +53,7 @@ async def exit_executors(app: Application):
         pass
 
 
-async def exit_scheduler(app: Application):
+async def shutdown_scheduler(app: Application):
     """
     Attempt to the close the app's `aiojobs` scheduler.
 
@@ -63,7 +63,7 @@ async def exit_scheduler(app: Application):
     await scheduler.close()
 
 
-async def exit_redis(app: Application):
+async def shutdown_redis(app: Application):
     """
     Attempt to close the app's `redis` instance.
 
