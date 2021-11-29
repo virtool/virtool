@@ -3,10 +3,9 @@ import logging
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import virtool.db.utils
 import virtool.tasks.models
 import virtool.tasks.pg
-import virtool.utils
+from virtool.utils import get_temp_dir
 
 logger = logging.getLogger("task")
 
@@ -27,7 +26,7 @@ class Task:
         self.document = None
         self.context = None
         self.errored = False
-        self.temp_dir = virtool.utils.get_temp_dir()
+        self.temp_dir = get_temp_dir()
 
     async def init_db(self):
         self.document = await virtool.tasks.pg.get(self.pg, self.id)
@@ -47,7 +46,6 @@ class Task:
                 self.id,
                 step=self.step.__name__
             )
-
             try:
                 await func()
             except Exception as err:
@@ -143,12 +141,15 @@ class ProgressTracker:
         :return: the new progress after update.
 
         """
+        benchmark_progress = self.progress
         self.progress += (value / self.file_size) * self.total
 
-        async with AsyncSession(self.pg) as session:
-            result = await session.execute(select(virtool.tasks.models.Task).filter_by(id=self.task_id))
-            task = result.scalar()
-            task.progress = round(self.progress)
-            await session.commit()
+        if int(benchmark_progress + 1) <= self.progress:
+            async with AsyncSession(self.pg) as session:
+                result = await session.execute(select(virtool.tasks.models.Task).filter_by(id=self.task_id))
+                task = result.scalar()
+                task.progress = round(self.progress)
+
+                await session.commit()
 
         return round(self.progress)
