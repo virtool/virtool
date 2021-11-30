@@ -97,12 +97,13 @@ async def find(req):
 
 @routes.get("/api/uploads/{id}")
 @routes.jobs_api.get("/api/uploads/{id}")
-async def get(req):
+async def download(req):
     """
     Downloads a file that corresponds to a row `id` in the `uploads` SQL table.
 
     """
     pg = req.app["pg"]
+
     upload_id = int(req.match_info["id"])
 
     upload = await virtool.uploads.db.get(pg, upload_id)
@@ -116,7 +117,12 @@ async def get(req):
     if not upload_path.exists():
         raise NotFound("Uploaded file not found at expected location")
 
-    return FileResponse(upload_path)
+    headers = {
+        "Content-Disposition": f"attachment; filename={upload.name}",
+        "Content-Type": "application/x-gzip"
+    }
+
+    return FileResponse(upload_path, headers=headers)
 
 
 @routes.delete("/api/uploads/{id}", permission="remove_file")
