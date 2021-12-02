@@ -1,7 +1,5 @@
 from typing import Callable, Tuple
 
-import aiofiles
-import jinja2
 import virtool.errors
 import virtool.utils
 from aiohttp import BasicAuth, web
