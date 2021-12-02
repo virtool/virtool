@@ -11,6 +11,7 @@ import virtool.http.errors
 import virtool.http.proxy
 import virtool.http.query
 from virtool.configuration.config import Config
+from virtool.http.headers import headers_middleware
 from virtool.process_utils import (create_app_runner, wait_for_restart,
                                    wait_for_shutdown)
 from virtool.shutdown import (shutdown_client, shutdown_dispatcher,
@@ -34,6 +35,7 @@ def create_app(config: Config):
 
     """
     middlewares = [
+        headers_middleware,
         virtool.http.auth.middleware,
         virtool.http.accept.middleware,
         virtool.http.errors.middleware,
