@@ -7,7 +7,7 @@ on:
 jobs:
   dockerhub:
     runs-on: ubuntu-20.04
-    if: github.repository_owner == 'Virtool' && !startsWith(github.event.release.tag_name, '4')
+    if: github.repository_owner == 'Virtool'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -21,34 +21,3 @@ jobs:
         with:
           push: true
           tags: virtool/virtool:${{ github.event.release.tag_name }}
-  github:
-    runs-on: ubuntu-20.04
-    if: github.repository_owner == 'Virtool' && startsWith(github.event.release.tag_name, '4')
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Setup NodeJS
-        uses: actions/setup-node@v1
-        with:
-          node-version: '12'
-      - name: Use Python 3.6
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.6
-      - name: Build Client
-        run: |
-          cd client
-          npm i
-          npx webpack --config webpack.production.config.babel.js
-      - name: Build Server
-        run: |
-          pip install -r requirements.txt
-          mkdir gh_build
-          mkdir gh_build/virtool
-          python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
-          python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); print(flags&os.O_NONBLOCK);'
-          python setup.py build
-          cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
-          echo "v${{ github.event.release.tag_name }}" > version.txt
-          cd gh_build
-          tar -czf virtool.tar.gz virtool
