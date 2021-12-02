@@ -3,13 +3,9 @@
 Virtool is a web-based application for diagnosing pathogen infections in using high-throughput sequencing. 
 
 [![ci](https://github.com/virtool/virtool/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/virtool/virtool/actions/workflows/ci.yml)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/1388b43207ae407c891744a4d70dde35)](https://www.codacy.com/gh/virtool/virtool?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=virtool/virtool&amp;utm_campaign=Badge_Grade)
-[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/1388b43207ae407c891744a4d70dde35)](https://www.codacy.com/gh/virtool/virtool?utm_source=github.com&utm_medium=referral&utm_content=virtool/virtool&utm_campaign=Badge_Coverage)
   
 Website: https://www.virtool.ca
 Gitter: https://gitter.im/virtool
-
-![Virtool Graph Example](./static/graph-example.png)
 
 ## Getting Started
 
