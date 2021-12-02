@@ -393,8 +393,8 @@ async def attach_files(pg: AsyncEngine, document: dict) -> dict:
 
     files = [row.to_dict() for row in rows]
 
-    for file in files:
-        file["download_url"] = f"/api/indexes/{file['index']}/files/{file['name']}"
+    for index_file in files:
+        index_file["download_url"] = f"/indexes/{index_file['index']}/files/{index_file['name']}"
 
     return {
         **document,

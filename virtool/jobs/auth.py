@@ -1,15 +1,14 @@
 import os
-from aiohttp import web
-from aiohttp import BasicAuth
+
+from aiohttp import BasicAuth, web
 from aiohttp.web import Request
 from aiohttp.web_exceptions import HTTPUnauthorized
-
 from virtool.http.client import JobClient
 from virtool.jobs.utils import JobRights
 from virtool.types import RouteHandler
 from virtool.utils import hash_key
 
-PUBLIC_ROUTES = [("PATCH", "/api/jobs")]
+PUBLIC_ROUTES = [("PATCH", "/jobs")]
 
 
 @web.middleware

@@ -1,6 +1,5 @@
-from aiohttp.web import Response, Request
-
 import virtool.settings.db
+from aiohttp.web import Request, Response
 from virtool.api.response import json_response
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
@@ -10,8 +9,8 @@ from virtool.settings.schema import SCHEMA
 routes = Routes()
 
 
-@routes.get("/api/settings")
-@routes.jobs_api.get("/api/settings")
+@routes.get("/settings")
+@routes.jobs_api.get("/settings")
 async def get(req: Request) -> Response:
     """
     Get a complete document of the application settings.
@@ -22,7 +21,7 @@ async def get(req: Request) -> Response:
     return json_response(settings)
 
 
-@routes.patch("/api/settings", admin=True)
+@routes.patch("/settings", admin=True)
 @schema(SCHEMA)
 async def update(req: Request) -> Response:
     """

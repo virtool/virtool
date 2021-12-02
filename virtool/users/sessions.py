@@ -3,7 +3,6 @@ import secrets
 from typing import Optional, Tuple
 
 import arrow
-
 import virtool.db.utils
 import virtool.utils
 from virtool.db.core import DB

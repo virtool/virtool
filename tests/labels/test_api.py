@@ -5,7 +5,7 @@ from virtool.labels.models import Label
 class TestFind:
     async def test_find(self, snapshot, spawn_client, pg_session):
         """
-        Test that a ``GET /api/labels`` return a complete list of labels.
+        Test that a ``GET /labels`` return a complete list of labels.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
@@ -46,14 +46,14 @@ class TestFind:
             session.add_all([label_1, label_2])
             await session.commit()
 
-        resp = await client.get("/api/labels")
+        resp = await client.get("/labels")
 
         assert resp.status == 200
         assert await resp.json() == snapshot
 
     async def test_find_by_name(self, snapshot, spawn_client, pg_session):
         """
-        Test that a ``GET /api/labels`` with a `find` query returns a particular label. Also test for partial matches.
+        Test that a ``GET /labels`` with a `find` query returns a particular label. Also test for partial matches.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
@@ -69,12 +69,12 @@ class TestFind:
             session.add(label)
             await session.commit()
 
-        resp = await client.get("/api/labels?find=b")
+        resp = await client.get("/labels?find=b")
 
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-        resp = await client.get("/api/labels?find=Question")
+        resp = await client.get("/labels?find=Question")
 
         assert resp.status == 200
         assert await resp.json() == snapshot
@@ -83,7 +83,7 @@ class TestFind:
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, spawn_client, all_permissions, pg_session, resp_is):
     """
-    Test that a ``GET /api/labels/:label_id`` return the correct label document.
+    Test that a ``GET /labels/:label_id`` return the correct label document.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
@@ -116,7 +116,7 @@ async def test_get(error, spawn_client, all_permissions, pg_session, resp_is):
             ))
             await session.commit()
 
-    resp = await client.get("/api/labels/1")
+    resp = await client.get("/labels/1")
 
     if error:
         await resp_is.not_found(resp)
@@ -135,7 +135,7 @@ async def test_get(error, spawn_client, all_permissions, pg_session, resp_is):
 @pytest.mark.parametrize("error", [None, "400_exists", "422_color"])
 async def test_create(error, spawn_client, test_random_alphanumeric, pg_session, resp_is):
     """
-    Test that a label can be added to the database at ``POST /api/labels``.
+    Test that a label can be added to the database at ``POST /labels``.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
@@ -172,7 +172,7 @@ async def test_create(error, spawn_client, test_random_alphanumeric, pg_session,
     if error == "422_color":
         data["color"] = "#1234567"
 
-    resp = await client.post("/api/labels", data)
+    resp = await client.post("/labels", data)
 
     if error == "400_exists":
         await resp_is.bad_request(resp, "Label name already exists")
@@ -196,7 +196,7 @@ async def test_create(error, spawn_client, test_random_alphanumeric, pg_session,
 @pytest.mark.parametrize("error", [None, "404", "400_exists", "422_color", "422_data"])
 async def test_edit(error, spawn_client, pg_session, resp_is):
     """
-    Test that a label can be edited to the database at ``PATCH /api/labels/:label_id``.
+    Test that a label can be edited to the database at ``PATCH /labels/:label_id``.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
@@ -253,7 +253,7 @@ async def test_edit(error, spawn_client, pg_session, resp_is):
     if error == "422_color":
         data["color"] = "#123bzp"
 
-    resp = await client.patch("/api/labels/1", data=data)
+    resp = await client.patch("/labels/1", data=data)
 
     if error == "404":
         await resp_is.not_found(resp)
@@ -280,7 +280,7 @@ async def test_edit(error, spawn_client, pg_session, resp_is):
 @pytest.mark.parametrize("error", [None, "400"])
 async def test_remove(error, spawn_client, pg_session, resp_is):
     """
-    Test that a label can be deleted to the database at ``DELETE /api/labels/:label_id``.
+    Test that a label can be deleted to the database at ``DELETE /labels/:label_id``.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
@@ -295,7 +295,7 @@ async def test_remove(error, spawn_client, pg_session, resp_is):
             ))
             await session.commit()
 
-    resp = await client.delete("/api/labels/1")
+    resp = await client.delete("/labels/1")
 
     if error:
         await resp_is.not_found(resp)
@@ -317,7 +317,7 @@ async def test_is_valid_hex_color(value, spawn_client, resp_is):
         "description": "test"
     }
 
-    resp = await client.patch("/api/labels/00", data=data)
+    resp = await client.patch("/labels/00", data=data)
 
     if value == "valid_hex_color":
         await resp_is.not_found(resp)

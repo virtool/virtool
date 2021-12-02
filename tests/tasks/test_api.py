@@ -4,7 +4,7 @@ from virtool.tasks.models import Task
 
 async def test_find(spawn_client, pg_session, snapshot, static_time):
     """
-    Test that a ``GET /api/tasks`` return a complete list of tasks.
+    Test that a ``GET /tasks`` return a complete list of tasks.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
@@ -40,7 +40,7 @@ async def test_find(spawn_client, pg_session, snapshot, static_time):
         session.add_all([task_1, task_2])
         await session.commit()
 
-    resp = await client.get("/api/tasks")
+    resp = await client.get("/tasks")
 
     assert resp.status == 200
     assert await resp.json() == snapshot
@@ -49,7 +49,7 @@ async def test_find(spawn_client, pg_session, snapshot, static_time):
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, spawn_client, all_permissions, pg_session, static_time, snapshot, resp_is):
     """
-    Test that a ``GET /api/tasks/:task_id`` return the correct task document.
+    Test that a ``GET /tasks/:task_id`` return the correct task document.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
@@ -71,7 +71,7 @@ async def test_get(error, spawn_client, all_permissions, pg_session, static_time
             ))
             await session.commit()
 
-    resp = await client.get("/api/tasks/1")
+    resp = await client.get("/tasks/1")
 
     if error:
         await resp_is.not_found(resp)

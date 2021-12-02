@@ -31,7 +31,7 @@ async def test_get_release(error, mocker, spawn_client, resp_is):
         })
     )
 
-    resp = await client.get("/api/refs/foo/release")
+    resp = await client.get("/refs/foo/release")
 
     if error == "400":
         await resp_is.bad_request(resp, "Not a remote reference")
@@ -66,7 +66,7 @@ async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is):
         ])
     )
 
-    resp = await client.get("/api/refs/foo/updates")
+    resp = await client.get("/refs/foo/updates")
 
     id_exists.assert_called_with(
         client.db.references,
@@ -127,7 +127,7 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
         ))
     )
 
-    resp = await client.post("/api/refs/foo/updates")
+    resp = await client.post("/refs/foo/updates")
 
     id_exists.assert_called_with(
         client.db.references,
@@ -188,7 +188,7 @@ async def test_find_indexes(mocker, spawn_client, id_exists, md_proxy, resp_is):
 
     m_find = mocker.patch("virtool.indexes.db.find", make_mocked_coro(body))
 
-    resp = await client.get("/api/refs/foo/indexes")
+    resp = await client.get("/refs/foo/indexes")
 
     if not id_exists:
         await resp_is.not_found(resp)
@@ -223,7 +223,7 @@ async def test_create(data_type, mocker, snapshot, spawn_client, test_random_alp
         "organism": "virus"
     }
 
-    resp = await client.post("/api/refs", data)
+    resp = await client.post("/refs", data)
 
     assert resp.status == 201
     assert resp.headers["Location"] == snapshot
@@ -289,7 +289,7 @@ async def test_edit(data_type, error, mocker, snapshot, fake, spawn_client, resp
         make_mocked_coro(return_value=can_modify)
     )
 
-    resp = await client.patch("/api/refs/foo", data)
+    resp = await client.patch("/refs/foo", data)
 
     if error == "400":
         await resp_is.bad_request(resp, "The targets field may not contain duplicate names")
@@ -368,7 +368,7 @@ async def test_add_group_or_user(error, field, snapshot, spawn_client, check_ref
     if error != "404":
         await client.db.references.insert_one(document)
 
-    url = "/api/refs/foo/{}s".format(field)
+    url = "/refs/foo/{}s".format(field)
 
     resp = await client.post(url, {
         field + "_id": "tech" if field == "group" else "fred",
@@ -433,7 +433,7 @@ async def test_edit_group_or_user(error, field, snapshot, spawn_client, check_re
 
     subdocument_id = "tech" if field == "group" else "fred"
 
-    url = "/api/refs/foo/{}s/{}".format(field, subdocument_id)
+    url = "/refs/foo/{}s/{}".format(field, subdocument_id)
 
     resp = await client.patch(url, {
         "remove": True
@@ -486,7 +486,7 @@ async def test_delete_group_or_user(error, field, snapshot, spawn_client, check_
 
     subdocument_id = "tech" if field == "group" else "fred"
 
-    url = "/api/refs/foo/{}s/{}".format(field, subdocument_id)
+    url = "/refs/foo/{}s/{}".format(field, subdocument_id)
 
     resp = await client.delete(url)
 

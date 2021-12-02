@@ -8,7 +8,7 @@ from virtool.errors import DatabaseError
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/api/history")
+@routes.get("/history")
 async def find(req):
     """
     Get a list of change documents.
@@ -21,7 +21,7 @@ async def find(req):
     return json_response(data)
 
 
-@routes.get("/api/history/{change_id}")
+@routes.get("/history/{change_id}")
 async def get(req):
     """
     Get a specific change document by its ``change_id``.
@@ -37,7 +37,7 @@ async def get(req):
     raise NotFound()
 
 
-@routes.delete("/api/history/{change_id}")
+@routes.delete("/history/{change_id}")
 async def revert(req):
     """
     Remove the change document with the given ``change_id`` and any subsequent changes.

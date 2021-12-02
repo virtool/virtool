@@ -1,5 +1,5 @@
-from aiohttp.client import ClientSession
 import pytest
+from aiohttp.client import ClientSession
 from aiohttp.test_utils import make_mocked_coro
 
 
@@ -13,7 +13,7 @@ async def test_get(error, mocker, resp_is, spawn_client):
 
     m_fetch = mocker.patch("virtool.genbank.http.fetch", make_mocked_coro(None if error else expected))
 
-    resp = await client.get("/api/genbank/NC_016574.1")
+    resp = await client.get("/genbank/NC_016574.1")
 
     if error:
         await resp_is.not_found(resp)

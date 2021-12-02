@@ -72,7 +72,7 @@ QUERY_SCHEMA = {
 routes = Routes()
 
 
-@routes.get("/api/samples")
+@routes.get("/samples")
 async def find(req):
     """
     Find samples, filtering by data passed as URL parameters.
@@ -148,7 +148,7 @@ async def find(req):
     })
 
 
-@routes.get("/api/samples/{sample_id}")
+@routes.get("/samples/{sample_id}")
 async def get(req):
     """
     Get a complete sample document.
@@ -172,7 +172,7 @@ async def get(req):
         raise NotFound()
 
 
-@routes.jobs_api.get("/api/samples/{sample_id}")
+@routes.jobs_api.get("/samples/{sample_id}")
 async def get_sample(req):
     """
     Get a complete sample document from a job.
@@ -188,7 +188,7 @@ async def get_sample(req):
         raise NotFound()
 
 
-@routes.jobs_api.get("/api/samples/{sample_id}/caches/{cache_key}")
+@routes.jobs_api.get("/samples/{sample_id}/caches/{cache_key}")
 async def get_cache(req):
     """
     Get a cache document by key using the Jobs API.
@@ -210,7 +210,7 @@ async def get_cache(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.post("/api/samples", permission="create_sample")
+@routes.post("/samples", permission="create_sample")
 @schema({
     "name": {
         "type": "string",
@@ -366,7 +366,7 @@ async def create(req):
     await req.app["jobs"].enqueue(job["_id"])
 
     headers = {
-        "Location": f"/api/samples/{sample_id}"
+        "Location": f"/samples/{sample_id}"
     }
 
     return json_response(
@@ -376,7 +376,7 @@ async def create(req):
     )
 
 
-@routes.patch("/api/samples/{sample_id}")
+@routes.patch("/samples/{sample_id}")
 @schema({
     "name": {
         "type": "string",
@@ -456,7 +456,7 @@ async def edit(req):
     )
 
 
-@routes.jobs_api.patch("/api/samples/{sample_id}")
+@routes.jobs_api.patch("/samples/{sample_id}")
 @schema({
     "quality": {
         "type": "dict",
@@ -485,7 +485,7 @@ async def finalize(req):
     return json_response(await virtool.samples.db.get_sample(req.app, sample_id))
 
 
-@routes.patch("/api/samples/{sample_id}/rights")
+@routes.patch("/samples/{sample_id}/rights")
 @schema({
     "group": {
         "type": "string"
@@ -538,7 +538,7 @@ async def set_rights(req):
     return json_response(document)
 
 
-@routes.delete("/api/samples/{sample_id}")
+@routes.delete("/samples/{sample_id}")
 async def remove(req):
     """
     Remove a sample document and all associated analyses.
@@ -567,7 +567,7 @@ async def remove(req):
     raise HTTPNoContent
 
 
-@routes.jobs_api.delete("/api/samples/{sample_id}")
+@routes.jobs_api.delete("/samples/{sample_id}")
 async def job_remove(req):
     """
     Remove a sample document and all associated analyses. Only usable in the Jobs API and when
@@ -602,7 +602,7 @@ async def job_remove(req):
     raise HTTPNoContent
 
 
-@routes.get("/api/samples/{sample_id}/analyses")
+@routes.get("/samples/{sample_id}/analyses")
 async def find_analyses(req):
     """
     List the analyses associated with the given ``sample_id``.
@@ -653,7 +653,7 @@ async def find_analyses(req):
     })
 
 
-@routes.post("/api/samples/{sample_id}/analyses")
+@routes.post("/samples/{sample_id}/analyses")
 @schema({
     "ref_id": {
         "type": "string",
@@ -758,12 +758,12 @@ async def analyze(req):
         virtool.utils.base_processor(document),
         status=201,
         headers={
-            "Location": f"/api/analyses/{analysis_id}"
+            "Location": f"/analyses/{analysis_id}"
         }
     )
 
 
-@routes.jobs_api.delete("/api/samples/{sample_id}/caches/{cache_key}")
+@routes.jobs_api.delete("/samples/{sample_id}/caches/{cache_key}")
 async def cache_job_remove(req: aiohttp.web.Request):
     """
     Remove a cache document. Only usable in the Jobs API and when caches are unfinalized.
@@ -788,7 +788,7 @@ async def cache_job_remove(req: aiohttp.web.Request):
     raise HTTPNoContent
 
 
-@routes.jobs_api.post("/api/samples/{sample_id}/artifacts")
+@routes.jobs_api.post("/samples/{sample_id}/artifacts")
 async def upload_artifact(req):
     """
     Upload artifact created during sample creation using the Jobs API.
@@ -835,13 +835,13 @@ async def upload_artifact(req):
     artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SampleArtifact)
 
     headers = {
-        "Location": f"/api/samples/{sample_id}/artifact/{name}"
+        "Location": f"/samples/{sample_id}/artifact/{name}"
     }
 
     return json_response(artifact, status=201, headers=headers)
 
 
-@routes.jobs_api.put("/api/samples/{sample_id}/reads/{filename}")
+@routes.jobs_api.put("/samples/{sample_id}/reads/{filename}")
 async def upload_reads(req):
     """
     Upload sample reads using the Jobs API.
@@ -888,13 +888,13 @@ async def upload_reads(req):
             text="Reads file name is already uploaded for this sample")
 
     headers = {
-        "Location": f"/api/samples/{sample_id}/reads/{reads['name_on_disk']}"
+        "Location": f"/samples/{sample_id}/reads/{reads['name_on_disk']}"
     }
 
     return json_response(reads, status=201, headers=headers)
 
 
-@routes.jobs_api.post("/api/samples/{sample_id}/caches")
+@routes.jobs_api.post("/samples/{sample_id}/caches")
 @schema({
     "key": {
         "type": "string",
@@ -925,13 +925,13 @@ async def create_cache(req):
             text=f"Cache with key {key} already exists for this sample")
 
     headers = {
-        "Location": f"/api/samples/{sample_id}/caches/{document['id']}"
+        "Location": f"/samples/{sample_id}/caches/{document['id']}"
     }
 
     return json_response(document, status=201, headers=headers)
 
 
-@routes.jobs_api.put("/api/samples/{sample_id}/caches/{key}/reads/{filename}")
+@routes.jobs_api.put("/samples/{sample_id}/caches/{key}/reads/{filename}")
 async def upload_cache_reads(req):
     """
     Upload reads files to cache using the Jobs API.
@@ -974,13 +974,13 @@ async def upload_cache_reads(req):
     )
 
     headers = {
-        "Location": f"/api/samples/{sample_id}/caches/{key}/reads/{reads['id']}"
+        "Location": f"/samples/{sample_id}/caches/{key}/reads/{reads['id']}"
     }
 
     return json_response(reads, status=201, headers=headers)
 
 
-@routes.jobs_api.post("/api/samples/{sample_id}/caches/{key}/artifacts")
+@routes.jobs_api.post("/samples/{sample_id}/caches/{key}/artifacts")
 async def upload_cache_artifact(req):
     """
     Upload sample artifacts to cache using the Jobs API.
@@ -1029,13 +1029,13 @@ async def upload_cache_artifact(req):
     artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SampleArtifactCache)
 
     headers = {
-        "Location": f"/api/samples/{sample_id}/caches/{key}/artifacts/{name}"
+        "Location": f"/samples/{sample_id}/caches/{key}/artifacts/{name}"
     }
 
     return json_response(artifact, status=201, headers=headers)
 
 
-@routes.jobs_api.patch("/api/samples/{sample_id}/caches/{key}")
+@routes.jobs_api.patch("/samples/{sample_id}/caches/{key}")
 @schema({
     "quality": {
         "type": "dict",
@@ -1059,8 +1059,8 @@ async def finalize_cache(req):
     return json_response(processed)
 
 
-@routes.get("/api/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
-@routes.jobs_api.get("/api/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
+@routes.get("/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
+@routes.jobs_api.get("/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
 async def download_reads(req: aiohttp.web.Request):
     """
     Download the sample reads file.
@@ -1097,7 +1097,7 @@ async def download_reads(req: aiohttp.web.Request):
     return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
 
 
-@routes.jobs_api.get("/api/samples/{sample_id}/artifacts/{filename}")
+@routes.jobs_api.get("/samples/{sample_id}/artifacts/{filename}")
 async def download_artifact(req: aiohttp.web.Request):
     """
     Download the sample artifact.
@@ -1138,7 +1138,7 @@ async def download_artifact(req: aiohttp.web.Request):
     return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
 
 
-@routes.jobs_api.get("/api/samples/{sample_id}/caches/{key}/reads/reads_{suffix}.fq.gz")
+@routes.jobs_api.get("/samples/{sample_id}/caches/{key}/reads/reads_{suffix}.fq.gz")
 async def download_cache_reads(req):
     """
     Download sample reads cache for a given key.
@@ -1177,7 +1177,7 @@ async def download_cache_reads(req):
     return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
 
 
-@routes.jobs_api.get("/api/samples/{sample_id}/caches/{key}/artifacts/{filename}")
+@routes.jobs_api.get("/samples/{sample_id}/caches/{key}/artifacts/{filename}")
 async def download_cache_artifact(req):
     """
     Download sample artifact cache for a given key.

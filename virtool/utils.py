@@ -11,12 +11,10 @@ import tempfile
 from pathlib import Path
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Iterable, Tuple, Any, Optional
+from typing import Any, Iterable, Optional, Tuple
 
 import arrow
 from aiohttp import web
-
-RE_STATIC_HASH = re.compile("^main.([a-z0-9]+).css$")
 
 SUB_DIRS = [
     "caches",
@@ -194,33 +192,6 @@ def generate_key() -> Tuple[str, str]:
 
 def hash_key(key: str) -> str:
     return hashlib.sha256(key.encode()).hexdigest()
-
-
-async def get_client_path() -> Path:
-    """
-    Return the Virtool client path. The path is different between production and development instances of Virtool.
-
-    :return: Path
-    """
-    for path in [Path.cwd() / "client", Path.cwd() / "client" / "dist"]:
-        if (path / "index.html").exists():
-            return path
-
-
-def get_static_hash(req: web.Request):
-    try:
-        client_path = req.app["client_path"]
-
-        for filename in os.listdir(client_path):
-            match = RE_STATIC_HASH.match(filename)
-
-            if match:
-                return match.group(1)
-
-    except (KeyError, FileNotFoundError):
-        pass
-
-    return ""
 
 
 def get_temp_dir():

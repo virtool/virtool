@@ -12,7 +12,7 @@ async def test_find(snapshot, spawn_client, create_user, static_time):
     await client.db.users.insert_one(create_user(user_id="foo", handle="bar"))
     await client.db.users.insert_one(create_user(user_id="bar", handle="baz"))
 
-    resp = await client.get("/api/users")
+    resp = await client.get("/users")
 
     assert resp.status == 200
     assert await resp.json() == snapshot
@@ -21,7 +21,7 @@ async def test_find(snapshot, spawn_client, create_user, static_time):
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, snapshot, spawn_client, create_user, no_permissions, resp_is, static_time):
     """
-    Test that a ``GET /api/users`` returns a list of users.
+    Test that a ``GET /users`` returns a list of users.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
@@ -33,7 +33,7 @@ async def test_get(error, snapshot, spawn_client, create_user, no_permissions, r
 
     await client.db.users.insert_many(users)
 
-    resp = await client.get("/api/users/bar")
+    resp = await client.get("/users/bar")
 
     if error:
         await resp_is.not_found(resp)
@@ -72,7 +72,7 @@ async def test_create(error, snapshot, spawn_client, create_user, resp_is, stati
     if error == "400_password":
         data["password"] = "foo"
 
-    resp = await client.post("/api/users", data)
+    resp = await client.post("/users", data)
 
     if error == "400_exists":
         await resp_is.bad_request(resp, "User already exists")
@@ -83,7 +83,7 @@ async def test_create(error, snapshot, spawn_client, create_user, resp_is, stati
         return
 
     assert resp.status == 201
-    assert resp.headers["Location"] == "/api/users/abc123"
+    assert resp.headers["Location"] == "/users/abc123"
     assert await resp.json() == snapshot
 
     document = await client.db.users.find_one("abc123")
@@ -133,7 +133,7 @@ async def test_edit(data, error, snapshot, spawn_client, resp_is, static_time, c
     if error == "invalid_input":
         payload["force_reset"] = "baz"
 
-    resp = await client.patch("/api/users/bob", payload)
+    resp = await client.patch("/users/bob", payload)
 
     if "primary_group" in data:
         if error == "group_dne":
@@ -169,7 +169,7 @@ async def test_remove(error, spawn_client, resp_is, create_user):
     if not error:
         await client.db.users.insert_one(create_user(user_id="bob", handle="fred"))
 
-    resp = await client.delete("/api/users/bob")
+    resp = await client.delete("/users/bob")
 
     if error:
         await resp_is.not_found(resp)

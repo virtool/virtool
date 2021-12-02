@@ -4,7 +4,7 @@ from aiohttp.test_utils import make_mocked_coro
 
 async def test_find(spawn_client, all_permissions, no_permissions):
     """
-    Test that a ``GET /api/groups`` return a complete list of groups.
+    Test that a ``GET /groups`` return a complete list of groups.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
@@ -20,7 +20,7 @@ async def test_find(spawn_client, all_permissions, no_permissions):
         }
     ])
 
-    resp = await client.get("/api/groups")
+    resp = await client.get("/groups")
 
     assert resp.status == 200
 
@@ -39,7 +39,7 @@ async def test_find(spawn_client, all_permissions, no_permissions):
 @pytest.mark.parametrize("error", [None, "400_exists"])
 async def test_create(error, spawn_client, all_permissions, no_permissions, resp_is):
     """
-    Test that a group can be added to the database at ``POST /api/groups/:group_id``.
+    Test that a group can be added to the database at ``POST /groups/:group_id``.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
@@ -50,7 +50,7 @@ async def test_create(error, spawn_client, all_permissions, no_permissions, resp
             "permissions": all_permissions
         })
 
-    resp = await client.post("/api/groups", data={
+    resp = await client.post("/groups", data={
         "group_id": "test"
     })
 
@@ -59,7 +59,7 @@ async def test_create(error, spawn_client, all_permissions, no_permissions, resp
         return
 
     assert resp.status == 201
-    assert resp.headers["Location"] == "/api/groups/test"
+    assert resp.headers["Location"] == "/groups/test"
 
     assert await resp.json() == {
         "id": "test",
@@ -75,7 +75,7 @@ async def test_create(error, spawn_client, all_permissions, no_permissions, resp
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, spawn_client, all_permissions, resp_is):
     """
-    Test that a ``GET /api/groups/:group_id`` return the correct group.
+    Test that a ``GET /groups/:group_id`` return the correct group.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
@@ -86,7 +86,7 @@ async def test_get(error, spawn_client, all_permissions, resp_is):
             "permissions": all_permissions
         })
 
-    resp = await client.get("/api/groups/foo")
+    resp = await client.get("/groups/foo")
 
     if error:
         await resp_is.not_found(resp)
@@ -114,7 +114,7 @@ async def test_update_permissions(error, spawn_client, no_permissions, resp_is):
             "permissions": no_permissions
         })
 
-    resp = await client.patch("/api/groups/test", data={
+    resp = await client.patch("/groups/test", data={
         "permissions": {
             "create_sample": True
         }
@@ -142,7 +142,7 @@ async def test_update_permissions(error, spawn_client, no_permissions, resp_is):
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_remove(error, mocker, spawn_client, no_permissions, resp_is):
     """
-    Test that an existing document can be removed at ``DELETE /api/groups/:group_id``.
+    Test that an existing document can be removed at ``DELETE /groups/:group_id``.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
@@ -155,7 +155,7 @@ async def test_remove(error, mocker, spawn_client, no_permissions, resp_is):
 
     m_update_member_users = mocker.patch("virtool.groups.db.update_member_users", make_mocked_coro(None))
 
-    resp = await client.delete("/api/groups/test")
+    resp = await client.delete("/groups/test")
 
     if error == "404":
         await resp_is.not_found(resp)

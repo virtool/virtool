@@ -38,7 +38,7 @@ BASE_QUERY = {
 }
 
 
-@routes.get("/api/subtractions")
+@routes.get("/subtractions")
 async def find(req):
     db = req.app["db"]
 
@@ -86,8 +86,8 @@ async def find(req):
     })
 
 
-@routes.get("/api/subtractions/{subtraction_id}")
-@routes.jobs_api.get("/api/subtractions/{subtraction_id}")
+@routes.get("/subtractions/{subtraction_id}")
+@routes.jobs_api.get("/subtractions/{subtraction_id}")
 async def get(req):
     """
     Get a complete host document.
@@ -110,7 +110,7 @@ async def get(req):
     return json_response(base_processor(document))
 
 
-@routes.post("/api/subtractions", permission="modify_subtraction")
+@routes.post("/subtractions", permission="modify_subtraction")
 @schema({
     "name": {
         "type": "string",
@@ -190,7 +190,7 @@ async def create(req):
     await req.app["jobs"].enqueue(job_id)
 
     headers = {
-        "Location": f"/api/subtraction/{subtraction_id}"
+        "Location": f"/subtraction/{subtraction_id}"
     }
 
     document = await attach_computed(req.app, document)
@@ -201,7 +201,7 @@ async def create(req):
     return json_response(base_processor(document), headers=headers, status=201)
 
 
-@routes.jobs_api.put("/api/subtractions/{subtraction_id}/files/{filename}")
+@routes.jobs_api.put("/subtractions/{subtraction_id}/files/{filename}")
 async def upload(req):
     """
     Upload a new subtraction file to the `subtraction_files` SQL table and the `subtractions`
@@ -250,13 +250,13 @@ async def upload(req):
     subtraction_file = await virtool.uploads.db.finalize(pg, size, upload_id, SubtractionFile)
 
     headers = {
-        "Location": f"/api/subtractions/{subtraction_id}/files/{filename}"
+        "Location": f"/subtractions/{subtraction_id}/files/{filename}"
     }
 
     return json_response(subtraction_file, headers=headers, status=201)
 
 
-@routes.patch("/api/subtractions/{subtraction_id}", permission="modify_subtraction")
+@routes.patch("/subtractions/{subtraction_id}", permission="modify_subtraction")
 @schema({
     "name": {
         "type": "string",
@@ -305,7 +305,7 @@ async def edit(req):
     return json_response(base_processor(document))
 
 
-@routes.delete("/api/subtractions/{subtraction_id}", permission="modify_subtraction")
+@routes.delete("/subtractions/{subtraction_id}", permission="modify_subtraction")
 async def remove(req):
     subtraction_id = req.match_info["subtraction_id"]
 
@@ -317,7 +317,7 @@ async def remove(req):
     raise HTTPNoContent
 
 
-@routes.jobs_api.patch("/api/subtractions/{subtraction_id}")
+@routes.jobs_api.patch("/subtractions/{subtraction_id}")
 @schema({
     "gc": {"type": "dict", "required": True},
     "count": {"type": "integer", "required": True}
@@ -350,7 +350,7 @@ async def finalize_subtraction(req: aiohttp.web.Request):
     return json_response(base_processor(document))
 
 
-@routes.jobs_api.delete("/api/subtractions/{subtraction_id}")
+@routes.jobs_api.delete("/subtractions/{subtraction_id}")
 async def job_remove(req: aiohttp.web.Request):
     """
     Remove a subtraction document. Only usable in the Jobs API and when subtractions are
@@ -373,8 +373,8 @@ async def job_remove(req: aiohttp.web.Request):
     raise HTTPNoContent
 
 
-@routes.get("/api/subtractions/{subtraction_id}/files/{filename}")
-@routes.jobs_api.get("/api/subtractions/{subtraction_id}/files/{filename}")
+@routes.get("/subtractions/{subtraction_id}/files/{filename}")
+@routes.jobs_api.get("/subtractions/{subtraction_id}/files/{filename}")
 async def download_subtraction_files(req: aiohttp.web.Request):
     """
     Download a Bowtie2 index file or a FASTA file for the given subtraction.

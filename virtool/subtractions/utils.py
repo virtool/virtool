@@ -5,7 +5,6 @@ from typing import List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-
 from virtool.configuration.config import Config
 from virtool.subtractions.models import SubtractionFile
 
@@ -62,7 +61,7 @@ async def get_subtraction_files(pg: AsyncEngine, subtraction: str) -> List[dict]
     files = [file.to_dict() for file in files]
 
     for file in files:
-        file["download_url"] = f"/api/subtractions/{file['subtraction']}/files/{file['name']}"
+        file["download_url"] = f"/subtractions/{file['subtraction']}/files/{file['name']}"
 
     return files
 

@@ -35,7 +35,7 @@ async def test_edit(data, has_user, mocker, snapshot, fake, spawn_client):
 
     await client.db.subtraction.insert_one(document)
 
-    resp = await client.patch("/api/subtractions/foo", data)
+    resp = await client.patch("/subtractions/foo", data)
 
     assert resp.status == 200
     assert await resp.json() == snapshot
@@ -71,7 +71,7 @@ async def test_upload(error, tmp_path, spawn_job_client, snapshot, resp_is, pg_s
 
     await client.db.subtraction.insert_one(subtraction)
 
-    url = "/api/subtractions/foo/files"
+    url = "/subtractions/foo/files"
 
     if error == "404_name":
         url += "/reference.1.bt2"
@@ -129,7 +129,7 @@ async def test_finalize_subtraction(error, fake, spawn_job_client, snapshot, res
     if error != "404":
         await client.db.subtraction.insert_one(subtraction)
 
-    resp = await client.patch("/api/subtractions/foo", json=data)
+    resp = await client.patch("/subtractions/foo", json=data)
 
     if error == "404":
         await resp_is.not_found(resp)
@@ -169,7 +169,7 @@ async def test_job_remove(exists, ready, tmp_path, spawn_job_client, snapshot, r
             "subtractions": ["foo"]
         })
 
-    resp = await client.delete("/api/subtractions/foo")
+    resp = await client.delete("/subtractions/foo")
 
     if not exists:
         assert resp.status == 404
@@ -224,8 +224,8 @@ async def test_download_subtraction_files(error, tmp_path, spawn_job_client, pg_
             session.add_all([file_1, file_2])
             await session.commit()
 
-    fasta_resp = await client.get("/api/subtractions/foo/files/subtraction.fa.gz")
-    bowtie_resp = await client.get("/api/subtractions/foo/files/subtraction.1.bt2")
+    fasta_resp = await client.get("/subtractions/foo/files/subtraction.fa.gz")
+    bowtie_resp = await client.get("/subtractions/foo/files/subtraction.1.bt2")
 
     if not error:
         assert fasta_resp.status == bowtie_resp.status == 200

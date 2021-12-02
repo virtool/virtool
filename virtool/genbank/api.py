@@ -3,16 +3,15 @@ Provides request handlers for accessing GenBank through the web server.
 
 """
 import aiohttp
-from aiohttp.web import HTTPBadGateway
-
 import virtool.genbank.http
+from aiohttp.web import HTTPBadGateway
+from virtool.api.response import NotFound, json_response
 from virtool.http.routes import Routes
-from virtool.api.response import json_response, NotFound
 
 routes = Routes()
 
 
-@routes.get("/api/genbank/{accession}")
+@routes.get("/genbank/{accession}")
 async def get(req):
     """
     Retrieve the Genbank data associated with the given accession and transform it into a Virtool-style sequence

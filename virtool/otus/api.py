@@ -1,18 +1,17 @@
 import asyncio
 
-from aiohttp import web
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
-
 import virtool.http.routes
 import virtool.otus.db
 import virtool.otus.isolates
 import virtool.otus.sequences
 import virtool.references.db
 import virtool.validators
-from virtool.api.response import json_response, InsufficientRights, NotFound
+from aiohttp import web
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
+from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.history.db import LIST_PROJECTION
 from virtool.http.schema import schema
-from virtool.otus.utils import find_isolate, evaluate_changes
+from virtool.otus.utils import evaluate_changes, find_isolate
 from virtool.utils import base_processor
 
 SCHEMA_VALIDATOR = {
@@ -40,8 +39,8 @@ SCHEMA_VALIDATOR = {
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/api/otus/{otu_id}.fa")
-@routes.jobs_api.get("/api/otus/{otu_id}.fa")
+@routes.get("/otus/{otu_id}.fa")
+@routes.jobs_api.get("/otus/{otu_id}.fa")
 async def download_otu(req):
     """
     Download a FASTA file containing the sequences for all isolates in a single Virtool otu.
@@ -60,7 +59,7 @@ async def download_otu(req):
     })
 
 
-@routes.get("/api/otus")
+@routes.get("/otus")
 async def find(req):
     """
     Find otus.
@@ -83,7 +82,7 @@ async def find(req):
     return json_response(data)
 
 
-@routes.get("/api/otus/{otu_id}")
+@routes.get("/otus/{otu_id}")
 async def get(req):
     """
     Get a complete otu document. Joins the otu document with its associated sequence documents.
@@ -101,7 +100,7 @@ async def get(req):
     return json_response(complete)
 
 
-@routes.post("/api/refs/{ref_id}/otus")
+@routes.post("/refs/{ref_id}/otus")
 @schema({
     "name": {
         "type": "string",
@@ -153,13 +152,13 @@ async def create(req):
     ))
 
     headers = {
-        "Location": "/api/otus/" + document["id"]
+        "Location": "/otus/" + document["id"]
     }
 
     return json_response(document, status=201, headers=headers)
 
 
-@routes.patch("/api/otus/{otu_id}")
+@routes.patch("/otus/{otu_id}")
 @schema({
     "name": {
         "type": "string",
@@ -218,7 +217,7 @@ async def edit(req):
     return json_response(document)
 
 
-@routes.delete("/api/otus/{otu_id}")
+@routes.delete("/otus/{otu_id}")
 async def remove(req):
     """
     Remove an OTU document and its associated sequence documents.
@@ -245,7 +244,7 @@ async def remove(req):
     return web.Response(status=204)
 
 
-@routes.get("/api/otus/{otu_id}/isolates")
+@routes.get("/otus/{otu_id}/isolates")
 async def list_isolates(req):
     """
     Return a list of isolate records for a given otu.
@@ -263,7 +262,7 @@ async def list_isolates(req):
     return json_response(document["isolates"])
 
 
-@routes.get("/api/otus/{otu_id}/isolates/{isolate_id}")
+@routes.get("/otus/{otu_id}/isolates/{isolate_id}")
 async def get_isolate(req):
     """
     Get a complete specific isolate sub-document, including its sequences.
@@ -290,7 +289,7 @@ async def get_isolate(req):
     return json_response(isolate)
 
 
-@routes.post("/api/otus/{otu_id}/isolates")
+@routes.post("/otus/{otu_id}/isolates")
 @schema({
     "source_type": {
         "type": "string",
@@ -339,7 +338,7 @@ async def add_isolate(req):
     ))
 
     headers = {
-        "Location": f"/api/otus/{otu_id}/isolates/{isolate['id']}"
+        "Location": f"/otus/{otu_id}/isolates/{isolate['id']}"
     }
 
     return json_response(
@@ -349,7 +348,7 @@ async def add_isolate(req):
     )
 
 
-@routes.patch("/api/otus/{otu_id}/isolates/{isolate_id}")
+@routes.patch("/otus/{otu_id}/isolates/{isolate_id}")
 @schema({
     "source_type": {
         "type": "string",
@@ -399,7 +398,7 @@ async def edit_isolate(req):
     return json_response(isolate, status=200)
 
 
-@routes.put("/api/otus/{otu_id}/isolates/{isolate_id}/default")
+@routes.put("/otus/{otu_id}/isolates/{isolate_id}/default")
 async def set_as_default(req):
     """
     Set an isolate as default.
@@ -428,7 +427,7 @@ async def set_as_default(req):
     return json_response(isolate)
 
 
-@routes.delete("/api/otus/{otu_id}/isolates/{isolate_id}")
+@routes.delete("/otus/{otu_id}/isolates/{isolate_id}")
 async def remove_isolate(req):
     """
     Remove an isolate and its sequences from a otu.
@@ -457,7 +456,7 @@ async def remove_isolate(req):
     raise HTTPNoContent
 
 
-@routes.get("/api/otus/{otu_id}/isolates/{isolate_id}/sequences")
+@routes.get("/otus/{otu_id}/isolates/{isolate_id}/sequences")
 async def list_sequences(req):
     db = req.app["db"]
 
@@ -477,7 +476,7 @@ async def list_sequences(req):
     return json_response([base_processor(d) async for d in cursor])
 
 
-@routes.get("/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
+@routes.get("/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
 async def get_sequence(req):
     """
     Get a single sequence document by its ``accession`.
@@ -502,7 +501,7 @@ async def get_sequence(req):
     return json_response(sequence)
 
 
-@routes.post("/api/otus/{otu_id}/isolates/{isolate_id}/sequences")
+@routes.post("/otus/{otu_id}/isolates/{isolate_id}/sequences")
 @schema({
     "accession": {
         "type": "string",
@@ -577,13 +576,13 @@ async def create_sequence(req):
     ))
 
     headers = {
-        "Location": f"/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_document['id']}"
+        "Location": f"/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_document['id']}"
     }
 
     return json_response(sequence_document, status=201, headers=headers)
 
 
-@routes.patch("/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
+@routes.patch("/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
 @schema({
     "accession": {
         "type": "string",
@@ -651,7 +650,7 @@ async def edit_sequence(req):
     return json_response(sequence_document)
 
 
-@routes.delete("/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
+@routes.delete("/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
 async def remove_sequence(req):
     """
     Remove a sequence from an isolate.
@@ -685,7 +684,7 @@ async def remove_sequence(req):
     raise HTTPNoContent
 
 
-@routes.get("/api/otus/{otu_id}/history")
+@routes.get("/otus/{otu_id}/history")
 async def list_history(req):
     db = req.app["db"]
 

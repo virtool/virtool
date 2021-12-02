@@ -102,7 +102,7 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
         if ready:
             for artifact in artifacts:
                 name_on_disk = artifact["name_on_disk"]
-                artifact["download_url"] = f"/api/samples/{sample_id}/artifacts/{name_on_disk}"
+                artifact["download_url"] = f"/samples/{sample_id}/artifacts/{name_on_disk}"
 
         for reads_file in reads:
             if upload := reads_file.get("upload"):
@@ -113,7 +113,7 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
                 ).to_dict()
 
             if ready:
-                reads_file["download_url"] = f"/api/samples/{sample_id}/reads/{reads_file['name']}"
+                reads_file["download_url"] = f"/samples/{sample_id}/reads/{reads_file['name']}"
 
     return {
         **document,

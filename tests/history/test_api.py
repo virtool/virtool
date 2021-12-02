@@ -12,7 +12,7 @@ async def test_find(snapshot, spawn_client, test_changes, static_time):
 
     await client.db.history.insert_many(test_changes)
 
-    resp = await client.get("/api/history")
+    resp = await client.get("/history")
 
     assert resp.status == 200
     assert await resp.json() == snapshot
@@ -30,7 +30,7 @@ async def test_get(error, snapshot, resp_is, spawn_client, test_changes, static_
 
     change_id = "baz.1" if error else "6116cba1.1"
 
-    resp = await client.get(f"/api/history/{change_id}")
+    resp = await client.get(f"/history/{change_id}")
 
     if error:
         await resp_is.not_found(resp)
@@ -53,7 +53,7 @@ async def test_revert(error, remove, snapshot, create_mock_history, spawn_client
 
     change_id = "foo.1" if error else "6116cba1.2"
 
-    resp = await client.delete("/api/history/" + change_id)
+    resp = await client.delete("/history/" + change_id)
 
     if error:
         await resp_is.not_found(resp)

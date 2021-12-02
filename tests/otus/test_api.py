@@ -29,7 +29,7 @@ async def test_find(find, verified, names, mocker, spawn_client, test_otu):
         if value is not None:
             params[key] = str(value)
 
-    resp = await client.get("/api/otus", params=params)
+    resp = await client.get("/otus", params=params)
 
     assert resp.status == 200
 
@@ -57,7 +57,7 @@ async def test_get(error, snapshot, spawn_client, resp_is, test_otu, test_sequen
 
     await client.db.sequences.insert_one(test_sequence)
 
-    resp = await client.get("/api/otus/6116cba1")
+    resp = await client.get("/otus/6116cba1")
 
     if error:
         await resp_is.not_found(resp)
@@ -94,7 +94,7 @@ class TestCreate:
         if abbreviation is not None:
             data["abbreviation"] = abbreviation
 
-        resp = await client.post("/api/refs/foo/otus", data)
+        resp = await client.post("/refs/foo/otus", data)
 
         if not exists:
             await resp_is.not_found(resp)
@@ -105,7 +105,7 @@ class TestCreate:
             return
 
         assert resp.status == 201
-        assert resp.headers["Location"] == "/api/otus/9pfsom1b"
+        assert resp.headers["Location"] == "/otus/9pfsom1b"
         assert await resp.json() == snapshot
 
         assert await client.db.otus.find_one() == snapshot
@@ -144,7 +144,7 @@ class TestCreate:
             "abbreviation": "TMV"
         }
 
-        resp = await client.post("/api/refs/foo/otus", data)
+        resp = await client.post("/refs/foo/otus", data)
 
         if error == "404":
             await resp_is.not_found(resp)
@@ -273,7 +273,7 @@ class TestEdit:
 
         await client.db.otus.insert_one(test_otu)
 
-        resp = await client.patch("/api/otus/6116cba1", data)
+        resp = await client.patch("/otus/6116cba1", data)
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -337,7 +337,7 @@ class TestEdit:
             }
         ])
 
-        resp = await client.patch("/api/otus/test", data)
+        resp = await client.patch("/otus/test", data)
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -383,7 +383,7 @@ class TestEdit:
             }
         })
 
-        resp = await client.patch("/api/otus/test", data)
+        resp = await client.patch("/otus/test", data)
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -401,7 +401,7 @@ class TestEdit:
             "abbreviation": "TMV"
         }
 
-        resp = await client.patch("/api/otus/test", data)
+        resp = await client.patch("/otus/test", data)
 
         await resp_is.not_found(resp)
 
@@ -421,7 +421,7 @@ async def test_remove(abbreviation, exists, snapshot, spawn_client, check_ref_ri
 
     old = await client.db.otus.find_one("6116cba1")
 
-    resp = await client.delete("/api/otus/6116cba1")
+    resp = await client.delete("/otus/6116cba1")
 
     if not exists:
         assert old is None
@@ -455,7 +455,7 @@ async def test_list_isolates(error, snapshot, spawn_client, resp_is, test_otu):
 
         await client.db.otus.insert_one(test_otu)
 
-    resp = await client.get("/api/otus/6116cba1/isolates")
+    resp = await client.get("/otus/6116cba1/isolates")
 
     if error:
         await resp_is.not_found(resp)
@@ -481,7 +481,7 @@ async def test_get_isolate(error, snapshot, spawn_client, resp_is, test_otu, tes
 
     await client.db.sequences.insert_one(test_sequence)
 
-    resp = await client.get("/api/otus/6116cba1/isolates/cab8b360")
+    resp = await client.get("/otus/6116cba1/isolates/cab8b360")
 
     if error:
         await resp_is.not_found(resp)
@@ -514,7 +514,7 @@ class TestAddIsolate:
         mocker.patch("virtool.references.db.check_source_type",
                      make_mocked_coro(True))
 
-        resp = await client.post("/api/otus/6116cba1/isolates", data)
+        resp = await client.post("/otus/6116cba1/isolates", data)
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -549,7 +549,7 @@ class TestAddIsolate:
         mocker.patch("virtool.references.db.check_source_type",
                      make_mocked_coro(True))
 
-        resp = await client.post("/api/otus/6116cba1/isolates", data)
+        resp = await client.post("/otus/6116cba1/isolates", data)
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -581,7 +581,7 @@ class TestAddIsolate:
         mocker.patch("virtool.references.db.check_source_type",
                      make_mocked_coro(True))
 
-        resp = await client.post("/api/otus/6116cba1/isolates", data)
+        resp = await client.post("/otus/6116cba1/isolates", data)
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -608,7 +608,7 @@ class TestAddIsolate:
         mocker.patch("virtool.references.db.check_source_type",
                      make_mocked_coro(True))
 
-        resp = await client.post("/api/otus/6116cba1/isolates", {})
+        resp = await client.post("/otus/6116cba1/isolates", {})
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -630,7 +630,7 @@ class TestAddIsolate:
             "default": False
         }
 
-        resp = await client.post("/api/otus/6116cba1/isolates", data)
+        resp = await client.post("/otus/6116cba1/isolates", data)
 
         await resp_is.not_found(resp)
 
@@ -668,7 +668,7 @@ class TestEditIsolate:
             ]
         })
 
-        resp = await client.patch("/api/otus/6116cba1/isolates/test", data)
+        resp = await client.patch("/otus/6116cba1/isolates/test", data)
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -701,7 +701,7 @@ class TestEditIsolate:
             "source_type": "Variant",
         }
 
-        resp = await client.patch("/api/otus/6116cba1/isolates/cab8b360", data)
+        resp = await client.patch("/otus/6116cba1/isolates/cab8b360", data)
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -732,7 +732,7 @@ class TestEditIsolate:
             "source_name": "A"
         }
 
-        resp = await client.patch("/api/otus/{}/isolates/{}".format(otu_id, isolate_id), data)
+        resp = await client.patch("/otus/{}/isolates/{}".format(otu_id, isolate_id), data)
 
         await resp_is.not_found(resp)
 
@@ -756,7 +756,7 @@ class TestSetAsDefault:
 
         await client.db.otus.insert_one(test_otu)
 
-        resp = await client.put("/api/otus/6116cba1/isolates/test/default", {})
+        resp = await client.put("/otus/6116cba1/isolates/test/default", {})
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -786,7 +786,7 @@ class TestSetAsDefault:
 
         await client.db.otus.insert_one(test_otu)
 
-        resp = await client.put("/api/otus/6116cba1/isolates/cab8b360/default", {})
+        resp = await client.put("/otus/6116cba1/isolates/cab8b360/default", {})
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -812,7 +812,7 @@ class TestSetAsDefault:
 
         await client.db.otus.insert_one(test_otu)
 
-        resp = await client.put(f"/api/otus/{otu_id}/isolates/{isolate_id}/default", {})
+        resp = await client.put(f"/otus/{otu_id}/isolates/{isolate_id}/default", {})
 
         await resp_is.not_found(resp)
 
@@ -832,7 +832,7 @@ class TestRemoveIsolate:
 
         assert await client.db.otus.count_documents({"isolates.id": "cab8b360"}) == 1
 
-        resp = await client.delete("/api/otus/6116cba1/isolates/cab8b360")
+        resp = await client.delete("/otus/6116cba1/isolates/cab8b360")
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -861,7 +861,7 @@ class TestRemoveIsolate:
         await client.db.otus.insert_one(test_otu)
         await client.db.sequences.insert_one(test_sequence)
 
-        resp = await client.delete("/api/otus/6116cba1/isolates/cab8b360")
+        resp = await client.delete("/otus/6116cba1/isolates/cab8b360")
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -874,7 +874,7 @@ class TestRemoveIsolate:
         assert await client.db.otus.find_one({"isolates.id": "bcb9b352"}) == snapshot
         assert await client.db.history.find_one() == snapshot
 
-    @pytest.mark.parametrize("url", ["/api/otus/foobar/isolates/cab8b360", "/api/otus/test/isolates/foobar"])
+    @pytest.mark.parametrize("url", ["/otus/foobar/isolates/cab8b360", "/otus/test/isolates/foobar"])
     async def test_not_found(self, url, spawn_client, test_otu, resp_is):
         """
         Test that removal fails with ``404`` if the otu does not exist.
@@ -901,7 +901,7 @@ async def test_list_sequences(error, snapshot, spawn_client, resp_is, test_otu, 
 
     await client.db.sequences.insert_one(test_sequence)
 
-    resp = await client.get("/api/otus/6116cba1/isolates/cab8b360/sequences")
+    resp = await client.get("/otus/6116cba1/isolates/cab8b360/sequences")
 
     if error:
         await resp_is.not_found(resp)
@@ -924,7 +924,7 @@ async def test_get_sequence(error, snapshot, spawn_client, resp_is, test_otu, te
     if error != "404_sequence":
         await client.db.sequences.insert_one(test_sequence)
 
-    resp = await client.get("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
+    resp = await client.get("/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
 
     if error:
         await resp_is.not_found(resp)
@@ -957,7 +957,7 @@ async def test_create_sequence(error, snapshot, spawn_client, check_ref_right, r
         "definition": "A made up sequence"
     }
 
-    resp = await client.post("/api/otus/6116cba1/isolates/cab8b360/sequences", data)
+    resp = await client.post("/otus/6116cba1/isolates/cab8b360/sequences", data)
 
     if error:
         await resp_is.not_found(resp)
@@ -1002,7 +1002,7 @@ async def test_edit_sequence(error, snapshot, spawn_client, check_ref_right, res
         "definition": "A made up sequence"
     }
 
-    resp = await client.patch("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872", data)
+    resp = await client.patch("/otus/6116cba1/isolates/cab8b360/sequences/KX269872", data)
 
     if error:
         await resp_is.not_found(resp)
@@ -1033,7 +1033,7 @@ async def test_remove_sequence(error, snapshot, spawn_client, check_ref_right, r
     if error != "404_sequence":
         await client.db.sequences.insert_one(test_sequence)
 
-    resp = await client.delete("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
+    resp = await client.delete("/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
 
     if error:
         await resp_is.not_found(resp)
@@ -1058,7 +1058,7 @@ async def test_download_otu(error, spawn_client, resp_is, test_sequence, test_ot
 
     await client.db.sequences.insert_one(test_sequence)
 
-    resp = await client.get("/api/otus/6116cba1.fa")
+    resp = await client.get("/otus/6116cba1.fa")
 
     if error == "404_otu":
         await resp_is.not_found(resp, "OTU not found")

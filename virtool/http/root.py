@@ -6,8 +6,8 @@ API_URL_ROOT = "https://www.virtool.ca/docs/developer/api"
 routes = Routes()
 
 
-@routes.get("/api", public=True)
-@routes.jobs_api.get("/api")
+@routes.get("/", public=True)
+@routes.jobs_api.get("/")
 async def get(req):
     """
     Returns a generic message. Used during testing for acquiring a ``session_id``.
@@ -20,63 +20,63 @@ async def get(req):
         "first_user": first_user,
         "endpoints": {
             "account": {
-                "url": "/api/account",
+                "url": "/account",
                 "doc": f"{API_URL_ROOT}/account"
             },
             "analyses": {
-                "url": "/api/analyses",
+                "url": "/analyses",
                 "doc": f"{API_URL_ROOT}/analyses"
             },
             "genbank": {
-                "url": "/api/genbank",
+                "url": "/genbank",
                 "doc": f"{API_URL_ROOT}/genbank"
             },
             "groups": {
-                "url": "/api/groups",
+                "url": "/groups",
                 "doc": f"{API_URL_ROOT}/groups"
             },
             "history": {
-                "url": "/api/history",
+                "url": "/history",
                 "doc": f"{API_URL_ROOT}/history"
             },
             "hmm": {
-                "url": "/api/hmm",
+                "url": "/hmm",
                 "doc": f"{API_URL_ROOT}/hmm"
             },
             "indexes": {
-                "url": "/api/indexes",
+                "url": "/indexes",
                 "doc": f"{API_URL_ROOT}/indexes"
             },
             "jobs": {
-                "url": "/api/jobs",
+                "url": "/jobs",
                 "doc": f"{API_URL_ROOT}/jobs"
             },
             "otus": {
-                "url": "/api/otus",
+                "url": "/otus",
                 "doc": f"{API_URL_ROOT}/otus"
             },
             "references": {
-                "url": "/api/references",
+                "url": "/references",
                 "doc": f"{API_URL_ROOT}/refs"
             },
             "samples": {
-                "url": "/api/samples",
+                "url": "/samples",
                 "doc": f"{API_URL_ROOT}/samples"
             },
             "settings": {
-                "url": "/api/settings",
+                "url": "/settings",
                 "doc": f"{API_URL_ROOT}/settings"
             },
             "subtraction": {
-                "url": "/api/subtraction",
+                "url": "/subtraction",
                 "doc": f"{API_URL_ROOT}/subtraction"
             },
             "tasks": {
-                "url": "/api/tasks",
+                "url": "/tasks",
                 "doc": f"{API_URL_ROOT}/tasks"
             },
             "users": {
-                "url": "/api/users",
+                "url": "/users",
                 "doc": f"{API_URL_ROOT}/users"
             }
         },

@@ -39,7 +39,7 @@ logger = logging.getLogger("analyses")
 routes = Routes()
 
 
-@routes.get("/api/analyses")
+@routes.get("/analyses")
 async def find(req: Request) -> Response:
     """
     Find and list all analyses.
@@ -80,7 +80,7 @@ async def find(req: Request) -> Response:
     })
 
 
-@routes.get("/api/analyses/{analysis_id}")
+@routes.get("/analyses/{analysis_id}")
 async def get(req: Request) -> Response:
     """
     Get a complete analysis document.
@@ -135,7 +135,7 @@ async def get(req: Request) -> Response:
     )
 
 
-@routes.jobs_api.get("/api/analyses/{analysis_id}")
+@routes.jobs_api.get("/analyses/{analysis_id}")
 async def get_for_jobs_api(req: Request) -> Response:
     """
     Get a complete analysis document.
@@ -185,7 +185,7 @@ async def get_for_jobs_api(req: Request) -> Response:
     return json_response(await processor(db, document), headers=headers)
 
 
-@routes.delete("/api/analyses/{analysis_id}")
+@routes.delete("/analyses/{analysis_id}")
 async def remove(req: Request) -> Response:
     """
     Remove an analysis document by its id.
@@ -241,7 +241,7 @@ async def remove(req: Request) -> Response:
     raise HTTPNoContent
 
 
-@routes.jobs_api.delete("/api/analyses/{analysis_id}")
+@routes.jobs_api.delete("/analyses/{analysis_id}")
 async def delete_analysis(req):
     db = req.app["db"]
 
@@ -280,7 +280,7 @@ async def delete_analysis(req):
     raise HTTPNoContent
 
 
-@routes.jobs_api.put("/api/analyses/{id}/files")
+@routes.jobs_api.put("/analyses/{id}/files")
 async def upload(req: Request) -> Response:
     """
     Upload a new analysis result file to the `analysis_files` SQL table and the `analyses` folder in the Virtool
@@ -325,13 +325,13 @@ async def upload(req: Request) -> Response:
     analysis_file = await virtool.uploads.db.finalize(pg, size, upload_id, AnalysisFile)
 
     headers = {
-        "Location": f"/api/analyses/{analysis_id}/files/{upload_id}"
+        "Location": f"/analyses/{analysis_id}/files/{upload_id}"
     }
 
     return json_response(analysis_file, status=201, headers=headers)
 
 
-@routes.get("/api/analyses/{analysis_id}/files/{upload_id}")
+@routes.get("/analyses/{analysis_id}/files/{upload_id}")
 async def download_analysis_result(req: Request) -> Union[FileResponse, Response]:
     """
     Download an analysis result file.
@@ -354,7 +354,7 @@ async def download_analysis_result(req: Request) -> Union[FileResponse, Response
     return FileResponse(analysis_file_path)
 
 
-@routes.get("/api/analyses/documents/{analysis_id}.{extension}")
+@routes.get("/analyses/documents/{analysis_id}.{extension}")
 async def download_analysis_document(req: Request) -> Response:
     """
     Download an analysis document.
@@ -385,7 +385,7 @@ async def download_analysis_document(req: Request) -> Response:
     return Response(text=formatted, headers=headers)
 
 
-@routes.put("/api/analyses/{analysis_id}/{sequence_index}/blast")
+@routes.put("/analyses/{analysis_id}/{sequence_index}/blast")
 async def blast(req: Request) -> Response:
     """
     BLAST a contig sequence that is part of a NuVs result record. The resulting BLAST
@@ -451,13 +451,13 @@ async def blast(req: Request) -> Response:
     ))
 
     headers = {
-        "Location": f"/api/analyses/{analysis_id}/{sequence_index}/blast"
+        "Location": f"/analyses/{analysis_id}/{sequence_index}/blast"
     }
 
     return json_response(blast_data, headers=headers, status=201)
 
 
-@routes.jobs_api.patch("/api/analyses/{analysis_id}")
+@routes.jobs_api.patch("/analyses/{analysis_id}")
 @schema({"results": {"type": "dict", "required": True}})
 async def finalize(req: Request):
     """Sets the result for an analysis and marks it as ready."""

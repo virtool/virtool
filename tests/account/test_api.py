@@ -5,7 +5,7 @@ from virtool.users.utils import PERMISSIONS, hash_password
 async def test_get(snapshot, spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
-    resp = await client.get("/api/account")
+    resp = await client.get("/account")
 
     assert resp.status == 200
     assert await resp.json() == snapshot
@@ -47,7 +47,7 @@ async def test_edit(error, snapshot, spawn_client, resp_is, static_time):
     if error != "missing_old_password":
         data["old_password"] = "not_right" if error == "credentials_error" else "hello_world"
 
-    resp = await client.patch("/api/account", data)
+    resp = await client.patch("/account", data)
 
     if error == "email_error":
         await resp_is.invalid_input(resp, {"email": ["Not a valid email"]})
@@ -99,7 +99,7 @@ async def test_get_settings(spawn_client):
     """
     client = await spawn_client(authorize=True)
 
-    resp = await client.get("/api/account/settings")
+    resp = await client.get("/account/settings")
 
     assert resp.status == 200
 
@@ -130,7 +130,7 @@ async def test_update_settings(invalid_input, spawn_client, resp_is):
             "show_ids": "yes"
         }
 
-    resp = await client.patch("/api/account/settings", data)
+    resp = await client.patch("/account/settings", data)
 
     if invalid_input:
         await resp_is.invalid_input(resp, {
@@ -169,7 +169,7 @@ async def test_get_api_keys(spawn_client):
         }
     ])
 
-    resp = await client.get("/api/account/keys")
+    resp = await client.get("/account/keys")
 
     assert await resp.json() == [
         {
@@ -218,7 +218,7 @@ class TestCreateAPIKey:
                 "create_sample": True
             }
 
-        resp = await client.post("/api/account/keys", body)
+        resp = await client.post("/account/keys", body)
 
         assert resp.status == 201
         assert await resp.json() == snapshot
@@ -244,7 +244,7 @@ class TestCreateAPIKey:
             "name": "Foobar"
         }
 
-        resp = await client.post("/api/account/keys", body)
+        resp = await client.post("/account/keys", body)
 
         assert resp.status == 201
         assert await resp.json() == snapshot
@@ -278,7 +278,7 @@ class TestUpdateAPIKey:
             "permissions": {p: False for p in PERMISSIONS}
         })
 
-        resp = await client.patch("/api/account/keys/foobar_0", {
+        resp = await client.patch("/account/keys/foobar_0", {
             "permissions": {
                 "create_sample": True,
                 "modify_subtraction": True
@@ -292,7 +292,7 @@ class TestUpdateAPIKey:
     async def test_not_found(self, spawn_client, resp_is):
         client = await spawn_client(authorize=True)
 
-        resp = await client.patch("/api/account/keys/foobar_0", {
+        resp = await client.patch("/account/keys/foobar_0", {
             "permissions": {
                 "create_sample": True
             }
@@ -315,7 +315,7 @@ async def test_remove_api_key(error, spawn_client, resp_is):
             }
         })
 
-    resp = await client.delete("/api/account/keys/foobar_0")
+    resp = await client.delete("/account/keys/foobar_0")
 
     if error:
         await resp_is.not_found(resp)
@@ -352,7 +352,7 @@ async def test_remove_all_api_keys(spawn_client, resp_is):
         }
     ])
 
-    resp = await client.delete("/api/account/keys")
+    resp = await client.delete("/account/keys")
 
     await resp_is.no_content(resp)
 
@@ -374,29 +374,29 @@ async def test_logout(spawn_client):
     client = await spawn_client(authorize=True)
 
     # Make sure the session is authorized
-    resp = await client.get("/api/account")
+    resp = await client.get("/account")
     assert resp.status == 200
 
     # Logout
-    resp = await client.get("/api/account/logout")
+    resp = await client.get("/account/logout")
     assert resp.status == 200
 
     # Make sure that the session is no longer authorized
-    resp = await client.get("/api/account")
+    resp = await client.get("/account")
     assert resp.status == 401
 
 
 @pytest.mark.parametrize("method,path", [
-    ("GET", "/api/account"),
-    ("PATCH", "/api/account"),
-    ("GET", "/api/account/settings"),
-    ("PATCH", "/api/account/settings"),
-    ("PATCH", "/api/account/settings"),
-    ("GET", "/api/account/keys"),
-    ("POST", "/api/account/keys"),
-    ("PATCH", "/api/account/keys/foobar"),
-    ("DELETE", "/api/account/keys/foobar"),
-    ("DELETE", "/api/account/keys")
+    ("GET", "/account"),
+    ("PATCH", "/account"),
+    ("GET", "/account/settings"),
+    ("PATCH", "/account/settings"),
+    ("PATCH", "/account/settings"),
+    ("GET", "/account/keys"),
+    ("POST", "/account/keys"),
+    ("PATCH", "/account/keys/foobar"),
+    ("DELETE", "/account/keys/foobar"),
+    ("DELETE", "/account/keys")
 ])
 async def test_requires_authorization(method, path, spawn_client):
     """
@@ -443,7 +443,7 @@ async def test_is_permission_dict(value, spawn_client, resp_is):
         "permissions": permissions
     }
 
-    resp = await client.patch("/api/account/keys/foo", data=data)
+    resp = await client.patch("/account/keys/foo", data=data)
 
     if value == "valid_permissions":
         await resp_is.not_found(resp)
@@ -464,7 +464,7 @@ async def test_is_valid_email(value, spawn_client, resp_is):
         "password": "password"
     }
 
-    resp = await client.patch("/api/account", data=data)
+    resp = await client.patch("/account", data=data)
 
     if value == "valid_email":
         await resp_is.bad_request(resp, "Invalid credentials")
@@ -497,7 +497,7 @@ async def test_login(spawn_client, create_user, resp_is, error, mocker):
     mocker.patch("virtool.users.sessions.replace_session",
                  return_value=[{"_id": None}, None])
 
-    resp = await client.post("/api/account/login", data=data)
+    resp = await client.post("/account/login", data=data)
 
     if error == "wrong_handle" or error == "wrong_password":
         await resp_is.bad_request(resp, "Invalid username or password")

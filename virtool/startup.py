@@ -46,7 +46,7 @@ from virtool.tasks.runner import TaskRunner
 from virtool.types import App
 from virtool.uploads.tasks import MigrateFilesTask
 from virtool.users.tasks import UpdateUserDocumentsTask
-from virtool.utils import ensure_data_dir, get_client_path, random_alphanumeric
+from virtool.utils import ensure_data_dir, random_alphanumeric
 from virtool.version import determine_server_version
 
 logger = logging.getLogger("startup")
@@ -100,17 +100,6 @@ async def startup_check_db(app: Application):
 
     logger.info("Checking database indexes")
     await virtool.db.mongo.create_indexes(db)
-
-
-async def startup_client_path(app: Application):
-    if not app["config"].no_client:
-        app["client_path"] = await get_client_path()
-
-        if app["client_path"] is None:
-            logger.critical("Client files not found")
-            sys.exit(1)
-
-        app.router.add_static("/static", app["client_path"])
 
 
 async def startup_db(app: App):

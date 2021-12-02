@@ -53,7 +53,7 @@
   }
 ---
 # name: test_create[uvloop-barcode]
-  '/api/refs/9pfsom1b'
+  '/refs/9pfsom1b'
 ---
 # name: test_create[uvloop-barcode].1
   <class 'dict'> {
@@ -95,7 +95,7 @@
   }
 ---
 # name: test_create[uvloop-genome]
-  '/api/refs/9pfsom1b'
+  '/refs/9pfsom1b'
 ---
 # name: test_create[uvloop-genome].1
   <class 'dict'> {

@@ -125,7 +125,7 @@ async def test_find(
         }
     ])
 
-    path = "/api/samples"
+    path = "/samples"
     query = list()
 
     if find is not None:
@@ -220,7 +220,7 @@ async def test_get(error, ready, mocker, snapshot, fake, spawn_client, resp_is, 
             session.add_all([label, artifact, reads, upload])
             await session.commit()
 
-    resp = await client.get("api/samples/test")
+    resp = await client.get("/samples/test")
 
     if error:
         await resp_is.not_found(resp)
@@ -301,7 +301,7 @@ class TestCreate:
         if group_setting == "force_choice":
             request_data["group"] = "diagnostics"
 
-        resp = await client.post("/api/samples", request_data)
+        resp = await client.post("/samples", request_data)
 
         assert resp.status == 201
         assert resp.headers["Location"] == snapshot
@@ -332,7 +332,7 @@ class TestCreate:
             "ready": True,
         })
 
-        resp = await client.post("/api/samples", {
+        resp = await client.post("/samples", {
             "name": "Foobar",
             "files": [1],
             "subtractions": ["apple"]
@@ -371,11 +371,11 @@ class TestCreate:
         )
 
         if group is None:
-            resp = await client.post("/api/samples", request_data)
+            resp = await client.post("/samples", request_data)
             await resp_is.bad_request(resp, "Group value required for sample creation")
         else:
             request_data["group"] = group
-            resp = await client.post("/api/samples", request_data)
+            resp = await client.post("/samples", request_data)
             assert resp.status == 201
 
     async def test_group_dne(self, spawn_client, pg: AsyncEngine, resp_is):
@@ -394,7 +394,7 @@ class TestCreate:
             session.add(upload)
             await session.commit()
 
-        resp = await client.post("/api/samples", {
+        resp = await client.post("/samples", {
             "name": "Foobar",
             "files": [1],
             "subtractions": ["apple"],
@@ -411,7 +411,7 @@ class TestCreate:
             session.add(upload)
             await session.commit()
 
-        resp = await client.post("/api/samples", {
+        resp = await client.post("/samples", {
             "name": "Foobar",
             "files": [1],
             "subtractions": ["apple"]
@@ -441,7 +441,7 @@ class TestCreate:
 
                 await session.commit()
 
-        resp = await client.post("/api/samples", {
+        resp = await client.post("/samples", {
             "name": "Foobar",
             "files": [1, 2],
             "subtractions": ["apple"]
@@ -461,7 +461,7 @@ class TestCreate:
                 session.add(label)
                 await session.commit()
 
-        resp = await client.post("/api/samples", {
+        resp = await client.post("/samples", {
             "name": "Foobar",
             "files": [1],
             "labels": [1]
@@ -507,7 +507,7 @@ class TestEdit:
             ))
             await session.commit()
 
-        resp = await client.patch("/api/samples/test", {
+        resp = await client.patch("/samples/test", {
             "name": "test_sample",
             "subtractions": ["foo"],
             "labels": [1],
@@ -558,7 +558,7 @@ class TestEdit:
             "name": "Bar"
         }
 
-        resp = await client.patch("/api/samples/foo", data)
+        resp = await client.patch("/samples/foo", data)
 
         if exists:
             await resp_is.bad_request(resp, "Sample name is already in use")
@@ -601,7 +601,7 @@ class TestEdit:
             "labels": [1]
         }
 
-        resp = await client.patch("/api/samples/foo", data)
+        resp = await client.patch("/samples/foo", data)
 
         if not exists:
             await resp_is.bad_request(resp, "Labels do not exist: 1")
@@ -653,7 +653,7 @@ class TestEdit:
             "subtractions": ["foo", "bar"]
         }
 
-        resp = await client.patch("/api/samples/test", data)
+        resp = await client.patch("/samples/test", data)
 
         if not exists:
             await resp_is.bad_request(resp, "Subtractions do not exist: bar")
@@ -709,7 +709,7 @@ async def test_finalize(field, snapshot, fake, spawn_job_client, resp_is, pg, pg
 
         await session.commit()
 
-    resp = await client.patch("/api/samples/test", json=data)
+    resp = await client.patch("/samples/test", json=data)
 
     if field == "quality":
         assert resp.status == 200
@@ -751,7 +751,7 @@ async def test_remove(
 
     mocker.patch("virtool.samples.db.remove_samples", new=mock_remove_samples)
 
-    resp = await client.delete("/api/samples/test")
+    resp = await client.delete("/samples/test")
 
     await getattr(resp_is, resp_is_attr)(resp)
 
@@ -796,7 +796,7 @@ async def test_job_remove(
 
     mocker.patch("virtool.utils.rm", return_value=True)
 
-    resp = await client.delete("/api/samples/test")
+    resp = await client.delete("/samples/test")
 
     if exists and not ready:
         await resp_is.no_content(resp)
@@ -912,7 +912,7 @@ async def test_find_analyses(error, term, snapshot, mocker, fake, spawn_client, 
         },
     ])
 
-    url = "/api/samples/test/analyses"
+    url = "/samples/test/analyses"
 
     if term:
         url += "?term={}".format(term)
@@ -1009,7 +1009,7 @@ async def test_analyze(
         make_mocked_coro(test_analysis)
     )
 
-    resp = await client.post("/api/samples/test/analyses", data={
+    resp = await client.post("/samples/test/analyses", data={
         "workflow": "pathoscope_bowtie",
         "ref_id": "foo",
         "subtractions": ["bar"]
@@ -1032,7 +1032,7 @@ async def test_analyze(
         return
 
     assert resp.status == 201
-    assert resp.headers["Location"] == "/api/analyses/test_analysis"
+    assert resp.headers["Location"] == "/analyses/test_analysis"
     assert await resp.json() == snapshot
 
     m_create.assert_called_with(
@@ -1067,7 +1067,7 @@ async def test_cache_job_remove(exists, ready, tmp_path, spawn_job_client, resp_
             "ready": ready
         })
 
-    resp = await client.delete("/api/samples/bar/caches/abc123")
+    resp = await client.delete("/samples/bar/caches/abc123")
 
     if not exists:
         assert resp.status == 404
@@ -1114,13 +1114,13 @@ async def test_upload_artifact(
     }
 
     resp = await client.post(
-        f"/api/samples/test/artifacts?name=small.fq&type={artifact_type}",
+        f"/samples/test/artifacts?name=small.fq&type={artifact_type}",
         data=data
     )
 
     if error == 409:
         resp_2 = await client.post(
-            f"/api/samples/test/artifacts?name=small.fq&type={artifact_type}",
+            f"/samples/test/artifacts?name=small.fq&type={artifact_type}",
             data={
                 **data,
                 "file": open(path, "rb")
@@ -1181,7 +1181,7 @@ class TestUploadReads:
                 side_effect=OSError("Not a gzipped file")
             )
 
-        resp = await client.put("/api/samples/test/reads/reads_1.fq.gz?upload=1", data=data)
+        resp = await client.put("/samples/test/reads/reads_1.fq.gz?upload=1", data=data)
 
         if compressed:
             assert resp.status == 201
@@ -1211,14 +1211,14 @@ class TestUploadReads:
             "ready": True,
         })
 
-        resp = await client.put("/api/samples/test/reads/reads_1.fq.gz", data=data)
+        resp = await client.put("/samples/test/reads/reads_1.fq.gz", data=data)
 
         data["file"] = open(path / "reads_2.fq.gz", "rb")
-        resp_2 = await client.put("/api/samples/test/reads/reads_2.fq.gz", data=data)
+        resp_2 = await client.put("/samples/test/reads/reads_2.fq.gz", data=data)
 
         if conflict:
             data["file"] = open(path / "reads_2.fq.gz", "rb")
-            resp_3 = await client.put("/api/samples/test/reads/reads_2.fq.gz", data=data)
+            resp_3 = await client.put("/samples/test/reads/reads_2.fq.gz", data=data)
 
             await resp_is.conflict(
                 resp_3,
@@ -1246,7 +1246,7 @@ async def test_get_cache(error, snapshot, spawn_job_client, resp_is, static_time
 
     await client.db.caches.insert_one(cache)
 
-    resp = await client.get("api/samples/foo/caches/abc123")
+    resp = await client.get("/samples/foo/caches/abc123")
 
     if error == "404":
         await resp_is.not_found(resp)
@@ -1286,8 +1286,8 @@ async def test_download_reads(suffix, error, tmp_path, spawn_client, spawn_job_c
             session.add(sample_reads)
             await session.commit()
 
-    resp = await client.get(f"/api/samples/foo/reads/{file_name}")
-    job_resp = await job_client.get(f"/api/samples/foo/reads/{file_name}")
+    resp = await client.get(f"/samples/foo/reads/{file_name}")
+    job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
 
     expected_path = client.app["config"].data_path / \
         "samples" / "foo" / file_name
@@ -1331,7 +1331,7 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
 
             await session.commit()
 
-    resp = await client.get("/api/samples/foo/artifacts/fastqc.txt")
+    resp = await client.get("/samples/foo/artifacts/fastqc.txt")
 
     expected_path = client.app["config"].data_path / \
         "samples" / "foo" / "fastqc.txt"
@@ -1367,7 +1367,7 @@ class TestCreateCache:
             return_value="a1b2c3d4"
         )
 
-        resp = await client.post("/api/samples/test/caches", json=data)
+        resp = await client.post("/samples/test/caches", json=data)
 
         if key == "key":
             assert resp.status == 201
@@ -1401,7 +1401,7 @@ class TestCreateCache:
 
         data = {"key": "aodp-abcdefgh"}
 
-        resp = await client.post("/api/samples/test/caches", json=data)
+        resp = await client.post("/samples/test/caches", json=data)
 
         assert resp.status == 409
         assert await dbi.caches.count_documents({}) == 1
@@ -1447,14 +1447,14 @@ async def test_upload_artifact_cache(
     })
 
     resp = await client.post(
-        f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}",
+        f"/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}",
         data=data
     )
 
     if error == 409:
         data["file"] = open(path, "rb")
         resp_2 = await client.post(
-            f"/api/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}",
+            f"/samples/test/caches/aodp-abcdefgh/artifacts?name=small.fq&type={artifact_type}",
             data=data
         )
 
@@ -1502,7 +1502,7 @@ async def test_upload_reads_cache(paired, snapshot, static_time, spawn_job_clien
     })
 
     resp = await client.put(
-        "/api/samples/test/caches/aodp-abcdefgh/reads/reads_1.fq.gz",
+        "/samples/test/caches/aodp-abcdefgh/reads/reads_1.fq.gz",
         data=data
     )
 
@@ -1512,7 +1512,7 @@ async def test_upload_reads_cache(paired, snapshot, static_time, spawn_job_clien
         data["file"] = open(path / "reads_2.fq.gz", "rb")
 
         resp = await client.put(
-            "/api/samples/test/caches/aodp-abcdefgh/reads/reads_2.fq.gz",
+            "/samples/test/caches/aodp-abcdefgh/reads/reads_2.fq.gz",
             data=data
         )
 
@@ -1572,7 +1572,7 @@ async def test_download_reads_cache(error, spawn_job_client, pg, tmp_path):
             session.add(sample_reads_cache)
             await session.commit()
 
-    resp = await client.get(f"/api/samples/foo/caches/{key}/reads/{filename}")
+    resp = await client.get(f"/samples/foo/caches/{key}/reads/{filename}")
 
     expected_path = client.app["config"].data_path / "caches" / key / filename
 
@@ -1630,7 +1630,7 @@ async def test_download_artifact_cache(error, spawn_job_client, pg: AsyncEngine,
             }
         })
 
-    resp = await client.get(f"/api/samples/foo/caches/{key}/artifacts/{name}")
+    resp = await client.get(f"/samples/foo/caches/{key}/artifacts/{name}")
     expected_path = client.app["config"].data_path / \
         "caches" / key / name_on_disk
 
@@ -1660,7 +1660,7 @@ async def test_finalize_cache(field, resp_is, snapshot, spawn_job_client):
         }
     })
 
-    resp = await client.patch("/api/samples/test/caches/aodp-abcdefgh", json=data)
+    resp = await client.patch("/samples/test/caches/aodp-abcdefgh", json=data)
 
     if field == "quality":
         assert resp.status == 200

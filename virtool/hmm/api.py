@@ -3,25 +3,25 @@ API request handlers for managing and querying HMM data.
 
 """
 import aiohttp
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPBadGateway, HTTPConflict
-from aiohttp.web_fileresponse import FileResponse
-
 import virtool.hmm.db
-from virtool.api.response import json_response, NotFound
+from aiohttp.web_exceptions import (HTTPBadGateway, HTTPBadRequest,
+                                    HTTPConflict, HTTPNoContent)
+from aiohttp.web_fileresponse import FileResponse
+from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_one_field
 from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument
-from virtool.hmm.db import generate_annotations_json_file, PROJECTION
+from virtool.hmm.db import PROJECTION, generate_annotations_json_file
 from virtool.hmm.tasks import HMMInstallTask
 from virtool.hmm.utils import hmm_data_exists
 from virtool.http.routes import Routes
-from virtool.utils import base_processor, rm, compress_file_with_gzip
+from virtool.utils import base_processor, compress_file_with_gzip, rm
 
 routes = Routes()
 
 
-@routes.get("/api/hmms")
+@routes.get("/hmms")
 async def find(req):
     """
     Find HMM annotation documents.
@@ -50,7 +50,7 @@ async def find(req):
     return json_response(data)
 
 
-@routes.get("/api/hmms/status")
+@routes.get("/hmms/status")
 async def get_status(req):
     """
     Get the status of the HMM data. Contains the following fields:
@@ -71,7 +71,7 @@ async def get_status(req):
     return json_response(status)
 
 
-@routes.get("/api/hmms/status/release")
+@routes.get("/hmms/status/release")
 async def get_release(req):
     """
     Get the latest release for the HMM data.
@@ -94,7 +94,7 @@ async def get_release(req):
     return json_response(release)
 
 
-@routes.get("/api/hmms/status/updates")
+@routes.get("/hmms/status/updates")
 async def list_updates(req):
     """
     List all updates applied to the HMM collection.
@@ -108,7 +108,7 @@ async def list_updates(req):
     return json_response(updates)
 
 
-@routes.post("/api/hmms/status/updates", permission="modify_hmm")
+@routes.post("/hmms/status/updates", permission="modify_hmm")
 async def install(req):
     """
     Install the latest official HMM database from GitHub.
@@ -155,8 +155,8 @@ async def install(req):
     return json_response(update)
 
 
-@routes.get("/api/hmms/{hmm_id}")
-@routes.jobs_api.get("/api/hmms/{hmm_id}")
+@routes.get("/hmms/{hmm_id}")
+@routes.jobs_api.get("/hmms/{hmm_id}")
 async def get(req):
     """
     Get a complete individual HMM annotation document.
@@ -170,7 +170,7 @@ async def get(req):
     return json_response(base_processor(document))
 
 
-@routes.delete("/api/hmms", permission="modify_hmm")
+@routes.delete("/hmms", permission="modify_hmm")
 async def purge(req):
     """
     Delete all unreferenced HMMs and hide the rest.
@@ -200,7 +200,7 @@ async def purge(req):
     raise HTTPNoContent
 
 
-@routes.jobs_api.get("/api/hmms/files/annotations.json.gz")
+@routes.jobs_api.get("/hmms/files/annotations.json.gz")
 async def get_hmm_annotations(request):
     """Get a compressed json file containing the database documents for all HMMs."""
     data_path = request.app["config"].data_path
@@ -214,7 +214,7 @@ async def get_hmm_annotations(request):
     return FileResponse(annotation_path)
 
 
-@routes.jobs_api.get("/api/hmms/files/profiles.hmm")
+@routes.jobs_api.get("/hmms/files/profiles.hmm")
 async def get_hmm_profiles(req):
     """
     Download the HMM profiles file if HMM data is available.

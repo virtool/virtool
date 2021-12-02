@@ -255,7 +255,7 @@
     },
     'reads': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/api/samples/test/reads/reads_1.fq.gz',
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',

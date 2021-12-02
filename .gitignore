@@ -4,10 +4,6 @@ __pycache__
 /.idea
 /assets/prunus_persica
 /build
-/client/node_modules
-/client/dist
-/client/doc
-/client/coverage
 /data
 /docs/_build
 /misc

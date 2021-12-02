@@ -116,7 +116,7 @@ async def test_find(snapshot, mocker, fake, spawn_client, resp_is, static_time):
         },
     ])
 
-    resp = await client.get("/api/analyses")
+    resp = await client.get("/analyses")
 
     assert resp.status == 200
     assert await resp.json() == snapshot
@@ -185,7 +185,7 @@ async def test_get(ready, fake: FakeGenerator, error, mocker, snapshot, spawn_cl
         })
     )
 
-    resp = await client.get("/api/analyses/foobar")
+    resp = await client.get("/analyses/foobar")
 
     if error == "400":
         await resp_is.bad_request(resp, "Parent sample does not exist")
@@ -246,7 +246,7 @@ async def test_remove(mocker, error, fake, spawn_client, resp_is, tmp_path):
 
     m_remove = mocker.patch("virtool.utils.rm")
 
-    resp = await client.delete("/api/analyses/foobar")
+    resp = await client.delete("/analyses/foobar")
 
     if error == "400":
         await resp_is.bad_request(resp, "Parent sample does not exist")
@@ -296,9 +296,9 @@ async def test_upload_file(error, files, resp_is, spawn_job_client, static_time,
         })
 
     if error == 422:
-        resp = await client.put("/api/analyses/foobar/files?format=fasta", data=files)
+        resp = await client.put("/analyses/foobar/files?format=fasta", data=files)
     else:
-        resp = await client.put(f"/api/analyses/foobar/files?name=reference.fa&format={format_}", data=files)
+        resp = await client.put(f"/analyses/foobar/files?name=reference.fa&format={format_}", data=files)
 
     if error is None:
         assert resp.status == 201
@@ -351,13 +351,13 @@ async def test_download_analysis_result(
     })
 
     if row_exists:
-        await job_client.put("/api/analyses/foobar/files?name=reference.fa&format=fasta", data=files)
+        await job_client.put("/analyses/foobar/files?name=reference.fa&format=fasta", data=files)
         assert expected_path.is_file()
 
     if not file_exists and row_exists:
         expected_path.unlink()
 
-    resp = await client.get("/api/analyses/foobar/files/1")
+    resp = await client.get("/analyses/foobar/files/1")
 
     if file_exists and row_exists:
         assert resp.status == 200
@@ -383,7 +383,7 @@ async def test_download_analysis_document(extension, exists, mocker, spawn_clien
         return_value=io.StringIO().getvalue()
     )
 
-    resp = await client.get(f"/api/analyses/documents/foobar.{extension}")
+    resp = await client.get(f"/analyses/documents/foobar.{extension}")
 
     assert resp.status == 200 if exists else 400
 
@@ -445,9 +445,9 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
     m_wait_for_blast_result = mocker.patch(
         "virtool.bio.wait_for_blast_result", make_mocked_coro())
 
-    await client.put("/api/analyses/foobar/5/blast", {})
+    await client.put("/analyses/foobar/5/blast", {})
 
-    resp = await client.put("/api/analyses/foobar/5/blast", {})
+    resp = await client.put("/analyses/foobar/5/blast", {})
 
     if error == "400":
         await resp_is.bad_request(resp, "Parent sample does not exist")
@@ -474,7 +474,7 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
         return
 
     assert resp.status == 201
-    assert resp.headers["Location"] == "/api/analyses/foobar/5/blast"
+    assert resp.headers["Location"] == "/analyses/foobar/5/blast"
 
     blast = {
         "rid": "FOOBAR1337",
@@ -535,7 +535,7 @@ async def test_finalize(fake, snapshot, spawn_job_client, faker, error, resp_is)
         insert_result = await client.db.analyses.insert_one(analysis_document)
         assert insert_result["_id"] == analysis_document["_id"]
 
-    resp = await client.patch(f"/api/analyses/{analysis_document['_id']}", json=patch_json)
+    resp = await client.patch(f"/analyses/{analysis_document['_id']}", json=patch_json)
 
     if error:
         assert resp.status == error
@@ -579,7 +579,7 @@ async def test_finalize_large(fake, spawn_job_client, faker):
         "ready": False
     })
 
-    resp = await client.patch(f"/api/analyses/analysis1", json=patch_json)
+    resp = await client.patch(f"/analyses/analysis1", json=patch_json)
 
 
     assert resp.status == 200

@@ -10,6 +10,6 @@ async def test_get(dev, first_user, spawn_client, snapshot):
     if first_user:
         await client.db.users.delete_one({})
 
-    resp = await client.get("/api")
+    resp = await client.get("/")
 
     assert await resp.json() == snapshot

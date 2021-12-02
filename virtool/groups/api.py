@@ -1,10 +1,9 @@
 import pymongo.errors
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
-
 import virtool.groups.db
 import virtool.http.routes
 import virtool.validators
-from virtool.api.response import json_response, NotFound
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
+from virtool.api.response import NotFound, json_response
 from virtool.http.schema import schema
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
@@ -12,7 +11,7 @@ from virtool.utils import base_processor
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/api/groups")
+@routes.get("/groups")
 async def find(req):
     """
     Get a list of all existing group documents.
@@ -22,7 +21,7 @@ async def find(req):
     return json_response([base_processor(d) async for d in cursor])
 
 
-@routes.post("/api/groups", admin=True)
+@routes.post("/groups", admin=True)
 @schema({
     "group_id": {
         "type": "string",
@@ -49,13 +48,13 @@ async def create(req):
         raise HTTPBadRequest(text="Group already exists")
 
     headers = {
-        "Location": "/api/groups/" + data["group_id"]
+        "Location": "/groups/" + data["group_id"]
     }
 
     return json_response(base_processor(document), status=201, headers=headers)
 
 
-@routes.get("/api/groups/{group_id}")
+@routes.get("/groups/{group_id}")
 async def get(req):
     """
     Gets a complete group document.
@@ -69,7 +68,7 @@ async def get(req):
     raise NotFound()
 
 
-@routes.patch("/api/groups/{group_id}", admin=True)
+@routes.patch("/groups/{group_id}", admin=True)
 @schema({
     "permissions": {
         "type": "dict",
@@ -106,7 +105,7 @@ async def update_permissions(req):
     return json_response(base_processor(document))
 
 
-@routes.delete("/api/groups/{group_id}", admin=True)
+@routes.delete("/groups/{group_id}", admin=True)
 async def remove(req):
     """
     Remove a group.

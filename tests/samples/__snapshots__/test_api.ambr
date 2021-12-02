@@ -1,5 +1,5 @@
 # name: TestCreate.test[uvloop-force_choice]
-  '/api/samples/9pfsom1b'
+  '/samples/9pfsom1b'
 ---
 # name: TestCreate.test[uvloop-force_choice].1
   <class 'dict'> {
@@ -86,7 +86,7 @@
   }
 ---
 # name: TestCreate.test[uvloop-none]
-  '/api/samples/9pfsom1b'
+  '/samples/9pfsom1b'
 ---
 # name: TestCreate.test[uvloop-none].1
   <class 'dict'> {
@@ -173,7 +173,7 @@
   }
 ---
 # name: TestCreate.test[uvloop-users_primary_group]
-  '/api/samples/9pfsom1b'
+  '/samples/9pfsom1b'
 ---
 # name: TestCreate.test[uvloop-users_primary_group].1
   <class 'dict'> {
@@ -260,7 +260,7 @@
   }
 ---
 # name: TestCreateCache.test[uvloop-key]
-  '/api/samples/test/caches/a1b2c3d4'
+  '/samples/test/caches/a1b2c3d4'
 ---
 # name: TestCreateCache.test[uvloop-key].1
   <class 'dict'> {
@@ -438,7 +438,7 @@
   <class 'dict'> {
     'artifacts': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/api/samples/test/artifacts/reference.fa.gz',
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
         'name_on_disk': 'reference.fa.gz',
@@ -458,7 +458,7 @@
     },
     'reads': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/api/samples/test/reads/reads_1.fq.gz',
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
@@ -1194,7 +1194,7 @@
   <class 'dict'> {
     'artifacts': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/api/samples/test/artifacts/reference.fa.gz',
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
         'name_on_disk': 'reference.fa.gz',
@@ -1227,7 +1227,7 @@
     'paired': False,
     'reads': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/api/samples/test/reads/reads_1.fq.gz',
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',

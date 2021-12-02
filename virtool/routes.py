@@ -29,19 +29,6 @@ import virtool.utils
 
 logger = logging.getLogger(__name__)
 
-INDEX_PATHS = [
-    "/",
-    r"/account{suffix:.*}",
-    r"/administration{suffix:.*}",
-    r"/home{suffix:.*}",
-    r"/hmm{suffix:.*}",
-    r"/jobs{suffix:.*}",
-    r"/otus{suffix:.*}",
-    r"/refs{suffix:.*}",
-    r"/samples{suffix:.*}",
-    r"/subtraction{suffix:.*}"
-]
-
 ROUTES = (
     virtool.account.api.routes,
     virtool.analyses.api.routes,
@@ -68,9 +55,6 @@ ROUTES = (
 
 
 def setup_routes(app):
-    for path in INDEX_PATHS:
-        app.router.add_get(path, virtool.http.auth.index_handler)
-
     app.router.add_get("/ws", virtool.http.ws.root)
 
     if app["config"].dev:
@@ -79,7 +63,3 @@ def setup_routes(app):
 
     for routes in ROUTES:
         app.router.add_routes(routes)
-
-    static_path = Path.cwd() / "static"
-
-    app.router.add_static("/assets", static_path)

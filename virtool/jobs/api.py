@@ -15,7 +15,7 @@ from virtool.users.db import attach_users
 routes = Routes()
 
 
-@routes.get("/api/jobs")
+@routes.get("/jobs")
 async def find(req):
     """
     Return a list of job documents.
@@ -46,8 +46,8 @@ async def find(req):
     })
 
 
-@routes.get("/api/jobs/{job_id}")
-@routes.jobs_api.get("/api/jobs/{job_id}")
+@routes.get("/jobs/{job_id}")
+@routes.jobs_api.get("/jobs/{job_id}")
 async def get(req):
     """
     Return the complete document for a given job.
@@ -64,8 +64,8 @@ async def get(req):
     return json_response(await processor(db, document))
 
 
-@routes.patch("/api/jobs/{job_id}")
-@routes.jobs_api.patch("/api/jobs/{job_id}")
+@routes.patch("/jobs/{job_id}")
+@routes.jobs_api.patch("/jobs/{job_id}")
 @schema({
     "acquired": {
         "type": "boolean",
@@ -98,7 +98,7 @@ async def acquire(req):
     return json_response(await processor(db, document))
 
 
-@routes.put("/api/jobs/{job_id}/cancel", permission="cancel_job")
+@routes.put("/jobs/{job_id}/cancel", permission="cancel_job")
 async def cancel(req):
     """
     Cancel a job.
@@ -121,8 +121,8 @@ async def cancel(req):
     return json_response(await processor(db, document))
 
 
-@routes.post("/api/jobs/{job_id}/status")
-@routes.jobs_api.post("/api/jobs/{job_id}/status")
+@routes.post("/jobs/{job_id}/status")
+@routes.jobs_api.post("/jobs/{job_id}/status")
 @schema({
     "state": {
         "type": "string",
@@ -183,7 +183,7 @@ async def push_status(req):
     return json_response(document["status"][-1], status=201)
 
 
-@routes.delete("/api/jobs", permission="remove_job")
+@routes.delete("/jobs", permission="remove_job")
 async def clear(req):
     db = req.app["db"]
 
@@ -202,7 +202,7 @@ async def clear(req):
     })
 
 
-@routes.delete("/api/jobs/{job_id}", permission="remove_job")
+@routes.delete("/jobs/{job_id}", permission="remove_job")
 async def remove(req):
     """
     Remove a job.

@@ -17,7 +17,7 @@ logger = getLogger(__name__)
 routes = Routes()
 
 
-@routes.post("/api/uploads", permission="upload_file")
+@routes.post("/uploads", permission="upload_file")
 async def create(req):
     """
     Upload a new file and add it to the `uploads` SQL table.
@@ -70,13 +70,13 @@ async def create(req):
     logger.debug(f"Upload succeeded: {upload_id}")
 
     headers = {
-        "Location": f"/api/uploads/{upload_id}"
+        "Location": f"/uploads/{upload_id}"
     }
 
     return json_response(await attach_user(req.app["db"], upload), status=201, headers=headers)
 
 
-@routes.get("/api/uploads")
+@routes.get("/uploads")
 async def find(req):
     """
     Get a list of upload documents from the `uploads` SQL table.
@@ -95,8 +95,8 @@ async def find(req):
     })
 
 
-@routes.get("/api/uploads/{id}")
-@routes.jobs_api.get("/api/uploads/{id}")
+@routes.get("/uploads/{id}")
+@routes.jobs_api.get("/uploads/{id}")
 async def download(req):
     """
     Downloads a file that corresponds to a row `id` in the `uploads` SQL table.
@@ -125,7 +125,7 @@ async def download(req):
     return FileResponse(upload_path, headers=headers)
 
 
-@routes.delete("/api/uploads/{id}", permission="remove_file")
+@routes.delete("/uploads/{id}", permission="remove_file")
 async def delete(req):
     """
     Set a row's `removed` and `removed_at` attribute in the `uploads` SQL table and delete its associated local file.

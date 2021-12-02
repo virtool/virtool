@@ -6,15 +6,14 @@ requests.
 
 """
 import aiohttp.web
-from aiohttp.web import HTTPNoContent
-from aiohttp.web_exceptions import HTTPBadRequest
-
 import virtool.account.db
 import virtool.http.auth
 import virtool.http.routes
 import virtool.validators
+from aiohttp.web import HTTPNoContent
+from aiohttp.web_exceptions import HTTPBadRequest
 from virtool.analyses.utils import WORKFLOW_NAMES
-from virtool.api.response import json_response, NotFound
+from virtool.api.response import NotFound, json_response
 from virtool.db.utils import get_one_field
 from virtool.http.schema import schema
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
@@ -35,7 +34,7 @@ API_KEY_PROJECTION = {
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/api/account")
+@routes.get("/account")
 async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Get complete user document.
@@ -45,7 +44,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(base_processor(document))
 
 
-@routes.patch("/api/account")
+@routes.patch("/account")
 @schema({
     "email": {
         "type": "string",
@@ -99,7 +98,7 @@ async def edit(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(base_processor(document))
 
 
-@routes.get("/api/account/settings")
+@routes.get("/account/settings")
 async def get_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Get account settings
@@ -114,7 +113,7 @@ async def get_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(account_settings)
 
 
-@routes.patch("/api/account/settings")
+@routes.patch("/account/settings")
 @schema({
     "show_ids": {
         "type": "boolean",
@@ -154,7 +153,7 @@ async def update_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(settings)
 
 
-@routes.get("/api/account/keys")
+@routes.get("/account/keys")
 async def list_api_keys(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     List API keys associated with the authenticated user account.
@@ -169,7 +168,7 @@ async def list_api_keys(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response([d async for d in cursor], status=200)
 
 
-@routes.get("/api/account/keys/{key_id}")
+@routes.get("/account/keys/{key_id}")
 async def get_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Get the complete representation of the API key identified by the `key_id`.
@@ -187,7 +186,7 @@ async def get_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(document, status=200)
 
 
-@routes.post("/api/account/keys")
+@routes.post("/account/keys")
 @schema({
     "name": {
         "type": "string",
@@ -220,13 +219,13 @@ async def create_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     )
 
     headers = {
-        "Location": f"/api/account/keys/{document['id']}"
+        "Location": f"/account/keys/{document['id']}"
     }
 
     return json_response(document, headers=headers, status=201)
 
 
-@routes.patch("/api/account/keys/{key_id}")
+@routes.patch("/account/keys/{key_id}")
 @schema({
     "permissions": {
         "type": "dict",
@@ -272,7 +271,7 @@ async def update_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return json_response(document)
 
 
-@routes.delete("/api/account/keys/{key_id}")
+@routes.delete("/account/keys/{key_id}")
 async def remove_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Remove an API key by its ID.
@@ -293,7 +292,7 @@ async def remove_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     raise HTTPNoContent
 
 
-@routes.delete("/api/account/keys")
+@routes.delete("/account/keys")
 async def remove_all_api_keys(req: aiohttp.web.Request):
     """
     Remove all API keys for the account associated with the requesting session.
@@ -303,7 +302,7 @@ async def remove_all_api_keys(req: aiohttp.web.Request):
     raise HTTPNoContent
 
 
-@routes.post("/api/account/login", public=True)
+@routes.post("/account/login", public=True)
 @schema({
     "username": {
         "type": "string",
@@ -368,7 +367,7 @@ async def login(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return resp
 
 
-@routes.get("/api/account/logout", public=True)
+@routes.get("/account/logout", public=True)
 async def logout(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Invalidates the requesting session, effectively logging out the user.
@@ -391,7 +390,7 @@ async def logout(req: aiohttp.web.Request) -> aiohttp.web.Response:
     return resp
 
 
-@routes.post("/api/account/reset", public=True)
+@routes.post("/account/reset", public=True)
 @schema({
     "password": {
         "type": "string",

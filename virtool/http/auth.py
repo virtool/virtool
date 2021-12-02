@@ -2,20 +2,19 @@ from typing import Callable, Tuple
 
 import aiofiles
 import jinja2
-from aiohttp import BasicAuth
-from aiohttp import web
-from aiohttp.web import Request, Response, HTTPFound
+import virtool.errors
+import virtool.utils
+from aiohttp import BasicAuth, web
+from aiohttp.web import HTTPFound, Request, Response
 from aiohttp.web_exceptions import HTTPUnauthorized
 from jose import ExpiredSignatureError
 from jose.exceptions import JWTClaimsError, JWTError
-
-import virtool.errors
-import virtool.utils
 from virtool.http.client import UserClient
 from virtool.http.utils import set_session_id_cookie
-from virtool.oidc.utils import validate_token, update_jwk_args
+from virtool.oidc.utils import update_jwk_args, validate_token
 from virtool.users.db import B2CUserAttributes, find_or_create_b2c_user
-from virtool.users.sessions import get_session, create_session, clear_reset_code
+from virtool.users.sessions import (clear_reset_code, create_session,
+                                    get_session)
 from virtool.utils import random_alphanumeric
 
 AUTHORIZATION_PROJECTION = [
@@ -26,26 +25,12 @@ AUTHORIZATION_PROJECTION = [
 ]
 
 PUBLIC_ROUTES = [
-    "/api/oidc/acquire_tokens",
-    "/api/oidc/refresh_tokens",
-    "/api/oidc/delete_tokens",
-    "/api/account/login",
-    "/api/account/logout"
+    "/oidc/acquire_tokens",
+    "/oidc/refresh_tokens",
+    "/oidc/delete_tokens",
+    "/account/login",
+    "/account/logout"
 ]
-
-
-def can_use_key(req: Request) -> bool:
-    """
-    Check if the passed :class:`.Request` object can be authenticated using an API key.
-
-    :param req: the request to check
-    :return: can the request be authenticated with an API key
-
-    """
-    path = req.path
-    enable_api = req.app["settings"].enable_api
-
-    return (path.startswith("/api") or path.startswith("/download")) and enable_api
 
 
 def get_ip(req: Request) -> str:
@@ -119,10 +104,10 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
     """
     Authenticate requests when req.app["config"].use_b2c is True.
 
-    If no id_token cookie is attached to request, redirect to /api/acquire_tokens
+    If no id_token cookie is attached to request, redirect to /acquire_tokens
 
     If id_token cookie is found, attempt to validate to gather user information from claims. If token is expired,
-    redirect to /api/refresh_tokens. If token is invalid for some other reason, redirect to /api/delete_tokens
+    redirect to /refresh_tokens. If token is invalid for some other reason, redirect to /delete_tokens
 
     find or create user based on token claims, then populate req["cient"] with user information and return the
     response from the handler.
@@ -136,7 +121,7 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
         auth_code_flow = await req.app["run_in_thread"](
             req.app["b2c"].msal.initiate_auth_code_flow,
             ["email"],
-            f"http://localhost:9950/api/oidc/acquire_tokens",
+            f"http://localhost:9950/oidc/acquire_tokens",
             random_alphanumeric(8)
         )
         req.app["b2c"].auth_code_flow = auth_code_flow
@@ -145,10 +130,10 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
     try:
         token_claims = await validate_token(req.app, req.cookies.get("id_token"))
     except ExpiredSignatureError:
-        return HTTPFound("/api/oidc/refresh_tokens")
+        return HTTPFound("/oidc/refresh_tokens")
     except (JWTClaimsError, JWTError):
         await update_jwk_args(req.app, req.cookies.get("id_token"))
-        return HTTPFound("/api/oidc/delete_tokens")
+        return HTTPFound("/oidc/delete_tokens")
 
     user_attributes = B2CUserAttributes(
         display_name=token_claims["name"],
@@ -197,8 +182,7 @@ async def middleware(req, handler) -> Response:
         return await handler(req)
 
     if req.headers.get("AUTHORIZATION"):
-        if can_use_key(req):
-            return await authenticate_with_key(req, handler)
+        return await authenticate_with_key(req, handler)
 
     if req.app["config"].use_b2c:
         return await authenticate_with_b2c(req, handler)
@@ -245,40 +229,12 @@ async def middleware(req, handler) -> Response:
 
     resp = await handler(req)
 
-    if req.path != "/api/account/reset":
+    if req.path != "/account/reset":
         await clear_reset_code(db, session["_id"])
 
     set_session_id_cookie(resp, session_id)
 
-    if req.path == "/api/":
+    if req.path == "/":
         resp.del_cookie("session_token")
 
     return resp
-
-
-async def index_handler(req: Request) -> Response:
-    """
-    A request handler for requests where the `index.html` should be returned.
-
-    :param req: the request to handle
-    :return: the response
-
-    """
-    requires_first_user = not await req.app["db"].users.count_documents({})
-
-    requires_login = not req.app["config"].use_b2c and not req["client"].authenticated
-
-    path = req.app["client_path"] / "index.html"
-
-    async with aiofiles.open(path, "r") as f:
-        template = jinja2.Template(await f.read(), autoescape=True)
-
-    html = template.render(
-        dev=req.app["config"].dev,
-        first=requires_first_user,
-        login=requires_login,
-        nonce=req["nonce"],
-        version=req.app["version"]
-    )
-
-    return Response(body=html, content_type="text/html")

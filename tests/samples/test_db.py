@@ -518,8 +518,8 @@ async def test_finalize(snapshot, tmp_path, dbi, fake, pg: AsyncEngine, pg_sessi
 class TestComposeWorkflowQuery:
 
     @pytest.mark.parametrize("url", [
-        "/api/samples?workflows=pathoscope%3Aready foo%3Apending foo%3Anone",
-        "/api/samples?workflows=pathoscope%3Aready foo%3Apending&workflows=foo%3Anone"
+        "/samples?workflows=pathoscope%3Aready foo%3Apending foo%3Anone",
+        "/samples?workflows=pathoscope%3Aready foo%3Apending&workflows=foo%3Anone"
     ], ids=["single", "multiple"])
     def test(self, url):
         """
@@ -542,7 +542,7 @@ class TestComposeWorkflowQuery:
         """
         req = make_mocked_request(
             "GET",
-            "/api/samples?find=foo"
+            "/samples?find=foo"
         )
 
         assert compose_sample_workflow_query(req.query) is None
@@ -554,7 +554,7 @@ class TestComposeWorkflowQuery:
         """
         req = make_mocked_request(
             "GET",
-            "/api/samples?workflows=pathoscope%3Abar pathoscope%3Aready"
+            "/samples?workflows=pathoscope%3Abar pathoscope%3Aready"
         )
 
         assert compose_sample_workflow_query(req.query) == {
@@ -570,7 +570,7 @@ class TestComposeWorkflowQuery:
         """
         req = make_mocked_request(
             "GET",
-            "/api/samples?workflows=pathoscope%3Abar"
+            "/samples?workflows=pathoscope%3Abar"
         )
 
         assert compose_sample_workflow_query(req.query) is None

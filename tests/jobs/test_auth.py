@@ -3,12 +3,12 @@ import aiohttp.web
 test_routes = aiohttp.web.RouteTableDef()
 
 
-@test_routes.patch("/api/jobs/{job_id}")
+@test_routes.patch("/jobs/{job_id}")
 def public_test_route(request: aiohttp.web.Request):
     return aiohttp.web.Response(status=200)
 
 
-@test_routes.get("/api/not_public")
+@test_routes.get("/not_public")
 def non_public_test_route(request: aiohttp.web.Request):
     return aiohttp.web.Response(status=200)
 
@@ -21,7 +21,7 @@ async def test_public_routes_are_public(spawn_job_client):
 
     assert insert_result["_id"] == job_id
 
-    response = await client.patch(f"/api/jobs/{job_id}")
+    response = await client.patch(f"/jobs/{job_id}")
 
     assert response.status == 200
 
@@ -29,7 +29,7 @@ async def test_public_routes_are_public(spawn_job_client):
 async def test_unauthorized_when_header_missing(spawn_job_client):
     client = await spawn_job_client(authorize=False, add_route_table=test_routes)
 
-    response = await client.get("/api/not_public")
+    response = await client.get("/not_public")
 
     assert response.status == 401
 
@@ -37,7 +37,7 @@ async def test_unauthorized_when_header_missing(spawn_job_client):
 async def test_unauthorized_when_header_invalid(spawn_job_client):
     client = await spawn_job_client(authorize=False, add_route_table=test_routes)
 
-    response = await client.get("/api/not_public", headers={
+    response = await client.get("/not_public", headers={
         "Authorization": "Basic job-not_a_job_id:not_a_key",
     })
 
@@ -47,6 +47,6 @@ async def test_unauthorized_when_header_invalid(spawn_job_client):
 async def test_authorized_when_header_is_valid(spawn_job_client):
     client = await spawn_job_client(authorize=True, add_route_table=test_routes)
 
-    response = await client.get("/api/not_public")
+    response = await client.get("/not_public")
 
     assert response.status == 200

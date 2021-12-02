@@ -3,8 +3,6 @@
 .pytest_cache
 .idea
 .pytest_cache
-client/node_modules
-client/dist
 data
 docker
 docs

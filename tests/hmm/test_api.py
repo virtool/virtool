@@ -23,7 +23,7 @@ async def test_find(mocker, snapshot, spawn_client, hmm_document):
 
     await client.db.hmm.insert_one(hmm_document)
 
-    resp = await client.get("/api/hmms")
+    resp = await client.get("/hmms")
 
     assert resp.status == 200
     assert await resp.json() == snapshot
@@ -37,7 +37,7 @@ async def test_get_status(mocker, spawn_client):
     mocker.patch("virtool.hmm.db.get_status",
                  make_mocked_coro({"id": "hmm", "updating": True}))
 
-    resp = await client.get("/api/hmms/status")
+    resp = await client.get("/hmms/status")
 
     assert resp.status == 200
 
@@ -68,7 +68,7 @@ async def test_get_release(error, mocker, spawn_client, resp_is):
         m_fetch.side_effect = aiohttp.ClientConnectorError(
             "foo", OSError("Bar"))
 
-    resp = await client.get("/api/hmms/status/release")
+    resp = await client.get("/hmms/status/release")
 
     m_fetch.assert_called_with(client.app)
 
@@ -105,7 +105,7 @@ async def test_get(error, spawn_client, hmm_document, resp_is):
     if not error:
         await client.db.hmm.insert_one(hmm_document)
 
-    resp = await client.get("/api/hmms/f8666902")
+    resp = await client.get("/hmms/f8666902")
 
     if error:
         await resp_is.not_found(resp)
@@ -130,7 +130,7 @@ async def test_get_hmm_annotations(spawn_job_client, tmp_path):
     compressed_hmm_annotations = tmp_path / "annotations.json.gz"
     decompressed_hmm_annotations = tmp_path / "annotations.json"
 
-    async with client.get("/api/hmms/files/annotations.json.gz") as response:
+    async with client.get("/hmms/files/annotations.json.gz") as response:
         assert response.status == 200
 
         async with aiofiles.open(compressed_hmm_annotations, "wb") as f:
@@ -173,7 +173,7 @@ async def test_get_hmm_profiles(
             shutil.copy(example_path / "hmms" / "profiles.hmm", hmms_path)
             assert profiles_path.exists()
 
-    resp = await client.get("/api/hmms/files/profiles.hmm")
+    resp = await client.get("/hmms/files/profiles.hmm")
 
     if data_exists and file_exists:
         assert resp.status == 200

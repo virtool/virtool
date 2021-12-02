@@ -31,7 +31,7 @@ logger = logging.getLogger("indexes")
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/api/indexes")
+@routes.get("/indexes")
 async def find(req):
     """
     Return a list of indexes.
@@ -87,8 +87,8 @@ async def find(req):
     return json_response(ready_indexes)
 
 
-@routes.get("/api/indexes/{index_id}")
-@routes.jobs_api.get("/api/indexes/{index_id}")
+@routes.get("/indexes/{index_id}")
+@routes.jobs_api.get("/indexes/{index_id}")
 async def get(req):
     """
     Get the complete document for a given index.
@@ -121,7 +121,7 @@ async def get(req):
     return json_response(document)
 
 
-@routes.jobs_api.get("/api/indexes/{index_id}/files/otus.json.gz")
+@routes.jobs_api.get("/indexes/{index_id}/files/otus.json.gz")
 async def download_otus_json(req):
     """
     Download a complete compressed JSON representation of the index OTUs.
@@ -159,7 +159,7 @@ async def download_otus_json(req):
     return FileResponse(json_path, headers=headers)
 
 
-@routes.get("/api/indexes/{index_id}/files/{filename}")
+@routes.get("/indexes/{index_id}/files/{filename}")
 async def download_index_file(req: Request):
     """
     Download files relating to a given index.
@@ -189,7 +189,7 @@ async def download_index_file(req: Request):
     return FileResponse(path)
 
 
-@routes.jobs_api.get("/api/indexes/{index_id}/files/{filename}")
+@routes.jobs_api.get("/indexes/{index_id}/files/{filename}")
 async def download_index_file_for_jobs(req: Request):
     """Download files relating to a given index for jobs."""
     index_id = req.match_info["index_id"]
@@ -214,7 +214,7 @@ async def download_index_file_for_jobs(req: Request):
     return FileResponse(path)
 
 
-@routes.post("/api/refs/{ref_id}/indexes")
+@routes.post("/refs/{ref_id}/indexes")
 async def create(req):
     """
     Starts a job to rebuild the otus Bowtie2 index on disk. Does a check to make sure there are no
@@ -274,7 +274,7 @@ async def create(req):
     await req.app["jobs"].enqueue(job["_id"])
 
     headers = {
-        "Location": f"/api/indexes/{document['_id']}"
+        "Location": f"/indexes/{document['_id']}"
     }
 
     return json_response(
@@ -284,7 +284,7 @@ async def create(req):
     )
 
 
-@routes.jobs_api.put("/api/indexes/{index_id}/files/{filename}")
+@routes.jobs_api.put("/indexes/{index_id}/files/{filename}")
 async def upload(req):
     """
     Upload a new index file to the `index_files` SQL table and the `references` folder in the
@@ -336,7 +336,7 @@ async def upload(req):
     )
 
     headers = {
-        "Location": f"/api/indexes/{index_id}/files/{name}"
+        "Location": f"/indexes/{index_id}/files/{name}"
     }
 
     index_file["uploaded_at"] = virtool.utils.timestamp()
@@ -344,7 +344,7 @@ async def upload(req):
     return json_response(index_file, headers=headers, status=201)
 
 
-@routes.jobs_api.patch("/api/indexes/{index_id}")
+@routes.jobs_api.patch("/indexes/{index_id}")
 async def finalize(req):
     """
     Finalize an index by setting `ready` to `True` and update associated OTU's `last_indexed_version` field.
@@ -392,7 +392,7 @@ async def finalize(req):
     return json_response(await virtool.indexes.db.processor(db, document))
 
 
-@routes.get("/api/indexes/{index_id}/history")
+@routes.get("/indexes/{index_id}/history")
 async def find_history(req):
     """
     Find history changes for a specific index.
@@ -426,7 +426,7 @@ async def find_history(req):
     return json_response(data)
 
 
-@routes.jobs_api.delete("/api/indexes/{index_id}")
+@routes.jobs_api.delete("/indexes/{index_id}")
 async def delete_index(req: Request):
     """Delete the index with the given id and reset history relating to that index."""
     index_id = req.match_info["index_id"]

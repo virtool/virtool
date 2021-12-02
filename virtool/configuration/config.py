@@ -18,7 +18,6 @@ class Config:
     data_path: Path = None
     proxy: str = None
     host: str = None
-    no_client: bool = False
     port: int = 9950
     fake: bool = False
     fake_path: Path = None

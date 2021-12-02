@@ -11,7 +11,7 @@ class TestJobAuthentication:
         """
         client = await spawn_job_client(authorize=True)
 
-        resp = await client.get("/api")
+        resp = await client.get("/")
 
         assert resp.status == 200
 
@@ -22,13 +22,13 @@ class TestJobAuthentication:
         """
         client = await spawn_job_client(authorize=False)
 
-        resp = await client.get("/api")
+        resp = await client.get("/")
 
         assert resp.status == 401
 
     async def test_protected_fails(self, dbi, spawn_client):
         """
-        Check that a request against GET /api/samples using job authentication fails. This URI is
+        Check that a request against GET /samples using job authentication fails. This URI is
         not accessible to jobs.
 
         """
@@ -42,6 +42,6 @@ class TestJobAuthentication:
             "key": hash_key(key)
         })
 
-        resp = await client.get("/api/samples")
+        resp = await client.get("/samples")
 
         assert resp.status == 401

@@ -1,12 +1,12 @@
 import virtool.http.routes
 import virtool.tasks.pg
 import virtool.utils
-from virtool.api.response import json_response, NotFound
+from virtool.api.response import NotFound, json_response
 
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/api/tasks")
+@routes.get("/tasks")
 async def find(req):
     """
     Get a list of all task documents in the database.
@@ -17,7 +17,7 @@ async def find(req):
     return json_response(documents)
 
 
-@routes.get("/api/tasks/{task_id}")
+@routes.get("/tasks/{task_id}")
 async def get(req):
     """
     Get a complete task document.

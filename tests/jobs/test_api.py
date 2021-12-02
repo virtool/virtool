@@ -14,7 +14,7 @@ async def test_get(error, fake, snapshot, spawn_client, test_job, resp_is):
     if not error:
         await client.db.jobs.insert_one(test_job)
 
-    resp = await client.get("/api/jobs/4c530449")
+    resp = await client.get("/jobs/4c530449")
 
     if error:
         await resp_is.not_found(resp)
@@ -47,7 +47,7 @@ async def test_acquire(error, mocker, snapshot, dbi, fake, test_job, spawn_clien
     if error != 404:
         await dbi.jobs.insert_one(test_job)
 
-    resp = await client.patch("/api/jobs/4c530449", {
+    resp = await client.patch("/jobs/4c530449", {
         "acquired": True
     })
 
@@ -98,7 +98,7 @@ async def test_cancel(error, snapshot, dbi, fake, resp_is, spawn_client, test_jo
     if error != 404:
         await dbi.jobs.insert_one(test_job)
 
-    resp = await client.put("/api/jobs/4c530449/cancel", {})
+    resp = await client.put("/jobs/4c530449/cancel", {})
 
     if error == 404:
         await resp_is.not_found(resp)
@@ -138,7 +138,7 @@ async def test_push_status(error, snapshot, resp_is, spawn_client, static_time, 
         "progress": 23
     }
 
-    resp = await client.post(f"/api/jobs/{test_job.id}/status", body)
+    resp = await client.post(f"/jobs/{test_job.id}/status", body)
 
     if error == 404:
         assert resp.status == 404

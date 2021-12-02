@@ -14,13 +14,12 @@ Schema:
 - settings (Object) user-specific settings - currently not used
 
 """
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest, HTTPConflict
-
 import virtool.http.auth
 import virtool.http.routes
 import virtool.users.db
 import virtool.validators
-from virtool.api.response import json_response, NotFound
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
+from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import apply_projection
 from virtool.errors import DatabaseError
@@ -33,7 +32,7 @@ from virtool.utils import base_processor
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/api/users", admin=True)
+@routes.get("/users", admin=True)
 async def find(req):
     """
     Get a list of all user documents in the database.
@@ -59,7 +58,7 @@ async def find(req):
     return json_response(data)
 
 
-@routes.get("/api/users/{user_id}", admin=True)
+@routes.get("/users/{user_id}", admin=True)
 async def get(req):
     """
     Get a near-complete user document. Password data are removed.
@@ -73,7 +72,7 @@ async def get(req):
     return json_response(base_processor(document))
 
 
-@routes.post("/api/users", admin=True)
+@routes.post("/users", admin=True)
 @schema({
     "handle": {
         "type": "string",
@@ -120,7 +119,7 @@ async def create(req):
 
     user_id = document["_id"]
     headers = {
-        "Location": f"/api/users/{user_id}"
+        "Location": f"/users/{user_id}"
     }
 
     return json_response(
@@ -130,7 +129,7 @@ async def create(req):
     )
 
 
-@routes.put("/api/users/first", public=True)
+@routes.put("/users/first", public=True)
 @schema({
     "handle": {
         "type": "string",
@@ -180,7 +179,7 @@ async def create_first(req):
     )
 
     headers = {
-        "Location": f"/api/users/{user_id}"
+        "Location": f"/users/{user_id}"
     }
 
     session, token = await create_session(
@@ -203,7 +202,7 @@ async def create_first(req):
     return resp
 
 
-@routes.patch("/api/users/{user_id}", admin=True)
+@routes.patch("/users/{user_id}", admin=True)
 @schema({
     "administrator": {
         "type": "boolean"
@@ -269,7 +268,7 @@ async def edit(req):
     return json_response(base_processor(projected))
 
 
-@routes.delete("/api/users/{user_id}", admin=True)
+@routes.delete("/users/{user_id}", admin=True)
 async def remove(req):
     """
     Remove a user.

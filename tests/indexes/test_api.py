@@ -132,7 +132,7 @@ async def test_find(mocker, snapshot, fake, spawn_client, static_time):
         "modified_otu_count": 3
     }))
 
-    resp = await client.get("/api/indexes")
+    resp = await client.get("/indexes")
 
     assert resp.status == 200
     assert await resp.json() == snapshot
@@ -223,7 +223,7 @@ async def test_get(error, mocker, snapshot, fake, resp_is, spawn_client, static_
         make_mocked_coro(otus)
     )
 
-    resp = await client.get("/api/indexes/foobar")
+    resp = await client.get("/indexes/foobar")
 
     if error:
         await resp_is.not_found(resp)
@@ -277,7 +277,7 @@ async def test_download_otus_json(file_exists, mocker, tmp_path, dbi, spawn_job_
         }
     })
 
-    async with await client.get("/api/indexes/bar/files/otus.json.gz") as resp:
+    async with await client.get("/indexes/bar/files/otus.json.gz") as resp:
         with gzip.open(BytesIO(await resp.read())) as f:
             result = json.load(f)
 
@@ -344,7 +344,7 @@ class TestCreate:
         )
 
         # Make API call.
-        resp = await client.post("/api/refs/foo/indexes")
+        resp = await client.post("/refs/foo/indexes")
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -356,7 +356,7 @@ class TestCreate:
         expected_job_id = test_random_alphanumeric.history[1]
         expected_id = test_random_alphanumeric.history[2]
 
-        assert resp.headers["Location"] == "/api/indexes/{}".format(
+        assert resp.headers["Location"] == "/indexes/{}".format(
             expected_id
         )
 
@@ -393,7 +393,7 @@ class TestCreate:
                 }
             })
 
-        resp = await client.post("/api/refs/foo/indexes", {})
+        resp = await client.post("/refs/foo/indexes", {})
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -501,7 +501,7 @@ async def test_find_history(error, snapshot, spawn_client, resp_is):
         }
     ])
 
-    resp = await client.get("/api/indexes/foobar/history")
+    resp = await client.get("/indexes/foobar/history")
 
     if error:
         await resp_is.not_found(resp)
@@ -535,7 +535,7 @@ async def test_delete_index(spawn_job_client, error):
         await indexes.insert_one(index_document)
         await history.insert_many(mock_history_documents)
 
-    response = await client.delete(f"/api/indexes/{index_id}")
+    response = await client.delete(f"/indexes/{index_id}")
 
     if error is not None:
         assert error == response.status
@@ -576,7 +576,7 @@ async def test_upload(error, tmp_path, fake, spawn_job_client, snapshot, static_
     if not error == "404_index":
         await client.db.indexes.insert_one(index)
 
-    url = "/api/indexes/foo/files"
+    url = "/indexes/foo/files"
 
     if error == "404_file":
         url += "/reference.bt2"
@@ -648,7 +648,7 @@ async def test_finalize(error, snapshot, fake, spawn_job_client, test_otu, pg):
     for file_name in files:
         await create_index_file(pg, "test_index", check_index_file_type(file_name), file_name)
 
-    resp = await client.patch("/api/indexes/test_index")
+    resp = await client.patch("/indexes/test_index")
 
     assert await resp.json() == snapshot
 
@@ -678,7 +678,7 @@ async def test_download(status, spawn_job_client, tmp_path):
     download_path = target_path / "downloads" / "reference.1.bt2"
     download_path.parent.mkdir()
 
-    files_url = "/api/indexes/test_index/files/"
+    files_url = "/indexes/test_index/files/"
 
     if status == 200:
         files_url += "reference.1.bt2"

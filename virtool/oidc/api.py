@@ -3,13 +3,12 @@ from urllib.parse import parse_qs
 import jwt
 from aiohttp.web import Request, Response
 from aiohttp.web_exceptions import HTTPFound
-
 from virtool.http.routes import Routes
 
 routes = Routes()
 
 
-@routes.get("/api/oidc/acquire_tokens", public=True)
+@routes.get("/oidc/acquire_tokens", public=True)
 async def acquire_tokens(req: Request) -> Response:
     """
     Gather authentication response from auth uri query string. Fetch tokens from b2c authorization endpoint.
@@ -30,7 +29,7 @@ async def acquire_tokens(req: Request) -> Response:
             auth_response
         )
     except ValueError:
-        return HTTPFound("/api/oidc/delete_tokens")
+        return HTTPFound("/oidc/delete_tokens")
 
     resp = HTTPFound("/")
 
@@ -40,7 +39,7 @@ async def acquire_tokens(req: Request) -> Response:
     return resp
 
 
-@routes.get("/api/oidc/refresh_tokens", public=True)
+@routes.get("/oidc/refresh_tokens", public=True)
 async def refresh_tokens(req: Request) -> Response:
     """
     Silently retrieve tokens for account in token cache.
@@ -48,7 +47,7 @@ async def refresh_tokens(req: Request) -> Response:
     Fetch oid value stored in expired ID token, then fetch fresh tokens from token cache for the account with the
     correct local account ID value.
 
-    If no accounts are found, or correct account isn't found, then redirect to /api/delete_tokens
+    If no accounts are found, or correct account isn't found, then redirect to /delete_tokens
 
     :param req: the request to handle
     :return: the response
@@ -74,10 +73,10 @@ async def refresh_tokens(req: Request) -> Response:
                 resp.set_cookie("id_token", result.get("id_token"), httponly=True)
                 return resp
 
-    return HTTPFound("/api/oidc/delete_tokens")
+    return HTTPFound("/oidc/delete_tokens")
 
 
-@routes.get("/api/oidc/delete_tokens", public=True)
+@routes.get("/oidc/delete_tokens", public=True)
 async def delete_tokens(req: Request) -> Response:
     """
     Delete id_token cookie from response.

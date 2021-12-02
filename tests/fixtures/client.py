@@ -2,10 +2,9 @@ import json
 
 import aiohttp
 import pytest
-from aiohttp.web_routedef import RouteTableDef
-
 import virtool.app
 import virtool.jobs.main
+from aiohttp.web_routedef import RouteTableDef
 from virtool.configuration.config import Config
 from virtool.utils import hash_key
 
@@ -78,7 +77,6 @@ def create_app(
             no_check_files=True,
             no_fetching=True,
             no_sentry=True,
-            no_client=True,
             postgres_connection_string=pg_connection_string,
             redis_connection_string=redis_connection_string,
             fake=False

@@ -1,11 +1,11 @@
 from logging import getLogger
 
 from aiohttp.web_exceptions import HTTPNoContent
-
 from virtool.http.routes import Routes
 from virtool.jobs.db import force_delete_jobs
 from virtool.samples.fake import create_fake_sample
-from virtool.subtractions.fake import create_fake_fasta_upload, create_fake_finalized_subtraction
+from virtool.subtractions.fake import (create_fake_fasta_upload,
+                                       create_fake_finalized_subtraction)
 from virtool.utils import random_alphanumeric
 
 logger = getLogger(__name__)
@@ -13,7 +13,7 @@ logger = getLogger(__name__)
 routes = Routes()
 
 
-@routes.post("/api/dev")
+@routes.post("/dev")
 async def dev(req):
     data = await req.json()
     user_id = req["client"].user_id

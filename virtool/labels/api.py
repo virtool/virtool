@@ -1,13 +1,12 @@
 import asyncio
 
-from aiohttp.web_exceptions import HTTPNoContent, HTTPBadRequest
+import virtool.http.routes
+import virtool.validators
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-
-import virtool.http.routes
-import virtool.validators
-from virtool.api.response import json_response, NotFound, EmptyRequest
+from virtool.api.response import EmptyRequest, NotFound, json_response
 from virtool.http.schema import schema
 from virtool.labels.db import attach_sample_count
 from virtool.labels.models import Label
@@ -16,7 +15,7 @@ from virtool.pg.utils import get_rows
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/api/labels")
+@routes.get("/labels")
 async def find(req):
     """
     Get a list of all label documents in the database.
@@ -31,7 +30,7 @@ async def find(req):
     return json_response(documents)
 
 
-@routes.get("/api/labels/{label_id}")
+@routes.get("/labels/{label_id}")
 async def get(req):
     """
     Get a complete label document.
@@ -49,7 +48,7 @@ async def get(req):
     return json_response(document)
 
 
-@routes.post("/api/labels")
+@routes.post("/labels")
 @schema({
     "name": {
         "type": "string",
@@ -89,13 +88,13 @@ async def create(req):
     document = await attach_sample_count(req.app["db"], document)
 
     headers = {
-        "Location": f"/api/labels/{document['id']}"
+        "Location": f"/labels/{document['id']}"
     }
 
     return json_response(document, status=201, headers=headers)
 
 
-@routes.patch("/api/labels/{label_id}")
+@routes.patch("/labels/{label_id}")
 @schema({
     "name": {
         "type": "string",
@@ -144,7 +143,7 @@ async def edit(req):
     return json_response(document)
 
 
-@routes.delete("/api/labels/{label_id}")
+@routes.delete("/labels/{label_id}")
 async def remove(req):
     """
     Remove a label.

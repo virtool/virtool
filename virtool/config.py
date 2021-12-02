@@ -127,11 +127,6 @@ def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_se
     is_flag=True
 )
 @click.option(
-    "--no-client",
-    help="Start without serving client files",
-    is_flag=True
-)
-@click.option(
     "--no-fetching",
     help="Start with automatic fetching disabled",
     is_flag=True
@@ -168,7 +163,6 @@ def start_server(
         port,
         no_check_db,
         no_check_files,
-        no_client,
         no_fetching,
         b2c_client_id,
         b2c_client_secret,
@@ -187,7 +181,6 @@ def start_server(
         host=host,        
         no_check_db=no_check_db,
         no_check_files=no_check_files,
-        no_client=no_client,
         no_fetching=no_fetching,
         port=port,
         use_b2c=use_b2c,

@@ -46,7 +46,7 @@ RIGHTS_SCHEMA = {
 }
 
 
-@routes.get("/api/refs")
+@routes.get("/refs")
 async def find(req):
     db = req.app["db"]
 
@@ -86,8 +86,8 @@ async def find(req):
     })
 
 
-@routes.get("/api/refs/{ref_id}")
-@routes.jobs_api.get("/api/refs/{ref_id}")
+@routes.get("/refs/{ref_id}")
+@routes.jobs_api.get("/refs/{ref_id}")
 async def get(req):
     """
     Get the complete representation of a specific reference.
@@ -107,7 +107,7 @@ async def get(req):
     return json_response(await virtool.references.db.processor(db, document))
 
 
-@routes.get("/api/refs/{ref_id}/release")
+@routes.get("/refs/{ref_id}/release")
 async def get_release(req):
     """
     Get the latest update from GitHub and return it. Also updates the reference document. This is the only way of doing
@@ -135,7 +135,7 @@ async def get_release(req):
     return json_response(release)
 
 
-@routes.get("/api/refs/{ref_id}/updates")
+@routes.get("/refs/{ref_id}/updates")
 async def list_updates(req):
     """
     List all updates made to the reference.
@@ -155,7 +155,7 @@ async def list_updates(req):
     return json_response(updates or list())
 
 
-@routes.post("/api/refs/{ref_id}/updates")
+@routes.post("/refs/{ref_id}/updates")
 async def update(req):
     app = req.app
     db = app["db"]
@@ -197,7 +197,7 @@ async def update(req):
     return json_response(update_subdocument, status=201)
 
 
-@routes.get("/api/refs/{ref_id}/otus")
+@routes.get("/refs/{ref_id}/otus")
 async def find_otus(req):
     db = req.app["db"]
 
@@ -222,7 +222,7 @@ async def find_otus(req):
     return json_response(data)
 
 
-@routes.get("/api/refs/{ref_id}/history")
+@routes.get("/refs/{ref_id}/history")
 async def find_history(req):
     db = req.app["db"]
 
@@ -254,7 +254,7 @@ async def find_history(req):
     return json_response(data)
 
 
-@routes.get("/api/refs/{ref_id}/indexes")
+@routes.get("/refs/{ref_id}/indexes")
 async def find_indexes(req):
     db = req.app["db"]
 
@@ -272,7 +272,7 @@ async def find_indexes(req):
     return json_response(data)
 
 
-@routes.post("/api/refs", permission="create_ref")
+@routes.post("/refs", permission="create_ref")
 @schema({
     "name": {
         "type": "string",
@@ -448,7 +448,7 @@ async def create(req):
     await db.references.insert_one(document)
 
     headers = {
-        "Location": f"/api/refs/{document['_id']}"
+        "Location": f"/refs/{document['_id']}"
     }
 
     document = await attach_computed(db, document)
@@ -457,7 +457,7 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 
 
-@routes.patch("/api/refs/{ref_id}")
+@routes.patch("/refs/{ref_id}")
 @schema({
     "name": {
         "type": "string",
@@ -541,7 +541,7 @@ async def edit(req):
     return json_response(document)
 
 
-@routes.delete("/api/refs/{ref_id}")
+@routes.delete("/refs/{ref_id}")
 async def remove(req):
     """
     Delete a reference and its otus, history, and indexes.
@@ -571,13 +571,13 @@ async def remove(req):
     })
 
     headers = {
-        "Content-Location": f"/api/tasks/{task['id']}"
+        "Content-Location": f"/tasks/{task['id']}"
     }
 
     return json_response(task, 202, headers)
 
 
-@routes.get("/api/refs/{ref_id}/groups")
+@routes.get("/refs/{ref_id}/groups")
 async def list_groups(req):
     db = req.app["db"]
     ref_id = req.match_info["ref_id"]
@@ -590,7 +590,7 @@ async def list_groups(req):
     return json_response(groups)
 
 
-@routes.get("/api/refs/{ref_id}/groups/{group_id}")
+@routes.get("/refs/{ref_id}/groups/{group_id}")
 async def get_group(req):
     db = req.app["db"]
     ref_id = req.match_info["ref_id"]
@@ -607,7 +607,7 @@ async def get_group(req):
                 return json_response(group)
 
 
-@routes.post("/api/refs/{ref_id}/groups")
+@routes.post("/refs/{ref_id}/groups")
 @schema({
     **RIGHTS_SCHEMA, "group_id": {
         "type": "string",
@@ -639,13 +639,13 @@ async def add_group(req):
         raise
 
     headers = {
-        "Location": f"/api/refs/{ref_id}/groups/{subdocument['id']}"
+        "Location": f"/refs/{ref_id}/groups/{subdocument['id']}"
     }
 
     return json_response(subdocument, headers=headers, status=201)
 
 
-@routes.post("/api/refs/{ref_id}/users")
+@routes.post("/refs/{ref_id}/users")
 @schema({
     **RIGHTS_SCHEMA, "user_id": {
         "type": "string",
@@ -677,13 +677,13 @@ async def add_user(req):
         raise
 
     headers = {
-        "Location": f"/api/refs/{ref_id}/users/{subdocument['id']}"
+        "Location": f"/refs/{ref_id}/users/{subdocument['id']}"
     }
 
     return json_response(subdocument, headers=headers, status=201)
 
 
-@routes.patch("/api/refs/{ref_id}/groups/{group_id}")
+@routes.patch("/refs/{ref_id}/groups/{group_id}")
 @schema(RIGHTS_SCHEMA)
 async def edit_group(req):
     db = req.app["db"]
@@ -704,7 +704,7 @@ async def edit_group(req):
     return json_response(subdocument)
 
 
-@routes.patch("/api/refs/{ref_id}/users/{user_id}")
+@routes.patch("/refs/{ref_id}/users/{user_id}")
 @schema(RIGHTS_SCHEMA)
 async def edit_user(req):
     db = req.app["db"]
@@ -728,7 +728,7 @@ async def edit_user(req):
     return json_response(subdocument)
 
 
-@routes.delete("/api/refs/{ref_id}/groups/{group_id}")
+@routes.delete("/refs/{ref_id}/groups/{group_id}")
 async def delete_group(req):
     db = req.app["db"]
     ref_id = req.match_info["ref_id"]
@@ -747,7 +747,7 @@ async def delete_group(req):
     raise HTTPNoContent
 
 
-@routes.delete("/api/refs/{ref_id}/users/{user_id}")
+@routes.delete("/refs/{ref_id}/users/{user_id}")
 async def delete_user(req):
     db = req.app["db"]
     ref_id = req.match_info["ref_id"]
