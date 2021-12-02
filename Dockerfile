@@ -13,8 +13,6 @@ WORKDIR /virtool
 COPY --from=server /root/.local /root/.local
 COPY run.py /virtool/
 COPY virtool /virtool/virtool
-COPY static /virtool/static
-COPY templates /virtool/templates
 COPY example /virtool/example
 EXPOSE 9950
 ENTRYPOINT ["python", "run.py"]
