@@ -66,24 +66,9 @@ jobs:
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: $GITHUB_WORKSPACE/coverage.xml
-  client:
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Setup NodeJS
-        uses: actions/setup-node@v1
-        with:
-          node-version: '14'
-      - name: Test
-        run: |
-          cd client
-          npm i
-          npx jest --coverage
-          npx webpack --config webpack.production.config.babel.js
   release:
     runs-on: ubuntu-20.04
-    needs: [server, client]
+    needs: server
     if: github.event_name == 'push'
     steps:
       - name: Checkout
