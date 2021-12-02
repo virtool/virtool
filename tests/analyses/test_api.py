@@ -1,9 +1,11 @@
 import io
+import json
 import os
 from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from faker import Faker
 from tests.fixtures.fake import FakeGenerator
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile
@@ -545,3 +547,39 @@ async def test_finalize(fake, snapshot, spawn_job_client, faker, error, resp_is)
 
         assert document == snapshot
         assert document["ready"] is True
+
+
+async def test_finalize_large(fake, spawn_job_client, faker):
+    user = await fake.users.insert()
+
+    faker = Faker(1)
+
+    profiles = [faker.profile(fields=["job", "company", "ssn", "residence", "address", "mail", "name", "username"]) for _ in range(100)]
+
+    patch_json = {
+        "results": {
+            "result": profiles * 500
+        }
+    }
+
+    # Make sure this test actually checks that the max body size is increased.
+    assert len(json.dumps(patch_json)) > 1024 ** 2
+
+    client = await spawn_job_client(authorize=True)
+
+    await client.db.analyses.insert_one({
+        "_id": "analysis1",
+        "sample": {
+            "id": "sample1"
+        },
+        "workflow": "test_workflow",
+        "user": {
+            "id": user["_id"]
+        },
+        "ready": False
+    })
+
+    resp = await client.patch(f"/api/analyses/analysis1", json=patch_json)
+
+
+    assert resp.status == 200

@@ -1,19 +1,20 @@
 import asyncio
 from typing import Tuple
 
-from aiohttp.web import Application, AppRunner
 import aiojobs.aiohttp
-
 import virtool.http.accept
 import virtool.http.errors
 import virtool.jobs.auth
+from aiohttp.web import Application, AppRunner
+from virtool.configuration.config import Config
 from virtool.dev.fake import drop_fake_mongo, remove_fake_data_path
 from virtool.jobs.routes import startup_routes
-from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
-from virtool.configuration.config import Config
+from virtool.process_utils import (create_app_runner, wait_for_restart,
+                                   wait_for_shutdown)
 from virtool.shutdown import drop_fake_postgres
-from virtool.startup import startup_fake_config, startup_redis, startup_db, startup_postgres, startup_settings, startup_executors, \
-    startup_fake, startup_events
+from virtool.startup import (startup_db, startup_events, startup_executors,
+                             startup_fake, startup_fake_config,
+                             startup_postgres, startup_redis, startup_settings)
 from virtool.types import App
 
 
@@ -24,8 +25,8 @@ async def create_app(config: Config):
         virtool.jobs.auth.middleware,
         virtool.http.errors.middleware
     ]
-
-    app: Application = Application(middlewares=middlewares)
+    
+    app = Application(client_max_size=1024 ** 2 * 20, middlewares=middlewares)
 
     app["config"] = config
     app["mode"] = "jobs_api_server"
