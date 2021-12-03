@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import virtool.config
+import virtool.config.cli
 
 if __name__ == "__main__":
-    virtool.config.entry()
+    virtool.config.cli.entry()

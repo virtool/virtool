@@ -16,7 +16,7 @@ from multidict import MultiDictProxy
 from pymongo.results import DeleteResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool.configuration.config import Config
+from virtool.config.cls import Config
 from virtool.labels.models import Label
 from virtool.samples.models import SampleArtifact, SampleReads
 from virtool.samples.utils import join_legacy_read_paths

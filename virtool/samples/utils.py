@@ -4,9 +4,8 @@ from typing import List
 from aiohttp.web import Response
 from aiohttp.web_exceptions import HTTPBadRequest
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
-
-from virtool.configuration.config import Config
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool.config.cls import Config
 from virtool.labels.models import Label
 
 PATHOSCOPE_TASK_NAMES = [

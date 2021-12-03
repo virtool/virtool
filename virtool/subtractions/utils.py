@@ -5,7 +5,7 @@ from typing import List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool.configuration.config import Config
+from virtool.config.cls import Config
 from virtool.subtractions.models import SubtractionFile
 
 FILES = (
