@@ -5,10 +5,9 @@ from pathlib import Path
 
 import click
 import uvloop
-
 import virtool.app
 import virtool.jobs.main
-from virtool.configuration.config import Config
+from virtool.config.cls import Config
 from virtool.logs import configure_logs
 
 logger = logging.getLogger(__name__)

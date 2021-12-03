@@ -6,7 +6,7 @@ import virtool.http.accept
 import virtool.http.errors
 import virtool.jobs.auth
 from aiohttp.web import Application, AppRunner
-from virtool.configuration.config import Config
+from virtool.config.cls import Config
 from virtool.dev.fake import drop_fake_mongo, remove_fake_data_path
 from virtool.jobs.routes import startup_routes
 from virtool.process_utils import (create_app_runner, wait_for_restart,

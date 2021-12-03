@@ -28,12 +28,11 @@ from typing import List
 import aiofiles
 import aiohttp.client_exceptions
 import pymongo.results
-from aiohttp.web import Application
-
 import virtool.analyses.utils
 import virtool.errors
 import virtool.utils
-from virtool.configuration.config import Config
+from aiohttp.web import Application
+from virtool.config.cls import Config
 from virtool.github import get_etag, get_release
 from virtool.hmm.utils import format_hmm_release
 from virtool.types import App

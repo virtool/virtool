@@ -5,7 +5,7 @@ import pytest
 import virtool.app
 import virtool.jobs.main
 from aiohttp.web_routedef import RouteTableDef
-from virtool.configuration.config import Config
+from virtool.config.cls import Config
 from virtool.utils import hash_key
 
 

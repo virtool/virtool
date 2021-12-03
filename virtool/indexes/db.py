@@ -13,7 +13,7 @@ import virtool.references.db
 import virtool.utils
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool.api.utils import paginate
-from virtool.configuration.config import Config
+from virtool.config.cls import Config
 from virtool.db.utils import get_new_id
 from virtool.indexes.models import IndexFile
 from virtool.users.db import attach_user

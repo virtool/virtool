@@ -10,7 +10,7 @@ import virtool.http.auth
 import virtool.http.errors
 import virtool.http.proxy
 import virtool.http.query
-from virtool.configuration.config import Config
+from virtool.config.cls import Config
 from virtool.http.headers import headers_middleware
 from virtool.process_utils import (create_app_runner, wait_for_restart,
                                    wait_for_shutdown)

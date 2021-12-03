@@ -10,7 +10,7 @@ import aiohttp
 import virtool.analyses.db
 import virtool.errors
 import virtool.utils
-from virtool.configuration.config import Config
+from virtool.config.cls import Config
 from virtool.http.proxy import ProxyRequest
 
 logger = logging.getLogger(__name__)

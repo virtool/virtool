@@ -7,12 +7,12 @@ import glob
 import shutil
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy.ext.asyncio import AsyncEngine
-
 import virtool.utils
-from virtool.db.utils import get_one_field, get_new_id
-from virtool.configuration.config import Config
-from virtool.subtractions.utils import join_subtraction_path, get_subtraction_files
+from sqlalchemy.ext.asyncio import AsyncEngine
+from virtool.config.cls import Config
+from virtool.db.utils import get_new_id, get_one_field
+from virtool.subtractions.utils import (get_subtraction_files,
+                                        join_subtraction_path)
 from virtool.types import App
 
 PROJECTION = [

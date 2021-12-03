@@ -14,12 +14,11 @@ from typing import Any, Dict, List, Tuple
 
 import aiofiles
 import openpyxl.styles
-import visvalingamwyatt as vw
-
 import virtool.analyses.utils
+import visvalingamwyatt as vw
+from virtool.config.cls import Config
 from virtool.history.db import patch_to_version
 from virtool.otus.utils import format_isolate_name
-from virtool.configuration.config import Config
 from virtool.types import App
 
 CSV_HEADERS = (

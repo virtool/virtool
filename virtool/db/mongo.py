@@ -3,11 +3,10 @@ import sys
 from typing import Callable, List
 
 import pymongo.errors
+import virtool.db.core
 from motor.motor_asyncio import AsyncIOMotorClient
 from semver import VersionInfo
-
-import virtool.db.core
-from virtool.configuration.config import Config
+from virtool.config.cls import Config
 
 MINIMUM_MONGO_VERSION = "3.6.0"
 

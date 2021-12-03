@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import virtool.bio
 import virtool.db.utils
 import virtool.utils
-from virtool.configuration.config import Config
+from virtool.config.cls import Config
 from virtool.indexes.db import get_current_id_and_version
 from virtool.subtractions.db import attach_subtractions
 from virtool.users.db import attach_user

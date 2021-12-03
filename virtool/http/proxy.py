@@ -1,11 +1,10 @@
 from logging import getLogger
 
 import aiohttp
-from aiohttp import web
-
 import virtool.errors
+from aiohttp import web
 from virtool.api.response import json_response
-from virtool.configuration.config import Config
+from virtool.config.cls import Config
 
 logger = getLogger(__name__)
 
