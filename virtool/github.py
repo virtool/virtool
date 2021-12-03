@@ -5,9 +5,9 @@ from typing import Optional
 import aiohttp
 
 import virtool.errors
+import virtool.utils
 from virtool.configuration.config import Config
 from virtool.http.proxy import ProxyRequest
-import virtool.utils
 
 logger = logging.getLogger(__name__)
 
@@ -124,4 +124,6 @@ async def get_release(
             return None
 
         else:
-            raise virtool.errors.GitHubError(f"Encountered error {resp.status} {await resp.json()}")
+            warning = f"Encountered error {resp.status} {await resp.json()}"
+            logger.warning(warning)
+            raise virtool.errors.GitHubError(warning)
