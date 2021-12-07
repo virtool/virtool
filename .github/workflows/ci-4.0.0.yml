@@ -59,7 +59,7 @@ jobs:
 
   build:
     runs-on: ubuntu-20.04
-    needs: [client, server]
+    needs: [client, server, commitlint]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -95,3 +95,22 @@ jobs:
         with:
           name: virtool.tar.gz
           path: gh_build/virtool.tar.gz
+          
+  release:
+    runs-on: ubuntu-20.04
+    needs: [build]
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup NodeJS
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16
+      - name: Install semantic-release
+        run: npm i semantic-release@v18.0.0 conventional-changelog-conventionalcommits@4.6.1
+      - name: Run semantic-release
+        env:
+          GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npx semantic-release
