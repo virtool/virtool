@@ -19,10 +19,10 @@ jobs:
       - uses: wagoid/commitlint-github-action@v4
 
   server:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     services:
       mongo:
-        image: mongo:3.6
+        image: mongo:4.0
         ports:
           - 27017:27017
     container:
@@ -42,7 +42,7 @@ jobs:
           coverage-reports: $GITHUB_WORKSPACE/coverage.xml
 
   client:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -58,7 +58,7 @@ jobs:
           npx webpack --config webpack.production.config.babel.js
 
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     needs: [client, server, commitlint]
     steps:
       - name: Checkout
@@ -97,7 +97,7 @@ jobs:
           path: gh_build/virtool.tar.gz
           
   release:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     needs: [build]
     if: github.event_name == 'push'
     steps:
