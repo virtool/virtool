@@ -77,7 +77,7 @@ class TestCreate:
         Test that a valid request results in the creation of a otu document and a ``201`` response.
 
         """
-        client = await spawn_client(authorize=True)
+        client = await spawn_client(authorize=True, base_url="https://virtool.example.com")
 
         if exists:
             await client.db.references.insert_one({
@@ -105,7 +105,7 @@ class TestCreate:
             return
 
         assert resp.status == 201
-        assert resp.headers["Location"] == "/otus/9pfsom1b"
+        assert resp.headers["Location"] == "https://virtool.example.com/otus/9pfsom1b"
         assert await resp.json() == snapshot
 
         assert await client.db.otus.find_one() == snapshot
@@ -501,7 +501,7 @@ class TestAddIsolate:
         process.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(authorize=True, permissions=["modify_otu"], base_url="https://virtool.example.com")
 
         await client.db.otus.insert_one(test_otu)
 
@@ -534,7 +534,7 @@ class TestAddIsolate:
         in the POST input.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(authorize=True, permissions=["modify_otu"], base_url="https://virtool.example.com")
 
         test_otu["isolates"] = []
 
@@ -568,7 +568,7 @@ class TestAddIsolate:
         Test that the ``source_type`` value is forced to lower case.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(authorize=True, permissions=["modify_otu"], base_url="https://virtool.example.com")
 
         await client.db.otus.insert_one(test_otu)
 
@@ -601,7 +601,7 @@ class TestAddIsolate:
         default values.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(authorize=True, permissions=["modify_otu"], base_url="https://virtool.example.com")
 
         await client.db.otus.insert_one(test_otu)
 
@@ -622,7 +622,7 @@ class TestAddIsolate:
         assert await client.db.history.find_one() == snapshot
 
     async def test_not_found(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(authorize=True, permissions=["modify_otu"], base_url="https://virtool.example.com")
 
         data = {
             "source_name": "Beta",
@@ -937,7 +937,7 @@ async def test_get_sequence(error, snapshot, spawn_client, resp_is, test_otu, te
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
 async def test_create_sequence(error, snapshot, spawn_client, check_ref_right, resp_is, test_otu,
                                test_random_alphanumeric):
-    client = await spawn_client(authorize=True, permissions=["modify_otu"])
+    client = await spawn_client(authorize=True, permissions=["modify_otu"], base_url="https://virtool.example.com")
 
     if error == "404_isolate":
         test_otu["isolates"] = list()
