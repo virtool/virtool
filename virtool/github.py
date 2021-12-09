@@ -112,7 +112,7 @@ async def get_release(
         rate_limit_remaining = resp.headers.get("X-RateLimit-Remaining", "00")
         rate_limit = resp.headers.get("X-RateLimit-Limit", "00")
 
-        if rate_limit / rate_limit_remaining < 2:
+        if int(rate_limit) / int(rate_limit_remaining) < 2:
             logger.warning(f"Less than half of GitHub remaining ({rate_limit_remaining} of {rate_limit})")
 
         logger.debug(f"Fetched release: {slug}/{release_id} ({resp.status})")
