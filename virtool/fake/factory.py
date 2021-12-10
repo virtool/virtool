@@ -12,7 +12,6 @@ import virtool.subtractions.db
 import yaml
 from virtool.analyses.files import create_analysis_file
 from virtool.example import example_path
-from virtool.fake.identifiers import USER_ID
 from virtool.fake.wrapper import FakerWrapper
 from virtool.hmm.fake import create_fake_hmms
 from virtool.indexes.files import create_index_file
@@ -58,7 +57,7 @@ class TestCaseDataFactory:
     def __init__(
             self,
             app: App,
-            user_id: str = USER_ID,
+            user_id: str,
             job_id: str = None):
         self.fake = app["fake"] if "fake" in app else FakerWrapper()
         self.user_id = user_id
@@ -230,7 +229,7 @@ class TestCaseDataFactory:
         )
 
 
-async def load_test_case_from_yml(app: App, path: str) -> WorkflowTestCase:
+async def load_test_case_from_yml(app: App, path: str, user_id: str) -> WorkflowTestCase:
     """Load a test case from a YAML file."""
     async with aiofiles.open(path) as f:
         yml = yaml.safe_load(await f.read())
@@ -242,7 +241,7 @@ async def load_test_case_from_yml(app: App, path: str) -> WorkflowTestCase:
 
     job_args = {}
 
-    factory = TestCaseDataFactory(job_id=job_id, app=app)
+    factory = TestCaseDataFactory(job_id=job_id, app=app, user_id=user_id)
     test_case = SimpleNamespace()
 
     test_case.reference = await factory.reference()

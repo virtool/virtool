@@ -6,7 +6,7 @@ class TestJobAuthentication:
 
     async def test_root_succeeds(self, spawn_job_client):
         """
-        Check that a request against the job accessible root URL (GET /api) succeeds.
+        Check that a request against the job accessible root URL (GET /) succeeds.
 
         """
         client = await spawn_job_client(authorize=True)
