@@ -14,7 +14,7 @@ async def test_load_yml(app, fake, run_in_thread, example_test_case):
     await fake.users.insert()
 
     app["run_in_thread"] = run_in_thread
-    case = await load_test_case_from_yml(app, example_test_case)
+    case = await load_test_case_from_yml(app, example_test_case, "bob")
 
     assert case.analysis.ready == False
     assert case.analysis._id == case.job.args["analysis_id"]
