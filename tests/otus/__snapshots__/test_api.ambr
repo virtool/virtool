@@ -1,5 +1,5 @@
 # name: TestAddIsolate.test_default[True-uvloop-False]
-  'https://virtool.example.com/otus/6116cba1/isolates/9pf'
+  '/otus/6116cba1/isolates/9pf'
 ---
 # name: TestAddIsolate.test_default[True-uvloop-False].1
   <class 'dict'> {
@@ -93,7 +93,7 @@
   }
 ---
 # name: TestAddIsolate.test_default[True-uvloop-True]
-  'https://virtool.example.com/otus/6116cba1/isolates/9pf'
+  '/otus/6116cba1/isolates/9pf'
 ---
 # name: TestAddIsolate.test_default[True-uvloop-True].1
   <class 'dict'> {
@@ -199,7 +199,7 @@
   }
 ---
 # name: TestAddIsolate.test_empty[True-uvloop]
-  'https://virtool.example.com/otus/6116cba1/isolates/9pf'
+  '/otus/6116cba1/isolates/9pf'
 ---
 # name: TestAddIsolate.test_empty[True-uvloop].1
   <class 'dict'> {
@@ -293,7 +293,7 @@
   }
 ---
 # name: TestAddIsolate.test_first[True-uvloop]
-  'https://virtool.example.com/otus/6116cba1/isolates/9pf'
+  '/otus/6116cba1/isolates/9pf'
 ---
 # name: TestAddIsolate.test_first[True-uvloop].1
   <class 'dict'> {
@@ -381,7 +381,7 @@
   }
 ---
 # name: TestAddIsolate.test_force_case[True-uvloop]
-  'https://virtool.example.com/otus/6116cba1/isolates/9pf'
+  '/otus/6116cba1/isolates/9pf'
 ---
 # name: TestAddIsolate.test_force_case[True-uvloop].1
   <class 'dict'> {
@@ -2850,7 +2850,7 @@
   }
 ---
 # name: test_create_sequence[True-uvloop-None]
-  'https://virtool.example.com/otus/6116cba1/isolates/cab8b360/sequences/9pfsom1b'
+  '/otus/6116cba1/isolates/cab8b360/sequences/9pfsom1b'
 ---
 # name: test_create_sequence[True-uvloop-None].1
   <class 'dict'> {

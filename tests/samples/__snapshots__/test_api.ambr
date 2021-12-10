@@ -1,5 +1,5 @@
 # name: TestCreate.test[uvloop-force_choice]
-  'https://virtool.example.com/samples/9pfsom1b'
+  '/samples/9pfsom1b'
 ---
 # name: TestCreate.test[uvloop-force_choice].1
   <class 'dict'> {
@@ -86,7 +86,7 @@
   }
 ---
 # name: TestCreate.test[uvloop-none]
-  'https://virtool.example.com/samples/9pfsom1b'
+  '/samples/9pfsom1b'
 ---
 # name: TestCreate.test[uvloop-none].1
   <class 'dict'> {
@@ -173,7 +173,7 @@
   }
 ---
 # name: TestCreate.test[uvloop-users_primary_group]
-  'https://virtool.example.com/samples/9pfsom1b'
+  '/samples/9pfsom1b'
 ---
 # name: TestCreate.test[uvloop-users_primary_group].1
   <class 'dict'> {

@@ -155,11 +155,6 @@ def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_se
     help="Use Azure AD B2C for authentication",
     is_flag=True
 )
-@click.option(
-    "--base-url",
-    help="URL used to prefix Location headers and redirects",
-    default=""
-)
 @click.pass_context
 def start_server(
         ctx,
@@ -172,8 +167,7 @@ def start_server(
         b2c_client_secret,
         b2c_tenant,
         b2c_user_flow,
-        use_b2c,
-        base_url
+        use_b2c
 ):
     configure_logs(ctx.obj["dev"], ctx.obj["verbose"])
 
@@ -189,7 +183,6 @@ def start_server(
         no_fetching=no_fetching,
         port=port,
         use_b2c=use_b2c,
-        base_url=base_url
     )
 
     logger.info("Starting in server mode")

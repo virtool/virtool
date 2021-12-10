@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import virtool.account.api
 import virtool.analyses.api

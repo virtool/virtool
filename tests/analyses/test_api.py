@@ -321,13 +321,13 @@ async def test_upload_file(error, files, resp_is, spawn_job_client, static_time,
 @pytest.mark.parametrize("file_exists", [True, False])
 @pytest.mark.parametrize("row_exists", [True, False])
 async def test_download_analysis_result(
-        file_exists,
-        row_exists,
-        files,
-        spawn_client,
-        spawn_job_client,
-        snapshot,
-        tmp_path
+    file_exists,
+    row_exists,
+    files,
+    spawn_client,
+    spawn_job_client,
+    snapshot,
+    tmp_path
 ):
     """
     Test that you can properly download an analysis result file using details from the `analysis_files` SQL table
@@ -339,7 +339,8 @@ async def test_download_analysis_result(
     client.app["config"].data_path = tmp_path
     job_client.app["config"].data_path = tmp_path
 
-    expected_path = client.app["config"].data_path / "analyses" / "1-reference.fa"
+    expected_path = client.app["config"].data_path / \
+        "analyses" / "1-reference.fa"
 
     await client.db.analyses.insert_one({
         "_id": "foobar",
@@ -394,7 +395,7 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
     correctly.
 
     """
-    client = await spawn_client(authorize=True, base_url="https://virtool.example.com")
+    client = await spawn_client(authorize=True)
 
     if error != "404_analysis":
         analysis_document = {
@@ -473,7 +474,7 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
         return
 
     assert resp.status == 201
-    assert resp.headers["Location"] == "https://virtool.example.com/analyses/foobar/5/blast"
+    assert resp.headers["Location"] == "/analyses/foobar/5/blast"
 
     blast = {
         "rid": "FOOBAR1337",
@@ -553,8 +554,7 @@ async def test_finalize_large(fake, spawn_job_client, faker):
 
     faker = Faker(1)
 
-    profiles = [faker.profile(fields=["job", "company", "ssn", "residence", "address", "mail", "name", "username"]) for
-                _ in range(100)]
+    profiles = [faker.profile(fields=["job", "company", "ssn", "residence", "address", "mail", "name", "username"]) for _ in range(100)]
 
     patch_json = {
         "results": {
@@ -580,5 +580,6 @@ async def test_finalize_large(fake, spawn_job_client, faker):
     })
 
     resp = await client.patch(f"/analyses/analysis1", json=patch_json)
+
 
     assert resp.status == 200

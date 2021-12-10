@@ -303,7 +303,7 @@ class TestCreate:
     ):
         mocker.patch("virtool.utils.generate_key", return_value=("foo", "bar"))
 
-        client = await spawn_client(authorize=True, base_url="https://virtool.example.com")
+        client = await spawn_client(authorize=True)
 
         client.app["settings"].sm_proc = 1
         client.app["settings"].sm_mem = 2
@@ -356,7 +356,9 @@ class TestCreate:
         expected_job_id = test_random_alphanumeric.history[1]
         expected_id = test_random_alphanumeric.history[2]
 
-        assert resp.headers["Location"] == f"https://virtool.example.com/indexes/{expected_id}"
+        assert resp.headers["Location"] == "/indexes/{}".format(
+            expected_id
+        )
 
         assert await client.db.jobs.find_one() == snapshot
         assert await client.db.indexes.find_one() == snapshot

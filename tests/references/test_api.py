@@ -207,7 +207,7 @@ async def test_find_indexes(mocker, spawn_client, id_exists, md_proxy, resp_is):
 
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
 async def test_create(data_type, mocker, snapshot, spawn_client, test_random_alphanumeric, static_time):
-    client = await spawn_client(authorize=True, permissions=["create_ref"], base_url="https://virtool.example.com")
+    client = await spawn_client(authorize=True, permissions=["create_ref"])
 
     default_source_type = [
         "strain",

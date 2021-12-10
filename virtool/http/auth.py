@@ -232,4 +232,7 @@ async def middleware(req, handler) -> Response:
 
     set_session_id_cookie(resp, session_id)
 
+    if req.path == "/":
+        resp.del_cookie("session_token")
+
     return resp
