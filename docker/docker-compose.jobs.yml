@@ -48,7 +48,7 @@ services:
   #    restart: always
   #    command: >
   #      run-from-redis --redis-url="redis://redis:6379"
-  #      --jobs-api-url="http://jobs-api:9990/api" --dev-mode
+  #      --jobs-api-url="http://jobs-api:9990" --dev-mode
   #      --is-analysis-workflow jobs_nuvs
 
   create-sample:
@@ -57,7 +57,7 @@ services:
     restart: always
     command: >
       run-from-redis --redis-url="redis://redis:6379"
-      --jobs-api-url="http://jobs-api:9990/api" --dev-mode
+      --jobs-api-url="http://jobs-api:9990" --dev-mode
       --is-analysis-workflow jobs_create_sample​
 
   create-subtraction:
@@ -66,7 +66,7 @@ services:
     entrypoint: workflow
     command: >
       run-from-redis --redis-url="redis://redis:6379"
-      --jobs-api-url="http://jobs-api:9990/api" --dev-mode
+      --jobs-api-url="http://jobs-api:9990" --dev-mode
       --is-analysis-workflow jobs_create_subtraction​
 
   build-index:
@@ -75,7 +75,7 @@ services:
     entrypoint: workflow
     command: >
       run-from-redis --redis-url="redis://redis:6379"
-      --jobs-api-url="http://jobs-api:9990/api" --dev-mode
+      --jobs-api-url="http://jobs-api:9990" --dev-mode
       --is-analysis-workflow jobs_build_index
 
 volumes:
