@@ -1,6 +1,5 @@
 import asyncio
 from asyncio.tasks import gather
-from logging import getLogger
 
 import aiohttp
 import virtool.db.utils
@@ -28,8 +27,6 @@ from virtool.references.tasks import (CloneReferenceTask, DeleteReferenceTask,
 from virtool.uploads.models import Upload
 from virtool.users.db import attach_user
 from virtool.validators import strip
-
-logger = getLogger(__name__)
 
 routes = Routes()
 
@@ -403,14 +400,14 @@ async def create(req):
                 remote_from,
                 release_id=release_id
             )
-        except aiohttp.ClientConnectionError as exc:
-            logger.exception(exc)
+
+        except aiohttp.ClientConnectionError:
             raise HTTPBadGateway(text="Could not reach GitHub")
+
         except GitHubError as err:
             if "404" in str(err):
                 raise HTTPBadGateway(
-                    text="Could not retrieve latest GitHub release"
-                )
+                    text="Could not retrieve latest GitHub release")
 
             raise
 

@@ -1,5 +1,4 @@
 import json
-from typing import Optional
 
 import aiohttp
 import pytest
@@ -68,7 +67,6 @@ def create_app(
 ):
     def _create_app(
             dev=False,
-            base_url=""
     ):
         config = Config(
             db_connection_string=test_db_connection_string,
@@ -81,8 +79,7 @@ def create_app(
             no_sentry=True,
             postgres_connection_string=pg_connection_string,
             redis_connection_string=redis_connection_string,
-            fake=False,
-            base_url=base_url
+            fake=False
         )
 
         return virtool.app.create_app(config)
@@ -109,17 +106,12 @@ def spawn_client(
             enable_api=False,
             groups=None,
             permissions=None,
-            use_b2c=False,
-            base_url="",
-            addon_route_table: Optional[RouteTableDef] = None
+            use_b2c=False
     ):
-        app = create_app(dev, base_url)
+        app = create_app(dev)
 
         user_document = create_user(user_id="test", administrator=administrator, groups=groups, permissions=permissions)
         await dbi.users.insert_one(user_document)
-
-        if addon_route_table:
-            app.add_routes(addon_route_table)
 
         if authorize:
             session_token = "bar"

@@ -42,7 +42,7 @@ async def test_create(error, spawn_client, all_permissions, no_permissions, resp
     Test that a group can be added to the database at ``POST /groups/:group_id``.
 
     """
-    client = await spawn_client(authorize=True, administrator=True, base_url="https://virtool.example.com")
+    client = await spawn_client(authorize=True, administrator=True)
 
     if error:
         await client.db.groups.insert_one({
@@ -59,7 +59,7 @@ async def test_create(error, spawn_client, all_permissions, no_permissions, resp
         return
 
     assert resp.status == 201
-    assert resp.headers["Location"] == "https://virtool.example.com/groups/test"
+    assert resp.headers["Location"] == "/groups/test"
 
     assert await resp.json() == {
         "id": "test",

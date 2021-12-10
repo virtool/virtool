@@ -244,11 +244,7 @@ class TestCreate:
             test_random_alphanumeric,
             settings
     ):
-        client = await spawn_client(
-            authorize=True,
-            permissions=["create_sample"],
-            base_url="https://virtool.example.com"
-        )
+        client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         client.app["settings"] = settings
         client.app["settings"].sm_proc = 2
@@ -953,7 +949,7 @@ async def test_analyze(
         return_value=(True, True)
     )
 
-    client = await spawn_client(authorize=True, base_url="https://virtool.example.com")
+    client = await spawn_client(authorize=True)
     client.app["jobs"] = MockJobInterface()
 
     test_analysis = {
@@ -1036,7 +1032,7 @@ async def test_analyze(
         return
 
     assert resp.status == 201
-    assert resp.headers["Location"] == "https://virtool.example.com/analyses/test_analysis"
+    assert resp.headers["Location"] == "/analyses/test_analysis"
     assert await resp.json() == snapshot
 
     m_create.assert_called_with(
