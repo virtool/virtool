@@ -21,10 +21,10 @@ REF_ID = "reference_1"
 
 
 async def populate(app: App):
-    bob = await create_fake_bob_user(app)
+    await create_fake_bob_user(app)
     for yml_file in Path(app["config"].fake_path).iterdir():
         if yml_file.suffix in (".yml", ".yaml"):
-            await load_test_case_from_yml(app, yml_file, bob["_id"])
+            await load_test_case_from_yml(app, yml_file)
 
 
 async def remove_fake_data_path(app: App):

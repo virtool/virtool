@@ -1,5 +1,3 @@
-from logging import BASIC_FORMAT
-from logging import Logger
 import random
 from asyncio.tasks import gather
 from dataclasses import dataclass
@@ -12,8 +10,6 @@ from virtool.errors import DatabaseError
 from virtool.groups.db import get_merged_permissions
 from virtool.users.utils import (check_legacy_password, check_password,
                                  generate_base_permissions, limit_permissions)
-
-logger = Logger(__name__)
 
 PROJECTION = [
     "_id",
@@ -80,10 +76,6 @@ async def attach_user(db, document: Dict[str, Any]) -> Dict[str, Any]:
         raise KeyError("Document needs a value at user or user.id")
 
     user_data = await db.users.find_one(user_id, ATTACH_PROJECTION)
-
-    if not user_data:
-        logger.debug(document)
-        raise KeyError(f"Document contains user {user_id}, which is not present in the database.")
 
     return {
         **document,
