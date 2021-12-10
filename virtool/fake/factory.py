@@ -229,7 +229,11 @@ class TestCaseDataFactory:
         )
 
 
-async def load_test_case_from_yml(app: App, path: str, user_id: str) -> WorkflowTestCase:
+async def load_test_case_from_yml(
+    app: App, 
+    path: str, 
+    user_id: str
+) -> WorkflowTestCase:
     """Load a test case from a YAML file."""
     async with aiofiles.open(path) as f:
         yml = yaml.safe_load(await f.read())

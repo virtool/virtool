@@ -83,7 +83,9 @@ async def attach_user(db, document: Dict[str, Any]) -> Dict[str, Any]:
 
     if not user_data:
         logger.debug(document)
-        raise KeyError(f"Document contains user {user_id}, which is not present in the database.")
+        raise KeyError(
+            f"Document contains user {user_id}, which is not present in the database."
+        )
 
     return {
         **document,
