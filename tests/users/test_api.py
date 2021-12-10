@@ -53,7 +53,7 @@ async def test_create(error, snapshot, spawn_client, create_user, resp_is, stati
     - check password
 
     """
-    client = await spawn_client(authorize=True, administrator=True)
+    client = await spawn_client(authorize=True, administrator=True, base_url="https://virtool.example.com")
     mocker.patch("virtool.db.utils.get_new_id", return_value="abc123")
 
     if error == "400_exists":
@@ -83,7 +83,7 @@ async def test_create(error, snapshot, spawn_client, create_user, resp_is, stati
         return
 
     assert resp.status == 201
-    assert resp.headers["Location"] == "/users/abc123"
+    assert resp.headers["Location"] == "https://virtool.example.com/users/abc123"
     assert await resp.json() == snapshot
 
     document = await client.db.users.find_one("abc123")

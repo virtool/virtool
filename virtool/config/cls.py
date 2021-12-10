@@ -26,3 +26,4 @@ class Config:
     b2c_tenant: str = None
     b2c_user_flow: str = None
     use_b2c: bool = False
+    base_url: str = "https://app.virtool.ca"
