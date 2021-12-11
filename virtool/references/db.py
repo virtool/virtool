@@ -58,7 +58,7 @@ import asyncio
 import datetime
 import logging
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pymongo
 import virtool.db.utils
@@ -81,7 +81,7 @@ from virtool.references.utils import (RIGHTS, check_will_change,
 from virtool.settings.db import Settings
 from virtool.types import App
 from virtool.uploads.models import Upload
-from virtool.users.db import attach_user
+from virtool.users.db import attach_user, extend_user
 
 PROJECTION = [
     "_id",
@@ -109,7 +109,9 @@ PROJECTION = [
 
 async def processor(db, document: dict) -> dict:
     """
-    Process a reference document. This adds a number of fields derived from other collections.
+    Process a reference document to a form that can be dispatched or returned in a list.
+
+    Used `attach_computed` for complete representations of the reference.
 
     :param db: the application database client
     :param document: the document to process
@@ -122,9 +124,9 @@ async def processor(db, document: dict) -> dict:
         ref_id = document["id"]
 
     latest_build, otu_count, unbuilt_count = await asyncio.gather(
-        virtool.references.db.get_latest_build(db, ref_id),
-        virtool.references.db.get_otu_count(db, ref_id),
-        virtool.references.db.get_unbuilt_count(db, ref_id)
+        get_latest_build(db, ref_id),
+        get_otu_count(db, ref_id),
+        get_unbuilt_count(db, ref_id),
     )
 
     document.update({
@@ -141,6 +143,59 @@ async def processor(db, document: dict) -> dict:
     document["id"] = ref_id
 
     return await attach_user(db, document)
+
+
+async def attach_computed(db, document: dict) -> dict:
+    """
+    Get all computed data for the specified reference and attach it to the passed `document`.
+
+    :param db: the application database client
+    :param document: the document to attached computed data to
+    :return: the updated document
+
+    """
+    ref_id = document["_id"]
+
+    try:
+        internal_control_id = document["internal_control"]["id"]
+    except (KeyError, TypeError):
+        internal_control_id = None
+
+    contributors, internal_control, latest_build, otu_count, users, unbuilt_count = await asyncio.gather(
+        get_contributors(db, ref_id),
+        get_internal_control(db, internal_control_id, ref_id),
+        get_latest_build(db, ref_id),
+        get_otu_count(db, ref_id),
+        get_reference_users(db, document),
+        get_unbuilt_count(db, ref_id),
+    )
+
+    processed = virtool.utils.base_processor({
+        **document,
+        "contributors": contributors,
+        "internal_control": internal_control or None,
+        "latest_build": latest_build,
+        "otu_count": otu_count,
+        "unbuilt_change_count": unbuilt_count,
+        "users": users
+    })
+
+    return await attach_user(db, processed)
+
+
+async def get_reference_users(db, document: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Get a detailed list of users that have access to the specified reference.
+
+    :param db: the application database client
+    :param document: the reference document
+    :return: a list of user data dictionaries
+
+    """
+    if not document.get("users"):
+        return []
+
+    return await asyncio.gather(*[extend_user(db, user) for user in document["users"]])
 
 
 async def add_group_or_user(db, ref_id: str, field: str, data: dict) -> Optional[dict]:
@@ -410,40 +465,6 @@ async def fetch_and_update_release(app, ref_id: str, ignore_errors: bool = False
     })
 
     return release
-
-
-async def attach_computed(db, document: dict) -> dict:
-    """
-    Get all computed data for the specified reference and attach it to the passed `document`.
-
-    :param db: the application database client
-    :param document: the document to attached computed data to
-    :return: the updated document
-
-    """
-    ref_id = document["_id"]
-
-    try:
-        internal_control_id = document["internal_control"]["id"]
-    except (KeyError, TypeError):
-        internal_control_id = None
-
-    contributors, internal_control, latest_build, otu_count, unbuilt_count = await asyncio.gather(
-        get_contributors(db, ref_id),
-        get_internal_control(db, internal_control_id, ref_id),
-        get_latest_build(db, ref_id),
-        get_otu_count(db, ref_id),
-        get_unbuilt_count(db, ref_id)
-    )
-
-    return {
-        **document,
-        "contributors": contributors,
-        "internal_control": internal_control or None,
-        "latest_build": latest_build,
-        "otu_count": otu_count,
-        "unbuilt_change_count": unbuilt_count,
-    }
 
 
 async def get_contributors(db, ref_id: str) -> Optional[List[dict]]:
@@ -745,7 +766,7 @@ async def edit(db, ref_id: str, data: dict) -> dict:
         "$set": data
     })
 
-    document = await asyncio.shield(virtool.references.db.attach_computed(db, document))
+    document = await attach_computed(db, document)
 
     if "name" in data:
         await db.analyses.update_many({"reference.id": ref_id}, {
@@ -754,7 +775,7 @@ async def edit(db, ref_id: str, data: dict) -> dict:
             }
         })
 
-    return await processor(db, document)
+    return document
 
 
 async def export(app: App, ref_id: str) -> list:

@@ -1,8 +1,7 @@
-from logging import BASIC_FORMAT
-from logging import Logger
 import random
 from asyncio.tasks import gather
 from dataclasses import dataclass
+from logging import BASIC_FORMAT, Logger
 from typing import Any, Dict, List, Optional, Union
 
 import virtool.utils
@@ -48,16 +47,6 @@ class B2CUserAttributes:
         self.display_name = display_name
         self.given_name = given_name
         self.family_name = family_name
-
-
-class AttachUsers:
-
-    def __init__(self, db):
-        self._db = db
-        self._cache = dict()
-
-    def __call__(self, documents):
-        pass
 
 
 async def attach_user(db, document: Dict[str, Any]) -> Dict[str, Any]:
@@ -108,6 +97,19 @@ async def attach_users(db, documents: List[Dict[str, Any]]) -> List[Dict[str, An
     return await gather(
         *[attach_user(db, document) for document in documents]
     )
+
+
+async def extend_user(db, user: Dict[str, Any]) -> Dict[str, Any]:
+    user_id = user["id"]
+
+    user_data = await db.users.find_one(user_id, ATTACH_PROJECTION)
+
+    extended = {
+        **user,
+        **user_data,
+    }
+
+    return extended
 
 
 def compose_force_reset_update(force_reset: Optional[bool]) -> dict:

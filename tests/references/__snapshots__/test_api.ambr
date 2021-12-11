@@ -85,7 +85,9 @@
     },
     'users': <class 'list'> [
       <class 'dict'> {
+        'administrator': False,
         'build': True,
+        'handle': 'bob',
         'id': 'test',
         'modify': True,
         'modify_otu': True,
@@ -125,7 +127,9 @@
     },
     'users': <class 'list'> [
       <class 'dict'> {
+        'administrator': False,
         'build': True,
+        'handle': 'bob',
         'id': 'test',
         'modify': True,
         'modify_otu': True,
@@ -166,7 +170,33 @@
     ],
   }
 ---
-# name: test_edit[uvloop-None-barcode]
+# name: test_edit[uvloop-None-barcode][db]
+  <class 'dict'> {
+    '_id': 'foo',
+    'data_type': 'barcode',
+    'description': 'This is a test reference.',
+    'name': 'Bar',
+    'targets': <class 'list'> [
+      <class 'dict'> {
+        'description': '',
+        'name': 'CPN60',
+        'required': True,
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'id': 'LB1U6zCj',
+      },
+      <class 'dict'> {
+        'id': 'w20Amyfb',
+      },
+    ],
+  }
+---
+# name: test_edit[uvloop-None-barcode][resp]
   <class 'dict'> {
     'contributors': <class 'list'> [
     ],
@@ -192,35 +222,38 @@
     },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'administrator': False,
+        'handle': 'johnsoncynthia',
+        'id': 'LB1U6zCj',
+      },
+      <class 'dict'> {
+        'administrator': False,
+        'handle': 'danagray',
+        'id': 'w20Amyfb',
       },
     ],
   }
 ---
-# name: test_edit[uvloop-None-barcode].1
+# name: test_edit[uvloop-None-genome][db]
   <class 'dict'> {
     '_id': 'foo',
-    'data_type': 'barcode',
+    'data_type': 'genome',
     'description': 'This is a test reference.',
     'name': 'Bar',
-    'targets': <class 'list'> [
-      <class 'dict'> {
-        'description': '',
-        'name': 'CPN60',
-        'required': True,
-      },
-    ],
     'user': <class 'dict'> {
       'id': '7CtBo2yG',
     },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'id': 'LB1U6zCj',
+      },
+      <class 'dict'> {
+        'id': 'w20Amyfb',
       },
     ],
   }
 ---
-# name: test_edit[uvloop-None-genome]
+# name: test_edit[uvloop-None-genome][resp]
   <class 'dict'> {
     'contributors': <class 'list'> [
     ],
@@ -239,23 +272,14 @@
     },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'administrator': False,
+        'handle': 'johnsoncynthia',
+        'id': 'LB1U6zCj',
       },
-    ],
-  }
----
-# name: test_edit[uvloop-None-genome].1
-  <class 'dict'> {
-    '_id': 'foo',
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'name': 'Bar',
-    'user': <class 'dict'> {
-      'id': '7CtBo2yG',
-    },
-    'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'administrator': False,
+        'handle': 'danagray',
+        'id': 'w20Amyfb',
       },
     ],
   }

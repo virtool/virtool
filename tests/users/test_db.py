@@ -1,12 +1,13 @@
 import hashlib
 
 import pytest
-from aiohttp.test_utils import make_mocked_coro
-
 import virtool.errors
-from virtool.users.db import compose_force_reset_update, compose_groups_update, compose_password_update, \
-    compose_primary_group_update, validate_credentials, update_sessions_and_keys, create, edit
-from virtool.users.db import generate_handle, find_or_create_b2c_user, B2CUserAttributes
+from aiohttp.test_utils import make_mocked_coro
+from virtool.users.db import (B2CUserAttributes, compose_force_reset_update,
+                              compose_groups_update, compose_password_update,
+                              compose_primary_group_update, create, edit,
+                              find_or_create_b2c_user, generate_handle,
+                              update_sessions_and_keys, validate_credentials)
 from virtool.users.utils import hash_password
 from virtool.utils import random_alphanumeric
 

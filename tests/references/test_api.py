@@ -235,7 +235,9 @@ async def test_create(data_type, mocker, snapshot, spawn_client, test_random_alp
 async def test_edit(data_type, error, mocker, snapshot, fake, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
-    user = await fake.users.insert()
+    user_1 = await fake.users.insert()
+    user_2 = await fake.users.insert()
+    user_3 = await fake.users.insert()
 
     if error != "404":
         await client.db.references.insert_one({
@@ -243,18 +245,13 @@ async def test_edit(data_type, error, mocker, snapshot, fake, spawn_client, resp
             "data_type": data_type,
             "name": "Foo",
             "user": {
-                "id": user["_id"]
+                "id": user_1["_id"]
             },
             "users": [
-                {
-                    "id": "bob"
-                }
+                {"id": user_2["_id"]},
+                {"id": user_3["_id"]}
             ]
         })
-
-    await client.db.users.insert_one({
-        "_id": "bob"
-    })
 
     data = {
         "name": "Bar",
@@ -318,8 +315,8 @@ async def test_edit(data_type, error, mocker, snapshot, fake, spawn_client, resp
         await resp_is.insufficient_rights(resp)
         return
 
-    assert await resp.json() == snapshot
-    assert await client.db.references.find_one() == snapshot
+    assert await resp.json() == snapshot(name="resp")
+    assert await client.db.references.find_one() == snapshot(name="db")
 
 
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
