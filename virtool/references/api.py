@@ -25,7 +25,7 @@ from virtool.references.tasks import (CloneReferenceTask, DeleteReferenceTask,
                                       ImportReferenceTask, RemoteReferenceTask,
                                       UpdateRemoteReferenceTask)
 from virtool.uploads.models import Upload
-from virtool.users.db import attach_user
+from virtool.users.db import attach_user, extend_user
 from virtool.validators import strip
 
 routes = Routes()
@@ -102,9 +102,7 @@ async def get(req):
     if not document:
         raise NotFound()
 
-    document = await attach_computed(db, document)
-
-    return json_response(await virtool.references.db.processor(db, document))
+    return json_response(await attach_computed(db, document))
 
 
 @routes.get("/refs/{ref_id}/release")
@@ -451,10 +449,11 @@ async def create(req):
         "Location": f"/refs/{document['_id']}"
     }
 
-    document = await attach_computed(db, document)
-    document = await attach_user(db, document)
-
-    return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
+    return json_response(
+        await attach_computed(db, document),
+        headers=headers,
+        status=201
+    )
 
 
 @routes.patch("/refs/{ref_id}")
@@ -680,7 +679,11 @@ async def add_user(req):
         "Location": f"/refs/{ref_id}/users/{subdocument['id']}"
     }
 
-    return json_response(subdocument, headers=headers, status=201)
+    return json_response(
+        await extend_user(db, subdocument),
+        headers=headers,
+        status=201
+    )
 
 
 @routes.patch("/refs/{ref_id}/groups/{group_id}")
@@ -725,7 +728,7 @@ async def edit_user(req):
     if subdocument is None:
         raise NotFound()
 
-    return json_response(subdocument)
+    return json_response(await extend_user(db, subdocument))
 
 
 @routes.delete("/refs/{ref_id}/groups/{group_id}")
