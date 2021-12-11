@@ -44,14 +44,17 @@ speedups = ["aiodns", "brotli", "cchardet"]
 
 [[package]]
 name = "aiojobs"
-version = "0.3.0"
+version = "1.0.0"
 description = "Jobs scheduler for managing background task (asyncio)."
 category = "main"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.6"
+
+[package.dependencies]
+async-timeout = ">=4.0.0"
 
 [package.extras]
-aiohttp = ["aiohttp (>=3.2.0)"]
+aiohttp = ["aiohttp (>=3.8.0)"]
 
 [[package]]
 name = "aioredis"
@@ -1008,7 +1011,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "9670dea23545bb4c3693be8bbf8c62fdcb51a50421b7725349c5d88d65773204"
+content-hash = "997e9b25e917d522fb69900ee201b80f33e8986712deffeca8a98e53eb948efb"
 
 [metadata.files]
 aiodns = [
@@ -1094,8 +1097,8 @@ aiohttp = [
     {file = "aiohttp-3.8.1.tar.gz", hash = "sha256:fc5471e1a54de15ef71c1bc6ebe80d4dc681ea600e68bfd1cbce40427f0b7578"},
 ]
 aiojobs = [
-    {file = "aiojobs-0.3.0-py3-none-any.whl", hash = "sha256:ed49e9ea1be0261fde99305c84691b440f69172016c7b372f9c411dac082a65f"},
-    {file = "aiojobs-0.3.0.tar.gz", hash = "sha256:f6631d42dc4308f7d883abbd70d4e976f3fcc35a3ba1e8eae5d4af4940a1e0c3"},
+    {file = "aiojobs-1.0.0-py3-none-any.whl", hash = "sha256:86bd70777df7c8140be9bc597181d4db0d88a6449f4e4578169f98b6df24e805"},
+    {file = "aiojobs-1.0.0.tar.gz", hash = "sha256:5097580bb73d838e3f80e49d6a81d8e5f1dfc22fc6e75a44383cb2164daea8ea"},
 ]
 aioredis = [
     {file = "aioredis-1.3.1-py3-none-any.whl", hash = "sha256:b61808d7e97b7cd5a92ed574937a079c9387fdadd22bfbfa7ad2fd319ecc26e3"},
