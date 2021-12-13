@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 import aiohttp
 import pytest
@@ -66,9 +67,11 @@ def create_app(
         test_db_name
 ):
     def _create_app(
-            dev=False,
+            dev: bool = False,
+            base_url: str = ""
     ):
         config = Config(
+            base_url=base_url,
             db_connection_string=test_db_connection_string,
             db_name=test_db_name,
             dev=dev,
@@ -99,19 +102,24 @@ def spawn_client(
         create_user
 ):
     async def func(
+            addon_route_table: Optional[RouteTableDef] = None,
             auth=None,
             authorize=False,
             administrator=False,
+            base_url="",
             dev=False,
             enable_api=False,
             groups=None,
             permissions=None,
             use_b2c=False
     ):
-        app = create_app(dev)
+        app = create_app(dev, base_url)
 
         user_document = create_user(user_id="test", administrator=administrator, groups=groups, permissions=permissions)
         await dbi.users.insert_one(user_document)
+
+        if addon_route_table:
+            app.add_routes(addon_route_table)
 
         if authorize:
             session_token = "bar"
