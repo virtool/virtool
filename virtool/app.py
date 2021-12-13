@@ -11,7 +11,7 @@ import virtool.http.errors
 import virtool.http.proxy
 import virtool.http.query
 from virtool.config.cls import Config
-from virtool.http.headers import headers_middleware
+from virtool.http.headers import headers_middleware, on_prepare_location
 from virtool.process_utils import (create_app_runner, wait_for_restart,
                                    wait_for_shutdown)
 from virtool.shutdown import (shutdown_client, shutdown_dispatcher,
@@ -72,6 +72,8 @@ def create_app(config: Config):
 
     if config.use_b2c:
         app.on_startup.append(startup_b2c)
+
+    app.on_response_prepare.append(on_prepare_location)
 
     app.on_shutdown.extend([
         shutdown_client,

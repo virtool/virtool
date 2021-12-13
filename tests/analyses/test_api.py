@@ -395,7 +395,7 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
     correctly.
 
     """
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authorize=True, base_url="https://virtool.example.com")
 
     if error != "404_analysis":
         analysis_document = {
@@ -474,7 +474,7 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
         return
 
     assert resp.status == 201
-    assert resp.headers["Location"] == "/analyses/foobar/5/blast"
+    assert resp.headers["Location"] == "https://virtool.example.com/analyses/foobar/5/blast"
 
     blast = {
         "rid": "FOOBAR1337",

@@ -29,6 +29,11 @@ def entry():
 
 @click.group()
 @click.option(
+    "--base-url",
+    help="URL used to prefix Location headers and redirects",
+    default=""
+)
+@click.option(
     "--data-path",
     default="data",
     help="The path to the application data directory",
@@ -85,10 +90,11 @@ def entry():
     is_flag=True
 )
 @click.pass_context
-def cli(ctx, data_path, db_connection_string, db_name, dev, force_version, no_sentry, proxy, postgres_connection_string,
+def cli(ctx, base_url, data_path, db_connection_string, db_name, dev, force_version, no_sentry, proxy, postgres_connection_string,
         redis_connection_string, verbose):
     ctx.ensure_object(dict)
     ctx.obj.update({
+        "base_url": base_url,
         "data_path": Path(data_path),
         "db_connection_string": db_connection_string,
         "db_name": db_name,
@@ -176,7 +182,7 @@ def start_server(
         b2c_client_id=b2c_client_id,
         b2c_client_secret=b2c_client_secret,
         b2c_tenant=b2c_tenant,
-        b2c_user_flow=b2c_user_flow,   
+        b2c_user_flow=b2c_user_flow,
         host=host,        
         no_check_db=no_check_db,
         no_check_files=no_check_files,
