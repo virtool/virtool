@@ -102,7 +102,7 @@ async def get(req):
     if not document:
         raise NotFound()
 
-    document = await attach_computed(req.app, document)
+    document = await attach_computed(req.app, document, no_download_urls=True)
 
     if "user" in document:
         document = await attach_user(db, document)
@@ -193,7 +193,7 @@ async def create(req):
         "Location": f"/subtraction/{subtraction_id}"
     }
 
-    document = await attach_computed(req.app, document)
+    document = await attach_computed(req.app, document, no_download_urls=True)
 
     # All new subtraction documents have a user field, therefore no `if` statement is needed here.
     document = await attach_user(db, document)
@@ -297,7 +297,7 @@ async def edit(req):
     if document is None:
         raise NotFound()
 
-    document = await attach_computed(req.app, document)
+    document = await attach_computed(req.app, document, no_download_urls=True)
 
     if "user" in document:
         document = await attach_user(db, document)
@@ -342,7 +342,7 @@ async def finalize_subtraction(req: aiohttp.web.Request):
         raise HTTPConflict(text="Subtraction has already been finalized")
 
     document = await virtool.subtractions.db.finalize(db, pg, subtraction_id, data["gc"], data["count"])
-    document = await attach_computed(req.app, document)
+    document = await attach_computed(req.app, document, no_download_urls=True)
 
     # All subtractions supporting finalization have a user field. No `if` statement is needed here.
     document = await attach_user(db, document)

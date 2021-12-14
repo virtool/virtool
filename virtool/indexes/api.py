@@ -115,7 +115,7 @@ async def get(req):
         "otus": otus,
     })
 
-    document = await virtool.indexes.db.attach_files(pg, document)
+    document = await virtool.indexes.db.attach_files(pg, document, no_download_urls=True)
     document = await virtool.indexes.db.processor(db, document)
 
     return json_response(document)

@@ -205,7 +205,6 @@
     },
     'reads': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/samples/sample_1/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
@@ -368,7 +367,6 @@
     },
     'reads': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/samples/sample_1/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
@@ -378,7 +376,6 @@
         'uploaded_at': datetime.datetime(2015, 10, 6, 20, 0),
       },
       <class 'dict'> {
-        'download_url': '/samples/sample_1/reads/reads_2.fq.gz',
         'id': 2,
         'name': 'reads_2.fq.gz',
         'name_on_disk': 'reads_2.fq.gz',

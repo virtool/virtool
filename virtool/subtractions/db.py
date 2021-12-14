@@ -32,7 +32,7 @@ ADD_SUBTRACTION_FILES_QUERY = {
 }
 
 
-async def attach_computed(app: App, subtraction: Dict[str, Any]) -> Dict[str, Any]:
+async def attach_computed(app: App, subtraction: Dict[str, Any], no_download_urls: bool = False) -> Dict[str, Any]:
     """
     Attach the ``linked_samples`` and ``files`` fields to the passed subtraction document.
 
@@ -40,13 +40,14 @@ async def attach_computed(app: App, subtraction: Dict[str, Any]) -> Dict[str, An
 
     :param app: the application object
     :param subtraction: the subtraction document to attach to
+    :param no_download_urls: Boolean to determine whether download URLs should be included in response
     :return: a new subtraction document with new fields attached
 
     """
     subtraction_id = subtraction["_id"]
 
     files, linked_samples = await asyncio.gather(
-        get_subtraction_files(app["pg"], subtraction_id),
+        get_subtraction_files(app["pg"], subtraction_id, no_download_urls=no_download_urls),
         virtool.subtractions.db.get_linked_samples(app["db"], subtraction_id)
     )
 

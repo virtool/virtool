@@ -93,7 +93,6 @@
     '_id': 'foo',
     'files': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/indexes/foo/files/reference.1.bt2',
         'id': 1,
         'index': 'foo',
         'name': 'reference.1.bt2',
@@ -101,7 +100,6 @@
         'type': 'bowtie2',
       },
       <class 'dict'> {
-        'download_url': '/indexes/foo/files/reference.2.bt2',
         'id': 2,
         'index': 'foo',
         'name': 'reference.2.bt2',

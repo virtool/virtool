@@ -10,7 +10,6 @@
     '_id': 'foo',
     'files': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/download/samples/oictwh/reads_1.fq.gz',
         'from': <class 'dict'> {
           'id': 'vorbsrmz-17TFP120_S21_R1_001.fastq.gz',
           'name': 'vorbsrmz-17TFP120_S21_R1_001.fastq.gz',
@@ -52,7 +51,6 @@
     '_id': 'foo',
     'files': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/download/samples/oictwh/reads_1.fq.gz',
         'from': <class 'dict'> {
           'id': 'vorbsrmz-17TFP120_S21_R1_001.fastq.gz',
           'name': 'vorbsrmz-17TFP120_S21_R1_001.fastq.gz',
@@ -64,7 +62,6 @@
         'size': 213889231,
       },
       <class 'dict'> {
-        'download_url': '/download/samples/oictwh/reads_2.fq.gz',
         'from': <class 'dict'> {
           'id': 'vorbsrmz-17TFP120_S21_R1_002.fastq.gz',
           'name': 'vorbsrmz-17TFP120_S21_R1_002.fastq.gz',

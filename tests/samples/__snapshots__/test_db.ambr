@@ -130,7 +130,6 @@
     '_id': 'foo',
     'files': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/download/samples/foo/reads_1.fq.gz',
         'from': <class 'dict'> {
           'id': 'M_S11_R1_001.fastq',
           'name': 'M_S11_R1_001.fastq',
@@ -155,7 +154,6 @@
     '_id': 'foo',
     'files': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/download/samples/foo/reads_1.fq.gz',
         'from': <class 'dict'> {
           'id': 'M_S11_R1_001.fastq',
           'name': 'M_S11_R1_001.fastq',
@@ -166,7 +164,6 @@
         'size': 6586501,
       },
       <class 'dict'> {
-        'download_url': '/download/samples/foo/reads_2.fq.gz',
         'from': <class 'dict'> {
           'id': 'M_S11_R1_001.fastq',
           'name': 'M_S11_R1_001.fastq',
@@ -255,7 +252,6 @@
     },
     'reads': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',

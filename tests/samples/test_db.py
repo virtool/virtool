@@ -421,7 +421,6 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
 
     reads_file = {
         "name": "reads_1.fastq",
-        "download_url": f"/download/samples/{sample_id}/reads_1.fastq",
         "size": 3750821789,
         "raw": False,
         "from": {
@@ -436,8 +435,7 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
     if paired:
         files.append({
             **reads_file,
-            "name": "reads_2.fastq",
-            "download_url": f"/download/samples/{sample_id}/reads_2.fastq"
+            "name": "reads_2.fastq"
         })
 
     sample = {
@@ -448,7 +446,7 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
 
     await dbi.samples.insert_one(sample)
 
-    await compress_sample_reads(app_dict, sample)
+    await compress_sample_reads(app_dict, sample, no_download_urls=True)
 
     assert set(os.listdir(sample_dir)) == snapshot
 

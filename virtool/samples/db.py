@@ -74,12 +74,13 @@ RIGHTS_PROJECTION = {
 }
 
 
-async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
+async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict, no_download_urls: bool = False) -> dict:
     """
     Attaches associated sample artifacts and reads to a sample document for response.
 
     :param pg: PostgreSQL AsyncEngine object
     :param document: A document that represents a sample
+    :param no_download_urls: Boolean to determine whether download URLs should be included in response
     :return: Updated document with associated sample artifacts
     """
     ready = document["ready"]
@@ -99,7 +100,7 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
         artifacts = [artifact.to_dict() for artifact in artifacts]
         reads = [reads_file.to_dict() for reads_file in reads_files]
 
-        if ready:
+        if ready and not no_download_urls:
             for artifact in artifacts:
                 name_on_disk = artifact["name_on_disk"]
                 artifact["download_url"] = f"/samples/{sample_id}/artifacts/{name_on_disk}"
@@ -112,7 +113,7 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
                     ).scalar()
                 ).to_dict()
 
-            if ready:
+            if ready and not no_download_urls:
                 reads_file["download_url"] = f"/samples/{sample_id}/reads/{reads_file['name']}"
 
     return {
@@ -412,12 +413,13 @@ async def update_is_compressed(db, sample: Dict[str, Any]):
         )
 
 
-async def compress_sample_reads(app: App, sample: Dict[str, Any]):
+async def compress_sample_reads(app: App, sample: Dict[str, Any], no_download_urls: bool = False):
     """
     Compress the reads for one legacy samples.
 
     :param app: the application object
     :param sample: the sample document
+    :param no_download_urls: Boolean to determine whether download URLs should be included in response
 
     """
     await update_is_compressed(app["db"], sample)
@@ -446,15 +448,18 @@ async def compress_sample_reads(app: App, sample: Dict[str, Any]):
 
         assert target_path.is_file()
 
-        files.append(
-            {
+        file = {
                 "name": target_filename,
                 "download_url": f"/download/samples/{sample_id}/{target_filename}",
                 "size": stats["size"],
                 "raw": False,
                 "from": sample["files"][i]["from"],
             }
-        )
+
+        if no_download_urls:
+            file.pop("download_url")
+
+        files.append(file)
 
     await app["db"].samples.update_one({"_id": sample_id}, {"$set": {"files": files}})
 
@@ -552,7 +557,7 @@ async def finalize(
 
         await session.commit()
 
-    document = await virtool.samples.db.attach_artifacts_and_reads(pg, document)
+    document = await virtool.samples.db.attach_artifacts_and_reads(pg, document, no_download_urls=True)
     document = await attach_user(db, document)
 
     return document
@@ -577,7 +582,7 @@ async def get_sample(app, sample_id: str):
 
     document = await attach_subtractions(db, document)
     document = await attach_labels(pg, document)
-    document = await attach_artifacts_and_reads(pg, document)
+    document = await attach_artifacts_and_reads(pg, document, no_download_urls=True)
     document = await attach_user(db, document)
 
     document["paired"] = (len(document["reads"]) == 2)

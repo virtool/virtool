@@ -183,7 +183,6 @@ async def test_get(error, ready, mocker, snapshot, fake, spawn_client, resp_is, 
                 {
                     "id": "foo",
                     "name": "Bar.fq.gz",
-                    "download_url": "/download/samples/files/file_1.fq.gz"
                 }
             ],
             "labels": [1],

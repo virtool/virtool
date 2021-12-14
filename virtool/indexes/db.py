@@ -175,7 +175,7 @@ async def finalize(db, pg: AsyncEngine, ref_id: str, index_id: str) -> dict:
         "$set": {"ready": True}
     })
 
-    return await attach_files(pg, document)
+    return await attach_files(pg, document, no_download_urls=True)
 
 
 async def get_contributors(db, index_id: str) -> List[dict]:
@@ -379,12 +379,13 @@ async def update_last_indexed_versions(db, ref_id: str):
         })
 
 
-async def attach_files(pg: AsyncEngine, document: dict) -> dict:
+async def attach_files(pg: AsyncEngine, document: dict, no_download_urls: bool = False) -> dict:
     """
     Attach a list of index files under `files` field.
 
     :param pg: PostgreSQL database connection object
     :param document: An index document
+    :param no_download_urls: Boolean to determine whether download URLs should be included in response
 
     :return: Index document with updated `files` entry containing a list of index files.
 
@@ -393,8 +394,9 @@ async def attach_files(pg: AsyncEngine, document: dict) -> dict:
 
     files = [row.to_dict() for row in rows]
 
-    for index_file in files:
-        index_file["download_url"] = f"/indexes/{index_file['index']}/files/{index_file['name']}"
+    if not no_download_urls:
+        for index_file in files:
+            index_file["download_url"] = f"/indexes/{index_file['index']}/files/{index_file['name']}"
 
     return {
         **document,

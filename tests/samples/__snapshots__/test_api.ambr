@@ -438,7 +438,6 @@
   <class 'dict'> {
     'artifacts': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/samples/test/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
         'name_on_disk': 'reference.fa.gz',
@@ -458,7 +457,6 @@
     },
     'reads': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
@@ -1132,7 +1130,6 @@
     'created_at': '2015-10-06T20:00:00Z',
     'files': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/download/samples/files/file_1.fq.gz',
         'id': 'foo',
         'name': 'Bar.fq.gz',
       },
@@ -1194,7 +1191,6 @@
   <class 'dict'> {
     'artifacts': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/samples/test/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
         'name_on_disk': 'reference.fa.gz',
@@ -1209,7 +1205,6 @@
     'created_at': '2015-10-06T20:00:00Z',
     'files': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/download/samples/files/file_1.fq.gz',
         'id': 'foo',
         'name': 'Bar.fq.gz',
       },
@@ -1227,7 +1222,6 @@
     'paired': False,
     'reads': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',

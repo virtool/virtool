@@ -96,7 +96,6 @@ async def test_move_sample_files_task(legacy, compressed, paired, dbi, pg, pg_se
         "is_compressed": compressed,
         "files": [
             {
-                "download_url": "/download/samples/oictwh/reads_1.fq.gz",
                 "name": "reads_1.fq.gz",
                 "raw": True,
                 "size": 213889231,
@@ -113,7 +112,6 @@ async def test_move_sample_files_task(legacy, compressed, paired, dbi, pg, pg_se
     if paired:
         sample["files"].append(
             {
-                "download_url": "/download/samples/oictwh/reads_2.fq.gz",
                 "name": "reads_2.fq.gz",
                 "raw": True,
                 "size": 213889231,

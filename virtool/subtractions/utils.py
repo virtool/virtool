@@ -43,12 +43,13 @@ def join_subtraction_index_path(config: Config, subtraction_id: str) -> Path:
     return join_subtraction_path(config, subtraction_id) / "reference"
 
 
-async def get_subtraction_files(pg: AsyncEngine, subtraction: str) -> List[dict]:
+async def get_subtraction_files(pg: AsyncEngine, subtraction: str, no_download_urls: bool = False) -> List[dict]:
     """
     Prepare a list of files from 'SubtractionFile' table to be added to 'files' field.
 
     :param pg: PostgreSQL AsyncEngine object
     :param subtraction: the ID of the subtraction
+    :param no_download_urls: Boolean to determine whether download URLs should be included in response
 
     :return: a list of files to be added to subtraction documents
 
@@ -60,8 +61,9 @@ async def get_subtraction_files(pg: AsyncEngine, subtraction: str) -> List[dict]
 
     files = [file.to_dict() for file in files]
 
-    for file in files:
-        file["download_url"] = f"/subtractions/{file['subtraction']}/files/{file['name']}"
+    if not no_download_urls:
+        for file in files:
+            file["download_url"] = f"/subtractions/{file['subtraction']}/files/{file['name']}"
 
     return files
 
