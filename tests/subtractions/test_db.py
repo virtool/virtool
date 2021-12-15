@@ -1,4 +1,5 @@
 import pytest
+
 import virtool.subtractions.db
 from virtool.subtractions.db import unlink_default_subtractions
 
@@ -75,7 +76,7 @@ async def test_unlink_default_subtractions(dbi):
 
 
 @pytest.mark.parametrize("subtraction_id", [None, "abc"])
-async def test_create(subtraction_id, snapshot, dbi, test_random_alphanumeric):
+async def test_create(subtraction_id, snapshot, dbi, test_random_alphanumeric, static_time):
     user_id = "test"
     filename = "subtraction.fa.gz"
 

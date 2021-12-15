@@ -1,3 +1,26 @@
+# name: test_create[uvloop]
+  <class 'dict'> {
+    'created_at': '2015-10-06T20:00:00Z',
+    'deleted': False,
+    'file': <class 'dict'> {
+      'id': 1234,
+      'name': 'test_upload',
+    },
+    'files': <class 'list'> [
+    ],
+    'id': 'abc123',
+    'linked_samples': <class 'list'> [
+    ],
+    'name': 'Foobar',
+    'nickname': 'foo',
+    'ready': False,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'test',
+    },
+  }
+---
 # name: test_edit[uvloop-False-data0]
   <class 'dict'> {
     'files': <class 'list'> [
