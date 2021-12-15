@@ -2,6 +2,7 @@ import os
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+
 from virtool.subtractions.models import SubtractionFile
 
 
@@ -240,3 +241,27 @@ async def test_download_subtraction_files(error, tmp_path, spawn_job_client, pg_
 
     assert fasta_expected_path.read_bytes() == await fasta_resp.content.read()
     assert bowtie_expected_path.read_bytes() == await bowtie_resp.content.read()
+
+
+async def test_create(spawn_client, mocker, snapshot):
+    upload = mocker.Mock()
+    upload.name = "test_upload"
+
+    mocker.patch("virtool.db.utils.get_new_id", return_value="abc123")
+    mocker.patch("virtool.pg.utils.get_row_by_id", return_value=upload)
+
+    client = await spawn_client(
+        authorize=True,
+        base_url="https://virtool.example.com",
+        permissions="modify_subtraction"
+    )
+
+    data = {
+        "name": "Foobar",
+        "nickname": "foo",
+        "upload_id": 1234
+    }
+
+    resp = await client.post("/subtractions", data)
+
+    assert await resp.json() == snapshot

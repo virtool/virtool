@@ -4,14 +4,15 @@ import os
 from asyncio.tasks import gather
 
 import aiohttp.web
-import virtool.jobs.db
-import virtool.subtractions.db
-import virtool.uploads.db
-import virtool.validators
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp.web_fileresponse import FileResponse
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+import virtool.jobs.db
+import virtool.subtractions.db
+import virtool.uploads.db
+import virtool.validators
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, get_query_bool, paginate
 from virtool.db.utils import get_new_id
@@ -141,7 +142,7 @@ async def create(req):
     nickname = data["nickname"]
     upload_id = data["upload_id"]
 
-    upload = await get_row_by_id(pg, Upload, upload_id)
+    upload = await virtool.pg.utils.get_row_by_id(pg, Upload, upload_id)
 
     if upload is None:
         raise HTTPBadRequest(text="File does not exist")

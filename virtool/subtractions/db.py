@@ -7,8 +7,9 @@ import glob
 import shutil
 from typing import Any, Dict, List, Optional
 
-import virtool.utils
 from sqlalchemy.ext.asyncio import AsyncEngine
+
+import virtool.utils
 from virtool.config.cls import Config
 from virtool.db.utils import get_new_id, get_one_field
 from virtool.subtractions.utils import (get_subtraction_files,
@@ -142,7 +143,7 @@ async def create(
 
     """
     document = {
-        "_id": subtraction_id or await get_new_id(db.subtraction),
+        "_id": subtraction_id or await virtool.db.utils.get_new_id(db.subtraction),
         "name": name,
         "nickname": nickname,
         "deleted": False,
@@ -153,7 +154,8 @@ async def create(
         },
         "user": {
             "id": user_id
-        }
+        },
+        "created_at": virtool.utils.timestamp()
     }
 
     await db.subtraction.insert_one(document)
