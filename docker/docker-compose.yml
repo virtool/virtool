@@ -1,0 +1,128 @@
+version: "3.1"
+services:
+  mongo:
+    image: mongo:4.4
+    ports:
+      - "27017:27017"
+    volumes:
+      - vt_mongo_data:/data/db
+
+  redis:
+    image: redis:6.0
+    ports:
+      - "6379:6379"
+    volumes:
+      - vt_redis_data:/data
+
+  postgres:
+    image: postgres:13.1
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      POSTGRES_USER: virtool
+      POSTGRES_PASSWORD: virtool
+    volumes:
+      - vt_postgres_data:/var/lib/postgresql/data
+
+  ui:
+    image: virtool/ui:2.7.0
+    ports:
+      - "9900:9900"
+    environment:
+      VT_UI_HOST: "0.0.0.0"
+      VT_UI_PORT: 9900 # Default port
+      VT_UI_API_URL: http://host.docker.internal:9950
+      VT_UI_USE_PROXY: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    profiles:
+      - backend
+
+  api:
+    image: virtool/virtool:6.5.0
+    depends_on:
+      - mongo
+      - redis
+      - postgres
+    environment:
+      VT_DATA_PATH: /data
+      VT_DB_CONNECTION_STRING: mongodb://mongo:27017
+      VT_POSTGRES_CONNECTION_STRING: postgresql+asyncpg://virtool:virtool@postgres/virtool
+      VT_REDIS_CONNECTION_STRING: redis://redis:6379
+    command: server --host=0.0.0.0
+    ports:
+      - "9950:9950"
+    profiles:
+      - ui
+    volumes:
+      - vt_data:/data​    
+
+  jobs-api:
+    image: virtool/virtool:6.5.0
+    depends_on:
+      - mongo
+      - redis
+      - postgres
+    environment:
+      VT_DATA_PATH: /data
+      VT_DB_CONNECTION_STRING: mongodb://mongo:27017
+      VT_POSTGRES_CONNECTION_STRING: postgresql+asyncpg://virtool:virtool@postgres/virtool
+      VT_REDIS_CONNECTION_STRING: redis://redis:6379
+    command: jobsAPI --host=0.0.0.0 --port=9990
+    ports:
+      - "9990:9990"
+    volumes:
+      - vt_data:/data​
+
+  pathoscope:
+    image: virtool/pathoscope:2.0.6
+    entrypoint: workflow
+    restart: always
+    command: >
+      run-from-redis
+      --redis-url="redis://redis:6379"
+      --jobs-api-url="http://jobs-api:9990"
+      --dev-mode
+      --is-analysis-workflow
+      jobs_pathoscope_bowtie
+
+  create-sample:
+    image: virtool/create-sample:2.0.4
+    entrypoint: workflow
+    restart: always
+    command: >
+      run-from-redis
+      --redis-url="redis://redis:6379"
+      --jobs-api-url="http://jobs-api:9990"
+      --dev-mode
+      --is-analysis-workflow
+      jobs_create_sample​
+
+  create-subtraction:
+    image: virtool/create-subtraction:2.0.8
+    restart: always
+    entrypoint: workflow
+    command: >
+      run-from-redis --redis-url="redis://redis:6379"
+      --jobs-api-url="http://jobs-api:9990"
+      --dev-mode
+      --is-analysis-workflow
+      jobs_create_subtraction​
+
+  build-index:
+    image: virtool/build-index:2.0.3
+    restart: always
+    entrypoint: workflow
+    command: >
+      run-from-redis --redis-url="redis://redis:6379"
+      --jobs-api-url="http://jobs-api:9990"
+      --dev-mode
+      --is-analysis-workflow
+      jobs_build_index
+
+volumes:
+  vt_data: null
+  vt_mongo_data: null
+  vt_redis_data: null
+  vt_postgres_data: null
