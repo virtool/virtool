@@ -1,7 +1,14 @@
 VERSION
 __pycache__
+*.log*
 *.pyc
-/.idea
+.idea
+.cache
+.coverage.cog*
+.coverage
+.DS_store
+.pytest_cache
+.venv
 /assets/prunus_persica
 /build
 /data
@@ -10,11 +17,5 @@ __pycache__
 /watch
 config.json
 settings.json
-*.log*
-.coverage.cog*
-.coverage
-.cache
-.DS_store
-.pytest_cache
 env
 tags
