@@ -19,6 +19,7 @@ from virtool.types import App
 PROJECTION = [
     "_id",
     "count",
+    "created_at",
     "file",
     "ready",
     "job",
