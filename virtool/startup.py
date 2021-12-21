@@ -316,7 +316,7 @@ async def startup_sentry(app: typing.Union[dict, Application]):
             and app["settings"].enable_sentry is not False
             and not app["config"].dev):
         logger.info("Configuring Sentry")
-        setup(app["version"])
+        setup(app["version"], app["config"].sentry_dsn)
 
     else:
         logger.info("Skipped configuring Sentry")

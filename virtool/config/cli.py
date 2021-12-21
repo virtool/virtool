@@ -89,9 +89,28 @@ def entry():
     help="Log debug messages",
     is_flag=True
 )
+@click.option(
+    "--sentry-dsn",
+    help="The sentry DSN",
+    type=str,
+    default="https://9a2f8d1a3f7a431e873207a70ef3d44d:ca6db07b82934005beceae93560a6794@sentry.io/220532"
+)
 @click.pass_context
-def cli(ctx, base_url, data_path, db_connection_string, db_name, dev, force_version, no_sentry, proxy, postgres_connection_string,
-        redis_connection_string, verbose):
+def cli(
+        ctx,
+        base_url,
+        data_path,
+        db_connection_string,
+        db_name,
+        dev,
+        force_version,
+        no_sentry,
+        proxy,
+        postgres_connection_string,
+        redis_connection_string,
+        verbose,
+        sentry_dsn,
+):
     ctx.ensure_object(dict)
     ctx.obj.update({
         "base_url": base_url,
@@ -104,7 +123,8 @@ def cli(ctx, base_url, data_path, db_connection_string, db_name, dev, force_vers
         "proxy": proxy,
         "postgres_connection_string": postgres_connection_string,
         "redis_connection_string": redis_connection_string,
-        "verbose": verbose
+        "verbose": verbose,
+        "sentry_dsn": sentry_dsn
     })
 
 
@@ -173,9 +193,10 @@ def start_server(
         b2c_client_secret,
         b2c_tenant,
         b2c_user_flow,
-        use_b2c
+        use_b2c,
 ):
     configure_logs(ctx.obj["dev"], ctx.obj["verbose"])
+    sentry_dsn = ctx.obj.pop("sentry_dsn")
 
     config = Config(
         **ctx.obj,
@@ -189,6 +210,7 @@ def start_server(
         no_fetching=no_fetching,
         port=port,
         use_b2c=use_b2c,
+        sentry_dsn=sentry_dsn
     )
 
     logger.info("Starting in server mode")
