@@ -4,15 +4,14 @@ import os
 from asyncio.tasks import gather
 
 import aiohttp.web
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
-from aiohttp.web_fileresponse import FileResponse
-from sqlalchemy import exc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 import virtool.jobs.db
 import virtool.subtractions.db
 import virtool.uploads.db
 import virtool.validators
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
+from aiohttp.web_fileresponse import FileResponse
+from sqlalchemy import exc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, get_query_bool, paginate
 from virtool.db.utils import get_new_id
@@ -45,26 +44,23 @@ async def find(req):
 
     ready = get_query_bool(req, "ready")
     short = get_query_bool(req, "short")
-
-    projection = ["name"] if short else PROJECTION
+    term = req.query.get("find")
 
     db_query = dict()
-
-    term = req.query.get("find")
 
     if term:
         db_query = compose_regex_query(term, ["name", "nickname"])
 
+    if ready:
+        db_query["ready"] = True
+
     if short:
         documents = list()
 
-        async for document in db.subtraction.find({**db_query, **BASE_QUERY}, ["name"]):
+        async for document in db.subtraction.find({**db_query, **BASE_QUERY}, ["name", "ready"]):
             documents.append(base_processor(document))
 
         return json_response(documents)
-
-    if ready:
-        db_query["ready"] = True
 
     data = await paginate(
         db.subtraction,
@@ -72,7 +68,7 @@ async def find(req):
         req.query,
         base_query=BASE_QUERY,
         sort="_id",
-        projection=projection
+        projection=PROJECTION
     )
 
     documents, ready_count = await gather(
