@@ -29,171 +29,130 @@ def entry():
 
 @click.group()
 @click.option(
-    "--base-url",
-    help="URL used to prefix Location headers and redirects",
-    default=""
+    "--base-url", help="URL used to prefix Location headers and redirects", default=""
 )
 @click.option(
     "--data-path",
     default="data",
     help="The path to the application data directory",
-    type=click.Path()
+    type=click.Path(),
 )
 @click.option(
     "--db-connection-string",
     default="mongodb://localhost:27017",
     help="The MongoDB connection string",
-    type=str
+    type=str,
 )
 @click.option(
-    "--db-name",
-    default="virtool",
-    help="The MongoDB database name",
-    type=str
+    "--db-name", default="virtool", help="The MongoDB database name", type=str
 )
-@click.option(
-    "--dev",
-    help="Run in development mode",
-    is_flag=True
-)
+@click.option("--dev", help="Run in development mode", is_flag=True)
 @click.option(
     "--force-version",
     help="Make the instance think it is a different version",
-    type=str
+    type=str,
 )
-@click.option(
-    "--no-sentry",
-    help="Disable Sentry error reporting",
-    is_flag=True
-)
+@click.option("--no-sentry", help="Disable Sentry error reporting", is_flag=True)
 @click.option(
     "--postgres-connection-string",
     help="The PostgreSQL connection string (must begin with 'postgresql+asyncpg://')",
     type=str,
-    default="postgresql+asyncpg://virtool:virtool@localhost/virtool"
+    default="postgresql+asyncpg://virtool:virtool@localhost/virtool",
 )
 @click.option(
-    "--proxy",
-    help="The address for an internet proxy to connect through",
-    type=str
+    "--proxy", help="The address for an internet proxy to connect through", type=str
 )
 @click.option(
     "--redis-connection-string",
     help="The Redis connection string",
     type=str,
     required=True,
-    default="redis://localhost:6379"
+    default="redis://localhost:6379",
 )
-@click.option(
-    "--verbose",
-    help="Log debug messages",
-    is_flag=True
-)
+@click.option("--verbose", help="Log debug messages", is_flag=True)
 @click.option(
     "--sentry-dsn",
     help="The sentry DSN",
     type=str,
-    default="https://9a2f8d1a3f7a431e873207a70ef3d44d:ca6db07b82934005beceae93560a6794@sentry.io/220532"
+    default="https://9a2f8d1a3f7a431e873207a70ef3d44d:ca6db07b82934005beceae93560a6794@sentry.io/220532",
 )
 @click.pass_context
 def cli(
-        ctx,
-        base_url,
-        data_path,
-        db_connection_string,
-        db_name,
-        dev,
-        force_version,
-        no_sentry,
-        proxy,
-        postgres_connection_string,
-        redis_connection_string,
-        verbose,
-        sentry_dsn,
+    ctx,
+    base_url,
+    data_path,
+    db_connection_string,
+    db_name,
+    dev,
+    force_version,
+    no_sentry,
+    proxy,
+    postgres_connection_string,
+    redis_connection_string,
+    verbose,
+    sentry_dsn,
 ):
     ctx.ensure_object(dict)
-    ctx.obj.update({
-        "base_url": base_url,
-        "data_path": Path(data_path),
-        "db_connection_string": db_connection_string,
-        "db_name": db_name,
-        "dev": dev,
-        "force_version": force_version,
-        "no_sentry": no_sentry,
-        "proxy": proxy,
-        "postgres_connection_string": postgres_connection_string,
-        "redis_connection_string": redis_connection_string,
-        "verbose": verbose,
-        "sentry_dsn": sentry_dsn
-    })
+    ctx.obj.update(
+        {
+            "base_url": base_url,
+            "data_path": Path(data_path),
+            "db_connection_string": db_connection_string,
+            "db_name": db_name,
+            "dev": dev,
+            "force_version": force_version,
+            "no_sentry": no_sentry,
+            "proxy": proxy,
+            "postgres_connection_string": postgres_connection_string,
+            "redis_connection_string": redis_connection_string,
+            "verbose": verbose,
+            "sentry_dsn": sentry_dsn,
+        }
+    )
 
 
 @cli.command("server", help="Start a Virtool API and websocket server")
+@click.option("--host", default="localhost", help="The host to listen on", type=str)
+@click.option("--port", default=9950, help="The port to listen on", type=int)
 @click.option(
-    "--host",
-    default="localhost",
-    help="The host to listen on",
-    type=str
-)
-@click.option(
-    "--port",
-    default=9950,
-    help="The port to listen on",
-    type=int
-)
-@click.option(
-    "--no-check-db",
-    help="Start without checking and repairing database",
-    is_flag=True
+    "--no-check-db", help="Start without checking and repairing database", is_flag=True
 )
 @click.option(
     "--no-check-files",
     help="Start without ensuring data directory is valid",
-    is_flag=True
+    is_flag=True,
 )
 @click.option(
-    "--no-fetching",
-    help="Start with automatic fetching disabled",
-    is_flag=True
+    "--no-fetching", help="Start with automatic fetching disabled", is_flag=True
 )
 @click.option(
-    "--b2c-client-id",
-    help="Azure AD B2C client ID, required for --use-b2c",
-    type=str
+    "--b2c-client-id", help="Azure AD B2C client ID, required for --use-b2c", type=str
 )
 @click.option(
     "--b2c-client-secret",
     help="Azure AD B2C client secret, required for --use-b2c",
-    type=str
+    type=str,
 )
-@click.option(
-    "--b2c-tenant",
-    help="Azure AD B2C tenant name",
-    type=str
-)
+@click.option("--b2c-tenant", help="Azure AD B2C tenant name", type=str)
 @click.option(
     "--b2c-user-flow",
     help="Azure AD B2C signupsignin user flow, required for --use-b2c",
     type=str,
 )
-@click.option(
-    "--use-b2c",
-    help="Use Azure AD B2C for authentication",
-    is_flag=True
-)
+@click.option("--use-b2c", help="Use Azure AD B2C for authentication", is_flag=True)
 @click.pass_context
 def start_server(
-        ctx,
-        host,
-        port,
-        no_check_db,
-        no_check_files,
-        no_fetching,
-        b2c_client_id,
-        b2c_client_secret,
-        b2c_tenant,
-        b2c_user_flow,
-        use_b2c,
+    ctx,
+    host,
+    port,
+    no_check_db,
+    no_check_files,
+    no_fetching,
+    b2c_client_id,
+    b2c_client_secret,
+    b2c_tenant,
+    b2c_user_flow,
+    use_b2c,
 ):
     configure_logs(ctx.obj["dev"], ctx.obj["verbose"])
     sentry_dsn = ctx.obj.pop("sentry_dsn")
@@ -204,13 +163,13 @@ def start_server(
         b2c_client_secret=b2c_client_secret,
         b2c_tenant=b2c_tenant,
         b2c_user_flow=b2c_user_flow,
-        host=host,        
+        host=host,
         no_check_db=no_check_db,
         no_check_files=no_check_files,
         no_fetching=no_fetching,
         port=port,
         use_b2c=use_b2c,
-        sentry_dsn=sentry_dsn
+        sentry_dsn=sentry_dsn,
     )
 
     logger.info("Starting in server mode")
@@ -218,24 +177,16 @@ def start_server(
 
 
 @cli.command("jobsAPI")
-@click.option(
-    "--host",
-    default="localhost",
-    help="The host to listen on",
-    type=str
-)
-@click.option(
-    "--port",
-    default=9950,
-    help="The port to listen on",
-    type=int
-)
+@click.option("--host", default="localhost", help="The host to listen on", type=str)
+@click.option("--port", default=9950, help="The port to listen on", type=int)
 @click.option(
     "--fake-path",
-    help=("Start the jobs API with fake data for integration testing. "
-          "The data will be loaded from any YAML files under this path."),
+    help=(
+        "Start the jobs API with fake data for integration testing. "
+        "The data will be loaded from any YAML files under this path."
+    ),
     type=click.Path(exists=True, dir_okay=True),
-    default=None
+    default=None,
 )
 @click.pass_context
 def start_jobs_api(ctx, fake_path, port, host):
@@ -249,9 +200,7 @@ def start_jobs_api(ctx, fake_path, port, host):
         host=host,
         fake=fake_path is not None,
         fake_path=fake_path,
-        port=port,        
+        port=port,
     )
 
-    asyncio.get_event_loop().run_until_complete(
-        virtool.jobs.main.run(config)
-    )
+    asyncio.get_event_loop().run_until_complete(virtool.jobs.main.run(config))

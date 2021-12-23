@@ -11,8 +11,12 @@ async def test_create_subtraction_files(snapshot, tmp_path, pg, pg_session):
 
     subtraction_files = ["subtraction.fa.gz", "subtraction.1.bt2"]
 
-    await virtool.subtractions.files.create_subtraction_files(pg, "foo", subtraction_files, test_dir)
+    await virtool.subtractions.files.create_subtraction_files(
+        pg, "foo", subtraction_files, test_dir
+    )
 
     rows = list()
     async with pg_session as session:
-        assert (await session.execute(select(SubtractionFile))).scalars().all() == snapshot
+        assert (
+            await session.execute(select(SubtractionFile))
+        ).scalars().all() == snapshot

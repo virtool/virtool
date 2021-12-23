@@ -19,7 +19,9 @@ TOOL = "virtool"
 FETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 
 
-async def fetch(config: Config, session: aiohttp.ClientSession, accession: Union[int, str]) -> Optional[dict]:
+async def fetch(
+    config: Config, session: aiohttp.ClientSession, accession: Union[int, str]
+) -> Optional[dict]:
     """
     Fetch the Genbank record for the passed `accession`. Returns `None` if the Genbank record can not be found.
 
@@ -35,7 +37,7 @@ async def fetch(config: Config, session: aiohttp.ClientSession, accession: Union
         "id": accession,
         "retmode": "text",
         "rettype": "gb",
-        "tool": TOOL
+        "tool": TOOL,
     }
 
     async with ProxyRequest(config, session.get, FETCH_URL, params=params) as resp:
@@ -54,7 +56,7 @@ async def fetch(config: Config, session: aiohttp.ClientSession, accession: Union
             "accession": gb.id,
             "definition": gb.description,
             "sequence": str(gb.seq),
-            "host": ""
+            "host": "",
         }
 
         for feature in gb.features:

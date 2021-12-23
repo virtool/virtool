@@ -5,12 +5,15 @@ from logging import BASIC_FORMAT, Logger
 from typing import Any, Dict, List, Optional, Union
 
 import virtool.utils
-from virtool.db.utils import (get_non_existent_ids, handle_exists, id_exists,
-                              oid_exists)
+from virtool.db.utils import get_non_existent_ids, handle_exists, id_exists, oid_exists
 from virtool.errors import DatabaseError
 from virtool.groups.db import get_merged_permissions
-from virtool.users.utils import (check_legacy_password, check_password,
-                                 generate_base_permissions, limit_permissions)
+from virtool.users.utils import (
+    check_legacy_password,
+    check_password,
+    generate_base_permissions,
+    limit_permissions,
+)
 
 logger = Logger(__name__)
 
@@ -22,7 +25,7 @@ PROJECTION = [
     "groups",
     "last_password_change",
     "permissions",
-    "primary_group"
+    "primary_group",
 ]
 
 ATTACH_PROJECTION = {
@@ -37,6 +40,7 @@ class B2CUserAttributes:
     """
     Class to store ID token claims from Azure AD B2C
     """
+
     oid: str
     display_name: str
     given_name: str
@@ -76,13 +80,7 @@ async def attach_user(db, document: Dict[str, Any]) -> Dict[str, Any]:
             f"Document contains user {user_id}, which is not present in the database."
         )
 
-    return {
-        **document,
-        "user": {
-            **user_data,
-            "id": user_id
-        }
-    }
+    return {**document, "user": {**user_data, "id": user_id}}
 
 
 async def attach_users(db, documents: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -94,9 +92,7 @@ async def attach_users(db, documents: List[Dict[str, Any]]) -> List[Dict[str, An
     :return: a list of documents with user data attached
 
     """
-    return await gather(
-        *[attach_user(db, document) for document in documents]
-    )
+    return await gather(*[attach_user(db, document) for document in documents])
 
 
 async def extend_user(db, user: Dict[str, Any]) -> Dict[str, Any]:
@@ -122,10 +118,7 @@ def compose_force_reset_update(force_reset: Optional[bool]) -> dict:
     if force_reset is None:
         return dict()
 
-    return {
-        "force_reset": force_reset,
-        "invalidate_sessions": True
-    }
+    return {"force_reset": force_reset, "invalidate_sessions": True}
 
 
 async def compose_groups_update(db, groups: Optional[list]) -> dict:
@@ -143,13 +136,9 @@ async def compose_groups_update(db, groups: Optional[list]) -> dict:
     non_existent_groups = await get_non_existent_ids(db.groups, groups)
 
     if non_existent_groups:
-        raise DatabaseError("Non-existent groups: " +
-                            ", ".join(non_existent_groups))
+        raise DatabaseError("Non-existent groups: " + ", ".join(non_existent_groups))
 
-    update = {
-        "groups": groups,
-        "permissions": await get_merged_permissions(db, groups)
-    }
+    update = {"groups": groups, "permissions": await get_merged_permissions(db, groups)}
 
     return update
 
@@ -168,11 +157,13 @@ def compose_password_update(password: Optional[str]) -> dict:
     return {
         "password": virtool.users.utils.hash_password(password),
         "last_password_change": virtool.utils.timestamp(),
-        "invalidate_sessions": True
+        "invalidate_sessions": True,
     }
 
 
-async def compose_primary_group_update(db, user_id: Optional[str], primary_group: Optional[str]) -> dict:
+async def compose_primary_group_update(
+    db, user_id: Optional[str], primary_group: Optional[str]
+) -> dict:
     """
     Compose an update dict for changing a user's `primary_group`.
 
@@ -194,9 +185,7 @@ async def compose_primary_group_update(db, user_id: Optional[str], primary_group
         if not await is_member_of_group(db, user_id, primary_group):
             raise DatabaseError("User is not member of group")
 
-    return {
-        "primary_group": primary_group
-    }
+    return {"primary_group": primary_group}
 
 
 async def generate_handle(collection, given_name: str, family_name: str) -> str:
@@ -217,11 +206,11 @@ async def generate_handle(collection, given_name: str, family_name: str) -> str:
 
 
 async def create(
-        db,
-        password: Union[str, None],
-        handle: str,
-        force_reset: bool = True,
-        b2c_user_attributes: B2CUserAttributes = None
+    db,
+    password: Union[str, None],
+    handle: str,
+    force_reset: bool = True,
+    b2c_user_attributes: B2CUserAttributes = None,
 ) -> dict:
     """
     Insert a new user document into the database. If Azure AD B2C information is given, add it to user document.
@@ -236,7 +225,9 @@ async def create(
     """
     user_id = await virtool.db.utils.get_new_id(db.users)
 
-    if await virtool.db.utils.handle_exists(db.users, handle) or await virtool.db.utils.id_exists(db.users, user_id):
+    if await virtool.db.utils.handle_exists(
+        db.users, handle
+    ) or await virtool.db.utils.id_exists(db.users, user_id):
         raise DatabaseError("User already exists")
 
     document = {
@@ -248,7 +239,7 @@ async def create(
             "skip_quick_analyze_dialog": True,
             "show_ids": True,
             "show_versions": True,
-            "quick_analyze_workflow": "pathoscope_bowtie"
+            "quick_analyze_workflow": "pathoscope_bowtie",
         },
         "permissions": generate_base_permissions(),
         "primary_group": "",
@@ -258,21 +249,22 @@ async def create(
         "last_password_change": virtool.utils.timestamp(),
         # Should all of the user's sessions be invalidated so that they are forced to login next time they
         # download the client.
-        "invalidate_sessions": False
+        "invalidate_sessions": False,
     }
 
     if password is not None:
-        document.update(
-            {"password": virtool.users.utils.hash_password(password)})
+        document.update({"password": virtool.users.utils.hash_password(password)})
     else:
         if await oid_exists(db.users, b2c_user_attributes.oid):
             raise DatabaseError("User already exists")
-        document.update({
-            "b2c_oid": b2c_user_attributes.oid,
-            "b2c_display_name": b2c_user_attributes.display_name,
-            "b2c_given_name": b2c_user_attributes.given_name,
-            "b2c_family_name": b2c_user_attributes.family_name
-        })
+        document.update(
+            {
+                "b2c_oid": b2c_user_attributes.oid,
+                "b2c_display_name": b2c_user_attributes.display_name,
+                "b2c_given_name": b2c_user_attributes.given_name,
+                "b2c_family_name": b2c_user_attributes.family_name,
+            }
+        )
 
     await db.users.insert_one(document)
 
@@ -280,13 +272,13 @@ async def create(
 
 
 async def edit(
-        db,
-        user_id: str,
-        administrator: Optional[bool] = None,
-        force_reset: Optional[bool] = None,
-        groups: Optional[list] = None,
-        password: Optional[str] = None,
-        primary_group: Optional[str] = None
+    db,
+    user_id: str,
+    administrator: Optional[bool] = None,
+    force_reset: Optional[bool] = None,
+    groups: Optional[list] = None,
+    password: Optional[str] = None,
+    primary_group: Optional[str] = None,
 ) -> dict:
     if not await id_exists(db.users, user_id):
         raise DatabaseError("User does not exist")
@@ -296,32 +288,28 @@ async def edit(
     if administrator is not None:
         update["administrator"] = administrator
 
-    update.update({
-        **compose_force_reset_update(force_reset),
-        **compose_password_update(password)
-    })
+    update.update(
+        {**compose_force_reset_update(force_reset), **compose_password_update(password)}
+    )
 
     groups_update = await compose_groups_update(db, groups)
-    primary_group_update = await compose_primary_group_update(db, user_id, primary_group)
+    primary_group_update = await compose_primary_group_update(
+        db, user_id, primary_group
+    )
 
-    update.update({
-        **groups_update,
-        **primary_group_update
-    })
+    update.update({**groups_update, **primary_group_update})
 
     if not update:
         return await db.users.find_one({"_id": user_id})
 
-    document = await db.users.find_one_and_update({"_id": user_id}, {
-        "$set": update
-    })
+    document = await db.users.find_one_and_update({"_id": user_id}, {"$set": update})
 
     await update_sessions_and_keys(
         db,
         user_id,
         document["administrator"],
         document["groups"],
-        document["permissions"]
+        document["permissions"],
     )
 
     return document
@@ -357,16 +345,16 @@ async def validate_credentials(db, user_id: str, password: str) -> bool:
         pass
 
     if "salt" in document and check_legacy_password(
-            password,
-            document["salt"],
-            document["password"]
+        password, document["salt"], document["password"]
     ):
         return True
 
     return False
 
 
-async def update_sessions_and_keys(db, user_id: str, administrator: bool, groups: list, permissions: dict):
+async def update_sessions_and_keys(
+    db, user_id: str, administrator: bool, groups: list, permissions: dict
+):
     """
 
     :param db: a database client
@@ -376,26 +364,32 @@ async def update_sessions_and_keys(db, user_id: str, administrator: bool, groups
     :param permissions: an updated set of permissions derived from the updated groups
 
     """
-    find_query = {
-        "user.id": user_id
-    }
+    find_query = {"user.id": user_id}
 
     async for document in db.keys.find(find_query, ["permissions"]):
-        await db.keys.update_one({"_id": document["_id"]}, {
+        await db.keys.update_one(
+            {"_id": document["_id"]},
+            {
+                "$set": {
+                    "administrator": administrator,
+                    "groups": groups,
+                    "permissions": limit_permissions(
+                        document["permissions"], permissions
+                    ),
+                }
+            },
+        )
+
+    await db.sessions.update_many(
+        find_query,
+        {
             "$set": {
                 "administrator": administrator,
                 "groups": groups,
-                "permissions": limit_permissions(document["permissions"], permissions)
+                "permissions": permissions,
             }
-        })
-
-    await db.sessions.update_many(find_query, {
-        "$set": {
-            "administrator": administrator,
-            "groups": groups,
-            "permissions": permissions
-        }
-    })
+        },
+    )
 
 
 async def find_or_create_b2c_user(db, b2c_user_attributes: B2CUserAttributes) -> dict:
@@ -413,9 +407,7 @@ async def find_or_create_b2c_user(db, b2c_user_attributes: B2CUserAttributes) ->
 
     if document is None:
         handle = await virtool.users.db.generate_handle(
-            db.users,
-            b2c_user_attributes.given_name,
-            b2c_user_attributes.family_name
+            db.users, b2c_user_attributes.given_name, b2c_user_attributes.family_name
         )
 
         document = await virtool.users.db.create(
@@ -423,7 +415,7 @@ async def find_or_create_b2c_user(db, b2c_user_attributes: B2CUserAttributes) ->
             password=None,
             handle=handle,
             force_reset=False,
-            b2c_user_attributes=b2c_user_attributes
+            b2c_user_attributes=b2c_user_attributes,
         )
 
     return document

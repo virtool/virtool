@@ -10,15 +10,7 @@ import pymongo.errors
 import virtool.utils
 from virtool.types import App
 
-PROJECTION = (
-    "_id",
-    "created_at",
-    "files",
-    "key",
-    "program",
-    "ready",
-    "sample"
-)
+PROJECTION = ("_id", "created_at", "files", "key", "program", "ready", "sample")
 
 
 async def get(db, cache_id: str) -> Dict[str, Any]:
@@ -35,10 +27,10 @@ async def get(db, cache_id: str) -> Dict[str, Any]:
 
 
 async def create(
-        db,
-        sample_id: str,
-        key: str,
-        paired: bool,
+    db,
+    sample_id: str,
+    key: str,
+    paired: bool,
 ) -> Dict[str, Any]:
     """
     Create and insert a new cache database document. Return the generated cache document.
@@ -62,9 +54,7 @@ async def create(
             "missing": False,
             "paired": paired,
             "ready": False,
-            "sample": {
-                "id": sample_id
-            }
+            "sample": {"id": sample_id},
         }
 
         await db.caches.insert_one(document)
@@ -91,9 +81,7 @@ async def remove(app: App, cache_id: str):
     db = app["db"]
     config = app["config"]
 
-    await db.caches.delete_one({
-        "_id": cache_id
-    })
+    await db.caches.delete_one({"_id": cache_id})
 
     path = config.data_path / "caches" / cache_id
 

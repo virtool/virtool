@@ -6,7 +6,9 @@ from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.tasks.models import Task
 
 
-async def test_store_nuvs_files_task(snapshot, tmp_path, spawn_client, dbi, pg, pg_session, static_time):
+async def test_store_nuvs_files_task(
+    snapshot, tmp_path, spawn_client, dbi, pg, pg_session, static_time
+):
     client = await spawn_client(authorize=True)
 
     test_dir = tmp_path / "samples" / "foo" / "analysis" / "bar"
@@ -17,13 +19,9 @@ async def test_store_nuvs_files_task(snapshot, tmp_path, spawn_client, dbi, pg, 
 
     client.app["config"].data_path = tmp_path
 
-    await dbi.analyses.insert_one({
-        "_id": "bar",
-        "workflow": "nuvs",
-        "sample": {
-            "id": "foo"
-        }
-    })
+    await dbi.analyses.insert_one(
+        {"_id": "bar", "workflow": "nuvs", "sample": {"id": "foo"}}
+    )
 
     task = Task(
         id=1,
@@ -33,7 +31,7 @@ async def test_store_nuvs_files_task(snapshot, tmp_path, spawn_client, dbi, pg, 
         progress=0,
         step="store_nuvs_files",
         type="store_nuvs_file_task",
-        created_at=static_time.datetime
+        created_at=static_time.datetime,
     )
     async with pg_session as session:
         session.add(task)
@@ -45,7 +43,10 @@ async def test_store_nuvs_files_task(snapshot, tmp_path, spawn_client, dbi, pg, 
     async with pg_session as session:
         assert (await session.execute(select(AnalysisFile))).scalars().all() == snapshot
 
-    assert set(os.listdir(tmp_path / "analyses" / "bar")
-               ) == {"assembly.fa.gz", "hmm.tsv", "unmapped_otus.fq.gz"}
+    assert set(os.listdir(tmp_path / "analyses" / "bar")) == {
+        "assembly.fa.gz",
+        "hmm.tsv",
+        "unmapped_otus.fq.gz",
+    }
 
     assert not (tmp_path / "samples" / "foo" / "analysis" / "bar").is_dir()

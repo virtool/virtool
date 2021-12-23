@@ -11,7 +11,6 @@ from virtool.utils import hash_key
 
 
 class VirtoolTestClient:
-
     def __init__(self, test_client):
         self._test_client = test_client
 
@@ -59,17 +58,14 @@ class VirtoolTestClient:
 
 @pytest.fixture
 def create_app(
-        create_user,
-        dbi,
-        pg_connection_string,
-        redis_connection_string,
-        test_db_connection_string,
-        test_db_name
+    create_user,
+    dbi,
+    pg_connection_string,
+    redis_connection_string,
+    test_db_connection_string,
+    test_db_name,
 ):
-    def _create_app(
-            dev: bool = False,
-            base_url: str = ""
-    ):
+    def _create_app(dev: bool = False, base_url: str = ""):
         config = Config(
             base_url=base_url,
             db_connection_string=test_db_connection_string,
@@ -82,7 +78,7 @@ def create_app(
             no_sentry=True,
             postgres_connection_string=pg_connection_string,
             redis_connection_string=redis_connection_string,
-            fake=False
+            fake=False,
         )
 
         return virtool.app.create_app(config)
@@ -92,30 +88,28 @@ def create_app(
 
 @pytest.fixture
 def spawn_client(
-        pg,
-        request,
-        aiohttp_client,
-        test_motor,
-        dbi,
-        pg_session,
-        create_app,
-        create_user
+    pg, request, aiohttp_client, test_motor, dbi, pg_session, create_app, create_user
 ):
     async def func(
-            addon_route_table: Optional[RouteTableDef] = None,
-            auth=None,
-            authorize=False,
-            administrator=False,
-            base_url="",
-            dev=False,
-            enable_api=False,
-            groups=None,
-            permissions=None,
-            use_b2c=False
+        addon_route_table: Optional[RouteTableDef] = None,
+        auth=None,
+        authorize=False,
+        administrator=False,
+        base_url="",
+        dev=False,
+        enable_api=False,
+        groups=None,
+        permissions=None,
+        use_b2c=False,
     ):
         app = create_app(dev, base_url)
 
-        user_document = create_user(user_id="test", administrator=administrator, groups=groups, permissions=permissions)
+        user_document = create_user(
+            user_id="test",
+            administrator=administrator,
+            groups=groups,
+            permissions=permissions,
+        )
         await dbi.users.insert_one(user_document)
 
         if addon_route_table:
@@ -124,36 +118,31 @@ def spawn_client(
         if authorize:
             session_token = "bar"
 
-            await dbi.sessions.insert_one({
-                "_id": "foobar",
-                "ip": "127.0.0.1",
-                "administrator": administrator,
-                "force_reset": False,
-                "groups": user_document["groups"],
-                "permissions": user_document["permissions"],
-                "token": hash_key(session_token),
-                "user_agent": "Python/3.6 aiohttp/3.4.4",
-                "user": {
-                    "id": "test"
+            await dbi.sessions.insert_one(
+                {
+                    "_id": "foobar",
+                    "ip": "127.0.0.1",
+                    "administrator": administrator,
+                    "force_reset": False,
+                    "groups": user_document["groups"],
+                    "permissions": user_document["permissions"],
+                    "token": hash_key(session_token),
+                    "user_agent": "Python/3.6 aiohttp/3.4.4",
+                    "user": {"id": "test"},
                 }
-            })
+            )
 
-            cookies = {
-                "session_id": "foobar",
-                "session_token": "bar"
-            }
+            cookies = {"session_id": "foobar", "session_token": "bar"}
 
         elif use_b2c:
-            cookies = {
-                "id_token": "foobar"
-            }
+            cookies = {"id_token": "foobar"}
 
         else:
-            cookies = {
-                "session_id": "dne"
-            }
+            cookies = {"session_id": "dne"}
 
-        test_client = await aiohttp_client(app, auth=auth, cookies=cookies, auto_decompress=False)
+        test_client = await aiohttp_client(
+            app, auth=auth, cookies=cookies, auto_decompress=False
+        )
 
         return VirtoolTestClient(test_client)
 
@@ -162,28 +151,30 @@ def spawn_client(
 
 @pytest.fixture
 def spawn_job_client(
-        dbi,
-        aiohttp_client,
-        test_db_connection_string,
-        redis_connection_string,
-        pg_connection_string,
-        pg_session,
-        test_db_name
+    dbi,
+    aiohttp_client,
+    test_db_connection_string,
+    redis_connection_string,
+    pg_connection_string,
+    pg_session,
+    test_db_name,
 ):
     """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
 
     async def _spawn_job_client(
-            authorize: bool = False,
-            dev: bool = False,
-            add_route_table: RouteTableDef = None,
+        authorize: bool = False,
+        dev: bool = False,
+        add_route_table: RouteTableDef = None,
     ):
         # Create a test job to use for authentication.
         if authorize:
             job_id, key = "test_job", "test_key"
-            await dbi.jobs.insert_one({
-                "_id": job_id,
-                "key": hash_key(key),
-            })
+            await dbi.jobs.insert_one(
+                {
+                    "_id": job_id,
+                    "key": hash_key(key),
+                }
+            )
 
             # Create Basic Authentication header.
             auth = aiohttp.BasicAuth(login=f"job-{job_id}", password=key)
@@ -197,7 +188,7 @@ def spawn_job_client(
                 dev=dev,
                 fake=False,
                 postgres_connection_string=pg_connection_string,
-                redis_connection_string=redis_connection_string
+                redis_connection_string=redis_connection_string,
             )
         )
 

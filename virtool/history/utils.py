@@ -43,10 +43,10 @@ def compose_create_description(document: dict) -> str:
 
 
 def compose_edit_description(
-        name: Optional[str],
-        abbreviation: Optional[str],
-        old_abbreviation: Optional[str],
-        schema: Optional[dict]
+    name: Optional[str],
+    abbreviation: Optional[str],
+    old_abbreviation: Optional[str],
+    schema: Optional[dict],
 ) -> str:
     """
     Compose a change description for an edit on an existing OTU.
@@ -109,7 +109,9 @@ def compose_remove_description(document: dict) -> str:
     return description
 
 
-def derive_otu_information(old: Optional[dict], new: Optional[dict]) -> Tuple[str, str, Union[int, str], str]:
+def derive_otu_information(
+    old: Optional[dict], new: Optional[dict]
+) -> Tuple[str, str, Union[int, str], str]:
     """
     Derive OTU information for a new change document from the old and new joined OTU documents.
 
@@ -207,11 +209,7 @@ async def remove_diff_files(app, id_list: List[str]):
     for change_id in id_list:
         otu_id, otu_version = change_id.split(".")
 
-        path = join_diff_path(
-            data_path,
-            otu_id,
-            otu_version
-        )
+        path = join_diff_path(data_path, otu_id, otu_version)
 
         try:
             await app["run_in_thread"](os.remove, path)
@@ -219,7 +217,9 @@ async def remove_diff_files(app, id_list: List[str]):
             pass
 
 
-async def write_diff_file(data_path: Path, otu_id: str, otu_version: Union[int, str], body):
+async def write_diff_file(
+    data_path: Path, otu_id: str, otu_version: Union[int, str], body
+):
     path = join_diff_path(data_path, otu_id, otu_version)
 
     async with aiofiles.open(path, "w") as f:

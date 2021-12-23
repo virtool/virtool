@@ -22,6 +22,7 @@ class Upload(Base):
     SQL table to store all new uploads
 
     """
+
     __tablename__ = "uploads"
 
     id = Column(Integer, primary_key=True)

@@ -5,9 +5,7 @@ from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
-PROJECTION = {
-    "_id": False
-}
+PROJECTION = {"_id": False}
 
 
 @dataclass
@@ -37,15 +35,10 @@ async def ensure(db):
     """
     existing = await db.settings.find_one({"_id": "settings"}, {"_id": False}) or dict()
 
-    settings = {
-        **asdict(Settings()),
-        **existing
-    }
+    settings = {**asdict(Settings()), **existing}
     settings.pop("_id", None)
 
-    await db.settings.update_one({"_id": "settings"}, {
-        "$set": settings
-    }, upsert=True)
+    await db.settings.update_one({"_id": "settings"}, {"$set": settings}, upsert=True)
 
     return Settings(**settings)
 
@@ -78,9 +71,9 @@ async def update(db, updates: dict) -> Dict[str, Any]:
     :return: the settings document after updating
 
     """
-    updated = await db.settings.find_one_and_update({"_id": "settings"}, {
-        "$set": updates
-    })
+    updated = await db.settings.find_one_and_update(
+        {"_id": "settings"}, {"$set": updates}
+    )
 
     updated.pop("_id", None)
     return updated

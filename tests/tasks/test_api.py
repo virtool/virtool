@@ -12,28 +12,24 @@ async def test_find(spawn_client, pg_session, snapshot, static_time):
     task_1 = Task(
         id=1,
         complete=True,
-        context={
-            "user_id": "test_1"
-        },
+        context={"user_id": "test_1"},
         count=40,
         created_at=static_time.datetime,
         file_size=1024,
         progress=100,
         step="download",
-        type="clone_reference"
+        type="clone_reference",
     )
     task_2 = Task(
         id=2,
         complete=False,
-        context={
-            "user_id": "test_2"
-        },
+        context={"user_id": "test_2"},
         count=30,
         created_at=static_time.datetime,
         file_size=14754,
         progress=80,
         step="download",
-        type="import_reference"
+        type="import_reference",
     )
 
     async with pg_session as session:
@@ -47,7 +43,9 @@ async def test_find(spawn_client, pg_session, snapshot, static_time):
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, spawn_client, all_permissions, pg_session, static_time, snapshot, resp_is):
+async def test_get(
+    error, spawn_client, all_permissions, pg_session, static_time, snapshot, resp_is
+):
     """
     Test that a ``GET /tasks/:task_id`` return the correct task document.
 
@@ -56,19 +54,19 @@ async def test_get(error, spawn_client, all_permissions, pg_session, static_time
 
     if not error:
         async with pg_session as session:
-            session.add(Task(
-                id=1,
-                complete=True,
-                context={
-                    "user_id": "test_1"
-                },
-                count=40,
-                created_at=static_time.datetime,
-                file_size=1024,
-                progress=100,
-                step="download",
-                type="clone_reference"
-            ))
+            session.add(
+                Task(
+                    id=1,
+                    complete=True,
+                    context={"user_id": "test_1"},
+                    count=40,
+                    created_at=static_time.datetime,
+                    file_size=1024,
+                    progress=100,
+                    step="download",
+                    type="clone_reference",
+                )
+            )
             await session.commit()
 
     resp = await client.get("/tasks/1")

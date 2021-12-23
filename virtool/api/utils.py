@@ -19,11 +19,7 @@ def compose_exists_query(field: str) -> Dict[str, Dict[str, bool]]:
     :return: a query
 
     """
-    return {
-        field: {
-            "$exists": True
-        }
-    }
+    return {field: {"$exists": True}}
 
 
 def compose_regex_query(term, fields: List[str]) -> Dict[str, List[Dict[str, dict]]]:
@@ -48,19 +44,17 @@ def compose_regex_query(term, fields: List[str]) -> Dict[str, List[Dict[str, dic
     regex = re.compile(str(term), re.IGNORECASE)
 
     # Compose and return $or-based query.
-    return {
-        "$or": [{field: {"$regex": regex}} for field in fields]
-    }
+    return {"$or": [{field: {"$regex": regex}} for field in fields]}
 
 
 async def paginate(
-        collection,
-        db_query: Union[Dict, MultiDictProxy[str]],
-        url_query: Union[Dict, MultiDictProxy[str]],
-        sort: Optional[Union[List[Tuple[str, int]], str]] = None,
-        projection: Optional[Projection] = None,
-        base_query: Optional[Dict] = None,
-        reverse: bool = False
+    collection,
+    db_query: Union[Dict, MultiDictProxy[str]],
+    url_query: Union[Dict, MultiDictProxy[str]],
+    sort: Optional[Union[List[Tuple[str, int]], str]] = None,
+    projection: Optional[Projection] = None,
+    base_query: Optional[Dict] = None,
+    reverse: bool = False,
 ):
     """
     A function for searching and paging collections.
@@ -112,15 +106,9 @@ async def paginate(
     if isinstance(sort, str):
         sort = [(sort, -1 if reverse else 1)]
 
-    db_query = {
-        "$and": [base_query, db_query]
-    }
+    db_query = {"$and": [base_query, db_query]}
 
-    cursor = collection.find(
-        db_query,
-        projection,
-        sort=sort
-    )
+    cursor = collection.find(db_query, projection, sort=sort)
 
     found_count = await collection.count_documents(db_query)
 
@@ -132,8 +120,10 @@ async def paginate(
         if page > 1:
             cursor.skip((page - 1) * per_page)
 
-        documents = [await collection.apply_processor(d) for d in
-                     await asyncio.shield(cursor.to_list(per_page))]
+        documents = [
+            await collection.apply_processor(d)
+            for d in await asyncio.shield(cursor.to_list(per_page))
+        ]
 
     total_count = await collection.count_documents(base_query)
 
@@ -143,7 +133,7 @@ async def paginate(
         "found_count": found_count,
         "page_count": page_count,
         "per_page": per_page,
-        "page": page
+        "page": page,
     }
 
 

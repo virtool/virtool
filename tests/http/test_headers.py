@@ -12,7 +12,9 @@ def public_test_route(request: Request):
 
 
 async def test_on_prepare_location_location(spawn_client):
-    client = await spawn_client(base_url="foobar", authorize=True, addon_route_table=test_routes)
+    client = await spawn_client(
+        base_url="foobar", authorize=True, addon_route_table=test_routes
+    )
 
     resp = await client.get("/foo")
 

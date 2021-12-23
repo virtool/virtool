@@ -6,40 +6,34 @@ import pytest
 async def test_all(get, missing, spawn_client):
     client = await spawn_client(authorize=True)
 
-    isolates = [{
-        "id": "baz",
-        "source_type": "isolate",
-        "source_name": "Baz"
-    }]
+    isolates = [{"id": "baz", "source_type": "isolate", "source_name": "Baz"}]
 
     if missing != "isolate":
-        isolates.append({
-            "id": "foo",
-            "source_type": "isolate",
-            "source_name": "Foo"
-        })
+        isolates.append({"id": "foo", "source_type": "isolate", "source_name": "Foo"})
 
     if missing != "otu":
-        await client.db.otus.insert_one({
-            "_id": "foobar",
-            "name": "Foobar virus",
-            "isolates": isolates
-        })
+        await client.db.otus.insert_one(
+            {"_id": "foobar", "name": "Foobar virus", "isolates": isolates}
+        )
 
-    sequences = [{
-        "_id": "test_1",
-        "otu_id": "foobar",
-        "isolate_id": "baz",
-        "sequence": "ATAGGGACATA"
-    }]
+    sequences = [
+        {
+            "_id": "test_1",
+            "otu_id": "foobar",
+            "isolate_id": "baz",
+            "sequence": "ATAGGGACATA",
+        }
+    ]
 
     if missing != "sequence":
-        sequences.append({
-            "_id": "test_2",
-            "otu_id": "foobar",
-            "isolate_id": "foo",
-            "sequence": "ATAGGGACATA"
-        })
+        sequences.append(
+            {
+                "_id": "test_2",
+                "otu_id": "foobar",
+                "isolate_id": "foo",
+                "sequence": "ATAGGGACATA",
+            }
+        )
 
     await client.db.sequences.insert_many(sequences)
 

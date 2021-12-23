@@ -6,7 +6,9 @@ from virtool.tasks.models import Task
 
 
 @pytest.mark.parametrize("files", ["DNE", "empty", "full", "not_ready"])
-async def test_add_index_files(spawn_client, pg_session, static_time, tmp_path, snapshot, files):
+async def test_add_index_files(
+    spawn_client, pg_session, static_time, tmp_path, snapshot, files
+):
     """
     Test that ``files`` field is populated for index documents in the following cases:
 
@@ -28,7 +30,7 @@ async def test_add_index_files(spawn_client, pg_session, static_time, tmp_path, 
         "name": "Foo",
         "nickname": "Foo Index",
         "deleted": False,
-        "ready": True
+        "ready": True,
     }
 
     if files == "empty":
@@ -50,7 +52,7 @@ async def test_add_index_files(spawn_client, pg_session, static_time, tmp_path, 
         progress=0,
         step="rename_index_files",
         type="add_index_files",
-        created_at=static_time.datetime
+        created_at=static_time.datetime,
     )
 
     async with pg_session as session:

@@ -15,11 +15,14 @@ def alphanumeric():
     return "abcdefghijklmnopqrstuvwxyz1234567890"
 
 
-@pytest.mark.parametrize("document,result", [
-    (None, None),
-    ({"_id": "foo"}, {"id": "foo"}),
-    ({"id": "foo"}, {"id": "foo"}),
-])
+@pytest.mark.parametrize(
+    "document,result",
+    [
+        (None, None),
+        ({"_id": "foo"}, {"id": "foo"}),
+        ({"id": "foo"}, {"id": "foo"}),
+    ],
+)
 def test_base_processor(document, result):
     assert virtool.utils.base_processor(document) == result
 
@@ -33,7 +36,7 @@ def test_generate_key(mocker):
     m_token_hex = mocker.patch("secrets.token_hex", return_value="foobar")
     assert virtool.utils.generate_key() == (
         "foobar",
-        "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"
+        "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2",
     )
     m_token_hex.assert_called_with(32)
 
@@ -54,12 +57,12 @@ def test_decompress_tgz(tmp_path):
     assert set(os.listdir(path / "de" / "virtool")) == {
         "run",
         "client",
-        "VERSION", "install.sh"
+        "VERSION",
+        "install.sh",
     }
 
 
 class TestRandomAlphanumeric:
-
     def test_default(self, alphanumeric):
         for _ in range(0, 10):
             result = virtool.utils.random_alphanumeric()
@@ -80,10 +83,9 @@ class TestRandomAlphanumeric:
             assert all(a in alphanumeric for a in result)
 
 
-@pytest.mark.parametrize("recursive,expected", [
-    (True, {"foo.txt"}),
-    (False, {"foo.txt", "baz"})
-])
+@pytest.mark.parametrize(
+    "recursive,expected", [(True, {"foo.txt"}), (False, {"foo.txt", "baz"})]
+)
 def test_rm(recursive, expected, tmp_path):
     """
     Test that a file can be removed and that a folder can be removed when `recursive` is set to
@@ -99,16 +101,10 @@ def test_rm(recursive, expected, tmp_path):
     virtool.utils.rm(tmp_path / "bar.txt")
 
     if recursive:
-        virtool.utils.rm(
-            tmp_path / "baz",
-            recursive=recursive
-        )
+        virtool.utils.rm(tmp_path / "baz", recursive=recursive)
     else:
         with pytest.raises(IsADirectoryError):
-            virtool.utils.rm(
-                tmp_path / "baz",
-                recursive=recursive
-            )
+            virtool.utils.rm(tmp_path / "baz", recursive=recursive)
 
     assert set(os.listdir(tmp_path)) == expected
 
@@ -143,12 +139,15 @@ def test_timestamp(mocker):
     assert timestamp == arrow.arrow.Arrow(2017, 10, 6, 20, 0, 0, 612000).naive
 
 
-@pytest.mark.parametrize("value,result", [
-    ("true", True),
-    ("1", True),
-    ("false", False),
-    ("0", False),
-])
+@pytest.mark.parametrize(
+    "value,result",
+    [
+        ("true", True),
+        ("1", True),
+        ("false", False),
+        ("0", False),
+    ],
+)
 def test_to_bool(value, result):
     """
     Test that function converts expected input values correctly.
@@ -174,6 +173,6 @@ def test_compress_json_with_gzip(tmpdir):
     assert target_with_sub_paths.exists()
 
     for _target in (target, target_with_sub_paths):
-        with gzip.open(_target, 'r') as f:
-            json_data = f.read().decode('utf-8')
+        with gzip.open(_target, "r") as f:
+            json_data = f.read().decode("utf-8")
             assert json_data == data

@@ -15,7 +15,7 @@ FILES = (
     "subtraction.3.bt2",
     "subtraction.4.bt2",
     "subtraction.rev.1.bt2",
-    "subtraction.rev.2.bt2"
+    "subtraction.rev.2.bt2",
 )
 
 logger = logging.getLogger(__name__)
@@ -55,13 +55,21 @@ async def get_subtraction_files(pg: AsyncEngine, subtraction: str) -> List[dict]
     """
     async with AsyncSession(pg) as session:
         files = (
-            await session.execute(select(SubtractionFile).filter_by(subtraction=subtraction))
-        ).scalars().all()
+            (
+                await session.execute(
+                    select(SubtractionFile).filter_by(subtraction=subtraction)
+                )
+            )
+            .scalars()
+            .all()
+        )
 
     files = [file.to_dict() for file in files]
 
     for file in files:
-        file["download_url"] = f"/subtractions/{file['subtraction']}/files/{file['name']}"
+        file[
+            "download_url"
+        ] = f"/subtractions/{file['subtraction']}/files/{file['name']}"
 
     return files
 

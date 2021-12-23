@@ -13,9 +13,7 @@ class MigrateFilesTask(virtool.tasks.task.Task):
     def __init__(self, app: App, task_id: int):
         super().__init__(app, task_id)
 
-        self.steps = [
-            self.transform_documents_to_rows
-        ]
+        self.steps = [self.transform_documents_to_rows]
 
     async def transform_documents_to_rows(self):
         """
@@ -24,7 +22,11 @@ class MigrateFilesTask(virtool.tasks.task.Task):
         """
         async for document in self.db.files.find():
             async with AsyncSession(self.app["pg"]) as session:
-                exists = (await session.execute(select(Upload).filter_by(name_on_disk=document["_id"]))).scalar()
+                exists = (
+                    await session.execute(
+                        select(Upload).filter_by(name_on_disk=document["_id"])
+                    )
+                ).scalar()
 
                 if not exists:
                     upload = Upload(
@@ -36,7 +38,7 @@ class MigrateFilesTask(virtool.tasks.task.Task):
                         size=document["size"],
                         type=document["type"],
                         user=document["user"]["id"],
-                        uploaded_at=document["uploaded_at"]
+                        uploaded_at=document["uploaded_at"],
                     )
 
                     session.add(upload)
@@ -45,8 +47,5 @@ class MigrateFilesTask(virtool.tasks.task.Task):
                     await self.db.files.delete_one({"_id": document["_id"]})
 
         await virtool.tasks.pg.update(
-            self.pg,
-            self.id,
-            step="transform_documents_to_rows"
+            self.pg, self.id, step="transform_documents_to_rows"
         )
-

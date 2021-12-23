@@ -8,7 +8,9 @@ from virtool.tasks.models import Task
 from virtool.uploads.models import Upload
 
 
-async def test_compress_samples_task(mocker, dbi, pg: AsyncEngine, pg_session, static_time):
+async def test_compress_samples_task(
+    mocker, dbi, pg: AsyncEngine, pg_session, static_time
+):
     """
     Ensure `compress_reads` is called correctly given a samples collection.
 
@@ -17,23 +19,16 @@ async def test_compress_samples_task(mocker, dbi, pg: AsyncEngine, pg_session, s
         "db": dbi,
         "pg": pg,
         "run_in_thread": make_mocked_coro(),
-        "settings": dict()
+        "settings": dict(),
     }
 
-    await dbi.samples.insert_many([
-        {
-            "_id": "foo",
-            "is_legacy": True
-        },
-        {
-            "_id": "fab",
-            "is_legacy": False
-        },
-        {
-            "_id": "bar",
-            "is_legacy": True
-        }
-    ])
+    await dbi.samples.insert_many(
+        [
+            {"_id": "foo", "is_legacy": True},
+            {"_id": "fab", "is_legacy": False},
+            {"_id": "bar", "is_legacy": True},
+        ]
+    )
 
     async with pg_session as session:
         task = Task(
@@ -44,7 +39,7 @@ async def test_compress_samples_task(mocker, dbi, pg: AsyncEngine, pg_session, s
             progress=0,
             step="rename_index_files",
             type="add_subtraction_files",
-            created_at=static_time.datetime
+            created_at=static_time.datetime,
         )
         session.add(task)
         await session.commit()
@@ -55,11 +50,9 @@ async def test_compress_samples_task(mocker, dbi, pg: AsyncEngine, pg_session, s
         calls.append((app, sample))
 
         # Set is_compressed on the sample as would be expected after a successful compression
-        await app["db"].samples.update_one({"_id": sample["_id"]}, {
-            "$set": {
-                "is_compressed": True
-            }
-        })
+        await app["db"].samples.update_one(
+            {"_id": sample["_id"]}, {"$set": {"is_compressed": True}}
+        )
 
     mocker.patch("virtool.samples.db.compress_sample_reads", compress_reads)
 
@@ -67,27 +60,25 @@ async def test_compress_samples_task(mocker, dbi, pg: AsyncEngine, pg_session, s
 
     await task.run()
 
-    assert calls == ([
-        (app_dict, {
-            "_id": "foo",
-            "is_legacy": True
-        }),
-        (app_dict, {
-            "_id": "bar",
-            "is_legacy": True
-        })
-    ])
+    assert calls == (
+        [
+            (app_dict, {"_id": "foo", "is_legacy": True}),
+            (app_dict, {"_id": "bar", "is_legacy": True}),
+        ]
+    )
 
 
 @pytest.mark.parametrize("legacy", [True, False])
 @pytest.mark.parametrize("compressed", [True, False])
 @pytest.mark.parametrize("paired", [True, False])
-async def test_move_sample_files_task(legacy, compressed, paired, dbi, pg, pg_session, snapshot, static_time):
+async def test_move_sample_files_task(
+    legacy, compressed, paired, dbi, pg, pg_session, snapshot, static_time
+):
     app_dict = {
         "db": dbi,
         "pg": pg,
         "run_in_thread": make_mocked_coro(),
-        "settings": dict()
+        "settings": dict(),
     }
 
     sample = {
@@ -129,16 +120,18 @@ async def test_move_sample_files_task(legacy, compressed, paired, dbi, pg, pg_se
     await dbi.samples.insert_one(sample)
 
     async with pg_session as session:
-        session.add(Task(
-            id=1,
-            complete=False,
-            context={},
-            count=0,
-            progress=0,
-            step="move_sample_files",
-            type="migrate_files",
-            created_at=static_time.datetime
-        ))
+        session.add(
+            Task(
+                id=1,
+                complete=False,
+                context={},
+                count=0,
+                progress=0,
+                step="move_sample_files",
+                type="migrate_files",
+                created_at=static_time.datetime,
+            )
+        )
         await session.commit()
 
     task = MoveSampleFilesTask(app_dict, 1)
@@ -149,7 +142,9 @@ async def test_move_sample_files_task(legacy, compressed, paired, dbi, pg, pg_se
 
     if not legacy or (legacy and compressed):
         async with pg_session as session:
-            sample_reads = (await session.execute(select(SampleReads).filter_by(id=1))).scalar()
+            sample_reads = (
+                await session.execute(select(SampleReads).filter_by(id=1))
+            ).scalar()
             upload = (await session.execute(select(Upload).filter_by(id=1))).scalar()
 
         assert sample_reads in upload.reads

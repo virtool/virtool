@@ -10,37 +10,19 @@ class TestFind:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        label_1 = Label(
-            id=1,
-            name="Bug",
-            color="#a83432",
-            description="This is a bug"
-        )
+        label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
 
         label_2 = Label(
-            id=2,
-            name="Question",
-            color="#03fc20",
-            description="This is a question"
+            id=2, name="Question", color="#03fc20", description="This is a question"
         )
 
-        await client.db.samples.insert_many([
-            {
-                "_id": "foo",
-                "name": "Foo",
-                "labels": [2]
-            },
-            {
-                "_id": "bar",
-                "name": "Bar",
-                "labels": [1]
-            },
-            {
-                "_id": "baz",
-                "name": "Baz",
-                "labels": [2]
-            }
-        ])
+        await client.db.samples.insert_many(
+            [
+                {"_id": "foo", "name": "Foo", "labels": [2]},
+                {"_id": "bar", "name": "Bar", "labels": [1]},
+                {"_id": "baz", "name": "Baz", "labels": [2]},
+            ]
+        )
 
         async with pg_session as session:
             session.add_all([label_1, label_2])
@@ -58,12 +40,7 @@ class TestFind:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        label = Label(
-            id=1,
-            name="Bug",
-            color="#a83432",
-            description="This is a bug"
-        )
+        label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
 
         async with pg_session as session:
             session.add(label)
@@ -88,32 +65,19 @@ async def test_get(error, spawn_client, all_permissions, pg_session, resp_is):
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    await client.db.samples.insert_many([
-        {
-            "_id": "foo",
-            "name": "Foo",
-            "labels": [2]
-        },
-        {
-            "_id": "bar",
-            "name": "Bar",
-            "labels": [1]
-        },
-        {
-            "_id": "baz",
-            "name": "Baz",
-            "labels": [2]
-        }
-    ])
+    await client.db.samples.insert_many(
+        [
+            {"_id": "foo", "name": "Foo", "labels": [2]},
+            {"_id": "bar", "name": "Bar", "labels": [1]},
+            {"_id": "baz", "name": "Baz", "labels": [2]},
+        ]
+    )
 
     if not error:
         async with pg_session as session:
-            session.add(Label(
-                id=1,
-                name="Bug",
-                color="#a83432",
-                description="This is a test"
-            ))
+            session.add(
+                Label(id=1, name="Bug", color="#a83432", description="This is a test")
+            )
             await session.commit()
 
     resp = await client.get("/labels/1")
@@ -128,46 +92,34 @@ async def test_get(error, spawn_client, all_permissions, pg_session, resp_is):
         "name": "Bug",
         "color": "#a83432",
         "description": "This is a test",
-        "count": 1
+        "count": 1,
     }
 
 
 @pytest.mark.parametrize("error", [None, "400_exists", "422_color"])
-async def test_create(error, spawn_client, test_random_alphanumeric, pg_session, resp_is):
+async def test_create(
+    error, spawn_client, test_random_alphanumeric, pg_session, resp_is
+):
     """
     Test that a label can be added to the database at ``POST /labels``.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    await client.db.samples.insert_many([
-        {
-            "_id": "foo",
-            "name": "Foo",
-            "labels": [2]
-        },
-        {
-            "_id": "bar",
-            "name": "Bar",
-            "labels": [1]
-        },
-        {
-            "_id": "baz",
-            "name": "Baz",
-            "labels": [2]
-        }
-    ])
+    await client.db.samples.insert_many(
+        [
+            {"_id": "foo", "name": "Foo", "labels": [2]},
+            {"_id": "bar", "name": "Bar", "labels": [1]},
+            {"_id": "baz", "name": "Baz", "labels": [2]},
+        ]
+    )
 
     if error == "400_exists":
         async with pg_session as session:
             session.add(Label(id=1, name="Bug"))
             await session.commit()
 
-    data = {
-        "name": "Bug",
-        "color": "#a83432",
-        "description": "This is a bug"
-    }
+    data = {"name": "Bug", "color": "#a83432", "description": "This is a bug"}
 
     if error == "422_color":
         data["color"] = "#1234567"
@@ -189,7 +141,7 @@ async def test_create(error, spawn_client, test_random_alphanumeric, pg_session,
         "name": "Bug",
         "color": "#a83432",
         "description": "This is a bug",
-        "count": 1
+        "count": 1,
     }
 
 
@@ -201,37 +153,19 @@ async def test_edit(error, spawn_client, pg_session, resp_is):
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    await client.db.samples.insert_many([
-        {
-            "_id": "foo",
-            "name": "Foo",
-            "labels": [2]
-        },
-        {
-            "_id": "bar",
-            "name": "Bar",
-            "labels": [1]
-        },
-        {
-            "_id": "baz",
-            "name": "Baz",
-            "labels": [2]
-        }
-    ])
+    await client.db.samples.insert_many(
+        [
+            {"_id": "foo", "name": "Foo", "labels": [2]},
+            {"_id": "bar", "name": "Bar", "labels": [1]},
+            {"_id": "baz", "name": "Baz", "labels": [2]},
+        ]
+    )
 
     if error != "404":
-        label_1 = Label(
-            id=1,
-            name="Bug",
-            color="#a83432",
-            description="This is a bug"
-        )
+        label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
 
         label_2 = Label(
-            id=2,
-            name="Question",
-            color="#03fc20",
-            description="Question from a user"
+            id=2, name="Question", color="#03fc20", description="Question from a user"
         )
 
         async with pg_session as session:
@@ -241,11 +175,7 @@ async def test_edit(error, spawn_client, pg_session, resp_is):
     data = dict()
 
     if error != "422_data":
-        data = {
-            "name": "Bug",
-            "color": "#fc5203",
-            "description": "Need to be fixed"
-        }
+        data = {"name": "Bug", "color": "#fc5203", "description": "Need to be fixed"}
 
     if error == "400_exists":
         data["name"] = "Question"
@@ -273,7 +203,7 @@ async def test_edit(error, spawn_client, pg_session, resp_is):
         "name": "Bug",
         "color": "#fc5203",
         "description": "Need to be fixed",
-        "count": 1
+        "count": 1,
     }
 
 
@@ -287,12 +217,9 @@ async def test_remove(error, spawn_client, pg_session, resp_is):
 
     if not error:
         async with pg_session as session:
-            session.add(Label(
-                id=1,
-                name="Bug",
-                color="#a83432",
-                description="This is a bug"
-            ))
+            session.add(
+                Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+            )
             await session.commit()
 
     resp = await client.delete("/labels/1")
@@ -314,7 +241,7 @@ async def test_is_valid_hex_color(value, spawn_client, resp_is):
     data = {
         "name": "test",
         "color": "#fc5203" if value == "valid_hex_color" else "foo",
-        "description": "test"
+        "description": "test",
     }
 
     resp = await client.patch("/labels/00", data=data)
@@ -322,4 +249,6 @@ async def test_is_valid_hex_color(value, spawn_client, resp_is):
     if value == "valid_hex_color":
         await resp_is.not_found(resp)
     else:
-        await resp_is.invalid_input(resp, {'color': ['This is not a valid Hexadecimal color']})
+        await resp_is.invalid_input(
+            resp, {"color": ["This is not a valid Hexadecimal color"]}
+        )

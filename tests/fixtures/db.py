@@ -7,7 +7,6 @@ import virtool.db.mongo
 
 
 class MockDeleteResult:
-
     def __init__(self, deleted_count):
         self.deleted_count = deleted_count
 

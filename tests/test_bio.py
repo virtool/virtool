@@ -3,8 +3,13 @@ from pathlib import Path
 
 import pytest
 from aiohttp import web
-from virtool.bio import (check_rid, extract_blast_info, format_blast_hit,
-                         get_ncbi_blast_result, initialize_ncbi_blast)
+from virtool.bio import (
+    check_rid,
+    extract_blast_info,
+    format_blast_hit,
+    get_ncbi_blast_result,
+    initialize_ncbi_blast,
+)
 
 TEST_FILES_PATH = Path.cwd() / "tests" / "test_files"
 TEST_BIO_PATH = TEST_FILES_PATH / "bio"
@@ -34,7 +39,7 @@ def mock_blast_server(monkeypatch, loop, aiohttp_server):
                 "CMD": "Get",
                 "RID": "YA6M9135015",
                 "FORMAT_TYPE": "JSON2",
-                "FORMAT_OBJECT": "Alignment"
+                "FORMAT_OBJECT": "Alignment",
             }
 
             with open(TEST_BIO_PATH / "blast.zip", "rb") as f:
@@ -50,7 +55,7 @@ def mock_blast_server(monkeypatch, loop, aiohttp_server):
             "MEGABLAST": "on",
             "HITLIST_SIZE": "5",
             "FILTER": "mL",
-            "FORMAT_TYPE": "JSON2"
+            "FORMAT_TYPE": "JSON2",
         }
 
         data = await req.post()
@@ -70,8 +75,7 @@ def mock_blast_server(monkeypatch, loop, aiohttp_server):
     server = loop.run_until_complete(aiohttp_server(app))
 
     monkeypatch.setattr(
-        "virtool.bio.BLAST_URL",
-        "http://{}:{}/blast".format(server.host, server.port)
+        "virtool.bio.BLAST_URL", "http://{}:{}/blast".format(server.host, server.port)
     )
 
     return server
@@ -81,13 +85,7 @@ def mock_blast_server(monkeypatch, loop, aiohttp_server):
 @pytest.mark.parametrize("sciname", ["Vitis", None])
 def test_format_blast_hit(missing, sciname, snapshot):
     hit = {
-        "description": [
-            {
-                "accession": "ABC123",
-                "taxid": "1234",
-                "title": "Foo"
-            }
-        ],
+        "description": [{"accession": "ABC123", "taxid": "1234", "title": "Foo"}],
         "hsps": [
             {
                 "identity": 0.86,
@@ -95,10 +93,10 @@ def test_format_blast_hit(missing, sciname, snapshot):
                 "align_len": 231,
                 "score": 98,
                 "bit_score": 1092,
-                "gaps": 3
+                "gaps": 3,
             }
         ],
-        "len": 4321
+        "len": 4321,
     }
 
     if missing:
@@ -129,10 +127,9 @@ def test_extract_blast_info():
         assert extract_blast_info(f.read()) == ("YA40WNN5014", 19)
 
 
-@pytest.mark.parametrize("rid,expected", [
-    ("YA27F0T6015", True),
-    ("5106T0F27AY", False)
-])
+@pytest.mark.parametrize(
+    "rid,expected", [("YA27F0T6015", True), ("5106T0F27AY", False)]
+)
 async def test_check_rid(rid, expected, mock_blast_server, config):
     """
     Test that check_rid() returns the correct result given HTML for a ready BLAST request and a waiting BLAST request.

@@ -52,7 +52,9 @@ async def revert(req):
     if not document:
         raise NotFound()
 
-    if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
+    if not await virtool.references.db.check_right(
+        req, document["reference"]["id"], "modify_otu"
+    ):
         raise InsufficientRights()
 
     try:

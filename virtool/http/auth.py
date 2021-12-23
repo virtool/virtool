@@ -11,23 +11,17 @@ from virtool.http.client import UserClient
 from virtool.http.utils import set_session_id_cookie
 from virtool.oidc.utils import update_jwk_args, validate_token
 from virtool.users.db import B2CUserAttributes, find_or_create_b2c_user
-from virtool.users.sessions import (clear_reset_code, create_session,
-                                    get_session)
+from virtool.users.sessions import clear_reset_code, create_session, get_session
 from virtool.utils import random_alphanumeric
 
-AUTHORIZATION_PROJECTION = [
-    "user",
-    "administrator",
-    "groups",
-    "permissions"
-]
+AUTHORIZATION_PROJECTION = ["user", "administrator", "groups", "permissions"]
 
 PUBLIC_ROUTES = [
     "/oidc/acquire_tokens",
     "/oidc/refresh_tokens",
     "/oidc/delete_tokens",
     "/account/login",
-    "/account/logout"
+    "/account/logout",
 ]
 
 
@@ -74,7 +68,9 @@ async def authenticate_with_key(req: Request, handler: Callable) -> Response:
     return await authenticate_with_api_key(req, handler, holder_id, key)
 
 
-async def authenticate_with_api_key(req: Request, handler: Callable, user_id: str, key: str) -> Response:
+async def authenticate_with_api_key(
+    req: Request, handler: Callable, user_id: str, key: str
+) -> Response:
     db = req.app["db"]
 
     document = await db.keys.find_one(
@@ -102,7 +98,7 @@ async def authenticate_with_api_key(req: Request, handler: Callable, user_id: st
         groups=user["groups"],
         permissions=document["permissions"],
         user_id=user_id,
-        authenticated=True
+        authenticated=True,
     )
 
     return await handler(req)
@@ -130,7 +126,7 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
             req.app["b2c"].msal.initiate_auth_code_flow,
             ["email"],
             f"http://localhost:9950/oidc/acquire_tokens",
-            random_alphanumeric(8)
+            random_alphanumeric(8),
         )
         req.app["b2c"].auth_code_flow = auth_code_flow
         return HTTPFound(auth_code_flow["auth_uri"])
@@ -147,7 +143,7 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
         display_name=token_claims["name"],
         given_name=token_claims["given_name"],
         family_name=token_claims["family_name"],
-        oid=token_claims["oid"]
+        oid=token_claims["oid"],
     )
 
     user_document = await find_or_create_b2c_user(req.app["db"], user_attributes)
@@ -159,7 +155,7 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
         groups=user_document["groups"],
         permissions=user_document["permissions"],
         user_id=user_document["_id"],
-        authenticated=True
+        authenticated=True,
     )
 
     return await handler(req)
@@ -184,7 +180,7 @@ async def middleware(req, handler) -> Response:
             groups=list(),
             permissions=dict(),
             user_id=None,
-            authenticated=False
+            authenticated=False,
         )
 
         return await handler(req)
@@ -199,11 +195,7 @@ async def middleware(req, handler) -> Response:
     session_id = req.cookies.get("session_id")
     session_token = req.cookies.get("session_token")
 
-    session, session_token = await get_session(
-        db,
-        session_id,
-        session_token
-    )
+    session, session_token = await get_session(db, session_id, session_token)
 
     ip = get_ip(req)
 
@@ -221,7 +213,7 @@ async def middleware(req, handler) -> Response:
             session["permissions"],
             session["user"]["id"],
             authenticated=True,
-            session_id=session_id
+            session_id=session_id,
         )
 
     else:

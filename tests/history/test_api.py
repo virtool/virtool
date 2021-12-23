@@ -42,7 +42,9 @@ async def test_get(error, snapshot, resp_is, spawn_client, test_changes, static_
 
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("remove", [False, True])
-async def test_revert(error, remove, snapshot, create_mock_history, spawn_client, check_ref_right, resp_is):
+async def test_revert(
+    error, remove, snapshot, create_mock_history, spawn_client, check_ref_right, resp_is
+):
     """
     Test that a valid request results in a reversion and a ``204`` response.
 

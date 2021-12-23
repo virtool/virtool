@@ -49,7 +49,7 @@ ROUTES = (
     virtool.subtractions.api.routes,
     virtool.uploads.api.routes,
     virtool.users.api.routes,
-    virtool.oidc.api.routes
+    virtool.oidc.api.routes,
 )
 
 

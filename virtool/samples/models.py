@@ -25,6 +25,7 @@ class SampleArtifact(Base):
     SQL model to store sample artifacts
 
     """
+
     __tablename__ = "sample_artifacts"
     __table_args__ = (UniqueConstraint("sample", "name"),)
 
@@ -42,6 +43,7 @@ class SampleReads(Base):
     SQL model to store new sample reads files
 
     """
+
     __tablename__ = "sample_reads"
     __table_args__ = (UniqueConstraint("sample", "name"),)
 
@@ -50,5 +52,5 @@ class SampleReads(Base):
     name = Column(String(length=13), nullable=False)
     name_on_disk = Column(String, nullable=False)
     size = Column(Integer)
-    upload = Column(Integer, ForeignKey('uploads.id'))
+    upload = Column(Integer, ForeignKey("uploads.id"))
     uploaded_at = Column(DateTime)

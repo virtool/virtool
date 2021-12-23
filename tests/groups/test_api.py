@@ -9,30 +9,20 @@ async def test_find(spawn_client, all_permissions, no_permissions):
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    await client.db.groups.insert_many([
-        {
-            "_id": "test",
-            "permissions": all_permissions
-        },
-        {
-            "_id": "limited",
-            "permissions": no_permissions
-        }
-    ])
+    await client.db.groups.insert_many(
+        [
+            {"_id": "test", "permissions": all_permissions},
+            {"_id": "limited", "permissions": no_permissions},
+        ]
+    )
 
     resp = await client.get("/groups")
 
     assert resp.status == 200
 
     assert await resp.json() == [
-        {
-            "id": "test",
-            "permissions": all_permissions
-        },
-        {
-            "id": "limited",
-            "permissions": no_permissions
-        }
+        {"id": "test", "permissions": all_permissions},
+        {"id": "limited", "permissions": no_permissions},
     ]
 
 
@@ -43,20 +33,15 @@ async def test_create(error, spawn_client, all_permissions, no_permissions, resp
 
     """
     client = await spawn_client(
-        authorize=True,
-        administrator=True,
-        base_url="https://virtool.example.com"
+        authorize=True, administrator=True, base_url="https://virtool.example.com"
     )
 
     if error:
-        await client.db.groups.insert_one({
-            "_id": "test",
-            "permissions": all_permissions
-        })
+        await client.db.groups.insert_one(
+            {"_id": "test", "permissions": all_permissions}
+        )
 
-    resp = await client.post("/groups", data={
-        "group_id": "test"
-    })
+    resp = await client.post("/groups", data={"group_id": "test"})
 
     if error:
         await resp_is.bad_request(resp, "Group already exists")
@@ -65,14 +50,11 @@ async def test_create(error, spawn_client, all_permissions, no_permissions, resp
     assert resp.status == 201
     assert resp.headers["Location"] == "https://virtool.example.com/groups/test"
 
-    assert await resp.json() == {
-        "id": "test",
-        "permissions": no_permissions
-    }
+    assert await resp.json() == {"id": "test", "permissions": no_permissions}
 
     assert await client.db.groups.find_one("test") == {
         "_id": "test",
-        "permissions": no_permissions
+        "permissions": no_permissions,
     }
 
 
@@ -85,10 +67,9 @@ async def test_get(error, spawn_client, all_permissions, resp_is):
     client = await spawn_client(authorize=True, administrator=True)
 
     if not error:
-        await client.db.groups.insert_one({
-            "_id": "foo",
-            "permissions": all_permissions
-        })
+        await client.db.groups.insert_one(
+            {"_id": "foo", "permissions": all_permissions}
+        )
 
     resp = await client.get("/groups/foo")
 
@@ -98,10 +79,7 @@ async def test_get(error, spawn_client, all_permissions, resp_is):
 
     assert resp.status == 200
 
-    assert await resp.json() == {
-        "id": "foo",
-        "permissions": all_permissions
-    }
+    assert await resp.json() == {"id": "foo", "permissions": all_permissions}
 
 
 @pytest.mark.parametrize("error", [None, "404"])
@@ -113,16 +91,13 @@ async def test_update_permissions(error, spawn_client, no_permissions, resp_is):
     client = await spawn_client(authorize=True, administrator=True)
 
     if not error:
-        await client.db.groups.insert_one({
-            "_id": "test",
-            "permissions": no_permissions
-        })
+        await client.db.groups.insert_one(
+            {"_id": "test", "permissions": no_permissions}
+        )
 
-    resp = await client.patch("/groups/test", data={
-        "permissions": {
-            "create_sample": True
-        }
-    })
+    resp = await client.patch(
+        "/groups/test", data={"permissions": {"create_sample": True}}
+    )
 
     if error:
         await resp_is.not_found(resp)
@@ -132,14 +107,11 @@ async def test_update_permissions(error, spawn_client, no_permissions, resp_is):
 
     no_permissions["create_sample"] = True
 
-    assert await resp.json() == {
-        "id": "test",
-        "permissions": no_permissions
-    }
+    assert await resp.json() == {"id": "test", "permissions": no_permissions}
 
     assert await client.db.groups.find_one("test") == {
         "_id": "test",
-        "permissions": no_permissions
+        "permissions": no_permissions,
     }
 
 
@@ -152,12 +124,13 @@ async def test_remove(error, mocker, spawn_client, no_permissions, resp_is):
     client = await spawn_client(authorize=True, administrator=True)
 
     if not error:
-        await client.db.groups.insert_one({
-            "_id": "test",
-            "permissions": no_permissions
-        })
+        await client.db.groups.insert_one(
+            {"_id": "test", "permissions": no_permissions}
+        )
 
-    m_update_member_users = mocker.patch("virtool.groups.db.update_member_users", make_mocked_coro(None))
+    m_update_member_users = mocker.patch(
+        "virtool.groups.db.update_member_users", make_mocked_coro(None)
+    )
 
     resp = await client.delete("/groups/test")
 
@@ -169,8 +142,4 @@ async def test_remove(error, mocker, spawn_client, no_permissions, resp_is):
 
     assert not await client.db.groups.count_documents({"_id": "test"})
 
-    m_update_member_users.assert_called_with(
-        client.db,
-        "test",
-        remove=True
-    )
+    m_update_member_users.assert_called_with(client.db, "test", remove=True)

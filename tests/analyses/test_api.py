@@ -16,105 +16,68 @@ from virtool.pg.utils import get_row_by_id
 def files(tmp_path):
     path = Path.cwd() / "tests" / "test_files" / "aodp" / "reference.fa"
 
-    data = {
-        "file": open(path, "rb")
-    }
+    data = {"file": open(path, "rb")}
 
     return data
 
 
 async def test_find(snapshot, mocker, fake, spawn_client, resp_is, static_time):
-    mocker.patch("virtool.samples.utils.get_sample_rights",
-                 return_value=(True, True))
+    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
     client = await spawn_client(authorize=True)
 
     user = await fake.users.insert()
 
-    await client.db.samples.insert_one({
-        "_id": "test",
-        "created_at": static_time.datetime,
-        "all_read": True,
-        "all_write": True,
-        "user": {
-            "id": user["_id"]
+    await client.db.samples.insert_one(
+        {
+            "_id": "test",
+            "created_at": static_time.datetime,
+            "all_read": True,
+            "all_write": True,
+            "user": {"id": user["_id"]},
         }
-    })
+    )
 
-    await client.db.analyses.insert_many([
-        {
-            "_id": "test_1",
-            "workflow": "pathoscope_bowtie",
-            "created_at": static_time.datetime,
-            "ready": True,
-            "job": {
-                "id": "test"
+    await client.db.analyses.insert_many(
+        [
+            {
+                "_id": "test_1",
+                "workflow": "pathoscope_bowtie",
+                "created_at": static_time.datetime,
+                "ready": True,
+                "job": {"id": "test"},
+                "index": {"version": 2, "id": "foo"},
+                "user": {"id": user["_id"]},
+                "sample": {"id": "test"},
+                "reference": {"id": "baz", "name": "Baz"},
+                "foobar": True,
             },
-            "index": {
-                "version": 2,
-                "id": "foo"
+            {
+                "_id": "test_2",
+                "workflow": "pathoscope_bowtie",
+                "created_at": static_time.datetime,
+                "ready": True,
+                "job": {"id": "test"},
+                "index": {"version": 2, "id": "foo"},
+                "user": {"id": user["_id"]},
+                "sample": {"id": "test"},
+                "reference": {"id": "baz", "name": "Baz"},
+                "foobar": True,
             },
-            "user": {
-                "id": user["_id"]
+            {
+                "_id": "test_3",
+                "workflow": "pathoscope_bowtie",
+                "created_at": static_time.datetime,
+                "ready": True,
+                "job": {"id": "test"},
+                "index": {"version": 2, "id": "foo"},
+                "user": {"id": user["_id"]},
+                "sample": {"id": "test"},
+                "reference": {"id": "foo", "name": "Foo"},
+                "foobar": False,
             },
-            "sample": {
-                "id": "test"
-            },
-            "reference": {
-                "id": "baz",
-                "name": "Baz"
-            },
-            "foobar": True
-        },
-        {
-            "_id": "test_2",
-            "workflow": "pathoscope_bowtie",
-            "created_at": static_time.datetime,
-            "ready": True,
-            "job": {
-                "id": "test"
-            },
-            "index": {
-                "version": 2,
-                "id": "foo"
-            },
-            "user": {
-                "id": user["_id"]
-            },
-            "sample": {
-                "id": "test"
-            },
-            "reference": {
-                "id": "baz",
-                "name": "Baz"
-            },
-            "foobar": True
-        },
-        {
-            "_id": "test_3",
-            "workflow": "pathoscope_bowtie",
-            "created_at": static_time.datetime,
-            "ready": True,
-            "job": {
-                "id": "test"
-            },
-            "index": {
-                "version": 2,
-                "id": "foo"
-            },
-            "user": {
-                "id": user["_id"]
-            },
-            "sample": {
-                "id": "test"
-            },
-            "reference": {
-                "id": "foo",
-                "name": "Foo"
-            },
-            "foobar": False
-        },
-    ])
+        ]
+    )
 
     resp = await client.get("/analyses")
 
@@ -124,7 +87,17 @@ async def test_find(snapshot, mocker, fake, spawn_client, resp_is, static_time):
 
 @pytest.mark.parametrize("ready", [True, False])
 @pytest.mark.parametrize("error", [None, "400", "403", "404"])
-async def test_get(ready, fake: FakeGenerator, error, mocker, snapshot, spawn_client, static_time, resp_is, pg):
+async def test_get(
+    ready,
+    fake: FakeGenerator,
+    error,
+    mocker,
+    snapshot,
+    spawn_client,
+    static_time,
+    resp_is,
+    pg,
+):
     client = await spawn_client(authorize=True)
 
     user = await fake.users.insert()
@@ -135,39 +108,28 @@ async def test_get(ready, fake: FakeGenerator, error, mocker, snapshot, spawn_cl
         "ready": ready,
         "workflow": "pathoscope_bowtie",
         "results": {},
-        "sample": {
-            "id": "baz"
-        },
+        "sample": {"id": "baz"},
         "subtractions": ["plum", "apple"],
-        "user": {
-            "id": user["_id"]
-        }
+        "user": {"id": user["_id"]},
     }
 
-    await client.db.subtraction.insert_many([
-        {
-            "_id": "plum",
-            "name": "Plum"
-        },
-        {
-            "_id": "apple",
-            "name": "Apple"
-        }
-    ])
+    await client.db.subtraction.insert_many(
+        [{"_id": "plum", "name": "Plum"}, {"_id": "apple", "name": "Apple"}]
+    )
 
     if error != "400":
-        await client.db.samples.insert_one({
-            "_id": "baz",
-            "all_read": error != "403",
-            "all_write": False,
-            "group": "tech",
-            "group_read": True,
-            "group_write": True,
-            "subtractions": ["apple", "plum"],
-            "user": {
-                "id": "fred"
+        await client.db.samples.insert_one(
+            {
+                "_id": "baz",
+                "all_read": error != "403",
+                "all_write": False,
+                "group": "tech",
+                "group_read": True,
+                "group_write": True,
+                "subtractions": ["apple", "plum"],
+                "user": {"id": "fred"},
             }
-        })
+        )
 
     if error != "404":
         await client.db.analyses.insert_one(document)
@@ -175,14 +137,14 @@ async def test_get(ready, fake: FakeGenerator, error, mocker, snapshot, spawn_cl
 
     m_format_analysis = mocker.patch(
         "virtool.analyses.format.format_analysis",
-        make_mocked_coro({
-            "_id": "foo",
-            "created_at": static_time.datetime,
-            "formatted": True,
-            "user": {
-                "id": user["_id"]
+        make_mocked_coro(
+            {
+                "_id": "foo",
+                "created_at": static_time.datetime,
+                "formatted": True,
+                "user": {"id": user["_id"]},
             }
-        })
+        ),
     )
 
     resp = await client.get("/analyses/foobar")
@@ -219,30 +181,27 @@ async def test_remove(mocker, error, fake, spawn_client, resp_is, tmp_path):
     user = await fake.users.insert()
 
     if error != "400":
-        await client.db.samples.insert_one({
-            "_id": "baz",
-            "all_read": True,
-            "all_write": error != "403",
-            "group": "tech",
-            "group_read": True,
-            "group_write": True,
-            "user": {
-                "id": user["_id"]
+        await client.db.samples.insert_one(
+            {
+                "_id": "baz",
+                "all_read": True,
+                "all_write": error != "403",
+                "group": "tech",
+                "group_read": True,
+                "group_write": True,
+                "user": {"id": user["_id"]},
             }
-        })
+        )
 
     if error != "404":
-        await client.db.analyses.insert_one({
-            "_id": "foobar",
-            "ready": error != "409",
-            "sample": {
-                "id": "baz",
-                "name": "Baz"
-            },
-            "job": {
-                "id": "hello"
+        await client.db.analyses.insert_one(
+            {
+                "_id": "foobar",
+                "ready": error != "409",
+                "sample": {"id": "baz", "name": "Baz"},
+                "job": {"id": "hello"},
             }
-        })
+        )
 
     m_remove = mocker.patch("virtool.utils.rm")
 
@@ -272,7 +231,9 @@ async def test_remove(mocker, error, fake, spawn_client, resp_is, tmp_path):
 
 
 @pytest.mark.parametrize("error", [None, 400, 404, 422])
-async def test_upload_file(error, files, resp_is, spawn_job_client, static_time, snapshot, pg, tmp_path):
+async def test_upload_file(
+    error, files, resp_is, spawn_job_client, static_time, snapshot, pg, tmp_path
+):
     """
     Test that an analysis result file is properly uploaded and a row is inserted into the `analysis_files` SQL table.
 
@@ -287,18 +248,20 @@ async def test_upload_file(error, files, resp_is, spawn_job_client, static_time,
         format_ = "fasta"
 
     if error != 404:
-        await client.db.analyses.insert_one({
-            "_id": "foobar",
-            "ready": True,
-            "job": {
-                "id": "hello"
-            },
-        })
+        await client.db.analyses.insert_one(
+            {
+                "_id": "foobar",
+                "ready": True,
+                "job": {"id": "hello"},
+            }
+        )
 
     if error == 422:
         resp = await client.put("/analyses/foobar/files?format=fasta", data=files)
     else:
-        resp = await client.put(f"/analyses/foobar/files?name=reference.fa&format={format_}", data=files)
+        resp = await client.put(
+            f"/analyses/foobar/files?name=reference.fa&format={format_}", data=files
+        )
 
     if error is None:
         assert resp.status == 201
@@ -313,21 +276,13 @@ async def test_upload_file(error, files, resp_is, spawn_job_client, static_time,
         assert resp.status == 404
 
     elif error == 422:
-        await resp_is.invalid_query(resp, {
-            "name": ["required field"]
-        })
+        await resp_is.invalid_query(resp, {"name": ["required field"]})
 
 
 @pytest.mark.parametrize("file_exists", [True, False])
 @pytest.mark.parametrize("row_exists", [True, False])
 async def test_download_analysis_result(
-    file_exists,
-    row_exists,
-    files,
-    spawn_client,
-    spawn_job_client,
-    snapshot,
-    tmp_path
+    file_exists, row_exists, files, spawn_client, spawn_job_client, snapshot, tmp_path
 ):
     """
     Test that you can properly download an analysis result file using details from the `analysis_files` SQL table
@@ -339,19 +294,20 @@ async def test_download_analysis_result(
     client.app["config"].data_path = tmp_path
     job_client.app["config"].data_path = tmp_path
 
-    expected_path = client.app["config"].data_path / \
-        "analyses" / "1-reference.fa"
+    expected_path = client.app["config"].data_path / "analyses" / "1-reference.fa"
 
-    await client.db.analyses.insert_one({
-        "_id": "foobar",
-        "ready": True,
-        "job": {
-            "id": "hello"
-        },
-    })
+    await client.db.analyses.insert_one(
+        {
+            "_id": "foobar",
+            "ready": True,
+            "job": {"id": "hello"},
+        }
+    )
 
     if row_exists:
-        await job_client.put("/analyses/foobar/files?name=reference.fa&format=fasta", data=files)
+        await job_client.put(
+            "/analyses/foobar/files?name=reference.fa&format=fasta", data=files
+        )
         assert expected_path.is_file()
 
     if not file_exists and row_exists:
@@ -373,14 +329,16 @@ async def test_download_analysis_document(extension, exists, mocker, spawn_clien
     client = await spawn_client(authorize=True)
 
     if exists:
-        await client.db.analyses.insert_one({
-            "_id": "foobar",
-            "ready": True,
-        })
+        await client.db.analyses.insert_one(
+            {
+                "_id": "foobar",
+                "ready": True,
+            }
+        )
 
     mocker.patch(
         f"virtool.analyses.format.format_analysis_to_{'excel' if extension == 'xlsx' else 'csv'}",
-        return_value=io.StringIO().getvalue()
+        return_value=io.StringIO().getvalue(),
     )
 
     resp = await client.get(f"/analyses/documents/foobar.{extension}")
@@ -388,7 +346,10 @@ async def test_download_analysis_document(extension, exists, mocker, spawn_clien
     assert resp.status == 200 if exists else 400
 
 
-@pytest.mark.parametrize("error", [None, "400", "403", "404_analysis", "404_sequence", "409_workflow", "409_ready"])
+@pytest.mark.parametrize(
+    "error",
+    [None, "400", "403", "404_analysis", "404_sequence", "409_workflow", "409_ready"],
+)
 async def test_blast(error, mocker, spawn_client, resp_is, static_time):
     """
     Test that the handler starts a BLAST for given NuVs sequence. Also check that it handles all error conditions
@@ -405,11 +366,9 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
             "results": [
                 {"index": 3, "sequence": "ATAGAGATTAGAT"},
                 {"index": 5, "sequence": "GGAGTTAGATTGG"},
-                {"index": 8, "sequence": "ACCAATAGACATT"}
+                {"index": 8, "sequence": "ACCAATAGACATT"},
             ],
-            "sample": {
-                "id": "baz"
-            }
+            "sample": {"id": "baz"},
         }
 
         if error == "404_sequence":
@@ -422,28 +381,31 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
             analysis_document["ready"] = False
 
         if error != "400":
-            await client.db.samples.insert_one({
-                "_id": "baz",
-                "all_read": True,
-                "all_write": error != "403",
-                "group": "tech",
-                "group_read": True,
-                "group_write": True,
-                "user": {
-                    "id": "fred"
+            await client.db.samples.insert_one(
+                {
+                    "_id": "baz",
+                    "all_read": True,
+                    "all_write": error != "403",
+                    "group": "tech",
+                    "group_read": True,
+                    "group_write": True,
+                    "user": {"id": "fred"},
                 }
-            })
+            )
 
         await client.db.analyses.insert_one(analysis_document)
 
     m_initialize_ncbi_blast = mocker.patch(
-        "virtool.bio.initialize_ncbi_blast", make_mocked_coro(("FOOBAR1337", 23)))
+        "virtool.bio.initialize_ncbi_blast", make_mocked_coro(("FOOBAR1337", 23))
+    )
 
     m_check_rid = mocker.patch(
-        "virtool.bio.check_rid", make_mocked_coro(return_value=False))
+        "virtool.bio.check_rid", make_mocked_coro(return_value=False)
+    )
 
     m_wait_for_blast_result = mocker.patch(
-        "virtool.bio.wait_for_blast_result", make_mocked_coro())
+        "virtool.bio.wait_for_blast_result", make_mocked_coro()
+    )
 
     await client.put("/analyses/foobar/5/blast", {})
 
@@ -474,34 +436,26 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
         return
 
     assert resp.status == 201
-    assert resp.headers["Location"] == "https://virtool.example.com/analyses/foobar/5/blast"
+    assert (
+        resp.headers["Location"]
+        == "https://virtool.example.com/analyses/foobar/5/blast"
+    )
 
     blast = {
         "rid": "FOOBAR1337",
         "interval": 3,
         "last_checked_at": static_time.iso,
         "ready": False,
-        "result": None
+        "result": None,
     }
 
     assert await resp.json() == blast
 
-    m_initialize_ncbi_blast.assert_called_with(
-        client.app["config"],
-        "GGAGTTAGATTGG"
-    )
+    m_initialize_ncbi_blast.assert_called_with(client.app["config"], "GGAGTTAGATTGG")
 
-    m_check_rid.assert_called_with(
-        client.app["config"],
-        "FOOBAR1337"
-    )
+    m_check_rid.assert_called_with(client.app["config"], "FOOBAR1337")
 
-    m_wait_for_blast_result.assert_called_with(
-        client.app,
-        "foobar",
-        5,
-        "FOOBAR1337"
-    )
+    m_wait_for_blast_result.assert_called_with(client.app, "foobar", 5, "FOOBAR1337")
 
 
 @pytest.mark.parametrize("error", [None, 422, 404, 409])
@@ -510,21 +464,13 @@ async def test_finalize(fake, snapshot, spawn_job_client, faker, error, resp_is)
 
     analysis_document = {
         "_id": "analysis1",
-        "sample": {
-            "id": "sample1"
-        },
+        "sample": {"id": "sample1"},
         "workflow": "test_workflow",
-        "user": {
-            "id": user["_id"]
-        },
-        "ready": error == 409
+        "user": {"id": user["_id"]},
+        "ready": error == 409,
     }
 
-    patch_json = {
-        "results": {
-            "result": "TEST_RESULT"
-        }
-    }
+    patch_json = {"results": {"result": "TEST_RESULT"}}
 
     if error == 422:
         del patch_json["results"]
@@ -554,32 +500,39 @@ async def test_finalize_large(fake, spawn_job_client, faker):
 
     faker = Faker(1)
 
-    profiles = [faker.profile(fields=["job", "company", "ssn", "residence", "address", "mail", "name", "username"]) for _ in range(100)]
+    profiles = [
+        faker.profile(
+            fields=[
+                "job",
+                "company",
+                "ssn",
+                "residence",
+                "address",
+                "mail",
+                "name",
+                "username",
+            ]
+        )
+        for _ in range(100)
+    ]
 
-    patch_json = {
-        "results": {
-            "result": profiles * 500
-        }
-    }
+    patch_json = {"results": {"result": profiles * 500}}
 
     # Make sure this test actually checks that the max body size is increased.
     assert len(json.dumps(patch_json)) > 1024 ** 2
 
     client = await spawn_job_client(authorize=True)
 
-    await client.db.analyses.insert_one({
-        "_id": "analysis1",
-        "sample": {
-            "id": "sample1"
-        },
-        "workflow": "test_workflow",
-        "user": {
-            "id": user["_id"]
-        },
-        "ready": False
-    })
+    await client.db.analyses.insert_one(
+        {
+            "_id": "analysis1",
+            "sample": {"id": "sample1"},
+            "workflow": "test_workflow",
+            "user": {"id": user["_id"]},
+            "ready": False,
+        }
+    )
 
     resp = await client.patch(f"/analyses/analysis1", json=patch_json)
-
 
     assert resp.status == 200

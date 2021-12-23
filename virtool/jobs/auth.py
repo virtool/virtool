@@ -53,9 +53,6 @@ async def middleware(request: Request, handler: RouteHandler):
     except KeyError:
         rights = None
 
-    request["client"] = JobClient(
-        job_id,
-        JobRights(rights)
-    )
+    request["client"] = JobClient(job_id, JobRights(rights))
 
     return await handler(request)

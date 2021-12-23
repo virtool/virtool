@@ -7,9 +7,7 @@ async def test_get(error, fake, snapshot, spawn_client, test_job, resp_is):
 
     user = await fake.users.insert()
 
-    test_job["user"] = {
-        "id": user["_id"]
-    }
+    test_job["user"] = {"id": user["_id"]}
 
     if not error:
         await client.db.jobs.insert_one(test_job)
@@ -30,14 +28,14 @@ async def test_get(error, fake, snapshot, spawn_client, test_job, resp_is):
 
 
 @pytest.mark.parametrize("error", [None, 400, 404])
-async def test_acquire(error, mocker, snapshot, dbi, fake, test_job, spawn_client, resp_is):
+async def test_acquire(
+    error, mocker, snapshot, dbi, fake, test_job, spawn_client, resp_is
+):
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
     user = await fake.users.insert()
 
-    test_job["user"] = {
-        "id": user["_id"]
-    }
+    test_job["user"] = {"id": user["_id"]}
 
     client = await spawn_client(authorize=True)
 
@@ -47,9 +45,7 @@ async def test_acquire(error, mocker, snapshot, dbi, fake, test_job, spawn_clien
     if error != 404:
         await dbi.jobs.insert_one(test_job)
 
-    resp = await client.patch("/jobs/4c530449", {
-        "acquired": True
-    })
+    resp = await client.patch("/jobs/4c530449", {"acquired": True})
 
     if error == 400:
         await resp_is.bad_request(resp, "Job already acquired")
@@ -68,15 +64,15 @@ async def test_acquire(error, mocker, snapshot, dbi, fake, test_job, spawn_clien
     assert "key" in body
 
 
-@pytest.mark.parametrize("error", [None, 404, "409_complete", "409_errored", "409_cancelled"])
+@pytest.mark.parametrize(
+    "error", [None, 404, "409_complete", "409_errored", "409_cancelled"]
+)
 async def test_cancel(error, snapshot, dbi, fake, resp_is, spawn_client, test_job):
     client = await spawn_client(authorize=True, permissions=["cancel_job"])
 
     user = await fake.users.insert()
 
-    test_job["user"] = {
-        "id": user["_id"]
-    }
+    test_job["user"] = {"id": user["_id"]}
 
     complete_status = test_job["status"].pop(-1)
 
@@ -84,16 +80,10 @@ async def test_cancel(error, snapshot, dbi, fake, resp_is, spawn_client, test_jo
         test_job["status"].append(complete_status)
 
     if error == "409_cancelled":
-        test_job["status"].append({
-            **complete_status,
-            "state": "cancelled"
-        })
+        test_job["status"].append({**complete_status, "state": "cancelled"})
 
     if error == "409_errored":
-        test_job["status"].append({
-            **complete_status,
-            "state": "errored"
-        })
+        test_job["status"].append({**complete_status, "state": "errored"})
 
     if error != 404:
         await dbi.jobs.insert_one(test_job)
@@ -118,12 +108,7 @@ async def test_cancel(error, snapshot, dbi, fake, resp_is, spawn_client, test_jo
 
 
 class TestPushStatus:
-
-    @pytest.mark.parametrize("error", [
-        None,
-        404,
-        409
-    ])
+    @pytest.mark.parametrize("error", [None, 404, 409])
     async def test(self, error, snapshot, resp_is, spawn_client, static_time, test_job):
         client = await spawn_client(authorize=True)
 
@@ -134,11 +119,7 @@ class TestPushStatus:
         if error != 404:
             await client.db.jobs.insert_one(test_job)
 
-        body = {
-            "state": "running",
-            "stage": "build",
-            "progress": 23
-        }
+        body = {"state": "running", "stage": "build", "progress": 23}
 
         resp = await client.post(f"/jobs/{test_job.id}/status", body)
 
@@ -153,7 +134,9 @@ class TestPushStatus:
         assert resp.status == 201
         assert await resp.json() == snapshot
 
-    async def test_name_and_description(self, snapshot, spawn_client, static_time, test_job):
+    async def test_name_and_description(
+        self, snapshot, spawn_client, static_time, test_job
+    ):
         client = await spawn_client(authorize=True)
 
         del test_job["status"][-1]
@@ -164,7 +147,7 @@ class TestPushStatus:
             "stage": "fastqc",
             "step_name": "FastQC",
             "step_description": "Run FastQC on the raw data",
-            "progress": 14
+            "progress": 14,
         }
 
         resp = await client.post(f"/jobs/{test_job.id}/status", body)
@@ -182,21 +165,32 @@ class TestPushStatus:
         del test_job["status"][-1]
         await client.db.jobs.insert_one(test_job)
 
-        body = {
-            "state": "bad",
-            "stage": "fastqc",
-            "progress": 14
-        }
+        body = {"state": "bad", "stage": "fastqc", "progress": 14}
 
         resp = await client.post(f"/jobs/{test_job.id}/status", body)
 
         assert resp.status == 422
         assert await resp.json() == snapshot
 
-    @pytest.mark.parametrize("error_type", ["KeyError", 3, None], ids=["valid", "invalid", "missing"])
-    @pytest.mark.parametrize("traceback", ["Invalid", ["Valid"], None], ids=["valid", "invalid", "missing"])
-    @pytest.mark.parametrize("details", ["Invalid", ["Valid"], None], ids=["valid", "invalid", "missing"])
-    async def test_error(self, error_type, traceback, details, snapshot, spawn_client, static_time, test_job):
+    @pytest.mark.parametrize(
+        "error_type", ["KeyError", 3, None], ids=["valid", "invalid", "missing"]
+    )
+    @pytest.mark.parametrize(
+        "traceback", ["Invalid", ["Valid"], None], ids=["valid", "invalid", "missing"]
+    )
+    @pytest.mark.parametrize(
+        "details", ["Invalid", ["Valid"], None], ids=["valid", "invalid", "missing"]
+    )
+    async def test_error(
+        self,
+        error_type,
+        traceback,
+        details,
+        snapshot,
+        spawn_client,
+        static_time,
+        test_job,
+    ):
         """
         Ensure valid and invalid error inputs are handled correctly.
 
@@ -217,12 +211,7 @@ class TestPushStatus:
         if details:
             error["details"] = details
 
-        body = {
-            "error": error,
-            "state": "error",
-            "stage": "fastqc",
-            "progress": 14
-        }
+        body = {"error": error, "state": "error", "stage": "fastqc", "progress": 14}
 
         resp = await client.post(f"/jobs/{test_job.id}/status", body)
 
@@ -238,11 +227,7 @@ class TestPushStatus:
         del test_job["status"][-1]
         await client.db.jobs.insert_one(test_job)
 
-        body = {
-            "state": "error",
-            "stage": "fastqc",
-            "progress": 14
-        }
+        body = {"state": "error", "stage": "fastqc", "progress": 14}
 
         resp = await client.post(f"/jobs/{test_job.id}/status", body)
 

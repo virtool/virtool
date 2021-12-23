@@ -32,8 +32,11 @@ import virtool.otus.db
 import virtool.otus.utils
 import virtool.utils
 from virtool.api.utils import paginate
-from virtool.history.utils import (calculate_diff, derive_otu_information,
-                                   write_diff_file)
+from virtool.history.utils import (
+    calculate_diff,
+    derive_otu_information,
+    write_diff_file,
+)
 from virtool.users.db import ATTACH_PROJECTION, attach_user
 
 MOST_RECENT_PROJECTION = [
@@ -42,7 +45,7 @@ MOST_RECENT_PROJECTION = [
     "method_name",
     "user",
     "otu",
-    "created_at"
+    "created_at",
 ]
 
 LIST_PROJECTION = [
@@ -53,12 +56,10 @@ LIST_PROJECTION = [
     "index",
     "otu",
     "reference",
-    "user"
+    "user",
 ]
 
-PROJECTION = LIST_PROJECTION + [
-    "diff"
-]
+PROJECTION = LIST_PROJECTION + ["diff"]
 
 
 async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
@@ -78,13 +79,13 @@ async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def add(
-        app,
-        method_name: str,
-        old: Optional[dict],
-        new: Optional[dict],
-        description: str,
-        user_id: str,
-        silent: bool = False
+    app,
+    method_name: str,
+    old: Optional[dict],
+    new: Optional[dict],
+    description: str,
+    user_id: str,
+    silent: bool = False,
 ) -> dict:
     """
     Add a change document to the history collection.
@@ -108,21 +109,10 @@ async def add(
         "method_name": method_name,
         "description": description,
         "created_at": virtool.utils.timestamp(),
-        "otu": {
-            "id": otu_id,
-            "name": otu_name,
-            "version": otu_version
-        },
-        "reference": {
-            "id": ref_id
-        },
-        "index": {
-            "id": "unbuilt",
-            "version": "unbuilt"
-        },
-        "user": {
-            "id": user_id
-        }
+        "otu": {"id": otu_id, "name": otu_name, "version": otu_version},
+        "reference": {"id": ref_id},
+        "index": {"id": "unbuilt", "version": "unbuilt"},
+        "user": {"id": user_id},
     }
 
     if method_name == "create":
@@ -138,10 +128,7 @@ async def add(
         await db.history.insert_one(document, silent=silent)
     except pymongo.errors.DocumentTooLarge:
         await write_diff_file(
-            app["config"].data_path,
-            otu_id,
-            otu_version,
-            document["diff"]
+            app["config"].data_path, otu_id, otu_version, document["diff"]
         )
 
         await db.history.insert_one(dict(document, diff="file"), silent=silent)
@@ -157,12 +144,12 @@ async def find(db, req_query, base_query=None):
         base_query=base_query,
         sort="otu.version",
         projection=LIST_PROJECTION,
-        reverse=True
+        reverse=True,
     )
 
     return {
         **data,
-        "documents": await gather(*[processor(db, d) for d in data["documents"]])
+        "documents": await gather(*[processor(db, d) for d in data["documents"]]),
     }
 
 
@@ -188,9 +175,7 @@ async def get(app, change_id: str) -> dict:
             otu_id, otu_version = change_id.split(".")
 
             document["diff"] = await virtool.history.utils.read_diff_file(
-                app["config"].data_path,
-                otu_id,
-                otu_version
+                app["config"].data_path, otu_id, otu_version
             )
 
         return await processor(db, document)
@@ -207,24 +192,16 @@ async def get_contributors(db, query: dict) -> List[dict]:
     :return: a list of contributors to the scanned history changes
 
     """
-    cursor = db.history.aggregate([
-        {"$match": query},
-        {"$group": {
-            "_id": "$user.id",
-            "count": {"$sum": 1}
-        }}
-    ])
+    cursor = db.history.aggregate(
+        [{"$match": query}, {"$group": {"_id": "$user.id", "count": {"$sum": 1}}}]
+    )
 
     contributors = [{"id": c["_id"], "count": c["count"]} async for c in cursor]
 
-    projection = {
-        **ATTACH_PROJECTION,
-        "_id": True
-    }
+    projection = {**ATTACH_PROJECTION, "_id": True}
 
     users = await db.users.find(
-        {"_id": {"$in": [c["id"] for c in contributors]}},
-        projection=projection
+        {"_id": {"$in": [c["id"] for c in contributors]}}, projection=projection
     ).to_list(None)
 
     users = {u.pop("_id"): u for u in users}
@@ -241,10 +218,11 @@ async def get_most_recent_change(db, otu_id: str) -> dict:
     :return: the most recent change document
 
     """
-    return await db.history.find_one({
-        "otu.id": otu_id,
-        "index.id": "unbuilt"
-    }, MOST_RECENT_PROJECTION, sort=[("otu.version", -1)])
+    return await db.history.find_one(
+        {"otu.id": otu_id, "index.id": "unbuilt"},
+        MOST_RECENT_PROJECTION,
+        sort=[("otu.version", -1)],
+    )
 
 
 async def patch_to_version(app, otu_id: str, version: Union[str, int]) -> tuple:
@@ -277,9 +255,7 @@ async def patch_to_version(app, otu_id: str, version: Union[str, int]) -> tuple:
 
             if change["diff"] == "file":
                 change["diff"] = await virtool.history.utils.read_diff_file(
-                    app["config"].data_path,
-                    otu_id,
-                    change["otu"]["version"]
+                    app["config"].data_path, otu_id, change["otu"]["version"]
                 )
 
             if change["method_name"] == "remove":
@@ -315,18 +291,15 @@ async def revert(app, change_id: str) -> dict:
 
     if change["index"]["id"] != "unbuilt" or change["index"]["version"] != "unbuilt":
         raise virtool.errors.DatabaseError(
-            "Change is included in a build an not revertible")
+            "Change is included in a build an not revertible"
+        )
 
     otu_id, otu_version = change_id.split(".")
 
     if otu_version != "removed":
         otu_version = int(otu_version)
 
-    _, patched, history_to_delete = await patch_to_version(
-        app,
-        otu_id,
-        otu_version - 1
-    )
+    _, patched, history_to_delete = await patch_to_version(app, otu_id, otu_version - 1)
 
     # Remove the old sequences from the collection.
     await db.sequences.delete_many({"otu_id": otu_id})

@@ -17,6 +17,7 @@ class BufferedBulkWriter:
     Performs bulk writes against a MongoDB collection.
 
     """
+
     def __init__(self, collection, batch_size):
         self.collection = collection
         self.batch_size = batch_size
@@ -106,9 +107,8 @@ async def delete_unready(collection):
 
 
 async def check_missing_ids(
-        collection: AsyncIOMotorCollection,
-        id_list: list,
-        query: dict = None) -> Set[str]:
+    collection: AsyncIOMotorCollection, id_list: list, query: dict = None
+) -> Set[str]:
     """
     Check if all IDs in the ``id_list`` exist in the database.
 

@@ -9,20 +9,16 @@ from virtool.uploads.models import Upload
 
 logger = logging.getLogger("uploads")
 
-PROJECTION = [
-    "_id",
-    "name",
-    "size",
-    "user",
-    "uploaded_at",
-    "type",
-    "ready",
-    "reserved"
-]
+PROJECTION = ["_id", "name", "size", "user", "uploaded_at", "type", "ready", "reserved"]
 
 
-async def create(pg: AsyncEngine, name: str, upload_type: str, reserved: bool = False,
-                 user: Optional[str] = None) -> Dict[str, any]:
+async def create(
+    pg: AsyncEngine,
+    name: str,
+    upload_type: str,
+    reserved: bool = False,
+    user: Optional[str] = None,
+) -> Dict[str, any]:
     """
     Creates a new row in the `uploads` SQL table. Returns a dictionary representation
     of the new row.
@@ -42,7 +38,7 @@ async def create(pg: AsyncEngine, name: str, upload_type: str, reserved: bool = 
             removed=False,
             reserved=reserved,
             type=upload_type,
-            user=user
+            user=user,
         )
 
         session.add(upload)
@@ -123,7 +119,9 @@ async def get(pg: AsyncEngine, upload_id: int) -> Optional[Upload]:
     :return: An row from the `uploads` table
     """
     async with AsyncSession(pg) as session:
-        upload = (await session.execute(select(Upload).filter_by(id=upload_id, removed=False))).scalar()
+        upload = (
+            await session.execute(select(Upload).filter_by(id=upload_id, removed=False))
+        ).scalar()
 
         if not upload:
             return None
@@ -148,7 +146,7 @@ async def delete(req, pg: AsyncEngine, upload_id: int) -> Optional[dict]:
     try:
         await req.app["run_in_thread"](
             virtool.utils.rm,
-            req.app["config"].data_path / "files" / upload["name_on_disk"]
+            req.app["config"].data_path / "files" / upload["name_on_disk"],
         )
     except FileNotFoundError:
         pass
@@ -165,7 +163,9 @@ async def delete_row(pg: AsyncEngine, upload_id: int) -> Optional[dict]:
     :return: A dictionary representation of the deleted row
     """
     async with AsyncSession(pg) as session:
-        upload = (await session.execute(select(Upload).where(Upload.id == upload_id))).scalar()
+        upload = (
+            await session.execute(select(Upload).where(Upload.id == upload_id))
+        ).scalar()
 
         if not upload or upload.removed:
             return None
@@ -189,9 +189,9 @@ async def release(pg: AsyncEngine, upload_ids: Union[int, List[int]]):
     :param upload_ids: List of row `id`s to set the attribute for
     """
     if isinstance(upload_ids, int):
-        query = (Upload.id == upload_ids)
+        query = Upload.id == upload_ids
     else:
-        query = (Upload.id.in_(upload_ids))
+        query = Upload.id.in_(upload_ids)
 
     async with AsyncSession(pg) as session:
         await session.execute(
@@ -218,8 +218,9 @@ async def reserve(pg: AsyncEngine, upload_ids: Union[int, List[int]]):
 
     async with AsyncSession(pg) as session:
         await session.execute(
-            update(Upload).
-            where(query).values(reserved=True).
-            execution_options(synchronize_session="fetch")
+            update(Upload)
+            .where(query)
+            .values(reserved=True)
+            .execution_options(synchronize_session="fetch")
         )
         await session.commit()

@@ -32,7 +32,9 @@ async def connect(postgres_connection_string: str) -> AsyncEngine:
         sys.exit(1)
 
     try:
-        pg = create_async_engine(postgres_connection_string, json_serializer=pretty_dumps)
+        pg = create_async_engine(
+            postgres_connection_string, json_serializer=pretty_dumps
+        )
 
         await check_version(pg)
         await create_models(pg)
@@ -90,11 +92,7 @@ async def get_row_by_id(pg: AsyncEngine, model: Base, id_: int) -> Optional[Base
     return await get_row(pg, model, ("id", id_))
 
 
-async def get_row(
-        pg: AsyncEngine,
-        model: Base,
-        match: tuple
-) -> Optional[Base]:
+async def get_row(pg: AsyncEngine, model: Base, match: tuple) -> Optional[Base]:
     """
     Get a row from the SQL `model` that matches a query and column combination.
 
@@ -105,14 +103,16 @@ async def get_row(
     """
     (column, value) = match
     async with AsyncSession(pg) as session:
-        return (await session.execute(select(model).filter(getattr(model, column) == value))).scalar()
+        return (
+            await session.execute(select(model).filter(getattr(model, column) == value))
+        ).scalar()
 
 
 async def get_rows(
-        pg: AsyncEngine,
-        model: Base,
-        filter_: str = "name",
-        query: Optional[Union[str, int, bool, SQLEnum]] = None
+    pg: AsyncEngine,
+    model: Base,
+    filter_: str = "name",
+    query: Optional[Union[str, int, bool, SQLEnum]] = None,
 ) -> ScalarResult:
     """
     Get one or more rows from the `model` SQL model by its `filter_`. By default, rows will be fetched by their `name`.
@@ -124,7 +124,10 @@ async def get_rows(
     :return: Row from the given SQL model
     """
     async with AsyncSession(pg) as session:
-        statement = select(model).filter(
-            getattr(model, filter_).ilike(f"%{query}%")) if query else select(model)
+        statement = (
+            select(model).filter(getattr(model, filter_).ilike(f"%{query}%"))
+            if query
+            else select(model)
+        )
 
         return (await session.execute(statement)).scalars()

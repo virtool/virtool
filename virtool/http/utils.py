@@ -10,10 +10,10 @@ from virtool.types import App
 
 
 async def download_file(
-        app: App,
-        url: str,
-        target_path: Path,
-        progress_handler: Callable[[Union[float, int]], Awaitable[int]] = None
+    app: App,
+    url: str,
+    target_path: Path,
+    progress_handler: Callable[[Union[float, int]], Awaitable[int]] = None,
 ):
     """
     Download the GitHub release at ``url`` to the location specified by ``target_path``.

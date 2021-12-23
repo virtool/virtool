@@ -28,7 +28,7 @@ async def test_job_rights_domain():
     assert domain.as_dict() == {
         "read": ["bar", "baz", "foo"],
         "modify": ["bar", "foo"],
-        "remove": ["foo"]
+        "remove": ["foo"],
     }
 
 
@@ -37,83 +37,51 @@ async def test_job_rights():
     Ensure that all calls to methods on JobRights succeed given the input rights dictionary.
 
     """
-    rights = JobRights({
-        "analyses": {
-            "read": ["foo", "bar", "baz"],
-            "modify": ["baz"]
-        },
-        "samples": {
-            "read": ["foo"]
-        },
-        "subtractions": {
-            "read": ["bar"],
-            "modify": ["bar"],
-            "remove": ["bar"]
-        },
-        "uploads": {
-            "read": ["foo", "baz"],
-            "modify": ["foo", "baz"],
-            "remove": ["foo", "baz"]
-        },
-        "references": {
-            "read": ["foo"],
-            "modify": ["foo"]
+    rights = JobRights(
+        {
+            "analyses": {"read": ["foo", "bar", "baz"], "modify": ["baz"]},
+            "samples": {"read": ["foo"]},
+            "subtractions": {"read": ["bar"], "modify": ["bar"], "remove": ["bar"]},
+            "uploads": {
+                "read": ["foo", "baz"],
+                "modify": ["foo", "baz"],
+                "remove": ["foo", "baz"],
+            },
+            "references": {"read": ["foo"], "modify": ["foo"]},
         }
-    })
+    )
 
     assert rights.as_dict() == {
-        "analyses": {
-            "modify": ["baz"],
-            "read": ["bar", "baz", "foo"]
-        },
-        "references": {
-            "modify": ["foo"],
-            "read": ["foo"]
-        },
-        "samples": {
-            "read": ["foo"]
-        },
-        "subtractions": {
-            "modify": ["bar"],
-            "read": ["bar"],
-            "remove": ["bar"]
-        },
+        "analyses": {"modify": ["baz"], "read": ["bar", "baz", "foo"]},
+        "references": {"modify": ["foo"], "read": ["foo"]},
+        "samples": {"read": ["foo"]},
+        "subtractions": {"modify": ["bar"], "read": ["bar"], "remove": ["bar"]},
         "uploads": {
             "modify": ["baz", "foo"],
             "read": ["baz", "foo"],
-            "remove": ["baz", "foo"]
-        }
+            "remove": ["baz", "foo"],
+        },
     }
 
     all_combos = {
-        "analyses": [
-            ("foo", READ),
-            ("bar", READ),
-            ("baz", READ),
-            ("baz", "modify")
-        ],
+        "analyses": [("foo", READ), ("bar", READ), ("baz", READ), ("baz", "modify")],
         "indexes": [],
         "samples": [("foo", READ)],
-        "subtractions": [
-            ("bar", READ),
-            ("bar", MODIFY),
-            ("bar", REMOVE)
-        ],
+        "subtractions": [("bar", READ), ("bar", MODIFY), ("bar", REMOVE)],
         "uploads": [
             ("foo", READ),
             ("baz", READ),
             ("foo", MODIFY),
             ("baz", MODIFY),
             ("foo", REMOVE),
-            ("baz", REMOVE)
+            ("baz", REMOVE),
         ],
-        "references": [
-            ("foo", READ),
-            ("foo", MODIFY)
-        ]
+        "references": [("foo", READ), ("foo", MODIFY)],
     }
 
     for name, combos in all_combos.items():
         for id_ in ("foo", "baz", "baz", "not"):
             for right in (READ, MODIFY, REMOVE):
-                assert getattr(rights, name).has_right(id_, right) is ((id_, right) in combos)
+                assert getattr(rights, name).has_right(id_, right) is (
+                    (id_, right) in combos
+                )

@@ -21,8 +21,4 @@ def configure_logs(dev: bool, verbose: bool):
 
     captureWarnings(True)
 
-    coloredlogs.install(
-        level=DEBUG if verbose else INFO,
-        fmt=log_format,
-        style="{"
-    )
+    coloredlogs.install(level=DEBUG if verbose else INFO, fmt=log_format, style="{")

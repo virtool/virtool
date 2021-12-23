@@ -14,8 +14,7 @@ async def test_find(mocker, snapshot, spawn_client, hmm_document):
     Check that a request with no URL parameters returns a list of HMM annotation documents.
 
     """
-    m = mocker.patch("virtool.hmm.db.get_status",
-                     make_mocked_coro({"id": "hmm"}))
+    m = mocker.patch("virtool.hmm.db.get_status", make_mocked_coro({"id": "hmm"}))
 
     client = await spawn_client(authorize=True)
 
@@ -34,17 +33,15 @@ async def test_find(mocker, snapshot, spawn_client, hmm_document):
 async def test_get_status(mocker, spawn_client):
     client = await spawn_client(authorize=True)
 
-    mocker.patch("virtool.hmm.db.get_status",
-                 make_mocked_coro({"id": "hmm", "updating": True}))
+    mocker.patch(
+        "virtool.hmm.db.get_status", make_mocked_coro({"id": "hmm", "updating": True})
+    )
 
     resp = await client.get("/hmms/status")
 
     assert resp.status == 200
 
-    assert await resp.json() == {
-        "id": "hmm",
-        "updating": True
-    }
+    assert await resp.json() == {"id": "hmm", "updating": True}
 
 
 @pytest.mark.parametrize("error", [None, "502_repo", "502_github", "404"])
@@ -56,8 +53,9 @@ async def test_get_release(error, mocker, spawn_client, resp_is):
     """
     client = await spawn_client(authorize=True)
 
-    m_fetch = make_mocked_coro(None if error == "404" else {
-                               "name": "v2.0.1", "newer": False})
+    m_fetch = make_mocked_coro(
+        None if error == "404" else {"name": "v2.0.1", "newer": False}
+    )
 
     mocker.patch("virtool.hmm.db.fetch_and_update_release", new=m_fetch)
 
@@ -65,8 +63,7 @@ async def test_get_release(error, mocker, spawn_client, resp_is):
         m_fetch.side_effect = virtool.errors.GitHubError("404 Not found")
 
     if error == "502_github":
-        m_fetch.side_effect = aiohttp.ClientConnectorError(
-            "foo", OSError("Bar"))
+        m_fetch.side_effect = aiohttp.ClientConnectorError("foo", OSError("Bar"))
 
     resp = await client.get("/hmms/status/release")
 
@@ -85,10 +82,7 @@ async def test_get_release(error, mocker, spawn_client, resp_is):
         return
 
     assert resp.status == 200
-    assert await resp.json() == {
-        "name": "v2.0.1",
-        "newer": False
-    }
+    assert await resp.json() == {"name": "v2.0.1", "newer": False}
 
 
 @pytest.mark.parametrize("error", [None, "404"])
@@ -136,8 +130,7 @@ async def test_get_hmm_annotations(spawn_job_client, tmp_path):
         async with aiofiles.open(compressed_hmm_annotations, "wb") as f:
             await f.write(await response.read())
 
-        decompress_file(compressed_hmm_annotations,
-                        decompressed_hmm_annotations)
+        decompress_file(compressed_hmm_annotations, decompressed_hmm_annotations)
 
         async with aiofiles.open(decompressed_hmm_annotations, "r") as f:
             hmms = json.loads(await f.read())
@@ -148,13 +141,13 @@ async def test_get_hmm_annotations(spawn_job_client, tmp_path):
 @pytest.mark.parametrize("data_exists", [True, False])
 @pytest.mark.parametrize("file_exists", [True, False])
 async def test_get_hmm_profiles(
-        data_exists,
-        file_exists,
-        snapshot,
-        example_path,
-        spawn_client,
-        spawn_job_client,
-        tmp_path
+    data_exists,
+    file_exists,
+    snapshot,
+    example_path,
+    spawn_client,
+    spawn_job_client,
+    tmp_path,
 ):
     """
     Test that HMM profiles can be properly downloaded once they are available.

@@ -20,13 +20,15 @@ async def acquire_tokens(req: Request) -> Response:
     :param req: the request to handle
     :return: the response
     """
-    auth_response = {key: value[0] for key, value in parse_qs(req.url.query_string).items()}
+    auth_response = {
+        key: value[0] for key, value in parse_qs(req.url.query_string).items()
+    }
 
     try:
         result = await req.app["run_in_thread"](
             req.app["b2c"].msal.acquire_token_by_auth_code_flow,
             req.app["b2c"].auth_code_flow,
-            auth_response
+            auth_response,
         )
     except ValueError:
         return HTTPFound("/oidc/delete_tokens")
@@ -56,16 +58,22 @@ async def refresh_tokens(req: Request) -> Response:
 
     if accounts:
         # decode token without validation to fetch oid value
-        payload = jwt.decode(req.cookies.get("id_token"), options={"verify_signature": False})
+        payload = jwt.decode(
+            req.cookies.get("id_token"), options={"verify_signature": False}
+        )
 
-        user_account = [account for account in accounts if payload["oid"] == account["local_account_id"]][0]
+        user_account = [
+            account
+            for account in accounts
+            if payload["oid"] == account["local_account_id"]
+        ][0]
 
         if user_account:
             result = await req.app["run_in_thread"](
                 req.app["b2c"].msal.acquire_token_silent,
                 [],
                 user_account,
-                req.app["b2c"].authority
+                req.app["b2c"].authority,
             )
 
             if "id_token" in result:

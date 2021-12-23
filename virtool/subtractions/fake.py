@@ -29,51 +29,39 @@ async def create_fake_fasta_upload(app: App, user_id: str) -> Tuple[int, str]:
 
 
 async def create_fake_finalized_subtraction(
-        app: App,
-        upload_id: int,
-        upload_name: str,
-        subtraction_id: str,
-        user_id: str
+    app: App, upload_id: int, upload_name: str, subtraction_id: str, user_id: str
 ):
     db = app["db"]
     pg = app["pg"]
 
-    document = await db.subtraction.insert_one({
-        "_id": subtraction_id,
-        "name": "subtraction_1",
-        "nickname": "",
-        "deleted": False,
-        "ready": True,
-        "file": {"id": upload_id, "name": upload_name},
-        "user": {"id": user_id},
-    })
+    document = await db.subtraction.insert_one(
+        {
+            "_id": subtraction_id,
+            "name": "subtraction_1",
+            "nickname": "",
+            "deleted": False,
+            "ready": True,
+            "file": {"id": upload_id, "name": upload_name},
+            "user": {"id": user_id},
+        }
+    )
 
     subtractions_path = (
-            app["config"].data_path
-            / "subtractions"
-            / subtraction_id.replace(" ", "_").lower()
+        app["config"].data_path
+        / "subtractions"
+        / subtraction_id.replace(" ", "_").lower()
     )
 
     subtractions_example_path = example_path / "subtractions" / "arabidopsis_thaliana"
 
     copytree(subtractions_example_path, subtractions_path, dirs_exist_ok=True)
 
-    await create_subtraction_files(
-        pg,
-        document["_id"],
-        FILES,
-        subtractions_path
-    )
+    await create_subtraction_files(pg, document["_id"], FILES, subtractions_path)
 
     return await finalize(
         db,
         pg,
         subtraction_id,
-        gc={
-            "a": 0.25,
-            "t": 0.25,
-            "g": 0.25,
-            "c": 0.25
-        },
+        gc={"a": 0.25, "t": 0.25, "g": 0.25, "c": 0.25},
         count=100,
     )

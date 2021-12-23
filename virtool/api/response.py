@@ -4,7 +4,9 @@ from aiohttp.web import Response
 from aiohttp.web_exceptions import HTTPForbidden, HTTPNotFound, HTTPUnprocessableEntity
 
 
-def json_response(data: object, status: int = 200, headers: Optional[dict] = None) -> Response:
+def json_response(
+    data: object, status: int = 200, headers: Optional[dict] = None
+) -> Response:
     """
     Return a response object whose attached JSON dict will be formatted by middleware depending on
     the request's `Accept` header.

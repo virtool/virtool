@@ -21,10 +21,15 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool.db.core import DB
 from virtool.dispatcher.change import Change
 from virtool.dispatcher.connection import Connection
-from virtool.dispatcher.fetchers import (IndexesFetcher, LabelsFetcher,
-                                         ReferencesFetcher, SamplesFetcher,
-                                         SimpleMongoFetcher, TasksFetcher,
-                                         UploadsFetcher)
+from virtool.dispatcher.fetchers import (
+    IndexesFetcher,
+    LabelsFetcher,
+    ReferencesFetcher,
+    SamplesFetcher,
+    SimpleMongoFetcher,
+    TasksFetcher,
+    UploadsFetcher,
+)
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
 
@@ -54,19 +59,28 @@ class Fetchers:
 
 
 class Dispatcher:
-
     def __init__(self, pg: AsyncEngine, db: DB, listener: RedisDispatcherListener):
         #: A dict of all active connections.
         self.db = db
         self._listener = listener
         self._fetchers = Fetchers(
-            analyses=SimpleMongoFetcher(db.analyses, virtool.analyses.db.PROJECTION, virtool.analyses.db.processor),
+            analyses=SimpleMongoFetcher(
+                db.analyses,
+                virtool.analyses.db.PROJECTION,
+                virtool.analyses.db.processor,
+            ),
             caches=SimpleMongoFetcher(db.caches, virtool.caches.db.PROJECTION),
             groups=SimpleMongoFetcher(db.groups),
-            history=SimpleMongoFetcher(db.history, virtool.history.db.LIST_PROJECTION, processor=virtool.history.db.processor),
+            history=SimpleMongoFetcher(
+                db.history,
+                virtool.history.db.LIST_PROJECTION,
+                processor=virtool.history.db.processor,
+            ),
             hmm=SimpleMongoFetcher(db.hmm, virtool.hmm.db.PROJECTION),
             indexes=IndexesFetcher(db),
-            jobs=SimpleMongoFetcher(db.jobs, virtool.jobs.db.PROJECTION, virtool.jobs.db.processor),
+            jobs=SimpleMongoFetcher(
+                db.jobs, virtool.jobs.db.PROJECTION, virtool.jobs.db.processor
+            ),
             labels=LabelsFetcher(pg, db),
             otus=SimpleMongoFetcher(db.otus, virtool.otus.db.PROJECTION),
             tasks=TasksFetcher(pg),
@@ -75,9 +89,11 @@ class Dispatcher:
             sequences=SimpleMongoFetcher(db.sequences),
             settings=SimpleMongoFetcher(db.settings),
             status=SimpleMongoFetcher(db.status),
-            subtraction=SimpleMongoFetcher(db.subtraction, virtool.subtractions.db.PROJECTION),
+            subtraction=SimpleMongoFetcher(
+                db.subtraction, virtool.subtractions.db.PROJECTION
+            ),
             uploads=UploadsFetcher(db, pg),
-            users=SimpleMongoFetcher(db.users, virtool.users.db.PROJECTION)
+            users=SimpleMongoFetcher(db.users, virtool.users.db.PROJECTION),
         )
 
         #: All active client connections.
@@ -151,11 +167,15 @@ class Dispatcher:
         if change.operation not in (DELETE, INSERT, UPDATE):
             raise ValueError(f"Unknown dispatch operation: {change.operation}")
 
-        async for connection, message in fetcher.fetch(change, self.authenticated_connections):
+        async for connection, message in fetcher.fetch(
+            change, self.authenticated_connections
+        ):
             try:
                 await connection.send(message)
             except RuntimeError as err:
-                if "RuntimeError: unable to perform operation on <TCPTransport" in str(err):
+                if "RuntimeError: unable to perform operation on <TCPTransport" in str(
+                    err
+                ):
                     self.remove_connection(connection)
 
         logger.debug(f"Dispatcher sent messages for {change.target}")

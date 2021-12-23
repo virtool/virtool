@@ -17,14 +17,10 @@ async def add_subtractions_field(collection: AsyncIOMotorCollection):
         except TypeError:
             subtractions = list()
 
-        update = UpdateOne({"_id": document["_id"]}, {
-            "$set": {
-                "subtractions": subtractions
-            },
-            "$unset": {
-                "subtraction": ""
-            }
-        })
+        update = UpdateOne(
+            {"_id": document["_id"]},
+            {"$set": {"subtractions": subtractions}, "$unset": {"subtraction": ""}},
+        )
 
         updates.append(update)
 

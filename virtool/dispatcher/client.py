@@ -9,7 +9,6 @@ from virtool.dispatcher.operations import Operation
 
 
 class DispatcherClient:
-
     def __init__(self, redis: Redis):
         self._redis = redis
         self._q = asyncio.Queue()
@@ -29,10 +28,7 @@ class DispatcherClient:
             pass
 
     def enqueue_change(
-            self,
-            interface: str,
-            operation: Operation,
-            id_list: Sequence[Union[str, int]]
+        self, interface: str, operation: Operation, id_list: Sequence[Union[str, int]]
     ):
         """
         Enqueue the description of a change to be processed by a dispatcher.
@@ -42,10 +38,8 @@ class DispatcherClient:
         :param id_list: the IDs of the resources changed
 
         """
-        json_string = json.dumps({
-            "interface": interface,
-            "operation": operation,
-            "id_list": id_list
-        })
+        json_string = json.dumps(
+            {"interface": interface, "operation": operation, "id_list": id_list}
+        )
 
         self._q.put_nowait(json_string)

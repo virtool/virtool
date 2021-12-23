@@ -19,6 +19,7 @@ class SubtractionFile(Base):
     SQL model to store new subtraction files
 
     """
+
     __tablename__ = "subtraction_files"
     __table_args__ = (UniqueConstraint("subtraction", "name"),)
 

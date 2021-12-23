@@ -9,7 +9,9 @@ import virtool.utils
 from virtool.types import App
 
 
-async def add(app, otu_id: str, data: dict, user_id: str, isolate_id: Optional[str] = None) -> dict:
+async def add(
+    app, otu_id: str, data: dict, user_id: str, isolate_id: Optional[str] = None
+) -> dict:
     """
     Add an isolate to an existing OTU.
 
@@ -50,19 +52,17 @@ async def add(app, otu_id: str, data: dict, user_id: str, isolate_id: Optional[s
         "id": isolate_id,
         "default": will_be_default,
         "source_type": data["source_type"],
-        "source_name": data["source_name"]
+        "source_name": data["source_name"],
     }
 
     # Push the new isolate to the database.
-    await db.otus.update_one({"_id": otu_id}, {
-        "$set": {
-            "isolates": [*isolates, isolate],
-            "verified": False
+    await db.otus.update_one(
+        {"_id": otu_id},
+        {
+            "$set": {"isolates": [*isolates, isolate], "verified": False},
+            "$inc": {"version": 1},
         },
-        "$inc": {
-            "version": 1
-        }
-    })
+    )
 
     # Get the joined entry now that it has been updated.
     new = await virtool.otus.db.join(db, otu_id)
@@ -76,19 +76,14 @@ async def add(app, otu_id: str, data: dict, user_id: str, isolate_id: Optional[s
     if will_be_default:
         description += " as default"
 
-    await virtool.history.db.add(
-        app,
-        "add_isolate",
-        old,
-        new,
-        description,
-        user_id
-    )
+    await virtool.history.db.add(app, "add_isolate", old, new, description, user_id)
 
     return {**isolate, "sequences": []}
 
 
-async def edit(app: App, otu_id: str, isolate_id: str, data: dict, user_id: str) -> dict:
+async def edit(
+    app: App, otu_id: str, isolate_id: str, data: dict, user_id: str
+) -> dict:
     db = app["db"]
 
     isolates = await virtool.db.utils.get_one_field(db.otus, "isolates", otu_id)
@@ -103,15 +98,10 @@ async def edit(app: App, otu_id: str, isolate_id: str, data: dict, user_id: str)
     old = await virtool.otus.db.join(db, otu_id)
 
     # Replace the isolates list with the update one.
-    document = await db.otus.find_one_and_update({"_id": otu_id}, {
-        "$set": {
-            "isolates": isolates,
-            "verified": False
-        },
-        "$inc": {
-            "version": 1
-        }
-    })
+    document = await db.otus.find_one_and_update(
+        {"_id": otu_id},
+        {"$set": {"isolates": isolates, "verified": False}, "$inc": {"version": 1}},
+    )
 
     # Get the joined entry now that it has been updated.
     new = await virtool.otus.db.join(db, otu_id, document)
@@ -125,7 +115,7 @@ async def edit(app: App, otu_id: str, isolate_id: str, data: dict, user_id: str)
         old,
         new,
         f"Renamed {old_isolate_name} to {new_isolate_name}",
-        user_id
+        user_id,
     )
 
     complete = await virtool.otus.db.join_and_format(db, otu_id, joined=new)
@@ -155,15 +145,10 @@ async def remove(app: App, otu_id: str, isolate_id: str, user_id: str):
 
     old = await virtool.otus.db.join(db, otu_id, document)
 
-    document = await db.otus.find_one_and_update({"_id": otu_id}, {
-        "$set": {
-            "isolates": isolates,
-            "verified": False
-        },
-        "$inc": {
-            "version": 1
-        }
-    })
+    document = await db.otus.find_one_and_update(
+        {"_id": otu_id},
+        {"$set": {"isolates": isolates, "verified": False}, "$inc": {"version": 1}},
+    )
 
     new = await virtool.otus.db.join(db, otu_id, document)
 
@@ -180,14 +165,7 @@ async def remove(app: App, otu_id: str, isolate_id: str, user_id: str):
         new_isolate_name = virtool.otus.utils.format_isolate_name(new_default)
         description += f" and set {new_isolate_name} as default"
 
-    await virtool.history.db.add(
-        app,
-        "remove_isolate",
-        old,
-        new,
-        description,
-        user_id
-    )
+    await virtool.history.db.add(app, "remove_isolate", old, new, description, user_id)
 
 
 async def set_default(app, otu_id: str, isolate_id: str, user_id: str) -> dict:
@@ -214,25 +192,19 @@ async def set_default(app, otu_id: str, isolate_id: str, user_id: str) -> dict:
         return virtool.otus.utils.find_isolate(old["isolates"], isolate_id)
 
     # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
-    isolates = [{**isolate, "default": isolate_id == isolate["id"]} for isolate in document["isolates"]]
+    isolates = [
+        {**isolate, "default": isolate_id == isolate["id"]}
+        for isolate in document["isolates"]
+    ]
 
     # Replace the isolates list with the updated one.
-    document = await db.otus.find_one_and_update({"_id": otu_id}, {
-        "$set": {
-            "isolates": isolates,
-            "verified": False
-        },
-        "$inc": {
-            "version": 1
-        }
-    })
+    document = await db.otus.find_one_and_update(
+        {"_id": otu_id},
+        {"$set": {"isolates": isolates, "verified": False}, "$inc": {"version": 1}},
+    )
 
     # Get the joined entry now that it has been updated.
-    new = await virtool.otus.db.join(
-        db,
-        otu_id,
-        document
-    )
+    new = await virtool.otus.db.join(db, otu_id, document)
 
     await virtool.otus.db.update_verification(db, new)
 
@@ -240,12 +212,7 @@ async def set_default(app, otu_id: str, isolate_id: str, user_id: str) -> dict:
 
     # Use the old and new entry to add a new history document for the change.
     await virtool.history.db.add(
-        app,
-        "set_as_default",
-        old,
-        new,
-        f"Set {isolate_name} as default",
-        user_id
+        app, "set_as_default", old, new, f"Set {isolate_name} as default", user_id
     )
 
     return virtool.otus.utils.find_isolate(new["isolates"], isolate_id)

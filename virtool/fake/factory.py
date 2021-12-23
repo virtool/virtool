@@ -20,8 +20,10 @@ from virtool.otus.fake import create_fake_otus
 from virtool.references.db import create_document
 from virtool.samples.fake import create_fake_sample
 from virtool.settings.db import Settings
-from virtool.subtractions.fake import (create_fake_fasta_upload,
-                                       create_fake_finalized_subtraction)
+from virtool.subtractions.fake import (
+    create_fake_fasta_upload,
+    create_fake_finalized_subtraction,
+)
 from virtool.types import App
 from virtool.utils import timestamp
 
@@ -35,13 +37,14 @@ INDEX_FILES = (
     "reference.3.bt2",
     "reference.4.bt2",
     "reference.rev.1.bt2",
-    "reference.rev.2.bt2"
+    "reference.rev.2.bt2",
 )
 
 
 @dataclass
 class WorkflowTestCase:
     """A collection of records required for a particular workflow run."""
+
     job: SimpleNamespace
     workflow: str
     analysis: SimpleNamespace = None
@@ -54,11 +57,7 @@ class WorkflowTestCase:
 class TestCaseDataFactory:
     """Initialize the database with fake data for a test case."""
 
-    def __init__(
-            self,
-            app: App,
-            user_id: str,
-            job_id: str = None):
+    def __init__(self, app: App, user_id: str, job_id: str = None):
         self.fake = app["fake"] if "fake" in app else FakerWrapper()
         self.user_id = user_id
         self.job_id = job_id or self.fake.get_mongo_id()
@@ -69,13 +68,13 @@ class TestCaseDataFactory:
         self.data_path = app["config"].data_path
 
     async def analysis(
-            self,
-            index_id: str = None,
-            ref_id: str = None,
-            subtractions: List[str] = None,
-            sample_id: str = None,
-            workflow: str = "test",
-            ready=False
+        self,
+        index_id: str = None,
+        ref_id: str = None,
+        subtractions: List[str] = None,
+        sample_id: str = None,
+        workflow: str = "test",
+        ready=False,
     ):
         id_ = self.fake.get_mongo_id()
 
@@ -84,21 +83,11 @@ class TestCaseDataFactory:
             "workflow": workflow,
             "created_at": timestamp(),
             "ready": ready,
-            "job": {
-                "id": self.job_id
-            },
-            "index": {
-                "id": index_id
-            },
-            "user": {
-                "id": self.user_id
-            },
-            "sample": {
-                "id": sample_id
-            },
-            "reference": {
-                "id": ref_id
-            },
+            "job": {"id": self.job_id},
+            "index": {"id": index_id},
+            "user": {"id": self.user_id},
+            "sample": {"id": sample_id},
+            "reference": {"id": ref_id},
             "subtractions": subtractions,
         }
 
@@ -118,12 +107,11 @@ class TestCaseDataFactory:
         return document
 
     async def sample(self, paired: bool, finalize: bool) -> dict:
-        await self.db.users.update_one({"_id": self.user_id}, {
-            "$set": {
-                "handle": self.user_id,
-                "administrator": False
-            }
-        }, upsert=True)
+        await self.db.users.update_one(
+            {"_id": self.user_id},
+            {"$set": {"handle": self.user_id, "administrator": False}},
+            upsert=True,
+        )
 
         sample_id = self.fake.get_mongo_id()
 
@@ -137,10 +125,7 @@ class TestCaseDataFactory:
 
     async def subtraction(self, finalize=True) -> dict:
         id_ = self.fake.get_mongo_id()
-        upload_id, upload_name = await create_fake_fasta_upload(
-            self.app,
-            self.user_id
-        )
+        upload_id, upload_name = await create_fake_fasta_upload(self.app, self.user_id)
 
         if finalize:
             return await create_fake_finalized_subtraction(
@@ -171,7 +156,7 @@ class TestCaseDataFactory:
             organism="virus",
             description="A fake reference",
             data_type="genome",
-            user_id=self.user_id
+            user_id=self.user_id,
         )
 
         await self.db.references.insert_one(document)
@@ -200,14 +185,11 @@ class TestCaseDataFactory:
                     self.pg,
                     id_,
                     "fasta" if index_file == "reference.fa.gz" else "bowtie2",
-                    index_file
+                    index_file,
                 )
 
             document = await virtool.indexes.db.finalize(
-                db=self.db,
-                pg=self.pg,
-                ref_id=ref_id,
-                index_id=id_
+                db=self.db, pg=self.pg, ref_id=ref_id, index_id=id_
             )
 
         return document
@@ -230,9 +212,7 @@ class TestCaseDataFactory:
 
 
 async def load_test_case_from_yml(
-    app: App, 
-    path: str, 
-    user_id: str
+    app: App, path: str, user_id: str
 ) -> WorkflowTestCase:
     """Load a test case from a YAML file."""
     async with aiofiles.open(path) as f:
@@ -273,8 +253,9 @@ async def load_test_case_from_yml(
         for subtraction in yml["subtractions"]:
             test_case.subtractions.append(await factory.subtraction(**subtraction))
 
-        job_args["subtractions"] = [subtraction["_id"]
-                                    for subtraction in test_case.subtractions]
+        job_args["subtractions"] = [
+            subtraction["_id"] for subtraction in test_case.subtractions
+        ]
 
     if "analysis" in yml:
         kwargs = job_args.copy()

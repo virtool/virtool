@@ -35,18 +35,20 @@ async def initialize_ncbi_blast(config: Config, sequence: dict) -> tuple:
         "MEGABLAST": "on",
         "HITLIST_SIZE": 5,
         "FILTER": "mL",
-        "FORMAT_TYPE": "JSON2"
+        "FORMAT_TYPE": "JSON2",
     }
 
     # Data passed as POST content.
-    data = {
-        "QUERY": sequence
-    }
+    data = {"QUERY": sequence}
 
     async with aiohttp.ClientSession() as session:
-        async with ProxyRequest(config, session.post, BLAST_URL, params=params, data=data) as resp:
+        async with ProxyRequest(
+            config, session.post, BLAST_URL, params=params, data=data
+        ) as resp:
             if resp.status != 200:
-                raise virtool.errors.NCBIError(f"BLAST request returned status: {resp.status}")
+                raise virtool.errors.NCBIError(
+                    f"BLAST request returned status: {resp.status}"
+                )
 
             # Extract and return the RID and RTOE from the QBlastInfo tag.
             html = await resp.text()
@@ -84,16 +86,14 @@ async def check_rid(config: Config, rid: str) -> bool:
     :return: ``True`` if ready, ``False`` otherwise
 
     """
-    params = {
-        "CMD": "Get",
-        "RID": rid,
-        "FORMAT_OBJECT": "SearchInfo"
-    }
+    params = {"CMD": "Get", "RID": rid, "FORMAT_OBJECT": "SearchInfo"}
 
     async with aiohttp.ClientSession() as session:
         async with ProxyRequest(config, session.get, BLAST_URL, params=params) as resp:
             if resp.status != 200:
-                raise virtool.errors.NCBIError(f"RID check request returned status {resp.status}")
+                raise virtool.errors.NCBIError(
+                    f"RID check request returned status {resp.status}"
+                )
 
             return "Status=WAITING" not in await resp.text()
 
@@ -120,26 +120,27 @@ def format_blast_hit(hit: dict) -> dict:
     :return: the formatted hit
 
     """
-    cleaned = {key: hit["description"][0].get(key, "") for key in ["accession", "taxid", "title"]}
+    cleaned = {
+        key: hit["description"][0].get(key, "")
+        for key in ["accession", "taxid", "title"]
+    }
 
-    hsps = {key: hit["hsps"][0][key] for key in [
-        "identity",
-        "evalue",
-        "align_len",
-        "score",
-        "bit_score",
-        "gaps"
-    ]}
+    hsps = {
+        key: hit["hsps"][0][key]
+        for key in ["identity", "evalue", "align_len", "score", "bit_score", "gaps"]
+    }
 
     return {
         **cleaned,
         **hsps,
         "name": hit["description"][0].get("sciname", "No name"),
-        "len": hit["len"]
+        "len": hit["len"],
     }
 
 
-async def get_ncbi_blast_result(config: Config, run_in_process: callable, rid: str) -> dict:
+async def get_ncbi_blast_result(
+    config: Config, run_in_process: callable, rid: str
+) -> dict:
     """
     Retrieve the BLAST result with the given `rid` from NCBI.
 
@@ -153,11 +154,13 @@ async def get_ncbi_blast_result(config: Config, run_in_process: callable, rid: s
         "CMD": "Get",
         "RID": rid,
         "FORMAT_TYPE": "JSON2",
-        "FORMAT_OBJECT": "Alignment"
+        "FORMAT_OBJECT": "Alignment",
     }
 
     async with aiohttp.ClientSession() as session:
-        async with virtool.http.proxy.ProxyRequest(config, session.get, BLAST_URL, params=params) as resp:
+        async with virtool.http.proxy.ProxyRequest(
+            config, session.get, BLAST_URL, params=params
+        ) as resp:
             data = await resp.read()
             return await run_in_process(extract_ncbi_blast_zip, data, rid)
 
@@ -171,12 +174,16 @@ def format_blast_content(result: dict) -> dict:
 
     """
     if len(result) != 1:
-        raise virtool.errors.NCBIError(f"Unexpected BLAST result count {len(result)} returned")
+        raise virtool.errors.NCBIError(
+            f"Unexpected BLAST result count {len(result)} returned"
+        )
 
     result = result["BlastOutput2"]
 
     if len(result) != 1:
-        raise virtool.errors.NCBIError(f"Unexpected BLAST result count {len(result)} returned")
+        raise virtool.errors.NCBIError(
+            f"Unexpected BLAST result count {len(result)} returned"
+        )
 
     result = result["report"]
 
@@ -207,11 +214,7 @@ async def wait_for_blast_result(app, analysis_id, sequence_index, rid):
     config = app["config"]
 
     blast = virtool.analyses.db.BLAST(
-        db,
-        app["config"],
-        analysis_id,
-        sequence_index,
-        rid
+        db, app["config"], analysis_id, sequence_index, rid
     )
 
     try:
@@ -225,12 +228,12 @@ async def wait_for_blast_result(app, analysis_id, sequence_index, rid):
             if blast.ready:
                 try:
                     result_json = await get_ncbi_blast_result(
-                        config,
-                        app["run_in_process"],
-                        rid
+                        config, app["run_in_process"], rid
                     )
                 except zipfile.BadZipFile:
-                    await blast.update(False, None, error="Unable to interpret NCBI result")
+                    await blast.update(
+                        False, None, error="Unable to interpret NCBI result"
+                    )
                     return
 
                 logger.debug(f"Retrieved result for BLAST {rid}")

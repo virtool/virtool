@@ -4,8 +4,10 @@ from aiohttp.web_exceptions import HTTPNoContent
 from virtool.http.routes import Routes
 from virtool.jobs.db import force_delete_jobs
 from virtool.samples.fake import create_fake_sample
-from virtool.subtractions.fake import (create_fake_fasta_upload,
-                                       create_fake_finalized_subtraction)
+from virtool.subtractions.fake import (
+    create_fake_fasta_upload,
+    create_fake_finalized_subtraction,
+)
 from virtool.utils import random_alphanumeric
 
 logger = getLogger(__name__)
@@ -28,25 +30,16 @@ async def dev(req):
 
     if command == "create_subtraction":
         upload_id, upload_name = await create_fake_fasta_upload(
-            req.app,
-            req["client"].user_id
+            req.app, req["client"].user_id
         )
 
         await create_fake_finalized_subtraction(
-            req.app,
-            upload_id,
-            upload_name,
-            random_alphanumeric(8),
-            user_id
+            req.app, upload_id, upload_name, random_alphanumeric(8), user_id
         )
 
     if command == "create_sample":
         await create_fake_sample(
-            req.app,
-            random_alphanumeric(8),
-            req["client"].user_id,
-            False,
-            True
+            req.app, random_alphanumeric(8), req["client"].user_id, False, True
         )
 
     if command == "force_delete_jobs":

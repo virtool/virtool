@@ -74,8 +74,11 @@ def find_isolate(isolates: List[dict], isolate_id: str) -> dict:
     return next((isolate for isolate in isolates if isolate["id"] == isolate_id), None)
 
 
-def format_otu(joined: Optional[dict], issues: Union[dict, None, bool] = False,
-               most_recent_change: Optional[dict] = None) -> dict:
+def format_otu(
+    joined: Optional[dict],
+    issues: Union[dict, None, bool] = False,
+    most_recent_change: Optional[dict] = None,
+) -> dict:
     """
     Join the otu identified by the passed ``otu_id`` or use the ``joined`` otu document if available. Then,
     format the joined otu into a format that can be directly returned to API clients.
@@ -101,7 +104,9 @@ def format_otu(joined: Optional[dict], issues: Union[dict, None, bool] = False,
     formatted["most_recent_change"] = None
 
     if most_recent_change:
-        formatted["most_recent_change"] = virtool.utils.base_processor(most_recent_change)
+        formatted["most_recent_change"] = virtool.utils.base_processor(
+            most_recent_change
+        )
 
     if issues is False:
         issues = verify(joined)
@@ -184,7 +189,7 @@ def verify(joined: dict) -> Optional[dict]:
         "empty_otu": len(joined["isolates"]) == 0,
         "empty_isolate": list(),
         "empty_sequence": list(),
-        "isolate_inconsistency": False
+        "isolate_inconsistency": False,
     }
 
     isolate_sequence_counts = list()
@@ -201,12 +206,14 @@ def verify(joined: dict) -> Optional[dict]:
 
         isolate_sequence_counts.append(isolate_sequence_count)
 
-        errors["empty_sequence"] += filter(lambda sequence: len(sequence["sequence"]) == 0, isolate_sequences)
+        errors["empty_sequence"] += filter(
+            lambda sequence: len(sequence["sequence"]) == 0, isolate_sequences
+        )
 
     # Give an isolate_inconsistency error the number of sequences is not the same for every isolate. Only give the
     # error if the otu is not also emtpy (empty_otu error).
-    errors["isolate_inconsistency"] = (
-            len(set(isolate_sequence_counts)) != 1 and not (errors["empty_otu"] or errors["empty_isolate"])
+    errors["isolate_inconsistency"] = len(set(isolate_sequence_counts)) != 1 and not (
+        errors["empty_otu"] or errors["empty_isolate"]
     )
 
     # If there is an error in the otu, return the errors object. Otherwise return False.

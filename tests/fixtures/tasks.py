@@ -12,7 +12,7 @@ async def test_tasks(pg, static_time):
         progress=100,
         step="download",
         type="clone_reference",
-        created_at=static_time.datetime
+        created_at=static_time.datetime,
     )
 
     task_2 = Task(
@@ -21,7 +21,7 @@ async def test_tasks(pg, static_time):
         progress=100,
         step="download",
         type="import_reference",
-        created_at=static_time.datetime
+        created_at=static_time.datetime,
     )
 
     task_3 = Task(
@@ -30,7 +30,7 @@ async def test_tasks(pg, static_time):
         progress=50,
         step="decompress",
         type="update_software",
-        created_at=static_time.datetime
+        created_at=static_time.datetime,
     )
 
     async with AsyncSession(pg) as session:

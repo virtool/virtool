@@ -40,10 +40,7 @@ def pg_connection_string(pg_base_connection_string: str, pg_db_name: str):
 
 @pytest.fixture
 async def pg(
-        loop,
-        pg_db_name: str,
-        pg_base_connection_string: str,
-        pg_connection_string: str
+    loop, pg_db_name: str, pg_base_connection_string: str, pg_connection_string: str
 ) -> AsyncEngine:
     """
     Return a SQLAlchemy :class:`AsyncEngine` object for an auto-generated test database.

@@ -10,10 +10,7 @@ from virtool.utils import file_stats
 
 
 async def create_subtraction_file(
-        pg: AsyncEngine,
-        subtraction_id: str,
-        file_type: str,
-        name: str
+    pg: AsyncEngine, subtraction_id: str, file_type: str, name: str
 ) -> Dict[str, any]:
     """
     Create a row in the `subtraction_files` SQL table that represents an subtraction file.
@@ -26,9 +23,7 @@ async def create_subtraction_file(
     """
     async with AsyncSession(pg) as session:
         subtraction_file = SubtractionFile(
-            name=name,
-            subtraction=subtraction_id,
-            type=file_type
+            name=name, subtraction=subtraction_id, type=file_type
         )
 
         session.add(subtraction_file)
@@ -43,10 +38,7 @@ async def create_subtraction_file(
 
 
 async def create_subtraction_files(
-        pg: AsyncEngine,
-        subtraction_id: str,
-        files: List[str],
-        path: Union[str, Path]
+    pg: AsyncEngine, subtraction_id: str, files: List[str], path: Union[str, Path]
 ):
     """
     Create multiple rows in the `subtraction_files` SQL table in a single transaction.
@@ -60,12 +52,14 @@ async def create_subtraction_files(
     subtraction_files = list()
 
     for filename in files:
-        subtraction_files.append(SubtractionFile(
-            name=filename,
-            subtraction=subtraction_id,
-            type=check_subtraction_file_type(filename),
-            size=file_stats(path / filename)["size"]
-        ))
+        subtraction_files.append(
+            SubtractionFile(
+                name=filename,
+                subtraction=subtraction_id,
+                type=check_subtraction_file_type(filename),
+                size=file_stats(path / filename)["size"],
+            )
+        )
 
     async with AsyncSession(pg) as session:
         session.add_all(subtraction_files)
@@ -82,7 +76,9 @@ async def delete_subtraction_file(pg: AsyncEngine, file_id: int):
     """
     async with AsyncSession(pg) as session:
         subtraction_file = (
-            await session.execute(select(SubtractionFile).where(SubtractionFile.id == file_id))
+            await session.execute(
+                select(SubtractionFile).where(SubtractionFile.id == file_id)
+            )
         ).scalar()
 
         if not subtraction_file:

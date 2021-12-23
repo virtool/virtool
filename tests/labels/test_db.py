@@ -4,43 +4,33 @@ from virtool.labels.db import attach_sample_count
 async def test_attach_sample_count(snapshot, spawn_client):
     client = await spawn_client(authorize=True)
 
-    await client.db.samples.insert_many([
-        {
-            "_id": "foo",
-            "name": "Foo",
-            "labels": [1, 2, 4]
-        },
-        {
-            "_id": "bar",
-            "name": "Bar",
-            "labels": []
-        },
-        {
-            "_id": "baz",
-            "name": "Baz",
-            "labels": [2]
-        }
-    ])
+    await client.db.samples.insert_many(
+        [
+            {"_id": "foo", "name": "Foo", "labels": [1, 2, 4]},
+            {"_id": "bar", "name": "Bar", "labels": []},
+            {"_id": "baz", "name": "Baz", "labels": [2]},
+        ]
+    )
 
     document_1 = {
         "id": 1,
         "name": "Bug",
         "color": "#a83432",
-        "description": "This is a bug"
+        "description": "This is a bug",
     }
 
     document_2 = {
         "id": 2,
         "name": "Question",
         "color": "#03fc20",
-        "description": "This is a question"
+        "description": "This is a question",
     }
 
     document_3 = {
         "id": 3,
         "name": "Info",
         "color": "#02db21",
-        "description": "This is a info"
+        "description": "This is a info",
     }
 
     result_1 = await attach_sample_count(client.app["db"], document_1)

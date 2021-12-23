@@ -13,23 +13,16 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://api.github.com/repos"
 
-EXCLUDED_UPDATE_FIELDS = (
-    "content_type",
-    "download_url",
-    "etag",
-    "retrieved_at"
-)
+EXCLUDED_UPDATE_FIELDS = ("content_type", "download_url", "etag", "retrieved_at")
 
-HEADERS = {
-    "Accept": "application/vnd.github.v3+json"
-}
+HEADERS = {"Accept": "application/vnd.github.v3+json"}
 
 
 def create_update_subdocument(
-        release: dict,
-        ready: bool,
-        user_id: str,
-        created_at: Optional[datetime.datetime] = None
+    release: dict,
+    ready: bool,
+    user_id: str,
+    created_at: Optional[datetime.datetime] = None,
 ) -> dict:
     update = {k: release[k] for k in release if k not in EXCLUDED_UPDATE_FIELDS}
 
@@ -37,9 +30,7 @@ def create_update_subdocument(
         **update,
         "created_at": created_at or virtool.utils.timestamp(),
         "ready": ready,
-        "user": {
-            "id": user_id
-        }
+        "user": {"id": user_id},
     }
 
 
@@ -63,7 +54,7 @@ def format_release(release: dict) -> dict:
         "html_url": release["html_url"],
         "download_url": asset["browser_download_url"],
         "published_at": release["published_at"],
-        "content_type": asset["content_type"]
+        "content_type": asset["content_type"],
     }
 
 
@@ -82,11 +73,11 @@ def get_etag(release: Optional[dict]) -> Optional[str]:
 
 
 async def get_release(
-        config: Config,
-        session: aiohttp.ClientSession,
-        slug: str,
-        etag: Optional[str] = None,
-        release_id: Optional[str] = "latest"
+    config: Config,
+    session: aiohttp.ClientSession,
+    slug: str,
+    etag: Optional[str] = None,
+    release_id: Optional[str] = "latest",
 ) -> Optional[dict]:
     """
     GET data from a GitHub API url.
@@ -108,12 +99,14 @@ async def get_release(
 
     logger.debug(f"Making GitHub request to {url}")
 
-    async with ProxyRequest(config, session.get, url, headers=headers) as resp:        
+    async with ProxyRequest(config, session.get, url, headers=headers) as resp:
         rate_limit_remaining = resp.headers.get("X-RateLimit-Remaining", "00")
         rate_limit = resp.headers.get("X-RateLimit-Limit", "00")
 
         if int(rate_limit) / int(rate_limit_remaining) > 2.0:
-            logger.warning(f"Less than half of GitHub remaining ({rate_limit_remaining} of {rate_limit})")
+            logger.warning(
+                f"Less than half of GitHub remaining ({rate_limit_remaining} of {rate_limit})"
+            )
 
         logger.debug(f"Fetched release: {slug}/{release_id} ({resp.status})")
 

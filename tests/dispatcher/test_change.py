@@ -7,11 +7,7 @@ def test_change():
     Make sure a change object has the required attributes and string representation.
 
     """
-    change = Change(
-        "jobs",
-        UPDATE,
-        ["foo", "bar"]
-    )
+    change = Change("jobs", UPDATE, ["foo", "bar"])
 
     assert change.interface == "jobs"
     assert change.operation == UPDATE

@@ -8,14 +8,12 @@ from sqlalchemy.future import select
 import virtool.utils
 from virtool.analyses.models import AnalysisFile
 
-WORKFLOW_NAMES = (
-    "aodp",
-    "nuvs",
-    "pathoscope_bowtie"
-)
+WORKFLOW_NAMES = ("aodp", "nuvs", "pathoscope_bowtie")
 
 
-async def attach_analysis_files(pg: AsyncEngine, analysis_id: str, document: Dict[str, any]) -> Dict[str, any]:
+async def attach_analysis_files(
+    pg: AsyncEngine, analysis_id: str, document: Dict[str, any]
+) -> Dict[str, any]:
     """
     Get analysis result file details for a specific analysis to attach to analysis `GET` response
 
@@ -25,12 +23,17 @@ async def attach_analysis_files(pg: AsyncEngine, analysis_id: str, document: Dic
     :return: List of file details for each file associated with an analysis
     """
     async with AsyncSession(pg) as session:
-        results = (await session.execute(select(AnalysisFile).filter_by(analysis=analysis_id))).scalars().all()
+        results = (
+            (
+                await session.execute(
+                    select(AnalysisFile).filter_by(analysis=analysis_id)
+                )
+            )
+            .scalars()
+            .all()
+        )
 
-    return {
-        **document,
-        "files": [result.to_dict() for result in results]
-    }
+    return {**document, "files": [result.to_dict() for result in results]}
 
 
 def check_nuvs_file_type(file_name: str) -> str:
@@ -54,8 +57,7 @@ def check_nuvs_file_type(file_name: str) -> str:
 
 
 def find_nuvs_sequence_by_index(
-        document: Dict[str, Any],
-        sequence_index: int
+    document: Dict[str, Any], sequence_index: int
 ) -> Optional[Dict[str, Any]]:
     """
     Get a sequence from a NuVs analysis document by its sequence index.
@@ -65,8 +67,11 @@ def find_nuvs_sequence_by_index(
     :return: a NuVs sequence
 
     """
-    sequences = [result["sequence"] for result in document["results"] if
-                 result["index"] == int(sequence_index)]
+    sequences = [
+        result["sequence"]
+        for result in document["results"]
+        if result["index"] == int(sequence_index)
+    ]
 
     if not sequences:
         return None
@@ -107,7 +112,9 @@ def join_analysis_json_path(data_path: Path, analysis_id: str, sample_id: str) -
     return join_analysis_path(data_path, analysis_id, sample_id) / "results.json"
 
 
-async def move_nuvs_files(filename: str, run_in_thread: callable, file_path: Path, target_path: Path):
+async def move_nuvs_files(
+    filename: str, run_in_thread: callable, file_path: Path, target_path: Path
+):
     """
     Move NuVs analysis files from `file_path` to `target_path`, compress FASTA files and FASTQ files.
 
@@ -118,12 +125,10 @@ async def move_nuvs_files(filename: str, run_in_thread: callable, file_path: Pat
 
     """
     if filename == "hmm.tsv":
-        await run_in_thread(
-            shutil.copy,
-            file_path / "hmm.tsv",
-            target_path / "hmm.tsv"
-        )
+        await run_in_thread(shutil.copy, file_path / "hmm.tsv", target_path / "hmm.tsv")
     else:
-        await run_in_thread(virtool.utils.compress_file,
-                            file_path / filename,
-                            target_path / f"{filename}.gz")
+        await run_in_thread(
+            virtool.utils.compress_file,
+            file_path / filename,
+            target_path / f"{filename}.gz",
+        )

@@ -24,7 +24,7 @@ PROJECTION = (
     "sample",
     "subtractions",
     "updated_at",
-    "user"
+    "user",
 )
 
 TARGET_FILES = (
@@ -32,7 +32,7 @@ TARGET_FILES = (
     "assembly.fa",
     "orfs.fa",
     "unmapped_hosts.fq",
-    "unmapped_otus.fq"
+    "unmapped_otus.fq",
 )
 
 
@@ -42,7 +42,9 @@ class BLAST:
 
     """
 
-    def __init__(self, db, config: Config, analysis_id: str, sequence_index: int, rid: str):
+    def __init__(
+        self, db, config: Config, analysis_id: str, sequence_index: int, rid: str
+    ):
         self.db = db
         self.config = config
         self.analysis_id = analysis_id
@@ -69,10 +71,7 @@ class BLAST:
         self.interval += 5
 
     async def update(
-            self,
-            ready: bool,
-            result: Optional[dict],
-            error: Optional[str]
+        self, ready: bool, result: Optional[dict], error: Optional[str]
     ) -> Tuple[dict, dict]:
         """
         Update the BLAST data. Returns the BLAST data and the complete analysis document.
@@ -96,18 +95,18 @@ class BLAST:
             "last_checked_at": virtool.utils.timestamp(),
             "rid": self.rid,
             "ready": ready,
-            "result": self.result
+            "result": self.result,
         }
 
-        document = await self.db.analyses.find_one_and_update({
-            "_id": self.analysis_id,
-            "results.index": self.sequence_index
-        }, {
-            "$set": {
-                "results.$.blast": data,
-                "updated_at": virtool.utils.timestamp()
-            }
-        })
+        document = await self.db.analyses.find_one_and_update(
+            {"_id": self.analysis_id, "results.index": self.sequence_index},
+            {
+                "$set": {
+                    "results.$.blast": data,
+                    "updated_at": virtool.utils.timestamp(),
+                }
+            },
+        )
 
         return data, document
 
@@ -135,7 +134,7 @@ async def create(
     user_id: str,
     workflow: str,
     job_id: str,
-    analysis_id: Optional[str] = None
+    analysis_id: Optional[str] = None,
 ) -> dict:
     """
     Creates a new analysis.
@@ -168,26 +167,19 @@ async def create(
         "ready": False,
         "created_at": created_at,
         "updated_at": created_at,
-        "job": {
-            "id": job_id
-        },
+        "job": {"id": job_id},
         "files": [],
         "workflow": workflow,
-        "sample": {
-            "id": sample_id
-        },
-        "index": {
-            "id": index_id,
-            "version": index_version
-        },
+        "sample": {"id": sample_id},
+        "index": {"id": index_id, "version": index_version},
         "reference": {
             "id": ref_id,
-            "name": await virtool.db.utils.get_one_field(db.references, "name", ref_id)
+            "name": await virtool.db.utils.get_one_field(db.references, "name", ref_id),
         },
         "subtractions": subtractions,
         "user": {
             "id": user_id,
-        }
+        },
     }
 
     await db.analyses.insert_one(document)
@@ -196,15 +188,15 @@ async def create(
 
 
 async def update_nuvs_blast(
-        db,
-        config: Config,
-        analysis_id: str,
-        sequence_index: int,
-        rid: str,
-        error: Optional[str] = None,
-        interval: int = 3,
-        ready: Optional[bool] = None,
-        result: Optional[dict] = None
+    db,
+    config: Config,
+    analysis_id: str,
+    sequence_index: int,
+    rid: str,
+    error: Optional[str] = None,
+    interval: int = 3,
+    ready: Optional[bool] = None,
+    result: Optional[dict] = None,
 ) -> Tuple[dict, dict]:
     """
     Update the BLAST data for a sequence in a NuVs analysis.
@@ -229,16 +221,13 @@ async def update_nuvs_blast(
         "last_checked_at": virtool.utils.timestamp(),
         "rid": rid,
         "ready": ready,
-        "result": result
+        "result": result,
     }
 
     document = await db.analyses.find_one_and_update(
-        {"_id": analysis_id, "results.index": sequence_index}, {
-            "$set": {
-                "results.$.blast": data,
-                "updated_at": virtool.utils.timestamp()
-            }
-        })
+        {"_id": analysis_id, "results.index": sequence_index},
+        {"$set": {"results.$.blast": data, "updated_at": virtool.utils.timestamp()}},
+    )
 
     return data, document
 
@@ -252,9 +241,7 @@ async def remove_nuvs_blast(db, analysis_id: str, sequence_index: int):
     :param sequence_index: the index of the sequence to remove BLAST data from
     :return:
     """
-    await db.analyses.update_one({"_id": analysis_id, "results.index": sequence_index}, {
-        "$set": {
-            "results.$.blast": None,
-            "updated_at": virtool.utils.timestamp()
-        }
-    })
+    await db.analyses.update_one(
+        {"_id": analysis_id, "results.index": sequence_index},
+        {"$set": {"results.$.blast": None, "updated_at": virtool.utils.timestamp()}},
+    )

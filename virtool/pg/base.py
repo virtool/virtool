@@ -5,9 +5,10 @@ from sqlalchemy.ext.declarative import as_declarative
 
 @as_declarative()
 class Base:
-
     def __repr__(self):
-        params = ', '.join(f'{column}={value}' for column, value in self.to_dict().items())
+        params = ", ".join(
+            f"{column}={value}" for column, value in self.to_dict().items()
+        )
 
         return f"<{self.__class__.__name__}({params})>"
 

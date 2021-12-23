@@ -17,10 +17,9 @@ def fake_release():
                     "name": "virtool.tar.gz",
                     "content_type": "application/gzip",
                     "size": 32203112,
-                    "browser_download_url": "https://www.example.com/file"
-
+                    "browser_download_url": "https://www.example.com/file",
                 }
-            ]
+            ],
         }
 
         formatted = {
@@ -33,7 +32,7 @@ def fake_release():
             "html_url": "https://www.example.com/release",
             "name": "v3.2.1",
             "published_at": "2019-07-23T21:10:17Z",
-            "size": 32203112
+            "size": 32203112,
         }
 
     return Release()

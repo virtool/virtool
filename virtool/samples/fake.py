@@ -49,8 +49,7 @@ async def create_fake_quality(fake: Optional[FakerWrapper]) -> dict:
         "bases": [[fake.integer(31, 32) for _ in range(5)] for _ in range(5)],
         "sequences": fake.list(25, value_types=[int]),
         "composition": [
-            list(create_fake_composition(fake))
-            for _ in range(fake.integer(4, 8))
+            list(create_fake_composition(fake)) for _ in range(fake.integer(4, 8))
         ],
         "hold": fake.boolean(),
         "group_read": fake.boolean(),
@@ -62,11 +61,11 @@ async def create_fake_quality(fake: Optional[FakerWrapper]) -> dict:
 
 
 async def create_fake_sample(
-        app: App,
-        sample_id: str,
-        user_id: str,
-        paired=False,
-        finalized=False,
+    app: App,
+    sample_id: str,
+    user_id: str,
+    paired=False,
+    finalized=False,
 ) -> dict:
     fake = app.get("fake", FakerWrapper())
 
@@ -122,7 +121,7 @@ async def create_fake_sample(
         labels=[],
         user_id=user_id,
         group="none",
-        settings=settings
+        settings=settings,
     )
 
     if finalized is True:

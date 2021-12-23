@@ -41,11 +41,7 @@ class Task:
 
             self.step = func
 
-            await virtool.tasks.pg.update(
-                self.pg,
-                self.id,
-                step=self.step.__name__
-            )
+            await virtool.tasks.pg.update(self.pg, self.id, step=self.step.__name__)
             try:
                 await func()
             except Exception as err:
@@ -64,7 +60,9 @@ class Task:
 
         """
         async with AsyncSession(self.pg) as session:
-            result = await session.execute(select(virtool.tasks.models.Task).filter_by(id=self.id))
+            result = await session.execute(
+                select(virtool.tasks.models.Task).filter_by(id=self.id)
+            )
             task = result.scalar()
             for key, value in update.items():
                 task.context[key] = value
@@ -84,18 +82,16 @@ class Task:
 
         """
         async with AsyncSession(self.pg) as session:
-            result = await session.execute(select(virtool.tasks.models.Task).filter_by(id=self.id))
+            result = await session.execute(
+                select(virtool.tasks.models.Task).filter_by(id=self.id)
+            )
             task = result.scalar().to_dict()
             initial = task["progress"]
 
         total = round((100 - initial) / (len(self.steps) - self.steps.index(self.step)))
 
         return ProgressTracker(
-            self.pg,
-            self.id,
-            total,
-            file_size=file_size,
-            initial=initial
+            self.pg, self.id, total, file_size=file_size, initial=initial
         )
 
     async def cleanup(self):
@@ -110,7 +106,9 @@ class Task:
 
         """
         async with AsyncSession(self.pg) as session:
-            result = await session.execute(select(virtool.tasks.models.Task).filter_by(id=self.id))
+            result = await session.execute(
+                select(virtool.tasks.models.Task).filter_by(id=self.id)
+            )
             task = result.scalar()
             task.error = error
             await session.commit()
@@ -121,7 +119,6 @@ class Task:
 
 
 class ProgressTracker:
-
     def __init__(self, pg, task_id, total, initial=0.0, file_size=0):
         self.pg = pg
         self.task_id = task_id
@@ -146,7 +143,9 @@ class ProgressTracker:
 
         if int(benchmark_progress + 1) <= self.progress:
             async with AsyncSession(self.pg) as session:
-                result = await session.execute(select(virtool.tasks.models.Task).filter_by(id=self.task_id))
+                result = await session.execute(
+                    select(virtool.tasks.models.Task).filter_by(id=self.task_id)
+                )
                 task = result.scalar()
                 task.progress = round(self.progress)
 

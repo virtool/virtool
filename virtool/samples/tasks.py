@@ -12,6 +12,7 @@ class CompressSamplesTask(Task):
     Compress the legacy FASTQ files for all uncompressed samples.
 
     """
+
     task_type = "compress_samples"
 
     def __init__(self, app, process_id):

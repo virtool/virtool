@@ -9,35 +9,23 @@ from virtool.tasks.models import Task
 
 
 class DummyTask(virtool.tasks.task.Task):
-
     def __init__(self, app, task_id):
         super().__init__(app, task_id)
 
-        self.steps = [
-            self.create_file,
-            self.remove_file
-        ]
+        self.steps = [self.create_file, self.remove_file]
         self.temp_path = Path(self.temp_dir.name)
 
     async def create_file(self):
         with open(self.temp_path / "test.txt", "w") as f:
             f.write("This is a test file.")
 
-        await virtool.tasks.pg.update(
-            self.pg,
-            self.id,
-            progress=50,
-            step="create_file"
-        )
+        await virtool.tasks.pg.update(self.pg, self.id, progress=50, step="create_file")
 
     async def remove_file(self):
         os.remove(self.temp_path / "test.txt")
 
         await virtool.tasks.pg.update(
-            self.pg,
-            self.id,
-            progress=100,
-            step="remove_file"
+            self.pg, self.id, progress=100, step="remove_file"
         )
 
 
@@ -47,14 +35,12 @@ async def task(spawn_client, pg_session, static_time):
     task = Task(
         id=1,
         complete=False,
-        context={
-            "user_id": "test"
-        },
+        context={"user_id": "test"},
         count=0,
         created_at=static_time.datetime,
         progress=0,
         step="create_file",
-        type="test_task"
+        type="test_task",
     )
     async with pg_session as session:
         session.add(task)
@@ -76,7 +62,11 @@ async def test_run(error, task, pg_session):
     await task.run()
 
     async with pg_session as session:
-        result = (await session.execute(select(Task).filter_by(id=task.id))).scalar().to_dict()
+        result = (
+            (await session.execute(select(Task).filter_by(id=task.id)))
+            .scalar()
+            .to_dict()
+        )
 
     if error:
         assert result["progress"] == 0
@@ -86,14 +76,9 @@ async def test_run(error, task, pg_session):
 
 
 async def test_update_context(task):
-    context = await task.update_context({
-        "ref_id": "askfllfk"
-    })
+    context = await task.update_context({"ref_id": "askfllfk"})
 
-    assert context == {
-        "user_id": "test",
-        "ref_id": "askfllfk"
-    }
+    assert context == {"user_id": "test", "ref_id": "askfllfk"}
 
 
 async def test_get_tracker(task, pg):

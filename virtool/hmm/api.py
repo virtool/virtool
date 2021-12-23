@@ -4,8 +4,12 @@ API request handlers for managing and querying HMM data.
 """
 import aiohttp
 import virtool.hmm.db
-from aiohttp.web_exceptions import (HTTPBadGateway, HTTPBadRequest,
-                                    HTTPConflict, HTTPNoContent)
+from aiohttp.web_exceptions import (
+    HTTPBadGateway,
+    HTTPBadRequest,
+    HTTPConflict,
+    HTTPNoContent,
+)
 from aiohttp.web_fileresponse import FileResponse
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
@@ -42,7 +46,7 @@ async def find(req):
         req.query,
         sort="cluster",
         projection=PROJECTION,
-        base_query={"hidden": False}
+        base_query={"hidden": False},
     )
 
     data["status"] = await virtool.hmm.db.get_status(db)
@@ -129,28 +133,16 @@ async def install(req):
         raise HTTPBadRequest(text="Target release does not exist")
 
     task = await req.app["tasks"].add(
-        HMMInstallTask,
-        context={
-            "user_id": user_id,
-            "release": release
-        }
+        HMMInstallTask, context={"user_id": user_id, "release": release}
     )
 
-    await db.status.find_one_and_update({"_id": "hmm"}, {
-        "$set": {
-            "task": {
-                "id": task["id"]
-            }
-        }
-    })
+    await db.status.find_one_and_update(
+        {"_id": "hmm"}, {"$set": {"task": {"id": task["id"]}}}
+    )
 
     update = create_update_subdocument(release, False, user_id)
 
-    await db.status.update_one({"_id": "hmm"}, {
-        "$push": {
-            "updates": update
-        }
-    })
+    await db.status.update_one({"_id": "hmm"}, {"$push": {"updates": update}})
 
     return json_response(update)
 
@@ -187,13 +179,9 @@ async def purge(req):
     except FileNotFoundError:
         pass
 
-    await db.status.find_one_and_update({"_id": "hmm"}, {
-        "$set": {
-            "installed": None,
-            "task": None,
-            "updates": list()
-        }
-    })
+    await db.status.find_one_and_update(
+        {"_id": "hmm"}, {"$set": {"installed": None, "task": None, "updates": list()}}
+    )
 
     await virtool.hmm.db.fetch_and_update_release(req.app)
 
@@ -208,8 +196,9 @@ async def get_hmm_annotations(request):
 
     if not annotation_path.exists():
         json_path = await generate_annotations_json_file(request.app)
-        await request.app["run_in_thread"](compress_file_with_gzip,
-                                           json_path, annotation_path)
+        await request.app["run_in_thread"](
+            compress_file_with_gzip, json_path, annotation_path
+        )
 
     return FileResponse(annotation_path)
 
@@ -225,8 +214,6 @@ async def get_hmm_profiles(req):
     if not await req.app["run_in_thread"](hmm_data_exists, file_path):
         raise NotFound("Profiles file could not be found")
 
-    headers = {
-        "Content-Type": "application/gzip"
-    }
+    headers = {"Content-Type": "application/gzip"}
 
     return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)

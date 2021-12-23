@@ -11,6 +11,7 @@ class RedisDispatcherListener(AsyncIterable):
     objects.
 
     """
+
     def __init__(self, channel: Channel):
         self._channel = channel
 
@@ -27,8 +28,4 @@ class RedisDispatcherListener(AsyncIterable):
         """
         change = await self._channel.get_json()
 
-        return Change(
-            change["interface"],
-            change["operation"],
-            change["id_list"]
-        )
+        return Change(change["interface"], change["operation"], change["id_list"])

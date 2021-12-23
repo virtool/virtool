@@ -8,8 +8,9 @@ import virtool.utils
 from virtool.analyses.models import AnalysisFile
 
 
-async def create_analysis_file(pg: AsyncEngine, analysis_id: str, analysis_format: str, name: str, size: int = None) \
-        -> Dict[str, any]:
+async def create_analysis_file(
+    pg: AsyncEngine, analysis_id: str, analysis_format: str, name: str, size: int = None
+) -> Dict[str, any]:
     """
     Create a row in the `analysis_files` SQL table that represents an analysis result file.
 
@@ -22,10 +23,7 @@ async def create_analysis_file(pg: AsyncEngine, analysis_id: str, analysis_forma
     """
     async with AsyncSession(pg) as session:
         analysis_file = AnalysisFile(
-            name=name,
-            analysis=analysis_id,
-            format=analysis_format,
-            size=size
+            name=name, analysis=analysis_id, format=analysis_format, size=size
         )
 
         session.add(analysis_file)
@@ -41,7 +39,9 @@ async def create_analysis_file(pg: AsyncEngine, analysis_id: str, analysis_forma
         return analysis_file
 
 
-async def create_nuvs_analysis_files(pg: AsyncEngine, analysis_id: str, files: list, file_path: Path):
+async def create_nuvs_analysis_files(
+    pg: AsyncEngine, analysis_id: str, files: list, file_path: Path
+):
     """
     Create a row in the `analysis_files` SQL table that represents an NuVs analysis result file.
 
@@ -60,12 +60,11 @@ async def create_nuvs_analysis_files(pg: AsyncEngine, analysis_id: str, files: l
 
         size = virtool.utils.file_stats(file_path / filename)["size"]
 
-        analysis_files.append(AnalysisFile(
-            name=filename,
-            analysis=analysis_id,
-            format=file_type,
-            size=size
-        ))
+        analysis_files.append(
+            AnalysisFile(
+                name=filename, analysis=analysis_id, format=file_type, size=size
+            )
+        )
 
     async with AsyncSession(pg) as session:
         session.add_all(analysis_files)

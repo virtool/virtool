@@ -19,66 +19,24 @@ async def get(req):
         "dev": req.app["config"].dev,
         "first_user": first_user,
         "endpoints": {
-            "account": {
-                "url": "/account",
-                "doc": f"{API_URL_ROOT}/account"
-            },
-            "analyses": {
-                "url": "/analyses",
-                "doc": f"{API_URL_ROOT}/analyses"
-            },
-            "genbank": {
-                "url": "/genbank",
-                "doc": f"{API_URL_ROOT}/genbank"
-            },
-            "groups": {
-                "url": "/groups",
-                "doc": f"{API_URL_ROOT}/groups"
-            },
-            "history": {
-                "url": "/history",
-                "doc": f"{API_URL_ROOT}/history"
-            },
-            "hmm": {
-                "url": "/hmm",
-                "doc": f"{API_URL_ROOT}/hmm"
-            },
-            "indexes": {
-                "url": "/indexes",
-                "doc": f"{API_URL_ROOT}/indexes"
-            },
-            "jobs": {
-                "url": "/jobs",
-                "doc": f"{API_URL_ROOT}/jobs"
-            },
-            "otus": {
-                "url": "/otus",
-                "doc": f"{API_URL_ROOT}/otus"
-            },
-            "references": {
-                "url": "/references",
-                "doc": f"{API_URL_ROOT}/refs"
-            },
-            "samples": {
-                "url": "/samples",
-                "doc": f"{API_URL_ROOT}/samples"
-            },
-            "settings": {
-                "url": "/settings",
-                "doc": f"{API_URL_ROOT}/settings"
-            },
+            "account": {"url": "/account", "doc": f"{API_URL_ROOT}/account"},
+            "analyses": {"url": "/analyses", "doc": f"{API_URL_ROOT}/analyses"},
+            "genbank": {"url": "/genbank", "doc": f"{API_URL_ROOT}/genbank"},
+            "groups": {"url": "/groups", "doc": f"{API_URL_ROOT}/groups"},
+            "history": {"url": "/history", "doc": f"{API_URL_ROOT}/history"},
+            "hmm": {"url": "/hmm", "doc": f"{API_URL_ROOT}/hmm"},
+            "indexes": {"url": "/indexes", "doc": f"{API_URL_ROOT}/indexes"},
+            "jobs": {"url": "/jobs", "doc": f"{API_URL_ROOT}/jobs"},
+            "otus": {"url": "/otus", "doc": f"{API_URL_ROOT}/otus"},
+            "references": {"url": "/references", "doc": f"{API_URL_ROOT}/refs"},
+            "samples": {"url": "/samples", "doc": f"{API_URL_ROOT}/samples"},
+            "settings": {"url": "/settings", "doc": f"{API_URL_ROOT}/settings"},
             "subtraction": {
                 "url": "/subtraction",
-                "doc": f"{API_URL_ROOT}/subtraction"
+                "doc": f"{API_URL_ROOT}/subtraction",
             },
-            "tasks": {
-                "url": "/tasks",
-                "doc": f"{API_URL_ROOT}/tasks"
-            },
-            "users": {
-                "url": "/users",
-                "doc": f"{API_URL_ROOT}/users"
-            }
+            "tasks": {"url": "/tasks", "doc": f"{API_URL_ROOT}/tasks"},
+            "users": {"url": "/users", "doc": f"{API_URL_ROOT}/users"},
         },
     }
 

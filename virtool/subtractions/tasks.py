@@ -24,6 +24,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
     subtraction.
 
     """
+
     task_type = "add_subtraction_files"
 
     def __init__(self, app: App, task_id: int):
@@ -39,15 +40,15 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         Change Bowtie2 index name from 'reference' to 'subtraction'
 
         """
-        await virtool.tasks.pg.update(
-            self.pg,
-            self.id,
-            step="rename_index_files"
-        )
+        await virtool.tasks.pg.update(self.pg, self.id, step="rename_index_files")
 
         async for subtraction in self.db.subtraction.find(ADD_SUBTRACTION_FILES_QUERY):
-            path = virtool.subtractions.utils.join_subtraction_path(self.app["config"], subtraction["_id"])
-            await self.app["run_in_thread"](virtool.subtractions.utils.rename_bowtie_files, path)
+            path = virtool.subtractions.utils.join_subtraction_path(
+                self.app["config"], subtraction["_id"]
+            )
+            await self.app["run_in_thread"](
+                virtool.subtractions.utils.rename_bowtie_files, path
+            )
 
     async def store_subtraction_files(self):
         """
@@ -55,34 +56,30 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
         subtraction
 
         """
-        await virtool.tasks.pg.update(
-            self.pg,
-            self.id,
-            step="store_subtraction_files"
-        )
+        await virtool.tasks.pg.update(self.pg, self.id, step="store_subtraction_files")
 
         async for subtraction in self.db.subtraction.find(ADD_SUBTRACTION_FILES_QUERY):
-            path = virtool.subtractions.utils.join_subtraction_path(self.app["config"], subtraction["_id"])
+            path = virtool.subtractions.utils.join_subtraction_path(
+                self.app["config"], subtraction["_id"]
+            )
             subtraction_files = list()
 
             for filename in sorted(os.listdir(path)):
                 if filename in FILES:
                     async with AsyncSession(self.app["pg"]) as session:
-                        exists = (await session.execute(
-                            select(SubtractionFile).filter_by(
-                                subtraction=subtraction["_id"],
-                                name=filename
+                        exists = (
+                            await session.execute(
+                                select(SubtractionFile).filter_by(
+                                    subtraction=subtraction["_id"], name=filename
+                                )
                             )
-                        )).scalar()
+                        ).scalar()
 
                     if not exists:
                         subtraction_files.append(filename)
 
             await virtool.subtractions.files.create_subtraction_files(
-                self.app["pg"],
-                subtraction["_id"],
-                subtraction_files,
-                path
+                self.app["pg"], subtraction["_id"], subtraction_files, path
             )
 
 
@@ -100,18 +97,19 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
         config = self.app["config"]
         subtraction = self.context["subtraction"]
 
-        index_path = virtool.subtractions.utils.join_subtraction_index_path(config, subtraction)
+        index_path = virtool.subtractions.utils.join_subtraction_index_path(
+            config, subtraction
+        )
         fasta_path = (
             virtool.subtractions.utils.join_subtraction_path(config, subtraction)
             / "subtraction.fa"
         )
 
-        command = f'bowtie2-inspect {index_path} > {fasta_path}'
+        command = f"bowtie2-inspect {index_path} > {fasta_path}"
 
         proc = await asyncio.create_subprocess_shell(
-            command,
-            stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.PIPE)
+            command, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.PIPE
+        )
 
         await proc.communicate()
 
@@ -120,21 +118,14 @@ class WriteSubtractionFASTATask(virtool.tasks.task.Task):
             / "subtraction.fa.gz"
         )
 
-        await self.run_in_thread(virtool.utils.compress_file,
-                                 fasta_path,
-                                 target_path)
+        await self.run_in_thread(virtool.utils.compress_file, fasta_path, target_path)
 
         virtool.utils.rm(fasta_path)
 
-        await self.db.subtraction.find_one_and_update({"_id": subtraction}, {
-            "$set": {
-                "has_file": True
-            }
-        })
+        await self.db.subtraction.find_one_and_update(
+            {"_id": subtraction}, {"$set": {"has_file": True}}
+        )
 
         await virtool.tasks.pg.update(
-            self.pg,
-            self.id,
-            progress=100,
-            step="generate_fasta_file"
+            self.pg, self.id, progress=100, step="generate_fasta_file"
         )

@@ -1,15 +1,16 @@
 import os
 
 import pytest
-from virtool.subtractions.utils import (check_subtraction_file_type,
-                                        get_subtraction_files,
-                                        join_subtraction_path,
-                                        rename_bowtie_files)
+from virtool.subtractions.utils import (
+    check_subtraction_file_type,
+    get_subtraction_files,
+    join_subtraction_path,
+    rename_bowtie_files,
+)
 
 
 def test_join_subtraction_path(tmp_path, config):
-    assert join_subtraction_path(
-        config, "bar") == tmp_path / "subtractions" / "bar"
+    assert join_subtraction_path(config, "bar") == tmp_path / "subtractions" / "bar"
 
 
 async def test_get_subtraction_files(snapshot, pg, test_subtraction_files):
@@ -27,7 +28,10 @@ def test_rename_bowtie_files(tmp_path):
     rename_bowtie_files(test_dir)
 
     assert set(os.listdir(test_dir)) == {
-        'subtraction.1.bt2', 'subtraction.2.bt2', 'subtraction.3.bt2'}
+        "subtraction.1.bt2",
+        "subtraction.2.bt2",
+        "subtraction.3.bt2",
+    }
 
 
 @pytest.mark.parametrize("file_type", ["fasta", "bowtie2"])

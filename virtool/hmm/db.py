@@ -41,13 +41,7 @@ logger = logging.getLogger(__name__)
 
 HMM_REFRESH_INTERVAL = 600
 
-PROJECTION = [
-    "_id",
-    "cluster",
-    "names",
-    "count",
-    "families"
-]
+PROJECTION = ["_id", "cluster", "names", "count", "families"]
 
 
 async def delete_unreferenced_hmms(db, config: Config) -> pymongo.results.DeleteResult:
@@ -83,11 +77,11 @@ async def get_hmms_referenced_in_files(db, config: Config) -> set:
     """
     paths = list()
 
-    async for document in db.analyses.find({"workflow": "nuvs", "results": "file"}, ["_id", "sample"]):
+    async for document in db.analyses.find(
+        {"workflow": "nuvs", "results": "file"}, ["_id", "sample"]
+    ):
         path = virtool.analyses.utils.join_analysis_json_path(
-            config.data_path,
-            document["_id"],
-            document["sample"]["id"]
+            config.data_path, document["_id"], document["sample"]["id"]
         )
 
         paths.append(path)
@@ -114,25 +108,23 @@ async def get_hmms_referenced_in_db(db) -> set:
     :return: set of all HMM ids referenced in analysis documents
 
     """
-    cursor = db.analyses.aggregate([
-        {"$match": {
-            "workflow": "nuvs"
-        }},
-        {"$project": {
-            "results.orfs.hits.hit": True
-        }},
-        {"$unwind": "$results"},
-        {"$unwind": "$results.orfs"},
-        {"$unwind": "$results.orfs.hits"},
-        {"$group": {
-            "_id": "$results.orfs.hits.hit"
-        }}
-    ])
+    cursor = db.analyses.aggregate(
+        [
+            {"$match": {"workflow": "nuvs"}},
+            {"$project": {"results.orfs.hits.hit": True}},
+            {"$unwind": "$results"},
+            {"$unwind": "$results.orfs"},
+            {"$unwind": "$results.orfs.hits"},
+            {"$group": {"_id": "$results.orfs.hits.hit"}},
+        ]
+    )
 
     return {a["_id"] async for a in cursor}
 
 
-async def fetch_and_update_release(app: Application, ignore_errors: bool = False) -> dict:
+async def fetch_and_update_release(
+    app: Application, ignore_errors: bool = False
+) -> dict:
     """
     Return the HMM install status document or create one if none exists.
 
@@ -162,37 +154,31 @@ async def fetch_and_update_release(app: Application, ignore_errors: bool = False
         # The release dict will only be replaced if there is a 200 response from GitHub. A 304 indicates the release
         # has not changed and `None` is returned from `get_release()`.
         updated = await get_release(
-            app["config"],
-            session,
-            app["settings"].hmm_slug,
-            etag
+            app["config"], session, app["settings"].hmm_slug, etag
         )
 
         # Release is replace with updated release if an update was found on GitHub.
         if updated:
-            release = format_hmm_release(
-                updated,
-                release,
-                installed
-            )
+            release = format_hmm_release(updated, release, installed)
 
         # Update the last retrieval timestamp whether or not an update was found on GitHub.
         release["retrieved_at"] = virtool.utils.timestamp()
 
         # Set and empty error list since the update check was successful.
-        await db.status.update_one({"_id": "hmm"}, {
-            "$set": {
-                "errors": [],
-                "installed": installed,
-                "release": release
-            }
-        }, upsert=True)
+        await db.status.update_one(
+            {"_id": "hmm"},
+            {"$set": {"errors": [], "installed": installed, "release": release}},
+            upsert=True,
+        )
 
         logger.debug("Fetched and updated HMM release")
 
         return release
 
-    except (aiohttp.client_exceptions.ClientConnectorError, virtool.errors.GitHubError) as err:
+    except (
+        aiohttp.client_exceptions.ClientConnectorError,
+        virtool.errors.GitHubError,
+    ) as err:
         errors = list()
 
         if "ClientConnectorError" in str(err):
@@ -204,12 +190,9 @@ async def fetch_and_update_release(app: Application, ignore_errors: bool = False
         if errors and not ignore_errors:
             raise
 
-        await db.status.update_one({"_id": "hmm"}, {
-            "$set": {
-                "errors": errors,
-                "installed": installed
-            }
-        })
+        await db.status.update_one(
+            {"_id": "hmm"}, {"$set": {"errors": errors, "installed": installed}}
+        )
 
         return release
 
@@ -243,11 +226,7 @@ async def purge(db, config: Config):
     """
     await delete_unreferenced_hmms(db, config)
 
-    await db.hmm.update_many({}, {
-        "$set": {
-            "hidden": True
-        }
-    })
+    await db.hmm.update_many({}, {"$set": {"hidden": True}})
 
 
 async def refresh(app: App):

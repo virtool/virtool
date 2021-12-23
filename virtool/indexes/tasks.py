@@ -12,21 +12,16 @@ class AddIndexFilesTask(Task):
     """
     Add a 'files' field to index documents to list what files can be downloaded for that index.
     """
+
     task_type = "add_index_files"
 
     def __init__(self, app: App, task_id: int):
         super().__init__(app, task_id)
 
-        self.steps = [
-            self.store_index_files
-        ]
+        self.steps = [self.store_index_files]
 
     async def store_index_files(self):
-        await update(
-            self.pg,
-            self.id,
-            step="store_index_files"
-        )
+        await update(self.pg, self.id, step="store_index_files")
 
         async for index in self.db.indexes.find():
             try:
@@ -49,7 +44,7 @@ class AddIndexFilesTask(Task):
                                     name=file_path.name,
                                     index=index_id,
                                     type=get_index_file_type_from_name(file_path.name),
-                                    size=size
+                                    size=size,
                                 )
                             )
 
