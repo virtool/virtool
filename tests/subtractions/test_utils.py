@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from virtool.subtractions.utils import (
     check_subtraction_file_type,
     get_subtraction_files,
