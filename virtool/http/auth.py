@@ -77,19 +77,29 @@ async def authenticate_with_key(req: Request, handler: Callable) -> Response:
 async def authenticate_with_api_key(req: Request, handler: Callable, user_id: str, key: str) -> Response:
     db = req.app["db"]
 
-    document = await db.keys.find_one({
-        "_id": virtool.utils.hash_key(key),
-        "user.id": user_id
-    }, AUTHORIZATION_PROJECTION)
+    document = await db.keys.find_one(
+        {
+            "_id": virtool.utils.hash_key(key),
+            "user.id": user_id
+        },
+        ["permissions"]
+    )
 
     if not document:
         raise HTTPUnauthorized(text="Invalid authorization header")
 
+    user = db.users.find_one(
+        {
+            "_id": user_id
+        },
+        AUTHORIZATION_PROJECTION
+    )
+
     req["client"] = UserClient(
         db=db,
-        administrator=document["administrator"],
-        force_reset=document["force_reset"],
-        groups=document["groups"],
+        administrator=user["administrator"],
+        force_reset=False,
+        groups=user["groups"],
         permissions=document["permissions"],
         user_id=user_id,
         authenticated=True
