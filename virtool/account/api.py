@@ -25,10 +25,7 @@ from virtool.utils import base_processor
 
 #: A MongoDB projection to use when returning API key documents to clients. The key should never be sent to client after
 #: its creation.
-API_KEY_PROJECTION = {
-    "_id": False,
-    "user": False
-}
+API_KEY_PROJECTION = {"_id": False, "user": False}
 
 #: A :class:`aiohttp.web.RouteTableDef` for account API routes.
 routes = virtool.http.routes.Routes()
@@ -45,21 +42,17 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.patch("/account")
-@schema({
-    "email": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "check_with": virtool.validators.is_valid_email
-    },
-    "old_password": {
-        "type": "string"
-    },
-    "password": {
-        "type": "string",
-        "dependencies": "old_password"
+@schema(
+    {
+        "email": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "check_with": virtool.validators.is_valid_email,
+        },
+        "old_password": {"type": "string"},
+        "password": {"type": "string", "dependencies": "old_password"},
     }
-
-})
+)
 async def edit(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Edit the user account.
@@ -89,9 +82,9 @@ async def edit(req: aiohttp.web.Request) -> aiohttp.web.Response:
         update["email"] = data["email"]
 
     if update:
-        document = await db.users.find_one_and_update({"_id": user_id}, {
-            "$set": update
-        }, projection=virtool.account.db.PROJECTION)
+        document = await db.users.find_one_and_update(
+            {"_id": user_id}, {"$set": update}, projection=virtool.account.db.PROJECTION
+        )
     else:
         document = await virtool.account.db.get(db, user_id)
 
@@ -105,30 +98,24 @@ async def get_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     """
     account_settings = await get_one_field(
-        req.app["db"].users,
-        "settings",
-        req["client"].user_id
+        req.app["db"].users, "settings", req["client"].user_id
     )
 
     return json_response(account_settings)
 
 
 @routes.patch("/account/settings")
-@schema({
-    "show_ids": {
-        "type": "boolean",
-        "required": False
-    },
-    "skip_quick_analyze_dialog": {
-        "type": "boolean",
-        "required": False
-    },
-    "quick_analyze_workflow": {
-        "type": "string",
-        "allowed": WORKFLOW_NAMES,
-        "required": False
+@schema(
+    {
+        "show_ids": {"type": "boolean", "required": False},
+        "skip_quick_analyze_dialog": {"type": "boolean", "required": False},
+        "quick_analyze_workflow": {
+            "type": "string",
+            "allowed": WORKFLOW_NAMES,
+            "required": False,
+        },
     }
-})
+)
 async def update_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Update account settings.
@@ -141,14 +128,9 @@ async def update_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     settings_from_db = await get_one_field(db.users, "settings", user_id)
 
-    settings = {
-        **settings_from_db,
-        **data
-    }
+    settings = {**settings_from_db, **data}
 
-    await db.users.update_one({"_id": user_id}, {
-        "$set": settings
-    })
+    await db.users.update_one({"_id": user_id}, {"$set": settings})
 
     return json_response(settings)
 
@@ -178,7 +160,9 @@ async def get_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     user_id = req["client"].user_id
     key_id = req.match_info["key_id"]
 
-    document = await db.keys.find_one({"id": key_id, "user.id": user_id}, API_KEY_PROJECTION)
+    document = await db.keys.find_one(
+        {"id": key_id, "user.id": user_id}, API_KEY_PROJECTION
+    )
 
     if document is None:
         raise NotFound()
@@ -187,19 +171,21 @@ async def get_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.post("/account/keys")
-@schema({
-    "name": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "empty": False,
-        "required": True
-    },
-    "permissions": {
-        "type": "dict",
-        "default": {},
-        "check_with": virtool.validators.is_permission_dict
+@schema(
+    {
+        "name": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "empty": False,
+            "required": True,
+        },
+        "permissions": {
+            "type": "dict",
+            "default": {},
+            "check_with": virtool.validators.is_permission_dict,
+        },
     }
-})
+)
 async def create_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Create a new API key. The new key value is returned in the response. This is the only response from the server that
@@ -212,27 +198,24 @@ async def create_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     user_id = req["client"].user_id
 
     document = await virtool.account.db.create_api_key(
-        db,
-        data["name"],
-        data["permissions"],
-        user_id
+        db, data["name"], data["permissions"], user_id
     )
 
-    headers = {
-        "Location": f"/account/keys/{document['id']}"
-    }
+    headers = {"Location": f"/account/keys/{document['id']}"}
 
     return json_response(document, headers=headers, status=201)
 
 
 @routes.patch("/account/keys/{key_id}")
-@schema({
-    "permissions": {
-        "type": "dict",
-        "check_with": virtool.validators.is_permission_dict,
-        "required": True
+@schema(
+    {
+        "permissions": {
+            "type": "dict",
+            "check_with": virtool.validators.is_permission_dict,
+            "required": True,
+        }
     }
-})
+)
 async def update_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Change the permissions for an existing API key.
@@ -252,9 +235,7 @@ async def update_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     # The permissions currently assigned to the API key.
     permissions = await get_one_field(
-        db.keys,
-        "permissions",
-        {"id": key_id, "user.id": user_id}
+        db.keys, "permissions", {"id": key_id, "user.id": user_id}
     )
 
     permissions.update(data["permissions"])
@@ -262,11 +243,11 @@ async def update_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     if not user["administrator"]:
         permissions = limit_permissions(permissions, user["permissions"])
 
-    document = await db.keys.find_one_and_update({"id": key_id}, {
-        "$set": {
-            "permissions": permissions
-        }
-    }, projection=API_KEY_PROJECTION)
+    document = await db.keys.find_one_and_update(
+        {"id": key_id},
+        {"$set": {"permissions": permissions}},
+        projection=API_KEY_PROJECTION,
+    )
 
     return json_response(document)
 
@@ -281,10 +262,7 @@ async def remove_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
     user_id = req["client"].user_id
     key_id = req.match_info["key_id"]
 
-    delete_result = await db.keys.delete_one({
-        "id": key_id,
-        "user.id": user_id
-    })
+    delete_result = await db.keys.delete_one({"id": key_id, "user.id": user_id})
 
     if delete_result.deleted_count == 0:
         raise NotFound()
@@ -303,22 +281,13 @@ async def remove_all_api_keys(req: aiohttp.web.Request):
 
 
 @routes.post("/account/login", public=True)
-@schema({
-    "username": {
-        "type": "string",
-        "empty": False,
-        "required": True
-    },
-    "password": {
-        "type": "string",
-        "empty": False,
-        "required": True
-    },
-    "remember": {
-        "type": "boolean",
-        "default": False
+@schema(
+    {
+        "username": {"type": "string", "empty": False, "required": True},
+        "password": {"type": "string", "empty": False, "required": True},
+        "remember": {"type": "boolean", "default": False},
     }
-})
+)
 async def login(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Create a new session for the user with `username`.
@@ -346,17 +315,18 @@ async def login(req: aiohttp.web.Request) -> aiohttp.web.Response:
     # If the user's password needs to be reset, redirect to the reset page without authorizing the session. A one-time
     # reset code is generated and added to the query string.
     if await get_one_field(db.users, "force_reset", user_id):
-        return json_response({
-            "reset": True,
-            "reset_code": await create_reset_code(db, session_id, user_id, remember)
-        }, status=200)
+        return json_response(
+            {
+                "reset": True,
+                "reset_code": await create_reset_code(
+                    db, session_id, user_id, remember
+                ),
+            },
+            status=200,
+        )
 
     session, token = await virtool.users.sessions.replace_session(
-        db,
-        session_id,
-        virtool.http.auth.get_ip(req),
-        user_id,
-        remember
+        db, session_id, virtool.http.auth.get_ip(req), user_id, remember
     )
 
     resp = json_response({"reset": False}, status=201)
@@ -377,9 +347,7 @@ async def logout(req: aiohttp.web.Request) -> aiohttp.web.Response:
     old_session_id = req.cookies.get("session_id")
 
     session, _ = await replace_session(
-        db,
-        old_session_id,
-        virtool.http.auth.get_ip(req)
+        db, old_session_id, virtool.http.auth.get_ip(req)
     )
 
     resp = aiohttp.web.Response(status=200)
@@ -391,16 +359,12 @@ async def logout(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.post("/account/reset", public=True)
-@schema({
-    "password": {
-        "type": "string",
-        "required": True
-    },
-    "reset_code": {
-        "type": "string",
-        "required": True
+@schema(
+    {
+        "password": {"type": "string", "required": True},
+        "reset_code": {"type": "string", "required": True},
     }
-})
+)
 async def reset(req: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     Handles `POST` requests for resetting the password for a session user.
@@ -416,16 +380,23 @@ async def reset(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     error = await check_password_length(req)
 
-    if not session.get("reset_code") or not session.get("reset_user_id") or reset_code != session.get("reset_code"):
+    if (
+        not session.get("reset_code")
+        or not session.get("reset_user_id")
+        or reset_code != session.get("reset_code")
+    ):
         error = "Invalid reset code"
 
     user_id = session["reset_user_id"]
 
     if error:
-        return json_response({
-            "error": error,
-            "reset_code": await create_reset_code(db, session_id, user_id=user_id)
-        }, status=400)
+        return json_response(
+            {
+                "error": error,
+                "reset_code": await create_reset_code(db, session_id, user_id=user_id),
+            },
+            status=400,
+        )
 
     # Update the user password and disable the `force_reset`.
     await virtool.users.db.edit(db, user_id, force_reset=False, password=password)
@@ -435,7 +406,7 @@ async def reset(req: aiohttp.web.Request) -> aiohttp.web.Response:
         session_id,
         virtool.http.auth.get_ip(req),
         user_id,
-        remember=session.get("reset_remember", False)
+        remember=session.get("reset_remember", False),
     )
 
     try:
@@ -443,10 +414,7 @@ async def reset(req: aiohttp.web.Request) -> aiohttp.web.Response:
     except AttributeError:
         pass
 
-    resp = json_response({
-        "login": False,
-        "reset": False
-    }, status=200)
+    resp = json_response({"login": False, "reset": False}, status=200)
 
     set_session_id_cookie(resp, new_session["_id"])
     set_session_token_cookie(resp, token)

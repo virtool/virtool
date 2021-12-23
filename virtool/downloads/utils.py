@@ -4,7 +4,9 @@ Utilities focussing on formatting FASTA files.
 """
 
 
-def format_fasta_entry(otu_name: str, isolate_name: str, sequence_id: str, sequence: str) -> str:
+def format_fasta_entry(
+    otu_name: str, isolate_name: str, sequence_id: str, sequence: str
+) -> str:
     """
     Create a FASTA header and sequence block for a sequence in a otu DNA FASTA file downloadable from Virtool.
 

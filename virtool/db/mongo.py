@@ -14,8 +14,7 @@ logger = logging.getLogger("mongo")
 
 
 async def connect(
-        config: Config,
-        enqueue_change: Callable[[str, str, List[str]], None]
+    config: Config, enqueue_change: Callable[[str, str, List[str]], None]
 ):
     """
     Connect to a MongoDB server and return an application database object.
@@ -25,8 +24,7 @@ async def connect(
 
     """
     db_client = AsyncIOMotorClient(
-        config.db_connection_string,
-        serverSelectionTimeoutMS=6000
+        config.db_connection_string, serverSelectionTimeoutMS=6000
     )
 
     try:
@@ -39,10 +37,7 @@ async def connect(
 
     db = db_client[config.db_name]
 
-    return virtool.db.core.DB(
-        db,
-        enqueue_change
-    )
+    return virtool.db.core.DB(db, enqueue_change)
 
 
 async def check_mongo_version(db: AsyncIOMotorClient) -> str:
@@ -83,19 +78,23 @@ async def create_indexes(db):
     """
     await db.analyses.create_index("sample.id")
     await db.analyses.create_index([("created_at", pymongo.DESCENDING)])
-    await db.caches.create_index([("key", pymongo.ASCENDING), ("sample.id", pymongo.ASCENDING)], unique=True)
+    await db.caches.create_index(
+        [("key", pymongo.ASCENDING), ("sample.id", pymongo.ASCENDING)], unique=True
+    )
     await db.history.create_index("otu.id")
     await db.history.create_index("index.id")
     await db.history.create_index("created_at")
     await db.history.create_index([("otu.name", pymongo.ASCENDING)])
     await db.history.create_index([("otu.version", pymongo.DESCENDING)])
-    await db.indexes.create_index([("version", pymongo.ASCENDING), ("reference.id", pymongo.ASCENDING)], unique=True)
+    await db.indexes.create_index(
+        [("version", pymongo.ASCENDING), ("reference.id", pymongo.ASCENDING)],
+        unique=True,
+    )
     await db.keys.create_index("id", unique=True)
     await db.keys.create_index("user.id")
-    await db.otus.create_index([
-        ("_id", pymongo.ASCENDING),
-        ("isolate.id", pymongo.ASCENDING)
-    ])
+    await db.otus.create_index(
+        [("_id", pymongo.ASCENDING), ("isolate.id", pymongo.ASCENDING)]
+    )
     await db.otus.create_index("name")
     await db.otus.create_index("nickname")
     await db.otus.create_index("abbreviation")

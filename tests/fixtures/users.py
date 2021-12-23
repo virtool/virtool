@@ -10,9 +10,7 @@ def bob(no_permissions, static_time):
         "handle": "bob",
         "administrator": False,
         "force_reset": False,
-        "groups": [
-            "peasants"
-        ],
+        "groups": ["peasants"],
         "last_password_change": static_time.datetime,
         "invalidate_sessions": False,
         "password": "hashed_password",
@@ -22,14 +20,16 @@ def bob(no_permissions, static_time):
             "skip_quick_analyze_dialog": True,
             "show_ids": True,
             "show_versions": True,
-            "quick_analyze_workflow": "pathoscope_bowtie"
-        }
+            "quick_analyze_workflow": "pathoscope_bowtie",
+        },
     }
 
 
 @pytest.fixture
 def create_user(static_time):
-    def func(user_id="test", handle="bob", administrator=False, groups=None, permissions=None):
+    def func(
+        user_id="test", handle="bob", administrator=False, groups=None, permissions=None
+    ):
 
         permissions = permissions or list()
 
@@ -47,10 +47,10 @@ def create_user(static_time):
                 "skip_quick_analyze_dialog": True,
                 "show_ids": True,
                 "show_versions": True,
-                "quick_analyze_workflow": "pathoscope_bowtie"
+                "quick_analyze_workflow": "pathoscope_bowtie",
             },
             "force_reset": False,
-            "password": "$2b$12$0aC1WPkTG.up/KQb3KcQVOMkMbThtjMMrFfG5tiILY2cUMVcnEW0.".encode()
+            "password": "$2b$12$0aC1WPkTG.up/KQb3KcQVOMkMbThtjMMrFfG5tiILY2cUMVcnEW0.".encode(),
         }
 
     return func

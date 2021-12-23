@@ -11,17 +11,27 @@ import virtool.analyses.format
 import virtool.bio
 import virtool.samples.db
 import virtool.uploads.db
-from aiohttp.web import (FileResponse, HTTPBadRequest, HTTPConflict,
-                         HTTPNoContent, HTTPNotModified, Request, Response)
+from aiohttp.web import (
+    FileResponse,
+    HTTPBadRequest,
+    HTTPConflict,
+    HTTPNoContent,
+    HTTPNotModified,
+    Request,
+    Response,
+)
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from virtool.analyses.db import PROJECTION, processor, update_nuvs_blast
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile, AnalysisFormat
-from virtool.analyses.utils import (attach_analysis_files,
-                                    find_nuvs_sequence_by_index)
+from virtool.analyses.utils import attach_analysis_files, find_nuvs_sequence_by_index
 from virtool.api.json import isoformat
-from virtool.api.response import (InsufficientRights, InvalidQuery, NotFound,
-                                  json_response)
+from virtool.api.response import (
+    InsufficientRights,
+    InvalidQuery,
+    NotFound,
+    json_response,
+)
 from virtool.api.utils import paginate
 from virtool.db.core import DB, Collection
 from virtool.http.routes import Routes
@@ -54,17 +64,14 @@ async def find(req: Request) -> Response:
         db_query,
         req.query,
         projection=PROJECTION,
-        sort=[("created_at", -1)]
+        sort=[("created_at", -1)],
     )
 
     documents = []
 
     for document in data["documents"]:
         if await virtool.samples.db.check_rights(
-                db,
-                document["sample"]["id"],
-                req["client"],
-                write=False
+            db, document["sample"]["id"], req["client"], write=False
         ):
             documents.append(document)
 
@@ -74,10 +81,7 @@ async def find(req: Request) -> Response:
         *[attach_subtractions(db, d) for d in documents]
     )
 
-    return json_response({
-        **data,
-        "documents": documents
-    })
+    return json_response({**data, "documents": documents})
 
 
 @routes.get("/analyses/{analysis_id}")
@@ -109,8 +113,7 @@ async def get(req: Request) -> Response:
     document = await attach_analysis_files(pg, analysis_id, document)
 
     sample = await db.samples.find_one(
-        {"_id": document["sample"]["id"]},
-        {"quality": False}
+        {"_id": document["sample"]["id"]}, {"quality": False}
     )
 
     if not sample:
@@ -126,13 +129,10 @@ async def get(req: Request) -> Response:
 
     headers = {
         "Cache-Control": "no-cache",
-        "Last-Modified": isoformat(document["created_at"])
+        "Last-Modified": isoformat(document["created_at"]),
     }
 
-    return json_response(
-        await processor(db, document),
-        headers=headers
-    )
+    return json_response(await processor(db, document), headers=headers)
 
 
 @routes.jobs_api.get("/analyses/{analysis_id}")
@@ -164,8 +164,7 @@ async def get_for_jobs_api(req: Request) -> Response:
     document = await attach_analysis_files(pg, analysis_id, document)
 
     sample = await db.samples.find_one(
-        {"_id": document["sample"]["id"]},
-        {"quality": False}
+        {"_id": document["sample"]["id"]}, {"quality": False}
     )
 
     if not sample:
@@ -179,7 +178,7 @@ async def get_for_jobs_api(req: Request) -> Response:
 
     headers = {
         "Cache-Control": "no-cache",
-        "Last-Modified": isoformat(document["created_at"])
+        "Last-Modified": isoformat(document["created_at"]),
     }
 
     return json_response(await processor(db, document), headers=headers)
@@ -196,8 +195,7 @@ async def remove(req: Request) -> Response:
     analysis_id = req.match_info["analysis_id"]
 
     document = await db.analyses.find_one(
-        {"_id": analysis_id},
-        ["job", "ready", "sample"]
+        {"_id": analysis_id}, ["job", "ready", "sample"]
     )
 
     if not document:
@@ -206,8 +204,7 @@ async def remove(req: Request) -> Response:
     sample_id = document["sample"]["id"]
 
     sample = await db.samples.find_one(
-        {"_id": sample_id},
-        virtool.samples.db.PROJECTION
+        {"_id": sample_id}, virtool.samples.db.PROJECTION
     )
 
     if not sample:
@@ -224,11 +221,7 @@ async def remove(req: Request) -> Response:
     await db.analyses.delete_one({"_id": analysis_id})
 
     path = (
-        req.app["config"].data_path
-        / "samples"
-        / sample_id
-        / "analysis"
-        / analysis_id
+        req.app["config"].data_path / "samples" / sample_id / "analysis" / analysis_id
     )
 
     try:
@@ -248,8 +241,7 @@ async def delete_analysis(req):
     analysis_id = req.match_info["analysis_id"]
 
     document = await db.analyses.find_one(
-        {"_id": analysis_id},
-        ["job", "ready", "sample"]
+        {"_id": analysis_id}, ["job", "ready", "sample"]
     )
 
     if not document:
@@ -263,11 +255,7 @@ async def delete_analysis(req):
     sample_id = document["sample"]["id"]
 
     path = (
-        req.app["config"].data_path
-        / "samples"
-        / sample_id
-        / "analysis"
-        / analysis_id
+        req.app["config"].data_path / "samples" / sample_id / "analysis" / analysis_id
     )
 
     try:
@@ -311,8 +299,9 @@ async def upload(req: Request) -> Response:
 
     upload_id = analysis_file["id"]
 
-    analysis_file_path = req.app["config"].data_path / \
-        "analyses" / analysis_file["name_on_disk"]
+    analysis_file_path = (
+        req.app["config"].data_path / "analyses" / analysis_file["name_on_disk"]
+    )
 
     try:
         size = await naive_writer(req, analysis_file_path)
@@ -324,9 +313,7 @@ async def upload(req: Request) -> Response:
 
     analysis_file = await virtool.uploads.db.finalize(pg, size, upload_id, AnalysisFile)
 
-    headers = {
-        "Location": f"/analyses/{analysis_id}/files/{upload_id}"
-    }
+    headers = {"Location": f"/analyses/{analysis_id}/files/{upload_id}"}
 
     return json_response(analysis_file, status=201, headers=headers)
 
@@ -345,8 +332,9 @@ async def download_analysis_result(req: Request) -> Union[FileResponse, Response
     if not analysis_file:
         raise NotFound()
 
-    analysis_file_path = req.app["config"].data_path / \
-        "analyses" / analysis_file.name_on_disk
+    analysis_file_path = (
+        req.app["config"].data_path / "analyses" / analysis_file.name_on_disk
+    )
 
     if not analysis_file_path.exists():
         raise NotFound("Uploaded file not found at expected location")
@@ -371,15 +359,21 @@ async def download_analysis_document(req: Request) -> Response:
         raise NotFound()
 
     if extension == "xlsx":
-        formatted = await virtool.analyses.format.format_analysis_to_excel(req.app, document)
-        content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        formatted = await virtool.analyses.format.format_analysis_to_excel(
+            req.app, document
+        )
+        content_type = (
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
     else:
-        formatted = await virtool.analyses.format.format_analysis_to_csv(req.app, document)
+        formatted = await virtool.analyses.format.format_analysis_to_csv(
+            req.app, document
+        )
         content_type = "text/csv"
 
     headers = {
         "Content-Disposition": f"attachment; filename={analysis_id}.{extension}",
-        "Content-Type": content_type
+        "Content-Type": content_type,
     }
 
     return Response(text=formatted, headers=headers)
@@ -398,8 +392,7 @@ async def blast(req: Request) -> Response:
     sequence_index = int(req.match_info["sequence_index"])
 
     document = await db.analyses.find_one(
-        {"_id": analysis_id},
-        ["ready", "workflow", "results", "sample"]
+        {"_id": analysis_id}, ["ready", "workflow", "results", "sample"]
     )
 
     if not document:
@@ -417,8 +410,7 @@ async def blast(req: Request) -> Response:
         raise NotFound("Sequence not found")
 
     sample = await db.samples.find_one(
-        {"_id": document["sample"]["id"]},
-        virtool.samples.db.PROJECTION
+        {"_id": document["sample"]["id"]}, virtool.samples.db.PROJECTION
     )
 
     if not sample:
@@ -434,25 +426,17 @@ async def blast(req: Request) -> Response:
     rid, _ = await virtool.bio.initialize_ncbi_blast(req.app["config"], sequence)
 
     blast_data, document = await update_nuvs_blast(
-        db,
-        req.app["config"],
-        analysis_id,
-        sequence_index,
-        rid
+        db, req.app["config"], analysis_id, sequence_index, rid
     )
 
     # Wait on BLAST request as a Task until the it completes on NCBI. At that point the
     # sequence in the DB will be updated with the BLAST result.
-    await aiojobs.aiohttp.spawn(req, virtool.bio.wait_for_blast_result(
-        req.app,
-        analysis_id,
-        sequence_index,
-        rid
-    ))
+    await aiojobs.aiohttp.spawn(
+        req,
+        virtool.bio.wait_for_blast_result(req.app, analysis_id, sequence_index, rid),
+    )
 
-    headers = {
-        "Location": f"/analyses/{analysis_id}/{sequence_index}/blast"
-    }
+    headers = {"Location": f"/analyses/{analysis_id}/{sequence_index}/blast"}
 
     return json_response(blast_data, headers=headers, status=201)
 
@@ -476,12 +460,9 @@ async def finalize(req: Request):
 
     data = await req.json()
 
-    document = await analyses.find_one_and_update({"_id": analysis_id}, {
-        "$set": {
-            "results": data["results"],
-            "ready": True
-        }
-    })
+    document = await analyses.find_one_and_update(
+        {"_id": analysis_id}, {"$set": {"results": data["results"], "ready": True}}
+    )
 
     await recalculate_workflow_tags(db, document["sample"]["id"])
     await attach_analysis_files(pg, analysis_id, document)

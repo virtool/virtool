@@ -10,7 +10,6 @@ logger = getLogger(__name__)
 
 
 class ProxyRequest:
-
     def __init__(self, config: Config, method, url, **kwargs):
         self.proxy = config.proxy or None
         self.method = method
@@ -48,13 +47,9 @@ async def middleware(req, handler):
         return await handler(req)
 
     except virtool.errors.ProxyError as err:
-        return json_response({
-            "id": "proxy_error",
-            "message": str(err)
-        }, status=500)
+        return json_response({"id": "proxy_error", "message": str(err)}, status=500)
 
     except aiohttp.ClientProxyConnectionError:
-        return json_response({
-            "id": "proxy_error",
-            "message": "Could not connect to proxy"
-        }, status=500)
+        return json_response(
+            {"id": "proxy_error", "message": "Could not connect to proxy"}, status=500
+        )

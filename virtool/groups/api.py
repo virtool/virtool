@@ -22,14 +22,16 @@ async def find(req):
 
 
 @routes.post("/groups", admin=True)
-@schema({
-    "group_id": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "empty": False,
-        "required": True
+@schema(
+    {
+        "group_id": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "empty": False,
+            "required": True,
+        }
     }
-})
+)
 async def create(req):
     """
     Adds a new user group.
@@ -39,7 +41,7 @@ async def create(req):
 
     document = {
         "_id": data["group_id"].lower(),
-        "permissions": generate_base_permissions()
+        "permissions": generate_base_permissions(),
     }
 
     try:
@@ -47,9 +49,7 @@ async def create(req):
     except pymongo.errors.DuplicateKeyError:
         raise HTTPBadRequest(text="Group already exists")
 
-    headers = {
-        "Location": "/groups/" + data["group_id"]
-    }
+    headers = {"Location": "/groups/" + data["group_id"]}
 
     return json_response(base_processor(document), status=201, headers=headers)
 
@@ -69,13 +69,15 @@ async def get(req):
 
 
 @routes.patch("/groups/{group_id}", admin=True)
-@schema({
-    "permissions": {
-        "type": "dict",
-        "default": {},
-        "check_with": virtool.validators.is_permission_dict
+@schema(
+    {
+        "permissions": {
+            "type": "dict",
+            "default": {},
+            "check_with": virtool.validators.is_permission_dict,
+        }
     }
-})
+)
 async def update_permissions(req):
     """
     Updates the permissions of a given group.
@@ -94,11 +96,9 @@ async def update_permissions(req):
     old_document["permissions"].update(data["permissions"])
 
     # Get the current permissions dict for the passed group id.
-    document = await db.groups.find_one_and_update({"_id": group_id}, {
-        "$set": {
-            "permissions": old_document["permissions"]
-        }
-    })
+    document = await db.groups.find_one_and_update(
+        {"_id": group_id}, {"$set": {"permissions": old_document["permissions"]}}
+    )
 
     await virtool.groups.db.update_member_users(db, group_id)
 

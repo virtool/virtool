@@ -59,9 +59,4 @@ def pretty_dumps(obj: object) -> str:
     :return: a JSON string
 
     """
-    return json.dumps(
-        obj,
-        cls=CustomEncoder,
-        indent=4,
-        sort_keys=True
-    )
+    return json.dumps(obj, cls=CustomEncoder, indent=4, sort_keys=True)

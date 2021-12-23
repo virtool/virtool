@@ -11,7 +11,7 @@ async def test_client(loop, redis: Redis):
     Test that the client can successfully publish a Pub/Sub message to the dispatch Redis channel.
 
     """
-    channel, = await redis.subscribe("channel:dispatch")
+    (channel,) = await redis.subscribe("channel:dispatch")
 
     interface = DispatcherClient(redis)
     scheduler = await create_scheduler()
@@ -24,7 +24,7 @@ async def test_client(loop, redis: Redis):
     assert change == {
         "interface": "samples",
         "operation": "update",
-        "id_list": [1, 3, 4]
+        "id_list": [1, 3, 4],
     }
 
     await scheduler.close()

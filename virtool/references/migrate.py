@@ -13,8 +13,6 @@ async def remove_process_field(db):
     :param db: the application database object
 
     """
-    await db.references.update_many(virtool.api.utils.compose_exists_query("process"), {
-        "$unset": {
-            "process": ""
-        }
-    })
+    await db.references.update_many(
+        virtool.api.utils.compose_exists_query("process"), {"$unset": {"process": ""}}
+    )

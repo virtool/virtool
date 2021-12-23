@@ -29,7 +29,7 @@ async def migrate(app: virtool.types.App):
         migrate_sessions,
         migrate_status,
         migrate_samples,
-        migrate_references
+        migrate_references,
     )
 
     for func in funcs:
@@ -58,52 +58,50 @@ async def migrate_status(app: virtool.types.App):
     db = app["db"]
     server_version = app["version"]
 
-    await db.status.delete_many({
-        "_id": {
-            "$in": ["software_update", "version"]
-        }
-    })
+    await db.status.delete_many({"_id": {"$in": ["software_update", "version"]}})
 
     mongo_version = await virtool.db.mongo.get_mongo_version(db)
 
-    await db.status.update_many({}, {
-        "$unset": {
-            "process": ""
-        }
-    })
+    await db.status.update_many({}, {"$unset": {"process": ""}})
 
     try:
-        await db.status.insert_one({
-            "_id": "software",
-            "installed": None,
-            "mongo_version": mongo_version,
-            "releases": list(),
-            "task": None,
-            "updating": False,
-            "version": server_version,
-        })
-    except pymongo.errors.DuplicateKeyError:
-        await db.status.update_one({"_id": "software"}, {
-            "$set": {
+        await db.status.insert_one(
+            {
+                "_id": "software",
+                "installed": None,
                 "mongo_version": mongo_version,
+                "releases": list(),
                 "task": None,
                 "updating": False,
-                "version": server_version
+                "version": server_version,
             }
-        })
+        )
+    except pymongo.errors.DuplicateKeyError:
+        await db.status.update_one(
+            {"_id": "software"},
+            {
+                "$set": {
+                    "mongo_version": mongo_version,
+                    "task": None,
+                    "updating": False,
+                    "version": server_version,
+                }
+            },
+        )
 
     try:
-        await db.status.insert_one({
-            "_id": "hmm",
-            "installed": None,
-            "task": None,
-            "updates": list(),
-            "release": None
-        })
+        await db.status.insert_one(
+            {
+                "_id": "hmm",
+                "installed": None,
+                "task": None,
+                "updates": list(),
+                "release": None,
+            }
+        )
     except pymongo.errors.DuplicateKeyError:
         if await db.hmm.count_documents({}):
-            await db.status.update_one({"_id": "hmm", "installed": {"$exists": False}}, {
-                "$set": {
-                    "installed": None
-                }
-            })
+            await db.status.update_one(
+                {"_id": "hmm", "installed": {"$exists": False}},
+                {"$set": {"installed": None}},
+            )

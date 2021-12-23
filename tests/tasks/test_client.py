@@ -8,12 +8,12 @@ from virtool.tasks.client import TasksClient
 from virtool.tasks.models import Task
 
 
-async def test_client(loop,  snapshot, pg, redis: Redis, static_time):
+async def test_client(loop, snapshot, pg, redis: Redis, static_time):
     """
     Test that the TasksClient can successfully publish a Pub/Sub message to the tasks Redis channel.
 
     """
-    channel, = await redis.subscribe("channel:tasks")
+    (channel,) = await redis.subscribe("channel:tasks")
 
     tasks_client = TasksClient(redis, pg)
 
@@ -24,4 +24,6 @@ async def test_client(loop,  snapshot, pg, redis: Redis, static_time):
     assert task_id == 1
 
     async with AsyncSession(pg) as session:
-        assert (await session.execute(select(Task).filter_by(id=1))).scalar().to_dict() == snapshot
+        assert (
+            await session.execute(select(Task).filter_by(id=1))
+        ).scalar().to_dict() == snapshot

@@ -11,17 +11,23 @@ def files(tmp_path):
 
     path = Path.cwd() / "tests" / "test_files" / "test.fq.gz"
 
-    files = {
-        "file": open(path, "rb")
-    }
+    files = {"file": open(path, "rb")}
 
     return files
 
 
 class TestUpload:
-
     @pytest.mark.parametrize("upload_type", UploadType.to_list())
-    async def test(self, files, upload_type, tmp_path, snapshot, spawn_client, static_time, pg_session):
+    async def test(
+        self,
+        files,
+        upload_type,
+        tmp_path,
+        snapshot,
+        spawn_client,
+        static_time,
+        pg_session,
+    ):
         """
         Test `POST /uploads` to assure a file can be uploaded and that it properly updates the db.
 
@@ -31,7 +37,9 @@ class TestUpload:
         client.app["config"].data_path = tmp_path
 
         if upload_type:
-            resp = await client.post_form(f"/uploads?type={upload_type}&name=Test.fq.gz", data=files)
+            resp = await client.post_form(
+                f"/uploads?type={upload_type}&name=Test.fq.gz", data=files
+            )
         else:
             resp = await client.post_form("/uploads?name=Test.fq.gz", data=files)
 
@@ -49,9 +57,7 @@ class TestUpload:
 
         resp = await client.post_form("/uploads", data=files)
 
-        await resp_is.invalid_query(resp, {
-            "name": ["required field"]
-        })
+        await resp_is.invalid_query(resp, {"name": ["required field"]})
 
     async def test_bad_type(self, files, spawn_client, resp_is):
         """
@@ -60,13 +66,14 @@ class TestUpload:
         """
         client = await spawn_client(authorize=True, permissions=["upload_file"])
 
-        resp = await client.post_form("/uploads?type=foobar&name=Test.fq.gz", data=files)
+        resp = await client.post_form(
+            "/uploads?type=foobar&name=Test.fq.gz", data=files
+        )
 
         await resp_is.bad_request(resp, "Unsupported upload type")
 
 
 class TestFind:
-
     @pytest.mark.parametrize("upload_type", ["reads", "reference", None])
     async def test(self, upload_type, spawn_client, snapshot, test_uploads):
         """
@@ -108,7 +115,9 @@ class TestGet:
             assert resp.status == 404
 
     @pytest.mark.parametrize("exists", [True, False])
-    async def test_upload_removed(self, exists, resp_is, spawn_client, pg_session, tmp_path):
+    async def test_upload_removed(
+        self, exists, resp_is, spawn_client, pg_session, tmp_path
+    ):
         """
         Test `GET /uploads/:id` to assure that it doesn't let you download a file that has been removed.
 
@@ -144,7 +153,9 @@ class TestDelete:
         assert resp.status == 404
 
     @pytest.mark.parametrize("exists", [True, False])
-    async def test_already_removed(self, exists, spawn_client, tmp_path, pg_session, resp_is):
+    async def test_already_removed(
+        self, exists, spawn_client, tmp_path, pg_session, resp_is
+    ):
         """
         Test `DELETE /uploads/:id to assure that it doesn't try to delete a file that has already been removed.
 
@@ -166,7 +177,9 @@ class TestDelete:
             await resp_is.no_content(resp)
 
     @pytest.mark.parametrize("exists", [True, False])
-    async def test_record_dne(self, exists, spawn_client, pg_session, tmp_path, resp_is):
+    async def test_record_dne(
+        self, exists, spawn_client, pg_session, tmp_path, resp_is
+    ):
         """
         Test `DELETE /uploads/:id to assure that it doesn't try to delete a file that corresponds to a `upload`
         record that does not exist.

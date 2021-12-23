@@ -7,10 +7,11 @@ class JobRightsDomain:
     Job rights that are specific to
 
     """
+
     def __init__(
-            self,
-            name: str,
-            rights_dict: Optional[Dict[str, Dict[str, Sequence[Union[int, str]]]]] = None
+        self,
+        name: str,
+        rights_dict: Optional[Dict[str, Dict[str, Sequence[Union[int, str]]]]] = None,
     ):
         self._name = name
 
@@ -91,6 +92,7 @@ class JobRights:
     Stores job rights for all resource types.
 
     """
+
     def __init__(self, rights_dict: Optional[Dict[str, dict]] = None):
         self.analyses = JobRightsDomain("analyses", rights_dict)
         self.indexes = JobRightsDomain("indexes", rights_dict)

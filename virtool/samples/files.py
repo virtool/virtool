@@ -11,9 +11,7 @@ from virtool.uploads.models import Upload
 
 
 async def get_existing_reads(
-        pg: AsyncEngine,
-        sample: str,
-        key: str = None
+    pg: AsyncEngine, sample: str, key: str = None
 ) -> List[str]:
     """
     Get reads files in either `sample_reads_files` or `sample_reads_files_cache` depending on value
@@ -37,12 +35,12 @@ async def get_existing_reads(
 
 
 async def create_artifact_file(
-        pg: AsyncEngine,
-        name: str,
-        name_on_disk: str,
-        sample: str,
-        artifact_type: str,
-        key: Optional[str] = None
+    pg: AsyncEngine,
+    name: str,
+    name_on_disk: str,
+    sample: str,
+    artifact_type: str,
+    key: Optional[str] = None,
 ) -> Dict[str, any]:
     """
     Create a row in an SQL table that represents uploaded sample artifact files. A row is created
@@ -76,14 +74,14 @@ async def create_artifact_file(
 
 
 async def create_reads_file(
-        pg: AsyncEngine,
-        size: int,
-        name: str,
-        name_on_disk: str,
-        sample_id: str,
-        cache: bool = False,
-        upload_id: Optional[int] = None,
-        key: Optional[str] = None
+    pg: AsyncEngine,
+    size: int,
+    name: str,
+    name_on_disk: str,
+    sample_id: str,
+    cache: bool = False,
+    upload_id: Optional[int] = None,
+    key: Optional[str] = None,
 ) -> Dict[str, any]:
     """
     Create a row in a SQL table that represents uploaded sample reads files.
@@ -109,9 +107,9 @@ async def create_reads_file(
         reads.uploaded_at = virtool.utils.timestamp()
 
         if upload_id and (
-                upload := (
-                        await session.execute(select(Upload).filter_by(id=upload_id))
-                ).scalar()
+            upload := (
+                await session.execute(select(Upload).filter_by(id=upload_id))
+            ).scalar()
         ):
             upload.reads.append(reads)
 

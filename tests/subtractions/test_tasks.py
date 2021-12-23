@@ -24,7 +24,7 @@ async def test_add_subtraction_files_task(
         "_id": "foo",
         "name": "Foo",
         "nickname": "Foo Subtraction",
-        "deleted": False
+        "deleted": False,
     }
 
     await client.db.subtraction.insert_one(subtraction)
@@ -37,7 +37,7 @@ async def test_add_subtraction_files_task(
         progress=0,
         step="rename_index_files",
         type="add_subtraction_files",
-        created_at=static_time.datetime
+        created_at=static_time.datetime,
     )
 
     async with pg_session as session:
@@ -49,4 +49,6 @@ async def test_add_subtraction_files_task(
     await add_files_task.run()
 
     async with pg_session as session:
-        assert (await session.execute(select(SubtractionFile))).scalars().all() == snapshot
+        assert (
+            await session.execute(select(SubtractionFile))
+        ).scalars().all() == snapshot

@@ -29,7 +29,7 @@ PROJECTION = [
     "user",
     "ready",
     "reference",
-    "version"
+    "version",
 ]
 
 FILES = (
@@ -40,11 +40,13 @@ FILES = (
     "reference.3.bt2",
     "reference.4.bt2",
     "reference.rev.1.bt2",
-    "reference.rev.2.bt2"
+    "reference.rev.2.bt2",
 )
 
 
-async def create(db, ref_id: str, user_id: str, job_id: str, index_id: Optional[str] = None) -> dict:
+async def create(
+    db, ref_id: str, user_id: str, job_id: str, index_id: Optional[str] = None
+) -> dict:
     """
     Create a new index and update history to show the version and id of the new index.
 
@@ -70,27 +72,17 @@ async def create(db, ref_id: str, user_id: str, job_id: str, index_id: Optional[
         "ready": False,
         "has_files": True,
         "has_json": False,
-        "reference": {
-            "id": ref_id
-        },
-        "job": {
-            "id": job_id
-        },
-        "user": {
-            "id": user_id
-        }
+        "reference": {"id": ref_id},
+        "job": {"id": job_id},
+        "user": {"id": user_id},
     }
 
     await db.indexes.insert_one(document)
 
-    await db.history.update_many({"index.id": "unbuilt", "reference.id": ref_id}, {
-        "$set": {
-            "index": {
-                "id": index_id,
-                "version": index_version
-            }
-        }
-    })
+    await db.history.update_many(
+        {"index.id": "unbuilt", "reference.id": ref_id},
+        {"$set": {"index": {"id": index_id, "version": index_version}}},
+    )
 
     return document
 
@@ -106,23 +98,19 @@ async def processor(db, document: dict) -> dict:
     """
     document = virtool.utils.base_processor(document)
 
-    query = {
-        "index.id": document["id"]
-    }
+    query = {"index.id": document["id"]}
 
     change_count, otu_ids = await asyncio.gather(
-        db.history.count_documents(query),
-        db.history.distinct("otu.id", query)
+        db.history.count_documents(query), db.history.distinct("otu.id", query)
     )
 
-    return await attach_user(db, {
-        **document,
-        "change_count": change_count,
-        "modified_otu_count": len(otu_ids)
-    })
+    return await attach_user(
+        db,
+        {**document, "change_count": change_count, "modified_otu_count": len(otu_ids)},
+    )
 
 
-async def find(db, req_query: dict, ref_id:  Optional[str] = None) -> dict:
+async def find(db, req_query: dict, ref_id: Optional[str] = None) -> dict:
     """
     Find an index document matching the `req_query`
 
@@ -135,9 +123,7 @@ async def find(db, req_query: dict, ref_id:  Optional[str] = None) -> dict:
     base_query = None
 
     if ref_id:
-        base_query = {
-            "reference.id": ref_id
-        }
+        base_query = {"reference.id": ref_id}
 
     data = await paginate(
         db.indexes,
@@ -146,7 +132,7 @@ async def find(db, req_query: dict, ref_id:  Optional[str] = None) -> dict:
         base_query=base_query,
         projection=PROJECTION,
         reverse=True,
-        sort="version"
+        sort="version",
     )
 
     unbuilt_stats = await get_unbuilt_stats(db, ref_id)
@@ -154,7 +140,7 @@ async def find(db, req_query: dict, ref_id:  Optional[str] = None) -> dict:
     return {
         **data,
         **unbuilt_stats,
-        "documents": [await processor(db, d) for d in data["documents"]]
+        "documents": [await processor(db, d) for d in data["documents"]],
     }
 
 
@@ -171,9 +157,9 @@ async def finalize(db, pg: AsyncEngine, ref_id: str, index_id: str) -> dict:
     """
     await update_last_indexed_versions(db, ref_id)
 
-    document = await db.indexes.find_one_and_update({"_id": index_id}, {
-        "$set": {"ready": True}
-    })
+    document = await db.indexes.find_one_and_update(
+        {"_id": index_id}, {"$set": {"ready": True}}
+    )
 
     return await attach_files(pg, document)
 
@@ -204,7 +190,7 @@ async def get_current_id_and_version(db, ref_id: str) -> Tuple[str, int]:
     document = await db.indexes.find_one(
         {"reference.id": ref_id, "ready": True},
         sort=[("version", pymongo.DESCENDING)],
-        projection=["_id", "version"]
+        projection=["_id", "version"],
     )
 
     if document is None:
@@ -223,28 +209,26 @@ async def get_otus(db, index_id: str) -> List[dict]:
     :return: a list of otus modified in the index
 
     """
-    cursor = db.history.aggregate([
-        {"$match": {
-            "index.id": index_id
-        }},
-        {"$sort": {
-            "otu.id": 1,
-            "otu.version": -1
-        }},
-        {"$group": {
-            "_id": "$otu.id",
-            "name": {"$first": "$otu.name"},
-            "count": {"$sum": 1}
-        }},
-        {"$match": {
-            "name": {"$ne": None}
-        }},
-        {"$sort": {
-            "name": 1
-        }}
-    ])
+    cursor = db.history.aggregate(
+        [
+            {"$match": {"index.id": index_id}},
+            {"$sort": {"otu.id": 1, "otu.version": -1}},
+            {
+                "$group": {
+                    "_id": "$otu.id",
+                    "name": {"$first": "$otu.name"},
+                    "count": {"$sum": 1},
+                }
+            },
+            {"$match": {"name": {"$ne": None}}},
+            {"$sort": {"name": 1}},
+        ]
+    )
 
-    return [{"id": v["_id"], "name": v["name"], "change_count": v["count"]} async for v in cursor]
+    return [
+        {"id": v["_id"], "name": v["name"], "change_count": v["count"]}
+        async for v in cursor
+    ]
 
 
 async def get_next_version(db, ref_id: str) -> int:
@@ -278,15 +262,12 @@ async def get_unbuilt_stats(db, ref_id: Optional[str] = None) -> dict:
     if ref_id:
         ref_query["reference.id"] = ref_id
 
-    history_query = {
-        **ref_query,
-        "index.id": "unbuilt"
-    }
+    history_query = {**ref_query, "index.id": "unbuilt"}
 
     return {
         "total_otu_count": await db.otus.count_documents(ref_query),
         "change_count": await db.history.count_documents(history_query),
-        "modified_otu_count": len(await db.history.distinct("otu.id", history_query))
+        "modified_otu_count": len(await db.history.distinct("otu.id", history_query)),
     }
 
 
@@ -298,20 +279,11 @@ async def reset_history(db, index_id: str):
     :param index_id: The ID of the index which failed to build
 
     """
-    query = {
-        "_id": {
-            "$in": await db.history.distinct("_id", {"index.id": index_id})
-        }
-    }
+    query = {"_id": {"$in": await db.history.distinct("_id", {"index.id": index_id})}}
 
-    return await db.history.update_many(query, {
-        "$set": {
-            "index": {
-                "id": "unbuilt",
-                "version": "unbuilt"
-            }
-        }
-    })
+    return await db.history.update_many(
+        query, {"$set": {"index": {"id": "unbuilt", "version": "unbuilt"}}}
+    )
 
 
 async def get_patched_otus(db, config: Config, manifest: Dict[str, int]) -> List[dict]:
@@ -323,19 +295,14 @@ async def get_patched_otus(db, config: Config, manifest: Dict[str, int]) -> List
     :param manifest: the manifest
 
     """
-    app_dict = {
-        "db": db,
-        "config": config
-    }
+    app_dict = {"db": db, "config": config}
 
     coros = list()
 
     for patch_id, patch_version in manifest.items():
-        coros.append(virtool.history.db.patch_to_version(
-            app_dict,
-            patch_id,
-            patch_version
-        ))
+        coros.append(
+            virtool.history.db.patch_to_version(app_dict, patch_id, patch_version)
+        )
 
     return [j[1] for j in await asyncio.tasks.gather(*coros)]
 
@@ -350,33 +317,27 @@ async def update_last_indexed_versions(db, ref_id: str):
     """
     # Find OTUs with changes.
     pipeline = [
-        {"$project": {
-            "reference": True,
-            "version": True,
-            "last_indexed_version": True,
-            "comp": {"$cmp": ["$version", "$last_indexed_version"]}
-        }},
-        {"$match": {
-            "reference.id": ref_id,
-            "comp": {"$ne": 0}
-        }},
-        {"$group": {
-            "_id": "$version",
-            "id_list": {
-                "$addToSet": "$_id"
+        {
+            "$project": {
+                "reference": True,
+                "version": True,
+                "last_indexed_version": True,
+                "comp": {"$cmp": ["$version", "$last_indexed_version"]},
             }
-        }}
+        },
+        {"$match": {"reference.id": ref_id, "comp": {"$ne": 0}}},
+        {"$group": {"_id": "$version", "id_list": {"$addToSet": "$_id"}}},
     ]
 
-    id_version_key = {agg["_id"]: agg["id_list"] async for agg in db.otus.aggregate(pipeline)}
+    id_version_key = {
+        agg["_id"]: agg["id_list"] async for agg in db.otus.aggregate(pipeline)
+    }
 
     # For each version number
     for version, id_list in id_version_key.items():
-        await db.otus.update_many({"_id": {"$in": id_list}}, {
-            "$set": {
-                "last_indexed_version": version
-            }
-        })
+        await db.otus.update_many(
+            {"_id": {"$in": id_list}}, {"$set": {"last_indexed_version": version}}
+        )
 
 
 async def attach_files(pg: AsyncEngine, document: dict) -> dict:
@@ -394,9 +355,8 @@ async def attach_files(pg: AsyncEngine, document: dict) -> dict:
     files = [row.to_dict() for row in rows]
 
     for index_file in files:
-        index_file["download_url"] = f"/indexes/{index_file['index']}/files/{index_file['name']}"
+        index_file[
+            "download_url"
+        ] = f"/indexes/{index_file['index']}/files/{index_file['name']}"
 
-    return {
-        **document,
-        "files": files
-    }
+    return {**document, "files": files}

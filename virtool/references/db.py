@@ -75,9 +75,13 @@ from virtool.http.utils import download_file
 from virtool.otus.db import join
 from virtool.otus.utils import verify
 from virtool.pg.utils import get_row
-from virtool.references.utils import (RIGHTS, check_will_change,
-                                      clean_export_list, get_owner_user,
-                                      load_reference_file)
+from virtool.references.utils import (
+    RIGHTS,
+    check_will_change,
+    clean_export_list,
+    get_owner_user,
+    load_reference_file,
+)
 from virtool.settings.db import Settings
 from virtool.types import App
 from virtool.uploads.models import Upload
@@ -103,7 +107,7 @@ PROJECTION = [
     "updating",
     "user",
     "users",
-    "groups"
+    "groups",
 ]
 
 
@@ -129,11 +133,13 @@ async def processor(db, document: dict) -> dict:
         get_unbuilt_count(db, ref_id),
     )
 
-    document.update({
-        "latest_build": latest_build,
-        "otu_count": otu_count,
-        "unbuilt_change_count": unbuilt_count
-    })
+    document.update(
+        {
+            "latest_build": latest_build,
+            "otu_count": otu_count,
+            "unbuilt_change_count": unbuilt_count,
+        }
+    )
 
     try:
         document["installed"] = document.pop("updates")[-1]
@@ -161,7 +167,14 @@ async def attach_computed(db, document: dict) -> dict:
     except (KeyError, TypeError):
         internal_control_id = None
 
-    contributors, internal_control, latest_build, otu_count, users, unbuilt_count = await asyncio.gather(
+    (
+        contributors,
+        internal_control,
+        latest_build,
+        otu_count,
+        users,
+        unbuilt_count,
+    ) = await asyncio.gather(
         get_contributors(db, ref_id),
         get_internal_control(db, internal_control_id, ref_id),
         get_latest_build(db, ref_id),
@@ -170,15 +183,17 @@ async def attach_computed(db, document: dict) -> dict:
         get_unbuilt_count(db, ref_id),
     )
 
-    processed = virtool.utils.base_processor({
-        **document,
-        "contributors": contributors,
-        "internal_control": internal_control or None,
-        "latest_build": latest_build,
-        "otu_count": otu_count,
-        "unbuilt_change_count": unbuilt_count,
-        "users": users
-    })
+    processed = virtool.utils.base_processor(
+        {
+            **document,
+            "contributors": contributors,
+            "internal_control": internal_control or None,
+            "latest_build": latest_build,
+            "otu_count": otu_count,
+            "unbuilt_change_count": unbuilt_count,
+            "users": users,
+        }
+    )
 
     return await attach_user(db, processed)
 
@@ -206,10 +221,16 @@ async def add_group_or_user(db, ref_id: str, field: str, data: dict) -> Optional
 
     subdocument_id = data.get("group_id") or data["user_id"]
 
-    if field == "groups" and await db.groups.count_documents({"_id": subdocument_id}) == 0:
+    if (
+        field == "groups"
+        and await db.groups.count_documents({"_id": subdocument_id}) == 0
+    ):
         raise virtool.errors.DatabaseError("group does not exist")
 
-    if field == "users" and await db.users.count_documents({"_id": subdocument_id}) == 0:
+    if (
+        field == "users"
+        and await db.users.count_documents({"_id": subdocument_id}) == 0
+    ):
         raise virtool.errors.DatabaseError("user does not exist")
 
     if subdocument_id in [s["id"] for s in document[field]]:
@@ -220,14 +241,10 @@ async def add_group_or_user(db, ref_id: str, field: str, data: dict) -> Optional
     subdocument = {
         "id": subdocument_id,
         "created_at": virtool.utils.timestamp(),
-        **rights
+        **rights,
     }
 
-    await db.references.update_one({"_id": ref_id}, {
-        "$push": {
-            field: subdocument
-        }
-    })
+    await db.references.update_one({"_id": ref_id}, {"$push": {field: subdocument}})
 
     return subdocument
 
@@ -242,7 +259,9 @@ async def check_right(req: Request, reference: dict, right: str) -> bool:
         groups = reference["groups"]
         users = reference["users"]
     except (KeyError, TypeError):
-        reference = await req.app["db"].references.find_one(reference, ["groups", "users"])
+        reference = await req.app["db"].references.find_one(
+            reference, ["groups", "users"]
+        )
         groups = reference["groups"]
         users = reference["users"]
 
@@ -270,7 +289,9 @@ async def check_source_type(db, ref_id: str, source_type: str) -> bool:
     :return: source type is valid
 
     """
-    document = await db.references.find_one(ref_id, ["restrict_source_types", "source_types"])
+    document = await db.references.find_one(
+        ref_id, ["restrict_source_types", "source_types"]
+    )
 
     restrict_source_types = document.get("restrict_source_types", False)
     source_types = document.get("source_types", list())
@@ -302,30 +323,18 @@ def compose_base_find_query(user_id: str, administrator: bool, groups: list) -> 
     if administrator:
         return dict()
 
-    is_user_member = {
-        "users.id": user_id
-    }
+    is_user_member = {"users.id": user_id}
 
-    is_group_member = {
-        "groups.id": {
-            "$in": groups
-        }
-    }
+    is_group_member = {"groups.id": {"$in": groups}}
 
-    is_owner = {
-        "user.id": user_id
-    }
+    is_owner = {"user.id": user_id}
 
-    return {
-        "$or": [
-            is_group_member,
-            is_user_member,
-            is_owner
-        ]
-    }
+    return {"$or": [is_group_member, is_user_member, is_owner]}
 
 
-async def delete_group_or_user(db, ref_id: str, subdocument_id: str, field: str) -> Optional[str]:
+async def delete_group_or_user(
+    db, ref_id: str, subdocument_id: str, field: str
+) -> Optional[str]:
     """
     Delete an existing group or user as decided by the `field` argument.
 
@@ -336,10 +345,9 @@ async def delete_group_or_user(db, ref_id: str, subdocument_id: str, field: str)
     :return: the id of the removed subdocument
 
     """
-    document = await db.references.find_one({
-        "_id": ref_id,
-        field + ".id": subdocument_id
-    }, [field])
+    document = await db.references.find_one(
+        {"_id": ref_id, field + ".id": subdocument_id}, [field]
+    )
 
     if document is None:
         return None
@@ -347,16 +355,14 @@ async def delete_group_or_user(db, ref_id: str, subdocument_id: str, field: str)
     # Retain only the subdocuments that don't match the passed `subdocument_id`.
     filtered = [s for s in document[field] if s["id"] != subdocument_id]
 
-    await db.references.update_one({"_id": ref_id}, {
-        "$set": {
-            field: filtered
-        }
-    })
+    await db.references.update_one({"_id": ref_id}, {"$set": {field: filtered}})
 
     return subdocument_id
 
 
-async def edit_group_or_user(db, ref_id: str, subdocument_id: str, field: str, data: dict) -> Optional[dict]:
+async def edit_group_or_user(
+    db, ref_id: str, subdocument_id: str, field: str, data: dict
+) -> Optional[dict]:
     """
     Edit an existing group or user as decided by the `field` argument. Returns `None` if the reference, group, or user
     does not exist.
@@ -369,10 +375,9 @@ async def edit_group_or_user(db, ref_id: str, subdocument_id: str, field: str, d
     :return: the modified subdocument
 
     """
-    document = await db.references.find_one({
-        "_id": ref_id,
-        field + ".id": subdocument_id
-    }, [field])
+    document = await db.references.find_one(
+        {"_id": ref_id, field + ".id": subdocument_id}, [field]
+    )
 
     if document is None:
         return None
@@ -382,16 +387,16 @@ async def edit_group_or_user(db, ref_id: str, subdocument_id: str, field: str, d
             rights = {key: data.get(key, subdocument[key]) for key in RIGHTS}
             subdocument.update(rights)
 
-            await db.references.update_one({"_id": ref_id}, {
-                "$set": {
-                    field: document[field]
-                }
-            })
+            await db.references.update_one(
+                {"_id": ref_id}, {"$set": {field: document[field]}}
+            )
 
             return subdocument
 
 
-async def fetch_and_update_release(app, ref_id: str, ignore_errors: bool = False) -> dict:
+async def fetch_and_update_release(
+    app, ref_id: str, ignore_errors: bool = False
+) -> dict:
     """
     Get the latest release for the GitHub repository identified by the passed `slug`. If a release is found, update the
     reference identified by the passed `ref_id` and return the release.
@@ -409,11 +414,9 @@ async def fetch_and_update_release(app, ref_id: str, ignore_errors: bool = False
 
     retrieved_at = virtool.utils.timestamp()
 
-    document = await db.references.find_one(ref_id, [
-        "installed",
-        "release",
-        "remotes_from"
-    ])
+    document = await db.references.find_one(
+        ref_id, ["installed", "release", "remotes_from"]
+    )
 
     release = document.get("release")
     etag = virtool.github.get_etag(release)
@@ -424,10 +427,7 @@ async def fetch_and_update_release(app, ref_id: str, ignore_errors: bool = False
 
     try:
         updated = await virtool.github.get_release(
-            app["config"],
-            app["client"],
-            document["remotes_from"]["slug"],
-            etag
+            app["config"], app["client"], document["remotes_from"]["slug"], etag
         )
 
         if updated:
@@ -450,19 +450,16 @@ async def fetch_and_update_release(app, ref_id: str, ignore_errors: bool = False
         installed = document["installed"]
 
         release["newer"] = bool(
-            installed and
-            VersionInfo.parse(release["name"].lstrip("v")) > VersionInfo.parse(
-                installed["name"].lstrip("v"))
+            installed
+            and VersionInfo.parse(release["name"].lstrip("v"))
+            > VersionInfo.parse(installed["name"].lstrip("v"))
         )
 
         release["retrieved_at"] = retrieved_at
 
-    await db.references.update_one({"_id": ref_id}, {
-        "$set": {
-            "errors": errors,
-            "release": release
-        }
-    })
+    await db.references.update_one(
+        {"_id": ref_id}, {"$set": {"errors": errors, "release": release}}
+    )
 
     return release
 
@@ -479,7 +476,9 @@ async def get_contributors(db, ref_id: str) -> Optional[List[dict]]:
     return await virtool.history.db.get_contributors(db, {"reference.id": ref_id})
 
 
-async def get_internal_control(db, internal_control_id: Optional[str], ref_id: str) -> Optional[dict]:
+async def get_internal_control(
+    db, internal_control_id: Optional[str], ref_id: str
+) -> Optional[dict]:
     """
     Return a minimal dict describing the ref internal control given a `otu_id`.
 
@@ -492,18 +491,14 @@ async def get_internal_control(db, internal_control_id: Optional[str], ref_id: s
     if internal_control_id is None:
         return None
 
-    name = await virtool.db.utils.get_one_field(db.otus, "name", {
-        "_id": internal_control_id,
-        "reference.id": ref_id
-    })
+    name = await virtool.db.utils.get_one_field(
+        db.otus, "name", {"_id": internal_control_id, "reference.id": ref_id}
+    )
 
     if name is None:
         return None
 
-    return {
-        "id": internal_control_id,
-        "name": name
-    }
+    return {"id": internal_control_id, "name": name}
 
 
 async def get_latest_build(db, ref_id: str) -> Optional[dict]:
@@ -515,10 +510,11 @@ async def get_latest_build(db, ref_id: str) -> Optional[dict]:
     :return: a subset of fields for the latest build
 
     """
-    latest_build = await db.indexes.find_one({
-        "reference.id": ref_id,
-        "ready": True
-    }, projection=["created_at", "version", "user", "has_json"], sort=[("version", pymongo.DESCENDING)])
+    latest_build = await db.indexes.find_one(
+        {"reference.id": ref_id, "ready": True},
+        projection=["created_at", "version", "user", "has_json"],
+        sort=[("version", pymongo.DESCENDING)],
+    )
 
     if latest_build is None:
         return None
@@ -533,7 +529,12 @@ async def get_official_installed(db) -> bool:
     :param db:
     :return: official reference install status
     """
-    return await db.references.count_documents({"remotes_from.slug": "virtool/ref-plant-viruses"}) > 0
+    return (
+        await db.references.count_documents(
+            {"remotes_from.slug": "virtool/ref-plant-viruses"}
+        )
+        > 0
+    )
 
 
 async def get_manifest(db, ref_id: str) -> dict:
@@ -563,9 +564,7 @@ async def get_otu_count(db, ref_id: str) -> int:
     :return: the OTU count
 
     """
-    return await db.otus.count_documents({
-        "reference.id": ref_id
-    })
+    return await db.otus.count_documents({"reference.id": ref_id})
 
 
 async def get_unbuilt_count(db, ref_id: str) -> int:
@@ -577,13 +576,14 @@ async def get_unbuilt_count(db, ref_id: str) -> int:
     :return: the number of unbuilt changes
 
     """
-    return await db.history.count_documents({
-        "reference.id": ref_id,
-        "index.id": "unbuilt"
-    })
+    return await db.history.count_documents(
+        {"reference.id": ref_id, "index.id": "unbuilt"}
+    )
 
 
-async def create_clone(db, settings: Settings, name: str, clone_from: str, description: str, user_id: str) -> dict:
+async def create_clone(
+    db, settings: Settings, name: str, clone_from: str, description: str, user_id: str
+) -> dict:
     source = await db.references.find_one(clone_from)
 
     name = name or "Clone of " + source["name"]
@@ -596,28 +596,25 @@ async def create_clone(db, settings: Settings, name: str, clone_from: str, descr
         description,
         source["data_type"],
         created_at=virtool.utils.timestamp(),
-        user_id=user_id
+        user_id=user_id,
     )
 
-    document["cloned_from"] = {
-        "id": clone_from,
-        "name": source["name"]
-    }
+    document["cloned_from"] = {"id": clone_from, "name": source["name"]}
 
     return document
 
 
 async def create_document(
-        db,
-        settings: Settings,
-        name: str,
-        organism: Optional[str],
-        description: str,
-        data_type: Optional[str],
-        created_at=None,
-        ref_id: Optional[str] = None,
-        user_id: Optional[str] = None,
-        users=None
+    db,
+    settings: Settings,
+    name: str,
+    organism: Optional[str],
+    description: str,
+    data_type: Optional[str],
+    created_at=None,
+    ref_id: Optional[str] = None,
+    user_id: Optional[str] = None,
+    users=None,
 ):
     if ref_id and await db.references.count_documents({"_id": ref_id}):
         raise virtool.errors.DatabaseError("ref_id already exists")
@@ -627,9 +624,7 @@ async def create_document(
     user = None
 
     if user_id:
-        user = {
-            "id": user_id
-        }
+        user = {"id": user_id}
 
     if not users:
         users = [get_owner_user(user_id)]
@@ -646,7 +641,7 @@ async def create_document(
         "source_types": settings.default_source_types,
         "groups": list(),
         "users": users,
-        "user": user
+        "user": user,
     }
 
     if data_type == "barcode":
@@ -655,7 +650,15 @@ async def create_document(
     return document
 
 
-async def create_import(db, pg: AsyncEngine, settings: Settings, name: str, description: str, import_from: str, user_id: str) -> dict:
+async def create_import(
+    db,
+    pg: AsyncEngine,
+    settings: Settings,
+    name: str,
+    description: str,
+    import_from: str,
+    user_id: str,
+) -> dict:
     """
     Import a previously exported Virtool reference.
 
@@ -679,7 +682,7 @@ async def create_import(db, pg: AsyncEngine, settings: Settings, name: str, desc
         description,
         None,
         created_at=created_at,
-        user_id=user_id
+        user_id=user_id,
     )
 
     upload = await get_row(pg, Upload, ("name_on_disk", import_from))
@@ -689,7 +692,9 @@ async def create_import(db, pg: AsyncEngine, settings: Settings, name: str, desc
     return document
 
 
-async def create_remote(db, settings: Settings, release: dict, remote_from: str, user_id: str) -> dict:
+async def create_remote(
+    db, settings: Settings, release: dict, remote_from: str, user_id: str
+) -> dict:
     """
     Create a remote reference document in the database.
 
@@ -711,36 +716,34 @@ async def create_remote(db, settings: Settings, release: dict, remote_from: str,
         "The official plant virus reference from the Virtool developers",
         None,
         created_at=created_at,
-        user_id=user_id
+        user_id=user_id,
     )
 
     return {
         **document,
         # Connection information for the GitHub remote repo.
-        "remotes_from": {
-            "errors": [],
-            "slug": remote_from
-        },
+        "remotes_from": {"errors": [], "slug": remote_from},
         # The latest available release on GitHub.
         "release": dict(release, retrieved_at=created_at),
         # The update history for the reference. We put the release being installed as the first history item.
-        "updates": [virtool.github.create_update_subdocument(release, False, user_id, created_at)],
-        "installed": None
+        "updates": [
+            virtool.github.create_update_subdocument(
+                release, False, user_id, created_at
+            )
+        ],
+        "installed": None,
     }
 
 
-async def download_and_parse_release(app, url: str, task_id: int, progress_handler: callable):
+async def download_and_parse_release(
+    app, url: str, task_id: int, progress_handler: callable
+):
     pg = app["pg"]
 
     with virtool.utils.get_temp_dir() as tempdir:
         download_path = Path(tempdir) / "reference.tar.gz"
 
-        await download_file(
-            app,
-            url,
-            download_path,
-            progress_handler
-        )
+        await download_file(app, url, download_path, progress_handler)
 
         await virtool.tasks.pg.update(pg, task_id, step="unpack")
 
@@ -762,18 +765,14 @@ async def edit(db, ref_id: str, data: dict) -> dict:
     if document["data_type"] != "barcode":
         data.pop("targets", None)
 
-    document = await db.references.find_one_and_update({"_id": ref_id}, {
-        "$set": data
-    })
+    document = await db.references.find_one_and_update({"_id": ref_id}, {"$set": data})
 
     document = await attach_computed(db, document)
 
     if "name" in data:
-        await db.analyses.update_many({"reference.id": ref_id}, {
-            "$set": {
-                "reference.name": document["name"]
-            }
-        })
+        await db.analyses.update_many(
+            {"reference.id": ref_id}, {"$set": {"reference.name": document["name"]}}
+        )
 
     return document
 
@@ -783,18 +782,11 @@ async def export(app: App, ref_id: str) -> list:
 
     otu_list = list()
 
-    query = {
-        "reference.id": ref_id,
-        "last_indexed_version": {
-            "$ne": None
-        }
-    }
+    query = {"reference.id": ref_id, "last_indexed_version": {"$ne": None}}
 
     async for document in db.otus.find(query):
         _, joined, _ = await virtool.history.db.patch_to_version(
-            app,
-            document["_id"],
-            document["last_indexed_version"]
+            app, document["_id"], document["last_indexed_version"]
         )
 
         otu_list.append(joined)
@@ -802,7 +794,9 @@ async def export(app: App, ref_id: str) -> list:
     return clean_export_list(otu_list)
 
 
-async def insert_change(app, otu_id: str, verb: str, user_id: str, old: Optional[dict] = None):
+async def insert_change(
+    app, otu_id: str, verb: str, user_id: str, old: Optional[dict] = None
+):
     """
     Insert a history document for the OTU identified by `otu_id` and the passed `verb`.
 
@@ -832,43 +826,35 @@ async def insert_change(app, otu_id: str, verb: str, user_id: str, old: Optional
         description = f"{description} ({abbreviation})"
 
     await virtool.history.db.add(
-        app,
-        verb,
-        old,
-        joined,
-        description,
-        user_id,
-        silent=True
+        app, verb, old, joined, description, user_id, silent=True
     )
 
 
 async def insert_joined_otu(
-        db,
-        otu: dict,
-        created_at: datetime.datetime,
-        ref_id: str,
-        user_id: str,
-        remote: bool = False
+    db,
+    otu: dict,
+    created_at: datetime.datetime,
+    ref_id: str,
+    user_id: str,
+    remote: bool = False,
 ) -> str:
     all_sequences = list()
 
     issues = verify(otu)
 
-    otu.update({
-        "created_at": created_at,
-        "lower_name": otu["name"].lower(),
-        "last_indexed_version": None,
-        "issues": issues,
-        "verified": issues is None,
-        "imported": True,
-        "version": 0,
-        "reference": {
-            "id": ref_id
-        },
-        "user": {
-            "id": user_id
+    otu.update(
+        {
+            "created_at": created_at,
+            "lower_name": otu["name"].lower(),
+            "last_indexed_version": None,
+            "issues": issues,
+            "verified": issues is None,
+            "imported": True,
+            "version": 0,
+            "reference": {"id": ref_id},
+            "user": {"id": user_id},
         }
-    })
+    )
 
     if "schema" not in otu:
         otu["schema"] = list()
@@ -876,9 +862,7 @@ async def insert_joined_otu(
     remote_id = otu.pop("_id")
 
     if remote:
-        otu["remote"] = {
-            "id": remote_id
-        }
+        otu["remote"] = {"id": remote_id}
 
     for isolate in otu["isolates"]:
         for sequence in isolate.pop("sequences"):
@@ -888,23 +872,23 @@ async def insert_joined_otu(
             except KeyError:
                 remote_sequence_id = sequence.pop("_id")
 
-            all_sequences.append({
-                **sequence,
-                "accession": sequence["accession"],
-                "isolate_id": isolate["id"],
-                "segment": sequence.get("segment", ""),
-                "reference": {
-                    "id": ref_id
-                },
-                "remote": {
-                    "id": remote_sequence_id
+            all_sequences.append(
+                {
+                    **sequence,
+                    "accession": sequence["accession"],
+                    "isolate_id": isolate["id"],
+                    "segment": sequence.get("segment", ""),
+                    "reference": {"id": ref_id},
+                    "remote": {"id": remote_sequence_id},
                 }
-            })
+            )
 
     document = await db.otus.insert_one(otu, silent=True)
 
     for sequence in all_sequences:
-        await db.sequences.insert_one(dict(sequence, otu_id=document["_id"]), silent=True)
+        await db.sequences.insert_one(
+            dict(sequence, otu_id=document["_id"]), silent=True
+        )
 
     return document["_id"]
 
@@ -916,12 +900,10 @@ async def refresh_remotes(app: App):
         logging.debug("Started reference refresher")
 
         while True:
-            for ref_id in await db.references.distinct("_id", {"remotes_from": {"$exists": True}}):
-                await fetch_and_update_release(
-                    app,
-                    ref_id,
-                    ignore_errors=True
-                )
+            for ref_id in await db.references.distinct(
+                "_id", {"remotes_from": {"$exists": True}}
+            ):
+                await fetch_and_update_release(app, ref_id, ignore_errors=True)
 
             await asyncio.sleep(600)
     except asyncio.CancelledError:
@@ -931,43 +913,32 @@ async def refresh_remotes(app: App):
 
 
 async def update(
-        req: Request,
-        created_at: datetime.datetime,
-        task_id: int,
-        ref_id: str,
-        release: dict,
-        user_id: str
+    req: Request,
+    created_at: datetime.datetime,
+    task_id: int,
+    ref_id: str,
+    release: dict,
+    user_id: str,
 ) -> tuple:
     db = req.app["db"]
 
     update_subdocument = virtool.github.create_update_subdocument(
-        release,
-        False,
-        user_id,
-        created_at
+        release, False, user_id, created_at
     )
 
-    await db.references.update_one({"_id": ref_id}, {
-        "$push": {
-            "updates": update_subdocument
+    await db.references.update_one(
+        {"_id": ref_id},
+        {
+            "$push": {"updates": update_subdocument},
+            "$set": {"task": {"id": task_id}, "updating": True},
         },
-        "$set": {
-            "task": {
-                "id": task_id
-            },
-            "updating": True
-        }
-    })
+    )
 
     return release, update_subdocument
 
 
 async def update_joined_otu(
-        db,
-        otu: dict,
-        created_at: datetime.datetime,
-        ref_id: str,
-        user_id: str
+    db, otu: dict, created_at: datetime.datetime, ref_id: str, user_id: str
 ) -> Union[dict, str, None]:
     remote_id = otu["_id"]
 
@@ -981,52 +952,45 @@ async def update_joined_otu(
 
         for isolate in otu["isolates"]:
             for sequence in isolate.pop("sequences"):
-                sequence_updates.append({
-                    "accession": sequence["accession"],
-                    "definition": sequence["definition"],
-                    "host": sequence["host"],
-                    "segment": sequence.get("segment", ""),
-                    "sequence": sequence["sequence"],
-                    "otu_id": old["_id"],
-                    "isolate_id": isolate["id"],
-                    "reference": {
-                        "id": ref_id
-                    },
-                    "remote": {
-                        "id": sequence["_id"]
+                sequence_updates.append(
+                    {
+                        "accession": sequence["accession"],
+                        "definition": sequence["definition"],
+                        "host": sequence["host"],
+                        "segment": sequence.get("segment", ""),
+                        "sequence": sequence["sequence"],
+                        "otu_id": old["_id"],
+                        "isolate_id": isolate["id"],
+                        "reference": {"id": ref_id},
+                        "remote": {"id": sequence["_id"]},
                     }
-                })
+                )
 
-        await db.otus.update_one({"_id": old["_id"]}, {
-            "$inc": {
-                "version": 1
+        await db.otus.update_one(
+            {"_id": old["_id"]},
+            {
+                "$inc": {"version": 1},
+                "$set": {
+                    "abbreviation": otu["abbreviation"],
+                    "name": otu["name"],
+                    "lower_name": otu["name"].lower(),
+                    "isolates": otu["isolates"],
+                    "schema": otu.get("schema", list()),
+                },
             },
-            "$set": {
-                "abbreviation": otu["abbreviation"],
-                "name": otu["name"],
-                "lower_name": otu["name"].lower(),
-                "isolates": otu["isolates"],
-                "schema": otu.get("schema", list())
-            }
-        })
+        )
 
         for sequence_update in sequence_updates:
             remote_sequence_id = sequence_update["remote"]["id"]
 
-            update_result = await db.sequences.update_one({"reference.id": ref_id, "remote.id": remote_sequence_id}, {
-                "$set": sequence_update
-            })
+            update_result = await db.sequences.update_one(
+                {"reference.id": ref_id, "remote.id": remote_sequence_id},
+                {"$set": sequence_update},
+            )
 
             if not update_result.matched_count:
                 await db.sequences.insert_one(sequence_update)
 
         return old
 
-    return await insert_joined_otu(
-        db,
-        otu,
-        created_at,
-        ref_id,
-        user_id,
-        remote=True
-    )
+    return await insert_joined_otu(db, otu, created_at, ref_id, user_id, remote=True)

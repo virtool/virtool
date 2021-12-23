@@ -34,6 +34,7 @@ class HMMInstallTask(Task):
     :param task_id: the id for the process document
 
     """
+
     task_type = "install_hmms"
 
     def __init__(self, app, task_id):
@@ -43,7 +44,7 @@ class HMMInstallTask(Task):
             self.download,
             self.decompress,
             self.install_profiles,
-            self.import_annotations
+            self.import_annotations,
         ]
 
         self.temp_path = Path(self.temp_dir.name)
@@ -57,12 +58,7 @@ class HMMInstallTask(Task):
         path = self.temp_path / "hmm.tar.gz"
 
         try:
-            await download_file(
-                self.app,
-                release["download_url"],
-                path,
-                tracker.add
-            )
+            await download_file(self.app, release["download_url"], path, tracker.add)
         except Exception as err:
             logger.warning(f"Request for HMM release encountered exception: {err}")
             await self.error("Could not download HMM data.")
@@ -71,41 +67,31 @@ class HMMInstallTask(Task):
         tracker = await self.get_tracker()
 
         await virtool.tasks.pg.update(
-            self.pg,
-            self.id,
-            progress=tracker.step_completed,
-            step="unpack"
+            self.pg, self.id, progress=tracker.step_completed, step="unpack"
         )
 
         await self.run_in_thread(
-            decompress_tgz,
-            self.temp_path / "hmm.tar.gz",
-            self.temp_path
+            decompress_tgz, self.temp_path / "hmm.tar.gz", self.temp_path
         )
 
     async def install_profiles(self):
         tracker = await self.get_tracker()
 
         await virtool.tasks.pg.update(
-            self.pg,
-            self.id,
-            progress=tracker.step_completed,
-            step="install_profiles"
+            self.pg, self.id, progress=tracker.step_completed, step="install_profiles"
         )
 
         decompressed_path = self.temp_path / "hmm"
 
         install_path = self.app["config"].data_path / "hmm" / "profiles.hmm"
 
-        await self.run_in_thread(shutil.move, decompressed_path / "profiles.hmm", install_path)
+        await self.run_in_thread(
+            shutil.move, decompressed_path / "profiles.hmm", install_path
+        )
 
     async def import_annotations(self):
         release = self.context["release"]
-        await virtool.tasks.pg.update(
-            self.pg,
-            self.id,
-            step="import_annotations"
-        )
+        await virtool.tasks.pg.update(self.pg, self.id, step="import_annotations")
 
         async with aiofiles.open(self.temp_path / "hmm" / "annotations.json", "r") as f:
             annotations = json.loads(await f.read())
@@ -125,12 +111,17 @@ class HMMInstallTask(Task):
         except TypeError:
             release_id = release["id"]
 
-        await self.db.status.update_one({"_id": "hmm", "updates.id": release_id}, {
-            "$set": {
-                "installed": create_update_subdocument(release, True, self.context["user_id"]),
-                "updates.$.ready": True
-            }
-        })
+        await self.db.status.update_one(
+            {"_id": "hmm", "updates.id": release_id},
+            {
+                "$set": {
+                    "installed": create_update_subdocument(
+                        release, True, self.context["user_id"]
+                    ),
+                    "updates.$.ready": True,
+                }
+            },
+        )
 
     async def cleanup(self):
         await purge(self.db, self.app["config"])

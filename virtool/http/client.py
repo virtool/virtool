@@ -55,17 +55,16 @@ class AbstractClient(ABC):
 
 
 class UserClient(AbstractClient):
-
     def __init__(
-            self,
-            db,
-            administrator: bool,
-            force_reset: bool,
-            groups: Sequence[str],
-            permissions: Dict[str, bool],
-            user_id: Union[str, None],
-            authenticated: bool,
-            session_id: Optional[str] = None
+        self,
+        db,
+        administrator: bool,
+        force_reset: bool,
+        groups: Sequence[str],
+        permissions: Dict[str, bool],
+        user_id: Union[str, None],
+        authenticated: bool,
+        session_id: Optional[str] = None,
     ):
         self._db = db
         self._force_reset = force_reset
@@ -151,7 +150,6 @@ class UserClient(AbstractClient):
 
 
 class JobClient(AbstractClient):
-
     def __init__(self, job_id, rights: JobRights):
         self._rights = rights
         self.job_id = job_id

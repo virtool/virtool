@@ -32,7 +32,7 @@ def test_otu():
                 "default": True,
                 "id": "cab8b360",
                 "source_name": "8816-v2",
-                "source_type": "isolate"
+                "source_type": "isolate",
             }
         ],
         "last_indexed_version": 0,
@@ -40,10 +40,8 @@ def test_otu():
         "verified": False,
         "name": "Prunus virus F",
         "schema": [],
-        "reference": {
-            "id": "hxn167"
-        },
-        "_id": "6116cba1"
+        "reference": {"id": "hxn167"},
+        "_id": "6116cba1",
     }
 
 
@@ -53,7 +51,7 @@ def test_isolate():
         "id": "cab8b360",
         "default": True,
         "source_name": "8816-v2",
-        "source_type": "isolate"
+        "source_type": "isolate",
     }
 
 
@@ -66,7 +64,7 @@ def test_sequence():
         "otu_id": "6116cba1",
         "isolate_id": "cab8b360",
         "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-        "segment": None
+        "segment": None,
     }
 
 
@@ -88,22 +86,20 @@ def test_merged_otu():
                         "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
                         "host": "sweet cherry",
                         "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                        "segment": None
+                        "segment": None,
                     }
                 ],
                 "source_name": "8816-v2",
-                "source_type": "isolate"
+                "source_type": "isolate",
             }
         ],
-        "reference": {
-            "id": "hxn167"
-        },
+        "reference": {"id": "hxn167"},
         "last_indexed_version": 0,
         "lower_name": "prunus virus f",
         "verified": False,
         "name": "Prunus virus F",
         "schema": [],
-        "_id": "6116cba1"
+        "_id": "6116cba1",
     }
 
 

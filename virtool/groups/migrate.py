@@ -13,8 +13,15 @@ async def migrate_groups(app: virtool.types.App):
     db = app["db"]
 
     async for group in db.groups.find():
-        await db.groups.update_one({"_id": group["_id"]}, {
-            "$set": {
-                "permissions": {perm: group["permissions"].get(perm, False) for perm in virtool.users.utils.PERMISSIONS}
-            }
-        }, silent=True)
+        await db.groups.update_one(
+            {"_id": group["_id"]},
+            {
+                "$set": {
+                    "permissions": {
+                        perm: group["permissions"].get(perm, False)
+                        for perm in virtool.users.utils.PERMISSIONS
+                    }
+                }
+            },
+            silent=True,
+        )

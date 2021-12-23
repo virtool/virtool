@@ -10,11 +10,7 @@ async def test_get(snapshot, spawn_client, test_settings):
 async def test_update(snapshot, spawn_client, test_settings):
     client = await spawn_client(authorize=True, administrator=True)
 
-    data = {
-        "enable_api": False,
-        "enable_sentry": False,
-        "minimum_password_length": 10
-    }
+    data = {"enable_api": False, "enable_sentry": False, "minimum_password_length": 10}
 
     resp = await client.patch("/settings", data)
 

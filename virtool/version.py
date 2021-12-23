@@ -31,16 +31,9 @@ async def determine_server_version(install_path: Optional[Path] = Path.cwd()):
 
 def determine_server_version_from_git():
     try:
-        command = [
-            "git",
-            "describe",
-            "--tags"
-        ]
+        command = ["git", "describe", "--tags"]
 
-        output = subprocess.check_output(
-            command,
-            stderr=subprocess.STDOUT
-        )
+        output = subprocess.check_output(command, stderr=subprocess.STDOUT)
 
         output = output.decode().rstrip()
 

@@ -10,30 +10,15 @@ from virtool.jobs.utils import JobRights
 from virtool.types import App
 from virtool.users.db import attach_user
 
-OR_COMPLETE = [
-    {"status.state": "complete"}
-]
+OR_COMPLETE = [{"status.state": "complete"}]
 
-OR_FAILED = [
-    {"status.state": "error"},
-    {"status.state": "cancelled"}
-]
+OR_FAILED = [{"status.state": "error"}, {"status.state": "cancelled"}]
 
 #: A projection for minimal representations of jobs suitable for search results.
-LIST_PROJECTION = [
-    "_id",
-    "workflow",
-    "status",
-    "proc",
-    "mem",
-    "rights",
-    "user"
-]
+LIST_PROJECTION = ["_id", "workflow", "status", "proc", "mem", "rights", "user"]
 
 #: A projection for full job details. Excludes the secure key field.
-PROJECTION = {
-    "key": False
-}
+PROJECTION = {"key": False}
 
 
 async def cancel(db, job_id: str) -> dict:
@@ -48,17 +33,21 @@ async def cancel(db, job_id: str) -> dict:
 
     latest = document["status"][-1]
 
-    return await db.jobs.find_one_and_update({"_id": job_id}, {
-        "$push": {
-            "status": {
-                "state": "cancelled",
-                "stage": latest["stage"],
-                "error": None,
-                "progress": latest["progress"],
-                "timestamp": virtool.utils.timestamp()
+    return await db.jobs.find_one_and_update(
+        {"_id": job_id},
+        {
+            "$push": {
+                "status": {
+                    "state": "cancelled",
+                    "stage": latest["stage"],
+                    "error": None,
+                    "progress": latest["progress"],
+                    "timestamp": virtool.utils.timestamp(),
+                }
             }
-        }
-    }, projection=PROJECTION)
+        },
+        projection=PROJECTION,
+    )
 
 
 async def clear(db, complete: bool = False, failed: bool = False):
@@ -73,9 +62,7 @@ async def clear(db, complete: bool = False, failed: bool = False):
     removed = list()
 
     if len(or_list):
-        query = {
-            "$or": or_list
-        }
+        query = {"$or": or_list}
 
         removed = await db.jobs.distinct("_id", query)
         await db.jobs.delete_many(query)
@@ -84,12 +71,12 @@ async def clear(db, complete: bool = False, failed: bool = False):
 
 
 async def create(
-        db,
-        workflow: str,
-        job_args: Dict[str, Any],
-        user_id: str,
-        rights: JobRights,
-        job_id: Optional[str] = None
+    db,
+    workflow: str,
+    job_args: Dict[str, Any],
+    user_id: str,
+    rights: JobRights,
+    job_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Create, insert, and return a job document.
@@ -115,12 +102,10 @@ async def create(
                 "stage": None,
                 "error": None,
                 "progress": 0,
-                "timestamp": virtool.utils.timestamp()
+                "timestamp": virtool.utils.timestamp(),
             }
         ],
-        "user": {
-            "id": user_id
-        }
+        "user": {"id": user_id},
     }
 
     if job_id:
@@ -142,12 +127,11 @@ async def acquire(db, job_id: str) -> Dict[str, Any]:
     """
     key, hashed = virtool.utils.generate_key()
 
-    document = await db.jobs.find_one_and_update({"_id": job_id}, {
-        "$set": {
-            "acquired": True,
-            "key": hashed
-        }
-    }, projection=PROJECTION)
+    document = await db.jobs.find_one_and_update(
+        {"_id": job_id},
+        {"$set": {"acquired": True, "key": hashed}},
+        projection=PROJECTION,
+    )
 
     document["key"] = key
 
@@ -173,13 +157,16 @@ async def processor(db, document: dict) -> dict:
 
     last_update = status[-1]
 
-    processed = await attach_user(db, {
-        **document,
-        "state": last_update["state"],
-        "stage": last_update["stage"],
-        "created_at": status[0]["timestamp"],
-        "progress": status[-1]["progress"]
-    })
+    processed = await attach_user(
+        db,
+        {
+            **document,
+            "state": last_update["state"],
+            "stage": last_update["stage"],
+            "created_at": status[0]["timestamp"],
+            "progress": status[-1]["progress"],
+        },
+    )
 
     return virtool.utils.base_processor(processed)
 

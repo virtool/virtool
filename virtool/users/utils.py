@@ -1,6 +1,7 @@
 import hashlib
 
 import bcrypt
+
 #: A list of the permission strings used by Virtool.
 PERMISSIONS = [
     "cancel_job",
@@ -10,7 +11,7 @@ PERMISSIONS = [
     "modify_subtraction",
     "remove_file",
     "remove_job",
-    "upload_file"
+    "upload_file",
 ]
 
 
@@ -27,7 +28,10 @@ def check_legacy_password(password: str, salt: str, hashed: str) -> bool:
     :return: success of test
 
     """
-    return hashed == hashlib.sha512(salt.encode("utf-8") + password.encode("utf-8")).hexdigest()
+    return (
+        hashed
+        == hashlib.sha512(salt.encode("utf-8") + password.encode("utf-8")).hexdigest()
+    )
 
 
 def check_password(password: str, hashed: bytes) -> bool:

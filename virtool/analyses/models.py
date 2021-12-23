@@ -24,6 +24,7 @@ class AnalysisFile(Base):
     SQL model to store new analysis files
 
     """
+
     __tablename__ = "analysis_files"
 
     id = Column(Integer, primary_key=True)

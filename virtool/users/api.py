@@ -52,7 +52,7 @@ async def find(req):
         db_query,
         req.query,
         sort="_id",
-        projection=virtool.users.db.PROJECTION
+        projection=virtool.users.db.PROJECTION,
     )
 
     return json_response(data)
@@ -64,7 +64,9 @@ async def get(req):
     Get a near-complete user document. Password data are removed.
 
     """
-    document = await req.app["db"].users.find_one(req.match_info["user_id"], virtool.users.db.PROJECTION)
+    document = await req.app["db"].users.find_one(
+        req.match_info["user_id"], virtool.users.db.PROJECTION
+    )
 
     if not document:
         raise NotFound()
@@ -73,23 +75,18 @@ async def get(req):
 
 
 @routes.post("/users", admin=True)
-@schema({
-    "handle": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "empty": False,
-        "required": True
-    },
-    "password": {
-        "type": "string",
-        "empty": False,
-        "required": True
-    },
-    "force_reset": {
-        "type": "boolean",
-        "default": True
+@schema(
+    {
+        "handle": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "empty": False,
+            "required": True,
+        },
+        "password": {"type": "string", "empty": False, "required": True},
+        "force_reset": {"type": "boolean", "default": True},
     }
-})
+)
 async def create(req):
     """
     Add a new user to the user database.
@@ -109,40 +106,33 @@ async def create(req):
 
     try:
         document = await virtool.users.db.create(
-            db,
-            data["password"],
-            handle=handle,
-            force_reset=data["force_reset"]
+            db, data["password"], handle=handle, force_reset=data["force_reset"]
         )
     except DatabaseError:
         raise HTTPBadRequest(text="User already exists")
 
     user_id = document["_id"]
-    headers = {
-        "Location": f"/users/{user_id}"
-    }
+    headers = {"Location": f"/users/{user_id}"}
 
     return json_response(
         base_processor({key: document[key] for key in virtool.users.db.PROJECTION}),
         headers=headers,
-        status=201
+        status=201,
     )
 
 
 @routes.put("/users/first", public=True)
-@schema({
-    "handle": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "empty": False,
-        "required": True
-    },
-    "password": {
-        "type": "string",
-        "empty": False,
-        "required": True
+@schema(
+    {
+        "handle": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "empty": False,
+            "required": True,
+        },
+        "password": {"type": "string", "empty": False, "required": True},
     }
-})
+)
 async def create_first(req):
     """
     Add a first user to the user database.
@@ -165,35 +155,22 @@ async def create_first(req):
     handle = data["handle"]
 
     document = await virtool.users.db.create(
-        db,
-        data["password"],
-        handle=handle,
-        force_reset=False
+        db, data["password"], handle=handle, force_reset=False
     )
     user_id = document["_id"]
 
-    document = await virtool.users.db.edit(
-        db,
-        user_id,
-        administrator=True
-    )
+    document = await virtool.users.db.edit(db, user_id, administrator=True)
 
-    headers = {
-        "Location": f"/users/{user_id}"
-    }
+    headers = {"Location": f"/users/{user_id}"}
 
-    session, token = await create_session(
-        db,
-        virtool.http.auth.get_ip(req),
-        user_id
-    )
+    session, token = await create_session(db, virtool.http.auth.get_ip(req), user_id)
 
     req["client"].authorize(session, is_api=False)
 
     resp = json_response(
         base_processor({key: document[key] for key in virtool.users.db.PROJECTION}),
         headers=headers,
-        status=201
+        status=201,
     )
 
     set_session_id_cookie(resp, session["_id"])
@@ -203,23 +180,15 @@ async def create_first(req):
 
 
 @routes.patch("/users/{user_id}", admin=True)
-@schema({
-    "administrator": {
-        "type": "boolean"
-    },
-    "force_reset": {
-        "type": "boolean"
-    },
-    "groups": {
-        "type": "list"
-    },
-    "password": {
-        "type": "string"
-    },
-    "primary_group": {
-        "type": "string"
+@schema(
+    {
+        "administrator": {"type": "boolean"},
+        "force_reset": {"type": "boolean"},
+        "groups": {"type": "list"},
+        "password": {"type": "string"},
+        "primary_group": {"type": "string"},
     }
-})
+)
 async def edit(req):
     db = req.app["db"]
     data = await req.json()
@@ -249,11 +218,7 @@ async def edit(req):
         raise HTTPBadRequest(text="Users cannot modify their own administrative status")
 
     try:
-        document = await virtool.users.db.edit(
-            db,
-            user_id,
-            **data
-        )
+        document = await virtool.users.db.edit(db, user_id, **data)
     except DatabaseError as err:
         if "User does not exist" in str(err):
             raise NotFound("User does not exist")
@@ -284,13 +249,7 @@ async def remove(req):
     delete_result = await db.users.delete_one({"_id": user_id})
 
     # Remove user from all references.
-    await db.references.update_many({}, {
-        "$pull": {
-            "users": {
-                "id": user_id
-            }
-        }
-    })
+    await db.references.update_many({}, {"$pull": {"users": {"id": user_id}}})
 
     if delete_result.deleted_count == 0:
         raise NotFound()

@@ -23,19 +23,24 @@ async def generate_isolate_fasta(db, otu_id: str, isolate_id: str) -> Tuple[str,
     """
     _, isolate_name = await get_otu_and_isolate_names(db, otu_id, isolate_id)
 
-    otu = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["name", "isolates"])
+    otu = await db.otus.find_one(
+        {"_id": otu_id, "isolates.id": isolate_id}, ["name", "isolates"]
+    )
 
     fasta = list()
 
-    async for sequence in db.sequences.find({"otu_id": otu_id, "isolate_id": isolate_id}, ["sequence"]):
-        fasta.append(virtool.downloads.utils.format_fasta_entry(
-            otu["name"],
-            isolate_name,
-            sequence["_id"],
-            sequence["sequence"]
-        ))
+    async for sequence in db.sequences.find(
+        {"otu_id": otu_id, "isolate_id": isolate_id}, ["sequence"]
+    ):
+        fasta.append(
+            virtool.downloads.utils.format_fasta_entry(
+                otu["name"], isolate_name, sequence["_id"], sequence["sequence"]
+            )
+        )
 
-    return virtool.downloads.utils.format_fasta_filename(otu["name"], isolate_name), "\n".join(fasta)
+    return virtool.downloads.utils.format_fasta_filename(
+        otu["name"], isolate_name
+    ), "\n".join(fasta)
 
 
 async def generate_sequence_fasta(db, sequence_id: str) -> Tuple[str, str]:
@@ -47,24 +52,32 @@ async def generate_sequence_fasta(db, sequence_id: str) -> Tuple[str, str]:
     :return: as FASTA filename and body
 
     """
-    sequence = await db.sequences.find_one(sequence_id, ["sequence", "otu_id", "isolate_id"])
+    sequence = await db.sequences.find_one(
+        sequence_id, ["sequence", "otu_id", "isolate_id"]
+    )
 
     if not sequence:
         raise virtool.errors.DatabaseError("Sequence does not exist")
 
-    otu_name, isolate_name = await get_otu_and_isolate_names(db, sequence["otu_id"], sequence["isolate_id"])
-
-    fasta = virtool.downloads.utils.format_fasta_entry(
-        otu_name,
-        isolate_name,
-        sequence_id,
-        sequence["sequence"]
+    otu_name, isolate_name = await get_otu_and_isolate_names(
+        db, sequence["otu_id"], sequence["isolate_id"]
     )
 
-    return virtool.downloads.utils.format_fasta_filename(otu_name, isolate_name, sequence["_id"]), fasta
+    fasta = virtool.downloads.utils.format_fasta_entry(
+        otu_name, isolate_name, sequence_id, sequence["sequence"]
+    )
+
+    return (
+        virtool.downloads.utils.format_fasta_filename(
+            otu_name, isolate_name, sequence["_id"]
+        ),
+        fasta,
+    )
 
 
-async def get_otu_and_isolate_names(db, otu_id: str, isolate_id: str) -> Tuple[str, str]:
+async def get_otu_and_isolate_names(
+    db, otu_id: str, isolate_id: str
+) -> Tuple[str, str]:
     """
     Get the OTU name and isolate name for a OTU-isolate combination specified by `otu_id` and `isolate_id`.
 
@@ -74,7 +87,9 @@ async def get_otu_and_isolate_names(db, otu_id: str, isolate_id: str) -> Tuple[s
     :return: an OTU name and isolate name
 
     """
-    otu = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["name", "isolates"])
+    otu = await db.otus.find_one(
+        {"_id": otu_id, "isolates.id": isolate_id}, ["name", "isolates"]
+    )
 
     if not otu:
         raise virtool.errors.DatabaseError("OTU does not exist")

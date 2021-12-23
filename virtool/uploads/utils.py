@@ -37,9 +37,9 @@ def naive_validator(req) -> Validator.errors:
 
 
 async def naive_writer(
-        req: Request,
-        path: pathlib.Path,
-        on_first_chunk: Optional[Callable[[bytes], Any]] = None
+    req: Request,
+    path: pathlib.Path,
+    on_first_chunk: Optional[Callable[[bytes], Any]] = None,
 ) -> Optional[int]:
     """
     Write a new file from a HTTP multipart request.

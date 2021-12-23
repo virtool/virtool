@@ -7,7 +7,6 @@ from virtool.fake.wrapper import FakerWrapper
 
 
 class AbstractFakeDataGenerator(ABC):
-
     @abstractmethod
     def create() -> dict:
         ...
@@ -22,7 +21,6 @@ class AbstractFakeDataGenerator(ABC):
 
 
 class FakeJobGenerator(AbstractFakeDataGenerator):
-
     def __init__(self, fake_generator, db):
         self.generator = fake_generator
 
@@ -43,12 +41,10 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
                     "stage": None,
                     "error": None,
                     "progress": 0,
-                    "timestamp": self._faker.date_time()
+                    "timestamp": self._faker.date_time(),
                 }
             ],
-            "user": {
-                "id": await self.generator.users.get_id()
-            }
+            "user": {"id": await self.generator.users.get_id()},
         }
 
     async def insert(self) -> dict:
@@ -68,7 +64,6 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
 
 
 class FakeUserGenerator(AbstractFakeDataGenerator):
-
     def __init__(self, fake_generator, db):
         self.generator = fake_generator
 
@@ -80,16 +75,13 @@ class FakeUserGenerator(AbstractFakeDataGenerator):
 
         return {
             "_id": self._faker.get_mongo_id(),
-            "groups": [
-                "technicians",
-                "bosses"
-            ],
+            "groups": ["technicians", "bosses"],
             "handle": profile["username"],
             "primary_group": "technicians",
             "username": profile["username"],
             "permissions": [],
             "administrator": False,
-            "created_at": self._faker.date_time()
+            "created_at": self._faker.date_time(),
         }
 
     async def insert(self):
@@ -109,7 +101,6 @@ class FakeUserGenerator(AbstractFakeDataGenerator):
 
 
 class FakeGenerator:
-
     def __init__(self, db):
         self.jobs = FakeJobGenerator(self, db)
         self.users = FakeUserGenerator(self, db)
@@ -122,7 +113,7 @@ def app(dbi, pg, tmp_path, config, settings):
         "fake": FakerWrapper(),
         "pg": pg,
         "settings": settings,
-        "config": config
+        "config": config,
     }
 
 

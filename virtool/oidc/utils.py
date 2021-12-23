@@ -30,7 +30,7 @@ async def validate_token(app: Application, token: jwt) -> dict:
         token,
         asdict(jwk_args),
         algorithms=["RS256"],
-        audience=app["config"].b2c_client_id
+        audience=app["config"].b2c_client_id,
     )
 
 
@@ -44,17 +44,15 @@ async def update_jwk_args(app: Application, token: jwt) -> JWKArgs:
     """
     header = await app["run_in_thread"](get_unverified_header, token)
     authority = app["b2c"].authority
-    resp = await app["client"].get(f"{authority}/discovery/v2.0/keys", allow_redirects=True)
+    resp = await app["client"].get(
+        f"{authority}/discovery/v2.0/keys", allow_redirects=True
+    )
     jwks = json.loads(await resp.text())
 
     jwk = await get_matching_jwk(jwks, header["kid"])
 
     jwk_args = JWKArgs(
-        kty=jwk["kty"],
-        kid=jwk["kid"],
-        use=jwk["use"],
-        n=jwk["n"],
-        e=jwk["e"]
+        kty=jwk["kty"], kid=jwk["kid"], use=jwk["use"], n=jwk["n"], e=jwk["e"]
     )
 
     app["b2c"].jwk_args = jwk_args

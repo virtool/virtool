@@ -39,45 +39,46 @@ async def nest_results(db):
 
             if document["workflow"] == "pathoscope_bowtie":
                 await writer.add(
-                    UpdateOne({"_id": document["_id"]}, {
-                        "$set": {
-                            "results": {
-                                **results,
-                                "read_count": document["read_count"],
-                                "subtracted_count": document["subtracted_count"]
-                            }
+                    UpdateOne(
+                        {"_id": document["_id"]},
+                        {
+                            "$set": {
+                                "results": {
+                                    **results,
+                                    "read_count": document["read_count"],
+                                    "subtracted_count": document["subtracted_count"],
+                                }
+                            },
+                            "$unset": {"read_count": "", "subtracted_count": ""},
                         },
-                        "$unset": {
-                            "read_count": "",
-                            "subtracted_count": ""
-                        }
-                    })
+                    )
                 )
 
             elif document["workflow"] == "nuvs":
                 await writer.add(
-                    UpdateOne({"_id": document["_id"]}, {
-                        "$set": {
-                            "results": results
-                        }
-                    })
+                    UpdateOne({"_id": document["_id"]}, {"$set": {"results": results}})
                 )
 
             elif document["workflow"] == "aodp":
                 await writer.add(
-                    UpdateOne({"_id": document["_id"]}, {
-                        "$set": {
-                            "results": {
-                                **results,
-                                "join_histogram": document["join_histogram"],
-                                "joined_pair_count": document["joined_pair_count"],
-                                "remainder_pair_count": document["remainder_pair_count"],
-                            }
+                    UpdateOne(
+                        {"_id": document["_id"]},
+                        {
+                            "$set": {
+                                "results": {
+                                    **results,
+                                    "join_histogram": document["join_histogram"],
+                                    "joined_pair_count": document["joined_pair_count"],
+                                    "remainder_pair_count": document[
+                                        "remainder_pair_count"
+                                    ],
+                                }
+                            },
+                            "$unset": {
+                                "join_histogram": "",
+                                "joined_pair_count": "",
+                                "remainder_pair_count": "",
+                            },
                         },
-                        "$unset": {
-                            "join_histogram": "",
-                            "joined_pair_count": "",
-                            "remainder_pair_count": "",
-                        }
-                    })
+                    )
                 )

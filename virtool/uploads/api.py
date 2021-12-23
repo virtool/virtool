@@ -37,10 +37,7 @@ async def create(req):
         raise HTTPBadRequest(text="Unsupported upload type")
 
     upload = await virtool.uploads.db.create(
-        pg,
-        name,
-        upload_type,
-        user=req["client"].user_id
+        pg, name, upload_type, user=req["client"].user_id
     )
 
     upload_id = upload["id"]
@@ -50,30 +47,21 @@ async def create(req):
     try:
         size = await naive_writer(req, file_path)
 
-        upload = await virtool.uploads.db.finalize(
-            pg,
-            size,
-            upload_id,
-            Upload
-        )
+        upload = await virtool.uploads.db.finalize(pg, size, upload_id, Upload)
     except CancelledError:
         logger.debug(f"Upload aborted: {upload_id}")
 
-        await virtool.uploads.db.delete(
-            req,
-            pg,
-            upload_id
-        )
+        await virtool.uploads.db.delete(req, pg, upload_id)
 
         return Response(status=499)
 
     logger.debug(f"Upload succeeded: {upload_id}")
 
-    headers = {
-        "Location": f"/uploads/{upload_id}"
-    }
+    headers = {"Location": f"/uploads/{upload_id}"}
 
-    return json_response(await attach_user(req.app["db"], upload), status=201, headers=headers)
+    return json_response(
+        await attach_user(req.app["db"], upload), status=201, headers=headers
+    )
 
 
 @routes.get("/uploads")
@@ -90,9 +78,7 @@ async def find(req):
     uploads = await virtool.uploads.db.find(pg, user, upload_type)
     uploads = await attach_users(req.app["db"], uploads)
 
-    return json_response({
-        "documents": uploads
-    })
+    return json_response({"documents": uploads})
 
 
 @routes.get("/uploads/{id}")
@@ -119,7 +105,7 @@ async def download(req):
 
     headers = {
         "Content-Disposition": f"attachment; filename={upload.name}",
-        "Content-Type": "application/x-gzip"
+        "Content-Type": "application/x-gzip",
     }
 
     return FileResponse(upload_path, headers=headers)

@@ -9,13 +9,12 @@ import virtool.version
 async def test_find_server_version(source, loop, mocker, tmp_path):
     if source == "git":
         mocker.patch(
-            "subprocess.check_output",
-            return_value=bytes("1.0.13", encoding="utf-8")
+            "subprocess.check_output", return_value=bytes("1.0.13", encoding="utf-8")
         )
     else:
         mocker.patch(
             "subprocess.check_output",
-            side_effect=subprocess.CalledProcessError(1, "none")
+            side_effect=subprocess.CalledProcessError(1, "none"),
         )
 
     loop.set_default_executor(concurrent.futures.ThreadPoolExecutor())

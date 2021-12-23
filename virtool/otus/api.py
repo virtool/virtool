@@ -23,17 +23,13 @@ SCHEMA_VALIDATOR = {
         "schema": {
             "name": {"type": "string", "required": True},
             "required": {"type": "boolean", "default": True},
-            "molecule": {"type": "string", "default": "", "allowed": [
-                "",
-                "ssDNA",
-                "dsDNA",
-                "ssRNA",
-                "ssRNA+",
-                "ssRNA-",
-                "dsRNA"
-            ]}
-        }
-    }
+            "molecule": {
+                "type": "string",
+                "default": "",
+                "allowed": ["", "ssDNA", "dsDNA", "ssRNA", "ssRNA+", "ssRNA-", "dsRNA"],
+            },
+        },
+    },
 }
 
 routes = virtool.http.routes.Routes()
@@ -54,9 +50,9 @@ async def download_otu(req):
 
     filename, fasta = await virtool.otus.db.generate_otu_fasta(db, otu_id)
 
-    return web.Response(text=fasta, headers={
-        "Content-Disposition": f"attachment; filename={filename}"
-    })
+    return web.Response(
+        text=fasta, headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
 
 
 @routes.get("/otus")
@@ -71,13 +67,7 @@ async def find(req):
     verified = req["query"].get("verified")
     names = req["query"].get("names", False)
 
-    data = await virtool.otus.db.find(
-        db,
-        names,
-        term,
-        req["query"],
-        verified
-    )
+    data = await virtool.otus.db.find(db, names, term, req["query"], verified)
 
     return json_response(data)
 
@@ -101,20 +91,22 @@ async def get(req):
 
 
 @routes.post("/refs/{ref_id}/otus")
-@schema({
-    "name": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "empty": False,
-        "required": True
-    },
-    "abbreviation": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "default": ""
-    },
-    "schema": SCHEMA_VALIDATOR
-})
+@schema(
+    {
+        "name": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "empty": False,
+            "required": True,
+        },
+        "abbreviation": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "default": "",
+        },
+        "schema": SCHEMA_VALIDATOR,
+    }
+)
 async def create(req):
     """
     Add a new otu to the collection. Checks to make sure the supplied otu name and abbreviation are not already in
@@ -138,39 +130,32 @@ async def create(req):
     abbreviation = data["abbreviation"].strip()
 
     # Check if either the name or abbreviation are already in use. Send a ``400`` if they are.
-    message = await virtool.otus.db.check_name_and_abbreviation(db, ref_id, name, abbreviation)
+    message = await virtool.otus.db.check_name_and_abbreviation(
+        db, ref_id, name, abbreviation
+    )
 
     if message:
         raise HTTPBadRequest(text=message)
 
-    document = await asyncio.shield(virtool.otus.db.create_otu(
-        req.app,
-        ref_id,
-        name,
-        abbreviation,
-        req["client"].user_id
-    ))
+    document = await asyncio.shield(
+        virtool.otus.db.create_otu(
+            req.app, ref_id, name, abbreviation, req["client"].user_id
+        )
+    )
 
-    headers = {
-        "Location": "/otus/" + document["id"]
-    }
+    headers = {"Location": "/otus/" + document["id"]}
 
     return json_response(document, status=201, headers=headers)
 
 
 @routes.patch("/otus/{otu_id}")
-@schema({
-    "name": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "empty": False
-    },
-    "abbreviation": {
-        "type": "string",
-        "coerce": virtool.validators.strip
-    },
-    "schema": SCHEMA_VALIDATOR
-})
+@schema(
+    {
+        "name": {"type": "string", "coerce": virtool.validators.strip, "empty": False},
+        "abbreviation": {"type": "string", "coerce": virtool.validators.strip},
+        "schema": SCHEMA_VALIDATOR,
+    }
+)
 async def edit(req):
     """
     Edit an existing OTU. Checks to make sure the supplied OTU name and abbreviation are not already in use in
@@ -183,7 +168,9 @@ async def edit(req):
     otu_id = req.match_info["otu_id"]
 
     # Get existing complete otu record, at the same time ensuring it exists. Send a ``404`` if not.
-    document = await db.otus.find_one(otu_id, ["abbreviation", "name", "reference", "schema"])
+    document = await db.otus.find_one(
+        otu_id, ["abbreviation", "name", "reference", "schema"]
+    )
 
     if not document:
         raise NotFound()
@@ -200,19 +187,18 @@ async def edit(req):
         return json_response(await virtool.otus.db.join_and_format(db, otu_id))
 
     # Make sure new name or abbreviation are not already in use.
-    message = await virtool.otus.db.check_name_and_abbreviation(db, ref_id, name, abbreviation)
+    message = await virtool.otus.db.check_name_and_abbreviation(
+        db, ref_id, name, abbreviation
+    )
 
     if message:
         raise HTTPBadRequest(text=message)
 
-    document = await asyncio.shield(virtool.otus.db.edit(
-        req.app,
-        otu_id,
-        name,
-        abbreviation,
-        schema,
-        req["client"].user_id
-    ))
+    document = await asyncio.shield(
+        virtool.otus.db.edit(
+            req.app, otu_id, name, abbreviation, schema, req["client"].user_id
+        )
+    )
 
     return json_response(document)
 
@@ -232,14 +218,12 @@ async def remove(req):
     if document is None:
         raise NotFound()
 
-    if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
+    if not await virtool.references.db.check_right(
+        req, document["reference"]["id"], "modify_otu"
+    ):
         raise InsufficientRights()
 
-    await asyncio.shield(virtool.otus.db.remove(
-        req.app,
-        otu_id,
-        req["client"].user_id
-    ))
+    await asyncio.shield(virtool.otus.db.remove(req.app, otu_id, req["client"].user_id))
 
     return web.Response(status=204)
 
@@ -273,14 +257,19 @@ async def get_isolate(req):
     otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["isolates"])
+    document = await db.otus.find_one(
+        {"_id": otu_id, "isolates.id": isolate_id}, ["isolates"]
+    )
 
     if not document:
         raise NotFound()
 
     isolate = dict(find_isolate(document["isolates"], isolate_id), sequences=[])
 
-    cursor = db.sequences.find({"otu_id": otu_id, "isolate_id": isolate_id}, {"otu_id": False, "isolate_id": False})
+    cursor = db.sequences.find(
+        {"otu_id": otu_id, "isolate_id": isolate_id},
+        {"otu_id": False, "isolate_id": False},
+    )
 
     async for sequence in cursor:
         sequence["id"] = sequence.pop("_id")
@@ -290,22 +279,21 @@ async def get_isolate(req):
 
 
 @routes.post("/otus/{otu_id}/isolates")
-@schema({
-    "source_type": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "default": ""
-    },
-    "source_name": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "default": ""
-    },
-    "default": {
-        "type": "boolean",
-        "default": False
+@schema(
+    {
+        "source_type": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "default": "",
+        },
+        "source_name": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "default": "",
+        },
+        "default": {"type": "boolean", "default": False},
     }
-})
+)
 async def add_isolate(req):
     """
     Add a new isolate to a otu.
@@ -321,44 +309,41 @@ async def add_isolate(req):
     if not document:
         raise NotFound()
 
-    if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
+    if not await virtool.references.db.check_right(
+        req, document["reference"]["id"], "modify_otu"
+    ):
         raise InsufficientRights()
 
         # All source types are stored in lower case.
     data["source_type"] = data["source_type"].lower()
 
-    if not await virtool.references.db.check_source_type(db, document["reference"]["id"], data["source_type"]):
+    if not await virtool.references.db.check_source_type(
+        db, document["reference"]["id"], data["source_type"]
+    ):
         raise HTTPBadRequest(text="Source type is not allowed")
 
-    isolate = await asyncio.shield(virtool.otus.isolates.add(
-        req.app,
-        otu_id,
-        data,
-        req["client"].user_id
-    ))
-
-    headers = {
-        "Location": f"/otus/{otu_id}/isolates/{isolate['id']}"
-    }
-
-    return json_response(
-        isolate,
-        status=201,
-        headers=headers
+    isolate = await asyncio.shield(
+        virtool.otus.isolates.add(req.app, otu_id, data, req["client"].user_id)
     )
+
+    headers = {"Location": f"/otus/{otu_id}/isolates/{isolate['id']}"}
+
+    return json_response(isolate, status=201, headers=headers)
 
 
 @routes.patch("/otus/{otu_id}/isolates/{isolate_id}")
-@schema({
-    "source_type": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-    },
-    "source_name": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
+@schema(
+    {
+        "source_type": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+        },
+        "source_name": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+        },
     }
-})
+)
 async def edit_isolate(req):
     """
     Edit an existing isolate.
@@ -384,16 +369,16 @@ async def edit_isolate(req):
     if "source_type" in data:
         data["source_type"] = data["source_type"].lower()
 
-        if not await virtool.references.db.check_source_type(db, ref_id, data["source_type"]):
+        if not await virtool.references.db.check_source_type(
+            db, ref_id, data["source_type"]
+        ):
             raise HTTPBadRequest(text="Source type is not allowed")
 
-    isolate = await asyncio.shield(virtool.otus.isolates.edit(
-        req.app,
-        otu_id,
-        isolate_id,
-        data,
-        req["client"].user_id
-    ))
+    isolate = await asyncio.shield(
+        virtool.otus.isolates.edit(
+            req.app, otu_id, isolate_id, data, req["client"].user_id
+        )
+    )
 
     return json_response(isolate, status=200)
 
@@ -409,20 +394,23 @@ async def set_as_default(req):
     otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference"])
+    document = await db.otus.find_one(
+        {"_id": otu_id, "isolates.id": isolate_id}, ["reference"]
+    )
 
     if not document:
         raise NotFound()
 
-    if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
+    if not await virtool.references.db.check_right(
+        req, document["reference"]["id"], "modify_otu"
+    ):
         raise InsufficientRights()
 
-    isolate = await asyncio.shield(virtool.otus.isolates.set_default(
-        req.app,
-        otu_id,
-        isolate_id,
-        req["client"].user_id
-    ))
+    isolate = await asyncio.shield(
+        virtool.otus.isolates.set_default(
+            req.app, otu_id, isolate_id, req["client"].user_id
+        )
+    )
 
     return json_response(isolate)
 
@@ -438,20 +426,21 @@ async def remove_isolate(req):
     otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference"])
+    document = await db.otus.find_one(
+        {"_id": otu_id, "isolates.id": isolate_id}, ["reference"]
+    )
 
     if not document:
         raise NotFound()
 
-    if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
+    if not await virtool.references.db.check_right(
+        req, document["reference"]["id"], "modify_otu"
+    ):
         raise InsufficientRights()
 
-    await asyncio.shield(virtool.otus.isolates.remove(
-        req.app,
-        otu_id,
-        isolate_id,
-        req["client"].user_id
-    ))
+    await asyncio.shield(
+        virtool.otus.isolates.remove(req.app, otu_id, isolate_id, req["client"].user_id)
+    )
 
     raise HTTPNoContent
 
@@ -488,12 +477,7 @@ async def get_sequence(req):
     isolate_id = req.match_info["isolate_id"]
     sequence_id = req.match_info["sequence_id"]
 
-    sequence = await virtool.otus.sequences.get(
-        db,
-        otu_id,
-        isolate_id,
-        sequence_id
-    )
+    sequence = await virtool.otus.sequences.get(db, otu_id, isolate_id, sequence_id)
 
     if sequence is None:
         raise NotFound()
@@ -502,36 +486,36 @@ async def get_sequence(req):
 
 
 @routes.post("/otus/{otu_id}/isolates/{isolate_id}/sequences")
-@schema({
-    "accession": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "empty": False,
-        "required": True
-    },
-    "definition": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "empty": False,
-        "required": True
-    },
-    "host": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-    },
-    "segment": {
-        "type": "string",
-    },
-    "sequence": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "empty": False,
-        "required": True
-    },
-    "target": {
-        "type": "string"
+@schema(
+    {
+        "accession": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "empty": False,
+            "required": True,
+        },
+        "definition": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "empty": False,
+            "required": True,
+        },
+        "host": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+        },
+        "segment": {
+            "type": "string",
+        },
+        "sequence": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "empty": False,
+            "required": True,
+        },
+        "target": {"type": "string"},
     }
-})
+)
 async def create_sequence(req):
     """
     Create a new sequence record for the given isolate.
@@ -544,7 +528,9 @@ async def create_sequence(req):
     isolate_id = req.match_info["isolate_id"]
 
     # Get the subject otu document. Will be ``None`` if it doesn't exist. This will result in a ``404`` response.
-    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference", "schema"])
+    document = await db.otus.find_one(
+        {"_id": otu_id, "isolates.id": isolate_id}, ["reference", "schema"]
+    )
 
     if not document:
         raise NotFound()
@@ -555,25 +541,17 @@ async def create_sequence(req):
         raise InsufficientRights()
 
     message = await virtool.otus.sequences.check_segment_or_target(
-        db,
-        otu_id,
-        isolate_id,
-        None,
-        ref_id,
-        data
+        db, otu_id, isolate_id, None, ref_id, data
     )
 
     if message:
         raise HTTPBadRequest(text=message)
 
-    sequence_document = await asyncio.shield(virtool.otus.sequences.create(
-        req.app,
-        ref_id,
-        otu_id,
-        isolate_id,
-        data,
-        req["client"].user_id
-    ))
+    sequence_document = await asyncio.shield(
+        virtool.otus.sequences.create(
+            req.app, ref_id, otu_id, isolate_id, data, req["client"].user_id
+        )
+    )
 
     headers = {
         "Location": f"/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_document['id']}"
@@ -583,33 +561,28 @@ async def create_sequence(req):
 
 
 @routes.patch("/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
-@schema({
-    "accession": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "empty": False
-    },
-    "host": {
-        "type": "string",
-        "coerce": virtool.validators.strip
-    },
-    "definition": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "empty": False
-    },
-    "segment": {
-        "type": "string"
-    },
-    "sequence": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "empty": False
-    },
-    "target": {
-        "type": "string"
+@schema(
+    {
+        "accession": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "empty": False,
+        },
+        "host": {"type": "string", "coerce": virtool.validators.strip},
+        "definition": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "empty": False,
+        },
+        "segment": {"type": "string"},
+        "sequence": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "empty": False,
+        },
+        "target": {"type": "string"},
     }
-})
+)
 async def edit_sequence(req):
     db = req.app["db"]
     data = req["data"]
@@ -618,34 +591,30 @@ async def edit_sequence(req):
     isolate_id = req.match_info["isolate_id"]
     sequence_id = req.match_info["sequence_id"]
 
-    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference", "segment"])
+    document = await db.otus.find_one(
+        {"_id": otu_id, "isolates.id": isolate_id}, ["reference", "segment"]
+    )
 
     if not document or not await db.sequences.count_documents({"_id": sequence_id}):
         raise NotFound()
 
-    if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
+    if not await virtool.references.db.check_right(
+        req, document["reference"]["id"], "modify_otu"
+    ):
         raise InsufficientRights()
 
     message = await virtool.otus.sequences.check_segment_or_target(
-        db,
-        otu_id,
-        isolate_id,
-        sequence_id,
-        document["reference"]["id"],
-        data
+        db, otu_id, isolate_id, sequence_id, document["reference"]["id"], data
     )
 
     if message:
         raise HTTPBadRequest(text=message)
 
-    sequence_document = await asyncio.shield(virtool.otus.sequences.edit(
-        req.app,
-        otu_id,
-        isolate_id,
-        sequence_id,
-        data,
-        req["client"].user_id
-    ))
+    sequence_document = await asyncio.shield(
+        virtool.otus.sequences.edit(
+            req.app, otu_id, isolate_id, sequence_id, data, req["client"].user_id
+        )
+    )
 
     return json_response(sequence_document)
 
@@ -665,21 +634,23 @@ async def remove_sequence(req):
     if not await db.sequences.count_documents({"_id": sequence_id}):
         raise NotFound()
 
-    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference"])
+    document = await db.otus.find_one(
+        {"_id": otu_id, "isolates.id": isolate_id}, ["reference"]
+    )
 
     if document is None:
         raise NotFound()
 
-    if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
+    if not await virtool.references.db.check_right(
+        req, document["reference"]["id"], "modify_otu"
+    ):
         raise InsufficientRights()
 
-    await asyncio.shield(virtool.otus.sequences.remove(
-        req.app,
-        otu_id,
-        isolate_id,
-        sequence_id,
-        req["client"].user_id
-    ))
+    await asyncio.shield(
+        virtool.otus.sequences.remove(
+            req.app, otu_id, isolate_id, sequence_id, req["client"].user_id
+        )
+    )
 
     raise HTTPNoContent
 

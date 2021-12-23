@@ -25,19 +25,15 @@ from tests.fixtures.config import *
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--db-connection-string",
-        action="store",
-        default="mongodb://localhost:27017"
+        "--db-connection-string", action="store", default="mongodb://localhost:27017"
     )
 
     parser.addoption(
-        "--redis-connection-string",
-        action="store",
-        default="redis://localhost:6379"
+        "--redis-connection-string", action="store", default="redis://localhost:6379"
     )
 
     parser.addoption(
         "--postgres-connection-string",
         action="store",
-        default="postgresql+asyncpg://virtool:virtool@localhost"
+        default="postgresql+asyncpg://virtool:virtool@localhost",
     )

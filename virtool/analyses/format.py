@@ -28,7 +28,7 @@ CSV_HEADERS = (
     "Length",
     "Weight",
     "Median Depth",
-    "Coverage"
+    "Coverage",
 )
 
 
@@ -58,17 +58,12 @@ async def load_results(config: Config, document: Dict[str, Any]) -> dict:
     """
     if document["results"] == "file":
         path = virtool.analyses.utils.join_analysis_json_path(
-            config.data_path,
-            document["_id"],
-            document["sample"]["id"]
+            config.data_path, document["_id"], document["sample"]["id"]
         )
 
         async with aiofiles.open(path, "r") as f:
             data = json.loads(await f.read())
-            return {
-                **document,
-                "results": data
-            }
+            return {**document, "results": data}
 
     return document
 
@@ -102,10 +97,7 @@ async def format_aodp(app: App, document: Dict[str, Any]) -> Dict[str, Any]:
 
     return {
         **document,
-        "results": {
-            **document["results"],
-            "hits": list(patched_otus.values())
-        }
+        "results": {**document["results"], "hits": list(patched_otus.values())},
     }
 
 
@@ -120,10 +112,7 @@ async def format_pathoscope(app: App, document: Dict[str, Any]) -> Dict[str, Any
     :return: the formatted document
 
     """
-    document = await load_results(
-        app["config"],
-        document
-    )
+    document = await load_results(app["config"], document)
 
     hits_by_otu = defaultdict(list)
 
@@ -141,26 +130,18 @@ async def format_pathoscope(app: App, document: Dict[str, Any]) -> Dict[str, Any
 
     return {
         **document,
-        "results": {
-            **document["results"],
-            "hits": await gather(*coros)
-        }
+        "results": {**document["results"], "hits": await gather(*coros)},
     }
 
 
 async def format_pathoscope_hits(app: App, otu_id: str, otu_version, hits: List[Dict]):
-    _, patched_otu, _ = await patch_to_version(
-        app,
-        otu_id,
-        otu_version
-    )
+    _, patched_otu, _ = await patch_to_version(app, otu_id, otu_version)
 
     max_sequence_length = 0
 
     for isolate in patched_otu["isolates"]:
         max_sequence_length = max(
-            max_sequence_length,
-            max([len(s["sequence"]) for s in isolate["sequences"]])
+            max_sequence_length, max([len(s["sequence"]) for s in isolate["sequences"]])
         )
 
     otu = {
@@ -169,32 +150,34 @@ async def format_pathoscope_hits(app: App, otu_id: str, otu_version, hits: List[
         "version": patched_otu["version"],
         "abbreviation": patched_otu["abbreviation"],
         "isolates": patched_otu["isolates"],
-        "length": max_sequence_length
+        "length": max_sequence_length,
     }
 
     hits_by_sequence_id = {hit["id"]: hit for hit in hits}
 
     return {
         **otu,
-        "isolates": list(format_pathoscope_isolates(patched_otu["isolates"], hits_by_sequence_id))
+        "isolates": list(
+            format_pathoscope_isolates(patched_otu["isolates"], hits_by_sequence_id)
+        ),
     }
 
 
 def format_pathoscope_isolates(
-        isolates: List[Dict[str, Any]],
-        hits_by_sequence_ids: Dict[str, dict]
+    isolates: List[Dict[str, Any]], hits_by_sequence_ids: Dict[str, dict]
 ) -> List[Dict[str, Any]]:
     for isolate in isolates:
-        sequences = list(format_pathoscope_sequences(isolate["sequences"], hits_by_sequence_ids))
+        sequences = list(
+            format_pathoscope_sequences(isolate["sequences"], hits_by_sequence_ids)
+        )
 
         if any((key in sequence for sequence in sequences) for key in ("pi", "final")):
-            yield {
-                **isolate,
-                "sequences": sequences
-            }
+            yield {**isolate, "sequences": sequences}
 
 
-def format_pathoscope_sequences(sequences: List[Dict[str, Any]], hits_by_sequence_id: Dict[str, dict]):
+def format_pathoscope_sequences(
+    sequences: List[Dict[str, Any]], hits_by_sequence_id: Dict[str, dict]
+):
     for sequence in sequences:
         try:
             hit = hits_by_sequence_id[sequence["_id"]]
@@ -233,16 +216,15 @@ async def format_nuvs(app: App, document: Dict[str, Any]) -> Dict[str, Any]:
     :return: the formatted document
 
     """
-    document = await load_results(
-        app["config"],
-        document
-    )
+    document = await load_results(app["config"], document)
 
     hits = document["results"]["hits"]
 
     hit_ids = list({h["hit"] for s in hits for o in s["orfs"] for h in o["hits"]})
 
-    cursor = app["db"].hmm.find({"_id": {"$in": hit_ids}}, ["cluster", "families", "names"])
+    cursor = app["db"].hmm.find(
+        {"_id": {"$in": hit_ids}}, ["cluster", "families", "names"]
+    )
 
     hmms = {d.pop("_id"): d async for d in cursor}
 
@@ -293,7 +275,7 @@ async def format_analysis_to_excel(app: App, document: Dict[str, Any]) -> bytes:
                     sequence["length"],
                     sequence["pi"],
                     depths.get(sequence["id"], 0),
-                    sequence["coverage"]
+                    sequence["coverage"],
                 ]
 
                 assert len(row) == len(CSV_HEADERS)
@@ -339,7 +321,7 @@ async def format_analysis_to_csv(app: App, document: Dict[str, Any]) -> str:
                     sequence["length"],
                     sequence["pi"],
                     depths.get(sequence["id"], 0),
-                    sequence["coverage"]
+                    sequence["coverage"],
                 ]
 
                 writer.writerow(row)
@@ -384,18 +366,16 @@ async def gather_patched_otus(app: App, results: List[dict]) -> Dict[str, dict]:
     # Use set to only id-version combinations once.
     otu_specifiers = {(hit["otu"]["id"], hit["otu"]["version"]) for hit in results}
 
-    patched_otus = await asyncio.gather(*[
-        patch_to_version(
-            app,
-            otu_id,
-            version
-        ) for otu_id, version in otu_specifiers
-    ])
+    patched_otus = await asyncio.gather(
+        *[patch_to_version(app, otu_id, version) for otu_id, version in otu_specifiers]
+    )
 
     return {patched["_id"]: patched for _, patched, _ in patched_otus}
 
 
-def transform_coverage_to_coordinates(coverage_list: List[int]) -> List[Tuple[int, int]]:
+def transform_coverage_to_coordinates(
+    coverage_list: List[int],
+) -> List[Tuple[int, int]]:
     """
     Takes a list of read depths where the list index is equal to the read position + 1 and returns
     a list of (x, y) coordinates.

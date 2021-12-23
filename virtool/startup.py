@@ -39,8 +39,10 @@ from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.sentry import setup
 from virtool.settings.db import ensure
 from virtool.subtractions.db import check_subtraction_fasta_files
-from virtool.subtractions.tasks import (AddSubtractionFilesTask,
-                                        WriteSubtractionFASTATask)
+from virtool.subtractions.tasks import (
+    AddSubtractionFilesTask,
+    WriteSubtractionFASTATask,
+)
 from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
@@ -68,10 +70,7 @@ def create_events() -> dict:
     :return: a `dict` containing :class:`~asyncio.Event` objects for restart and shutdown
 
     """
-    return {
-        "restart": asyncio.Event(),
-        "shutdown": asyncio.Event()
-    }
+    return {"restart": asyncio.Event(), "shutdown": asyncio.Event()}
 
 
 def get_scheduler_from_app(app: Application) -> aiojobs.Scheduler:
@@ -117,7 +116,9 @@ async def startup_db(app: App):
     dispatcher_interface = DispatcherClient(app["redis"])
     await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
 
-    app["db"] = await virtool.db.mongo.connect(app["config"], dispatcher_interface.enqueue_change)
+    app["db"] = await virtool.db.mongo.connect(
+        app["config"], dispatcher_interface.enqueue_change
+    )
     app["dispatcher_interface"] = dispatcher_interface
 
 
@@ -131,16 +132,12 @@ async def startup_dispatcher(app: Application):
     """
     logger.info("Starting dispatcher")
 
-    channel, = await app["redis"].subscribe("channel:dispatch")
+    (channel,) = await app["redis"].subscribe("channel:dispatch")
 
-    DispatcherSQLEvents(
-        app["dispatcher_interface"].enqueue_change
-    )
+    DispatcherSQLEvents(app["dispatcher_interface"].enqueue_change)
 
     app["dispatcher"] = Dispatcher(
-        app["pg"],
-        app["db"],
-        RedisDispatcherListener(channel)
+        app["pg"], app["db"], RedisDispatcherListener(channel)
     )
 
     await get_scheduler_from_app(app).spawn(app["dispatcher"].run())
@@ -205,21 +202,11 @@ async def startup_fake_config(app: App):
     if app["config"].fake:
         url = urlparse(app["config"].postgres_connection_string)
 
-        base_connection_string = urlunparse((
-            url.scheme,
-            url.netloc,
-            "",
-            "",
-            "",
-            ""
-        ))
+        base_connection_string = urlunparse((url.scheme, url.netloc, "", "", "", ""))
 
         name = f"fake_{suffix}"
 
-        await create_test_database(
-            base_connection_string,
-            name
-        )
+        await create_test_database(base_connection_string, name)
 
         app["config"].db_name = f"fake-{suffix}"
         app["config"].data_path = create_fake_data_path()
@@ -266,12 +253,12 @@ async def startup_paths(app: Application):
 
 async def startup_postgres(app: Application):
     """
-     An application ``on_startup`` callback that attaches an instance of :class:`~AsyncConnection`
-     to the Virtool ``app`` object.
+    An application ``on_startup`` callback that attaches an instance of :class:`~AsyncConnection`
+    to the Virtool ``app`` object.
 
-     :param app: the app object
+    :param app: the app object
 
-     """
+    """
     postgres_connection_string = app["config"].postgres_connection_string
 
     logger.info("Connecting to PostgreSQL")
@@ -312,9 +299,11 @@ async def startup_routes(app: Application):
 
 
 async def startup_sentry(app: typing.Union[dict, Application]):
-    if (not app["config"].no_sentry
-            and app["settings"].enable_sentry is not False
-            and not app["config"].dev):
+    if (
+        not app["config"].no_sentry
+        and app["settings"].enable_sentry is not False
+        and not app["config"].dev
+    ):
         logger.info("Configuring Sentry")
         setup(app["version"], app["config"].sentry_dsn)
 
@@ -367,13 +356,17 @@ async def startup_b2c(app: Application):
     b2c_tenant = app["config"].b2c_tenant
     b2c_user_flow = app["config"].b2c_user_flow
 
-    if not all([
-        app["config"].b2c_client_id,
-        app["config"].b2c_client_secret,
-        b2c_tenant,
-        b2c_user_flow
-    ]):
-        logger.fatal("Required B2C client information not provided for --use-b2c option")
+    if not all(
+        [
+            app["config"].b2c_client_id,
+            app["config"].b2c_client_secret,
+            b2c_tenant,
+            b2c_user_flow,
+        ]
+    ):
+        logger.fatal(
+            "Required B2C client information not provided for --use-b2c option"
+        )
         sys.exit(1)
 
     authority = f"https://{b2c_tenant}.b2clogin.com/{b2c_tenant}.onmicrosoft.com/{b2c_user_flow}"
@@ -381,7 +374,7 @@ async def startup_b2c(app: Application):
     msal = ClientApplication(
         client_id=app["config"].b2c_client_id,
         authority=authority,
-        client_credential=app["config"].b2c_client_secret
+        client_credential=app["config"].b2c_client_secret,
     )
 
     app["b2c"] = B2C(msal, authority)
@@ -396,7 +389,7 @@ async def startup_task_runner(app: Application):
 
     """
     scheduler = get_scheduler_from_app(app)
-    channel, = await app["redis"].subscribe("channel:tasks")
+    (channel,) = await app["redis"].subscribe("channel:tasks")
 
     app["tasks"] = TasksClient(app["redis"], app["pg"])
 
@@ -411,9 +404,12 @@ async def startup_tasks(app: Application):
 
     logger.info("Checking subtraction FASTA files")
     subtractions_without_fasta = await check_subtraction_fasta_files(
-        app["db"], app["config"])
+        app["db"], app["config"]
+    )
     for subtraction in subtractions_without_fasta:
-        await app["tasks"].add(WriteSubtractionFASTATask, context={"subtraction": subtraction})
+        await app["tasks"].add(
+            WriteSubtractionFASTATask, context={"subtraction": subtraction}
+        )
 
     logger.info("Checking index JSON files")
 

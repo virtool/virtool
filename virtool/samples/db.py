@@ -87,9 +87,7 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
 
     async with AsyncSession(pg) as session:
         artifacts = (
-            await session.execute(
-                select(SampleArtifact).filter_by(sample=sample_id)
-            )
+            await session.execute(select(SampleArtifact).filter_by(sample=sample_id))
         ).scalars()
 
         reads_files = (
@@ -102,7 +100,9 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
         if ready:
             for artifact in artifacts:
                 name_on_disk = artifact["name_on_disk"]
-                artifact["download_url"] = f"/samples/{sample_id}/artifacts/{name_on_disk}"
+                artifact[
+                    "download_url"
+                ] = f"/samples/{sample_id}/artifacts/{name_on_disk}"
 
         for reads_file in reads:
             if upload := reads_file.get("upload"):
@@ -113,7 +113,9 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
                 ).to_dict()
 
             if ready:
-                reads_file["download_url"] = f"/samples/{sample_id}/reads/{reads_file['name']}"
+                reads_file[
+                    "download_url"
+                ] = f"/samples/{sample_id}/reads/{reads_file['name']}"
 
     return {
         **document,
@@ -145,10 +147,7 @@ async def attach_labels(pg: AsyncEngine, document: dict) -> dict:
 
 
 async def check_name(
-        db,
-        settings: Settings,
-        name: str,
-        sample_id: Optional[str] = None
+    db, settings: Settings, name: str, sample_id: Optional[str] = None
 ) -> Optional[str]:
     if settings.sample_unique_names:
         query = {"name": name}
@@ -168,8 +167,7 @@ async def check_rights(db, sample_id: str, client, write: bool = True) -> bool:
     if not sample_rights:
         raise virtool.errors.DatabaseError("Sample does not exist")
 
-    has_read, has_write = virtool.samples.utils.get_sample_rights(
-        sample_rights, client)
+    has_read, has_write = virtool.samples.utils.get_sample_rights(sample_rights, client)
 
     return has_read and (write is False or has_write)
 
@@ -202,35 +200,32 @@ def compose_sample_workflow_query(url_query: MultiDictProxy) -> Optional[dict]:
 
     if any(workflow_query):
         return {
-            workflow: {"$in": list(conditions)} for workflow, conditions in workflow_query.items()
+            workflow: {"$in": list(conditions)}
+            for workflow, conditions in workflow_query.items()
         }
 
     return None
 
 
 def convert_workflow_condition(condition: str) -> Optional[dict]:
-    return {
-        "none": False,
-        "pending": "ip",
-        "ready": True
-    }.get(condition, None)
+    return {"none": False, "pending": "ip", "ready": True}.get(condition, None)
 
 
 async def create_sample(
-        db,
-        name: str,
-        host: str,
-        isolate: str,
-        group: str,
-        locale: str,
-        library_type: str,
-        subtractions: List[str],
-        notes: str,
-        labels: List[int],
-        user_id: str,
-        settings: Settings,
-        paired=False,
-        _id=None,
+    db,
+    name: str,
+    host: str,
+    isolate: str,
+    group: str,
+    locale: str,
+    library_type: str,
+    subtractions: List[str],
+    notes: str,
+    labels: List[int],
+    user_id: str,
+    settings: Settings,
+    paired=False,
+    _id=None,
 ) -> Dict[str, any]:
     """
     Create, insert, and return a new sample document.
@@ -313,8 +308,7 @@ async def recalculate_workflow_tags(db, sample_id: str) -> dict:
 
     """
     analyses = await asyncio.shield(
-        db.analyses.find({"sample.id": sample_id}, [
-            "ready", "workflow"]).to_list(None)
+        db.analyses.find({"sample.id": sample_id}, ["ready", "workflow"]).to_list(None)
     )
 
     update = virtool.samples.utils.calculate_workflow_tags(analyses)
@@ -326,9 +320,7 @@ async def recalculate_workflow_tags(db, sample_id: str) -> dict:
     return document
 
 
-async def remove_samples(
-        db, config: Config, id_list: List[str]
-) -> DeleteResult:
+async def remove_samples(db, config: Config, id_list: List[str]) -> DeleteResult:
     """
     Complete removes the samples identified by the document ids in ``id_list``. In order, it:
 
@@ -434,8 +426,7 @@ async def compress_sample_reads(app: App, sample: Dict[str, Any]):
 
     for i, path in enumerate(paths):
         target_filename = (
-            "reads_1.fq.gz" if "reads_1.fastq" in str(
-                path) else "reads_2.fq.gz"
+            "reads_1.fq.gz" if "reads_1.fastq" in str(path) else "reads_2.fq.gz"
         )
 
         target_path = data_path / "samples" / sample_id / target_filename
@@ -504,12 +495,12 @@ async def move_sample_files_to_pg(app: App, sample: Dict[str, any]):
 
 
 async def finalize(
-        db,
-        pg: AsyncEngine,
-        sample_id: str,
-        quality: Dict[str, Any],
-        run_in_thread: callable,
-        data_path: Path,
+    db,
+    pg: AsyncEngine,
+    sample_id: str,
+    quality: Dict[str, Any],
+    run_in_thread: callable,
+    data_path: Path,
 ) -> Dict[str, Any]:
     """
     Finalize a sample document by setting a ``quality`` field and ``ready`` to ``True``
@@ -531,11 +522,14 @@ async def finalize(
     async with AsyncSession(pg) as session:
         rows = (
             (
-                await session.execute(select(Upload)
-                                      .filter(SampleReads.sample == sample_id)
-                                      .join_from(SampleReads, Upload)
-                                      )
-            ).unique().scalars()
+                await session.execute(
+                    select(Upload)
+                    .filter(SampleReads.sample == sample_id)
+                    .join_from(SampleReads, Upload)
+                )
+            )
+            .unique()
+            .scalars()
         )
 
         for row in rows:
@@ -544,7 +538,9 @@ async def finalize(
             row.removed_at = virtool.utils.timestamp()
 
             try:
-                await run_in_thread(virtool.utils.rm, data_path / "files" / row.name_on_disk)
+                await run_in_thread(
+                    virtool.utils.rm, data_path / "files" / row.name_on_disk
+                )
             except FileNotFoundError:
                 pass
 
@@ -580,6 +576,6 @@ async def get_sample(app, sample_id: str):
     document = await attach_artifacts_and_reads(pg, document)
     document = await attach_user(db, document)
 
-    document["paired"] = (len(document["reads"]) == 2)
+    document["paired"] = len(document["reads"]) == 2
 
     return virtool.utils.base_processor(document)

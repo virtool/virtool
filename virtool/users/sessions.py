@@ -9,10 +9,7 @@ from virtool.db.core import DB
 
 
 async def create_session(
-        db,
-        ip: str,
-        user_id: Optional[str] = None,
-        remember: Optional[bool] = False
+    db, ip: str, user_id: Optional[str] = None, remember: Optional[bool] = False
 ) -> Tuple[dict, str]:
     session_id = await create_session_id(db)
 
@@ -31,7 +28,7 @@ async def create_session(
         "_id": session_id,
         "created_at": virtool.utils.timestamp(),
         "expiresAt": expires_at.datetime,
-        "ip": ip
+        "ip": ip,
     }
 
     token = None
@@ -40,16 +37,16 @@ async def create_session(
         token, hashed = virtool.utils.generate_key()
         user_document = await db.users.find_one(user_id)
 
-        session.update({
-            "token": hashed,
-            "administrator": user_document["administrator"],
-            "groups": user_document["groups"],
-            "permissions": user_document["permissions"],
-            "force_reset": user_document["force_reset"],
-            "user": {
-                "id": user_id
+        session.update(
+            {
+                "token": hashed,
+                "administrator": user_document["administrator"],
+                "groups": user_document["groups"],
+                "permissions": user_document["permissions"],
+                "force_reset": user_document["force_reset"],
+                "user": {"id": user_id},
             }
-        })
+        )
 
     await db.sessions.insert_one(session)
 
@@ -72,7 +69,9 @@ async def create_session_id(db: virtool.db.core.DB) -> str:
     return session_id
 
 
-async def get_session(db: DB, session_id: str, session_token: str) -> Tuple[Optional[dict], Optional[str]]:
+async def get_session(
+    db: DB, session_id: str, session_token: str
+) -> Tuple[Optional[dict], Optional[str]]:
     """
     Get a session and token by its id and token.
 
@@ -88,9 +87,7 @@ async def get_session(db: DB, session_id: str, session_token: str) -> Tuple[Opti
     :return: a session document
 
     """
-    document = await db.sessions.find_one({
-        "_id": session_id
-    })
+    document = await db.sessions.find_one({"_id": session_id})
 
     if document is None:
         return None, None
@@ -109,7 +106,9 @@ async def get_session(db: DB, session_id: str, session_token: str) -> Tuple[Opti
         return document, session_token
 
 
-async def create_reset_code(db, session_id: str, user_id: str, remember: Optional[bool] = False) -> int:
+async def create_reset_code(
+    db, session_id: str, user_id: str, remember: Optional[bool] = False
+) -> int:
     """
     Create a secret code that is used to verify a password reset request. Properties:
 
@@ -127,13 +126,16 @@ async def create_reset_code(db, session_id: str, user_id: str, remember: Optiona
     """
     reset_code = secrets.token_hex(32)
 
-    await db.sessions.update_one({"_id": session_id}, {
-        "$set": {
-            "reset_code": reset_code,
-            "reset_remember": remember,
-            "reset_user_id": user_id
-        }
-    })
+    await db.sessions.update_one(
+        {"_id": session_id},
+        {
+            "$set": {
+                "reset_code": reset_code,
+                "reset_remember": remember,
+                "reset_user_id": user_id,
+            }
+        },
+    )
 
     return reset_code
 
@@ -146,21 +148,18 @@ async def clear_reset_code(db: virtool.db.core.DB, session_id: str):
     :param session_id: the session id
 
     """
-    await db.sessions.update_one({"_id": session_id}, {
-        "$unset": {
-            "reset_code": "",
-            "reset_remember": "",
-            "reset_user_id": ""
-        }
-    })
+    await db.sessions.update_one(
+        {"_id": session_id},
+        {"$unset": {"reset_code": "", "reset_remember": "", "reset_user_id": ""}},
+    )
 
 
 async def replace_session(
-        db: virtool.db.core.DB,
-        session_id: str,
-        ip: str,
-        user_id: Optional[str] = None,
-        remember: Optional[bool] = False
+    db: virtool.db.core.DB,
+    session_id: str,
+    ip: str,
+    user_id: Optional[str] = None,
+    remember: Optional[bool] = False,
 ) -> Tuple[dict, str]:
     """
     Replace the session associated with `session_id` with a new one. Return the new session

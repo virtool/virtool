@@ -3,8 +3,7 @@ Fetchers provide a get() method
 """
 from abc import ABC, abstractmethod
 from asyncio import gather
-from typing import (Any, AsyncIterable, Awaitable, Callable, Dict, List,
-                    Optional, Tuple)
+from typing import Any, AsyncIterable, Awaitable, Callable, Dict, List, Optional, Tuple
 
 import virtool.indexes.db
 import virtool.references.db
@@ -27,17 +26,13 @@ from virtool.utils import base_processor
 
 
 def object_as_dict(obj):
-    return {c.key: getattr(obj, c.key)
-            for c in inspect(obj).mapper.column_attrs}
+    return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
 
 
 class AbstractFetcher(ABC):
-
     @abstractmethod
     async def prepare(
-            self,
-            change: Change,
-            connections: List[Connection]
+        self, change: Change, connections: List[Connection]
     ) -> AsyncIterable[Tuple[Connection, dict]]:
         """
         Fetch all records with IDs matching the passed ``id_list`` and are allowed to be viewed
@@ -45,11 +40,7 @@ class AbstractFetcher(ABC):
         """
         pass
 
-    async def fetch(
-            self,
-            change: Change,
-            connections: List[Connection]
-    ):
+    async def fetch(self, change: Change, connections: List[Connection]):
         """
         Return connection-message pairs for the resources with IDs matching the passed ``id_list``
         as prepared by :meth:``prepare``.
@@ -67,7 +58,7 @@ class AbstractFetcher(ABC):
                 message = {
                     "interface": change.interface,
                     "operation": DELETE,
-                    "data": change.id_list
+                    "data": change.id_list,
                 }
 
                 for connection in connections:
@@ -80,22 +71,23 @@ class AbstractFetcher(ABC):
 
 
 class SimpleMongoFetcher(AbstractFetcher):
-
     def __init__(
-            self,
-            collection: Collection,
-            projection: Optional[Projection] = None,
-            processor: Optional[Callable[[None, dict], Awaitable[dict]]] = None
+        self,
+        collection: Collection,
+        projection: Optional[Projection] = None,
+        processor: Optional[Callable[[None, dict], Awaitable[dict]]] = None,
     ):
         self._collection = collection
         self._db: AsyncIOMotorDatabase = collection.database
         self._projection = projection
 
         if processor:
+
             async def process(document: Dict[str, Any]) -> Dict[str, Any]:
                 return await processor(self._db, document)
 
         else:
+
             async def process(document: Dict[str, Any]) -> Dict[str, Any]:
                 return base_processor(document)
 
@@ -110,15 +102,14 @@ class SimpleMongoFetcher(AbstractFetcher):
 
         """
         cursor = self._collection.find(
-            {"_id": {"$in": change.id_list}},
-            projection=self._projection
+            {"_id": {"$in": change.id_list}}, projection=self._projection
         )
 
         async for document in cursor:
             message = {
                 "interface": change.interface,
                 "operation": change.operation,
-                "data": await self._process(document)
+                "data": await self._process(document),
             }
 
             for connection in connections:
@@ -126,15 +117,10 @@ class SimpleMongoFetcher(AbstractFetcher):
 
 
 class IndexesFetcher(AbstractFetcher):
-
     def __init__(self, db):
         self._db = db
 
-    async def prepare(
-            self,
-            change: Change,
-            connections: List[Connection]
-    ):
+    async def prepare(self, change: Change, connections: List[Connection]):
         """
         Prepare index websocket message-connection pairs for dispatch.
 
@@ -145,23 +131,23 @@ class IndexesFetcher(AbstractFetcher):
 
         """
         documents = await self._db.indexes.find(
-            {"_id": {"$in": change.id_list}},
-            projection=virtool.indexes.db.PROJECTION
+            {"_id": {"$in": change.id_list}}, projection=virtool.indexes.db.PROJECTION
         ).to_list(None)
 
-        documents = await gather(*[virtool.indexes.db.processor(self._db, d) for d in documents])
+        documents = await gather(
+            *[virtool.indexes.db.processor(self._db, d) for d in documents]
+        )
 
         for document in documents:
             for connection in connections:
                 yield connection, {
                     "interface": change.interface,
                     "operation": change.operation,
-                    "data": document
+                    "data": document,
                 }
 
 
 class LabelsFetcher(AbstractFetcher):
-
     def __init__(self, pg: AsyncEngine, db: DB):
         self._pg = pg
         self._db = db
@@ -177,7 +163,9 @@ class LabelsFetcher(AbstractFetcher):
 
         """
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(Label).filter(Label.id.in_(change.id_list)))
+            result = await session.execute(
+                select(Label).filter(Label.id.in_(change.id_list))
+            )
 
         records = [object_as_dict(record) for record in result.scalars().all()]
 
@@ -188,20 +176,15 @@ class LabelsFetcher(AbstractFetcher):
                 yield connection, {
                     "interface": change.interface,
                     "operation": change.operation,
-                    "data": record
+                    "data": record,
                 }
 
 
 class ReferencesFetcher(AbstractFetcher):
-
     def __init__(self, db: DB):
         self._db = db
 
-    async def prepare(
-            self,
-            change: Change,
-            connections: List[Connection]
-    ):
+    async def prepare(self, change: Change, connections: List[Connection]):
         """
         Prepare reference connection-message pairs to dispatch by WebSocket.
 
@@ -213,12 +196,9 @@ class ReferencesFetcher(AbstractFetcher):
         :param connections: the connections to dispatch to
 
         """
-        documents = await self._db.references.find({
-            "_id": {
-                "$in": change.id_list
-            }
-        },
-            projection=virtool.references.db.PROJECTION
+        documents = await self._db.references.find(
+            {"_id": {"$in": change.id_list}},
+            projection=virtool.references.db.PROJECTION,
         ).to_list(None)
 
         documents = await gather(
@@ -230,24 +210,24 @@ class ReferencesFetcher(AbstractFetcher):
             group_ids = {group["id"] for group in document["groups"]}
 
             for connection in connections:
-                if connection.user_id in user_ids or set(connection.groups).union(set(group_ids)):
+                if connection.user_id in user_ids or set(connection.groups).union(
+                    set(group_ids)
+                ):
                     yield connection, {
                         "interface": change.interface,
                         "operation": change.operation,
-                        "data": document
+                        "data": document,
                     }
 
 
 class SamplesFetcher(AbstractFetcher):
-
     def __init__(self, pg: AsyncEngine, db: DB):
         self._pg = pg
         self._db = db
 
     async def prepare(self, change: Change, connections: List[Connection]):
         documents = await self._db.samples.find(
-            {"_id": {"$in": change.id_list}},
-            projection=virtool.samples.db.PROJECTION
+            {"_id": {"$in": change.id_list}}, projection=virtool.samples.db.PROJECTION
         ).to_list(None)
 
         await gather(*[attach_labels(self._pg, d) for d in documents])
@@ -262,12 +242,11 @@ class SamplesFetcher(AbstractFetcher):
                     yield connection, {
                         "interface": change.interface,
                         "operation": change.operation,
-                        "data": base_processor(document)
+                        "data": base_processor(document),
                     }
 
 
 class UploadsFetcher(AbstractFetcher):
-
     def __init__(self, db, pg: AsyncEngine):
         self._db = db
         self._pg = pg
@@ -286,7 +265,9 @@ class UploadsFetcher(AbstractFetcher):
 
         """
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(Upload).filter(Upload.id.in_(change.id_list)))
+            result = await session.execute(
+                select(Upload).filter(Upload.id.in_(change.id_list))
+            )
 
         records = [object_as_dict(r) for r in result.unique().scalars()]
         records = await attach_users(self._db, records)
@@ -297,18 +278,17 @@ class UploadsFetcher(AbstractFetcher):
                     yield connection, {
                         "interface": change.interface,
                         "operation": DELETE,
-                        "data": change.id_list
+                        "data": change.id_list,
                     }
                 else:
                     yield connection, {
                         "interface": change.interface,
                         "operation": change.operation,
-                        "data": record
+                        "data": record,
                     }
 
 
 class TasksFetcher(AbstractFetcher):
-
     def __init__(self, pg: AsyncEngine):
         self._pg = pg
         self._interface = "tasks"
@@ -322,7 +302,9 @@ class TasksFetcher(AbstractFetcher):
 
         """
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(Task).filter(Task.id.in_(change.id_list)))
+            result = await session.execute(
+                select(Task).filter(Task.id.in_(change.id_list))
+            )
 
         records = [object_as_dict(r) for r in result.scalars()]
 
@@ -331,5 +313,5 @@ class TasksFetcher(AbstractFetcher):
                 yield connection, {
                     "interface": change.interface,
                     "operation": change.operation,
-                    "data": record
+                    "data": record,
                 }

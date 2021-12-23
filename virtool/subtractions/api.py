@@ -20,8 +20,7 @@ from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
 from virtool.pg.utils import get_row_by_id
 from virtool.subtractions.db import PROJECTION, attach_computed
-from virtool.subtractions.files import (create_subtraction_file,
-                                        delete_subtraction_file)
+from virtool.subtractions.files import create_subtraction_file, delete_subtraction_file
 from virtool.subtractions.models import SubtractionFile
 from virtool.subtractions.utils import FILES
 from virtool.uploads.models import Upload
@@ -33,9 +32,7 @@ logger = logging.getLogger("subtractions")
 
 routes = Routes()
 
-BASE_QUERY = {
-    "deleted": False
-}
+BASE_QUERY = {"deleted": False}
 
 
 @routes.get("/subtractions")
@@ -57,7 +54,9 @@ async def find(req):
     if short:
         documents = list()
 
-        async for document in db.subtraction.find({**db_query, **BASE_QUERY}, ["name", "ready"]):
+        async for document in db.subtraction.find(
+            {**db_query, **BASE_QUERY}, ["name", "ready"]
+        ):
             documents.append(base_processor(document))
 
         return json_response(documents)
@@ -68,19 +67,15 @@ async def find(req):
         req.query,
         base_query=BASE_QUERY,
         sort="_id",
-        projection=PROJECTION
+        projection=PROJECTION,
     )
 
     documents, ready_count = await gather(
         gather(*[attach_user(db, d) for d in data["documents"]]),
-        db.subtraction.count_documents({"ready": True})
+        db.subtraction.count_documents({"ready": True}),
     )
 
-    return json_response({
-        **data,
-        "documents": documents,
-        "ready_count": ready_count
-    })
+    return json_response({**data, "documents": documents, "ready_count": ready_count})
 
 
 @routes.get("/subtractions/{subtraction_id}")
@@ -108,23 +103,22 @@ async def get(req):
 
 
 @routes.post("/subtractions", permission="modify_subtraction")
-@schema({
-    "name": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "empty": False,
-        "required": True
-    },
-    "nickname": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "default": ""
-    },
-    "upload_id": {
-        "type": "integer",
-        "required": True
+@schema(
+    {
+        "name": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "empty": False,
+            "required": True,
+        },
+        "nickname": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "default": "",
+        },
+        "upload_id": {"type": "integer", "required": True},
     }
-})
+)
 async def create(req):
     """
     Add a new subtraction. Starts an :class:`.CreateSubtraction` job process.
@@ -148,22 +142,14 @@ async def create(req):
     user_id = req["client"].user_id
 
     document = await virtool.subtractions.db.create(
-        db,
-        user_id,
-        filename,
-        name,
-        nickname,
-        upload_id
+        db, user_id, filename, name, nickname, upload_id
     )
 
     subtraction_id = document["_id"]
 
     task_args = {
         "subtraction_id": subtraction_id,
-        "files": [{
-            "id": upload_id,
-            "name": filename
-        }]
+        "files": [{"id": upload_id, "name": filename}],
     }
 
     rights = JobRights()
@@ -176,19 +162,12 @@ async def create(req):
     job_id = await get_new_id(db.jobs)
 
     await virtool.jobs.db.create(
-        db,
-        "create_subtraction",
-        task_args,
-        user_id,
-        rights,
-        job_id=job_id
+        db, "create_subtraction", task_args, user_id, rights, job_id=job_id
     )
 
     await req.app["jobs"].enqueue(job_id)
 
-    headers = {
-        "Location": f"/subtraction/{subtraction_id}"
-    }
+    headers = {"Location": f"/subtraction/{subtraction_id}"}
 
     document = await attach_computed(req.app, document)
 
@@ -219,22 +198,17 @@ async def upload(req):
     if filename not in FILES:
         raise NotFound("Unsupported subtraction file name")
 
-    file_type = virtool.subtractions.utils.check_subtraction_file_type(
-        filename)
+    file_type = virtool.subtractions.utils.check_subtraction_file_type(filename)
 
     try:
         subtraction_file = await create_subtraction_file(
-            pg,
-            subtraction_id,
-            file_type,
-            filename
+            pg, subtraction_id, file_type, filename
         )
     except exc.IntegrityError:
         raise HTTPConflict(text="File name already exists")
 
     upload_id = subtraction_file["id"]
-    path = req.app["config"].data_path / \
-        "subtractions" / subtraction_id / filename
+    path = req.app["config"].data_path / "subtractions" / subtraction_id / filename
 
     try:
         size = await naive_writer(req, path)
@@ -244,27 +218,26 @@ async def upload(req):
 
         return aiohttp.web.Response(status=499)
 
-    subtraction_file = await virtool.uploads.db.finalize(pg, size, upload_id, SubtractionFile)
+    subtraction_file = await virtool.uploads.db.finalize(
+        pg, size, upload_id, SubtractionFile
+    )
 
-    headers = {
-        "Location": f"/subtractions/{subtraction_id}/files/{filename}"
-    }
+    headers = {"Location": f"/subtractions/{subtraction_id}/files/{filename}"}
 
     return json_response(subtraction_file, headers=headers, status=201)
 
 
 @routes.patch("/subtractions/{subtraction_id}", permission="modify_subtraction")
-@schema({
-    "name": {
-        "type": "string",
-        "coerce": virtool.validators.strip,
-        "empty": False,
-    },
-    "nickname": {
-        "type": "string",
-        "coerce": virtool.validators.strip
+@schema(
+    {
+        "name": {
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "empty": False,
+        },
+        "nickname": {"type": "string", "coerce": virtool.validators.strip},
     }
-})
+)
 async def edit(req):
     """
     Updates the nickname for an existing subtraction.
@@ -287,9 +260,9 @@ async def edit(req):
     except KeyError:
         pass
 
-    document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
-        "$set": update
-    })
+    document = await db.subtraction.find_one_and_update(
+        {"_id": subtraction_id}, {"$set": update}
+    )
 
     if document is None:
         raise NotFound()
@@ -306,7 +279,9 @@ async def edit(req):
 async def remove(req):
     subtraction_id = req.match_info["subtraction_id"]
 
-    updated_count = await asyncio.shield(virtool.subtractions.db.delete(req.app, subtraction_id))
+    updated_count = await asyncio.shield(
+        virtool.subtractions.db.delete(req.app, subtraction_id)
+    )
 
     if updated_count == 0:
         raise NotFound()
@@ -315,10 +290,12 @@ async def remove(req):
 
 
 @routes.jobs_api.patch("/subtractions/{subtraction_id}")
-@schema({
-    "gc": {"type": "dict", "required": True},
-    "count": {"type": "integer", "required": True}
-})
+@schema(
+    {
+        "gc": {"type": "dict", "required": True},
+        "count": {"type": "integer", "required": True},
+    }
+)
 async def finalize_subtraction(req: aiohttp.web.Request):
     """
     Sets the gc field for an subtraction and marks it as ready.
@@ -338,7 +315,9 @@ async def finalize_subtraction(req: aiohttp.web.Request):
     if "ready" in document and document["ready"]:
         raise HTTPConflict(text="Subtraction has already been finalized")
 
-    document = await virtool.subtractions.db.finalize(db, pg, subtraction_id, data["gc"], data["count"])
+    document = await virtool.subtractions.db.finalize(
+        db, pg, subtraction_id, data["gc"], data["count"]
+    )
     document = await attach_computed(req.app, document)
 
     # All subtractions supporting finalization have a user field. No `if` statement is needed here.
@@ -391,10 +370,13 @@ async def download_subtraction_files(req: aiohttp.web.Request):
         raise HTTPBadRequest(text="Unsupported subtraction file name")
 
     async with AsyncSession(pg) as session:
-        result = (await session.execute(
-            select(SubtractionFile).filter_by(
-                subtraction=subtraction_id, name=filename)
-        )).scalar()
+        result = (
+            await session.execute(
+                select(SubtractionFile).filter_by(
+                    subtraction=subtraction_id, name=filename
+                )
+            )
+        ).scalar()
 
     if not result:
         raise NotFound()
@@ -403,14 +385,15 @@ async def download_subtraction_files(req: aiohttp.web.Request):
 
     file_path = (
         virtool.subtractions.utils.join_subtraction_path(
-            req.app["config"], subtraction_id)
+            req.app["config"], subtraction_id
+        )
         / filename
     )
 
     if not os.path.isfile(file_path):
         raise NotFound()
 
-    return FileResponse(file_path, headers={
-        "Content-Length": file["size"],
-        "Content-Type": "application/gzip"
-    })
+    return FileResponse(
+        file_path,
+        headers={"Content-Length": file["size"], "Content-Type": "application/gzip"},
+    )

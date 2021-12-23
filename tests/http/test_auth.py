@@ -3,7 +3,6 @@ from virtool.utils import hash_key
 
 
 class TestJobAuthentication:
-
     async def test_root_succeeds(self, spawn_job_client):
         """
         Check that a request against the job accessible root URL (GET /) succeeds.
@@ -37,10 +36,7 @@ class TestJobAuthentication:
         client = await spawn_client(auth=BasicAuth("job-foo", key))
         client.settings.enable_api = True
 
-        await dbi.jobs.insert_one({
-            "_id": "foo",
-            "key": hash_key(key)
-        })
+        await dbi.jobs.insert_one({"_id": "foo", "key": hash_key(key)})
 
         resp = await client.get("/samples")
 

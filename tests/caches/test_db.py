@@ -13,12 +13,14 @@ def trim_parameters():
         "max_indel_rate": "0.03",
         "max_length": None,
         "mean_quality": "25",
-        "min_length": "20"
+        "min_length": "20",
     }
 
 
 @pytest.mark.parametrize("paired", [True, False], ids=["paired", "unpaired"])
-async def test_create(paired, snapshot, dbi, static_time, test_random_alphanumeric, trim_parameters):
+async def test_create(
+    paired, snapshot, dbi, static_time, test_random_alphanumeric, trim_parameters
+):
     """
     Test that the function works with default keyword arguments and when `paired` is either `True` or `False`.
 
@@ -29,17 +31,24 @@ async def test_create(paired, snapshot, dbi, static_time, test_random_alphanumer
     assert await dbi.caches.find_one() == snapshot
 
 
-async def test_create_duplicate(snapshot, dbi, static_time, test_random_alphanumeric, trim_parameters):
+async def test_create_duplicate(
+    snapshot, dbi, static_time, test_random_alphanumeric, trim_parameters
+):
     """
     Test that the function handles duplicate document ids smoothly. The function should retry with a new id.
 
     """
-    await dbi.caches.insert_one({"_id": test_random_alphanumeric.next_choice[:8].lower()})
+    await dbi.caches.insert_one(
+        {"_id": test_random_alphanumeric.next_choice[:8].lower()}
+    )
 
     cache = await virtool.caches.db.create(dbi, "foo", "aodp-abcdefgh", False)
 
     assert cache == snapshot
-    assert await dbi.caches.find_one({"_id": test_random_alphanumeric.last_choice}) == snapshot
+    assert (
+        await dbi.caches.find_one({"_id": test_random_alphanumeric.last_choice})
+        == snapshot
+    )
 
 
 @pytest.mark.parametrize("exists", [True, False])
@@ -64,8 +73,10 @@ async def test_get(exists, dbi):
 async def test_remove(exception, dbi, tmp_path, config):
     app = {
         "db": dbi,
-        "run_in_thread": make_mocked_coro(raise_exception=FileNotFoundError) if exception else make_mocked_coro(),
-        "config": config
+        "run_in_thread": make_mocked_coro(raise_exception=FileNotFoundError)
+        if exception
+        else make_mocked_coro(),
+        "config": config,
     }
 
     await dbi.caches.insert_one({"_id": "baz"})
@@ -75,7 +86,5 @@ async def test_remove(exception, dbi, tmp_path, config):
     assert await dbi.caches.count_documents({}) == 0
 
     app["run_in_thread"].assert_called_with(
-        virtool.utils.rm,
-        tmp_path / "caches" / "baz",
-        True
+        virtool.utils.rm, tmp_path / "caches" / "baz", True
     )

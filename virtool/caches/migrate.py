@@ -33,17 +33,11 @@ async def add_missing_field(app: App):
 
     found_cache_ids = os.listdir(path)
 
-    await db.caches.update_many({}, {
-        "$set": {
-            "missing": False
-        }
-    })
+    await db.caches.update_many({}, {"$set": {"missing": False}})
 
-    await db.caches.update_many({"_id": {"$nin": found_cache_ids}}, {
-        "$set": {
-            "missing": True
-        }
-    })
+    await db.caches.update_many(
+        {"_id": {"$nin": found_cache_ids}}, {"$set": {"missing": True}}
+    )
 
 
 async def rename_hash_field(app: App):
@@ -55,8 +49,4 @@ async def rename_hash_field(app: App):
     """
     db = app["db"]
 
-    await db.caches.update_many({}, {
-        "$rename": {
-            "hash": "key"
-        }
-    })
+    await db.caches.update_many({}, {"$rename": {"hash": "key"}})

@@ -8,7 +8,9 @@ import aiohttp.web
 logger = logging.getLogger(__name__)
 
 
-async def create_app_runner(app: aiohttp.web.Application, host: str, port: int) -> aiohttp.web.AppRunner:
+async def create_app_runner(
+    app: aiohttp.web.Application, host: str, port: int
+) -> aiohttp.web.AppRunner:
     """
     Create an :class:`aiohttp.web.AppRunner` to allow customization of signal handlers.
 

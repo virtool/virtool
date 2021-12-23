@@ -5,7 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.indexes.models import IndexFile
 
 
-async def create_index_file(pg: AsyncEngine, index_id: str, file_type: str, name: str) -> Dict[str, any]:
+async def create_index_file(
+    pg: AsyncEngine, index_id: str, file_type: str, name: str
+) -> Dict[str, any]:
     """
     Create a row in the `index_files` SQL table that represents an index file.
 
@@ -16,11 +18,7 @@ async def create_index_file(pg: AsyncEngine, index_id: str, file_type: str, name
     :return: A dictionary representation of the newly created row
     """
     async with AsyncSession(pg) as session:
-        index_file = IndexFile(
-            name=name,
-            index=index_id,
-            type=file_type
-        )
+        index_file = IndexFile(name=name, index=index_id, type=file_type)
 
         session.add(index_file)
 

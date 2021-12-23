@@ -17,7 +17,7 @@ PROJECTION = (
     "last_password_change",
     "permissions",
     "primary_group",
-    "settings"
+    "settings",
 )
 
 
@@ -34,7 +34,7 @@ def compose_password_update(password: str) -> Dict[str, Any]:
         "password": virtool.users.utils.hash_password(password),
         "invalidate_sessions": False,
         "last_password_change": virtool.utils.timestamp(),
-        "force_reset": False
+        "force_reset": False,
     }
 
 
@@ -47,10 +47,7 @@ async def get(db, user_id: str) -> Dict[str, Any]:
     :return: the projected user document
 
     """
-    return await db.users.find_one(
-        user_id,
-        PROJECTION
-    )
+    return await db.users.find_one(user_id, PROJECTION)
 
 
 async def get_alternate_id(db, name: str) -> str:
@@ -77,10 +74,7 @@ async def get_alternate_id(db, name: str) -> str:
 
 
 async def create_api_key(
-        db,
-        name: str,
-        permissions: Dict[str, bool],
-        user_id: str
+    db, name: str, permissions: Dict[str, bool], user_id: str
 ) -> Dict[str, Any]:
     """
     Create a new API key for the account with the given `user_id`.
@@ -99,15 +93,11 @@ async def create_api_key(
     """
     user = await db.users.find_one(user_id, ["administrator", "groups", "permissions"])
 
-    key_permissions = {
-        **virtool.users.utils.generate_base_permissions(),
-        **permissions
-    }
+    key_permissions = {**virtool.users.utils.generate_base_permissions(), **permissions}
 
     if not user["administrator"]:
         key_permissions = virtool.users.utils.limit_permissions(
-            key_permissions,
-            user["permissions"]
+            key_permissions, user["permissions"]
         )
 
     raw, hashed = virtool.utils.generate_key()
@@ -119,9 +109,7 @@ async def create_api_key(
         "groups": user["groups"],
         "permissions": key_permissions,
         "created_at": virtool.utils.timestamp(),
-        "user": {
-            "id": user_id
-        }
+        "user": {"id": user_id},
     }
 
     await db.keys.insert_one(document)

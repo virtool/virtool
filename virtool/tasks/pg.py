@@ -57,7 +57,7 @@ async def register(pg, task_class, context: dict = None) -> dict:
         count=0,
         created_at=virtool.utils.timestamp(),
         progress=0,
-        type=task_class.task_type
+        type=task_class.task_type,
     )
 
     async with AsyncSession(pg) as session:
@@ -70,13 +70,13 @@ async def register(pg, task_class, context: dict = None) -> dict:
 
 
 async def update(
-        pg: AsyncEngine,
-        task_id: int,
-        count: int = None,
-        progress: int = None,
-        step: str = None,
-        context_update: dict = None,
-        error: str = None
+    pg: AsyncEngine,
+    task_id: int,
+    count: int = None,
+    progress: int = None,
+    step: str = None,
+    context_update: dict = None,
+    error: str = None,
 ) -> dict:
     """
     Update a task record with given `task_id`.

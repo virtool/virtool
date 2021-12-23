@@ -11,9 +11,7 @@ from virtool.startup import startup_executors, startup_http_client
 async def fake_app():
     version = "v1.2.3"
 
-    app = {
-        "version": version
-    }
+    app = {"version": version}
 
     yield app
 
@@ -55,8 +53,6 @@ async def test_startup_http_client_headers(loop, mocker, fake_app):
 
     await startup_http_client(fake_app)
 
-    headers = {
-        "User-Agent": "virtool/v1.2.3"
-    }
+    headers = {"User-Agent": "virtool/v1.2.3"}
 
     m.assert_called_with(headers=headers)

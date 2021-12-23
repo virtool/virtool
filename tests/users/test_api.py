@@ -7,7 +7,9 @@ async def test_find(snapshot, spawn_client, create_user, static_time):
     Test that a ``GET /users`` returns a list of users.
 
     """
-    client = await spawn_client(authorize=True, administrator=True, permissions=["create_sample"])
+    client = await spawn_client(
+        authorize=True, administrator=True, permissions=["create_sample"]
+    )
 
     await client.db.users.insert_one(create_user(user_id="foo", handle="bar"))
     await client.db.users.insert_one(create_user(user_id="bar", handle="baz"))
@@ -19,7 +21,9 @@ async def test_find(snapshot, spawn_client, create_user, static_time):
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, snapshot, spawn_client, create_user, no_permissions, resp_is, static_time):
+async def test_get(
+    error, snapshot, spawn_client, create_user, no_permissions, resp_is, static_time
+):
     """
     Test that a ``GET /users`` returns a list of users.
 
@@ -44,7 +48,9 @@ async def test_get(error, snapshot, spawn_client, create_user, no_permissions, r
 
 
 @pytest.mark.parametrize("error", [None, "400_exists", "400_password"])
-async def test_create(error, snapshot, spawn_client, create_user, resp_is, static_time, mocker):
+async def test_create(
+    error, snapshot, spawn_client, create_user, resp_is, static_time, mocker
+):
     """
     Test that a valid request results in a user document being properly inserted.
 
@@ -57,17 +63,11 @@ async def test_create(error, snapshot, spawn_client, create_user, resp_is, stati
     mocker.patch("virtool.db.utils.get_new_id", return_value="abc123")
 
     if error == "400_exists":
-        await client.db.users.insert_one({
-            "_id": "abc123"
-        })
+        await client.db.users.insert_one({"_id": "abc123"})
 
     client.app["settings"].minimum_password_length = 8
 
-    data = {
-        "handle": "fred",
-        "password": "hello_world",
-        "force_reset": False
-    }
+    data = {"handle": "fred", "password": "hello_world", "force_reset": False}
 
     if error == "400_password":
         data["password"] = "foo"
@@ -79,7 +79,9 @@ async def test_create(error, snapshot, spawn_client, create_user, resp_is, stati
         return
 
     if error == "400_password":
-        await resp_is.bad_request(resp, "Password does not meet minimum length requirement (8)")
+        await resp_is.bad_request(
+            resp, "Password does not meet minimum length requirement (8)"
+        )
         return
 
     assert resp.status == 201
@@ -93,40 +95,55 @@ async def test_create(error, snapshot, spawn_client, create_user, resp_is, stati
     assert check_password("hello_world", password)
 
 
-@pytest.mark.parametrize("data", [
-    {"password": "hello_world", "force_reset": True, "primary_group": "tech"},
-    {"password": "hello_world", "force_reset": True},
-    {"force_reset": True, "primary_group": "tech"},
-    {"password": "hello_world", "primary_group": "tech"},
-    {"password": "hello_world"},
-    {"force_reset": True},
-    {"primary_group": "tech"}
-])
-@pytest.mark.parametrize("error", [None, "invalid_input", "user_dne", "group_dne", "not_group_member"])
-async def test_edit(data, error, snapshot, spawn_client, resp_is, static_time, create_user, no_permissions):
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"password": "hello_world", "force_reset": True, "primary_group": "tech"},
+        {"password": "hello_world", "force_reset": True},
+        {"force_reset": True, "primary_group": "tech"},
+        {"password": "hello_world", "primary_group": "tech"},
+        {"password": "hello_world"},
+        {"force_reset": True},
+        {"primary_group": "tech"},
+    ],
+)
+@pytest.mark.parametrize(
+    "error", [None, "invalid_input", "user_dne", "group_dne", "not_group_member"]
+)
+async def test_edit(
+    data,
+    error,
+    snapshot,
+    spawn_client,
+    resp_is,
+    static_time,
+    create_user,
+    no_permissions,
+):
 
     client = await spawn_client(authorize=True, administrator=True)
 
     client.app["settings"].minimum_password_length = 8
 
     if error != "user_dne":
-        await client.db.users.insert_one(create_user(
-            user_id="bob",
-            handle="fred",
-            groups=[] if error == "not_group_member" else ["tech"]
-        ))
+        await client.db.users.insert_one(
+            create_user(
+                user_id="bob",
+                handle="fred",
+                groups=[] if error == "not_group_member" else ["tech"],
+            )
+        )
 
     # Don't insert the 'tech' group when we are checking for failure when group is missing.
-    await client.db.groups.insert_many([
-        {
-            "_id": "test",
-            "permissions": dict(no_permissions, build_index=True)
-        },
-        {
-            "_id": "manager" if error == "group_dne" else "tech",
-            "permissions": dict(no_permissions)
-        }
-    ])
+    await client.db.groups.insert_many(
+        [
+            {"_id": "test", "permissions": dict(no_permissions, build_index=True)},
+            {
+                "_id": "manager" if error == "group_dne" else "tech",
+                "permissions": dict(no_permissions),
+            },
+        ]
+    )
 
     payload = dict(data)
 
@@ -145,9 +162,7 @@ async def test_edit(data, error, snapshot, spawn_client, resp_is, static_time, c
             return
 
     if error == "invalid_input":
-        await resp_is.invalid_input(resp, {
-            "force_reset": ["must be of boolean type"]
-        })
+        await resp_is.invalid_input(resp, {"force_reset": ["must be of boolean type"]})
         return
 
     if error == "user_dne":

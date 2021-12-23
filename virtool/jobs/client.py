@@ -13,12 +13,11 @@ WORKFLOW_NAMES = (
     "jobs_create_subtraction",
     "jobs_aodp",
     "jobs_nuvs",
-    "jobs_pathoscope_bowtie"
+    "jobs_pathoscope_bowtie",
 )
 
 
 class JobsClient:
-
     def __init__(self, app):
         self.db = app["db"]
         self.redis = app["redis"]
@@ -44,18 +43,19 @@ class JobsClient:
         :return: the updated job document
 
         """
-        lrem_calls = [self.redis.lrem(workflow_name, 0, job_id) for workflow_name in WORKFLOW_NAMES]
+        lrem_calls = [
+            self.redis.lrem(workflow_name, 0, job_id)
+            for workflow_name in WORKFLOW_NAMES
+        ]
         counts = await gather(*lrem_calls)
 
         if any(counts):
             logger.debug(f"Removed job from Redis job queue: {job_id}")
             return await cancel(self.db, job_id)
 
-        document = await self.db.jobs.find_one_and_update({"_id": job_id}, {
-            "$set": {
-                "state": "cancelling"
-            }
-        }, projection=PROJECTION)
+        document = await self.db.jobs.find_one_and_update(
+            {"_id": job_id}, {"$set": {"state": "cancelling"}}, projection=PROJECTION
+        )
 
         await self.redis.publish("channel:cancel", job_id)
 

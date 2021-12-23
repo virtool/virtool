@@ -23,26 +23,32 @@ async def test_events(rollback, mocker, pg: AsyncEngine):
         session.add(Label(name="Test 1", color="#D97706", description="This is a test"))
         await session.commit()
 
-    assert changes == [
-        ("labels", "insert", [1])
-    ]
+    assert changes == [("labels", "insert", [1])]
 
     async with AsyncSession(pg) as session:
-        session.add(Label(name="Test 2", color="#000000", description="This is a test again"))
-        session.add(Label(name="Test 3", color="#FFFFFF", description="This is a test yet again"))
+        session.add(
+            Label(name="Test 2", color="#000000", description="This is a test again")
+        )
+        session.add(
+            Label(
+                name="Test 3", color="#FFFFFF", description="This is a test yet again"
+            )
+        )
 
         await session.flush()
 
-        session.add(Label(name="Test 4", color="#DDDDDD", description="This is a test after flush"))
+        session.add(
+            Label(
+                name="Test 4", color="#DDDDDD", description="This is a test after flush"
+            )
+        )
 
         if rollback:
             await session.rollback()
         else:
             await session.commit()
 
-    expected = [
-        ("labels", "insert", [1])
-    ]
+    expected = [("labels", "insert", [1])]
 
     if rollback:
         assert changes == expected
@@ -50,6 +56,5 @@ async def test_events(rollback, mocker, pg: AsyncEngine):
         assert changes == expected + [
             ("labels", "insert", [2]),
             ("labels", "insert", [3]),
-            ("labels", "insert", [4])
+            ("labels", "insert", [4]),
         ]
-

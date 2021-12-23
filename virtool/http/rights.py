@@ -4,8 +4,4 @@ READ = "read"
 MODIFY = "modify"
 REMOVE = "remove"
 
-Right = Literal[
-    "read",
-    "modify",
-    "remove"
-]
+Right = Literal["read", "modify", "remove"]

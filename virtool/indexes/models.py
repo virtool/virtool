@@ -20,6 +20,7 @@ class IndexFile(Base):
     SQL model to store new index files
 
     """
+
     __tablename__ = "index_files"
     __table_args__ = (UniqueConstraint("index", "name"),)
 

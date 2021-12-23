@@ -9,7 +9,6 @@ from virtool.users.utils import PERMISSIONS
 
 
 class Routes(RouteTableDef):
-
     @staticmethod
     def _protected(method):
         @wraps(method)
@@ -30,10 +29,10 @@ class Routes(RouteTableDef):
 
 
 def protect(
-        route_decorator: Callable,
-        admin: bool,
-        permission: str,
-        public: bool,
+    route_decorator: Callable,
+    admin: bool,
+    permission: str,
+    public: bool,
 ):
     if permission and permission not in PERMISSIONS:
         raise ValueError("Invalid permission: " + permission)
@@ -42,21 +41,27 @@ def protect(
         async def wrapped(req):
             client = req["client"]
 
-            if not public and not client.authenticated and req.path not in PUBLIC_ROUTES:
+            if (
+                not public
+                and not client.authenticated
+                and req.path not in PUBLIC_ROUTES
+            ):
                 raise HTTPUnauthorized(text="Requires authorization")
 
             if not client.authenticated or not client.administrator:
                 if admin:
-                    return json_response({
-                        "id": "not_permitted",
-                        "message": "Requires administrative privilege"
-                    }, status=403)
+                    return json_response(
+                        {
+                            "id": "not_permitted",
+                            "message": "Requires administrative privilege",
+                        },
+                        status=403,
+                    )
 
                 if permission and not req["client"].permissions[permission]:
-                    return json_response({
-                        "id": "not_permitted",
-                        "message": "Not permitted"
-                    }, status=403)
+                    return json_response(
+                        {"id": "not_permitted", "message": "Not permitted"}, status=403
+                    )
 
             return await handler(req)
 

@@ -8,10 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.config.cls import Config
 from virtool.labels.models import Label
 
-PATHOSCOPE_TASK_NAMES = [
-    "pathoscope_bowtie",
-    "pathoscope_barracuda"
-]
+PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie", "pathoscope_barracuda"]
 
 
 def calculate_workflow_tags(analyses: list) -> dict:
@@ -36,14 +33,11 @@ def calculate_workflow_tags(analyses: list) -> dict:
         if pathoscope is True and nuvs is True:
             break
 
-    return {
-        "pathoscope": pathoscope,
-        "nuvs": nuvs
-    }
+    return {"pathoscope": pathoscope, "nuvs": nuvs}
 
 
 async def check_labels(pg: AsyncEngine, labels: List[int]) -> List[int]:
-    """"
+    """ "
     Check for existence of label IDs given in sample creation request
 
     :param pg: PostgreSQL database connection object
@@ -80,7 +74,9 @@ def bad_labels_response(labels: List[int]) -> Response:
     :param labels: A list of label IDs that do not exist
     :return: A `bad_request()` response
     """
-    raise HTTPBadRequest(text=f"Labels do not exist: {', '.join(str(label) for label in labels)}")
+    raise HTTPBadRequest(
+        text=f"Labels do not exist: {', '.join(str(label) for label in labels)}"
+    )
 
 
 def join_legacy_read_path(sample_path: Path, suffix: int) -> Path:
@@ -111,7 +107,7 @@ def join_legacy_read_paths(config: Config, sample):
         if sample["paired"]:
             return [
                 join_legacy_read_path(sample_path, 1),
-                join_legacy_read_path(sample_path, 2)
+                join_legacy_read_path(sample_path, 2),
             ]
 
         return [join_legacy_read_path(sample_path, 1)]

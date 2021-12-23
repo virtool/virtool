@@ -10,11 +10,18 @@ from aiohttp.test_utils import make_mocked_coro, make_mocked_request
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool.labels.models import Label
 from virtool.pg.utils import get_row_by_id
-from virtool.samples.db import (attach_labels, check_is_legacy,
-                                compose_sample_workflow_query,
-                                compress_sample_reads, create_sample, finalize,
-                                get_sample_owner, recalculate_workflow_tags,
-                                remove_samples, update_is_compressed)
+from virtool.samples.db import (
+    attach_labels,
+    check_is_legacy,
+    compose_sample_workflow_query,
+    compress_sample_reads,
+    create_sample,
+    finalize,
+    get_sample_owner,
+    recalculate_workflow_tags,
+    remove_samples,
+    update_is_compressed,
+)
 from virtool.samples.models import SampleReads
 from virtool.samples.utils import calculate_workflow_tags
 from virtool.uploads.models import Upload
@@ -23,25 +30,33 @@ FASTQ_PATH = Path(__file__).parent.parent / "test_files/test.fq"
 
 
 class TestCalculateWorkflowTags:
-
-    @pytest.mark.parametrize("path_ready,path_tag", [
-        ([False, False], "ip"),
-        ([True, False], True),
-        ([False, True], True),
-        ([True, True], True)
-    ])
-    @pytest.mark.parametrize("alg1,alg2", [
-        ("bowtie", "bowtie"),
-        ("bowtie", "barracuda"),
-        ("barracuda", "bowtie"),
-        ("barracuda", "barracuda")
-    ])
-    @pytest.mark.parametrize("nuvs_ready,nuvs_tag", [
-        ([False, False], "ip"),
-        ([True, False], True),
-        ([False, True], True),
-        ([True, True], True)
-    ])
+    @pytest.mark.parametrize(
+        "path_ready,path_tag",
+        [
+            ([False, False], "ip"),
+            ([True, False], True),
+            ([False, True], True),
+            ([True, True], True),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "alg1,alg2",
+        [
+            ("bowtie", "bowtie"),
+            ("bowtie", "barracuda"),
+            ("barracuda", "bowtie"),
+            ("barracuda", "barracuda"),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "nuvs_ready,nuvs_tag",
+        [
+            ([False, False], "ip"),
+            ([True, False], True),
+            ([False, True], True),
+            ([True, True], True),
+        ],
+    )
     def test(self, path_ready, alg1, alg2, path_tag, nuvs_ready, nuvs_tag):
         """
         Test that the function returns the correct update dict for every combination of pathoscope
@@ -57,84 +72,65 @@ class TestCalculateWorkflowTags:
             {
                 "_id": index,
                 "ready": path_ready_1,
-                "workflow": "pathoscope_{}".format(alg1)
+                "workflow": "pathoscope_{}".format(alg1),
             },
             {
                 "_id": index,
                 "ready": path_ready_2,
-                "workflow": "pathoscope_{}".format(alg2)
+                "workflow": "pathoscope_{}".format(alg2),
             },
-            {
-                "_id": index,
-                "ready": nuvs_ready_1,
-                "workflow": "nuvs"
-            },
-            {
-                "_id": index,
-                "ready": nuvs_ready_2,
-                "workflow": "nuvs"
-            }
+            {"_id": index, "ready": nuvs_ready_1, "workflow": "nuvs"},
+            {"_id": index, "ready": nuvs_ready_2, "workflow": "nuvs"},
         ]
 
         tags = calculate_workflow_tags(documents)
 
-        assert tags == {
-            "pathoscope": path_tag,
-            "nuvs": nuvs_tag
-        }
+        assert tags == {"pathoscope": path_tag, "nuvs": nuvs_tag}
 
 
 class TestRecalculateWorkflowTags:
-
     async def test(self, mocker, dbi):
-        await dbi.samples.insert_one({
-            "_id": "test",
-            "pathoscope": False,
-            "nuvs": False
-        })
+        await dbi.samples.insert_one(
+            {"_id": "test", "pathoscope": False, "nuvs": False}
+        )
 
         analysis_documents = [
             {
                 "_id": "test_1",
                 "workflow": "pathoscope_bowtie",
                 "ready": "ip",
-                "sample": {
-                    "id": "test"
-                }
+                "sample": {"id": "test"},
             },
             {
                 "_id": "test_2",
                 "workflow": "pathoscope_bowtie",
                 "ready": True,
-                "sample": {
-                    "id": "test"
-                }
+                "sample": {"id": "test"},
             },
             {
                 "_id": "test_3",
                 "workflow": "nuvs",
                 "ready": True,
-                "sample": {
-                    "id": "test"
-                }
-            }
+                "sample": {"id": "test"},
+            },
         ]
 
-        await dbi.analyses.insert_many(analysis_documents + [
-            {
-                "_id": "test_4",
-                "sample": {
-                    "id": "foobar"
-                },
-                "workflow": "pathoscope_bowtie",
-                "ready": True
-            }
-        ])
+        await dbi.analyses.insert_many(
+            analysis_documents
+            + [
+                {
+                    "_id": "test_4",
+                    "sample": {"id": "foobar"},
+                    "workflow": "pathoscope_bowtie",
+                    "ready": True,
+                }
+            ]
+        )
 
-        m = mocker.patch("virtool.samples.utils.calculate_workflow_tags", return_value={
-            "pathoscope": True,
-            "nuvs": "ip"
-        })
+        m = mocker.patch(
+            "virtool.samples.utils.calculate_workflow_tags",
+            return_value={"pathoscope": True, "nuvs": "ip"},
+        )
 
         await recalculate_workflow_tags(dbi, "test")
 
@@ -146,31 +142,22 @@ class TestRecalculateWorkflowTags:
         assert await dbi.samples.find_one() == {
             "_id": "test",
             "pathoscope": True,
-            "nuvs": "ip"
+            "nuvs": "ip",
         }
 
 
 class TestGetSampleOwner:
-
     async def test(self, dbi):
         """
         Test that the correct owner id is returned given a sample id.
 
         """
-        await dbi.samples.insert_many([
-            {
-                "_id": "test",
-                "user": {
-                    "id": "foobar"
-                }
-            },
-            {
-                "_id": "baz",
-                "user": {
-                    "id": "fred"
-                }
-            },
-        ])
+        await dbi.samples.insert_many(
+            [
+                {"_id": "test", "user": {"id": "foobar"}},
+                {"_id": "baz", "user": {"id": "fred"}},
+            ]
+        )
 
         assert await get_sample_owner(dbi, "test") == "foobar"
 
@@ -183,11 +170,13 @@ class TestGetSampleOwner:
 
 
 class TestRemoveSamples:
-
-    @pytest.mark.parametrize("id_list", [
-        ["test_1"],
-        ["test_1", "test_2"],
-    ])
+    @pytest.mark.parametrize(
+        "id_list",
+        [
+            ["test_1"],
+            ["test_1", "test_2"],
+        ],
+    )
     async def test(self, id_list, snapshot, tmp_path, dbi, config):
         """
         Test that the function can remove one or more samples, their analysis documents, and files.
@@ -205,23 +194,23 @@ class TestRemoveSamples:
         for handle in paths.values():
             handle.joinpath("text.txt").write_text("hello world")
 
-        await dbi.samples.insert_many([
-            {"_id": "test_1"},
-            {"_id": "test_2"},
-            {"_id": "test_3"}
-        ])
+        await dbi.samples.insert_many(
+            [{"_id": "test_1"}, {"_id": "test_2"}, {"_id": "test_3"}]
+        )
 
-        await dbi.analyses.insert_many([
-            {"_id": "a_1", "sample": {"id": "test_1"}},
-            {"_id": "a_2", "sample": {"id": "test_1"}},
-            {"_id": "a_3", "sample": {"id": "test_2"}},
-            {"_id": "a_4", "sample": {"id": "test_2"}},
-            {"_id": "a_5", "sample": {"id": "test_2"}},
-            {"_id": "a_6", "sample": {"id": "test_3"}},
-            {"_id": "a_7", "sample": {"id": "test_3"}},
-            {"_id": "a_8", "sample": {"id": "test_3"}},
-            {"_id": "a_9", "sample": {"id": "test_3"}}
-        ])
+        await dbi.analyses.insert_many(
+            [
+                {"_id": "a_1", "sample": {"id": "test_1"}},
+                {"_id": "a_2", "sample": {"id": "test_1"}},
+                {"_id": "a_3", "sample": {"id": "test_2"}},
+                {"_id": "a_4", "sample": {"id": "test_2"}},
+                {"_id": "a_5", "sample": {"id": "test_2"}},
+                {"_id": "a_6", "sample": {"id": "test_3"}},
+                {"_id": "a_7", "sample": {"id": "test_3"}},
+                {"_id": "a_8", "sample": {"id": "test_3"}},
+                {"_id": "a_9", "sample": {"id": "test_3"}},
+            ]
+        )
 
         await remove_samples(dbi, config, id_list)
 
@@ -239,10 +228,7 @@ class TestRemoveSamples:
 
         samples_dir.joinpath("test.txt").write_text("hello world")
 
-        await dbi.samples.insert_many([
-            {"_id": "test_1"},
-            {"_id": "test_2"}
-        ])
+        await dbi.samples.insert_many([{"_id": "test_1"}, {"_id": "test_2"}])
 
         await remove_samples(dbi, config, ["test_1", "test_2"])
 
@@ -251,29 +237,17 @@ class TestRemoveSamples:
 
 
 async def test_attach_labels(snapshot, pg: AsyncEngine, pg_session):
-    label_1 = Label(
-        id=1,
-        name="Bug",
-        color="#a83432",
-        description="This is a bug"
-    )
+    label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
 
     label_2 = Label(
-        id=2,
-        name="Question",
-        color="#03fc20",
-        description="This is a question"
+        id=2, name="Question", color="#03fc20", description="This is a question"
     )
 
     async with pg_session as session:
         session.add_all([label_1, label_2])
         await session.commit()
 
-    document = {
-        "id": "foo",
-        "name": "Foo",
-        "labels": [1, 2]
-    }
+    document = {"id": "foo", "name": "Foo", "labels": [1, 2]}
 
     assert await attach_labels(pg, document) == snapshot
 
@@ -299,7 +273,7 @@ async def test_create_sample(dbi, mocker, snapshot, static_time, spawn_client):
         "test",
         [],
         "bob",
-        settings=client.app["settings"]
+        settings=client.app["settings"],
     )
 
     assert result == snapshot
@@ -307,13 +281,15 @@ async def test_create_sample(dbi, mocker, snapshot, static_time, spawn_client):
 
 
 class TestCheckIsLegacy:
-
-    @pytest.mark.parametrize("is_legacy,files", [
-        (False, [{"raw": True}]),
-        (True, [{"raw": False}]),
-        (False, [{"raw": True}, {"raw": False}]),
-        (True, [{"raw": False}, {"raw": False}]),
-    ])
+    @pytest.mark.parametrize(
+        "is_legacy,files",
+        [
+            (False, [{"raw": True}]),
+            (True, [{"raw": False}]),
+            (False, [{"raw": True}, {"raw": False}]),
+            (True, [{"raw": False}, {"raw": False}]),
+        ],
+    )
     def test_raw(self, is_legacy, files):
         """
         Test that checks check ``raw`` files field correctly.
@@ -326,11 +302,7 @@ class TestCheckIsLegacy:
         except IndexError:
             pass
 
-        sample = {
-            "_id": "foo",
-            "paired": len(files) == 2,
-            "files": files
-        }
+        sample = {"_id": "foo", "paired": len(files) == 2, "files": files}
 
         assert check_is_legacy(sample) is is_legacy
 
@@ -340,22 +312,12 @@ class TestCheckIsLegacy:
         Test that checks fail when names are not as expected.
 
         """
-        files = [{
-            "name": "reads.fastq",
-            "raw": False
-        }]
+        files = [{"name": "reads.fastq", "raw": False}]
 
         if paired:
-            files.append({
-                "name": "reads_two.fastq",
-                "raw": False
-            })
+            files.append({"name": "reads_two.fastq", "raw": False})
 
-        sample = {
-            "_id": "foo",
-            "files": files,
-            "paired": paired
-        }
+        sample = {"_id": "foo", "files": files, "paired": paired}
 
         assert check_is_legacy(sample) is False
 
@@ -371,20 +333,10 @@ async def test_update_is_compressed(snapshot, dbi):
             "files": [
                 {"name": "reads_1.fq.gz"},
                 {"name": "reads_2.fq.gz"},
-            ]
+            ],
         },
-        {
-            "_id": "baz",
-            "files": [
-                {"name": "reads_1.fastq"}
-            ]
-        },
-        {
-            "_id": "bar",
-            "files": [
-                {"name": "reads_1.fq.gz"}
-            ]
-        }
+        {"_id": "baz", "files": [{"name": "reads_1.fastq"}]},
+        {"_id": "bar", "files": [{"name": "reads_1.fq.gz"}]},
     ]
 
     await dbi.samples.insert_many(samples)
@@ -396,8 +348,7 @@ async def test_update_is_compressed(snapshot, dbi):
 @pytest.mark.parametrize("paired", [True, False])
 async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, config):
     m_update_is_compressed = mocker.patch(
-        "virtool.samples.db.update_is_compressed",
-        make_mocked_coro()
+        "virtool.samples.db.update_is_compressed", make_mocked_coro()
     )
 
     async def run_in_thread(func, *args):
@@ -411,11 +362,7 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
     if paired:
         shutil.copy(FASTQ_PATH, sample_dir / "reads_2.fastq")
 
-    app_dict = {
-        "db": dbi,
-        "run_in_thread": run_in_thread,
-        "config": config
-    }
+    app_dict = {"db": dbi, "run_in_thread": run_in_thread, "config": config}
 
     sample_id = "foo"
 
@@ -427,24 +374,22 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
         "from": {
             "id": "M_S11_R1_001.fastq",
             "name": "M_S11_R1_001.fastq",
-            "size": 3750821789
-        }
+            "size": 3750821789,
+        },
     }
 
     files = [reads_file]
 
     if paired:
-        files.append({
-            **reads_file,
-            "name": "reads_2.fastq",
-            "download_url": f"/download/samples/{sample_id}/reads_2.fastq"
-        })
+        files.append(
+            {
+                **reads_file,
+                "name": "reads_2.fastq",
+                "download_url": f"/download/samples/{sample_id}/reads_2.fastq",
+            }
+        )
 
-    sample = {
-        "_id": sample_id,
-        "files": files,
-        "paired": paired
-    }
+    sample = {"_id": sample_id, "files": files, "paired": paired}
 
     await dbi.samples.insert_one(sample)
 
@@ -468,30 +413,17 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
 
 
 async def test_finalize(snapshot, tmp_path, dbi, fake, pg: AsyncEngine, pg_session):
-    quality = {
-        "count": 10000000,
-        "gc": 43
-    }
+    quality = {"count": 10000000, "gc": 43}
 
     user = await fake.users.insert()
 
-    await dbi.samples.insert_one({
-        "_id": "test",
-        "user": {
-            "id": user["_id"]
-        }
-    })
+    await dbi.samples.insert_one({"_id": "test", "user": {"id": user["_id"]}})
 
     async with pg_session as session:
-        upload = Upload(
-            name="test",
-            name_on_disk="test.fq.gz"
-        )
+        upload = Upload(name="test", name_on_disk="test.fq.gz")
 
         reads = SampleReads(
-            name="reads_1.fq.gz",
-            name_on_disk="reads_1.fq.gz",
-            sample="test"
+            name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test"
         )
 
         upload.reads.append(reads)
@@ -501,14 +433,7 @@ async def test_finalize(snapshot, tmp_path, dbi, fake, pg: AsyncEngine, pg_sessi
 
     m_run_in_thread = make_mocked_coro()
 
-    result = await finalize(
-        dbi,
-        pg,
-        "test",
-        quality,
-        m_run_in_thread,
-        tmp_path
-    )
+    result = await finalize(dbi, pg, "test", quality, m_run_in_thread, tmp_path)
 
     assert result == snapshot
     assert not await virtool.uploads.db.get(pg, 1)
@@ -516,11 +441,14 @@ async def test_finalize(snapshot, tmp_path, dbi, fake, pg: AsyncEngine, pg_sessi
 
 
 class TestComposeWorkflowQuery:
-
-    @pytest.mark.parametrize("url", [
-        "/samples?workflows=pathoscope%3Aready foo%3Apending foo%3Anone",
-        "/samples?workflows=pathoscope%3Aready foo%3Apending&workflows=foo%3Anone"
-    ], ids=["single", "multiple"])
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "/samples?workflows=pathoscope%3Aready foo%3Apending foo%3Anone",
+            "/samples?workflows=pathoscope%3Aready foo%3Apending&workflows=foo%3Anone",
+        ],
+        ids=["single", "multiple"],
+    )
     def test(self, url):
         """
         Test that the workflow query is composed from a single `workflows` parameter as well as
@@ -529,8 +457,7 @@ class TestComposeWorkflowQuery:
         """
         req = make_mocked_request("GET", url)
 
-        result = compose_sample_workflow_query(req.query)\
-
+        result = compose_sample_workflow_query(req.query)
         assert len(result) == 2
         assert result["pathoscope"]["$in"] == [True]
         assert set(result["foo"]["$in"]) == {False, "ip"}
@@ -540,10 +467,7 @@ class TestComposeWorkflowQuery:
         Check that `None` is returned when there is no `workflows` parameter.
 
         """
-        req = make_mocked_request(
-            "GET",
-            "/samples?find=foo"
-        )
+        req = make_mocked_request("GET", "/samples?find=foo")
 
         assert compose_sample_workflow_query(req.query) is None
 
@@ -553,14 +477,11 @@ class TestComposeWorkflowQuery:
 
         """
         req = make_mocked_request(
-            "GET",
-            "/samples?workflows=pathoscope%3Abar pathoscope%3Aready"
+            "GET", "/samples?workflows=pathoscope%3Abar pathoscope%3Aready"
         )
 
         assert compose_sample_workflow_query(req.query) == {
-            "pathoscope": {
-                "$in": [True]
-            }
+            "pathoscope": {"$in": [True]}
         }
 
     def test_all_conditions_invalid(self):
@@ -568,9 +489,6 @@ class TestComposeWorkflowQuery:
         Check that if no valid conditions are found, `None` is returned.
 
         """
-        req = make_mocked_request(
-            "GET",
-            "/samples?workflows=pathoscope%3Abar"
-        )
+        req = make_mocked_request("GET", "/samples?workflows=pathoscope%3Abar")
 
         assert compose_sample_workflow_query(req.query) is None

@@ -5,9 +5,7 @@ from virtool.settings.db import Settings
 
 @pytest.fixture()
 async def test_settings(dbi):
-    await dbi.settings.delete_one({
-        "_id": "settings"
-    })
+    await dbi.settings.delete_one({"_id": "settings"})
 
     settings = {
         "_id": "settings",
@@ -22,7 +20,7 @@ async def test_settings(dbi):
         "sample_group_read": True,
         "sample_group_write": False,
         "sample_unique_names": True,
-        "software_channel": "stable"
+        "software_channel": "stable",
     }
 
     await dbi.settings.insert_one(settings)

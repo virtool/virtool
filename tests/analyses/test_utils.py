@@ -11,14 +11,16 @@ import virtool.analyses.utils
 @pytest.mark.parametrize("exists", [True, False])
 async def test_attach_analysis_files(exists, snapshot, pg):
     if exists:
-        await virtool.analyses.files.create_analysis_file(pg, "foobar", "fasta", "reference-fa")
+        await virtool.analyses.files.create_analysis_file(
+            pg, "foobar", "fasta", "reference-fa"
+        )
 
-    document = {
-        "_id": "foobar",
-        "ready": True
-    }
+    document = {"_id": "foobar", "ready": True}
 
-    assert await virtool.analyses.utils.attach_analysis_files(pg, "foobar", document) == snapshot
+    assert (
+        await virtool.analyses.utils.attach_analysis_files(pg, "foobar", document)
+        == snapshot
+    )
 
 
 @pytest.mark.parametrize("name", ["nuvs", "pathoscope"])
@@ -28,8 +30,7 @@ def test_get_json_path(name):
     and `analysis_id` arguments.
 
     """
-    path = virtool.analyses.utils.join_analysis_json_path(
-        Path("data"), "bar", "foo")
+    path = virtool.analyses.utils.join_analysis_json_path(Path("data"), "bar", "foo")
 
     assert path == Path("data/samples/foo/analysis/bar/results.json")
 
@@ -41,8 +42,7 @@ async def test_check_nuvs_file_type(file_type):
         assert result == "fasta"
 
     if file_type == "fastq":
-        result = virtool.analyses.utils.check_nuvs_file_type(
-            "unmapped_hosts.fq")
+        result = virtool.analyses.utils.check_nuvs_file_type("unmapped_hosts.fq")
         assert result == "fastq"
 
     if file_type == "tsv":
@@ -61,8 +61,12 @@ async def test_move_nuvs_files(tmp_path, spawn_client):
     target_path = tmp_path.joinpath("analyses")
     target_path.mkdir()
 
-    await virtool.analyses.utils.move_nuvs_files("hmm.tsv", client.app["run_in_thread"], file_path, target_path)
+    await virtool.analyses.utils.move_nuvs_files(
+        "hmm.tsv", client.app["run_in_thread"], file_path, target_path
+    )
     assert set(os.listdir(target_path)) == {"hmm.tsv"}
 
-    await virtool.analyses.utils.move_nuvs_files("assembly.fa", client.app["run_in_thread"], file_path, target_path)
+    await virtool.analyses.utils.move_nuvs_files(
+        "assembly.fa", client.app["run_in_thread"], file_path, target_path
+    )
     assert set(os.listdir(target_path)) == {"hmm.tsv", "assembly.fa.gz"}

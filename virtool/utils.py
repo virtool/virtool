@@ -24,7 +24,7 @@ SUB_DIRS = [
     "samples",
     "history",
     "hmm",
-    "logs/jobs"
+    "logs/jobs",
 ]
 
 
@@ -53,7 +53,7 @@ def base_processor(document: Optional[dict]) -> Optional[dict]:
 def chunk_list(lst: list, n: int):
     """Yield successive n-sized chunks from `lst`."""
     for i in range(0, len(lst), n):
-        yield lst[i:i + n]
+        yield lst[i : i + n]
 
 
 def compress_file(path: Path, target: Path, processes: int = 1):
@@ -74,13 +74,7 @@ def compress_file_with_gzip(path: Path, target: Path):
 
 
 def compress_file_with_pigz(path: Path, target: Path, processes: int):
-    command = [
-        "pigz",
-        "-p", str(processes),
-        "-k",
-        "--stdout",
-        path
-    ]
+    command = ["pigz", "-p", str(processes), "-k", "--stdout", path]
 
     with open(target, "wb") as f:
         subprocess.call(command, stdout=f)
@@ -132,14 +126,7 @@ def decompress_file_with_gzip(path: Path, target: Path):
 
 
 def decompress_file_with_pigz(path: Path, target: Path, processes: int):
-    command = [
-        "pigz",
-        "-p", str(processes),
-        "-d",
-        "-k",
-        "--stdout",
-        path
-    ]
+    command = ["pigz", "-p", str(processes), "-d", "-k", "--stdout", path]
 
     with open(target, "w") as f:
         subprocess.call(command, stdout=f)
@@ -179,10 +166,7 @@ def file_stats(path: Path) -> dict:
     stats = path.stat()
 
     # Append file entry to reply list
-    return {
-        "size": stats.st_size,
-        "modify": arrow.get(stats.st_mtime).datetime
-    }
+    return {"size": stats.st_size, "modify": arrow.get(stats.st_mtime).datetime}
 
 
 def generate_key() -> Tuple[str, str]:
@@ -199,9 +183,9 @@ def get_temp_dir():
 
 
 def random_alphanumeric(
-        length: Optional[int] = 6,
-        mixed_case: Optional[bool] = False,
-        excluded: Optional[Iterable[str]] = None
+    length: Optional[int] = 6,
+    mixed_case: Optional[bool] = False,
+    excluded: Optional[Iterable[str]] = None,
 ) -> str:
     """
     Generates a random string composed of letters and numbers.

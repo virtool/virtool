@@ -19,10 +19,7 @@ class StoreNuvsFilesTask(Task):
     def __init__(self, app: App, task_id: int):
         super().__init__(app, task_id)
 
-        self.steps = [
-            self.store_nuvs_files,
-            self.remove_directory
-        ]
+        self.steps = [self.store_nuvs_files, self.remove_directory]
 
         self.nuvs_directory = []
 
@@ -38,17 +35,15 @@ class StoreNuvsFilesTask(Task):
             analysis_id = analysis["_id"]
             sample_id = analysis["sample"]["id"]
 
-            path = join_analysis_path(
-                config.data_path,
-                analysis_id,
-                sample_id
-            )
+            path = join_analysis_path(config.data_path, analysis_id, sample_id)
 
             target_path = config.data_path / "analyses" / analysis_id
 
             async with AsyncSession(self.app["pg"]) as session:
                 exists = (
-                    await session.execute(select(AnalysisFile).filter_by(analysis=analysis_id))
+                    await session.execute(
+                        select(AnalysisFile).filter_by(analysis=analysis_id)
+                    )
                 ).scalar()
 
             if path.is_dir() and not exists:
@@ -64,24 +59,14 @@ class StoreNuvsFilesTask(Task):
                         analysis_files.append(filename)
 
                         await move_nuvs_files(
-                            filename,
-                            self.run_in_thread,
-                            path,
-                            target_path
+                            filename, self.run_in_thread, path, target_path
                         )
 
                 await create_nuvs_analysis_files(
-                    self.app["pg"],
-                    analysis_id,
-                    analysis_files,
-                    target_path
+                    self.app["pg"], analysis_id, analysis_files, target_path
                 )
 
-        await virtool.tasks.pg.update(
-            self.pg,
-            self.id,
-            step="store_nuvs_files"
-        )
+        await virtool.tasks.pg.update(self.pg, self.id, step="store_nuvs_files")
 
     async def remove_directory(self):
         """
@@ -95,17 +80,9 @@ class StoreNuvsFilesTask(Task):
             analysis_id = analysis["_id"]
             sample_id = analysis["sample"]["id"]
 
-            path = join_analysis_path(
-                config.data_path,
-                analysis_id,
-                sample_id
-            )
+            path = join_analysis_path(config.data_path, analysis_id, sample_id)
 
             if (config.data_path / "analyses" / analysis_id).is_dir():
                 await self.app["run_in_thread"](shutil.rmtree, path, True)
 
-        await virtool.tasks.pg.update(
-            self.pg,
-            self.id,
-            step="remove_directory"
-        )
+        await virtool.tasks.pg.update(self.pg, self.id, step="remove_directory")

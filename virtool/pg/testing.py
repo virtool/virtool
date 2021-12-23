@@ -19,7 +19,7 @@ async def create_test_database(connection_string: str, name: str):
     engine = create_async_engine(
         f"{connection_string}",
         isolation_level="AUTOCOMMIT",
-        json_serializer=virtool.api.json.dumps
+        json_serializer=virtool.api.json.dumps,
     )
 
     async with engine.connect() as conn:

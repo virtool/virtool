@@ -30,17 +30,9 @@ async def add_is_legacy(db):
     :param db: the application object
 
     """
-    await db.samples.update_many({"files.raw": False}, {
-        "$set": {
-            "is_legacy": True
-        }
-    })
+    await db.samples.update_many({"files.raw": False}, {"$set": {"is_legacy": True}})
 
-    await db.samples.update_many({"files.raw": True}, {
-        "$set": {
-            "is_legacy": False
-        }
-    })
+    await db.samples.update_many({"files.raw": True}, {"$set": {"is_legacy": False}})
 
 
 async def recalculate_all_workflow_tags(db):

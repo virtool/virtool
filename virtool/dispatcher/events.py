@@ -35,7 +35,10 @@ class DispatcherSQLEvents:
     Inspired by signalling in [Flask-SQLAlchemy](https://github.com/pallets/flask-sqlalchemy).
 
     """
-    def __init__(self, enqueue_change: Callable[[str, Operation, List[Union[str, int]]], None]):
+
+    def __init__(
+        self, enqueue_change: Callable[[str, Operation, List[Union[str, int]]], None]
+    ):
         self._enqueue_change = enqueue_change
         self._changes = defaultdict(dict)
 
@@ -92,9 +95,11 @@ class DispatcherSQLEvents:
         session_changes = self._changes[id(session)]
 
         for targets, operation in (
-                (session.new, "insert"), (session.dirty, "update"), (session.deleted, "delete")):
+            (session.new, "insert"),
+            (session.dirty, "update"),
+            (session.deleted, "delete"),
+        ):
             for target in targets:
                 state = inspect(target)
                 key = state.identity_key if state.has_identity else id(target)
                 session_changes[key] = (target, operation)
-

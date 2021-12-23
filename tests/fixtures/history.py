@@ -12,23 +12,12 @@ def test_change(static_time):
         "diff": [
             ["change", "abbreviation", ["PVF", ""]],
             ["change", "name", ["Prunus virus F", "Prunus virus E"]],
-            ["change", "version", [0, 1]]
+            ["change", "version", [0, 1]],
         ],
-        "index": {
-            "id": "unbuilt",
-            "version": "unbuilt"
-        },
-        "reference": {
-            "id": "hxn167"
-        },
-        "user": {
-            "id": "test"
-        },
-        "otu": {
-            "id": "6116cba1",
-            "name": "Prunus virus F",
-            "version": 1
-        }
+        "index": {"id": "unbuilt", "version": "unbuilt"},
+        "reference": {"id": "hxn167"},
+        "user": {"id": "test"},
+        "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 1},
     }
 
 
@@ -37,7 +26,7 @@ def test_changes(test_change):
     return [
         test_change,
         dict(test_change, _id="foobar.1"),
-        dict(test_change, _id="foobar.2")
+        dict(test_change, _id="foobar.2"),
     ]
 
 
@@ -60,25 +49,23 @@ def test_otu_edit():
                         {
                             "_id": "KX269872",
                             "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete "
-                                          "cds.",
+                            "cds.",
                             "host": "sweet cherry",
                             "isolate_id": "cab8b360",
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                            "segment": None
+                            "segment": None,
                         }
                     ],
                     "source_name": "8816-v2",
-                    "source_type": "isolate"
+                    "source_type": "isolate",
                 }
             ],
-            "reference": {
-                "id": "hxn167"
-            },
+            "reference": {"id": "hxn167"},
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
             "name": "Prunus virus F",
             "schema": [],
-            "version": 0
+            "version": 0,
         },
         {
             "_id": "6116cba1",
@@ -92,26 +79,24 @@ def test_otu_edit():
                         {
                             "_id": "KX269872",
                             "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete "
-                                          "cds.",
+                            "cds.",
                             "host": "sweet cherry",
                             "isolate_id": "cab8b360",
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                            "segment": None
+                            "segment": None,
                         }
                     ],
                     "source_name": "8816-v2",
-                    "source_type": "isolate"
+                    "source_type": "isolate",
                 }
             ],
-            "reference": {
-                "id": "hxn167"
-            },
+            "reference": {"id": "hxn167"},
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
             "name": "Prunus virus E",
             "schema": [],
-            "version": 1
-        }
+            "version": 1,
+        },
     )
 
 
@@ -144,37 +129,24 @@ def create_mock_history(dbi):
                                     "isolate_id": "cab8b360",
                                     "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
                                     "otu_id": "6116cba1",
-                                    "segment": None
+                                    "segment": None,
                                 }
-                            ]
+                            ],
                         }
                     ],
-                    "reference": {
-                        "id": "hxn167"
-                    },
+                    "reference": {"id": "hxn167"},
                     "schema": [],
                     "last_indexed_version": 0,
                     "lower_name": "prunus virus f",
                     "verified": False,
                     "name": "Prunus virus F",
-                    "version": 0
+                    "version": 0,
                 },
-                "index": {
-                    "id": "unbuilt",
-                    "version": "unbuilt"
-                },
+                "index": {"id": "unbuilt", "version": "unbuilt"},
                 "method_name": "create",
-                "user": {
-                    "id": "test"
-                },
-                "reference": {
-                    "id": "hxn167"
-                },
-                "otu": {
-                    "id": "6116cba1",
-                    "name": "Prunus virus F",
-                    "version": 0
-                }
+                "user": {"id": "test"},
+                "reference": {"id": "hxn167"},
+                "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 0},
             },
             {
                 "_id": "6116cba1.1",
@@ -182,24 +154,13 @@ def create_mock_history(dbi):
                 "description": "Description",
                 "diff": [
                     ["change", "version", [0, 1]],
-                    ["change", "abbreviation", ["PVF", "TST"]]
+                    ["change", "abbreviation", ["PVF", "TST"]],
                 ],
-                "index": {
-                    "id": "unbuilt",
-                    "version": "unbuilt"
-                },
+                "index": {"id": "unbuilt", "version": "unbuilt"},
                 "method_name": "update",
-                "user": {
-                    "id": "test"
-                },
-                "reference": {
-                    "id": "hxn167"
-                },
-                "otu": {
-                    "id": "6116cba1",
-                    "name": "Prunus virus F",
-                    "version": 1
-                }
+                "user": {"id": "test"},
+                "reference": {"id": "hxn167"},
+                "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 1},
             },
             {
                 "_id": "6116cba1.2",
@@ -207,24 +168,13 @@ def create_mock_history(dbi):
                 "description": "Description",
                 "diff": [
                     ["change", "version", [1, 2]],
-                    ["change", "name", ["Prunus virus F", "Test Virus"]]
+                    ["change", "name", ["Prunus virus F", "Test Virus"]],
                 ],
-                "index": {
-                    "id": "unbuilt",
-                    "version": "unbuilt"
-                },
+                "index": {"id": "unbuilt", "version": "unbuilt"},
                 "method_name": "update",
-                "user": {
-                    "id": "test"
-                },
-                "reference": {
-                    "id": "hxn167"
-                },
-                "otu": {
-                    "id": "6116cba1",
-                    "name": "Prunus virus F",
-                    "version": 2
-                }
+                "user": {"id": "test"},
+                "reference": {"id": "hxn167"},
+                "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 2},
             },
             {
                 "_id": "6116cba1.3",
@@ -232,80 +182,74 @@ def create_mock_history(dbi):
                 "description": "Description",
                 "diff": [
                     ["change", "version", [2, 3]],
-                    ["remove", "isolates", [[0, {
-                        "default": True,
-                        "id": "cab8b360",
-                        "sequences": [{
-                            "_id": "KX269872",
-                            "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete "
-                                          "cds.",
-                            "host": "sweet cherry",
-                            "isolate_id": "cab8b360",
-                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                            "otu_id": "6116cba1",
-                            "segment": None
-                        }],
-                        "source_name": "8816-v2",
-                        "source_type": "isolate"}]
-                    ]]],
-                "index": {
-                    "id": "unbuilt",
-                    "version": "unbuilt"
-                },
+                    [
+                        "remove",
+                        "isolates",
+                        [
+                            [
+                                0,
+                                {
+                                    "default": True,
+                                    "id": "cab8b360",
+                                    "sequences": [
+                                        {
+                                            "_id": "KX269872",
+                                            "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete "
+                                            "cds.",
+                                            "host": "sweet cherry",
+                                            "isolate_id": "cab8b360",
+                                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                                            "otu_id": "6116cba1",
+                                            "segment": None,
+                                        }
+                                    ],
+                                    "source_name": "8816-v2",
+                                    "source_type": "isolate",
+                                },
+                            ]
+                        ],
+                    ],
+                ],
+                "index": {"id": "unbuilt", "version": "unbuilt"},
                 "method_name": "remove_isolate",
-                "user": {
-                    "id": "test"
-                },
-                "reference": {
-                    "id": "hxn167"
-                },
-                "otu": {
-                    "id": "6116cba1",
-                    "name": "Test Virus",
-                    "version": 3
-                }
-            }
+                "user": {"id": "test"},
+                "reference": {"id": "hxn167"},
+                "otu": {"id": "6116cba1", "name": "Test Virus", "version": 3},
+            },
         ]
 
         otu = None
 
         if remove:
-            documents.append({
-                "_id": "6116cba1.removed",
-                "created_at": datetime.datetime(2017, 7, 12, 16, 0, 50, 605000),
-                "description": "Description",
-                "diff": {
-                    "_id": "6116cba1",
-                    "abbreviation": "TST",
-                    "imported": True,
-                    "isolates": [],
-                    "last_indexed_version": 0,
-                    "lower_name": "prunus virus f",
-                    "verified": False,
-                    "name": "Test Virus",
-                    "reference": {
-                        "id": "hxn167"
+            documents.append(
+                {
+                    "_id": "6116cba1.removed",
+                    "created_at": datetime.datetime(2017, 7, 12, 16, 0, 50, 605000),
+                    "description": "Description",
+                    "diff": {
+                        "_id": "6116cba1",
+                        "abbreviation": "TST",
+                        "imported": True,
+                        "isolates": [],
+                        "last_indexed_version": 0,
+                        "lower_name": "prunus virus f",
+                        "verified": False,
+                        "name": "Test Virus",
+                        "reference": {"id": "hxn167"},
+                        "version": 3,
+                        "schema": [],
                     },
-                    "version": 3,
-                    "schema": [],
-                },
-                "index": {
-                    "id": "unbuilt",
-                    "version": "unbuilt"
-                },
-                "reference": {
-                    "id": "hxn167"
-                },
-                "method_name": "remove",
-                "user": {
-                    "id": "test"
-                },
-                "otu": {
-                    "id": "6116cba1",
-                    "name": "Test Virus",
-                    "version": "removed"
+                    "index": {"id": "unbuilt", "version": "unbuilt"},
+                    "reference": {"id": "hxn167"},
+                    "method_name": "remove",
+                    "user": {"id": "test"},
+                    "otu": {
+                        "id": "6116cba1",
+                        "name": "Test Virus",
+                        "version": "removed",
+                    },
                 }
-            })
+            )
         else:
             otu = {
                 "_id": "6116cba1",
@@ -316,9 +260,7 @@ def create_mock_history(dbi):
                 "lower_name": "prunus virus f",
                 "verified": False,
                 "name": "Test Virus",
-                "reference": {
-                    "id": "hxn167"
-                },
+                "reference": {"id": "hxn167"},
                 "version": 3,
                 "schema": [],
             }

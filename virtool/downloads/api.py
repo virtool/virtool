@@ -40,7 +40,9 @@ async def download_isolate(req):
     isolate_id = req.match_info["isolate_id"]
 
     try:
-        filename, fasta = await virtool.downloads.db.generate_isolate_fasta(db, otu_id, isolate_id)
+        filename, fasta = await virtool.downloads.db.generate_isolate_fasta(
+            db, otu_id, isolate_id
+        )
     except virtool.errors.DatabaseError as err:
         if "OTU does not exist" in str(err):
             raise NotFound("OTU not found")
@@ -50,9 +52,9 @@ async def download_isolate(req):
 
         raise
 
-    return web.Response(text=fasta, headers={
-        "Content-Disposition": f"attachment; filename={filename}"
-    })
+    return web.Response(
+        text=fasta, headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
 
 
 @routes.get("/download/sequences/{sequence_id}")
@@ -66,7 +68,9 @@ async def download_sequence(req):
     sequence_id = req.match_info["sequence_id"]
 
     try:
-        filename, fasta = await virtool.downloads.db.generate_sequence_fasta(db, sequence_id)
+        filename, fasta = await virtool.downloads.db.generate_sequence_fasta(
+            db, sequence_id
+        )
     except virtool.errors.DatabaseError as err:
         if "Sequence does not exist" in str(err):
             raise NotFound("Sequence not found")
@@ -82,6 +86,6 @@ async def download_sequence(req):
     if fasta is None:
         return web.Response(status=404)
 
-    return web.Response(text=fasta, headers={
-        "Content-Disposition": f"attachment; filename={filename}"
-    })
+    return web.Response(
+        text=fasta, headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )

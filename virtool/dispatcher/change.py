@@ -13,6 +13,7 @@ class Change:
     the resource to connected browser clients.
 
     """
+
     interface: str
     operation: Operation
     id_list: Sequence[Union[int, str]]
@@ -22,7 +23,9 @@ class Change:
         return f"{self.interface}.{self.operation}"
 
     def __repr__(self):
-        return f'<Change' \
-               f' interface="{self.interface}"' \
-               f' operation="{self.operation}"' \
-               f' id_list="{self.id_list}">'
+        return (
+            f"<Change"
+            f' interface="{self.interface}"'
+            f' operation="{self.operation}"'
+            f' id_list="{self.id_list}">'
+        )

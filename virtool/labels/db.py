@@ -8,5 +8,5 @@ async def attach_sample_count(db, document: dict) -> Dict[str, Any]:
     """
     return {
         **document,
-        "count": await db.samples.count_documents({"labels": document["id"]})
+        "count": await db.samples.count_documents({"labels": document["id"]}),
     }

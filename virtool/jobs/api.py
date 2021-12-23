@@ -33,19 +33,12 @@ async def find(req):
         db_query.update(compose_regex_query(term, ["workflow", "user.id"]))
 
     data = await paginate(
-        db.jobs,
-        db_query,
-        req.query,
-        projection=LIST_PROJECTION,
-        sort="created_at"
+        db.jobs, db_query, req.query, projection=LIST_PROJECTION, sort="created_at"
     )
 
     documents = await attach_users(db, data["documents"])
 
-    return json_response({
-        **data,
-        "documents": documents
-    })
+    return json_response({**data, "documents": documents})
 
 
 @routes.get("/jobs/{job_id}")
@@ -68,13 +61,7 @@ async def get(req):
 
 @routes.patch("/jobs/{job_id}")
 @routes.jobs_api.patch("/jobs/{job_id}")
-@schema({
-    "acquired": {
-        "type": "boolean",
-        "allowed": [True],
-        "required": True
-    }
-})
+@schema({"acquired": {"type": "boolean", "allowed": [True], "required": True}})
 async def acquire(req):
     """
     Sets the acquired field on the job document.
@@ -125,60 +112,40 @@ async def cancel(req):
 
 @routes.post("/jobs/{job_id}/status")
 @routes.jobs_api.post("/jobs/{job_id}/status")
-@schema({
-    "error": {
-        "type": "dict",
-        "default": None,
-        "nullable": True,
-        "schema": {
-            "type": {
-                "type": "string",
-                "required": True
+@schema(
+    {
+        "error": {
+            "type": "dict",
+            "default": None,
+            "nullable": True,
+            "schema": {
+                "type": {"type": "string", "required": True},
+                "traceback": {
+                    "type": "list",
+                    "items": [{"type": "string"}],
+                    "required": True,
+                },
+                "details": {
+                    "type": "list",
+                    "items": [{"type": "string"}],
+                    "required": True,
+                },
             },
-            "traceback": {
-                "type": "list",
-                "items": [{"type": "string"}],
-                "required": True
-            },
-            "details": {
-                "type": "list",
-                "items": [{"type": "string"}],
-                "required": True
-            }
-        }
-    },
-    "progress": {
-        "type": "integer",
-        "required": True,
-        "min": 0,
-        "max": 100
-    },
-    "stage": {
-        "type": "string",
-        "required": True,
-    },
-    "step_name": {
-        "type": "string",
-        "default": None,
-        "nullable": True
-    },
-    "step_description": {
-        "type": "string",
-        "default": None,
-        "nullable": True
-    },
-    "state": {
-        "type": "string",
-        "allowed": [
-            "waiting",
-            "running",
-            "complete",
-            "cancelled",
-            "error"
-        ],
-        "required": True
+        },
+        "progress": {"type": "integer", "required": True, "min": 0, "max": 100},
+        "stage": {
+            "type": "string",
+            "required": True,
+        },
+        "step_name": {"type": "string", "default": None, "nullable": True},
+        "step_description": {"type": "string", "default": None, "nullable": True},
+        "state": {
+            "type": "string",
+            "allowed": ["waiting", "running", "complete", "cancelled", "error"],
+            "required": True,
+        },
     }
-})
+)
 async def push_status(req):
     """
     Push a status update to a job.
@@ -202,27 +169,28 @@ async def push_status(req):
     if data["state"] == "error" and not data["error"]:
         raise HTTPBadRequest(text="Missing error information")
 
-    document = await db.jobs.find_one_and_update({"_id": job_id}, {
-        "$set": {
-            "state": data["state"]
+    document = await db.jobs.find_one_and_update(
+        {"_id": job_id},
+        {
+            "$set": {"state": data["state"]},
+            "$push": {
+                "status": {
+                    "state": data["state"],
+                    "stage": data["stage"],
+                    "step_name": data["step_name"],
+                    "step_description": data["step_description"],
+                    "error": data["error"],
+                    "progress": data["progress"],
+                    "timestamp": virtool.utils.timestamp(),
+                }
+            },
         },
-        "$push": {
-            "status": {
-                "state": data["state"],
-                "stage": data["stage"],
-                "step_name": data["step_name"],
-                "step_description": data["step_description"],
-                "error": data["error"],
-                "progress": data["progress"],
-                "timestamp": virtool.utils.timestamp()
-            }
-        }
-    })
+    )
 
     return json_response(document["status"][-1], status=201)
 
 
-@ routes.delete("/jobs", permission="remove_job")
+@routes.delete("/jobs", permission="remove_job")
 async def clear(req):
     db = req.app["db"]
 
@@ -236,12 +204,10 @@ async def clear(req):
 
     removed = await virtool.jobs.db.clear(db, complete=complete, failed=failed)
 
-    return json_response({
-        "removed": removed
-    })
+    return json_response({"removed": removed})
 
 
-@ routes.delete("/jobs/{job_id}", permission="remove_job")
+@routes.delete("/jobs/{job_id}", permission="remove_job")
 async def remove(req):
     """
     Remove a job.
@@ -255,8 +221,7 @@ async def remove(req):
         raise NotFound()
 
     if is_running_or_waiting(document):
-        raise HTTPConflict(
-            text="Job is running or waiting and cannot be removed")
+        raise HTTPConflict(text="Job is running or waiting and cannot be removed")
 
     await delete(req.app, job_id)
 

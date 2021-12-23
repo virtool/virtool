@@ -14,8 +14,7 @@ def test_detect_duplicate_abbreviation(in_seen, empty, test_otu):
     if empty:
         test_otu["abbreviation"] = ""
 
-    virtool.references.utils.detect_duplicate_abbreviation(
-        test_otu, duplicates, seen)
+    virtool.references.utils.detect_duplicate_abbreviation(test_otu, duplicates, seen)
 
     if in_seen or not empty:
         assert seen == {"PVF"}
@@ -36,8 +35,7 @@ def test_detect_duplicate_ids(seen, test_otu):
     if seen:
         seen_ids.add("6116cba1")
 
-    virtool.references.utils.detect_duplicate_ids(
-        test_otu, duplicate_ids, seen_ids)
+    virtool.references.utils.detect_duplicate_ids(test_otu, duplicate_ids, seen_ids)
 
     assert duplicate_ids == ({"6116cba1"} if seen else set())
     assert seen_ids == {"6116cba1"}
@@ -55,14 +53,12 @@ def test_detect_duplicate_isolate_ids(has_dups, test_otu):
     duplicate_isolate_ids = dict()
 
     virtool.references.utils.detect_duplicate_isolate_ids(
-        test_otu, duplicate_isolate_ids)
+        test_otu, duplicate_isolate_ids
+    )
 
     if has_dups:
         assert duplicate_isolate_ids == {
-            test_otu["_id"]: {
-                "name": "Prunus virus F",
-                "duplicates": ["cab8b360"]
-            }
+            test_otu["_id"]: {"name": "Prunus virus F", "duplicates": ["cab8b360"]}
         }
     else:
         assert duplicate_isolate_ids == dict()
@@ -82,8 +78,7 @@ def test_detect_duplicate_name(seen, transform, test_otu):
 
     duplicates = set()
 
-    virtool.references.utils.detect_duplicate_name(
-        test_otu, duplicates, seen_names)
+    virtool.references.utils.detect_duplicate_name(test_otu, duplicates, seen_names)
 
     if seen:
         assert duplicates == {test_otu["name"]}
@@ -109,9 +104,7 @@ def test_detect_duplicate_sequence_ids(intra, seen, test_merged_otu):
     duplicate_sequence_ids = set()
 
     virtool.references.utils.detect_duplicate_sequence_ids(
-        test_merged_otu,
-        duplicate_sequence_ids,
-        seen_sequence_ids
+        test_merged_otu, duplicate_sequence_ids, seen_sequence_ids
     )
 
     if intra or seen:
@@ -128,119 +121,80 @@ def test_detect_duplicates(strict, test_merged_otu):
 
     otu_list[0]["isolates"].append(otu_list[0]["isolates"][0])
 
-    result = virtool.references.utils.detect_duplicates(
-        otu_list, strict=strict)
+    result = virtool.references.utils.detect_duplicates(otu_list, strict=strict)
 
     if strict:
         assert result == [
             {
-                'duplicates': ['PVF'],
-                'id': 'duplicate_abbreviations',
-                'message': 'Duplicate OTU abbreviations found'
+                "duplicates": ["PVF"],
+                "id": "duplicate_abbreviations",
+                "message": "Duplicate OTU abbreviations found",
             },
             {
-                'duplicates': ['6116cba1'],
-                'id': 'duplicate_ids',
-                'message': 'Duplicate OTU ids found'
+                "duplicates": ["6116cba1"],
+                "id": "duplicate_ids",
+                "message": "Duplicate OTU ids found",
             },
             {
-                'duplicates': {
-                    '6116cba1': {
-                        'duplicates': ['cab8b360'],
-                        'name': 'Prunus virus F'
-                    }
+                "duplicates": {
+                    "6116cba1": {"duplicates": ["cab8b360"], "name": "Prunus virus F"}
                 },
-                'id': 'duplicate_isolate_ids',
-                'message': 'Duplicate isolate ids found in some OTUs'
+                "id": "duplicate_isolate_ids",
+                "message": "Duplicate isolate ids found in some OTUs",
             },
             {
-                'duplicates': ['Prunus virus F'],
-                'id': 'duplicate_names',
-                'message': 'Duplicate OTU names found'
+                "duplicates": ["Prunus virus F"],
+                "id": "duplicate_names",
+                "message": "Duplicate OTU names found",
             },
             {
-                'duplicates': {'KX269872'},
-                'id': 'duplicate_sequence_ids',
-                'message': 'Duplicate sequence ids found'
-            }
+                "duplicates": {"KX269872"},
+                "id": "duplicate_sequence_ids",
+                "message": "Duplicate sequence ids found",
+            },
         ]
     else:
         assert result == [
             {
                 "duplicates": ["PVF"],
                 "id": "duplicate_abbreviations",
-                "message": "Duplicate OTU abbreviations found"
+                "message": "Duplicate OTU abbreviations found",
             },
             {
                 "duplicates": ["Prunus virus F"],
                 "id": "duplicate_names",
-                "message": "Duplicate OTU names found"
-            }
+                "message": "Duplicate OTU names found",
+            },
         ]
 
 
 @pytest.mark.parametrize("require_meta", [True, False])
 def test_get_import_schema(require_meta):
     assert virtool.references.utils.get_import_schema(require_meta) == {
-        "data_type": {
-            "type": "string",
-            "required": require_meta
-        },
-        "organism": {
-            "type": "string",
-            "required": require_meta
-        },
-        "otus": {
-            "type": "list",
-            "required": True
-        }
+        "data_type": {"type": "string", "required": require_meta},
+        "organism": {"type": "string", "required": require_meta},
+        "otus": {"type": "list", "required": True},
     }
 
 
 @pytest.mark.parametrize("require_id", [True, False])
 def test_get_isolate_schema(require_id):
     assert virtool.references.utils.get_isolate_schema(require_id) == {
-        "id": {
-            "type": "string",
-            "required": require_id
-        },
-        "source_type": {
-            "type": "string",
-            "required": True
-        },
-        "source_name": {
-            "type": "string",
-            "required": True
-        },
-        "default": {
-            "type": "boolean",
-            "required": True
-        },
-        "sequences": {
-            "type": "list",
-            "required": True
-        }
+        "id": {"type": "string", "required": require_id},
+        "source_type": {"type": "string", "required": True},
+        "source_name": {"type": "string", "required": True},
+        "default": {"type": "boolean", "required": True},
+        "sequences": {"type": "list", "required": True},
     }
 
 
 @pytest.mark.parametrize("require_id", [True, False])
 def test_get_otu_schema(require_id):
     assert virtool.references.utils.get_otu_schema(require_id) == {
-        "_id": {
-            "type": "string",
-            "required": require_id
-        },
-        "abbreviation": {
-            "type": "string"
-        },
-        "name": {
-            "type": "string",
-            "required": True
-        },
-        "isolates": {
-            "type": "list",
-            "required": True
-        }
+        "_id": {"type": "string", "required": require_id},
+        "abbreviation": {"type": "string"},
+        "name": {"type": "string", "required": True},
+        "isolates": {"type": "list", "required": True},
     }
 
 
@@ -250,27 +204,15 @@ def test_get_owner_user():
         "build": True,
         "modify": True,
         "modify_otu": True,
-        "remove": True
+        "remove": True,
     }
 
 
 @pytest.mark.parametrize("require_id", [True, False])
 def test_get_sequence_schema(require_id):
     assert virtool.references.utils.get_sequence_schema(require_id) == {
-        "_id": {
-            "type": "string",
-            "required": require_id
-        },
-        "accession": {
-            "type": "string",
-            "required": True
-        },
-        "definition": {
-            "type": "string",
-            "required": True
-        },
-        "sequence": {
-            "type": "string",
-            "required": True
-        }
+        "_id": {"type": "string", "required": require_id},
+        "accession": {"type": "string", "required": True},
+        "definition": {"type": "string", "required": True},
+        "sequence": {"type": "string", "required": True},
     }

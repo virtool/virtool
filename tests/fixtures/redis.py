@@ -24,5 +24,5 @@ async def redis(redis_connection_string, worker_id):
 
 @pytest.fixture()
 async def channel(redis: Redis):
-    channel, = await redis.subscribe("channel:test")
+    (channel,) = await redis.subscribe("channel:test")
     return channel

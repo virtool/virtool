@@ -9,7 +9,6 @@ from virtool.tasks.task import Task
 
 
 class TasksClient:
-
     def __init__(self, redis: Redis, pg: AsyncEngine):
         self._redis = redis
         self.pg = pg
@@ -31,7 +30,9 @@ class TasksClient:
         except CancelledError:
             pass
 
-    async def add_periodic(self, task_class: Task, interval: int = None, context: dict = None):
+    async def add_periodic(
+        self, task_class: Task, interval: int = None, context: dict = None
+    ):
         """
         Register a new task that will be run regularly at the given interval.
 

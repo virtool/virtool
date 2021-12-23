@@ -13,4 +13,6 @@ async def test_create_reads_file(snapshot, pg, pg_session, static_time):
     )
 
     async with pg_session as session:
-        assert (await session.execute(select(SampleReads).filter_by(id=1))).scalar() == snapshot
+        assert (
+            await session.execute(select(SampleReads).filter_by(id=1))
+        ).scalar() == snapshot

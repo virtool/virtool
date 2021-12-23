@@ -46,27 +46,15 @@ async def find(req):
         return json_response(data)
 
     pipeline = [
-        {
-            "$match": {
-                "ready": True
-            }
-        },
-        {
-            "$sort": {
-                "version": -1
-            }
-        },
+        {"$match": {"ready": True}},
+        {"$sort": {"version": -1}},
         {
             "$group": {
                 "_id": "$reference.id",
-                "index": {
-                    "$first": "$_id"
-                },
-                "version": {
-                    "$first": "$version"
-                }
+                "index": {"$first": "$_id"},
+                "version": {"$first": "$version"},
             }
-        }
+        },
     ]
 
     ready_indexes = list()
@@ -74,15 +62,17 @@ async def find(req):
     async for agg in db.indexes.aggregate(pipeline):
         reference = await db.references.find_one(agg["_id"], ["data_type", "name"])
 
-        ready_indexes.append({
-            "id": agg["index"],
-            "version": agg["version"],
-            "reference": {
-                "id": agg["_id"],
-                "name": reference["name"],
-                "data_type": reference["data_type"]
+        ready_indexes.append(
+            {
+                "id": agg["index"],
+                "version": agg["version"],
+                "reference": {
+                    "id": agg["_id"],
+                    "name": reference["name"],
+                    "data_type": reference["data_type"],
+                },
             }
-        })
+        )
 
     return json_response(ready_indexes)
 
@@ -106,14 +96,16 @@ async def get(req):
 
     contributors, otus = await asyncio.gather(
         virtool.indexes.db.get_contributors(db, index_id),
-        virtool.indexes.db.get_otus(db, index_id)
+        virtool.indexes.db.get_otus(db, index_id),
     )
 
-    document.update({
-        "change_count": sum(v["change_count"] for v in otus),
-        "contributors": contributors,
-        "otus": otus,
-    })
+    document.update(
+        {
+            "change_count": sum(v["change_count"] for v in otus),
+            "contributors": contributors,
+            "otus": otus,
+        }
+    )
 
     document = await virtool.indexes.db.attach_files(pg, document)
     document = await virtool.indexes.db.processor(db, document)
@@ -142,9 +134,7 @@ async def download_otus_json(req):
 
     if not json_path.exists():
         patched_otus = await virtool.indexes.db.get_patched_otus(
-            db,
-            req.app["config"],
-            index["manifest"]
+            db, req.app["config"], index["manifest"]
         )
 
         json_string = json.dumps(patched_otus, cls=CustomEncoder)
@@ -153,7 +143,7 @@ async def download_otus_json(req):
 
     headers = {
         "Content-Disposition": "attachment; filename=otus.json.gz",
-        "Content-Type": "application/gzip"
+        "Content-Type": "application/gzip",
     }
 
     return FileResponse(json_path, headers=headers)
@@ -180,8 +170,9 @@ async def download_index_file(req: Request):
         raise InsufficientRights()
 
     reference_id = index_document["reference"]["id"]
-    path = req.app["config"].data_path / "references" / \
-        reference_id / index_id / filename
+    path = (
+        req.app["config"].data_path / "references" / reference_id / index_id / filename
+    )
 
     if not path.exists():
         raise NotFound("File not found")
@@ -205,8 +196,9 @@ async def download_index_file_for_jobs(req: Request):
 
     reference_id = index_document["reference"]["id"]
 
-    path = req.app["config"].data_path / "references" / \
-        reference_id / index_id / filename
+    path = (
+        req.app["config"].data_path / "references" / reference_id / index_id / filename
+    )
 
     if not path.exists():
         raise NotFound("File not found")
@@ -240,7 +232,9 @@ async def create(req):
     if await db.otus.count_documents({"reference.id": ref_id, "verified": False}):
         raise HTTPBadRequest(text="There are unverified OTUs")
 
-    if not await db.history.count_documents({"reference.id": ref_id, "index.id": "unbuilt"}):
+    if not await db.history.count_documents(
+        {"reference.id": ref_id, "index.id": "unbuilt"}
+    ):
         raise HTTPBadRequest(text="There are no unbuilt changes")
 
     user_id = req["client"].user_id
@@ -254,7 +248,7 @@ async def create(req):
         "user_id": user_id,
         "index_id": document["_id"],
         "index_version": document["version"],
-        "manifest": document["manifest"]
+        "manifest": document["manifest"],
     }
 
     rights = JobRights()
@@ -263,24 +257,15 @@ async def create(req):
 
     # Create job document.
     job = await virtool.jobs.db.create(
-        db,
-        "build_index",
-        task_args,
-        user_id,
-        rights,
-        job_id=job_id
+        db, "build_index", task_args, user_id, rights, job_id=job_id
     )
 
     await req.app["jobs"].enqueue(job["_id"])
 
-    headers = {
-        "Location": f"/indexes/{document['_id']}"
-    }
+    headers = {"Location": f"/indexes/{document['_id']}"}
 
     return json_response(
-        await virtool.indexes.db.processor(db, document),
-        status=201,
-        headers=headers
+        await virtool.indexes.db.processor(db, document), status=201, headers=headers
     )
 
 
@@ -308,18 +293,12 @@ async def upload(req):
     file_type = check_index_file_type(name)
 
     try:
-        index_file = await create_index_file(
-            pg,
-            index_id,
-            file_type,
-            name
-        )
+        index_file = await create_index_file(pg, index_id, file_type, name)
     except exc.IntegrityError:
         raise HTTPConflict(text="File name already exists")
 
     upload_id = index_file["id"]
-    path = req.app["config"].data_path / \
-        "references" / reference_id / index_id / name
+    path = req.app["config"].data_path / "references" / reference_id / index_id / name
 
     try:
         size = await naive_writer(req, path)
@@ -328,16 +307,9 @@ async def upload(req):
         await delete_row(pg, upload_id, IndexFile)
         return Response(status=499)
 
-    index_file = await virtool.uploads.db.finalize(
-        pg,
-        size,
-        upload_id,
-        IndexFile
-    )
+    index_file = await virtool.uploads.db.finalize(pg, size, upload_id, IndexFile)
 
-    headers = {
-        "Location": f"/indexes/{index_id}/files/{name}"
-    }
+    headers = {"Location": f"/indexes/{index_id}/files/{name}"}
 
     index_file["uploaded_at"] = virtool.utils.timestamp()
 
@@ -373,21 +345,19 @@ async def finalize(req):
 
     if IndexType.fasta not in results.values():
         raise HTTPConflict(
-            text="A FASTA file must be uploaded in order to finalize index")
+            text="A FASTA file must be uploaded in order to finalize index"
+        )
 
     if reference["data_type"] == "genome":
         required_files = [f for f in FILES if f != "reference.json.gz"]
 
         if missing_files := [f for f in required_files if f not in results]:
-            raise HTTPConflict(text=f"Reference requires that all Bowtie2 index files have been uploaded. "
-                               f"Missing files: {', '.join(missing_files)}")
+            raise HTTPConflict(
+                text=f"Reference requires that all Bowtie2 index files have been uploaded. "
+                f"Missing files: {', '.join(missing_files)}"
+            )
 
-    document = await virtool.indexes.db.finalize(
-        db,
-        pg,
-        ref_id,
-        index_id
-    )
+    document = await virtool.indexes.db.finalize(db, pg, ref_id, index_id)
 
     return json_response(await virtool.indexes.db.processor(db, document))
 
@@ -407,9 +377,7 @@ async def find_history(req):
 
     term = req.query.get("term")
 
-    db_query = {
-        "index.id": index_id
-    }
+    db_query = {"index.id": index_id}
 
     if term:
         db_query.update(compose_regex_query(term, ["otu.name", "user.id"]))
@@ -420,7 +388,7 @@ async def find_history(req):
         req.query,
         sort=[("otu.name", 1), ("otu.version", -1)],
         projection=LIST_PROJECTION,
-        reverse=True
+        reverse=True,
     )
 
     return json_response(data)

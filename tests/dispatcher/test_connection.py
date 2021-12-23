@@ -12,29 +12,23 @@ def test_init(ws):
 
 
 async def test_send(ws):
-    """
-
-
-    """
+    """ """
     message = {
         "interface": "users",
         "operation": "update",
-        "data": {
-            "groups": [],
-            "user_id": "john"
-        }
+        "data": {"groups": [], "user_id": "john"},
     }
 
     await ws.send(message)
 
-    ws._ws.send_json.assert_called_with({
-        "interface": "users",
-        "operation": "update",
-        "data": {
-            "groups": [],
-            "user_id": "john"
-        }
-    }, dumps=virtool.api.json.dumps)
+    ws._ws.send_json.assert_called_with(
+        {
+            "interface": "users",
+            "operation": "update",
+            "data": {"groups": [], "user_id": "john"},
+        },
+        dumps=virtool.api.json.dumps,
+    )
 
 
 async def test_close(ws):

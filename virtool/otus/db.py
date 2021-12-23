@@ -14,14 +14,7 @@ import virtool.utils
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.types import App
 
-PROJECTION = [
-    "_id",
-    "abbreviation",
-    "name",
-    "reference",
-    "verified",
-    "version"
-]
+PROJECTION = ["_id", "abbreviation", "name", "reference", "verified", "version"]
 
 SEQUENCE_PROJECTION = [
     "_id",
@@ -30,15 +23,12 @@ SEQUENCE_PROJECTION = [
     "otu_id",
     "isolate_id",
     "sequence",
-    "segment"
+    "segment",
 ]
 
 
 async def check_name_and_abbreviation(
-        db,
-        ref_id: str,
-        name: Optional[str] = None,
-        abbreviation: Optional[str] = None
+    db, ref_id: str, name: Optional[str] = None, abbreviation: Optional[str] = None
 ) -> Union[bool, str]:
     """
     Check is a otu name and abbreviation are already in use in the reference identified by `ref_id`. Returns a message
@@ -53,18 +43,16 @@ async def check_name_and_abbreviation(
     name_count = 0
 
     if name:
-        name_count = await db.otus.count_documents({
-            "lower_name": name.lower(),
-            "reference.id": ref_id
-        })
+        name_count = await db.otus.count_documents(
+            {"lower_name": name.lower(), "reference.id": ref_id}
+        )
 
     abbr_count = 0
 
     if abbreviation:
-        abbr_count = await db.otus.count_documents({
-            "abbreviation": abbreviation,
-            "reference.id": ref_id
-        })
+        abbr_count = await db.otus.count_documents(
+            {"abbreviation": abbreviation, "reference.id": ref_id}
+        )
 
     unique_name = not name or not name_count
     unique_abbreviation = not abbreviation or not abbr_count
@@ -82,12 +70,12 @@ async def check_name_and_abbreviation(
 
 
 async def create_otu(
-        app: App,
-        ref_id: str,
-        name: str,
-        abbreviation: str,
-        user_id: str,
-        otu_id: Optional[str] = None
+    app: App,
+    ref_id: str,
+    name: str,
+    abbreviation: str,
+    user_id: str,
+    otu_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Create a new OTU.
@@ -115,10 +103,8 @@ async def create_otu(
         "lower_name": name.lower(),
         "isolates": [],
         "version": 0,
-        "reference": {
-            "id": ref_id
-        },
-        "schema": []
+        "reference": {"id": ref_id},
+        "schema": [],
     }
 
     # Insert the otu document.
@@ -127,24 +113,19 @@ async def create_otu(
     description = virtool.history.utils.compose_create_description(document)
 
     change = await virtool.history.db.add(
-        app,
-        "create",
-        None,
-        document,
-        description,
-        user_id
+        app, "create", None, document, description, user_id
     )
 
     return virtool.otus.utils.format_otu(document, most_recent_change=change)
 
 
 async def edit(
-        app: App,
-        otu_id: Optional[str],
-        name: Optional[str],
-        abbreviation: Optional[str],
-        schema: Union[str, list],
-        user_id: str
+    app: App,
+    otu_id: Optional[str],
+    name: Optional[str],
+    abbreviation: Optional[str],
+    schema: Union[str, list],
+    user_id: str,
 ) -> Dict[str, Any]:
     """
     Edit an existing OTU identified by `otu_id`. Modifiable fields are `name`, `abbreviation`, and `schema`.
@@ -162,16 +143,11 @@ async def edit(
 
     # Update the ``modified`` and ``verified`` fields in the otu document now, because we are definitely going to
     # modify the otu.
-    update = {
-        "verified": False
-    }
+    update = {"verified": False}
 
     # If the name is changing, update the ``lower_name`` field in the otu document.
     if name is not None:
-        update.update({
-            "name": name,
-            "lower_name": name.lower()
-        })
+        update.update({"name": name, "lower_name": name.lower()})
 
     if abbreviation is not None:
         update["abbreviation"] = abbreviation
@@ -182,12 +158,9 @@ async def edit(
     old = await virtool.otus.db.join(db, otu_id)
 
     # Update the database collection.
-    document = await db.otus.find_one_and_update({"_id": otu_id}, {
-        "$set": update,
-        "$inc": {
-            "version": 1
-        }
-    })
+    document = await db.otus.find_one_and_update(
+        {"_id": otu_id}, {"$set": update, "$inc": {"version": 1}}
+    )
 
     await virtool.otus.db.update_sequence_segments(db, old, document)
 
@@ -195,27 +168,22 @@ async def edit(
 
     issues = await virtool.otus.db.update_verification(db, new)
 
-    description = virtool.history.utils.compose_edit_description(name, abbreviation, old["abbreviation"], schema)
-
-    await virtool.history.db.add(
-        app,
-        "edit",
-        old,
-        new,
-        description,
-        user_id
+    description = virtool.history.utils.compose_edit_description(
+        name, abbreviation, old["abbreviation"], schema
     )
+
+    await virtool.history.db.add(app, "edit", old, new, description, user_id)
 
     return await virtool.otus.db.join_and_format(db, otu_id, joined=new, issues=issues)
 
 
 async def find(
-        db,
-        names: Union[bool, str],
-        term: str,
-        req_query: dict,
-        verified: bool,
-        ref_id: str = None
+    db,
+    names: Union[bool, str],
+    term: str,
+    req_query: dict,
+    verified: bool,
+    ref_id: str = None,
 ) -> Union[Dict[str, Any], List[Optional[dict]]]:
     db_query = dict()
 
@@ -228,9 +196,7 @@ async def find(
     base_query = None
 
     if ref_id is not None:
-        base_query = {
-            "reference.id": ref_id
-        }
+        base_query = {"reference.id": ref_id}
 
     if names is True or names == "true":
         cursor = db.otus.find({**db_query, **base_query}, ["name"], sort=[("name", 1)])
@@ -242,12 +208,10 @@ async def find(
         req_query,
         base_query=base_query,
         sort="name",
-        projection=PROJECTION
+        projection=PROJECTION,
     )
 
-    history_query = {
-        "index.id": "unbuilt"
-    }
+    history_query = {"index.id": "unbuilt"}
 
     if ref_id:
         history_query["reference.id"] = ref_id
@@ -257,7 +221,9 @@ async def find(
     return data
 
 
-async def join(db, query: Union[dict, str], document: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
+async def join(
+    db, query: Union[dict, str], document: Dict[str, Any] = None
+) -> Optional[Dict[str, Any]]:
     """
     Join the otu associated with the supplied ``otu_id`` with its sequences. If a otu entry is also passed,
     the database will not be queried for the otu based on its id.
@@ -283,9 +249,10 @@ async def join(db, query: Union[dict, str], document: Dict[str, Any] = None) -> 
 
 
 async def join_and_format(
-        db, otu_id: str,
-        joined: Optional[dict] = None,
-        issues: Union[dict, None, bool] = False
+    db,
+    otu_id: str,
+    joined: Optional[dict] = None,
+    issues: Union[dict, None, bool] = False,
 ) -> Optional[dict]:
     """
     Join the otu identified by the passed ``otu_id`` or use the ``joined`` otu document if available. Then,
@@ -312,11 +279,11 @@ async def join_and_format(
 
 
 async def remove(
-        app,
-        otu_id: str,
-        user_id: str,
-        document: Optional[dict] = None,
-        silent: bool = False
+    app,
+    otu_id: str,
+    user_id: str,
+    document: Optional[dict] = None,
+    silent: bool = False,
 ) -> Optional[bool]:
     """
     Remove and OTU given its `otu_id`. Create a history document to record the change.
@@ -344,23 +311,16 @@ async def remove(
     await db.otus.delete_one({"_id": otu_id}, silent=silent)
 
     # Unset the reference internal_control if it is the OTU being removed.
-    await db.references.update_one({"_id": joined["reference"]["id"], "internal_control.id": joined["_id"]}, {
-        "$set": {
-            "internal_control": None
-        }
-    })
+    await db.references.update_one(
+        {"_id": joined["reference"]["id"], "internal_control.id": joined["_id"]},
+        {"$set": {"internal_control": None}},
+    )
 
     description = virtool.history.utils.compose_remove_description(joined)
 
     # Add a removal history item.
     await virtool.history.db.add(
-        app,
-        "remove",
-        joined,
-        None,
-        description,
-        user_id,
-        silent=silent
+        app, "remove", joined, None, description, user_id, silent=silent
     )
 
     return True
@@ -393,22 +353,17 @@ async def update_sequence_segments(db, old: dict, new: dict):
 
     to_unset = list(old_names - new_names)
 
-    await db.sequences.update_many({"otu_id": old["_id"], "segment": {"$in": to_unset}}, {
-        "$unset": {
-            "segment": ""
-        }
-    })
+    await db.sequences.update_many(
+        {"otu_id": old["_id"], "segment": {"$in": to_unset}},
+        {"$unset": {"segment": ""}},
+    )
 
 
 async def update_verification(db, joined: dict) -> Optional[dict]:
     issues = virtool.otus.utils.verify(joined)
 
     if issues is None:
-        await db.otus.update_one({"_id": joined["_id"]}, {
-            "$set": {
-                "verified": True
-            }
-        })
+        await db.otus.update_one({"_id": joined["_id"]}, {"$set": {"verified": True}})
 
         joined["verified"] = True
 
@@ -430,13 +385,17 @@ async def generate_otu_fasta(db, otu_id: str) -> Tuple[Optional[str], Optional[s
     fasta = list()
 
     for isolate in otu["isolates"]:
-        async for sequence in db.sequences.find({"otu_id": otu_id, "isolate_id": isolate["id"]}, ["sequence"]):
-            fasta.append(virtool.downloads.utils.format_fasta_entry(
-                otu["name"],
-                virtool.otus.utils.format_isolate_name(isolate),
-                sequence["_id"],
-                sequence["sequence"]
-            ))
+        async for sequence in db.sequences.find(
+            {"otu_id": otu_id, "isolate_id": isolate["id"]}, ["sequence"]
+        ):
+            fasta.append(
+                virtool.downloads.utils.format_fasta_entry(
+                    otu["name"],
+                    virtool.otus.utils.format_isolate_name(isolate),
+                    sequence["_id"],
+                    sequence["sequence"],
+                )
+            )
 
     fasta = "\n".join(fasta)
 

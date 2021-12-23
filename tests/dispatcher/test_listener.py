@@ -14,23 +14,23 @@ async def test_listener(loop, redis: Redis):
     :class:`Change` objects.
 
     """
-    channel, = await redis.subscribe("channel:dispatch-test")
+    (channel,) = await redis.subscribe("channel:dispatch-test")
 
     listener = RedisDispatcherListener(channel)
 
     await asyncio.sleep(0.3)
 
-    await redis.publish("channel:dispatch-test", json.dumps({
-        "interface": "samples",
-        "operation": UPDATE,
-        "id_list": [1, 3, 5]
-    }))
+    await redis.publish(
+        "channel:dispatch-test",
+        json.dumps({"interface": "samples", "operation": UPDATE, "id_list": [1, 3, 5]}),
+    )
 
-    await redis.publish("channel:dispatch-test", json.dumps({
-        "interface": "analyses",
-        "operation": DELETE,
-        "id_list": [2, 1, 7]
-    }))
+    await redis.publish(
+        "channel:dispatch-test",
+        json.dumps(
+            {"interface": "analyses", "operation": DELETE, "id_list": [2, 1, 7]}
+        ),
+    )
 
     await asyncio.sleep(0.5)
 

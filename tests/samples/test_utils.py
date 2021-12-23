@@ -6,18 +6,10 @@ from virtool.samples.utils import check_labels
 @pytest.fixture()
 def labels():
     label_1 = Label(
-        id=1,
-        name="Legacy",
-        color="#83F52C",
-        description="This is a legacy sample"
+        id=1, name="Legacy", color="#83F52C", description="This is a legacy sample"
     )
 
-    label_2 = Label(
-        id=2,
-        name="Bug",
-        color="#83F52C",
-        description="This is a bug"
-    )
+    label_2 = Label(id=2, name="Bug", color="#83F52C", description="This is a bug")
 
     return [label_1, label_2]
 
