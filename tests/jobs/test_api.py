@@ -117,36 +117,133 @@ async def test_cancel(error, snapshot, dbi, fake, resp_is, spawn_client, test_jo
     assert "key" not in body
 
 
-@pytest.mark.parametrize("error", [
-    None,
-    404,
-    409
-])
-async def test_push_status(error, snapshot, resp_is, spawn_client, static_time, test_job):
-    client = await spawn_client(authorize=True)
+class TestPushStatus:
 
-    if error != 409:
-        # Removes the last "completed" status entry, imitating a running job.
+    @pytest.mark.parametrize("error", [
+        None,
+        404,
+        409
+    ])
+    async def test(self, error, snapshot, resp_is, spawn_client, static_time, test_job):
+        client = await spawn_client(authorize=True)
+
+        if error != 409:
+            # Removes the last "completed" status entry, imitating a running job.
+            del test_job["status"][-1]
+
+        if error != 404:
+            await client.db.jobs.insert_one(test_job)
+
+        body = {
+            "state": "running",
+            "stage": "build",
+            "progress": 23
+        }
+
+        resp = await client.post(f"/jobs/{test_job.id}/status", body)
+
+        if error == 404:
+            assert resp.status == 404
+            return
+
+        if error == 409:
+            await resp_is.conflict(resp, "Job is finished")
+            return
+
+        assert resp.status == 201
+        assert await resp.json() == snapshot
+
+    async def test_name_and_description(self, snapshot, spawn_client, static_time, test_job):
+        client = await spawn_client(authorize=True)
+
         del test_job["status"][-1]
-
-    if error != 404:
         await client.db.jobs.insert_one(test_job)
 
-    body = {
-        "state": "running",
-        "stage": "build",
-        "progress": 23
-    }
+        body = {
+            "state": "running",
+            "stage": "fastqc",
+            "step_name": "FastQC",
+            "step_description": "Run FastQC on the raw data",
+            "progress": 14
+        }
 
-    resp = await client.post(f"/jobs/{test_job.id}/status", body)
+        resp = await client.post(f"/jobs/{test_job.id}/status", body)
 
-    if error == 404:
-        assert resp.status == 404
-        return
+        assert resp.status == 201
+        assert await resp.json() == snapshot
 
-    if error == 409:
-        await resp_is.conflict(resp, "Job is finished")
-        return
+    async def test_bad_state(self, snapshot, spawn_client, test_job):
+        """
+        Check that an unallowed state is rejected with 422.
 
-    assert resp.status == 201
-    assert await resp.json() == snapshot
+        """
+        client = await spawn_client(authorize=True)
+
+        del test_job["status"][-1]
+        await client.db.jobs.insert_one(test_job)
+
+        body = {
+            "state": "bad",
+            "stage": "fastqc",
+            "progress": 14
+        }
+
+        resp = await client.post(f"/jobs/{test_job.id}/status", body)
+
+        assert resp.status == 422
+        assert await resp.json() == snapshot
+
+    @pytest.mark.parametrize("error_type", ["KeyError", 3, None], ids=["valid", "invalid", "missing"])
+    @pytest.mark.parametrize("traceback", ["Invalid", ["Valid"], None], ids=["valid", "invalid", "missing"])
+    @pytest.mark.parametrize("details", ["Invalid", ["Valid"], None], ids=["valid", "invalid", "missing"])
+    async def test_error(self, error_type, traceback, details, snapshot, spawn_client, static_time, test_job):
+        """
+        Ensure valid and invalid error inputs are handled correctly.
+
+        """
+        client = await spawn_client(authorize=True)
+
+        del test_job["status"][-1]
+        await client.db.jobs.insert_one(test_job)
+
+        error = {}
+
+        if error_type:
+            error["type"] = error_type
+
+        if traceback:
+            error["traceback"] = traceback
+
+        if details:
+            error["details"] = details
+
+        body = {
+            "error": error,
+            "state": "error",
+            "stage": "fastqc",
+            "progress": 14
+        }
+
+        resp = await client.post(f"/jobs/{test_job.id}/status", body)
+
+        assert (resp.status, await resp.json()) == snapshot
+
+    async def test_missing_error(self, snapshot, spawn_client, static_time, test_job):
+        """
+        Ensure and error is returned when state is set to `error`, but no error field is included.
+
+        """
+        client = await spawn_client(authorize=True)
+
+        del test_job["status"][-1]
+        await client.db.jobs.insert_one(test_job)
+
+        body = {
+            "state": "error",
+            "stage": "fastqc",
+            "progress": 14
+        }
+
+        resp = await client.post(f"/jobs/{test_job.id}/status", body)
+
+        assert (resp.status, await resp.json()) == snapshot
