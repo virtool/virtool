@@ -1,4 +1,4 @@
-import os
+from logging import getLogger
 
 import virtool.jobs.db
 import virtool.utils
@@ -11,6 +11,8 @@ from virtool.http.schema import schema
 from virtool.jobs import is_running_or_waiting
 from virtool.jobs.db import LIST_PROJECTION, PROJECTION, delete, processor
 from virtool.users.db import attach_users
+
+logger = getLogger(__name__)
 
 routes = Routes()
 
@@ -124,6 +126,47 @@ async def cancel(req):
 @routes.post("/jobs/{job_id}/status")
 @routes.jobs_api.post("/jobs/{job_id}/status")
 @schema({
+    "error": {
+        "type": "dict",
+        "default": None,
+        "nullable": True,
+        "schema": {
+            "type": {
+                "type": "string",
+                "required": True
+            },
+            "traceback": {
+                "type": "list",
+                "items": [{"type": "string"}],
+                "required": True
+            },
+            "details": {
+                "type": "list",
+                "items": [{"type": "string"}],
+                "required": True
+            }
+        }
+    },
+    "progress": {
+        "type": "integer",
+        "required": True,
+        "min": 0,
+        "max": 100
+    },
+    "stage": {
+        "type": "string",
+        "required": True,
+    },
+    "step_name": {
+        "type": "string",
+        "default": None,
+        "nullable": True
+    },
+    "step_description": {
+        "type": "string",
+        "default": None,
+        "nullable": True
+    },
     "state": {
         "type": "string",
         "allowed": [
@@ -134,24 +177,15 @@ async def cancel(req):
             "error"
         ],
         "required": True
-    },
-    "stage": {
-        "type": "string",
-        "required": True,
-    },
-    "progress": {
-        "type": "integer",
-        "required": True,
-        "min": 0,
-        "max": 100
-    },
-    "error": {
-        "type": "dict",
-        "default": None,
-        "nullable": True
     }
 })
 async def push_status(req):
+    """
+    Push a status update to a job.
+
+    Relevant Virtool 4: https://github.com/virtool/virtool/blob/0d52d40927815aa8e53c64cf05d2790771f9a420/virtool/jobs/job.py#L380
+
+    """
     db = req.app["db"]
     data = req["data"]
 
@@ -165,6 +199,9 @@ async def push_status(req):
     if status[-1]["state"] in ("complete", "cancelled", "error"):
         raise HTTPConflict(text="Job is finished")
 
+    if data["state"] == "error" and not data["error"]:
+        raise HTTPBadRequest(text="Missing error information")
+
     document = await db.jobs.find_one_and_update({"_id": job_id}, {
         "$set": {
             "state": data["state"]
@@ -173,6 +210,8 @@ async def push_status(req):
             "status": {
                 "state": data["state"],
                 "stage": data["stage"],
+                "step_name": data["step_name"],
+                "step_description": data["step_description"],
                 "error": data["error"],
                 "progress": data["progress"],
                 "timestamp": virtool.utils.timestamp()
@@ -183,7 +222,7 @@ async def push_status(req):
     return json_response(document["status"][-1], status=201)
 
 
-@routes.delete("/jobs", permission="remove_job")
+@ routes.delete("/jobs", permission="remove_job")
 async def clear(req):
     db = req.app["db"]
 
@@ -202,7 +241,7 @@ async def clear(req):
     })
 
 
-@routes.delete("/jobs/{job_id}", permission="remove_job")
+@ routes.delete("/jobs/{job_id}", permission="remove_job")
 async def remove(req):
     """
     Remove a job.
