@@ -52,13 +52,11 @@ jobs:
           npx webpack --config webpack.production.config.babel.js
   build:
     runs-on: ubuntu-18.04
+    container:
+      image: python:3.6-jessie
     needs: [client, server]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: '3.6'
+      - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
           node-version: '12'
@@ -71,37 +69,20 @@ jobs:
         env:
           RELEASE_VERSION: ${{ steps.set_version.outputs.tag }}
         run: |
-          pip install -r requirements.txt
           mkdir gh_build
-          mkdir gh_build/virtool
+          apt-get update
+          apt-get install -y libssl-dev zlib1g-dev python-dev
+          pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
           python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
           python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); print(flags&os.O_NONBLOCK);'
           python setup.py build
-          cp -rv build/exe.linux-x86_64-3.6* gh_build/virtool
-          if [ "$RELEASE_VERSION" ]; then echo $RELEASE_VERSION > version.txt; else echo "v0.0.0" > version.txt; fi
+          cp -rv build/exe.linux-x86_64-3.6 gh_build/virtool
+          echo "artifact" > gh_build/virtool/VERSION
           cd gh_build
           tar -czf virtool.tar.gz virtool
-      - name: Save Artifacts
+      - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
           name: virtool.tar.gz
           path: gh_build/virtool.tar.gz
-          
-  release:
-    runs-on: ubuntu-18.04
-    needs: [build]
-    if: github.event_name == 'push'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Setup NodeJS
-        uses: actions/setup-node@v1
-        with:
-          node-version: 16
-      - name: Install semantic-release
-        run: npm i semantic-release@v18.0.0 conventional-changelog-conventionalcommits@4.6.1
-      - name: Run semantic-release
-        env:
-          GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: npx semantic-release
