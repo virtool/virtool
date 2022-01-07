@@ -1,4 +1,4 @@
-name: ci-4.0.0
+name: publish-4.0.0
 
 on:
   release:
@@ -9,7 +9,6 @@ jobs:
     runs-on: ubuntu-20.04
     container:
       image: python:3.6-jessie
-    if: github.repository_owner == "Virtool"
     steps:
       - uses: actions/checkout@v2
       - name: Build
