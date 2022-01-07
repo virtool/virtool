@@ -1,9 +1,10 @@
-from cx_Freeze import setup, Executable
+from cx_Freeze import Executable, setup
 
 build_exe_options = {
     "bin_includes": [
         "libssl.so",
-        "libz.so"
+        "libz.so",
+        "zlib1g.so"
     ],
     "bin_path_includes": [
          "/usr/lib/x86_64-linux-gnu"
