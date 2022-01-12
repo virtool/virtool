@@ -1,4 +1,6 @@
 import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine
+
 import virtool.indexes.db
 from aiohttp.test_utils import make_mocked_coro
 from virtool.indexes.db import (
@@ -141,10 +143,12 @@ async def test_attach_files(snapshot, pg, pg_session):
 
     document = {"_id": "foo", "reference": {"id": "bar"}}
 
-    assert await attach_files(pg, document) == snapshot
+    assert (
+        await attach_files(pg, "https://virtool.example.com/api", document) == snapshot
+    )
 
 
-async def test_finalize(snapshot, dbi, pg, pg_session):
+async def test_finalize(snapshot, dbi, pg: AsyncEngine, pg_session):
     await dbi.indexes.insert_one({"_id": "foo", "reference": {"id": "bar"}})
 
     index_1 = IndexFile(
@@ -160,7 +164,12 @@ async def test_finalize(snapshot, dbi, pg, pg_session):
         await session.commit()
 
     # Ensure return value is correct.
-    assert await virtool.indexes.db.finalize(dbi, pg, "bar", "foo") == snapshot
+    assert (
+        await virtool.indexes.db.finalize(
+            dbi, pg, "https://virtool.example.com/api", "bar", "foo"
+        )
+        == snapshot
+    )
 
     # Ensure document in database is correct.
     assert await dbi.indexes.find_one() == snapshot

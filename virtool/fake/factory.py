@@ -188,8 +188,10 @@ class TestCaseDataFactory:
                     index_file,
                 )
 
+            base_url = self.app["config"].base_url
+
             document = await virtool.indexes.db.finalize(
-                db=self.db, pg=self.pg, ref_id=ref_id, index_id=id_
+                self.db, self.pg, base_url, ref_id, id_
             )
 
         return document

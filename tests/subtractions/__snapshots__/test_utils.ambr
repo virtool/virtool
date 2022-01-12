@@ -1,7 +1,6 @@
 # name: test_get_subtraction_files[uvloop]
   <class 'list'> [
     <class 'dict'> {
-      'download_url': '/subtractions/foo/files/subtraction.fq.gz',
       'id': 1,
       'name': 'subtraction.fq.gz',
       'size': 12345,
@@ -9,7 +8,6 @@
       'type': 'fasta',
     },
     <class 'dict'> {
-      'download_url': '/subtractions/foo/files/subtraction.1.bt2',
       'id': 2,
       'name': 'subtraction.1.bt2',
       'size': 56437,
@@ -17,7 +15,6 @@
       'type': 'bowtie2',
     },
     <class 'dict'> {
-      'download_url': '/subtractions/foo/files/subtraction.2.bt2',
       'id': 3,
       'name': 'subtraction.2.bt2',
       'size': 93845,

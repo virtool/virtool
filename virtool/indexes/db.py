@@ -144,12 +144,15 @@ async def find(db, req_query: dict, ref_id: Optional[str] = None) -> dict:
     }
 
 
-async def finalize(db, pg: AsyncEngine, ref_id: str, index_id: str) -> dict:
+async def finalize(
+    db, pg: AsyncEngine, base_url: str, ref_id: str, index_id: str
+) -> dict:
     """
     Finalize an index document by setting `ready` to `True`.
 
     :param db: the application database client
     :param pg: the PostgreSQL AsyncEngine object
+    :param base_url: the application base URL configuration value
     :param ref_id: the ID of the reference
     :param index_id: the ID of the index to be finalized for
     :return: the index document after finalization
@@ -161,7 +164,7 @@ async def finalize(db, pg: AsyncEngine, ref_id: str, index_id: str) -> dict:
         {"_id": index_id}, {"$set": {"ready": True}}
     )
 
-    return await attach_files(pg, document)
+    return await attach_files(pg, base_url, document)
 
 
 async def get_contributors(db, index_id: str) -> List[dict]:
@@ -340,23 +343,29 @@ async def update_last_indexed_versions(db, ref_id: str):
         )
 
 
-async def attach_files(pg: AsyncEngine, document: dict) -> dict:
+async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
     """
     Attach a list of index files under `files` field.
 
-    :param pg: PostgreSQL database connection object
-    :param document: An index document
+    :param pg: the application PostgreSQL client
+    :param base_url: the application base URL
+    :param document: an index document
 
     :return: Index document with updated `files` entry containing a list of index files.
 
     """
-    rows = await virtool.pg.utils.get_rows(pg, IndexFile, "index", document["_id"])
+    index_id = document["_id"]
 
-    files = [row.to_dict() for row in rows]
+    rows = await virtool.pg.utils.get_rows(pg, IndexFile, "index", index_id)
 
-    for index_file in files:
-        index_file[
-            "download_url"
-        ] = f"/indexes/{index_file['index']}/files/{index_file['name']}"
+    files = []
+
+    for index_file in [row.to_dict() for row in rows]:
+        files.append(
+            {
+                **index_file,
+                "download_url": f"{base_url}/indexes/{index_id}/files/{index_file['name']}",
+            }
+        )
 
     return {**document, "files": files}
