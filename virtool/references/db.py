@@ -519,7 +519,7 @@ async def get_latest_build(db, ref_id: str) -> Optional[dict]:
     if latest_build is None:
         return None
 
-    return virtool.utils.base_processor(latest_build)
+    return virtool.utils.base_processor(await attach_user(db, latest_build))
 
 
 async def get_official_installed(db) -> bool:
