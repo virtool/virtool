@@ -9,9 +9,10 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+import virtool.db.utils
 import virtool.utils
 from virtool.config.cls import Config
-from virtool.db.utils import get_new_id, get_one_field
+from virtool.db.utils import get_one_field
 from virtool.subtractions.utils import get_subtraction_files, join_subtraction_path
 from virtool.types import App
 
@@ -48,6 +49,13 @@ async def attach_computed(app: App, subtraction: Dict[str, Any]) -> Dict[str, An
         get_subtraction_files(app["pg"], subtraction_id),
         virtool.subtractions.db.get_linked_samples(app["db"], subtraction_id),
     )
+
+    base_url = app["config"].base_url
+
+    for file in files:
+        file[
+            "download_url"
+        ] = f"{base_url}/subtractions/{subtraction_id}/files/{file['name']}"
 
     return {**subtraction, "files": files, "linked_samples": linked_samples}
 

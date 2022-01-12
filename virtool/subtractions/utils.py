@@ -32,8 +32,8 @@ def check_subtraction_file_type(file_name: str) -> str:
     """
     if file_name.endswith(".fa.gz"):
         return "fasta"
-    else:
-        return "bowtie2"
+
+    return "bowtie2"
 
 
 def join_subtraction_path(config: Config, subtraction_id: str) -> Path:
@@ -66,11 +66,6 @@ async def get_subtraction_files(pg: AsyncEngine, subtraction: str) -> List[dict]
         )
 
     files = [file.to_dict() for file in files]
-
-    for file in files:
-        file[
-            "download_url"
-        ] = f"/subtractions/{file['subtraction']}/files/{file['name']}"
 
     return files
 

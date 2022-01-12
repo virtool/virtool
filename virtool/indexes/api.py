@@ -107,7 +107,10 @@ async def get(req):
         }
     )
 
-    document = await virtool.indexes.db.attach_files(pg, document)
+    document = await virtool.indexes.db.attach_files(
+        pg, req.app["config"].base_url, document
+    )
+
     document = await virtool.indexes.db.processor(db, document)
 
     return json_response(document)
@@ -357,7 +360,9 @@ async def finalize(req):
                 f"Missing files: {', '.join(missing_files)}"
             )
 
-    document = await virtool.indexes.db.finalize(db, pg, ref_id, index_id)
+    document = await virtool.indexes.db.finalize(
+        db, pg, req.app["config"].base_url, ref_id, index_id
+    )
 
     return json_response(await virtool.indexes.db.processor(db, document))
 
