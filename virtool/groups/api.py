@@ -1,8 +1,10 @@
 import pymongo.errors
+from aiohttp.web import Request, Response
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
+
 import virtool.groups.db
 import virtool.http.routes
 import virtool.validators
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from virtool.api.response import NotFound, json_response
 from virtool.http.schema import schema
 from virtool.users.utils import generate_base_permissions
@@ -12,7 +14,7 @@ routes = virtool.http.routes.Routes()
 
 
 @routes.get("/groups")
-async def find(req):
+async def find(req: Request) -> Response:
     """
     Get a list of all existing group documents.
 
@@ -32,7 +34,7 @@ async def find(req):
         }
     }
 )
-async def create(req):
+async def create(req: Request) -> Response:
     """
     Adds a new user group.
 
@@ -55,7 +57,7 @@ async def create(req):
 
 
 @routes.get("/groups/{group_id}")
-async def get(req):
+async def get(req: Request) -> Response:
     """
     Gets a complete group document.
 
@@ -78,7 +80,7 @@ async def get(req):
         }
     }
 )
-async def update_permissions(req):
+async def update_permissions(req: Request) -> Response:
     """
     Updates the permissions of a given group.
 
@@ -106,7 +108,7 @@ async def update_permissions(req):
 
 
 @routes.delete("/groups/{group_id}", admin=True)
-async def remove(req):
+async def remove(req: Request):
     """
     Remove a group.
 

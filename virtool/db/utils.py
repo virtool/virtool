@@ -3,7 +3,7 @@ Utilities for working with MongoDB.
 
 """
 from contextlib import asynccontextmanager
-from typing import Any, Dict, Optional, Sequence, Union, Set
+from typing import Any, Dict, Optional, Sequence, Set, Union
 
 from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo import InsertOne, UpdateOne
@@ -27,7 +27,8 @@ class BufferedBulkWriter:
         """
         Add a write request to the buffer.
 
-        If the buffer has reached ``batch_size`` all requests will be sent to MongoDB and the buffer will be emptied.
+        If the buffer has reached ``batch_size`` all requests will be sent to MongoDB
+        and the buffer will be emptied.
 
         :param request: the request to add to the buffer
 
@@ -52,7 +53,8 @@ async def buffered_bulk_writer(collection, batch_size=100):
     """
     A context manager for bulk writing to MongoDB.
 
-    Returns a :class:``BufferedBulkWriter`` object. Automatically flushes the buffer when the context manager exits.
+    Returns a :class:``BufferedBulkWriter`` object. Automatically flushes the buffer
+    when the context manager exits.
 
     :param collection: the MongoDB collection to write against
     :param batch_size: the number of requests to be sent in each bulk operation
@@ -124,8 +126,8 @@ async def check_missing_ids(
 
 async def get_new_id(collection, excluded: Optional[Sequence[str]] = None) -> str:
     """
-    Returns a new, unique, id that can be used for inserting a new document. Will not return any id
-    that is included in ``excluded``.
+    Returns a new, unique, id that can be used for inserting a new document. Will not
+    return any id that is included in ``excluded``.
 
     :param collection: the Mongo collection to get a new _id for
     :param excluded: a list of ids to exclude from the search

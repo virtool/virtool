@@ -8,8 +8,8 @@ def json_response(
     data: object, status: int = 200, headers: Optional[dict] = None
 ) -> Response:
     """
-    Return a response object whose attached JSON dict will be formatted by middleware depending on
-    the request's `Accept` header.
+    Return a response object whose attached JSON dict will be formatted by middleware
+    depending on the request's `Accept` header.
 
     :param data: the data to send in the response as JSON
     :param status: the HTTP status code for the response

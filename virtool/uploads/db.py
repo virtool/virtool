@@ -27,7 +27,7 @@ async def create(
     :param pg: PostgreSQL AsyncEngine object
     :param name: The name of the upload
     :param upload_type: The type of upload (e.g. reads)
-    :param reserved: Whether the file should immediately be reserved (used for legacy samples)
+    :param reserved: Whether the file should immediately be reserved
     :param user: The id of the uploading user
     :return: Dictionary representation of new row in the `uploads` SQL table
     """
@@ -57,8 +57,9 @@ async def create(
 
 async def finalize(pg, size: int, id_: int, model: Type[Base]) -> Optional[dict]:
     """
-    Finalize row creation for tables that store uploaded files. Updates table with file information and sets `ready`
-    to `True`.
+    Finalize row creation for tables that store uploaded files.
+
+    Updates table with file information and sets `ready`    to `True`.
 
     :param pg: PostgreSQL AsyncEngine object
     :param size: Size of a newly uploaded file in bytes
@@ -85,8 +86,9 @@ async def finalize(pg, size: int, id_: int, model: Type[Base]) -> Optional[dict]
 
 async def find(pg, user: str = None, upload_type: str = None) -> List[dict]:
     """
-    Retrieves a list of `Upload` documents in the `uploads` SQL table. Can be given a list of filters to narrow down
-    results.
+    Retrieves a list of `Upload` documents in the `uploads` SQL table.
+
+    Can be given a list of filters to narrow down results.
 
     :param pg: PostgreSQL AsyncEngine object
     :param user: User id that corresponds to the user that uploaded the file
@@ -157,7 +159,9 @@ async def delete(req, pg: AsyncEngine, upload_id: int) -> Optional[dict]:
 
 async def delete_row(pg: AsyncEngine, upload_id: int) -> Optional[dict]:
     """
-    Set the `removed` and `removed_at` attributes in the given row. Returns a dictionary representation of that row.
+    Set the `removed` and `removed_at` attributes in the given row.
+
+    Returns a dictionary representation of that row.
 
     :param pg: PostgreSQL AsyncEngine object
     :param upload_id: Row `id` to set attributes for

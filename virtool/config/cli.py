@@ -1,16 +1,17 @@
 import asyncio
 import json
-import logging
+from logging import getLogger
 from pathlib import Path
 
 import click
 import uvloop
-import virtool.app
+
 import virtool.jobs.main
+from virtool.app import run_app
 from virtool.config.cls import Config
 from virtool.logs import configure_logs
 
-logger = logging.getLogger(__name__)
+logger = getLogger("config")
 
 
 def create_default_map():
@@ -173,7 +174,7 @@ def start_server(
     )
 
     logger.info("Starting in server mode")
-    asyncio.get_event_loop().run_until_complete(virtool.app.run_app(config))
+    asyncio.get_event_loop().run_until_complete(run_app(config))
 
 
 @cli.command("jobsAPI")

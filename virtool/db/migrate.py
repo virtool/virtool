@@ -1,19 +1,19 @@
-import logging
+from logging import getLogger
 
-import pymongo.errors
+from pymongo.errors import DuplicateKeyError
 
 import virtool.db.mongo
-import virtool.types
 from virtool.analyses.migrate import migrate_analyses
 from virtool.caches.migrate import migrate_caches
 from virtool.groups.migrate import migrate_groups
 from virtool.references.migrate import migrate_references
 from virtool.samples.migrate import migrate_samples
+from virtool.types import App
 
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 
 
-async def migrate(app: virtool.types.App):
+async def migrate(app: App):
     """
     Update all collections on application start.
 
@@ -38,7 +38,7 @@ async def migrate(app: virtool.types.App):
         await func(app)
 
 
-async def migrate_sessions(app: virtool.types.App):
+async def migrate_sessions(app: App):
     """
     Add the expiry index to the sessions collection.
 
@@ -48,7 +48,7 @@ async def migrate_sessions(app: virtool.types.App):
     await app["db"].sessions.create_index("expiresAt", expireAfterSeconds=0)
 
 
-async def migrate_status(app: virtool.types.App):
+async def migrate_status(app: App):
     """
     Automatically update the status collection.
 
@@ -76,7 +76,7 @@ async def migrate_status(app: virtool.types.App):
                 "version": server_version,
             }
         )
-    except pymongo.errors.DuplicateKeyError:
+    except DuplicateKeyError:
         await db.status.update_one(
             {"_id": "software"},
             {
@@ -99,7 +99,7 @@ async def migrate_status(app: virtool.types.App):
                 "release": None,
             }
         )
-    except pymongo.errors.DuplicateKeyError:
+    except DuplicateKeyError:
         if await db.hmm.count_documents({}):
             await db.status.update_one(
                 {"_id": "hmm", "installed": {"$exists": False}},
