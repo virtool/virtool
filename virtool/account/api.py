@@ -1,16 +1,15 @@
 """
 API request handlers for account endpoints.
 
-These endpoints modify and return data about the user account associated with the session or API key making the
-requests.
+These endpoints modify and return data about the user account associated with the
+session or API key making the requests.
 
 """
-import aiohttp.web
 import virtool.account.db
 import virtool.http.auth
 import virtool.http.routes
 import virtool.validators
-from aiohttp.web import HTTPNoContent
+from aiohttp.web import HTTPNoContent, Request, Response
 from aiohttp.web_exceptions import HTTPBadRequest
 from virtool.analyses.utils import WORKFLOW_NAMES
 from virtool.api.response import NotFound, json_response
@@ -23,16 +22,21 @@ from virtool.users.sessions import create_reset_code, replace_session
 from virtool.users.utils import limit_permissions
 from virtool.utils import base_processor
 
-#: A MongoDB projection to use when returning API key documents to clients. The key should never be sent to client after
-#: its creation.
 API_KEY_PROJECTION = {"_id": False, "user": False}
+"""
+A MongoDB projection to use when returning API key documents to clients.
 
-#: A :class:`aiohttp.web.RouteTableDef` for account API routes.
+The key should never be sent to client after its creation.
+"""
+
 routes = virtool.http.routes.Routes()
+"""
+A :class:`aiohttp.web.RouteTableDef` for account API routes.
+"""
 
 
 @routes.get("/account")
-async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def get(req: Request) -> Response:
     """
     Get complete user document.
 
@@ -53,7 +57,7 @@ async def get(req: aiohttp.web.Request) -> aiohttp.web.Response:
         "password": {"type": "string", "dependencies": "old_password"},
     }
 )
-async def edit(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def edit(req: Request) -> Response:
     """
     Edit the user account.
 
@@ -92,7 +96,7 @@ async def edit(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.get("/account/settings")
-async def get_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def get_settings(req: Request) -> Response:
     """
     Get account settings
 
@@ -116,7 +120,7 @@ async def get_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
         },
     }
 )
-async def update_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def update_settings(req: Request) -> Response:
     """
     Update account settings.
 
@@ -136,7 +140,7 @@ async def update_settings(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.get("/account/keys")
-async def list_api_keys(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def list_api_keys(req: Request) -> Response:
     """
     List API keys associated with the authenticated user account.
 
@@ -151,7 +155,7 @@ async def list_api_keys(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.get("/account/keys/{key_id}")
-async def get_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def get_api_key(req: Request) -> Response:
     """
     Get the complete representation of the API key identified by the `key_id`.
 
@@ -186,10 +190,12 @@ async def get_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
         },
     }
 )
-async def create_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def create_api_key(req: Request) -> Response:
     """
-    Create a new API key. The new key value is returned in the response. This is the only response from the server that
-    will ever include the key.
+    Create a new API key.
+
+    The new key value is returned in the response. This is the only response from the
+    server that will ever include the key.
 
     """
     db = req.app["db"]
@@ -216,7 +222,7 @@ async def create_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
         }
     }
 )
-async def update_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def update_api_key(req: Request) -> Response:
     """
     Change the permissions for an existing API key.
 
@@ -253,7 +259,7 @@ async def update_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.delete("/account/keys/{key_id}")
-async def remove_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def remove_api_key(req: Request):
     """
     Remove an API key by its ID.
 
@@ -271,7 +277,7 @@ async def remove_api_key(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.delete("/account/keys")
-async def remove_all_api_keys(req: aiohttp.web.Request):
+async def remove_all_api_keys(req: Request):
     """
     Remove all API keys for the account associated with the requesting session.
 
@@ -288,7 +294,7 @@ async def remove_all_api_keys(req: aiohttp.web.Request):
         "remember": {"type": "boolean", "default": False},
     }
 )
-async def login(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def login(req: Request) -> Response:
     """
     Create a new session for the user with `username`.
 
@@ -299,11 +305,12 @@ async def login(req: aiohttp.web.Request) -> aiohttp.web.Response:
     handle = data["username"]
     password = data["password"]
 
-    # When this value is set, the session will last for 1 month instead of the 1 hour default.
+    # When this value is set, the session will last for 1 month instead of the 1-hour
+    # default.
     remember = data["remember"]
 
-    # Re-render the login page with an error message if the username doesn't correlate to a user_id value in the
-    # database and/or password are invalid.
+    # Re-render the login page with an error message if the username doesn't correlate
+    # to a user_id value in the database and/or password are invalid.
     document = await db.users.find_one({"handle": handle})
     if not document or not await validate_credentials(db, document["_id"], password):
         raise HTTPBadRequest(text="Invalid username or password")
@@ -312,8 +319,9 @@ async def login(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
     session_id = req.cookies.get("session_id")
 
-    # If the user's password needs to be reset, redirect to the reset page without authorizing the session. A one-time
-    # reset code is generated and added to the query string.
+    # If the user's password needs to be reset, redirect to the reset page without
+    # authorizing the session. A one-time reset code is generated and added to the query
+    # string.
     if await get_one_field(db.users, "force_reset", user_id):
         return json_response(
             {
@@ -338,7 +346,7 @@ async def login(req: aiohttp.web.Request) -> aiohttp.web.Response:
 
 
 @routes.get("/account/logout", public=True)
-async def logout(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def logout(req: Request) -> Response:
     """
     Invalidates the requesting session, effectively logging out the user.
 
@@ -350,7 +358,7 @@ async def logout(req: aiohttp.web.Request) -> aiohttp.web.Response:
         db, old_session_id, virtool.http.auth.get_ip(req)
     )
 
-    resp = aiohttp.web.Response(status=200)
+    resp = Response(status=200)
 
     set_session_id_cookie(resp, session["_id"])
     resp.del_cookie("session_token")
@@ -365,7 +373,7 @@ async def logout(req: aiohttp.web.Request) -> aiohttp.web.Response:
         "reset_code": {"type": "string", "required": True},
     }
 )
-async def reset(req: aiohttp.web.Request) -> aiohttp.web.Response:
+async def reset(req: Request) -> Response:
     """
     Handles `POST` requests for resetting the password for a session user.
 
@@ -398,7 +406,6 @@ async def reset(req: aiohttp.web.Request) -> aiohttp.web.Response:
             status=400,
         )
 
-    # Update the user password and disable the `force_reset`.
     await virtool.users.db.edit(db, user_id, force_reset=False, password=password)
 
     new_session, token = await replace_session(
@@ -419,6 +426,4 @@ async def reset(req: aiohttp.web.Request) -> aiohttp.web.Response:
     set_session_id_cookie(resp, new_session["_id"])
     set_session_token_cookie(resp, token)
 
-    # Authenticate and return a redirect response to the `return_to` path. This is identical to the process used for
-    # successful login requests.
     return resp

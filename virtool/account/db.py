@@ -4,9 +4,9 @@ Work with the current user account and its API keys.
 """
 from typing import Any, Dict
 
-import virtool.users.db
 import virtool.users.utils
 import virtool.utils
+from virtool.types import Document
 
 PROJECTION = (
     "_id",
@@ -23,8 +23,10 @@ PROJECTION = (
 
 def compose_password_update(password: str) -> Dict[str]:
     """
-    Compose an update dict for self-changing a users account password. This will disable forced
-    reset and won't invalidate current sessions, unlike a password change by an administrator.
+    Compose an update dict for self-changing a users account password.
+
+    This will disable forced reset and won't invalidate current sessions, unlike a
+    password change by an administrator.
 
     :param password: the new password
     :return: a password update
@@ -52,8 +54,8 @@ async def get(db, user_id: str) -> Document:
 
 async def get_alternate_id(db, name: str) -> str:
     """
-    Get an alternate id for an API key whose provided `name` is not unique. Appends an integer
-    suffix to the end of the `name`.
+    Get an alternate id for an API key whose provided `name` is not unique. Appends an
+    integer suffix to the end of the `name`.
 
     :param db: the application database object
     :param name: the API key name
@@ -79,10 +81,11 @@ async def create_api_key(
     """
     Create a new API key for the account with the given `user_id`.
 
-    API keys can only receive permissions possessed by the owner of the API key. If the owner is an
-    administrator, their key permissions will not be limited.
+    API keys can only receive permissions possessed by the owner of the API key. If the
+    owner is an administrator, their key permissions will not be limited.
 
-    Actions that require administrator status cannot be performed using API key authentication.
+    Actions that require administrator status cannot be performed using API key
+    authentication.
 
     :param db: the application database object
     :param name: a display name for the API key
