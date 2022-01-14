@@ -2,10 +2,12 @@
 Custom Types for Virtool
 
 """
-from typing import Union, Dict, Sequence, Any, Callable, Awaitable
+from datetime import datetime
+from typing import Any, Awaitable, Callable, Dict, List, Sequence, Union
 
-import aiohttp.web
+from aiohttp.web import Application, Request, Response
 
-App = Union[aiohttp.web.Application, Dict[str, Any]]
+App = Union[Application, Dict[str, Any]]
+Document = Dict[str, Union[Dict, List, bool, str, int, float, datetime]]
 Projection = Union[Dict[str, bool], Sequence[str]]
-RouteHandler = Callable[[aiohttp.web.Request], Awaitable[aiohttp.web.Response]]
+RouteHandler = Callable[[Request], Awaitable[Response]]

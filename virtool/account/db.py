@@ -21,7 +21,7 @@ PROJECTION = (
 )
 
 
-def compose_password_update(password: str) -> Dict[str, Any]:
+def compose_password_update(password: str) -> Dict[str]:
     """
     Compose an update dict for self-changing a users account password. This will disable forced
     reset and won't invalidate current sessions, unlike a password change by an administrator.
@@ -38,7 +38,7 @@ def compose_password_update(password: str) -> Dict[str, Any]:
     }
 
 
-async def get(db, user_id: str) -> Dict[str, Any]:
+async def get(db, user_id: str) -> Document:
     """
     Get appropriately projected user document by id.
 
@@ -75,7 +75,7 @@ async def get_alternate_id(db, name: str) -> str:
 
 async def create_api_key(
     db, name: str, permissions: Dict[str, bool], user_id: str
-) -> Dict[str, Any]:
+) -> Document:
     """
     Create a new API key for the account with the given `user_id`.
 
