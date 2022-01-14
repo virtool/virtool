@@ -2,22 +2,20 @@
 Core database classes.
 
 The purpose of these classes is to automatically dispatch database changes via
-:class:`Dispatcher` using the projections and processors appropriate for each collection.
+:class:`Dispatcher` using the projections and processors appropriate for each
+collection.
 
 """
-from typing import Any, Awaitable, Callable, Dict, Optional, Sequence, Union
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence, Union
 
-import motor.motor_asyncio
-import pymongo
-import pymongo.errors
-import pymongo.results
-from motor.motor_asyncio import AsyncIOMotorClient
-from pymongo.results import UpdateResult
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
+from pymongo import ReturnDocument
+from pymongo.errors import DuplicateKeyError
+from pymongo.results import DeleteResult, UpdateResult
 
 import virtool.analyses.db
 import virtool.caches.db
 import virtool.db.utils
-import virtool.errors
 import virtool.history.db
 import virtool.hmm.db
 import virtool.indexes.db
@@ -31,24 +29,24 @@ import virtool.uploads.db
 import virtool.users.db
 import virtool.utils
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
-from virtool.types import Projection
+from virtool.types import Document, Projection
 
 
 class Collection:
     """
     A wrapper for a Motor collection.
 
-    Wraps collection methods that modify the database and automatically dispatches websocket
-    messages to inform clients of the changes.
+    Wraps collection methods that modify the database and automatically dispatches
+    websocket messages to inform clients of the changes.
 
     """
 
     def __init__(
         self,
         name: str,
-        collection: motor.motor_asyncio.AsyncIOMotorCollection,
+        collection: AsyncIOMotorCollection,
         enqueue_change: Callable[[str, str, Sequence[str]], None],
-        processor: Callable[[Any, Dict[str, Any]], Awaitable[Dict[str, Any]]],
+        processor: Callable[[Any, Document], Awaitable[Document]],
         projection: Optional[Projection],
         silent: bool = False,
     ):
@@ -60,8 +58,8 @@ class Collection:
         self.projection = projection
         self.silent = silent
 
-        # No dispatches are necessary for these collection methods and they can be directly
-        # referenced instead of wrapped.
+        # No dispatches are necessary for these collection methods, so they can be
+        # directly referenced instead of wrapped.
         self.aggregate = self._collection.aggregate
         self.bulk_write = self._collection.bulk_write
         self.count_documents = self._collection.count_documents
@@ -83,25 +81,27 @@ class Collection:
 
     def enqueue_change(self, operation: str, *id_list: str):
         """
-        Dispatch updates if the collection is not `silent` and the `silent` parameter is `False`.
+        Dispatch collection updates.
+
         Applies the collection projection and processor.
 
-        :param operation: the operation to label the dispatch with (insert, update, delete)
+        Does not dispatch if the collection is `silent` or `silent` parameter is
+        `True`.
+
+        :param operation: the dispatch operation (insert, update, delete)
         :param id_list: the document IDs the queue changes for
 
         """
         if not self.silent:
             self._enqueue_change(self.name, operation, id_list)
 
-    async def delete_many(
-        self, query: dict, silent: bool = False
-    ) -> pymongo.results.DeleteResult:
+    async def delete_many(self, query: dict, silent: bool = False) -> DeleteResult:
         """
         Delete many documents based on the passed `query`.
 
         :param query: a MongoDB query
         :param silent: don't dispatch websocket messages for this operation
-        :return: the delete result
+        :return: the result
 
         """
         id_list = await self.distinct("_id", query)
@@ -113,13 +113,13 @@ class Collection:
 
         return delete_result
 
-    async def delete_one(self, query: dict, silent: bool = False):
+    async def delete_one(self, query: dict, silent: bool = False) -> DeleteResult:
         """
         Delete a single document based on the passed `query`.
 
         :param query: a MongoDB query
         :param silent: don't dispatch websocket messages for this operation
-        :return: the delete result
+        :return: the result
 
         """
         document_id = await virtool.db.utils.get_one_field(
@@ -139,20 +139,20 @@ class Collection:
         projection: Optional[Projection] = None,
         silent: bool = False,
         upsert: bool = False,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Document]:
         """
         Update a document and return the updated result.
 
         :param query: a MongoDB query used to select the documents to update
         :param update: a MongoDB update
-        :param projection: a projection to apply to the returned document instead of the default
+        :param projection: a projection to apply to the document instead of the default
         :param silent: don't dispatch websocket messages for this operation
-        :param upsert: insert a new document if the query doesn't match an existing document
+        :param upsert: insert a new document if no existing document is found
         :return: the updated document
 
         """
         document = await self._collection.find_one_and_update(
-            query, update, return_document=pymongo.ReturnDocument.AFTER, upsert=upsert
+            query, update, return_document=ReturnDocument.AFTER, upsert=upsert
         )
 
         if document is None:
@@ -166,14 +166,12 @@ class Collection:
 
         return document
 
-    async def insert_one(
-        self, document: Dict[str, Any], silent: bool = False
-    ) -> Dict[str, Any]:
+    async def insert_one(self, document: Document, silent: bool = False) -> Document:
         """
         Insert the `document`.
 
-        If no `_id` is included in the `document`, one will be autogenerated. If a provided `_id`
-        already exists, a :class:`DuplicateKeyError` will be raised.
+        If no `_id` is included in the `document`, one will be autogenerated. If a
+        provided `_id` already exists, a :class:`DuplicateKeyError` will be raised.
 
         :param document: the document to insert
         :param silent: don't dispatch the change to connected clients
@@ -192,7 +190,7 @@ class Collection:
                 self.enqueue_change(INSERT, document["_id"])
 
             return document
-        except pymongo.errors.DuplicateKeyError:
+        except DuplicateKeyError:
             if generate_id:
                 document.pop("_id")
                 return await self._collection.insert_one(document)
@@ -200,7 +198,7 @@ class Collection:
             raise
 
     async def replace_one(
-        self, query: Dict[str, Any], replacement: Dict[str, Any], upsert: bool = False
+        self, query: Dict[str, Any], replacement: Document, upsert: bool = False
     ):
         """
         Replace the document identified using `query` with the `replacement` document.
@@ -266,7 +264,7 @@ class DB:
     def __init__(
         self,
         motor_client: AsyncIOMotorClient,
-        enqueue_change: Callable[[str, str, Sequence[str]], None],
+        enqueue_change: Callable[[str, str, List[str]], None],
     ):
         self.motor_client = motor_client
         self.enqueue_change = enqueue_change

@@ -3,12 +3,11 @@ import math
 import re
 from typing import Dict, List, Optional, Tuple, Union
 
-import aiohttp.web
+from aiohttp.web import Request
 from multidict import MultiDictProxy
 
-import virtool.users.utils
-import virtool.utils
 from virtool.types import Projection
+from virtool.utils import coerce_list, to_bool
 
 
 def compose_exists_query(field: str) -> Dict[str, Dict[str, bool]]:
@@ -24,8 +23,8 @@ def compose_exists_query(field: str) -> Dict[str, Dict[str, bool]]:
 
 def compose_regex_query(term, fields: List[str]) -> Dict[str, List[Dict[str, dict]]]:
     """
-    Compose a MongoDB query that checks if the values of the passed `fields` match the passed
-    search `term`.
+    Compose a MongoDB query that checks if the values of the passed `fields` match the
+    passed search `term`.
 
     :param term: the term to search
     :param fields: the list of field to match against
@@ -36,7 +35,7 @@ def compose_regex_query(term, fields: List[str]) -> Dict[str, List[Dict[str, dic
         raise TypeError("Type of 'fields' must be one of 'list' or 'tuple'")
 
     # Stringify fields.
-    fields = [str(field) for field in virtool.utils.coerce_list(fields)]
+    fields = [str(field) for field in coerce_list(fields)]
 
     term = re.escape(term)
 
@@ -61,21 +60,22 @@ async def paginate(
 
     Uses a number of different queries to return search results.
 
-    The `db_query` is composed is passed in the function call. This is usually derived from user
-    input such as search terms and filter options. This documents matching query will count toward
-    the returned `found_count`.
+    The `db_query` is composed is passed in the function call. This is usually derived
+    from user input such as search terms and filter options. This documents matching
+    query will count toward the returned `found_count`.
 
-    The `url_query` is the raw query from the request URL. This value is used to derive the `page`
-    and `per_page` numbers used in paging the search results.
+    The `url_query` is the raw query from the request URL. This value is used to derive
+    the `page` and `per_page` numbers used in paging the search results.
 
-    The `base_query` is affects the `total_count` of documents in the collection returned to the
-    API client. An example where this is used is only ever returning documents that have a `ready`
-    field set to `True`. If the field is `False`, the client would never know the document existed.
+    The `base_query` is affects the `total_count` of documents in the collection
+    returned to the API client. An example where this is used is only ever returning
+    documents that have a `ready` field set to `True`. If the field is `False`, the
+    client would never know the document existed.
 
-    The function returns a dictionary containing the matching `documents` and metadata about the
-    search.
+    The function returns a dictionary containing the matching `documents` and metadata
+    about the search.
 
-    `total_count`: the total number of documents the API client should see are in the collection
+    `total_count`: the total number of unhidden documents in the collection
     `found_count`: the number of documents matching the search query (`db_query`)
     `page_count`: the number of pages given the passed `per_page` value
     `per_page`: the `documents` to return for each page request
@@ -137,7 +137,7 @@ async def paginate(
     }
 
 
-def get_query_bool(req: aiohttp.web.Request, key: str) -> bool:
+def get_query_bool(req: Request, key: str) -> bool:
     """
     Return a `bool` calculated from a URL query given its `key`.
 
@@ -148,6 +148,6 @@ def get_query_bool(req: aiohttp.web.Request, key: str) -> bool:
     """
     try:
         short = req.query[key]
-        return virtool.utils.to_bool(short)
+        return to_bool(short)
     except KeyError:
         return False

@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, String, BigInteger
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Enum, Integer, String
 from sqlalchemy.orm import relationship
 
 from virtool.pg.base import Base
@@ -25,16 +25,16 @@ class Upload(Base):
 
     __tablename__ = "uploads"
 
-    id = Column(Integer, primary_key=True)
-    created_at = Column(DateTime)
-    name = Column(String)
-    name_on_disk = Column(String, unique=True)
-    ready = Column(Boolean, default=False, nullable=False)
-    reads = relationship("SampleReads", lazy="joined")
-    removed = Column(Boolean, default=False, nullable=False)
-    removed_at = Column(DateTime)
-    reserved = Column(Boolean, default=False, nullable=False)
-    size = Column(BigInteger)
-    type = Column(Enum(UploadType))
-    user = Column(String)
-    uploaded_at = Column(DateTime)
+    id: Column = Column(Integer, primary_key=True)
+    created_at: Column = Column(DateTime)
+    name: Column = Column(String)
+    name_on_disk: Column = Column(String, unique=True)
+    ready: Column = Column(Boolean, default=False, nullable=False)
+    reads: Column = relationship("SampleReads", lazy="joined")
+    removed: Column = Column(Boolean, default=False, nullable=False)
+    removed_at: Column = Column(DateTime)
+    reserved: Column = Column(Boolean, default=False, nullable=False)
+    size: Column = Column(BigInteger)
+    type: Column = Column(Enum(UploadType))
+    user: Column = Column(String)
+    uploaded_at: Column = Column(DateTime)

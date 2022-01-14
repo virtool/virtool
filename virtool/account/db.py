@@ -21,7 +21,7 @@ PROJECTION = (
 )
 
 
-def compose_password_update(password: str) -> Dict[str]:
+def compose_password_update(password: str) -> Dict[str, Any]:
     """
     Compose an update dict for self-changing a users account password.
 

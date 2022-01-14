@@ -2,13 +2,14 @@ import asyncio
 from asyncio.tasks import gather
 
 import aiohttp
+from aiohttp.web_exceptions import HTTPBadGateway, HTTPBadRequest, HTTPNoContent
+
 import virtool.db.utils
 import virtool.history.db
 import virtool.indexes.db
 import virtool.otus.db
 import virtool.references.db
 import virtool.utils
-from aiohttp.web_exceptions import HTTPBadGateway, HTTPBadRequest, HTTPNoContent
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.errors import DatabaseError, GitHubError
@@ -34,7 +35,7 @@ from virtool.references.tasks import (
     UpdateRemoteReferenceTask,
 )
 from virtool.uploads.models import Upload
-from virtool.users.db import attach_user, extend_user
+from virtool.users.db import extend_user
 from virtool.validators import strip
 
 routes = Routes()

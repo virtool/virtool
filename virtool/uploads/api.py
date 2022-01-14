@@ -1,11 +1,11 @@
 from asyncio import CancelledError
 from logging import getLogger
-from pathlib import Path
 
-import virtool.uploads.db
 from aiohttp.web_exceptions import HTTPBadRequest
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp.web_response import Response
+
+import virtool.uploads.db
 from virtool.api.response import InvalidQuery, NotFound, json_response
 from virtool.http.routes import Routes
 from virtool.uploads.models import Upload, UploadType
@@ -114,7 +114,8 @@ async def download(req):
 @routes.delete("/uploads/{id}", permission="remove_file")
 async def delete(req):
     """
-    Set a row's `removed` and `removed_at` attribute in the `uploads` SQL table and delete its associated local file.
+    Set a row's `removed` and `removed_at` attribute in the `uploads` SQL table and
+    delete its associated local file.
 
     """
     pg = req.app["pg"]
