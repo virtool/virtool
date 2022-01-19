@@ -1,9 +1,10 @@
 import logging
 from typing import Dict, List, Optional, Type, Union
 
-import virtool.utils
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
+import virtool.utils
 from virtool.pg.base import Base
 from virtool.uploads.models import Upload
 
