@@ -14,8 +14,9 @@ from typing import Any, Dict, List, Tuple
 
 import aiofiles
 import openpyxl.styles
-import virtool.analyses.utils
 import visvalingamwyatt as vw
+
+import virtool.analyses.utils
 from virtool.config.cls import Config
 from virtool.history.db import patch_to_version
 from virtool.otus.utils import format_isolate_name
@@ -228,7 +229,7 @@ async def format_nuvs(app: App, document: Dict[str, Any]) -> Dict[str, Any]:
 
     hmms = {d.pop("_id"): d async for d in cursor}
 
-    for sequence in document["results"]:
+    for sequence in hits:
         for orf in sequence["orfs"]:
             for hit in orf["hits"]:
                 hit.update(hmms[hit["hit"]])
