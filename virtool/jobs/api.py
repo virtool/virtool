@@ -122,12 +122,12 @@ async def cancel(req):
                 "type": {"type": "string", "required": True},
                 "traceback": {
                     "type": "list",
-                    "items": [{"type": "string"}],
+                    "schema": {"type": "string"},
                     "required": True,
                 },
                 "details": {
                     "type": "list",
-                    "items": [{"type": "string"}],
+                    "schema": {"type": "string"},
                     "required": True,
                 },
             },
