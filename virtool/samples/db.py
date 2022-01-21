@@ -9,13 +9,14 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import virtool.errors
-import virtool.samples.utils
-import virtool.utils
 from multidict import MultiDictProxy
 from pymongo.results import DeleteResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
+import virtool.errors
+import virtool.samples.utils
+import virtool.utils
 from virtool.config.cls import Config
 from virtool.labels.models import Label
 from virtool.samples.models import SampleArtifact, SampleReads
@@ -126,22 +127,23 @@ async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
 
 async def attach_labels(pg: AsyncEngine, document: dict) -> dict:
     """
-    Finds label documents for each label ID given in a request body, then converts each document
-    into a dictionary to be placed in the list of dictionaries in the updated sample document.
+    Finds label documents for each label ID given in a request body, then converts each
+    document into a dictionary to be placed in the list of dictionaries in the updated
+    sample document.
 
     :param pg: PostgreSQL database connection object
     :param document: sample document to be used for creating or editing a sample
     :return: sample document with updated `labels` entry containing a list of label dictionaries
     """
     labels = list()
+
     if document.get("labels"):
         async with AsyncSession(pg) as session:
             results = await session.execute(
                 select(Label).filter(Label.id.in_(document["labels"]))
             )
 
-        for label in results.scalars():
-            labels.append(label.to_dict())
+        labels = [label.to_dict() for label in results.scalars()]
 
     return {**document, "labels": labels}
 

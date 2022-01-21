@@ -5,13 +5,14 @@ from abc import ABC, abstractmethod
 from asyncio import gather
 from typing import Any, AsyncIterable, Awaitable, Callable, Dict, List, Optional, Tuple
 
-import virtool.indexes.db
-import virtool.references.db
-import virtool.samples.db
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from sqlalchemy import inspect, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool.db.core import DB, Collection
+
+import virtool.indexes.db
+import virtool.references.db
+import virtool.samples.db
+from virtool.db.core import Collection, DB
 from virtool.dispatcher.change import Change
 from virtool.dispatcher.connection import Connection
 from virtool.dispatcher.operations import DELETE
@@ -35,18 +36,18 @@ class AbstractFetcher(ABC):
         self, change: Change, connections: List[Connection]
     ) -> AsyncIterable[Tuple[Connection, dict]]:
         """
-        Fetch all records with IDs matching the passed ``id_list`` and are allowed to be viewed
-        by the ``connection``
+        Fetch all records with IDs matching the passed ``id_list`` and are allowed to be
+        viewed by the ``connection``
         """
         pass
 
     async def fetch(self, change: Change, connections: List[Connection]):
         """
-        Return connection-message pairs for the resources with IDs matching the passed ``id_list``
-        as prepared by :meth:``prepare``.
+        Return connection-message pairs for the resources with IDs matching the passed
+        ``id_list`` as prepared by :meth:``prepare``.
 
-        Returns deletion messages by default unless the attribute :attr:`auto_delete` is set to
-        `False`.
+        Returns deletion messages by default unless the attribute :attr:`auto_delete`
+        is set to `False`.
 
         :param change: the change causing the dispatch
         :param connections: the authenticated connections from the dispatcher
@@ -97,8 +98,8 @@ class SimpleMongoFetcher(AbstractFetcher):
         """
         Prepare and yield websocket message-connection pairs based on ``change``.
 
-        This fetcher will allow the message to be distributed to all passed ``connections``. There
-        is no right or permission checking.
+        This fetcher will allow the message to be distributed to all passed
+        ``connections``. There is no right or permission checking.
 
         """
         cursor = self._collection.find(
@@ -188,9 +189,9 @@ class ReferencesFetcher(AbstractFetcher):
         """
         Prepare reference connection-message pairs to dispatch by WebSocket.
 
-        Run the data through the reference processor, thereby attaching related data from other
-        collections. Only sends message on connections that have read rights on the associated
-        reference.
+        Run the data through the reference processor, thereby attaching related data
+        from other collections. Only sends message on connections that have read rights
+        on the associated reference.
 
         :param change: the change that is triggering the dispatch
         :param connections: the connections to dispatch to
@@ -230,8 +231,8 @@ class SamplesFetcher(AbstractFetcher):
             {"_id": {"$in": change.id_list}}, projection=virtool.samples.db.PROJECTION
         ).to_list(None)
 
-        await gather(*[attach_labels(self._pg, d) for d in documents])
-        await attach_users(self._db, documents)
+        documents = await gather(*[attach_labels(self._pg, d) for d in documents])
+        documents = await attach_users(self._db, list(documents))
 
         for document in documents:
             user = document["user"]["id"]
@@ -256,9 +257,9 @@ class UploadsFetcher(AbstractFetcher):
         """
         Prepare reference connection-message pairs to dispatch by WebSocket.
 
-        Run the data through the reference processor, thereby attaching related data from other
-        collections. Only sends message on connections that have read rights on the associated
-        reference.
+        Run the data through the reference processor, attaching related data from other
+        collections. Only sends message on connections that have read rights on the
+        associated reference.
 
         :param change: the change that is triggering the dispatch
         :param connections: the connections to dispatch to
