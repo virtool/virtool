@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Enum, Integer, String, UniqueConstraint
+from sqlalchemy import BigInteger, Column, Enum, Integer, String, UniqueConstraint
 
 from virtool.pg.base import Base
 from virtool.pg.utils import SQLEnum
@@ -27,4 +27,4 @@ class SubtractionFile(Base):
     name = Column(String)
     subtraction = Column(String)
     type = Column(Enum(SubtractionType))
-    size = Column(Integer)
+    size = Column(BigInteger)

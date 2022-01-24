@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Enum
+from sqlalchemy import BigInteger, Column, DateTime, Enum, Integer, String
 
 from virtool.pg.base import Base
 from virtool.pg.utils import SQLEnum
@@ -33,5 +33,5 @@ class AnalysisFile(Base):
     format = Column(Enum(AnalysisFormat))
     name = Column(String)
     name_on_disk = Column(String, unique=True)
-    size = Column(Integer)
+    size = Column(BigInteger)
     uploaded_at = Column(DateTime)

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Enum, Integer, String, UniqueConstraint
+from sqlalchemy import BigInteger, Column, Enum, Integer, String, UniqueConstraint
 
 from virtool.pg.base import Base
 from virtool.pg.utils import SQLEnum
@@ -28,4 +28,4 @@ class IndexFile(Base):
     name = Column(String, nullable=False)
     index = Column(String, nullable=False)
     type = Column(Enum(IndexType))
-    size = Column(Integer)
+    size = Column(BigInteger)
