@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, Enum, Integer, String
+from sqlalchemy import BigInteger, Column, DateTime, Enum, Integer, String
 from sqlalchemy.sql.schema import UniqueConstraint
 
 from virtool.pg.base import Base
@@ -19,7 +19,7 @@ class SampleArtifactCache(Base):
     name = Column(String, nullable=False)
     name_on_disk = Column(String)
     sample = Column(String, nullable=False)
-    size = Column(Integer)
+    size = Column(BigInteger)
     type = Column(Enum(ArtifactType), nullable=False)
     uploaded_at = Column(DateTime)
 
@@ -38,5 +38,5 @@ class SampleReadsCache(Base):
     name = Column(String(length=13), nullable=False)
     name_on_disk = Column(String, nullable=False)
     sample = Column(String, nullable=False)
-    size = Column(Integer)
+    size = Column(BigInteger)
     uploaded_at = Column(DateTime)
