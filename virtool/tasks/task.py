@@ -28,6 +28,9 @@ class Task:
         self.errored = False
         self.temp_dir = get_temp_dir()
 
+    def __str__(self):
+        return f"<{type(self).__name__} id={self.id} step={self.step.__name__}>"
+
     async def init_db(self):
         self.document = await virtool.tasks.pg.get(self.pg, self.id)
         self.context = self.document["context"]
@@ -45,6 +48,7 @@ class Task:
             try:
                 await func()
             except Exception as err:
+                logger.exception(f"Encountered error in {self}")
                 await self.error(str(err))
 
         if not self.errored:
