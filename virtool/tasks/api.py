@@ -1,9 +1,8 @@
-import virtool.http.routes
 import virtool.tasks.pg
-import virtool.utils
 from virtool.api.response import NotFound, json_response
+from virtool.http.routes import Routes
 
-routes = virtool.http.routes.Routes()
+routes = Routes()
 
 
 @routes.get("/tasks")

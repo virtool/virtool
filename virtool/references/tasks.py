@@ -2,9 +2,12 @@ import asyncio
 import json
 import os
 import shutil
+from datetime import timedelta
 from pathlib import Path
 
 import aiohttp
+import arrow
+from semver import VersionInfo
 
 import virtool.errors
 import virtool.otus.db
@@ -15,15 +18,15 @@ from virtool.history.db import patch_to_version
 from virtool.history.utils import remove_diff_files
 from virtool.http.utils import download_file
 from virtool.references.db import (
-    insert_joined_otu,
-    insert_change,
     download_and_parse_release,
     fetch_and_update_release,
+    insert_change,
+    insert_joined_otu,
     update_joined_otu,
 )
-from virtool.references.utils import load_reference_file, check_import_data
+from virtool.references.utils import check_import_data, load_reference_file
 from virtool.tasks.task import Task
-from virtool.utils import get_temp_dir, compress_json_with_gzip
+from virtool.utils import compress_json_with_gzip, get_temp_dir
 
 
 class CloneReferenceTask(Task):
@@ -585,3 +588,43 @@ class CreateIndexJSONTask(Task):
                 progress=tracker.step_completed,
                 step="create_index_json_files",
             )
+
+
+class CleanReferencesTask(Task):
+    task_type = "clean_references"
+
+    def __init__(self, app, task_id):
+        super().__init__(app, task_id)
+
+        self.steps = [self.clean_timed_out_updates]
+
+    async def _remove_latest_update(self, ref_id):
+        await self.db.references.update_one(
+            {"_id": ref_id}, {"$pop": {"updates": -1}, "$set": {"updating": False}}
+        )
+
+    async def clean_timed_out_updates(self):
+        async for reference in self.db.references.find(
+            {"remotes_from": {"$exists": True}}, ["installed", "task", "updates"]
+        ):
+            if len(reference["updates"]) == 0:
+                continue
+
+            latest_update = reference["updates"][-1]
+
+            if latest_update["ready"]:
+                continue
+
+            installed_version = VersionInfo.parse(
+                reference["installed"]["name"].lstrip("v")
+            )
+
+            latest_update_version = VersionInfo.parse(latest_update["name"].lstrip("v"))
+
+            if latest_update_version <= installed_version:
+                continue
+
+            if arrow.utcnow() - arrow.get(latest_update["created_at"]) > timedelta(
+                minutes=15
+            ):
+                await self._remove_latest_update(reference["_id"])

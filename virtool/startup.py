@@ -6,6 +6,7 @@ import sys
 import typing
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Dict
 from urllib.parse import urlparse, urlunparse
 
 import aiohttp.client
@@ -33,7 +34,11 @@ from virtool.oidc.utils import JWKArgs
 from virtool.pg.testing import create_test_database
 from virtool.redis import periodically_ping_redis
 from virtool.references.db import refresh_remotes
-from virtool.references.tasks import CreateIndexJSONTask, DeleteReferenceTask
+from virtool.references.tasks import (
+    CleanReferencesTask,
+    CreateIndexJSONTask,
+    DeleteReferenceTask,
+)
 from virtool.routes import setup_routes
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.sentry import setup
@@ -62,12 +67,12 @@ class B2C:
     auth_code_flow: dict = None
 
 
-def create_events() -> dict:
+def create_events() -> Dict[str, asyncio.Event]:
     """
-    Create and store :class:`asyncio.Event` objects for triggering an application restart or
-    shutdown.
+    Create and store :class:`asyncio.Event` objects for triggering an application
+    restart or shutdown.
 
-    :return: a `dict` containing :class:`~asyncio.Event` objects for restart and shutdown
+    :return: a `dict` with :class:`~asyncio.Event` objects for restart and shutdown
 
     """
     return {"restart": asyncio.Event(), "shutdown": asyncio.Event()}
@@ -91,7 +96,8 @@ async def startup_check_db(app: Application):
     logger.info("Checking database")
     await migrate(app)
 
-    # Make sure the indexes collection exists before later trying to set an compound index on it.
+    # Make sure the indexes collection exists before later trying to set an compound
+    # index on it.
     try:
         await db.motor_client.create_collection("indexes")
     except pymongo.errors.CollectionInvalid:
@@ -124,8 +130,8 @@ async def startup_db(app: App):
 
 async def startup_dispatcher(app: Application):
     """
-    An application ``on_startup`` callback that initializes a Virtool :class:`~.Dispatcher` object
-    and attaches it to the ``app`` object.
+    An application ``on_startup`` callback that initializes a Virtool
+    :class:`~.Dispatcher` object and attaches it to the ``app`` object.
 
     :param app: the app object
 
@@ -156,8 +162,8 @@ async def startup_events(app: Application):
 
 async def startup_executors(app: Application):
     """
-    An application ``on_startup`` callback that initializes a :class:`~ThreadPoolExecutor` and
-    attaches it to the ``app`` object.
+    An application ``on_startup`` callback that initializes a
+    :class:`~ThreadPoolExecutor` and attaches it to the ``app`` object.
 
     :param app: the application object
 
@@ -191,8 +197,8 @@ async def startup_fake(app: Application):
 
 async def startup_fake_config(app: App):
     """
-    If the ``fake`` config flag is set, patch the config so that the MongoDB and Postgres databases
-    and the data directory are faked.
+    If the ``fake`` config flag is set, patch the config so that the MongoDB and
+    Postgres databases and the data directory are faked.
 
     :param app:
 
@@ -229,7 +235,8 @@ async def startup_http_client(app: Application):
     """
     Create an async HTTP client session for the server.
 
-    The client session is used to make requests to GitHub, NCBI, and https://www.virtool.ca.
+    The client session is used to make requests to GitHub, NCBI, and
+    https://www.virtool.ca.
 
     :param app: the application object
 
@@ -253,8 +260,8 @@ async def startup_paths(app: Application):
 
 async def startup_postgres(app: Application):
     """
-    An application ``on_startup`` callback that attaches an instance of :class:`~AsyncConnection`
-    to the Virtool ``app`` object.
+    An application ``on_startup`` callback that attaches an instance of
+    :class:`~AsyncConnection` to the Virtool ``app`` object.
 
     :param app: the app object
 
@@ -327,8 +334,8 @@ async def startup_version(app: typing.Union[dict, Application]):
     """
     Bind the application version to the application state `dict`.
 
-    The value will come by checking `--force-version`, the `VERSION` file, or the current Git tag
-    if the containing folder is a Git repository.
+    The value will come by checking `--force-version`, the `VERSION` file, or the
+    current Git tag if the containing folder is a Git repository.
 
     :param app: the application object
 
@@ -421,5 +428,6 @@ async def startup_tasks(app: Application):
     await app["tasks"].add(CompressSamplesTask)
     await app["tasks"].add(MoveSampleFilesTask)
     await app["tasks"].add(UpdateUserDocumentsTask)
+    await app["tasks"].add(CleanReferencesTask)
 
     await scheduler.spawn(app["tasks"].add_periodic(MigrateFilesTask, 3600))

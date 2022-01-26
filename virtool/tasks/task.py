@@ -1,4 +1,4 @@
-import logging
+from logging import getLogger
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,7 +7,7 @@ import virtool.tasks.models
 import virtool.tasks.pg
 from virtool.utils import get_temp_dir
 
-logger = logging.getLogger("task")
+logger = getLogger("task")
 
 
 class Task:
@@ -135,8 +135,10 @@ class ProgressTracker:
 
     async def add(self, value: int) -> int:
         """
-        Add value to progress, the value will be automatically convert to progress based on the value and file size,
-        and update to the SQL database.
+        Add value to progress.
+
+        The value will be automatically convert to progress based on the value and file
+        size, and update to the SQL database.
 
         :param value: the value to be added to progress.
         :return: the new progress after update.
