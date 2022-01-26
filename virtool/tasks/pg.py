@@ -1,7 +1,6 @@
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-import virtool.db.utils
 import virtool.utils
 from virtool.tasks.models import Task
 
@@ -31,13 +30,13 @@ async def get(pg: AsyncEngine, task_id: int) -> dict:
     :return: a task record
 
     """
-    document = dict()
     async with AsyncSession(pg) as session:
         result = (await session.execute(select(Task).filter_by(id=task_id))).scalar()
-    if result:
-        document = result.to_dict()
 
-    return document
+    if result:
+        return result.to_dict()
+
+    return {}
 
 
 async def register(pg, task_class, context: dict = None) -> dict:

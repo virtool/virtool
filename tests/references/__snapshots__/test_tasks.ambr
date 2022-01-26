@@ -1,0 +1,82 @@
+# name: test_clean_references_task[uvloop-clean]
+  <class 'dict'> {
+    '_id': 'foo',
+    'installed': <class 'dict'> {
+      'name': 'v1.2.1',
+    },
+    'remotes_from': <class 'dict'> {
+      'slug': 'virtool/ref-plant-viruses',
+    },
+    'updates': <class 'list'> [
+    ],
+    'updating': False,
+  }
+---
+# name: test_clean_references_task[uvloop-no_updates]
+  <class 'dict'> {
+    '_id': 'foo',
+    'installed': <class 'dict'> {
+      'name': 'v1.2.1',
+    },
+    'remotes_from': <class 'dict'> {
+      'slug': 'virtool/ref-plant-viruses',
+    },
+    'updates': <class 'list'> [
+    ],
+    'updating': True,
+  }
+---
+# name: test_clean_references_task[uvloop-ready]
+  <class 'dict'> {
+    '_id': 'foo',
+    'installed': <class 'dict'> {
+      'name': 'v1.2.1',
+    },
+    'remotes_from': <class 'dict'> {
+      'slug': 'virtool/ref-plant-viruses',
+    },
+    'updates': <class 'list'> [
+      <class 'dict'> {
+        'name': 'v1.2.2',
+        'ready': True,
+      },
+    ],
+    'updating': True,
+  }
+---
+# name: test_clean_references_task[uvloop-too_new]
+  <class 'dict'> {
+    '_id': 'foo',
+    'installed': <class 'dict'> {
+      'name': 'v1.2.1',
+    },
+    'remotes_from': <class 'dict'> {
+      'slug': 'virtool/ref-plant-viruses',
+    },
+    'updates': <class 'list'> [
+      <class 'dict'> {
+        'created_at': datetime.datetime(2020, 1, 1, 21, 20),
+        'name': 'v1.2.2',
+        'ready': False,
+      },
+    ],
+    'updating': True,
+  }
+---
+# name: test_clean_references_task[uvloop-too_old]
+  <class 'dict'> {
+    '_id': 'foo',
+    'installed': <class 'dict'> {
+      'name': 'v1.2.1',
+    },
+    'remotes_from': <class 'dict'> {
+      'slug': 'virtool/ref-plant-viruses',
+    },
+    'updates': <class 'list'> [
+      <class 'dict'> {
+        'name': 'v1.2.0',
+      },
+    ],
+    'updating': True,
+  }
+---
