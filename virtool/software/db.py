@@ -45,10 +45,9 @@ async def fetch_and_update_releases(app, ignore_errors=False):
             data = await resp.text()
             data = json.loads(data)
 
-        logger.debug("Retrieved software releases from www.virtool.ca")
+        logger.info("Retrieved software releases from www.virtool.ca")
     except aiohttp.ClientConnectorError:
-        # Return any existing release list or `None`.
-        logger.debug("Could not retrieve software releases")
+        logger.exception("Could not retrieve software releases")
 
         await db.status.update_one({"_id": "software"}, {
             "$set": {
