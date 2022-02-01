@@ -376,7 +376,7 @@ async def download_analysis_document(req: Request) -> Response:
         "Content-Type": content_type,
     }
 
-    return Response(text=formatted, headers=headers)
+    return Response(body=formatted, headers=headers)
 
 
 @routes.put("/analyses/{analysis_id}/{sequence_index}/blast")

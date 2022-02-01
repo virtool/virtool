@@ -246,7 +246,7 @@ async def format_analysis_to_excel(app: App, document: Dict[str, Any]) -> bytes:
     :return: the formatted Excel workbook
 
     """
-    depths = calculate_median_depths(document["hits"])
+    depths = calculate_median_depths(document["results"]["hits"])
 
     formatted = await format_analysis(app, document)
 
@@ -266,7 +266,7 @@ async def format_analysis_to_excel(app: App, document: Dict[str, Any]) -> bytes:
 
     rows = list()
 
-    for otu in formatted["results"]:
+    for otu in formatted["results"]["hits"]:
         for isolate in otu["isolates"]:
             for sequence in isolate["sequences"]:
                 row = [
@@ -302,7 +302,7 @@ async def format_analysis_to_csv(app: App, document: Dict[str, Any]) -> str:
     :return: the formatted CSV data
 
     """
-    depths = calculate_median_depths(document["hits"])
+    depths = calculate_median_depths(document["results"]["hits"])
 
     formatted = await format_analysis(app, document)
 
@@ -312,7 +312,7 @@ async def format_analysis_to_csv(app: App, document: Dict[str, Any]) -> str:
 
     writer.writerow(CSV_HEADERS)
 
-    for otu in formatted["results"]:
+    for otu in formatted["results"]["hits"]:
         for isolate in otu["isolates"]:
             for sequence in isolate["sequences"]:
                 row = [
