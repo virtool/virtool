@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-from asyncio.tasks import gather
 
 import aiohttp.web
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
@@ -10,6 +9,7 @@ from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.jobs.db
+import virtool.pg.utils
 import virtool.subtractions.db
 import virtool.uploads.db
 import virtool.validators
@@ -20,7 +20,6 @@ from virtool.db.utils import get_new_id
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
-from virtool.pg.utils import get_row_by_id
 from virtool.subtractions.db import PROJECTION, attach_computed
 from virtool.subtractions.files import create_subtraction_file, delete_subtraction_file
 from virtool.subtractions.models import SubtractionFile
@@ -72,7 +71,7 @@ async def find(req):
         projection=PROJECTION,
     )
 
-    documents, ready_count = await gather(
+    documents, ready_count = await asyncio.gather(
         apply_transforms(
             data["documents"], [AttachUserTransform(db, ignore_errors=True)]
         ),
@@ -137,12 +136,12 @@ async def create(req):
     nickname = data["nickname"]
     upload_id = data["upload_id"]
 
-    upload = await virtool.pg.utils.get_row_by_id(pg, Upload, upload_id)
+    upload_record = await virtool.pg.utils.get_row_by_id(pg, Upload, upload_id)
 
-    if upload is None:
+    if upload_record is None:
         raise HTTPBadRequest(text="File does not exist")
 
-    filename = upload.name
+    filename = upload_record.name
 
     user_id = req["client"].user_id
 
@@ -183,11 +182,7 @@ async def create(req):
 
 @routes.jobs_api.put("/subtractions/{subtraction_id}/files/{filename}")
 async def upload(req):
-    """
-    Upload a new subtraction file to the `subtraction_files` SQL table and the `subtractions`
-    folder in the Virtool data path.
-
-    """
+    """Upload a new subtraction file."""
     db = req.app["db"]
     pg = req.app["pg"]
 

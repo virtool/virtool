@@ -1,9 +1,12 @@
 import hashlib
 
 import pytest
-import virtool.errors
 from aiohttp.test_utils import make_mocked_coro
+
+import virtool.errors
+from virtool.db.transforms import apply_transforms
 from virtool.users.db import (
+    AttachUserTransform,
     B2CUserAttributes,
     compose_force_reset_update,
     compose_groups_update,
@@ -18,6 +21,23 @@ from virtool.users.db import (
 )
 from virtool.users.utils import hash_password
 from virtool.utils import random_alphanumeric
+
+
+@pytest.mark.parametrize("multiple", [True, False])
+async def test_attach_user_transform(multiple, snapshot, dbi, fake):
+    user_1 = await fake.users.insert()
+    user_2 = await fake.users.insert()
+
+    documents = {"_id": "bar", "user": {"id": user_1["_id"]}}
+
+    if multiple:
+        documents = [
+            documents,
+            {"_id": "foo", "user": {"id": user_2["_id"]}},
+            {"_id": "baz", "user": {"id": user_1["_id"]}},
+        ]
+
+    assert await apply_transforms(documents, [AttachUserTransform(dbi)]) == snapshot
 
 
 @pytest.mark.parametrize("force_reset", [None, True, False])

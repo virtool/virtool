@@ -93,7 +93,8 @@ class BLAST:
 
     async def sleep(self):
         """
-        Sleep for the current interval and increase the interval by 5 seconds after sleeping.
+        Sleep for the current interval and increase the interval by 5 seconds after
+        sleeping.
 
         """
         await asyncio.sleep(self.interval)
@@ -103,7 +104,8 @@ class BLAST:
         self, ready: bool, result: Optional[dict], error: Optional[str]
     ) -> Tuple[dict, dict]:
         """
-        Update the BLAST data. Returns the BLAST data and the complete analysis document.
+        Update the BLAST data. Returns the BLAST data and the complete analysis
+        document.
 
         :param ready: indicates whether the BLAST request is complete
         :param result: the formatted result of a successful BLAST request
@@ -187,30 +189,29 @@ async def create(
 
     created_at = virtool.utils.timestamp()
 
-    document = await db.analyses.insert_one(
-        {
-            "ready": False,
-            "created_at": created_at,
-            "updated_at": created_at,
-            "job": {"id": job_id},
-            "files": [],
-            "workflow": workflow,
-            "sample": {"id": sample_id},
-            "index": {"id": index_id, "version": index_version},
-            "reference": {
-                "id": ref_id,
-                "name": await virtool.db.utils.get_one_field(
-                    db.references, "name", ref_id
-                ),
-            },
-            "subtractions": subtractions,
-            "user": {
-                "id": user_id,
-            },
-        }
-    )
+    document = {
+        "ready": False,
+        "created_at": created_at,
+        "updated_at": created_at,
+        "job": {"id": job_id},
+        "files": [],
+        "workflow": workflow,
+        "sample": {"id": sample_id},
+        "index": {"id": index_id, "version": index_version},
+        "reference": {
+            "id": ref_id,
+            "name": await virtool.db.utils.get_one_field(db.references, "name", ref_id),
+        },
+        "subtractions": subtractions,
+        "user": {
+            "id": user_id,
+        },
+    }
 
-    return base_processor(document)
+    if analysis_id:
+        document["_id"] = analysis_id
+
+    return base_processor(await db.analyses.insert_one(document))
 
 
 async def update_nuvs_blast(

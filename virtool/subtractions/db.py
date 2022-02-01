@@ -59,9 +59,11 @@ class AttachSubtractionTransform(AbstractTransform):
 
 async def attach_computed(app: App, subtraction: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Attach the ``linked_samples`` and ``files`` fields to the passed subtraction document.
+    Attach the ``linked_samples`` and ``files`` fields to the passed subtraction
+    document.
 
-    Queries MongoDB and SQL to find the required data. Returns a new document dictionary.
+    Queries MongoDB and SQL to find the required data. Returns a new document
+    dictionary.
 
     :param app: the application object
     :param subtraction: the subtraction document to attach to
@@ -87,8 +89,8 @@ async def attach_computed(app: App, subtraction: Dict[str, Any]) -> Dict[str, An
 
 async def check_subtraction_fasta_files(db, config: Config) -> list:
     """
-    Check subtraction directories for files and set 'has_file' to boolean based on whether .fa.gz
-    exists.
+    Check subtraction directories for files and set 'has_file' to boolean based on
+    whether a ``.fa.gz`` file exists.
 
     :param db: the application database client
     :param config: the application configuration
@@ -176,7 +178,8 @@ async def finalize(
     count: int,
 ) -> dict:
     """
-    Finalize a subtraction by setting `ready` to True and updating the `gc` and `files` fields.
+    Finalize a subtraction by setting `ready` to True and updating the `gc` and `files`
+    fields.
 
     :param db: the application database client
     :param pg: the PostgreSQL AsyncEngine object

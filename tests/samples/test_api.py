@@ -7,11 +7,11 @@ from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.caches.db
+import virtool.pg.utils
 import virtool.uploads.db
 from virtool.caches.models import SampleArtifactCache, SampleReadsCache
 from virtool.caches.utils import join_cache_path
 from virtool.labels.models import Label
-from virtool.pg.utils import get_row_by_id
 from virtool.samples.db import check_name
 from virtool.samples.files import create_reads_file
 from virtool.samples.models import SampleArtifact, SampleReads
@@ -124,7 +124,7 @@ async def test_find(
         label_query = "&label=".join(str(label) for label in labels)
         query.append(f"label={label_query}")
 
-    if len(query):
+    if query:
         path += "?{}".format("&".join(query))
 
     resp = await client.get(path)

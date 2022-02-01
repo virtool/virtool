@@ -1,4 +1,4 @@
-import asyncio.tasks
+import asyncio
 import logging
 import os
 from pathlib import Path
@@ -255,7 +255,8 @@ async def create(req):
 
     group = "none"
 
-    # Require a valid ``group`` field if the ``sample_group`` setting is ``users_primary_group``.
+    # Require a valid ``group`` field if the ``sample_group`` setting is
+    # ``users_primary_group``.
     if sample_group_setting == "force_choice":
         force_choice_error_message = await validate_force_choice_group(db, data)
 
@@ -388,8 +389,9 @@ async def edit(req):
 @schema({"quality": {"type": "dict", "required": True}})
 async def finalize(req):
     """
-    Finalize a sample that is being created using the Jobs API by setting a sample's quality field
-    and `ready` to `True`
+    Finalize a sample.
+
+    Set the sample's quality field and the `ready` field to `True`.
 
     """
     data = req["data"]
@@ -433,7 +435,8 @@ async def set_rights(req):
 
     user_id = req["client"].user_id
 
-    # Only update the document if the connected user owns the samples or is an administrator.
+    # Only update the document if the connected user owns the samples or is an
+    # administrator.
     if not req["client"].administrator and user_id != await get_sample_owner(
         db, sample_id
     ):
@@ -483,8 +486,9 @@ async def remove(req):
 @routes.jobs_api.delete("/samples/{sample_id}")
 async def job_remove(req):
     """
-    Remove a sample document and all associated analyses. Only usable in the Jobs API and when
-    samples are unfinalized.
+    Remove a sample document and all associated analyses.
+
+    Only usable in the Jobs API and when samples are unfinalized.
 
     """
     db = req.app["db"]
@@ -658,7 +662,8 @@ async def analyze(req):
 @routes.jobs_api.delete("/samples/{sample_id}/caches/{cache_key}")
 async def cache_job_remove(req: aiohttp.web.Request):
     """
-    Remove a cache document. Only usable in the Jobs API and when caches are unfinalized.
+    Remove a cache document. Only usable in the Jobs API and when caches are
+    unfinalized.
 
     """
     db = req.app["db"]

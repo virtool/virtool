@@ -2,7 +2,6 @@
 Work with OTU history in the database.
 
 """
-from asyncio.tasks import gather
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -199,10 +198,8 @@ async def get_contributors(db, query: dict) -> List[dict]:
 
     contributors = [{"id": c["_id"], "count": c["count"]} async for c in cursor]
 
-    projection = {**ATTACH_PROJECTION, "_id": True}
-
     users = await db.users.find(
-        {"_id": {"$in": [c["id"] for c in contributors]}}, projection=projection
+        {"_id": {"$in": [c["id"] for c in contributors]}}, projection=ATTACH_PROJECTION
     ).to_list(None)
 
     users = {u.pop("_id"): u for u in users}
