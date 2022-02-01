@@ -12,9 +12,10 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 import virtool.db.utils
 import virtool.utils
 from virtool.config.cls import Config
+from virtool.db.transforms import AbstractTransform
 from virtool.db.utils import get_one_field
 from virtool.subtractions.utils import get_subtraction_files, join_subtraction_path
-from virtool.types import App
+from virtool.types import App, Document
 
 PROJECTION = [
     "_id",
@@ -30,6 +31,30 @@ PROJECTION = [
 ]
 
 ADD_SUBTRACTION_FILES_QUERY = {"deleted": False}
+
+
+class AttachSubtractionTransform(AbstractTransform):
+    """
+    Attach more subtraction detail to a document with a field `subtractions` that
+    contains a list    of subtraction IDs.
+    """
+
+    def __init__(self, db):
+        self._db = db
+
+    async def attach_one(self, document: Document, prepared: Any) -> Document:
+        return {**document, "subtractions": prepared}
+
+    async def prepare_one(self, document: Document) -> Any:
+        return [
+            {
+                "id": subtraction_id,
+                "name": await get_one_field(
+                    self._db.subtraction, "name", subtraction_id
+                ),
+            }
+            for subtraction_id in document["subtractions"]
+        ]
 
 
 async def attach_computed(app: App, subtraction: Dict[str, Any]) -> Dict[str, Any]:
@@ -58,30 +83,6 @@ async def attach_computed(app: App, subtraction: Dict[str, Any]) -> Dict[str, An
         ] = f"{base_url}/subtractions/{subtraction_id}/files/{file['name']}"
 
     return {**subtraction, "files": files, "linked_samples": linked_samples}
-
-
-async def attach_subtractions(db, document: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Attach more subtraction detail to a document with a field `subtractions` that contains a list
-    of subtraction IDs.
-
-    :param db: the application database client
-    :param document: the document to attach data to
-    :return: the updated document
-    """
-    if document.get("subtractions"):
-        subtractions = list()
-
-        for subtraction_id in document["subtractions"]:
-            subtraction_name = await get_one_field(
-                db.subtraction, "name", subtraction_id
-            )
-
-            subtractions.append({"id": subtraction_id, "name": subtraction_name})
-
-        return {**document, "subtractions": subtractions}
-
-    return document
 
 
 async def check_subtraction_fasta_files(db, config: Config) -> list:

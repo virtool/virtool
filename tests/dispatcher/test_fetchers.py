@@ -1,4 +1,6 @@
 import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine
+
 from virtool.dispatcher.change import Change
 from virtool.dispatcher.fetchers import (
     IndexesFetcher,
@@ -8,7 +10,6 @@ from virtool.dispatcher.fetchers import (
     UploadsFetcher,
 )
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
-from virtool.uploads.models import UploadType
 
 
 @pytest.fixture
@@ -173,7 +174,7 @@ class TestIndexesFetcher:
 
 
 class TestLabelsFetcher:
-    async def test_auto_delete(self, connections, dbi, pg, ws):
+    async def test_auto_delete(self, connections, dbi, pg: AsyncEngine, ws):
         fetcher = LabelsFetcher(pg, dbi)
 
         pairs = list()
@@ -197,7 +198,13 @@ class TestLabelsFetcher:
             pairs.append(pair)
 
         message = {
-            "data": {"id": 1, "name": "Legacy", "color": None, "description": None},
+            "data": {
+                "id": 1,
+                "name": "Legacy",
+                "count": 0,
+                "color": None,
+                "description": None,
+            },
             "interface": "labels",
             "operation": operation,
         }

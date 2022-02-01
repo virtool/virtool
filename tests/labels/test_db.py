@@ -1,7 +1,66 @@
-from virtool.labels.db import attach_sample_count
+import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
+from virtool.db.transforms import apply_transforms
+from virtool.labels.db import AttachLabelsTransform, SampleCountTransform
+from virtool.labels.models import Label
 
 
-async def test_attach_sample_count(snapshot, spawn_client):
+@pytest.mark.parametrize(
+    "documents",
+    [
+        {"id": "foo", "name": "Foo", "labels": [1, 2]},
+        [
+            {"id": "foo", "name": "Foo", "labels": [2]},
+            {"id": "bar", "name": "Bar", "labels": [1, 2]},
+            {"id": "baz", "name": "Baz", "labels": []},
+        ],
+    ],
+)
+async def test_label_attacher(documents, snapshot, pg: AsyncEngine):
+    async with AsyncSession(pg) as session:
+        session.add_all(
+            [
+                Label(id=1, name="Bug", color="#a83432", description="This is a bug"),
+                Label(
+                    id=2,
+                    name="Question",
+                    color="#03fc20",
+                    description="This is a question",
+                ),
+            ]
+        )
+        await session.commit()
+
+    assert await apply_transforms(documents, [AttachLabelsTransform(pg)]) == snapshot
+
+
+@pytest.mark.parametrize(
+    "labels",
+    [
+        {
+            "id": 1,
+            "name": "Bug",
+            "color": "#a83432",
+            "description": "This is a bug",
+        },
+        [
+            {
+                "id": 2,
+                "name": "Question",
+                "color": "#03fc20",
+                "description": "This is a question",
+            },
+            {
+                "id": 3,
+                "name": "Info",
+                "color": "#02db21",
+                "description": "This is a info",
+            },
+        ],
+    ],
+)
+async def test_sample_count_attacher(labels, snapshot, spawn_client):
     client = await spawn_client(authorize=True)
 
     await client.db.samples.insert_many(
@@ -12,29 +71,4 @@ async def test_attach_sample_count(snapshot, spawn_client):
         ]
     )
 
-    document_1 = {
-        "id": 1,
-        "name": "Bug",
-        "color": "#a83432",
-        "description": "This is a bug",
-    }
-
-    document_2 = {
-        "id": 2,
-        "name": "Question",
-        "color": "#03fc20",
-        "description": "This is a question",
-    }
-
-    document_3 = {
-        "id": 3,
-        "name": "Info",
-        "color": "#02db21",
-        "description": "This is a info",
-    }
-
-    result_1 = await attach_sample_count(client.app["db"], document_1)
-    result_2 = await attach_sample_count(client.app["db"], document_2)
-    result_3 = await attach_sample_count(client.app["db"], document_3)
-
-    assert (result_1, result_2, result_3) == snapshot
+    assert await apply_transforms(labels, [SampleCountTransform(client.db)]) == snapshot

@@ -1,16 +1,18 @@
 from logging import getLogger
 
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
+
 import virtool.jobs.db
 import virtool.utils
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
+from virtool.db.transforms import apply_transforms
 from virtool.db.utils import get_one_field
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs import is_running_or_waiting
 from virtool.jobs.db import LIST_PROJECTION, PROJECTION, delete, processor
-from virtool.users.db import attach_users
+from virtool.users.db import AttachUserTransform
 
 logger = getLogger(__name__)
 
@@ -36,7 +38,7 @@ async def find(req):
         db.jobs, db_query, req.query, projection=LIST_PROJECTION, sort="created_at"
     )
 
-    documents = await attach_users(db, data["documents"])
+    documents = await apply_transforms(data["documents"], [AttachUserTransform(db)])
 
     return json_response({**data, "documents": documents})
 
@@ -66,8 +68,8 @@ async def acquire(req):
     """
     Sets the acquired field on the job document.
 
-    This is used to let the server know that a job process has accepted the ID and needs to have
-    the secure token returned to it.
+    This is used to let the server know that a job process has accepted the ID and needs
+    to have the secure token returned to it.
 
     """
     db = req.app["db"]
@@ -149,8 +151,6 @@ async def cancel(req):
 async def push_status(req):
     """
     Push a status update to a job.
-
-    Relevant Virtool 4: https://github.com/virtool/virtool/blob/0d52d40927815aa8e53c64cf05d2790771f9a420/virtool/jobs/job.py#L380
 
     """
     db = req.app["db"]

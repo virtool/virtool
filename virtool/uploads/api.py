@@ -7,10 +7,11 @@ from aiohttp.web_response import Response
 
 import virtool.uploads.db
 from virtool.api.response import InvalidQuery, NotFound, json_response
+from virtool.db.transforms import apply_transforms
 from virtool.http.routes import Routes
 from virtool.uploads.models import Upload, UploadType
 from virtool.uploads.utils import naive_validator, naive_writer
-from virtool.users.db import attach_user, attach_users
+from virtool.users.db import AttachUserTransform
 
 logger = getLogger(__name__)
 
@@ -60,7 +61,9 @@ async def create(req):
     headers = {"Location": f"/uploads/{upload_id}"}
 
     return json_response(
-        await attach_user(req.app["db"], upload), status=201, headers=headers
+        await apply_transforms(upload, [AttachUserTransform(req.app["db"])]),
+        status=201,
+        headers=headers,
     )
 
 
@@ -73,12 +76,16 @@ async def find(req):
     pg = req.app["pg"]
     user = req.query.get("user")
     upload_type = req.query.get("type")
-    response = dict()
 
     uploads = await virtool.uploads.db.find(pg, user, upload_type)
-    uploads = await attach_users(req.app["db"], uploads)
 
-    return json_response({"documents": uploads})
+    return json_response(
+        {
+            "documents": await apply_transforms(
+                uploads, [AttachUserTransform(req.app["db"])]
+            )
+        }
+    )
 
 
 @routes.get("/uploads/{id}")

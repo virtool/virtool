@@ -5,13 +5,20 @@ Work with analyses in the database.
 import asyncio
 from typing import Any, Dict, List, Optional, Tuple
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
 import virtool.bio
 import virtool.db.utils
 import virtool.utils
+from virtool.analyses.models import AnalysisFile
 from virtool.config.cls import Config
+from virtool.db.transforms import AbstractTransform, apply_transforms
 from virtool.indexes.db import get_current_id_and_version
-from virtool.subtractions.db import attach_subtractions
-from virtool.users.db import attach_user
+from virtool.subtractions.db import AttachSubtractionTransform
+from virtool.types import Document
+from virtool.users.db import AttachUserTransform
+from virtool.utils import base_processor
 
 PROJECTION = (
     "_id",
@@ -34,6 +41,28 @@ TARGET_FILES = (
     "unmapped_hosts.fq",
     "unmapped_otus.fq",
 )
+
+
+class AttachAnalysisFileTransform(AbstractTransform):
+    def __init__(self, pg: AsyncEngine):
+        self._pg = pg
+
+    async def attach_one(self, document: Document, prepared: Any) -> Document:
+        return {**document, "files": prepared}
+
+    async def prepare_one(self, document: Document) -> Any:
+        async with AsyncSession(self._pg) as session:
+            results = (
+                (
+                    await session.execute(
+                        select(AnalysisFile).filter_by(analysis=document["id"])
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+        return [result.to_dict() for result in results]
 
 
 class BLAST:
@@ -120,10 +149,10 @@ async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
     :return: the processed analysis document
 
     """
-    processed = await attach_subtractions(db, document)
-    processed = await attach_user(db, processed)
-
-    return virtool.utils.base_processor(processed)
+    return await apply_transforms(
+        base_processor(document),
+        [AttachSubtractionTransform(db), AttachUserTransform(db)],
+    )
 
 
 async def create(
@@ -139,9 +168,9 @@ async def create(
     """
     Creates a new analysis.
 
-    Ensures that a valid subtraction host was the submitted. Configures
-    read and write permissions on the sample document and assigns it a creator username based on
-    the requesting connection.
+    Ensures that a valid subtraction host was the submitted. Configures read and write
+    permissions on the sample document and assigns it a creator username based on the
+    requesting connection.
 
     :param db: the application database object
     :param sample_id: the ID of the sample to create an analysis for
@@ -151,40 +180,37 @@ async def create(
     :param workflow: the analysis workflow to run
     :param job_id: the ID of the job
     :param analysis_id: the ID of the analysis
-
     :return: the analysis document
 
     """
-    # Get the current id and version of the otu index currently being used for analysis.
     index_id, index_version = await get_current_id_and_version(db, ref_id)
-
-    analysis_id = analysis_id or await virtool.db.utils.get_new_id(db.analyses)
 
     created_at = virtool.utils.timestamp()
 
-    document = {
-        "_id": analysis_id,
-        "ready": False,
-        "created_at": created_at,
-        "updated_at": created_at,
-        "job": {"id": job_id},
-        "files": [],
-        "workflow": workflow,
-        "sample": {"id": sample_id},
-        "index": {"id": index_id, "version": index_version},
-        "reference": {
-            "id": ref_id,
-            "name": await virtool.db.utils.get_one_field(db.references, "name", ref_id),
-        },
-        "subtractions": subtractions,
-        "user": {
-            "id": user_id,
-        },
-    }
+    document = await db.analyses.insert_one(
+        {
+            "ready": False,
+            "created_at": created_at,
+            "updated_at": created_at,
+            "job": {"id": job_id},
+            "files": [],
+            "workflow": workflow,
+            "sample": {"id": sample_id},
+            "index": {"id": index_id, "version": index_version},
+            "reference": {
+                "id": ref_id,
+                "name": await virtool.db.utils.get_one_field(
+                    db.references, "name", ref_id
+                ),
+            },
+            "subtractions": subtractions,
+            "user": {
+                "id": user_id,
+            },
+        }
+    )
 
-    await db.analyses.insert_one(document)
-
-    return document
+    return base_processor(document)
 
 
 async def update_nuvs_blast(

@@ -1,43 +1,29 @@
 """
 Work with OTU history in the database.
 
-Schema:
-- _id (str) the change ID - ID = OTU ID + '.' + version (eg. a9b22vuj.2)
-- created_at (datetime) when the change was made
-- description (str) a human-readable description of the operation
-- diff (JSON) a diff of the change created by the dictdiffer package
-- index (Object) describes the index associated with the change - null for unbuilt changes
-  - id (str) the ID of the index
-  - version (int) the version of the reference represented by the index
-- legacy (Object) contains legacy data
-- method_name (str) the name of the change method (eg. create_sequence, remove, clone)
-- otu (Object) describes the associated OTU
-  - id (str) the OTU ID
-  - name (str) the OTU name at the time the change was made
-- reference (Object) describes the parent reference
-  - id (str) the reference ID
-- user (Object) describes the user that made the change
-  - id (str) the user ID
-
 """
 from asyncio.tasks import gather
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import dictdiffer
 import pymongo.errors
+
 import virtool.errors
 import virtool.history.utils
 import virtool.otus.db
 import virtool.otus.utils
 import virtool.utils
 from virtool.api.utils import paginate
+from virtool.db.transforms import AbstractTransform, apply_transforms
 from virtool.history.utils import (
     calculate_diff,
     derive_otu_information,
     write_diff_file,
 )
-from virtool.users.db import ATTACH_PROJECTION, attach_user
+from virtool.types import Document
+from virtool.users.db import ATTACH_PROJECTION, AttachUserTransform
 
 MOST_RECENT_PROJECTION = [
     "_id",
@@ -62,6 +48,25 @@ LIST_PROJECTION = [
 PROJECTION = LIST_PROJECTION + ["diff"]
 
 
+class DiffTransform(AbstractTransform):
+    def __init__(self, data_path: Path):
+        self._data_path = data_path
+
+    async def attach_one(self, document: Document, prepared: Any) -> Document:
+        return {**document, "diff": prepared}
+
+    async def prepare_one(self, document: Document) -> Any:
+
+        if document["diff"] == "file":
+            otu_id, otu_version = document["id"].split(".")
+
+            document["diff"] = await virtool.history.utils.read_diff_file(
+                self._data_path, otu_id, otu_version
+            )
+
+        return document["diff"]
+
+
 async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
     """
     Process a history document before it is returned to the client.
@@ -70,12 +75,10 @@ async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
     :param document: the document to process
     :return: the processed document
     """
-    processed = virtool.utils.base_processor(document)
-
-    if processed.get("user"):
-        processed = await attach_user(db, processed)
-
-    return processed
+    return await apply_transforms(
+        virtool.utils.base_processor(document),
+        [AttachUserTransform(db, ignore_errors=True)],
+    )
 
 
 async def add(
@@ -149,15 +152,18 @@ async def find(db, req_query, base_query=None):
 
     return {
         **data,
-        "documents": await gather(*[processor(db, d) for d in data["documents"]]),
+        "documents": await apply_transforms(
+            data["documents"], [AttachUserTransform(db)]
+        ),
     }
 
 
-async def get(app, change_id: str) -> dict:
+async def get(app, change_id: str) -> Optional[Document]:
     """
     Get a complete history document identified by the passed `changed_id`.
 
-    Loads diff field from file if necessary. Returns `None` if the document does not exist.
+    Loads diff field from file if necessary. Returns `None` if the document does not
+    exist.
 
     :param app: the application object
     :param change_id: the ID of the change to get
@@ -169,23 +175,18 @@ async def get(app, change_id: str) -> dict:
     document = await db.history.find_one(change_id, PROJECTION)
 
     if document:
-        document = await attach_user(db, document)
-
-        if document["diff"] == "file":
-            otu_id, otu_version = change_id.split(".")
-
-            document["diff"] = await virtool.history.utils.read_diff_file(
-                app["config"].data_path, otu_id, otu_version
-            )
-
-        return await processor(db, document)
+        return await apply_transforms(
+            virtool.utils.base_processor(document),
+            [AttachUserTransform(db), DiffTransform(app["config"].data_path)],
+        )
 
     return None
 
 
 async def get_contributors(db, query: dict) -> List[dict]:
     """
-    Return an list of contributors and their contribution count for a specific set of history.
+    Return list of contributors and their contribution count for a specific set of
+    history.
 
     :param db: the application database client
     :param query: a query to filter scanned history by
@@ -227,18 +228,18 @@ async def get_most_recent_change(db, otu_id: str) -> dict:
 
 async def patch_to_version(app, otu_id: str, version: Union[str, int]) -> tuple:
     """
-    Take a joined otu back in time to the passed ``version``. Uses the diffs in the change documents associated with
-    the otu.
+    Take a joined otu back in time to the passed ``version``.
+
+    Uses the diffs in the change documents associated with the otu.
 
     :param app: the application object
     :param otu_id: the id of the otu to patch
     :param version: the version to patch to
-    :return: the current joined otu, patched otu, and the ids of changes reverted in the process
+    :return: the current joined otu, patched otu, and the ids of reverted changes
 
     """
     db = app["db"]
 
-    # A list of history_ids reverted to produce the patched entry.
     reverted_history_ids = list()
 
     current = await virtool.otus.db.join(db, otu_id) or dict()

@@ -15,6 +15,7 @@ import virtool.uploads.db
 import virtool.validators
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, get_query_bool, paginate
+from virtool.db.transforms import apply_transforms
 from virtool.db.utils import get_new_id
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
@@ -26,7 +27,7 @@ from virtool.subtractions.models import SubtractionFile
 from virtool.subtractions.utils import FILES
 from virtool.uploads.models import Upload
 from virtool.uploads.utils import naive_writer
-from virtool.users.db import attach_user
+from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
 logger = logging.getLogger("subtractions")
@@ -72,7 +73,9 @@ async def find(req):
     )
 
     documents, ready_count = await gather(
-        gather(*[attach_user(db, d) for d in data["documents"]]),
+        apply_transforms(
+            data["documents"], [AttachUserTransform(db, ignore_errors=True)]
+        ),
         db.subtraction.count_documents({"ready": True}),
     )
 
@@ -97,10 +100,11 @@ async def get(req):
 
     document = await attach_computed(req.app, document)
 
-    if "user" in document:
-        document = await attach_user(db, document)
-
-    return json_response(base_processor(document))
+    return json_response(
+        await apply_transforms(
+            base_processor(document), [AttachUserTransform(db, ignore_errors=True)]
+        )
+    )
 
 
 @routes.post("/subtractions", permission="modify_subtraction")
@@ -172,8 +176,7 @@ async def create(req):
 
     document = await attach_computed(req.app, document)
 
-    # All new subtraction documents have a user field, therefore no `if` statement is needed here.
-    document = await attach_user(db, document)
+    document = await apply_transforms(document, [AttachUserTransform(db)])
 
     return json_response(base_processor(document), headers=headers, status=201)
 
@@ -270,10 +273,11 @@ async def edit(req):
 
     document = await attach_computed(req.app, document)
 
-    if "user" in document:
-        document = await attach_user(db, document)
-
-    return json_response(base_processor(document))
+    return json_response(
+        await apply_transforms(
+            base_processor(document), [AttachUserTransform(db, ignore_errors=True)]
+        )
+    )
 
 
 @routes.delete("/subtractions/{subtraction_id}", permission="modify_subtraction")
@@ -319,12 +323,12 @@ async def finalize_subtraction(req: aiohttp.web.Request):
     document = await virtool.subtractions.db.finalize(
         db, pg, subtraction_id, data["gc"], data["count"]
     )
+
     document = await attach_computed(req.app, document)
 
-    # All subtractions supporting finalization have a user field. No `if` statement is needed here.
-    document = await attach_user(db, document)
-
-    return json_response(base_processor(document))
+    return json_response(
+        await apply_transforms(base_processor(document), [AttachUserTransform(db)])
+    )
 
 
 @routes.jobs_api.delete("/subtractions/{subtraction_id}")

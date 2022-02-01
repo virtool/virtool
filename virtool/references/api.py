@@ -12,6 +12,7 @@ import virtool.references.db
 import virtool.utils
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
+from virtool.db.transforms import apply_transforms
 from virtool.errors import DatabaseError, GitHubError
 from virtool.github import format_release
 from virtool.http.routes import Routes
@@ -35,7 +36,7 @@ from virtool.references.tasks import (
     UpdateRemoteReferenceTask,
 )
 from virtool.uploads.models import Upload
-from virtool.users.db import extend_user
+from virtool.users.db import AttachUserTransform, extend_user
 from virtool.validators import strip
 
 routes = Routes()
@@ -71,6 +72,8 @@ async def find(req):
         base_query=base_query,
         projection=virtool.references.db.PROJECTION,
     )
+
+    await apply_transforms(data["documents"], [AttachUserTransform(db)])
 
     documents, official_installed = await gather(
         gather(*[virtool.references.db.processor(db, d) for d in data["documents"]]),

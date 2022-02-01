@@ -13,16 +13,16 @@ import virtool.indexes.db
 import virtool.references.db
 import virtool.samples.db
 from virtool.db.core import Collection, DB
+from virtool.db.transforms import apply_transforms
 from virtool.dispatcher.change import Change
 from virtool.dispatcher.connection import Connection
 from virtool.dispatcher.operations import DELETE
-from virtool.labels.db import attach_sample_count
+from virtool.labels.db import AttachLabelsTransform, SampleCountTransform
 from virtool.labels.models import Label
-from virtool.samples.db import attach_labels
 from virtool.tasks.models import Task
 from virtool.types import Projection
 from virtool.uploads.models import Upload
-from virtool.users.db import attach_users
+from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
 
@@ -169,8 +169,7 @@ class LabelsFetcher(AbstractFetcher):
             )
 
         records = [object_as_dict(record) for record in result.scalars().all()]
-
-        await gather(*[attach_sample_count(self._db, record) for record in records])
+        records = await apply_transforms(records, [SampleCountTransform(self._db)])
 
         for record in records:
             for connection in connections:
@@ -231,8 +230,11 @@ class SamplesFetcher(AbstractFetcher):
             {"_id": {"$in": change.id_list}}, projection=virtool.samples.db.PROJECTION
         ).to_list(None)
 
-        documents = await gather(*[attach_labels(self._pg, d) for d in documents])
-        documents = await attach_users(self._db, list(documents))
+        documents = [base_processor(document) for document in documents]
+
+        await apply_transforms(
+            documents, [AttachLabelsTransform(self._pg), AttachUserTransform(self._db)]
+        )
 
         for document in documents:
             user = document["user"]["id"]
@@ -270,8 +272,10 @@ class UploadsFetcher(AbstractFetcher):
                 select(Upload).filter(Upload.id.in_(change.id_list))
             )
 
-        records = [object_as_dict(r) for r in result.unique().scalars()]
-        records = await attach_users(self._db, records)
+        records = await apply_transforms(
+            [object_as_dict(r) for r in result.unique().scalars()],
+            [AttachUserTransform(self._db)],
+        )
 
         for record in records:
             for connection in connections:

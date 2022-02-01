@@ -182,7 +182,6 @@
 ---
 # name: test_create_sample[uvloop]
   <class 'dict'> {
-    '_id': 'a2oj3gfd',
     'all_read': True,
     'all_write': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -192,6 +191,7 @@
     'group_write': False,
     'hold': True,
     'host': '',
+    'id': 'a2oj3gfd',
     'is_legacy': False,
     'isolate': '',
     'labels': <class 'list'> [
@@ -246,9 +246,9 @@
 ---
 # name: test_finalize[uvloop]
   <class 'dict'> {
-    '_id': 'test',
     'artifacts': <class 'list'> [
     ],
+    'id': 'test',
     'quality': <class 'dict'> {
       'count': 10000000,
       'gc': 43,

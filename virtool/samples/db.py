@@ -14,19 +14,21 @@ from pymongo.results import DeleteResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+import virtool.db.utils
 import virtool.errors
 import virtool.samples.utils
 import virtool.utils
 from virtool.config.cls import Config
-from virtool.labels.models import Label
+from virtool.db.transforms import AbstractTransform, apply_transforms
+from virtool.labels.db import AttachLabelsTransform
 from virtool.samples.models import SampleArtifact, SampleReads
 from virtool.samples.utils import join_legacy_read_paths
 from virtool.settings.db import Settings
-from virtool.subtractions.db import attach_subtractions
-from virtool.types import App
+from virtool.subtractions.db import AttachSubtractionTransform
+from virtool.types import App, Document
 from virtool.uploads.models import Upload
-from virtool.users.db import attach_user
-from virtool.utils import compress_file, file_stats
+from virtool.users.db import AttachUserTransform
+from virtool.utils import base_processor, compress_file, file_stats
 
 logger = logging.getLogger(__name__)
 
@@ -75,77 +77,51 @@ RIGHTS_PROJECTION = {
 }
 
 
-async def attach_artifacts_and_reads(pg: AsyncEngine, document: dict) -> dict:
-    """
-    Attaches associated sample artifacts and reads to a sample document for response.
+class ArtifactsAndReadsTransform(AbstractTransform):
+    def __init__(self, pg):
+        self._pg = pg
 
-    :param pg: PostgreSQL AsyncEngine object
-    :param document: A document that represents a sample
-    :return: Updated document with associated sample artifacts
-    """
-    ready = document["ready"]
-    sample_id = document["_id"]
+    async def attach_one(self, document: Document, prepared: Any) -> Document:
+        return {**document, **prepared}
 
-    async with AsyncSession(pg) as session:
-        artifacts = (
-            await session.execute(select(SampleArtifact).filter_by(sample=sample_id))
-        ).scalars()
+    async def prepare_one(self, document: Document) -> Any:
+        sample_id = document["id"]
 
-        reads_files = (
-            await session.execute(select(SampleReads).filter_by(sample=sample_id))
-        ).scalars()
+        async with AsyncSession(self._pg) as session:
+            artifacts = (
+                await session.execute(
+                    select(SampleArtifact).filter_by(sample=sample_id)
+                )
+            ).scalars()
 
-        artifacts = [artifact.to_dict() for artifact in artifacts]
-        reads = [reads_file.to_dict() for reads_file in reads_files]
+            reads_files = (
+                await session.execute(select(SampleReads).filter_by(sample=sample_id))
+            ).scalars()
 
-        if ready:
-            for artifact in artifacts:
-                name_on_disk = artifact["name_on_disk"]
-                artifact[
-                    "download_url"
-                ] = f"/samples/{sample_id}/artifacts/{name_on_disk}"
+            artifacts = [artifact.to_dict() for artifact in artifacts]
+            reads = [reads_file.to_dict() for reads_file in reads_files]
 
-        for reads_file in reads:
-            if upload := reads_file.get("upload"):
-                reads_file["upload"] = (
-                    (
-                        await session.execute(select(Upload).filter_by(id=upload))
-                    ).scalar()
-                ).to_dict()
+            if document["ready"]:
+                for artifact in artifacts:
+                    name_on_disk = artifact["name_on_disk"]
+                    artifact[
+                        "download_url"
+                    ] = f"/samples/{sample_id}/artifacts/{name_on_disk}"
 
-            if ready:
-                reads_file[
-                    "download_url"
-                ] = f"/samples/{sample_id}/reads/{reads_file['name']}"
+            for reads_file in reads:
+                if upload := reads_file.get("upload"):
+                    reads_file["upload"] = (
+                        (
+                            await session.execute(select(Upload).filter_by(id=upload))
+                        ).scalar()
+                    ).to_dict()
 
-    return {
-        **document,
-        "artifacts": artifacts,
-        "reads": reads,
-    }
+                if document["ready"]:
+                    reads_file[
+                        "download_url"
+                    ] = f"/samples/{sample_id}/reads/{reads_file['name']}"
 
-
-async def attach_labels(pg: AsyncEngine, document: dict) -> dict:
-    """
-    Finds label documents for each label ID given in a request body, then converts each
-    document into a dictionary to be placed in the list of dictionaries in the updated
-    sample document.
-
-    :param pg: PostgreSQL database connection object
-    :param document: sample document to be used for creating or editing a sample
-    :return: sample document with updated `labels` entry containing a list of label dictionaries
-    """
-    labels = list()
-
-    if document.get("labels"):
-        async with AsyncSession(pg) as session:
-            results = await session.execute(
-                select(Label).filter(Label.id.in_(document["labels"]))
-            )
-
-        labels = [label.to_dict() for label in results.scalars()]
-
-    return {**document, "labels": labels}
+        return {"artifacts": artifacts, "reads": reads}
 
 
 async def check_name(
@@ -226,9 +202,9 @@ async def create_sample(
     labels: List[int],
     user_id: str,
     settings: Settings,
-    paired=False,
-    _id=None,
-) -> Dict[str, any]:
+    paired: bool = False,
+    _id: Optional[str] = None,
+) -> Document:
     """
     Create, insert, and return a new sample document.
 
@@ -251,36 +227,36 @@ async def create_sample(
     if _id is None:
         _id = await virtool.db.utils.get_new_id(db.samples)
 
-    document = {
-        "_id": _id,
-        "name": name,
-        "host": host,
-        "isolate": isolate,
-        "nuvs": False,
-        "pathoscope": False,
-        "created_at": virtool.utils.timestamp(),
-        "is_legacy": False,
-        "format": "fastq",
-        "ready": False,
-        "quality": None,
-        "hold": True,
-        "group_read": settings.sample_group_read,
-        "group_write": settings.sample_group_write,
-        "all_read": settings.sample_all_read,
-        "all_write": settings.sample_all_write,
-        "labels": labels,
-        "library_type": library_type,
-        "subtractions": subtractions,
-        "notes": notes,
-        "user": {"id": user_id},
-        "group": group,
-        "locale": locale,
-        "paired": paired,
-    }
+    document = await db.samples.insert_one(
+        {
+            "_id": _id,
+            "name": name,
+            "host": host,
+            "isolate": isolate,
+            "nuvs": False,
+            "pathoscope": False,
+            "created_at": virtool.utils.timestamp(),
+            "is_legacy": False,
+            "format": "fastq",
+            "ready": False,
+            "quality": None,
+            "hold": True,
+            "group_read": settings.sample_group_read,
+            "group_write": settings.sample_group_write,
+            "all_read": settings.sample_all_read,
+            "all_write": settings.sample_all_write,
+            "labels": labels,
+            "library_type": library_type,
+            "subtractions": subtractions,
+            "notes": notes,
+            "user": {"id": user_id},
+            "group": group,
+            "locale": locale,
+            "paired": paired,
+        }
+    )
 
-    await db.samples.insert_one(document)
-
-    return document
+    return base_processor(document)
 
 
 async def get_sample_owner(db, sample_id: str) -> Optional[str]:
@@ -550,34 +526,41 @@ async def finalize(
 
         await session.commit()
 
-    document = await virtool.samples.db.attach_artifacts_and_reads(pg, document)
-    document = await attach_user(db, document)
-
-    return document
+    return await apply_transforms(
+        base_processor(document),
+        [ArtifactsAndReadsTransform(pg), AttachUserTransform(db)],
+    )
 
 
 async def get_sample(app, sample_id: str):
-    """Get the sample document with subtractions, labels, and reads attached."""
+    """
+    Get the sample document with subtractions, labels, and reads attached.
+
+    # TODO: Attach caches using an attacher.
+    """
     db = app["db"]
     pg = app["pg"]
 
     document = await db.samples.find_one({"_id": sample_id})
 
     if not document:
-        raise ValueError("Sample {sample_id} does not exist.")
+        raise ValueError(f"Sample {sample_id} does not exist.")
 
-    caches = list()
+    document["caches"] = [
+        virtool.utils.base_processor(cache)
+        async for cache in db.caches.find({"sample.id": sample_id})
+    ]
 
-    async for cache in db.caches.find({"sample.id": sample_id}):
-        caches.append(virtool.utils.base_processor(cache))
-
-    document["caches"] = caches
-
-    document = await attach_subtractions(db, document)
-    document = await attach_labels(pg, document)
-    document = await attach_artifacts_and_reads(pg, document)
-    document = await attach_user(db, document)
+    document = await apply_transforms(
+        virtool.utils.base_processor(document),
+        [
+            ArtifactsAndReadsTransform(pg),
+            AttachLabelsTransform(pg),
+            AttachSubtractionTransform(db),
+            AttachUserTransform(db),
+        ],
+    )
 
     document["paired"] = len(document["reads"]) == 2
 
-    return virtool.utils.base_processor(document)
+    return document

@@ -1,11 +1,16 @@
 import asyncio.tasks
 import logging
 import os
-from asyncio import gather
 from pathlib import Path
 
 import aiohttp.web
 import pymongo.errors
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
+from aiohttp.web_fileresponse import FileResponse
+from cerberus import Validator
+from sqlalchemy import exc, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 import virtool.analyses.db
 import virtool.caches.db
 import virtool.db.utils
@@ -15,11 +20,6 @@ import virtool.samples.utils
 import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
-from aiohttp.web_fileresponse import FileResponse
-from cerberus import Validator
-from sqlalchemy import exc, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from virtool.analyses.db import PROJECTION
 from virtool.analyses.utils import WORKFLOW_NAMES
 from virtool.api.response import (
@@ -31,15 +31,16 @@ from virtool.api.response import (
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.caches.models import SampleArtifactCache
 from virtool.caches.utils import join_cache_path
+from virtool.db.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
+from virtool.labels.db import AttachLabelsTransform
 from virtool.pg.utils import delete_row, get_rows
 from virtool.samples.db import (
     LIST_PROJECTION,
     RIGHTS_PROJECTION,
-    attach_labels,
     check_name,
     check_rights,
     compose_sample_workflow_query,
@@ -55,9 +56,9 @@ from virtool.samples.files import (
 )
 from virtool.samples.models import ArtifactType, SampleArtifact, SampleReads
 from virtool.samples.utils import bad_labels_response, check_labels
-from virtool.subtractions.db import attach_subtractions
+from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import is_gzip_compressed
-from virtool.users.db import attach_users
+from virtool.users.db import AttachUserTransform
 from virtool.validators import strip
 
 logger = logging.getLogger("samples")
@@ -114,8 +115,8 @@ async def find(req):
     ]
 
     if req["client"].groups:
-        # The sample rights allow owner group members to view the sample and the requesting user
-        # is a member of the owner group.
+        # The sample rights allow owner group members to view the sample and the
+        # requesting user is a member of the owner group.
         rights_filter.append(
             {"group_read": True, "group": {"$in": req["client"].groups}}
         )
@@ -132,8 +133,9 @@ async def find(req):
         reverse=True,
     )
 
-    documents = await gather(*[attach_labels(pg, d) for d in data["documents"]])
-    documents = await attach_users(db, documents)
+    documents = await apply_transforms(
+        data["documents"], [AttachLabelsTransform(pg), AttachUserTransform(db)]
+    )
 
     return json_response({**data, "documents": documents})
 
@@ -148,15 +150,15 @@ async def get(req):
 
     try:
         sample = await virtool.samples.db.get_sample(req.app, sample_id)
-
-        rights = virtool.samples.utils.get_sample_rights(sample, req["client"])[0]
-
-        if not rights:
-            raise InsufficientRights()
-
-        return json_response(sample)
     except ValueError:
         raise NotFound()
+
+    rights = virtool.samples.utils.get_sample_rights(sample, req["client"])[0]
+
+    if not rights:
+        raise InsufficientRights()
+
+    return json_response(sample)
 
 
 @routes.jobs_api.get("/samples/{sample_id}")
@@ -288,7 +290,7 @@ async def create(req):
         paired=len(files) == 2,
     )
 
-    sample_id = document["_id"]
+    sample_id = document["id"]
 
     await virtool.uploads.db.reserve(pg, data["files"])
 
@@ -530,28 +532,29 @@ async def find_analyses(req):
 
     term = req.query.get("term")
 
-    db_query = dict()
+    db_query = {}
 
     if term:
         db_query.update(compose_regex_query(term, ["reference.name", "user.id"]))
-    base_query = {"sample.id": sample_id}
 
     data = await paginate(
         db.analyses,
         db_query,
         req.query,
-        base_query=base_query,
+        base_query={"sample.id": sample_id},
         projection=PROJECTION,
         sort=[("created_at", -1)],
     )
 
-    documents = await asyncio.tasks.gather(
-        *[attach_subtractions(db, d) for d in data["documents"]]
+    return json_response(
+        {
+            **data,
+            "documents": await apply_transforms(
+                data["documents"],
+                [AttachSubtractionTransform(db), AttachUserTransform(db)],
+            ),
+        }
     )
-
-    documents = await attach_users(db, documents)
-
-    return json_response({**data, "documents": documents})
 
 
 @routes.post("/samples/{sample_id}/analyses")
