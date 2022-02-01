@@ -1,12 +1,74 @@
-# name: test_attach_sample_count[uvloop]
-  <class 'tuple'> (
+# name: test_label_attacher[uvloop-documents0]
+  <class 'dict'> {
+    'id': 'foo',
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#a83432',
+        'description': 'This is a bug',
+        'id': 1,
+        'name': 'Bug',
+      },
+      <class 'dict'> {
+        'color': '#03fc20',
+        'description': 'This is a question',
+        'id': 2,
+        'name': 'Question',
+      },
+    ],
+    'name': 'Foo',
+  }
+---
+# name: test_label_attacher[uvloop-documents1]
+  <class 'list'> [
     <class 'dict'> {
-      'color': '#a83432',
-      'count': 1,
-      'description': 'This is a bug',
-      'id': 1,
-      'name': 'Bug',
+      'id': 'foo',
+      'labels': <class 'list'> [
+        <class 'dict'> {
+          'color': '#03fc20',
+          'description': 'This is a question',
+          'id': 2,
+          'name': 'Question',
+        },
+      ],
+      'name': 'Foo',
     },
+    <class 'dict'> {
+      'id': 'bar',
+      'labels': <class 'list'> [
+        <class 'dict'> {
+          'color': '#a83432',
+          'description': 'This is a bug',
+          'id': 1,
+          'name': 'Bug',
+        },
+        <class 'dict'> {
+          'color': '#03fc20',
+          'description': 'This is a question',
+          'id': 2,
+          'name': 'Question',
+        },
+      ],
+      'name': 'Bar',
+    },
+    <class 'dict'> {
+      'id': 'baz',
+      'labels': <class 'list'> [
+      ],
+      'name': 'Baz',
+    },
+  ]
+---
+# name: test_sample_count_attacher[uvloop-labels0]
+  <class 'dict'> {
+    'color': '#a83432',
+    'count': 1,
+    'description': 'This is a bug',
+    'id': 1,
+    'name': 'Bug',
+  }
+---
+# name: test_sample_count_attacher[uvloop-labels1]
+  <class 'list'> [
     <class 'dict'> {
       'color': '#03fc20',
       'count': 2,
@@ -21,5 +83,5 @@
       'id': 3,
       'name': 'Info',
     },
-  )
+  ]
 ---

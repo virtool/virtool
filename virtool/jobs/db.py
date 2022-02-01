@@ -6,9 +6,10 @@ from asyncio import gather
 from typing import Any, Dict, Optional
 
 import virtool.utils
+from virtool.db.transforms import apply_transforms
 from virtool.jobs.utils import JobRights
 from virtool.types import App
-from virtool.users.db import attach_user
+from virtool.users.db import AttachUserTransform
 
 OR_COMPLETE = [{"status.state": "complete"}]
 
@@ -157,18 +158,18 @@ async def processor(db, document: dict) -> dict:
 
     last_update = status[-1]
 
-    processed = await attach_user(
-        db,
-        {
-            **document,
-            "state": last_update["state"],
-            "stage": last_update["stage"],
-            "created_at": status[0]["timestamp"],
-            "progress": status[-1]["progress"],
-        },
+    return await apply_transforms(
+        virtool.utils.base_processor(
+            {
+                **document,
+                "state": last_update["state"],
+                "stage": last_update["stage"],
+                "created_at": status[0]["timestamp"],
+                "progress": status[-1]["progress"],
+            }
+        ),
+        [AttachUserTransform(db)],
     )
-
-    return virtool.utils.base_processor(processed)
 
 
 async def delete(app: App, job_id: str):

@@ -61,16 +61,18 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import pymongo
+from aiohttp import ClientConnectorError
+from aiohttp.web import Request
+from semver import VersionInfo
+from sqlalchemy.ext.asyncio.engine import AsyncEngine
+
 import virtool.db.utils
 import virtool.errors
 import virtool.github
 import virtool.history.db
 import virtool.tasks.pg
 import virtool.utils
-from aiohttp import ClientConnectorError
-from aiohttp.web import Request
-from semver import VersionInfo
-from sqlalchemy.ext.asyncio.engine import AsyncEngine
+from virtool.db.transforms import apply_transforms
 from virtool.http.utils import download_file
 from virtool.otus.db import join
 from virtool.otus.utils import verify
@@ -85,7 +87,7 @@ from virtool.references.utils import (
 from virtool.settings.db import Settings
 from virtool.types import App
 from virtool.uploads.models import Upload
-from virtool.users.db import attach_user, extend_user
+from virtool.users.db import AttachUserTransform, extend_user
 
 PROJECTION = [
     "_id",
@@ -148,7 +150,7 @@ async def processor(db, document: dict) -> dict:
 
     document["id"] = ref_id
 
-    return await attach_user(db, document)
+    return document
 
 
 async def attach_computed(db, document: dict) -> dict:
@@ -195,7 +197,7 @@ async def attach_computed(db, document: dict) -> dict:
         }
     )
 
-    return await attach_user(db, processed)
+    return await apply_transforms(processed, [AttachUserTransform(db)])
 
 
 async def get_reference_users(db, document: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -519,7 +521,9 @@ async def get_latest_build(db, ref_id: str) -> Optional[dict]:
     if latest_build is None:
         return None
 
-    return virtool.utils.base_processor(await attach_user(db, latest_build))
+    return await apply_transforms(
+        virtool.utils.base_processor(latest_build), [AttachUserTransform(db)]
+    )
 
 
 async def get_official_installed(db) -> bool:

@@ -3,10 +3,11 @@ from pathlib import Path
 
 import arrow
 import pytest
-import virtool.caches.db
-import virtool.uploads.db
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
+import virtool.caches.db
+import virtool.uploads.db
 from virtool.caches.models import SampleArtifactCache, SampleReadsCache
 from virtool.caches.utils import join_cache_path
 from virtool.labels.models import Label
@@ -462,7 +463,8 @@ class TestEdit:
     @pytest.mark.parametrize("exists", [True, False])
     async def test_name_exists(self, exists, snapshot, fake, spawn_client, resp_is):
         """
-        Test that a ``bad_request`` is returned if the sample name passed in ``name`` already exists.
+        Test that a ``bad_request`` is returned if the sample name passed in ``name``
+        already exists.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
@@ -476,6 +478,7 @@ class TestEdit:
                 "all_read": True,
                 "all_write": True,
                 "ready": True,
+                "subtractions": [],
                 "user": {
                     "id": user["_id"],
                 },
@@ -488,6 +491,7 @@ class TestEdit:
                     "_id": "bar",
                     "name": "Bar",
                     "ready": True,
+                    "subtractions": [],
                     "user": {
                         "id": user["_id"],
                     },
@@ -512,7 +516,8 @@ class TestEdit:
         self, exists, snapshot, fake, spawn_client, resp_is, pg_session
     ):
         """
-        Test that a ``bad_request`` is returned if the label passed in ``labels`` does not exist.
+        Test that a ``bad_request`` is returned if the label passed in ``labels`` does
+        not exist.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
@@ -525,22 +530,23 @@ class TestEdit:
                 "name": "Foo",
                 "all_read": True,
                 "all_write": True,
+                "subtractions": [],
                 "user": {"id": user["_id"]},
                 "labels": [2, 3],
                 "ready": True,
             }
         )
+
         if exists:
-            label = Label(
-                id=1, name="Bug", color="#a83432", description="This is a bug"
-            )
             async with pg_session as session:
-                session.add(label)
+                session.add(
+                    Label(
+                        id=1, name="Bug", color="#a83432", description="This is a bug"
+                    )
+                )
                 await session.commit()
 
-        data = {"labels": [1]}
-
-        resp = await client.patch("/samples/foo", data)
+        resp = await client.patch("/samples/foo", {"labels": [1]})
 
         if not exists:
             await resp_is.bad_request(resp, "Labels do not exist: 1")
@@ -593,9 +599,7 @@ class TestEdit:
 
 
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
-async def test_finalize(
-    field, snapshot, fake, spawn_job_client, resp_is, pg, pg_session, tmp_path
-):
+async def test_finalize(field, snapshot, fake, spawn_job_client, resp_is, pg, tmp_path):
     """
     Test that sample can be finalized using the Jobs API.
 
@@ -609,10 +613,10 @@ async def test_finalize(
     data = {field: {}}
 
     await client.db.samples.insert_one(
-        {"_id": "test", "ready": True, "user": {"id": user["_id"]}}
+        {"_id": "test", "ready": True, "user": {"id": user["_id"]}, "subtractions": []}
     )
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         upload = Upload(name="test", name_on_disk="test.fq.gz")
 
         artifact = SampleArtifact(
@@ -627,6 +631,7 @@ async def test_finalize(
         )
 
         upload.reads.append(reads)
+
         session.add_all([upload, artifact, reads])
 
         await session.commit()
@@ -749,6 +754,10 @@ async def test_find_analyses(
     user_1 = await fake.users.insert()
     user_2 = await fake.users.insert()
 
+    await client.db.subtraction.insert_one(
+        {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"}
+    )
+
     await client.db.analyses.insert_many(
         [
             {
@@ -758,9 +767,10 @@ async def test_find_analyses(
                 "ready": True,
                 "job": {"id": "test"},
                 "index": {"version": 2, "id": "foo"},
-                "user": {"id": user_1["_id"]},
-                "sample": {"id": "test"},
                 "reference": {"id": "baz", "name": "Baz"},
+                "sample": {"id": "test"},
+                "subtractions": [],
+                "user": {"id": user_1["_id"]},
                 "foobar": True,
             },
             {
@@ -771,8 +781,9 @@ async def test_find_analyses(
                 "job": {"id": "test"},
                 "index": {"version": 2, "id": "foo"},
                 "user": {"id": user_1["_id"]},
-                "sample": {"id": "test"},
                 "reference": {"id": "baz", "name": "Baz"},
+                "sample": {"id": "test"},
+                "subtractions": ["foo"],
                 "foobar": True,
             },
             {
@@ -782,9 +793,10 @@ async def test_find_analyses(
                 "ready": True,
                 "job": {"id": "test"},
                 "index": {"version": 2, "id": "foo"},
-                "user": {"id": user_2["_id"]},
-                "sample": {"id": "test"},
                 "reference": {"id": "foo", "name": "Foo"},
+                "sample": {"id": "test"},
+                "subtractions": ["foo"],
+                "user": {"id": user_2["_id"]},
                 "foobar": False,
             },
         ]
@@ -813,6 +825,7 @@ async def test_analyze(
     error,
     mocker,
     snapshot,
+    fake,
     spawn_client,
     static_time,
     resp_is,
@@ -1040,7 +1053,8 @@ class TestUploadReads:
         self, conflict, resp_is, spawn_job_client, tmp_path
     ):
         """
-        Test that paired sample reads can be uploaded using the Jobs API and that conflicts are properly handled.
+        Test that paired sample reads can be uploaded using the Jobs API and that
+        conflicts are properly handled.
 
         """
         path = Path.cwd() / "tests" / "test_files" / "samples"
@@ -1126,13 +1140,11 @@ async def test_download_reads(
             }
         )
 
-    sample_reads = SampleReads(
-        id=1, sample="foo", name=file_name, name_on_disk=file_name
-    )
-
     if error != "404_reads":
         async with AsyncSession(pg) as session:
-            session.add(sample_reads)
+            session.add(
+                SampleReads(id=1, sample="foo", name=file_name, name_on_disk=file_name)
+            )
             await session.commit()
 
     resp = await client.get(f"/samples/foo/reads/{file_name}")
@@ -1172,16 +1184,16 @@ async def test_download_artifact(error, tmp_path, spawn_job_client, pg):
         )
 
     if error != "404_artifact":
-        sample_artfact = SampleArtifact(
-            id=1,
-            sample="foo",
-            name="fastqc.txt",
-            name_on_disk="fastqc.txt",
-            type="fastq",
-        )
-
         async with AsyncSession(pg) as session:
-            session.add(sample_artfact)
+            session.add(
+                SampleArtifact(
+                    id=1,
+                    sample="foo",
+                    name="fastqc.txt",
+                    name_on_disk="fastqc.txt",
+                    type="fastq",
+                )
+            )
 
             await session.commit()
 

@@ -1,13 +1,14 @@
 import random
-from asyncio.tasks import gather
 from dataclasses import dataclass
-from logging import BASIC_FORMAT, Logger
-from typing import Any, Dict, List, Optional, Union
+from logging import Logger
+from typing import Any, Dict, Optional, Union
 
 import virtool.utils
+from virtool.db.transforms import AbstractTransform
 from virtool.db.utils import get_non_existent_ids, handle_exists, id_exists, oid_exists
 from virtool.errors import DatabaseError
 from virtool.groups.db import get_merged_permissions
+from virtool.types import Document
 from virtool.users.utils import (
     check_legacy_password,
     check_password,
@@ -53,46 +54,63 @@ class B2CUserAttributes:
         self.family_name = family_name
 
 
-async def attach_user(db, document: Dict[str, Any]) -> Dict[str, Any]:
+class AttachUserTransform(AbstractTransform):
     """
-    Attach more complete user data to a document with a `user.id` field.
-
-    :param db: the application database client
-    :param document: a document to attach user data to
-    :return: a document with user data attached
-
+    Attaches more complete user data to a document with a `user.id` field.
     """
-    try:
-        user = document["user"]
 
+    def __init__(self, db, ignore_errors: bool = False):
+        self._db = db
+        self._ignore_errors = ignore_errors
+
+    async def attach_one(self, document, prepared):
         try:
-            user_id = user["id"]
-        except TypeError:
-            user_id = user
-    except KeyError:
-        raise KeyError("Document needs a value at user or user.id")
+            user_data = document["user"]
+        except KeyError:
+            if self._ignore_errors:
+                return document
 
-    user_data = await db.users.find_one(user_id, ATTACH_PROJECTION)
+            raise
 
-    if not user_data:
-        logger.debug(document)
-        raise KeyError(
-            f"Document contains user {user_id}, which is not present in the database."
-        )
+        if isinstance(user_data, str):
+            return {
+                **document,
+                "user": {
+                    "id": user_data,
+                    **prepared,
+                },
+            }
 
-    return {**document, "user": {**user_data, "id": user_id}}
+        return {
+            **document,
+            "user": {
+                **document["user"],
+                **prepared,
+            },
+        }
 
+    async def prepare_one(self, document):
+        try:
+            user = document["user"]
 
-async def attach_users(db, documents: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """
-    Attach more complete user data to a list of documents each containing a `user.id` field.
+            try:
+                user_id = user["id"]
+            except TypeError:
+                user_id = user
+        except KeyError:
+            if self._ignore_errors:
+                return document
 
-    :param db: the application database client
-    :param documents: a list of documents to attach user data to
-    :return: a list of documents with user data attached
+            raise KeyError("Document needs a value at user or user.id")
 
-    """
-    return await gather(*[attach_user(db, document) for document in documents])
+        user_data = await self._db.users.find_one(user_id, ATTACH_PROJECTION)
+
+        if not user_data:
+            raise KeyError(
+                f"Document contains user {user_id}, which is not present in the database."
+            )
+
+        return user_data
 
 
 async def extend_user(db, user: Dict[str, Any]) -> Dict[str, Any]:
@@ -177,7 +195,8 @@ async def compose_primary_group_update(
     if primary_group is None:
         return dict()
 
-    # 'none' is a valid primary group regardless of user membership or existence of the group in the db
+    # 'none' is a valid primary group regardless of user membership or existence of the
+    # group in the db
     if primary_group != "none":
         if not await id_exists(db.groups, primary_group):
             raise DatabaseError("Non-existent group: " + primary_group)
@@ -211,7 +230,7 @@ async def create(
     handle: str,
     force_reset: bool = True,
     b2c_user_attributes: B2CUserAttributes = None,
-) -> dict:
+) -> Document:
     """
     Insert a new user document into the database. If Azure AD B2C information is given, add it to user document.
 
@@ -247,8 +266,8 @@ async def create(
         "force_reset": force_reset,
         # A timestamp taken at the last password change.
         "last_password_change": virtool.utils.timestamp(),
-        # Should all of the user's sessions be invalidated so that they are forced to login next time they
-        # download the client.
+        # Should all of the user's sessions be invalidated so that they are forced to
+        # login next time they download the client.
         "invalidate_sessions": False,
     }
 
@@ -279,7 +298,7 @@ async def edit(
     groups: Optional[list] = None,
     password: Optional[str] = None,
     primary_group: Optional[str] = None,
-) -> dict:
+) -> Document:
     if not await id_exists(db.users, user_id):
         raise DatabaseError("User does not exist")
 
@@ -333,7 +352,6 @@ async def validate_credentials(db, user_id: str, password: str) -> bool:
     """
     document = await db.users.find_one(user_id, ["password", "salt"])
 
-    # First, check if the user exists in the database. Return False if the user does not exist.
     if not document:
         return False
 
@@ -392,11 +410,14 @@ async def update_sessions_and_keys(
     )
 
 
-async def find_or_create_b2c_user(db, b2c_user_attributes: B2CUserAttributes) -> dict:
+async def find_or_create_b2c_user(
+    db, b2c_user_attributes: B2CUserAttributes
+) -> Document:
     """
     search for existing user using oid value found in user_attributes.
 
-    If not found, create new user with oid value, generated handle and user_attribute information.
+    If not found, create new user with oid value, generated handle and user_attribute
+    information.
 
     :param b2c_user_attributes: User attributes collected from ID token claims
     :param db: a database client

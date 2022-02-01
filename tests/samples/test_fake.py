@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import LIST_PROJECTION
 from virtool.samples.fake import READ_FILES_PATH, copy_reads_file, create_fake_sample
@@ -27,6 +28,9 @@ async def test_create_fake_unpaired(
     fake_sample = await create_fake_sample(
         app, "sample_1", user["_id"], paired=paired, finalized=finalized
     )
+
+    print(sorted(list(set(LIST_PROJECTION))))
+    print(sorted(list(set(fake_sample.keys()))))
 
     assert set(LIST_PROJECTION) <= set(fake_sample.keys())
 

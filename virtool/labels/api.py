@@ -1,14 +1,14 @@
-import asyncio
-
-import virtool.http.routes
-import virtool.validators
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+
+import virtool.http.routes
+import virtool.validators
 from virtool.api.response import EmptyRequest, NotFound, json_response
+from virtool.db.transforms import apply_transforms
 from virtool.http.schema import schema
-from virtool.labels.db import attach_sample_count
+from virtool.labels.db import SampleCountTransform
 from virtool.labels.models import Label
 from virtool.pg.utils import get_rows
 
@@ -25,8 +25,8 @@ async def find(req):
 
     labels = await get_rows(req.app["pg"], Label, query=term)
 
-    documents = await asyncio.gather(
-        *[attach_sample_count(req.app["db"], label.to_dict()) for label in labels]
+    documents = await apply_transforms(
+        [label.to_dict() for label in labels], [SampleCountTransform(req.app["db"])]
     )
 
     return json_response(documents)
@@ -42,12 +42,15 @@ async def get(req):
         result = await session.execute(
             select(Label).filter_by(id=int(req.match_info["label_id"]))
         )
+
         label = result.scalar()
 
-        if label is None:
-            raise NotFound()
+    if label is None:
+        raise NotFound()
 
-    document = await attach_sample_count(req.app["db"], label.to_dict())
+    document = await apply_transforms(
+        label.to_dict(), [SampleCountTransform(req.app["db"])]
+    )
 
     return json_response(document)
 
@@ -84,6 +87,7 @@ async def create(req):
         label = Label(
             name=data["name"], color=data["color"], description=data["description"]
         )
+
         session.add(label)
 
         try:
@@ -93,7 +97,7 @@ async def create(req):
         except IntegrityError:
             raise HTTPBadRequest(text="Label name already exists")
 
-    document = await attach_sample_count(req.app["db"], document)
+    document = await apply_transforms(document, [SampleCountTransform(req.app["db"])])
 
     headers = {"Location": f"/labels/{document['id']}"}
 
@@ -146,7 +150,7 @@ async def edit(req):
         except IntegrityError:
             raise HTTPBadRequest(text="Label name already exists")
 
-    document = await attach_sample_count(req.app["db"], document)
+    document = await apply_transforms(document, [SampleCountTransform(req.app["db"])])
 
     return json_response(document)
 

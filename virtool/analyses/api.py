@@ -2,15 +2,11 @@
 Provides request handlers for managing and viewing analyses.
 
 """
-import asyncio
-import logging
+from asyncio import CancelledError, gather
+from logging import getLogger
 from typing import Union
 
 import aiojobs.aiohttp
-import virtool.analyses.format
-import virtool.bio
-import virtool.samples.db
-import virtool.uploads.db
 from aiohttp.web import (
     FileResponse,
     HTTPBadRequest,
@@ -21,6 +17,11 @@ from aiohttp.web import (
     Response,
 )
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
+
+import virtool.analyses.format
+import virtool.bio
+import virtool.samples.db
+import virtool.uploads.db
 from virtool.analyses.db import PROJECTION, processor, update_nuvs_blast
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile, AnalysisFormat
@@ -33,18 +34,19 @@ from virtool.api.response import (
     json_response,
 )
 from virtool.api.utils import paginate
-from virtool.db.core import DB, Collection
+from virtool.db.core import Collection, DB
+from virtool.db.transforms import apply_transforms
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
-from virtool.subtractions.db import attach_subtractions
+from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import naive_validator, naive_writer
-from virtool.users.db import attach_users
+from virtool.users.db import AttachUserTransform
 from virtool.utils import rm
 
-logger = logging.getLogger("analyses")
+logger = getLogger("analyses")
 
 routes = Routes()
 
@@ -67,18 +69,23 @@ async def find(req: Request) -> Response:
         sort=[("created_at", -1)],
     )
 
-    documents = []
+    per_document_can_read = await gather(
+        *[
+            virtool.samples.db.check_rights(
+                db, document["sample"]["id"], req["client"], write=False
+            )
+            for document in data["documents"]
+        ]
+    )
 
-    for document in data["documents"]:
-        if await virtool.samples.db.check_rights(
-            db, document["sample"]["id"], req["client"], write=False
-        ):
-            documents.append(document)
+    documents = [
+        document
+        for document, can_write in zip(data["documents"], per_document_can_read)
+        if can_write
+    ]
 
-    documents = await attach_users(db, documents)
-
-    documents = await asyncio.tasks.gather(
-        *[attach_subtractions(db, d) for d in documents]
+    documents = await apply_transforms(
+        documents, [AttachUserTransform(db), AttachSubtractionTransform(db)]
     )
 
     return json_response({**data, "documents": documents})
@@ -271,8 +278,8 @@ async def delete_analysis(req):
 @routes.jobs_api.put("/analyses/{id}/files")
 async def upload(req: Request) -> Response:
     """
-    Upload a new analysis result file to the `analysis_files` SQL table and the `analyses` folder in the Virtool
-    data path.
+    Upload a new analysis result file to the `analysis_files` SQL table and the
+    `analyses` folder in the Virtool data path.
 
     """
     db = req.app["db"]
@@ -305,7 +312,7 @@ async def upload(req: Request) -> Response:
 
     try:
         size = await naive_writer(req, analysis_file_path)
-    except asyncio.CancelledError:
+    except CancelledError:
         logger.debug(f"Analysis file upload aborted: {upload_id}")
         await delete_row(pg, upload_id, AnalysisFile)
 

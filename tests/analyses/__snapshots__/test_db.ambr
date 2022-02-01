@@ -672,10 +672,10 @@
 ---
 # name: test_create[uvloop-None]
   <class 'dict'> {
-    '_id': '9pfsom1b',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'files': <class 'list'> [
     ],
+    'id': '9pfsom1b',
     'index': <class 'dict'> {
       'id': 'test_index',
       'version': 11,
@@ -736,10 +736,10 @@
 ---
 # name: test_create[uvloop-test_analysis]
   <class 'dict'> {
-    '_id': 'test_analysis',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'files': <class 'list'> [
     ],
+    'id': '9pfsom1b',
     'index': <class 'dict'> {
       'id': 'test_index',
       'version': 11,
@@ -768,7 +768,7 @@
 ---
 # name: test_create[uvloop-test_analysis].1
   <class 'dict'> {
-    '_id': 'test_analysis',
+    '_id': '9pfsom1b',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'files': <class 'list'> [
     ],

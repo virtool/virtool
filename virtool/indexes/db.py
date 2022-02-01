@@ -4,19 +4,22 @@ Work with indexes in the database.
 """
 import asyncio
 import asyncio.tasks
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import pymongo
+from sqlalchemy.ext.asyncio import AsyncEngine
+
 import virtool.history.db
 import virtool.pg.utils
 import virtool.references.db
 import virtool.utils
-from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool.api.utils import paginate
 from virtool.config.cls import Config
+from virtool.db.transforms import AbstractTransform, apply_transforms
 from virtool.db.utils import get_new_id
 from virtool.indexes.models import IndexFile
-from virtool.users.db import attach_user
+from virtool.types import Document
+from virtool.users.db import AttachUserTransform
 
 PROJECTION = [
     "_id",
@@ -42,6 +45,24 @@ FILES = (
     "reference.rev.1.bt2",
     "reference.rev.2.bt2",
 )
+
+
+class IndexCountsTransform(AbstractTransform):
+    def __init__(self, db):
+        self._db = db
+
+    async def attach_one(self, document: Document, prepared: Any) -> Document:
+        return {**document, **prepared}
+
+    async def prepare_one(self, document: Document) -> Any:
+        query = {"index.id": document["id"]}
+
+        change_count, otu_ids = await asyncio.gather(
+            self._db.history.count_documents(query),
+            self._db.history.distinct("otu.id", query),
+        )
+
+        return {"change_count": change_count, "modified_otu_count": len(otu_ids)}
 
 
 async def create(
@@ -96,17 +117,9 @@ async def processor(db, document: dict) -> dict:
     :return: the processed document
 
     """
-    document = virtool.utils.base_processor(document)
-
-    query = {"index.id": document["id"]}
-
-    change_count, otu_ids = await asyncio.gather(
-        db.history.count_documents(query), db.history.distinct("otu.id", query)
-    )
-
-    return await attach_user(
-        db,
-        {**document, "change_count": change_count, "modified_otu_count": len(otu_ids)},
+    return await apply_transforms(
+        virtool.utils.base_processor(document),
+        [AttachUserTransform(db), IndexCountsTransform(db)],
     )
 
 
@@ -140,7 +153,9 @@ async def find(db, req_query: dict, ref_id: Optional[str] = None) -> dict:
     return {
         **data,
         **unbuilt_stats,
-        "documents": [await processor(db, d) for d in data["documents"]],
+        "documents": await apply_transforms(
+            data["documents"], [AttachUserTransform(db), IndexCountsTransform(db)]
+        ),
     }
 
 

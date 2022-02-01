@@ -23,7 +23,6 @@ async def test_edit(data, has_user, mocker, snapshot, fake, spawn_client):
 
     if has_user:
         user = await fake.users.insert()
-
         document["user"] = {"id": user["_id"]}
 
     client = await spawn_client(authorize=True, permissions=["modify_subtraction"])

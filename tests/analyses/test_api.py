@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from faker import Faker
+
 from tests.fixtures.fake import FakeGenerator
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile
@@ -35,7 +36,12 @@ async def test_find(snapshot, mocker, fake, spawn_client, resp_is, static_time):
             "all_read": True,
             "all_write": True,
             "user": {"id": user["_id"]},
+            "labels": [],
         }
+    )
+
+    await client.db.subtraction.insert_one(
+        {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"}
     )
 
     await client.db.analyses.insert_many(
@@ -50,6 +56,7 @@ async def test_find(snapshot, mocker, fake, spawn_client, resp_is, static_time):
                 "user": {"id": user["_id"]},
                 "sample": {"id": "test"},
                 "reference": {"id": "baz", "name": "Baz"},
+                "subtractions": [],
                 "foobar": True,
             },
             {
@@ -62,6 +69,7 @@ async def test_find(snapshot, mocker, fake, spawn_client, resp_is, static_time):
                 "user": {"id": user["_id"]},
                 "sample": {"id": "test"},
                 "reference": {"id": "baz", "name": "Baz"},
+                "subtractions": ["foo"],
                 "foobar": True,
             },
             {
@@ -74,6 +82,7 @@ async def test_find(snapshot, mocker, fake, spawn_client, resp_is, static_time):
                 "user": {"id": user["_id"]},
                 "sample": {"id": "test"},
                 "reference": {"id": "foo", "name": "Foo"},
+                "subtractions": [],
                 "foobar": False,
             },
         ]
@@ -126,8 +135,9 @@ async def test_get(
                 "group": "tech",
                 "group_read": True,
                 "group_write": True,
+                "labels": [],
                 "subtractions": ["apple", "plum"],
-                "user": {"id": "fred"},
+                "user": {"id": user["_id"]},
             }
         )
 
@@ -143,6 +153,7 @@ async def test_get(
                 "created_at": static_time.datetime,
                 "formatted": True,
                 "user": {"id": user["_id"]},
+                "subtractions": ["apple", "plum"],
             }
         ),
     )
@@ -468,6 +479,7 @@ async def test_finalize(fake, snapshot, spawn_job_client, faker, error, resp_is)
         "workflow": "test_workflow",
         "user": {"id": user["_id"]},
         "ready": error == 409,
+        "subtractions": [],
     }
 
     patch_json = {"results": {"result": "TEST_RESULT"}}
@@ -530,6 +542,7 @@ async def test_finalize_large(fake, spawn_job_client, faker):
             "workflow": "test_workflow",
             "user": {"id": user["_id"]},
             "ready": False,
+            "subtractions": [],
         }
     )
 

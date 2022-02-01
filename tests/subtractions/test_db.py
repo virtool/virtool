@@ -1,22 +1,32 @@
 import pytest
 
 import virtool.subtractions.db
-from virtool.subtractions.db import unlink_default_subtractions
+from virtool.db.transforms import apply_transforms
+from virtool.subtractions.db import (
+    AttachSubtractionTransform,
+    unlink_default_subtractions,
+)
 
 
-async def test_attach_subtractions(dbi):
+@pytest.mark.parametrize(
+    "documents",
+    [
+        {"id": "sub_1", "subtractions": ["foo", "bar"]},
+        [
+            {"id": "sub_1", "subtractions": ["foo", "bar"]},
+            {"id": "sub_2", "subtractions": ["foo"]},
+            {"id": "sub_3", "subtractions": []},
+        ],
+    ],
+)
+async def test_attach_subtractions(documents, dbi, snapshot):
     await dbi.subtraction.insert_many(
         [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}]
     )
 
-    document = {"_id": "foobar", "subtractions": ["foo", "bar"]}
+    result = await apply_transforms(documents, [AttachSubtractionTransform(dbi)])
 
-    result = await virtool.subtractions.db.attach_subtractions(dbi, document)
-
-    assert result == {
-        "_id": "foobar",
-        "subtractions": [{"id": "foo", "name": "Foo"}, {"id": "bar", "name": "Bar"}],
-    }
+    assert result == snapshot
 
 
 async def test_get_linked_samples(dbi):

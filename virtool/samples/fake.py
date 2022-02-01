@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 from sqlalchemy.exc import IntegrityError
+
 from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import create_sample, finalize
@@ -133,6 +134,8 @@ async def create_fake_sample(
             run_in_thread=app["run_in_thread"],
             data_path=app["config"].data_path,
         )
+
+    sample["_id"] = sample.pop("id")
 
     return sample
 

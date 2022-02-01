@@ -1,3 +1,49 @@
+# name: test_attach_subtractions[uvloop-documents0]
+  <class 'dict'> {
+    'id': 'sub_1',
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'foo',
+        'name': 'Foo',
+      },
+      <class 'dict'> {
+        'id': 'bar',
+        'name': 'Bar',
+      },
+    ],
+  }
+---
+# name: test_attach_subtractions[uvloop-documents1]
+  <class 'list'> [
+    <class 'dict'> {
+      'id': 'sub_1',
+      'subtractions': <class 'list'> [
+        <class 'dict'> {
+          'id': 'foo',
+          'name': 'Foo',
+        },
+        <class 'dict'> {
+          'id': 'bar',
+          'name': 'Bar',
+        },
+      ],
+    },
+    <class 'dict'> {
+      'id': 'sub_2',
+      'subtractions': <class 'list'> [
+        <class 'dict'> {
+          'id': 'foo',
+          'name': 'Foo',
+        },
+      ],
+    },
+    <class 'dict'> {
+      'id': 'sub_3',
+      'subtractions': <class 'list'> [
+      ],
+    },
+  ]
+---
 # name: test_create[uvloop-None]
   <class 'dict'> {
     '_id': '9pfsom1b',
