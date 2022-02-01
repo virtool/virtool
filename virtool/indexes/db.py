@@ -264,10 +264,10 @@ async def get_next_version(db, ref_id: str) -> int:
 
 async def get_unbuilt_stats(db, ref_id: Optional[str] = None) -> dict:
     """
-    Get the number of unbuilt changes and number of OTUs affected by those changes. Used to populate the metadata for a
-    index find request.
+    Get the number of unbuilt changes and number of OTUs affected by those changes.
 
-    Can search against a specific reference or all references.
+    Used to populate the metadata for an index find request. Can search against a
+    specific reference or all references.
 
     :param db: the application database client
     :param ref_id: the ref id to search unbuilt changes for
@@ -306,7 +306,8 @@ async def reset_history(db, index_id: str):
 
 async def get_patched_otus(db, config: Config, manifest: Dict[str, int]) -> List[dict]:
     """
-    Get joined OTUs patched to a specific version based on a manifest of OTU ids and versions.
+    Get joined OTUs patched to a specific version based on a manifest of OTU ids and
+    versions.
 
     :param db: the job database client
     :param config: the application configuration
@@ -362,7 +363,7 @@ async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
     """
     Attach a list of index files under `files` field.
 
-    :param pg: the application PostgreSQL client
+    :param pg: the application Postgres client
     :param base_url: the application base URL
     :param document: an index document
 
@@ -376,10 +377,12 @@ async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
     files = []
 
     for index_file in [row.to_dict() for row in rows]:
+        location = f"/indexes/{index_id}/files/{index_file['name']}"
+
         files.append(
             {
                 **index_file,
-                "download_url": f"{base_url}/indexes/{index_id}/files/{index_file['name']}",
+                "download_url": str(base_url) + location,
             }
         )
 

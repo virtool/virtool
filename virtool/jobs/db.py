@@ -1,5 +1,6 @@
 """
-Constants and utility functions for interacting with the jobs collection in the application database.
+Constants and utility functions for interacting with the jobs collection in the
+application database.
 
 """
 from asyncio import gather
@@ -141,13 +142,15 @@ async def acquire(db, job_id: str) -> Dict[str, Any]:
 
 async def processor(db, document: dict) -> dict:
     """
-    The default document processor for job documents. Transforms projected job documents to a structure that can be
-    dispatches to clients.
+    The default document processor for job documents.
+
+    Transforms projected job documents to a structure that can be dispatches to clients.
 
     1. Removes the ``status`` and ``args`` fields from the job document.
     2. Adds a ``username`` field.
     3. Adds a ``created_at`` date taken from the first status entry in the job document.
-    4. Adds ``state`` and ``progress`` fields derived from the most recent ``status`` entry in the job document.
+    4. Adds ``state`` and ``progress`` fields derived from the most recent ``status``
+       entry in the job document.
 
     :param db: the application database object
     :param document: a document to process

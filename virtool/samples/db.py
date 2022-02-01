@@ -152,7 +152,7 @@ async def check_rights(db, sample_id: str, client, write: bool = True) -> bool:
 
 def compose_sample_workflow_query(url_query: MultiDictProxy) -> Optional[dict]:
     """
-    Compose a MongoDB query for filtering samples by completed workflow (ie. workflow tags).
+    Compose a MongoDB query for filtering samples by completed workflow.
 
     :param url_query: a URL query string to compose the workflow query from
     :return: a MongoDB query for filtering by workflow
@@ -261,7 +261,8 @@ async def create_sample(
 
 async def get_sample_owner(db, sample_id: str) -> Optional[str]:
     """
-    A Shortcut function for getting the owner user id of a sample given its ``sample_id``.
+    A Shortcut function for getting the owner user id of a sample given its
+    ``sample_id``.
 
     :param db: the application database client
     :param sample_id: the id of the sample to get the owner for
@@ -300,8 +301,9 @@ async def recalculate_workflow_tags(db, sample_id: str) -> dict:
 
 async def remove_samples(db, config: Config, id_list: List[str]) -> DeleteResult:
     """
-    Complete removes the samples identified by the document ids in ``id_list``. In order, it:
+    Complete removes the samples identified by the document ids in ``id_list``.
 
+    In order, it:
     - removes all analyses associated with the sample from the analyses collection
     - removes the sample from the samples collection
     - removes the sample directory from the file system
@@ -360,8 +362,8 @@ def check_is_legacy(sample: Dict[str, Any]) -> bool:
 
 async def update_is_compressed(db, sample: Dict[str, Any]):
     """
-    Update the ``is_compressed`` field for the passed ``sample`` in the database if all of its
-    files are compressed.
+    Update the ``is_compressed`` field for the passed ``sample`` in the database if all
+    of its files are compressed.
 
     :param db: the application database
     :param sample: the sample document
@@ -433,9 +435,10 @@ async def compress_sample_reads(app: App, sample: Dict[str, Any]):
 
 async def move_sample_files_to_pg(app: App, sample: Dict[str, any]):
     """
-    Creates a row in the `sample_reads` table for each file in a sample's `files` array, and
-    creates a row in the `uploads` table for information stored in a file's `from` field. The rows
-    are then linked via a SQL relationship.
+    Creates a row in the `sample_reads` table for each file in a sample's `files` array.
+
+    Also, creates a row in the `uploads` table for information stored in a file's
+    `from` field with a relation to the `SampleRead`.
 
     :param app: the application object
     :param sample: the sample document

@@ -107,8 +107,10 @@ async def get(req):
 @routes.get("/refs/{ref_id}/release")
 async def get_release(req):
     """
-    Get the latest update from GitHub and return it. Also updates the reference document. This is the only way of doing
-    so without waiting for an automatic refresh every 10 minutes.
+    Get the latest update from GitHub and return it.
+
+    Also updates the reference document. This is the only way of doing so without
+    waiting for an automatic refresh every 10 minutes.
 
     """
     db = req.app["db"]

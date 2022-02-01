@@ -1,7 +1,7 @@
 import random
 from dataclasses import dataclass
 from logging import Logger
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import virtool.utils
 from virtool.db.transforms import AbstractTransform
@@ -15,6 +15,7 @@ from virtool.users.utils import (
     generate_base_permissions,
     limit_permissions,
 )
+from virtool.utils import base_processor
 
 logger = Logger(__name__)
 
@@ -29,11 +30,10 @@ PROJECTION = [
     "primary_group",
 ]
 
-ATTACH_PROJECTION = {
-    "_id": False,
-    "administrator": True,
-    "handle": True,
-}
+ATTACH_PROJECTION = [
+    "administrator",
+    "handle",
+]
 
 
 @dataclass
@@ -63,6 +63,23 @@ class AttachUserTransform(AbstractTransform):
         self._db = db
         self._ignore_errors = ignore_errors
 
+    def _extract_user_id(self, document: Document) -> Optional[str]:
+        try:
+            user = document["user"]
+
+            try:
+                return user["id"]
+            except TypeError:
+                if isinstance(user, str):
+                    return user
+
+                raise
+        except KeyError:
+            if not self._ignore_errors:
+                raise KeyError("Document needs a value at user or user.id")
+
+        return None
+
     async def attach_one(self, document, prepared):
         try:
             user_data = document["user"]
@@ -89,34 +106,42 @@ class AttachUserTransform(AbstractTransform):
             },
         }
 
+    async def attach_many(
+        self, documents: List[Document], prepared: Dict[int, Any]
+    ) -> List[Document]:
+        return [
+            await self.attach_one(document, prepared[self._extract_user_id(document)])
+            for document in documents
+        ]
+
     async def prepare_one(self, document):
-        try:
-            user = document["user"]
-
-            try:
-                user_id = user["id"]
-            except TypeError:
-                user_id = user
-        except KeyError:
-            if self._ignore_errors:
-                return document
-
-            raise KeyError("Document needs a value at user or user.id")
-
-        user_data = await self._db.users.find_one(user_id, ATTACH_PROJECTION)
+        user_id = self._extract_user_id(document)
+        user_data = base_processor(
+            await self._db.users.find_one(user_id, ATTACH_PROJECTION)
+        )
 
         if not user_data:
-            raise KeyError(
-                f"Document contains user {user_id}, which is not present in the database."
-            )
+            raise KeyError(f"Document contains non-existent user: {user_id}.")
 
         return user_data
+
+    async def prepare_many(
+        self, documents: List[Document]
+    ) -> Dict[Union[int, str], Any]:
+        user_ids = list({self._extract_user_id(document) for document in documents})
+
+        return {
+            document["_id"]: base_processor(document)
+            async for document in self._db.users.find(
+                {"_id": {"$in": user_ids}}, ATTACH_PROJECTION
+            )
+        }
 
 
 async def extend_user(db, user: Dict[str, Any]) -> Dict[str, Any]:
     user_id = user["id"]
 
-    user_data = await db.users.find_one(user_id, ATTACH_PROJECTION)
+    user_data = base_processor(await db.users.find_one(user_id, ATTACH_PROJECTION))
 
     extended = {
         **user,
@@ -188,15 +213,12 @@ async def compose_primary_group_update(
     :param db: the application database client
     :param user_id: the id of the user being updated
     :param primary_group: the primary group to set for the user
-
     :return: an update
 
     """
     if primary_group is None:
         return dict()
 
-    # 'none' is a valid primary group regardless of user membership or existence of the
-    # group in the db
     if primary_group != "none":
         if not await id_exists(db.groups, primary_group):
             raise DatabaseError("Non-existent group: " + primary_group)
@@ -209,7 +231,8 @@ async def compose_primary_group_update(
 
 async def generate_handle(collection, given_name: str, family_name: str) -> str:
     """
-    Create handle for new B2C users in Virtool using values from ID token and random int
+    Create handle for new B2C users in Virtool using values from ID token and random
+    integer.
 
     :param collection: the mongo collection to check for existing usernames
     :param given_name: user's first name collected from Azure AD B2C
@@ -232,7 +255,9 @@ async def create(
     b2c_user_attributes: B2CUserAttributes = None,
 ) -> Document:
     """
-    Insert a new user document into the database. If Azure AD B2C information is given, add it to user document.
+    Insert a new user document into the database.
+
+    If Azure AD B2C information is given, add it to user document.
 
     :param db: the application database client
     :param handle: the requested handle for the user
@@ -340,13 +365,14 @@ async def is_member_of_group(db, user_id: str, group_id: str) -> bool:
 
 async def validate_credentials(db, user_id: str, password: str) -> bool:
     """
-    Returns ``True`` if the username exists and the password is correct. Returns ``False`` if the username does not
-    exist or the or the password is incorrect.
+    Check if the ``user_id`` and ``password`` are valid.
+
+    Returns ``True`` if the username exists and the password is correct. Returns
+    ``False`` if the username does not exist or the password is incorrect.
 
     :param db: a database client
     :param user_id: the username to check.
     :param password: the password to check.
-
     :return: validation success
 
     """

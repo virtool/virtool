@@ -1,58 +1,6 @@
 """
 Work with references in the database
 
-Schema:
-- _id (str) the instance-unique reference ID
-- cloned_from (Object) describes the reference this one was cloned from (can be null)
-  - id (str) the ID of the source reference
-  - name (str) the name of the source reference at the time of cloning
-- created_at (datetime) when the reference was created
-- data_type (Enum["genome", "barcode"]) the type of data stored in the reference
-- description (str) a user-defined description for the the reference
-- groups (List[Object]) describes groups assigned to the reference and their rights
-  - id (str) the group ID
-  - build (bool) the group can create new builds of the reference
-  - modify (bool) the group can modify the non-OTU reference data
-  - modify_otu (bool) the group can modify OTUs
-  - remove (bool) the group can remove the reference
-- groups (List[Object]) describes users assigned to the reference and their rights
-  - id (str) the user ID
-  - build (bool) the user can create new builds of the reference
-  - modify (bool) the user can modify the non-OTU reference data
-  - modify_otu (bool) the user can modify OTUs
-  - remove (bool) the user can remove the reference
-- internal_control (str) the ID for an OTU that is used as an internal control in the lab
-- name (str) the reference name
-- organism (str) the organism represented in the reference (eg. virus, bacteria, fungus)
-- task (Object) a task associated with a current reference operation
-  - id (str) the task ID
-- release (Object) describes the latest remote reference release
-  - body (str) the Markdown-formatted release body from GitHub
-  - content_type (str) release content type - should always be application/gzip
-  - download_url (str) the GitHUB URL at which the reference release can be downloaded
-  - etag (str) the release ETag - allows caching of the release check result
-  - filename (str) the name of the release file
-  - html_url (str) the URL to the web page for the release on GitHub
-  - id (str) the unique ID for the release from GitHub
-  - name (str) the name of the release (eg. v1.4.0)
-  - newer (bool) true if there is a newer release available
-  - published_at (datetime) when the release was published on GitHub
-  - retrieved_at (datetime) when teh release was retrieved from GitHub
-  - size (int) size of the release file in bytes
-- remotes_from (Object) describes where the reference remotes from (can be null)
-  - errors (Array) errors related to the remote reference
-  - slug (str) the GitHub repository slug for the reference
-- restrict_source_types (bool) restricts the source types users may use when creating isolates
-- source_types (Array[str]) a set of allowable source types
-- updates (Array[Object]) a history of updates applied to the remote reference
-  - SHARES FIELDS WITH release
-  - user (Object) describes the user that applied the update
-    - id (str) the user ID
-- updating (bool) the remote reference is being updated
-- user (Object) describes the creating user
-  - id (str) the user ID
-
-
 """
 import asyncio
 import datetime
@@ -155,7 +103,8 @@ async def processor(db, document: dict) -> dict:
 
 async def attach_computed(db, document: dict) -> dict:
     """
-    Get all computed data for the specified reference and attach it to the passed `document`.
+    Get all computed data for the specified reference and attach it to the passed
+    ``document``.
 
     :param db: the application database client
     :param document: the document to attached computed data to
@@ -283,7 +232,8 @@ async def check_right(req: Request, reference: dict, right: str) -> bool:
 
 async def check_source_type(db, ref_id: str, source_type: str) -> bool:
     """
-    Check if the provided `source_type` is valid based on the current reference source type configuration.
+    Check if the provided `source_type` is valid based on the current reference source
+    type configuration.
 
     :param db: the application database client
     :param ref_id: the reference context
@@ -366,8 +316,9 @@ async def edit_group_or_user(
     db, ref_id: str, subdocument_id: str, field: str, data: dict
 ) -> Optional[dict]:
     """
-    Edit an existing group or user as decided by the `field` argument. Returns `None` if the reference, group, or user
-    does not exist.
+    Edit an existing group or user as decided by the `field` argument.
+
+    Returns `None` if the reference, group, or user does not exist.
 
     :param db: the application database client
     :param ref_id: the id of the reference to modify
@@ -400,11 +351,13 @@ async def fetch_and_update_release(
     app, ref_id: str, ignore_errors: bool = False
 ) -> dict:
     """
-    Get the latest release for the GitHub repository identified by the passed `slug`. If a release is found, update the
-    reference identified by the passed `ref_id` and return the release.
+    Get the latest release for the GitHub repository identified by the passed `slug`.
 
-    Exceptions can be ignored during the GitHub request. Error information will still be written to the reference
-    document.
+    If a release is found, update the reference identified by the passed `ref_id` and
+    return the release.
+
+    Exceptions can be ignored during the GitHub request. Error information will still
+    be written to the reference document.
 
     :param app: the application object
     :param ref_id: the id of the reference to update
@@ -543,8 +496,10 @@ async def get_official_installed(db) -> bool:
 
 async def get_manifest(db, ref_id: str) -> dict:
     """
-    Generate a dict of otu document version numbers keyed by the document id. This is used to make sure only changes
-    made at the time the index rebuild was started are included in the build.
+    Generate a dict of otu document version numbers keyed by the document id.
+
+    This is used to make sure only changes made at the time the index rebuild was
+    started are included in the build.
 
     :param db: the application database client
     :param ref_id: the id of the reference to get the current index for
@@ -729,7 +684,8 @@ async def create_remote(
         "remotes_from": {"errors": [], "slug": remote_from},
         # The latest available release on GitHub.
         "release": dict(release, retrieved_at=created_at),
-        # The update history for the reference. We put the release being installed as the first history item.
+        # The update history for the reference. We put the release being installed as
+        # the first history item.
         "updates": [
             virtool.github.create_update_subdocument(
                 release, False, user_id, created_at
@@ -813,7 +769,8 @@ async def insert_change(
     """
     db = app["db"]
 
-    # Join the otu document into a complete otu record. This will be used for recording history.
+    # Join the otu document into a complete otu record. This will be used for recording
+    # history.
     joined = await join(db, otu_id)
 
     name = joined["name"]

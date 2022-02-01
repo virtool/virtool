@@ -1,3 +1,41 @@
+# name: test_attach_user_transform[uvloop-False]
+  <class 'dict'> {
+    '_id': 'bar',
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
+  }
+---
+# name: test_attach_user_transform[uvloop-True]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'bar',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': '7CtBo2yG',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'foo',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'johnsoncynthia',
+        'id': 'LB1U6zCj',
+      },
+    },
+    <class 'dict'> {
+      '_id': 'baz',
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': '7CtBo2yG',
+      },
+    },
+  ]
+---
 # name: test_create[uvloop-False-False]
   <class 'dict'> {
     '_id': 'abc123',
