@@ -21,7 +21,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: wagoid/commitlint-github-action@v4
-  server:
+  test:
     runs-on: ubuntu-20.04
     services:
       redis:
