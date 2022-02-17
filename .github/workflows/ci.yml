@@ -62,7 +62,7 @@ jobs:
           --cov-report xml
   release:
     runs-on: ubuntu-20.04
-    needs: server
+    needs: test
     if: github.event_name == 'push'
     steps:
       - name: Checkout
