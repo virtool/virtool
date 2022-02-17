@@ -1,17 +1,20 @@
 import asyncio
 
+from aiohttp import web
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
+
 import virtool.http.routes
 import virtool.otus.db
 import virtool.otus.isolates
 import virtool.otus.sequences
 import virtool.references.db
 import virtool.validators
-from aiohttp import web
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from virtool.api.response import InsufficientRights, NotFound, json_response
+from virtool.db.transforms import apply_transforms
 from virtool.history.db import LIST_PROJECTION
 from virtool.http.schema import schema
 from virtool.otus.utils import evaluate_changes, find_isolate
+from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 
 SCHEMA_VALIDATOR = {
@@ -39,7 +42,8 @@ routes = virtool.http.routes.Routes()
 @routes.jobs_api.get("/otus/{otu_id}.fa")
 async def download_otu(req):
     """
-    Download a FASTA file containing the sequences for all isolates in a single Virtool otu.
+    Download a FASTA file containing the sequences for all isolates in a single Virtool
+    otu.
 
     """
     db = req.app["db"]
@@ -75,7 +79,8 @@ async def find(req):
 @routes.get("/otus/{otu_id}")
 async def get(req):
     """
-    Get a complete otu document. Joins the otu document with its associated sequence documents.
+    Get a complete otu document. Joins the otu document with its associated sequence
+    documents.
 
     """
     db = req.app["db"]
@@ -109,8 +114,10 @@ async def get(req):
 )
 async def create(req):
     """
-    Add a new otu to the collection. Checks to make sure the supplied otu name and abbreviation are not already in
-    use in the collection. Any errors are sent back to the client.
+    Add a new otu to the collection.
+
+    Checks to make sure the supplied otu name and abbreviation are not already in use in
+    the collection. Any errors are sent back to the client.
 
     """
     db = req.app["db"]
@@ -129,7 +136,8 @@ async def create(req):
     name = data["name"].strip()
     abbreviation = data["abbreviation"].strip()
 
-    # Check if either the name or abbreviation are already in use. Send a ``400`` if they are.
+    # Check if either the name or abbreviation are already in use. Send a ``400`` if
+    # they are.
     message = await virtool.otus.db.check_name_and_abbreviation(
         db, ref_id, name, abbreviation
     )
@@ -158,8 +166,8 @@ async def create(req):
 )
 async def edit(req):
     """
-    Edit an existing OTU. Checks to make sure the supplied OTU name and abbreviation are not already in use in
-    the collection.
+    Edit an existing OTU. Checks to make sure the supplied OTU name and abbreviation are
+    not already in use in the collection.
 
     """
     db = req.app["db"]
@@ -167,7 +175,8 @@ async def edit(req):
 
     otu_id = req.match_info["otu_id"]
 
-    # Get existing complete otu record, at the same time ensuring it exists. Send a ``404`` if not.
+    # Get existing complete otu record, at the same time ensuring it exists. Send a
+    # ``404`` if not.
     document = await db.otus.find_one(
         otu_id, ["abbreviation", "name", "reference", "schema"]
     )
@@ -180,10 +189,10 @@ async def edit(req):
     if not await virtool.references.db.check_right(req, ref_id, "modify_otu"):
         raise InsufficientRights()
 
-    name, abbreviation, schema = evaluate_changes(data, document)
+    name, abbreviation, otu_schema = evaluate_changes(data, document)
 
     # Send ``200`` with the existing otu record if no change will be made.
-    if name is None and abbreviation is None and schema is None:
+    if name is None and abbreviation is None and otu_schema is None:
         return json_response(await virtool.otus.db.join_and_format(db, otu_id))
 
     # Make sure new name or abbreviation are not already in use.
@@ -196,7 +205,7 @@ async def edit(req):
 
     document = await asyncio.shield(
         virtool.otus.db.edit(
-            req.app, otu_id, name, abbreviation, schema, req["client"].user_id
+            req.app, otu_id, name, abbreviation, otu_schema, req["client"].user_id
         )
     )
 
@@ -527,7 +536,6 @@ async def create_sequence(req):
     otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    # Get the subject otu document. Will be ``None`` if it doesn't exist. This will result in a ``404`` response.
     document = await db.otus.find_one(
         {"_id": otu_id, "isolates.id": isolate_id}, ["reference", "schema"]
     )
@@ -553,8 +561,10 @@ async def create_sequence(req):
         )
     )
 
+    sequence_id = sequence_document["id"]
+
     headers = {
-        "Location": f"/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_document['id']}"
+        "Location": f"/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}"
     }
 
     return json_response(sequence_document, status=201, headers=headers)
@@ -664,6 +674,10 @@ async def list_history(req):
     if not await db.otus.count_documents({"_id": otu_id}):
         raise NotFound()
 
-    cursor = db.history.find({"otu.id": otu_id}, projection=LIST_PROJECTION)
+    documents = await db.history.find(
+        {"otu.id": otu_id}, projection=LIST_PROJECTION
+    ).to_list(None)
 
-    return json_response([d async for d in cursor])
+    return json_response(
+        await apply_transforms(documents, [AttachUserTransform(db, ignore_errors=True)])
+    )
