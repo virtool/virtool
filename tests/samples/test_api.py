@@ -836,20 +836,6 @@ async def test_analyze(
     client = await spawn_client(authorize=True)
     client.app["jobs"] = MockJobInterface()
 
-    test_analysis = {
-        "_id": "test_analysis",
-        "ready": False,
-        "created_at": static_time.iso,
-        "job": {"id": "baz"},
-        "workflow": "pathoscope_bowtie",
-        "reference": {"id": "foo"},
-        "sample": {"id": "test"},
-        "index": {"id": "foobar", "version": 3},
-        "user": {
-            "id": "test",
-        },
-    }
-
     if error != "400_reference":
         await client.db.references.insert_one({"_id": "foo"})
 
@@ -878,7 +864,22 @@ async def test_analyze(
         )
 
     m_create = mocker.patch(
-        "virtool.analyses.db.create", make_mocked_coro(test_analysis)
+        "virtool.analyses.db.create",
+        make_mocked_coro(
+            {
+                "id": "test_analysis",
+                "ready": False,
+                "created_at": static_time.iso,
+                "job": {"id": "baz"},
+                "workflow": "pathoscope_bowtie",
+                "reference": {"id": "foo"},
+                "sample": {"id": "test"},
+                "index": {"id": "foobar", "version": 3},
+                "user": {
+                    "id": "test",
+                },
+            }
+        ),
     )
 
     resp = await client.post(
