@@ -1,6 +1,13 @@
+from pprint import pprint
+
+import arrow
 import asyncio
+import json
 import os
-from typing import Tuple, Union
+from contextlib import asynccontextmanager
+from typing import Optional, Tuple, Union
+
+import aiofiles
 
 import virtool.analyses.utils
 import virtool.bio
@@ -11,6 +18,7 @@ import virtool.jobs.db
 import virtool.otus.utils
 import virtool.samples.db
 import virtool.utils
+from virtool.analyses.utils import join_analysis_json_path
 
 PROJECTION = [
     "_id",
@@ -45,7 +53,33 @@ class BLAST:
         Remove the BLAST result from the analysis document.
 
         """
-        await remove_nuvs_blast(self.db, self.analysis_id, self.sequence_index)
+        document = await self.db.analyses.find_one({"_id": self.analysis_id},
+                                              ["results", "sample"])
+
+        if document["results"] == "file":
+            async with json_results(
+                    self.settings["data_path"],
+                    self.analysis_id,
+                    document["sample"]["id"]
+            ) as data:
+                for hit in data:
+                    if hit["index"] == self.sequence_index:
+                        hit["blast"] = None
+                        break
+
+            return await self.db.analyses.update_one({"_id": self.analysis_id}, {
+                "$set": {
+                    "updated_at": virtool.utils.timestamp()
+                }
+            })
+
+        await self.db.analyses.update_one(
+            {"_id": self.analysis_id, "results.index": self.sequence_index}, {
+                "$set": {
+                    "results.$.blast": None,
+                    "updated_at": virtool.utils.timestamp()
+                }
+            })
 
     async def sleep(self):
         """
@@ -55,7 +89,12 @@ class BLAST:
         await asyncio.sleep(self.interval)
         self.interval += 5
 
-    async def update(self, ready: bool, result: Union[None, dict], error: Union[None, str]) -> Tuple[dict, dict]:
+    async def update(
+        self,
+        ready: Optional[bool] = None,
+        result: Optional[dict] = None,
+        error: Optional[str] = None,
+    ) -> Tuple[dict, dict]:
         """
         Update the BLAST data. Returns the BLAST data and the complete analysis document.
 
@@ -72,26 +111,17 @@ class BLAST:
         else:
             self.ready = ready
 
-        data = {
-            "error": error,
-            "interval": self.interval,
-            "last_checked_at": virtool.utils.timestamp(),
-            "rid": self.rid,
-            "ready": ready,
-            "result": self.result
-        }
-
-        document = await self.db.analyses.find_one_and_update({
-            "_id": self.analysis_id,
-            "results.index": self.sequence_index
-        }, {
-            "$set": {
-                "results.$.blast": data,
-                "updated_at": virtool.utils.timestamp()
-            }
-        })
-
-        return data, document
+        return await update_nuvs_blast(
+            self.db,
+            self.settings,
+            self.analysis_id,
+            self.sequence_index,
+            self.rid,
+            error,
+            self.interval,
+            self.ready,
+            self.result
+        )
 
 
 async def new(app, sample_id, ref_id, subtraction_id, user_id, workflow):
@@ -168,16 +198,29 @@ async def new(app, sample_id, ref_id, subtraction_id, user_id, workflow):
     return document
 
 
+@asynccontextmanager
+async def json_results(data_path, analysis_id, sample_id):
+    path = join_analysis_json_path(data_path, analysis_id, sample_id)
+
+    async with aiofiles.open(path, "r") as f:
+        data = json.loads(await f.read())
+
+    yield data
+
+    async with aiofiles.open(path, "w") as f:
+        await f.write(json.dumps(data))
+
+
 async def update_nuvs_blast(
         db,
         settings: dict,
         analysis_id: str,
         sequence_index: int,
         rid: str,
-        error: Union[None, str] = None,
+        error: Optional[str] = None,
         interval: int = 3,
-        ready: Union[None, bool] = None,
-        result: Union[None, dict] = None
+        ready: Optional[bool] = None,
+        result: Optional[dict] = None
 ) -> Tuple[dict, dict]:
     """
     Update the BLAST data for a sequence in a NuVs analysis.
@@ -198,35 +241,52 @@ async def update_nuvs_blast(
         ready = await virtool.bio.check_rid(settings, rid)
 
     data = {
+        "error": error,
         "interval": interval,
-        "last_checked_at": virtool.utils.timestamp(),
+        "last_checked_at": arrow.get(virtool.utils.timestamp()).isoformat(),
         "rid": rid,
         "ready": ready,
         "result": result
     }
 
-    document = await db.analyses.find_one_and_update({"_id": analysis_id, "results.index": sequence_index}, {
-        "$set": {
-            "results.$.blast": data,
-            "updated_at": virtool.utils.timestamp()
+    document = await db.analyses.find_one({"_id": analysis_id}, ["results", "sample"])
+
+    if document["results"] == "file":
+        async with json_results(
+                settings["data_path"],
+                analysis_id,
+                document["sample"]["id"]
+        ) as nuvs_json:
+            for hit in nuvs_json:
+                if hit["index"] == sequence_index:
+                    hit["blast"] = data
+                    break
+
+        document = await db.analyses.find_one_and_update({"_id": analysis_id}, {
+            "$set": {
+                "updated_at": virtool.utils.timestamp()
+            }
+        })
+
+        return data, document
+
+    document = await db.analyses.find_one_and_update(
+        {"_id": analysis_id, "results.index": sequence_index},
+        {
+            "$set": {
+                "results.$.blast": data,
+                "updated_at": virtool.utils.timestamp()
+            }
         }
-    })
+    )
 
     return data, document
 
 
-async def remove_nuvs_blast(db, analysis_id, sequence_index):
-    await db.analyses.update_one({"_id": analysis_id, "results.index": sequence_index}, {
-        "$set": {
-            "results.$.blast": None,
-            "updated_at": virtool.utils.timestamp()
-        }
-    })
-
-
 async def remove_orphaned_directories(app):
     """
-    Remove all analysis directories for which an analysis document does not exist in the database.
+    Remove all analysis directories for which an analysis document does not exist in
+    the database.
 
     :param app:
     """

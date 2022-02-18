@@ -1,3 +1,5 @@
+from pprint import pprint
+
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
@@ -188,11 +190,20 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
 
         await client.db.analyses.insert_one(analysis_document)
 
-    m_initialize_ncbi_blast = mocker.patch("virtool.bio.initialize_ncbi_blast", make_mocked_coro(("FOOBAR1337", 23)))
+    m_initialize_ncbi_blast = mocker.patch(
+        "virtool.bio.initialize_ncbi_blast",
+        make_mocked_coro(("FOOBAR1337", 23))
+    )
 
-    m_check_rid = mocker.patch("virtool.bio.check_rid", make_mocked_coro(return_value=False))
+    m_check_rid = mocker.patch(
+        "virtool.bio.check_rid",
+        make_mocked_coro(return_value=False)
+    )
 
-    m_wait_for_blast_result = mocker.patch("virtool.bio.wait_for_blast_result", make_mocked_coro())
+    m_wait_for_blast_result = mocker.patch(
+        "virtool.bio.wait_for_blast_result",
+        make_mocked_coro()
+    )
 
     await client.put("/api/analyses/foobar/5/blast", {})
 
@@ -225,15 +236,14 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
     assert resp.status == 201
     assert resp.headers["Location"] == "/api/analyses/foobar/5/blast"
 
-    blast = {
+    assert await resp.json() == {
         "rid": "FOOBAR1337",
+        "error": None,
         "interval": 3,
-        "last_checked_at": static_time.iso,
+        "last_checked_at": "2015-10-06T20:00:00+00:00",
         "ready": False,
         "result": None
     }
-
-    assert await resp.json() == blast
 
     m_initialize_ncbi_blast.assert_called_with(
         client.settings,

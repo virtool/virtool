@@ -1,14 +1,50 @@
+import json
+import os
+
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.analyses.db
 import virtool.analyses.format
+from virtool.analyses.db import BLAST
+from virtool.analyses.utils import join_analysis_json_path, join_analysis_path
 
 
 @pytest.fixture
-def test_blast_obj(dbi):
+async def blast(dbi, static_time, tmpdir):
+    await dbi.samples.insert_one({
+        "_id": "sample"
+    })
+
+    await dbi.analyses.insert_many([
+        {
+            "_id": "foo",
+            "results": [
+                {"index": 2, "blast": "bar"},
+                {"index": 5, "blast": "baz"},
+                {"index": 12, "blast": "baz"},
+            ],
+            "sample": {
+                "id": "sample"
+            },
+            "updated_at": static_time.datetime
+        },
+        {
+
+            "_id": "bar",
+            "results": [
+                {"index": 3, "blast": "bar"},
+                {"index": 9, "blast": "baz"},
+            ],
+            "sample": {
+                "id": "sample"
+            },
+            "updated_at": static_time.datetime
+        }
+    ])
+
     settings = {
-        "data_path": "/mnt/data"
+        "data_path": str(tmpdir)
     }
 
     return virtool.analyses.db.BLAST(
@@ -20,69 +56,47 @@ def test_blast_obj(dbi):
     )
 
 
-class TestBLAST:
+async def test_blast_sleep(mocker, dbi, blast: BLAST):
+    """
+    Test that calling the `sleep()` method calls `asyncio.sleep` and increments the `interval` attribute by 5.
 
-    def test_init(self, dbi, test_blast_obj):
-        assert test_blast_obj.db == dbi
-        assert test_blast_obj.settings == {"data_path": "/mnt/data"}
-        assert test_blast_obj.analysis_id == "foo"
-        assert test_blast_obj.sequence_index == 5
-        assert test_blast_obj.rid == "ABC123"
-        assert test_blast_obj.error is None
-        assert test_blast_obj.interval == 3
-        assert test_blast_obj.ready is False
-        assert test_blast_obj.result is None
+    """
+    m_sleep = mocker.patch("asyncio.sleep", make_mocked_coro())
 
-    async def test_remove(self, mocker, dbi, test_blast_obj):
-        """
-        Test that the `remove()` method results in a call to `virtool.analyses.db.remove_nuvs_blast()` using the
-        BLAST object attributes.
+    await blast.sleep()
+    m_sleep.assert_called_with(3)
+    assert blast.interval == 8
 
-        """
-        m_remove_nuvs_blast = mocker.patch("virtool.analyses.db.remove_nuvs_blast", make_mocked_coro())
-        await test_blast_obj.remove()
-        m_remove_nuvs_blast.assert_called_with(dbi, "foo", 5)
+    await blast.sleep()
+    m_sleep.assert_called_with(8)
+    assert blast.interval == 13
 
-    async def test_sleep(self, mocker, dbi, test_blast_obj):
-        """
-        Test that calling the `sleep()` method calls `asyncio.sleep` and increments the `interval` attribute by 5.
 
-        """
-        m_sleep = mocker.patch("asyncio.sleep", make_mocked_coro())
+@pytest.mark.parametrize("check", [True, False])
+@pytest.mark.parametrize("error", [None, "Error"])
+@pytest.mark.parametrize("ready", [None, True, False])
+@pytest.mark.parametrize("result", [None, {"foo": "bar"}])
+async def test_update(
+        snapshot,
+        check,
+        ready,
+        result,
+        error,
+        mocker,
+        dbi,
+        blast: BLAST,
+        static_time
+):
+    m_check_rid = mocker.patch("virtool.bio.check_rid", make_mocked_coro(check))
 
-        await test_blast_obj.sleep()
-        m_sleep.assert_called_with(3)
-        assert test_blast_obj.interval == 8
+    await blast.update(ready, result, error)
 
-        await test_blast_obj.sleep()
-        m_sleep.assert_called_with(8)
-        assert test_blast_obj.interval == 13
+    if ready is None:
+        m_check_rid.assert_called_with(blast.settings, blast.rid)
+    else:
+        assert not m_check_rid.called
 
-    @pytest.mark.parametrize("check", [True, False])
-    @pytest.mark.parametrize("error", [None, "Error"])
-    @pytest.mark.parametrize("ready", [None, True, False])
-    @pytest.mark.parametrize("result", [None, {"foo": "bar"}])
-    async def test_update(self, snapshot, check, ready, result, error, mocker, dbi, test_blast_obj, static_time):
-        m_check_rid = mocker.patch("virtool.bio.check_rid", make_mocked_coro(check))
-
-        await dbi.analyses.insert_one({
-            "_id": "foo",
-            "results": [
-                {"index": 2, "blast": "bar"},
-                {"index": 5, "blast": "baz"},
-                {"index": 12, "blast": "baz"}
-            ],
-            "updated_at": static_time.datetime
-        })
-
-        await test_blast_obj.update(ready, result, error)
-
-        if ready is None:
-            m_check_rid.assert_called_with(test_blast_obj.settings, test_blast_obj.rid)
-        else:
-            assert not m_check_rid.called
-
-        snapshot.assert_match(await dbi.analyses.find_one())
+    snapshot.assert_match(await dbi.analyses.find_one())
 
 
 @pytest.mark.parametrize("workflow", [None, "foobar", "nuvs", "pathoscope"])
@@ -139,35 +153,87 @@ async def test_format_analysis(workflow, mocker):
         assert not m_format_nuvs.called
 
 
-async def test_remove_nuvs_blast(snapshot, dbi, static_time):
+@pytest.mark.parametrize("has_file", [True, False])
+async def test_update_nuvs_blast(blast: BLAST, has_file, snapshot, dbi, tmpdir):
+    """
+    Test that the correct BLAST result is updated.
+
+    """
+    if has_file:
+        await dbi.analyses.update_one({"_id": "foo"}, {
+            "$set": {
+                "results": "file"
+            }
+        })
+
+    analysis_path = join_analysis_path(str(tmpdir), "foo", "sample")
+    os.makedirs(analysis_path, exist_ok=True)
+
+    json_path = join_analysis_json_path(str(tmpdir), "foo", "sample")
+
+    with open(json_path, "w") as f:
+        json.dump([
+            {"index": 2, "blast": "bar"},
+            {"index": 5, "blast": "baz"},
+            {"index": 12, "blast": "baz"},
+        ], f)
+
+    await virtool.analyses.db.update_nuvs_blast(
+        dbi,
+        blast.settings,
+        blast.analysis_id,
+        blast.sequence_index,
+        blast.rid,
+        None,
+        blast.interval,
+        True,
+        {
+            "updated": True
+        }
+    )
+
+    snapshot.assert_match(await dbi.analyses.find().to_list(None))
+
+    if has_file:
+        with open(json_path, "r") as f:
+            data = json.load(f)
+
+        snapshot.assert_match(data)
+
+
+
+
+@pytest.mark.parametrize("has_file", [True, False])
+async def test_blast_remove(has_file, snapshot, blast, dbi, tmpdir):
     """
     Test that the correct BLAST result is removed.
 
     """
-    await dbi.analyses.insert_many([
-        {
-            "_id": "foo",
-            "results": [
-                {"index": 2, "blast": "bar"},
-                {"index": 5, "blast": "baz"},
-            ],
-            "updated_at": static_time.datetime
-        },
-        {
+    if has_file:
+        await dbi.analyses.update_one({"_id": "foo"}, {
+            "$set": {
+                "results": "file"
+            }
+        })
 
-            "_id": "bar",
-            "results": [
-                {"index": 3, "blast": "bar"},
-                {"index": 9, "blast": "baz"},
-            ],
-            "updated_at": static_time.datetime
-        }
-    ])
+    analysis_path = join_analysis_path(str(tmpdir), "foo", "sample")
+    os.makedirs(analysis_path, exist_ok=True)
 
-    await virtool.analyses.db.remove_nuvs_blast(
-        dbi,
-        "foo",
-        5
-    )
+    json_path = join_analysis_json_path(str(tmpdir), "foo", "sample")
+
+    with open(json_path, "w") as f:
+        json.dump([
+            {"index": 2, "blast": "bar"},
+            {"index": 5, "blast": "baz"},
+            {"index": 12, "blast": "baz"},
+        ], f)
+
+    await blast.remove()
 
     snapshot.assert_match(await dbi.analyses.find().to_list(None))
+
+    if has_file:
+        with open(json_path, "r") as f:
+            data = json.load(f)
+
+        snapshot.assert_match(data)
