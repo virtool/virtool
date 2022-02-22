@@ -1,13 +1,11 @@
-from pprint import pprint
-
-import arrow
 import asyncio
 import json
 import os
-from contextlib import asynccontextmanager
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import aiofiles
+import arrow
+from async_generator import asynccontextmanager
 
 import virtool.analyses.utils
 import virtool.bio
