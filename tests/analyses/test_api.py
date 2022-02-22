@@ -56,6 +56,7 @@ async def test_find(snapshot, mocker, fake, spawn_client, resp_is, static_time):
                 "user": {"id": user["_id"]},
                 "sample": {"id": "test"},
                 "reference": {"id": "baz", "name": "Baz"},
+                "results": {"hits": []},
                 "subtractions": [],
                 "foobar": True,
             },
@@ -69,6 +70,7 @@ async def test_find(snapshot, mocker, fake, spawn_client, resp_is, static_time):
                 "user": {"id": user["_id"]},
                 "sample": {"id": "test"},
                 "reference": {"id": "baz", "name": "Baz"},
+                "results": {"hits": []},
                 "subtractions": ["foo"],
                 "foobar": True,
             },
@@ -82,6 +84,7 @@ async def test_find(snapshot, mocker, fake, spawn_client, resp_is, static_time):
                 "user": {"id": user["_id"]},
                 "sample": {"id": "test"},
                 "reference": {"id": "foo", "name": "Foo"},
+                "results": {"hits": []},
                 "subtractions": [],
                 "foobar": False,
             },
@@ -116,7 +119,7 @@ async def test_get(
         "created_at": static_time.datetime,
         "ready": ready,
         "workflow": "pathoscope_bowtie",
-        "results": {},
+        "results": {"hits": []},
         "sample": {"id": "baz"},
         "subtractions": ["plum", "apple"],
         "user": {"id": user["_id"]},
@@ -154,6 +157,7 @@ async def test_get(
                 "formatted": True,
                 "user": {"id": user["_id"]},
                 "subtractions": ["apple", "plum"],
+                "results": {"hits": []},
             }
         ),
     )
@@ -361,29 +365,34 @@ async def test_download_analysis_document(extension, exists, mocker, spawn_clien
     "error",
     [None, "400", "403", "404_analysis", "404_sequence", "409_workflow", "409_ready"],
 )
-async def test_blast(error, mocker, spawn_client, resp_is, static_time):
+async def test_blast(
+    error, mocker, spawn_client, resp_is, snapshot, static_time, tasks
+):
     """
     Test that the handler starts a BLAST for given NuVs sequence. Also check that it handles all error conditions
     correctly.
 
     """
     client = await spawn_client(authorize=True, base_url="https://virtool.example.com")
+    client.app["tasks"] = tasks
 
     if error != "404_analysis":
         analysis_document = {
             "_id": "foobar",
             "workflow": "nuvs",
             "ready": True,
-            "results": [
-                {"index": 3, "sequence": "ATAGAGATTAGAT"},
-                {"index": 5, "sequence": "GGAGTTAGATTGG"},
-                {"index": 8, "sequence": "ACCAATAGACATT"},
-            ],
+            "results": {
+                "hits": [
+                    {"index": 3, "sequence": "ATAGAGATTAGAT"},
+                    {"index": 5, "sequence": "GGAGTTAGATTGG"},
+                    {"index": 8, "sequence": "ACCAATAGACATT"},
+                ]
+            },
             "sample": {"id": "baz"},
         }
 
         if error == "404_sequence":
-            analysis_document["results"].pop(1)
+            analysis_document["results"]["hits"].pop(1)
 
         elif error == "409_workflow":
             analysis_document["workflow"] = "pathoscope_bowtie"
@@ -405,18 +414,6 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
             )
 
         await client.db.analyses.insert_one(analysis_document)
-
-    m_initialize_ncbi_blast = mocker.patch(
-        "virtool.bio.initialize_ncbi_blast", make_mocked_coro(("FOOBAR1337", 23))
-    )
-
-    m_check_rid = mocker.patch(
-        "virtool.bio.check_rid", make_mocked_coro(return_value=False)
-    )
-
-    m_wait_for_blast_result = mocker.patch(
-        "virtool.bio.wait_for_blast_result", make_mocked_coro()
-    )
 
     await client.put("/analyses/foobar/5/blast", {})
 
@@ -447,26 +444,13 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
         return
 
     assert resp.status == 201
+
     assert (
         resp.headers["Location"]
         == "https://virtool.example.com/analyses/foobar/5/blast"
     )
 
-    blast = {
-        "rid": "FOOBAR1337",
-        "interval": 3,
-        "last_checked_at": static_time.iso,
-        "ready": False,
-        "result": None,
-    }
-
-    assert await resp.json() == blast
-
-    m_initialize_ncbi_blast.assert_called_with(client.app["config"], "GGAGTTAGATTGG")
-
-    m_check_rid.assert_called_with(client.app["config"], "FOOBAR1337")
-
-    m_wait_for_blast_result.assert_called_with(client.app, "foobar", 5, "FOOBAR1337")
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, 422, 404, 409])

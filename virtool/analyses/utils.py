@@ -15,7 +15,8 @@ async def attach_analysis_files(
     pg: AsyncEngine, analysis_id: str, document: Dict[str, any]
 ) -> Dict[str, any]:
     """
-    Get analysis result file details for a specific analysis to attach to analysis `GET` response
+    Get analysis result file details for a specific analysis to attach to analysis `GET`
+    response.
 
     :param pg: PostgreSQL AsyncEngine object
     :param analysis_id: An id for a specific analysis
@@ -58,7 +59,7 @@ def check_nuvs_file_type(file_name: str) -> str:
 
 def find_nuvs_sequence_by_index(
     document: Dict[str, Any], sequence_index: int
-) -> Optional[Dict[str, Any]]:
+) -> Optional[str]:
     """
     Get a sequence from a NuVs analysis document by its sequence index.
 
@@ -69,15 +70,15 @@ def find_nuvs_sequence_by_index(
     """
     sequences = [
         result["sequence"]
-        for result in document["results"]
+        for result in document["results"]["hits"]
         if result["index"] == int(sequence_index)
     ]
 
     if not sequences:
         return None
 
-    # Raise exception if more than one sequence has the provided index. This should never happen,
-    # just being careful.
+    # Raise exception if more than one sequence has the provided index. This should
+    # never happen, just being careful.
     if len(sequences) > 1:
         raise ValueError(f"More than one sequence with index {sequence_index}")
 
@@ -101,7 +102,8 @@ def join_analysis_json_path(data_path: Path, analysis_id: str, sample_id: str) -
     """
     Join the path to an analysis JSON file for the given sample-analysis ID combination.
 
-    Analysis JSON files are created when the analysis data is too large for a MongoDB document.
+    Analysis JSON files are created when the analysis data is too large for a MongoDB
+    document.
 
     :param data_path: the path to the application data
     :param analysis_id: the ID of the analysis
@@ -116,7 +118,8 @@ async def move_nuvs_files(
     filename: str, run_in_thread: callable, file_path: Path, target_path: Path
 ):
     """
-    Move NuVs analysis files from `file_path` to `target_path`, compress FASTA files and FASTQ files.
+    Move NuVs analysis files from `file_path` to `target_path`, compress FASTA files
+    and FASTQ files.
 
     :param filename: the name of the analysis file
     :param run_in_thread: the application thread running function

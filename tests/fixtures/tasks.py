@@ -1,7 +1,13 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from virtool.tasks.client import TasksClient
 from virtool.tasks.models import Task
+
+
+@pytest.fixture
+async def tasks(mocker):
+    return mocker.Mock(spec=TasksClient)
 
 
 @pytest.fixture

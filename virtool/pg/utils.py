@@ -115,7 +115,9 @@ async def get_rows(
     query: Optional[Union[str, int, bool, SQLEnum]] = None,
 ) -> ScalarResult:
     """
-    Get one or more rows from the `model` SQL model by its `filter_`. By default, rows will be fetched by their `name`.
+    Get one or more rows from the `model` SQL model by its `filter_`.
+
+    By default, rows will be fetched by their `name`.
 
     :param pg: the application AsyncEngine object
     :param query: A query to filter by

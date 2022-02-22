@@ -23,6 +23,7 @@ from virtool.shutdown import (
 from virtool.startup import (
     startup_b2c,
     startup_check_db,
+    startup_data,
     startup_db,
     startup_dispatcher,
     startup_events,
@@ -79,6 +80,7 @@ def create_app(config: Config):
             startup_routes,
             startup_executors,
             startup_task_runner,
+            startup_data,
             startup_tasks,
             startup_sentry,
             startup_check_db,

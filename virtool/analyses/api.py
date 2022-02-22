@@ -6,7 +6,6 @@ from asyncio import CancelledError, gather
 from logging import getLogger
 from typing import Union
 
-import aiojobs.aiohttp
 from aiohttp.web import (
     FileResponse,
     HTTPBadRequest,
@@ -19,10 +18,9 @@ from aiohttp.web import (
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 
 import virtool.analyses.format
-import virtool.bio
 import virtool.samples.db
 import virtool.uploads.db
-from virtool.analyses.db import PROJECTION, processor, update_nuvs_blast
+from virtool.analyses.db import PROJECTION, processor
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile, AnalysisFormat
 from virtool.analyses.utils import attach_analysis_files, find_nuvs_sequence_by_index
@@ -34,6 +32,8 @@ from virtool.api.response import (
     json_response,
 )
 from virtool.api.utils import paginate
+from virtool.blast.transform import AttachNuVsBLAST
+from virtool.data.utils import get_data_from_req
 from virtool.db.core import Collection, DB
 from virtool.db.transforms import apply_transforms
 from virtool.http.routes import Routes
@@ -139,7 +139,14 @@ async def get(req: Request) -> Response:
         "Last-Modified": isoformat(document["created_at"]),
     }
 
-    return json_response(await processor(db, document), headers=headers)
+    document = await processor(db, document)
+
+    document = await apply_transforms(
+        document,
+        [AttachNuVsBLAST(pg)],
+    )
+
+    return json_response(document, headers=headers)
 
 
 @routes.jobs_api.get("/analyses/{analysis_id}")
@@ -428,24 +435,13 @@ async def blast(req: Request) -> Response:
     if not write:
         raise InsufficientRights()
 
-    # Start a BLAST at NCBI with the specified sequence. Return a RID that identifies
-    # the BLAST run.
-    rid, _ = await virtool.bio.initialize_ncbi_blast(req.app["config"], sequence)
-
-    blast_data, document = await update_nuvs_blast(
-        db, req.app["config"], analysis_id, sequence_index, rid
-    )
-
-    # Wait on BLAST request as a Task until the it completes on NCBI. At that point the
-    # sequence in the DB will be updated with the BLAST result.
-    await aiojobs.aiohttp.spawn(
-        req,
-        virtool.bio.wait_for_blast_result(req.app, analysis_id, sequence_index, rid),
+    document = await get_data_from_req(req).blast.create_nuvs_blast(
+        analysis_id, sequence_index
     )
 
     headers = {"Location": f"/analyses/{analysis_id}/{sequence_index}/blast"}
 
-    return json_response(blast_data, headers=headers, status=201)
+    return json_response(document, headers=headers, status=201)
 
 
 @routes.jobs_api.patch("/analyses/{analysis_id}")

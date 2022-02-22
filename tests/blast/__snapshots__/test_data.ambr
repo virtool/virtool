@@ -1,0 +1,47 @@
+# name: test_list_by_analysis[uvloop]
+  <class 'list'> [
+    <class 'dict'> {
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'id': 2,
+      'interval': 3,
+      'last_checked_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'ready': False,
+      'result': None,
+      'rid': None,
+      'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
+    },
+    <class 'dict'> {
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'id': 3,
+      'interval': 3,
+      'last_checked_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'ready': False,
+      'result': None,
+      'rid': None,
+      'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
+    },
+  ]
+---
+# name: test_update_nuvs_blast[uvloop]
+  <class 'dict'> {
+    'analysis_id': 'analysis',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'error': None,
+    'id': 1,
+    'interval': 3,
+    'last_checked_at': datetime.datetime(2015, 10, 6, 20, 25),
+    'ready': True,
+    'result': <class 'dict'> {
+      'foo': 'bar',
+    },
+    'rid': 'rid',
+    'sequence_index': 21,
+    'task_id': 1,
+    'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
+  }
+---
+# name: test_update_nuvs_blast[uvloop].1
+  <class 'tuple'> (
+    <NuVsBlast(id=1, analysis_id=analysis, sequence_index=21, created_at=2015-10-06 20:00:00, updated_at=2015-10-06 20:00:00, last_checked_at=2015-10-06 20:25:00, error=None, interval=3, rid=rid, ready=True, result={'foo': 'bar'}, task_id=1)>,
+  )
+---

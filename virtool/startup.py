@@ -19,7 +19,10 @@ from msal import ClientApplication
 import virtool.db.mongo
 import virtool.pg.utils
 import virtool.redis
+from virtool.analyses.data import AnalysisData
 from virtool.analyses.tasks import StoreNuvsFilesTask
+from virtool.blast.data import BLASTData
+from virtool.data.layer import DataLayer
 from virtool.db.migrate import migrate
 from virtool.dev.fake import create_fake_data_path, populate
 from virtool.dispatcher.client import DispatcherClient
@@ -105,6 +108,17 @@ async def startup_check_db(app: Application):
 
     logger.info("Checking database indexes")
     await virtool.db.mongo.create_indexes(db)
+
+
+async def startup_data(app: App):
+    """
+    Create the application data layer object.
+
+    :param app: the application object
+    """
+    app["data"] = DataLayer(
+        AnalysisData(app), BLASTData(app["db"], app["pg"], app["tasks"])
+    )
 
 
 async def startup_db(app: App):
