@@ -2,17 +2,14 @@
 Work with analyses in the database.
 
 """
-import asyncio
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-import virtool.bio
 import virtool.db.utils
 import virtool.utils
 from virtool.analyses.models import AnalysisFile
-from virtool.config.cls import Config
 from virtool.db.transforms import AbstractTransform, apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.subtractions.db import AttachSubtractionTransform
@@ -63,83 +60,6 @@ class AttachAnalysisFileTransform(AbstractTransform):
             )
 
         return [result.to_dict() for result in results]
-
-
-class BLAST:
-    """
-    A class for representing a long-lived remote BLAST search.
-
-    """
-
-    def __init__(
-        self, db, config: Config, analysis_id: str, sequence_index: int, rid: str
-    ):
-        self.db = db
-        self.config = config
-        self.analysis_id = analysis_id
-        self.sequence_index = sequence_index
-        self.rid = rid
-        self.error = None
-        self.interval = 3
-        self.ready = False
-        self.result = None
-
-    async def remove(self):
-        """
-        Remove the BLAST result from the analysis document.
-
-        """
-        await remove_nuvs_blast(self.db, self.analysis_id, self.sequence_index)
-
-    async def sleep(self):
-        """
-        Sleep for the current interval and increase the interval by 5 seconds after
-        sleeping.
-
-        """
-        await asyncio.sleep(self.interval)
-        self.interval += 5
-
-    async def update(
-        self, ready: bool, result: Optional[dict], error: Optional[str]
-    ) -> Tuple[dict, dict]:
-        """
-        Update the BLAST data. Returns the BLAST data and the complete analysis
-        document.
-
-        :param ready: indicates whether the BLAST request is complete
-        :param result: the formatted result of a successful BLAST request
-        :param error: and error message to add to the BLAST record
-        :return: the BLAST data and the complete analysis document
-
-        """
-        self.result = result
-
-        if ready is None:
-            self.ready = await virtool.bio.check_rid(self.config, self.rid)
-        else:
-            self.ready = ready
-
-        data = {
-            "error": error,
-            "interval": self.interval,
-            "last_checked_at": virtool.utils.timestamp(),
-            "rid": self.rid,
-            "ready": ready,
-            "result": self.result,
-        }
-
-        document = await self.db.analyses.find_one_and_update(
-            {"_id": self.analysis_id, "results.index": self.sequence_index},
-            {
-                "$set": {
-                    "results.$.blast": data,
-                    "updated_at": virtool.utils.timestamp(),
-                }
-            },
-        )
-
-        return data, document
 
 
 async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
@@ -212,63 +132,3 @@ async def create(
         document["_id"] = analysis_id
 
     return base_processor(await db.analyses.insert_one(document))
-
-
-async def update_nuvs_blast(
-    db,
-    config: Config,
-    analysis_id: str,
-    sequence_index: int,
-    rid: str,
-    error: Optional[str] = None,
-    interval: int = 3,
-    ready: Optional[bool] = None,
-    result: Optional[dict] = None,
-) -> Tuple[dict, dict]:
-    """
-    Update the BLAST data for a sequence in a NuVs analysis.
-
-    :param db: the application database object
-    :param config: the application configuration
-    :param analysis_id: the id of the analysis the BLAST is for
-    :param sequence_index: the index of the NuVs sequence the BLAST is for
-    :param rid: the id of the request
-    :param error: an error message if the BLAST failed
-    :param interval: the current interval for checking the request status on NCBI
-    :param ready: indicates that the BLAST result is ready
-    :param result: the formatted result from NCBI
-    :return: the blast data and the complete analysis document
-
-    """
-    if ready is None:
-        ready = await virtool.bio.check_rid(config, rid)
-
-    data = {
-        "interval": interval,
-        "last_checked_at": virtool.utils.timestamp(),
-        "rid": rid,
-        "ready": ready,
-        "result": result,
-    }
-
-    document = await db.analyses.find_one_and_update(
-        {"_id": analysis_id, "results.index": sequence_index},
-        {"$set": {"results.$.blast": data, "updated_at": virtool.utils.timestamp()}},
-    )
-
-    return data, document
-
-
-async def remove_nuvs_blast(db, analysis_id: str, sequence_index: int):
-    """
-    Remove the BLAST data for the identified NuVs contig sequence.
-
-    :param db: the application database object
-    :param analysis_id: the ID of the analysis containing the sequence
-    :param sequence_index: the index of the sequence to remove BLAST data from
-    :return:
-    """
-    await db.analyses.update_one(
-        {"_id": analysis_id, "results.index": sequence_index},
-        {"$set": {"results.$.blast": None, "updated_at": virtool.utils.timestamp()}},
-    )

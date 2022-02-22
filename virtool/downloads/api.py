@@ -4,28 +4,12 @@ Provides request handlers for file downloads.
 """
 from aiohttp import web
 
-import virtool.analyses.db
-import virtool.analyses.format
-import virtool.api.json
-import virtool.api.response
-import virtool.bio
-import virtool.caches.db
-import virtool.caches.utils
-import virtool.db.utils
-import virtool.downloads.db
-import virtool.downloads.utils
-import virtool.errors
-import virtool.history.db
-import virtool.http.routes
-import virtool.otus.db
-import virtool.otus.utils
-import virtool.references.db
-import virtool.samples.utils
-import virtool.subtractions.utils
-import virtool.utils
 from virtool.api.response import NotFound
+from virtool.downloads.db import generate_isolate_fasta, generate_sequence_fasta
+from virtool.errors import DatabaseError
+from virtool.http.routes import Routes
 
-routes = virtool.http.routes.Routes()
+routes = Routes()
 
 
 @routes.get("/download/otus/{otu_id}/isolates/{isolate_id}")
@@ -40,10 +24,8 @@ async def download_isolate(req):
     isolate_id = req.match_info["isolate_id"]
 
     try:
-        filename, fasta = await virtool.downloads.db.generate_isolate_fasta(
-            db, otu_id, isolate_id
-        )
-    except virtool.errors.DatabaseError as err:
+        filename, fasta = await generate_isolate_fasta(db, otu_id, isolate_id)
+    except DatabaseError as err:
         if "OTU does not exist" in str(err):
             raise NotFound("OTU not found")
 
@@ -68,10 +50,8 @@ async def download_sequence(req):
     sequence_id = req.match_info["sequence_id"]
 
     try:
-        filename, fasta = await virtool.downloads.db.generate_sequence_fasta(
-            db, sequence_id
-        )
-    except virtool.errors.DatabaseError as err:
+        filename, fasta = await generate_sequence_fasta(db, sequence_id)
+    except DatabaseError as err:
         if "Sequence does not exist" in str(err):
             raise NotFound("Sequence not found")
 

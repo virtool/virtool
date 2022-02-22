@@ -1,3 +1,19 @@
+# name: test_blast[uvloop-None]
+  <class 'dict'> {
+    'analysis_id': 'foobar',
+    'created_at': '2015-10-06T20:00:00Z',
+    'error': None,
+    'id': 2,
+    'interval': 3,
+    'last_checked_at': '2015-10-06T20:00:00Z',
+    'ready': False,
+    'result': None,
+    'rid': None,
+    'sequence_index': 5,
+    'task_id': None,
+    'updated_at': '2015-10-06T20:00:00Z',
+  }
+---
 # name: test_download_analysis_result[uvloop-False-False]
   <class 'dict'> {
     'id': 'not_found',
@@ -168,6 +184,8 @@
     'id': 'foobar',
     'ready': False,
     'results': <class 'dict'> {
+      'hits': <class 'list'> [
+      ],
     },
     'sample': <class 'dict'> {
       'id': 'baz',
@@ -195,6 +213,10 @@
     'created_at': '2015-10-06T20:00:00Z',
     'formatted': True,
     'id': 'foo',
+    'results': <class 'dict'> {
+      'hits': <class 'list'> [
+      ],
+    },
     'subtractions': <class 'list'> [
       <class 'dict'> {
         'id': 'apple',
@@ -230,6 +252,8 @@
     ],
     'ready': True,
     'results': <class 'dict'> {
+      'hits': <class 'list'> [
+      ],
     },
     'sample': <class 'dict'> {
       'id': 'baz',
