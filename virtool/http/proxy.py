@@ -1,4 +1,7 @@
+import ssl
+
 import aiohttp
+import certifi
 from aiohttp import web
 
 import virtool.errors
@@ -13,10 +16,16 @@ class ProxyRequest:
         self.url = url
         self.resp = None
         self._kwargs = kwargs
+        self.ssl_context = ssl.create_default_context(cafile=certifi.where())
 
     async def __aenter__(self):
         try:
-            self.resp = await self.method(self.url, proxy=self.proxy, **self._kwargs)
+            self.resp = await self.method(
+                self.url,
+                proxy=self.proxy,
+                ssl=self.ssl_context,
+                **self._kwargs
+            )
         except aiohttp.ClientHttpProxyError as err:
             if err.status == 407:
                 raise virtool.errors.ProxyError("Proxy authentication required")
