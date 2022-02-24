@@ -3,7 +3,6 @@ API request handlers for managing and querying HMM data.
 
 """
 import aiohttp
-import virtool.hmm.db
 from aiohttp.web_exceptions import (
     HTTPBadGateway,
     HTTPBadRequest,
@@ -11,6 +10,8 @@ from aiohttp.web_exceptions import (
     HTTPNoContent,
 )
 from aiohttp.web_fileresponse import FileResponse
+
+import virtool.hmm.db
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_one_field
@@ -189,6 +190,7 @@ async def purge(req):
 
 
 @routes.jobs_api.get("/hmms/files/annotations.json.gz")
+@routes.get("/hmms/files/annotations.json.gz")
 async def get_hmm_annotations(request):
     """Get a compressed json file containing the database documents for all HMMs."""
     data_path = request.app["config"].data_path
@@ -200,7 +202,13 @@ async def get_hmm_annotations(request):
             compress_file_with_gzip, json_path, annotation_path
         )
 
-    return FileResponse(annotation_path)
+    return FileResponse(
+        annotation_path,
+        headers={
+            "Content-Disposition": "attachment; filename=annotations.json.gz",
+            "Content-Type": "application/octet-stream",
+        },
+    )
 
 
 @routes.jobs_api.get("/hmms/files/profiles.hmm")
@@ -214,6 +222,11 @@ async def get_hmm_profiles(req):
     if not await req.app["run_in_thread"](hmm_data_exists, file_path):
         raise NotFound("Profiles file could not be found")
 
-    headers = {"Content-Type": "application/gzip"}
-
-    return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
+    return FileResponse(
+        file_path,
+        chunk_size=1024 * 1024,
+        headers={
+            "Content-Disposition": "attachment; filename=profiles.hmm",
+            "Content-Type": "application/octet-stream",
+        },
+    )

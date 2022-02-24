@@ -110,12 +110,13 @@ async def download(req):
     if not upload_path.exists():
         raise NotFound("Uploaded file not found at expected location")
 
-    headers = {
-        "Content-Disposition": f"attachment; filename={upload.name}",
-        "Content-Type": "application/x-gzip",
-    }
-
-    return FileResponse(upload_path, headers=headers)
+    return FileResponse(
+        upload_path,
+        headers={
+            "Content-Disposition": f"attachment; filename={upload.name}",
+            "Content-Type": "application/octet-stream",
+        },
+    )
 
 
 @routes.delete("/uploads/{id}", permission="remove_file")
