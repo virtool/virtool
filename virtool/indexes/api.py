@@ -2,16 +2,16 @@ import asyncio
 import json
 import logging
 
+from aiohttp.web import FileResponse, Request, Response
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
+from sqlalchemy.exc import IntegrityError
+
 import virtool.http.routes
 import virtool.indexes.db
 import virtool.jobs.db
 import virtool.references.db
 import virtool.uploads.db
 import virtool.utils
-from aiohttp.web import Request, Response
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
-from aiohttp.web_fileresponse import FileResponse
-from sqlalchemy import exc
 from virtool.api.json import CustomEncoder
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
@@ -144,12 +144,13 @@ async def download_otus_json(req):
 
         await req.app["run_in_thread"](compress_json_with_gzip, json_string, json_path)
 
-    headers = {
-        "Content-Disposition": "attachment; filename=otus.json.gz",
-        "Content-Type": "application/gzip",
-    }
-
-    return FileResponse(json_path, headers=headers)
+    return FileResponse(
+        json_path,
+        headers={
+            "Content-Disposition": "attachment; filename=otus.json.gz",
+            "Content-Type": "application/octet-stream",
+        },
+    )
 
 
 @routes.get("/indexes/{index_id}/files/{filename}")
@@ -212,9 +213,10 @@ async def download_index_file_for_jobs(req: Request):
 @routes.post("/refs/{ref_id}/indexes")
 async def create(req):
     """
-    Starts a job to rebuild the otus Bowtie2 index on disk. Does a check to make sure there are no
-    unverified OTUs in the collection and updates otu history to show the version and id of the new
-    index.
+    Starts a job to rebuild the otus Bowtie2 index on disk.
+
+    Does a check to make sure there are no unverified OTUs in the collection and updates
+    otu history to show the version and id of the new index.
 
     """
     db = req.app["db"]
@@ -274,11 +276,7 @@ async def create(req):
 
 @routes.jobs_api.put("/indexes/{index_id}/files/{filename}")
 async def upload(req):
-    """
-    Upload a new index file to the `index_files` SQL table and the `references` folder in the
-    Virtool data path.
-
-    """
+    """Upload a new index file."""
     db = req.app["db"]
     pg = req.app["pg"]
     index_id = req.match_info["index_id"]
@@ -297,7 +295,7 @@ async def upload(req):
 
     try:
         index_file = await create_index_file(pg, index_id, file_type, name)
-    except exc.IntegrityError:
+    except IntegrityError:
         raise HTTPConflict(text="File name already exists")
 
     upload_id = index_file["id"]
@@ -322,7 +320,9 @@ async def upload(req):
 @routes.jobs_api.patch("/indexes/{index_id}")
 async def finalize(req):
     """
-    Finalize an index by setting `ready` to `True` and update associated OTU's `last_indexed_version` field.
+    Finalize an index.
+
+    Sets the `ready` flag and updates associated OTUs' `last_indexed_version` fields.
 
     """
     db = req.app["db"]

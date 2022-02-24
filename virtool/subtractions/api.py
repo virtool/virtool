@@ -395,5 +395,8 @@ async def download_subtraction_files(req: aiohttp.web.Request):
 
     return FileResponse(
         file_path,
-        headers={"Content-Length": file["size"], "Content-Type": "application/gzip"},
+        headers={
+            "Content-Length": file["size"],
+            "Content-Type": "application/octet-stream",
+        },
     )
