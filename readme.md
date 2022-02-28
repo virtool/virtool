@@ -1,6 +1,6 @@
 # Virtool
 
-Virtool is a web-based application for diagnosing pathogen infections in using high-throughput sequencing. 
+Virtool is a web-based application for diagnosing pathogen infections using high-throughput sequencing. 
 
 [![ci](https://github.com/virtool/virtool/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/virtool/virtool/actions/workflows/ci.yml)
   
