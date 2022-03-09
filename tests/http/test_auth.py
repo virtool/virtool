@@ -1,4 +1,5 @@
 from aiohttp import BasicAuth
+
 from virtool.utils import hash_key
 
 
@@ -16,7 +17,7 @@ class TestJobAuthentication:
 
     async def test_unauthenticated_root_fails(self, spawn_job_client):
         """
-        Check that an request against the root API URL
+        Check that a request against the root API URL
 
         """
         client = await spawn_job_client(authorize=False)
@@ -27,8 +28,9 @@ class TestJobAuthentication:
 
     async def test_protected_fails(self, dbi, spawn_client):
         """
-        Check that a request against GET /samples using job authentication fails. This URI is
-        not accessible to jobs.
+        Check that a request against GET /samples using job authentication fails.
+
+        This path is not accessible to jobs.
 
         """
         key = "bar"
