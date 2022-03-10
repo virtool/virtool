@@ -158,6 +158,7 @@ async def test_get(
                 "user": {"id": user["_id"]},
                 "subtractions": ["apple", "plum"],
                 "results": {"hits": []},
+                "workflow": "pathoscope_bowtie",
             }
         ),
     )
