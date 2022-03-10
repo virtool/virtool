@@ -232,6 +232,7 @@
       'handle': 'leeashley',
       'id': '7CtBo2yG',
     },
+    'workflow': 'pathoscope_bowtie',
   }
 ---
 # name: test_get[uvloop-None-True].1

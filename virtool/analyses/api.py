@@ -141,10 +141,11 @@ async def get(req: Request) -> Response:
 
     document = await processor(db, document)
 
-    document = await apply_transforms(
-        document,
-        [AttachNuVsBLAST(pg)],
-    )
+    if document["workflow"] == "nuvs":
+        document = await apply_transforms(
+            document,
+            [AttachNuVsBLAST(pg)],
+        )
 
     return json_response(document, headers=headers)
 
