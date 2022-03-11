@@ -1,20 +1,20 @@
 import logging
+from logging import getLogger
 
 import sentry_sdk
-import sentry_sdk.integrations.aiohttp
-import sentry_sdk.integrations.logging
+from sentry_sdk.integrations.aiohttp import AioHttpIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 
-sentry_logging = sentry_sdk.integrations.logging.LoggingIntegration(
-    level=logging.INFO, event_level=logging.ERROR
-)
+logger = getLogger(__name__)
 
 
 def setup(server_version, dsn):
+    logger.info(f"Initializing Sentry with DSN {dsn[:20]}...")
     sentry_sdk.init(
         dsn=dsn,
         integrations=[
-            sentry_sdk.integrations.aiohttp.AioHttpIntegration(),
-            sentry_logging,
+            AioHttpIntegration(),
+            LoggingIntegration(level=logging.INFO, event_level=logging.ERROR),
         ],
         release=server_version,
         traces_sample_rate=0.2,
