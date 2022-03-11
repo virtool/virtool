@@ -6,7 +6,6 @@ from aiohttp.web import FileResponse, Request, Response
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from sqlalchemy.exc import IntegrityError
 
-import virtool.http.routes
 import virtool.indexes.db
 import virtool.jobs.db
 import virtool.references.db
@@ -17,10 +16,11 @@ from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.utils import get_new_id
 from virtool.history.db import LIST_PROJECTION
+from virtool.http.routes import Routes
 from virtool.indexes.db import FILES, reset_history
 from virtool.indexes.files import create_index_file
 from virtool.indexes.models import IndexFile, IndexType
-from virtool.indexes.utils import check_index_file_type
+from virtool.indexes.utils import check_index_file_type, join_index_path
 from virtool.jobs.utils import JobRights
 from virtool.pg.utils import delete_row, get_rows
 from virtool.references.db import check_right
@@ -28,7 +28,7 @@ from virtool.uploads.utils import naive_writer
 from virtool.utils import compress_json_with_gzip
 
 logger = logging.getLogger("indexes")
-routes = virtool.http.routes.Routes()
+routes = Routes()
 
 
 @routes.get("/indexes")
@@ -132,8 +132,9 @@ async def download_otus_json(req):
 
     ref_id = index["reference"]["id"]
 
-    data_path = req.app["config"].data_path
-    json_path = data_path / f"references/{ref_id}/{index_id}/otus.json.gz"
+    json_path = (
+        join_index_path(req.app["config"].data_path, ref_id, index_id) / "otus.json.gz"
+    )
 
     if not json_path.exists():
         patched_otus = await virtool.indexes.db.get_patched_otus(
@@ -174,14 +175,21 @@ async def download_index_file(req: Request):
         raise InsufficientRights()
 
     reference_id = index_document["reference"]["id"]
+
     path = (
-        req.app["config"].data_path / "references" / reference_id / index_id / filename
+        join_index_path(req.app["config"].data_path, reference_id, index_id) / filename
     )
 
     if not path.exists():
         raise NotFound("File not found")
 
-    return FileResponse(path)
+    return FileResponse(
+        path,
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+            "Content-Type": "application/octet-stream",
+        },
+    )
 
 
 @routes.jobs_api.get("/indexes/{index_id}/files/{filename}")
@@ -201,7 +209,7 @@ async def download_index_file_for_jobs(req: Request):
     reference_id = index_document["reference"]["id"]
 
     path = (
-        req.app["config"].data_path / "references" / reference_id / index_id / filename
+        join_index_path(req.app["config"].data_path, reference_id, index_id) / filename
     )
 
     if not path.exists():
@@ -299,7 +307,8 @@ async def upload(req):
         raise HTTPConflict(text="File name already exists")
 
     upload_id = index_file["id"]
-    path = req.app["config"].data_path / "references" / reference_id / index_id / name
+
+    path = join_index_path(req.app["config"].data_path, reference_id, index_id) / name
 
     try:
         size = await naive_writer(req, path)

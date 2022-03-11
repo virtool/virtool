@@ -1,7 +1,7 @@
-import asyncio
 import json
 import os
 import shutil
+from asyncio import gather
 from datetime import timedelta
 from pathlib import Path
 
@@ -9,10 +9,9 @@ import aiohttp
 import arrow
 from semver import VersionInfo
 
-import virtool.errors
 import virtool.otus.db
 import virtool.tasks.pg
-from virtool.api.json import CustomEncoder
+from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument
 from virtool.history.db import patch_to_version
 from virtool.history.utils import remove_diff_files
@@ -24,9 +23,12 @@ from virtool.references.db import (
     insert_joined_otu,
     update_joined_otu,
 )
-from virtool.references.utils import check_import_data, load_reference_file
+from virtool.references.utils import (
+    check_import_data,
+    load_reference_file,
+)
 from virtool.tasks.task import Task
-from virtool.utils import compress_json_with_gzip, get_temp_dir
+from virtool.utils import get_temp_dir
 
 
 class CloneReferenceTask(Task):
@@ -85,7 +87,7 @@ class CloneReferenceTask(Task):
 
         await virtool.tasks.pg.update(self.pg, self.id, step="cleanup")
 
-        await asyncio.gather(
+        await gather(
             self.db.references.delete_one({"_id": ref_id}),
             self.db.history.delete_many(query),
             self.db.otus.delete_many(query),
@@ -221,7 +223,7 @@ class RemoteReferenceTask(Task):
             self.import_data = await download_and_parse_release(
                 self.app, self.context["release"]["download_url"], self.id, tracker.add
             )
-        except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
+        except (aiohttp.ClientConnectorError, GitHubError):
             return await virtool.tasks.pg.update(
                 self.pg, self.id, error="Could not download reference data"
             )
@@ -361,7 +363,7 @@ class DeleteReferenceTask(Task):
                 "_id", {"diff": "file", "otu.id": {"$in": unreferenced_otu_ids}}
             )
 
-            await asyncio.gather(
+            await gather(
                 self.db.otus.delete_many({"_id": {"$in": unreferenced_otu_ids}}),
                 self.db.history.delete_many({"otu.id": {"$in": unreferenced_otu_ids}}),
                 self.db.sequences.delete_many(
@@ -426,7 +428,7 @@ class UpdateRemoteReferenceTask(Task):
                     load_reference_file, download_path
                 )
 
-        except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
+        except (aiohttp.ClientConnectorError, GitHubError):
             return await self.error("Could not download reference data")
 
         await virtool.tasks.pg.update(self.pg, self.id, step="download_and_extract")
@@ -531,63 +533,6 @@ class UpdateRemoteReferenceTask(Task):
         await virtool.tasks.pg.update(
             self.pg, self.id, progress=tracker.step_completed, step="update_reference"
         )
-
-
-class CreateIndexJSONTask(Task):
-    task_type = "create_index_json"
-
-    def __init__(self, app, task_id):
-        super().__init__(app, task_id)
-
-        self.steps = [self.create_index_json_files]
-
-    async def create_index_json_files(self):
-        tracker = await self.get_tracker()
-        async for index in self.db.indexes.find({"has_json": {"$ne": True}}):
-            index_id = index["_id"]
-            ref_id = index["reference"]["id"]
-
-            document = await self.db.references.find_one(
-                ref_id, ["data_type", "organism", "targets"]
-            )
-
-            otu_list = await virtool.references.db.export(self.app, ref_id)
-
-            data = {
-                "otus": otu_list,
-                "data_type": document["data_type"],
-                "organism": document["organism"],
-            }
-
-            try:
-                data["targets"] = document["targets"]
-            except KeyError:
-                pass
-
-            file_path = (
-                self.app["config"].data_path
-                / "references"
-                / ref_id
-                / index_id
-                / "reference.json.gz"
-            )
-
-            # Convert the list of OTUs to a JSON-formatted string.
-            json_string = json.dumps(data, cls=CustomEncoder)
-
-            # Compress the JSON string to a gzip file.
-            await self.run_in_thread(compress_json_with_gzip, json_string, file_path)
-
-            await self.db.indexes.find_one_and_update(
-                {"_id": index_id}, {"$set": {"has_json": True}}
-            )
-
-            await virtool.tasks.pg.update(
-                self.pg,
-                self.id,
-                progress=tracker.step_completed,
-                step="create_index_json_files",
-            )
 
 
 class CleanReferencesTask(Task):

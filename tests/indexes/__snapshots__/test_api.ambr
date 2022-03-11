@@ -105,20 +105,20 @@
     'change_count': 0,
     'files': <class 'list'> [
       <class 'dict'> {
-        'download_url': '/indexes/test_index/files/reference.json.gz',
-        'id': 1,
-        'index': 'test_index',
-        'name': 'reference.json.gz',
-        'size': None,
-        'type': 'json',
-      },
-      <class 'dict'> {
         'download_url': '/indexes/test_index/files/reference.fa.gz',
-        'id': 2,
+        'id': 1,
         'index': 'test_index',
         'name': 'reference.fa.gz',
         'size': None,
         'type': 'fasta',
+      },
+      <class 'dict'> {
+        'download_url': '/indexes/test_index/files/reference.json.gz',
+        'id': 2,
+        'index': 'test_index',
+        'name': 'reference.json.gz',
+        'size': None,
+        'type': 'json',
       },
       <class 'dict'> {
         'download_url': '/indexes/test_index/files/reference.1.bt2',

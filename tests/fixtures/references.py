@@ -20,7 +20,7 @@ def check_ref_right(mocker, request):
 def reference(static_time):
     return {
         "_id": "3tt0w336",
-        "created_at": static_time,
+        "created_at": static_time.datetime,
         "data_type": "genome",
         "description": "",
         "name": "Original",

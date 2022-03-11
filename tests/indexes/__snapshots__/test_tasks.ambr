@@ -1,20 +1,30 @@
 # name: test_add_index_files[uvloop-DNE]
   <class 'list'> [
-    <IndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=4096)>,
-    <IndexFile(id=2, name=reference.fa.gz, index=foo, type=fasta, size=4096)>,
+    <IndexFile(id=1, name=reference.1.bt2, index=index, type=bowtie2, size=12)>,
+    <IndexFile(id=2, name=reference.fa.gz, index=index, type=fasta, size=10)>,
   ]
 ---
 # name: test_add_index_files[uvloop-empty]
   <class 'list'> [
-    <IndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=4096)>,
-    <IndexFile(id=2, name=reference.fa.gz, index=foo, type=fasta, size=4096)>,
+    <IndexFile(id=1, name=reference.1.bt2, index=index, type=bowtie2, size=12)>,
+    <IndexFile(id=2, name=reference.fa.gz, index=index, type=fasta, size=10)>,
   ]
 ---
 # name: test_add_index_files[uvloop-full]
   <class 'list'> [
+    <IndexFile(id=1, name=reference.1.bt2, index=index, type=bowtie2, size=12)>,
+    <IndexFile(id=2, name=reference.fa.gz, index=index, type=fasta, size=10)>,
   ]
 ---
 # name: test_add_index_files[uvloop-not_ready]
   <class 'list'> [
   ]
+---
+# name: test_add_index_json[uvloop]
+  <class 'list'> [
+    <IndexFile(id=1, name=reference.json.gz, index=index_1, type=json, size=321)>,
+  ]
+---
+# name: test_add_index_json[uvloop][json]
+  '{"data_type": "genome", "organism": "virus", "otus": [{"_id": "6116cba1", "name": "Prunus virus F", "abbreviation": "PVF", "isolates": [{"id": "cab8b360", "default": true, "source_name": "8816-v2", "source_type": "isolate", "sequences": [{"_id": "KX269872", "accession": "KX269872", "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.", "host": "sweet cherry", "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC", "segment": null}]}], "schema": []}], "targets": null}'
 ---
