@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Dict, List
 
 from sqlalchemy import select
@@ -66,49 +67,55 @@ class AddIndexJSONTask(Task):
         super().__init__(*args)
         self.steps = [self.add_index_json_file]
 
+    async def _add_one_json(self, index: Document):
+        index_id = index["_id"]
+        ref_id = index["reference"]["id"]
+        manifest = index["manifest"]
+
+        async with AsyncSession(self.pg) as session:
+            path = join_index_path(self.app["config"].data_path, ref_id, index_id)
+
+            index_json_path = path / "reference.json.gz"
+
+            if index_json_path.is_file():
+                return
+
+            index_data = await export_index(self.app, manifest)
+
+            reference = await self.db.references.find_one(
+                ref_id, ["data_type", "organism", "targets"]
+            )
+
+            json_string = json.dumps(
+                {
+                    "data_type": reference["data_type"],
+                    "organism": reference["organism"],
+                    "otus": index_data,
+                    "targets": reference.get("targets"),
+                }
+            )
+
+            await self.run_in_thread(
+                compress_json_with_gzip, json_string, index_json_path
+            )
+
+            session.add(
+                IndexFile(
+                    name="reference.json.gz",
+                    index=index_id,
+                    type="json",
+                    size=file_stats(index_json_path)["size"],
+                ),
+            )
+
+            await session.commit()
+
     async def add_index_json_file(self):
         async for index in self.db.indexes.find({"ready": True}):
-            index_id = index["_id"]
-            ref_id = index["reference"]["id"]
-            manifest = index["manifest"]
-
-            async with AsyncSession(self.pg) as session:
-                path = join_index_path(self.app["config"].data_path, ref_id, index_id)
-
-                index_json_path = path / "reference.json.gz"
-
-                if index_json_path.is_file():
-                    continue
-
-                index_data = await export_index(self.app, manifest)
-
-                reference = await self.db.references.find_one(
-                    ref_id, ["data_type", "organism", "targets"]
-                )
-
-                json_string = json.dumps(
-                    {
-                        "data_type": reference["data_type"],
-                        "organism": reference["organism"],
-                        "otus": index_data,
-                        "targets": reference.get("targets"),
-                    }
-                )
-
-                await self.run_in_thread(
-                    compress_json_with_gzip, json_string, index_json_path
-                )
-
-                session.add(
-                    IndexFile(
-                        name="reference.json.gz",
-                        index=index_id,
-                        type="json",
-                        size=file_stats(index_json_path)["size"],
-                    ),
-                )
-
-                await session.commit()
+            try:
+                await self._add_one_json(index)
+            except IndexError:
+                logging.exception("Exception encountered while generating index JSON")
 
 
 def format_sequence_for_export(sequence: Document) -> Document:
