@@ -1,5 +1,18 @@
 import pytest
-import virtool.references.utils
+
+from virtool.references.utils import (
+    detect_duplicate_abbreviation,
+    detect_duplicate_ids,
+    detect_duplicate_isolate_ids,
+    detect_duplicate_name,
+    detect_duplicate_sequence_ids,
+    detect_duplicates,
+    get_import_schema,
+    get_isolate_schema,
+    get_otu_schema,
+    get_owner_user,
+    get_sequence_schema,
+)
 
 
 @pytest.mark.parametrize("empty", [True, False])
@@ -14,7 +27,7 @@ def test_detect_duplicate_abbreviation(in_seen, empty, test_otu):
     if empty:
         test_otu["abbreviation"] = ""
 
-    virtool.references.utils.detect_duplicate_abbreviation(test_otu, duplicates, seen)
+    detect_duplicate_abbreviation(test_otu, duplicates, seen)
 
     if in_seen or not empty:
         assert seen == {"PVF"}
@@ -35,7 +48,7 @@ def test_detect_duplicate_ids(seen, test_otu):
     if seen:
         seen_ids.add("6116cba1")
 
-    virtool.references.utils.detect_duplicate_ids(test_otu, duplicate_ids, seen_ids)
+    detect_duplicate_ids(test_otu, duplicate_ids, seen_ids)
 
     assert duplicate_ids == ({"6116cba1"} if seen else set())
     assert seen_ids == {"6116cba1"}
@@ -52,9 +65,7 @@ def test_detect_duplicate_isolate_ids(has_dups, test_otu):
 
     duplicate_isolate_ids = dict()
 
-    virtool.references.utils.detect_duplicate_isolate_ids(
-        test_otu, duplicate_isolate_ids
-    )
+    detect_duplicate_isolate_ids(test_otu, duplicate_isolate_ids)
 
     if has_dups:
         assert duplicate_isolate_ids == {
@@ -78,7 +89,7 @@ def test_detect_duplicate_name(seen, transform, test_otu):
 
     duplicates = set()
 
-    virtool.references.utils.detect_duplicate_name(test_otu, duplicates, seen_names)
+    detect_duplicate_name(test_otu, duplicates, seen_names)
 
     if seen:
         assert duplicates == {test_otu["name"]}
@@ -103,7 +114,7 @@ def test_detect_duplicate_sequence_ids(intra, seen, test_merged_otu):
 
     duplicate_sequence_ids = set()
 
-    virtool.references.utils.detect_duplicate_sequence_ids(
+    detect_duplicate_sequence_ids(
         test_merged_otu, duplicate_sequence_ids, seen_sequence_ids
     )
 
@@ -121,7 +132,7 @@ def test_detect_duplicates(strict, test_merged_otu):
 
     otu_list[0]["isolates"].append(otu_list[0]["isolates"][0])
 
-    result = virtool.references.utils.detect_duplicates(otu_list, strict=strict)
+    result = detect_duplicates(otu_list, strict=strict)
 
     if strict:
         assert result == [
@@ -170,7 +181,7 @@ def test_detect_duplicates(strict, test_merged_otu):
 
 @pytest.mark.parametrize("require_meta", [True, False])
 def test_get_import_schema(require_meta):
-    assert virtool.references.utils.get_import_schema(require_meta) == {
+    assert get_import_schema(require_meta) == {
         "data_type": {"type": "string", "required": require_meta},
         "organism": {"type": "string", "required": require_meta},
         "otus": {"type": "list", "required": True},
@@ -179,7 +190,7 @@ def test_get_import_schema(require_meta):
 
 @pytest.mark.parametrize("require_id", [True, False])
 def test_get_isolate_schema(require_id):
-    assert virtool.references.utils.get_isolate_schema(require_id) == {
+    assert get_isolate_schema(require_id) == {
         "id": {"type": "string", "required": require_id},
         "source_type": {"type": "string", "required": True},
         "source_name": {"type": "string", "required": True},
@@ -190,7 +201,7 @@ def test_get_isolate_schema(require_id):
 
 @pytest.mark.parametrize("require_id", [True, False])
 def test_get_otu_schema(require_id):
-    assert virtool.references.utils.get_otu_schema(require_id) == {
+    assert get_otu_schema(require_id) == {
         "_id": {"type": "string", "required": require_id},
         "abbreviation": {"type": "string"},
         "name": {"type": "string", "required": True},
@@ -199,7 +210,7 @@ def test_get_otu_schema(require_id):
 
 
 def test_get_owner_user():
-    assert virtool.references.utils.get_owner_user("fred") == {
+    assert get_owner_user("fred") == {
         "id": "fred",
         "build": True,
         "modify": True,
@@ -210,7 +221,7 @@ def test_get_owner_user():
 
 @pytest.mark.parametrize("require_id", [True, False])
 def test_get_sequence_schema(require_id):
-    assert virtool.references.utils.get_sequence_schema(require_id) == {
+    assert get_sequence_schema(require_id) == {
         "_id": {"type": "string", "required": require_id},
         "accession": {"type": "string", "required": True},
         "definition": {"type": "string", "required": True},

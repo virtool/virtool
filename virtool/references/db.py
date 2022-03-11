@@ -28,7 +28,6 @@ from virtool.pg.utils import get_row
 from virtool.references.utils import (
     RIGHTS,
     check_will_change,
-    clean_export_list,
     get_owner_user,
     load_reference_file,
 )
@@ -735,23 +734,6 @@ async def edit(db, ref_id: str, data: dict) -> dict:
         )
 
     return document
-
-
-async def export(app: App, ref_id: str) -> list:
-    db = app["db"]
-
-    otu_list = list()
-
-    query = {"reference.id": ref_id, "last_indexed_version": {"$ne": None}}
-
-    async for document in db.otus.find(query):
-        _, joined, _ = await virtool.history.db.patch_to_version(
-            app, document["_id"], document["last_indexed_version"]
-        )
-
-        otu_list.append(joined)
-
-    return clean_export_list(otu_list)
 
 
 async def insert_change(

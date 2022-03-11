@@ -36,8 +36,8 @@ PROJECTION = [
 ]
 
 FILES = (
-    "reference.json.gz",
     "reference.fa.gz",
+    "reference.json.gz",
     "reference.1.bt2",
     "reference.2.bt2",
     "reference.3.bt2",
@@ -48,6 +48,10 @@ FILES = (
 
 
 class IndexCountsTransform(AbstractTransform):
+    """
+    Attaches modification counts to index documents based on OTU collection queries.
+    """
+
     def __init__(self, db):
         self._db = db
 
@@ -76,7 +80,6 @@ async def create(
     :param user_id: the ID of the current user
     :param job_id: the ID of the job
     :param index_id: the ID of the index
-
     :return: the new index document
     """
     index_id = index_id or await get_new_id(db.indexes)
@@ -195,7 +198,7 @@ async def get_contributors(db, index_id: str) -> List[dict]:
     return await virtool.history.db.get_contributors(db, {"index.id": index_id})
 
 
-async def get_current_id_and_version(db, ref_id: str) -> Tuple[str, int]:
+async def get_current_id_and_version(db, ref_id: str) -> Tuple[Optional[str], int]:
     """
     Return the current index id and version number.
 
@@ -266,7 +269,7 @@ async def get_unbuilt_stats(db, ref_id: Optional[str] = None) -> dict:
     """
     Get the number of unbuilt changes and number of OTUs affected by those changes.
 
-    Used to populate the metadata for an index find request. Can search against a
+    Used to populate the metadata for an index find request.Can search against a
     specific reference or all references.
 
     :param db: the application database client
@@ -316,14 +319,15 @@ async def get_patched_otus(db, config: Config, manifest: Dict[str, int]) -> List
     """
     app_dict = {"db": db, "config": config}
 
-    coros = list()
-
-    for patch_id, patch_version in manifest.items():
-        coros.append(
-            virtool.history.db.patch_to_version(app_dict, patch_id, patch_version)
+    return [
+        j[1]
+        for j in await asyncio.tasks.gather(
+            *[
+                virtool.history.db.patch_to_version(app_dict, patch_id, patch_version)
+                for patch_id, patch_version in manifest.items()
+            ]
         )
-
-    return [j[1] for j in await asyncio.tasks.gather(*coros)]
+    ]
 
 
 async def update_last_indexed_versions(db, ref_id: str):

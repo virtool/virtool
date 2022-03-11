@@ -9,8 +9,6 @@ import virtool.otus.utils
 
 ISOLATE_KEYS = ["id", "source_type", "source_name", "default"]
 
-OTU_KEYS = ["name", "abbreviation", "schema"]
-
 RIGHTS = ["build", "modify", "modify_otu", "remove"]
 
 SEQUENCE_KEYS = ["accession", "definition", "host", "sequence"]
@@ -57,7 +55,8 @@ def check_will_change(old: dict, imported: dict) -> bool:
         if old[key] != imported[key]:
             return True
 
-    # Will change if isolate ids have changed, meaning an isolate has been added or removed.
+    # Will change if isolate ids have changed, meaning an isolate has been added or
+    # removed.
     if {i["id"] for i in old["isolates"]} != {i["id"] for i in imported["isolates"]}:
         return True
 
@@ -95,58 +94,6 @@ def check_will_change(old: dict, imported: dict) -> bool:
                     return True
 
     return False
-
-
-def clean_export_list(otus: List[dict]) -> List[dict]:
-    cleaned = list()
-
-    otu_keys = OTU_KEYS + ["_id"]
-    sequence_keys = SEQUENCE_KEYS + ["_id"]
-
-    for otu in otus:
-        try:
-            otu["_id"] = otu["remote"]["id"]
-        except KeyError:
-            pass
-
-        for isolate in otu["isolates"]:
-            for sequence in isolate["sequences"]:
-                try:
-                    sequence["_id"] = sequence["remote"]["id"]
-                except KeyError:
-                    pass
-
-        cleaned.append(clean_otu(otu, otu_keys, sequence_keys))
-
-    return cleaned
-
-
-def clean_otu(otu: dict, otu_keys: list = None, sequence_keys: list = None) -> dict:
-    otu_keys = otu_keys or OTU_KEYS
-    sequence_keys = sequence_keys or SEQUENCE_KEYS
-
-    cleaned = {key: otu.get(key) for key in otu_keys}
-
-    cleaned.update({"isolates": list(), "schema": otu.get("schema", list())})
-
-    for isolate in otu["isolates"]:
-        cleaned_isolate = {key: isolate[key] for key in ISOLATE_KEYS}
-        cleaned_isolate["sequences"] = list()
-
-        for sequence in isolate["sequences"]:
-            cleaned_sequence = {key: sequence[key] for key in sequence_keys}
-
-            for key in ["segment", "target"]:
-                try:
-                    cleaned_sequence[key] = sequence[key]
-                except KeyError:
-                    pass
-
-            cleaned_isolate["sequences"].append(cleaned_sequence)
-
-        cleaned["isolates"].append(cleaned_isolate)
-
-    return cleaned
 
 
 def detect_duplicate_abbreviation(joined: dict, duplicates: set, seen: set):
@@ -340,7 +287,8 @@ def get_sequence_schema(require_id: bool) -> dict:
 
 def load_reference_file(path: str) -> dict:
     """
-    Load a list of merged otus documents from a file associated with a Virtool reference file.
+    Load a list of merged otus documents from a file associated with a Virtool reference
+    file.
 
     :param path: the path to the otus.json.gz file
 

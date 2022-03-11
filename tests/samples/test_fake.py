@@ -29,9 +29,6 @@ async def test_create_fake_unpaired(
         app, "sample_1", user["_id"], paired=paired, finalized=finalized
     )
 
-    print(sorted(list(set(LIST_PROJECTION))))
-    print(sorted(list(set(fake_sample.keys()))))
-
     assert set(LIST_PROJECTION) <= set(fake_sample.keys())
 
     if finalized is True:

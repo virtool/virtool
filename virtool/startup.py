@@ -31,7 +31,10 @@ from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.fake.wrapper import FakerWrapper
 from virtool.hmm.db import refresh
-from virtool.indexes.tasks import AddIndexFilesTask
+from virtool.indexes.tasks import (
+    AddIndexFilesTask,
+    AddIndexJSONTask,
+)
 from virtool.jobs.client import JobsClient
 from virtool.oidc.utils import JWKArgs
 from virtool.pg.testing import create_test_database
@@ -39,7 +42,6 @@ from virtool.redis import periodically_ping_redis
 from virtool.references.db import refresh_remotes
 from virtool.references.tasks import (
     CleanReferencesTask,
-    CreateIndexJSONTask,
     DeleteReferenceTask,
 )
 from virtool.routes import setup_routes
@@ -432,12 +434,10 @@ async def startup_tasks(app: Application):
             WriteSubtractionFASTATask, context={"subtraction": subtraction}
         )
 
-    logger.info("Checking index JSON files")
-
-    await app["tasks"].add(CreateIndexJSONTask)
+    await app["tasks"].add(AddIndexFilesTask)
+    await app["tasks"].add(AddIndexJSONTask)
     await app["tasks"].add(DeleteReferenceTask, context={"user_id": "virtool"})
     await app["tasks"].add(AddSubtractionFilesTask)
-    await app["tasks"].add(AddIndexFilesTask)
     await app["tasks"].add(StoreNuvsFilesTask)
     await app["tasks"].add(CompressSamplesTask)
     await app["tasks"].add(MoveSampleFilesTask)
