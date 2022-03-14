@@ -1,6 +1,7 @@
 from unittest.mock import call
 
 import pytest
+
 import virtool.jobs.db
 from virtool.jobs.client import JobsClient
 from virtool.jobs.db import acquire, create, force_delete_jobs
@@ -64,20 +65,13 @@ async def test_create(
     assert await dbi.jobs.find_one() == snapshot
 
 
-async def test_acquire(dbi, mocker):
+async def test_acquire(dbi, mocker, snapshot, static_time):
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
     await dbi.jobs.insert_one({"_id": "foo", "acquired": False, "key": None})
 
-    result = await acquire(dbi, "foo")
-
-    assert await dbi.jobs.find_one() == {
-        "_id": "foo",
-        "acquired": True,
-        "key": "hashed",
-    }
-
-    assert result == {"id": "foo", "acquired": True, "key": "key"}
+    assert await acquire(dbi, "foo") == snapshot
+    assert await dbi.jobs.find_one() == snapshot
 
 
 async def test_force_delete_jobs(dbi, mocker, tmp_path):

@@ -5,13 +5,7 @@ from virtool.jobs.client import JobsClient
 
 @pytest.fixture
 def jobs_client(dbi, redis):
-    app = {"db": dbi, "redis": redis}
-
-    return JobsClient(app)
-
-
-async def test_init(dbi, redis, jobs_client):
-    assert jobs_client.redis == redis
+    return JobsClient({"db": dbi, "redis": redis})
 
 
 @pytest.mark.parametrize("workflow", ["nuvs", "create_sample"])
@@ -27,7 +21,7 @@ async def test_enqueue(workflow, dbi, redis, jobs_client):
 
 
 @pytest.mark.parametrize("workflow", ["nuvs", "create_sample"])
-async def test_cancel_waiting(workflow, dbi, redis, jobs_client, static_time):
+async def test_cancel_waiting(workflow, dbi, redis, jobs_client, snapshot, static_time):
     await redis.rpush(f"jobs_{workflow}", "foo")
 
     list_keys = ["jobs_nuvs", "jobs_create_sample"]
@@ -53,31 +47,10 @@ async def test_cancel_waiting(workflow, dbi, redis, jobs_client, static_time):
 
     await jobs_client.cancel("foo")
 
-    # Check that job ID was removed from lists.
     for key in list_keys:
         assert await redis.lrange(key, 0, 5, encoding="utf-8") == ["bar", "baz", "boo"]
 
-    # Check that job document was updated.
-    assert await dbi.jobs.find_one() == {
-        "_id": "foo",
-        "state": "waiting",
-        "status": [
-            {
-                "state": "running",
-                "stage": "foo",
-                "error": None,
-                "progress": 0.33,
-                "timestamp": static_time.datetime,
-            },
-            {
-                "state": "cancelled",
-                "stage": "foo",
-                "error": None,
-                "progress": 0.33,
-                "timestamp": static_time.datetime,
-            },
-        ],
-    }
+    assert await dbi.jobs.find_one() == snapshot
 
 
 async def test_cancel_running(dbi, redis, jobs_client):

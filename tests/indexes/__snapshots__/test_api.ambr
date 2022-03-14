@@ -53,6 +53,8 @@
         'progress': 0,
         'stage': None,
         'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
       },
     ],

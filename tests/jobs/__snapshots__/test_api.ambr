@@ -630,9 +630,9 @@
     'key': 'key',
     'mem': 16,
     'proc': 10,
-    'progress': 1.0,
-    'stage': 'import_results',
-    'state': 'complete',
+    'progress': 3,
+    'stage': None,
+    'state': 'preparing',
     'status': <class 'list'> [
       <class 'dict'> {
         'error': None,
@@ -660,6 +660,15 @@
         'progress': 1.0,
         'stage': 'import_results',
         'state': 'complete',
+        'timestamp': '2015-10-06T20:00:00Z',
+      },
+      <class 'dict'> {
+        'error': None,
+        'progress': 3,
+        'stage': None,
+        'state': 'preparing',
+        'step_description': None,
+        'step_name': None,
         'timestamp': '2015-10-06T20:00:00Z',
       },
     ],
