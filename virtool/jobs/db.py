@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 import virtool.utils
 from virtool.db.transforms import apply_transforms
 from virtool.jobs.utils import JobRights
-from virtool.types import App
+from virtool.types import App, Document
 from virtool.users.db import AttachUserTransform
 
 OR_COMPLETE = [{"status.state": "complete"}]
@@ -39,13 +39,9 @@ async def cancel(db, job_id: str) -> dict:
         {"_id": job_id},
         {
             "$push": {
-                "status": {
-                    "state": "cancelled",
-                    "stage": latest["stage"],
-                    "error": None,
-                    "progress": latest["progress"],
-                    "timestamp": virtool.utils.timestamp(),
-                }
+                "status": compose_status(
+                    "cancelled", latest["stage"], progress=latest["progress"]
+                )
             }
         },
         projection=PROJECTION,
@@ -98,15 +94,7 @@ async def create(
         "key": None,
         "rights": rights.as_dict(),
         "state": "waiting",
-        "status": [
-            {
-                "state": "waiting",
-                "stage": None,
-                "error": None,
-                "progress": 0,
-                "timestamp": virtool.utils.timestamp(),
-            }
-        ],
+        "status": [compose_status("waiting", None)],
         "user": {"id": user_id},
     }
 
@@ -131,7 +119,10 @@ async def acquire(db, job_id: str) -> Dict[str, Any]:
 
     document = await db.jobs.find_one_and_update(
         {"_id": job_id},
-        {"$set": {"acquired": True, "key": hashed}},
+        {
+            "$set": {"acquired": True, "key": hashed},
+            "$push": {"status": compose_status("preparing", None, progress=3)},
+        },
         projection=PROJECTION,
     )
 
@@ -177,6 +168,36 @@ async def processor(db, document: dict) -> dict:
 
 async def delete(app: App, job_id: str):
     await app["db"].jobs.delete_one({"_id": job_id})
+
+
+def compose_status(
+    state: Optional[str],
+    stage: Optional[str],
+    step_name: Optional[str] = None,
+    step_description: Optional[str] = None,
+    error: Optional[dict] = None,
+    progress: Optional[int] = 0,
+) -> Document:
+    """
+    Compose a status subdocument for a job.
+
+    :param state: the current state
+    :param stage: the current stage
+    :param step_name: the name of the current step
+    :param step_description: a description of the current step
+    :param error: an error dict
+    :param progress: the current progress
+    :return: a status subdocument
+    """
+    return {
+        "state": state,
+        "stage": stage,
+        "step_name": step_name,
+        "step_description": step_description,
+        "error": error,
+        "progress": progress,
+        "timestamp": virtool.utils.timestamp(),
+    }
 
 
 async def force_delete_jobs(app: App):

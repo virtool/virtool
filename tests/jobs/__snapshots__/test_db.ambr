@@ -1,3 +1,39 @@
+# name: test_acquire[uvloop]
+  <class 'dict'> {
+    'acquired': True,
+    'id': 'foo',
+    'key': 'key',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 3,
+        'stage': None,
+        'state': 'preparing',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+  }
+---
+# name: test_acquire[uvloop].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'acquired': True,
+    'key': 'hashed',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 3,
+        'stage': None,
+        'state': 'preparing',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+  }
+---
 # name: test_cancel[uvloop]
   <class 'dict'> {
     '_id': 'foo',
@@ -15,6 +51,8 @@
         'progress': 0.33,
         'stage': 'foo',
         'state': 'cancelled',
+        'step_description': None,
+        'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
       },
     ],
@@ -48,6 +86,8 @@
         'progress': 0,
         'stage': None,
         'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
       },
     ],
@@ -85,6 +125,8 @@
         'progress': 0,
         'stage': None,
         'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
       },
     ],

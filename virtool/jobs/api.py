@@ -3,7 +3,6 @@ from logging import getLogger
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 
 import virtool.jobs.db
-import virtool.utils
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.db.transforms import apply_transforms
@@ -11,7 +10,13 @@ from virtool.db.utils import get_one_field
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs import is_running_or_waiting
-from virtool.jobs.db import LIST_PROJECTION, PROJECTION, delete, processor
+from virtool.jobs.db import (
+    LIST_PROJECTION,
+    PROJECTION,
+    compose_status,
+    delete,
+    processor,
+)
 from virtool.users.db import AttachUserTransform
 
 logger = getLogger(__name__)
@@ -70,6 +75,10 @@ async def acquire(req):
 
     This is used to let the server know that a job process has accepted the ID and needs
     to have the secure token returned to it.
+
+    Pushes a status record indicating the job is in the 'Preparing' state. This sets an
+    arbitrary progress value of 3 to give visual feedback in the UI that the job has
+    started.
 
     """
     db = req.app["db"]
@@ -143,7 +152,13 @@ async def cancel(req):
         "step_description": {"type": "string", "default": None, "nullable": True},
         "state": {
             "type": "string",
-            "allowed": ["waiting", "running", "complete", "cancelled", "error"],
+            "allowed": [
+                "waiting",
+                "running",
+                "complete",
+                "cancelled",
+                "error",
+            ],
             "required": True,
         },
     }
@@ -174,15 +189,14 @@ async def push_status(req):
         {
             "$set": {"state": data["state"]},
             "$push": {
-                "status": {
-                    "state": data["state"],
-                    "stage": data["stage"],
-                    "step_name": data["step_name"],
-                    "step_description": data["step_description"],
-                    "error": data["error"],
-                    "progress": data["progress"],
-                    "timestamp": virtool.utils.timestamp(),
-                }
+                "status": compose_status(
+                    data["state"],
+                    data["stage"],
+                    data["step_name"],
+                    data["step_description"],
+                    data["error"],
+                    data["progress"],
+                )
             },
         },
     )
