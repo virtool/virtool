@@ -1,10 +1,8 @@
 from dataclasses import dataclass
 from typing import List
 
-import virtool.otus.isolates
-import virtool.otus.sequences
 from virtool.fake.wrapper import FakerWrapper
-from virtool.otus.db import create_otu
+from virtool.otus.data import OTUData
 from virtool.types import App
 
 SEQUENCE = """
@@ -43,6 +41,7 @@ class FakeSequence:
 class FakeOTU:
     def __init__(self, app: App, ref_id: str, user_id: str, document: dict):
         self._app = app
+        self._data = OTUData(app)
         self._ref_id = ref_id
         self._user_id = user_id
         self._document = document
@@ -53,33 +52,25 @@ class FakeOTU:
     async def add_isolate(
         self, source_type, source_name, sequences: List[FakeSequence]
     ):
-        isolate_data = {
-            "default": False,
-            "source_type": source_type,
-            "source_name": source_name,
-        }
-
         isolate_id = self._faker.get_mongo_id()
 
-        await virtool.otus.isolates.add(
-            self._app, self.otu_id, isolate_data, self._user_id, isolate_id
+        await self._data.add_isolate(
+            self.otu_id,
+            source_type,
+            source_name,
+            self._user_id,
+            isolate_id=isolate_id,
         )
 
         for sequence in sequences:
-            sequence_data = {
-                "accession": sequence.accession,
-                "definition": sequence.definition,
-                "sequence": sequence.sequence,
-            }
-
-            await virtool.otus.sequences.create(
-                self._app,
-                self._ref_id,
+            await self._data.create_sequence(
                 self.otu_id,
                 isolate_id,
-                sequence_data,
+                sequence.accession,
+                sequence.definition,
+                sequence.sequence,
                 self._user_id,
-                self._faker.get_mongo_id(),
+                sequence_id=self._faker.get_mongo_id(),
             )
 
 
@@ -91,10 +82,14 @@ class FakeOTUCreator:
         self._user_id = user_id
 
     async def create(self, name: str, abbreviation: str):
-        otu_id = self._faker.get_mongo_id()
+        otu_data = OTUData(self._app)
 
-        document = await create_otu(
-            self._app, self._ref_id, name, abbreviation, self._user_id, otu_id
+        document = await otu_data.create(
+            self._ref_id,
+            name,
+            self._user_id,
+            abbreviation=abbreviation,
+            otu_id=self._faker.get_mongo_id(),
         )
 
         return FakeOTU(self._app, self._ref_id, self._user_id, document)

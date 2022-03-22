@@ -2,7 +2,6 @@ import datetime
 import gzip
 import hashlib
 import os
-import re
 import secrets
 import shutil
 import subprocess
@@ -14,7 +13,6 @@ from string import ascii_letters, ascii_lowercase, digits
 from typing import Any, Iterable, Optional, Tuple
 
 import arrow
-from aiohttp import web
 
 SUB_DIRS = [
     "caches",
@@ -30,8 +28,9 @@ SUB_DIRS = [
 
 def base_processor(document: Optional[dict]) -> Optional[dict]:
     """
-    Converts a document `dict` returned from MongoDB into a `dict` that can be passed into a JSON response. Removes the
-    '_id' key and reassigns it to `id`.
+    Converts a document from MongoDB into one that form a JSON response.
+
+    Removes the '_id' key and reassigns it to `id`.
 
     :param document: the document to process
     :return: processed document
@@ -94,8 +93,10 @@ def compress_json_with_gzip(json_string: str, target: str):
 
 def coerce_list(obj: Any) -> list:
     """
-    Takes an object of any type and returns a list. If ``obj`` is a list it will be passed back with modification.
-    Otherwise, a single-item list containing ``obj`` will be returned.
+    Takes an object of any type and returns a list.
+
+    If ``obj`` is a list it will be passed back with modification. Otherwise, a
+    single-item list containing ``obj`` will be returned.
 
     :param obj: an object of any type
     :return: a list equal to or containing ``obj``
@@ -210,7 +211,9 @@ def random_alphanumeric(
 
 def rm(path: Path, recursive=False) -> bool:
     """
-    A function that removes files or directories in a separate thread. Wraps :func:`os.remove` and func:`shutil.rmtree`.
+    A function that removes files or directories in a separate thread.
+
+    Wraps :func:`os.remove` and func:`shutil.rmtree`.
 
     :param path: the path to remove
     :param recursive: the operation should recursively descend into dirs
@@ -230,8 +233,9 @@ def rm(path: Path, recursive=False) -> bool:
 
 def should_use_pigz(processes: int) -> bool:
     """
-    Decides whether pigz should be used for gzip decompression. If multiple processes are used and pigz is installed,
-    the function evaluates true.
+    Decides whether pigz should be used for gzip decompression.
+
+    If multiple processes are used and pigz is installed, the function evaluates true.
 
     :param processes: the number of processes to use for decompression
     :return: a boolean indicating if pigz should be used
@@ -242,8 +246,9 @@ def should_use_pigz(processes: int) -> bool:
 
 def timestamp() -> datetime.datetime:
     """
-    Returns a datetime object representing the current UTC time. The last 3 digits of the microsecond frame are set
-    to zero.
+    Returns a datetime object representing the current UTC time.
+
+    The last 3 digits of the microsecond frame are set to zero.
 
     :return: a UTC timestamp
 

@@ -1,8 +1,7 @@
 import pytest
-import virtool.otus.db
-import virtool.otus.utils
 from aiohttp.test_utils import make_mocked_coro
-from sqlalchemy.ext.asyncio import base
+
+import virtool.otus.db
 
 
 @pytest.mark.parametrize("find", [None, "tobacco"])
@@ -31,7 +30,6 @@ async def test_find(find, verified, names, mocker, spawn_client, test_otu):
     resp = await client.get("/otus", params=params)
 
     assert resp.status == 200
-
     assert await resp.json() == result
 
     m.assert_called_with(client.db, names or False, find, mocker.ANY, verified)
@@ -470,8 +468,8 @@ class TestAddIsolate:
         test_random_alphanumeric,
     ):
         """
-        Test that a new default isolate can be added, setting ``default`` to ``False`` on all other isolates in the
-        process.
+        Test that a new default isolate can be added, setting ``default`` to ``False``
+        on all other isolates in the process.
 
         """
         client = await spawn_client(
@@ -482,11 +480,12 @@ class TestAddIsolate:
 
         await client.db.otus.insert_one(test_otu)
 
-        data = {"source_name": "b", "source_type": "isolate", "default": default}
-
         mocker.patch("virtool.references.db.check_source_type", make_mocked_coro(True))
 
-        resp = await client.post("/otus/6116cba1/isolates", data)
+        resp = await client.post(
+            "/otus/6116cba1/isolates",
+            {"source_name": "b", "source_type": "isolate", "default": default},
+        )
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)

@@ -2865,6 +2865,7 @@
     },
     'segment': None,
     'sequence': 'ATGCGTGTACTG',
+    'target': None,
   }
 ---
 # name: test_create_sequence[True-uvloop-None].2
@@ -2905,6 +2906,7 @@
     },
     'segment': None,
     'sequence': 'ATGCGTGTACTG',
+    'target': None,
   }
 ---
 # name: test_create_sequence[True-uvloop-None].4
@@ -2943,6 +2945,7 @@
               },
               'segment': None,
               'sequence': 'ATGCGTGTACTG',
+              'target': None,
             },
           ],
         ],

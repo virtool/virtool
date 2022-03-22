@@ -6,9 +6,14 @@ The purpose of these classes is to automatically dispatch database changes via
 collection.
 
 """
+from contextlib import asynccontextmanager
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence, Union
 
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
+from motor.motor_asyncio import (
+    AsyncIOMotorClient,
+    AsyncIOMotorClientSession,
+    AsyncIOMotorCollection,
+)
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 from pymongo.results import DeleteResult, UpdateResult
@@ -95,37 +100,49 @@ class Collection:
         if not self.silent:
             self._enqueue_change(self.name, operation, id_list)
 
-    async def delete_many(self, query: dict, silent: bool = False) -> DeleteResult:
+    async def delete_many(
+        self,
+        query: dict,
+        silent: bool = False,
+        session: Optional[AsyncIOMotorClientSession] = None,
+    ) -> DeleteResult:
         """
         Delete many documents based on the passed `query`.
 
         :param query: a MongoDB query
         :param silent: don't dispatch websocket messages for this operation
+        :param session: an optional Motor session to use
         :return: the result
 
         """
         id_list = await self.distinct("_id", query)
 
-        delete_result = await self._collection.delete_many(query)
+        delete_result = await self._collection.delete_many(query, session=session)
 
         if not silent and len(id_list):
             self.enqueue_change(DELETE, *id_list)
 
         return delete_result
 
-    async def delete_one(self, query: dict, silent: bool = False) -> DeleteResult:
+    async def delete_one(
+        self,
+        query: dict,
+        silent: bool = False,
+        session: Optional[AsyncIOMotorClientSession] = None,
+    ) -> DeleteResult:
         """
         Delete a single document based on the passed `query`.
 
         :param query: a MongoDB query
         :param silent: don't dispatch websocket messages for this operation
+        :param session: an optional Motor session to use
         :return: the result
 
         """
         document_id = await virtool.db.utils.get_one_field(
             self._collection, "_id", query
         )
-        delete_result = await self._collection.delete_one(query)
+        delete_result = await self._collection.delete_one(query, session=session)
 
         if not silent and delete_result.deleted_count:
             self.enqueue_change(DELETE, document_id)
@@ -139,6 +156,7 @@ class Collection:
         projection: Optional[Projection] = None,
         silent: bool = False,
         upsert: bool = False,
+        session: Optional[AsyncIOMotorClientSession] = None,
     ) -> Optional[Document]:
         """
         Update a document and return the updated result.
@@ -148,11 +166,16 @@ class Collection:
         :param projection: a projection to apply to the document instead of the default
         :param silent: don't dispatch websocket messages for this operation
         :param upsert: insert a new document if no existing document is found
+        :param session: an optional Motor session to use
         :return: the updated document
 
         """
         document = await self._collection.find_one_and_update(
-            query, update, return_document=ReturnDocument.AFTER, upsert=upsert
+            query,
+            update,
+            return_document=ReturnDocument.AFTER,
+            upsert=upsert,
+            session=session,
         )
 
         if document is None:
@@ -166,7 +189,12 @@ class Collection:
 
         return document
 
-    async def insert_one(self, document: Document, silent: bool = False) -> Document:
+    async def insert_one(
+        self,
+        document: Document,
+        silent: bool = False,
+        session: Optional[AsyncIOMotorClientSession] = None,
+    ) -> Document:
         """
         Insert the `document`.
 
@@ -175,6 +203,7 @@ class Collection:
 
         :param document: the document to insert
         :param silent: don't dispatch the change to connected clients
+        :param session: an optional Motor session to use
         :return: the inserted document
 
         """
@@ -184,7 +213,7 @@ class Collection:
             document["_id"] = virtool.utils.random_alphanumeric(8)
 
         try:
-            await self._collection.insert_one(document)
+            await self._collection.insert_one(document, session=session)
 
             if not silent:
                 self.enqueue_change(INSERT, document["_id"])
@@ -193,23 +222,33 @@ class Collection:
         except DuplicateKeyError:
             if generate_id:
                 document.pop("_id")
-                return await self._collection.insert_one(document)
+                return await self._collection.insert_one(document, session=session)
 
             raise
 
     async def replace_one(
-        self, query: Dict[str, Any], replacement: Document, upsert: bool = False
-    ):
+        self,
+        query: Dict[str, Any],
+        replacement: Document,
+        upsert: bool = False,
+        session: Optional[AsyncIOMotorClientSession] = None,
+    ) -> Document:
         """
         Replace the document identified using `query` with the `replacement` document.
 
         :param query: the query used to find a document to replace
         :param replacement: the replacement document
         :param upsert: insert a new document if nothing matches the query
+        :param session: an optional Motor session to use
+        :return: the replacement document
 
         """
         document = await self._collection.find_one_and_replace(
-            query, replacement, projection=self.projection, upsert=upsert
+            query,
+            replacement,
+            projection=self.projection,
+            upsert=upsert,
+            session=session,
         )
 
         self.enqueue_change(UPDATE, replacement["_id"])
@@ -217,7 +256,11 @@ class Collection:
         return document
 
     async def update_many(
-        self, query: Union[str, Dict], update: Dict, silent: bool = False
+        self,
+        query: Union[str, Dict],
+        update: Dict,
+        silent: bool = False,
+        session: Optional[AsyncIOMotorClientSession] = None,
     ) -> UpdateResult:
         """
         Update all documents that match `query` by applying the `update`.
@@ -225,10 +268,14 @@ class Collection:
         :param query: the query to match
         :param update: the update to apply to matching documents
         :param silent: don't dispatch the change to connected clients
+        :param session: an optional Motor session to use
+        :return: the Pymongo `UpdateResult` object
 
         """
-        updated_ids = await self._collection.distinct("_id", query)
-        update_result = await self._collection.update_many(query, update)
+        updated_ids = await self._collection.distinct("_id", query, session=session)
+        update_result = await self._collection.update_many(
+            query, update, session=session
+        )
 
         if not silent:
             self.enqueue_change(UPDATE, *updated_ids)
@@ -241,6 +288,7 @@ class Collection:
         update: Dict,
         upsert: bool = False,
         silent: bool = False,
+        session: Optional[AsyncIOMotorClientSession] = None,
     ) -> UpdateResult:
         """
         Update one document matching the `query` by applying the `update`.
@@ -249,10 +297,14 @@ class Collection:
         :param update: the update to apply to matching document
         :param upsert: insert a new document if there is no match for the query
         :param silent: don't dispatch the change to connected clients
+        :param session: an optional Motor session to use
+        :return: the Pymongo `UpdateResult` object
 
         """
-        document = await self.find_one(query, ["_id"])
-        update_result = await self._collection.update_one(query, update, upsert=upsert)
+        document = await self.find_one(query, ["_id"], session=session)
+        update_result = await self._collection.update_one(
+            query, update, upsert=upsert, session=session
+        )
 
         if not silent and document:
             self.enqueue_change(UPDATE, document["_id"])
@@ -267,6 +319,7 @@ class DB:
         enqueue_change: Callable[[str, str, List[str]], None],
     ):
         self.motor_client = motor_client
+        self.start_session = motor_client.start_session
         self.enqueue_change = enqueue_change
 
         self.analyses = self.bind_collection(
@@ -343,3 +396,9 @@ class DB:
             projection,
             silent,
         )
+
+    @asynccontextmanager
+    async def create_session(self):
+        async with await self.motor_client.client.start_session() as s:
+            async with s.start_transaction():
+                yield s
