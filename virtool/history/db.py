@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import dictdiffer
 import pymongo.errors
+from motor.motor_asyncio import AsyncIOMotorClientSession
 
 import virtool.errors
 import virtool.history.utils
@@ -88,6 +89,7 @@ async def add(
     description: str,
     user_id: str,
     silent: bool = False,
+    session: Optional[AsyncIOMotorClientSession] = None,
 ) -> dict:
     """
     Add a change document to the history collection.
@@ -127,13 +129,15 @@ async def add(
         document["diff"] = calculate_diff(old, new)
 
     try:
-        await db.history.insert_one(document, silent=silent)
+        await db.history.insert_one(document, silent=silent, session=session)
     except pymongo.errors.DocumentTooLarge:
         await write_diff_file(
             app["config"].data_path, otu_id, otu_version, document["diff"]
         )
 
-        await db.history.insert_one(dict(document, diff="file"), silent=silent)
+        await db.history.insert_one(
+            dict(document, diff="file"), silent=silent, session=session
+        )
 
     return document
 
@@ -207,12 +211,15 @@ async def get_contributors(db, query: dict) -> List[dict]:
     return [{**u, **users[u["id"]]} for u in contributors]
 
 
-async def get_most_recent_change(db, otu_id: str) -> dict:
+async def get_most_recent_change(
+    db, otu_id: str, session: Optional[AsyncIOMotorClientSession] = None
+) -> Document:
     """
     Get the most recent change for the otu identified by the passed ``otu_id``.
 
     :param db: the application database client
     :param otu_id: the target otu_id
+    :param session: a Motor session to use for database operations
     :return: the most recent change document
 
     """
@@ -220,6 +227,7 @@ async def get_most_recent_change(db, otu_id: str) -> dict:
         {"otu.id": otu_id, "index.id": "unbuilt"},
         MOST_RECENT_PROJECTION,
         sort=[("otu.version", -1)],
+        session=session,
     )
 
 

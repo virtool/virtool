@@ -1,12 +1,11 @@
 from copy import deepcopy
-from typing import List, Union, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
-import virtool.errors
-import virtool.history.utils
-import virtool.utils
+from virtool.types import Document
+from virtool.utils import base_processor
 
 
-def evaluate_changes(data: dict, document: dict) -> Tuple[str, str, str]:
+def evaluate_changes(data: dict, document: dict) -> Tuple[str, str, Document]:
     name = data.get("name")
     abbreviation = data.get("abbreviation")
     schema = data.get("schema")
@@ -75,13 +74,16 @@ def find_isolate(isolates: List[dict], isolate_id: str) -> dict:
 
 
 def format_otu(
-    joined: Optional[dict],
-    issues: Union[dict, None, bool] = False,
-    most_recent_change: Optional[dict] = None,
+    joined: Optional[Document],
+    issues: Optional[Union[Document, bool]] = False,
+    most_recent_change: Optional[Document] = None,
 ) -> dict:
     """
-    Join the otu identified by the passed ``otu_id`` or use the ``joined`` otu document if available. Then,
-    format the joined otu into a format that can be directly returned to API clients.
+    Join and format an OTU.
+
+    Join the otu identified by the passed ``otu_id`` or use the ``joined`` otu document
+    if available. Then, format the joined otu into a format that can be directly
+    returned to API clients.
 
     :param joined:
     :param issues: an object describing issues in the otu
@@ -89,7 +91,7 @@ def format_otu(
     :return: a joined and formatted otu
 
     """
-    formatted = virtool.utils.base_processor(joined)
+    formatted = base_processor(joined)
 
     del formatted["lower_name"]
 
@@ -104,9 +106,7 @@ def format_otu(
     formatted["most_recent_change"] = None
 
     if most_recent_change:
-        formatted["most_recent_change"] = virtool.utils.base_processor(
-            most_recent_change
-        )
+        formatted["most_recent_change"] = base_processor(most_recent_change)
 
     if issues is False:
         issues = verify(joined)
@@ -116,12 +116,11 @@ def format_otu(
     return formatted
 
 
-def format_isolate_name(isolate: dict) -> str:
+def format_isolate_name(isolate: Document) -> str:
     """
     Take a complete or partial isolate ``dict`` and return a readable isolate name.
 
-    :param isolate: a complete or partial isolate ``dict`` containing ``source_type`` and ``source_name`` fields.
-
+    :param isolate: an isolate containing source_type and source_name fields
     :return: an isolate name
     """
     if not isolate["source_type"] or not isolate["source_name"]:
@@ -132,8 +131,10 @@ def format_isolate_name(isolate: dict) -> str:
 
 def merge_otu(otu: dict, sequences: List[dict]) -> dict:
     """
-    Merge the given sequences in the given otu document. The otu will gain a ``sequences`` field containing a
-    list of its associated sequence documents.
+    Merge the given sequences in the given otu document.
+
+    The otu will gain a ``sequences`` field containing a list of its associated sequence
+    documents.
 
     :param otu: a otu document.
     :param sequences: the sequence documents to merge into the otu.
@@ -150,13 +151,12 @@ def merge_otu(otu: dict, sequences: List[dict]) -> dict:
     return merged
 
 
-def split(merged: dict) -> Tuple[dict, List[dict]]:
+def split(merged: Document) -> Tuple[Document, List[Document]]:
     """
-    Split a merged otu document into a list of sequence documents associated with the otu and a regular otu
-    document containing no sequence sub-documents.
+    Split a merged otu document into a list of sequence documents associated with the
+    otu and a regular otu document containing no sequence sub-documents.
 
     :param merged: the merged otu to split
-
     :return: a tuple containing the new otu document and a list of sequence documents
     """
     sequences = list()
@@ -169,20 +169,19 @@ def split(merged: dict) -> Tuple[dict, List[dict]]:
     return otu, sequences
 
 
-def verify(joined: dict) -> Optional[dict]:
+def verify(joined: Document) -> Union[bool, Document]:
     """
-    Checks that the passed otu and sequences constitute valid Virtool records and can be included in a otu
-    index. Error fields are:
+    Checks that the passed otu and sequences constitute valid Virtool records and can be
+    included in an index.
+
+    Error fields are:
     * emtpy_otu - otu has no isolates associated with it.
     * empty_isolate - isolates that have no sequences associated with them.
     * empty_sequence - sequences that have a zero length sequence field.
-    * isolate_inconsistency - otu has isolates containing different numbers of sequences.
+    * isolate_inconsistency - otu has different sequence counts between isolates.
 
     :param joined: a joined otu
-    :type joined: dict
-
     :return: return any errors or False if there are no errors.
-    :rtype: Union[dict, None]
 
     """
     errors = {
@@ -194,13 +193,14 @@ def verify(joined: dict) -> Optional[dict]:
 
     isolate_sequence_counts = list()
 
-    # Append the isolate_ids of any isolates without sequences to empty_isolate. Append the isolate_id and sequence
-    # id of any sequences that have an empty sequence.
+    # Append the isolate_ids of any isolates without sequences to empty_isolate. Append
+    # the isolate_id and sequence id of any sequences that have an empty sequence.
     for isolate in joined["isolates"]:
         isolate_sequences = isolate["sequences"]
         isolate_sequence_count = len(isolate_sequences)
 
-        # If there are no sequences attached to the isolate it gets an empty_isolate error.
+        # If there are no sequences attached to the isolate it gets an empty_isolate
+        # error.
         if isolate_sequence_count == 0:
             errors["empty_isolate"].append(isolate["id"])
 
@@ -210,8 +210,8 @@ def verify(joined: dict) -> Optional[dict]:
             lambda sequence: len(sequence["sequence"]) == 0, isolate_sequences
         )
 
-    # Give an isolate_inconsistency error the number of sequences is not the same for every isolate. Only give the
-    # error if the otu is not also emtpy (empty_otu error).
+    # Give an isolate_inconsistency error the number of sequences is not the same for
+    # every isolate. Only give the error if the otu is not also emtpy (empty_otu error).
     errors["isolate_inconsistency"] = len(set(isolate_sequence_counts)) != 1 and not (
         errors["empty_otu"] or errors["empty_isolate"]
     )

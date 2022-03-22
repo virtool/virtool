@@ -9,8 +9,8 @@ import aiohttp
 import arrow
 from semver import VersionInfo
 
-import virtool.otus.db
 import virtool.tasks.pg
+from virtool.data.utils import get_data_from_app
 from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument
 from virtool.history.db import patch_to_version
@@ -386,8 +386,8 @@ class DeleteReferenceTask(Task):
 
         for ref_id in self.non_existent_references:
             async for document in self.db.otus.find({"reference.id": ref_id}):
-                await virtool.otus.db.remove(
-                    self.app, document["_id"], user_id, document=document, silent=True
+                await get_data_from_app(self.app).otus.remove(
+                    document["_id"], user_id, silent=True
                 )
 
         await virtool.tasks.pg.update(
@@ -489,7 +489,7 @@ class UpdateRemoteReferenceTask(Task):
         await virtool.tasks.pg.update(self.pg, self.id, step="create_history")
 
     async def remove_otus(self):
-        # Delete OTUs with remote ids that were not in the update.
+        """Delete OTUs with remote ids that were not in the update."""
         to_delete = await self.db.otus.distinct(
             "_id",
             {
@@ -501,8 +501,9 @@ class UpdateRemoteReferenceTask(Task):
         tracker = await self.get_tracker(len(to_delete))
 
         for otu_id in to_delete:
-            await virtool.otus.db.remove(self.app, otu_id, self.context["user_id"])
-
+            await get_data_from_app(self.app).otus.remove(
+                otu_id, self.context["user_id"]
+            )
             await tracker.add(1)
 
         await virtool.tasks.pg.update(self.pg, self.id, step="remove_otus")

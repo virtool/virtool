@@ -1,6 +1,7 @@
 import pytest
 
 import virtool.otus.utils
+from virtool.otus.utils import find_isolate, format_isolate_name
 
 
 class TestVerify:
@@ -9,8 +10,7 @@ class TestVerify:
         Test that a valid otu and sequence list results in return value of ``None``.
 
         """
-        result = virtool.otus.utils.verify(test_merged_otu)
-        assert result is None
+        assert virtool.otus.utils.verify(test_merged_otu) is None
 
     def test_empty_isolate(self, test_merged_otu):
         """
@@ -19,40 +19,20 @@ class TestVerify:
         """
         test_merged_otu["isolates"][0]["sequences"] = list()
 
-        result = virtool.otus.utils.verify(test_merged_otu)
-
-        assert result == {
+        assert virtool.otus.utils.verify(test_merged_otu) == {
             "empty_isolate": ["cab8b360"],
             "empty_sequence": False,
             "empty_otu": False,
             "isolate_inconsistency": False,
         }
 
-    def test_empty_sequence(self, test_merged_otu):
+    def test_empty_sequence(self, test_merged_otu, snapshot):
         """
         Test that a sequence with an empty ``sequence`` field is detected.
 
         """
         test_merged_otu["isolates"][0]["sequences"][0]["sequence"] = ""
-
-        result = virtool.otus.utils.verify(test_merged_otu)
-
-        assert result == {
-            "empty_isolate": False,
-            "empty_sequence": [
-                {
-                    "_id": "KX269872",
-                    "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
-                    "host": "sweet cherry",
-                    "otu_id": "6116cba1",
-                    "isolate_id": "cab8b360",
-                    "sequence": "",
-                    "segment": None,
-                }
-            ],
-            "empty_otu": False,
-            "isolate_inconsistency": False,
-        }
+        assert virtool.otus.utils.verify(test_merged_otu) == snapshot
 
     def test_empty_otu(self, test_merged_otu):
         """
@@ -61,9 +41,7 @@ class TestVerify:
         """
         test_merged_otu["isolates"] = []
 
-        result = virtool.otus.utils.verify(test_merged_otu)
-
-        assert result == {
+        assert virtool.otus.utils.verify(test_merged_otu) == {
             "empty_isolate": False,
             "empty_sequence": False,
             "empty_otu": True,
@@ -84,9 +62,7 @@ class TestVerify:
             dict(test_sequence, _id="foobar_2"),
         ]
 
-        result = virtool.otus.utils.verify(test_merged_otu)
-
-        assert result == {
+        assert virtool.otus.utils.verify(test_merged_otu) == {
             "empty_isolate": False,
             "empty_sequence": False,
             "empty_otu": False,
@@ -95,8 +71,7 @@ class TestVerify:
 
 
 def test_merge_otu(test_otu, test_sequence, test_merged_otu):
-    merged = virtool.otus.utils.merge_otu(test_otu, [test_sequence])
-    assert merged == test_merged_otu
+    assert virtool.otus.utils.merge_otu(test_otu, [test_sequence]) == test_merged_otu
 
 
 def test_split(test_otu, test_sequence, test_merged_otu):
@@ -106,20 +81,22 @@ def test_split(test_otu, test_sequence, test_merged_otu):
     assert sequences == [test_sequence]
 
 
-class TestFindIsolate:
-    def test(self, test_otu, test_isolate):
-        new_isolate = dict(
-            test_isolate, id="foobar", source_type="isolate", source_name="b"
-        )
+@pytest.mark.parametrize("exists", [True, False])
+def test_find_isolate(exists, test_otu, test_isolate):
 
+    new_isolate = {
+        **test_isolate,
+        "id": "foobar",
+        "source_type": "isolate",
+        "source_name": "b",
+    }
+
+    if exists:
         test_otu["isolates"].append(new_isolate)
 
-        isolate = virtool.otus.utils.find_isolate(test_otu["isolates"], "foobar")
+    isolate = find_isolate(test_otu["isolates"], "foobar")
 
-        assert isolate == new_isolate
-
-    def test_does_not_exist(self, test_otu):
-        assert virtool.otus.utils.find_isolate(test_otu["isolates"], "foobar") is None
+    assert isolate == (new_isolate if exists else None)
 
 
 class TestExtractSequenceIds:
@@ -165,15 +142,18 @@ class TestExtractSequenceIds:
 )
 def test_format_isolate_name(source_type, source_name, test_isolate):
     """
-    Test that a formatted isolate name is produced for a full ``source_type`` and ``source_name``. Test that if
-    either of these fields are missing, "Unnamed isolate" is returned.
+    Test that a formatted isolate name is produced for a full ``source_type`` and
+    ``source_name``.
+
+    Test that if either of these fields are missing, "Unnamed isolate" is returned.
 
     """
-    test_isolate.update({"source_type": source_type, "source_name": source_name})
+    formatted = format_isolate_name(
+        {**test_isolate, "source_type": source_type, "source_name": source_name}
+    )
 
-    formatted = virtool.otus.utils.format_isolate_name(test_isolate)
-
-    if source_type and source_name:
-        assert formatted == "Isolate 8816 - v2"
-    else:
-        assert formatted == "Unnamed Isolate"
+    assert (
+        formatted == "Isolate 8816 - v2"
+        if source_type and source_name
+        else "Unnamed Isolate"
+    )

@@ -5,7 +5,7 @@ Utilities for working with MongoDB.
 from contextlib import asynccontextmanager
 from typing import Any, Dict, Optional, Sequence, Set, Union
 
-from motor.motor_asyncio import AsyncIOMotorCollection
+from motor.motor_asyncio import AsyncIOMotorClientSession, AsyncIOMotorCollection
 from pymongo import InsertOne, UpdateOne
 
 import virtool.utils
@@ -141,22 +141,26 @@ async def get_new_id(collection, excluded: Optional[Sequence[str]] = None) -> st
     return virtool.utils.random_alphanumeric(length=8, excluded=excluded)
 
 
-async def get_one_field(collection, field: str, query: Union[str, Dict]) -> Any:
+async def get_one_field(
+    collection,
+    field: str,
+    query: Union[str, Dict],
+    session: Optional[AsyncIOMotorClientSession] = None,
+) -> Any:
     """
     Get the value for a single `field` from a single document matching the `query`.
 
     :param collection: the database collection to search
     :param field: the field to return
     :param query: the document matching query
+    :param session: a Motor session to use for database operations
     :return: the field
 
     """
-    projected = await collection.find_one(query, [field])
+    if projected := await collection.find_one(query, [field], session=session):
+        return projected.get(field)
 
-    if projected is None:
-        return None
-
-    return projected.get(field)
+    return None
 
 
 async def get_non_existent_ids(collection, id_list: Sequence[str]) -> Set[str]:

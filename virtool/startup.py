@@ -37,6 +37,7 @@ from virtool.indexes.tasks import (
 )
 from virtool.jobs.client import JobsClient
 from virtool.oidc.utils import JWKArgs
+from virtool.otus.data import OTUData
 from virtool.pg.testing import create_test_database
 from virtool.redis import periodically_ping_redis
 from virtool.references.db import refresh_remotes
@@ -119,7 +120,7 @@ async def startup_data(app: App):
     :param app: the application object
     """
     app["data"] = DataLayer(
-        AnalysisData(app), BLASTData(app["db"], app["pg"], app["tasks"])
+        AnalysisData(app), BLASTData(app["db"], app["pg"], app["tasks"]), OTUData(app)
     )
 
 
