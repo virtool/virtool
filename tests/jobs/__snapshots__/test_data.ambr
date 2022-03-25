@@ -1,0 +1,245 @@
+# name: test_acquire[uvloop]
+  <class 'dict'> {
+    'acquired': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'id': 'foo',
+    'key': 'key',
+    'progress': 3,
+    'stage': None,
+    'state': 'preparing',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 3,
+        'stage': None,
+        'state': 'preparing',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
+  }
+---
+# name: test_acquire[uvloop].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'acquired': True,
+    'key': 'hashed',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 3,
+        'stage': None,
+        'state': 'preparing',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
+  }
+---
+# name: test_cancel[uvloop]
+  <class 'dict'> {
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'id': 'foo',
+    'progress': 0.33,
+    'stage': 'foo',
+    'state': 'running',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0.33,
+        'stage': 'foo',
+        'state': 'running',
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
+  }
+---
+# name: test_cancel[uvloop].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'state': 'waiting',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0.33,
+        'stage': 'foo',
+        'state': 'running',
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
+  }
+---
+# name: test_create[uvloop-None]
+  <class 'dict'> {
+    '_id': '9pfsom1b',
+    'acquired': False,
+    'args': <class 'dict'> {
+      'sample_id': 'foo',
+    },
+    'key': None,
+    'rights': <class 'dict'> {
+      'samples': <class 'dict'> {
+        'modify': <class 'list'> [
+          'foo',
+        ],
+        'read': <class 'list'> [
+          'foo',
+        ],
+        'remove': <class 'list'> [
+          'foo',
+        ],
+      },
+    },
+    'state': 'waiting',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+    'workflow': 'create_sample',
+  }
+---
+# name: test_create[uvloop-None].1
+  <class 'dict'> {
+    '_id': '9pfsom1b',
+    'acquired': False,
+    'args': <class 'dict'> {
+      'sample_id': 'foo',
+    },
+    'key': None,
+    'rights': <class 'dict'> {
+      'samples': <class 'dict'> {
+        'modify': <class 'list'> [
+          'foo',
+        ],
+        'read': <class 'list'> [
+          'foo',
+        ],
+        'remove': <class 'list'> [
+          'foo',
+        ],
+      },
+    },
+    'state': 'waiting',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+    'workflow': 'create_sample',
+  }
+---
+# name: test_create[uvloop-bar]
+  <class 'dict'> {
+    '_id': 'bar',
+    'acquired': False,
+    'args': <class 'dict'> {
+      'sample_id': 'foo',
+    },
+    'key': None,
+    'rights': <class 'dict'> {
+      'samples': <class 'dict'> {
+        'modify': <class 'list'> [
+          'foo',
+        ],
+        'read': <class 'list'> [
+          'foo',
+        ],
+        'remove': <class 'list'> [
+          'foo',
+        ],
+      },
+    },
+    'state': 'waiting',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+    'workflow': 'create_sample',
+  }
+---
+# name: test_create[uvloop-bar].1
+  <class 'dict'> {
+    '_id': 'bar',
+    'acquired': False,
+    'args': <class 'dict'> {
+      'sample_id': 'foo',
+    },
+    'key': None,
+    'rights': <class 'dict'> {
+      'samples': <class 'dict'> {
+        'modify': <class 'list'> [
+          'foo',
+        ],
+        'read': <class 'list'> [
+          'foo',
+        ],
+        'remove': <class 'list'> [
+          'foo',
+        ],
+      },
+    },
+    'state': 'waiting',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': 'bob',
+    },
+    'workflow': 'create_sample',
+  }
+---

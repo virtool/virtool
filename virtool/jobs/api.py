@@ -2,22 +2,14 @@ from logging import getLogger
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 
-import virtool.jobs.db
 from virtool.api.response import NotFound, json_response
-from virtool.api.utils import compose_regex_query, paginate
-from virtool.db.transforms import apply_transforms
-from virtool.db.utils import get_one_field
+from virtool.data.errors import (
+    ResourceConflictError,
+    ResourceNotFoundError,
+)
+from virtool.data.utils import get_data_from_req
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
-from virtool.jobs import is_running_or_waiting
-from virtool.jobs.db import (
-    LIST_PROJECTION,
-    PROJECTION,
-    compose_status,
-    delete,
-    processor,
-)
-from virtool.users.db import AttachUserTransform
 
 logger = getLogger(__name__)
 
@@ -30,22 +22,7 @@ async def find(req):
     Return a list of job documents.
 
     """
-    db = req.app["db"]
-
-    term = req.query.get("find")
-
-    db_query = dict()
-
-    if term:
-        db_query.update(compose_regex_query(term, ["workflow", "user.id"]))
-
-    data = await paginate(
-        db.jobs, db_query, req.query, projection=LIST_PROJECTION, sort="created_at"
-    )
-
-    documents = await apply_transforms(data["documents"], [AttachUserTransform(db)])
-
-    return json_response({**data, "documents": documents})
+    return json_response(await get_data_from_req(req).jobs.find(req.query))
 
 
 @routes.get("/jobs/{job_id}")
@@ -55,15 +32,12 @@ async def get(req):
     Return the complete document for a given job.
 
     """
-    db = req.app["db"]
-    job_id = req.match_info["job_id"]
-
-    document = await db.jobs.find_one(job_id, projection=PROJECTION)
-
-    if not document:
+    try:
+        document = await get_data_from_req(req).jobs.get(req.match_info["job_id"])
+    except ResourceNotFoundError:
         raise NotFound()
 
-    return json_response(await processor(db, document))
+    return json_response(document)
 
 
 @routes.patch("/jobs/{job_id}")
@@ -81,44 +55,27 @@ async def acquire(req):
     started.
 
     """
-    db = req.app["db"]
-
-    job_id = req.match_info["job_id"]
-
-    acquired = await get_one_field(db.jobs, "acquired", job_id)
-
-    if acquired is True:
+    try:
+        document = await get_data_from_req(req).jobs.acquire(req.match_info["job_id"])
+    except ResourceNotFoundError:
+        raise NotFound()
+    except ResourceConflictError:
         raise HTTPBadRequest(text="Job already acquired")
 
-    if acquired is None:
-        raise NotFound()
-
-    document = await virtool.jobs.db.acquire(db, job_id)
-
-    return json_response(await processor(db, document))
+    return json_response(document)
 
 
 @routes.put("/jobs/{job_id}/cancel", permission="cancel_job")
 async def cancel(req):
-    """
-    Cancel a job.
+    """Cancel a job."""
+    try:
+        document = await get_data_from_req(req).jobs.cancel(req.match_info["job_id"])
+    except ResourceNotFoundError:
+        raise NotFound
+    except ResourceConflictError:
+        raise HTTPConflict(text="Job cannot be cancelled in its current state")
 
-    """
-    db = req.app["db"]
-
-    job_id = req.match_info["job_id"]
-
-    document = await db.jobs.find_one(job_id, ["status"])
-
-    if not document:
-        raise NotFound()
-
-    if not virtool.jobs.is_running_or_waiting(document):
-        raise HTTPConflict(text="Not cancellable")
-
-    document = await req.app["jobs"].cancel(job_id)
-
-    return json_response(await processor(db, document))
+    return json_response(document)
 
 
 @routes.post("/jobs/{job_id}/status")
@@ -165,50 +122,32 @@ async def cancel(req):
     }
 )
 async def push_status(req):
-    """
-    Push a status update to a job.
-
-    """
-    db = req.app["db"]
+    """Push a status update to a job."""
     data = req["data"]
-
-    job_id = req.match_info["job_id"]
-
-    status = await get_one_field(db.jobs, "status", job_id)
-
-    if status is None:
-        raise NotFound()
-
-    if status[-1]["state"] in ("complete", "cancelled", "error", "terminated"):
-        raise HTTPConflict(text="Job is finished")
 
     if data["state"] == "error" and not data["error"]:
         raise HTTPBadRequest(text="Missing error information")
 
-    document = await db.jobs.find_one_and_update(
-        {"_id": job_id},
-        {
-            "$set": {"state": data["state"]},
-            "$push": {
-                "status": compose_status(
-                    data["state"],
-                    data["stage"],
-                    data["step_name"],
-                    data["step_description"],
-                    data["error"],
-                    data["progress"],
-                )
-            },
-        },
-    )
+    try:
+        document = await get_data_from_req(req).jobs.push_status(
+            req.match_info["job_id"],
+            data["state"],
+            data["stage"],
+            data["step_name"],
+            data["step_description"],
+            data["error"],
+            data["progress"],
+        )
+    except ResourceNotFoundError:
+        raise NotFound
+    except ResourceConflictError:
+        raise HTTPConflict(text="Job is finished")
 
     return json_response(document["status"][-1], status=201)
 
 
 @routes.delete("/jobs", permission="remove_job")
 async def clear(req):
-    db = req.app["db"]
-
     job_filter = req.query.get("filter")
 
     # Remove jobs that completed successfully.
@@ -217,9 +156,11 @@ async def clear(req):
     # Remove jobs that errored or were cancelled.
     failed = job_filter in [None, "failed", "finished" "terminated"]
 
-    removed = await virtool.jobs.db.clear(db, complete=complete, failed=failed)
+    removed_job_ids = await get_data_from_req(req).jobs.clear(
+        complete=complete, failed=failed
+    )
 
-    return json_response({"removed": removed})
+    return json_response({"removed": removed_job_ids})
 
 
 @routes.delete("/jobs/{job_id}", permission="remove_job")
@@ -228,16 +169,11 @@ async def remove(req):
     Remove a job.
 
     """
-    job_id = req.match_info["job_id"]
-
-    document = await req.app["db"].jobs.find_one(job_id)
-
-    if not document:
-        raise NotFound()
-
-    if is_running_or_waiting(document):
+    try:
+        await get_data_from_req(req).jobs.delete(req.match_info["job_id"])
+    except ResourceConflictError:
         raise HTTPConflict(text="Job is running or waiting and cannot be removed")
-
-    await delete(req.app, job_id)
+    except ResourceNotFoundError:
+        raise NotFound()
 
     raise HTTPNoContent

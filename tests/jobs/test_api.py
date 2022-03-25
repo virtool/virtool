@@ -1,6 +1,18 @@
 import pytest
 
 
+async def test_find(fake, snapshot, spawn_client):
+    client = await spawn_client(authorize=True)
+
+    for _ in range(25):
+        await fake.jobs.insert()
+
+    resp = await client.get("/jobs")
+
+    assert resp.status == 200
+    assert await resp.json() == snapshot
+
+
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, fake, snapshot, spawn_client, test_job, resp_is):
     client = await spawn_client(authorize=True)
@@ -9,7 +21,7 @@ async def test_get(error, fake, snapshot, spawn_client, test_job, resp_is):
 
     test_job["user"] = {"id": user["_id"]}
 
-    if not error:
+    if error is None:
         await client.db.jobs.insert_one(test_job)
 
     resp = await client.get("/jobs/4c530449")
@@ -23,7 +35,7 @@ async def test_get(error, fake, snapshot, spawn_client, test_job, resp_is):
     body = await resp.json()
     assert body == snapshot
 
-    # Explicitly make sure the secret API key is not returned in the response
+    # Explicitly ensure the secret API key is not returned in the response.
     assert "key" not in body
 
 
@@ -95,7 +107,7 @@ async def test_cancel(error, snapshot, dbi, fake, resp_is, spawn_client, test_jo
         return
 
     if str(error).startswith("409"):
-        await resp_is.conflict(resp, "Not cancellable")
+        await resp_is.conflict(resp, "Job cannot be cancelled in its current state")
         return
 
     assert resp.status == 200
@@ -219,7 +231,8 @@ class TestPushStatus:
 
     async def test_missing_error(self, snapshot, spawn_client, static_time, test_job):
         """
-        Ensure and error is returned when state is set to `error`, but no error field is included.
+        Ensure and error is returned when state is set to `error`, but no error field is
+        included.
 
         """
         client = await spawn_client(authorize=True)

@@ -1,5 +1,17 @@
 from typing import Dict, List, Optional, Sequence, Union
+
+import virtool.utils
 from virtool.http.rights import MODIFY, READ, REMOVE, Right
+from virtool.types import Document
+
+WORKFLOW_NAMES = (
+    "jobs_build_index",
+    "jobs_create_sample",
+    "jobs_create_subtraction",
+    "jobs_aodp",
+    "jobs_nuvs",
+    "jobs_pathoscope_bowtie",
+)
 
 
 class JobRightsDomain:
@@ -117,3 +129,33 @@ class JobRights:
                 rights_dict[name] = rights_domain_dict
 
         return rights_dict
+
+
+def compose_status(
+    state: Optional[str],
+    stage: Optional[str],
+    step_name: Optional[str] = None,
+    step_description: Optional[str] = None,
+    error: Optional[dict] = None,
+    progress: Optional[int] = 0,
+) -> Document:
+    """
+    Compose a status subdocument for a job.
+
+    :param state: the current state
+    :param stage: the current stage
+    :param step_name: the name of the current step
+    :param step_description: a description of the current step
+    :param error: an error dict
+    :param progress: the current progress
+    :return: a status subdocument
+    """
+    return {
+        "state": state,
+        "stage": stage,
+        "step_name": step_name,
+        "step_description": step_description,
+        "error": error,
+        "progress": progress,
+        "timestamp": virtool.utils.timestamp(),
+    }

@@ -1,18 +1,20 @@
 import pytest
 
-from virtool.jobs.client import JobsClient
+from virtool.jobs.client import JOB_REMOVED_FROM_QUEUE, JobsClient
 
 
 @pytest.fixture
 def jobs_client(dbi, redis):
-    return JobsClient({"db": dbi, "redis": redis})
+    return JobsClient(redis)
 
 
-@pytest.mark.parametrize("workflow", ["nuvs", "create_sample"])
-async def test_enqueue(workflow, dbi, redis, jobs_client):
-    await dbi.jobs.insert_one({"_id": "foo", "workflow": workflow})
+@pytest.mark.parametrize("workflow", ["create_sample", "nuvs"])
+async def test_enqueue(workflow, redis, jobs_client):
+    """
+    Test that a job ID is put in the correct job list when enqueued.
 
-    await jobs_client.enqueue("foo")
+    """
+    await jobs_client.enqueue(workflow, "foo")
 
     key = f"jobs_{workflow}"
 
@@ -21,7 +23,11 @@ async def test_enqueue(workflow, dbi, redis, jobs_client):
 
 
 @pytest.mark.parametrize("workflow", ["nuvs", "create_sample"])
-async def test_cancel_waiting(workflow, dbi, redis, jobs_client, snapshot, static_time):
+async def test_cancel_waiting(workflow, redis, jobs_client):
+    """
+    Test that a job ID is cancelled by removal when still in a Redis list.
+
+    """
     await redis.rpush(f"jobs_{workflow}", "foo")
 
     list_keys = ["jobs_nuvs", "jobs_create_sample"]
@@ -29,39 +35,21 @@ async def test_cancel_waiting(workflow, dbi, redis, jobs_client, snapshot, stati
     for key in list_keys:
         await redis.rpush(key, "bar", "foo", "baz", "boo")
 
-    await dbi.jobs.insert_one(
-        {
-            "_id": "foo",
-            "state": "waiting",
-            "status": [
-                {
-                    "state": "running",
-                    "stage": "foo",
-                    "error": None,
-                    "progress": 0.33,
-                    "timestamp": static_time.datetime,
-                }
-            ],
-        }
-    )
-
-    await jobs_client.cancel("foo")
+    assert await jobs_client.cancel("foo") == JOB_REMOVED_FROM_QUEUE
 
     for key in list_keys:
         assert await redis.lrange(key, 0, 5, encoding="utf-8") == ["bar", "baz", "boo"]
 
-    assert await dbi.jobs.find_one() == snapshot
-
 
 async def test_cancel_running(dbi, redis, jobs_client):
+    """
+    Test that cancellation is published to 'channel:cancel' if the job ID is not in a
+    list already.
+
+    """
     (channel,) = await redis.subscribe("channel:cancel")
 
-    await dbi.jobs.insert_one({"_id": "foo", "state": "running"})
-
     await jobs_client.cancel("foo")
-
-    # Check that cancelling state is set of job document.
-    assert await dbi.jobs.find_one() == {"_id": "foo", "state": "cancelling"}
 
     # Check that job ID was published to cancellation channel.
     async for message in channel.iter(encoding="utf-8"):

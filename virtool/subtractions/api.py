@@ -15,8 +15,8 @@ import virtool.uploads.db
 import virtool.validators
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, get_query_bool, paginate
+from virtool.data.utils import get_data_from_req
 from virtool.db.transforms import apply_transforms
-from virtool.db.utils import get_new_id
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
@@ -163,18 +163,13 @@ async def create(req):
     rights.subtractions.can_remove(subtraction_id)
     rights.uploads.can_read(upload_id)
 
-    job_id = await get_new_id(db.jobs)
-
-    await virtool.jobs.db.create(
-        db, "create_subtraction", task_args, user_id, rights, job_id=job_id
+    await get_data_from_req(req).jobs.create(
+        "create_subtraction", task_args, user_id, rights
     )
-
-    await req.app["jobs"].enqueue(job_id)
 
     headers = {"Location": f"/subtraction/{subtraction_id}"}
 
     document = await attach_computed(req.app, document)
-
     document = await apply_transforms(document, [AttachUserTransform(db)])
 
     return json_response(base_processor(document), headers=headers, status=201)

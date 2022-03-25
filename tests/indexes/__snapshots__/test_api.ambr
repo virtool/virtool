@@ -84,6 +84,95 @@
     'version': 9,
   }
 ---
+# name: TestCreate.test[True-uvloop][index]
+  <class 'dict'> {
+    '_id': 'xjqvxigh',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'has_files': True,
+    'has_json': False,
+    'job': <class 'dict'> {
+      'id': 'u3cuwaoq',
+    },
+    'manifest': 'manifest',
+    'ready': False,
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+    'version': 9,
+  }
+---
+# name: TestCreate.test[True-uvloop][job]
+  <class 'dict'> {
+    '_id': 'u3cuwaoq',
+    'acquired': False,
+    'args': <class 'dict'> {
+      'index_id': 'xjqvxigh',
+      'index_version': 9,
+      'manifest': 'manifest',
+      'ref_id': 'foo',
+      'user_id': 'test',
+    },
+    'key': None,
+    'rights': <class 'dict'> {
+      'indexes': <class 'dict'> {
+        'modify': <class 'list'> [
+          'xjqvxigh',
+        ],
+      },
+      'references': <class 'dict'> {
+        'read': <class 'list'> [
+          'foo',
+        ],
+      },
+    },
+    'state': 'waiting',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+    'workflow': 'build_index',
+  }
+---
+# name: TestCreate.test[True-uvloop][json]
+  <class 'dict'> {
+    'change_count': 1,
+    'created_at': '2015-10-06T20:00:00Z',
+    'has_files': True,
+    'has_json': False,
+    'id': 'xjqvxigh',
+    'job': <class 'dict'> {
+      'id': 'u3cuwaoq',
+    },
+    'manifest': 'manifest',
+    'modified_otu_count': 0,
+    'ready': False,
+    'reference': <class 'dict'> {
+      'id': 'foo',
+    },
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'test',
+    },
+    'version': 9,
+  }
+---
+# name: TestCreate.test[True-uvloop][location]
+  'https://virtool.example.com/indexes/xjqvxigh'
+---
 # name: test_finalize[uvloop-404_reference]
   <class 'dict'> {
     'id': 'not_found',

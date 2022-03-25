@@ -31,6 +31,7 @@ from virtool.api.response import (
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.caches.models import SampleArtifactCache
 from virtool.caches.utils import join_cache_path
+from virtool.data.utils import get_data_from_req
 from virtool.db.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.http.routes import Routes
@@ -304,10 +305,9 @@ async def create(req):
     rights.samples.can_remove(sample_id)
     rights.uploads.can_read(*data["files"])
 
-    # Create job document.
-    job = await virtool.jobs.db.create(db, "create_sample", task_args, user_id, rights)
-
-    await req.app["jobs"].enqueue(job["_id"])
+    await get_data_from_req(req).jobs.create(
+        "create_sample", task_args, user_id, rights
+    )
 
     headers = {"Location": f"/samples/{sample_id}"}
 
@@ -644,12 +644,9 @@ async def analyze(req):
     rights.references.can_read(ref_id)
     rights.subtractions.can_read(*subtractions)
 
-    # Create job document.
-    job = await virtool.jobs.db.create(
-        db, document["workflow"], task_args, document["user"]["id"], rights
+    await get_data_from_req(req).jobs.create(
+        document["workflow"], task_args, document["user"]["id"], rights
     )
-
-    await req.app["jobs"].enqueue(job["_id"])
 
     await recalculate_workflow_tags(db, sample_id)
 
