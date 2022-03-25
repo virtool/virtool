@@ -1,8 +1,0 @@
----
-engines:
-  duplication:
-    exclude_paths:
-      - tests/**
-  coverage:
-    exclude_paths:
-      - tests/**
