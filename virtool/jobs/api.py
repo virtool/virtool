@@ -158,6 +158,7 @@ async def cancel(req):
                 "complete",
                 "cancelled",
                 "error",
+                "terminated",
             ],
             "required": True,
         },
@@ -178,7 +179,7 @@ async def push_status(req):
     if status is None:
         raise NotFound()
 
-    if status[-1]["state"] in ("complete", "cancelled", "error"):
+    if status[-1]["state"] in ("complete", "cancelled", "error", "terminated"):
         raise HTTPConflict(text="Job is finished")
 
     if data["state"] == "error" and not data["error"]:
@@ -214,7 +215,7 @@ async def clear(req):
     complete = job_filter in [None, "finished", "complete"]
 
     # Remove jobs that errored or were cancelled.
-    failed = job_filter in [None, "finished", "failed"]
+    failed = job_filter in [None, "failed", "finished" "terminated"]
 
     removed = await virtool.jobs.db.clear(db, complete=complete, failed=failed)
 
