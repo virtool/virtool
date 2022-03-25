@@ -26,11 +26,8 @@ jobs:
     services:
       redis:
         image: redis:6.0
-      mongo:
-        image: mongo:4.4
-        env:
-          MONGO_INITDB_ROOT_USERNAME: virtool
-          MONGO_INITDB_ROOT_PASSWORD: virtool
+        ports:
+          - 6379:6379
       postgres:
         image: postgres:13.1
         env:
@@ -41,11 +38,16 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    container:
-      image: virtool/external-tools:0.2.0
+        ports:
+          - 5432:5432
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.7.0
+        with:
+          mongodb-version: 4.4
+          mongodb-replica-set: rs
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
@@ -66,9 +68,9 @@ jobs:
           poetry run
           pytest
           -x
-          --db-connection-string mongodb://virtool:virtool@mongo:27017
-          --redis-connection-string redis://redis:6379
-          --postgres-connection-string postgresql+asyncpg://virtool:virtool@postgres
+          --db-connection-string mongodb://localhost:27017
+          --redis-connection-string redis://localhost:6379
+          --postgres-connection-string postgresql+asyncpg://virtool:virtool@localhost
           --cov
           --cov-report xml
   release:
