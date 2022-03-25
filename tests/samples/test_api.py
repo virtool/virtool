@@ -11,7 +11,10 @@ import virtool.pg.utils
 import virtool.uploads.db
 from virtool.caches.models import SampleArtifactCache, SampleReadsCache
 from virtool.caches.utils import join_cache_path
+from virtool.data.utils import get_data_from_app
+from virtool.jobs.client import DummyJobsClient
 from virtool.labels.models import Label
+from virtool.pg.utils import get_row_by_id
 from virtool.samples.db import check_name
 from virtool.samples.files import create_reads_file
 from virtool.samples.models import SampleArtifact, SampleReads
@@ -218,6 +221,12 @@ class TestCreate:
         client.app["settings"] = settings
         client.app["settings"].sm_proc = 2
         client.app["settings"].sm_mem = 4
+        client.app["settings"].sample_group = group_setting
+        client.app["settings"].sample_all_write = True
+        client.app["settings"].sample_group_write = True
+
+        data = get_data_from_app(client.app)
+        data.jobs._client = DummyJobsClient()
 
         await client.db.subtraction.insert_one({"_id": "apple"})
 
@@ -234,17 +243,7 @@ class TestCreate:
             [{"_id": "diagnostics"}, {"_id": "technician"}]
         )
 
-        client.app["settings"].sample_group = group_setting
-        client.app["settings"].sample_all_write = True
-        client.app["settings"].sample_group_write = True
-
-        m_reserve = mocker.patch("virtool.uploads.db.reserve", make_mocked_coro())
-
         client.app["jobs"] = mocker.Mock()
-
-        m_enqueue = mocker.patch.object(
-            client.app["jobs"], "enqueue", make_mocked_coro()
-        )
 
         request_data = {
             "name": "Foobar",
@@ -264,10 +263,12 @@ class TestCreate:
 
         assert await client.db.samples.find_one() == snapshot
 
-        # Check call to file.reserve.
-        m_reserve.assert_called_with(client.app["pg"], [1])
+        assert data.jobs._client.enqueued == [("create_sample", "u3cuwaoq")]
 
-        m_enqueue.assert_called_with(test_random_alphanumeric.history[1])
+        async with pg.begin() as conn:
+            upload = await get_row_by_id(conn, Upload, 1)
+
+        assert upload.reserved is True
 
     async def test_name_exists(self, spawn_client, static_time, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])

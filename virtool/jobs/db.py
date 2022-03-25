@@ -3,14 +3,10 @@ Constants and utility functions for interacting with the jobs collection in the
 application database.
 
 """
-from asyncio import gather
-from typing import Any, Dict, Optional
 
-import virtool.utils
 from virtool.db.transforms import apply_transforms
-from virtool.jobs.utils import JobRights
-from virtool.types import App, Document
 from virtool.users.db import AttachUserTransform
+from virtool.utils import base_processor
 
 OR_COMPLETE = [{"status.state": "complete"}]
 
@@ -21,114 +17,6 @@ LIST_PROJECTION = ["_id", "workflow", "status", "proc", "mem", "rights", "user"]
 
 #: A projection for full job details. Excludes the secure key field.
 PROJECTION = {"key": False}
-
-
-async def cancel(db, job_id: str) -> dict:
-    """
-    Add a cancellation status sub-document to the job identified by `job_id`.
-
-    :param db: the application database connection
-    :param job_id: the ID of the job to add a cancellation status for
-
-    """
-    document = await db.jobs.find_one(job_id, ["status"])
-
-    latest = document["status"][-1]
-
-    return await db.jobs.find_one_and_update(
-        {"_id": job_id},
-        {
-            "$push": {
-                "status": compose_status(
-                    "cancelled", latest["stage"], progress=latest["progress"]
-                )
-            }
-        },
-        projection=PROJECTION,
-    )
-
-
-async def clear(db, complete: bool = False, failed: bool = False):
-    or_list = list()
-
-    if complete:
-        or_list = OR_COMPLETE
-
-    if failed:
-        or_list += OR_FAILED
-
-    removed = list()
-
-    if len(or_list):
-        query = {"$or": or_list}
-
-        removed = await db.jobs.distinct("_id", query)
-        await db.jobs.delete_many(query)
-
-    return removed
-
-
-async def create(
-    db,
-    workflow: str,
-    job_args: Dict[str, Any],
-    user_id: str,
-    rights: JobRights,
-    job_id: Optional[str] = None,
-) -> Dict[str, Any]:
-    """
-    Create, insert, and return a job document.
-
-    :param db: the application database object
-    :param workflow: the name of the workflow to run
-    :param job_args: the arguments required to run the job
-    :param user_id: the user that started the job
-    :param rights: the rights the job will have on Virtool resources
-    :param job_id: an optional ID to use for the new job
-
-    """
-    document = {
-        "acquired": False,
-        "workflow": workflow,
-        "args": job_args,
-        "key": None,
-        "rights": rights.as_dict(),
-        "state": "waiting",
-        "status": [compose_status("waiting", None)],
-        "user": {"id": user_id},
-    }
-
-    if job_id:
-        document["_id"] = job_id
-
-    document = await db.jobs.insert_one(document)
-
-    return document
-
-
-async def acquire(db, job_id: str) -> Dict[str, Any]:
-    """
-    Set the `started` field on a job to `True` and return the complete document.
-
-    :param db: the application database object
-    :param job_id: the ID of the job to start
-    :return: the complete job document
-
-    """
-    key, hashed = virtool.utils.generate_key()
-
-    document = await db.jobs.find_one_and_update(
-        {"_id": job_id},
-        {
-            "$set": {"acquired": True, "key": hashed},
-            "$push": {"status": compose_status("preparing", None, progress=3)},
-        },
-        projection=PROJECTION,
-    )
-
-    document["key"] = key
-
-    return virtool.utils.base_processor(document)
 
 
 async def processor(db, document: dict) -> dict:
@@ -153,7 +41,7 @@ async def processor(db, document: dict) -> dict:
     last_update = status[-1]
 
     return await apply_transforms(
-        virtool.utils.base_processor(
+        base_processor(
             {
                 **document,
                 "state": last_update["state"],
@@ -164,50 +52,3 @@ async def processor(db, document: dict) -> dict:
         ),
         [AttachUserTransform(db)],
     )
-
-
-async def delete(app: App, job_id: str):
-    await app["db"].jobs.delete_one({"_id": job_id})
-
-
-def compose_status(
-    state: Optional[str],
-    stage: Optional[str],
-    step_name: Optional[str] = None,
-    step_description: Optional[str] = None,
-    error: Optional[dict] = None,
-    progress: Optional[int] = 0,
-) -> Document:
-    """
-    Compose a status subdocument for a job.
-
-    :param state: the current state
-    :param stage: the current stage
-    :param step_name: the name of the current step
-    :param step_description: a description of the current step
-    :param error: an error dict
-    :param progress: the current progress
-    :return: a status subdocument
-    """
-    return {
-        "state": state,
-        "stage": stage,
-        "step_name": step_name,
-        "step_description": step_description,
-        "error": error,
-        "progress": progress,
-        "timestamp": virtool.utils.timestamp(),
-    }
-
-
-async def force_delete_jobs(app: App):
-    """
-    Force cancellation and deletion of all jobs.
-
-    :param app: the application object
-
-    """
-    job_ids = await app["db"].jobs.distinct("_id")
-
-    await gather(*[app["jobs"].cancel(job_id) for job_id in job_ids])
-    await gather(*[delete(app, job_id) for job_id in job_ids])

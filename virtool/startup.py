@@ -36,6 +36,7 @@ from virtool.indexes.tasks import (
     AddIndexJSONTask,
 )
 from virtool.jobs.client import JobsClient
+from virtool.jobs.data import JobsData
 from virtool.oidc.utils import JWKArgs
 from virtool.otus.data import OTUData
 from virtool.pg.testing import create_test_database
@@ -120,7 +121,10 @@ async def startup_data(app: App):
     :param app: the application object
     """
     app["data"] = DataLayer(
-        AnalysisData(app), BLASTData(app["db"], app["pg"], app["tasks"]), OTUData(app)
+        AnalysisData(app),
+        BLASTData(app["db"], app["pg"], app["tasks"]),
+        JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
+        OTUData(app),
     )
 
 
@@ -234,18 +238,6 @@ async def startup_fake_config(app: App):
         app["config"].db_name = f"fake-{suffix}"
         app["config"].data_path = create_fake_data_path()
         app["config"].postgres_connection_string = f"{base_connection_string}/{name}"
-
-
-async def startup_jobs_client(app: Application):
-    """
-    An application `on_startup` callback that initializes a Virtool
-    :class:`virtool.job_manager.Manager` object and puts it in app state.
-
-    :param app: the app object
-    :type app: :class:`aiohttp.aiohttp.web.Application`
-
-    """
-    app["jobs"] = JobsClient(app)
 
 
 async def startup_http_client(app: Application):

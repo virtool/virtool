@@ -1,22 +1,23 @@
 from abc import ABC, abstractmethod
 
 import pytest
-from attr import dataclass
 from faker.proxy import Faker
+
 from virtool.fake.wrapper import FakerWrapper
+from virtool.types import Document
 
 
 class AbstractFakeDataGenerator(ABC):
     @abstractmethod
-    def create() -> dict:
+    def create(self) -> Document:
         ...
 
     @abstractmethod
-    async def insert() -> dict:
+    async def insert(self) -> Document:
         ...
 
     @abstractmethod
-    async def get_id() -> str:
+    async def get_id(self) -> str:
         ...
 
 
@@ -70,7 +71,7 @@ class FakeUserGenerator(AbstractFakeDataGenerator):
         self._db = db
         self._faker = FakerWrapper()
 
-    async def create(self):
+    async def create(self) -> Document:
         profile = self._faker.profile()
 
         return {
@@ -84,12 +85,12 @@ class FakeUserGenerator(AbstractFakeDataGenerator):
             "created_at": self._faker.date_time(),
         }
 
-    async def insert(self):
+    async def insert(self) -> Document:
         document = await self.create()
         await self._db.users.insert_one(document)
         return document
 
-    async def get_id(self):
+    async def get_id(self) -> str:
         id_list = await self._db.users.distinct("_id")
 
         if id_list:

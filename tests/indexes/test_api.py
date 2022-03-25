@@ -9,10 +9,13 @@ from pathlib import Path
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy import select
+
+from virtool.data.utils import get_data_from_app
 from virtool.indexes.db import FILES
 from virtool.indexes.files import create_index_file
 from virtool.indexes.models import IndexFile
 from virtool.indexes.utils import check_index_file_type
+from virtool.jobs.client import DummyJobsClient
 
 OTUS_JSON_PATH = Path.cwd() / "tests/test_files/index/otus.json.gz"
 
@@ -187,6 +190,9 @@ class TestCreate:
         client.app["settings"].sm_proc = 1
         client.app["settings"].sm_mem = 2
 
+        data = get_data_from_app(client.app)
+        data.jobs._client = DummyJobsClient()
+
         await client.db.references.insert_one({"_id": "foo"})
 
         # Insert unbuilt changes to prevent initial check failure.
@@ -196,12 +202,6 @@ class TestCreate:
                 "reference": {"id": "foo"},
             }
         )
-
-        # Define mocks.
-        m_job_manager = client.app["jobs"] = mocker.Mock()
-        mocker.patch.object(m_job_manager, "close", make_mocked_coro())
-
-        m_enqueue = mocker.patch.object(m_job_manager, "enqueue", make_mocked_coro())
 
         m_get_next_version = mocker.patch(
             "virtool.indexes.db.get_next_version", new=make_mocked_coro(9)
@@ -219,23 +219,14 @@ class TestCreate:
             return
 
         assert resp.status == 201
-        assert await resp.json() == snapshot
-
-        expected_job_id = test_random_alphanumeric.history[1]
-        expected_id = test_random_alphanumeric.history[2]
-
-        assert (
-            resp.headers["Location"]
-            == f"https://virtool.example.com/indexes/{expected_id}"
-        )
-        assert await client.db.jobs.find_one() == snapshot
-        assert await client.db.indexes.find_one() == snapshot
+        assert await resp.json() == snapshot(name="json")
+        assert resp.headers["Location"] == snapshot(name="location")
+        assert await client.db.jobs.find_one() == snapshot(name="job")
+        assert await client.db.indexes.find_one() == snapshot(name="index")
+        assert data.jobs._client.enqueued == [("build_index", "u3cuwaoq")]
 
         m_get_next_version.assert_called_with(client.db, "foo")
         m_create_manifest.assert_called_with(client.db, "foo")
-
-        # Check that appropriate mocks were called.
-        m_enqueue.assert_called_with(expected_job_id)
 
     @pytest.mark.parametrize(
         "error", [None, "400_unbuilt", "400_unverified", "409_running"]

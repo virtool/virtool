@@ -14,6 +14,7 @@ import virtool.utils
 from virtool.api.json import CustomEncoder
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
+from virtool.data.utils import get_data_from_req
 from virtool.db.utils import get_new_id
 from virtool.history.db import LIST_PROJECTION
 from virtool.http.routes import Routes
@@ -255,25 +256,23 @@ async def create(req):
 
     document = await virtool.indexes.db.create(db, ref_id, user_id, job_id)
 
-    # A dict of task_args for the rebuild job.
-    task_args = {
-        "ref_id": ref_id,
-        "user_id": user_id,
-        "index_id": document["_id"],
-        "index_version": document["version"],
-        "manifest": document["manifest"],
-    }
-
     rights = JobRights()
     rights.indexes.can_modify(document["_id"])
     rights.references.can_read(ref_id)
 
-    # Create job document.
-    job = await virtool.jobs.db.create(
-        db, "build_index", task_args, user_id, rights, job_id=job_id
+    job = await get_data_from_req(req).jobs.create(
+        "build_index",
+        {
+            "ref_id": ref_id,
+            "user_id": user_id,
+            "index_id": document["_id"],
+            "index_version": document["version"],
+            "manifest": document["manifest"],
+        },
+        user_id,
+        rights,
+        job_id=job_id,
     )
-
-    await req.app["jobs"].enqueue(job["_id"])
 
     headers = {"Location": f"/indexes/{document['_id']}"}
 

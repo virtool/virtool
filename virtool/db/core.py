@@ -142,6 +142,7 @@ class Collection:
         document_id = await virtool.db.utils.get_one_field(
             self._collection, "_id", query
         )
+
         delete_result = await self._collection.delete_one(query, session=session)
 
         if not silent and delete_result.deleted_count:

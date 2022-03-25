@@ -6,15 +6,18 @@ from types import SimpleNamespace
 from typing import List
 
 import aiofiles
+import yaml
+
 import virtool.indexes.db
 import virtool.jobs.db
 import virtool.subtractions.db
-import yaml
 from virtool.analyses.files import create_analysis_file
 from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
 from virtool.hmm.fake import create_fake_hmms
 from virtool.indexes.files import create_index_file
+from virtool.jobs.client import DummyJobsClient
+from virtool.jobs.data import JobsData
 from virtool.jobs.utils import JobRights
 from virtool.otus.fake import create_fake_otus
 from virtool.references.db import create_document
@@ -203,13 +206,14 @@ class TestCaseDataFactory:
         return await create_fake_otus(self.app, ref_id, self.user_id)
 
     async def job(self, workflow: str, args: dict, rights=JobRights()):
-        return await virtool.jobs.db.create(
-            db=self.db,
-            workflow=workflow,
-            job_args=args,
-            user_id=self.user_id,
-            job_id=self.job_id,
-            rights=rights,
+        jobs_data = JobsData(DummyJobsClient(), self.db, self.pg)
+
+        return await jobs_data.create(
+            workflow,
+            args,
+            self.user_id,
+            rights,
+            self.job_id,
         )
 
 
