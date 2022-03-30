@@ -2642,6 +2642,14 @@
     },
   ]
 ---
+# name: test_import_reference_task[uvloop][ref]
+  <class 'dict'> {
+    '_id': 'foo',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'organism': 'virus',
+  }
+---
 # name: test_import_reference_task[uvloop][sequences]
   <class 'list'> [
     <class 'dict'> {

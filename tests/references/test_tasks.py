@@ -125,6 +125,8 @@ async def test_import_reference_task(snapshot, spawn_client, pg, static_time, tm
     import_reference_task = ImportReferenceTask(client.app, 1)
     await import_reference_task.run()
 
+    assert await client.db.references.find_one({"_id": "foo"}) == snapshot(name="ref")
+
     assert await client.db.otus.find({}, sort=[("name", 1)]).to_list(None) == snapshot(
         name="otus",
         matcher=path_type(
