@@ -148,6 +148,28 @@ class ImportReferenceTask(Task):
         ref_id = self.context["ref_id"]
         user_id = self.context["user_id"]
 
+        try:
+            data_type = self.import_data["data_type"]
+        except (TypeError, KeyError):
+            data_type = "genome"
+
+        try:
+            organism = self.import_data["organism"]
+        except (TypeError, KeyError):
+            organism = ""
+
+        try:
+            targets = self.import_data["targets"]
+        except (TypeError, KeyError):
+            targets = None
+
+        update_dict = {"data_type": data_type, "organism": organism}
+
+        if targets:
+            update_dict["targets"] = targets
+
+        await self.db.references.update_one({"_id": ref_id}, {"$set": update_dict})
+
         created_at = await get_one_field(self.db.references, "created_at", ref_id)
 
         otus = self.import_data["otus"]
