@@ -106,6 +106,7 @@
         ],
       ),
       <class 'dict'> {
+        'session': None,
       },
     ),
     <class '_Call'> (
@@ -214,6 +215,7 @@
         ],
       ),
       <class 'dict'> {
+        'session': None,
       },
     ),
     <class '_Call'> (
@@ -322,6 +324,7 @@
         ],
       ),
       <class 'dict'> {
+        'session': None,
       },
     ),
     <class '_Call'> (
@@ -402,6 +405,7 @@
         ],
       ),
       <class 'dict'> {
+        'session': None,
       },
     ),
   ]
@@ -474,6 +478,7 @@
         ],
       ),
       <class 'dict'> {
+        'session': None,
       },
     ),
     <class '_Call'> (
@@ -542,6 +547,7 @@
         ],
       ),
       <class 'dict'> {
+        'session': None,
       },
     ),
     <class '_Call'> (
@@ -610,6 +616,7 @@
         ],
       ),
       <class 'dict'> {
+        'session': None,
       },
     ),
     <class '_Call'> (
@@ -678,6 +685,7 @@
         ],
       ),
       <class 'dict'> {
+        'session': None,
       },
     ),
     <class '_Call'> (
@@ -746,6 +754,7 @@
         ],
       ),
       <class 'dict'> {
+        'session': None,
       },
     ),
     <class '_Call'> (
@@ -814,6 +823,7 @@
         ],
       ),
       <class 'dict'> {
+        'session': None,
       },
     ),
     <class '_Call'> (
@@ -834,6 +844,7 @@
         ],
       ),
       <class 'dict'> {
+        'session': None,
       },
     ),
   ]

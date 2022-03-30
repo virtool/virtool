@@ -7,10 +7,12 @@ from pathlib import Path
 
 import aiohttp
 import arrow
+from pip._internal.utils._log import getLogger
 from semver import VersionInfo
 
 import virtool.tasks.pg
 from virtool.data.utils import get_data_from_app
+from virtool.db.utils import get_one_field
 from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument
 from virtool.history.db import patch_to_version
@@ -28,7 +30,9 @@ from virtool.references.utils import (
     load_reference_file,
 )
 from virtool.tasks.task import Task
-from virtool.utils import get_temp_dir
+from virtool.utils import chunk_list, get_temp_dir
+
+logger = getLogger(__name__)
 
 
 class CloneReferenceTask(Task):
@@ -104,10 +108,8 @@ class ImportReferenceTask(Task):
 
         self.steps = [
             self.load_file,
-            self.set_metadata,
             self.validate,
-            self.import_otus,
-            self.create_history,
+            self.import_reference,
         ]
 
         self.import_data = None
@@ -115,6 +117,7 @@ class ImportReferenceTask(Task):
     async def load_file(self):
         path = self.context["path"]
         tracker = await self.get_tracker()
+
         try:
             self.import_data = await self.run_in_thread(load_reference_file, path)
         except json.decoder.JSONDecodeError as err:
@@ -129,36 +132,6 @@ class ImportReferenceTask(Task):
             self.pg, self.id, progress=tracker.step_completed, step="load_file"
         )
 
-    async def set_metadata(self):
-        ref_id = self.context["ref_id"]
-        tracker = await self.get_tracker()
-
-        try:
-            data_type = self.import_data["data_type"]
-        except (TypeError, KeyError):
-            data_type = "genome"
-
-        try:
-            organism = self.import_data["organism"]
-        except (TypeError, KeyError):
-            organism = ""
-
-        try:
-            targets = self.import_data["targets"]
-        except (TypeError, KeyError):
-            targets = None
-
-        update_dict = {"data_type": data_type, "organism": organism}
-
-        if targets:
-            update_dict["targets"] = targets
-
-        await self.db.references.update_one({"_id": ref_id}, {"$set": update_dict})
-
-        await virtool.tasks.pg.update(
-            self.pg, self.id, progress=tracker.step_completed, step="set_metadata"
-        )
-
     async def validate(self):
         tracker = await self.get_tracker()
 
@@ -171,38 +144,39 @@ class ImportReferenceTask(Task):
             self.pg, self.id, progress=tracker.step_completed, step="validate"
         )
 
-    async def import_otus(self):
-        created_at = self.context["created_at"]
+    async def import_reference(self):
         ref_id = self.context["ref_id"]
         user_id = self.context["user_id"]
 
+        created_at = await get_one_field(self.db.references, "created_at", ref_id)
+
         otus = self.import_data["otus"]
 
-        tracker = await self.get_tracker(len(otus))
+        tracker = await self.get_tracker(len(otus) * 2)
 
-        inserted_otu_ids = list()
+        inserted_otu_ids = []
 
-        for otu in otus:
-            otu_id = await insert_joined_otu(self.db, otu, created_at, ref_id, user_id)
-            inserted_otu_ids.append(otu_id)
-            await tracker.add(1)
+        async with self.db.create_session() as session:
+            for chunk in chunk_list(otus, 10):
+                chunk_otu_ids = await gather(
+                    *[
+                        insert_joined_otu(self.db, otu, created_at, ref_id, user_id)
+                        for otu in chunk
+                    ]
+                )
+                inserted_otu_ids.extend(chunk_otu_ids)
+                await tracker.add(len(chunk))
 
-        await self.update_context({"inserted_otu_ids": inserted_otu_ids})
-
-        await virtool.tasks.pg.update(self.pg, self.id, step="import_otus")
-
-    async def create_history(self):
-        inserted_otu_ids = self.context["inserted_otu_ids"]
-        user_id = self.context["user_id"]
-
-        tracker = await self.get_tracker(len(inserted_otu_ids))
-
-        for otu_id in inserted_otu_ids:
-            await insert_change(self.app, otu_id, "import", user_id)
-
-            await tracker.add(1)
-
-        await virtool.tasks.pg.update(self.pg, self.id, step="create_history")
+            for chunk in chunk_list(inserted_otu_ids, 10):
+                await gather(
+                    *[
+                        insert_change(
+                            self.app, otu_id, "import", user_id, session=session
+                        )
+                        for otu_id in chunk
+                    ]
+                )
+                await tracker.add(len(chunk))
 
 
 class RemoteReferenceTask(Task):
@@ -264,7 +238,6 @@ class RemoteReferenceTask(Task):
                 self.context["created_at"],
                 self.context["ref_id"],
                 self.context["user_id"],
-                remote=True,
             )
             self.inserted_otu_ids.append(otu_id)
             await tracker.add(1)

@@ -1,9 +1,18 @@
+import datetime
+import shutil
+from pathlib import Path
+
 import arrow
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+from syrupy.matchers import path_type
 
-from virtool.references.tasks import CleanReferencesTask
+import virtool.uploads.db
+from virtool.references.tasks import CleanReferencesTask, ImportReferenceTask
 from virtool.tasks.models import Task
+from virtool.uploads.models import UploadType
+
+TEST_FILES_PATH = Path(__file__).parent.parent / "test_files"
 
 
 @pytest.mark.parametrize(
@@ -75,3 +84,70 @@ async def test_clean_references_task(
     await clean_references_task.run()
 
     assert await dbi.references.find_one({}) == snapshot
+
+
+async def test_import_reference_task(snapshot, spawn_client, pg, static_time, tmpdir):
+    client = await spawn_client(authorize=True)
+
+    path = Path(tmpdir.mkdir("files")) / "reference.json.gz"
+    shutil.copyfile(TEST_FILES_PATH / "reference.json.gz", path)
+
+    await virtool.uploads.db.create(
+        pg, "import.json.gz", UploadType.reference, False, "test"
+    )
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            Task(
+                id=1,
+                complete=False,
+                context={
+                    "path": str(path),
+                    "ref_id": "foo",
+                    "user_id": "test",
+                },
+                count=0,
+                progress=0,
+                step="load_file",
+                type="import_reference",
+                created_at=static_time.datetime,
+            )
+        )
+        await session.commit()
+
+    await client.db.references.insert_one(
+        {
+            "_id": "foo",
+            "created_at": static_time.datetime,
+        }
+    )
+
+    import_reference_task = ImportReferenceTask(client.app, 1)
+    await import_reference_task.run()
+
+    assert await client.db.otus.find({}, sort=[("name", 1)]).to_list(None) == snapshot(
+        name="otus",
+        matcher=path_type(
+            {".*_id": (str,), ".*created_at": (datetime.datetime,)},
+            regex=True,
+        ),
+    )
+
+    assert await client.db.sequences.find({}, sort=[("accession", 1)]).to_list(
+        None
+    ) == snapshot(
+        name="sequences",
+        matcher=path_type(
+            {
+                ".*_id": (str,),
+            },
+            regex=True,
+        ),
+    )
+
+    assert await client.db.history.find({}, sort=[("otu.name", 1)]).to_list(
+        None
+    ) == snapshot(
+        name="history",
+        matcher=path_type({".*_id": (str,), ".*otu.id": (str,)}, regex=True),
+    )

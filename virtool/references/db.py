@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Union
 import pymongo
 from aiohttp import ClientConnectorError
 from aiohttp.web import Request
+from motor.motor_asyncio import AsyncIOMotorClientSession
 from semver import VersionInfo
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 
@@ -737,7 +738,12 @@ async def edit(db, ref_id: str, data: dict) -> dict:
 
 
 async def insert_change(
-    app, otu_id: str, verb: str, user_id: str, old: Optional[dict] = None
+    app,
+    otu_id: str,
+    verb: str,
+    user_id: str,
+    old: Optional[dict] = None,
+    session: Optional[AsyncIOMotorClientSession] = None,
 ):
     """
     Insert a history document for the OTU identified by `otu_id` and the passed `verb`.
@@ -747,29 +753,24 @@ async def insert_change(
     :param verb: the change verb (eg. remove, insert)
     :param user_id: the ID of the requesting user
     :param old: the old joined OTU document
+    :param session: a Mongo session
 
     """
     db = app["db"]
 
-    # Join the otu document into a complete otu record. This will be used for recording
-    # history.
-    joined = await join(db, otu_id)
+    joined = await join(db, otu_id, session=session)
 
     name = joined["name"]
 
     e = "" if verb[-1] == "e" else "e"
 
-    # Build a ``description`` field for the otu creation change document.
     description = f"{verb.capitalize()}{e}d {name}"
 
-    abbreviation = joined.get("abbreviation")
-
-    # Add the abbreviation to the description if there is one.
-    if abbreviation:
+    if abbreviation := joined.get("abbreviation"):
         description = f"{description} ({abbreviation})"
 
     await virtool.history.db.add(
-        app, verb, old, joined, description, user_id, silent=True
+        app, verb, old, joined, description, user_id, silent=True, session=session
     )
 
 
@@ -779,33 +780,38 @@ async def insert_joined_otu(
     created_at: datetime.datetime,
     ref_id: str,
     user_id: str,
-    remote: bool = False,
+    session: Optional[AsyncIOMotorClientSession] = None,
 ) -> str:
-    all_sequences = list()
-
     issues = verify(otu)
 
-    otu.update(
+    document = await db.otus.insert_one(
         {
+            "abbreviation": otu["abbreviation"],
             "created_at": created_at,
+            "imported": True,
+            "isolates": [
+                {
+                    key: isolate[key]
+                    for key in ("id", "default", "source_type", "source_name")
+                }
+                for isolate in otu["isolates"]
+            ],
+            "issues": issues,
             "lower_name": otu["name"].lower(),
             "last_indexed_version": None,
-            "issues": issues,
-            "verified": issues is None,
-            "imported": True,
-            "version": 0,
+            "name": otu["name"],
             "reference": {"id": ref_id},
+            "remote": {"id": otu["_id"]},
+            "schema": otu.get("schema", []),
             "user": {"id": user_id},
-        }
+            "verified": issues is None,
+            "version": 0,
+        },
+        silent=True,
+        session=session,
     )
 
-    if "schema" not in otu:
-        otu["schema"] = list()
-
-    remote_id = otu.pop("_id")
-
-    if remote:
-        otu["remote"] = {"id": remote_id}
+    sequences = []
 
     for isolate in otu["isolates"]:
         for sequence in isolate.pop("sequences"):
@@ -815,23 +821,20 @@ async def insert_joined_otu(
             except KeyError:
                 remote_sequence_id = sequence.pop("_id")
 
-            all_sequences.append(
+            sequences.append(
                 {
                     **sequence,
                     "accession": sequence["accession"],
                     "isolate_id": isolate["id"],
+                    "otu_id": document["_id"],
                     "segment": sequence.get("segment", ""),
                     "reference": {"id": ref_id},
                     "remote": {"id": remote_sequence_id},
                 }
             )
 
-    document = await db.otus.insert_one(otu, silent=True)
-
-    for sequence in all_sequences:
-        await db.sequences.insert_one(
-            dict(sequence, otu_id=document["_id"]), silent=True
-        )
+    for sequence in sequences:
+        await db.sequences.insert_one(sequence)
 
     return document["_id"]
 
@@ -936,4 +939,4 @@ async def update_joined_otu(
 
         return old
 
-    return await insert_joined_otu(db, otu, created_at, ref_id, user_id, remote=True)
+    return await insert_joined_otu(db, otu, created_at, ref_id, user_id)
