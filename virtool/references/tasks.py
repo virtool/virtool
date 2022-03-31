@@ -3,11 +3,11 @@ import os
 import shutil
 from asyncio import gather
 from datetime import timedelta
+from logging import getLogger
 from pathlib import Path
 
 import aiohttp
 import arrow
-from pip._internal.utils._log import getLogger
 from semver import VersionInfo
 
 import virtool.tasks.pg
