@@ -634,7 +634,7 @@ async def create_import(
     created_at = virtool.utils.timestamp()
 
     document = await create_document(
-        pg,
+        db,
         settings,
         name or "Unnamed Import",
         None,
