@@ -319,7 +319,7 @@ async def create(req):
 
         context = {
             "created_at": document["created_at"],
-            "path": path,
+            "path": str(path),
             "ref_id": document["_id"],
             "user_id": user_id,
         }

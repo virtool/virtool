@@ -115,8 +115,7 @@ class ImportReferenceTask(Task):
         self.import_data = None
 
     async def load_file(self):
-        path = self.context["path"]
-        tracker = await self.get_tracker()
+        path = Path(self.context["path"])
 
         try:
             self.import_data = await self.run_in_thread(load_reference_file, path)
@@ -128,21 +127,9 @@ class ImportReferenceTask(Task):
             else:
                 return await self.error(str(err))
 
-        await virtool.tasks.pg.update(
-            self.pg, self.id, progress=tracker.step_completed, step="load_file"
-        )
-
     async def validate(self):
-        tracker = await self.get_tracker()
-
-        errors = check_import_data(self.import_data, strict=False, verify=True)
-
-        if errors:
+        if errors := check_import_data(self.import_data, strict=False, verify=True):
             return await self.error(errors)
-
-        await virtool.tasks.pg.update(
-            self.pg, self.id, progress=tracker.step_completed, step="validate"
-        )
 
     async def import_reference(self):
         ref_id = self.context["ref_id"]

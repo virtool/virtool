@@ -348,3 +348,59 @@
     ],
   }
 ---
+# name: test_import_reference[uvloop]
+  <class 'dict'> {
+    'contributors': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': None,
+    'description': '',
+    'groups': <class 'list'> [
+    ],
+    'id': <class 'str'>,
+    'imported_from': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 1,
+      'name': 'reference.json.gz',
+      'name_on_disk': '1-reference.json.gz',
+      'ready': True,
+      'removed': False,
+      'removed_at': None,
+      'reserved': False,
+      'size': 102286,
+      'type': 'reference',
+      'uploaded_at': '2015-10-06T20:00:00Z',
+      'user': 'test',
+    },
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Test Viruses',
+    'organism': None,
+    'otu_count': 0,
+    'restrict_source_types': False,
+    'source_types': <class 'list'> [
+      'isolate',
+      'strain',
+    ],
+    'task': <class 'dict'> {
+      'id': 1,
+    },
+    'unbuilt_change_count': 0,
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'bob',
+      'id': 'test',
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'build': True,
+        'handle': 'bob',
+        'id': 'test',
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      },
+    ],
+  }
+---

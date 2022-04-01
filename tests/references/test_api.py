@@ -1,7 +1,15 @@
+import asyncio
+from asyncio import gather
+from pathlib import Path
+
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from aiohttp.web import Request
+from syrupy.matchers import path_type
+
+from virtool.pg.utils import get_row_by_id
 from virtool.references.tasks import UpdateRemoteReferenceTask
+from virtool.tasks.models import Task
 
 
 @pytest.mark.parametrize("error", [None, "400", "404"])
@@ -170,6 +178,53 @@ async def test_create(
     assert resp.status == 201
     assert resp.headers["Location"] == snapshot
     assert await resp.json() == snapshot
+
+
+async def test_import_reference(pg, snapshot, spawn_client, test_files_path, tmpdir):
+    client = await spawn_client(
+        authorize=True,
+        permissions=["create_ref", "upload_file"],
+    )
+
+    tmpdir.mkdir("files")
+
+    client.app["config"].data_path = Path(tmpdir)
+
+    with open(test_files_path / "reference.json.gz", "rb") as f:
+        resp = await client.post_form(
+            "/uploads?type=reference&name=reference.json.gz", data={"file": f}
+        )
+
+        upload = await resp.json()
+
+    resp = await client.post(
+        "/refs", {"name": "Test Viruses", "import_from": str(upload["name_on_disk"])}
+    )
+
+    reference = await resp.json()
+    assert reference == snapshot(
+        matcher=path_type({"id": (str,)}),
+    )
+
+    task_id = reference["task"]["id"]
+
+    while True:
+        await asyncio.sleep(1)
+
+        task: Task = await get_row_by_id(pg, Task, task_id)
+        complete = task.complete
+
+        if complete:
+            assert (
+                await gather(
+                    client.db.otus.count_documents({}),
+                    client.db.sequences.count_documents({}),
+                    client.db.history.count_documents({}),
+                )
+                == [20, 26, 20]
+            )
+
+            break
 
 
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
