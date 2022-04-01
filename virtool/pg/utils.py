@@ -80,7 +80,7 @@ async def delete_row(pg: AsyncEngine, id_: int, model: Type[Base]):
             await session.commit()
 
 
-async def get_row_by_id(pg: AsyncEngine, model: Type[Base], id_: int) -> Optional[Base]:
+async def get_row_by_id(pg: AsyncEngine, model: Base, id_: int) -> Optional[Base]:
     """
     Get a row from a SQL `model` by its `id`.
 
