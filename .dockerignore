@@ -1,0 +1,8 @@
+.codacy.yml
+.github
+.pytest_cache
+config.json
+data
+docs
+tests
+watch
