@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 import pytest
-from faker.proxy import Faker
 
 from virtool.fake.wrapper import FakerWrapper
 from virtool.types import Document
@@ -26,30 +25,39 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
         self.generator = fake_generator
 
         self._db = db
-        self._faker = Faker()
+        self._faker = FakerWrapper()
 
-    async def create(self) -> dict:
-        return {
-            "acquired": self._faker.pybool(),
-            "workflow": "nuvs",
-            "args": {},
-            "key": None,
-            "rights": {},
-            "state": "waiting",
-            "status": [
+    async def create(self, randomize: bool = False) -> dict:
+        status = (
+            self._faker.fake.job_status()
+            if randomize
+            else [
                 {
                     "state": "waiting",
                     "stage": None,
                     "error": None,
                     "progress": 0,
                     "timestamp": self._faker.date_time(),
-                }
-            ],
+                },
+            ]
+        )
+
+        workflow = self._faker.fake.workflow() if randomize else "nuvs"
+
+        return {
+            "_id": self._faker.fake.mongo_id(),
+            "acquired": False,
+            "workflow": workflow,
+            "args": {},
+            "key": None,
+            "rights": {},
+            "state": "waiting",
+            "status": status,
             "user": {"id": await self.generator.users.get_id()},
         }
 
-    async def insert(self) -> dict:
-        document = await self.create()
+    async def insert(self, randomize: bool = False) -> dict:
+        document = await self.create(randomize)
         await self._db.jobs.insert_one(document)
         return document
 

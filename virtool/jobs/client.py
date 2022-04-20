@@ -13,7 +13,7 @@ JOB_CANCELLATION_DISPATCHED = 1
 
 class AbstractJobsClient(ABC):
     @abstractmethod
-    def enqueue(self, workflow: str, job_id: str):
+    async def enqueue(self, workflow: str, job_id: str):
         ...
 
     @abstractmethod
