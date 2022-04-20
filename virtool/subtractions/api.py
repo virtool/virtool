@@ -8,7 +8,6 @@ from aiohttp.web_fileresponse import FileResponse
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import virtool.jobs.db
 import virtool.pg.utils
 import virtool.subtractions.db
 import virtool.uploads.db

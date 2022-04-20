@@ -9,7 +9,6 @@ import aiofiles
 import yaml
 
 import virtool.indexes.db
-import virtool.jobs.db
 import virtool.subtractions.db
 from virtool.analyses.files import create_analysis_file
 from virtool.example import example_path

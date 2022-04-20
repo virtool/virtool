@@ -1,5 +1,6 @@
 from asyncio import gather
-from typing import Mapping, Optional
+from collections import defaultdict
+from typing import Mapping, Optional, Dict
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -21,6 +22,7 @@ from virtool.jobs.db import (
 from virtool.jobs.utils import JobRights, compose_status
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform
+from virtool.utils import base_processor
 
 
 class JobsData:
@@ -29,14 +31,35 @@ class JobsData:
         self._db = db
         self._pg = pg
 
-    async def find(self, query: Mapping):
-        """
-        :param query:
-        :return:
-        """
+    async def _get_counts(
+        self,
+    ) -> Dict[str, Dict[str, int]]:
+        counts = defaultdict(dict)
+
+        async for a in self._db.jobs.aggregate(
+            [
+                {"$addFields": {"last_status": {"$last": "$status"}}},
+                {
+                    "$group": {
+                        "_id": {
+                            "workflow": "$workflow",
+                            "state": "$last_status.state",
+                        },
+                        "count": {"$sum": 1},
+                    }
+                },
+            ]
+        ):
+            workflow = a["_id"]["workflow"]
+            state = a["_id"]["state"]
+            counts[state][workflow] = a["count"]
+
+        return dict(counts)
+
+    async def _find_basic(self, query: Mapping) -> Document:
         term = query.get("find")
 
-        db_query = dict()
+        db_query = {}
 
         if term:
             db_query.update(compose_regex_query(term, ["workflow", "user.id"]))
@@ -51,10 +74,71 @@ class JobsData:
 
         return {
             **data,
+            "counts": await self._get_counts(),
             "documents": await apply_transforms(
                 data["documents"], [AttachUserTransform(self._db)]
             ),
         }
+
+    async def _find_beta(self, query: Mapping) -> Document:
+        """
+        {
+          "waiting": {
+            "all": 23,
+            "pathoscope": 12,
+            "create_sample": 8,
+            "nuvs": 3
+          }
+        }
+        """
+        state = query.get("state")
+        term = query.get("find")
+
+        documents = [
+            base_processor(d)
+            async for d in self._db.jobs.aggregate(
+                [
+                    {"$match": compose_regex_query(term, ["user.id"]) if term else {}},
+                    {"$set": {"last_status": {"$last": "$status"}}},
+                    {
+                        "$set": {
+                            "progress": "$last_status.progress",
+                            "state": "$last_status.state",
+                            "stage": "$last_status.stage",
+                        }
+                    },
+                    {"$match": {"state": state} if state else {}},
+                    {
+                        "$project": {
+                            "_id": True,
+                            "created_at": True,
+                            "progress": True,
+                            "stage": True,
+                            "state": True,
+                            "user": True,
+                            "workflow": True,
+                        }
+                    },
+                ],
+            )
+        ]
+
+        return {
+            "counts": await self._get_counts(),
+            "documents": await apply_transforms(
+                documents, [AttachUserTransform(self._db)]
+            ),
+        }
+
+    async def find(self, query: Mapping):
+        """
+        :param query:
+        :return:
+        """
+        if query.get("beta"):
+            return await self._find_beta(query)
+
+        return await self._find_basic(query)
 
     async def create(
         self,

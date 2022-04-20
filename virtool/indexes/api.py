@@ -7,7 +7,6 @@ from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from sqlalchemy.exc import IntegrityError
 
 import virtool.indexes.db
-import virtool.jobs.db
 import virtool.references.db
 import virtool.uploads.db
 import virtool.utils
@@ -260,7 +259,7 @@ async def create(req):
     rights.indexes.can_modify(document["_id"])
     rights.references.can_read(ref_id)
 
-    job = await get_data_from_req(req).jobs.create(
+    await get_data_from_req(req).jobs.create(
         "build_index",
         {
             "ref_id": ref_id,

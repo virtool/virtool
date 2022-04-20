@@ -5,6 +5,8 @@ A wrapper for the `fake` package that adds some Virtool-specific functionality.
 from faker import Faker
 from faker.providers import address, date_time, lorem, misc, profile, python
 
+from virtool.fake.providers import MongoIDProvider, JobsProvider
+
 
 class FakerWrapper:
     def __init__(self):
@@ -16,6 +18,8 @@ class FakerWrapper:
         self.fake.add_provider(python)
         self.fake.add_provider(date_time)
         self.fake.add_provider(profile)
+        self.fake.add_provider(JobsProvider)
+        self.fake.add_provider(MongoIDProvider)
 
         self.country = self.fake.country
 

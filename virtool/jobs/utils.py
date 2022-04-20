@@ -62,7 +62,8 @@ class JobRightsDomain:
 
     def has_right(self, id_, right: Right) -> bool:
         """
-        Check that the holder of the rights has the ``right`` on a resource with a given ``id_``.
+        Check that the holder of the rights has the ``right`` on a resource with a given
+        ``id_``.
 
         :param id_: the resource ID
         :param right: the right

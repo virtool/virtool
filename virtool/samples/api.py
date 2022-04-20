@@ -14,7 +14,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import virtool.analyses.db
 import virtool.caches.db
 import virtool.db.utils
-import virtool.jobs.db
 import virtool.samples.db
 import virtool.samples.utils
 import virtool.uploads.db

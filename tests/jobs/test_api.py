@@ -1,13 +1,19 @@
 import pytest
 
 
-async def test_find(fake, snapshot, spawn_client):
+@pytest.mark.parametrize("filter_by_state", [True, False])
+async def test_find(filter_by_state, fake, snapshot, spawn_client):
     client = await spawn_client(authorize=True)
 
-    for _ in range(25):
-        await fake.jobs.insert()
+    for _ in range(15):
+        await fake.jobs.insert(randomize=True)
 
-    resp = await client.get("/jobs")
+    url = "/jobs?beta=true"
+
+    if filter_by_state:
+        url += "&state=running"
+
+    resp = await client.get(url)
 
     assert resp.status == 200
     assert await resp.json() == snapshot
