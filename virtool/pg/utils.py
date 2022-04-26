@@ -133,3 +133,20 @@ async def get_rows(
         )
 
         return (await session.execute(statement)).scalars()
+
+
+async def get_generic(
+    pg: AsyncEngine,
+    statement: Type[Base],
+) -> ScalarResult:
+    """
+    Generic function for getting data from SQL database.
+
+    Executes the statement passed and returns the results as a scalar
+
+    :param pg: the application AsyncEngine object
+    :param statement: SQL statement to be executed
+    :return: Results of the SQL request
+    """
+    async with AsyncSession(pg) as session:
+        return (await session.execute(statement)).scalars()

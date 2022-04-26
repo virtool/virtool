@@ -10,7 +10,7 @@ from virtool.db.transforms import apply_transforms
 from virtool.http.schema import schema
 from virtool.labels.db import SampleCountTransform
 from virtool.labels.models import Label
-from virtool.pg.utils import get_rows
+from virtool.pg.utils import get_generic
 
 routes = virtool.http.routes.Routes()
 
@@ -23,7 +23,11 @@ async def find(req):
     """
     term = req.query.get("find")
 
-    labels = await get_rows(req.app["pg"], Label, query=term)
+    statement = select(Label).order_by(Label.name)
+    if term:
+        statement = statement.filter(Label.name.ilike(f"%{term}%"))
+
+    labels = await get_generic(req.app["pg"], statement)
 
     documents = await apply_transforms(
         [label.to_dict() for label in labels], [SampleCountTransform(req.app["db"])]
