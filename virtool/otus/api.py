@@ -506,7 +506,7 @@ async def get_sequence(req):
             "coerce": virtool.validators.strip,
         },
         "segment": {
-            "type": "string",
+            "type": "string", "nullable": True, "default": None
         },
         "sequence": {
             "type": "string",
@@ -580,7 +580,7 @@ async def create_sequence(req):
             "coerce": virtool.validators.strip,
             "empty": False,
         },
-        "segment": {"type": "string"},
+        "segment": {"type": "string", "nullable": True, "default": None},
         "sequence": {
             "type": "string",
             "coerce": virtool.validators.strip,
