@@ -2,10 +2,11 @@ import asyncio
 from typing import Tuple
 
 import aiojobs.aiohttp
+from aiohttp.web import Application, AppRunner
+
 import virtool.http.accept
 import virtool.http.errors
 import virtool.jobs.auth
-from aiohttp.web import Application, AppRunner
 from virtool.config.cls import Config
 from virtool.dev.fake import drop_fake_mongo, remove_fake_data_path
 from virtool.jobs.routes import startup_routes
@@ -20,19 +21,22 @@ from virtool.startup import (
     startup_postgres,
     startup_redis,
     startup_settings,
+    startup_data,
+    startup_task_runner,
 )
 from virtool.types import App
 
 
 async def create_app(config: Config):
     """Create the :class:`aiohttp.web.Application` for the jobs API process."""
-    middlewares = [
-        virtool.http.accept.middleware,
-        virtool.jobs.auth.middleware,
-        virtool.http.errors.middleware,
-    ]
-
-    app = Application(client_max_size=1024 ** 2 * 20, middlewares=middlewares)
+    app = Application(
+        client_max_size=1024 ** 2 * 20,
+        middlewares=[
+            virtool.http.accept.middleware,
+            virtool.jobs.auth.middleware,
+            virtool.http.errors.middleware,
+        ],
+    )
 
     app["config"] = config
     app["mode"] = "jobs_api_server"
@@ -48,6 +52,8 @@ async def create_app(config: Config):
             startup_settings,
             startup_executors,
             startup_fake,
+            startup_task_runner,
+            startup_data,
             startup_events,
             startup_routes,
         ]

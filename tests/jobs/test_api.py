@@ -47,7 +47,7 @@ async def test_get(error, fake, snapshot, spawn_client, test_job, resp_is):
 
 @pytest.mark.parametrize("error", [None, 400, 404])
 async def test_acquire(
-    error, mocker, snapshot, dbi, fake, test_job, spawn_client, resp_is
+    error, mocker, snapshot, dbi, fake, test_job, spawn_job_client, resp_is
 ):
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
@@ -55,7 +55,7 @@ async def test_acquire(
 
     test_job["user"] = {"id": user["_id"]}
 
-    client = await spawn_client(authorize=True)
+    client = await spawn_job_client(authorize=True)
 
     if error == 400:
         test_job["acquired"] = True
@@ -63,7 +63,7 @@ async def test_acquire(
     if error != 404:
         await dbi.jobs.insert_one(test_job)
 
-    resp = await client.patch("/jobs/4c530449", {"acquired": True})
+    resp = await client.patch("/jobs/4c530449", json={"acquired": True})
 
     if error == 400:
         await resp_is.bad_request(resp, "Job already acquired")
