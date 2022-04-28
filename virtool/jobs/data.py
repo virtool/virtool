@@ -276,7 +276,7 @@ class JobsData:
         if status is None:
             raise ResourceNotFoundError
 
-        if status[-1]["state"] in ("complete", "cancelled", "error"):
+        if status[-1]["state"] in ("complete", "cancelled", "error", "terminated"):
             raise ResourceConflictError("Job is finished")
 
         return await self._db.jobs.find_one_and_update(
