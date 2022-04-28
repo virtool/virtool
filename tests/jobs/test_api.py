@@ -251,3 +251,19 @@ class TestPushStatus:
         resp = await client.post(f"/jobs/{test_job.id}/status", body)
 
         assert (resp.status, await resp.json()) == snapshot
+
+    @pytest.mark.parametrize("state", ["complete", "cancelled", "error", "terminated"])
+    async def test_finalized_job_error(self, state, resp_is, spawn_client, test_job):
+        """
+            Verify that job state cannot be updated once the latest status indicates the job is finished
+            or otherwise terminated
+        """
+        client = await spawn_client(authorize=True)
+
+        test_job["status"][-1]["state"] = state
+        await client.db.jobs.insert_one(test_job)
+
+        body = {"state": "running", "stage": "build", "progress": 23}
+        resp = await client.post(f"/jobs/{test_job.id}/status", body)
+
+        await resp_is.conflict(resp, "Job is finished")
