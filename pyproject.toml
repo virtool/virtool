@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "virtool"
-version = "5.0.0"
+version = "0.0.0"
 authors = [
     "Ian Boyes <igboyes@gmail.com>",
     "Naomi Schaufele",
