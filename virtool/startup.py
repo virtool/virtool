@@ -22,6 +22,7 @@ from virtool.analyses.data import AnalysisData
 from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.blast.data import BLASTData
 from virtool.data.layer import DataLayer
+from virtool.db.core import DB
 from virtool.db.migrate import migrate
 from virtool.dev.fake import create_fake_data_path, populate
 from virtool.dispatcher.client import DispatcherClient
@@ -39,7 +40,6 @@ from virtool.jobs.data import JobsData
 from virtool.oidc.utils import JWKArgs
 from virtool.otus.data import OTUData
 from virtool.pg.testing import create_test_database
-from virtool.redis import periodically_ping_redis
 from virtool.references.db import refresh_remotes
 from virtool.references.tasks import (
     CleanReferencesTask,
@@ -125,27 +125,6 @@ async def startup_data(app: App):
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),
     )
-
-
-async def startup_db(app: App):
-    """
-    An application ``on_startup`` callback that attaches an instance of
-    :class:`~AsyncIOMotorClient` and the ``db_name`` to the Virtool ``app`` object. Also
-    initializes collection indices.
-
-    :param app: the app object
-    :type app: :class:`aiohttp.aiohttp.web.Application`
-
-    """
-    logger.info("Connecting to MongoDB")
-
-    dispatcher_interface = DispatcherClient(app["redis"])
-    await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
-
-    app["db"] = await virtool.db.mongo.connect(
-        app["config"], dispatcher_interface.enqueue_change
-    )
-    app["dispatcher_interface"] = dispatcher_interface
 
 
 async def startup_dispatcher(app: Application):
@@ -262,30 +241,34 @@ async def startup_paths(app: Application):
         ensure_data_dir(app["config"].data_path)
 
 
-async def startup_postgres(app: Application):
+async def startup_databases(app: Application):
     """
-    An application ``on_startup`` callback that attaches an instance of
-    :class:`~AsyncConnection` to the Virtool ``app`` object.
+    Connects to MongoDB, Redis and Postgres concurrently
 
     :param app: the app object
 
     """
+    db_connection_string = app["config"].db_connection_string
+    db_name = app["config"].db_name
     postgres_connection_string = app["config"].postgres_connection_string
-
-    logger.info("Connecting to PostgreSQL")
-
-    app["pg"] = await virtool.pg.utils.connect(postgres_connection_string)
-
-
-async def startup_redis(app: typing.Union[dict, Application]):
     redis_connection_string = app["config"].redis_connection_string
-    logger.info("Connecting to Redis")
-    redis = await virtool.redis.connect(redis_connection_string)
 
-    scheduler = get_scheduler_from_app(app)
-    await scheduler.spawn(periodically_ping_redis(redis))
+    mongo, pg, redis = await asyncio.gather(
+        virtool.db.mongo.connect(db_connection_string, db_name),
+        virtool.pg.utils.connect(postgres_connection_string),
+        virtool.redis.connect(redis_connection_string, get_scheduler_from_app(app))
+    )
 
     app["redis"] = redis
+
+    dispatcher_interface = DispatcherClient(app["redis"])
+    await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
+
+    app["db"] = DB(mongo, dispatcher_interface.enqueue_change)
+
+    app["dispatcher_interface"] = dispatcher_interface
+
+    app["pg"] = pg
 
 
 async def startup_refresh(app: Application):
