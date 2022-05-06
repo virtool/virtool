@@ -1,14 +1,11 @@
 import sys
 from logging import getLogger
-from typing import Callable, List
 
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import ASCENDING, DESCENDING
 from pymongo.errors import ServerSelectionTimeoutError
 from semver import VersionInfo
 
-from virtool.config.cls import Config
-from virtool.db.core import DB
 
 MINIMUM_MONGO_VERSION = "3.6.0"
 
@@ -16,18 +13,21 @@ logger = getLogger("mongo")
 
 
 async def connect(
-    config: Config, enqueue_change: Callable[[str, str, List[str]], None]
-):
+    db_connection_string: str, db_name: str
+) -> AsyncIOMotorDatabase:
     """
     Connect to a MongoDB server and return an application database object.
 
-    :param config: the application's configuration object
-    :param enqueue_change: a function that can to report change to the database
+    :param db_connection_string: the mongoDB connection string
+    :param db_name: the database name
+    :return: database
 
     """
     db_client = AsyncIOMotorClient(
-        config.db_connection_string, serverSelectionTimeoutMS=6000
+        db_connection_string, serverSelectionTimeoutMS=6000
     )
+
+    logger.info("Connecting to MongoDB")
 
     try:
         await db_client.list_database_names()
@@ -37,9 +37,7 @@ async def connect(
 
     await check_mongo_version(db_client)
 
-    db = db_client[config.db_name]
-
-    return DB(db, enqueue_change)
+    return db_client[db_name]
 
 
 async def check_mongo_version(db: AsyncIOMotorClient) -> str:

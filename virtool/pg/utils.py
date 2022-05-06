@@ -31,6 +31,8 @@ async def connect(postgres_connection_string: str) -> AsyncEngine:
         logger.fatal("Invalid PostgreSQL connection string")
         sys.exit(1)
 
+    logger.info("Connecting to PostgreSQL")
+
     try:
         pg = create_async_engine(
             postgres_connection_string, json_serializer=pretty_dumps
