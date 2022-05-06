@@ -1,13 +1,15 @@
 import os
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
 from virtool.analyses.models import AnalysisFile
 from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.tasks.models import Task
 
 
 async def test_store_nuvs_files_task(
-    snapshot, tmp_path, spawn_client, dbi, pg, pg_session, static_time
+    snapshot, tmp_path, spawn_client, dbi, pg: AsyncEngine, static_time
 ):
     client = await spawn_client(authorize=True)
 
@@ -33,14 +35,14 @@ async def test_store_nuvs_files_task(
         type="store_nuvs_file_task",
         created_at=static_time.datetime,
     )
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         session.add(task)
         await session.commit()
 
     store_nuvs_task = StoreNuvsFilesTask(client.app, 1)
     await store_nuvs_task.run()
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         assert (await session.execute(select(AnalysisFile))).scalars().all() == snapshot
 
     assert set(os.listdir(tmp_path / "analyses" / "bar")) == {

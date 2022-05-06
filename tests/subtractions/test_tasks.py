@@ -1,4 +1,6 @@
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
 from virtool.subtractions.models import SubtractionFile
 from virtool.subtractions.tasks import AddSubtractionFilesTask
 from virtool.tasks.models import Task
@@ -9,7 +11,7 @@ async def test_add_subtraction_files_task(
     tmp_path,
     spawn_client,
     dbi,
-    pg_session,
+    pg: AsyncEngine,
     static_time,
 ):
     client = await spawn_client(authorize=True)
@@ -40,7 +42,7 @@ async def test_add_subtraction_files_task(
         created_at=static_time.datetime,
     )
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         session.add(task)
         await session.commit()
 
@@ -48,7 +50,7 @@ async def test_add_subtraction_files_task(
 
     await add_files_task.run()
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         assert (
             await session.execute(select(SubtractionFile))
         ).scalars().all() == snapshot

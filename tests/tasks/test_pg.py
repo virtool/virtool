@@ -1,8 +1,10 @@
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
 import virtool.tasks.pg
 from virtool.tasks.models import Task
 
 
-async def test_find(snapshot, spawn_client, pg, pg_session, static_time):
+async def test_find(snapshot, spawn_client, pg: AsyncEngine, static_time):
     task_1 = Task(
         id=1,
         complete=True,
@@ -26,15 +28,15 @@ async def test_find(snapshot, spawn_client, pg, pg_session, static_time):
         type="import_reference",
     )
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         session.add_all([task_1, task_2])
         await session.commit()
 
     assert await virtool.tasks.pg.find(pg) == snapshot
 
 
-async def test_get(snapshot, spawn_client, pg, pg_session, static_time):
-    async with pg_session as session:
+async def test_get(snapshot, spawn_client, pg: AsyncEngine, static_time):
+    async with AsyncSession(pg) as session:
         session.add(
             Task(
                 id=1,

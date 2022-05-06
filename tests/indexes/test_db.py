@@ -1,5 +1,5 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.indexes.db
 from aiohttp.test_utils import make_mocked_coro
@@ -129,7 +129,7 @@ async def test_update_last_indexed_versions(dbi, test_otu, spawn_client):
     assert document["last_indexed_version"] == document["version"]
 
 
-async def test_attach_files(snapshot, pg, pg_session):
+async def test_attach_files(snapshot, pg: AsyncEngine):
     index_1 = IndexFile(
         id=1, name="reference.1.bt2", index="foo", type="bowtie2", size=1234567
     )
@@ -137,7 +137,7 @@ async def test_attach_files(snapshot, pg, pg_session):
         id=2, name="reference.2.bt2", index="foo", type="bowtie2", size=1234567
     )
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         session.add_all([index_1, index_2])
         await session.commit()
 
@@ -148,7 +148,7 @@ async def test_attach_files(snapshot, pg, pg_session):
     )
 
 
-async def test_finalize(snapshot, dbi, pg: AsyncEngine, pg_session):
+async def test_finalize(snapshot, dbi, pg: AsyncEngine):
     await dbi.indexes.insert_one({"_id": "foo", "reference": {"id": "bar"}})
 
     index_1 = IndexFile(
@@ -159,7 +159,7 @@ async def test_finalize(snapshot, dbi, pg: AsyncEngine, pg_session):
         id=2, name="reference.2.bt2", index="foo", type="bowtie2", size=1234567
     )
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         session.add_all([index_1, index_2])
         await session.commit()
 

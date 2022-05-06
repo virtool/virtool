@@ -1,4 +1,6 @@
 import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
 from virtool.labels.models import Label
 from virtool.samples.utils import check_labels
 
@@ -15,10 +17,10 @@ def labels():
 
 
 @pytest.mark.parametrize("exists", [0, 1, 2])
-async def test_check_labels(exists, labels, spawn_client, pg_session, pg):
+async def test_check_labels(exists, labels, spawn_client, pg: AsyncEngine):
     ids = [label.id for label in labels]
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         session.add_all(labels[:exists])
         await session.commit()
 

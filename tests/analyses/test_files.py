@@ -1,9 +1,11 @@
-import virtool.analyses.files
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy import select
+
+import virtool.analyses.files
 from virtool.analyses.models import AnalysisFile
 
 
-async def test_create_nuvs_analysis_files(snapshot, tmp_path, pg, pg_session):
+async def test_create_nuvs_analysis_files(snapshot, tmp_path, pg: AsyncEngine):
     test_dir = tmp_path / "analyses"
     test_dir.mkdir()
     test_dir.joinpath("assembly.fa.gz").write_text("FASTA file")
@@ -13,5 +15,5 @@ async def test_create_nuvs_analysis_files(snapshot, tmp_path, pg, pg_session):
         pg, "foo", ["assembly.fa", "hmm.tsv"], test_dir
     )
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         assert (await session.execute(select(AnalysisFile))).scalars().all() == snapshot

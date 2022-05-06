@@ -42,14 +42,14 @@ class MockJobInterface:
     ],
 )
 async def test_find(
-    find, per_page, page, labels, snapshot, fake, spawn_client, static_time, pg_session
+    find, per_page, page, labels, snapshot, fake, spawn_client, static_time, pg: AsyncEngine
 ):
     user_1 = await fake.users.insert()
     user_2 = await fake.users.insert()
 
     client = await spawn_client(authorize=True)
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         session.add_all(
             [
                 Label(id=1, name="Bug", color="#a83432", description="This is a bug"),
@@ -139,7 +139,7 @@ async def test_find(
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("ready", [True, False])
 async def test_get(
-    error, ready, mocker, snapshot, fake, spawn_client, resp_is, static_time, pg_session
+    error, ready, mocker, snapshot, fake, spawn_client, resp_is, static_time, pg: AsyncEngine
 ):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
@@ -187,7 +187,7 @@ async def test_get(
         upload = Upload(name="test")
         upload.reads.append(reads)
 
-        async with pg_session as session:
+        async with AsyncSession(pg) as session:
             session.add_all([label, artifact, reads, upload])
             await session.commit()
 
@@ -399,14 +399,14 @@ class TestCreate:
         await resp_is.bad_request(resp, "File does not exist")
 
     @pytest.mark.parametrize("exists", [True, False])
-    async def test_label_dne(self, exists, spawn_client, pg_session, resp_is):
+    async def test_label_dne(self, exists, spawn_client, pg: AsyncEngine, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         client.app["settings"].sample_unique_names = True
 
         if exists:
             label = Label(id=1, name="Orange", color="#FFA500", description="An orange")
-            async with pg_session as session:
+            async with AsyncSession(pg) as session:
                 session.add(label)
                 await session.commit()
 
@@ -418,7 +418,7 @@ class TestCreate:
 
 
 class TestEdit:
-    async def test(self, snapshot, fake, spawn_client, pg: AsyncEngine, pg_session):
+    async def test(self, snapshot, fake, spawn_client, pg: AsyncEngine):
         """
         Test that an existing sample can be edited correctly.
 
@@ -444,7 +444,7 @@ class TestEdit:
 
         await client.db.subtraction.insert_one({"_id": "foo", "name": "Foo"})
 
-        async with pg_session as session:
+        async with AsyncSession(pg) as session:
             session.add(Label(name="Bug", color="#a83432", description="This is a bug"))
             await session.commit()
 
@@ -514,7 +514,7 @@ class TestEdit:
 
     @pytest.mark.parametrize("exists", [True, False])
     async def test_label_exists(
-        self, exists, snapshot, fake, spawn_client, resp_is, pg_session
+        self, exists, snapshot, fake, spawn_client, resp_is, pg: AsyncEngine
     ):
         """
         Test that a ``bad_request`` is returned if the label passed in ``labels`` does
@@ -539,7 +539,7 @@ class TestEdit:
         )
 
         if exists:
-            async with pg_session as session:
+            async with AsyncSession(pg) as session:
                 session.add(
                     Label(
                         id=1, name="Bug", color="#a83432", description="This is a bug"

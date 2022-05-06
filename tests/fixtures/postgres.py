@@ -1,5 +1,5 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from virtool.pg.testing import create_test_database
 from virtool.pg.utils import Base
@@ -59,21 +59,3 @@ async def pg(
 
     return pg
 
-
-@pytest.fixture
-async def pg_session(pg: AsyncEngine) -> AsyncSession:
-    """
-    Return an :class:`AsyncSession` object backed by a test database that can be used for testing
-    calls to SQLAlchemy.
-
-    Empties tables using `TRUNCATE` between tests.
-
-    """
-    session = AsyncSession(bind=pg)
-
-    yield session
-
-    async with pg.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-
-    await session.close()

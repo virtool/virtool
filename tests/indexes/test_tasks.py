@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 from virtool.indexes.models import IndexFile
 from virtool.indexes.tasks import AddIndexFilesTask, AddIndexJSONTask
@@ -12,7 +12,7 @@ from virtool.tasks.models import Task
 
 @pytest.mark.parametrize("files", ["DNE", "empty", "full", "not_ready"])
 async def test_add_index_files(
-    spawn_client, pg_session, static_time, tmp_path, snapshot, files
+    spawn_client, pg: AsyncEngine, static_time, tmp_path, snapshot, files
 ):
     """
     Test that ``files`` field is populated for index documents in the following cases:
@@ -61,7 +61,7 @@ async def test_add_index_files(
         created_at=static_time.datetime,
     )
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         session.add(task)
         await session.commit()
 
@@ -69,7 +69,7 @@ async def test_add_index_files(
 
     await add_index_files_task.run()
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         assert (await session.execute(select(IndexFile))).scalars().all() == snapshot
 
 

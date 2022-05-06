@@ -1,9 +1,11 @@
 import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
 from virtool.labels.models import Label
 
 
 class TestFind:
-    async def test_find(self, snapshot, spawn_client, pg_session):
+    async def test_find(self, snapshot, spawn_client, pg: AsyncEngine):
         """
         Test that a ``GET /labels`` return a complete list of labels.
 
@@ -24,7 +26,7 @@ class TestFind:
             ]
         )
 
-        async with pg_session as session:
+        async with AsyncSession(pg) as session:
             session.add_all([label_1, label_2])
             await session.commit()
 
@@ -33,7 +35,7 @@ class TestFind:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    async def test_find_by_name(self, snapshot, spawn_client, pg_session):
+    async def test_find_by_name(self, snapshot, spawn_client, pg: AsyncEngine):
         """
         Test that a ``GET /labels`` with a `find` query returns a particular label. Also test for partial matches.
 
@@ -42,7 +44,7 @@ class TestFind:
 
         label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
 
-        async with pg_session as session:
+        async with AsyncSession(pg) as session:
             session.add(label)
             await session.commit()
 
@@ -58,7 +60,7 @@ class TestFind:
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, spawn_client, all_permissions, pg_session, resp_is):
+async def test_get(error, spawn_client, all_permissions, pg: AsyncEngine, resp_is):
     """
     Test that a ``GET /labels/:label_id`` return the correct label document.
 
@@ -74,7 +76,7 @@ async def test_get(error, spawn_client, all_permissions, pg_session, resp_is):
     )
 
     if not error:
-        async with pg_session as session:
+        async with AsyncSession(pg) as session:
             session.add(
                 Label(id=1, name="Bug", color="#a83432", description="This is a test")
             )
@@ -98,7 +100,7 @@ async def test_get(error, spawn_client, all_permissions, pg_session, resp_is):
 
 @pytest.mark.parametrize("error", [None, "400_exists", "422_color"])
 async def test_create(
-    error, spawn_client, test_random_alphanumeric, pg_session, resp_is
+    error, spawn_client, test_random_alphanumeric, pg: AsyncEngine, resp_is
 ):
     """
     Test that a label can be added to the database at ``POST /labels``.
@@ -115,7 +117,7 @@ async def test_create(
     )
 
     if error == "400_exists":
-        async with pg_session as session:
+        async with AsyncSession(pg) as session:
             session.add(Label(id=1, name="Bug"))
             await session.commit()
 
@@ -146,7 +148,7 @@ async def test_create(
 
 
 @pytest.mark.parametrize("error", [None, "404", "400_exists", "422_color", "422_data"])
-async def test_edit(error, spawn_client, pg_session, resp_is):
+async def test_edit(error, spawn_client, pg: AsyncEngine, resp_is):
     """
     Test that a label can be edited to the database at ``PATCH /labels/:label_id``.
 
@@ -168,7 +170,7 @@ async def test_edit(error, spawn_client, pg_session, resp_is):
             id=2, name="Question", color="#03fc20", description="Question from a user"
         )
 
-        async with pg_session as session:
+        async with AsyncSession(pg) as session:
             session.add_all([label_1, label_2])
             await session.commit()
 
@@ -208,7 +210,7 @@ async def test_edit(error, spawn_client, pg_session, resp_is):
 
 
 @pytest.mark.parametrize("error", [None, "400"])
-async def test_remove(error, spawn_client, pg_session, resp_is):
+async def test_remove(error, spawn_client, pg: AsyncEngine, resp_is):
     """
     Test that a label can be deleted to the database at ``DELETE /labels/:label_id``.
 
@@ -216,7 +218,7 @@ async def test_remove(error, spawn_client, pg_session, resp_is):
     client = await spawn_client(authorize=True, administrator=True)
 
     if not error:
-        async with pg_session as session:
+        async with AsyncSession(pg) as session:
             session.add(
                 Label(id=1, name="Bug", color="#a83432", description="This is a bug")
             )

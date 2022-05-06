@@ -88,7 +88,7 @@ def create_app(
 
 @pytest.fixture
 def spawn_client(
-    pg, request, aiohttp_client, test_motor, dbi, pg_session, create_app, create_user
+    pg, request, aiohttp_client, test_motor, dbi, create_app, create_user
 ):
     async def func(
         addon_route_table: Optional[RouteTableDef] = None,
@@ -156,7 +156,7 @@ def spawn_job_client(
     test_db_connection_string,
     redis_connection_string,
     pg_connection_string,
-    pg_session,
+    pg,
     test_db_name,
 ):
     """A factory method for creating an aiohttp client which can authenticate with the API as a Job."""
