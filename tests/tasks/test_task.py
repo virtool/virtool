@@ -2,9 +2,11 @@ import os
 from pathlib import Path
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy import select
+
 import virtool.tasks.pg
 import virtool.tasks.task
-from sqlalchemy import select
 from virtool.tasks.models import Task
 
 
@@ -30,7 +32,7 @@ class DummyTask(virtool.tasks.task.Task):
 
 
 @pytest.fixture()
-async def task(spawn_client, pg_session, static_time):
+async def task(spawn_client, pg: AsyncEngine, static_time):
     client = await spawn_client(authorize=True)
     task = Task(
         id=1,
@@ -42,7 +44,7 @@ async def task(spawn_client, pg_session, static_time):
         step="create_file",
         type="test_task",
     )
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         session.add(task)
         await session.commit()
 
@@ -57,11 +59,11 @@ async def test_init_db(snapshot, task, static_time):
 
 
 @pytest.mark.parametrize("error", [None, "error"])
-async def test_run(error, task, pg_session):
+async def test_run(error, task, pg: AsyncEngine):
     task.errored = error
     await task.run()
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         result = (
             (await session.execute(select(Task).filter_by(id=task.id)))
             .scalar()

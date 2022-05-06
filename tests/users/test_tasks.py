@@ -1,11 +1,12 @@
 import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.tasks.models import Task
 from virtool.users.tasks import UpdateUserDocumentsTask
 
 
 @pytest.mark.parametrize("user", ["ad_user", "existing_user", "user_with_handle"])
 async def test_update_user_document_task(
-    spawn_client, snapshot, pg_session, static_time, mocker, user
+    spawn_client, snapshot, pg: AsyncEngine, static_time, mocker, user
 ):
     client = await spawn_client()
 
@@ -22,7 +23,7 @@ async def test_update_user_document_task(
 
     mocker.patch("virtool.users.db.generate_handle", return_value="foo")
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         session.add(
             Task(
                 id=1,

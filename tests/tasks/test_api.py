@@ -1,8 +1,10 @@
 import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
 from virtool.tasks.models import Task
 
 
-async def test_find(spawn_client, pg_session, snapshot, static_time):
+async def test_find(spawn_client, pg: AsyncEngine, snapshot, static_time):
     """
     Test that a ``GET /tasks`` return a complete list of tasks.
 
@@ -32,7 +34,7 @@ async def test_find(spawn_client, pg_session, snapshot, static_time):
         type="import_reference",
     )
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         session.add_all([task_1, task_2])
         await session.commit()
 
@@ -44,7 +46,7 @@ async def test_find(spawn_client, pg_session, snapshot, static_time):
 
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
-    error, spawn_client, all_permissions, pg_session, static_time, snapshot, resp_is
+    error, spawn_client, all_permissions, pg: AsyncEngine, static_time, snapshot, resp_is
 ):
     """
     Test that a ``GET /tasks/:task_id`` return the correct task document.
@@ -53,7 +55,7 @@ async def test_get(
     client = await spawn_client(authorize=True, administrator=True)
 
     if not error:
-        async with pg_session as session:
+        async with AsyncSession(pg) as session:
             session.add(
                 Task(
                     id=1,

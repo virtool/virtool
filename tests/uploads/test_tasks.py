@@ -1,11 +1,13 @@
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+
 from virtool.tasks.models import Task
 from virtool.uploads.models import Upload
 from virtool.uploads.tasks import MigrateFilesTask
 
 
 async def test_migrate_files_task(
-    snapshot, dbi, spawn_client, static_time, pg, pg_session
+    snapshot, dbi, spawn_client, static_time, pg: AsyncEngine,
 ):
     client = await spawn_client(authorize=True)
     await client.db.files.insert_one(
@@ -31,14 +33,14 @@ async def test_migrate_files_task(
         type="migrate_files",
         created_at=static_time.datetime,
     )
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         session.add(task)
         await session.commit()
 
     files_task = MigrateFilesTask(client.app, 1)
     await files_task.run()
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         assert (
             await session.execute(select(Upload).filter_by(id=1))
         ).scalar() == snapshot

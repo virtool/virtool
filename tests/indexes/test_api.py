@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.utils import get_data_from_app
 from virtool.indexes.db import FILES
@@ -349,7 +350,7 @@ async def test_delete_index(spawn_job_client, error):
 
 @pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])
 async def test_upload(
-    error, tmp_path, fake, spawn_job_client, snapshot, static_time, resp_is, pg_session
+    error, tmp_path, fake, spawn_job_client, snapshot, static_time, resp_is, pg: AsyncEngine
 ):
     client = await spawn_job_client(authorize=True)
     path = Path.cwd() / "tests" / "test_files" / "index" / "reference.1.bt2"
@@ -363,7 +364,7 @@ async def test_upload(
     index = {"_id": "foo", "reference": {"id": "bar"}, "user": {"id": user["_id"]}}
 
     if error == "409":
-        async with pg_session as session:
+        async with AsyncSession(pg) as session:
             session.add(IndexFile(name="reference.1.bt2", index="foo"))
             await session.commit()
 
@@ -397,7 +398,7 @@ async def test_upload(
     assert await resp.json() == snapshot
     assert await client.db.indexes.find_one("foo") == snapshot
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         assert (
             await session.execute(select(IndexFile).filter_by(id=1))
         ).scalar() == snapshot

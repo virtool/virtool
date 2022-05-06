@@ -2,6 +2,7 @@ import os
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.subtractions.models import SubtractionFile
 
@@ -37,7 +38,7 @@ async def test_edit(data, has_user, mocker, snapshot, fake, spawn_client):
 
 
 @pytest.mark.parametrize("error", [None, "404_name", "404", "409"])
-async def test_upload(error, tmp_path, spawn_job_client, snapshot, resp_is, pg_session):
+async def test_upload(error, tmp_path, spawn_job_client, snapshot, resp_is, pg: AsyncEngine):
     client = await spawn_job_client(authorize=True)
     test_dir = tmp_path / "files"
     test_dir.mkdir()
@@ -51,7 +52,7 @@ async def test_upload(error, tmp_path, spawn_job_client, snapshot, resp_is, pg_s
     subtraction = {"_id": "foo", "name": "Foo"}
 
     if error == "409":
-        async with pg_session as session:
+        async with AsyncSession(pg) as session:
             session.add(SubtractionFile(name="subtraction.1.bt2", subtraction="foo"))
             await session.commit()
 
@@ -167,7 +168,7 @@ async def test_job_remove(exists, ready, tmp_path, spawn_job_client, snapshot, r
 
 @pytest.mark.parametrize("error", [None, "400_subtraction", "400_file", "400_path"])
 async def test_download_subtraction_files(
-    error, tmp_path, spawn_job_client, pg_session
+    error, tmp_path, spawn_job_client, pg: AsyncEngine
 ):
     client = await spawn_job_client(authorize=True)
 
@@ -194,7 +195,7 @@ async def test_download_subtraction_files(
     )
 
     if error != "400_file":
-        async with pg_session as session:
+        async with AsyncSession(pg) as session:
             session.add_all([file_1, file_2])
             await session.commit()
 

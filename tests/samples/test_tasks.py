@@ -1,7 +1,7 @@
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.samples.models import SampleReads
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.tasks.models import Task
@@ -9,7 +9,7 @@ from virtool.uploads.models import Upload
 
 
 async def test_compress_samples_task(
-    mocker, dbi, pg: AsyncEngine, pg_session, static_time
+    mocker, dbi, pg: AsyncEngine, static_time
 ):
     """
     Ensure `compress_reads` is called correctly given a samples collection.
@@ -30,7 +30,7 @@ async def test_compress_samples_task(
         ]
     )
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         task = Task(
             id=1,
             complete=False,
@@ -72,7 +72,7 @@ async def test_compress_samples_task(
 @pytest.mark.parametrize("compressed", [True, False])
 @pytest.mark.parametrize("paired", [True, False])
 async def test_move_sample_files_task(
-    legacy, compressed, paired, dbi, pg, pg_session, snapshot, static_time
+    legacy, compressed, paired, dbi, pg: AsyncEngine, snapshot, static_time
 ):
     app_dict = {
         "db": dbi,
@@ -119,7 +119,7 @@ async def test_move_sample_files_task(
 
     await dbi.samples.insert_one(sample)
 
-    async with pg_session as session:
+    async with AsyncSession(pg) as session:
         session.add(
             Task(
                 id=1,
@@ -141,7 +141,7 @@ async def test_move_sample_files_task(
     assert await dbi.samples.find_one({"_id": "foo"}) == snapshot
 
     if not legacy or (legacy and compressed):
-        async with pg_session as session:
+        async with AsyncSession(pg) as session:
             sample_reads = (
                 await session.execute(select(SampleReads).filter_by(id=1))
             ).scalar()

@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
 from virtool.uploads.models import Upload, UploadType
 
 
@@ -26,7 +28,7 @@ class TestUpload:
         snapshot,
         spawn_client,
         static_time,
-        pg_session,
+        pg: AsyncEngine,
     ):
         """
         Test `POST /uploads` to assure a file can be uploaded and that it properly updates the db.
@@ -116,7 +118,7 @@ class TestGet:
 
     @pytest.mark.parametrize("exists", [True, False])
     async def test_upload_removed(
-        self, exists, resp_is, spawn_client, pg_session, tmp_path
+        self, exists, resp_is, spawn_client, pg: AsyncEngine, tmp_path
     ):
         """
         Test `GET /uploads/:id` to assure that it doesn't let you download a file that has been removed.
@@ -126,7 +128,7 @@ class TestGet:
 
         client.app["config"].data_path = tmp_path
 
-        async with pg_session as session:
+        async with AsyncSession(pg) as session:
             session.add(Upload(name_on_disk="1-test.fq.gz", removed=exists))
             await session.commit()
 
@@ -154,7 +156,7 @@ class TestDelete:
 
     @pytest.mark.parametrize("exists", [True, False])
     async def test_already_removed(
-        self, exists, spawn_client, tmp_path, pg_session, resp_is
+        self, exists, spawn_client, tmp_path, pg: AsyncEngine, resp_is
     ):
         """
         Test `DELETE /uploads/:id to assure that it doesn't try to delete a file that has already been removed.
@@ -164,7 +166,7 @@ class TestDelete:
 
         client.app["config"].data_path = tmp_path
 
-        async with pg_session as session:
+        async with AsyncSession(pg) as session:
             session.add(Upload(name_on_disk="1-test.fq.gz", removed=exists))
 
             await session.commit()
@@ -178,7 +180,7 @@ class TestDelete:
 
     @pytest.mark.parametrize("exists", [True, False])
     async def test_record_dne(
-        self, exists, spawn_client, pg_session, tmp_path, resp_is
+        self, exists, spawn_client, pg: AsyncEngine, tmp_path, resp_is
     ):
         """
         Test `DELETE /uploads/:id to assure that it doesn't try to delete a file that corresponds to a `upload`
@@ -190,7 +192,7 @@ class TestDelete:
         client.app["config"].data_path = tmp_path
 
         if exists:
-            async with pg_session as session:
+            async with AsyncSession(pg) as session:
                 session.add(Upload(name_on_disk="1-test.fq.gz"))
                 await session.commit()
 
