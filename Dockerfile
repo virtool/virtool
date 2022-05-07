@@ -11,7 +11,7 @@ RUN pip install --user .
 FROM virtool/external-tools:0.2.0
 WORKDIR /virtool
 COPY --from=server /root/.local /root/.local
-COPY run.py /virtool/
+COPY run.py VERSION* /virtool/
 COPY virtool /virtool/virtool
 COPY example /virtool/example
 EXPOSE 9950
