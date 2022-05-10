@@ -10,20 +10,16 @@ logger = logging.getLogger("app")
 
 
 async def determine_server_version(install_path: Optional[Path] = Path.cwd()):
-    loop = asyncio.get_event_loop()
-
-    version = await loop.run_in_executor(None, determine_server_version_from_git)
+    version = await asyncio.get_event_loop().run_in_executor(
+        None, determine_server_version_from_git
+    )
 
     if version:
         return version
 
     try:
-        version_file_path = install_path / "VERSION"
-
-        async with aiofiles.open(version_file_path, "r") as version_file:
-            content = await version_file.read()
-            return content.rstrip()
-
+        async with aiofiles.open(install_path / "VERSION", "r") as version_file:
+            return (await version_file.read()).rstrip()
     except FileNotFoundError:
         logger.critical("Could not determine software version.")
         return "Unknown"

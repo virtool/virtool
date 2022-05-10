@@ -5,7 +5,6 @@ import signal
 import sys
 import typing
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Dict
 from urllib.parse import urlparse, urlunparse
 
@@ -345,13 +344,12 @@ async def startup_version(app: typing.Union[dict, Application]):
     :param app: the application object
 
     """
-
     force_version = app["config"].force_version
 
     if force_version:
         version = force_version
     else:
-        version = await determine_server_version(Path(sys.path[0]))
+        version = await determine_server_version()
 
     logger.info(f"Virtool {version}")
     logger.info(f"Mode: {app['mode']}")
