@@ -28,7 +28,7 @@ from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.types import App, Document
 from virtool.uploads.models import Upload
 from virtool.users.db import AttachUserTransform
-from virtool.utils import base_processor, compress_file, file_stats
+from virtool.utils import base_processor, compress_file, file_stats, run_in_thread
 
 logger = logging.getLogger(__name__)
 
@@ -411,11 +411,9 @@ async def compress_sample_reads(app: App, sample: Dict[str, Any]):
 
         target_path = data_path / "samples" / sample_id / target_filename
 
-        await app["run_in_thread"](compress_file, path, target_path, 1)
+        await run_in_thread(compress_file, path, target_path, 1)
 
-        stats = await app["run_in_thread"](file_stats, target_path)
-
-        assert target_path.is_file()
+        stats = await run_in_thread(file_stats, target_path)
 
         files.append(
             {
@@ -430,7 +428,7 @@ async def compress_sample_reads(app: App, sample: Dict[str, Any]):
     await app["db"].samples.update_one({"_id": sample_id}, {"$set": {"files": files}})
 
     for path in paths:
-        await app["run_in_thread"](os.remove, path)
+        await run_in_thread(os.remove, path)
 
 
 async def move_sample_files_to_pg(app: App, sample: Dict[str, any]):
@@ -480,7 +478,7 @@ async def finalize(
     pg: AsyncEngine,
     sample_id: str,
     quality: Dict[str, Any],
-    run_in_thread: callable,
+    _run_in_thread: callable,
     data_path: Path,
 ) -> Dict[str, Any]:
     """
@@ -490,7 +488,7 @@ async def finalize(
     :param pg: the PostgreSQL AsyncEngine object
     :param sample_id: the id of the sample
     :param quality: a dict contains quality data
-    :param run_in_thread: the application thread running function
+    :param _run_in_thread: the application thread running function
     :param data_path: the application data path settings
 
     :return: the sample document after finalizing

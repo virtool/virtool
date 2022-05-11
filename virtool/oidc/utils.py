@@ -5,6 +5,8 @@ import jwt
 from aiohttp.web import Application
 from jose.jwt import decode, get_unverified_header
 
+from virtool.utils import run_in_thread
+
 
 @dataclass
 class JWKArgs:
@@ -42,7 +44,7 @@ async def update_jwk_args(app: Application, token: jwt) -> JWKArgs:
     :param app: the app object
     :return: jwk_args
     """
-    header = await app["run_in_thread"](get_unverified_header, token)
+    header = await run_in_thread(get_unverified_header, token)
     authority = app["b2c"].authority
     resp = await app["client"].get(
         f"{authority}/discovery/v2.0/keys", allow_redirects=True
@@ -62,7 +64,8 @@ async def update_jwk_args(app: Application, token: jwt) -> JWKArgs:
 
 async def get_matching_jwk(jwks: dict, kid: str) -> dict:
     """
-    Iterate through JSON web key set and return first key with matching KID from the token header.
+    Iterate through JSON web key set and return first key with
+    matching KID from the token header.
 
     :param jwks: JSON web key set
     :param kid: Json web key ID from token header

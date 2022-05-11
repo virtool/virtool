@@ -16,6 +16,7 @@ from virtool.db.transforms import AbstractTransform
 from virtool.db.utils import get_one_field
 from virtool.subtractions.utils import get_subtraction_files, join_subtraction_path
 from virtool.types import App, Document
+from virtool.utils import run_in_thread
 
 PROJECTION = [
     "_id",
@@ -165,7 +166,7 @@ async def delete(app: App, subtraction_id: str) -> int:
 
     if update_result.modified_count:
         path = join_subtraction_path(config, subtraction_id)
-        await app["run_in_thread"](shutil.rmtree, path, True)
+        await run_in_thread(shutil.rmtree, path, True)
 
     return update_result.modified_count
 

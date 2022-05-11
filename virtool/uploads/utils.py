@@ -7,6 +7,8 @@ import aiofiles
 from aiohttp.web_request import Request
 from cerberus import Validator
 
+from virtool.utils import run_in_thread
+
 logger = getLogger(__name__)
 
 CHUNK_SIZE = 1024 * 1000 * 50
@@ -57,7 +59,7 @@ async def naive_writer(
     size = 0
 
     try:
-        await req.app["run_in_thread"](os.makedirs, path.parent)
+        await run_in_thread(os.makedirs, path.parent)
     except FileExistsError:
         pass
 

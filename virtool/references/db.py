@@ -36,6 +36,7 @@ from virtool.settings.db import Settings
 from virtool.types import App
 from virtool.uploads.models import Upload
 from virtool.users.db import AttachUserTransform, extend_user
+from virtool.utils import run_in_thread
 
 PROJECTION = [
     "_id",
@@ -707,7 +708,7 @@ async def download_and_parse_release(
 
         await virtool.tasks.pg.update(pg, task_id, step="unpack")
 
-        return await app["run_in_thread"](load_reference_file, download_path)
+        return run_in_thread(load_reference_file, download_path)
 
 
 async def edit(db, ref_id: str, data: dict) -> dict:

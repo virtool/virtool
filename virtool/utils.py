@@ -1,4 +1,6 @@
+import asyncio
 import datetime
+import functools
 import gzip
 import hashlib
 import os
@@ -52,7 +54,7 @@ def base_processor(document: Optional[dict]) -> Optional[dict]:
 def chunk_list(lst: list, n: int):
     """Yield successive n-sized chunks from `lst`."""
     for i in range(0, len(lst), n):
-        yield lst[i : i + n]
+        yield lst[i: i + n]
 
 
 def compress_file(path: Path, target: Path, processes: int = 1):
@@ -264,3 +266,9 @@ def timestamp() -> datetime.datetime:
 
 def to_bool(obj):
     return str(obj).lower() in ["1", "true"]
+
+
+async def run_in_thread(func, *args, **kwargs):
+    loop = asyncio.get_event_loop()
+    bound_func = functools.partial(func, *args, **kwargs)
+    return await loop.run_in_executor(None, bound_func)

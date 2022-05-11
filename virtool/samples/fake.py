@@ -5,12 +5,14 @@ from typing import Optional
 
 from sqlalchemy.exc import IntegrityError
 
+
 from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import create_sample, finalize
 from virtool.samples.files import create_reads_file
 from virtool.settings.db import Settings
 from virtool.types import App
+from virtool.utils import run_in_thread
 
 READ_FILES_PATH = example_path / "reads"
 
@@ -131,7 +133,7 @@ async def create_fake_sample(
             pg=pg,
             sample_id=sample_id,
             quality=await create_fake_quality(fake),
-            run_in_thread=app["run_in_thread"],
+            _run_in_thread=run_in_thread,
             data_path=app["config"].data_path,
         )
 
@@ -153,4 +155,4 @@ async def copy_reads_file(app: App, file_path: Path, filename: str, sample_id: s
     reads_path = app["config"].data_path / "samples" / sample_id
     reads_path.mkdir(parents=True, exist_ok=True)
 
-    await app["run_in_thread"](shutil.copy, file_path, reads_path / filename)
+    await run_in_thread(shutil.copy, file_path, reads_path / filename)

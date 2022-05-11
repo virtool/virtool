@@ -8,6 +8,8 @@ import aiofiles
 import arrow
 import dictdiffer
 
+from virtool.utils import run_in_thread
+
 
 def calculate_diff(old: dict, new: dict) -> list:
     """
@@ -113,7 +115,8 @@ def derive_otu_information(
     old: Optional[dict], new: Optional[dict]
 ) -> Tuple[str, str, Union[int, str], str]:
     """
-    Derive OTU information for a new change document from the old and new joined OTU documents.
+    Derive OTU information for a new change document
+    from the old and new joined OTU documents.
 
     :param old: the old, joined OTU document
     :param new: the new, joined OTU document
@@ -145,7 +148,8 @@ def derive_otu_information(
 
 def join_diff_path(data_path: Path, otu_id: str, otu_version: Union[int, str]) -> Path:
     """
-    Derive the path to a diff file based on the application `data_path` configuration and the OTU ID and version.
+    Derive the path to a diff file based on the application
+    `data_path` configuration and the OTU ID and version.
 
     :param data_path: the application data path
     :param otu_id: the OTU ID to join a diff path for
@@ -158,7 +162,8 @@ def join_diff_path(data_path: Path, otu_id: str, otu_version: Union[int, str]) -
 
 def json_encoder(o):
     """
-    A custom JSON encoder function that stores `datetime` objects as ISO format date strings.
+    A custom JSON encoder function that stores `datetime` objects
+    as ISO format date strings.
 
     :param o: a JSON value object
     :return: the object converted to a `datetime` if necessary
@@ -172,7 +177,8 @@ def json_encoder(o):
 
 def json_object_hook(o: dict) -> dict:
     """
-    A JSON decoder hook for converting `created_at` fields from ISO format dates to `datetime` objects.
+    A JSON decoder hook for converting `created_at` fields from
+    ISO format dates to `datetime` objects.
 
     :param o: the JSON parsing dict
     :return: the parsed dict
@@ -212,7 +218,7 @@ async def remove_diff_files(app, id_list: List[str]):
         path = join_diff_path(data_path, otu_id, otu_version)
 
         try:
-            await app["run_in_thread"](os.remove, path)
+            await run_in_thread(os.remove, path)
         except FileNotFoundError:
             pass
 

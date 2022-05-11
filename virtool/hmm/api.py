@@ -21,7 +21,7 @@ from virtool.hmm.db import PROJECTION, generate_annotations_json_file
 from virtool.hmm.tasks import HMMInstallTask
 from virtool.hmm.utils import hmm_data_exists
 from virtool.http.routes import Routes
-from virtool.utils import base_processor, compress_file_with_gzip, rm
+from virtool.utils import base_processor, compress_file_with_gzip, rm, run_in_thread
 
 routes = Routes()
 
@@ -176,7 +176,7 @@ async def purge(req):
     hmm_path = req.app["config"].data_path / "hmm/profiles.hmm"
 
     try:
-        await req.app["run_in_thread"](rm, hmm_path)
+        await run_in_thread(rm, hmm_path)
     except FileNotFoundError:
         pass
 
@@ -198,7 +198,7 @@ async def get_hmm_annotations(request):
 
     if not annotation_path.exists():
         json_path = await generate_annotations_json_file(request.app)
-        await request.app["run_in_thread"](
+        await run_in_thread(
             compress_file_with_gzip, json_path, annotation_path
         )
 
@@ -219,7 +219,7 @@ async def get_hmm_profiles(req):
     """
     file_path = req.app["config"].data_path / "hmm" / "profiles.hmm"
 
-    if not await req.app["run_in_thread"](hmm_data_exists, file_path):
+    if not await run_in_thread(hmm_data_exists, file_path):
         raise NotFound("Profiles file could not be found")
 
     return FileResponse(

@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.utils
 from virtool.pg.base import Base
 from virtool.uploads.models import Upload
+from virtool.utils import run_in_thread
 
 logger = logging.getLogger("uploads")
 
@@ -147,7 +148,7 @@ async def delete(req, pg: AsyncEngine, upload_id: int) -> Optional[dict]:
         return None
 
     try:
-        await req.app["run_in_thread"](
+        await run_in_thread(
             virtool.utils.rm,
             req.app["config"].data_path / "files" / upload["name_on_disk"],
         )

@@ -44,7 +44,7 @@ from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import naive_validator, naive_writer
 from virtool.users.db import AttachUserTransform
-from virtool.utils import rm
+from virtool.utils import rm, run_in_thread
 
 logger = getLogger("analyses")
 
@@ -240,7 +240,7 @@ async def remove(req: Request) -> Response:
     )
 
     try:
-        await req.app["run_in_thread"](rm, path, True)
+        await run_in_thread(rm, path, True)
     except FileNotFoundError:
         pass
 
@@ -274,7 +274,7 @@ async def delete_analysis(req):
     )
 
     try:
-        await req.app["run_in_thread"](rm, path, True)
+        await run_in_thread(rm, path, True)
     except FileNotFoundError:
         pass
 

@@ -1,5 +1,4 @@
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.samples.models import SampleReads
@@ -18,7 +17,6 @@ async def test_compress_samples_task(
     app_dict = {
         "db": dbi,
         "pg": pg,
-        "run_in_thread": make_mocked_coro(),
         "settings": dict(),
     }
 
@@ -77,7 +75,6 @@ async def test_move_sample_files_task(
     app_dict = {
         "db": dbi,
         "pg": pg,
-        "run_in_thread": make_mocked_coro(),
         "settings": dict(),
     }
 

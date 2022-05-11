@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import gzip
 import json
@@ -8,6 +9,7 @@ from pathlib import Path
 import arrow
 import pytest
 import virtool.utils
+from virtool.utils import run_in_thread
 
 
 @pytest.fixture(scope="session")
@@ -176,3 +178,22 @@ def test_compress_json_with_gzip(tmpdir):
         with gzip.open(_target, "r") as f:
             json_data = f.read().decode("utf-8")
             assert json_data == data
+
+
+async def test_run_in_thread():
+
+    assert asyncio.iscoroutinefunction(run_in_thread) is True
+
+    def func(*args, **kwargs):
+        testsum = 0
+        for arg in args:
+            testsum += arg
+        for value in kwargs.values():
+            testsum += value
+        return testsum
+
+    assert await run_in_thread(func, 1, 3, 5, key1=5, key2=-4) == 10
+
+
+
+

@@ -1,9 +1,11 @@
 from urllib.parse import parse_qs
 
 import jwt
+from virtool.utils import run_in_thread
+from virtool.http.routes import Routes
 from aiohttp.web import Request, Response
 from aiohttp.web_exceptions import HTTPFound
-from virtool.http.routes import Routes
+
 
 routes = Routes()
 
@@ -11,7 +13,8 @@ routes = Routes()
 @routes.get("/oidc/acquire_tokens", public=True)
 async def acquire_tokens(req: Request) -> Response:
     """
-    Gather authentication response from auth uri query string. Fetch tokens from b2c authorization endpoint.
+    Gather authentication response from auth uri query string.
+    Fetch tokens from b2c authorization endpoint.
 
     Once tokens are acquired, redirect user back to Virtool homepage.
 
@@ -25,7 +28,7 @@ async def acquire_tokens(req: Request) -> Response:
     }
 
     try:
-        result = await req.app["run_in_thread"](
+        result = await run_in_thread(
             req.app["b2c"].msal.acquire_token_by_auth_code_flow,
             req.app["b2c"].auth_code_flow,
             auth_response,
@@ -46,10 +49,12 @@ async def refresh_tokens(req: Request) -> Response:
     """
     Silently retrieve tokens for account in token cache.
 
-    Fetch oid value stored in expired ID token, then fetch fresh tokens from token cache for the account with the
-    correct local account ID value.
+    Fetch oid value stored in expired ID token, then fetch fresh
+    tokens from token cache for the account with the correct
+    local account ID value.
 
-    If no accounts are found, or correct account isn't found, then redirect to /delete_tokens
+    If no accounts are found, or correct account isn't found,
+    then redirect to /delete_tokens
 
     :param req: the request to handle
     :return: the response
@@ -69,7 +74,7 @@ async def refresh_tokens(req: Request) -> Response:
         ][0]
 
         if user_account:
-            result = await req.app["run_in_thread"](
+            result = await run_in_thread(
                 req.app["b2c"].msal.acquire_token_silent,
                 [],
                 user_account,

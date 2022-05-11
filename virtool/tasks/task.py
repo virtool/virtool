@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.tasks.models
 import virtool.tasks.pg
-from virtool.utils import get_temp_dir
+from virtool.utils import get_temp_dir, run_in_thread
 
 logger = getLogger("task")
 
@@ -18,7 +18,7 @@ class Task:
         self.app = app
         self.db = app["db"]
         self.pg = app["pg"]
-        self.run_in_thread = app["run_in_thread"]
+        self.run_in_thread = run_in_thread
         self.id = task_id
         self.step = None
         self.steps = []

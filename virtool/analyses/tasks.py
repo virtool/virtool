@@ -11,6 +11,7 @@ from virtool.analyses.models import AnalysisFile
 from virtool.analyses.utils import move_nuvs_files, join_analysis_path
 from virtool.tasks.task import Task
 from virtool.types import App
+from virtool.utils import run_in_thread
 
 
 class StoreNuvsFilesTask(Task):
@@ -48,7 +49,7 @@ class StoreNuvsFilesTask(Task):
 
             if path.is_dir() and not exists:
                 try:
-                    await self.app["run_in_thread"](os.makedirs, target_path)
+                    await run_in_thread(os.makedirs, target_path)
                 except FileExistsError:
                     pass
 
@@ -70,7 +71,8 @@ class StoreNuvsFilesTask(Task):
 
     async def remove_directory(self):
         """
-        Remove `<data_path>`/samples/:id/analysis/:id directory after files have been preserved in
+        Remove `<data_path>`/samples/:id/analysis/:id directory
+        after files have been preserved in
         `<data_path>`/analyses/:id>.
 
         """
@@ -83,6 +85,6 @@ class StoreNuvsFilesTask(Task):
             path = join_analysis_path(config.data_path, analysis_id, sample_id)
 
             if (config.data_path / "analyses" / analysis_id).is_dir():
-                await self.app["run_in_thread"](shutil.rmtree, path, True)
+                await run_in_thread(shutil.rmtree, path, True)
 
         await virtool.tasks.pg.update(self.pg, self.id, step="remove_directory")

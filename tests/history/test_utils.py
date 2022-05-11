@@ -241,10 +241,7 @@ async def test_remove_diff_files(loop, tmp_path, config):
 
     id_list = ["foo.0", "foo.1", "foo.2", "bar.0"]
 
-    async def run_in_thread(func, *args):
-        return (await loop.run_in_executor(None, func, *args),)
-
-    app = {"run_in_thread": run_in_thread, "config": config}
+    app = {"config": config}
 
     await remove_diff_files(app, id_list)
 

@@ -14,14 +14,15 @@ from virtool.subtractions.db import ADD_SUBTRACTION_FILES_QUERY
 from virtool.subtractions.models import SubtractionFile
 from virtool.subtractions.utils import FILES
 from virtool.types import App
+from virtool.utils import run_in_thread
 
 
 class AddSubtractionFilesTask(virtool.tasks.task.Task):
     """
     Rename Bowtie2 index name from 'reference' to 'subtraction'.
 
-    Add a 'files' field to subtraction documents to list what files can be downloaded for that
-    subtraction.
+    Add a 'files' field to subtraction documents to list what files can
+    be downloaded for that subtraction.
 
     """
 
@@ -46,14 +47,14 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
             path = virtool.subtractions.utils.join_subtraction_path(
                 self.app["config"], subtraction["_id"]
             )
-            await self.app["run_in_thread"](
+            await run_in_thread(
                 virtool.subtractions.utils.rename_bowtie_files, path
             )
 
     async def store_subtraction_files(self):
         """
-        Add a 'files' field to subtraction documents to list what files can be downloaded for that
-        subtraction
+        Add a 'files' field to subtraction documents to list what
+        files can be downloaded for that subtraction
 
         """
         await virtool.tasks.pg.update(self.pg, self.id, step="store_subtraction_files")

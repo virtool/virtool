@@ -195,10 +195,6 @@ async def startup_executors(app: Application):
 
     loop.set_default_executor(thread_executor)
 
-    async def run_in_thread(func, *args):
-        return await loop.run_in_executor(thread_executor, func, *args)
-
-    app["run_in_thread"] = run_in_thread
     app["executor"] = thread_executor
 
     process_executor = concurrent.futures.ProcessPoolExecutor()
