@@ -1,8 +1,6 @@
 import pytest
 import virtool.caches.db
-import virtool.utils
-from aiohttp.test_utils import make_mocked_coro
-
+import os
 
 @pytest.fixture
 def trim_parameters():
@@ -73,11 +71,13 @@ async def test_get(exists, dbi):
 async def test_remove(exception, dbi, tmp_path, config):
     app = {
         "db": dbi,
-        "run_in_thread": make_mocked_coro(raise_exception=FileNotFoundError)
-        if exception
-        else make_mocked_coro(),
         "config": config,
     }
+
+    f1 = tmp_path / "cache"
+    f1.mkdir()
+
+    f1.joinpath("baz")
 
     await dbi.caches.insert_one({"_id": "baz"})
 
@@ -85,6 +85,5 @@ async def test_remove(exception, dbi, tmp_path, config):
 
     assert await dbi.caches.count_documents({}) == 0
 
-    app["run_in_thread"].assert_called_with(
-        virtool.utils.rm, tmp_path / "caches" / "baz", True
-    )
+    assert os.listdir(f1) == []
+

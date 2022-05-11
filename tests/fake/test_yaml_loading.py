@@ -10,10 +10,9 @@ def example_test_case(test_files_path) -> Path:
     return test_files_path / "fake/test_case.yml"
 
 
-async def test_load_yml(app, fake, run_in_thread, example_test_case):
+async def test_load_yml(app, fake, example_test_case):
     await fake.users.insert()
 
-    app["run_in_thread"] = run_in_thread
     case = await load_test_case_from_yml(app, example_test_case, "bob")
 
     assert case.analysis.ready == False
@@ -32,9 +31,8 @@ async def test_load_yml(app, fake, run_in_thread, example_test_case):
 
 
 async def test_populate_does_load_yaml(
-    app, run_in_thread, example_test_case, tmp_path, config
+    app, example_test_case, tmp_path, config
 ):
-    app["run_in_thread"] = run_in_thread
 
     app["config"] = config
     app["config"].fake_path = example_test_case.parent

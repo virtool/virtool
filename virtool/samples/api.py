@@ -60,6 +60,7 @@ from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import is_gzip_compressed
 from virtool.users.db import AttachUserTransform
 from virtool.validators import strip
+from virtool.utils import run_in_thread
 
 logger = logging.getLogger("samples")
 
@@ -402,7 +403,7 @@ async def finalize(req):
         req.app["pg"],
         sample_id,
         data["quality"],
-        req.app["run_in_thread"],
+        run_in_thread,
         req.app["config"].data_path,
     )
 
@@ -723,7 +724,7 @@ async def upload_artifact(req):
     except asyncio.CancelledError:
         logger.debug(f"Artifact file upload aborted for sample: {sample_id}")
         await delete_row(pg, upload_id, SampleArtifact)
-        await req.app["run_in_thread"](os.remove, artifact_file_path)
+        await run_in_thread(os.remove, artifact_file_path)
         return aiohttp.web.Response(status=499)
 
     artifact = await virtool.uploads.db.finalize(pg, size, upload_id, SampleArtifact)
@@ -896,7 +897,7 @@ async def upload_cache_artifact(req):
     except asyncio.CancelledError:
         logger.debug(f"Artifact file cache upload aborted for sample: {sample_id}")
         await delete_row(pg, upload_id, SampleArtifact)
-        await req.app["run_in_thread"](os.remove, cache_path)
+        await run_in_thread(os.remove, cache_path)
         return aiohttp.web.Response(status=499)
 
     artifact = await virtool.uploads.db.finalize(

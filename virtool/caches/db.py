@@ -1,6 +1,6 @@
 """
-Work with caches in the database. Caches are bundles of trimmed read and QC data generated during
-analyses.
+Work with caches in the database. Caches are bundles of
+trimmed read and QC data generated during analyses.
 
 """
 from typing import Any, Dict
@@ -9,6 +9,7 @@ import pymongo.errors
 
 import virtool.utils
 from virtool.types import App
+from virtool.utils import run_in_thread
 
 PROJECTION = ("_id", "created_at", "files", "key", "program", "ready", "sample")
 
@@ -33,7 +34,8 @@ async def create(
     paired: bool,
 ) -> Dict[str, Any]:
     """
-    Create and insert a new cache database document. Return the generated cache document.
+    Create and insert a new cache database document.
+    Return the generated cache document.
 
     :param db: the application database client
     :param sample_id: the id of the sample the cache is derived from
@@ -86,6 +88,6 @@ async def remove(app: App, cache_id: str):
     path = config.data_path / "caches" / cache_id
 
     try:
-        await app["run_in_thread"](virtool.utils.rm, path, True)
+        await run_in_thread(virtool.utils.rm, path, True)
     except FileNotFoundError:
         pass

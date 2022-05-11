@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
-import virtool.analyses.db
 import virtool.analyses.files
 import virtool.analyses.utils
+from virtool.utils import run_in_thread
 
 
 @pytest.mark.parametrize("exists", [True, False])
@@ -51,7 +51,6 @@ async def test_check_nuvs_file_type(file_type):
 
 
 async def test_move_nuvs_files(tmp_path, spawn_client):
-    client = await spawn_client(authorize=True)
 
     file_path = tmp_path.joinpath("files")
     file_path.mkdir()
@@ -62,11 +61,11 @@ async def test_move_nuvs_files(tmp_path, spawn_client):
     target_path.mkdir()
 
     await virtool.analyses.utils.move_nuvs_files(
-        "hmm.tsv", client.app["run_in_thread"], file_path, target_path
+        "hmm.tsv", run_in_thread, file_path, target_path
     )
     assert set(os.listdir(target_path)) == {"hmm.tsv"}
 
     await virtool.analyses.utils.move_nuvs_files(
-        "assembly.fa", client.app["run_in_thread"], file_path, target_path
+        "assembly.fa", run_in_thread, file_path, target_path
     )
     assert set(os.listdir(target_path)) == {"hmm.tsv", "assembly.fa.gz"}

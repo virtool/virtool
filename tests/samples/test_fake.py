@@ -8,12 +8,11 @@ from virtool.samples.fake import READ_FILES_PATH, copy_reads_file, create_fake_s
 
 
 @pytest.fixture
-def app(dbi, pg, run_in_thread, tmp_path, config):
+def app(dbi, pg, tmp_path, config):
     return {
         "db": dbi,
         "fake": FakerWrapper(),
         "pg": pg,
-        "run_in_thread": run_in_thread,
         "config": config,
     }
 

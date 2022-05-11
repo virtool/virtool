@@ -25,7 +25,7 @@ from virtool.jobs.utils import JobRights
 from virtool.pg.utils import delete_row, get_rows
 from virtool.references.db import check_right
 from virtool.uploads.utils import naive_writer
-from virtool.utils import compress_json_with_gzip
+from virtool.utils import compress_json_with_gzip, run_in_thread
 
 logger = logging.getLogger("indexes")
 routes = Routes()
@@ -143,7 +143,7 @@ async def download_otus_json(req):
 
         json_string = json.dumps(patched_otus, cls=CustomEncoder)
 
-        await req.app["run_in_thread"](compress_json_with_gzip, json_string, json_path)
+        await run_in_thread(compress_json_with_gzip, json_string, json_path)
 
     return FileResponse(
         json_path,

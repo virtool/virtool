@@ -32,13 +32,6 @@ async def test_startup_executors():
 
     assert isinstance(app["executor"], ThreadPoolExecutor)
 
-    def func(*args):
-        return sum(args)
-
-    result = await app["run_in_thread"](func, 1, 5, 6, 2)
-
-    assert result == 14
-
 
 async def test_startup_http_client(loop, fake_app):
     await startup_http_client(fake_app)

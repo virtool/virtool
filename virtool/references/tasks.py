@@ -30,7 +30,7 @@ from virtool.references.utils import (
     load_reference_file,
 )
 from virtool.tasks.task import Task
-from virtool.utils import chunk_list, get_temp_dir
+from virtool.utils import chunk_list, get_temp_dir, run_in_thread
 
 logger = getLogger(__name__)
 
@@ -124,8 +124,8 @@ class ImportReferenceTask(Task):
         except OSError as err:
             if "Not a gzipped file" in str(err):
                 return await self.error("Not a gzipped file")
-            else:
-                return await self.error(str(err))
+
+            return await self.error(str(err))
 
     async def validate(self):
         if errors := check_import_data(self.import_data, strict=False, verify=True):
@@ -311,7 +311,7 @@ class DeleteReferenceTask(Task):
         ]
 
         for dir_name in self.non_existent_references:
-            await self.app["run_in_thread"](shutil.rmtree, path / dir_name, True)
+            await run_in_thread(shutil.rmtree, path / dir_name, True)
 
         await virtool.tasks.pg.update(
             self.pg, self.id, progress=tracker.step_completed, step="remove_directory"

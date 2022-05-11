@@ -357,9 +357,6 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
         "virtool.samples.db.update_is_compressed", make_mocked_coro()
     )
 
-    async def run_in_thread(func, *args):
-        return func(*args)
-
     sample_dir = tmp_path / "samples" / "foo"
     sample_dir.mkdir(parents=True)
 
@@ -368,7 +365,7 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
     if paired:
         shutil.copy(FASTQ_PATH, sample_dir / "reads_2.fastq")
 
-    app_dict = {"db": dbi, "run_in_thread": run_in_thread, "config": config}
+    app_dict = {"db": dbi, "config": config}
 
     sample_id = "foo"
 
