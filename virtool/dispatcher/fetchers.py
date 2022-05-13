@@ -232,7 +232,7 @@ class SamplesFetcher(AbstractFetcher):
 
         documents = [base_processor(document) for document in documents]
 
-        await apply_transforms(
+        documents = await apply_transforms(
             documents, [AttachLabelsTransform(self._pg), AttachUserTransform(self._db)]
         )
 
