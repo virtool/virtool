@@ -835,7 +835,7 @@ async def insert_joined_otu(
             )
 
     for sequence in sequences:
-        await db.sequences.insert_one(sequence)
+        await db.sequences.insert_one(sequence, session=session)
 
     return document["_id"]
 
