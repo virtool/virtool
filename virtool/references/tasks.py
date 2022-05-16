@@ -169,7 +169,9 @@ class ImportReferenceTask(Task):
             for chunk in chunk_list(otus, 10):
                 chunk_otu_ids = await gather(
                     *[
-                        insert_joined_otu(self.db, otu, created_at, ref_id, user_id)
+                        insert_joined_otu(
+                            self.db, otu, created_at, ref_id, user_id, session
+                        )
                         for otu in chunk
                     ]
                 )
