@@ -6,10 +6,10 @@ from pathlib import Path
 import click
 import uvloop
 
+from virtool_core.logging import configure_logs
 import virtool.jobs.main
 from virtool.app import run_app
 from virtool.config.cls import Config
-from virtool.logs import configure_logs
 
 logger = getLogger("config")
 
@@ -155,7 +155,8 @@ def start_server(
     b2c_user_flow,
     use_b2c,
 ):
-    configure_logs(ctx.obj["dev"], ctx.obj["verbose"])
+    debug = ctx.obj["dev"] or ctx.obj["verbose"]
+    configure_logs(debug)
     sentry_dsn = ctx.obj.pop("sentry_dsn")
 
     config = Config(
@@ -192,7 +193,8 @@ def start_server(
 @click.pass_context
 def start_jobs_api(ctx, fake_path, port, host):
     """Start a Virtool Jobs API server"""
-    configure_logs(ctx.obj["dev"], ctx.obj["verbose"])
+    debug = ctx.obj["dev"] or ctx.obj["verbose"]
+    configure_logs(debug)
 
     logger.info("Starting jobs API process")
 
