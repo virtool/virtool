@@ -137,12 +137,10 @@ async def startup_dispatcher(app: Application):
     """
     logger.info("Starting dispatcher")
 
-    (channel,) = await app["redis"].subscribe("channel:dispatch")
-
     DispatcherSQLEvents(app["dispatcher_interface"].enqueue_change)
 
     app["dispatcher"] = Dispatcher(
-        app["pg"], app["db"], RedisDispatcherListener(channel)
+        app["pg"], app["db"], RedisDispatcherListener(app["redis"], "channel:dispatch")
     )
 
     await get_scheduler_from_app(app).spawn(app["dispatcher"].run())
