@@ -84,10 +84,29 @@ class TestFind:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        url = f"/uploads"
+        url = "/uploads"
 
         if upload_type:
             url += f"?type={upload_type}"
+
+        resp = await client.get(url)
+
+        assert resp.status == 200
+        assert await resp.json() == snapshot
+
+    @pytest.mark.parametrize("upload_ready", [True, False, None])
+    async def test_ready(self, upload_ready, spawn_client, snapshot, test_uploads):
+        """
+        Test `GET /uploads?ready` to assure that it returns the correct `upload` documents
+        with correct 'ready' status.
+
+        """
+        client = await spawn_client(authorize=True, administrator=True)
+
+        url = "/uploads"
+
+        if upload_ready:
+            url += f"?ready={upload_ready}"
 
         resp = await client.get(url)
 

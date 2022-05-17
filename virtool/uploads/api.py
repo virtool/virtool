@@ -76,8 +76,12 @@ async def find(req):
     pg = req.app["pg"]
     user = req.query.get("user")
     upload_type = req.query.get("type")
+    upload_ready = req.query.get("ready")
 
-    uploads = await virtool.uploads.db.find(pg, user, upload_type)
+    if upload_ready is not None:
+        upload_ready = bool(upload_ready)
+
+    uploads = await virtool.uploads.db.find(pg, user, upload_type, upload_ready)
 
     return json_response(
         {
