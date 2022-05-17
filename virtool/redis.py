@@ -2,7 +2,7 @@ import asyncio
 import logging
 import sys
 from typing import Optional
-from aioredis import Redis, create_redis_pool
+from aioredis import Redis, create_redis_pool, Channel, ConnectionClosedError
 import aiojobs
 
 
@@ -74,3 +74,20 @@ async def check_version(redis: Redis) -> Optional[str]:
             return version
 
     return None
+
+
+async def resubscribe(redis: Redis, redis_channel_name: str) -> Channel:
+    """
+    Subscribe to the passed channel of the passed :class:`Redis` object.
+
+    :param redis: the Redis connection
+    :param redis_channel_name: name of the channel to reconnect to
+    :return: Channel
+
+    """
+    while True:
+        try:
+            (channel,) = await redis.subscribe(redis_channel_name)
+            return channel
+        except (ConnectionRefusedError, ConnectionResetError, ConnectionClosedError):
+            await asyncio.sleep(5)

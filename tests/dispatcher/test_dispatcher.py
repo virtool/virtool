@@ -1,11 +1,12 @@
+from aioredis import Redis, Channel
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.listener import RedisDispatcherListener
 
 
-def test_add_and_remove_connection(mocker, dbi, pg: AsyncEngine, channel):
-    dispatcher = Dispatcher(pg, dbi, RedisDispatcherListener(channel))
+def test_add_and_remove_connection(mocker, dbi, pg: AsyncEngine, channel: Channel, redis: Redis):
+    dispatcher = Dispatcher(pg, dbi, RedisDispatcherListener(channel, redis))
 
     m = mocker.Mock()
 
