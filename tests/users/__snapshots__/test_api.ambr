@@ -353,8 +353,8 @@
         'force_reset': False,
         'groups': <class 'list'> [
         ],
-        'handle': 'baz',
-        'id': 'bar',
+        'handle': 'bar',
+        'id': 'foo',
         'last_password_change': '2015-10-06T20:00:00Z',
         'permissions': <class 'dict'> {
           'cancel_job': False,
@@ -373,8 +373,8 @@
         'force_reset': False,
         'groups': <class 'list'> [
         ],
-        'handle': 'bar',
-        'id': 'foo',
+        'handle': 'baz',
+        'id': 'bar',
         'last_password_change': '2015-10-06T20:00:00Z',
         'permissions': <class 'dict'> {
           'cancel_job': False,

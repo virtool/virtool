@@ -9,8 +9,10 @@ Schema:
 - groups (List[str]) a list of group IDs the user is a member of
 - last_password_change (datetime) a timestamp for the last time the password was changed
 - password (str) a salted and bcrypt-hashed password for the user
-- permissions (Object) a object of permissions keys with boolean values indicating if the user has that permission
-- primary_group (str) the ID of a group that can automatically gain ownership of samples created by the user
+- permissions (Object) a object of permissions keys with boolean values
+                       indicating if the user has that permission
+- primary_group (str) the ID of a group that can automatically
+                      gain ownership of samples created by the user
 - settings (Object) user-specific settings - currently not used
 
 """
@@ -51,7 +53,7 @@ async def find(req):
         db.users,
         db_query,
         req.query,
-        sort="_id",
+        sort="handle",
         projection=virtool.users.db.PROJECTION,
     )
 
