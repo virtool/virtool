@@ -106,6 +106,132 @@
     ],
   }
 ---
+# name: TestFind.test_ready[uvloop-False]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': None,
+        'id': 2,
+        'name': 'test.fq.gz',
+        'name_on_disk': None,
+        'ready': False,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': None,
+        'type': 'reference',
+        'uploaded_at': None,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
+        },
+      },
+      <class 'dict'> {
+        'created_at': None,
+        'id': 1,
+        'name': 'test.fq.gz',
+        'name_on_disk': None,
+        'ready': False,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': None,
+        'type': 'reads',
+        'uploaded_at': None,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
+        },
+      },
+      <class 'dict'> {
+        'created_at': None,
+        'id': 3,
+        'name': 'test.fq.gz',
+        'name_on_disk': None,
+        'ready': False,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': None,
+        'type': None,
+        'uploaded_at': None,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'johnsoncynthia',
+          'id': 'LB1U6zCj',
+        },
+      },
+    ],
+  }
+---
+# name: TestFind.test_ready[uvloop-None]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': None,
+        'id': 2,
+        'name': 'test.fq.gz',
+        'name_on_disk': None,
+        'ready': False,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': None,
+        'type': 'reference',
+        'uploaded_at': None,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
+        },
+      },
+      <class 'dict'> {
+        'created_at': None,
+        'id': 1,
+        'name': 'test.fq.gz',
+        'name_on_disk': None,
+        'ready': False,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': None,
+        'type': 'reads',
+        'uploaded_at': None,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
+        },
+      },
+      <class 'dict'> {
+        'created_at': None,
+        'id': 3,
+        'name': 'test.fq.gz',
+        'name_on_disk': None,
+        'ready': False,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': None,
+        'type': None,
+        'uploaded_at': None,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'johnsoncynthia',
+          'id': 'LB1U6zCj',
+        },
+      },
+    ],
+  }
+---
+# name: TestFind.test_ready[uvloop-True]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+    ],
+  }
+---
 # name: TestUpload.test[uvloop-hmm]
   <class 'dict'> {
     'created_at': '2015-10-06T20:00:00Z',
