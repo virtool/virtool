@@ -21,6 +21,13 @@ jobs:
         with:
           fetch-depth: 0
       - uses: wagoid/commitlint-github-action@v4
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        run: docker build .
   test:
     runs-on: ubuntu-20.04
     services:
@@ -75,7 +82,7 @@ jobs:
           --cov-report xml
   release:
     runs-on: ubuntu-20.04
-    needs: test
+    needs: [test, build]
     if: github.event_name == 'push'
     steps:
       - name: Checkout
