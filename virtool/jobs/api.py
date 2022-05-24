@@ -40,7 +40,6 @@ async def get(req):
     return json_response(document)
 
 
-@routes.patch("/jobs/{job_id}")
 @routes.jobs_api.patch("/jobs/{job_id}")
 @schema({"acquired": {"type": "boolean", "allowed": [True], "required": True}})
 async def acquire(req):
@@ -61,6 +60,22 @@ async def acquire(req):
         raise NotFound()
     except ResourceConflictError:
         raise HTTPBadRequest(text="Job already acquired")
+
+    return json_response(document)
+
+
+@routes.jobs_api.patch("/jobs/{job_id}/archive")
+async def archive(req):
+    """
+    Sets the archived field on the job document.
+
+    """
+    try:
+        document = await get_data_from_req(req).jobs.archive(req.match_info["job_id"])
+    except ResourceNotFoundError:
+        raise NotFound()
+    except ResourceConflictError:
+        raise HTTPBadRequest(text="Job already archived")
 
     return json_response(document)
 

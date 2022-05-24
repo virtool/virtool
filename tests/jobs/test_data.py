@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
-from virtool.jobs.utils import JobRights
+from virtool.jobs.utils import JobRights, compose_status
 
 
 @pytest.fixture
@@ -76,6 +76,21 @@ async def test_acquire(
     )
 
     assert await jobs_data.acquire("foo") == snapshot
+    assert await dbi.jobs.find_one() == snapshot
+
+
+async def test_archive(
+    dbi, fake, jobs_data: JobsData, pg, snapshot, static_time
+):
+    user = await fake.users.insert()
+
+    status = compose_status("waiting", None)
+
+    await dbi.jobs.insert_one(
+        {"_id": "foo", "status": [status], "archived": False, "acquired": False, "key": None, "user": {"id": user["_id"]}}
+    )
+
+    assert await jobs_data.archive("foo") == snapshot
     assert await dbi.jobs.find_one() == snapshot
 
 

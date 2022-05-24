@@ -46,6 +46,55 @@
     },
   }
 ---
+# name: test_archive[uvloop]
+  <class 'dict'> {
+    'acquired': False,
+    'archived': True,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'id': 'foo',
+    'progress': 0,
+    'stage': None,
+    'state': 'waiting',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
+  }
+---
+# name: test_archive[uvloop].1
+  <class 'dict'> {
+    '_id': 'foo',
+    'acquired': False,
+    'archived': True,
+    'key': None,
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      },
+    ],
+    'user': <class 'dict'> {
+      'id': '7CtBo2yG',
+    },
+  }
+---
 # name: test_cancel[uvloop]
   <class 'dict'> {
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -91,6 +140,7 @@
   <class 'dict'> {
     '_id': '9pfsom1b',
     'acquired': False,
+    'archived': False,
     'args': <class 'dict'> {
       'sample_id': 'foo',
     },
@@ -130,6 +180,7 @@
   <class 'dict'> {
     '_id': '9pfsom1b',
     'acquired': False,
+    'archived': False,
     'args': <class 'dict'> {
       'sample_id': 'foo',
     },
@@ -169,6 +220,7 @@
   <class 'dict'> {
     '_id': 'bar',
     'acquired': False,
+    'archived': False,
     'args': <class 'dict'> {
       'sample_id': 'foo',
     },
@@ -208,6 +260,7 @@
   <class 'dict'> {
     '_id': 'bar',
     'acquired': False,
+    'archived': False,
     'args': <class 'dict'> {
       'sample_id': 'foo',
     },

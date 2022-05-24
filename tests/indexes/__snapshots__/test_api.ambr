@@ -22,6 +22,7 @@
   <class 'dict'> {
     '_id': 'u3cuwaoq',
     'acquired': False,
+    'archived': False,
     'args': <class 'dict'> {
       'index_id': 'xjqvxigh',
       'index_version': 9,

@@ -105,7 +105,7 @@ class TestFind:
 
         url = "/uploads"
 
-        if upload_ready:
+        if upload_ready is not None:
             url += f"?ready={upload_ready}"
 
         resp = await client.get(url)
