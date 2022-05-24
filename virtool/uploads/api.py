@@ -79,7 +79,7 @@ async def find(req):
     upload_ready = req.query.get("ready")
 
     if upload_ready is not None:
-        upload_ready = bool(upload_ready)
+        upload_ready = bool(upload_ready == "True")
 
     uploads = await virtool.uploads.db.find(pg, user, upload_type, upload_ready)
 

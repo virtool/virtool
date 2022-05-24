@@ -19,6 +19,24 @@ async def test_find(filter_by_state, fake, snapshot, spawn_client):
     assert await resp.json() == snapshot
 
 
+@pytest.mark.parametrize("filter_by_archive", [True, False, None])
+async def test_find_archive(dbi, filter_by_archive, fake, snapshot, spawn_client):
+    client = await spawn_client(authorize=True)
+
+    for _ in range(15):
+        await fake.jobs.insert(randomize=True)
+
+    url = "/jobs?beta=true"
+
+    if filter_by_archive is not None:
+        url += f"&archived={filter_by_archive}"
+
+    resp = await client.get(url)
+
+    assert resp.status == 200
+    assert await resp.json() == snapshot
+
+
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, fake, snapshot, spawn_client, test_job, resp_is):
     client = await spawn_client(authorize=True)
@@ -80,6 +98,38 @@ async def test_acquire(
 
     # Explicitly make sure the API key IS in the body.
     assert "key" in body
+
+
+@pytest.mark.parametrize("error", [None, 400, 404])
+async def test_archive(
+    error, snapshot, dbi, fake, test_job, spawn_job_client, resp_is
+):
+    user = await fake.users.insert()
+
+    test_job["user"] = {"id": user["_id"]}
+
+    client = await spawn_job_client(authorize=True)
+
+    if error == 400:
+        test_job["archived"] = True
+
+    if error != 404:
+        await dbi.jobs.insert_one(test_job)
+
+    resp = await client.patch("/jobs/4c530449/archive", json={"archived": True})
+
+    if error == 400:
+        await resp_is.bad_request(resp, "Job already archived")
+        return
+
+    if error == 404:
+        await resp_is.not_found(resp)
+        return
+
+    assert resp.status == 200
+
+    body = await resp.json()
+    assert body == snapshot
 
 
 @pytest.mark.parametrize(

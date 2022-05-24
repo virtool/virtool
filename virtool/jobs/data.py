@@ -92,7 +92,11 @@ class JobsData:
         }
         """
         state = query.get("state")
+        archive = query.get("archived")
         term = query.get("find")
+
+        if archive is not None:
+            archive = bool(archive == "True")
 
         documents = [
             base_processor(d)
@@ -107,11 +111,13 @@ class JobsData:
                             "stage": "$last_status.stage",
                         }
                     },
+                    {"$match": {"archived": archive} if archive is not None else {}},
                     {"$match": {"state": state} if state else {}},
                     {
                         "$project": {
                             "_id": True,
                             "created_at": True,
+                            "archived": True,
                             "progress": True,
                             "stage": True,
                             "state": True,
@@ -163,6 +169,7 @@ class JobsData:
         """
         document = {
             "acquired": False,
+            "archived": False,
             "workflow": workflow,
             "args": job_args,
             "key": None,
@@ -222,6 +229,32 @@ class JobsData:
         )
 
         return await processor(self._db, {**document, "key": key})
+
+    async def archive(self, job_id: str) -> Document:
+        """
+        Set the `archived` field on a job to `True` and return the complete document.
+
+        :param job_id: the ID of the job to start
+        :return: the complete job document
+
+        """
+
+        archived = await get_one_field(self._db.jobs, "archived", job_id)
+
+        if archived is None:
+            raise ResourceNotFoundError("Job not found")
+
+        if archived is True:
+            raise ResourceConflictError("Job already archived")
+
+        document = await self._db.jobs.find_one_and_update(
+            {"_id": job_id},
+            {
+                "$set": {"archived": True}
+            },
+            projection=PROJECTION,
+        )
+        return await processor(self._db, {**document})
 
     async def cancel(self, job_id: str) -> Document:
         """

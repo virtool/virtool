@@ -47,6 +47,7 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
         return {
             "_id": self._faker.fake.mongo_id(),
             "acquired": False,
+            "archived": False,
             "workflow": workflow,
             "args": {},
             "key": None,

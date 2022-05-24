@@ -1,6 +1,7 @@
 # name: test_processor[uvloop]
   <class 'dict'> {
     'acquired': False,
+    'archived': False,
     'args': <class 'dict'> {
       'analysis_id': 'e410429b',
       'index_id': '465428b0',

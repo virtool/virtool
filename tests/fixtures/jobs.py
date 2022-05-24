@@ -41,6 +41,7 @@ def test_job(dbi, static_time):
         {
             "_id": "4c530449",
             "acquired": False,
+            "archived": False,
             "args": {
                 "name": None,
                 "username": "igboyes",
