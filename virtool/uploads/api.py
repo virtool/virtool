@@ -7,6 +7,7 @@ from aiohttp.web_response import Response
 
 import virtool.uploads.db
 from virtool.api.response import InvalidQuery, NotFound, json_response
+from virtool.api.utils import get_query_bool
 from virtool.db.transforms import apply_transforms
 from virtool.http.routes import Routes
 from virtool.uploads.models import Upload, UploadType
@@ -76,12 +77,10 @@ async def find(req):
     pg = req.app["pg"]
     user = req.query.get("user")
     upload_type = req.query.get("type")
-    upload_ready = req.query.get("ready")
 
-    if upload_ready is not None:
-        upload_ready = bool(upload_ready == "True")
+    ready = get_query_bool(req, "ready") if "ready" in req.query else None
 
-    uploads = await virtool.uploads.db.find(pg, user, upload_type, upload_ready)
+    uploads = await virtool.uploads.db.find(pg, user, upload_type, ready)
 
     return json_response(
         {

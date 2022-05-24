@@ -10,12 +10,7 @@ from virtool.uploads.models import Upload, UploadType
 @pytest.fixture
 def files(tmp_path):
     (tmp_path / "files").mkdir()
-
-    path = Path.cwd() / "tests" / "test_files" / "test.fq.gz"
-
-    files = {"file": open(path, "rb")}
-
-    return files
+    return {"file": open(Path.cwd() / "tests" / "test_files" / "test.fq.gz", "rb")}
 
 
 class TestUpload:
@@ -94,8 +89,8 @@ class TestFind:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    @pytest.mark.parametrize("upload_ready", [True, False, None])
-    async def test_ready(self, upload_ready, spawn_client, snapshot, test_uploads):
+    @pytest.mark.parametrize("ready", [True, False, None])
+    async def test_ready(self, ready, spawn_client, snapshot, test_uploads):
         """
         Test `GET /uploads?ready` to assure that it returns the correct `upload` documents
         with correct 'ready' status.
@@ -105,8 +100,8 @@ class TestFind:
 
         url = "/uploads"
 
-        if upload_ready is not None:
-            url += f"?ready={upload_ready}"
+        if ready is not None:
+            url += f"?ready={ready}"
 
         resp = await client.get(url)
 
