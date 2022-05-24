@@ -85,7 +85,7 @@ async def finalize(pg, size: int, id_: int, model: Type[Base]) -> Optional[dict]
     return upload
 
 
-async def find(pg, user: str = None, upload_type: str = None, upload_ready: bool = None) -> List[dict]:
+async def find(pg, user: str = None, upload_type: str = None, ready: bool = None) -> List[dict]:
     """
     Retrieves a list of `Upload` documents in the `uploads` SQL table.
 
@@ -94,7 +94,7 @@ async def find(pg, user: str = None, upload_type: str = None, upload_ready: bool
     :param pg: PostgreSQL AsyncEngine object
     :param user: User id that corresponds to the user that uploaded the file
     :param upload_type: Type of file that was uploaded
-    :param upload_ready: Determines if file is ready or not
+    :param ready: Determines if file is ready or not
     :return: A list of dictionaries that represent each `Upload` document found
     """
     filters = [Upload.removed == False]
@@ -107,8 +107,8 @@ async def find(pg, user: str = None, upload_type: str = None, upload_ready: bool
         if upload_type:
             filters.append(Upload.type == upload_type)
 
-        if upload_ready is not None:
-            filters.append(Upload.ready == upload_ready)
+        if ready is not None:
+            filters.append(Upload.ready == ready)
 
         results = await session.execute(select(Upload).filter(*filters))
 
