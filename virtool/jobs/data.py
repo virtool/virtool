@@ -92,11 +92,8 @@ class JobsData:
         }
         """
         state = query.get("state")
-        archive = query.get("archived")
         term = query.get("find")
-
-        if archive is not None:
-            archive = bool(archive == "True")
+        archive = virtool.utils.to_bool(query["archived"]) if "archived" in query else None
 
         documents = [
             base_processor(d)

@@ -21,6 +21,8 @@ WORKFLOW_STATUS = [
     {"state": "running", "stage": "second"},
 ]
 
+ARCHIVED = [True, False]
+
 
 class JobsProvider(BaseProvider):
     def workflow(self):
@@ -36,6 +38,9 @@ class JobsProvider(BaseProvider):
             {"state": "running", "stage": "first"},
             self.random_element(WORKFLOW_STATUS),
         ]
+
+    def archive(self):
+        return self.random_element(ARCHIVED)
 
 
 class MongoIDProvider(BaseProvider):

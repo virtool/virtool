@@ -64,6 +64,7 @@ async def acquire(req):
     return json_response(document)
 
 
+@routes.patch("/jobs/{job_id}/archive")
 @routes.jobs_api.patch("/jobs/{job_id}/archive")
 async def archive(req):
     """
