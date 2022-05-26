@@ -45,6 +45,9 @@ class Task:
             self.step = func
 
             await virtool.tasks.pg.update(self.pg, self.id, step=self.step.__name__)
+
+            logger.info(f"Starting task step '{self.task_type}.{func.__name__}'")
+
             try:
                 await func()
             except Exception as err:
