@@ -792,19 +792,19 @@
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
-        'build_index': 3,
+        'build_index': 2,
         'create_sample': 1,
-        'nuvs': 3,
+        'pathoscope': 1,
       },
       'complete': <class 'dict'> {
         'aodp': 1,
-        'build_index': 1,
-        'create_sample': 1,
-        'create_subtraction': 1,
-        'nuvs': 1,
+        'create_subtraction': 2,
+        'pathoscope': 1,
       },
       'running': <class 'dict'> {
-        'aodp': 1,
+        'build_index': 2,
+        'create_sample': 1,
+        'create_subtraction': 2,
         'nuvs': 1,
         'pathoscope': 1,
       },
@@ -812,7 +812,7 @@
     'documents': <class 'list'> [
       <class 'dict'> {
         'archived': False,
-        'id': 'b8r738m6',
+        'id': 'jso2krv6',
         'stage': 'first',
         'state': 'complete',
         'user': <class 'dict'> {
@@ -823,8 +823,20 @@
         'workflow': 'create_subtraction',
       },
       <class 'dict'> {
+        'archived': True,
+        'id': 'fd29tzvf',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'build_index',
+      },
+      <class 'dict'> {
         'archived': False,
-        'id': 'ffd29tzv',
+        'id': '6yqdpv68',
         'stage': 'first',
         'state': 'cancelled',
         'user': <class 'dict'> {
@@ -832,13 +844,61 @@
           'handle': 'bob',
           'id': 'test',
         },
-        'workflow': 'nuvs',
+        'workflow': 'pathoscope',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'c76d4z2w',
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_subtraction',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'il5gui82',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_subtraction',
       },
       <class 'dict'> {
         'archived': False,
-        'id': 'dc4lumlx',
+        'id': '959rkkel',
         'stage': 'first',
-        'state': 'cancelled',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'aodp',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'qvnukggw',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'build_index',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'cyefbcz3',
+        'stage': 'second',
+        'state': 'running',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'bob',
@@ -847,20 +907,20 @@
         'workflow': 'create_sample',
       },
       <class 'dict'> {
-        'archived': False,
-        'id': 'r5j2tazo',
-        'stage': 'first',
-        'state': 'cancelled',
+        'archived': True,
+        'id': 'sihy3pjr',
+        'stage': 'second',
+        'state': 'running',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'bob',
           'id': 'test',
         },
-        'workflow': 'nuvs',
+        'workflow': 'create_subtraction',
       },
       <class 'dict'> {
-        'archived': False,
-        'id': 'ar5il5gu',
+        'archived': True,
+        'id': 'cwrw4i0e',
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -872,33 +932,9 @@
       },
       <class 'dict'> {
         'archived': False,
-        'id': '2qcls7dt',
+        'id': 'l3dfzbu6',
         'stage': 'first',
         'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 't3t8vvqv',
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'aodp',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 'ukggwxrd',
-        'stage': 'first',
-        'state': 'complete',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'bob',
@@ -908,55 +944,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'id': '7467tozj',
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': '6v8uqx97',
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 'levmgajz',
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'aodp',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 'l3dfzbu6',
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 'yawvuon9',
+        'id': 'awvuon9b',
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -968,7 +956,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'id': 'a8geh27a',
+        'id': 'zr0cytw4',
         'stage': 'first',
         'state': 'cancelled',
         'user': <class 'dict'> {
@@ -976,11 +964,23 @@
           'handle': 'bob',
           'id': 'test',
         },
-        'workflow': 'nuvs',
+        'workflow': 'build_index',
       },
       <class 'dict'> {
         'archived': False,
-        'id': 'djhxmgsb',
+        'id': 'xmgsbd9h',
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'build_index',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': '47gy8cy4',
         'stage': 'first',
         'state': 'complete',
         'user': <class 'dict'> {
@@ -988,7 +988,7 @@
           'handle': 'bob',
           'id': 'test',
         },
-        'workflow': 'nuvs',
+        'workflow': 'pathoscope',
       },
     ],
   }
@@ -997,27 +997,87 @@
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
-        'build_index': 3,
+        'build_index': 2,
         'create_sample': 1,
-        'nuvs': 3,
+        'pathoscope': 1,
       },
       'complete': <class 'dict'> {
         'aodp': 1,
-        'build_index': 1,
-        'create_sample': 1,
-        'create_subtraction': 1,
-        'nuvs': 1,
+        'create_subtraction': 2,
+        'pathoscope': 1,
       },
       'running': <class 'dict'> {
-        'aodp': 1,
+        'build_index': 2,
+        'create_sample': 1,
+        'create_subtraction': 2,
         'nuvs': 1,
         'pathoscope': 1,
       },
     },
     'documents': <class 'list'> [
       <class 'dict'> {
-        'archived': False,
-        'id': 'ar5il5gu',
+        'archived': True,
+        'id': 'fd29tzvf',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'build_index',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'il5gui82',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_subtraction',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'qvnukggw',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'build_index',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'cyefbcz3',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_sample',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'sihy3pjr',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_subtraction',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'cwrw4i0e',
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -1029,19 +1089,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'id': 't3t8vvqv',
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'aodp',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 'yawvuon9',
+        'id': 'awvuon9b',
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -1058,19 +1106,19 @@
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
-        'build_index': 3,
+        'build_index': 2,
         'create_sample': 1,
-        'nuvs': 3,
+        'pathoscope': 1,
       },
       'complete': <class 'dict'> {
         'aodp': 1,
-        'build_index': 1,
-        'create_sample': 1,
-        'create_subtraction': 1,
-        'nuvs': 1,
+        'create_subtraction': 2,
+        'pathoscope': 1,
       },
       'running': <class 'dict'> {
-        'aodp': 1,
+        'build_index': 2,
+        'create_sample': 1,
+        'create_subtraction': 2,
         'nuvs': 1,
         'pathoscope': 1,
       },
@@ -1078,7 +1126,7 @@
     'documents': <class 'list'> [
       <class 'dict'> {
         'archived': False,
-        'id': 'b8r738m6',
+        'id': 'jso2krv6',
         'stage': 'first',
         'state': 'complete',
         'user': <class 'dict'> {
@@ -1090,45 +1138,9 @@
       },
       <class 'dict'> {
         'archived': False,
-        'id': 'ffd29tzv',
+        'id': '6yqdpv68',
         'stage': 'first',
         'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'nuvs',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 'dc4lumlx',
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 'r5j2tazo',
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'nuvs',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 'ar5il5gu',
-        'stage': 'second',
-        'state': 'running',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'bob',
@@ -1138,67 +1150,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'id': '2qcls7dt',
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 't3t8vvqv',
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'aodp',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 'ukggwxrd',
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'create_sample',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': '7467tozj',
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': '6v8uqx97',
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 'levmgajz',
+        'id': '959rkkel',
         'stage': 'first',
         'state': 'complete',
         'user': <class 'dict'> {
@@ -1212,17 +1164,17 @@
         'archived': False,
         'id': 'l3dfzbu6',
         'stage': 'first',
-        'state': 'complete',
+        'state': 'cancelled',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'bob',
           'id': 'test',
         },
-        'workflow': 'build_index',
+        'workflow': 'create_sample',
       },
       <class 'dict'> {
         'archived': False,
-        'id': 'yawvuon9',
+        'id': 'awvuon9b',
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -1234,7 +1186,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'id': 'a8geh27a',
+        'id': 'zr0cytw4',
         'stage': 'first',
         'state': 'cancelled',
         'user': <class 'dict'> {
@@ -1242,19 +1194,19 @@
           'handle': 'bob',
           'id': 'test',
         },
-        'workflow': 'nuvs',
+        'workflow': 'build_index',
       },
       <class 'dict'> {
         'archived': False,
-        'id': 'djhxmgsb',
+        'id': 'xmgsbd9h',
         'stage': 'first',
-        'state': 'complete',
+        'state': 'cancelled',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'bob',
           'id': 'test',
         },
-        'workflow': 'nuvs',
+        'workflow': 'build_index',
       },
     ],
   }
@@ -1263,19 +1215,19 @@
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
-        'build_index': 3,
+        'build_index': 2,
         'create_sample': 1,
-        'nuvs': 3,
+        'pathoscope': 1,
       },
       'complete': <class 'dict'> {
         'aodp': 1,
-        'build_index': 1,
-        'create_sample': 1,
-        'create_subtraction': 1,
-        'nuvs': 1,
+        'create_subtraction': 2,
+        'pathoscope': 1,
       },
       'running': <class 'dict'> {
-        'aodp': 1,
+        'build_index': 2,
+        'create_sample': 1,
+        'create_subtraction': 2,
         'nuvs': 1,
         'pathoscope': 1,
       },
@@ -1283,7 +1235,7 @@
     'documents': <class 'list'> [
       <class 'dict'> {
         'archived': False,
-        'id': 'b8r738m6',
+        'id': 'jso2krv6',
         'stage': 'first',
         'state': 'complete',
         'user': <class 'dict'> {
@@ -1294,8 +1246,20 @@
         'workflow': 'create_subtraction',
       },
       <class 'dict'> {
+        'archived': True,
+        'id': 'fd29tzvf',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'build_index',
+      },
+      <class 'dict'> {
         'archived': False,
-        'id': 'ffd29tzv',
+        'id': '6yqdpv68',
         'stage': 'first',
         'state': 'cancelled',
         'user': <class 'dict'> {
@@ -1303,13 +1267,61 @@
           'handle': 'bob',
           'id': 'test',
         },
-        'workflow': 'nuvs',
+        'workflow': 'pathoscope',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'c76d4z2w',
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_subtraction',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'il5gui82',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_subtraction',
       },
       <class 'dict'> {
         'archived': False,
-        'id': 'dc4lumlx',
+        'id': '959rkkel',
         'stage': 'first',
-        'state': 'cancelled',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'aodp',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'qvnukggw',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'build_index',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'cyefbcz3',
+        'stage': 'second',
+        'state': 'running',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'bob',
@@ -1318,20 +1330,20 @@
         'workflow': 'create_sample',
       },
       <class 'dict'> {
-        'archived': False,
-        'id': 'r5j2tazo',
-        'stage': 'first',
-        'state': 'cancelled',
+        'archived': True,
+        'id': 'sihy3pjr',
+        'stage': 'second',
+        'state': 'running',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'bob',
           'id': 'test',
         },
-        'workflow': 'nuvs',
+        'workflow': 'create_subtraction',
       },
       <class 'dict'> {
-        'archived': False,
-        'id': 'ar5il5gu',
+        'archived': True,
+        'id': 'cwrw4i0e',
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -1343,33 +1355,9 @@
       },
       <class 'dict'> {
         'archived': False,
-        'id': '2qcls7dt',
+        'id': 'l3dfzbu6',
         'stage': 'first',
         'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 't3t8vvqv',
-        'stage': 'second',
-        'state': 'running',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'aodp',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 'ukggwxrd',
-        'stage': 'first',
-        'state': 'complete',
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'bob',
@@ -1379,55 +1367,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'id': '7467tozj',
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': '6v8uqx97',
-        'stage': 'first',
-        'state': 'cancelled',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 'levmgajz',
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'aodp',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 'l3dfzbu6',
-        'stage': 'first',
-        'state': 'complete',
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
-        'workflow': 'build_index',
-      },
-      <class 'dict'> {
-        'archived': False,
-        'id': 'yawvuon9',
+        'id': 'awvuon9b',
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -1439,7 +1379,7 @@
       },
       <class 'dict'> {
         'archived': False,
-        'id': 'a8geh27a',
+        'id': 'zr0cytw4',
         'stage': 'first',
         'state': 'cancelled',
         'user': <class 'dict'> {
@@ -1447,11 +1387,23 @@
           'handle': 'bob',
           'id': 'test',
         },
-        'workflow': 'nuvs',
+        'workflow': 'build_index',
       },
       <class 'dict'> {
         'archived': False,
-        'id': 'djhxmgsb',
+        'id': 'xmgsbd9h',
+        'stage': 'first',
+        'state': 'cancelled',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'build_index',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': '47gy8cy4',
         'stage': 'first',
         'state': 'complete',
         'user': <class 'dict'> {
@@ -1459,7 +1411,7 @@
           'handle': 'bob',
           'id': 'test',
         },
-        'workflow': 'nuvs',
+        'workflow': 'pathoscope',
       },
     ],
   }
@@ -1468,24 +1420,120 @@
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
-        'build_index': 3,
+        'build_index': 2,
         'create_sample': 1,
-        'nuvs': 3,
+        'pathoscope': 1,
       },
       'complete': <class 'dict'> {
         'aodp': 1,
-        'build_index': 1,
-        'create_sample': 1,
-        'create_subtraction': 1,
-        'nuvs': 1,
+        'create_subtraction': 2,
+        'pathoscope': 1,
       },
       'running': <class 'dict'> {
-        'aodp': 1,
+        'build_index': 2,
+        'create_sample': 1,
+        'create_subtraction': 2,
         'nuvs': 1,
         'pathoscope': 1,
       },
     },
     'documents': <class 'list'> [
+      <class 'dict'> {
+        'archived': True,
+        'id': 'fd29tzvf',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'build_index',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'c76d4z2w',
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_subtraction',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'il5gui82',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_subtraction',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'qvnukggw',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'build_index',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'cyefbcz3',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_sample',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'sihy3pjr',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'create_subtraction',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': 'cwrw4i0e',
+        'stage': 'second',
+        'state': 'running',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'pathoscope',
+      },
+      <class 'dict'> {
+        'archived': True,
+        'id': '47gy8cy4',
+        'stage': 'first',
+        'state': 'complete',
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'bob',
+          'id': 'test',
+        },
+        'workflow': 'pathoscope',
+      },
     ],
   }
 ---
