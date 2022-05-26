@@ -43,11 +43,12 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
         )
 
         workflow = self._faker.fake.workflow() if randomize else "nuvs"
+        archived = self._faker.fake.archive() if randomize else False
 
         return {
             "_id": self._faker.fake.mongo_id(),
             "acquired": False,
-            "archived": False,
+            "archived": archived,
             "workflow": workflow,
             "args": {},
             "key": None,

@@ -1,6 +1,7 @@
 import string
 
 from faker.providers import BaseProvider
+from faker.providers.python import Provider
 
 ID_CHARACTERS = string.ascii_lowercase + string.digits
 
@@ -22,7 +23,7 @@ WORKFLOW_STATUS = [
 ]
 
 
-class JobsProvider(BaseProvider):
+class JobsProvider(Provider):
     def workflow(self):
         return self.random_element(WORKFLOW_NAMES)
 
@@ -36,6 +37,9 @@ class JobsProvider(BaseProvider):
             {"state": "running", "stage": "first"},
             self.random_element(WORKFLOW_STATUS),
         ]
+
+    def archive(self):
+        return self.pybool()
 
 
 class MongoIDProvider(BaseProvider):
