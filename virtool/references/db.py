@@ -708,7 +708,7 @@ async def download_and_parse_release(
 
         await virtool.tasks.pg.update(pg, task_id, step="unpack")
 
-        return run_in_thread(load_reference_file, download_path)
+        return await run_in_thread(load_reference_file, download_path)
 
 
 async def edit(db, ref_id: str, data: dict) -> dict:
