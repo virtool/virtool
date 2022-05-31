@@ -13,7 +13,7 @@ import virtool.subtractions.db
 import virtool.uploads.db
 import virtool.validators
 from virtool.api.response import NotFound, json_response
-from virtool.api.utils import compose_regex_query, get_query_bool, paginate
+from virtool.api.utils import compose_regex_query, get_req_bool, paginate
 from virtool.data.utils import get_data_from_req
 from virtool.db.transforms import apply_transforms
 from virtool.http.routes import Routes
@@ -39,8 +39,8 @@ BASE_QUERY = {"deleted": False}
 async def find(req):
     db = req.app["db"]
 
-    ready = get_query_bool(req, "ready")
-    short = get_query_bool(req, "short")
+    ready = get_req_bool(req, "ready", False)
+    short = get_req_bool(req, "short", False)
     term = req.query.get("find")
 
     db_query = dict()

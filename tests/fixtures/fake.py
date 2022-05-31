@@ -1,6 +1,8 @@
+import datetime
 from abc import ABC, abstractmethod
 
 import pytest
+import arrow
 
 from virtool.fake.wrapper import FakerWrapper
 from virtool.types import Document
@@ -28,19 +30,38 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
         self._faker = FakerWrapper()
 
     async def create(self, randomize: bool = False) -> dict:
-        status = (
-            self._faker.fake.job_status()
-            if randomize
-            else [
+        if randomize:
+            status = self._faker.fake.job_status()
+
+            timestamp = arrow.get(
+                self._faker.fake.date_time_between(
+                    start_date=datetime.datetime(2016, 1, 1, 12, 32, 33)
+                )
+            ).naive
+
+            end_timestamp = timestamp + datetime.timedelta(days=1.5)
+
+            progress = 0
+
+            for entry in status:
+                entry.update({"timestamp": timestamp, "progress": progress})
+
+                progress = self._faker.fake.random_int(min=progress, max=100)
+                timestamp = arrow.get(
+                    self._faker.fake.date_time_between(
+                        start_date=timestamp, end_date=end_timestamp
+                    )
+                ).naive
+        else:
+            status = [
                 {
                     "state": "waiting",
                     "stage": None,
                     "error": None,
                     "progress": 0,
                     "timestamp": self._faker.date_time(),
-                },
+                }
             ]
-        )
 
         workflow = self._faker.fake.workflow() if randomize else "nuvs"
         archived = self._faker.fake.archive() if randomize else False

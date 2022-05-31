@@ -2,10 +2,15 @@ from asyncio import gather
 from collections import defaultdict
 from typing import Mapping, Optional, Dict
 
+from multidict import MultiDictProxy
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 import virtool.utils
-from virtool.api.utils import compose_regex_query, paginate
+from virtool.api.utils import (
+    compose_regex_query,
+    paginate,
+    get_query_bool,
+)
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.db.core import DB
 from virtool.db.transforms import apply_transforms
@@ -56,7 +61,7 @@ class JobsData:
 
         return dict(counts)
 
-    async def _find_basic(self, query: Mapping) -> Document:
+    async def _find_basic(self, query: MultiDictProxy) -> Document:
         term = query.get("find")
 
         db_query = {}
@@ -80,7 +85,7 @@ class JobsData:
             ),
         }
 
-    async def _find_beta(self, query: Mapping) -> Document:
+    async def _find_beta(self, query: MultiDictProxy) -> Document:
         """
         {
           "waiting": {
@@ -91,18 +96,20 @@ class JobsData:
           }
         }
         """
-        state = query.get("state")
-        archive = query.get("archived")
+        states = query.getall("state", None)
         term = query.get("find")
-
-        if archive is not None:
-            archive = bool(archive == "True")
+        archived = get_query_bool(query, "archived") if "archived" in query else None
 
         documents = [
             base_processor(d)
             async for d in self._db.jobs.aggregate(
                 [
-                    {"$match": compose_regex_query(term, ["user.id"]) if term else {}},
+                    {
+                        "$match": {
+                            **(compose_regex_query(term, ["user.id"]) if term else {}),
+                            **({"archived": archived} if archived is not None else {}),
+                        }
+                    },
                     {"$set": {"last_status": {"$last": "$status"}}},
                     {
                         "$set": {
@@ -111,8 +118,7 @@ class JobsData:
                             "stage": "$last_status.stage",
                         }
                     },
-                    {"$match": {"archived": archive} if archive is not None else {}},
-                    {"$match": {"state": state} if state else {}},
+                    {"$match": {"state": {"$in": states}} if states else {}},
                     {
                         "$project": {
                             "_id": True,
@@ -141,7 +147,7 @@ class JobsData:
         :param query:
         :return:
         """
-        if query.get("beta"):
+        if get_query_bool(query, "beta", False):
             return await self._find_beta(query)
 
         return await self._find_basic(query)
@@ -249,9 +255,7 @@ class JobsData:
 
         document = await self._db.jobs.find_one_and_update(
             {"_id": job_id},
-            {
-                "$set": {"archived": True}
-            },
+            {"$set": {"archived": True}},
             projection=PROJECTION,
         )
         return await processor(self._db, {**document})
