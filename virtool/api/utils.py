@@ -1,7 +1,7 @@
 import asyncio
 import math
 import re
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, Mapping, Any
 
 from aiohttp.web import Request
 from multidict import MultiDictProxy
@@ -137,17 +137,30 @@ async def paginate(
     }
 
 
-def get_query_bool(req: Request, key: str) -> bool:
+def get_query_bool(query: Mapping, key: str, default: Optional[Any] = None) -> bool:
     """
     Return a `bool` calculated from a URL query given its `key`.
 
-    :param req: the request
+    :param query: the URL query
     :param key: the URL query key
+    :param default: the default to return if the value is not present
     :return: the derived boolean value
 
     """
     try:
-        short = req.query[key]
-        return to_bool(short)
+        return to_bool(query[key])
     except KeyError:
-        return False
+        return default
+
+
+def get_req_bool(req: Request, key: str, default: Optional[Any] = None) -> bool:
+    """
+    Return a `bool` calculated from the request's query given its `key`.
+
+    :param req: the request
+    :param key: the URL query key
+    :param default: the default to return if the key is not present
+    :return: the derived boolean value
+
+    """
+    return get_query_bool(req.query, key, default)

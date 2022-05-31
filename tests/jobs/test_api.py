@@ -1,8 +1,21 @@
 import pytest
 
 
-@pytest.mark.parametrize("filter_by_state", [True, False])
-async def test_find(filter_by_state, fake, snapshot, spawn_client):
+async def test_find(fake, snapshot, spawn_client):
+    client = await spawn_client(authorize=True)
+
+    for _ in range(5):
+        await fake.jobs.insert(randomize=True)
+
+    resp = await client.get("/jobs")
+
+    assert resp.status == 200
+    assert await resp.json() == snapshot
+
+
+@pytest.mark.parametrize("archived", [True, False, None])
+@pytest.mark.parametrize("state", ["running", None])
+async def test_find_beta(archived, state, fake, snapshot, spawn_client):
     client = await spawn_client(authorize=True)
 
     for _ in range(15):
@@ -10,31 +23,25 @@ async def test_find(filter_by_state, fake, snapshot, spawn_client):
 
     url = "/jobs?beta=true"
 
-    if filter_by_state:
-        url += "&state=running"
+    if archived is not None:
+        url += f"&archived={archived}"
+
+    if state is not None:
+        url += f"&state={state}"
 
     resp = await client.get(url)
 
     assert resp.status == 200
-    assert await resp.json() == snapshot
 
+    body = await resp.json()
 
-@pytest.mark.parametrize("filter_by_archive", [True, False, None])
-async def test_find_archive(dbi, filter_by_archive, fake, snapshot, spawn_client):
-    client = await spawn_client(authorize=True)
+    assert body == snapshot
 
-    for _ in range(15):
-        await fake.jobs.insert(randomize=True)
+    if archived is not None:
+        assert all(job["archived"] is archived for job in body["documents"])
 
-    url = "/jobs?beta=true"
-
-    if filter_by_archive is not None:
-        url += f"&archived={filter_by_archive}"
-
-    resp = await client.get(url)
-
-    assert resp.status == 200
-    assert await resp.json() == snapshot
+    if state is not None:
+        assert all(job["state"] == state for job in body["documents"])
 
 
 @pytest.mark.parametrize("error", [None, "404"])
@@ -101,9 +108,7 @@ async def test_acquire(
 
 
 @pytest.mark.parametrize("error", [None, 400, 404])
-async def test_archive(
-    error, snapshot, dbi, fake, test_job, spawn_job_client, resp_is
-):
+async def test_archive(error, snapshot, dbi, fake, test_job, spawn_job_client, resp_is):
     user = await fake.users.insert()
 
     test_job["user"] = {"id": user["_id"]}
@@ -305,8 +310,8 @@ class TestPushStatus:
     @pytest.mark.parametrize("state", ["complete", "cancelled", "error", "terminated"])
     async def test_finalized_job_error(self, state, resp_is, spawn_client, test_job):
         """
-            Verify that job state cannot be updated once the latest status indicates the job is finished
-            or otherwise terminated
+        Verify that job state cannot be updated once the latest status indicates the job is finished
+        or otherwise terminated
         """
         client = await spawn_client(authorize=True)
 

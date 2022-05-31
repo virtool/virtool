@@ -13,7 +13,16 @@ OR_COMPLETE = [{"status.state": "complete"}]
 OR_FAILED = [{"status.state": "error"}, {"status.state": "cancelled"}]
 
 #: A projection for minimal representations of jobs suitable for search results.
-LIST_PROJECTION = ["_id", "workflow", "status", "proc", "mem", "rights", "user"]
+LIST_PROJECTION = [
+    "_id",
+    "archived",
+    "workflow",
+    "status",
+    "proc",
+    "mem",
+    "rights",
+    "user",
+]
 
 #: A projection for full job details. Excludes the secure key field.
 PROJECTION = {"key": False}
