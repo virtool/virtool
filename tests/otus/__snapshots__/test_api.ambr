@@ -2849,10 +2849,10 @@
     'version': 0,
   }
 ---
-# name: test_create_sequence[True-uvloop-None]
+# name: test_create_sequence[True-uvloop-None-null]
   'https://virtool.example.com/otus/6116cba1/isolates/cab8b360/sequences/9pfsom1b'
 ---
-# name: test_create_sequence[True-uvloop-None].1
+# name: test_create_sequence[True-uvloop-None-null].1
   <class 'dict'> {
     'accession': 'foobar',
     'definition': 'A made up sequence',
@@ -2868,7 +2868,7 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[True-uvloop-None].2
+# name: test_create_sequence[True-uvloop-None-null].2
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -2888,12 +2888,17 @@
       'id': 'hxn167',
     },
     'schema': <class 'list'> [
+      <class 'dict'> {
+        'molecule': 'ssDNA',
+        'name': 'test_segment',
+        'required': False,
+      },
     ],
     'verified': True,
-    'version': 1,
+    'version': 2,
   }
 ---
-# name: test_create_sequence[True-uvloop-None].3
+# name: test_create_sequence[True-uvloop-None-null].3
   <class 'dict'> {
     '_id': '9pfsom1b',
     'accession': 'foobar',
@@ -2909,9 +2914,9 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[True-uvloop-None].4
+# name: test_create_sequence[True-uvloop-None-null].4
   <class 'dict'> {
-    '_id': '6116cba1.1',
+    '_id': '6116cba1.2',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'description': 'Created new sequence foobar in Isolate 8816-v2',
     'diff': <class 'list'> [
@@ -2919,8 +2924,8 @@
         'change',
         'version',
         <class 'list'> [
-          0,
           1,
+          2,
         ],
       ],
       <class 'list'> [
@@ -2967,7 +2972,7 @@
     'otu': <class 'dict'> {
       'id': '6116cba1',
       'name': 'Prunus virus F',
-      'version': 1,
+      'version': 2,
     },
     'reference': <class 'dict'> {
       'id': 'hxn167',
@@ -2977,18 +2982,26 @@
     },
   }
 ---
-# name: test_edit_sequence[True-uvloop-None]
+# name: test_create_sequence[True-uvloop-None-test_segment]
+  'https://virtool.example.com/otus/6116cba1/isolates/cab8b360/sequences/9pfsom1b'
+---
+# name: test_create_sequence[True-uvloop-None-test_segment].1
   <class 'dict'> {
+    'accession': 'foobar',
     'definition': 'A made up sequence',
-    'host': 'Grapevine',
-    'id': 'KX269872',
+    'host': 'Plant',
+    'id': '9pfsom1b',
     'isolate_id': 'cab8b360',
     'otu_id': '6116cba1',
-    'segment': None,
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'segment': 'test_segment',
     'sequence': 'ATGCGTGTACTG',
+    'target': None,
   }
 ---
-# name: test_edit_sequence[True-uvloop-None].1
+# name: test_create_sequence[True-uvloop-None-test_segment].2
   <class 'dict'> {
     '_id': '6116cba1',
     'abbreviation': 'PVF',
@@ -3008,12 +3021,142 @@
       'id': 'hxn167',
     },
     'schema': <class 'list'> [
+      <class 'dict'> {
+        'molecule': 'ssDNA',
+        'name': 'test_segment',
+        'required': False,
+      },
     ],
     'verified': True,
-    'version': 1,
+    'version': 2,
   }
 ---
-# name: test_edit_sequence[True-uvloop-None].2
+# name: test_create_sequence[True-uvloop-None-test_segment].3
+  <class 'dict'> {
+    '_id': '9pfsom1b',
+    'accession': 'foobar',
+    'definition': 'A made up sequence',
+    'host': 'Plant',
+    'isolate_id': 'cab8b360',
+    'otu_id': '6116cba1',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'segment': 'test_segment',
+    'sequence': 'ATGCGTGTACTG',
+    'target': None,
+  }
+---
+# name: test_create_sequence[True-uvloop-None-test_segment].4
+  <class 'dict'> {
+    '_id': '6116cba1.2',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Created new sequence foobar in Isolate 8816-v2',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          1,
+          2,
+        ],
+      ],
+      <class 'list'> [
+        'add',
+        <class 'list'> [
+          'isolates',
+          0,
+          'sequences',
+        ],
+        <class 'list'> [
+          <class 'list'> [
+            0,
+            <class 'dict'> {
+              '_id': '9pfsom1b',
+              'accession': 'foobar',
+              'definition': 'A made up sequence',
+              'host': 'Plant',
+              'isolate_id': 'cab8b360',
+              'otu_id': '6116cba1',
+              'reference': <class 'dict'> {
+                'id': 'hxn167',
+              },
+              'segment': 'test_segment',
+              'sequence': 'ATGCGTGTACTG',
+              'target': None,
+            },
+          ],
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        'verified',
+        <class 'list'> [
+          False,
+          True,
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'create_sequence',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 2,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: test_edit_sequence[True-uvloop-None-null]
+  <class 'dict'> {
+    'definition': 'A made up sequence',
+    'host': 'Grapevine',
+    'id': 'KX269872',
+    'isolate_id': 'cab8b360',
+    'otu_id': '6116cba1',
+    'segment': None,
+    'sequence': 'ATGCGTGTACTG',
+  }
+---
+# name: test_edit_sequence[True-uvloop-None-null].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+      <class 'dict'> {
+        'molecule': 'ssDNA',
+        'name': 'test_segment',
+        'required': False,
+      },
+    ],
+    'verified': True,
+    'version': 2,
+  }
+---
+# name: test_edit_sequence[True-uvloop-None-null].2
   <class 'dict'> {
     '_id': 'KX269872',
     'definition': 'A made up sequence',
@@ -3024,9 +3167,9 @@
     'sequence': 'ATGCGTGTACTG',
   }
 ---
-# name: test_edit_sequence[True-uvloop-None].3
+# name: test_edit_sequence[True-uvloop-None-null].3
   <class 'dict'> {
-    '_id': '6116cba1.1',
+    '_id': '6116cba1.2',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'description': 'Edited sequence KX269872 in Isolate 8816-v2',
     'diff': <class 'list'> [
@@ -3034,8 +3177,135 @@
         'change',
         'version',
         <class 'list'> [
-          0,
           1,
+          2,
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          0,
+          'sequences',
+          0,
+          'definition',
+        ],
+        <class 'list'> [
+          'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
+          'A made up sequence',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          0,
+          'sequences',
+          0,
+          'host',
+        ],
+        <class 'list'> [
+          'sweet cherry',
+          'Grapevine',
+        ],
+      ],
+      <class 'list'> [
+        'change',
+        <class 'list'> [
+          'isolates',
+          0,
+          'sequences',
+          0,
+          'sequence',
+        ],
+        <class 'list'> [
+          'TGTTTAAGAGATTAAACAACCGCTTTC',
+          'ATGCGTGTACTG',
+        ],
+      ],
+    ],
+    'index': <class 'dict'> {
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    },
+    'method_name': 'edit_sequence',
+    'otu': <class 'dict'> {
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 2,
+    },
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: test_edit_sequence[True-uvloop-None-test_segment]
+  <class 'dict'> {
+    'definition': 'A made up sequence',
+    'host': 'Grapevine',
+    'id': 'KX269872',
+    'isolate_id': 'cab8b360',
+    'otu_id': '6116cba1',
+    'segment': 'test_segment',
+    'sequence': 'ATGCGTGTACTG',
+  }
+---
+# name: test_edit_sequence[True-uvloop-None-test_segment].1
+  <class 'dict'> {
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'imported': True,
+    'isolates': <class 'list'> [
+      <class 'dict'> {
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      },
+    ],
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': <class 'dict'> {
+      'id': 'hxn167',
+    },
+    'schema': <class 'list'> [
+      <class 'dict'> {
+        'molecule': 'ssDNA',
+        'name': 'test_segment',
+        'required': False,
+      },
+    ],
+    'verified': True,
+    'version': 2,
+  }
+---
+# name: test_edit_sequence[True-uvloop-None-test_segment].2
+  <class 'dict'> {
+    '_id': 'KX269872',
+    'definition': 'A made up sequence',
+    'host': 'Grapevine',
+    'isolate_id': 'cab8b360',
+    'otu_id': '6116cba1',
+    'segment': 'test_segment',
+    'sequence': 'ATGCGTGTACTG',
+  }
+---
+# name: test_edit_sequence[True-uvloop-None-test_segment].3
+  <class 'dict'> {
+    '_id': '6116cba1.2',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Edited sequence KX269872 in Isolate 8816-v2',
+    'diff': <class 'list'> [
+      <class 'list'> [
+        'change',
+        'version',
+        <class 'list'> [
+          1,
+          2,
         ],
       ],
       <class 'list'> [
@@ -3082,10 +3352,16 @@
       ],
       <class 'list'> [
         'change',
-        'verified',
         <class 'list'> [
-          False,
-          True,
+          'isolates',
+          0,
+          'sequences',
+          0,
+          'segment',
+        ],
+        <class 'list'> [
+          None,
+          'test_segment',
         ],
       ],
     ],
@@ -3097,7 +3373,7 @@
     'otu': <class 'dict'> {
       'id': '6116cba1',
       'name': 'Prunus virus F',
-      'version': 1,
+      'version': 2,
     },
     'reference': <class 'dict'> {
       'id': 'hxn167',

@@ -3,7 +3,6 @@ from aiohttp.test_utils import make_mocked_coro
 
 import virtool.otus.db
 
-
 @pytest.mark.parametrize("find", [None, "tobacco"])
 @pytest.mark.parametrize("verified", [None, True, False])
 @pytest.mark.parametrize("names", [None, True, False])
@@ -970,7 +969,7 @@ async def test_get_sequence(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
+@pytest.mark.parametrize("error,segment", [(None, "null"), (None, "test_segment"), ("404_otu", None), ("404_isolate", None)])
 async def test_create_sequence(
     error,
     snapshot,
@@ -979,6 +978,7 @@ async def test_create_sequence(
     resp_is,
     test_otu,
     test_random_alphanumeric,
+    segment
 ):
     client = await spawn_client(
         authorize=True,
@@ -1001,6 +1001,12 @@ async def test_create_sequence(
         "definition": "A made up sequence",
     }
 
+    if segment:
+        segment_data = {"schema": [{"name": "test_segment", "molecule": "ssDNA", "required": False}]}
+        await client.patch("/otus/6116cba1", segment_data)
+
+        data["segment"] = segment if segment != "null" else None
+
     resp = await client.post("/otus/6116cba1/isolates/cab8b360/sequences", data)
 
     if error:
@@ -1019,12 +1025,13 @@ async def test_create_sequence(
 
     assert await client.db.otus.find_one("6116cba1") == snapshot
     assert await client.db.sequences.find_one(sequence_id) == snapshot
-    assert await client.db.history.find_one() == snapshot
+    assert await client.db.history.find_one({"method_name": "create_sequence"}) == snapshot
 
 
-@pytest.mark.parametrize("error", [None, "404_otu", "404_isolate", "404_sequence"])
+
+@pytest.mark.parametrize("error, segment", [(None, "null"), (None, "test_segment"), ("404_otu", None), ("404_isolate", None), ("404_sequence", None)])
 async def test_edit_sequence(
-    error, snapshot, spawn_client, check_ref_right, resp_is, test_otu, test_sequence
+    error, snapshot, spawn_client, check_ref_right, resp_is, test_otu, test_sequence, segment
 ):
     client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
@@ -1045,6 +1052,11 @@ async def test_edit_sequence(
         "definition": "A made up sequence",
     }
 
+    if segment:
+        data["segment"] = segment if segment != "null" else None
+        segment_data = {"schema": [{"name": "test_segment", "molecule": "ssDNA", "required": False}]}
+        await client.patch("/otus/6116cba1", segment_data)
+
     resp = await client.patch(
         "/otus/6116cba1/isolates/cab8b360/sequences/KX269872", data
     )
@@ -1062,7 +1074,7 @@ async def test_edit_sequence(
 
     assert await client.db.otus.find_one("6116cba1") == snapshot
     assert await client.db.sequences.find_one("KX269872") == snapshot
-    assert await client.db.history.find_one() == snapshot
+    assert await client.db.history.find_one({"method_name": "edit_sequence"}) == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate", "404_sequence"])
