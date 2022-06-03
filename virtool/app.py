@@ -4,6 +4,7 @@ import logging
 import aiohttp.web
 import aiojobs
 import aiojobs.aiohttp
+from aiohttp_pydantic import oas
 
 import virtool.http.accept
 import virtool.http.auth
@@ -13,6 +14,7 @@ import virtool.http.query
 from virtool.config.cls import Config
 from virtool.http.headers import headers_middleware, on_prepare_location
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
+from virtool.routes import setup_routes
 from virtool.shutdown import (
     shutdown_client,
     shutdown_dispatcher,
@@ -42,6 +44,24 @@ from virtool.startup import (
 logger = logging.getLogger(__name__)
 
 
+def create_app_without_startup():
+    middlewares = [
+        headers_middleware,
+        virtool.http.auth.middleware,
+        virtool.http.accept.middleware,
+        virtool.http.errors.middleware,
+        virtool.http.proxy.middleware,
+        virtool.http.query.middleware,
+    ]
+
+    app = aiohttp.web.Application(middlewares=middlewares)
+
+    setup_routes(app)
+    oas.setup(app)
+
+    return app
+
+
 def create_app(config: Config):
     """
     Creates the Virtool application.
@@ -57,6 +77,8 @@ def create_app(config: Config):
     ]
 
     app = aiohttp.web.Application(middlewares=middlewares)
+
+    oas.setup(app)
 
     app["config"] = config
     app["mode"] = "server"

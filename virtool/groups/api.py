@@ -1,127 +1,125 @@
+from typing import List, Union
+
 import pymongo.errors
-from aiohttp.web import Request, Response
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400
 
 import virtool.groups.db
 import virtool.http.routes
-import virtool.validators
 from virtool.api.response import NotFound, json_response
-from virtool.http.schema import schema
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
+from virtool.data_model.group import VirtoolGroup
+from virtool.groups.oas import CreateGroupSchema, EditGroupSchema
 
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/groups")
-async def find(req: Request) -> Response:
-    """
-    Get a list of all existing group documents.
+@routes.view("/groups")
+class Groups(PydanticView):
 
-    """
-    cursor = req.app["db"].groups.find()
-    return json_response([base_processor(d) async for d in cursor])
+    async def get(self) -> r200[List[VirtoolGroup]]:
+        """
+        Get a list of all existing group documents.
 
+        Status Codes:
+            200: Successful operation
+        """
+        cursor = self.request.app["db"].groups.find()
+        return json_response([base_processor(d) async for d in cursor])
 
-@routes.post("/groups", admin=True)
-@schema(
-    {
-        "group_id": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "empty": False,
-            "required": True,
+    async def post(self, data: CreateGroupSchema) -> Union[r201[VirtoolGroup], r400]:
+        """
+
+        Adds a new user group.
+
+        Status Codes:
+            201: Successful operation
+            400: Group already exists
+        """
+        db = self.request.app["db"]
+        group_id = data.group_id
+
+        document = {
+            "_id": group_id,
+            "permissions": generate_base_permissions(),
         }
-    }
-)
-async def create(req: Request) -> Response:
-    """
-    Adds a new user group.
 
-    """
-    db, data = req.app["db"], req["data"]
+        try:
+            await db.groups.insert_one(document)
+        except pymongo.errors.DuplicateKeyError:
+            raise HTTPBadRequest(text="Group already exists")
 
-    document = {
-        "_id": data["group_id"].lower(),
-        "permissions": generate_base_permissions(),
-    }
+        headers = {"Location": "/groups/" + group_id}
 
-    try:
-        await db.groups.insert_one(document)
-    except pymongo.errors.DuplicateKeyError:
-        raise HTTPBadRequest(text="Group already exists")
-
-    headers = {"Location": "/groups/" + data["group_id"]}
-
-    return json_response(base_processor(document), status=201, headers=headers)
+        return json_response(base_processor(document), status=201, headers=headers)
 
 
-@routes.get("/groups/{group_id}")
-async def get(req: Request) -> Response:
-    """
-    Gets a complete group document.
+@routes.view("/groups/{group_id}")
+class Group(PydanticView):
+    async def get(self) -> Union[r200[VirtoolGroup], r404]:
+        """
+        Gets a complete group document.
 
-    """
-    document = await req.app["db"].groups.find_one(req.match_info["group_id"])
+        Status Codes:
+            200: Successful operation
+            404: Group not found
+        """
+        document = await self.request.app["db"].groups.find_one(self.request.match_info["group_id"])
 
-    if document:
+        if document:
+            return json_response(base_processor(document))
+
+        raise NotFound()
+
+    async def patch(self, data: EditGroupSchema) -> Union[r200[VirtoolGroup], r404]:
+        """
+        Updates the permissions of a given group.
+
+        Status Codes:
+            200: Successful operation
+            404: Group not found
+        """
+        db = self.request.app["db"]
+        permissions = data.permissions.dict(exclude_unset=True)
+
+        group_id = self.request.match_info["group_id"]
+
+        old_document = await db.groups.find_one({"_id": group_id}, ["permissions"])
+
+        if not old_document:
+            raise NotFound()
+
+        old_document["permissions"].update(permissions)
+
+        # Get the current permissions dict for the passed group id.
+        document = await db.groups.find_one_and_update(
+            {"_id": group_id}, {"$set": {"permissions": old_document["permissions"]}}
+        )
+
+        await virtool.groups.db.update_member_users(db, group_id)
+
         return json_response(base_processor(document))
 
-    raise NotFound()
+    async def delete(self) -> Union[r204, r404]:
+        """
+        Remove a group.
 
+        Status Codes:
+            204: No content
+            404: Group not found
 
-@routes.patch("/groups/{group_id}", admin=True)
-@schema(
-    {
-        "permissions": {
-            "type": "dict",
-            "default": {},
-            "check_with": virtool.validators.is_permission_dict,
-        }
-    }
-)
-async def update_permissions(req: Request) -> Response:
-    """
-    Updates the permissions of a given group.
+        """
+        db = self.request.app["db"]
 
-    """
-    db = req.app["db"]
-    data = req["data"]
+        group_id = self.request.match_info["group_id"]
 
-    group_id = req.match_info["group_id"]
+        delete_result = await db.groups.delete_one({"_id": group_id})
 
-    old_document = await db.groups.find_one({"_id": group_id}, ["permissions"])
+        if not delete_result.deleted_count:
+            raise NotFound()
 
-    if not old_document:
-        raise NotFound()
+        await virtool.groups.db.update_member_users(db, group_id, remove=True)
 
-    old_document["permissions"].update(data["permissions"])
-
-    # Get the current permissions dict for the passed group id.
-    document = await db.groups.find_one_and_update(
-        {"_id": group_id}, {"$set": {"permissions": old_document["permissions"]}}
-    )
-
-    await virtool.groups.db.update_member_users(db, group_id)
-
-    return json_response(base_processor(document))
-
-
-@routes.delete("/groups/{group_id}", admin=True)
-async def remove(req: Request):
-    """
-    Remove a group.
-
-    """
-    db = req.app["db"]
-
-    group_id = req.match_info["group_id"]
-
-    delete_result = await db.groups.delete_one({"_id": group_id})
-
-    if not delete_result.deleted_count:
-        raise NotFound()
-
-    await virtool.groups.db.update_member_users(db, group_id, remove=True)
-
-    raise HTTPNoContent
+        raise HTTPNoContent
