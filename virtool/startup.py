@@ -287,7 +287,7 @@ async def startup_refresh(app: Application):
 
 async def startup_routes(app: Application):
     logger.debug("Setting up routes")
-    setup_routes(app)
+    setup_routes(app, dev=app["config"].dev)
 
 
 async def startup_sentry(app: typing.Union[dict, Application]):
