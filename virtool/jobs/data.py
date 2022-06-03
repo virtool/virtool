@@ -113,6 +113,7 @@ class JobsData:
                     {"$set": {"last_status": {"$last": "$status"}}},
                     {
                         "$set": {
+                            "created_at": "$last_status.timestamp",
                             "progress": "$last_status.progress",
                             "state": "$last_status.state",
                             "stage": "$last_status.stage",
