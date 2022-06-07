@@ -18,10 +18,9 @@ routes = virtool.http.routes.Routes()
 
 @routes.view("/groups")
 class Groups(PydanticView):
-
     async def get(self) -> r200[List[VirtoolGroup]]:
         """
-        Get a list of all existing group documents.
+        List all existing user groups.
 
         Status Codes:
             200: Successful operation
@@ -31,8 +30,9 @@ class Groups(PydanticView):
 
     async def post(self, data: CreateGroupSchema) -> Union[r201[VirtoolGroup], r400]:
         """
+        Create a new group.
 
-        Adds a new user group.
+        New groups have no permissions.
 
         Status Codes:
             201: Successful operation
@@ -60,13 +60,15 @@ class Groups(PydanticView):
 class Group(PydanticView):
     async def get(self) -> Union[r200[VirtoolGroup], r404]:
         """
-        Gets a complete group document.
+        Get the complete representation of a single user group.
 
         Status Codes:
             200: Successful operation
             404: Group not found
         """
-        document = await self.request.app["db"].groups.find_one(self.request.match_info["group_id"])
+        document = await self.request.app["db"].groups.find_one(
+            self.request.match_info["group_id"]
+        )
 
         if document:
             return json_response(base_processor(document))
@@ -75,7 +77,9 @@ class Group(PydanticView):
 
     async def patch(self, data: EditGroupSchema) -> Union[r200[VirtoolGroup], r404]:
         """
-        Updates the permissions of a given group.
+        Update the permissions of a group.
+
+        Unset permissions will retain their previous setting.
 
         Status Codes:
             200: Successful operation
@@ -104,7 +108,7 @@ class Group(PydanticView):
 
     async def delete(self) -> Union[r204, r404]:
         """
-        Remove a group.
+        Delete a group.
 
         Status Codes:
             204: No content
