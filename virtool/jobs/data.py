@@ -43,6 +43,7 @@ class JobsData:
 
         async for a in self._db.jobs.aggregate(
             [
+                {"$match": {"archived": False}},
                 {"$addFields": {"last_status": {"$last": "$status"}}},
                 {
                     "$group": {
