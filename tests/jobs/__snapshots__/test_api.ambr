@@ -793,8 +793,6 @@
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
         'build_index': 1,
-        'create_subtraction': 1,
-        'pathoscope': 1,
       },
       'complete': <class 'dict'> {
         'create_sample': 1,
@@ -1024,12 +1022,9 @@
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
-        'aodp': 1,
         'build_index': 1,
-        'create_sample': 1,
-        'create_subtraction': 3,
-        'nuvs': 1,
-        'pathoscope': 3,
+        'create_subtraction': 1,
+        'pathoscope': 2,
       },
       'complete': <class 'dict'> {
         'create_sample': 2,
@@ -1174,12 +1169,9 @@
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
-        'aodp': 1,
         'build_index': 1,
-        'create_sample': 1,
-        'create_subtraction': 3,
-        'nuvs': 1,
-        'pathoscope': 3,
+        'create_subtraction': 1,
+        'pathoscope': 2,
       },
       'complete': <class 'dict'> {
         'create_sample': 2,
@@ -1408,12 +1400,9 @@
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
-        'aodp': 1,
         'build_index': 1,
-        'create_sample': 1,
-        'create_subtraction': 3,
-        'nuvs': 1,
-        'pathoscope': 3,
+        'create_subtraction': 1,
+        'pathoscope': 2,
       },
       'complete': <class 'dict'> {
         'create_sample': 2,
@@ -1516,12 +1505,9 @@
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
-        'aodp': 1,
         'build_index': 1,
-        'create_sample': 1,
-        'create_subtraction': 3,
-        'nuvs': 1,
-        'pathoscope': 3,
+        'create_subtraction': 1,
+        'pathoscope': 2,
       },
       'complete': <class 'dict'> {
         'create_sample': 2,
@@ -1568,12 +1554,9 @@
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
-        'aodp': 1,
         'build_index': 1,
-        'create_sample': 1,
-        'create_subtraction': 3,
-        'nuvs': 1,
-        'pathoscope': 3,
+        'create_subtraction': 1,
+        'pathoscope': 2,
       },
       'complete': <class 'dict'> {
         'create_sample': 2,
@@ -1620,12 +1603,9 @@
   <class 'dict'> {
     'counts': <class 'dict'> {
       'cancelled': <class 'dict'> {
-        'aodp': 1,
         'build_index': 1,
-        'create_sample': 1,
-        'create_subtraction': 3,
-        'nuvs': 1,
-        'pathoscope': 3,
+        'create_subtraction': 1,
+        'pathoscope': 2,
       },
       'complete': <class 'dict'> {
         'create_sample': 2,
