@@ -7,10 +7,10 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-import virtool.db.utils
+import virtool.mongo.utils
 import virtool.utils
 from virtool.analyses.models import AnalysisFile
-from virtool.db.transforms import AbstractTransform, apply_transforms
+from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.types import Document
@@ -120,7 +120,9 @@ async def create(
         "index": {"id": index_id, "version": index_version},
         "reference": {
             "id": ref_id,
-            "name": await virtool.db.utils.get_one_field(db.references, "name", ref_id),
+            "name": await virtool.mongo.utils.get_one_field(
+                db.references, "name", ref_id
+            ),
         },
         "subtractions": subtractions,
         "user": {

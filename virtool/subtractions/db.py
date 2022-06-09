@@ -9,11 +9,11 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-import virtool.db.utils
+import virtool.mongo.utils
 import virtool.utils
 from virtool.config.cls import Config
-from virtool.db.transforms import AbstractTransform
-from virtool.db.utils import get_one_field
+from virtool.mongo.transforms import AbstractTransform
+from virtool.mongo.utils import get_one_field
 from virtool.subtractions.utils import get_subtraction_files, join_subtraction_path
 from virtool.types import App, Document
 from virtool.utils import run_in_thread
@@ -139,7 +139,7 @@ async def create(
 
     """
     document = {
-        "_id": subtraction_id or await virtool.db.utils.get_new_id(db.subtraction),
+        "_id": subtraction_id or await virtool.mongo.utils.get_new_id(db.subtraction),
         "name": name,
         "nickname": nickname,
         "deleted": False,

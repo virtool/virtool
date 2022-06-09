@@ -4,8 +4,13 @@ from logging import Logger
 from typing import Any, Dict, List, Optional, Union
 
 import virtool.utils
-from virtool.db.transforms import AbstractTransform
-from virtool.db.utils import get_non_existent_ids, handle_exists, id_exists, oid_exists
+from virtool.mongo.transforms import AbstractTransform
+from virtool.mongo.utils import (
+    get_non_existent_ids,
+    handle_exists,
+    id_exists,
+    oid_exists,
+)
 from virtool.errors import DatabaseError
 from virtool.groups.db import get_merged_permissions
 from virtool.types import Document
@@ -267,11 +272,11 @@ async def create(
 
     :return: the user document
     """
-    user_id = await virtool.db.utils.get_new_id(db.users)
+    user_id = await virtool.mongo.utils.get_new_id(db.users)
 
-    if await virtool.db.utils.handle_exists(
+    if await virtool.mongo.utils.handle_exists(
         db.users, handle
-    ) or await virtool.db.utils.id_exists(db.users, user_id):
+    ) or await virtool.mongo.utils.id_exists(db.users, user_id):
         raise DatabaseError("User already exists")
 
     document = {

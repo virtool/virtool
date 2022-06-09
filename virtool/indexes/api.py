@@ -14,7 +14,7 @@ from virtool.api.json import CustomEncoder
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.utils import get_data_from_req
-from virtool.db.utils import get_new_id
+from virtool.mongo.utils import get_new_id
 from virtool.history.db import LIST_PROJECTION
 from virtool.http.routes import Routes
 from virtool.indexes.db import FILES, reset_history

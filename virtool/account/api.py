@@ -13,7 +13,7 @@ from aiohttp.web import HTTPNoContent, Request, Response
 from aiohttp.web_exceptions import HTTPBadRequest
 from virtool.analyses.utils import WORKFLOW_NAMES
 from virtool.api.response import NotFound, json_response
-from virtool.db.utils import get_one_field
+from virtool.mongo.utils import get_one_field
 from virtool.http.schema import schema
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.users.checks import check_password_length

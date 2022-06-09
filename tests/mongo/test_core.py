@@ -2,18 +2,17 @@ import pymongo.results
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
-import virtool.db.core
-import virtool.utils
+import virtool.mongo.core
 
 
 @pytest.fixture
 def create_test_collection(mocker, test_motor):
     def func(
         name="samples", projection=None, silent=False
-    ) -> virtool.db.core.Collection:
+    ) -> virtool.mongo.core.Collection:
         processor = make_mocked_coro(return_value={"id": "foo", "mock": True})
 
-        return virtool.db.core.Collection(
+        return virtool.mongo.core.Collection(
             name, test_motor[name], mocker.stub(), processor, projection, silent
         )
 

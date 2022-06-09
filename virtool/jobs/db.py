@@ -4,7 +4,7 @@ application database.
 
 """
 
-from virtool.db.transforms import apply_transforms
+from virtool.mongo.transforms import apply_transforms
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
 

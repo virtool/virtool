@@ -15,7 +15,7 @@ import virtool.validators
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, get_req_bool, paginate
 from virtool.data.utils import get_data_from_req
-from virtool.db.transforms import apply_transforms
+from virtool.mongo.transforms import apply_transforms
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights

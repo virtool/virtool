@@ -4,12 +4,12 @@ from typing import List, Optional, Tuple
 
 from pymongo.results import DeleteResult
 
-import virtool.db.utils
+import virtool.mongo.utils
 import virtool.history.db
 import virtool.otus.db
 import virtool.utils
-from virtool.db.core import DB
-from virtool.db.utils import get_one_field
+from virtool.mongo.core import DB
+from virtool.mongo.utils import get_one_field
 from virtool.downloads.utils import format_fasta_entry, format_fasta_filename
 from virtool.history.utils import (
     compose_create_description,
@@ -93,7 +93,8 @@ class OTUData:
         async with self._db.create_session() as session:
             document = await self._db.otus.insert_one(
                 {
-                    "_id": otu_id or await virtool.db.utils.get_new_id(self._db.otus),
+                    "_id": otu_id
+                    or await virtool.mongo.utils.get_new_id(self._db.otus),
                     "name": name,
                     "abbreviation": abbreviation,
                     "last_indexed_version": None,

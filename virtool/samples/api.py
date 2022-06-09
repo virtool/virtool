@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.analyses.db
 import virtool.caches.db
-import virtool.db.utils
+import virtool.mongo.utils
 import virtool.samples.db
 import virtool.samples.utils
 import virtool.uploads.db
@@ -31,7 +31,7 @@ from virtool.api.utils import compose_regex_query, paginate
 from virtool.caches.models import SampleArtifactCache
 from virtool.caches.utils import join_cache_path
 from virtool.data.utils import get_data_from_req
-from virtool.db.transforms import apply_transforms
+from virtool.mongo.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
@@ -229,7 +229,7 @@ async def create(req):
     subtractions = data.get("subtractions", list())
 
     # Make sure each subtraction host was submitted and it exists.
-    non_existent_subtractions = await virtool.db.utils.check_missing_ids(
+    non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
         db.subtraction, subtractions
     )
 
@@ -269,7 +269,9 @@ async def create(req):
     # Assign the user"s primary group as the sample owner group if the setting is
     # ``users_primary_group``.
     elif sample_group_setting == "users_primary_group":
-        group = await virtool.db.utils.get_one_field(db.users, "primary_group", user_id)
+        group = await virtool.mongo.utils.get_one_field(
+            db.users, "primary_group", user_id
+        )
 
     files = [
         {"id": upload["id"], "name": upload["name"], "size": upload["size"]}
@@ -371,7 +373,7 @@ async def edit(req):
             return bad_labels_response(non_existent_labels)
 
     if "subtractions" in data:
-        non_existent_subtractions = await virtool.db.utils.check_missing_ids(
+        non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
             db.subtraction, data["subtractions"]
         )
 
@@ -600,7 +602,7 @@ async def analyze(req):
     if subtractions is None:
         subtractions = []
     else:
-        non_existent_subtractions = await virtool.db.utils.check_missing_ids(
+        non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
             db.subtraction, subtractions
         )
 
@@ -609,7 +611,7 @@ async def analyze(req):
                 text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
             )
 
-    job_id = await virtool.db.utils.get_new_id(db.jobs)
+    job_id = await virtool.mongo.utils.get_new_id(db.jobs)
 
     document = await virtool.analyses.db.create(
         req.app["db"],

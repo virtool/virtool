@@ -5,7 +5,7 @@ import virtool.otus.db
 import virtool.references.db
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.data.utils import get_data_from_req
-from virtool.db.transforms import apply_transforms
+from virtool.mongo.transforms import apply_transforms
 from virtool.history.db import LIST_PROJECTION
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
@@ -505,9 +505,7 @@ async def get_sequence(req):
             "type": "string",
             "coerce": virtool.validators.strip,
         },
-        "segment": {
-            "type": "string", "nullable": True
-        },
+        "segment": {"type": "string", "nullable": True},
         "sequence": {
             "type": "string",
             "coerce": virtool.validators.strip,

@@ -23,7 +23,7 @@ import virtool.validators
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.db.utils import apply_projection
+from virtool.mongo.utils import apply_projection
 from virtool.errors import DatabaseError
 from virtool.http.schema import schema
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie

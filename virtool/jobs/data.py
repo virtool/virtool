@@ -12,9 +12,9 @@ from virtool.api.utils import (
     get_query_bool,
 )
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.db.core import DB
-from virtool.db.transforms import apply_transforms
-from virtool.db.utils import get_one_field
+from virtool.mongo.core import DB
+from virtool.mongo.transforms import apply_transforms
+from virtool.mongo.utils import get_one_field
 from virtool.jobs import is_running_or_waiting
 from virtool.jobs.client import AbstractJobsClient, JOB_REMOVED_FROM_QUEUE
 from virtool.jobs.db import (

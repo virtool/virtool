@@ -1,20 +1,17 @@
 import sys
 from logging import getLogger
 
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
-from pymongo import ASCENDING, DESCENDING
+from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorClient
+from pymongo import DESCENDING, ASCENDING
 from pymongo.errors import ServerSelectionTimeoutError
 from semver import VersionInfo
-
 
 MINIMUM_MONGO_VERSION = "3.6.0"
 
 logger = getLogger("mongo")
 
 
-async def connect(
-    db_connection_string: str, db_name: str
-) -> AsyncIOMotorDatabase:
+async def connect(db_connection_string: str, db_name: str) -> AsyncIOMotorDatabase:
     """
     Connect to a MongoDB server and return an application database object.
 
@@ -23,9 +20,7 @@ async def connect(
     :return: database
 
     """
-    db_client = AsyncIOMotorClient(
-        db_connection_string, serverSelectionTimeoutMS=6000
-    )
+    db_client = AsyncIOMotorClient(db_connection_string, serverSelectionTimeoutMS=6000)
 
     logger.info("Connecting to MongoDB")
 
@@ -105,3 +100,4 @@ async def create_indexes(db):
     await db.sequences.create_index("name")
     await db.users.create_index("b2c_oid", unique=True, sparse=True)
     await db.users.create_index("handle", unique=True, sparse=True)
+    await db.sessions.create_index("expiresAt", expireAfterSeconds=0)

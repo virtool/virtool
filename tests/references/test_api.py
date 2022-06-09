@@ -55,7 +55,7 @@ async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is):
     client = await spawn_client(authorize=True)
 
     m_get_one_field = mocker.patch(
-        "virtool.db.utils.get_one_field",
+        "virtool.mongo.utils.get_one_field",
         make_mocked_coro(None if empty else ["a", "b", "c"]),
     )
 
@@ -215,14 +215,11 @@ async def test_import_reference(pg, snapshot, spawn_client, test_files_path, tmp
         complete = task.complete
 
         if complete:
-            assert (
-                await gather(
-                    client.db.otus.count_documents({}),
-                    client.db.sequences.count_documents({}),
-                    client.db.history.count_documents({}),
-                )
-                == [20, 26, 20]
-            )
+            assert await gather(
+                client.db.otus.count_documents({}),
+                client.db.sequences.count_documents({}),
+                client.db.history.count_documents({}),
+            ) == [20, 26, 20]
 
             break
 

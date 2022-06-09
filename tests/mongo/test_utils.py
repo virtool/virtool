@@ -1,6 +1,5 @@
 import pytest
-import virtool.db
-import virtool.db.utils
+import virtool.mongo.utils
 
 
 class TestApplyProjection:
@@ -22,7 +21,7 @@ class TestApplyProjection:
         """
         document = {"_id": "foo", "name": "bar", "age": 25}
 
-        assert virtool.db.utils.apply_projection(document, projection) == expected
+        assert virtool.mongo.utils.apply_projection(document, projection) == expected
 
     def test_type_error(self):
         """
@@ -30,7 +29,7 @@ class TestApplyProjection:
 
         """
         with pytest.raises(TypeError) as excinfo:
-            virtool.db.utils.apply_projection({}, "_id")
+            virtool.mongo.utils.apply_projection({}, "_id")
 
         assert "Invalid type for projection: <class 'str'>" in str(excinfo.value)
 
@@ -40,7 +39,7 @@ async def test_delete_unready(dbi):
         [{"_id": 1, "ready": True}, {"_id": 2, "ready": False}]
     )
 
-    await virtool.db.utils.delete_unready(dbi.analyses)
+    await virtool.mongo.utils.delete_unready(dbi.analyses)
 
     assert await dbi.analyses.find().to_list(None) == [{"_id": 1, "ready": True}]
 
@@ -59,7 +58,7 @@ async def test_check_missing_ids(dbi):
         ]
     )
 
-    non_existent_subtractions = await virtool.db.utils.check_missing_ids(
+    non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
         dbi.subtraction, ["foo", "bar", "baz"]
     )
 

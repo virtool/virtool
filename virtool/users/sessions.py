@@ -3,9 +3,9 @@ import secrets
 from typing import Optional, Tuple
 
 import arrow
-import virtool.db.utils
+
 import virtool.utils
-from virtool.db.core import DB
+from virtool.mongo.core import DB
 
 
 async def create_session(
@@ -53,7 +53,7 @@ async def create_session(
     return session, token
 
 
-async def create_session_id(db: virtool.db.core.DB) -> str:
+async def create_session_id(db: virtool.mongo.core.DB) -> str:
     """
     Create a new unique session id.
 
@@ -75,11 +75,12 @@ async def get_session(
     """
     Get a session and token by its id and token.
 
-    If the passed `session_token` is `None`, an unauthenticated session document matching the
-    `session_id` will be returned. If the matching session is authenticated and token is passed,
-    `None` will be returned.
+    If the passed `session_token` is `None`, an unauthenticated session document
+    matching the `session_id` will be returned. If the matching session is authenticated
+    and token is passed, `None` will be returned.
 
-    Will return `None` if the session doesn't exist or the session id and token do not go together.
+    Will return `None` if the session doesn't exist or the session id and token do not
+    go together.
 
     :param db: the application database client
     :param session_id: the session id
@@ -112,10 +113,10 @@ async def create_reset_code(
     """
     Create a secret code that is used to verify a password reset request. Properties:
 
-    - the reset request must pass a reset code that is associated with the session linked to the
-      request
-    - the reset code is dropped from the session for any non-reset request sent after the code was
-      generated
+    - the reset request must pass a reset code that is associated with the session
+      linked to the request
+    - the reset code is dropped from the session for any non-reset request sent after
+      the code was generated
 
     :param db:
     :param session_id:
@@ -140,9 +141,10 @@ async def create_reset_code(
     return reset_code
 
 
-async def clear_reset_code(db: virtool.db.core.DB, session_id: str):
+async def clear_reset_code(db: virtool.mongo.core.DB, session_id: str):
     """
-    Clear the reset information attached to the session associated with the passed `session_id`.
+    Clear the reset information attached to the session associated with the passed
+    `session_id`.
 
     :param db: the application database client
     :param session_id: the session id
@@ -155,18 +157,18 @@ async def clear_reset_code(db: virtool.db.core.DB, session_id: str):
 
 
 async def replace_session(
-    db: virtool.db.core.DB,
+    db: virtool.mongo.core.DB,
     session_id: str,
     ip: str,
     user_id: Optional[str] = None,
     remember: Optional[bool] = False,
 ) -> Tuple[dict, str]:
     """
-    Replace the session associated with `session_id` with a new one. Return the new session
-    document.
+    Replace the session associated with `session_id` with a new one. Return the new
+    session document.
 
-    Supplying a `user_id` indicates the session is authenticated. Setting `remember` will make the
-    session last for 30 days instead of the default 30 minutes.
+    Supplying a `user_id` indicates the session is authenticated. Setting `remember`
+    will make the session last for 30 days instead of the default 30 minutes.
 
     :param db: the application database client
     :param session_id: the id of the session to replace

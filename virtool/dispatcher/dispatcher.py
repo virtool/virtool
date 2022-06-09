@@ -6,19 +6,16 @@ from dataclasses import dataclass
 from logging import getLogger
 from typing import List
 
+from sqlalchemy.ext.asyncio import AsyncEngine
+
 import virtool.analyses.db
 import virtool.caches.db
 import virtool.history.db
 import virtool.hmm.db
-import virtool.indexes.db
 import virtool.jobs.db
 import virtool.otus.db
-import virtool.references.db
-import virtool.samples.db
 import virtool.subtractions.db
 import virtool.users.db
-from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool.db.core import DB
 from virtool.dispatcher.change import Change
 from virtool.dispatcher.connection import Connection
 from virtool.dispatcher.fetchers import (
@@ -32,6 +29,7 @@ from virtool.dispatcher.fetchers import (
 )
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
+from virtool.mongo.core import DB
 
 logger = getLogger(__name__)
 
@@ -103,8 +101,8 @@ class Dispatcher:
         """
         Start the dispatcher.
 
-        The dispatcher loops through available changes in the ``listener`` and dispatches them as
-        messages to connected websocket clients.
+        The dispatcher loops through available changes in the ``listener`` and
+        dispatches them as messages to connected websocket clients.
 
         """
         logger.debug("Started dispatcher")
