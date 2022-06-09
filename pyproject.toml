@@ -2,11 +2,16 @@
 name = "virtool"
 version = "0.0.0"
 authors = [
-    "Ian Boyes <igboyes@gmail.com>",
-    "Naomi Schaufele",
-    "Sebastian Chen",
+    "Ian Boyes",
+    "Reece Hoffmann",
+    "Aman Monga",
     "Blake Smith",
     "Jake Alexander",
+    "Josh Moreira",
+    "Lilly Roberts",
+    "Naomi Schaufele",
+    "Ryan Fang",
+    "Sebastian Chen",
     "Tiansheng Sui"
 ]
 maintainers = [
