@@ -14,10 +14,10 @@ import aiojobs.aiohttp
 import pymongo.errors
 from aiohttp.web import Application
 from msal import ClientApplication
+from virtool_core.redis import connect, periodically_ping_redis
 
 import virtool.db.mongo
 import virtool.pg.utils
-import virtool.redis
 from virtool.analyses.data import AnalysisData
 from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.blast.data import BLASTData
@@ -254,8 +254,11 @@ async def startup_databases(app: Application):
     mongo, pg, redis = await asyncio.gather(
         virtool.db.mongo.connect(db_connection_string, db_name),
         virtool.pg.utils.connect(postgres_connection_string),
-        virtool.redis.connect(redis_connection_string, get_scheduler_from_app(app))
+        connect(redis_connection_string),
     )
+
+    scheduler = get_scheduler_from_app(app)
+    await scheduler.spawn(periodically_ping_redis(redis))
 
     app["redis"] = redis
 
