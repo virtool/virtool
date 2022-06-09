@@ -6,7 +6,7 @@ from aioredis import Channel, ChannelClosedError, Redis
 
 from virtool.dispatcher.change import Change
 
-from virtool.redis import resubscribe
+from virtool_core.redis import resubscribe
 
 from logging import getLogger
 
