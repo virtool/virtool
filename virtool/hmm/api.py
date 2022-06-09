@@ -14,7 +14,7 @@ from aiohttp.web_fileresponse import FileResponse
 import virtool.hmm.db
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.db.utils import get_one_field
+from virtool.mongo.utils import get_one_field
 from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument
 from virtool.hmm.db import PROJECTION, generate_annotations_json_file
@@ -198,9 +198,7 @@ async def get_hmm_annotations(request):
 
     if not annotation_path.exists():
         json_path = await generate_annotations_json_file(request.app)
-        await run_in_thread(
-            compress_file_with_gzip, json_path, annotation_path
-        )
+        await run_in_thread(compress_file_with_gzip, json_path, annotation_path)
 
     return FileResponse(
         annotation_path,

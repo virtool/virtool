@@ -54,7 +54,7 @@ def base_processor(document: Optional[dict]) -> Optional[dict]:
 def chunk_list(lst: list, n: int):
     """Yield successive n-sized chunks from `lst`."""
     for i in range(0, len(lst), n):
-        yield lst[i: i + n]
+        yield lst[i : i + n]
 
 
 def compress_file(path: Path, target: Path, processes: int = 1):
@@ -199,7 +199,7 @@ def random_alphanumeric(
     :return: a random alphanumeric string.
 
     """
-    excluded = set(excluded or list())
+    excluded = set(excluded or [])
 
     characters = digits + (ascii_letters if mixed_case else ascii_lowercase)
 

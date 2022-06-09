@@ -15,8 +15,8 @@ import virtool.references.db
 import virtool.utils
 from virtool.api.utils import paginate
 from virtool.config.cls import Config
-from virtool.db.transforms import AbstractTransform, apply_transforms
-from virtool.db.utils import get_new_id
+from virtool.mongo.transforms import AbstractTransform, apply_transforms
+from virtool.mongo.utils import get_new_id
 from virtool.indexes.models import IndexFile
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform

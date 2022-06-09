@@ -9,7 +9,7 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 import virtool.history.db
 import virtool.otus.utils
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.db.utils import get_one_field
+from virtool.mongo.utils import get_one_field
 from virtool.errors import DatabaseError
 from virtool.types import Document
 from virtool.utils import base_processor, to_bool

@@ -34,8 +34,8 @@ from virtool.api.response import (
 from virtool.api.utils import paginate
 from virtool.blast.transform import AttachNuVsBLAST
 from virtool.data.utils import get_data_from_req
-from virtool.db.core import Collection, DB
-from virtool.db.transforms import apply_transforms
+from virtool.mongo.core import Collection, DB
+from virtool.mongo.transforms import apply_transforms
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.pg.utils import delete_row, get_row_by_id

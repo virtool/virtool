@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import virtool.http.routes
 import virtool.validators
 from virtool.api.response import EmptyRequest, NotFound, json_response
-from virtool.db.transforms import apply_transforms
+from virtool.mongo.transforms import apply_transforms
 from virtool.http.schema import schema
 from virtool.labels.db import SampleCountTransform
 from virtool.labels.models import Label

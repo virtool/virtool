@@ -14,13 +14,13 @@ from pymongo.results import DeleteResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-import virtool.db.utils
 import virtool.errors
+import virtool.mongo.utils
 import virtool.samples.utils
 import virtool.utils
 from virtool.config.cls import Config
-from virtool.db.transforms import AbstractTransform, apply_transforms
 from virtool.labels.db import AttachLabelsTransform
+from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.samples.models import SampleArtifact, SampleReads
 from virtool.samples.utils import join_legacy_read_paths
 from virtool.settings.db import Settings
@@ -186,7 +186,7 @@ def compose_sample_workflow_query(url_query: MultiDictProxy) -> Optional[dict]:
 
 
 def convert_workflow_condition(condition: str) -> Optional[dict]:
-    return {"none": False, "pending": "ip", "ready": True}.get(condition, None)
+    return {"none": False, "pending": "ip", "ready": True}.get(condition)
 
 
 async def create_sample(
@@ -225,7 +225,7 @@ async def create_sample(
     :return: the newly inserted sample document
     """
     if _id is None:
-        _id = await virtool.db.utils.get_new_id(db.samples)
+        _id = await virtool.mongo.utils.get_new_id(db.samples)
 
     document = await db.samples.insert_one(
         {
@@ -373,10 +373,13 @@ async def update_is_compressed(db, sample: Dict[str, Any]):
 
     names = [file["name"] for file in files]
 
-    is_compressed = names == ["reads_1.fq.gz"] or names == [
-        "reads_1.fq.gz",
-        "reads_2.fq.gz",
-    ]
+    is_compressed = names in (
+        ["reads_1.fq.gz"],
+        [
+            "reads_1.fq.gz",
+            "reads_2.fq.gz",
+        ],
+    )
 
     if is_compressed:
         await db.samples.update_one(
@@ -402,7 +405,7 @@ async def compress_sample_reads(app: App, sample: Dict[str, Any]):
     data_path = app["config"].data_path
     sample_id = sample["_id"]
 
-    files = list()
+    files = []
 
     for i, path in enumerate(paths):
         target_filename = (

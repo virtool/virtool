@@ -16,14 +16,12 @@ from aiohttp.web import Application
 from msal import ClientApplication
 from virtool_core.redis import connect, periodically_ping_redis
 
-import virtool.db.mongo
+import virtool.mongo.connect
 import virtool.pg.utils
 from virtool.analyses.data import AnalysisData
 from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.blast.data import BLASTData
 from virtool.data.layer import DataLayer
-from virtool.db.core import DB
-from virtool.db.migrate import migrate
 from virtool.dev.fake import create_fake_data_path, populate
 from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.dispatcher import Dispatcher
@@ -37,6 +35,8 @@ from virtool.indexes.tasks import (
 )
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
+from virtool.mongo.core import DB
+from virtool.mongo.migrate import migrate
 from virtool.oidc.utils import JWKArgs
 from virtool.otus.data import OTUData
 from virtool.pg.testing import create_test_database
@@ -110,7 +110,7 @@ async def startup_check_db(app: Application):
         pass
 
     logger.info("Checking database indexes")
-    await virtool.db.mongo.create_indexes(db)
+    await virtool.mongo.connect.create_indexes(db)
 
 
 async def startup_data(app: App):
@@ -252,7 +252,7 @@ async def startup_databases(app: Application):
     redis_connection_string = app["config"].redis_connection_string
 
     mongo, pg, redis = await asyncio.gather(
-        virtool.db.mongo.connect(db_connection_string, db_name),
+        virtool.mongo.connect.connect(db_connection_string, db_name),
         virtool.pg.utils.connect(postgres_connection_string),
         connect(redis_connection_string),
     )

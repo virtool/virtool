@@ -15,13 +15,13 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from semver import VersionInfo
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 
-import virtool.db.utils
+import virtool.mongo.utils
 import virtool.errors
 import virtool.github
 import virtool.history.db
 import virtool.tasks.pg
 import virtool.utils
-from virtool.db.transforms import apply_transforms
+from virtool.mongo.transforms import apply_transforms
 from virtool.http.utils import download_file
 from virtool.otus.db import join
 from virtool.otus.utils import verify
@@ -247,7 +247,7 @@ async def check_source_type(db, ref_id: str, source_type: str) -> bool:
     )
 
     restrict_source_types = document.get("restrict_source_types", False)
-    source_types = document.get("source_types", list())
+    source_types = document.get("source_types", [])
 
     if source_type == "unknown":
         return True
@@ -274,7 +274,7 @@ def compose_base_find_query(user_id: str, administrator: bool, groups: list) -> 
 
     """
     if administrator:
-        return dict()
+        return {}
 
     is_user_member = {"users.id": user_id}
 
@@ -378,7 +378,7 @@ async def fetch_and_update_release(
     etag = virtool.github.get_etag(release)
 
     # Variables that will be used when trying to fetch release from GitHub.
-    errors = list()
+    errors = []
     updated = None
 
     try:
@@ -447,7 +447,7 @@ async def get_internal_control(
     if internal_control_id is None:
         return None
 
-    name = await virtool.db.utils.get_one_field(
+    name = await virtool.mongo.utils.get_one_field(
         db.otus, "name", {"_id": internal_control_id, "reference.id": ref_id}
     )
 
@@ -507,7 +507,7 @@ async def get_manifest(db, ref_id: str) -> dict:
     :return: a manifest of otu ids and versions
 
     """
-    manifest = dict()
+    manifest = {}
 
     async for document in db.otus.find({"reference.id": ref_id}, ["version"]):
         manifest[document["_id"]] = document["version"]
@@ -579,7 +579,7 @@ async def create_document(
     if ref_id and await db.references.count_documents({"_id": ref_id}):
         raise virtool.errors.DatabaseError("ref_id already exists")
 
-    ref_id = ref_id or await virtool.db.utils.get_new_id(db.otus)
+    ref_id = ref_id or await virtool.mongo.utils.get_new_id(db.otus)
 
     user = None
 
@@ -599,13 +599,13 @@ async def create_document(
         "internal_control": None,
         "restrict_source_types": False,
         "source_types": settings.default_source_types,
-        "groups": list(),
+        "groups": [],
         "users": users,
         "user": user,
     }
 
     if data_type == "barcode":
-        document["targets"] = list()
+        document["targets"] = []
 
     return document
 
@@ -895,7 +895,7 @@ async def update_joined_otu(
         if not check_will_change(old, otu):
             return None
 
-        sequence_updates = list()
+        sequence_updates = []
 
         for isolate in otu["isolates"]:
             for sequence in isolate.pop("sequences"):
@@ -922,7 +922,7 @@ async def update_joined_otu(
                     "name": otu["name"],
                     "lower_name": otu["name"].lower(),
                     "isolates": otu["isolates"],
-                    "schema": otu.get("schema", list()),
+                    "schema": otu.get("schema", []),
                 },
             },
         )

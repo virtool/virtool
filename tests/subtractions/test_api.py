@@ -38,7 +38,9 @@ async def test_edit(data, has_user, mocker, snapshot, fake, spawn_client):
 
 
 @pytest.mark.parametrize("error", [None, "404_name", "404", "409"])
-async def test_upload(error, tmp_path, spawn_job_client, snapshot, resp_is, pg: AsyncEngine):
+async def test_upload(
+    error, tmp_path, spawn_job_client, snapshot, resp_is, pg: AsyncEngine
+):
     client = await spawn_job_client(authorize=True)
     test_dir = tmp_path / "files"
     test_dir.mkdir()
@@ -223,7 +225,7 @@ async def test_create(spawn_client, mocker, snapshot):
     upload = mocker.Mock()
     upload.name = "test_upload"
 
-    mocker.patch("virtool.db.utils.get_new_id", return_value="abc123")
+    mocker.patch("virtool.mongo.utils.get_new_id", return_value="abc123")
     mocker.patch("virtool.pg.utils.get_row_by_id", return_value=upload)
 
     client = await spawn_client(

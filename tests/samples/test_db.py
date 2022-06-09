@@ -9,7 +9,7 @@ from aiohttp.test_utils import make_mocked_coro, make_mocked_request
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.uploads.db
-from virtool.db.transforms import apply_transforms
+from virtool.mongo.transforms import apply_transforms
 from virtool.labels.db import AttachLabelsTransform
 from virtool.labels.models import Label
 from virtool.pg.utils import get_row_by_id
@@ -187,7 +187,7 @@ class TestRemoveSamples:
         samples_dir = tmp_path / "samples"
         samples_dir.mkdir()
 
-        paths = dict()
+        paths = {}
 
         for x in range(1, 4):
             paths[f"sample_{x}_file"] = samples_dir / f"test_{x}"
@@ -265,7 +265,7 @@ async def test_create_sample(dbi, mocker, snapshot, static_time, spawn_client):
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    mocker.patch("virtool.db.utils.get_new_id", return_value="a2oj3gfd")
+    mocker.patch("virtool.mongo.utils.get_new_id", return_value="a2oj3gfd")
 
     result = await create_sample(
         dbi,

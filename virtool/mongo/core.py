@@ -20,11 +20,12 @@ from pymongo.results import DeleteResult, UpdateResult
 
 import virtool.analyses.db
 import virtool.caches.db
-import virtool.db.utils
+import virtool.mongo.utils
 import virtool.history.db
 import virtool.hmm.db
 import virtool.indexes.db
 import virtool.jobs.db
+import virtool.mongo.connect
 import virtool.otus.db
 import virtool.references.db
 import virtool.samples.db
@@ -69,7 +70,7 @@ class Collection:
         self.bulk_write = self._collection.bulk_write
         self.count_documents = self._collection.count_documents
         self.create_index = self._collection.create_index
-        self.create_indexes = self._collection.create_indexes
+        self.create_indexes = virtool.mongo.connect.create_indexes
         self.distinct = self._collection.distinct
         self.drop_index = self._collection.drop_index
         self.drop_indexes = self._collection.drop_indexes
@@ -139,7 +140,7 @@ class Collection:
         :return: the result
 
         """
-        document_id = await virtool.db.utils.get_one_field(
+        document_id = await virtool.mongo.utils.get_one_field(
             self._collection, "_id", query
         )
 
@@ -186,7 +187,7 @@ class Collection:
             self.enqueue_change(UPDATE, document["_id"])
 
         if projection:
-            return virtool.db.utils.apply_projection(document, projection)
+            return virtool.mongo.utils.apply_projection(document, projection)
 
         return document
 

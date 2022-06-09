@@ -1,4 +1,5 @@
 import pytest
+
 from virtool.users.utils import check_password
 
 
@@ -60,7 +61,7 @@ async def test_create(
 
     """
     client = await spawn_client(authorize=True, administrator=True)
-    mocker.patch("virtool.db.utils.get_new_id", return_value="abc123")
+    mocker.patch("virtool.mongo.utils.get_new_id", return_value="abc123")
 
     if error == "400_exists":
         await client.db.users.insert_one({"_id": "abc123"})
@@ -157,7 +158,7 @@ async def test_edit(
             await resp_is.bad_request(resp, "Primary group does not exist")
             return
 
-        elif error == "not_group_member":
+        if error == "not_group_member":
             await resp_is.conflict(resp, "User is not member of group")
             return
 

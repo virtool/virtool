@@ -4,7 +4,7 @@ from asyncio.tasks import gather
 import aiohttp
 from aiohttp.web_exceptions import HTTPBadGateway, HTTPBadRequest, HTTPNoContent
 
-import virtool.db.utils
+import virtool.mongo.utils
 import virtool.history.db
 import virtool.indexes.db
 import virtool.otus.db
@@ -12,7 +12,7 @@ import virtool.references.db
 import virtool.utils
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.db.transforms import apply_transforms
+from virtool.mongo.transforms import apply_transforms
 from virtool.errors import DatabaseError, GitHubError
 from virtool.github import format_release
 from virtool.http.routes import Routes
@@ -116,7 +116,7 @@ async def get_release(req):
     db = req.app["db"]
     ref_id = req.match_info["ref_id"]
 
-    if not await virtool.db.utils.id_exists(db.references, ref_id):
+    if not await virtool.mongo.utils.id_exists(db.references, ref_id):
         raise NotFound()
 
     if not await db.references.count_documents(
@@ -144,10 +144,10 @@ async def list_updates(req):
     db = req.app["db"]
     ref_id = req.match_info["ref_id"]
 
-    if not await virtool.db.utils.id_exists(db.references, ref_id):
+    if not await virtool.mongo.utils.id_exists(db.references, ref_id):
         raise NotFound()
 
-    updates = await virtool.db.utils.get_one_field(db.references, "updates", ref_id)
+    updates = await virtool.mongo.utils.get_one_field(db.references, "updates", ref_id)
 
     if updates is not None:
         updates.reverse()
@@ -163,13 +163,13 @@ async def update(req):
     ref_id = req.match_info["ref_id"]
     user_id = req["client"].user_id
 
-    if not await virtool.db.utils.id_exists(db.references, ref_id):
+    if not await virtool.mongo.utils.id_exists(db.references, ref_id):
         raise NotFound()
 
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
         raise InsufficientRights()
 
-    release = await virtool.db.utils.get_one_field(db.references, "release", ref_id)
+    release = await virtool.mongo.utils.get_one_field(db.references, "release", ref_id)
 
     if release is None:
         raise HTTPBadRequest(text="Target release does not exist")
@@ -179,7 +179,7 @@ async def update(req):
     context = {
         "created_at": created_at,
         "ref_id": ref_id,
-        "release": await virtool.db.utils.get_one_field(
+        "release": await virtool.mongo.utils.get_one_field(
             db.references, "release", ref_id
         ),
         "user_id": user_id,
@@ -202,7 +202,7 @@ async def find_otus(req):
 
     ref_id = req.match_info["ref_id"]
 
-    if not await virtool.db.utils.id_exists(db.references, ref_id):
+    if not await virtool.mongo.utils.id_exists(db.references, ref_id):
         raise NotFound()
 
     term = req.query.get("find")
@@ -244,7 +244,7 @@ async def find_indexes(req):
 
     ref_id = req.match_info["ref_id"]
 
-    if not await virtool.db.utils.id_exists(db.references, ref_id):
+    if not await virtool.mongo.utils.id_exists(db.references, ref_id):
         raise NotFound()
 
     data = await virtool.indexes.db.find(db, req.query, ref_id=ref_id)
@@ -410,7 +410,7 @@ async def edit(req):
 
     ref_id = req.match_info["ref_id"]
 
-    if not await virtool.db.utils.id_exists(db.references, ref_id):
+    if not await virtool.mongo.utils.id_exists(db.references, ref_id):
         raise NotFound()
 
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
@@ -441,7 +441,7 @@ async def remove(req):
 
     ref_id = req.match_info["ref_id"]
 
-    if not await virtool.db.utils.id_exists(db.references, ref_id):
+    if not await virtool.mongo.utils.id_exists(db.references, ref_id):
         raise NotFound()
 
     if not await virtool.references.db.check_right(req, ref_id, "remove"):
@@ -468,7 +468,7 @@ async def list_groups(req):
     if not await db.references.count_documents({"_id": ref_id}):
         raise NotFound()
 
-    groups = await virtool.db.utils.get_one_field(db.references, "groups", ref_id)
+    groups = await virtool.mongo.utils.get_one_field(db.references, "groups", ref_id)
 
     return json_response(groups)
 

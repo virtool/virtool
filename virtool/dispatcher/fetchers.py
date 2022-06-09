@@ -12,8 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.indexes.db
 import virtool.references.db
 import virtool.samples.db
-from virtool.db.core import Collection, DB
-from virtool.db.transforms import apply_transforms
+from virtool.mongo.core import Collection, DB
+from virtool.mongo.transforms import apply_transforms
 from virtool.dispatcher.change import Change
 from virtool.dispatcher.connection import Connection
 from virtool.dispatcher.operations import DELETE
@@ -39,7 +39,6 @@ class AbstractFetcher(ABC):
         Fetch all records with IDs matching the passed ``id_list`` and are allowed to be
         viewed by the ``connection``
         """
-        pass
 
     async def fetch(self, change: Change, connections: List[Connection]):
         """
@@ -54,18 +53,17 @@ class AbstractFetcher(ABC):
         :return: connection-message pairs
 
         """
-        if getattr(self, "auto_delete", True):
-            if change.operation == DELETE:
-                message = {
-                    "interface": change.interface,
-                    "operation": DELETE,
-                    "data": change.id_list,
-                }
+        if getattr(self, "auto_delete", True) and change.operation == DELETE:
+            message = {
+                "interface": change.interface,
+                "operation": DELETE,
+                "data": change.id_list,
+            }
 
-                for connection in connections:
-                    yield connection, message
+            for connection in connections:
+                yield connection, message
 
-                return
+            return
 
         async for connection, message in self.prepare(change, connections):
             yield connection, message

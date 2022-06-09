@@ -8,7 +8,7 @@ from aiohttp.web_response import Response
 import virtool.uploads.db
 from virtool.api.response import InvalidQuery, NotFound, json_response
 from virtool.api.utils import get_req_bool
-from virtool.db.transforms import apply_transforms
+from virtool.mongo.transforms import apply_transforms
 from virtool.http.routes import Routes
 from virtool.uploads.models import Upload, UploadType
 from virtool.uploads.utils import naive_validator, naive_writer

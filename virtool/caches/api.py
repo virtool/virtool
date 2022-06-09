@@ -3,16 +3,12 @@ API request handlers for sample caches.
 
 """
 import aiohttp.web
-import virtool.analyses.utils
-import virtool.caches.db
-import virtool.db.utils
-import virtool.http.routes
-import virtool.users.db
-import virtool.utils
-import virtool.validators
-from virtool.api.response import NotFound, json_response
 
-routes = virtool.http.routes.Routes()
+import virtool.caches.db
+from virtool.api.response import NotFound, json_response
+from virtool.http.routes import Routes
+
+routes = Routes()
 
 
 @routes.get("/caches/{cache_id}")

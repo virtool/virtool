@@ -2,8 +2,8 @@ import motor.motor_asyncio
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
-import virtool.db.core
-import virtool.db.mongo
+import virtool.mongo.connect
+import virtool.mongo.core
 
 
 class MockDeleteResult:
@@ -26,19 +26,21 @@ async def test_motor(test_db_connection_string, test_db_name, loop, request):
     client = motor.motor_asyncio.AsyncIOMotorClient(test_db_connection_string)
     await client.drop_database(test_db_name)
     db = client[test_db_name]
-    await virtool.db.mongo.create_indexes(db)
+    await virtool.mongo.connect.create_indexes(db)
     yield db
     await client.drop_database(test_db_name)
 
 
 @pytest.fixture
 def dbi(test_motor, mocker):
-    return virtool.db.core.DB(test_motor, mocker.stub())
+    return virtool.mongo.core.DB(test_motor, mocker.stub())
 
 
 @pytest.fixture(params=[True, False])
 def id_exists(mocker, request):
-    mock = mocker.patch("virtool.db.utils.id_exists", make_mocked_coro(request.param))
+    mock = mocker.patch(
+        "virtool.mongo.utils.id_exists", make_mocked_coro(request.param)
+    )
     setattr(mock, "__bool__", lambda x: request.param)
     return mock
 

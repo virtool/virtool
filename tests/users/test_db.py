@@ -4,7 +4,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.errors
-from virtool.db.transforms import apply_transforms
+from virtool.mongo.transforms import apply_transforms
 from virtool.users.db import (
     AttachUserTransform,
     B2CUserAttributes,
@@ -130,10 +130,10 @@ async def test_create(exists, force_reset, snapshot, mocker, dbi, bob):
     handle = "bob"
     password = "hello_world"
 
-    mocker.patch("virtool.db.utils.get_new_id", return_value="abc123")
+    mocker.patch("virtool.mongo.utils.get_new_id", return_value="abc123")
 
     mocker.patch(
-        "virtool.db.utils.id_exists", new=make_mocked_coro(return_value=exists)
+        "virtool.mongo.utils.id_exists", new=make_mocked_coro(return_value=exists)
     )
 
     mocker.patch("virtool.users.utils.hash_password", return_value="hashed_password")
@@ -336,7 +336,7 @@ async def test_find_or_create_b2c_user(exists, dbi, mocker, snapshot, static_tim
         await dbi.users.insert_one({"handle": "bob123"})
 
     if exists == "user_id":
-        mocker.patch("virtool.db.utils.get_new_id", return_value="foobar")
+        mocker.patch("virtool.mongo.utils.get_new_id", return_value="foobar")
         await dbi.users.insert_one({"_id": "foobar"})
 
     if exists == "oid":
@@ -344,7 +344,7 @@ async def test_find_or_create_b2c_user(exists, dbi, mocker, snapshot, static_tim
 
     if exists is None:
         mocker.patch("virtool.users.db.generate_handle", return_value="bob123")
-        mocker.patch("virtool.db.utils.get_new_id", return_value="foobar")
+        mocker.patch("virtool.mongo.utils.get_new_id", return_value="foobar")
         mocker.patch("virtool.utils.timestamp", return_value=static_time.datetime)
 
     coroutine = find_or_create_b2c_user(dbi, user_attributes)

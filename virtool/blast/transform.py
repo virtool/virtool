@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.blast.models import NuVsBlast
-from virtool.db.transforms import AbstractTransform
+from virtool.mongo.transforms import AbstractTransform
 from virtool.types import Document
 
 

@@ -12,7 +12,7 @@ from semver import VersionInfo
 
 import virtool.tasks.pg
 from virtool.data.utils import get_data_from_app
-from virtool.db.utils import get_one_field
+from virtool.mongo.utils import get_one_field
 from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument
 from virtool.history.db import patch_to_version

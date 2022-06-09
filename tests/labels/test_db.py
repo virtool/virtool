@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.db.transforms import apply_transforms
+from virtool.mongo.transforms import apply_transforms
 from virtool.labels.db import AttachLabelsTransform, SampleCountTransform
 from virtool.labels.models import Label
 

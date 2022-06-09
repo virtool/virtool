@@ -1,7 +1,7 @@
 import pytest
 
 import virtool.subtractions.db
-from virtool.db.transforms import apply_transforms
+from virtool.mongo.transforms import apply_transforms
 from virtool.subtractions.db import (
     AttachSubtractionTransform,
     unlink_default_subtractions,
