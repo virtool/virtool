@@ -52,7 +52,7 @@ PyJWT = "^2.3.0"
 msal = "^1.16.0"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 aiojobs = "^1.0.0"
-virtool-core = "^0.6.0"
+virtool-core = "^1.1.0"
 aiohttp-pydantic = "^1.12.1"
 
 

@@ -1,30 +1,30 @@
 from pymongo import UpdateOne
+from virtool_core.mongo import buffered_bulk_writer
 
-import virtool.db.migrate
-import virtool.db.migrate_shared
-import virtool.db.utils
-import virtool.types
-from virtool.db.utils import buffered_bulk_writer
+from virtool.db.migrate_shared import add_subtractions_field
+from virtool.db.utils import delete_unready
+from virtool.types import App
 
 
-async def migrate_analyses(app: virtool.types.App):
+async def migrate_analyses(app: App):
     """
     Delete unready analyses.
 
     :param app: the application object
 
     """
-    await virtool.db.utils.delete_unready(app["db"].analyses)
-    await virtool.db.migrate_shared.add_subtractions_field(app["db"].analyses)
+    await delete_unready(app["db"].analyses)
+    await add_subtractions_field(app["db"].analyses)
     await nest_results(app["db"])
 
 
 async def nest_results(db):
     """
-    Move the ``subtracted_count`` and ``read_count`` fields from the document to the ``results`` subdocument.
+    Move the ``subtracted_count`` and ``read_count`` fields from the document to the
+    ``results`` subdocument.
 
-    This supports the new jobs API model where only a ``results`` field can be set on the analysis document by a
-    workflow job.
+    This supports the new jobs API model where only a ``results`` field can be set on
+    the analysis document by a workflow job.
 
     :param db: the application database object
 
