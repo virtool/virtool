@@ -12,12 +12,14 @@ from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
 from virtool.data_model.group import VirtoolGroup
 from virtool.groups.oas import CreateGroupSchema, EditGroupSchema
+from virtool.http.privileges import admin
 
 routes = virtool.http.routes.Routes()
 
 
 @routes.view("/groups")
 class Groups(PydanticView):
+
     async def get(self) -> r200[List[VirtoolGroup]]:
         """
         List all existing user groups.
@@ -28,6 +30,7 @@ class Groups(PydanticView):
         cursor = self.request.app["db"].groups.find()
         return json_response([base_processor(d) async for d in cursor])
 
+    @admin
     async def post(self, data: CreateGroupSchema) -> Union[r201[VirtoolGroup], r400]:
         """
         Create a new group.
@@ -58,6 +61,7 @@ class Groups(PydanticView):
 
 @routes.view("/groups/{group_id}")
 class Group(PydanticView):
+
     async def get(self) -> Union[r200[VirtoolGroup], r404]:
         """
         Get the complete representation of a single user group.
@@ -75,6 +79,7 @@ class Group(PydanticView):
 
         raise NotFound()
 
+    @admin
     async def patch(self, data: EditGroupSchema) -> Union[r200[VirtoolGroup], r404]:
         """
         Update the permissions of a group.
@@ -106,6 +111,7 @@ class Group(PydanticView):
 
         return json_response(base_processor(document))
 
+    @admin
     async def delete(self) -> Union[r204, r404]:
         """
         Delete a group.
