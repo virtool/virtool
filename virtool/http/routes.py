@@ -25,14 +25,16 @@ class Routes(RouteTableDef):
         self.put = self._protected(self.put)
         self.patch = self._protected(self.patch)
 
+        self.view = self._protected(self.view)
+
         self.jobs_api = RouteTableDef()
 
 
 def protect(
-    route_decorator: Callable,
-    admin: bool,
-    permission: str,
-    public: bool,
+        route_decorator: Callable,
+        admin: bool,
+        permission: str,
+        public: bool,
 ):
     if permission and permission not in PERMISSIONS:
         raise ValueError("Invalid permission: " + permission)
@@ -41,15 +43,21 @@ def protect(
         async def wrapped(req):
             client = req["client"]
 
+            # temporarily added for @public decorator checked in middleware
+            if public:
+                req.public = True
+
             if (
-                not public
-                and not client.authenticated
-                and req.path not in PUBLIC_ROUTES
+                    not public
+                    and not client.authenticated
+                    and req.path not in PUBLIC_ROUTES
             ):
                 raise HTTPUnauthorized(text="Requires authorization")
 
             if not client.authenticated or not client.administrator:
                 if admin:
+                    # temporarily added for @admin decorator checked in middleware
+                    req.admin = True
                     return json_response(
                         {
                             "id": "not_permitted",
@@ -57,6 +65,10 @@ def protect(
                         },
                         status=403,
                     )
+                # temporarily added for @permissions decorator checked in middleware
+                if permission:
+                    temp_list = [permission]
+                    req.permissions = temp_list
 
                 if permission and not req["client"].permissions[permission]:
                     return json_response(

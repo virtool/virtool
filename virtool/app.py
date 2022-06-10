@@ -11,6 +11,7 @@ import virtool.http.auth
 import virtool.http.errors
 import virtool.http.proxy
 import virtool.http.query
+import virtool.http.privileges
 from virtool.config.cls import Config
 from virtool.http.headers import headers_middleware, on_prepare_location
 from virtool.process_utils import create_app_runner, wait_for_restart, wait_for_shutdown
@@ -50,6 +51,7 @@ def create_app_without_startup():
         virtool.http.auth.middleware,
         virtool.http.accept.middleware,
         virtool.http.errors.middleware,
+        virtool.http.privileges.middleware,
         virtool.http.proxy.middleware,
         virtool.http.query.middleware,
     ]
@@ -72,6 +74,7 @@ def create_app(config: Config):
         virtool.http.auth.middleware,
         virtool.http.accept.middleware,
         virtool.http.errors.middleware,
+        virtool.http.privileges.middleware,
         virtool.http.proxy.middleware,
         virtool.http.query.middleware,
     ]
