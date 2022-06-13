@@ -28,6 +28,7 @@ from virtool.dispatcher.dispatcher import Dispatcher
 from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.fake.wrapper import FakerWrapper
+from virtool.groups.data import GroupsData
 from virtool.hmm.db import refresh
 from virtool.indexes.tasks import (
     AddIndexFilesTask,
@@ -122,6 +123,7 @@ async def startup_data(app: App):
     app["data"] = DataLayer(
         AnalysisData(app),
         BLASTData(app["db"], app["pg"], app["tasks"]),
+        GroupsData(app["db"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),
     )

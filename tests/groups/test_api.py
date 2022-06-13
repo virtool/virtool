@@ -83,12 +83,21 @@ async def test_get(error, spawn_client, all_permissions, resp_is):
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_update_permissions(error, spawn_client, no_permissions, resp_is):
+async def test_update_permissions(
+    error, fake, spawn_client, no_permissions, resp_is, snapshot
+):
     """
     Test that a valid request results in permission changes.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
+
+    await client.db.users.insert_many(
+        [
+            {**(await fake.users.create()), "groups": ["test"]},
+            {**(await fake.users.create()), "groups": []},
+        ]
+    )
 
     if not error:
         await client.db.groups.insert_one(
@@ -101,45 +110,46 @@ async def test_update_permissions(error, spawn_client, no_permissions, resp_is):
 
     if error:
         await resp_is.not_found(resp)
-        return
+    else:
+        assert resp.status == 200
+        assert await resp.json() == snapshot(name="json")
+        assert await client.db.groups.find_one("test") == snapshot(name="db")
 
-    assert resp.status == 200
-
-    no_permissions["create_sample"] = True
-
-    assert await resp.json() == {"id": "test", "permissions": no_permissions}
-
-    assert await client.db.groups.find_one("test") == {
-        "_id": "test",
-        "permissions": no_permissions,
-    }
+    assert await client.db.users.find().to_list(None) == snapshot(name="users")
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_remove(error, mocker, spawn_client, no_permissions, resp_is):
+async def test_remove(error, fake, snapshot, spawn_client, no_permissions, resp_is):
     """
     Test that an existing document can be removed at ``DELETE /groups/:group_id``.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
 
+    await client.db.users.insert_many(
+        [
+            {
+                **(await fake.users.create()),
+                "groups": ["test"],
+                "permissions": {**no_permissions, "create_sample": True},
+            },
+            {**(await fake.users.create()), "groups": []},
+        ]
+    )
+
     if not error:
         await client.db.groups.insert_one(
-            {"_id": "test", "permissions": no_permissions}
+            {"_id": "test", "permissions": {**no_permissions, "create_sample": True}}
         )
-
-    m_update_member_users = mocker.patch(
-        "virtool.groups.db.update_member_users", make_mocked_coro(None)
-    )
 
     resp = await client.delete("/groups/test")
 
     if error == "404":
         await resp_is.not_found(resp)
-        return
+    else:
+        await resp_is.no_content(resp)
+        assert await client.db.groups.count_documents({"_id": "test"}) == 0
 
-    await resp_is.no_content(resp)
-
-    assert not await client.db.groups.count_documents({"_id": "test"})
-
-    m_update_member_users.assert_called_with(client.db, "test", remove=True)
+    assert await client.db.users.find({}, ["permissions"]).to_list(None) == snapshot(
+        name="users"
+    )
