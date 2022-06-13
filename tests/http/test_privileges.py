@@ -5,36 +5,40 @@ from aiohttp_pydantic import PydanticView
 
 from virtool.http.privileges import admin, permissions, public
 
-test_routes = RouteTableDef()
 
+@pytest.fixture
+def privilege_routes():
+    routes = RouteTableDef()
 
-@test_routes.view("/foo")
-class TestDecorators(PydanticView):
-    async def get(self):
-        return json_response({"test_get": "OK"}, status=200)
+    @routes.view("/foo")
+    class TestDecorators(PydanticView):
+        async def get(self):
+            return json_response({"test_get": "OK"}, status=200)
 
-    @admin
-    async def post(self):
-        return json_response({"test_post": "OK"}, status=201)
+        @admin
+        async def post(self):
+            return json_response({"test_post": "OK"}, status=201)
 
-    @permissions("modify_subtraction")
-    async def patch(self):
-        return json_response({"test_patch": "OK"}, status=200)
+        @permissions("modify_subtraction")
+        async def patch(self):
+            return json_response({"test_patch": "OK"}, status=200)
 
-    @public
-    async def put(self):
-        return json_response({"test_put": "OK"}, status=201)
+        @public
+        async def put(self):
+            return json_response({"test_put": "OK"}, status=201)
+
+    return routes
 
 
 @pytest.mark.parametrize("is_administrator", [True, False])
-async def test_get_no_privileges(is_administrator, spawn_client):
+async def test_get_no_privileges(is_administrator, privilege_routes, spawn_client):
     if is_administrator:
         client = await spawn_client(
-            authorize=True, administrator=True, addon_route_table=test_routes
+            authorize=True, administrator=True, addon_route_table=privilege_routes
         )
     else:
         client = await spawn_client(
-            authorize=True, administrator=False, addon_route_table=test_routes
+            authorize=True, administrator=False, addon_route_table=privilege_routes
         )
 
     resp = await client.get("/foo")
@@ -44,14 +48,14 @@ async def test_get_no_privileges(is_administrator, spawn_client):
 
 
 @pytest.mark.parametrize("is_administrator", [True, False])
-async def test_post_admin_privileges(is_administrator, spawn_client):
+async def test_post_admin_privileges(is_administrator, privilege_routes, spawn_client):
     if is_administrator:
         client = await spawn_client(
-            authorize=True, administrator=True, addon_route_table=test_routes
+            authorize=True, administrator=True, addon_route_table=privilege_routes
         )
     else:
         client = await spawn_client(
-            authorize=True, administrator=False, addon_route_table=test_routes
+            authorize=True, administrator=False, addon_route_table=privilege_routes
         )
 
     resp = await client.post("/foo")
@@ -69,15 +73,17 @@ async def test_post_admin_privileges(is_administrator, spawn_client):
 
 
 @pytest.mark.parametrize("has_permission", [True, False])
-async def test_patch_permission_privileges(has_permission, spawn_client):
+async def test_patch_permission_privileges(
+    has_permission, privilege_routes, spawn_client
+):
     if has_permission:
         client = await spawn_client(
-            authorize=True, permissions="modify_subtraction", addon_route_table=test_routes
+            authorize=True,
+            permissions="modify_subtraction",
+            addon_route_table=privilege_routes,
         )
     else:
-        client = await spawn_client(
-            authorize=True, addon_route_table=test_routes
-        )
+        client = await spawn_client(authorize=True, addon_route_table=privilege_routes)
 
     resp = await client.patch("/foo", data="")
 
@@ -91,14 +97,14 @@ async def test_patch_permission_privileges(has_permission, spawn_client):
 
 
 @pytest.mark.parametrize("is_public", [True, False])
-async def test_put_public_privileges(is_public, spawn_client):
+async def test_put_public_privileges(is_public, privilege_routes, spawn_client):
     if is_public:
         client = await spawn_client(
-            authorize=False, administrator=False, addon_route_table=test_routes
+            authorize=False, administrator=False, addon_route_table=privilege_routes
         )
     else:
         client = await spawn_client(
-            authorize=True, administrator=True, addon_route_table=test_routes
+            authorize=True, administrator=True, addon_route_table=privilege_routes
         )
 
     resp = await client.put("/foo", data="")
