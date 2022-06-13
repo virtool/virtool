@@ -802,9 +802,9 @@
     'documents': <class 'list'> [
       <class 'dict'> {
         'archived': False,
-        'created_at': '2019-07-31T04:37:58Z',
+        'created_at': '2022-06-13T09:43:07Z',
         'id': 'sk1wj693',
-        'progress': 82,
+        'progress': 100,
         'rights': <class 'dict'> {
         },
         'stage': 'first',
@@ -814,25 +814,25 @@
             'progress': 0,
             'stage': None,
             'state': 'waiting',
-            'timestamp': '2019-07-31T04:37:58Z',
+            'timestamp': '2022-06-13T09:43:07Z',
           },
           <class 'dict'> {
-            'progress': 5,
+            'progress': 53,
             'stage': None,
             'state': 'preparing',
-            'timestamp': '2019-07-31T14:03:34Z',
+            'timestamp': '2022-06-13T11:11:33Z',
           },
           <class 'dict'> {
-            'progress': 70,
+            'progress': 69,
             'stage': 'first',
             'state': 'running',
-            'timestamp': '2019-08-01T07:45:05Z',
+            'timestamp': '2022-06-14T05:48:26Z',
           },
           <class 'dict'> {
-            'progress': 82,
+            'progress': 100,
             'stage': 'first',
             'state': 'complete',
-            'timestamp': '2019-08-01T16:06:33Z',
+            'timestamp': '2022-06-14T13:10:43Z',
           },
         ],
         'user': <class 'dict'> {
@@ -1038,9 +1038,9 @@
     'documents': <class 'list'> [
       <class 'dict'> {
         'archived': False,
-        'created_at': '2019-08-01T16:06:33Z',
+        'created_at': '2022-06-14T13:10:43Z',
         'id': 'sk1wj693',
-        'progress': 82,
+        'progress': 100,
         'stage': 'first',
         'state': 'complete',
         'user': <class 'dict'> {
@@ -1185,9 +1185,9 @@
     'documents': <class 'list'> [
       <class 'dict'> {
         'archived': False,
-        'created_at': '2019-08-01T16:06:33Z',
+        'created_at': '2022-06-14T13:10:43Z',
         'id': 'sk1wj693',
-        'progress': 82,
+        'progress': 100,
         'stage': 'first',
         'state': 'complete',
         'user': <class 'dict'> {
