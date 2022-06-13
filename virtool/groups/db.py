@@ -19,7 +19,9 @@ TODO: Add unique name field and use standard ID for _id
 """
 
 import asyncio
-from typing import List
+from typing import List, Optional
+
+from motor.motor_asyncio import AsyncIOMotorClientSession
 
 import virtool.groups.utils
 import virtool.users.db
@@ -32,7 +34,6 @@ async def get_merged_permissions(db, id_list: List[str]) -> dict:
 
     :param db: the application database interface
     :param id_list: a list of group ids
-
     :return: the merged permissions
 
     """
@@ -42,12 +43,19 @@ async def get_merged_permissions(db, id_list: List[str]) -> dict:
     return virtool.groups.utils.merge_group_permissions(groups)
 
 
-async def update_member_users(db, group_id: str, remove: bool = False):
-    groups = await asyncio.shield(db.groups.find().to_list(None))
+async def update_member_users(
+    db,
+    group_id: str,
+    remove: bool = False,
+    session: Optional[AsyncIOMotorClientSession] = None,
+):
+
+    groups = await db.groups.find({}, session=session).to_list(None)
 
     async for user in db.users.find(
         {"groups": group_id},
         ["administrator", "groups", "permissions", "primary_group"],
+        session=session,
     ):
         if remove:
             user["groups"].remove(group_id)
@@ -69,7 +77,10 @@ async def update_member_users(db, group_id: str, remove: bool = False):
             update_dict["$pull"] = {"groups": group_id}
 
         document = await db.users.find_one_and_update(
-            {"_id": user["_id"]}, update_dict, projection=["groups", "permissions"]
+            {"_id": user["_id"]},
+            update_dict,
+            projection=["groups", "permissions"],
+            session=session,
         )
 
         await virtool.users.db.update_sessions_and_keys(
@@ -78,4 +89,5 @@ async def update_member_users(db, group_id: str, remove: bool = False):
             user["_id"],
             document["groups"],
             document["permissions"],
+            session=session,
         )

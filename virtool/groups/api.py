@@ -1,37 +1,38 @@
 from typing import List, Union
 
-import pymongo.errors
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400
+from virtool_core.models import Group
 
-import virtool.groups.db
-import virtool.http.routes
 from virtool.api.response import NotFound, json_response
-from virtool.users.utils import generate_base_permissions
-from virtool.utils import base_processor
-from virtool.data_model.group import VirtoolGroup
+from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
+from virtool.data.utils import get_data_from_req
 from virtool.groups.oas import CreateGroupSchema, EditGroupSchema
 from virtool.http.privileges import admin
+from virtool.http.routes import Routes
 
-routes = virtool.http.routes.Routes()
+routes = Routes()
 
 
 @routes.view("/groups")
-class Groups(PydanticView):
-
-    async def get(self) -> r200[List[VirtoolGroup]]:
+class GroupsView(PydanticView):
+    async def get(self) -> r200[List[Group]]:
         """
         List all existing user groups.
 
         Status Codes:
             200: Successful operation
         """
-        cursor = self.request.app["db"].groups.find()
-        return json_response([base_processor(d) async for d in cursor])
+        return json_response(
+            [
+                Group.parse_obj(group).dict()
+                for group in await get_data_from_req(self.request).groups.find()
+            ]
+        )
 
     @admin
-    async def post(self, data: CreateGroupSchema) -> Union[r201[VirtoolGroup], r400]:
+    async def post(self, data: CreateGroupSchema) -> Union[r201[Group], r400]:
         """
         Create a new group.
 
@@ -41,28 +42,23 @@ class Groups(PydanticView):
             201: Successful operation
             400: Group already exists
         """
-        db = self.request.app["db"]
         group_id = data.group_id
 
-        document = {
-            "_id": group_id,
-            "permissions": generate_base_permissions(),
-        }
-
         try:
-            await db.groups.insert_one(document)
-        except pymongo.errors.DuplicateKeyError:
+            group = await get_data_from_req(self.request).groups.create(group_id)
+        except ResourceConflictError:
             raise HTTPBadRequest(text="Group already exists")
 
-        headers = {"Location": "/groups/" + group_id}
-
-        return json_response(base_processor(document), status=201, headers=headers)
+        return json_response(
+            Group.parse_obj(group).dict(),
+            status=201,
+            headers={"Location": f"/groups/{group.id}"},
+        )
 
 
 @routes.view("/groups/{group_id}")
-class Group(PydanticView):
-
-    async def get(self) -> Union[r200[VirtoolGroup], r404]:
+class GroupView(PydanticView):
+    async def get(self) -> Union[r200[Group], r404]:
         """
         Get the complete representation of a single user group.
 
@@ -70,17 +66,17 @@ class Group(PydanticView):
             200: Successful operation
             404: Group not found
         """
-        document = await self.request.app["db"].groups.find_one(
-            self.request.match_info["group_id"]
-        )
+        group_id = self.request.match_info["group_id"]
 
-        if document:
-            return json_response(base_processor(document))
+        try:
+            group = await get_data_from_req(self.request).groups.get(group_id)
+        except ResourceNotFoundError:
+            raise NotFound()
 
-        raise NotFound()
+        return json_response(Group.parse_obj(group).dict())
 
     @admin
-    async def patch(self, data: EditGroupSchema) -> Union[r200[VirtoolGroup], r404]:
+    async def patch(self, data: EditGroupSchema) -> Union[r200[Group], r404]:
         """
         Update the permissions of a group.
 
@@ -90,26 +86,16 @@ class Group(PydanticView):
             200: Successful operation
             404: Group not found
         """
-        db = self.request.app["db"]
-        permissions = data.permissions.dict(exclude_unset=True)
-
         group_id = self.request.match_info["group_id"]
 
-        old_document = await db.groups.find_one({"_id": group_id}, ["permissions"])
-
-        if not old_document:
+        try:
+            group = await get_data_from_req(self.request).groups.update(
+                group_id, data.permissions.dict(exclude_unset=True)
+            )
+        except ResourceNotFoundError:
             raise NotFound()
 
-        old_document["permissions"].update(permissions)
-
-        # Get the current permissions dict for the passed group id.
-        document = await db.groups.find_one_and_update(
-            {"_id": group_id}, {"$set": {"permissions": old_document["permissions"]}}
-        )
-
-        await virtool.groups.db.update_member_users(db, group_id)
-
-        return json_response(base_processor(document))
+        return json_response(Group.parse_obj(group).dict())
 
     @admin
     async def delete(self) -> Union[r204, r404]:
@@ -121,15 +107,11 @@ class Group(PydanticView):
             404: Group not found
 
         """
-        db = self.request.app["db"]
-
         group_id = self.request.match_info["group_id"]
 
-        delete_result = await db.groups.delete_one({"_id": group_id})
-
-        if not delete_result.deleted_count:
+        try:
+            await get_data_from_req(self.request).groups.delete(group_id)
+        except ResourceNotFoundError:
             raise NotFound()
-
-        await virtool.groups.db.update_member_users(db, group_id, remove=True)
 
         raise HTTPNoContent

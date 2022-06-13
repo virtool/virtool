@@ -1,7 +1,10 @@
 import random
+from asyncio import gather
 from dataclasses import dataclass
 from logging import Logger
 from typing import Any, Dict, List, Optional, Union
+
+from motor.motor_asyncio import AsyncIOMotorClientSession
 
 import virtool.utils
 from virtool.mongo.transforms import AbstractTransform
@@ -402,7 +405,12 @@ async def validate_credentials(db, user_id: str, password: str) -> bool:
 
 
 async def update_sessions_and_keys(
-    db, user_id: str, administrator: bool, groups: list, permissions: dict
+    db,
+    user_id: str,
+    administrator: bool,
+    groups: list,
+    permissions: dict,
+    session: Optional[AsyncIOMotorClientSession] = None,
 ):
     """
 
@@ -411,26 +419,32 @@ async def update_sessions_and_keys(
     :param administrator: the administrator flag for the user
     :param groups: an updated list of groups
     :param permissions: an updated set of permissions derived from the updated groups
+    :param session: an option Motor session to use
 
     """
-    find_query = {"user.id": user_id}
+    query = {"user.id": user_id}
 
-    async for document in db.keys.find(find_query, ["permissions"]):
-        await db.keys.update_one(
-            {"_id": document["_id"]},
-            {
-                "$set": {
-                    "administrator": administrator,
-                    "groups": groups,
-                    "permissions": limit_permissions(
-                        document["permissions"], permissions
-                    ),
-                }
-            },
-        )
+    await gather(
+        *[
+            db.keys.update_one(
+                {"_id": document["_id"]},
+                {
+                    "$set": {
+                        "administrator": administrator,
+                        "groups": groups,
+                        "permissions": limit_permissions(
+                            document["permissions"], permissions
+                        ),
+                    }
+                },
+                session=session,
+            )
+            async for document in db.keys.find(query, ["permissions"], session=session)
+        ]
+    )
 
     await db.sessions.update_many(
-        find_query,
+        query,
         {
             "$set": {
                 "administrator": administrator,
@@ -438,6 +452,7 @@ async def update_sessions_and_keys(
                 "permissions": permissions,
             }
         },
+        session=session,
     )
 
 

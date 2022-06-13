@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from virtool.analyses.data import AnalysisData
 from virtool.blast.data import BLASTData
+from virtool.groups.data import GroupsData
 from virtool.jobs.data import JobsData
 from virtool.otus.data import OTUData
 
@@ -17,5 +18,6 @@ class DataLayer:
 
     analyses: AnalysisData
     blast: BLASTData
+    groups: GroupsData
     jobs: JobsData
     otus: OTUData
