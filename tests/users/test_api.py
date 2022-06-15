@@ -1,3 +1,5 @@
+from typing import List
+
 import pytest
 
 from virtool.users.utils import check_password
@@ -164,7 +166,13 @@ async def test_edit(
             return
 
     if error == "invalid_input":
-        await resp_is.invalid_input(resp, {"force_reset": ["must be of boolean type"]})
+        assert resp.status == 400
+        assert await resp.json() == [{
+            "loc": ["force_reset"],
+            "msg": "value could not be parsed to a boolean",
+            "type": "type_error.bool",
+            "in": "body"
+        }]
         return
 
     if error == "user_dne":
