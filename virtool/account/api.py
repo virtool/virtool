@@ -72,7 +72,7 @@ async def edit(req: Request) -> Response:
     update = dict()
 
     if password is not None:
-        error = await check_password_length(req)
+        error = await check_password_length(req, password)
 
         if error:
             raise HTTPBadRequest(text=error)
@@ -386,7 +386,7 @@ async def reset(req: Request) -> Response:
 
     session = await db.sessions.find_one(session_id)
 
-    error = await check_password_length(req)
+    error = await check_password_length(req, password)
 
     if (
         not session.get("reset_code")
