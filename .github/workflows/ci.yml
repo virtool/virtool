@@ -80,6 +80,7 @@ jobs:
           --postgres-connection-string postgresql+asyncpg://virtool:virtool@localhost
           --cov
           --cov-report xml
+          --snapshot-details
   release:
     runs-on: ubuntu-20.04
     needs: [test, build]
