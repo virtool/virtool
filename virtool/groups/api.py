@@ -3,7 +3,7 @@ from typing import List, Union
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400
-from virtool_core.models import Group
+from virtool_core.models.group import Group
 
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
