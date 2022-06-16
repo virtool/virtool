@@ -1,21 +1,23 @@
 from logging import getLogger
 
-import virtool.users.db
-from virtool.types import App
+from virtool_core.models.user import User
+
+from virtool.users.data import UsersData
+from virtool.users.oas import UpdateUserSchema
 
 logger = getLogger(__name__)
 
 
-async def create_fake_bob_user(app: App):
+async def create_fake_bob_user(users_data: UsersData) -> User:
     """
     Create a fake user called Bob.
 
-    :param app: the application object
+    :param users_data: the user data layer component
+    :returns: the bob user
 
     """
-    user_document = await virtool.users.db.create(app["db"], "hello_world", "bob", True)
-    await virtool.users.db.edit(
-        app["db"], user_document["_id"], administrator=True, force_reset=False
+    user = await users_data.create("bob", "hello_world", True)
+    user = await users_data.update(
+        user.id, UpdateUserSchema(administrator=True, force_reset=False)
     )
-    logger.debug("Created fake user")
-    return user_document
+    return user

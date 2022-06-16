@@ -10,6 +10,7 @@ from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
 
+from virtool.data.utils import get_data_from_app
 from virtool.fake.factory import load_test_case_from_yml
 from virtool.types import App
 from virtool.users.fake import create_fake_bob_user
@@ -21,16 +22,16 @@ REF_ID = "reference_1"
 
 
 async def populate(app: App):
-    bob = await create_fake_bob_user(app)
+    bob = await create_fake_bob_user(get_data_from_app(app).users)
     for yml_file in Path(app["config"].fake_path).iterdir():
         if yml_file.suffix in (".yml", ".yaml"):
-            await load_test_case_from_yml(app, yml_file, bob["_id"])
+            await load_test_case_from_yml(app, yml_file, bob.id)
 
 
 async def remove_fake_data_path(app: App):
     """
-    Remove the temporary fake application data directory created when the jobs API is run with the
-    ``--fake`` option.
+    Remove the temporary fake application data directory created when the jobs API is
+    run with the ``--fake`` option.
 
     :param app: the application object
 
