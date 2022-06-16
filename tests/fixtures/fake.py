@@ -1,18 +1,18 @@
 import datetime
 from abc import ABC, abstractmethod
+from datetime import datetime
 
 import pytest
 import arrow
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.fake.wrapper import FakerWrapper
+from virtool.subtractions.models import SubtractionFile
 from virtool.types import Document
+from virtool.uploads.models import Upload
 
 
 class AbstractFakeDataGenerator(ABC):
-    @abstractmethod
-    def create(self) -> Document:
-        ...
-
     @abstractmethod
     async def insert(self) -> Document:
         ...
@@ -95,6 +95,104 @@ class FakeJobGenerator(AbstractFakeDataGenerator):
         return document["_id"]
 
 
+class FakeSubtractionGenerator(AbstractFakeDataGenerator):
+    def __init__(self, fake_generator, db, pg):
+        self.generator = fake_generator
+        self._db = db
+        self._pg = pg
+        self._faker = FakerWrapper()
+
+    async def get_id(self) -> str:
+        id_list = await self._db.users.distinct("_id")
+
+        if id_list:
+            return self._faker.random_element(id_list)
+
+        return (await self.insert())["_id"]
+
+    async def insert(self) -> Document:
+        subtraction_id = self._faker.get_mongo_id()
+
+        user = await self.generator.users.insert()
+
+        async with AsyncSession(self._pg) as session:
+            upload = Upload(
+                id=1,
+                created_at=self._faker.fake.date_time_between(
+                    datetime(2015, 10, 6), datetime(2050, 1, 1)
+                ),
+                name="palm.fa.gz",
+                name_on_disk="1-palm.fa.gz",
+                ready=True,
+                removed=False,
+                reserved=False,
+                size=12345,
+                type="subtraction",
+                user=user["_id"],
+                uploaded_at=self._faker.fake.date_time_between(
+                    datetime(2015, 10, 6), datetime(2050, 1, 1)
+                ),
+            )
+
+            session.add_all(
+                [
+                    upload,
+                    SubtractionFile(
+                        name="subtraction.fq.gz",
+                        subtraction=subtraction_id,
+                        type="fasta",
+                        size=12345,
+                    ),
+                    SubtractionFile(
+                        name="subtraction.1.bt2",
+                        subtraction=subtraction_id,
+                        type="bowtie2",
+                        size=56437,
+                    ),
+                    SubtractionFile(
+                        name="subtraction.2.bt2",
+                        subtraction=subtraction_id,
+                        type="bowtie2",
+                        size=93845,
+                    ),
+                ]
+            )
+
+            await session.commit()
+
+        finalization_update = self._faker.random_element(
+            [
+                {
+                    "gc": {
+                        letter: self._faker.fake.pyfloat(min_value=0, max_value=1.0)
+                        for letter in "atgcn"
+                    },
+                    "ready": True,
+                    "count": self._faker.integer(max_value=36),
+                },
+                {"ready": False},
+            ]
+        )
+
+        document = {
+            "_id": subtraction_id,
+            "name": self._faker.fake.word(),
+            "nickname": self._faker.fake.word(),
+            "deleted": self._faker.boolean(),
+            "ready": self._faker.boolean(),
+            "upload": 1,
+            "user": {"id": user["_id"]},
+            "created_at": self._faker.fake.date_time_between(
+                datetime(2015, 10, 6), datetime(2050, 1, 1)
+            ),
+            **finalization_update,
+        }
+
+        await self._db.subtraction.insert_one(document)
+
+        return document
+
+
 class FakeUserGenerator(AbstractFakeDataGenerator):
     def __init__(self, fake_generator, db):
         self.generator = fake_generator
@@ -133,9 +231,10 @@ class FakeUserGenerator(AbstractFakeDataGenerator):
 
 
 class FakeGenerator:
-    def __init__(self, db):
-        self.jobs = FakeJobGenerator(self, db)
-        self.users = FakeUserGenerator(self, db)
+    def __init__(self, mongo, pg):
+        self.jobs = FakeJobGenerator(self, mongo)
+        self.users = FakeUserGenerator(self, mongo)
+        self.subtractions = FakeSubtractionGenerator(self, mongo, pg)
 
 
 @pytest.fixture
@@ -150,5 +249,5 @@ def app(dbi, pg, tmp_path, config, settings):
 
 
 @pytest.fixture
-def fake(dbi):
-    return FakeGenerator(dbi)
+def fake(dbi, pg):
+    return FakeGenerator(dbi, pg)

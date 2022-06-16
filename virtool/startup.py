@@ -1,5 +1,6 @@
 import asyncio
 import concurrent.futures
+import dataclasses
 import logging
 import signal
 import sys
@@ -50,6 +51,7 @@ from virtool.routes import setup_routes
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.sentry import setup
 from virtool.settings.db import ensure
+from virtool.subtractions.data import SubtractionsData
 from virtool.subtractions.db import check_subtraction_fasta_files
 from virtool.subtractions.tasks import (
     AddSubtractionFilesTask,
@@ -120,13 +122,16 @@ async def startup_data(app: App):
 
     :param app: the application object
     """
-    app["data"] = DataLayer(
+    data = DataLayer(
         AnalysisData(app),
         BLASTData(app["db"], app["pg"], app["tasks"]),
         GroupsData(app["db"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),
+        SubtractionsData(app["config"].base_url, app["db"], app["pg"]),
     )
+
+    app["data"] = data
 
 
 async def startup_dispatcher(app: Application):

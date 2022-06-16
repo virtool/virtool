@@ -3,8 +3,23 @@ import os
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.models.subtraction import Subtraction
 
 from virtool.subtractions.models import SubtractionFile
+
+
+async def test_get(fake, spawn_client):
+    subtraction = await fake.subtractions.insert()
+
+    client = await spawn_client(authorize=True)
+
+    resp = await client.get(f"/subtractions/{subtraction['_id']}")
+
+    assert resp.status == 200
+
+    print(await resp.json())
+
+    assert 0
 
 
 @pytest.mark.parametrize(

@@ -14,6 +14,8 @@ import virtool.uploads.db
 import virtool.validators
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, get_req_bool, paginate
+from virtool.config import get_config_from_req
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.mongo.transforms import apply_transforms
 from virtool.http.routes import Routes
@@ -84,25 +86,17 @@ async def find(req):
 @routes.jobs_api.get("/subtractions/{subtraction_id}")
 async def get(req):
     """
-    Get a complete host document.
+    Get details of a subtraction.
 
     """
-    db = req.app["db"]
-
-    subtraction_id = req.match_info["subtraction_id"]
-
-    document = await db.subtraction.find_one(subtraction_id)
-
-    if not document:
+    try:
+        subtraction = await get_data_from_req(req).subtractions.get(
+            req.match_info["subtraction_id"]
+        )
+    except ResourceNotFoundError:
         raise NotFound()
 
-    document = await attach_computed(req.app, document)
-
-    return json_response(
-        await apply_transforms(
-            base_processor(document), [AttachUserTransform(db, ignore_errors=True)]
-        )
-    )
+    return json_response(subtraction.dict())
 
 
 @routes.post("/subtractions", permission="modify_subtraction")
@@ -166,12 +160,16 @@ async def create(req):
         "create_subtraction", task_args, user_id, rights
     )
 
-    headers = {"Location": f"/subtraction/{subtraction_id}"}
-
-    document = await attach_computed(req.app, document)
+    document = await attach_computed(
+        db, pg, get_config_from_req(req).base_url, document
+    )
     document = await apply_transforms(document, [AttachUserTransform(db)])
 
-    return json_response(base_processor(document), headers=headers, status=201)
+    return json_response(
+        base_processor(document),
+        headers={"Location": f"/subtraction/{subtraction_id}"},
+        status=201,
+    )
 
 
 @routes.jobs_api.put("/subtractions/{subtraction_id}/files/{filename}")
@@ -260,7 +258,9 @@ async def edit(req):
     if document is None:
         raise NotFound()
 
-    document = await attach_computed(req.app, document)
+    document = await attach_computed(
+        db, req.app["pg"], get_config_from_req(req).base_url, document
+    )
 
     return json_response(
         await apply_transforms(
@@ -313,7 +313,9 @@ async def finalize_subtraction(req: aiohttp.web.Request):
         db, pg, subtraction_id, data["gc"], data["count"]
     )
 
-    document = await attach_computed(req.app, document)
+    document = await attach_computed(
+        db, pg, get_config_from_req(req).base_url, document
+    )
 
     return json_response(
         await apply_transforms(base_processor(document), [AttachUserTransform(db)])

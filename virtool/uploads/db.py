@@ -1,17 +1,58 @@
 import logging
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, List, Optional, Type, Union, Any
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
+from virtool.mongo.transforms import AbstractTransform
 from virtool.pg.base import Base
+from virtool.pg.utils import get_row_by_id
+from virtool.types import Document
 from virtool.uploads.models import Upload
 from virtool.utils import run_in_thread
 
 logger = logging.getLogger("uploads")
 
 PROJECTION = ["_id", "name", "size", "user", "uploaded_at", "type", "ready", "reserved"]
+
+
+class AttachUploadTransform(AbstractTransform):
+    """
+    Attaches an upload to a document that has an upload field.
+    """
+
+    def __init__(self, pg: AsyncEngine):
+        self._pg = pg
+
+    async def attach_one(self, document: Document, prepared: Document):
+        return {**document, "upload": prepared}
+
+    async def prepare_one(self, document: Document):
+        try:
+            upload_id = document["upload"]
+        except KeyError:
+            return None
+
+        return await get_row_by_id(self._pg, Upload, upload_id)
+
+    async def prepare_many(self, documents: List[Document]) -> Dict[int, Dict]:
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                (
+                    select(Upload).filter(
+                        Upload.id.in_(
+                            list({document["upload"] for document in documents})
+                        )
+                    )
+                )
+            )
+
+            uploads = {upload.id: dict(upload) for upload in result.scalars()}
+
+        return {
+            document["_id"]: uploads.get(document["upload"]) for document in documents
+        }
 
 
 async def create(
@@ -85,7 +126,9 @@ async def finalize(pg, size: int, id_: int, model: Type[Base]) -> Optional[dict]
     return upload
 
 
-async def find(pg, user: str = None, upload_type: str = None, ready: bool = None) -> List[dict]:
+async def find(
+    pg, user: str = None, upload_type: str = None, ready: bool = None
+) -> List[dict]:
     """
     Retrieves a list of `Upload` documents in the `uploads` SQL table.
 

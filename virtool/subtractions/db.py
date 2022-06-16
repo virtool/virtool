@@ -58,7 +58,9 @@ class AttachSubtractionTransform(AbstractTransform):
         ]
 
 
-async def attach_computed(app: App, subtraction: Dict[str, Any]) -> Dict[str, Any]:
+async def attach_computed(
+    mongo, pg: AsyncEngine, base_url: str, subtraction: Dict[str, Any]
+) -> Dict[str, Any]:
     """
     Attach the ``linked_samples`` and ``files`` fields to the passed subtraction
     document.
@@ -66,7 +68,9 @@ async def attach_computed(app: App, subtraction: Dict[str, Any]) -> Dict[str, An
     Queries MongoDB and SQL to find the required data. Returns a new document
     dictionary.
 
-    :param app: the application object
+    :param mongo: the application MongoDB database
+    :param pg: the application Postgres engine
+    :param base_url: the base URL the API is being served from
     :param subtraction: the subtraction document to attach to
     :return: a new subtraction document with new fields attached
 
@@ -74,11 +78,9 @@ async def attach_computed(app: App, subtraction: Dict[str, Any]) -> Dict[str, An
     subtraction_id = subtraction["_id"]
 
     files, linked_samples = await asyncio.gather(
-        get_subtraction_files(app["pg"], subtraction_id),
-        virtool.subtractions.db.get_linked_samples(app["db"], subtraction_id),
+        get_subtraction_files(pg, subtraction_id),
+        virtool.subtractions.db.get_linked_samples(mongo, subtraction_id),
     )
-
-    base_url = app["config"].base_url
 
     for file in files:
         file[
