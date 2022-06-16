@@ -1,50 +1,34 @@
-"""
-Work with user documents in the database.
-
-Schema:
-- _id (str) username
-- administrator (bool) true if the user is an administrator
-- email (str) the user's email address
-- force_reset (bool) the user must reset their password on next login
-- groups (List[str]) a list of group IDs the user is a member of
-- last_password_change (datetime) a timestamp for the last time the password was changed
-- password (str) a salted and bcrypt-hashed password for the user
-- permissions (Object) a object of permissions keys with boolean values
-                       indicating if the user has that permission
-- primary_group (str) the ID of a group that can automatically
-                      gain ownership of samples created by the user
-- settings (Object) user-specific settings - currently not used
-
-"""
 from typing import Union
 
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r409
+from virtool_core.models.user import User
 
 import virtool.http.auth
-import virtool.http.routes
 import virtool.users.db
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.data_model.user import VirtoolUser
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.utils import get_data_from_req
 from virtool.http.privileges import admin, public
-from virtool.mongo.utils import apply_projection
-from virtool.errors import DatabaseError
+from virtool.http.routes import Routes
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.users.checks import check_password_length
-from virtool.users.oas import CreateUserSchema, CreateFirstUserSchema, EditUserSchema
+from virtool.users.oas import (
+    UpdateUserSchema,
+    CreateUserSchema,
+    CreateFirstUserSchema,
+)
 from virtool.users.sessions import create_session
-from virtool.utils import base_processor
 
-routes = virtool.http.routes.Routes()
+routes = Routes()
 
 
 @routes.view("/users")
 class UsersView(PydanticView):
-
     @admin
-    async def get(self) -> Union[r201[VirtoolUser], r403]:
+    async def get(self) -> Union[r200, r403]:
         """
         Get a list of all user documents in the database.
 
@@ -56,9 +40,7 @@ class UsersView(PydanticView):
 
         term = self.request.query.get("find")
 
-        db_query = {}
-        if term:
-            db_query.update(compose_regex_query(term, ["_id"]))
+        db_query = compose_regex_query(term, ["_id"]) if term else {}
 
         data = await paginate(
             db.users,
@@ -71,7 +53,7 @@ class UsersView(PydanticView):
         return json_response(data)
 
     @admin
-    async def post(self, data: CreateUserSchema) -> Union[r201[VirtoolUser], r400, r403]:
+    async def post(self, data: CreateUserSchema) -> Union[r201[User], r400, r403]:
         """
         Add a new user to the user database.
 
@@ -81,154 +63,125 @@ class UsersView(PydanticView):
             400: Password does not meet length requirement
             403: Not permitted
         """
-        db = self.request.app["db"]
-
-        handle = data.handle
-        password = data.password
-        force_reset = data.force_reset
-
-        if handle == "virtool":
+        if data.handle == "virtool":
             raise HTTPBadRequest(text="Reserved user name: virtool")
 
-        error = await check_password_length(self.request, password=password)
-
-        if error:
+        if error := await check_password_length(self.request, password=data.password):
             raise HTTPBadRequest(text=error)
 
         try:
-            document = await virtool.users.db.create(
-                db, password=password, handle=handle, force_reset=force_reset
+            user = await get_data_from_req(self.request).users.create(
+                data.handle, data.password, data.force_reset
             )
-        except DatabaseError:
-            raise HTTPBadRequest(text="User already exists")
-
-        user_id = document["_id"]
-        headers = {"Location": f"/users/{user_id}"}
+        except ResourceConflictError as err:
+            raise HTTPBadRequest(text=str(err))
 
         return json_response(
-            base_processor({key: document[key] for key in virtool.users.db.PROJECTION}),
-            headers=headers,
+            user.dict(),
+            headers={"Location": f"/users/{user.id}"},
             status=201,
         )
 
 
 @routes.view("/users/{user_id}")
 class UserView(PydanticView):
-
     @admin
-    async def get(self) -> Union[r200[VirtoolUser], r403, r404]:
+    async def get(self) -> Union[r200[User], r403, r404]:
         """
-        Get a near-complete user document. Password data are removed.
+        Gets the details of a user.
 
         Status Codes:
-            200: Successful operation
+            200: Success
             403: Not permitted
-            404: User not found
+            404: Not found
         """
-        document = await self.request.app["db"].users.find_one(
-            self.request.match_info["user_id"], virtool.users.db.PROJECTION
-        )
-
-        if not document:
+        try:
+            user = await get_data_from_req(self.request).users.get(
+                self.request.match_info["user_id"]
+            )
+        except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(base_processor(document))
+        return json_response(user.dict())
 
     @admin
-    async def patch(self, data: EditUserSchema) -> Union[r200[VirtoolUser], r400, r403, r404, r409]:
+    async def patch(
+        self, data: UpdateUserSchema
+    ) -> Union[r200[User], r400, r403, r404, r409]:
         """
-        Change the password, primary group, or force reset setting of an existing user.
+        Updates the user with the passed parameters.
+
+        Users cannot modify their own administrative status.
 
         Status Codes:
             200: Successful operation
             400: Primary group does not exist
-            400: Users cannot modify their own administrative status
+            400: Bad request
             403: Not permitted
             404: Not found
             409: User is not member of group
         """
-
-        db = self.request.app["db"]
-
-        if data.password is not None:
-            error = await check_password_length(self.request, password=data.password)
-
-            if error:
-                raise HTTPBadRequest(text=error)
-
-        groups = await db.groups.distinct("_id")
-
-        if data.groups is not None:
-            missing = [g for g in data.groups if g not in groups]
-
-            if missing:
-                raise HTTPBadRequest(text="Groups do not exist: " + ", ".join(missing))
-
-        primary_group = data.primary_group
-
-        if primary_group and primary_group not in groups:
-            raise HTTPBadRequest(text="Primary group does not exist")
-
         user_id = self.request.match_info["user_id"]
 
+        if data.password is not None:
+            if error := await check_password_length(
+                self.request, password=data.password
+            ):
+                raise HTTPBadRequest(text=error)
+
         if data.administrator is not None and user_id == self.request["client"].user_id:
-            raise HTTPBadRequest(text="Users cannot modify their own administrative status")
+            raise HTTPBadRequest(
+                text="Users cannot modify their own administrative status"
+            )
 
         try:
-            document = await virtool.users.db.edit(db, user_id, **data.__dict__)
-        except DatabaseError as err:
-            if "User does not exist" in str(err):
-                raise NotFound("User does not exist")
+            user = await get_data_from_req(self.request).users.update(user_id, data)
+        except ResourceConflictError as err:
+            raise HTTPBadRequest(text=str(err))
+        except ResourceNotFoundError:
+            raise NotFound("User does not exist")
 
-            if "User is not member of group" in str(err):
-                raise HTTPConflict(text="User is not member of group")
-
-            raise
-
-        projected = apply_projection(document, virtool.users.db.PROJECTION)
-
-        return json_response(base_processor(projected))
+        return json_response(user.dict())
 
     @admin
     async def delete(self) -> Union[r204, r400, r403, r404]:
         """
-        Remove a user.
+        Deletes a user.
+
+        Users cannot delete their own accounts.
 
         Status Codes:
             204: No content
-            400: Cannot remove own account
+            400: Bad request
             403: Not permitted
             404: Not found
         """
-        db = self.request.app["db"]
-
         user_id = self.request.match_info["user_id"]
 
         if user_id == self.request["client"].user_id:
             raise HTTPBadRequest(text="Cannot remove own account")
 
-        delete_result = await db.users.delete_one({"_id": user_id})
-
-        # Remove user from all references.
-        await db.references.update_many({}, {"$pull": {"users": {"id": user_id}}})
-
-        if delete_result.deleted_count == 0:
-            raise NotFound()
+        try:
+            await get_data_from_req(self.request).users.delete(user_id)
+        except ResourceNotFoundError:
+            raise NotFound
 
         raise HTTPNoContent
 
 
 @routes.view("/users/first")
 class FirstUserView(PydanticView):
-
     @public
-    async def put(self, data: CreateFirstUserSchema) -> Union[r201[VirtoolUser], r400, r403]:
+    async def put(self, data: CreateFirstUserSchema) -> Union[r201[User], r400, r403]:
         """
-        Add a first user to the user database.
+        Creates the first user for the instance.
+
+        This endpoint will not work after the first is created. Authenticate as the
+        first user and use those credentials to continue interacting with the API.
 
         Status Codes:
             201: Successful operation
-            400: User already exists
+            400: Bad request
             403: Not permitted
         """
         db = self.request.app["db"]
@@ -236,37 +189,29 @@ class FirstUserView(PydanticView):
         if await db.users.count_documents({}):
             raise HTTPConflict(text="Virtool already has at least one user")
 
-        if data["handle"] == "virtool":
+        if data.handle == "virtool":
             raise HTTPBadRequest(text="Reserved user name: virtool")
 
-        error = await check_password_length(self.request, password=data.password)
-
-        if error:
+        if error := await check_password_length(self.request, password=data.password):
             raise HTTPBadRequest(text=error)
 
-        handle = data.handle
-        password = data.password
-
-        document = await virtool.users.db.create(
-            db, password=password, handle=handle, force_reset=False
+        user = await get_data_from_req(self.request).users.create_first(
+            data.handle, data.password
         )
-        user_id = document["_id"]
 
-        document = await virtool.users.db.edit(db, user_id, administrator=True)
-
-        headers = {"Location": f"/users/{user_id}"}
-
-        session, token = await create_session(db, virtool.http.auth.get_ip(self.request), user_id)
+        session, token = await create_session(
+            db, virtool.http.auth.get_ip(self.request), user.id
+        )
 
         self.request["client"].authorize(session, is_api=False)
 
-        resp = json_response(
-            base_processor({key: document[key] for key in virtool.users.db.PROJECTION}),
-            headers=headers,
+        response = json_response(
+            user.dict(),
+            headers={"Location": f"/users/{user.id}"},
             status=201,
         )
 
-        set_session_id_cookie(resp, session["_id"])
-        set_session_token_cookie(resp, token)
+        set_session_id_cookie(response, session["_id"])
+        set_session_token_cookie(response, token)
 
-        return resp
+        return response

@@ -6,6 +6,7 @@ from virtool.groups.data import GroupsData
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
 from virtool.otus.data import OTUData
+from virtool.users.data import UsersData
 
 
 @dataclass
@@ -23,3 +24,4 @@ class DataLayer:
     labels: LabelsData
     jobs: JobsData
     otus: OTUData
+    users: UsersData

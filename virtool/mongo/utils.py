@@ -66,19 +66,23 @@ async def check_missing_ids(
     return set(id_list) - set(existent_ids)
 
 
-async def get_new_id(collection, excluded: Optional[Sequence[str]] = None) -> str:
+async def get_new_id(
+    collection,
+    excluded: Optional[Sequence[str]] = None,
+    session: Optional[AsyncIOMotorClientSession] = None,
+) -> str:
     """
     Returns a new, unique, id that can be used for inserting a new document. Will not
     return any id that is included in ``excluded``.
 
     :param collection: the Mongo collection to get a new _id for
     :param excluded: a list of ids to exclude from the search
+    :param session: a Motor session to use
     :return: an ID unique within the collection
 
     """
     excluded = set(excluded or set())
-
-    excluded.update(await collection.distinct("_id"))
+    excluded.update(await collection.distinct("_id", session=session))
 
     return virtool.utils.random_alphanumeric(length=8, excluded=excluded)
 
@@ -126,26 +130,4 @@ async def id_exists(collection, id_: str) -> bool:
     :param id_: the _id to check for
     :return: does the id exist
     """
-    return bool(await collection.count_documents({"_id": id_}))
-
-
-async def handle_exists(collection, handle: str) -> bool:
-    """
-    Check if the document handle exists in the collection.
-
-    :param collection: the Mongo collection to check the handle against
-    :param handle: the handle to check for
-    :return: does the id exist
-    """
-    return bool(await collection.count_documents({"handle": handle}))
-
-
-async def oid_exists(collection, b2c_oid: str) -> bool:
-    """
-    Check if the oid from Azure AD B2C exists in the collection.
-
-    :param collection: the Mongo collection to check the oid against
-    :param b2c_oid: the Azure AD B2C oid to check for
-    :return: does the oid exist
-    """
-    return bool(await collection.count_documents({"b2c_oid": b2c_oid}))
+    return bool(await collection.count_documents({"_id": id_}, limit=1))

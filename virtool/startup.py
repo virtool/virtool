@@ -60,6 +60,7 @@ from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
 from virtool.uploads.tasks import MigrateFilesTask
+from virtool.users.data import UsersData
 from virtool.utils import ensure_data_dir, random_alphanumeric
 from virtool.version import determine_server_version
 
@@ -127,6 +128,7 @@ async def startup_data(app: App):
         LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),
+        UsersData(app["db"], app["pg"]),
     )
 
 
