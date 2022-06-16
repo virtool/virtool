@@ -22,6 +22,7 @@ from virtool.hmm.tasks import HMMInstallTask
 from virtool.hmm.utils import hmm_data_exists
 from virtool.http.routes import Routes
 from virtool.utils import base_processor, compress_file_with_gzip, rm, run_in_thread
+from virtool.users.utils import Permission
 
 routes = Routes()
 
@@ -113,7 +114,7 @@ async def list_updates(req):
     return json_response(updates)
 
 
-@routes.post("/hmms/status/updates", permission="modify_hmm")
+@routes.post("/hmms/status/updates", permission=Permission.modify_hmm.value)
 async def install(req):
     """
     Install the latest official HMM database from GitHub.
@@ -163,7 +164,7 @@ async def get(req):
     return json_response(base_processor(document))
 
 
-@routes.delete("/hmms", permission="modify_hmm")
+@routes.delete("/hmms", permission=Permission.modify_hmm.value)
 async def purge(req):
     """
     Delete all unreferenced HMMs and hide the rest.

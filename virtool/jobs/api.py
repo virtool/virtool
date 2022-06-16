@@ -10,6 +10,7 @@ from virtool.data.errors import (
 from virtool.data.utils import get_data_from_req
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
+from virtool.users.utils import Permission
 
 logger = getLogger(__name__)
 
@@ -81,7 +82,7 @@ async def archive(req):
     return json_response(document)
 
 
-@routes.put("/jobs/{job_id}/cancel", permission="cancel_job")
+@routes.put("/jobs/{job_id}/cancel", permission=Permission.cancel_job.value)
 async def cancel(req):
     """Cancel a job."""
     try:
@@ -162,7 +163,7 @@ async def push_status(req):
     return json_response(document["status"][-1], status=201)
 
 
-@routes.delete("/jobs", permission="remove_job")
+@routes.delete("/jobs", permission=Permission.remove_job.value)
 async def clear(req):
     job_filter = req.query.get("filter")
 
@@ -179,7 +180,7 @@ async def clear(req):
     return json_response({"removed": removed_job_ids})
 
 
-@routes.delete("/jobs/{job_id}", permission="remove_job")
+@routes.delete("/jobs/{job_id}", permission=Permission.remove_job.value)
 async def remove(req):
     """
     Remove a job.

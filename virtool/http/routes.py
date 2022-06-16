@@ -5,7 +5,7 @@ from aiohttp.web_exceptions import HTTPUnauthorized
 from aiohttp.web_routedef import RouteTableDef
 from virtool.api.response import json_response
 from virtool.http.auth import PUBLIC_ROUTES
-from virtool.users.utils import PERMISSIONS
+from virtool.users.utils import Permission
 
 
 class Routes(RouteTableDef):
@@ -25,8 +25,6 @@ class Routes(RouteTableDef):
         self.put = self._protected(self.put)
         self.patch = self._protected(self.patch)
 
-        self.view = self._protected(self.view)
-
         self.jobs_api = RouteTableDef()
 
 
@@ -36,7 +34,7 @@ def protect(
         permission: str,
         public: bool,
 ):
-    if permission and permission not in PERMISSIONS:
+    if permission is not None and not hasattr(Permission, permission):
         raise ValueError("Invalid permission: " + permission)
 
     def decorator(handler):

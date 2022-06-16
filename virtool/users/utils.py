@@ -2,22 +2,13 @@ import hashlib
 
 import bcrypt
 
-#: A list of the permission strings used by Virtool.
-PERMISSIONS = [
-    "cancel_job",
-    "create_ref",
-    "create_sample",
-    "modify_hmm",
-    "modify_subtraction",
-    "remove_file",
-    "remove_job",
-    "upload_file",
-]
+from virtool_core.models.enums import Permission
 
 
 def check_legacy_password(password: str, salt: str, hashed: str) -> bool:
     """
-    Check if a unicode ``password`` and ``salt`` match a ``hashed`` password from the database.
+    Check if a unicode ``password`` and ``salt``
+    match a ``hashed`` password from the database.
 
     This is for use only with legacy SHA512 hashed passwords. New password hash with
     :func:`.hash_password` will be hashed using bcrypt.
@@ -52,7 +43,7 @@ def generate_base_permissions() -> dict:
 
     :return: all-false permissions
     """
-    return {p: False for p in PERMISSIONS}
+    return {p.value: False for p in Permission}
 
 
 def hash_password(password: str) -> str:
@@ -68,8 +59,8 @@ def hash_password(password: str) -> str:
 
 def limit_permissions(permissions: dict, limit_filter: dict) -> dict:
     """
-    Make sure permission values in `permissions` do not exceed those in `limit_filter`. Returns a
-    filtered set of permissions.
+    Make sure permission values in `permissions` do not exceed those in `limit_filter`.
+    Returns a filtered set of permissions.
 
     :param limit_filter: the limiting permissions that cannot be exceeded
     :param permissions: a permissions to filter

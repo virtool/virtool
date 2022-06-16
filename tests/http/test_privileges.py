@@ -4,6 +4,7 @@ from aiohttp.web_routedef import RouteTableDef
 from aiohttp_pydantic import PydanticView
 
 from virtool.http.privileges import admin, permissions, public
+from virtool.users.utils import Permission
 
 
 @pytest.fixture
@@ -19,7 +20,7 @@ def privilege_routes():
         async def post(self):
             return json_response({"test_post": "OK"}, status=201)
 
-        @permissions("modify_subtraction")
+        @permissions(Permission.modify_subtraction.value)
         async def patch(self):
             return json_response({"test_patch": "OK"}, status=200)
 
@@ -79,7 +80,7 @@ async def test_patch_permission_privileges(
     if has_permission:
         client = await spawn_client(
             authorize=True,
-            permissions="modify_subtraction",
+            permissions=Permission.modify_subtraction.value,
             addon_route_table=privilege_routes,
         )
     else:

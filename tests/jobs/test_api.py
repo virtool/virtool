@@ -1,4 +1,5 @@
 import pytest
+from virtool.users.utils import Permission
 
 
 async def test_find(fake, snapshot, spawn_client):
@@ -141,7 +142,7 @@ async def test_archive(error, snapshot, dbi, fake, test_job, spawn_job_client, r
     "error", [None, 404, "409_complete", "409_errored", "409_cancelled"]
 )
 async def test_cancel(error, snapshot, dbi, fake, resp_is, spawn_client, test_job):
-    client = await spawn_client(authorize=True, permissions=["cancel_job"])
+    client = await spawn_client(authorize=True, permissions=[Permission.cancel_job.value])
 
     user = await fake.users.insert()
 

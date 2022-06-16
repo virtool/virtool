@@ -10,6 +10,7 @@ from syrupy.matchers import path_type
 from virtool.pg.utils import get_row_by_id
 from virtool.references.tasks import UpdateRemoteReferenceTask
 from virtool.tasks.models import Task
+from virtool.users.utils import Permission
 
 
 @pytest.mark.parametrize("error", [None, "400", "404"])
@@ -159,7 +160,7 @@ async def test_create(
     client = await spawn_client(
         authorize=True,
         base_url="https://virtool.example.com",
-        permissions=["create_ref"],
+        permissions=[Permission.create_ref.value],
     )
 
     default_source_type = ["strain", "isolate"]
@@ -183,7 +184,7 @@ async def test_create(
 async def test_import_reference(pg, snapshot, spawn_client, test_files_path, tmpdir):
     client = await spawn_client(
         authorize=True,
-        permissions=["create_ref", "upload_file"],
+        permissions=[Permission.create_ref.value, Permission.upload_file.value],
     )
 
     tmpdir.mkdir("files")

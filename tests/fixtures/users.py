@@ -1,6 +1,6 @@
 import pytest
 
-from virtool.users.utils import PERMISSIONS
+from virtool.users.utils import Permission
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ def create_user(static_time):
             "_id": user_id,
             "handle": handle,
             "administrator": administrator,
-            "permissions": {perm: perm in permissions for perm in PERMISSIONS},
+            "permissions": {perm.value: perm.value in permissions for perm in Permission},
             "groups": groups or list(),
             "invalidate_sessions": False,
             "last_password_change": static_time.datetime,
@@ -58,9 +58,9 @@ def create_user(static_time):
 
 @pytest.fixture
 def all_permissions():
-    return {permission: True for permission in PERMISSIONS}
+    return {permission.value: True for permission in Permission}
 
 
 @pytest.fixture
 def no_permissions():
-    return {permission: False for permission in PERMISSIONS}
+    return {permission.value: False for permission in Permission}

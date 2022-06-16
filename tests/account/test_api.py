@@ -1,5 +1,5 @@
 import pytest
-from virtool.users.utils import PERMISSIONS, hash_password
+from virtool.users.utils import Permission, hash_password
 
 
 async def test_get(snapshot, spawn_client, static_time):
@@ -16,7 +16,7 @@ async def test_get(snapshot, spawn_client, static_time):
         "id": "test",
         "administrator": False,
         "last_password_change": static_time.iso,
-        "permissions": {p: False for p in PERMISSIONS},
+        "permissions": {p.value: False for p in Permission},
         "primary_group": "technician",
         "settings": {
             "quick_analyze_workflow": "pathoscope_bowtie",
@@ -75,16 +75,7 @@ async def test_edit(error, snapshot, spawn_client, resp_is, static_time):
         assert await resp.json() == snapshot
 
         assert await resp.json() == {
-            "permissions": {
-                "cancel_job": False,
-                "create_ref": False,
-                "create_sample": False,
-                "modify_hmm": False,
-                "modify_subtraction": False,
-                "remove_file": False,
-                "remove_job": False,
-                "upload_file": False,
-            },
+            "permissions": {p.value: False for p in Permission},
             "groups": [],
             "handle": "bob",
             "administrator": False,
@@ -176,14 +167,14 @@ class TestCreateAPIKey:
     @pytest.mark.parametrize("has_perm", [True, False])
     @pytest.mark.parametrize("req_perm", [True, False])
     async def test(
-        self,
-        has_perm,
-        req_perm,
-        mocker,
-        snapshot,
-        spawn_client,
-        static_time,
-        no_permissions,
+            self,
+            has_perm,
+            req_perm,
+            mocker,
+            snapshot,
+            spawn_client,
+            static_time,
+            no_permissions,
     ):
         """
         Test that creation of an API key functions properly. Check that different permission inputs work.
@@ -198,13 +189,13 @@ class TestCreateAPIKey:
         if has_perm:
             await client.db.users.update_one(
                 {"_id": "test"},
-                {"$set": {"permissions": {**no_permissions, "create_sample": True}}},
+                {"$set": {"permissions": {**no_permissions, Permission.create_sample.value: True}}},
             )
 
         body = {"name": "Foobar"}
 
         if req_perm:
-            body["permissions"] = {"create_sample": True}
+            body["permissions"] = {Permission.create_sample.value: True}
 
         resp = await client.post("/account/keys", body)
 
@@ -261,13 +252,13 @@ class TestUpdateAPIKey:
                 "created_at": static_time.datetime,
                 "user": {"id": "test"},
                 "groups": [],
-                "permissions": {p: False for p in PERMISSIONS},
+                "permissions": {p.value: False for p in Permission},
             }
         )
 
         resp = await client.patch(
             "/account/keys/foobar_0",
-            {"permissions": {"create_sample": True, "modify_subtraction": True}},
+            {"permissions": {Permission.create_sample.value: True, Permission.modify_subtraction.value: True}},
         )
 
         assert resp.status == 200
@@ -278,7 +269,7 @@ class TestUpdateAPIKey:
         client = await spawn_client(authorize=True)
 
         resp = await client.patch(
-            "/account/keys/foobar_0", {"permissions": {"create_sample": True}}
+            "/account/keys/foobar_0", {"permissions": {Permission.create_sample.value: True}}
         )
 
         await resp_is.not_found(resp)
@@ -395,12 +386,10 @@ async def test_is_permission_dict(value, spawn_client, resp_is):
     """
     client = await spawn_client(authorize=True)
 
-    permissions = {
-        "cancel_job": True,
-        "create_ref": True,
-        "create_sample": True,
-        "modify_hmm": True,
-    }
+    permissions = {Permission.cancel_job.value: True,
+                   Permission.create_ref.value: True,
+                   Permission.create_sample.value: True,
+                   Permission.modify_hmm.value: True}
 
     if value == "invalid_permissions":
         permissions["foo"] = True

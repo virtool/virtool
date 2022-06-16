@@ -4,23 +4,16 @@ from virtool.validators import (
     has_unique_segment_names,
     is_valid_hex_color,
 )
+from virtool.users.utils import Permission
 
 
 async def test_is_permission_dict(mocker):
     stub = mocker.stub()
+    permissions = {p.value: True for p in Permission}
+    permissions["foo"] = True
     is_permission_dict(
         "permissions",
-        {
-            "cancel_job": True,
-            "create_ref": True,
-            "create_sample": True,
-            "modify_hmm": True,
-            "modify_subtraction": True,
-            "remove_file": True,
-            "remove_job": True,
-            "upload_file": True,
-            "foo": True,
-        },
+        permissions,
         stub,
     )
     stub.assert_called_with("permissions", "keys must be valid permissions")
