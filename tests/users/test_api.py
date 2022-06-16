@@ -1,6 +1,7 @@
 import pytest
 
 from virtool.users.utils import check_password
+from virtool.users.utils import Permission
 
 
 async def test_find(snapshot, spawn_client, create_user, static_time):
@@ -9,7 +10,7 @@ async def test_find(snapshot, spawn_client, create_user, static_time):
 
     """
     client = await spawn_client(
-        authorize=True, administrator=True, permissions=["create_sample"]
+        authorize=True, administrator=True, permissions=[Permission.create_sample.value]
     )
 
     await client.db.users.insert_one(create_user(user_id="foo", handle="bar"))

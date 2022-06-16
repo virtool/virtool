@@ -1,8 +1,9 @@
 import pytest
 
-import virtool.users.db
+
 import virtool.users.utils
-import virtool.utils
+
+from virtool.users.utils import Permission
 
 
 @pytest.mark.parametrize(
@@ -52,5 +53,5 @@ def test_check_password(password, hashed, result):
 
 def test_generate_base_permissions():
     assert virtool.users.utils.generate_base_permissions() == {
-        p: False for p in virtool.users.utils.PERMISSIONS
+        p.value: False for p in Permission
     }

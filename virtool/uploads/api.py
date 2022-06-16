@@ -13,13 +13,14 @@ from virtool.http.routes import Routes
 from virtool.uploads.models import Upload, UploadType
 from virtool.uploads.utils import naive_validator, naive_writer
 from virtool.users.db import AttachUserTransform
+from virtool.users.utils import Permission
 
 logger = getLogger(__name__)
 
 routes = Routes()
 
 
-@routes.post("/uploads", permission="upload_file")
+@routes.post("/uploads", permission=Permission.upload_file.value)
 async def create(req):
     """
     Upload a new file and add it to the `uploads` SQL table.
@@ -122,7 +123,7 @@ async def download(req):
     )
 
 
-@routes.delete("/uploads/{id}", permission="remove_file")
+@routes.delete("/uploads/{id}", permission=Permission.remove_file.value)
 async def delete(req):
     """
     Set a row's `removed` and `removed_at` attribute in the `uploads` SQL table and

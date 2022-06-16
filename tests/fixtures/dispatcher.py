@@ -4,6 +4,7 @@ from aiohttp.web_ws import WebSocketResponse
 
 from virtool.dispatcher.connection import Connection
 from virtool.http.client import UserClient
+from virtool.users.utils import Permission
 
 
 @pytest.fixture
@@ -17,6 +18,6 @@ def ws(mocker):
 
     client.user_id = "test"
     client.groups = ["admin", "test"]
-    client.permissions = ["create_sample"]
+    client.permissions = [Permission.create_sample.value]
 
     return Connection(ws, client)

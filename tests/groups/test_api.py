@@ -1,5 +1,6 @@
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from virtool.users.utils import Permission
 
 
 async def test_find(spawn_client, all_permissions, no_permissions):
@@ -105,7 +106,7 @@ async def test_update_permissions(
         )
 
     resp = await client.patch(
-        "/groups/test", data={"permissions": {"create_sample": True}}
+        "/groups/test", data={"permissions": {Permission.create_sample.value: True}}
     )
 
     if error:
@@ -131,7 +132,7 @@ async def test_remove(error, fake, snapshot, spawn_client, no_permissions, resp_
             {
                 **(await fake.users.create()),
                 "groups": ["test"],
-                "permissions": {**no_permissions, "create_sample": True},
+                "permissions": {**no_permissions, Permission.create_sample.value: True},
             },
             {**(await fake.users.create()), "groups": []},
         ]
@@ -139,7 +140,7 @@ async def test_remove(error, fake, snapshot, spawn_client, no_permissions, resp_
 
     if not error:
         await client.db.groups.insert_one(
-            {"_id": "test", "permissions": {**no_permissions, "create_sample": True}}
+            {"_id": "test", "permissions": {**no_permissions, Permission.create_sample.value: True}}
         )
 
     resp = await client.delete("/groups/test")

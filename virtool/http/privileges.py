@@ -7,7 +7,7 @@ from aiohttp import web
 
 from virtool.api.response import json_response
 from virtool.http.auth import PUBLIC_ROUTES
-from virtool.users.utils import PERMISSIONS
+from virtool.users.utils import Permission
 
 
 def admin(func):
@@ -74,7 +74,7 @@ async def middleware(req: Request, handler: Callable):
         try:
             required_permissions = req.permissions
             for permission in required_permissions:
-                if permission not in PERMISSIONS:
+                if not hasattr(Permission, permission):
                     raise ValueError("Invalid permission: " + permission)
                 if not client.permissions[permission]:
                     return json_response(

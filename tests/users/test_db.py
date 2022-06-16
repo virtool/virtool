@@ -21,6 +21,7 @@ from virtool.users.db import (
 )
 from virtool.users.utils import hash_password
 from virtool.utils import random_alphanumeric
+from virtool.users.utils import Permission
 
 
 @pytest.mark.parametrize("multiple", [True, False])
@@ -281,7 +282,7 @@ async def test_update_sessions_and_keys(
     permissions = dict(no_permissions if elevate else all_permissions)
 
     if missing and not elevate:
-        permissions.update({"create_sample": False, "upload_file": False})
+        permissions.update({Permission.create_sample.value: False, Permission.upload_file.value: False})
 
     await dbi.keys.insert_one(
         {

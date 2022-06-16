@@ -61,6 +61,7 @@ from virtool.uploads.utils import is_gzip_compressed
 from virtool.users.db import AttachUserTransform
 from virtool.validators import strip
 from virtool.utils import run_in_thread
+from virtool.users.utils import Permission
 
 logger = logging.getLogger("samples")
 
@@ -195,7 +196,7 @@ async def get_cache(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.post("/samples", permission="create_sample")
+@routes.post("/samples", permission=Permission.create_sample.value)
 @schema(
     {
         "name": {"type": "string", "coerce": strip, "empty": False, "required": True},

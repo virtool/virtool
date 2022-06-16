@@ -1,6 +1,7 @@
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 import virtool.account.db
+from virtool.users.utils import Permission
 
 
 def test_compose_password_update(mocker, static_time):
@@ -71,15 +72,19 @@ async def test_create_api_key(administrator, has_permission, mocker, dbi, static
             "administrator": administrator,
             "groups": groups,
             "permissions": {
-                "create_sample": True,
+                Permission.create_sample.value: True,
                 "create_subtraction": has_permission,
             },
         }
     )
 
     document = await virtool.account.db.create_api_key(
-        dbi, "Foo", {"create_sample": True, "create_subtraction": True}, "bob"
+        dbi, "Foo", {Permission.create_sample.value: True, "create_subtraction": True}, "bob"
     )
+
+    permissions = {p.value: False for p in Permission}
+    permissions[Permission.create_sample.value] = True
+    permissions["create_subtraction"] = False
 
     expected = {
         "id": "foo_0",
@@ -87,17 +92,7 @@ async def test_create_api_key(administrator, has_permission, mocker, dbi, static
         "name": "Foo",
         "created_at": static_time.datetime,
         "groups": groups,
-        "permissions": {
-            "cancel_job": False,
-            "create_ref": False,
-            "create_sample": True,
-            "create_subtraction": False,
-            "modify_hmm": False,
-            "modify_subtraction": False,
-            "remove_file": False,
-            "remove_job": False,
-            "upload_file": False,
-        },
+        "permissions": permissions,
     }
 
     # The key should not have the `create_subtraction` permission set unless the key owner is and

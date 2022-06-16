@@ -1,4 +1,5 @@
 import virtool.api.json
+from virtool.users.utils import Permission
 
 
 def test_init(ws):
@@ -8,7 +9,7 @@ def test_init(ws):
     """
     assert ws.user_id == "test"
     assert ws.groups == ["admin", "test"]
-    assert ws.permissions == ["create_sample"]
+    assert ws.permissions == [Permission.create_sample.value]
 
 
 async def test_send(ws):

@@ -38,6 +38,7 @@ from virtool.references.tasks import (
 from virtool.uploads.models import Upload
 from virtool.users.db import AttachUserTransform, extend_user
 from virtool.validators import strip
+from virtool.users.utils import Permission
 
 routes = Routes()
 
@@ -252,7 +253,7 @@ async def find_indexes(req):
     return json_response(data)
 
 
-@routes.post("/refs", permission="create_ref")
+@routes.post("/refs", permission=Permission.create_ref.value)
 @schema(
     {
         "name": {"type": "string", "coerce": strip, "default": ""},
