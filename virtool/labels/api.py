@@ -1,180 +1,162 @@
+from typing import List, Union
+
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r404
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.http.routes
-import virtool.validators
 from virtool.api.response import EmptyRequest, NotFound, json_response
 from virtool.mongo.transforms import apply_transforms
-from virtool.http.schema import schema
 from virtool.labels.db import SampleCountTransform
-from virtool.labels.models import Label
+from virtool.labels.models import Label as LabelSQL
 from virtool.pg.utils import get_generic
-
+from virtool.labels.oas import CreateLabelSchema, EditLabelSchema
+from virtool_core.models.label import Label, LabelMinimal
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/labels")
-async def find(req):
-    """
-    Get a list of all label documents in the database.
+@routes.view("/labels")
+class LabelsView(PydanticView):
 
-    """
-    term = req.query.get("find")
+    async def get(self) -> Union[r200[List[LabelMinimal]], r400]:
+        """
+        List all sample labels.
 
-    statement = select(Label).order_by(Label.name)
-    if term:
-        statement = statement.filter(Label.name.ilike(f"%{term}%"))
+        Status Codes:
+            200: Successful operation
+            400: Invalid query
+        """
+        term = self.request.query.get("find")
 
-    labels = await get_generic(req.app["pg"], statement)
+        statement = select(LabelSQL).order_by(LabelSQL.name)
+        if term:
+            statement = statement.filter(LabelSQL.name.ilike(f"%{term}%"))
 
-    documents = await apply_transforms(
-        [label.to_dict() for label in labels], [SampleCountTransform(req.app["db"])]
-    )
+        labels = await get_generic(self.request.app["pg"], statement)
 
-    return json_response(documents)
-
-
-@routes.get("/labels/{label_id}")
-async def get(req):
-    """
-    Get a complete label document.
-
-    """
-    async with AsyncSession(req.app["pg"]) as session:
-        result = await session.execute(
-            select(Label).filter_by(id=int(req.match_info["label_id"]))
+        documents = await apply_transforms(
+            [label.to_dict() for label in labels], [SampleCountTransform(self.request.app["db"])]
         )
 
-        label = result.scalar()
+        return json_response(documents)
 
-    if label is None:
-        raise NotFound()
+    async def post(self, data: CreateLabelSchema) -> Union[r201[Label], r400]:
+        """
+        Create a sample label.
 
-    document = await apply_transforms(
-        label.to_dict(), [SampleCountTransform(req.app["db"])]
-    )
+        The color must be a valid hexadecimal code.
 
-    return json_response(document)
+        Status Codes:
+            201: Successful operation
+            400: Invalid Input
+        """
+        name = data.name
+        color = data.color
+        description = data.description
+
+        async with AsyncSession(self.request.app["pg"]) as session:
+            label = LabelSQL(
+                name=name, color=color, description=description
+            )
+
+            session.add(label)
+
+            try:
+                await session.flush()
+                document = label.to_dict()
+                await session.commit()
+            except IntegrityError:
+                raise HTTPBadRequest(text="Label name already exists")
+
+        document = await apply_transforms(document, [SampleCountTransform(self.request.app["db"])])
+
+        headers = {"Location": f"/labels/{document['id']}"}
+
+        return json_response(document, status=201, headers=headers)
 
 
-@routes.post("/labels")
-@schema(
-    {
-        "name": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "required": True,
-            "empty": False,
-        },
-        "color": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "check_with": virtool.validators.is_valid_hex_color,
-            "default": "#A0AEC0",
-        },
-        "description": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "default": "",
-        },
-    }
-)
-async def create(req):
-    """
-    Add a new label to the labels database.
-    """
-    data = req["data"]
+@routes.view("/labels/{label_id}")
+class LabelView(PydanticView):
 
-    async with AsyncSession(req.app["pg"]) as session:
-        label = Label(
-            name=data["name"], color=data["color"], description=data["description"]
+    async def get(self) -> Union[r200[Label], r404]:
+        """
+        Get the details for a sample label.
+
+        Status Codes:
+            200: Successful operation
+            404: Not found
+        """
+        async with AsyncSession(self.request.app["pg"]) as session:
+            result = await session.execute(
+                select(LabelSQL).filter_by(id=int(self.request.match_info["label_id"]))
+            )
+
+            label = result.scalar()
+
+        if label is None:
+            raise NotFound()
+
+        document = await apply_transforms(
+            label.to_dict(), [SampleCountTransform(self.request.app["db"])]
         )
 
-        session.add(label)
+        return json_response(document)
 
-        try:
-            await session.flush()
+    async def patch(self, data: EditLabelSchema) -> Union[r200[Label], r400, r404]:
+        """
+        Edit an existing sample label.
+
+        Status codes:
+            200: Successful operation
+            400: Invalid input
+            404: Not found
+        """
+        label_id = int(self.request.match_info["label_id"])
+
+        if not data:
+            raise EmptyRequest()
+
+        async with AsyncSession(self.request.app["pg"]) as session:
+            result = await session.execute(select(LabelSQL).filter_by(id=label_id))
+            label = result.scalar()
+
+            if label is None:
+                raise NotFound()
+
+            label.name = data.name
+            label.color = data.color
+            label.description = data.description
             document = label.to_dict()
+            try:
+                await session.commit()
+            except IntegrityError:
+                raise HTTPBadRequest(text="Label name already exists")
+
+        document = await apply_transforms(document, [SampleCountTransform(self.request.app["db"])])
+
+        return json_response(document)
+
+    async def delete(self) -> Union[r204, r404]:
+        """
+        Delete a sample label.
+
+        Status Codes:
+            204: Successful operation
+            404: Not found
+        """
+        label_id = int(self.request.match_info["label_id"])
+
+        async with AsyncSession(self.request.app["pg"]) as session:
+            result = await session.execute(select(LabelSQL).filter_by(id=label_id))
+            label = result.scalar()
+
+            if label is None:
+                raise NotFound()
+
+            await session.delete(label)
             await session.commit()
-        except IntegrityError:
-            raise HTTPBadRequest(text="Label name already exists")
 
-    document = await apply_transforms(document, [SampleCountTransform(req.app["db"])])
-
-    headers = {"Location": f"/labels/{document['id']}"}
-
-    return json_response(document, status=201, headers=headers)
-
-
-@routes.patch("/labels/{label_id}")
-@schema(
-    {
-        "name": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-        },
-        "color": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "check_with": virtool.validators.is_valid_hex_color,
-        },
-        "description": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-        },
-    }
-)
-async def edit(req):
-    """
-    Edit an existing label.
-
-    """
-    data = req["data"]
-
-    label_id = int(req.match_info["label_id"])
-
-    if not data:
-        raise EmptyRequest()
-
-    async with AsyncSession(req.app["pg"]) as session:
-        result = await session.execute(select(Label).filter_by(id=label_id))
-        label = result.scalar()
-
-        if label is None:
-            raise NotFound()
-
-        label.name = data["name"]
-        label.color = data["color"]
-        label.description = data["description"]
-        document = label.to_dict()
-        try:
-            await session.commit()
-        except IntegrityError:
-            raise HTTPBadRequest(text="Label name already exists")
-
-    document = await apply_transforms(document, [SampleCountTransform(req.app["db"])])
-
-    return json_response(document)
-
-
-@routes.delete("/labels/{label_id}")
-async def remove(req):
-    """
-    Remove a label.
-
-    """
-    label_id = int(req.match_info["label_id"])
-
-    async with AsyncSession(req.app["pg"]) as session:
-        result = await session.execute(select(Label).filter_by(id=label_id))
-        label = result.scalar()
-
-        if label is None:
-            raise NotFound()
-
-        await session.delete(label)
-        await session.commit()
-
-    raise HTTPNoContent
+        raise HTTPNoContent
