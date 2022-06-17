@@ -133,7 +133,7 @@ async def test_create(
         return
 
     if error == "422_color":
-        assert resp.status == 422
+        assert resp.status == 400
         return
 
     assert resp.status == 201
@@ -141,7 +141,7 @@ async def test_create(
     assert await resp.json() == {
         "id": 1,
         "name": "Bug",
-        "color": "#a83432",
+        "color": "#A83432",
         "description": "This is a bug",
         "count": 1,
     }
@@ -196,14 +196,14 @@ async def test_edit(error, spawn_client, pg: AsyncEngine, resp_is):
         return
 
     if error == "422_color" or error == "422_data":
-        assert resp.status == 422
+        assert resp.status == 400
         return
 
     assert resp.status == 200
     assert await resp.json() == {
         "id": 1,
         "name": "Bug",
-        "color": "#fc5203",
+        "color": "#FC5203",
         "description": "Need to be fixed",
         "count": 1,
     }
@@ -247,10 +247,13 @@ async def test_is_valid_hex_color(value, spawn_client, resp_is):
     }
 
     resp = await client.patch("/labels/00", data=data)
-
     if value == "valid_hex_color":
         await resp_is.not_found(resp)
     else:
-        await resp_is.invalid_input(
-            resp, {"color": ["This is not a valid Hexadecimal color"]}
-        )
+        assert resp.status == 400
+        assert await resp.json() == [{
+            "loc": ["color"],
+            "msg": "The format of the color code is invalid",
+            "type": "value_error",
+            "in": "body"
+        }]
