@@ -1,21 +1,24 @@
 import asyncio
 import logging
 import os
+from typing import Union
 
 import aiohttp.web
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp.web_fileresponse import FileResponse
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r403, r409
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.pg.utils
 import virtool.subtractions.db
 import virtool.uploads.db
-import virtool.validators
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, get_req_bool, paginate
 from virtool.data.utils import get_data_from_req
 from virtool.mongo.transforms import apply_transforms
+from virtool.http.privileges import permissions
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
@@ -27,6 +30,9 @@ from virtool.uploads.models import Upload
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
+from virtool.subtractions.oas import CreateSubtractionSchema, EditSubtractionSchema
+from virtool.data_model.subtraction import SubtractionMinimal, Subtraction
+from virtool.users.utils import Permission
 
 logger = logging.getLogger("subtractions")
 
@@ -35,143 +41,203 @@ routes = Routes()
 BASE_QUERY = {"deleted": False}
 
 
-@routes.get("/subtractions")
-async def find(req):
-    db = req.app["db"]
+@routes.view("/subtractions")
+class SubtractionsView(PydanticView):
+    async def get(self) -> r200[SubtractionMinimal]:
+        """
+        Find subtractions by id (name) or nickname.
 
-    ready = get_req_bool(req, "ready", False)
-    short = get_req_bool(req, "short", False)
-    term = req.query.get("find")
+        Status Codes:
+            200: Successful operation
+        """
+        db = self.request.app["db"]
 
-    db_query = dict()
+        ready = get_req_bool(self.request, "ready", False)
+        short = get_req_bool(self.request, "short", False)
+        term = self.request.query.get("find")
 
-    if term:
-        db_query = compose_regex_query(term, ["name", "nickname"])
+        db_query = {}
 
-    if ready:
-        db_query["ready"] = True
+        if term:
+            db_query = compose_regex_query(term, ["name", "nickname"])
 
-    if short:
-        documents = list()
+        if ready:
+            db_query["ready"] = True
 
-        async for document in db.subtraction.find(
-            {**db_query, **BASE_QUERY}, ["name", "ready"]
-        ).sort("name"):
-            documents.append(base_processor(document))
+        if short:
+            documents = []
 
-        return json_response(documents)
+            async for document in db.subtraction.find(
+                {**db_query, **BASE_QUERY}, ["name", "ready"]
+            ).sort("name"):
+                documents.append(base_processor(document))
 
-    data = await paginate(
-        db.subtraction,
-        db_query,
-        req.query,
-        base_query=BASE_QUERY,
-        sort="name",
-        projection=PROJECTION,
-    )
+            return json_response(documents)
 
-    documents, ready_count = await asyncio.gather(
-        apply_transforms(
-            data["documents"], [AttachUserTransform(db, ignore_errors=True)]
-        ),
-        db.subtraction.count_documents({"ready": True}),
-    )
-
-    return json_response({**data, "documents": documents, "ready_count": ready_count})
-
-
-@routes.get("/subtractions/{subtraction_id}")
-@routes.jobs_api.get("/subtractions/{subtraction_id}")
-async def get(req):
-    """
-    Get a complete host document.
-
-    """
-    db = req.app["db"]
-
-    subtraction_id = req.match_info["subtraction_id"]
-
-    document = await db.subtraction.find_one(subtraction_id)
-
-    if not document:
-        raise NotFound()
-
-    document = await attach_computed(req.app, document)
-
-    return json_response(
-        await apply_transforms(
-            base_processor(document), [AttachUserTransform(db, ignore_errors=True)]
+        data = await paginate(
+            db.subtraction,
+            db_query,
+            self.request.query,
+            base_query=BASE_QUERY,
+            sort="name",
+            projection=PROJECTION,
         )
-    )
+
+        documents, ready_count = await asyncio.gather(
+            apply_transforms(
+                data["documents"], [AttachUserTransform(db, ignore_errors=True)]
+            ),
+            db.subtraction.count_documents({"ready": True}),
+        )
+
+        return json_response(
+            {**data, "documents": documents, "ready_count": ready_count}
+        )
+
+    @permissions(Permission.modify_subtraction.value)
+    async def post(
+        self, data: CreateSubtractionSchema
+    ) -> Union[r201[Subtraction], r400, r403]:
+        """
+        Add a new subtraction. Starts a 'CreateSubtraction' job process.
+
+        Status Codes:
+            201: Successful operation
+            400: Bad request
+            403: Not permitted
+
+        """
+        db = self.request.app["db"]
+        pg = self.request.app["pg"]
+
+        name = data.name
+        nickname = data.nickname
+        upload_id = data.upload_id
+
+        upload_record = await virtool.pg.utils.get_row_by_id(pg, Upload, upload_id)
+
+        if upload_record is None:
+            raise HTTPBadRequest(text="File does not exist")
+
+        filename = upload_record.name
+
+        user_id = self.request["client"].user_id
+
+        document = await virtool.subtractions.db.create(
+            db, user_id, filename, name, nickname, upload_id
+        )
+
+        subtraction_id = document["_id"]
+
+        task_args = {
+            "subtraction_id": subtraction_id,
+            "files": [{"id": upload_id, "name": filename}],
+        }
+
+        rights = JobRights()
+
+        rights.subtractions.can_read(subtraction_id)
+        rights.subtractions.can_modify(subtraction_id)
+        rights.subtractions.can_remove(subtraction_id)
+        rights.uploads.can_read(upload_id)
+
+        await get_data_from_req(self.request).jobs.create(
+            "create_subtraction", task_args, user_id, rights
+        )
+
+        headers = {"Location": f"/subtraction/{subtraction_id}"}
+
+        document = await attach_computed(self.request.app, document)
+        document = await apply_transforms(document, [AttachUserTransform(db)])
+
+        return json_response(base_processor(document), headers=headers, status=201)
 
 
-@routes.post("/subtractions", permission="modify_subtraction")
-@schema(
-    {
-        "name": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "empty": False,
-            "required": True,
-        },
-        "nickname": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "default": "",
-        },
-        "upload_id": {"type": "integer", "required": True},
-    }
-)
-async def create(req):
-    """
-    Add a new subtraction. Starts an :class:`.CreateSubtraction` job process.
+@routes.view("/subtractions/{subtraction_id}")
+@routes.jobs_api.get("/subtractions/{subtraction_id}")
+class SubtractionView(PydanticView):
+    async def get(self) -> Union[r200[Subtraction], r404]:
+        """
+        Get a complete host document.
 
-    """
-    db = req.app["db"]
-    pg = req.app["pg"]
-    data = req["data"]
+        Status Codes:
+            200: Operation Successful
+            404: Not found
 
-    name = data["name"]
-    nickname = data["nickname"]
-    upload_id = data["upload_id"]
+        """
+        db = self.request.app["db"]
 
-    upload_record = await virtool.pg.utils.get_row_by_id(pg, Upload, upload_id)
+        subtraction_id = self.request.match_info["subtraction_id"]
 
-    if upload_record is None:
-        raise HTTPBadRequest(text="File does not exist")
+        document = await db.subtraction.find_one(subtraction_id)
 
-    filename = upload_record.name
+        if not document:
+            raise NotFound()
 
-    user_id = req["client"].user_id
+        document = await attach_computed(self.request.app, document)
 
-    document = await virtool.subtractions.db.create(
-        db, user_id, filename, name, nickname, upload_id
-    )
+        return json_response(
+            await apply_transforms(
+                base_processor(document), [AttachUserTransform(db, ignore_errors=True)]
+            )
+        )
 
-    subtraction_id = document["_id"]
+    @permissions(Permission.modify_subtraction.value)
+    async def patch(
+        self, data: EditSubtractionSchema
+    ) -> Union[r200[Subtraction], r400, r403, r404]:
+        """
+        Updates the nickname for an existing subtraction.
 
-    task_args = {
-        "subtraction_id": subtraction_id,
-        "files": [{"id": upload_id, "name": filename}],
-    }
+        Status Codes:
+            200: Operation successful
+            400: Invalid input
+            403: Not permitted
+            404: Not found
 
-    rights = JobRights()
+        """
+        db = self.request.app["db"]
 
-    rights.subtractions.can_read(subtraction_id)
-    rights.subtractions.can_modify(subtraction_id)
-    rights.subtractions.can_remove(subtraction_id)
-    rights.uploads.can_read(upload_id)
+        subtraction_id = self.request.match_info["subtraction_id"]
 
-    await get_data_from_req(req).jobs.create(
-        "create_subtraction", task_args, user_id, rights
-    )
+        update = data.dict(exclude_unset=True)
 
-    headers = {"Location": f"/subtraction/{subtraction_id}"}
+        document = await db.subtraction.find_one_and_update(
+            {"_id": subtraction_id}, {"$set": update}
+        )
 
-    document = await attach_computed(req.app, document)
-    document = await apply_transforms(document, [AttachUserTransform(db)])
+        if document is None:
+            raise NotFound()
 
-    return json_response(base_processor(document), headers=headers, status=201)
+        document = await attach_computed(self.request.app, document)
+
+        return json_response(
+            await apply_transforms(
+                base_processor(document), [AttachUserTransform(db, ignore_errors=True)]
+            )
+        )
+
+    @permissions(Permission.modify_subtraction.value)
+    async def delete(self) -> Union[r204, r403, r404, r409]:
+        """
+        Remove an existing subtraction.
+
+        Status Codes:
+            204: No content
+            403: Not permitted
+            404: Not found
+            409: Has linked samples
+        """
+        subtraction_id = self.request.match_info["subtraction_id"]
+
+        updated_count = await asyncio.shield(
+            virtool.subtractions.db.delete(self.request.app, subtraction_id)
+        )
+
+        if updated_count == 0:
+            raise NotFound()
+
+        raise HTTPNoContent
 
 
 @routes.jobs_api.put("/subtractions/{subtraction_id}/files/{filename}")
@@ -218,69 +284,6 @@ async def upload(req):
     headers = {"Location": f"/subtractions/{subtraction_id}/files/{filename}"}
 
     return json_response(subtraction_file, headers=headers, status=201)
-
-
-@routes.patch("/subtractions/{subtraction_id}", permission="modify_subtraction")
-@schema(
-    {
-        "name": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "empty": False,
-        },
-        "nickname": {"type": "string", "coerce": virtool.validators.strip},
-    }
-)
-async def edit(req):
-    """
-    Updates the nickname for an existing subtraction.
-
-    """
-    db = req.app["db"]
-    data = req["data"]
-
-    subtraction_id = req.match_info["subtraction_id"]
-
-    update = dict()
-
-    try:
-        update["name"] = data["name"]
-    except KeyError:
-        pass
-
-    try:
-        update["nickname"] = data["nickname"]
-    except KeyError:
-        pass
-
-    document = await db.subtraction.find_one_and_update(
-        {"_id": subtraction_id}, {"$set": update}
-    )
-
-    if document is None:
-        raise NotFound()
-
-    document = await attach_computed(req.app, document)
-
-    return json_response(
-        await apply_transforms(
-            base_processor(document), [AttachUserTransform(db, ignore_errors=True)]
-        )
-    )
-
-
-@routes.delete("/subtractions/{subtraction_id}", permission="modify_subtraction")
-async def remove(req):
-    subtraction_id = req.match_info["subtraction_id"]
-
-    updated_count = await asyncio.shield(
-        virtool.subtractions.db.delete(req.app, subtraction_id)
-    )
-
-    if updated_count == 0:
-        raise NotFound()
-
-    raise HTTPNoContent
 
 
 @routes.jobs_api.patch("/subtractions/{subtraction_id}")
@@ -343,54 +346,59 @@ async def job_remove(req: aiohttp.web.Request):
     raise HTTPNoContent
 
 
-@routes.get("/subtractions/{subtraction_id}/files/{filename}")
+@routes.view("/subtractions/{subtraction_id}/files/{filename}")
 @routes.jobs_api.get("/subtractions/{subtraction_id}/files/{filename}")
-async def download_subtraction_files(req: aiohttp.web.Request):
-    """
-    Download a Bowtie2 index file or a FASTA file for the given subtraction.
+class SubtractionFileView(PydanticView):
+    async def get(self) -> Union[r200, r400, r404]:
+        """
+        Download a Bowtie2 index file or a FASTA file for the given subtraction.
 
-    """
-    db = req.app["db"]
-    pg = req.app["pg"]
-    subtraction_id = req.match_info["subtraction_id"]
-    filename = req.match_info["filename"]
+        Status Codes:
+            200: Operation successful
+            400: Bad request
+            404: Not found
+        """
+        db = self.request.app["db"]
+        pg = self.request.app["pg"]
+        subtraction_id = self.request.match_info["subtraction_id"]
+        filename = self.request.match_info["filename"]
 
-    document = await db.subtraction.find_one(subtraction_id)
+        document = await db.subtraction.find_one(subtraction_id)
 
-    if document is None:
-        raise NotFound()
+        if document is None:
+            raise NotFound()
 
-    if filename not in FILES:
-        raise HTTPBadRequest(text="Unsupported subtraction file name")
+        if filename not in FILES:
+            raise HTTPBadRequest(text="Unsupported subtraction file name")
 
-    async with AsyncSession(pg) as session:
-        result = (
-            await session.execute(
-                select(SubtractionFile).filter_by(
-                    subtraction=subtraction_id, name=filename
+        async with AsyncSession(pg) as session:
+            result = (
+                await session.execute(
+                    select(SubtractionFile).filter_by(
+                        subtraction=subtraction_id, name=filename
+                    )
                 )
+            ).scalar()
+
+        if not result:
+            raise NotFound()
+
+        file = result.to_dict()
+
+        file_path = (
+            virtool.subtractions.utils.join_subtraction_path(
+                self.request.app["config"], subtraction_id
             )
-        ).scalar()
-
-    if not result:
-        raise NotFound()
-
-    file = result.to_dict()
-
-    file_path = (
-        virtool.subtractions.utils.join_subtraction_path(
-            req.app["config"], subtraction_id
+            / filename
         )
-        / filename
-    )
 
-    if not os.path.isfile(file_path):
-        raise NotFound()
+        if not os.path.isfile(file_path):
+            raise NotFound()
 
-    return FileResponse(
-        file_path,
-        headers={
-            "Content-Length": file["size"],
-            "Content-Type": "application/octet-stream",
-        },
-    )
+        return FileResponse(
+            file_path,
+            headers={
+                "Content-Length": file["size"],
+                "Content-Type": "application/octet-stream",
+            },
+        )
