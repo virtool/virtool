@@ -94,7 +94,7 @@ class SubtractionsView(PydanticView):
             {**data, "documents": documents, "ready_count": ready_count}
         )
 
-    @permissions(Permission.modify_subtraction.value)
+    @permissions(Permission.modify_subtraction)
     async def post(
         self, data: CreateSubtractionSchema
     ) -> Union[r201[Subtraction], r400, r403]:
@@ -182,7 +182,7 @@ class SubtractionView(PydanticView):
             )
         )
 
-    @permissions(Permission.modify_subtraction.value)
+    @permissions(Permission.modify_subtraction)
     async def patch(
         self, data: EditSubtractionSchema
     ) -> Union[r200[Subtraction], r400, r403, r404]:
@@ -217,7 +217,7 @@ class SubtractionView(PydanticView):
             )
         )
 
-    @permissions(Permission.modify_subtraction.value)
+    @permissions(Permission.modify_subtraction)
     async def delete(self) -> Union[r204, r403, r404, r409]:
         """
         Remove an existing subtraction.
