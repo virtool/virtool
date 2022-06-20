@@ -66,7 +66,7 @@ async def middleware(req: Request, handler: Callable):
                     "id": "not_permitted",
                     "message": "Requires administrative privilege",
                 },
-                status=403
+                status=403,
             )
         except AttributeError:
             pass
@@ -74,9 +74,8 @@ async def middleware(req: Request, handler: Callable):
         try:
             required_permissions = req.permissions
             for permission in required_permissions:
-                if not hasattr(Permission, permission):
-                    raise ValueError("Invalid permission: " + permission)
-                if not client.permissions[permission]:
+                Permission(permission)
+                if not client.permissions[permission.value]:
                     return json_response(
                         {"id": "not_permitted", "message": "Not permitted"}, status=403
                     )

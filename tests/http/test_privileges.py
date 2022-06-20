@@ -20,7 +20,7 @@ def privilege_routes():
         async def post(self):
             return json_response({"test_post": "OK"}, status=201)
 
-        @permissions(Permission.modify_subtraction.value)
+        @permissions(Permission.modify_subtraction)
         async def patch(self):
             return json_response({"test_patch": "OK"}, status=200)
 
