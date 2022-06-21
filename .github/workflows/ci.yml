@@ -81,13 +81,44 @@ jobs:
           --cov
           --cov-report xml
           --snapshot-details
+  oas:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Load Cached Packages
+        id: cached-poetry-dependencies
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install Packages
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+      - run: mkdir -p virtool/spec
+      - run: poetry run python3 -m aiohttp_pydantic.oas virtool.oas:app > virtool/spec/oas.json
+      - uses: actions/upload-artifact@v3
+        with:
+          name: oas-specification
+          path: virtool/spec/oas.json
   release:
     runs-on: ubuntu-20.04
-    needs: [test, build]
+    needs: [test, build, oas]
     if: github.event_name == 'push'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: oas-specification
+          path: virtool/spec/oas.json
       - name: Setup NodeJS
         uses: actions/setup-node@v1
         with:

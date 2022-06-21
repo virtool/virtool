@@ -16,7 +16,11 @@
       "preset": "conventionalcommits"
     }],
     "@semantic-release/release-notes-generator",
-    "@semantic-release/github"
+    ["@semantic-release/github", {
+     "assets": [
+        {"path": "virtool/spec/oas.json", "label": "oas specification"}
+        ]
+    }]
   ],
   "repositoryUrl": "https://github.com/virtool/virtool.git",
   "tagFormat": "${version}"
