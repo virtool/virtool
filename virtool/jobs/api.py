@@ -1,6 +1,8 @@
 from logging import getLogger
+from typing import Union, List
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
+from aiohttp_pydantic import PydanticView
 
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import (
@@ -8,30 +10,96 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.utils import get_data_from_req
+from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.users.utils import Permission
-
+from virtool.http.privileges import permissions
+from virtool_core.models.job import Job, JobMinimal
 logger = getLogger(__name__)
 
 routes = Routes()
 
 
-@routes.get("/jobs")
-async def find(req):
-    """
-    Return a list of job documents.
+@routes.view("/jobs")
+class JobsView(PydanticView):
 
-    """
-    return json_response(await get_data_from_req(req).jobs.find(req.query))
+    async def get(self) -> Union[List[JobMinimal], r200, r400]:
+        """
+        List all job documents.
+
+        Status Codes:
+            200: Successful operation
+            400: Invalid query
+        """
+        return json_response(await get_data_from_req(self.request).jobs.find(self.request.query))
+
+    @permissions(Permission.remove_job)
+    async def delete(self) -> r200:
+        """
+        Clear completed, failed or all finished jobs.
+
+        Status Codes:
+            200: Successful Operation
+        """
+        job_filter = self.request.query.get("filter")
+
+        # Remove jobs that completed successfully.
+        complete = job_filter in [None, "finished", "complete"]
+
+        # Remove jobs that errored or were cancelled.
+        failed = job_filter in [None, "failed", "finished" "terminated"]
+
+        removed_job_ids = await get_data_from_req(self.request).jobs.clear(
+            complete=complete, failed=failed
+        )
+
+        return json_response({"removed": removed_job_ids})
 
 
-@routes.get("/jobs/{job_id}")
+@routes.view("/jobs/{job_id}")
+class JobView(PydanticView):
+
+    async def get(self) -> Union[List[JobMinimal], r200, r404]:
+        """
+        Return the complete document for a given job.
+
+        Status Codes:
+            200: Successful operation
+            404: Not found
+        """
+        try:
+            document = await get_data_from_req(self.request).jobs.get(self.request.match_info["job_id"])
+        except ResourceNotFoundError:
+            raise NotFound()
+
+        return json_response(document)
+
+    @permissions(Permission.remove_job)
+    async def delete(self) -> Union[r204, r403, r404, r409]:
+        """
+        Remove a job.
+
+        Status Codes:
+            204: Successful operation
+            403: Not permitted
+            404: Not found
+            409: Job is running or waiting and cannot be removed
+        """
+        try:
+            await get_data_from_req(self.request).jobs.delete(self.request.match_info["job_id"])
+        except ResourceConflictError:
+            raise HTTPConflict(text="Job is running or waiting and cannot be removed")
+        except ResourceNotFoundError:
+            raise NotFound()
+
+        raise HTTPNoContent
+
+
 @routes.jobs_api.get("/jobs/{job_id}")
 async def get(req):
     """
     Return the complete document for a given job.
-
     """
     try:
         document = await get_data_from_req(req).jobs.get(req.match_info["job_id"])
@@ -46,14 +114,11 @@ async def get(req):
 async def acquire(req):
     """
     Sets the acquired field on the job document.
-
     This is used to let the server know that a job process has accepted the ID and needs
     to have the secure token returned to it.
-
     Pushes a status record indicating the job is in the 'Preparing' state. This sets an
     arbitrary progress value of 3 to give visual feedback in the UI that the job has
     started.
-
     """
     try:
         document = await get_data_from_req(req).jobs.acquire(req.match_info["job_id"])
@@ -70,7 +135,6 @@ async def acquire(req):
 async def archive(req):
     """
     Sets the archived field on the job document.
-
     """
     try:
         document = await get_data_from_req(req).jobs.archive(req.match_info["job_id"])
@@ -82,17 +146,28 @@ async def archive(req):
     return json_response(document)
 
 
-@routes.put("/jobs/{job_id}/cancel", permission=Permission.cancel_job.value)
-async def cancel(req):
-    """Cancel a job."""
-    try:
-        document = await get_data_from_req(req).jobs.cancel(req.match_info["job_id"])
-    except ResourceNotFoundError:
-        raise NotFound
-    except ResourceConflictError:
-        raise HTTPConflict(text="Job cannot be cancelled in its current state")
+@routes.view("/jobs/{job_id}/cancel")
+class CancelJobView(PydanticView):
 
-    return json_response(document)
+    @permissions(Permission.cancel_job)
+    async def put(self) -> Union[Job, r200, r403, r404, r409]:
+        """
+        Cancel a job.
+
+        Status Codes:
+            200: Successful operation
+            403: Not permitted
+            404: Not found
+            409: Not cancellable
+        """
+        try:
+            document = await get_data_from_req(self.request).jobs.cancel(self.request.match_info["job_id"])
+        except ResourceNotFoundError:
+            raise NotFound
+        except ResourceConflictError:
+            raise HTTPConflict(text="Job cannot be cancelled in its current state")
+
+        return json_response(document)
 
 
 @routes.post("/jobs/{job_id}/status")
@@ -161,36 +236,3 @@ async def push_status(req):
         raise HTTPConflict(text="Job is finished")
 
     return json_response(document["status"][-1], status=201)
-
-
-@routes.delete("/jobs", permission=Permission.remove_job.value)
-async def clear(req):
-    job_filter = req.query.get("filter")
-
-    # Remove jobs that completed successfully.
-    complete = job_filter in [None, "finished", "complete"]
-
-    # Remove jobs that errored or were cancelled.
-    failed = job_filter in [None, "failed", "finished" "terminated"]
-
-    removed_job_ids = await get_data_from_req(req).jobs.clear(
-        complete=complete, failed=failed
-    )
-
-    return json_response({"removed": removed_job_ids})
-
-
-@routes.delete("/jobs/{job_id}", permission=Permission.remove_job.value)
-async def remove(req):
-    """
-    Remove a job.
-
-    """
-    try:
-        await get_data_from_req(req).jobs.delete(req.match_info["job_id"])
-    except ResourceConflictError:
-        raise HTTPConflict(text="Job is running or waiting and cannot be removed")
-    except ResourceNotFoundError:
-        raise NotFound()
-
-    raise HTTPNoContent
