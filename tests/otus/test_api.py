@@ -928,7 +928,7 @@ async def test_list_sequences(
     client = await spawn_client(authorize=True)
 
     if error == "404_isolate":
-        test_otu["isolates"] = list()
+        test_otu["isolates"] = []
 
     if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
@@ -952,7 +952,7 @@ async def test_get_sequence(
     client = await spawn_client(authorize=True)
 
     if error == "404_isolate":
-        test_otu["isolates"] = list()
+        test_otu["isolates"] = []
 
     if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
@@ -991,7 +991,7 @@ async def test_create_sequence(
     )
 
     if error == "404_isolate":
-        test_otu["isolates"] = list()
+        test_otu["isolates"] = []
 
     if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
@@ -1059,7 +1059,7 @@ async def test_edit_sequence(
     client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
     if error == "404_isolate":
-        test_otu["isolates"] = list()
+        test_otu["isolates"] = []
 
     if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
@@ -1111,7 +1111,7 @@ async def test_remove_sequence(
     client = await spawn_client(authorize=True)
 
     if error == "404_isolate":
-        test_otu["isolates"] = list()
+        test_otu["isolates"] = []
 
     if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
@@ -1151,3 +1151,58 @@ async def test_download_otu(error, spawn_client, resp_is, test_sequence, test_ot
         return
 
     assert resp.status == 200
+
+
+@pytest.mark.parametrize("get", ["isolate", "sequence"])
+@pytest.mark.parametrize("missing", [None, "otu", "isolate", "sequence"])
+async def test_all(get, missing, spawn_client):
+    client = await spawn_client(authorize=True)
+
+    isolates = [{"id": "baz", "source_type": "isolate", "source_name": "Baz"}]
+
+    if missing != "isolate":
+        isolates.append({"id": "foo", "source_type": "isolate", "source_name": "Foo"})
+
+    if missing != "otu":
+        await client.db.otus.insert_one(
+            {"_id": "foobar", "name": "Foobar virus", "isolates": isolates}
+        )
+
+    sequences = [
+        {
+            "_id": "test_1",
+            "otu_id": "foobar",
+            "isolate_id": "baz",
+            "sequence": "ATAGGGACATA",
+        }
+    ]
+
+    if missing != "sequence":
+        sequences.append(
+            {
+                "_id": "test_2",
+                "otu_id": "foobar",
+                "isolate_id": "foo",
+                "sequence": "ATAGGGACATA",
+            }
+        )
+
+    await client.db.sequences.insert_many(sequences)
+
+    url = "/otus/foobar/isolates"
+
+    if get == "isolate":
+        url += "/foo.fa"
+
+    if get == "sequence":
+        url += "/foo/sequences/test_2.fa"
+
+    resp = await client.get(url)
+
+    get_isolate_error = get == "isolate" and missing == "otu"
+    get_sequence_error = get == "sequence" and missing in ["otu", "isolate"]
+
+    if get == missing or get_isolate_error or get_sequence_error:
+        assert resp.status == 404
+    else:
+        assert resp.status == 200
