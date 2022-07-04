@@ -31,6 +31,7 @@ from virtool.references.utils import (
 )
 from virtool.tasks.task import Task
 from virtool.utils import chunk_list, get_temp_dir, run_in_thread
+from virtool_core.models.enums import HistoryMethod
 
 logger = getLogger(__name__)
 
@@ -77,7 +78,7 @@ class CloneReferenceTask(Task):
         await virtool.tasks.pg.update(self.pg, self.id, step="create_history")
 
         for otu_id in inserted_otu_ids:
-            await insert_change(self.app, otu_id, "clone", user_id)
+            await insert_change(self.app, otu_id, HistoryMethod.clone, user_id)
             await tracker.add(1)
 
     async def cleanup(self):
@@ -182,7 +183,7 @@ class ImportReferenceTask(Task):
                 await gather(
                     *[
                         insert_change(
-                            self.app, otu_id, "import", user_id, session=session
+                            self.app, otu_id, HistoryMethod.import_otu, user_id, session=session
                         )
                         for otu_id in chunk
                     ]
@@ -259,7 +260,7 @@ class RemoteReferenceTask(Task):
         tracker = await self.get_tracker(len(self.import_data["otus"]))
 
         for otu_id in self.inserted_otu_ids:
-            await insert_change(self.app, otu_id, "remote", self.context["user_id"])
+            await insert_change(self.app, otu_id, HistoryMethod.remote, self.context["user_id"])
 
             await tracker.add(1)
 
@@ -463,7 +464,7 @@ class UpdateRemoteReferenceTask(Task):
             await insert_change(
                 self.app,
                 otu_id,
-                "update" if old else "remote",
+                HistoryMethod.update if old else HistoryMethod.remote,
                 self.context["user_id"],
                 old,
             )

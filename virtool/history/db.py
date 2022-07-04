@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Union
 import dictdiffer
 import pymongo.errors
 from motor.motor_asyncio import AsyncIOMotorClientSession
+from virtool_core.models.enums import HistoryMethod
 
 import virtool.errors
 import virtool.history.utils
@@ -83,7 +84,7 @@ async def processor(db, document: Dict[str, Any]) -> Dict[str, Any]:
 
 async def add(
     app,
-    method_name: str,
+    method_name: HistoryMethod,
     old: Optional[dict],
     new: Optional[dict],
     description: str,
@@ -110,7 +111,7 @@ async def add(
 
     document = {
         "_id": ".".join([str(otu_id), str(otu_version)]),
-        "method_name": method_name,
+        "method_name": method_name.value,
         "description": description,
         "created_at": virtool.utils.timestamp(),
         "otu": {"id": otu_id, "name": otu_name, "version": otu_version},
@@ -119,10 +120,10 @@ async def add(
         "user": {"id": user_id},
     }
 
-    if method_name == "create":
+    if method_name.value == "create":
         document["diff"] = new
 
-    elif method_name == "remove":
+    elif method_name.value == "remove":
         document["diff"] = old
 
     else:
