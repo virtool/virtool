@@ -3,6 +3,7 @@ import datetime
 import pytest
 import virtool.history.db
 from aiohttp.test_utils import make_mocked_coro
+from virtool_core.models.enums import HistoryMethod
 
 
 class TestAdd:
@@ -15,7 +16,7 @@ class TestAdd:
         old, new = test_otu_edit
 
         change = await virtool.history.db.add(
-            app, "edit", old, new, "Edited {}".format(new["name"]), "test"
+            app, HistoryMethod.edit, old, new, "Edited {}".format(new["name"]), "test"
         )
 
         assert change == snapshot
@@ -34,7 +35,7 @@ class TestAdd:
         description = "Created {}".format(new["name"])
 
         change = await virtool.history.db.add(
-            app, "create", old, new, description, "test"
+            app, HistoryMethod.create, old, new, description, "test"
         )
 
         assert change == snapshot
@@ -57,7 +58,7 @@ class TestAdd:
         description = "Removed {}".format(old["name"])
 
         change = await virtool.history.db.add(
-            app, "remove", old, new, description, "test"
+            app, HistoryMethod.remove, old, new, description, "test"
         )
 
         assert change == snapshot

@@ -20,6 +20,7 @@ from virtool.otus.db import increment_otu_version, update_otu_verification
 from virtool.otus.utils import find_isolate, format_isolate_name, format_otu
 from virtool.types import App, Document
 from virtool.utils import base_processor
+from virtool_core.models.enums import HistoryMethod
 
 
 class OTUData:
@@ -110,7 +111,7 @@ class OTUData:
 
             change = await virtool.history.db.add(
                 self._app,
-                "create",
+                HistoryMethod.create,
                 None,
                 document,
                 compose_create_description(document),
@@ -178,7 +179,7 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._app,
-                "edit",
+                HistoryMethod.edit,
                 old,
                 new,
                 compose_edit_description(
@@ -234,7 +235,7 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._app,
-                "remove",
+                HistoryMethod.remove,
                 joined,
                 None,
                 description,
@@ -313,7 +314,7 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._app,
-                "add_isolate",
+                HistoryMethod.add_isolate,
                 old,
                 new,
                 description,
@@ -372,7 +373,7 @@ class OTUData:
             # Use the old and new entry to add a new history document for the change.
             await virtool.history.db.add(
                 self._app,
-                "edit_isolate",
+                HistoryMethod.edit_isolate,
                 old,
                 new,
                 f"Renamed {old_isolate_name} to {new_isolate_name}",
@@ -439,7 +440,7 @@ class OTUData:
             # Use the old and new entry to add a new history document for the change.
             await virtool.history.db.add(
                 self._app,
-                "set_as_default",
+                HistoryMethod.set_as_default,
                 old,
                 new,
                 f"Set {isolate_name} as default",
@@ -499,7 +500,7 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._app,
-                "remove_isolate",
+                HistoryMethod.remove_isolate,
                 old,
                 new,
                 description,
@@ -559,7 +560,7 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._app,
-                "create_sequence",
+                HistoryMethod.create_sequence,
                 old,
                 new,
                 f"Created new sequence {accession} in {isolate_name}",
@@ -634,7 +635,7 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._app,
-                "edit_sequence",
+                HistoryMethod.edit_sequence,
                 old,
                 new,
                 f"Edited sequence {sequence_id} in {isolate_name}",
@@ -676,7 +677,7 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._app,
-                "remove_sequence",
+                HistoryMethod.remove_sequence,
                 old,
                 new,
                 f"Removed sequence {sequence_id} from {isolate_name}",
