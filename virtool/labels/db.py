@@ -3,8 +3,8 @@ from typing import Any, Awaitable, List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.mongo.transforms import AbstractTransform
 from virtool.labels.models import Label
+from virtool.mongo.transforms import AbstractTransform
 from virtool.types import Document
 
 

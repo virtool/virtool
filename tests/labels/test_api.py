@@ -12,10 +12,10 @@ class TestFind:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+        label_1 = Label(id=1, name="Bug", color="#A83432", description="This is a bug")
 
         label_2 = Label(
-            id=2, name="Question", color="#03fc20", description="This is a question"
+            id=2, name="Question", color="#03FC20", description="This is a question"
         )
 
         await client.db.samples.insert_many(
@@ -42,7 +42,7 @@ class TestFind:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+        label = Label(id=1, name="Bug", color="#A83432", description="This is a bug")
 
         async with AsyncSession(pg) as session:
             session.add(label)
@@ -78,7 +78,7 @@ async def test_get(error, spawn_client, all_permissions, pg: AsyncEngine, resp_i
     if not error:
         async with AsyncSession(pg) as session:
             session.add(
-                Label(id=1, name="Bug", color="#a83432", description="This is a test")
+                Label(id=1, name="Bug", color="#A83432", description="This is a test")
             )
             await session.commit()
 
@@ -92,7 +92,7 @@ async def test_get(error, spawn_client, all_permissions, pg: AsyncEngine, resp_i
     assert await resp.json() == {
         "id": 1,
         "name": "Bug",
-        "color": "#a83432",
+        "color": "#A83432",
         "description": "This is a test",
         "count": 1,
     }
