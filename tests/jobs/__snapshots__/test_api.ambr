@@ -1108,9 +1108,9 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2020-11-02T04:27:01Z',
+        'created_at': '2021-09-26T08:48:49Z',
         'id': 'fczq56va',
-        'progress': 100,
+        'progress': 97,
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -1325,9 +1325,9 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2020-02-07T23:59:24Z',
-        'id': '3cvzfiqz',
-        'progress': 85,
+        'created_at': '2022-06-27T21:51:28Z',
+        'id': '03cvzfiq',
+        'progress': 100,
         'stage': 'first',
         'state': 'cancelled',
         'user': <class 'dict'> {
@@ -1335,13 +1335,13 @@
           'handle': 'bob',
           'id': 'test',
         },
-        'workflow': 'create_subtraction',
+        'workflow': 'create_sample',
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2020-11-02T04:27:01Z',
+        'created_at': '2021-09-26T08:48:49Z',
         'id': 'fczq56va',
-        'progress': 100,
+        'progress': 97,
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -1486,9 +1486,9 @@
       },
       <class 'dict'> {
         'archived': True,
-        'created_at': '2020-02-07T23:59:24Z',
-        'id': '3cvzfiqz',
-        'progress': 85,
+        'created_at': '2022-06-27T21:51:28Z',
+        'id': '03cvzfiq',
+        'progress': 100,
         'stage': 'first',
         'state': 'cancelled',
         'user': <class 'dict'> {
@@ -1496,7 +1496,7 @@
           'handle': 'bob',
           'id': 'test',
         },
-        'workflow': 'create_subtraction',
+        'workflow': 'create_sample',
       },
     ],
   }
@@ -1535,9 +1535,9 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2020-11-02T04:27:01Z',
+        'created_at': '2021-09-26T08:48:49Z',
         'id': 'fczq56va',
-        'progress': 100,
+        'progress': 97,
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
@@ -1584,9 +1584,9 @@
       },
       <class 'dict'> {
         'archived': False,
-        'created_at': '2020-11-02T04:27:01Z',
+        'created_at': '2021-09-26T08:48:49Z',
         'id': 'fczq56va',
-        'progress': 100,
+        'progress': 97,
         'stage': 'second',
         'state': 'running',
         'user': <class 'dict'> {
