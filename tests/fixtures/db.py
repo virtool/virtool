@@ -18,7 +18,7 @@ def test_db_connection_string(request):
 
 @pytest.fixture
 def test_db_name(worker_id):
-    return "vt-test-{}".format(worker_id)
+    return f"vt-test-{worker_id}"
 
 
 @pytest.fixture

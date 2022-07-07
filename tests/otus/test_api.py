@@ -737,9 +737,7 @@ class TestEditIsolate:
 
         data = {"source_type": "variant", "source_name": "A"}
 
-        resp = await client.patch(
-            "/otus/{}/isolates/{}".format(otu_id, isolate_id), data
-        )
+        resp = await client.patch(f"/otus/{otu_id}/isolates/{isolate_id}", data)
 
         await resp_is.not_found(resp)
 
