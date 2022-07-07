@@ -101,7 +101,7 @@ class UserClient(AbstractClient):
             return self.has_permission("modify_hmm")
 
     async def has_right_on_index(self, index_id: str, right: Right) -> bool:
-        return True if right == READ else False
+        return right == READ
 
     async def has_right_on_sample(self, sample_id: str, right: Right) -> bool:
         if self.administrator:
