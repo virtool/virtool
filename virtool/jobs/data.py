@@ -144,7 +144,7 @@ class JobsData:
             ),
         }
 
-    async def find(self, query: Mapping):
+    async def find(self, query: MultiDictProxy):
         """
         :param query:
         :return:
