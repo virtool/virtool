@@ -3,24 +3,19 @@ from typing import List, Union
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r404
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
+from virtool_core.models.label import Label, LabelMinimal
 
 import virtool.http.routes
 from virtool.api.response import EmptyRequest, NotFound, json_response
-from virtool.mongo.transforms import apply_transforms
-from virtool.labels.db import SampleCountTransform
-from virtool.labels.models import Label as LabelSQL
-from virtool.pg.utils import get_generic
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.utils import get_data_from_req
 from virtool.labels.oas import CreateLabelSchema, EditLabelSchema
-from virtool_core.models.label import Label, LabelMinimal
+
 routes = virtool.http.routes.Routes()
 
 
 @routes.view("/labels")
 class LabelsView(PydanticView):
-
     async def get(self) -> Union[r200[List[LabelMinimal]], r400]:
         """
         List all sample labels.
@@ -31,17 +26,9 @@ class LabelsView(PydanticView):
         """
         term = self.request.query.get("find")
 
-        statement = select(LabelSQL).order_by(LabelSQL.name)
-        if term:
-            statement = statement.filter(LabelSQL.name.ilike(f"%{term}%"))
+        labels = await get_data_from_req(self.request).labels.find(term=term)
 
-        labels = await get_generic(self.request.app["pg"], statement)
-
-        documents = await apply_transforms(
-            [label.to_dict() for label in labels], [SampleCountTransform(self.request.app["db"])]
-        )
-
-        return json_response(documents)
+        return json_response([label.dict() for label in labels])
 
     async def post(self, data: CreateLabelSchema) -> Union[r201[Label], r400]:
         """
@@ -57,30 +44,20 @@ class LabelsView(PydanticView):
         color = data.color
         description = data.description
 
-        async with AsyncSession(self.request.app["pg"]) as session:
-            label = LabelSQL(
+        try:
+            label = await get_data_from_req(self.request).labels.create(
                 name=name, color=color, description=description
             )
+        except ResourceConflictError:
+            raise HTTPBadRequest(text="Label name already exists")
 
-            session.add(label)
+        headers = {"Location": f"/labels/{label.id}"}
 
-            try:
-                await session.flush()
-                document = label.to_dict()
-                await session.commit()
-            except IntegrityError:
-                raise HTTPBadRequest(text="Label name already exists")
-
-        document = await apply_transforms(document, [SampleCountTransform(self.request.app["db"])])
-
-        headers = {"Location": f"/labels/{document['id']}"}
-
-        return json_response(document, status=201, headers=headers)
+        return json_response(label.dict(), status=201, headers=headers)
 
 
 @routes.view("/labels/{label_id}")
 class LabelView(PydanticView):
-
     async def get(self) -> Union[r200[Label], r404]:
         """
         Get the details for a sample label.
@@ -89,21 +66,14 @@ class LabelView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        async with AsyncSession(self.request.app["pg"]) as session:
-            result = await session.execute(
-                select(LabelSQL).filter_by(id=int(self.request.match_info["label_id"]))
-            )
+        label_id = int(self.request.match_info["label_id"])
 
-            label = result.scalar()
-
-        if label is None:
+        try:
+            label = await get_data_from_req(self.request).labels.get(label_id)
+        except ResourceNotFoundError:
             raise NotFound()
 
-        document = await apply_transforms(
-            label.to_dict(), [SampleCountTransform(self.request.app["db"])]
-        )
-
-        return json_response(document)
+        return json_response(label.dict())
 
     async def patch(self, data: EditLabelSchema) -> Union[r200[Label], r400, r404]:
         """
@@ -119,25 +89,16 @@ class LabelView(PydanticView):
         if not data:
             raise EmptyRequest()
 
-        async with AsyncSession(self.request.app["pg"]) as session:
-            result = await session.execute(select(LabelSQL).filter_by(id=label_id))
-            label = result.scalar()
+        try:
+            label = await get_data_from_req(self.request).labels.edit(
+                label_id=label_id, data=data
+            )
+        except ResourceNotFoundError:
+            raise NotFound()
+        except ResourceConflictError:
+            raise HTTPBadRequest(text="Label name already exists")
 
-            if label is None:
-                raise NotFound()
-
-            label.name = data.name
-            label.color = data.color
-            label.description = data.description
-            document = label.to_dict()
-            try:
-                await session.commit()
-            except IntegrityError:
-                raise HTTPBadRequest(text="Label name already exists")
-
-        document = await apply_transforms(document, [SampleCountTransform(self.request.app["db"])])
-
-        return json_response(document)
+        return json_response(label.dict())
 
     async def delete(self) -> Union[r204, r404]:
         """
@@ -149,14 +110,9 @@ class LabelView(PydanticView):
         """
         label_id = int(self.request.match_info["label_id"])
 
-        async with AsyncSession(self.request.app["pg"]) as session:
-            result = await session.execute(select(LabelSQL).filter_by(id=label_id))
-            label = result.scalar()
-
-            if label is None:
-                raise NotFound()
-
-            await session.delete(label)
-            await session.commit()
+        try:
+            await get_data_from_req(self.request).labels.delete(label_id=label_id)
+        except ResourceNotFoundError:
+            raise NotFound()
 
         raise HTTPNoContent

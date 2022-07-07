@@ -36,6 +36,7 @@ from virtool.indexes.tasks import (
 )
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
+from virtool.labels.data import LabelsData
 from virtool.mongo.core import DB
 from virtool.mongo.migrate import migrate
 from virtool.oidc.utils import JWKArgs
@@ -123,6 +124,7 @@ async def startup_data(app: App):
         AnalysisData(app),
         BLASTData(app["db"], app["pg"], app["tasks"]),
         GroupsData(app["db"]),
+        LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),
     )
