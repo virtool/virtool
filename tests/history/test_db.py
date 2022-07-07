@@ -16,7 +16,7 @@ class TestAdd:
         old, new = test_otu_edit
 
         change = await virtool.history.db.add(
-            app, HistoryMethod.edit, old, new, "Edited {}".format(new["name"]), "test"
+            app, HistoryMethod.edit, old, new, f"Edited {new['name']}", "test"
         )
 
         assert change == snapshot
@@ -32,7 +32,7 @@ class TestAdd:
 
         new, _ = test_otu_edit
 
-        description = "Created {}".format(new["name"])
+        description = f"Created {new['name']}"
 
         change = await virtool.history.db.add(
             app, HistoryMethod.create, old, new, description, "test"
@@ -55,7 +55,7 @@ class TestAdd:
 
         old, _ = test_otu_edit
 
-        description = "Removed {}".format(old["name"])
+        description = f"Removed {old['name']}"
 
         change = await virtool.history.db.add(
             app, HistoryMethod.remove, old, new, description, "test"

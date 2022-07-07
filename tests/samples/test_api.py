@@ -43,7 +43,15 @@ class MockJobInterface:
     ],
 )
 async def test_find(
-    find, per_page, page, labels, snapshot, fake, spawn_client, static_time, pg: AsyncEngine
+    find,
+    per_page,
+    page,
+    labels,
+    snapshot,
+    fake,
+    spawn_client,
+    static_time,
+    pg: AsyncEngine,
 ):
     user_1 = await fake.users.insert()
     user_2 = await fake.users.insert()
@@ -129,7 +137,7 @@ async def test_find(
         query.append(f"label={label_query}")
 
     if query:
-        path += "?{}".format("&".join(query))
+        path += f"?{'&'.join(query)}"
 
     resp = await client.get(path)
 
@@ -140,7 +148,15 @@ async def test_find(
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("ready", [True, False])
 async def test_get(
-    error, ready, mocker, snapshot, fake, spawn_client, resp_is, static_time, pg: AsyncEngine
+    error,
+    ready,
+    mocker,
+    snapshot,
+    fake,
+    spawn_client,
+    resp_is,
+    static_time,
+    pg: AsyncEngine,
 ):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
@@ -217,7 +233,9 @@ class TestCreate:
         test_random_alphanumeric,
         settings,
     ):
-        client = await spawn_client(authorize=True, permissions=[Permission.create_sample.value])
+        client = await spawn_client(
+            authorize=True, permissions=[Permission.create_sample.value]
+        )
 
         client.app["settings"] = settings
         client.app["settings"].sm_proc = 2
@@ -272,7 +290,9 @@ class TestCreate:
         assert upload.reserved is True
 
     async def test_name_exists(self, spawn_client, static_time, resp_is):
-        client = await spawn_client(authorize=True, permissions=[Permission.create_sample.value])
+        client = await spawn_client(
+            authorize=True, permissions=[Permission.create_sample.value]
+        )
 
         client.app["settings"].sample_unique_names = True
 
@@ -300,7 +320,9 @@ class TestCreate:
         an error response, that "" is accepted as a valid user group and that valid user groups are accepted as expected
 
         """
-        client = await spawn_client(authorize=True, permissions=[Permission.create_sample.value])
+        client = await spawn_client(
+            authorize=True, permissions=[Permission.create_sample.value]
+        )
 
         client.app["settings"].sample_group = "force_choice"
         client.app["settings"].sample_unique_names = True
@@ -331,7 +353,9 @@ class TestCreate:
             assert resp.status == 201
 
     async def test_group_dne(self, spawn_client, pg: AsyncEngine, resp_is):
-        client = await spawn_client(authorize=True, permissions=[Permission.create_sample.value])
+        client = await spawn_client(
+            authorize=True, permissions=[Permission.create_sample.value]
+        )
 
         client.app["settings"].sample_group = "force_choice"
         client.app["settings"].sample_unique_names = True
@@ -356,7 +380,9 @@ class TestCreate:
         await resp_is.bad_request(resp, "Group does not exist")
 
     async def test_subtraction_dne(self, pg: AsyncEngine, spawn_client, resp_is):
-        client = await spawn_client(authorize=True, permissions=[Permission.create_sample.value])
+        client = await spawn_client(
+            authorize=True, permissions=[Permission.create_sample.value]
+        )
 
         upload = Upload(id=1, name="test.fq.gz", size=123456)
 
@@ -376,7 +402,9 @@ class TestCreate:
         exist.
 
         """
-        client = await spawn_client(authorize=True, permissions=[Permission.create_sample.value])
+        client = await spawn_client(
+            authorize=True, permissions=[Permission.create_sample.value]
+        )
 
         client.app["settings"].sample_unique_names = True
 
@@ -401,7 +429,9 @@ class TestCreate:
 
     @pytest.mark.parametrize("exists", [True, False])
     async def test_label_dne(self, exists, spawn_client, pg: AsyncEngine, resp_is):
-        client = await spawn_client(authorize=True, permissions=[Permission.create_sample.value])
+        client = await spawn_client(
+            authorize=True, permissions=[Permission.create_sample.value]
+        )
 
         client.app["settings"].sample_unique_names = True
 
@@ -807,7 +837,7 @@ async def test_find_analyses(
     url = "/samples/test/analyses"
 
     if term:
-        url += "?term={}".format(term)
+        url += f"?term={term}"
 
     resp = await client.get(url)
 

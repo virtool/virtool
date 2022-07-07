@@ -74,13 +74,9 @@ class TestCalculateWorkflowTags:
             {
                 "_id": index,
                 "ready": path_ready_1,
-                "workflow": "pathoscope_{}".format(alg1),
+                "workflow": f"pathoscope_{alg1}",
             },
-            {
-                "_id": index,
-                "ready": path_ready_2,
-                "workflow": "pathoscope_{}".format(alg2),
-            },
+            {"_id": index, "ready": path_ready_2, "workflow": f"pathoscope_{alg2}"},
             {"_id": index, "ready": nuvs_ready_1, "workflow": "nuvs"},
             {"_id": index, "ready": nuvs_ready_2, "workflow": "nuvs"},
         ]

@@ -343,7 +343,7 @@ async def test_add_group_or_user(
     if error != "404":
         await client.db.references.insert_one(document)
 
-    url = "/refs/foo/{}s".format(field)
+    url = f"/refs/foo/{field}s"
 
     resp = await client.post(
         url, {field + "_id": "tech" if field == "group" else "fred", "modify": True}
@@ -358,11 +358,11 @@ async def test_add_group_or_user(
         return
 
     if error == "400_dne":
-        await resp_is.bad_request(resp, "{} does not exist".format(field.capitalize()))
+        await resp_is.bad_request(resp, f"{field.capitalize()} does not exist")
         return
 
     if error == "400_exists":
-        await resp_is.bad_request(resp, "{} already exists".format(field.capitalize()))
+        await resp_is.bad_request(resp, f"{field.capitalize()} already exists")
         return
 
     assert resp.status == 201
@@ -407,7 +407,7 @@ async def test_edit_group_or_user(
 
     subdocument_id = "tech" if field == "group" else "fred"
 
-    url = "/refs/foo/{}s/{}".format(field, subdocument_id)
+    url = f"/refs/foo/{field}s/{subdocument_id}"
 
     resp = await client.patch(url, {"remove": True})
 
@@ -460,7 +460,7 @@ async def test_delete_group_or_user(
 
     subdocument_id = "tech" if field == "group" else "fred"
 
-    url = "/refs/foo/{}s/{}".format(field, subdocument_id)
+    url = f"/refs/foo/{field}s/{subdocument_id}"
 
     resp = await client.delete(url)
 
