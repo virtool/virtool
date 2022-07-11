@@ -3,7 +3,6 @@ from logging import getLogger
 
 from pymongo.errors import DuplicateKeyError
 
-from virtool.mongo.utils import delete_unready
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.types import App
 from virtool.utils import chunk_list
@@ -20,13 +19,6 @@ async def migrate(app: App):
     :param app: the application object
 
     """
-    logger.info("Deleting unready samples and analyses")
-
-    await gather(
-        delete_unready(app["db"].analyses),
-        delete_unready(app["db"].samples),
-    )
-
     await gather(migrate_status(app["db"]), recalculate_all_workflow_tags(app["db"]))
 
 
@@ -45,17 +37,17 @@ async def recalculate_all_workflow_tags(db):
         await gather(*[recalculate_workflow_tags(db, sample_id) for sample_id in chunk])
 
 
-async def migrate_status(db):
+async def migrate_status(mongo):
     """
     Automatically update the status collection.
 
-    :param app: the application object
+    :param mongo: the application MongoDB object
 
     """
     logger.info("Updating HMM status")
 
     try:
-        await db.status.insert_one(
+        await mongo.status.insert_one(
             {
                 "_id": "hmm",
                 "installed": None,
@@ -65,8 +57,8 @@ async def migrate_status(db):
             }
         )
     except DuplicateKeyError:
-        if await db.hmm.count_documents({}):
-            await db.status.update_one(
+        if await mongo.hmm.count_documents({}):
+            await mongo.status.update_one(
                 {"_id": "hmm", "installed": {"$exists": False}},
                 {"$set": {"installed": None}},
             )
