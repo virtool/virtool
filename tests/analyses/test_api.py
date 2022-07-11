@@ -14,8 +14,8 @@ from virtool.pg.utils import get_row_by_id
 
 
 @pytest.fixture
-def files(tmp_path):
-    path = Path.cwd() / "tests" / "test_files" / "aodp" / "reference.fa"
+def files(test_files_path, tmp_path):
+    path = test_files_path/"aodp"/"reference.fa"
 
     data = {"file": open(path, "rb")}
 
@@ -339,7 +339,7 @@ async def test_download_analysis_result(
         assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize("extension", ["csv", "xlsx"])
+@pytest.mark.parametrize("extension", ["csv", "xlsx", "bug"])
 @pytest.mark.parametrize("exists", [True, False])
 async def test_download_analysis_document(extension, exists, mocker, spawn_client):
     client = await spawn_client(authorize=True)
@@ -359,7 +359,12 @@ async def test_download_analysis_document(extension, exists, mocker, spawn_clien
 
     resp = await client.get(f"/analyses/documents/foobar.{extension}")
 
-    assert resp.status == 200 if exists else 400
+    if extension == "bug":
+        assert resp.status == 400
+    elif not exists:
+        assert resp.status == 404
+    else:
+        assert resp.status == 200
 
 
 @pytest.mark.parametrize(

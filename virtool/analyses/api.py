@@ -4,7 +4,7 @@ Provides request handlers for managing and viewing analyses.
 """
 from asyncio import CancelledError, gather
 from logging import getLogger
-from typing import Union
+from typing import Union, List
 
 from aiohttp.web import (
     FileResponse,
@@ -15,6 +15,8 @@ from aiohttp.web import (
     Request,
     Response,
 )
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 
 import virtool.analyses.format
@@ -45,109 +47,175 @@ from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import naive_validator, naive_writer
 from virtool.users.db import AttachUserTransform
 from virtool.utils import rm, run_in_thread
+from virtool_core.models.analysis import AnalysisMinimal, Analysis
+
 
 logger = getLogger("analyses")
 
 routes = Routes()
 
 
-@routes.get("/analyses")
-async def find(req: Request) -> Response:
-    """
-    Find and list all analyses.
+@routes.view("/analyses")
+class AnalysesView(PydanticView):
 
-    """
-    db = req.app["db"]
+    async def get(self) -> r200[List[AnalysisMinimal]]:
+        """
+        Find and list all analyses.
 
-    db_query = dict()
+        Status Codes:
+            200: Successful operation
+        """
+        db = self.request.app["db"]
 
-    data = await paginate(
-        db.analyses,
-        db_query,
-        req.query,
-        projection=PROJECTION,
-        sort=[("created_at", -1)],
-    )
+        db_query = {}
 
-    per_document_can_read = await gather(
-        *[
-            virtool.samples.db.check_rights(
-                db, document["sample"]["id"], req["client"], write=False
-            )
-            for document in data["documents"]
-        ]
-    )
-
-    documents = [
-        document
-        for document, can_write in zip(data["documents"], per_document_can_read)
-        if can_write
-    ]
-
-    documents = await apply_transforms(
-        documents, [AttachUserTransform(db), AttachSubtractionTransform(db)]
-    )
-
-    return json_response({**data, "documents": documents})
-
-
-@routes.get("/analyses/{analysis_id}")
-async def get(req: Request) -> Response:
-    """
-    Get a complete analysis document.
-
-    """
-    db = req.app["db"]
-    pg = req.app["pg"]
-
-    analysis_id = req.match_info["analysis_id"]
-
-    document = await db.analyses.find_one(analysis_id)
-
-    if document is None:
-        raise NotFound()
-
-    try:
-        iso = isoformat(document["updated_at"])
-    except KeyError:
-        iso = isoformat(document["created_at"])
-
-    if_modified_since = req.headers.get("If-Modified-Since")
-
-    if if_modified_since and if_modified_since == iso:
-        raise HTTPNotModified()
-
-    document = await attach_analysis_files(pg, analysis_id, document)
-
-    sample = await db.samples.find_one(
-        {"_id": document["sample"]["id"]}, {"quality": False}
-    )
-
-    if not sample:
-        raise HTTPBadRequest(text="Parent sample does not exist")
-
-    read, _ = get_sample_rights(sample, req["client"])
-
-    if not read:
-        raise InsufficientRights()
-
-    if document["ready"]:
-        document = await virtool.analyses.format.format_analysis(req.app, document)
-
-    headers = {
-        "Cache-Control": "no-cache",
-        "Last-Modified": isoformat(document["created_at"]),
-    }
-
-    document = await processor(db, document)
-
-    if document["workflow"] == "nuvs":
-        document = await apply_transforms(
-            document,
-            [AttachNuVsBLAST(pg)],
+        data = await paginate(
+            db.analyses,
+            db_query,
+            self.request.query,
+            projection=PROJECTION,
+            sort=[("created_at", -1)],
         )
 
-    return json_response(document, headers=headers)
+        per_document_can_read = await gather(
+            *[
+                virtool.samples.db.check_rights(
+                    db, document["sample"]["id"], self.request["client"], write=False
+                )
+                for document in data["documents"]
+            ]
+        )
+
+        documents = [
+            document
+            for document, can_write in zip(data["documents"], per_document_can_read)
+            if can_write
+        ]
+
+        documents = await apply_transforms(
+            documents, [AttachUserTransform(db), AttachSubtractionTransform(db)]
+        )
+
+        return json_response({**data, "documents": documents})
+
+
+@routes.view("/analyses/{analysis_id}")
+class AnalysisView(PydanticView):
+
+    async def get(self) -> Union[r200[Analysis], r400, r403, r404]:
+        """
+        Get the details of an analysis.
+
+        Status Codes:
+            200: Successful operation
+            400: Parent sample does not exist
+            403: Insufficient rights
+            404: Not found
+        """
+        db = self.request.app["db"]
+        pg = self.request.app["pg"]
+
+        analysis_id = self.request.match_info["analysis_id"]
+
+        document = await db.analyses.find_one(analysis_id)
+
+        if document is None:
+            raise NotFound()
+
+        try:
+            iso = isoformat(document["updated_at"])
+        except KeyError:
+            iso = isoformat(document["created_at"])
+
+        if_modified_since = self.request.headers.get("If-Modified-Since")
+
+        if if_modified_since and if_modified_since == iso:
+            raise HTTPNotModified()
+
+        document = await attach_analysis_files(pg, analysis_id, document)
+
+        sample = await db.samples.find_one(
+            {"_id": document["sample"]["id"]}, {"quality": False}
+        )
+
+        if not sample:
+            raise HTTPBadRequest(text="Parent sample does not exist")
+
+        read, _ = get_sample_rights(sample, self.request["client"])
+
+        if not read:
+            raise InsufficientRights()
+
+        if document["ready"]:
+            document = await virtool.analyses.format.format_analysis(self.request.app, document)
+
+        headers = {
+            "Cache-Control": "no-cache",
+            "Last-Modified": isoformat(document["created_at"]),
+        }
+
+        document = await processor(db, document)
+
+        if document["workflow"] == "nuvs":
+            document = await apply_transforms(
+                document,
+                [AttachNuVsBLAST(pg)],
+            )
+
+        return json_response(document, headers=headers)
+
+    async def delete(self) -> Union[r204, r403, r404, r409]:
+        """
+        Delete an analysis.
+
+        Status Codes:
+            204: Successful operation
+            403: Insufficient rights
+            404: Not found
+            409: Analysis is still running
+        """
+        db = self.request.app["db"]
+
+        analysis_id = self.request.match_info["analysis_id"]
+
+        document = await db.analyses.find_one(
+            {"_id": analysis_id}, ["job", "ready", "sample"]
+        )
+
+        if not document:
+            raise NotFound()
+
+        sample_id = document["sample"]["id"]
+
+        sample = await db.samples.find_one(
+            {"_id": sample_id}, virtool.samples.db.PROJECTION
+        )
+
+        if not sample:
+            raise HTTPBadRequest(text="Parent sample does not exist")
+
+        read, write = get_sample_rights(sample, self.request["client"])
+
+        if not read or not write:
+            raise InsufficientRights()
+
+        if not document["ready"]:
+            raise HTTPConflict(text="Analysis is still running")
+
+        await db.analyses.delete_one({"_id": analysis_id})
+
+        path = (
+                self.request.app["config"].data_path / "samples" / sample_id / "analysis" / analysis_id
+        )
+
+        try:
+            await run_in_thread(rm, path, True)
+        except FileNotFoundError:
+            pass
+
+        await recalculate_workflow_tags(db, sample_id)
+
+        raise HTTPNoContent
 
 
 @routes.jobs_api.get("/analyses/{analysis_id}")
@@ -197,56 +265,6 @@ async def get_for_jobs_api(req: Request) -> Response:
     }
 
     return json_response(await processor(db, document), headers=headers)
-
-
-@routes.delete("/analyses/{analysis_id}")
-async def remove(req: Request) -> Response:
-    """
-    Remove an analysis document by its id.
-
-    """
-    db = req.app["db"]
-
-    analysis_id = req.match_info["analysis_id"]
-
-    document = await db.analyses.find_one(
-        {"_id": analysis_id}, ["job", "ready", "sample"]
-    )
-
-    if not document:
-        raise NotFound()
-
-    sample_id = document["sample"]["id"]
-
-    sample = await db.samples.find_one(
-        {"_id": sample_id}, virtool.samples.db.PROJECTION
-    )
-
-    if not sample:
-        raise HTTPBadRequest(text="Parent sample does not exist")
-
-    read, write = get_sample_rights(sample, req["client"])
-
-    if not read or not write:
-        raise InsufficientRights()
-
-    if not document["ready"]:
-        raise HTTPConflict(text="Analysis is still running")
-
-    await db.analyses.delete_one({"_id": analysis_id})
-
-    path = (
-        req.app["config"].data_path / "samples" / sample_id / "analysis" / analysis_id
-    )
-
-    try:
-        await run_in_thread(rm, path, True)
-    except FileNotFoundError:
-        pass
-
-    await recalculate_workflow_tags(db, sample_id)
-
-    raise HTTPNoContent
 
 
 @routes.jobs_api.delete("/analyses/{analysis_id}")
@@ -333,116 +351,140 @@ async def upload(req: Request) -> Response:
     return json_response(analysis_file, status=201, headers=headers)
 
 
-@routes.get("/analyses/{analysis_id}/files/{upload_id}")
-async def download_analysis_result(req: Request) -> Union[FileResponse, Response]:
-    """
-    Download an analysis result file.
+@routes.view("/analyses/{analysis_id}/files/{upload_id}")
+class AnalysisFileView(PydanticView):
 
-    """
-    pg = req.app["pg"]
-    upload_id = int(req.match_info["upload_id"])
+    async def get(self) -> Union[r200[FileResponse], r404]:
+        """
+        Download a file generated during the analysis.
 
-    analysis_file = await get_row_by_id(pg, AnalysisFile, upload_id)
+        Status Codes:
+            200: Successful operation
+            404: Not found
+        """
+        pg = self.request.app["pg"]
+        upload_id = int(self.request.match_info["upload_id"])
 
-    if not analysis_file:
-        raise NotFound()
+        analysis_file = await get_row_by_id(pg, AnalysisFile, upload_id)
 
-    analysis_file_path = (
-        req.app["config"].data_path / "analyses" / analysis_file.name_on_disk
-    )
+        if not analysis_file:
+            raise NotFound()
 
-    if not analysis_file_path.exists():
-        raise NotFound("Uploaded file not found at expected location")
-
-    return FileResponse(analysis_file_path)
-
-
-@routes.get("/analyses/documents/{analysis_id}.{extension}")
-async def download_analysis_document(req: Request) -> Response:
-    """
-    Download an analysis document.
-
-    """
-    db = req.app["db"]
-
-    analysis_id = req.match_info["analysis_id"]
-    extension = req.match_info["extension"]
-
-    document = await db.analyses.find_one(analysis_id)
-
-    if not document:
-        raise NotFound()
-
-    if extension == "xlsx":
-        formatted = await virtool.analyses.format.format_analysis_to_excel(
-            req.app, document
+        analysis_file_path = (
+                self.request.app["config"].data_path / "analyses" / analysis_file.name_on_disk
         )
-        content_type = (
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+        if not analysis_file_path.exists():
+            raise NotFound("Uploaded file not found at expected location")
+
+        return FileResponse(analysis_file_path)
+
+
+@routes.view("/analyses/documents/{analysis_id}.{extension}")
+class DocumentDownloadView(PydanticView):
+
+    async def get(self) -> Union[r200[Response], r404]:
+        """
+        Download an analysis in CSV or XSLX format.
+
+        Status Codes:
+            200: Operation successful
+            400: Invalid extension
+            404: Not found
+        """
+        db = self.request.app["db"]
+
+        analysis_id = self.request.match_info["analysis_id"]
+        extension = self.request.match_info["extension"]
+
+        if extension not in ["xlsx", "csv"]:
+            raise HTTPBadRequest(text=f"Invalid extension: {extension}")
+
+        document = await db.analyses.find_one(analysis_id)
+
+        if not document:
+            raise NotFound()
+
+        if extension == "xlsx":
+            formatted = await virtool.analyses.format.format_analysis_to_excel(
+                self.request.app, document
+            )
+            content_type = (
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        else:
+            formatted = await virtool.analyses.format.format_analysis_to_csv(
+                self.request.app, document
+            )
+            content_type = "text/csv"
+
+        headers = {
+            "Content-Disposition": f"attachment; filename={analysis_id}.{extension}",
+            "Content-Type": content_type,
+        }
+
+        return Response(body=formatted, headers=headers)
+
+
+@routes.view("/analyses/{analysis_id}/{sequence_index}/blast")
+class BlastView(PydanticView):
+
+    async def put(self) -> Union[r200[Response], r400, r403, r404, r409]:
+        """
+        BLAST a contig sequence that is part of a NuVs result record. The resulting
+        BLAST data will be attached to that sequence.
+
+        Status Codes:
+            200: Operation successful
+            400: Parent sample does not exist
+            403: Insufficient rights
+            404: Analysis not found
+            404: Sequence not found
+            409: Not a NuVs analysis
+            409: Analysis is still running
+        """
+        db = self.request.app["db"]
+
+        analysis_id = self.request.match_info["analysis_id"]
+        sequence_index = int(self.request.match_info["sequence_index"])
+
+        document = await db.analyses.find_one(
+            {"_id": analysis_id}, ["ready", "workflow", "results", "sample"]
         )
-    else:
-        formatted = await virtool.analyses.format.format_analysis_to_csv(
-            req.app, document
+
+        if not document:
+            raise NotFound("Analysis not found")
+
+        if document["workflow"] != "nuvs":
+            raise HTTPConflict(text="Not a NuVs analysis")
+
+        if not document["ready"]:
+            raise HTTPConflict(text="Analysis is still running")
+
+        sequence = find_nuvs_sequence_by_index(document, sequence_index)
+
+        if sequence is None:
+            raise NotFound("Sequence not found")
+
+        sample = await db.samples.find_one(
+            {"_id": document["sample"]["id"]}, virtool.samples.db.PROJECTION
         )
-        content_type = "text/csv"
 
-    headers = {
-        "Content-Disposition": f"attachment; filename={analysis_id}.{extension}",
-        "Content-Type": content_type,
-    }
+        if not sample:
+            raise HTTPBadRequest(text="Parent sample does not exist")
 
-    return Response(body=formatted, headers=headers)
+        _, write = get_sample_rights(sample, self.request["client"])
 
+        if not write:
+            raise InsufficientRights()
 
-@routes.put("/analyses/{analysis_id}/{sequence_index}/blast")
-async def blast(req: Request) -> Response:
-    """
-    BLAST a contig sequence that is part of a NuVs result record. The resulting BLAST
-    data will be attached to that sequence.
+        document = await get_data_from_req(self.request).blast.create_nuvs_blast(
+            analysis_id, sequence_index
+        )
 
-    """
-    db = req.app["db"]
+        headers = {"Location": f"/analyses/{analysis_id}/{sequence_index}/blast"}
 
-    analysis_id = req.match_info["analysis_id"]
-    sequence_index = int(req.match_info["sequence_index"])
-
-    document = await db.analyses.find_one(
-        {"_id": analysis_id}, ["ready", "workflow", "results", "sample"]
-    )
-
-    if not document:
-        raise NotFound("Analysis not found")
-
-    if document["workflow"] != "nuvs":
-        raise HTTPConflict(text="Not a NuVs analysis")
-
-    if not document["ready"]:
-        raise HTTPConflict(text="Analysis is still running")
-
-    sequence = find_nuvs_sequence_by_index(document, sequence_index)
-
-    if sequence is None:
-        raise NotFound("Sequence not found")
-
-    sample = await db.samples.find_one(
-        {"_id": document["sample"]["id"]}, virtool.samples.db.PROJECTION
-    )
-
-    if not sample:
-        raise HTTPBadRequest(text="Parent sample does not exist")
-
-    _, write = get_sample_rights(sample, req["client"])
-
-    if not write:
-        raise InsufficientRights()
-
-    document = await get_data_from_req(req).blast.create_nuvs_blast(
-        analysis_id, sequence_index
-    )
-
-    headers = {"Location": f"/analyses/{analysis_id}/{sequence_index}/blast"}
-
-    return json_response(document, headers=headers, status=201)
+        return json_response(document, headers=headers, status=201)
 
 
 @routes.jobs_api.patch("/analyses/{analysis_id}")
