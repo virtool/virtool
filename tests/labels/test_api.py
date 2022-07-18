@@ -1,3 +1,6 @@
+import asyncio
+from typing import List
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -210,19 +213,42 @@ async def test_edit(error, spawn_client, pg: AsyncEngine, resp_is):
 
 
 @pytest.mark.parametrize("error", [None, "400"])
-async def test_remove(error, spawn_client, pg: AsyncEngine, resp_is):
+async def test_remove(
+    error, spawn_client, pg: AsyncEngine, resp_is, fake, mock_samples: List[dict]
+):
     """
     Test that a label can be deleted to the database at ``DELETE /labels/:label_id``.
 
+    Test that samples are updated when a label is deleted.
     """
     client = await spawn_client(authorize=True, administrator=True)
 
     if not error:
         async with AsyncSession(pg) as session:
-            session.add(
-                Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+            session.add_all(
+                [
+                    Label(
+                        id=1, name="Bug", color="#a83432", description="This is a bug"
+                    ),
+                    Label(
+                        id=4, name="Info", color="#03fc20", description="This is a info"
+                    ),
+                    Label(
+                        id=9, name="que", color="#03fc20", description="This is a que"
+                    ),
+                ]
             )
             await session.commit()
+
+        await client.db.subtraction.insert_many(
+            [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}]
+        )
+
+        mock_samples[0].update({"labels": [1, 4]})
+        mock_samples[1].update({"labels": [1, 9]}),
+        mock_samples[2].update({"labels": [1, 4, 9]})
+
+        await client.db.samples.insert_many(mock_samples)
 
     resp = await client.delete("/labels/1")
 
@@ -231,6 +257,16 @@ async def test_remove(error, spawn_client, pg: AsyncEngine, resp_is):
         return
 
     await resp_is.no_content(resp)
+
+    responses = await asyncio.gather(
+        *[client.get(f"/samples/{sample['_id']}") for sample in mock_samples]
+    )
+
+    samples = [await response.json() for response in responses]
+
+    label_ids = [label["id"] for sample in samples for label in sample["labels"]]
+
+    assert 1 not in label_ids
 
 
 @pytest.mark.parametrize("value", ["valid_hex_color", "invalid_hex_color"])
@@ -251,9 +287,11 @@ async def test_is_valid_hex_color(value, spawn_client, resp_is):
         await resp_is.not_found(resp)
     else:
         assert resp.status == 400
-        assert await resp.json() == [{
-            "loc": ["color"],
-            "msg": "The format of the color code is invalid",
-            "type": "value_error",
-            "in": "body"
-        }]
+        assert await resp.json() == [
+            {
+                "loc": ["color"],
+                "msg": "The format of the color code is invalid",
+                "type": "value_error",
+                "in": "body",
+            }
+        ]
