@@ -1,5 +1,5 @@
 """
-Generate api-doc using: python3 -m aiohttp_pydantic.oas virtool.oas:app
+Generate api-doc using: python3 -m virtool.custom_oas.oas virtool.oas:app
 """
 
 from virtool.app import create_app_without_startup
