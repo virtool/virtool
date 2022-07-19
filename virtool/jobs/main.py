@@ -28,7 +28,7 @@ from virtool.types import App
 async def create_app(config: Config):
     """Create the :class:`aiohttp.web.Application` for the jobs API process."""
     app = Application(
-        client_max_size=1024 ** 2 * 20,
+        client_max_size=1024 ** 2 * 50,
         middlewares=[
             virtool.http.accept.middleware,
             virtool.jobs.auth.middleware,
