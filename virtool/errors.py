@@ -16,3 +16,7 @@ class NCBIError(Exception):
 
 class ProxyError(Exception):
     pass
+
+
+class PolicyError(Exception):
+    ...

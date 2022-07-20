@@ -5,18 +5,20 @@ These endpoints modify and return data about the user account associated with th
 session or API key making the requests.
 
 """
+from aiohttp.web import HTTPNoContent, Request, Response
+from aiohttp.web_exceptions import HTTPBadRequest
+
 import virtool.account.db
 import virtool.http.auth
 import virtool.http.routes
 import virtool.validators
-from aiohttp.web import HTTPNoContent, Request, Response
-from aiohttp.web_exceptions import HTTPBadRequest
 from virtool.analyses.utils import WORKFLOW_NAMES
 from virtool.api.response import NotFound, json_response
 from virtool.data.utils import get_data_from_req
-from virtool.mongo.utils import get_one_field
+from virtool.http.policy import policy, PublicRoutePolicy
 from virtool.http.schema import schema
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
+from virtool.mongo.utils import get_one_field
 from virtool.users.checks import check_password_length
 from virtool.users.db import validate_credentials
 from virtool.users.oas import UpdateUserSchema
@@ -288,7 +290,7 @@ async def remove_all_api_keys(req: Request):
     raise HTTPNoContent
 
 
-@routes.post("/account/login", public=True)
+@routes.post("/account/login")
 @schema(
     {
         "username": {"type": "string", "empty": False, "required": True},
@@ -296,6 +298,7 @@ async def remove_all_api_keys(req: Request):
         "remember": {"type": "boolean", "default": False},
     }
 )
+@policy(PublicRoutePolicy)
 async def login(req: Request) -> Response:
     """
     Create a new session for the user with `username`.
@@ -347,7 +350,8 @@ async def login(req: Request) -> Response:
     return resp
 
 
-@routes.get("/account/logout", public=True)
+@routes.get("/account/logout")
+@policy(PublicRoutePolicy)
 async def logout(req: Request) -> Response:
     """
     Invalidates the requesting session, effectively logging out the user.
@@ -368,13 +372,14 @@ async def logout(req: Request) -> Response:
     return resp
 
 
-@routes.post("/account/reset", public=True)
+@routes.post("/account/reset")
 @schema(
     {
         "password": {"type": "string", "required": True},
         "reset_code": {"type": "string", "required": True},
     }
 )
+@policy(PublicRoutePolicy)
 async def reset(req: Request) -> Response:
     """
     Handles `POST` requests for resetting the password for a session user.

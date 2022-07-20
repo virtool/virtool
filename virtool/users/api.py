@@ -11,7 +11,11 @@ from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.http.privileges import admin, public
+from virtool.http.policy import (
+    policy,
+    AdministratorRoutePolicy,
+    PublicRoutePolicy,
+)
 from virtool.http.routes import Routes
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.users.checks import check_password_length
@@ -27,7 +31,7 @@ routes = Routes()
 
 @routes.view("/users")
 class UsersView(PydanticView):
-    @admin
+    @policy(AdministratorRoutePolicy)
     async def get(self) -> Union[r200, r403]:
         """
         Get a list of all user documents in the database.
@@ -52,7 +56,7 @@ class UsersView(PydanticView):
 
         return json_response(data)
 
-    @admin
+    @policy(AdministratorRoutePolicy)
     async def post(self, data: CreateUserSchema) -> Union[r201[User], r400, r403]:
         """
         Add a new user to the user database.
@@ -85,7 +89,7 @@ class UsersView(PydanticView):
 
 @routes.view("/users/{user_id}")
 class UserView(PydanticView):
-    @admin
+    @policy(AdministratorRoutePolicy)
     async def get(self) -> Union[r200[User], r403, r404]:
         """
         Gets the details of a user.
@@ -104,7 +108,7 @@ class UserView(PydanticView):
 
         return json_response(user.dict())
 
-    @admin
+    @policy(AdministratorRoutePolicy)
     async def patch(
         self, data: UpdateUserSchema
     ) -> Union[r200[User], r400, r403, r404, r409]:
@@ -143,7 +147,7 @@ class UserView(PydanticView):
 
         return json_response(user.dict())
 
-    @admin
+    @policy(AdministratorRoutePolicy)
     async def delete(self) -> Union[r204, r400, r403, r404]:
         """
         Deletes a user.
@@ -171,7 +175,7 @@ class UserView(PydanticView):
 
 @routes.view("/users/first")
 class FirstUserView(PydanticView):
-    @public
+    @policy(PublicRoutePolicy)
     async def put(self, data: CreateFirstUserSchema) -> Union[r201[User], r400, r403]:
         """
         Creates the first user for the instance.

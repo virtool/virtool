@@ -9,6 +9,10 @@ from jose.exceptions import JWTClaimsError, JWTError
 from virtool.data.utils import get_data_from_req
 from virtool.errors import AuthError
 from virtool.http.client import UserClient
+from virtool.http.policy import (
+    get_handler_policy,
+    PublicRoutePolicy,
+)
 from virtool.http.utils import set_session_id_cookie
 from virtool.oidc.utils import validate_token
 from virtool.users.db import B2CUserAttributes
@@ -16,14 +20,6 @@ from virtool.users.sessions import clear_reset_code, create_session, get_session
 from virtool.utils import hash_key
 
 AUTHORIZATION_PROJECTION = ["user", "administrator", "groups", "permissions"]
-
-PUBLIC_ROUTES = [
-    "/oidc/acquire_tokens",
-    "/oidc/refresh_tokens",
-    "/oidc/delete_tokens",
-    "/account/login",
-    "/account/logout",
-]
 
 
 def get_ip(req: Request) -> str:
@@ -160,7 +156,7 @@ async def middleware(req, handler) -> Response:
     """
     db = req.app["db"]
 
-    if req.path in PUBLIC_ROUTES:
+    if isinstance(get_handler_policy(handler, req.method), PublicRoutePolicy):
         req["client"] = UserClient(
             db=db,
             administrator=False,
