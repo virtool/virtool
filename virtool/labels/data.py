@@ -127,5 +127,7 @@ class LabelsData:
             if label is None:
                 raise ResourceNotFoundError()
 
+            await self._db.samples.update_many({"labels": label_id}, {"$pull": {"labels": label_id}})
+
             await session.delete(label)
             await session.commit()
