@@ -1,6 +1,8 @@
-import virtool.settings.db
 from aiohttp.web import Request, Response
+
+import virtool.settings.db
 from virtool.api.response import json_response
+from virtool.http.policy import policy, AdministratorRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.settings.db import Settings
@@ -21,7 +23,8 @@ async def get(req: Request) -> Response:
     return json_response(settings)
 
 
-@routes.patch("/settings", admin=True)
+@routes.patch("/settings")
+@policy(AdministratorRoutePolicy)
 @schema(SCHEMA)
 async def update(req: Request) -> Response:
     """

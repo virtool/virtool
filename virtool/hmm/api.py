@@ -5,6 +5,7 @@ API request handlers for managing and querying HMM data.
 from typing import List, Union
 
 import aiohttp
+from aiohttp.web import Response
 from aiohttp.web_exceptions import (
     HTTPBadGateway,
     HTTPBadRequest,
@@ -12,31 +13,29 @@ from aiohttp.web_exceptions import (
     HTTPNoContent,
 )
 from aiohttp.web_fileresponse import FileResponse
-from aiohttp.web import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r502
+from virtool_core.models.hmm import HMM, HMMSearchResult
+
 import virtool.hmm.db
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
-from virtool_core.models.hmm import HMM, HMMSearchResult
-
-from virtool.http.privileges import permissions
-from virtool.mongo.utils import get_one_field
 from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument
 from virtool.hmm.db import PROJECTION, generate_annotations_json_file
 from virtool.hmm.tasks import HMMInstallTask
 from virtool.hmm.utils import hmm_data_exists
+from virtool.http.policy import policy, PermissionsRoutePolicy
 from virtool.http.routes import Routes
-from virtool.utils import base_processor, compress_file_with_gzip, rm, run_in_thread
+from virtool.mongo.utils import get_one_field
 from virtool.users.utils import Permission
+from virtool.utils import base_processor, compress_file_with_gzip, rm, run_in_thread
 
 routes = Routes()
 
 
 @routes.view("/hmms")
 class HMMsView(PydanticView):
-
     async def get(self) -> r200[HMMSearchResult]:
         """
         Find HMM annotation documents.
@@ -66,7 +65,7 @@ class HMMsView(PydanticView):
 
         return json_response(data)
 
-    @permissions(Permission.modify_hmm)
+    @policy(PermissionsRoutePolicy(Permission.modify_hmm))
     async def delete(self) -> Union[r204, r403]:
         """
         Delete all installed HMM data.
@@ -99,7 +98,6 @@ class HMMsView(PydanticView):
 
 @routes.view("/hmms/status")
 class StatusView(PydanticView):
-
     async def get(self) -> r200[Response]:
         """
         Get the status of the HMM data. Contains the following fields:
@@ -122,7 +120,6 @@ class StatusView(PydanticView):
 
 @routes.view("/hmms/status/release")
 class ReleaseView(PydanticView):
-
     async def get(self) -> Union[r200[Response], r502]:
         """
         Get the latest release for the HMM data.
@@ -151,7 +148,6 @@ class ReleaseView(PydanticView):
 
 @routes.view("/hmms/status/updates")
 class UpdatesView(PydanticView):
-
     async def get(self) -> r200[Response]:
         """
         List all updates applied to the HMM collection.
@@ -166,7 +162,7 @@ class UpdatesView(PydanticView):
 
         return json_response(updates)
 
-    @permissions(Permission.modify_hmm)
+    @policy(PermissionsRoutePolicy(Permission.modify_hmm))
     async def post(self) -> Union[r201[Response], r400, r403]:
         """
         Install the latest official HMM database from GitHub.
@@ -207,7 +203,6 @@ class UpdatesView(PydanticView):
 
 @routes.view("/hmms/{hmm_id}")
 class HMMView(PydanticView):
-
     async def get(self) -> Union[r200[HMM], r404]:
         """
         Get a complete individual HMM annotation document.
@@ -216,7 +211,9 @@ class HMMView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        document = await self.request.app["db"].hmm.find_one({"_id": self.request.match_info["hmm_id"]})
+        document = await self.request.app["db"].hmm.find_one(
+            {"_id": self.request.match_info["hmm_id"]}
+        )
 
         if document is None:
             raise NotFound()

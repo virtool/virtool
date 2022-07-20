@@ -3,6 +3,8 @@ from typing import Union, List
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
+from virtool_core.models.job import Job, JobMinimal
 
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import (
@@ -10,12 +12,11 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.utils import get_data_from_req
-from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
+from virtool.http.policy import policy, PermissionsRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.users.utils import Permission
-from virtool.http.privileges import permissions
-from virtool_core.models.job import Job, JobMinimal
+
 logger = getLogger(__name__)
 
 routes = Routes()
@@ -23,7 +24,6 @@ routes = Routes()
 
 @routes.view("/jobs")
 class JobsView(PydanticView):
-
     async def get(self) -> Union[List[JobMinimal], r200, r400]:
         """
         List all job documents.
@@ -32,9 +32,11 @@ class JobsView(PydanticView):
             200: Successful operation
             400: Invalid query
         """
-        return json_response(await get_data_from_req(self.request).jobs.find(self.request.query))
+        return json_response(
+            await get_data_from_req(self.request).jobs.find(self.request.query)
+        )
 
-    @permissions(Permission.remove_job)
+    @policy(PermissionsRoutePolicy(Permission.remove_job))
     async def delete(self) -> r200:
         """
         Clear completed, failed or all finished jobs.
@@ -59,7 +61,6 @@ class JobsView(PydanticView):
 
 @routes.view("/jobs/{job_id}")
 class JobView(PydanticView):
-
     async def get(self) -> Union[List[JobMinimal], r200, r404]:
         """
         Return the complete document for a given job.
@@ -69,13 +70,15 @@ class JobView(PydanticView):
             404: Not found
         """
         try:
-            document = await get_data_from_req(self.request).jobs.get(self.request.match_info["job_id"])
+            document = await get_data_from_req(self.request).jobs.get(
+                self.request.match_info["job_id"]
+            )
         except ResourceNotFoundError:
             raise NotFound()
 
         return json_response(document)
 
-    @permissions(Permission.remove_job)
+    @policy(PermissionsRoutePolicy(Permission.remove_job))
     async def delete(self) -> Union[r204, r403, r404, r409]:
         """
         Remove a job.
@@ -87,7 +90,9 @@ class JobView(PydanticView):
             409: Job is running or waiting and cannot be removed
         """
         try:
-            await get_data_from_req(self.request).jobs.delete(self.request.match_info["job_id"])
+            await get_data_from_req(self.request).jobs.delete(
+                self.request.match_info["job_id"]
+            )
         except ResourceConflictError:
             raise HTTPConflict(text="Job is running or waiting and cannot be removed")
         except ResourceNotFoundError:
@@ -148,8 +153,7 @@ async def archive(req):
 
 @routes.view("/jobs/{job_id}/cancel")
 class CancelJobView(PydanticView):
-
-    @permissions(Permission.cancel_job)
+    @policy(PermissionsRoutePolicy(Permission.cancel_job))
     async def put(self) -> Union[Job, r200, r403, r404, r409]:
         """
         Cancel a job.
@@ -161,7 +165,9 @@ class CancelJobView(PydanticView):
             409: Not cancellable
         """
         try:
-            document = await get_data_from_req(self.request).jobs.cancel(self.request.match_info["job_id"])
+            document = await get_data_from_req(self.request).jobs.cancel(
+                self.request.match_info["job_id"]
+            )
         except ResourceNotFoundError:
             raise NotFound
         except ResourceConflictError:

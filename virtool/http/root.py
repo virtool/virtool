@@ -1,4 +1,5 @@
 from virtool.api.response import json_response
+from virtool.http.policy import policy, PublicRoutePolicy
 from virtool.http.routes import Routes
 
 API_URL_ROOT = "https://www.virtool.ca/docs/developer/api"
@@ -6,8 +7,9 @@ API_URL_ROOT = "https://www.virtool.ca/docs/developer/api"
 routes = Routes()
 
 
-@routes.get("/", public=True)
+@routes.get("/")
 @routes.jobs_api.get("/")
+@policy(PublicRoutePolicy)
 async def get(req):
     """
     Returns a generic message. Used during testing for acquiring a ``session_id``.

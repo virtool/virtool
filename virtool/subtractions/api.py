@@ -17,22 +17,22 @@ import virtool.uploads.db
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, get_req_bool, paginate
 from virtool.data.utils import get_data_from_req
-from virtool.mongo.transforms import apply_transforms
-from virtool.http.privileges import permissions
+from virtool.data_model.subtraction import SubtractionMinimal, Subtraction
+from virtool.http.policy import PermissionsRoutePolicy, policy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
+from virtool.mongo.transforms import apply_transforms
 from virtool.subtractions.db import PROJECTION, attach_computed
 from virtool.subtractions.files import create_subtraction_file, delete_subtraction_file
 from virtool.subtractions.models import SubtractionFile
+from virtool.subtractions.oas import CreateSubtractionSchema, EditSubtractionSchema
 from virtool.subtractions.utils import FILES
 from virtool.uploads.models import Upload
 from virtool.uploads.utils import naive_writer
 from virtool.users.db import AttachUserTransform
-from virtool.utils import base_processor
-from virtool.subtractions.oas import CreateSubtractionSchema, EditSubtractionSchema
-from virtool.data_model.subtraction import SubtractionMinimal, Subtraction
 from virtool.users.utils import Permission
+from virtool.utils import base_processor
 
 logger = logging.getLogger("subtractions")
 
@@ -94,7 +94,7 @@ class SubtractionsView(PydanticView):
             {**data, "documents": documents, "ready_count": ready_count}
         )
 
-    @permissions(Permission.modify_subtraction)
+    @policy(PermissionsRoutePolicy(Permission.modify_subtraction))
     async def post(
         self, data: CreateSubtractionSchema
     ) -> Union[r201[Subtraction], r400, r403]:
@@ -182,7 +182,7 @@ class SubtractionView(PydanticView):
             )
         )
 
-    @permissions(Permission.modify_subtraction)
+    @policy(PermissionsRoutePolicy(Permission.modify_subtraction))
     async def patch(
         self, data: EditSubtractionSchema
     ) -> Union[r200[Subtraction], r400, r403, r404]:
@@ -217,7 +217,7 @@ class SubtractionView(PydanticView):
             )
         )
 
-    @permissions(Permission.modify_subtraction)
+    @policy(PermissionsRoutePolicy(Permission.modify_subtraction))
     async def delete(self) -> Union[r204, r403, r404, r409]:
         """
         Remove an existing subtraction.

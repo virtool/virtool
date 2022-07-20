@@ -15,7 +15,7 @@ from virtool.groups.oas import (
     GroupResponse,
     GetGroupResponse,
 )
-from virtool.http.privileges import admin
+from virtool.http.policy import policy, AdministratorRoutePolicy
 from virtool.http.routes import Routes
 
 routes = Routes()
@@ -37,7 +37,7 @@ class GroupsView(PydanticView):
             ]
         )
 
-    @admin
+    @policy(AdministratorRoutePolicy)
     async def post(
         self, data: CreateGroupSchema
     ) -> Union[r201[CreateGroupResponse], r400]:
@@ -81,7 +81,7 @@ class GroupView(PydanticView):
 
         return json_response(GroupResponse.parse_obj(group).dict())
 
-    @admin
+    @policy(AdministratorRoutePolicy)
     async def patch(self, data: EditGroupSchema) -> Union[r200[GroupResponse], r404]:
         """
         Update the permissions of a group.
@@ -103,7 +103,7 @@ class GroupView(PydanticView):
 
         return json_response(GroupResponse.parse_obj(group).dict())
 
-    @admin
+    @policy(AdministratorRoutePolicy)
     async def delete(self) -> Union[r204, r404]:
         """
         Delete a group.

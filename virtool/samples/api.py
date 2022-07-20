@@ -31,12 +31,13 @@ from virtool.api.utils import compose_regex_query, paginate
 from virtool.caches.models import SampleArtifactCache
 from virtool.caches.utils import join_cache_path
 from virtool.data.utils import get_data_from_req
-from virtool.mongo.transforms import apply_transforms
 from virtool.errors import DatabaseError
+from virtool.http.policy import policy, PermissionsRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
 from virtool.labels.db import AttachLabelsTransform
+from virtool.mongo.transforms import apply_transforms
 from virtool.pg.utils import delete_row, get_rows
 from virtool.samples.db import (
     LIST_PROJECTION,
@@ -59,9 +60,9 @@ from virtool.samples.utils import bad_labels_response, check_labels
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import is_gzip_compressed
 from virtool.users.db import AttachUserTransform
-from virtool.validators import strip
-from virtool.utils import run_in_thread
 from virtool.users.utils import Permission
+from virtool.utils import run_in_thread
+from virtool.validators import strip
 
 logger = logging.getLogger("samples")
 
@@ -196,7 +197,8 @@ async def get_cache(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.post("/samples", permission=Permission.create_sample.value)
+@routes.post("/samples")
+@policy(PermissionsRoutePolicy(Permission.create_sample))
 @schema(
     {
         "name": {"type": "string", "coerce": strip, "empty": False, "required": True},
