@@ -31,11 +31,13 @@ async def test_load_yml(app, fake, example_test_case):
 
 
 async def test_populate_does_load_yaml(
-    app, example_test_case, tmp_path, config
+    app, data_layer, example_test_case, tmp_path, config
 ):
 
     app["config"] = config
     app["config"].fake_path = example_test_case.parent
+    app["data"] = data_layer
+
     await populate(app)
 
     job = await app["db"].jobs.find_one({"_id": "test_case_1"})

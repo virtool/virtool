@@ -2,6 +2,8 @@
 API request handlers for managing and querying HMM data.
 
 """
+from typing import List, Union
+
 import aiohttp
 from aiohttp.web_exceptions import (
     HTTPBadGateway,
@@ -10,10 +12,15 @@ from aiohttp.web_exceptions import (
     HTTPNoContent,
 )
 from aiohttp.web_fileresponse import FileResponse
-
+from aiohttp.web import Response
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r502
 import virtool.hmm.db
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
+from virtool_core.models.hmm import HMM, HMMSearchResult
+
+from virtool.http.privileges import permissions
 from virtool.mongo.utils import get_one_field
 from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument
@@ -27,129 +34,196 @@ from virtool.users.utils import Permission
 routes = Routes()
 
 
-@routes.get("/hmms")
-async def find(req):
-    """
-    Find HMM annotation documents.
+@routes.view("/hmms")
+class HMMsView(PydanticView):
 
-    """
-    db = req.app["db"]
+    async def get(self) -> r200[HMMSearchResult]:
+        """
+        Find HMM annotation documents.
 
-    term = req.query.get("find")
+        Status Codes:
+            200: Successful operation
+        """
+        db = self.request.app["db"]
 
-    db_query = dict()
+        term = self.request.query.get("find")
 
-    if term:
-        db_query.update(compose_regex_query(term, ["names"]))
+        db_query = {}
 
-    data = await paginate(
-        db.hmm,
-        db_query,
-        req.query,
-        sort="cluster",
-        projection=PROJECTION,
-        base_query={"hidden": False},
-    )
+        if term:
+            db_query.update(compose_regex_query(term, ["names"]))
 
-    data["status"] = await virtool.hmm.db.get_status(db)
+        data = await paginate(
+            db.hmm,
+            db_query,
+            self.request.query,
+            sort="cluster",
+            projection=PROJECTION,
+            base_query={"hidden": False},
+        )
 
-    return json_response(data)
+        data["status"] = await virtool.hmm.db.get_status(db)
 
+        return json_response(data)
 
-@routes.get("/hmms/status")
-async def get_status(req):
-    """
-    Get the status of the HMM data. Contains the following fields:
+    @permissions(Permission.modify_hmm)
+    async def delete(self) -> Union[r204, r403]:
+        """
+        Delete all installed HMM data.
 
-    - `errors`: lists any errors in the HMM data
-    - `id`: is always 'hmm'
-    - `installed`: a dict describing the installed HMM data
-    - `process.id`: the ID of the process installing the HMM data
-    - `release`: a dict describing the latest available release
+        This won't break analyses that reference the installed HMM data.
 
-    Installed HMM data cannot currently be updated.
+        Status Codes:
+            204: Successful operation
+            403: Not permitted
+        """
+        db = self.request.app["db"]
 
-    :param req:
-    :return:
-    """
-    db = req.app["db"]
-    status = await virtool.hmm.db.get_status(db)
-    return json_response(status)
+        await virtool.hmm.db.purge(db, self.request.app["config"])
 
+        hmm_path = self.request.app["config"].data_path / "hmm/profiles.hmm"
 
-@routes.get("/hmms/status/release")
-async def get_release(req):
-    """
-    Get the latest release for the HMM data.
+        try:
+            await run_in_thread(rm, hmm_path)
+        except FileNotFoundError:
+            pass
 
-    """
-    try:
-        release = await virtool.hmm.db.fetch_and_update_release(req.app)
-    except GitHubError as err:
-        if "404" in str(err):
-            raise HTTPBadGateway(text="GitHub repository does not exist")
+        await db.status.find_one_and_update(
+            {"_id": "hmm"}, {"$set": {"installed": None, "task": None, "updates": []}}
+        )
 
-        raise
+        await virtool.hmm.db.fetch_and_update_release(self.request.app)
 
-    except aiohttp.ClientConnectorError:
-        raise HTTPBadGateway(text="Could not reach GitHub")
-
-    if release is None:
-        raise NotFound("Release not found")
-
-    return json_response(release)
+        raise HTTPNoContent
 
 
-@routes.get("/hmms/status/updates")
-async def list_updates(req):
-    """
-    List all updates applied to the HMM collection.
+@routes.view("/hmms/status")
+class StatusView(PydanticView):
 
-    """
-    db = req.app["db"]
+    async def get(self) -> r200[Response]:
+        """
+        Get the status of the HMM data. Contains the following fields:
 
-    updates = await get_one_field(db.status, "updates", "hmm") or list()
-    updates.reverse()
+        - `errors`: lists any errors in the HMM data
+        - `id`: is always 'hmm'
+        - `installed`: a dict describing the installed HMM data
+        - `process.id`: the ID of the process installing the HMM data
+        - `release`: a dict describing the latest available release
 
-    return json_response(updates)
+        Installed HMM data cannot currently be updated.
 
-
-@routes.post("/hmms/status/updates", permission=Permission.modify_hmm.value)
-async def install(req):
-    """
-    Install the latest official HMM database from GitHub.
-
-    """
-    db = req.app["db"]
-
-    user_id = req["client"].user_id
-
-    if await db.status.count_documents({"_id": "hmm", "updates.ready": False}):
-        raise HTTPConflict(text="Install already in progress")
-
-    await virtool.hmm.db.fetch_and_update_release(req.app)
-
-    release = await get_one_field(db.status, "release", "hmm")
-
-    if release is None:
-        raise HTTPBadRequest(text="Target release does not exist")
-
-    task = await req.app["tasks"].add(
-        HMMInstallTask, context={"user_id": user_id, "release": release}
-    )
-
-    await db.status.find_one_and_update(
-        {"_id": "hmm"}, {"$set": {"task": {"id": task["id"]}}}
-    )
-
-    update = create_update_subdocument(release, False, user_id)
-
-    await db.status.update_one({"_id": "hmm"}, {"$push": {"updates": update}})
-
-    return json_response(update)
+        Status Codes:
+            200: Successful operation
+        """
+        db = self.request.app["db"]
+        status = await virtool.hmm.db.get_status(db)
+        return json_response(status)
 
 
-@routes.get("/hmms/{hmm_id}")
+@routes.view("/hmms/status/release")
+class ReleaseView(PydanticView):
+
+    async def get(self) -> Union[r200[Response], r502]:
+        """
+        Get the latest release for the HMM data.
+
+        Status Codes:
+            200: Successful operation
+            502: Repository does not exist
+            502: count not reach Github
+        """
+        try:
+            release = await virtool.hmm.db.fetch_and_update_release(self.request.app)
+        except GitHubError as err:
+            if "404" in str(err):
+                raise HTTPBadGateway(text="GitHub repository does not exist")
+
+            raise
+
+        except aiohttp.ClientConnectorError:
+            raise HTTPBadGateway(text="Could not reach GitHub")
+
+        if release is None:
+            raise NotFound("Release not found")
+
+        return json_response(release)
+
+
+@routes.view("/hmms/status/updates")
+class UpdatesView(PydanticView):
+
+    async def get(self) -> r200[Response]:
+        """
+        List all updates applied to the HMM collection.
+
+        Status Codes:
+            200: Successful operation
+        """
+        db = self.request.app["db"]
+
+        updates = await get_one_field(db.status, "updates", "hmm") or []
+        updates.reverse()
+
+        return json_response(updates)
+
+    @permissions(Permission.modify_hmm)
+    async def post(self) -> Union[r201[Response], r400, r403]:
+        """
+        Install the latest official HMM database from GitHub.
+
+        Status Codes:
+            201: Successful operation
+            400: Target release does not exist
+            403: Not permitted
+        """
+        db = self.request.app["db"]
+
+        user_id = self.request["client"].user_id
+
+        if await db.status.count_documents({"_id": "hmm", "updates.ready": False}):
+            raise HTTPConflict(text="Install already in progress")
+
+        await virtool.hmm.db.fetch_and_update_release(self.request.app)
+
+        release = await get_one_field(db.status, "release", "hmm")
+
+        if release is None:
+            raise HTTPBadRequest(text="Target release does not exist")
+
+        task = await self.request.app["tasks"].add(
+            HMMInstallTask, context={"user_id": user_id, "release": release}
+        )
+
+        await db.status.find_one_and_update(
+            {"_id": "hmm"}, {"$set": {"task": {"id": task["id"]}}}
+        )
+
+        update = create_update_subdocument(release, False, user_id)
+
+        await db.status.update_one({"_id": "hmm"}, {"$push": {"updates": update}})
+
+        return json_response(update)
+
+
+@routes.view("/hmms/{hmm_id}")
+class HMMView(PydanticView):
+
+    async def get(self) -> Union[r200[HMM], r404]:
+        """
+        Get a complete individual HMM annotation document.
+
+        Status Codes:
+            200: Successful operation
+            404: Not found
+        """
+        document = await self.request.app["db"].hmm.find_one({"_id": self.request.match_info["hmm_id"]})
+
+        if document is None:
+            raise NotFound()
+
+        return json_response(base_processor(document))
+
+
 @routes.jobs_api.get("/hmms/{hmm_id}")
 async def get(req):
     """
@@ -162,32 +236,6 @@ async def get(req):
         raise NotFound()
 
     return json_response(base_processor(document))
-
-
-@routes.delete("/hmms", permission=Permission.modify_hmm.value)
-async def purge(req):
-    """
-    Delete all unreferenced HMMs and hide the rest.
-
-    """
-    db = req.app["db"]
-
-    await virtool.hmm.db.purge(db, req.app["config"])
-
-    hmm_path = req.app["config"].data_path / "hmm/profiles.hmm"
-
-    try:
-        await run_in_thread(rm, hmm_path)
-    except FileNotFoundError:
-        pass
-
-    await db.status.find_one_and_update(
-        {"_id": "hmm"}, {"$set": {"installed": None, "task": None, "updates": list()}}
-    )
-
-    await virtool.hmm.db.fetch_and_update_release(req.app)
-
-    raise HTTPNoContent
 
 
 @routes.jobs_api.get("/hmms/files/annotations.json.gz")

@@ -3,12 +3,12 @@ from typing import List, Union
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400
-from virtool_core.models.group import Group
+
 
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
-from virtool.groups.oas import CreateGroupSchema, EditGroupSchema
+from virtool.groups.oas import CreateGroupSchema, EditGroupSchema, CreateGroupResponse, GroupResponse, GetGroupResponse
 from virtool.http.privileges import admin
 from virtool.http.routes import Routes
 
@@ -17,7 +17,7 @@ routes = Routes()
 
 @routes.view("/groups")
 class GroupsView(PydanticView):
-    async def get(self) -> r200[List[Group]]:
+    async def get(self) -> r200[List[GetGroupResponse]]:
         """
         List all existing user groups.
 
@@ -26,17 +26,15 @@ class GroupsView(PydanticView):
         """
         return json_response(
             [
-                Group.parse_obj(group).dict()
+                GroupResponse.parse_obj(group).dict()
                 for group in await get_data_from_req(self.request).groups.find()
             ]
         )
 
     @admin
-    async def post(self, data: CreateGroupSchema) -> Union[r201[Group], r400]:
+    async def post(self, data: CreateGroupSchema) -> Union[r201[CreateGroupResponse], r400]:
         """
-        Create a new group.
-
-        New groups have no permissions.
+        Create a new group. New groups have no permissions.
 
         Status Codes:
             201: Successful operation
@@ -50,7 +48,7 @@ class GroupsView(PydanticView):
             raise HTTPBadRequest(text="Group already exists")
 
         return json_response(
-            Group.parse_obj(group).dict(),
+            GroupResponse.parse_obj(group).dict(),
             status=201,
             headers={"Location": f"/groups/{group.id}"},
         )
@@ -58,7 +56,7 @@ class GroupsView(PydanticView):
 
 @routes.view("/groups/{group_id}")
 class GroupView(PydanticView):
-    async def get(self) -> Union[r200[Group], r404]:
+    async def get(self) -> Union[r200[GroupResponse], r404]:
         """
         Get the complete representation of a single user group.
 
@@ -73,10 +71,10 @@ class GroupView(PydanticView):
         except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(Group.parse_obj(group).dict())
+        return json_response(GroupResponse.parse_obj(group).dict())
 
     @admin
-    async def patch(self, data: EditGroupSchema) -> Union[r200[Group], r404]:
+    async def patch(self, data: EditGroupSchema) -> Union[r200[GroupResponse], r404]:
         """
         Update the permissions of a group.
 
@@ -95,7 +93,7 @@ class GroupView(PydanticView):
         except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(Group.parse_obj(group).dict())
+        return json_response(GroupResponse.parse_obj(group).dict())
 
     @admin
     async def delete(self) -> Union[r204, r404]:
