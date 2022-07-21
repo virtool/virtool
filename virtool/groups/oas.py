@@ -7,6 +7,7 @@ class EditPermissionsSchema(BaseModel):
     """
     Possible permissions that will be updated for a user and group.
     """
+
     cancel_job: Optional[bool] = None
     create_ref: Optional[bool] = None
     create_sample: Optional[bool] = None
@@ -19,17 +20,15 @@ class EditPermissionsSchema(BaseModel):
 
 class CreateGroupSchema(BaseModel):
     """
-    Group id for creating a new Group.
+    A schema for requests to create groups.
     """
+
     group_id: constr(strip_whitespace=True, to_lower=True, min_length=1) = Field(
-        description="a unique id and display name for the group")
+        description="a unique id for the group"
+    )
 
     class Config:
-        schema_extra = {
-            "example": {
-                "group_id": "research"
-            }
-        }
+        schema_extra = {"example": {"group_id": "research"}}
 
 
 class CreateGroupResponse(Group):
@@ -44,12 +43,11 @@ class CreateGroupResponse(Group):
                     "modify_subtraction": False,
                     "remove_file": False,
                     "remove_job": True,
-                    "upload_file": True
+                    "upload_file": True,
                 },
-                "id": "research"
-
+                "id": "research",
+                "name": "research",
             }
-
         }
 
 
@@ -66,9 +64,10 @@ class GetGroupResponse(Group):
                         "modify_subtraction": False,
                         "remove_file": False,
                         "remove_job": True,
-                        "upload_file": True
+                        "upload_file": True,
                     },
-                    "id": "technicians"
+                    "id": "technicians",
+                    "name": "technicians",
                 }
             ]
         }
@@ -78,19 +77,15 @@ class EditGroupSchema(BaseModel):
     """
     Used when updating permissions.
     """
+
     permissions: EditPermissionsSchema = Field(
         description="a permission update comprising an object keyed by permissions "
-                    "with boolean values", default={})
+        "with boolean values",
+        default={},
+    )
 
     class Config:
-        schema_extra = {
-            "example": {
-                "permissions": {
-                    "create_ref": True
-                }
-
-            }
-        }
+        schema_extra = {"example": {"permissions": {"create_ref": True}}}
 
 
 class GroupResponse(Group):
@@ -105,8 +100,9 @@ class GroupResponse(Group):
                     "modify_subtraction": False,
                     "remove_file": False,
                     "remove_job": True,
-                    "upload_file": True
+                    "upload_file": True,
                 },
-                "id": "technicians"
+                "id": "technicians",
+                "name": "technicians",
             }
         }

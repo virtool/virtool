@@ -12,7 +12,7 @@ async def test_find(spawn_client, all_permissions, no_permissions):
 
     await client.db.groups.insert_many(
         [
-            {"_id": "test", "permissions": all_permissions},
+            {"_id": "test", "name": "testers", "permissions": all_permissions},
             {"_id": "limited", "permissions": no_permissions},
         ]
     )
@@ -22,8 +22,8 @@ async def test_find(spawn_client, all_permissions, no_permissions):
     assert resp.status == 200
 
     assert await resp.json() == [
-        {"id": "test", "permissions": all_permissions},
-        {"id": "limited", "permissions": no_permissions},
+        {"id": "test", "name": "testers", "permissions": all_permissions},
+        {"id": "limited", "name": "limited", "permissions": no_permissions},
     ]
 
 
@@ -51,7 +51,11 @@ async def test_create(error, spawn_client, all_permissions, no_permissions, resp
     assert resp.status == 201
     assert resp.headers["Location"] == "https://virtool.example.com/groups/test"
 
-    assert await resp.json() == {"id": "test", "permissions": no_permissions}
+    assert await resp.json() == {
+        "id": "test",
+        "name": "test",
+        "permissions": no_permissions,
+    }
 
     assert await client.db.groups.find_one("test") == {
         "_id": "test",
@@ -69,7 +73,7 @@ async def test_get(error, spawn_client, all_permissions, resp_is):
 
     if not error:
         await client.db.groups.insert_one(
-            {"_id": "foo", "permissions": all_permissions}
+            {"_id": "foo", "permissions": all_permissions},
         )
 
     resp = await client.get("/groups/foo")
@@ -80,7 +84,11 @@ async def test_get(error, spawn_client, all_permissions, resp_is):
 
     assert resp.status == 200
 
-    assert await resp.json() == {"id": "foo", "permissions": all_permissions}
+    assert await resp.json() == {
+        "id": "foo",
+        "name": "foo",
+        "permissions": all_permissions,
+    }
 
 
 @pytest.mark.parametrize("error", [None, "404"])
@@ -140,7 +148,10 @@ async def test_remove(error, fake, snapshot, spawn_client, no_permissions, resp_
 
     if not error:
         await client.db.groups.insert_one(
-            {"_id": "test", "permissions": {**no_permissions, Permission.create_sample.value: True}}
+            {
+                "_id": "test",
+                "permissions": {**no_permissions, Permission.create_sample.value: True},
+            }
         )
 
     resp = await client.delete("/groups/test")

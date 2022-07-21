@@ -145,6 +145,7 @@
 # name: test_update_permissions[uvloop-None][json]
   <class 'dict'> {
     'id': 'test',
+    'name': 'test',
     'permissions': <class 'dict'> {
       'cancel_job': False,
       'create_ref': False,

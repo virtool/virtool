@@ -8,7 +8,13 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
-from virtool.groups.oas import CreateGroupSchema, EditGroupSchema, CreateGroupResponse, GroupResponse, GetGroupResponse
+from virtool.groups.oas import (
+    CreateGroupSchema,
+    EditGroupSchema,
+    CreateGroupResponse,
+    GroupResponse,
+    GetGroupResponse,
+)
 from virtool.http.privileges import admin
 from virtool.http.routes import Routes
 
@@ -32,7 +38,9 @@ class GroupsView(PydanticView):
         )
 
     @admin
-    async def post(self, data: CreateGroupSchema) -> Union[r201[CreateGroupResponse], r400]:
+    async def post(
+        self, data: CreateGroupSchema
+    ) -> Union[r201[CreateGroupResponse], r400]:
         """
         Create a new group. New groups have no permissions.
 
