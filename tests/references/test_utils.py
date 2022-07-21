@@ -63,7 +63,7 @@ def test_detect_duplicate_isolate_ids(has_dups, test_otu):
 
     test_otu["isolates"].append(extra_isolate)
 
-    duplicate_isolate_ids = dict()
+    duplicate_isolate_ids = {}
 
     detect_duplicate_isolate_ids(test_otu, duplicate_isolate_ids)
 
@@ -72,7 +72,7 @@ def test_detect_duplicate_isolate_ids(has_dups, test_otu):
             test_otu["_id"]: {"name": "Prunus virus F", "duplicates": ["cab8b360"]}
         }
     else:
-        assert duplicate_isolate_ids == dict()
+        assert duplicate_isolate_ids == {}
 
 
 @pytest.mark.parametrize("seen", [True, False])

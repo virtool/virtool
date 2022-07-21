@@ -17,7 +17,7 @@ class TestVerify:
         Test that an isolate with no sequences is detected.
 
         """
-        test_merged_otu["isolates"][0]["sequences"] = list()
+        test_merged_otu["isolates"][0]["sequences"] = []
 
         assert virtool.otus.utils.verify(test_merged_otu) == {
             "empty_isolate": ["cab8b360"],
@@ -113,7 +113,7 @@ class TestExtractSequenceIds:
         assert "'isolates'" in str(excinfo.value)
 
     def test_empty_isolates(self, test_merged_otu):
-        test_merged_otu["isolates"] = list()
+        test_merged_otu["isolates"] = []
 
         with pytest.raises(ValueError) as excinfo:
             virtool.otus.utils.extract_sequence_ids(test_merged_otu)
@@ -129,7 +129,7 @@ class TestExtractSequenceIds:
         assert "missing sequences field" in str(excinfo.value)
 
     def test_empty_sequences(self, test_merged_otu):
-        test_merged_otu["isolates"][0]["sequences"] = list()
+        test_merged_otu["isolates"][0]["sequences"] = []
 
         with pytest.raises(ValueError) as excinfo:
             virtool.otus.utils.extract_sequence_ids(test_merged_otu)

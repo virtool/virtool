@@ -42,7 +42,7 @@ def extract_sequence_ids(otu: dict) -> List[str]:
 
     :return: the sequence ids belonging to ``otu``
     """
-    sequence_ids = list()
+    sequence_ids = []
 
     isolates = otu["isolates"]
 
@@ -159,7 +159,7 @@ def split(merged: Document) -> Tuple[Document, List[Document]]:
     :param merged: the merged otu to split
     :return: a tuple containing the new otu document and a list of sequence documents
     """
-    sequences = list()
+    sequences = []
 
     otu = deepcopy(merged)
 
@@ -186,12 +186,12 @@ def verify(joined: Document) -> Union[bool, Document]:
     """
     errors = {
         "empty_otu": len(joined["isolates"]) == 0,
-        "empty_isolate": list(),
-        "empty_sequence": list(),
+        "empty_isolate": [],
+        "empty_sequence": [],
         "isolate_inconsistency": False,
     }
 
-    isolate_sequence_counts = list()
+    isolate_sequence_counts = []
 
     # Append the isolate_ids of any isolates without sequences to empty_isolate. Append
     # the isolate_id and sequence id of any sequences that have an empty sequence.

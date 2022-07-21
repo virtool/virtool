@@ -278,7 +278,7 @@ async def get_unbuilt_stats(db, ref_id: Optional[str] = None) -> dict:
     :return: the change count and modified OTU count
 
     """
-    ref_query = dict()
+    ref_query = {}
 
     if ref_id:
         ref_query["reference.id"] = ref_id

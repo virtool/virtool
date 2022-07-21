@@ -123,7 +123,7 @@ async def format_pathoscope(app: App, document: Dict[str, Any]) -> Dict[str, Any
 
         hits_by_otu[(otu_id, otu_version)].append(hit)
 
-    coros = list()
+    coros = []
 
     for otu_specifier, hits in hits_by_otu.items():
         otu_id, otu_version = otu_specifier
@@ -188,7 +188,7 @@ def format_pathoscope_sequences(
         try:
             final = hit["final"]
         except KeyError:
-            final = dict()
+            final = {}
 
         align = hit.get("align")
 
@@ -264,7 +264,7 @@ async def format_analysis_to_excel(app: App, document: Dict[str, Any]) -> bytes:
         cell = ws.cell(column=col, row=1, value=header)
         cell.font = header_font
 
-    rows = list()
+    rows = []
 
     for otu in formatted["results"]["hits"]:
         for isolate in otu["isolates"]:

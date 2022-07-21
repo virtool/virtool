@@ -52,7 +52,7 @@ class CloneReferenceTask(Task):
 
         tracker = await self.get_tracker(len(manifest))
 
-        inserted_otu_ids = list()
+        inserted_otu_ids = []
 
         await virtool.tasks.pg.update(self.pg, self.id, step="copy_otus")
 
@@ -200,7 +200,7 @@ class RemoteReferenceTask(Task):
         self.steps = [self.download, self.create_history, self.update_reference]
 
         self.import_data = None
-        self.inserted_otu_ids = list()
+        self.inserted_otu_ids = []
 
     async def download(self):
         tracker = await self.get_tracker(self.context["release"]["size"])
@@ -426,7 +426,7 @@ class UpdateRemoteReferenceTask(Task):
         # The remote ids in the update otus.
         otu_ids_in_update = {otu["_id"] for otu in update_data["otus"]}
 
-        updated_list = list()
+        updated_list = []
 
         for otu in update_data["otus"]:
             old_or_id = await update_joined_otu(

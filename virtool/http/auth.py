@@ -161,8 +161,8 @@ async def middleware(req, handler) -> Response:
             db=db,
             administrator=False,
             force_reset=False,
-            groups=list(),
-            permissions=dict(),
+            groups=[],
+            permissions={},
             user_id=None,
             authenticated=False,
         )
@@ -209,8 +209,8 @@ async def middleware(req, handler) -> Response:
             db=db,
             administrator=False,
             force_reset=False,
-            groups=list(),
-            permissions=dict(),
+            groups=[],
+            permissions={},
             user_id=None,
             authenticated=False,
         )

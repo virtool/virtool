@@ -86,7 +86,7 @@ class JobRightsDomain:
         Return the dictionary representation of the rights.
 
         """
-        rights_dict = dict()
+        rights_dict = {}
 
         if len(self._read):
             rights_dict["read"] = sorted(self._read)
@@ -121,7 +121,7 @@ class JobRights:
         This is intended for writing the rights to a database or as JSON.
 
         """
-        rights_dict = dict()
+        rights_dict = {}
 
         for name, rights_domain in self.__dict__.items():
             rights_domain_dict = rights_domain.as_dict()

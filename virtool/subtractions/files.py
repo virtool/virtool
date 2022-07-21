@@ -49,7 +49,7 @@ async def create_subtraction_files(
     :param path: The path to the subtraction files
 
     """
-    subtraction_files = list()
+    subtraction_files = []
 
     for filename in files:
         subtraction_files.append(

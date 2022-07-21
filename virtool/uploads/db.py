@@ -98,7 +98,7 @@ async def find(pg, user: str = None, upload_type: str = None, ready: bool = None
     :return: A list of dictionaries that represent each `Upload` document found
     """
     filters = [Upload.removed == False]
-    uploads = list()
+    uploads = []
 
     async with AsyncSession(pg) as session:
         if user:

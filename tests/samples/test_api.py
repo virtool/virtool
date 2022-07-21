@@ -121,7 +121,7 @@ async def test_find(
     )
 
     path = "/samples"
-    query = list()
+    query = []
 
     if find is not None:
         query.append(f"find={find}")

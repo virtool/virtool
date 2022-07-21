@@ -21,7 +21,7 @@ class TestSimpleMongoFetcher:
     async def test_auto_delete(self, connections, dbi, ws):
         fetcher = SimpleMongoFetcher(dbi.hmm)
 
-        pairs = list()
+        pairs = []
 
         async for pair in fetcher.fetch(Change("hmm", DELETE, ["foo"]), connections):
             pairs.append(pair)
@@ -47,7 +47,7 @@ class TestSimpleMongoFetcher:
         else:
             fetcher = SimpleMongoFetcher(dbi.hmm)
 
-        pairs = list()
+        pairs = []
 
         async for pair in fetcher.fetch(Change("hmm", operation, ["foo"]), connections):
             pairs.append(pair)
@@ -82,7 +82,7 @@ class TestSimpleMongoFetcher:
         else:
             fetcher = SimpleMongoFetcher(dbi.hmm)
 
-        pairs = list()
+        pairs = []
 
         async for pair in fetcher.fetch(Change("hmm", UPDATE, ["foo"]), connections):
             pairs.append(pair)
@@ -109,7 +109,7 @@ class TestIndexesFetcher:
     async def test_auto_delete(self, connections, dbi, ws):
         fetcher = IndexesFetcher(dbi)
 
-        pairs = list()
+        pairs = []
 
         async for pair in fetcher.fetch(
             Change("indexes", DELETE, ["foo.3"]), connections
@@ -147,7 +147,7 @@ class TestIndexesFetcher:
 
         fetcher = IndexesFetcher(dbi)
 
-        pairs = list()
+        pairs = []
 
         async for pair in fetcher.fetch(
             Change("indexes", operation, ["cdffbdjk"]), connections
@@ -177,7 +177,7 @@ class TestLabelsFetcher:
     async def test_auto_delete(self, connections, dbi, pg: AsyncEngine, ws):
         fetcher = LabelsFetcher(pg, dbi)
 
-        pairs = list()
+        pairs = []
 
         message = {"interface": "labels", "operation": DELETE, "data": [1]}
 
@@ -192,7 +192,7 @@ class TestLabelsFetcher:
     ):
         fetcher = LabelsFetcher(pg, dbi)
 
-        pairs = list()
+        pairs = []
 
         async for pair in fetcher.fetch(Change("labels", operation, [1]), connections):
             pairs.append(pair)
@@ -216,7 +216,7 @@ class TestUploadsFetcher:
     async def test_auto_delete(self, connections, dbi, pg, ws):
         fetcher = UploadsFetcher(dbi, pg)
 
-        pairs = list()
+        pairs = []
 
         message = {"interface": "uploads", "operation": DELETE, "data": [1]}
 
@@ -240,7 +240,7 @@ class TestUploadsFetcher:
     ):
         fetcher = UploadsFetcher(dbi, pg)
 
-        messages = list()
+        messages = []
 
         async for conn, message in fetcher.fetch(
             Change("uploads", operation, [1]), connections
@@ -255,7 +255,7 @@ class TestTasksFetcher:
     async def test_auto_delete(self, connections, pg, ws):
         fetcher = TasksFetcher(pg)
 
-        pairs = list()
+        pairs = []
 
         message = {"interface": "tasks", "operation": DELETE, "data": [1]}
 
@@ -270,7 +270,7 @@ class TestTasksFetcher:
     ):
         fetcher = TasksFetcher(pg)
 
-        pairs = list()
+        pairs = []
 
         async for pair in fetcher.fetch(Change("tasks", operation, [1]), connections):
             pairs.append(pair)
