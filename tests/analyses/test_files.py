@@ -1,5 +1,5 @@
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.analyses.files
 from virtool.analyses.models import AnalysisFile

@@ -1,7 +1,6 @@
 import io
 import json
 import os
-from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
@@ -15,7 +14,7 @@ from virtool.pg.utils import get_row_by_id
 
 @pytest.fixture
 def files(test_files_path, tmp_path):
-    path = test_files_path/"aodp"/"reference.fa"
+    path = test_files_path / "aodp" / "reference.fa"
 
     data = {"file": open(path, "rb")}
 
@@ -521,7 +520,7 @@ async def test_finalize_large(fake, spawn_job_client, faker):
     patch_json = {"results": {"result": profiles * 500}}
 
     # Make sure this test actually checks that the max body size is increased.
-    assert len(json.dumps(patch_json)) > 1024 ** 2
+    assert len(json.dumps(patch_json)) > 1024**2
 
     client = await spawn_job_client(authorize=True)
 
