@@ -102,7 +102,7 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
       - run: mkdir -p virtool/spec
-      - run: poetry run python3 -m virtool.custom_oas.oas virtool.oas:app > virtool/spec/oas.json
+      - run: poetry run python3 -m virtool.custom_oas.oas virtool.oas:app > virtool/spec/openapi.json
       - uses: actions/upload-artifact@v3
         with:
           name: openapi.json
