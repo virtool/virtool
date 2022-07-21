@@ -294,9 +294,8 @@ def load_reference_file(path: str) -> dict:
 
     :return: the otus data to import
     """
-    with open(path, "rb") as handle:
-        with gzip.open(handle, "rt") as gzip_file:
-            return json.load(gzip_file)
+    with open(path, "rb") as handle, gzip.open(handle, "rt") as gzip_file:
+        return json.load(gzip_file)
 
 
 def validate_otu(otu: dict, strict: bool) -> dict:
