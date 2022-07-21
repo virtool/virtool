@@ -7,38 +7,38 @@ import virtool.history.db
 import virtool.http.routes
 import virtool.references.db
 from aiohttp.web import HTTPConflict, HTTPNoContent
+from virtool.data.utils import get_data_from_req
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.errors import DatabaseError
 from virtool_core.models.history import History, HistoryMinimal
+from virtool.data.errors import ResourceNotFoundError
 
 routes = virtool.http.routes.Routes()
 
 
 @routes.view("/history")
 class ChangesView(PydanticView):
-
     async def get(self) -> Union[Dict[str, Union[Any, List[HistoryMinimal]]], r422]:
         """
         Get a list of change documents.
-
         Status Codes:
         200: Successful Operation
-        422: Invalid query
+        400: Invalid query
         """
-        db = self.request.app["db"]
+        data = await get_data_from_req(self.request).history.find(
+            req_query=self.request.query
+        )
 
-        data = await virtool.history.db.find(db, self.request.query)
-
-        return json_response(data)
+        return json_response(
+            [HistoryMinimal.parse_obj(document).dict() for document in data]
+        )
 
 
 @routes.view("/history/{change_id}")
 class ChangeView(PydanticView):
-
     async def get(self) -> Union[r200[History], r404]:
         """
         Get a specific change document by its ``change_id``.
-
         Status Codes:
         200: Successful Operation
         404: Not found
@@ -56,24 +56,23 @@ class ChangeView(PydanticView):
         """
         Remove the change document with the given ``change_id`` and
         any subsequent changes.
-
         Status Codes:
         204: Successful Operation
         403: Insufficient Rights
         404: Not found
         409: Not unbuilt
         """
-        db = self.request.app["db"]
-
         change_id = self.request.match_info["change_id"]
 
-        document = await db.history.find_one(change_id, ["reference"])
-
-        if not document:
+        try:
+            document = await get_data_from_req(self.request).history.delete(
+                change_id=change_id
+            )
+        except ResourceNotFoundError:
             raise NotFound()
 
         if not await virtool.references.db.check_right(
-                self.request, document["reference"]["id"], "modify_otu"
+            self.request, document["reference"]["id"], "modify_otu"
         ):
             raise InsufficientRights()
 

@@ -14,7 +14,7 @@ def test_change(static_time):
             ["change", "name", ["Prunus virus F", "Prunus virus E"]],
             ["change", "version", [0, 1]],
         ],
-        "index": {"id": "unbuilt", "version": "unbuilt"},
+        "index": {"id": "unbuilt", "version": 1},
         "reference": {"id": "hxn167"},
         "user": {"id": "test"},
         "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 1},

@@ -1,82 +1,90 @@
 # name: test_find[uvloop]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': '2015-10-06T20:00:00Z',
-        'description': 'Edited Prunus virus E',
-        'id': '6116cba1.1',
-        'index': <class 'dict'> {
-          'id': 'unbuilt',
-          'version': 'unbuilt',
-        },
-        'method_name': 'edit',
-        'otu': <class 'dict'> {
-          'id': '6116cba1',
-          'name': 'Prunus virus F',
-          'version': 1,
-        },
-        'reference': <class 'dict'> {
-          'id': 'hxn167',
-        },
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
+  <class 'list'> [
+    <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Edited Prunus virus E',
+      'id': '6116cba1.1',
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 1,
       },
-      <class 'dict'> {
-        'created_at': '2015-10-06T20:00:00Z',
-        'description': 'Edited Prunus virus E',
-        'id': 'foobar.1',
-        'index': <class 'dict'> {
-          'id': 'unbuilt',
-          'version': 'unbuilt',
-        },
-        'method_name': 'edit',
-        'otu': <class 'dict'> {
-          'id': '6116cba1',
-          'name': 'Prunus virus F',
-          'version': 1,
-        },
-        'reference': <class 'dict'> {
-          'id': 'hxn167',
-        },
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
+      'method_name': 'edit',
+      'otu': <class 'dict'> {
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'version': '1',
       },
-      <class 'dict'> {
-        'created_at': '2015-10-06T20:00:00Z',
-        'description': 'Edited Prunus virus E',
-        'id': 'foobar.2',
-        'index': <class 'dict'> {
-          'id': 'unbuilt',
-          'version': 'unbuilt',
-        },
-        'method_name': 'edit',
-        'otu': <class 'dict'> {
-          'id': '6116cba1',
-          'name': 'Prunus virus F',
-          'version': 1,
-        },
-        'reference': <class 'dict'> {
-          'id': 'hxn167',
-        },
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'bob',
-          'id': 'test',
-        },
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
       },
-    ],
-    'found_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  }
+      'user': <class 'dict'> {
+        'administrator': False,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'handle': 'bob',
+        'id': 'test',
+      },
+    },
+    <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Edited Prunus virus E',
+      'id': 'foobar.1',
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 1,
+      },
+      'method_name': 'edit',
+      'otu': <class 'dict'> {
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'version': '1',
+      },
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
+      },
+      'user': <class 'dict'> {
+        'administrator': False,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'handle': 'bob',
+        'id': 'test',
+      },
+    },
+    <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Edited Prunus virus E',
+      'id': 'foobar.2',
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 1,
+      },
+      'method_name': 'edit',
+      'otu': <class 'dict'> {
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'version': '1',
+      },
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
+      },
+      'user': <class 'dict'> {
+        'administrator': False,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'handle': 'bob',
+        'id': 'test',
+      },
+    },
+  ]
 ---
 # name: test_get[uvloop-None]
   <class 'dict'> {
@@ -111,7 +119,7 @@
     'id': '6116cba1.1',
     'index': <class 'dict'> {
       'id': 'unbuilt',
-      'version': 'unbuilt',
+      'version': 1,
     },
     'method_name': 'edit',
     'otu': <class 'dict'> {
