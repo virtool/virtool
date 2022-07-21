@@ -105,8 +105,8 @@ jobs:
       - run: poetry run python3 -m virtool.custom_oas.oas virtool.oas:app > virtool/spec/oas.json
       - uses: actions/upload-artifact@v3
         with:
-          name: oas-specification
-          path: virtool/spec/oas.json
+          name: openapi.json
+          path: virtool/spec/openapi.json
   release:
     runs-on: ubuntu-20.04
     needs: [test, build, oas]
@@ -117,8 +117,8 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: oas-specification
-          path: virtool/spec/oas.json
+          name: openapi.json
+          path: virtool/spec/openapi.json
       - name: Setup NodeJS
         uses: actions/setup-node@v1
         with:
