@@ -5,6 +5,7 @@ from virtool.analyses.data import AnalysisData
 from virtool.blast.data import BLASTData
 from virtool.data.layer import DataLayer
 from virtool.groups.data import GroupsData
+from virtool.history.data import HistoryData
 from virtool.jobs.client import DummyJobsClient
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
@@ -18,6 +19,7 @@ def data_layer(dbi, mocker, pg: AsyncEngine):
         AnalysisData({"db": dbi, "pg": pg}),
         mocker.Mock(spec=BLASTData),
         GroupsData(dbi),
+        HistoryData(dbi),
         LabelsData(dbi, pg),
         JobsData(DummyJobsClient(), dbi, pg),
         OTUData({"db": dbi, "pg": pg}),

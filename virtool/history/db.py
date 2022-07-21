@@ -17,12 +17,12 @@ import virtool.otus.db
 import virtool.otus.utils
 import virtool.utils
 from virtool.api.utils import paginate
-from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.history.utils import (
     calculate_diff,
     derive_otu_information,
     write_diff_file,
 )
+from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION, AttachUserTransform
 
