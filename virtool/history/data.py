@@ -1,8 +1,9 @@
 from typing import List, Any, Dict, Union
 
+from virtool_core.models.history import HistoryMinimal
+
 import virtool.history.db
 from virtool.data.errors import ResourceNotFoundError
-from virtool_core.models.history import HistoryMinimal
 from virtool.mongo.core import DB
 
 

@@ -1,17 +1,17 @@
 from typing import Union, List, Dict, Any
 
+from aiohttp.web import HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r403, r404, r409, r422
+from virtool_core.models.history import History, HistoryMinimal
 
 import virtool.history.db
 import virtool.http.routes
 import virtool.references.db
-from aiohttp.web import HTTPConflict, HTTPNoContent
-from virtool.data.utils import get_data_from_req
 from virtool.api.response import InsufficientRights, NotFound, json_response
-from virtool.errors import DatabaseError
-from virtool_core.models.history import History, HistoryMinimal
 from virtool.data.errors import ResourceNotFoundError
+from virtool.data.utils import get_data_from_req
+from virtool.errors import DatabaseError
 
 routes = virtool.http.routes.Routes()
 
