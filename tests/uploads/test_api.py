@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -9,9 +8,8 @@ from virtool.users.utils import Permission
 
 
 @pytest.fixture
-def files(tmp_path):
-    (tmp_path / "files").mkdir()
-    return {"file": open(Path.cwd() / "tests" / "test_files" / "test.fq.gz", "rb")}
+def files(test_files_path):
+    return {"file": open(test_files_path / "test.fq.gz", "rb")}
 
 
 class TestUpload:
@@ -30,7 +28,9 @@ class TestUpload:
         Test `POST /uploads` to assure a file can be uploaded and that it properly updates the db.
 
         """
-        client = await spawn_client(authorize=True, permissions=[Permission.upload_file.value])
+        client = await spawn_client(
+            authorize=True, permissions=[Permission.upload_file.value]
+        )
 
         client.app["config"].data_path = tmp_path
 
@@ -51,7 +51,9 @@ class TestUpload:
         Test `POST /uploads` to assure it properly rejects an invalid request.
 
         """
-        client = await spawn_client(authorize=True, permissions=[Permission.upload_file.value])
+        client = await spawn_client(
+            authorize=True, permissions=[Permission.upload_file.value]
+        )
 
         resp = await client.post_form("/uploads", data=files)
 
@@ -62,7 +64,9 @@ class TestUpload:
         Test `POST /uploads` to assure it properly rejects an invalid upload type.
 
         """
-        client = await spawn_client(authorize=True, permissions=[Permission.upload_file.value])
+        client = await spawn_client(
+            authorize=True, permissions=[Permission.upload_file.value]
+        )
 
         resp = await client.post_form(
             "/uploads?type=foobar&name=Test.fq.gz", data=files
