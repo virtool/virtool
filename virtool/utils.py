@@ -69,9 +69,8 @@ def compress_file(path: Path, target: Path, processes: int = 1):
 
 
 def compress_file_with_gzip(path: Path, target: Path):
-    with open(path, "rb") as f_in:
-        with gzip.open(target, "wb", compresslevel=6) as f_out:
-            shutil.copyfileobj(f_in, f_out)
+    with open(path, "rb") as f_in, gzip.open(target, "wb", compresslevel=6) as f_out:
+        shutil.copyfileobj(f_in, f_out)
 
 
 def compress_file_with_pigz(path: Path, target: Path, processes: int):
@@ -123,9 +122,8 @@ def decompress_file(path: Path, target: Path, processes: Optional[int] = 1):
 
 
 def decompress_file_with_gzip(path: Path, target: Path):
-    with gzip.open(path, "rb") as f_in:
-        with open(target, "wb") as f_out:
-            shutil.copyfileobj(f_in, f_out)
+    with gzip.open(path, "rb") as f_in, open(target, "wb") as f_out:
+        shutil.copyfileobj(f_in, f_out)
 
 
 def decompress_file_with_pigz(path: Path, target: Path, processes: int):
