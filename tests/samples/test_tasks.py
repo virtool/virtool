@@ -17,7 +17,7 @@ async def test_compress_samples_task(
     app_dict = {
         "db": dbi,
         "pg": pg,
-        "settings": dict(),
+        "settings": {},
     }
 
     await dbi.samples.insert_many(
@@ -42,7 +42,7 @@ async def test_compress_samples_task(
         session.add(task)
         await session.commit()
 
-    calls = list()
+    calls = []
 
     async def compress_reads(app, sample):
         calls.append((app, sample))
@@ -75,7 +75,7 @@ async def test_move_sample_files_task(
     app_dict = {
         "db": dbi,
         "pg": pg,
-        "settings": dict(),
+        "settings": {},
     }
 
     sample = {

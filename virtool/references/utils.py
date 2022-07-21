@@ -26,7 +26,7 @@ def check_import_data(
     if v.errors:
         errors.append({"id": "file", "issues": v.errors})
 
-    otus = dict()
+    otus = {}
 
     for otu in import_data["otus"]:
         verification = None
@@ -36,7 +36,7 @@ def check_import_data(
 
         validation = validate_otu(otu, strict)
 
-        issues = dict()
+        issues = {}
 
         if verification:
             issues["verification"] = verification
@@ -160,7 +160,7 @@ def detect_duplicate_name(joined: dict, duplicates: Set[str], seen: Set[str]):
 def detect_duplicates(otus: List[dict], strict: bool = True) -> List[dict]:
     duplicate_abbreviations = set()
     duplicate_ids = set()
-    duplicate_isolate_ids = dict()
+    duplicate_isolate_ids = {}
     duplicate_names = set()
     duplicate_sequence_ids = set()
 
@@ -189,7 +189,7 @@ def detect_duplicates(otus: List[dict], strict: bool = True) -> List[dict]:
                 joined, duplicate_sequence_ids, seen_sequence_ids
             )
 
-    errors = list()
+    errors = []
 
     if duplicate_abbreviations:
         errors.append(
@@ -300,14 +300,14 @@ def load_reference_file(path: str) -> dict:
 
 
 def validate_otu(otu: dict, strict: bool) -> dict:
-    report = {"otu": None, "isolates": dict(), "sequences": dict()}
+    report = {"otu": None, "isolates": {}, "sequences": {}}
 
     otu_validator = Validator(get_otu_schema(strict), allow_unknown=True)
 
     if not otu_validator.validate(otu):
         report["otu"] = otu_validator.errors
 
-    report["isolates"] = dict()
+    report["isolates"] = {}
 
     if "isolates" in otu:
         isolate_validator = Validator(get_isolate_schema(strict), allow_unknown=True)

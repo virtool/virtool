@@ -12,7 +12,7 @@ async def test_events(rollback, mocker, pg: AsyncEngine):
     Specifically, make sure changes aren't recorded for both flushed and un-flushed changes.
 
     """
-    changes = list()
+    changes = []
 
     def enqueue_change(*args):
         changes.append(args)

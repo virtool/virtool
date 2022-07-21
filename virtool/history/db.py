@@ -246,9 +246,9 @@ async def patch_to_version(app, otu_id: str, version: Union[str, int]) -> tuple:
     """
     db = app["db"]
 
-    reverted_history_ids = list()
+    reverted_history_ids = []
 
-    current = await virtool.otus.db.join(db, otu_id) or dict()
+    current = await virtool.otus.db.join(db, otu_id) or {}
 
     if "version" in current and current["version"] == version:
         return current, deepcopy(current), reverted_history_ids

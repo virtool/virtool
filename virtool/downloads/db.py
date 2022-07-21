@@ -27,7 +27,7 @@ async def generate_isolate_fasta(db, otu_id: str, isolate_id: str) -> Tuple[str,
         {"_id": otu_id, "isolates.id": isolate_id}, ["name", "isolates"]
     )
 
-    fasta = list()
+    fasta = []
 
     async for sequence in db.sequences.find(
         {"otu_id": otu_id, "isolate_id": isolate_id}, ["sequence"]

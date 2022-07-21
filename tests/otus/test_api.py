@@ -437,7 +437,7 @@ async def test_get_isolate(
     client = await spawn_client(authorize=True)
 
     if error == "404_isolate":
-        test_otu["isolates"] = list()
+        test_otu["isolates"] = []
 
     if error != "404_otu":
         await client.db.otus.insert_one(test_otu)

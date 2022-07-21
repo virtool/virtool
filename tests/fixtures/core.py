@@ -12,8 +12,8 @@ from virtool.example import example_path as virtool_example_path
 
 class MockRequest:
     def __init__(self):
-        self.app = dict()
-        self._state = dict()
+        self.app = {}
+        self._state = {}
 
     def __getitem__(self, key):
         return self._state.get(key)
@@ -36,7 +36,7 @@ def mock_req():
 @pytest.fixture(scope="session")
 def md_proxy():
     def func(data_dict=None):
-        md = multidict.MultiDict(data_dict or dict())
+        md = multidict.MultiDict(data_dict or {})
         return multidict.MultiDictProxy(md)
 
     return func
@@ -64,7 +64,7 @@ def test_random_alphanumeric(mocker):
                 "9PfsOM1B99KfaMz2Wu3C",
             ]
 
-            self.history = list()
+            self.history = []
 
             self.last_choice = None
 
@@ -74,7 +74,7 @@ def test_random_alphanumeric(mocker):
             if not mixed_case:
                 string = string.lower()
 
-            excluded = excluded or list()
+            excluded = excluded or []
 
             if string in excluded:
                 string = self.__call__(length, mixed_case, excluded)

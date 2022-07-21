@@ -98,7 +98,7 @@ async def check_subtraction_fasta_files(db, config: Config) -> list:
     :return: a list of subtraction IDs without FASTA files
 
     """
-    subtractions_without_fasta = list()
+    subtractions_without_fasta = []
 
     async for subtraction in db.subtraction.find({"deleted": False}):
         path = join_subtraction_path(config, subtraction["_id"])

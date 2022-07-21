@@ -57,7 +57,7 @@ async def find(req):
         },
     ]
 
-    ready_indexes = list()
+    ready_indexes = []
 
     async for agg in db.indexes.aggregate(pipeline):
         reference = await db.references.find_one(agg["_id"], ["data_type", "name"])
