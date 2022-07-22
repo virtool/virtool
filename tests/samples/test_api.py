@@ -238,8 +238,6 @@ class TestCreate:
         )
 
         client.app["settings"] = settings
-        client.app["settings"].sm_proc = 2
-        client.app["settings"].sm_mem = 4
         client.app["settings"].sample_group = group_setting
         client.app["settings"].sample_all_write = True
         client.app["settings"].sample_group_write = True

@@ -20,7 +20,6 @@ async def test_settings(dbi):
         "sample_group_read": True,
         "sample_group_write": False,
         "sample_unique_names": True,
-        "software_channel": "stable",
     }
 
     await dbi.settings.insert_one(settings)
