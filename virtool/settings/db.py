@@ -1,27 +1,10 @@
 import logging
-from dataclasses import asdict
-from dataclasses import dataclass, field
 from typing import Any, Dict
+from virtool_core.models.settings import Settings
 
 logger = logging.getLogger(__name__)
 
 PROJECTION = {"_id": False}
-
-
-@dataclass
-class Settings:
-    sample_group: str = None
-    sample_group_read: bool = True
-    sample_group_write: bool = False
-    sample_all_read: bool = True
-    sample_all_write: bool = False
-    sample_unique_names: bool = True
-    hmm_slug: str = "virtool/virtool-hmm"
-    enable_api: bool = False
-    enable_sentry: bool = True
-    software_channel: str = "stable"
-    minimum_password_length: int = 8
-    default_source_types: list = field(default_factory=lambda: ["isolate", "strain"])
 
 
 async def ensure(db):
@@ -33,9 +16,9 @@ async def ensure(db):
     :return: a dictionary with settings data
 
     """
-    existing = await db.settings.find_one({"_id": "settings"}, {"_id": False}) or dict()
+    existing = await db.settings.find_one({"_id": "settings"}, {"_id": False}) or {}
 
-    settings = {**asdict(Settings()), **existing}
+    settings = {**(Settings().dict()), **existing}
     settings.pop("_id", None)
 
     await db.settings.update_one({"_id": "settings"}, {"$set": settings}, upsert=True)
@@ -56,9 +39,10 @@ async def get(db) -> Dict[str, Any]:
 
     if settings:
         settings.pop("_id", None)
+        settings.pop("software_channel", None)
         return settings
 
-    return dict()
+    return {}
 
 
 async def update(db, updates: dict) -> Dict[str, Any]:
@@ -76,4 +60,5 @@ async def update(db, updates: dict) -> Dict[str, Any]:
     )
 
     updated.pop("_id", None)
+
     return updated
