@@ -3,20 +3,19 @@ from typing import List, Union
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r404
-from virtool_core.models.label import Label, LabelMinimal
 
 import virtool.http.routes
 from virtool.api.response import EmptyRequest, NotFound, json_response
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.labels.oas import CreateLabelSchema, EditLabelSchema
+from virtool.labels.oas import CreateLabelSchema, EditLabelSchema, CreateLabelResponse, GetLabelResponse, LabelResponse
 
 routes = virtool.http.routes.Routes()
 
 
 @routes.view("/labels")
 class LabelsView(PydanticView):
-    async def get(self) -> Union[r200[List[LabelMinimal]], r400]:
+    async def get(self) -> Union[r200[List[GetLabelResponse]], r400]:
         """
         List all sample labels.
 
@@ -30,7 +29,7 @@ class LabelsView(PydanticView):
 
         return json_response([label.dict() for label in labels])
 
-    async def post(self, data: CreateLabelSchema) -> Union[r201[Label], r400]:
+    async def post(self, data: CreateLabelSchema) -> Union[r201[CreateLabelResponse], r400]:
         """
         Create a sample label.
 
@@ -58,7 +57,7 @@ class LabelsView(PydanticView):
 
 @routes.view("/labels/{label_id}")
 class LabelView(PydanticView):
-    async def get(self) -> Union[r200[Label], r404]:
+    async def get(self) -> Union[r200[LabelResponse], r404]:
         """
         Get the details for a sample label.
 
@@ -75,7 +74,7 @@ class LabelView(PydanticView):
 
         return json_response(label.dict())
 
-    async def patch(self, data: EditLabelSchema) -> Union[r200[Label], r400, r404]:
+    async def patch(self, data: EditLabelSchema) -> Union[r200[LabelResponse], r400, r404]:
         """
         Edit an existing sample label.
 
