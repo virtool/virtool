@@ -25,7 +25,13 @@ from virtool.mongo.transforms import apply_transforms
 from virtool.subtractions.db import PROJECTION, attach_computed
 from virtool.subtractions.files import create_subtraction_file, delete_subtraction_file
 from virtool.subtractions.models import SubtractionFile
-from virtool.subtractions.oas import CreateSubtractionSchema, EditSubtractionSchema, GetSubtractionResponse, CreateSubtractionResponse, SubtractionResponse
+from virtool.subtractions.oas import (
+    CreateSubtractionSchema,
+    EditSubtractionSchema,
+    GetSubtractionResponse,
+    CreateSubtractionResponse,
+    SubtractionResponse,
+)
 from virtool.subtractions.utils import FILES
 from virtool.uploads.models import Upload
 from virtool.uploads.utils import naive_writer
