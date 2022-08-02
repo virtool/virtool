@@ -50,7 +50,7 @@ async def create(
         document = {
             "_id": cache_id,
             "created_at": virtool.utils.timestamp(),
-            "files": list(),
+            "files": [],
             "key": key,
             "legacy": False,
             "missing": False,

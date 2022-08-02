@@ -33,7 +33,7 @@ async def ensure(db):
     :return: a dictionary with settings data
 
     """
-    existing = await db.settings.find_one({"_id": "settings"}, {"_id": False}) or dict()
+    existing = await db.settings.find_one({"_id": "settings"}, {"_id": False}) or {}
 
     settings = {**asdict(Settings()), **existing}
     settings.pop("_id", None)
@@ -58,7 +58,7 @@ async def get(db) -> Dict[str, Any]:
         settings.pop("_id", None)
         return settings
 
-    return dict()
+    return {}
 
 
 async def update(db, updates: dict) -> Dict[str, Any]:

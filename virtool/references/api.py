@@ -57,7 +57,7 @@ async def find(req):
 
     term = req.query.get("find")
 
-    db_query = dict()
+    db_query = {}
 
     if term:
         db_query = compose_regex_query(term, ["name", "data_type"])
@@ -154,7 +154,7 @@ async def list_updates(req):
     if updates is not None:
         updates.reverse()
 
-    return json_response(updates or list())
+    return json_response(updates or [])
 
 
 @routes.post("/refs/{ref_id}/updates")
@@ -490,7 +490,7 @@ async def get_group(req):
         raise NotFound()
 
     if document is not None:
-        for group in document.get("groups", list()):
+        for group in document.get("groups", []):
             if group["id"] == group_id:
                 return json_response(group)
 

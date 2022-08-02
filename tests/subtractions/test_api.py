@@ -5,7 +5,7 @@ from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.subtractions.models import SubtractionFile
-from virtool.users.utils import Permission
+from virtool_core.models.enums import Permission
 
 
 async def test_find(fake, spawn_client, snapshot):
@@ -13,7 +13,13 @@ async def test_find(fake, spawn_client, snapshot):
 
     user = await fake.users.insert()
 
-    document = {"_id": "id", "name": "test", "deleted": False, "ready": False, "user": {"id": user["_id"]}}
+    document = {
+        "_id": "id",
+        "name": "test",
+        "deleted": False,
+        "ready": False,
+        "user": {"id": user["_id"]},
+    }
 
     await client.db.subtraction.insert_one(document)
 
@@ -62,7 +68,9 @@ async def test_edit(data, has_user, mocker, snapshot, fake, spawn_client):
         user = await fake.users.insert()
         document["user"] = {"id": user["_id"]}
 
-    client = await spawn_client(authorize=True, permissions=[Permission.modify_subtraction.value])
+    client = await spawn_client(
+        authorize=True, permissions=[Permission.modify_subtraction]
+    )
 
     await client.db.subtraction.insert_one(document)
 
@@ -75,7 +83,9 @@ async def test_edit(data, has_user, mocker, snapshot, fake, spawn_client):
 
 @pytest.mark.parametrize("exists", [True, False])
 async def test_remove(exists, fake, spawn_client, tmp_path, resp_is):
-    client = await spawn_client(authorize=True, permissions=Permission.modify_subtraction.value)
+    client = await spawn_client(
+        authorize=True, permissions=Permission.modify_subtraction
+    )
     client.app["config"].data_path = tmp_path
 
     user = await fake.users.insert()
@@ -148,7 +158,7 @@ async def test_upload(
 
 @pytest.mark.parametrize("error", [None, "404", "409", "422"])
 async def test_finalize_subtraction(
-        error, fake, spawn_job_client, snapshot, resp_is, test_subtraction_files
+    error, fake, spawn_job_client, snapshot, resp_is, test_subtraction_files
 ):
     user = await fake.users.insert()
 
@@ -234,7 +244,7 @@ async def test_job_remove(exists, ready, tmp_path, spawn_job_client, snapshot, r
 
 @pytest.mark.parametrize("error", [None, "400_subtraction", "400_file", "400_path"])
 async def test_download_subtraction_files(
-        error, tmp_path, spawn_job_client, pg: AsyncEngine
+    error, tmp_path, spawn_job_client, pg: AsyncEngine
 ):
     client = await spawn_job_client(authorize=True)
 
@@ -275,10 +285,10 @@ async def test_download_subtraction_files(
         return
 
     fasta_expected_path = (
-            client.app["config"].data_path / "subtractions" / "foo" / "subtraction.fa.gz"
+        client.app["config"].data_path / "subtractions" / "foo" / "subtraction.fa.gz"
     )
     bowtie_expected_path = (
-            client.app["config"].data_path / "subtractions" / "foo" / "subtraction.1.bt2"
+        client.app["config"].data_path / "subtractions" / "foo" / "subtraction.1.bt2"
     )
 
     assert fasta_expected_path.read_bytes() == await fasta_resp.content.read()

@@ -89,7 +89,7 @@ async def find(req):
     if not v.validate(dict(req.query)):
         raise InvalidQuery(v.errors)
 
-    queries = list()
+    queries = []
 
     term = req.query.get("find")
 
@@ -105,7 +105,7 @@ async def find(req):
     if "workflows" in req.query:
         queries.append(compose_sample_workflow_query(req.query))
 
-    db_query = dict()
+    db_query = {}
 
     if queries:
         db_query["$and"] = queries
@@ -229,7 +229,7 @@ async def create(req):
     if name_error_message:
         raise HTTPBadRequest(text=name_error_message)
 
-    subtractions = data.get("subtractions", list())
+    subtractions = data.get("subtractions", [])
 
     # Make sure each subtraction host was submitted and it exists.
     non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(

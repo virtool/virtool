@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.uploads.models import Upload, UploadType
-from virtool.users.utils import Permission
+from virtool_core.models.enums import Permission
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ class TestUpload:
 
         """
         client = await spawn_client(
-            authorize=True, permissions=[Permission.upload_file.value]
+            authorize=True, permissions=[Permission.upload_file]
         )
 
         client.app["config"].data_path = tmp_path
@@ -52,7 +52,7 @@ class TestUpload:
 
         """
         client = await spawn_client(
-            authorize=True, permissions=[Permission.upload_file.value]
+            authorize=True, permissions=[Permission.upload_file]
         )
 
         resp = await client.post_form("/uploads", data=files)
@@ -65,7 +65,7 @@ class TestUpload:
 
         """
         client = await spawn_client(
-            authorize=True, permissions=[Permission.upload_file.value]
+            authorize=True, permissions=[Permission.upload_file]
         )
 
         resp = await client.post_form(

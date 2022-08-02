@@ -75,7 +75,7 @@ async def get_hmms_referenced_in_files(db, config: Config) -> set:
     :return: HMM ids referenced in NuVs result files
 
     """
-    paths = list()
+    paths = []
 
     async for document in db.analyses.find(
         {"workflow": "nuvs", "results": "file"}, ["_id", "sample"]
@@ -179,7 +179,7 @@ async def fetch_and_update_release(
         aiohttp.client_exceptions.ClientConnectorError,
         virtool.errors.GitHubError,
     ) as err:
-        errors = list()
+        errors = []
 
         if "ClientConnectorError" in str(err):
             errors = ["Could not reach GitHub"]
