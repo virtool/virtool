@@ -2,11 +2,14 @@ import asyncio
 import logging
 import os
 from pathlib import Path
+from typing import List, Union
 
 import aiohttp.web
 import pymongo.errors
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp.web_fileresponse import FileResponse
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404
 from cerberus import Validator
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +23,6 @@ import virtool.uploads.db
 import virtool.uploads.utils
 import virtool.utils
 from virtool.analyses.db import PROJECTION
-from virtool.analyses.utils import WORKFLOW_NAMES
 from virtool.api.response import (
     InsufficientRights,
     InvalidQuery,
@@ -56,6 +58,19 @@ from virtool.samples.files import (
     get_existing_reads,
 )
 from virtool.samples.models import ArtifactType, SampleArtifact, SampleReads
+from virtool.samples.oas import (
+    GetSamplesResponse,
+    GetSampleResponse,
+    CreateSampleSchema,
+    CreateSampleResponse,
+    EditSampleSchema,
+    EditSampleResponse,
+    EditRightsSchema,
+    EditRightsResponse,
+    CreateAnalysisSchema,
+    GetSampleAnalysesResponse,
+    CreateAnalysisResponse,
+)
 from virtool.samples.utils import bad_labels_response, check_labels
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import is_gzip_compressed
@@ -75,93 +90,310 @@ QUERY_SCHEMA = {
 routes = Routes()
 
 
-@routes.get("/samples")
-async def find(req):
-    """
-    Find samples, filtering by data passed as URL parameters.
+@routes.view("/samples")
+class SamplesView(PydanticView):
+    async def get(self) -> Union[r200[List[GetSamplesResponse]], r400]:
+        """
+        Find samples, filtering by data passed as URL parameters.
 
-    """
-    db = req.app["db"]
-    pg = req.app["pg"]
+        Status Codes:
+            200: Successful operation
+            400: Invalid query
+        """
+        db = self.request.app["db"]
+        pg = self.request.app["pg"]
 
-    v = Validator(QUERY_SCHEMA, allow_unknown=True)
+        v = Validator(QUERY_SCHEMA, allow_unknown=True)
 
-    if not v.validate(dict(req.query)):
-        raise InvalidQuery(v.errors)
+        if not v.validate(dict(self.request.query)):
+            raise InvalidQuery(v.errors)
 
-    queries = list()
+        queries = []
 
-    term = req.query.get("find")
+        term = self.request.query.get("find")
 
-    if term:
-        queries.append(compose_regex_query(term, ["name", "user.id"]))
+        if term:
+            queries.append(compose_regex_query(term, ["name", "user.id"]))
 
-    if "label" in req.query:
-        labels = req.query.getall("label")
-        labels = [int(label) if label.isdigit() else label for label in labels]
+        if "label" in self.request.query:
+            labels = self.request.query.getall("label")
+            labels = [int(label) for label in labels if label.isdigit()]
 
-        queries.append({"labels": {"$in": labels}})
+            queries.append({"labels": {"$in": labels}})
 
-    if "workflows" in req.query:
-        queries.append(compose_sample_workflow_query(req.query))
+        if "workflows" in self.request.query:
+            queries.append(compose_sample_workflow_query(self.request.query))
 
-    db_query = dict()
+        db_query = {}
 
-    if queries:
-        db_query["$and"] = queries
+        if queries:
+            db_query["$and"] = queries
 
-    rights_filter = [
-        # The requesting user is the sample owner
-        {"user.id": req["client"].user_id},
-        # The sample rights allow all users to view the sample.
-        {"all_read": True},
-    ]
+        rights_filter = [
+            # The requesting user is the sample owner
+            {"user.id": self.request["client"].user_id},
+            # The sample rights allow all users to view the sample.
+            {"all_read": True},
+        ]
 
-    if req["client"].groups:
-        # The sample rights allow owner group members to view the sample and the
-        # requesting user is a member of the owner group.
-        rights_filter.append(
-            {"group_read": True, "group": {"$in": req["client"].groups}}
+        if self.request["client"].groups:
+            # The sample rights allow owner group members to view the sample and the
+            # requesting user is a member of the owner group.
+            rights_filter.append(
+                {"group_read": True, "group": {"$in": self.request["client"].groups}}
+            )
+
+        base_query = {"$or": rights_filter}
+
+        data = await paginate(
+            db.samples,
+            db_query,
+            self.request.query,
+            sort="created_at",
+            projection=LIST_PROJECTION,
+            base_query=base_query,
+            reverse=True,
         )
 
-    base_query = {"$or": rights_filter}
+        documents = await apply_transforms(
+            data["documents"], [AttachLabelsTransform(pg), AttachUserTransform(db)]
+        )
 
-    data = await paginate(
-        db.samples,
-        db_query,
-        req.query,
-        sort="created_at",
-        projection=LIST_PROJECTION,
-        base_query=base_query,
-        reverse=True,
-    )
+        return json_response({**data, "documents": documents})
 
-    documents = await apply_transforms(
-        data["documents"], [AttachLabelsTransform(pg), AttachUserTransform(db)]
-    )
+    @policy(PermissionsRoutePolicy(Permission.create_sample))
+    async def post(
+        self, data: CreateSampleSchema
+    ) -> Union[r201[CreateSampleResponse], r400, r403]:
+        """
+        Create a sample.
 
-    return json_response({**data, "documents": documents})
+        Status Codes:
+            201: Operation successful
+            400: File does not exist
+            400: Group does not exist
+            400: Group value required for sample creation
+            400: Sample name already in use
+            400: Subtraction does not exist
+            403: Not permitted
+            400: Invalid input
+        """
+        db = self.request.app["db"]
+        pg = self.request.app["pg"]
+        user_id = self.request["client"].user_id
+        settings = self.request.app["settings"]
+
+        name_error_message = await check_name(
+            db, self.request.app["settings"], data.name
+        )
+
+        if name_error_message:
+            raise HTTPBadRequest(text=name_error_message)
+
+        subtractions = data.subtractions
+
+        # Make sure each subtraction host was submitted and it exists.
+        non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
+            db.subtraction, subtractions
+        )
+
+        if non_existent_subtractions:
+            raise HTTPBadRequest(
+                text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
+            )
+
+        if len(data.labels) != 0:
+            non_existent_labels = await check_labels(pg, data.labels)
+
+            if non_existent_labels:
+                return bad_labels_response(non_existent_labels)
+
+        try:
+            uploads = [
+                (await virtool.uploads.db.get(pg, file_)).to_dict()
+                for file_ in data.files
+            ]
+        except AttributeError:
+            raise HTTPBadRequest(text="File does not exist")
+
+        sample_group_setting = settings.sample_group
+
+        group = "none"
+
+        # Require a valid ``group`` field if the ``sample_group`` setting is
+        # ``users_primary_group``.
+        if sample_group_setting == "force_choice":
+            force_choice_error_message = await validate_force_choice_group(
+                db, data.dict(exclude_unset=True)
+            )
+
+            if force_choice_error_message:
+                raise HTTPBadRequest(text=force_choice_error_message)
+
+            group = data.group
+
+        # Assign the user"s primary group as the sample owner group if the setting is
+        # ``users_primary_group``.
+        elif sample_group_setting == "users_primary_group":
+            group = await virtool.mongo.utils.get_one_field(
+                db.users, "primary_group", user_id
+            )
+
+        files = [
+            {"id": upload["id"], "name": upload["name"], "size": upload["size"]}
+            for upload in uploads
+        ]
+
+        document = await create_sample(
+            db,
+            data.name,
+            data.host,
+            data.isolate,
+            group,
+            data.locale,
+            data.library_type,
+            data.subtractions,
+            data.notes,
+            data.labels,
+            user_id,
+            settings,
+            paired=len(files) == 2,
+        )
+
+        sample_id = document["id"]
+
+        await virtool.uploads.db.reserve(pg, data.files)
+
+        task_args = {"sample_id": sample_id, "files": files}
+
+        rights = JobRights()
+
+        rights.samples.can_read(sample_id)
+        rights.samples.can_modify(sample_id)
+        rights.samples.can_remove(sample_id)
+        rights.uploads.can_read(*data.files)
+
+        await get_data_from_req(self.request).jobs.create(
+            "create_sample", task_args, user_id, rights
+        )
+
+        headers = {"Location": f"/samples/{sample_id}"}
+
+        return json_response(
+            await virtool.samples.db.get_sample(self.request.app, sample_id),
+            status=201,
+            headers=headers,
+        )
 
 
-@routes.get("/samples/{sample_id}")
-async def get(req):
-    """
-    Get a complete sample document.
+@routes.view("/samples/{sample_id}")
+class SampleView(PydanticView):
+    async def get(
+        self,
+    ) -> Union[r200[GetSampleResponse], r403, r404]:
+        """
+        Get a complete sample document.
 
-    """
-    sample_id = req.match_info["sample_id"]
+        Status Codes:
+            200: Successful operation
+            400: Invalid query
+        """
+        sample_id = self.request.match_info["sample_id"]
 
-    try:
-        sample = await virtool.samples.db.get_sample(req.app, sample_id)
-    except ValueError:
-        raise NotFound()
+        try:
+            sample = await virtool.samples.db.get_sample(self.request.app, sample_id)
+        except ValueError:
+            raise NotFound()
 
-    rights = virtool.samples.utils.get_sample_rights(sample, req["client"])[0]
+        rights = virtool.samples.utils.get_sample_rights(
+            sample, self.request["client"]
+        )[0]
 
-    if not rights:
-        raise InsufficientRights()
+        if not rights:
+            raise InsufficientRights()
 
-    return json_response(sample)
+        return json_response(sample)
+
+    async def patch(
+        self, data: EditSampleSchema
+    ) -> Union[r200[EditSampleResponse], r400, r403, r404]:
+        """
+        Update specific fields in the sample document.
+
+        Status Codes:
+            200: Successful operation
+            400: Invalid input
+            400: Sample name is already in use
+            403: Insufficient rights
+            404: Not found
+        """
+        data = data.dict(exclude_unset=True)
+        db = self.request.app["db"]
+        pg = self.request.app["pg"]
+
+        sample_id = self.request.match_info["sample_id"]
+
+        if not await check_rights(db, sample_id, self.request["client"]):
+            raise InsufficientRights()
+
+        if "name" in data:
+            message = await check_name(
+                db, self.request.app["settings"], data["name"], sample_id=sample_id
+            )
+
+            if message:
+                raise HTTPBadRequest(text=message)
+
+        if "labels" in data:
+            non_existent_labels = await check_labels(pg, data["labels"])
+
+            if non_existent_labels:
+                return bad_labels_response(non_existent_labels)
+
+        if "subtractions" in data:
+            non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
+                db.subtraction, data["subtractions"]
+            )
+
+            if non_existent_subtractions:
+                raise HTTPBadRequest(
+                    text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
+                )
+
+        await db.samples.update_one({"_id": sample_id}, {"$set": data})
+
+        return json_response(
+            await virtool.samples.db.get_sample(self.request.app, sample_id)
+        )
+
+    async def delete(self) -> Union[r204, r403, r404]:
+        """
+        Remove a sample document and all associated analyses.
+
+        Status Codes:
+            204: Operation successful
+            403: Insufficient rights
+            404: Not found
+        """
+        db = self.request.app["db"]
+        client = self.request["client"]
+
+        sample_id = self.request.match_info["sample_id"]
+
+        try:
+            if not await check_rights(db, sample_id, client):
+                raise InsufficientRights()
+        except DatabaseError as err:
+            if "Sample does not exist" in str(err):
+                raise NotFound()
+
+            raise
+
+        await virtool.samples.db.remove_samples(
+            db, self.request.app["config"], [sample_id]
+        )
+
+        raise HTTPNoContent
 
 
 @routes.jobs_api.get("/samples/{sample_id}")
@@ -197,199 +429,6 @@ async def get_cache(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.post("/samples")
-@policy(PermissionsRoutePolicy(Permission.create_sample))
-@schema(
-    {
-        "name": {"type": "string", "coerce": strip, "empty": False, "required": True},
-        "host": {"type": "string", "coerce": strip, "default": ""},
-        "isolate": {"type": "string", "coerce": strip, "default": ""},
-        "group": {"type": "string"},
-        "locale": {"type": "string", "coerce": strip, "default": ""},
-        "library_type": {
-            "type": "string",
-            "allowed": ["normal", "srna", "amplicon"],
-            "default": "normal",
-        },
-        "subtractions": {"type": "list", "default": []},
-        "files": {"type": "list", "minlength": 1, "maxlength": 2, "required": True},
-        "notes": {"type": "string", "default": ""},
-        "labels": {"type": "list", "default": []},
-    }
-)
-async def create(req):
-    db = req.app["db"]
-    pg = req.app["pg"]
-    data = req["data"]
-    user_id = req["client"].user_id
-    settings = req.app["settings"]
-
-    name_error_message = await check_name(db, req.app["settings"], data["name"])
-
-    if name_error_message:
-        raise HTTPBadRequest(text=name_error_message)
-
-    subtractions = data.get("subtractions", list())
-
-    # Make sure each subtraction host was submitted and it exists.
-    non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
-        db.subtraction, subtractions
-    )
-
-    if non_existent_subtractions:
-        raise HTTPBadRequest(
-            text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
-        )
-
-    if "labels" in data:
-        non_existent_labels = await check_labels(pg, data["labels"])
-
-        if non_existent_labels:
-            return bad_labels_response(non_existent_labels)
-
-    try:
-        uploads = [
-            (await virtool.uploads.db.get(pg, file_)).to_dict()
-            for file_ in data["files"]
-        ]
-    except AttributeError:
-        raise HTTPBadRequest(text="File does not exist")
-
-    sample_group_setting = settings.sample_group
-
-    group = "none"
-
-    # Require a valid ``group`` field if the ``sample_group`` setting is
-    # ``users_primary_group``.
-    if sample_group_setting == "force_choice":
-        force_choice_error_message = await validate_force_choice_group(db, data)
-
-        if force_choice_error_message:
-            raise HTTPBadRequest(text=force_choice_error_message)
-
-        group = data["group"]
-
-    # Assign the user"s primary group as the sample owner group if the setting is
-    # ``users_primary_group``.
-    elif sample_group_setting == "users_primary_group":
-        group = await virtool.mongo.utils.get_one_field(
-            db.users, "primary_group", user_id
-        )
-
-    files = [
-        {"id": upload["id"], "name": upload["name"], "size": upload["size"]}
-        for upload in uploads
-    ]
-
-    document = await create_sample(
-        db,
-        data["name"],
-        data["host"],
-        data["isolate"],
-        group,
-        data["locale"],
-        data["library_type"],
-        data["subtractions"],
-        data["notes"],
-        data["labels"],
-        user_id,
-        settings,
-        paired=len(files) == 2,
-    )
-
-    sample_id = document["id"]
-
-    await virtool.uploads.db.reserve(pg, data["files"])
-
-    task_args = {"sample_id": sample_id, "files": files}
-
-    rights = JobRights()
-
-    rights.samples.can_read(sample_id)
-    rights.samples.can_modify(sample_id)
-    rights.samples.can_remove(sample_id)
-    rights.uploads.can_read(*data["files"])
-
-    await get_data_from_req(req).jobs.create(
-        "create_sample", task_args, user_id, rights
-    )
-
-    headers = {"Location": f"/samples/{sample_id}"}
-
-    return json_response(
-        await virtool.samples.db.get_sample(req.app, sample_id),
-        status=201,
-        headers=headers,
-    )
-
-
-@routes.patch("/samples/{sample_id}")
-@schema(
-    {
-        "name": {"type": "string", "coerce": strip, "empty": False},
-        "host": {
-            "type": "string",
-            "coerce": strip,
-        },
-        "isolate": {
-            "type": "string",
-            "coerce": strip,
-        },
-        "locale": {
-            "type": "string",
-            "coerce": strip,
-        },
-        "notes": {
-            "type": "string",
-            "coerce": strip,
-        },
-        "labels": {"type": "list"},
-        "subtractions": {"type": "list"},
-    }
-)
-async def edit(req):
-    """
-    Update specific fields in the sample document.
-
-    """
-    db = req.app["db"]
-    pg = req.app["pg"]
-    data = req["data"]
-
-    sample_id = req.match_info["sample_id"]
-
-    if not await check_rights(db, sample_id, req["client"]):
-        raise InsufficientRights()
-
-    if "name" in data:
-        message = await check_name(
-            db, req.app["settings"], data["name"], sample_id=sample_id
-        )
-
-        if message:
-            raise HTTPBadRequest(text=message)
-
-    if "labels" in data:
-        non_existent_labels = await check_labels(pg, data["labels"])
-
-        if non_existent_labels:
-            return bad_labels_response(non_existent_labels)
-
-    if "subtractions" in data:
-        non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
-            db.subtraction, data["subtractions"]
-        )
-
-        if non_existent_subtractions:
-            raise HTTPBadRequest(
-                text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
-            )
-
-    await db.samples.update_one({"_id": sample_id}, {"$set": data})
-
-    return json_response(await virtool.samples.db.get_sample(req.app, sample_id))
-
-
 @routes.jobs_api.patch("/samples/{sample_id}")
 @schema({"quality": {"type": "dict", "required": True}})
 async def finalize(req):
@@ -415,77 +454,54 @@ async def finalize(req):
     return json_response(await virtool.samples.db.get_sample(req.app, sample_id))
 
 
-@routes.patch("/samples/{sample_id}/rights")
-@schema(
-    {
-        "group": {"type": "string"},
-        "all_read": {"type": "boolean"},
-        "all_write": {"type": "boolean"},
-        "group_read": {"type": "boolean"},
-        "group_write": {"type": "boolean"},
-    }
-)
-async def set_rights(req):
-    """
-    Change rights settings for the specified sample document.
+@routes.view("/samples/{sample_id}/rights")
+class RightsView(PydanticView):
+    async def patch(
+        self, data: EditRightsSchema
+    ) -> Union[r200[EditRightsResponse], r400, r403, r404]:
+        """
+        Change rights settings for the specified sample document.
 
-    """
-    db = req.app["db"]
-    data = req["data"]
+        Status Codes:
+            200: Successful operation
+            400: Invalid input
+            400: Group does not exist
+            403: Must be administrator or sample owner
+            404: Not found
+        """
+        db = self.request.app["db"]
+        data = data.dict(exclude_unset=True)
 
-    sample_id = req.match_info["sample_id"]
+        sample_id = self.request.match_info["sample_id"]
 
-    if not await db.samples.count_documents({"_id": sample_id}):
-        raise NotFound()
-
-    user_id = req["client"].user_id
-
-    # Only update the document if the connected user owns the samples or is an
-    # administrator.
-    if not req["client"].administrator and user_id != await get_sample_owner(
-        db, sample_id
-    ):
-        raise InsufficientRights("Must be administrator or sample owner")
-
-    group = data.get("group")
-
-    if group:
-        existing_group_ids = await db.groups.distinct("_id") + ["none"]
-
-        if group not in existing_group_ids:
-            raise HTTPBadRequest(text="Group does not exist")
-
-    # Update the sample document with the new rights.
-    document = await db.samples.find_one_and_update(
-        {"_id": sample_id}, {"$set": data}, projection=RIGHTS_PROJECTION
-    )
-
-    return json_response(document)
-
-
-@routes.delete("/samples/{sample_id}")
-async def remove(req):
-    """
-    Remove a sample document and all associated analyses.
-
-    """
-    db = req.app["db"]
-    client = req["client"]
-
-    sample_id = req.match_info["sample_id"]
-
-    try:
-        if not await check_rights(db, sample_id, client):
-            raise InsufficientRights()
-    except DatabaseError as err:
-        if "Sample does not exist" in str(err):
+        if not await db.samples.count_documents({"_id": sample_id}):
             raise NotFound()
 
-        raise
+        user_id = self.request["client"].user_id
 
-    await virtool.samples.db.remove_samples(db, req.app["config"], [sample_id])
+        # Only update the document if the connected user owns the samples or is an
+        # administrator.
+        if not self.request[
+            "client"
+        ].administrator and user_id != await get_sample_owner(db, sample_id):
+            raise InsufficientRights("Must be administrator or sample owner")
 
-    raise HTTPNoContent
+        group = data["group"]
+
+        if group is not None:
+            existing_group_ids = await db.groups.distinct("_id") + ["none"]
+
+            if group not in existing_group_ids:
+                raise HTTPBadRequest(text="Group does not exist")
+
+        # Update the sample document with the new rights.
+        document = await db.samples.find_one_and_update(
+            {"_id": sample_id},
+            {"$set": data},
+            projection=RIGHTS_PROJECTION,
+        )
+
+        return json_response(document)
 
 
 @routes.jobs_api.delete("/samples/{sample_id}")
@@ -520,146 +536,153 @@ async def job_remove(req):
     raise HTTPNoContent
 
 
-@routes.get("/samples/{sample_id}/analyses")
-async def find_analyses(req):
-    """
-    List the analyses associated with the given ``sample_id``.
+@routes.view("/samples/{sample_id}/analyses")
+class AnalysesView(PydanticView):
+    async def get(self) -> Union[r200[List[GetSampleAnalysesResponse]], r403, r404]:
+        """
+        List the analyses associated with the given ``sample_id``.
 
-    """
-    db = req.app["db"]
+        Status Codes:
+            200: Successful operation
+            403: Insufficient rights
+            404: Not found
+        """
+        db = self.request.app["db"]
 
-    sample_id = req.match_info["sample_id"]
+        sample_id = self.request.match_info["sample_id"]
 
-    try:
-        if not await check_rights(db, sample_id, req["client"], write=False):
-            raise InsufficientRights()
-    except DatabaseError as err:
-        if "Sample does not exist" in str(err):
-            raise NotFound()
+        try:
+            if not await check_rights(
+                db, sample_id, self.request["client"], write=False
+            ):
+                raise InsufficientRights()
+        except DatabaseError as err:
+            if "Sample does not exist" in str(err):
+                raise NotFound()
 
-        raise
+            raise
 
-    term = req.query.get("term")
+        term = self.request.query.get("term")
 
-    db_query = {}
+        db_query = {}
 
-    if term:
-        db_query.update(compose_regex_query(term, ["reference.name", "user.id"]))
+        if term:
+            db_query.update(compose_regex_query(term, ["reference.name", "user.id"]))
 
-    data = await paginate(
-        db.analyses,
-        db_query,
-        req.query,
-        base_query={"sample.id": sample_id},
-        projection=PROJECTION,
-        sort=[("created_at", -1)],
-    )
-
-    return json_response(
-        {
-            **data,
-            "documents": await apply_transforms(
-                data["documents"],
-                [AttachSubtractionTransform(db), AttachUserTransform(db)],
-            ),
-        }
-    )
-
-
-@routes.post("/samples/{sample_id}/analyses")
-@schema(
-    {
-        "ref_id": {"type": "string", "required": True},
-        "subtractions": {"type": "list"},
-        "workflow": {"type": "string", "required": True, "allowed": WORKFLOW_NAMES},
-    }
-)
-async def analyze(req):
-    """
-    Starts an analysis job for a given sample.
-
-    """
-    db = req.app["db"]
-    data = req["data"]
-
-    sample_id = req.match_info["sample_id"]
-    ref_id = data["ref_id"]
-
-    try:
-        if not await check_rights(db, sample_id, req["client"]):
-            raise InsufficientRights()
-    except DatabaseError as err:
-        if "Sample does not exist" in str(err):
-            raise NotFound()
-
-        raise
-
-    if not await db.references.count_documents({"_id": ref_id}):
-        raise HTTPBadRequest(text="Reference does not exist")
-
-    if not await db.indexes.count_documents({"reference.id": ref_id, "ready": True}):
-        raise HTTPBadRequest(text="No ready index")
-
-    subtractions = data.get("subtractions")
-
-    if subtractions is None:
-        subtractions = []
-    else:
-        non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
-            db.subtraction, subtractions
+        data = await paginate(
+            db.analyses,
+            db_query,
+            self.request.query,
+            base_query={"sample.id": sample_id},
+            projection=PROJECTION,
+            sort=[("created_at", -1)],
         )
 
-        if non_existent_subtractions:
-            raise HTTPBadRequest(
-                text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
+        return json_response(
+            {
+                **data,
+                "documents": await apply_transforms(
+                    data["documents"],
+                    [AttachSubtractionTransform(db), AttachUserTransform(db)],
+                ),
+            }
+        )
+
+    async def post(
+        self, data: CreateAnalysisSchema
+    ) -> Union[r201[CreateAnalysisResponse], r400, r403, r404]:
+        """
+        Starts an analysis job for a given sample.
+
+        Status Codes:
+            201: Successful operation
+            400: Reference does not exist
+            400: No index is ready for the reference
+            400: Invalid input
+            403: Insufficient rights
+            404: Not found
+        """
+        db = self.request.app["db"]
+        sample_id = self.request.match_info["sample_id"]
+        ref_id = data.ref_id
+
+        try:
+            if not await check_rights(db, sample_id, self.request["client"]):
+                raise InsufficientRights()
+        except DatabaseError as err:
+            if "Sample does not exist" in str(err):
+                raise NotFound()
+
+            raise
+
+        if not await db.references.count_documents({"_id": ref_id}):
+            raise HTTPBadRequest(text="Reference does not exist")
+
+        if not await db.indexes.count_documents(
+            {"reference.id": ref_id, "ready": True}
+        ):
+            raise HTTPBadRequest(text="No ready index")
+
+        subtractions = data.subtractions
+
+        if subtractions is None:
+            subtractions = []
+        else:
+            non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
+                db.subtraction, subtractions
             )
 
-    job_id = await virtool.mongo.utils.get_new_id(db.jobs)
+            if non_existent_subtractions:
+                raise HTTPBadRequest(
+                    text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
+                )
 
-    document = await virtool.analyses.db.create(
-        req.app["db"],
-        sample_id,
-        ref_id,
-        subtractions,
-        req["client"].user_id,
-        data["workflow"],
-        job_id,
-    )
+        job_id = await virtool.mongo.utils.get_new_id(db.jobs)
 
-    analysis_id = document["id"]
+        document = await virtool.analyses.db.create(
+            self.request.app["db"],
+            sample_id,
+            ref_id,
+            subtractions,
+            self.request["client"].user_id,
+            data.workflow,
+            job_id,
+        )
 
-    sample = await db.samples.find_one(sample_id, ["name"])
+        analysis_id = document["id"]
 
-    task_args = {
-        "analysis_id": analysis_id,
-        "ref_id": ref_id,
-        "sample_id": sample_id,
-        "sample_name": sample["name"],
-        "index_id": document["index"]["id"],
-        "subtractions": subtractions,
-    }
+        sample = await db.samples.find_one(sample_id, ["name"])
 
-    rights = JobRights()
+        task_args = {
+            "analysis_id": analysis_id,
+            "ref_id": ref_id,
+            "sample_id": sample_id,
+            "sample_name": sample["name"],
+            "index_id": document["index"]["id"],
+            "subtractions": subtractions,
+        }
 
-    rights.analyses.can_read(analysis_id)
-    rights.analyses.can_modify(analysis_id)
-    rights.analyses.can_remove(analysis_id)
-    rights.samples.can_read(sample_id)
-    rights.indexes.can_read(document["index"]["id"])
-    rights.references.can_read(ref_id)
-    rights.subtractions.can_read(*subtractions)
+        rights = JobRights()
 
-    await get_data_from_req(req).jobs.create(
-        document["workflow"], task_args, document["user"]["id"], rights
-    )
+        rights.analyses.can_read(analysis_id)
+        rights.analyses.can_modify(analysis_id)
+        rights.analyses.can_remove(analysis_id)
+        rights.samples.can_read(sample_id)
+        rights.indexes.can_read(document["index"]["id"])
+        rights.references.can_read(ref_id)
+        rights.subtractions.can_read(*subtractions)
 
-    await recalculate_workflow_tags(db, sample_id)
+        await get_data_from_req(self.request).jobs.create(
+            document["workflow"], task_args, document["user"]["id"], rights
+        )
 
-    return json_response(
-        virtool.utils.base_processor(document),
-        status=201,
-        headers={"Location": f"/analyses/{analysis_id}"},
-    )
+        await recalculate_workflow_tags(db, sample_id)
+
+        return json_response(
+            virtool.utils.base_processor(document),
+            status=201,
+            headers={"Location": f"/analyses/{analysis_id}"},
+        )
 
 
 @routes.jobs_api.delete("/samples/{sample_id}/caches/{cache_key}")
