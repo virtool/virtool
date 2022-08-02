@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.uploads.models import Upload, UploadType
-from virtool.users.utils import Permission
+from virtool_core.models.enums import Permission
 
 
 @pytest.fixture
@@ -30,7 +30,9 @@ class TestUpload:
         Test `POST /uploads` to assure a file can be uploaded and that it properly updates the db.
 
         """
-        client = await spawn_client(authorize=True, permissions=[Permission.upload_file.value])
+        client = await spawn_client(
+            authorize=True, permissions=[Permission.upload_file]
+        )
 
         client.app["config"].data_path = tmp_path
 
@@ -51,7 +53,9 @@ class TestUpload:
         Test `POST /uploads` to assure it properly rejects an invalid request.
 
         """
-        client = await spawn_client(authorize=True, permissions=[Permission.upload_file.value])
+        client = await spawn_client(
+            authorize=True, permissions=[Permission.upload_file]
+        )
 
         resp = await client.post_form("/uploads", data=files)
 
@@ -62,7 +66,9 @@ class TestUpload:
         Test `POST /uploads` to assure it properly rejects an invalid upload type.
 
         """
-        client = await spawn_client(authorize=True, permissions=[Permission.upload_file.value])
+        client = await spawn_client(
+            authorize=True, permissions=[Permission.upload_file]
+        )
 
         resp = await client.post_form(
             "/uploads?type=foobar&name=Test.fq.gz", data=files

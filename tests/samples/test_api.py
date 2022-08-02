@@ -19,7 +19,7 @@ from virtool.samples.db import check_name
 from virtool.samples.files import create_reads_file
 from virtool.samples.models import SampleArtifact, SampleReads
 from virtool.uploads.models import Upload
-from virtool.users.utils import Permission
+from virtool_core.models.enums import Permission
 
 
 class MockJobInterface:
@@ -234,7 +234,7 @@ class TestCreate:
         settings,
     ):
         client = await spawn_client(
-            authorize=True, permissions=[Permission.create_sample.value]
+            authorize=True, permissions=[Permission.create_sample]
         )
 
         client.app["settings"] = settings
@@ -291,7 +291,7 @@ class TestCreate:
 
     async def test_name_exists(self, spawn_client, static_time, resp_is):
         client = await spawn_client(
-            authorize=True, permissions=[Permission.create_sample.value]
+            authorize=True, permissions=[Permission.create_sample]
         )
 
         client.app["settings"].sample_unique_names = True
@@ -321,7 +321,7 @@ class TestCreate:
 
         """
         client = await spawn_client(
-            authorize=True, permissions=[Permission.create_sample.value]
+            authorize=True, permissions=[Permission.create_sample]
         )
 
         client.app["settings"].sample_group = "force_choice"
@@ -354,7 +354,7 @@ class TestCreate:
 
     async def test_group_dne(self, spawn_client, pg: AsyncEngine, resp_is):
         client = await spawn_client(
-            authorize=True, permissions=[Permission.create_sample.value]
+            authorize=True, permissions=[Permission.create_sample]
         )
 
         client.app["settings"].sample_group = "force_choice"
@@ -381,7 +381,7 @@ class TestCreate:
 
     async def test_subtraction_dne(self, pg: AsyncEngine, spawn_client, resp_is):
         client = await spawn_client(
-            authorize=True, permissions=[Permission.create_sample.value]
+            authorize=True, permissions=[Permission.create_sample]
         )
 
         upload = Upload(id=1, name="test.fq.gz", size=123456)
@@ -403,7 +403,7 @@ class TestCreate:
 
         """
         client = await spawn_client(
-            authorize=True, permissions=[Permission.create_sample.value]
+            authorize=True, permissions=[Permission.create_sample]
         )
 
         client.app["settings"].sample_unique_names = True
@@ -430,7 +430,7 @@ class TestCreate:
     @pytest.mark.parametrize("exists", [True, False])
     async def test_label_dne(self, exists, spawn_client, pg: AsyncEngine, resp_is):
         client = await spawn_client(
-            authorize=True, permissions=[Permission.create_sample.value]
+            authorize=True, permissions=[Permission.create_sample]
         )
 
         client.app["settings"].sample_unique_names = True
