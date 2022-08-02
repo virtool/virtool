@@ -2,7 +2,7 @@
 Provides request handlers for managing and viewing analyses.
 
 """
-from asyncio import CancelledError, gather
+from asyncio import CancelledError
 from logging import getLogger
 from typing import Union, List
 
@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio.engine import AsyncEngine
 import virtool.analyses.format
 import virtool.samples.db
 import virtool.uploads.db
-from virtool.analyses.db import PROJECTION, processor
+from virtool.analyses.db import processor
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile, AnalysisFormat
 from virtool.analyses.utils import attach_analysis_files, find_nuvs_sequence_by_index
@@ -33,19 +33,20 @@ from virtool.api.response import (
     NotFound,
     json_response,
 )
-from virtool.api.utils import paginate
-from virtool.blast.transform import AttachNuVsBLAST
+from virtool.data.errors import (
+    ResourceNotFoundError,
+    ResourceNotModifiedError,
+    ResourceError,
+    ResourceConflictError,
+)
 from virtool.data.utils import get_data_from_req
 from virtool.mongo.core import Collection, DB
-from virtool.mongo.transforms import apply_transforms
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.utils import get_sample_rights
-from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.utils import naive_validator, naive_writer
-from virtool.users.db import AttachUserTransform
 from virtool.utils import rm, run_in_thread
 from virtool_core.models.analysis import AnalysisMinimal, Analysis
 
@@ -57,7 +58,6 @@ routes = Routes()
 
 @routes.view("/analyses")
 class AnalysesView(PydanticView):
-
     async def get(self) -> r200[List[AnalysisMinimal]]:
         """
         Find and list all analyses.
@@ -65,43 +65,17 @@ class AnalysesView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-        db = self.request.app["db"]
-
-        db_query = {}
-
-        data = await paginate(
-            db.analyses,
-            db_query,
-            self.request.query,
-            projection=PROJECTION,
-            sort=[("created_at", -1)],
+        analysis_documents = await get_data_from_req(self.request).analyses.find(
+            self.request
         )
 
-        per_document_can_read = await gather(
-            *[
-                virtool.samples.db.check_rights(
-                    db, document["sample"]["id"], self.request["client"], write=False
-                )
-                for document in data["documents"]
-            ]
+        return json_response(
+            {**analysis_documents[0], "documents": analysis_documents[1]}
         )
-
-        documents = [
-            document
-            for document, can_write in zip(data["documents"], per_document_can_read)
-            if can_write
-        ]
-
-        documents = await apply_transforms(
-            documents, [AttachUserTransform(db), AttachSubtractionTransform(db)]
-        )
-
-        return json_response({**data, "documents": documents})
 
 
 @routes.view("/analyses/{analysis_id}")
 class AnalysisView(PydanticView):
-
     async def get(self) -> Union[r200[Analysis], r400, r403, r404]:
         """
         Get the details of an analysis.
@@ -112,57 +86,20 @@ class AnalysisView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
-        db = self.request.app["db"]
-        pg = self.request.app["pg"]
-
-        analysis_id = self.request.match_info["analysis_id"]
-
-        document = await db.analyses.find_one(analysis_id)
-
-        if document is None:
-            raise NotFound()
-
         try:
-            iso = isoformat(document["updated_at"])
-        except KeyError:
-            iso = isoformat(document["created_at"])
-
-        if_modified_since = self.request.headers.get("If-Modified-Since")
-
-        if if_modified_since and if_modified_since == iso:
+            analysis_data = await get_data_from_req(self.request).analyses.get(
+                self.request
+            )
+        except ResourceNotFoundError:
+            raise NotFound()
+        except ResourceNotModifiedError:
             raise HTTPNotModified()
-
-        document = await attach_analysis_files(pg, analysis_id, document)
-
-        sample = await db.samples.find_one(
-            {"_id": document["sample"]["id"]}, {"quality": False}
-        )
-
-        if not sample:
+        except ResourceError:
             raise HTTPBadRequest(text="Parent sample does not exist")
-
-        read, _ = get_sample_rights(sample, self.request["client"])
-
-        if not read:
+        except InsufficientRights:
             raise InsufficientRights()
 
-        if document["ready"]:
-            document = await virtool.analyses.format.format_analysis(self.request.app, document)
-
-        headers = {
-            "Cache-Control": "no-cache",
-            "Last-Modified": isoformat(document["created_at"]),
-        }
-
-        document = await processor(db, document)
-
-        if document["workflow"] == "nuvs":
-            document = await apply_transforms(
-                document,
-                [AttachNuVsBLAST(pg)],
-            )
-
-        return json_response(document, headers=headers)
+        return json_response(analysis_data[0], headers=analysis_data[1])
 
     async def delete(self) -> Union[r204, r403, r404, r409]:
         """
@@ -174,46 +111,16 @@ class AnalysisView(PydanticView):
             404: Not found
             409: Analysis is still running
         """
-        db = self.request.app["db"]
-
-        analysis_id = self.request.match_info["analysis_id"]
-
-        document = await db.analyses.find_one(
-            {"_id": analysis_id}, ["job", "ready", "sample"]
-        )
-
-        if not document:
-            raise NotFound()
-
-        sample_id = document["sample"]["id"]
-
-        sample = await db.samples.find_one(
-            {"_id": sample_id}, virtool.samples.db.PROJECTION
-        )
-
-        if not sample:
-            raise HTTPBadRequest(text="Parent sample does not exist")
-
-        read, write = get_sample_rights(sample, self.request["client"])
-
-        if not read or not write:
-            raise InsufficientRights()
-
-        if not document["ready"]:
-            raise HTTPConflict(text="Analysis is still running")
-
-        await db.analyses.delete_one({"_id": analysis_id})
-
-        path = (
-                self.request.app["config"].data_path / "samples" / sample_id / "analysis" / analysis_id
-        )
-
         try:
-            await run_in_thread(rm, path, True)
-        except FileNotFoundError:
-            pass
-
-        await recalculate_workflow_tags(db, sample_id)
+            await get_data_from_req(self.request).analyses.delete_analysis(self.request)
+        except ResourceNotFoundError:
+            raise NotFound()
+        except ResourceError:
+            raise HTTPBadRequest(text="Parent sample does not exist")
+        except ResourceConflictError:
+            raise HTTPConflict(text="Analysis is still running")
+        except InsufficientRights:
+            raise InsufficientRights()
 
         raise HTTPNoContent
 
@@ -353,7 +260,6 @@ async def upload(req: Request) -> Response:
 
 @routes.view("/analyses/{analysis_id}/files/{upload_id}")
 class AnalysisFileView(PydanticView):
-
     async def get(self) -> Union[r200[FileResponse], r404]:
         """
         Download a file generated during the analysis.
@@ -371,7 +277,9 @@ class AnalysisFileView(PydanticView):
             raise NotFound()
 
         analysis_file_path = (
-                self.request.app["config"].data_path / "analyses" / analysis_file.name_on_disk
+            self.request.app["config"].data_path
+            / "analyses"
+            / analysis_file.name_on_disk
         )
 
         if not analysis_file_path.exists():
@@ -382,7 +290,6 @@ class AnalysisFileView(PydanticView):
 
 @routes.view("/analyses/documents/{analysis_id}.{extension}")
 class DocumentDownloadView(PydanticView):
-
     async def get(self) -> Union[r200[Response], r404]:
         """
         Download an analysis in CSV or XSLX format.
@@ -428,7 +335,6 @@ class DocumentDownloadView(PydanticView):
 
 @routes.view("/analyses/{analysis_id}/{sequence_index}/blast")
 class BlastView(PydanticView):
-
     async def put(self) -> Union[r200[Response], r400, r403, r404, r409]:
         """
         BLAST a contig sequence that is part of a NuVs result record. The resulting
