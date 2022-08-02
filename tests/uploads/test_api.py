@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -9,9 +8,8 @@ from virtool_core.models.enums import Permission
 
 
 @pytest.fixture
-def files(tmp_path):
-    (tmp_path / "files").mkdir()
-    return {"file": open(Path.cwd() / "tests" / "test_files" / "test.fq.gz", "rb")}
+def files(test_files_path):
+    return {"file": open(test_files_path / "test.fq.gz", "rb")}
 
 
 class TestUpload:
