@@ -27,6 +27,9 @@ import virtool.groups.utils
 import virtool.users.db
 import virtool.utils
 
+from virtool_core.models.user import UserNested
+from virtool.utils import base_processor
+
 
 async def get_merged_permissions(db, id_list: List[str]) -> dict:
     """
@@ -44,18 +47,17 @@ async def get_merged_permissions(db, id_list: List[str]) -> dict:
 
 
 async def update_member_users(
-    db,
-    group_id: str,
-    remove: bool = False,
-    session: Optional[AsyncIOMotorClientSession] = None,
+        db,
+        group_id: str,
+        remove: bool = False,
+        session: Optional[AsyncIOMotorClientSession] = None,
 ):
-
     groups = await db.groups.find({}, session=session).to_list(None)
 
     async for user in db.users.find(
-        {"groups": group_id},
-        ["administrator", "groups", "permissions", "primary_group"],
-        session=session,
+            {"groups": group_id},
+            ["administrator", "groups", "permissions", "primary_group"],
+            session=session,
     ):
         if remove:
             user["groups"].remove(group_id)
@@ -91,3 +93,10 @@ async def update_member_users(
             document["permissions"],
             session=session,
         )
+
+
+async def fetch_group_users(db, group_id: str) -> List[UserNested]:
+    return [
+        UserNested(**base_processor(user))
+        async for user in db.users.find({"groups": group_id})
+    ]

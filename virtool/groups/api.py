@@ -32,7 +32,7 @@ class GroupsView(PydanticView):
         """
         return json_response(
             [
-                GroupResponse.parse_obj(group).dict()
+                GetGroupResponse.parse_obj(group).dict()
                 for group in await get_data_from_req(self.request).groups.find()
             ]
         )

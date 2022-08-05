@@ -1,6 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, Field, constr
-from virtool_core.models.group import Group
+from virtool_core.models.group import Group, GroupMinimal
 
 
 class EditPermissionsSchema(BaseModel):
@@ -47,28 +47,23 @@ class CreateGroupResponse(Group):
                 },
                 "id": "research",
                 "name": "research",
+                "users": [],
             }
         }
 
 
-class GetGroupResponse(Group):
+class GetGroupResponse(GroupMinimal):
     class Config:
         schema_extra = {
             "example": [
                 {
-                    "permissions": {
-                        "cancel_job": True,
-                        "create_ref": False,
-                        "create_sample": True,
-                        "modify_hmm": False,
-                        "modify_subtraction": False,
-                        "remove_file": False,
-                        "remove_job": True,
-                        "upload_file": True,
-                    },
                     "id": "technicians",
                     "name": "technicians",
-                }
+                },
+                {
+                    "id": "sidney",
+                    "name": "sidney",
+                },
             ]
         }
 
@@ -104,5 +99,17 @@ class GroupResponse(Group):
                 },
                 "id": "technicians",
                 "name": "technicians",
+                "users": [
+                    {
+                        "administrator": False,
+                        "b2c": None,
+                        "b2c_display_name": None,
+                        "b2c_family_name": None,
+                        "b2c_given_name": None,
+                        "b2c_oid": None,
+                        "handle": "leeashley",
+                        "id": "7CtBo2yG",
+                    },
+                ],
             }
         }

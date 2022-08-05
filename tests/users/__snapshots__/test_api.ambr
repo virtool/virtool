@@ -68,6 +68,7 @@
       'groups': <class 'list'> [
         <class 'dict'> {
           'id': 'technicians',
+          'name': 'technicians',
         },
       ],
       'handle': 'fred',
@@ -85,6 +86,7 @@
       },
       'primary_group': <class 'dict'> {
         'id': 'technicians',
+        'name': 'technicians',
       },
     },
   )
@@ -103,9 +105,11 @@
       'groups': <class 'list'> [
         <class 'dict'> {
           'id': 'managers',
+          'name': 'managers',
         },
         <class 'dict'> {
           'id': 'technicians',
+          'name': 'technicians',
         },
       ],
       'handle': 'fred',
@@ -244,6 +248,7 @@
     'groups': <class 'list'> [
       <class 'dict'> {
         'id': 'technician',
+        'name': 'technician',
       },
     ],
     'handle': 'baz',
@@ -261,6 +266,7 @@
     },
     'primary_group': <class 'dict'> {
       'id': 'technician',
+      'name': 'technician',
     },
   }
 ---
