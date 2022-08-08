@@ -181,6 +181,7 @@ async def test_create(
     assert await resp.json() == snapshot
 
 
+@pytest.mark.flaky(reruns=2)
 async def test_import_reference(pg, snapshot, spawn_client, test_files_path, tmpdir):
     client = await spawn_client(
         authorize=True,
