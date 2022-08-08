@@ -5,13 +5,12 @@ These endpoints modify and return data about the user account associated with th
 session or API key making the requests.
 
 """
-from typing import Union
+from typing import Union, List
 
 from aiohttp.web import HTTPNoContent, Response
 from aiohttp.web_exceptions import HTTPBadRequest
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
-from virtool_core.models.account import Account
 
 import virtool.account.db
 import virtool.http.auth
@@ -23,6 +22,14 @@ from virtool.account.oas import (
     EditKeySchema,
     ResetPasswordSchema,
     CreateLoginSchema,
+    AccountResponse,
+    EditAccountResponse,
+    AccountSettingsResponse,
+    GetAPIKeysResponse,
+    CreateAPIKeyResponse,
+    APIKeyResponse,
+    LoginResponse,
+    AccountResetPasswordResponse,
 )
 from virtool.api.response import NotFound, json_response
 from virtool.data.utils import get_data_from_req
@@ -51,7 +58,7 @@ A :class:`aiohttp.web.RouteTableDef` for account API routes.
 
 @routes.view("/account")
 class AccountView(PydanticView):
-    async def get(self) -> Union[r200[Account], r401]:
+    async def get(self) -> Union[r200[AccountResponse], r401]:
         """
         Get complete user document.
 
@@ -64,7 +71,9 @@ class AccountView(PydanticView):
         )
         return json_response(base_processor(document))
 
-    async def patch(self, data: EditAccountSchema) -> Union[r200[Account], r400, r401]:
+    async def patch(
+        self, data: EditAccountSchema
+    ) -> Union[r200[EditAccountResponse], r400, r401]:
         """
         Edit the user account.
 
@@ -110,7 +119,7 @@ class AccountView(PydanticView):
 
 @routes.view("/account/settings")
 class SettingsView(PydanticView):
-    async def get(self) -> Union[r200[Response], r401]:
+    async def get(self) -> Union[r200[AccountSettingsResponse], r401]:
         """
         Get account settings
 
@@ -126,9 +135,9 @@ class SettingsView(PydanticView):
 
     async def patch(
         self, data: EditSettingsSchema
-    ) -> Union[r200[Response], r400, r401]:
+    ) -> Union[r200[AccountSettingsResponse], r400, r401]:
         """
-        Update account settings.
+        Update account settings. All fields are optional.
 
         Status Codes:
             200: Successful operation
@@ -152,7 +161,7 @@ class SettingsView(PydanticView):
 
 @routes.view("/account/keys")
 class KeysView(PydanticView):
-    async def get(self) -> Union[r200[Response], r401]:
+    async def get(self) -> Union[r200[List[GetAPIKeysResponse]], r401]:
         """
         List API keys associated with the authenticated user account.
 
@@ -168,7 +177,9 @@ class KeysView(PydanticView):
 
         return json_response([d async for d in cursor], status=200)
 
-    async def post(self, data: CreateKeysSchema) -> Union[r201[Response], r400, r401]:
+    async def post(
+        self, data: CreateKeysSchema
+    ) -> Union[r201[CreateAPIKeyResponse], r400, r401]:
         """
         Create a new API key.
 
@@ -208,7 +219,7 @@ class KeysView(PydanticView):
 
 @routes.view("/account/keys/{key_id}")
 class KeyView(PydanticView):
-    async def get(self) -> Union[r200[Response], r404]:
+    async def get(self) -> Union[r200[APIKeyResponse], r404]:
         """
         Get the complete representation of the API key identified by the `key_id`.
 
@@ -231,7 +242,7 @@ class KeyView(PydanticView):
 
     async def patch(
         self, data: EditKeySchema
-    ) -> Union[r200[Response], r400, r401, r404]:
+    ) -> Union[r200[APIKeyResponse], r400, r401, r404]:
         """
         Change the permissions for an existing API key.
 
@@ -270,7 +281,7 @@ class KeyView(PydanticView):
 
         return json_response(document)
 
-    async def delete(self) -> Union[r204[Response], r401, r404]:
+    async def delete(self) -> Union[r204, r401, r404]:
         """
         Remove an API key by its ID.
 
@@ -294,7 +305,9 @@ class KeyView(PydanticView):
 @routes.view("/account/login")
 class LoginView(PydanticView):
     @policy(PublicRoutePolicy)
-    async def post(self, data: CreateLoginSchema) -> Union[r201[Response], r400]:
+    async def post(
+        self, data: CreateLoginSchema
+    ) -> Union[r201[LoginResponse], r400]:
         """
         Create a new session for the user with `username`.
 
@@ -353,7 +366,7 @@ class LoginView(PydanticView):
 @routes.view("/account/logout")
 class LogoutView(PydanticView):
     @policy(PublicRoutePolicy)
-    async def get(self) -> r204[Response]:
+    async def get(self) -> r204:
         """
         Invalidates the requesting session, effectively logging out the user.
 
@@ -378,7 +391,9 @@ class LogoutView(PydanticView):
 @routes.view("/account/reset")
 class ResetView(PydanticView):
     @policy(PublicRoutePolicy)
-    async def post(self, data: ResetPasswordSchema) -> Union[r200[Response], r400]:
+    async def post(
+        self, data: ResetPasswordSchema
+    ) -> Union[r200[AccountResetPasswordResponse], r400]:
         """
         Handles `POST` requests for resetting the password for a session user.
 
