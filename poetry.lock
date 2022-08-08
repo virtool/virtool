@@ -878,6 +878,17 @@ image = ["pillow", "numpy"]
 num = ["numpy", "pandas"]
 
 [[package]]
+name = "pytest-rerunfailures"
+version = "10.2"
+description = "pytest plugin to re-run tests to eliminate flaky failures"
+category = "dev"
+optional = false
+python-versions = ">= 3.6"
+
+[package.dependencies]
+pytest = ">=5.3"
+
+[[package]]
 name = "pytest-xdist"
 version = "2.5.0"
 description = "pytest xdist plugin for distributed testing and loop-on-failing modes"
@@ -1189,7 +1200,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.8"
-content-hash = "2919354167076b1c8194501d5ec4c71b3a77d681fa5faee077f16e5d77abfcfb"
+content-hash = "d98cdd96b004bb86357e3204b2833502fefa171d552c40f267b21c63ea4a2252"
 
 [metadata.files]
 aiodns = [
@@ -2079,6 +2090,7 @@ pytest-regressions = [
     {file = "pytest-regressions-2.3.1.tar.gz", hash = "sha256:b3ec4cdb34e8f627606275d8b834c65e60e1a3073e326bb3727a427273d0221d"},
     {file = "pytest_regressions-2.3.1-py3-none-any.whl", hash = "sha256:ebd350a942fb2de1b541ac750d6c2422854e54762256956ad6ed769a71477d35"},
 ]
+pytest-rerunfailures = []
 pytest-xdist = [
     {file = "pytest-xdist-2.5.0.tar.gz", hash = "sha256:4580deca3ff04ddb2ac53eba39d76cb5dd5edeac050cb6fbc768b0dd712b4edf"},
     {file = "pytest_xdist-2.5.0-py3-none-any.whl", hash = "sha256:6fe5c74fec98906deb8f2d2b616b5c782022744978e7bd4695d39c8f42d0ce65"},
