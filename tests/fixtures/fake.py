@@ -6,6 +6,7 @@ import arrow
 
 from virtool.fake.wrapper import FakerWrapper
 from virtool.types import Document
+from virtool_core.models.enums import Permission
 
 
 class AbstractFakeDataGenerator(ABC):
@@ -111,7 +112,7 @@ class FakeUserGenerator(AbstractFakeDataGenerator):
             "handle": profile["username"],
             "primary_group": "technicians",
             "username": profile["username"],
-            "permissions": [],
+            "permissions": {p.value: False for p in Permission},
             "administrator": False,
             "created_at": self._faker.date_time(),
         }

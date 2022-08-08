@@ -68,8 +68,16 @@
     },
     <class 'dict'> {
       '_id': 'LB1U6zCj',
-      'permissions': <class 'list'> [
-      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
     },
   ]
 ---
@@ -103,8 +111,16 @@
     },
     <class 'dict'> {
       '_id': 'LB1U6zCj',
-      'permissions': <class 'list'> [
-      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
     },
   ]
 ---
@@ -148,8 +164,16 @@
         'test',
       ],
       'handle': 'leeashley',
-      'permissions': <class 'list'> [
-      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
       'primary_group': 'technicians',
       'username': 'leeashley',
     },
@@ -160,8 +184,16 @@
       'groups': <class 'list'> [
       ],
       'handle': 'johnsoncynthia',
-      'permissions': <class 'list'> [
-      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
       'primary_group': 'technicians',
       'username': 'johnsoncynthia',
     },
@@ -270,8 +302,16 @@
       'groups': <class 'list'> [
       ],
       'handle': 'johnsoncynthia',
-      'permissions': <class 'list'> [
-      ],
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
       'primary_group': 'technicians',
       'username': 'johnsoncynthia',
     },
