@@ -1,15 +1,10 @@
 from typing import Union, Optional
+
+from email_validator import validate_email, EmailSyntaxError
 from pydantic import BaseModel, constr, Field, root_validator, validator
-from virtool.users.utils import Permission
 from virtool_core.models.enums import QuickAnalyzeWorkflow
 from virtool_core.models.account import Account, AccountSettings, check_email
-
-
-def check_permissions(permissions: dict) -> dict:
-    if any(not hasattr(Permission, key) for key in permissions):
-        raise ValueError("One or more permissions is invalid")
-
-    return permissions
+from virtool.groups.oas import EditPermissionsSchema
 
 
 class EditAccountSchema(BaseModel):
@@ -17,9 +12,11 @@ class EditAccountSchema(BaseModel):
     Fields for editing a user account.
     """
 
-    email: constr(strip_whitespace=True) = Field(description="an email address")
-    old_password: str = Field(description="the old password for verification")
-    password: str = Field(description="the new password")
+    email: Optional[constr(strip_whitespace=True)] = Field(
+        description="an email address"
+    )
+    old_password: Optional[str] = Field(description="the old password for verification")
+    password: Optional[str] = Field(description="the new password")
 
     class Config:
         schema_extra = {
@@ -38,14 +35,31 @@ class EditAccountSchema(BaseModel):
         """
         old_password, password = values.get("old_password"), values.get("password")
 
-        if password is not None and old_password is None:
-            raise ValueError(
-                "The old password needs to be given in order for the password to be changed"
-            )
+        if password:
+            if not old_password:
+                raise ValueError(
+                    "The old password needs to be given in order for the password to be changed"
+                )
+        else:
+            if old_password:
+                raise ValueError(
+                    "The new password needs to be given in order for the password to be changed"
+                )
 
         return values
 
-    _email_validation = validator("email", allow_reuse=True)(check_email)
+    @validator("email")
+    def check_email(cls, email: Optional[str]) -> str:
+        """
+        Checks if the given email is valid.
+        """
+        if email:
+            try:
+                validate_email(email)
+            except EmailSyntaxError:
+                raise ValueError("The format of the email is invalid")
+
+        return email
 
 
 class EditAccountResponse(Account):
@@ -109,14 +123,10 @@ class CreateKeysSchema(BaseModel):
     name: constr(strip_whitespace=True, min_length=1) = Field(
         description="a non-unique name for the API key"
     )
-    permissions: dict = Field(
+    permissions: EditPermissionsSchema = Field(
         default={},
         description="an object describing the permissions the new key will have. "
         "Any unset permissions will default to false",
-    )
-
-    _ensure_permissions_is_valid = validator("permissions", allow_reuse=True)(
-        check_permissions
     )
 
     class Config:
@@ -149,12 +159,10 @@ class CreateAPIKeyResponse(BaseModel):
 
 
 class EditKeySchema(BaseModel):
-    permissions: dict = Field(
-        description="	an object describing updates to the key’s permissions"
-    )
-
-    _ensure_permissions_is_valid = validator("permissions", allow_reuse=True)(
-        check_permissions
+    permissions: EditPermissionsSchema = Field(
+        description="a permission update comprising an object keyed by permissions "
+        "with boolean values",
+        default={},
     )
 
     class Config:

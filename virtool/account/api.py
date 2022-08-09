@@ -86,12 +86,16 @@ class AccountView(PydanticView):
         db = self.request.app["db"]
         user_id = self.request["client"].user_id
 
-        password = data.password
-        old_password = data.old_password
-
         update = {}
 
-        if password is not None:
+        data_dict = data.dict(exclude_unset=True)
+
+        if "password" in data_dict or "old_password" in data_dict:
+
+            # validator makes sure if one password is passed in, the other is also passed in
+
+            password = data_dict["password"]
+            old_password = data_dict["old_password"]
             error = await check_password_length(self.request, password)
 
             if error:
@@ -102,8 +106,9 @@ class AccountView(PydanticView):
 
             update = virtool.account.db.compose_password_update(password)
 
-        if data.email is not None:
-            update["email"] = data.email
+        if "email" in data_dict:
+            email = data_dict["email"]
+            update["email"] = email
 
         if update:
             document = await db.users.find_one_and_update(
@@ -195,8 +200,15 @@ class KeysView(PydanticView):
 
         user_id = self.request["client"].user_id
 
+        data_dict = data.dict(exclude_unset=True)
+
+        permissions_dict = {}
+
+        if "permissions" in data_dict:
+            permissions_dict = data_dict["permissions"]
+
         document = await virtool.account.db.create_api_key(
-            db, data.name, data.permissions, user_id
+            db, data.name, permissions_dict, user_id
         )
 
         headers = {"Location": f"/account/keys/{document['id']}"}
@@ -268,7 +280,7 @@ class KeyView(PydanticView):
             db.keys, "permissions", {"id": key_id, "user.id": user_id}
         )
 
-        permissions.update(data.permissions)
+        permissions.update(data.permissions.dict(exclude_unset=True))
 
         if not user["administrator"]:
             permissions = limit_permissions(permissions, user["permissions"])
@@ -305,9 +317,7 @@ class KeyView(PydanticView):
 @routes.view("/account/login")
 class LoginView(PydanticView):
     @policy(PublicRoutePolicy)
-    async def post(
-        self, data: CreateLoginSchema
-    ) -> Union[r201[LoginResponse], r400]:
+    async def post(self, data: CreateLoginSchema) -> Union[r201[LoginResponse], r400]:
         """
         Create a new session for the user with `username`.
 
