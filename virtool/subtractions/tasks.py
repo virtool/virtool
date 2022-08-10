@@ -63,7 +63,7 @@ class AddSubtractionFilesTask(virtool.tasks.task.Task):
             path = virtool.subtractions.utils.join_subtraction_path(
                 self.app["config"], subtraction["_id"]
             )
-            subtraction_files = list()
+            subtraction_files = []
 
             for filename in sorted(os.listdir(path)):
                 if filename in FILES:

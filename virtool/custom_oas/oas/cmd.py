@@ -1,8 +1,8 @@
 import argparse
 import importlib
 import json
-from typing import Dict, Protocol, Optional, Callable
 import sys
+from typing import Dict, Protocol, Optional, Callable
 
 from virtool.custom_oas.oas.view import generate_oas
 
@@ -131,4 +131,22 @@ def show_oas(args: argparse.Namespace):
     """
     spec = args.base
     spec.update(generate_oas(args.apps))
+
+    for path in spec["paths"].values():
+        for operation in ("get", "patch", "post", "put", "delete"):
+            try:
+                operation_dict = path[operation]
+                description = operation_dict["description"]
+            except KeyError:
+                continue
+
+            split_description = description.split("\n")
+
+            operation_dict.update(
+                {
+                    "summary": split_description[0].strip().rstrip("."),
+                    "description": "\n".join(split_description[1:]).lstrip("\n"),
+                }
+            )
+
     print(args.formatter(spec), file=args.output)

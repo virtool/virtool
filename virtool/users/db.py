@@ -160,7 +160,7 @@ async def compose_groups_update(db, groups: Optional[list]) -> dict:
     :return: an update
     """
     if groups is None:
-        return dict()
+        return {}
 
     non_existent_groups = await get_non_existent_ids(db.groups, groups)
 
@@ -185,7 +185,7 @@ async def compose_primary_group_update(
 
     """
     if primary_group is None:
-        return dict()
+        return {}
 
     if primary_group != "none":
         if not await id_exists(db.groups, primary_group):

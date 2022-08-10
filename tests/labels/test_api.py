@@ -177,7 +177,7 @@ async def test_edit(error, spawn_client, pg: AsyncEngine, resp_is):
             session.add_all([label_1, label_2])
             await session.commit()
 
-    data = dict()
+    data = {}
 
     if error != "422_data":
         data = {"name": "Bug", "color": "#fc5203", "description": "Need to be fixed"}

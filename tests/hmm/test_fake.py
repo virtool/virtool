@@ -9,6 +9,5 @@ async def test_fake_hmms(app, snapshot, tmp_path, dbi, example_path, pg):
 
     assert await dbi.hmm.find().to_list(None) == snapshot
 
-    with open(hmm_dir / "profiles.hmm", "r") as f_result:
-        with open(example_path / "hmms/profiles.hmm") as f_expected:
-            assert f_result.read() == f_expected.read()
+    with open(hmm_dir / "profiles.hmm", "r") as f_result, open(example_path / "hmms/profiles.hmm") as f_expected:
+        assert f_result.read() == f_expected.read()

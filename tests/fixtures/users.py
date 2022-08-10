@@ -31,14 +31,14 @@ def create_user(static_time):
         user_id="test", handle="bob", administrator=False, groups=None, permissions=None
     ):
 
-        permissions = permissions or list()
+        permissions = permissions or []
 
         return {
             "_id": user_id,
             "handle": handle,
             "administrator": administrator,
             "permissions": {perm.value: perm.value in permissions for perm in Permission},
-            "groups": groups or list(),
+            "groups": groups or [],
             "invalidate_sessions": False,
             "last_password_change": static_time.datetime,
             "primary_group": "technician",

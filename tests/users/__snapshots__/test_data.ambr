@@ -136,6 +136,7 @@
     'groups': <class 'list'> [
       <class 'dict'> {
         'id': 'peasants',
+        'name': 'peasants',
       },
     ],
     'handle': 'bob',
@@ -197,6 +198,7 @@
     'groups': <class 'list'> [
       <class 'dict'> {
         'id': 'peasants',
+        'name': 'peasants',
       },
     ],
     'handle': 'bob',
@@ -259,9 +261,11 @@
     'groups': <class 'list'> [
       <class 'dict'> {
         'id': 'kings',
+        'name': 'kings',
       },
       <class 'dict'> {
         'id': 'peasants',
+        'name': 'peasants',
       },
     ],
     'handle': 'bob',
@@ -279,6 +283,7 @@
     },
     'primary_group': <class 'dict'> {
       'id': 'peasants',
+      'name': 'peasants',
     },
   }
 ---

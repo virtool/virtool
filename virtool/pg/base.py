@@ -13,7 +13,7 @@ class Base:
         return f"<{self.__class__.__name__}({params})>"
 
     def to_dict(self):
-        row = dict()
+        row = {}
 
         for column in self.__table__.columns:
             value = getattr(self, column.name, None)

@@ -6,17 +6,20 @@ from aiohttp_pydantic.oas.typing import r200, r400
 import virtool.tasks.pg
 from virtool.api.response import NotFound, json_response
 from virtool.http.routes import Routes
-from virtool_core.models.task import TaskMinimal, Task
+
+from virtool.tasks.oas import GetTasksResponse, TaskResponse
 
 routes = Routes()
 
 
 @routes.view("/tasks")
 class TasksView(PydanticView):
-
-    async def get(self) -> r200[List[TaskMinimal]]:
+    async def get(self) -> r200[List[GetTasksResponse]]:
         """
-        Get a list of all task documents in the database.
+        List all tasks.
+
+        Retrieves a list of all tasks active on the instance. Pagination is not
+        supported.
 
         Status Codes:
             200: Successful operation
@@ -28,10 +31,11 @@ class TasksView(PydanticView):
 
 @routes.view("/tasks/{task_id}")
 class TaskView(PydanticView):
-
-    async def get(self) -> Union[r200[Task], r400]:
+    async def get(self) -> Union[r200[TaskResponse], r400]:
         """
-        Get a complete task document.
+        Retrieve a task.
+
+        Get the details of a task.
 
         Status Codes:
             200: Successful operation

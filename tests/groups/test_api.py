@@ -1,9 +1,8 @@
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 from virtool.users.utils import Permission
 
 
-async def test_find(spawn_client, all_permissions, no_permissions):
+async def test_find(spawn_client, all_permissions, no_permissions, snapshot):
     """
     Test that a ``GET /groups`` return a complete list of groups.
 
@@ -12,8 +11,15 @@ async def test_find(spawn_client, all_permissions, no_permissions):
 
     await client.db.groups.insert_many(
         [
-            {"_id": "test", "name": "testers", "permissions": all_permissions},
-            {"_id": "limited", "permissions": no_permissions},
+            {
+                "_id": "test",
+                "name": "testers",
+                "permissions": all_permissions,
+            },
+            {
+                "_id": "limited",
+                "permissions": no_permissions,
+            },
         ]
     )
 
@@ -21,10 +27,7 @@ async def test_find(spawn_client, all_permissions, no_permissions):
 
     assert resp.status == 200
 
-    assert await resp.json() == [
-        {"id": "test", "name": "testers", "permissions": all_permissions},
-        {"id": "limited", "name": "limited", "permissions": no_permissions},
-    ]
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "400_exists"])
@@ -42,7 +45,12 @@ async def test_create(error, spawn_client, all_permissions, no_permissions, resp
             {"_id": "test", "permissions": all_permissions}
         )
 
-    resp = await client.post("/groups", data={"group_id": "test"})
+    resp = await client.post(
+        "/groups",
+        data={
+            "group_id": "test",
+        },
+    )
 
     if error:
         await resp_is.bad_request(resp, "Group already exists")
@@ -55,6 +63,7 @@ async def test_create(error, spawn_client, all_permissions, no_permissions, resp
         "id": "test",
         "name": "test",
         "permissions": no_permissions,
+        "users": [],
     }
 
     assert await client.db.groups.find_one("test") == {
@@ -64,7 +73,7 @@ async def test_create(error, spawn_client, all_permissions, no_permissions, resp
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, spawn_client, all_permissions, resp_is):
+async def test_get(error, spawn_client, all_permissions, resp_is, fake, snapshot):
     """
     Test that a ``GET /groups/:group_id`` return the correct group.
 
@@ -72,8 +81,19 @@ async def test_get(error, spawn_client, all_permissions, resp_is):
     client = await spawn_client(authorize=True, administrator=True)
 
     if not error:
+
+        await client.db.users.insert_many(
+            [
+                {**(await fake.users.create()), "groups": ["foo"]},
+                {**(await fake.users.create()), "groups": []},
+            ]
+        )
+
         await client.db.groups.insert_one(
-            {"_id": "foo", "permissions": all_permissions},
+            {
+                "_id": "foo",
+                "permissions": all_permissions,
+            },
         )
 
     resp = await client.get("/groups/foo")
@@ -84,11 +104,7 @@ async def test_get(error, spawn_client, all_permissions, resp_is):
 
     assert resp.status == 200
 
-    assert await resp.json() == {
-        "id": "foo",
-        "name": "foo",
-        "permissions": all_permissions,
-    }
+    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404"])

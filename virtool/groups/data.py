@@ -3,19 +3,19 @@ from typing import List, Dict
 from pymongo.errors import DuplicateKeyError
 
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
-from virtool.data_model.group import VTGroup
-from virtool.groups.db import update_member_users
+from virtool.groups.db import update_member_users, fetch_group_users
 from virtool.mongo.core import DB
 from virtool.mongo.utils import get_one_field
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
+from virtool_core.models.group import GroupMinimal, Group
 
 
 class GroupsData:
     def __init__(self, db):
         self._db: DB = db
 
-    async def find(self) -> List[VTGroup]:
+    async def find(self) -> List[GroupMinimal]:
         """
         List all user groups.
 
@@ -23,11 +23,11 @@ class GroupsData:
 
         """
         return [
-            VTGroup(**base_processor(document))
+            GroupMinimal(**base_processor(document))
             async for document in self._db.groups.find()
         ]
 
-    async def get(self, group_id: str) -> VTGroup:
+    async def get(self, group_id: str) -> Group:
         """
         Get a single group by its ID.
 
@@ -39,9 +39,12 @@ class GroupsData:
         if document is None:
             raise ResourceNotFoundError()
 
-        return VTGroup(**base_processor(document))
+        return Group(
+            **base_processor(document),
+            users=await fetch_group_users(self._db, group_id)
+        )
 
-    async def create(self, group_id: str) -> VTGroup:
+    async def create(self, group_id: str) -> Group:
         """
         Create new group given a group ID.
 
@@ -58,11 +61,9 @@ class GroupsData:
         except DuplicateKeyError:
             raise ResourceConflictError("Group already exists")
 
-        return VTGroup(**base_processor(document))
+        return Group(**base_processor(document), users=[])
 
-    async def update(
-        self, group_id: str, permissions_update: Dict[str, str]
-    ) -> VTGroup:
+    async def update(self, group_id: str, permissions_update: Dict[str, str]) -> Group:
         """
         Update the permissions for a group.
 
@@ -86,7 +87,10 @@ class GroupsData:
 
             await update_member_users(self._db, group_id, session=session)
 
-        return VTGroup(**base_processor(document))
+        return Group(
+            **base_processor(document),
+            users=await fetch_group_users(self._db, group_id)
+        )
 
     async def delete(self, group_id: str):
         async with self._db.create_session() as session:

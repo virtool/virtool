@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import os
-from typing import Union
+from typing import Union, List
 
 import aiohttp.web
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
@@ -17,7 +17,6 @@ import virtool.uploads.db
 from virtool.api.response import NotFound, json_response
 from virtool.api.utils import compose_regex_query, get_req_bool, paginate
 from virtool.data.utils import get_data_from_req
-from virtool.data_model.subtraction import SubtractionMinimal, Subtraction
 from virtool.http.policy import PermissionsRoutePolicy, policy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
@@ -26,7 +25,13 @@ from virtool.mongo.transforms import apply_transforms
 from virtool.subtractions.db import PROJECTION, attach_computed
 from virtool.subtractions.files import create_subtraction_file, delete_subtraction_file
 from virtool.subtractions.models import SubtractionFile
-from virtool.subtractions.oas import CreateSubtractionSchema, EditSubtractionSchema
+from virtool.subtractions.oas import (
+    CreateSubtractionSchema,
+    EditSubtractionSchema,
+    GetSubtractionResponse,
+    CreateSubtractionResponse,
+    SubtractionResponse,
+)
 from virtool.subtractions.utils import FILES
 from virtool.uploads.models import Upload
 from virtool.uploads.utils import naive_writer
@@ -43,9 +48,14 @@ BASE_QUERY = {"deleted": False}
 
 @routes.view("/subtractions")
 class SubtractionsView(PydanticView):
-    async def get(self) -> r200[SubtractionMinimal]:
+    async def get(self) -> r200[List[GetSubtractionResponse]]:
         """
-        Find subtractions by id (name) or nickname.
+        Find subtractions.
+
+        Find subtractions by their ``name`` or ``nickname`` by providing a ``term`` as a
+        query parameter. Partial matches are supported.
+
+        This endpoint returns paginated results by default.
 
         Status Codes:
             200: Successful operation
@@ -97,9 +107,13 @@ class SubtractionsView(PydanticView):
     @policy(PermissionsRoutePolicy(Permission.modify_subtraction))
     async def post(
         self, data: CreateSubtractionSchema
-    ) -> Union[r201[Subtraction], r400, r403]:
+    ) -> Union[r201[CreateSubtractionResponse], r400, r403]:
         """
-        Add a new subtraction. Starts a 'CreateSubtraction' job process.
+        Create a subtraction.
+
+        Creates a new subtraction. A job is started to build the data necessary to make
+        the subtraction usable in analyses. The subtraction is usable when the
+        ``ready`` property is ``true``.
 
         Status Codes:
             201: Successful operation
@@ -156,9 +170,11 @@ class SubtractionsView(PydanticView):
 @routes.view("/subtractions/{subtraction_id}")
 @routes.jobs_api.get("/subtractions/{subtraction_id}")
 class SubtractionView(PydanticView):
-    async def get(self) -> Union[r200[Subtraction], r404]:
+    async def get(self) -> Union[r200[SubtractionResponse], r404]:
         """
-        Get a complete host document.
+        Get a subtraction.
+
+        Retrieves the details of a subtraction.
 
         Status Codes:
             200: Operation Successful
@@ -185,9 +201,11 @@ class SubtractionView(PydanticView):
     @policy(PermissionsRoutePolicy(Permission.modify_subtraction))
     async def patch(
         self, data: EditSubtractionSchema
-    ) -> Union[r200[Subtraction], r400, r403, r404]:
+    ) -> Union[r200[SubtractionResponse], r400, r403, r404]:
         """
-        Updates the nickname for an existing subtraction.
+        Update a subtraction.
+
+        Updates the name or nickname of an existing subtraction.
 
         Status Codes:
             200: Operation successful
@@ -220,7 +238,9 @@ class SubtractionView(PydanticView):
     @policy(PermissionsRoutePolicy(Permission.modify_subtraction))
     async def delete(self) -> Union[r204, r403, r404, r409]:
         """
-        Remove an existing subtraction.
+        Delete a subtraction.
+
+        Deletes an existing subtraction.
 
         Status Codes:
             204: No content

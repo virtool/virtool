@@ -114,7 +114,7 @@ async def paginate(
 
     page_count = int(math.ceil(found_count / per_page))
 
-    documents = list()
+    documents = []
 
     if found_count:
         if page > 1:

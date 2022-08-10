@@ -13,7 +13,7 @@ async def find(pg: AsyncEngine) -> list:
     :return: a list of task records
 
     """
-    documents = list()
+    documents = []
     async with AsyncSession(pg) as session:
         tasks = (await session.execute(select(Task))).scalars().all()
         for task in tasks:
@@ -52,7 +52,7 @@ async def register(pg, task_class, context: dict = None) -> dict:
     """
     task = Task(
         complete=False,
-        context=context or dict(),
+        context=context or {},
         count=0,
         created_at=virtool.utils.timestamp(),
         progress=0,

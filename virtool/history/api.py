@@ -3,7 +3,7 @@ from typing import Union, List, Dict, Any
 from aiohttp.web import HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r403, r404, r409, r422
-from virtool_core.models.history import History, HistoryMinimal
+from virtool.history.oas import GetHistoryResponse, HistoryResponse
 
 import virtool.history.db
 import virtool.http.routes
@@ -18,30 +18,33 @@ routes = virtool.http.routes.Routes()
 
 @routes.view("/history")
 class ChangesView(PydanticView):
-    async def get(self) -> Union[Dict[str, Union[Any, List[HistoryMinimal]]], r422]:
+    async def get(self) -> Union[r200[List[GetHistoryResponse]], r422]:
         """
-        Get a list of change documents.
+        List history.
+
+        Returns a list of change documents.
+
         Status Codes:
-        200: Successful Operation
-        400: Invalid query
+            200: Successful Operation
+            422: Invalid query
         """
         data = await get_data_from_req(self.request).history.find(
             req_query=self.request.query
         )
 
         return json_response(
-            [HistoryMinimal.parse_obj(document).dict() for document in data]
+            [GetHistoryResponse.parse_obj(document).dict() for document in data]
         )
 
 
 @routes.view("/history/{change_id}")
 class ChangeView(PydanticView):
-    async def get(self) -> Union[r200[History], r404]:
+    async def get(self) -> Union[r200[HistoryResponse], r404]:
         """
         Get a specific change document by its ``change_id``.
         Status Codes:
-        200: Successful Operation
-        404: Not found
+            200: Successful Operation
+            404: Not found
         """
         change_id = self.request.match_info["change_id"]
 
@@ -57,10 +60,10 @@ class ChangeView(PydanticView):
         Remove the change document with the given ``change_id`` and
         any subsequent changes.
         Status Codes:
-        204: Successful Operation
-        403: Insufficient Rights
-        404: Not found
-        409: Not unbuilt
+            204: Successful Operation
+            403: Insufficient Rights
+            404: Not found
+            409: Not unbuilt
         """
         change_id = self.request.match_info["change_id"]
 

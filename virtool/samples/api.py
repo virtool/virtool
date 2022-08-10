@@ -94,7 +94,7 @@ routes = Routes()
 class SamplesView(PydanticView):
     async def get(self) -> Union[r200[List[GetSamplesResponse]], r400]:
         """
-        Find samples, filtering by data passed as URL parameters.
+        Find samples, filtering by data passed as URL parameters
 
         Status Codes:
             200: Successful operation

@@ -2,6 +2,7 @@
 API request handlers for managing and querying HMM data.
 
 """
+from asyncio import gather
 from typing import List, Union
 
 import aiohttp
@@ -35,42 +36,54 @@ routes = Routes()
 
 
 @routes.view("/hmms")
-class HMMsView(PydanticView):
+class HmmsView(PydanticView):
     async def get(self) -> r200[HMMSearchResult]:
         """
-        Find HMM annotation documents.
+        Find HMMs.
+
+        Finds profile hidden Markov model (HMM) annotations that are used in Virtool for
+        novel virus prediction.
+
+        Providing a search term will return HMMs with full or partial matches in the
+        `names` attribute.
+
+        Each HMM annotation is generated from numerous public viral protein sequences.
+        The top three most common names in the protein records are combined into the
+        `names` attribute.
 
         Status Codes:
             200: Successful operation
         """
         db = self.request.app["db"]
 
-        term = self.request.query.get("find")
-
         db_query = {}
 
-        if term:
+        if term := self.request.query.get("find"):
             db_query.update(compose_regex_query(term, ["names"]))
 
-        data = await paginate(
-            db.hmm,
-            db_query,
-            self.request.query,
-            sort="cluster",
-            projection=PROJECTION,
-            base_query={"hidden": False},
+        data, status = await gather(
+            paginate(
+                db.hmm,
+                db_query,
+                self.request.query,
+                sort="cluster",
+                projection=PROJECTION,
+                base_query={"hidden": False},
+            ),
+            virtool.hmm.db.get_status(db),
         )
 
-        data["status"] = await virtool.hmm.db.get_status(db)
-
-        return json_response(data)
+        return json_response({**data, "status": status})
 
     @policy(PermissionsRoutePolicy(Permission.modify_hmm))
     async def delete(self) -> Union[r204, r403]:
         """
+        Purge HMMs.
+
         Delete all installed HMM data.
 
-        This won't break analyses that reference the installed HMM data.
+        This is not recommended and is used in experimental instances or development. It
+        won't break analyses that reference the installed HMM data.
 
         Status Codes:
             204: Successful operation
@@ -100,15 +113,18 @@ class HMMsView(PydanticView):
 class StatusView(PydanticView):
     async def get(self) -> r200[Response]:
         """
-        Get the status of the HMM data. Contains the following fields:
+        Get HMM data.
 
-        - `errors`: lists any errors in the HMM data
-        - `id`: is always 'hmm'
-        - `installed`: a dict describing the installed HMM data
-        - `process.id`: the ID of the process installing the HMM data
-        - `release`: a dict describing the latest available release
+        Returns the installation status of the HMM data. Contains the following fields:
 
-        Installed HMM data cannot currently be updated.
+        | Field      | Type          | Description                                               |
+        | :--------- | :------------ | :-------------------------------------------------------- |
+        | `errors`   | array[string] | An array of any errors in the HMM data                    |
+        | `installed`| object        | A description of the currently installed HMM release      |
+        | `task.id`  | integer       | The `id` the task responsible for installing the HMM data |
+        | `release`  | object        | A description of the latest available release             |
+
+        **Installed HMM data cannot currently be updated**.
 
         Status Codes:
             200: Successful operation
@@ -122,12 +138,14 @@ class StatusView(PydanticView):
 class ReleaseView(PydanticView):
     async def get(self) -> Union[r200[Response], r502]:
         """
+        Get the latest HMM release.
+
         Get the latest release for the HMM data.
 
         Status Codes:
             200: Successful operation
             502: Repository does not exist
-            502: count not reach Github
+            502: Cannot reach GitHub
         """
         try:
             release = await virtool.hmm.db.fetch_and_update_release(self.request.app)
@@ -205,7 +223,9 @@ class UpdatesView(PydanticView):
 class HMMView(PydanticView):
     async def get(self) -> Union[r200[HMM], r404]:
         """
-        Get a complete individual HMM annotation document.
+        Get an HMM.
+
+        Retrieves the details for an HMM annotation.
 
         Status Codes:
             200: Successful operation

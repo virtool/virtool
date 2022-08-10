@@ -95,7 +95,7 @@ class Dispatcher:
         )
 
         #: All active client connections.
-        self._connections = list()
+        self._connections = []
 
     async def run(self):
         """
