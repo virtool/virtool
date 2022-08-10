@@ -20,7 +20,7 @@ async def test_format_analysis(workflow, mocker):
     mocker.patch("virtool.analyses.format.format_nuvs", new=m_format_nuvs)
     mocker.patch("virtool.analyses.format.format_pathoscope", new=m_format_pathoscope)
 
-    document = dict()
+    document = {}
 
     if workflow:
         document["workflow"] = workflow

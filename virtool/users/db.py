@@ -5,22 +5,19 @@ from logging import Logger
 from typing import Any, Dict, List, Optional, Union
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
+from virtool_core.models.user import User
 
-import virtool.utils
+from virtool.errors import DatabaseError
+from virtool.groups.db import get_merged_permissions
 from virtool.mongo.transforms import AbstractTransform
 from virtool.mongo.utils import (
     get_non_existent_ids,
-    handle_exists,
     id_exists,
-    oid_exists,
 )
-from virtool.errors import DatabaseError
-from virtool.groups.db import get_merged_permissions
 from virtool.types import Document
 from virtool.users.utils import (
     check_legacy_password,
     check_password,
-    generate_base_permissions,
     limit_permissions,
 )
 from virtool.utils import base_processor
@@ -54,12 +51,6 @@ class B2CUserAttributes:
     display_name: str
     given_name: str
     family_name: str
-
-    def __init__(self, oid: str, display_name: str, given_name: str, family_name: str):
-        self.oid = oid
-        self.display_name = display_name
-        self.given_name = given_name
-        self.family_name = family_name
 
 
 class AttachUserTransform(AbstractTransform):
@@ -159,19 +150,6 @@ async def extend_user(db, user: Dict[str, Any]) -> Dict[str, Any]:
     return extended
 
 
-def compose_force_reset_update(force_reset: Optional[bool]) -> dict:
-    """
-    Compose a update dict for the database given a `force_reset` value.
-
-    :param force_reset: a force reset value
-    :return: an update
-    """
-    if force_reset is None:
-        return dict()
-
-    return {"force_reset": force_reset, "invalidate_sessions": True}
-
-
 async def compose_groups_update(db, groups: Optional[list]) -> dict:
     """
     Compose a update dict for the updating the list of groups a user is a member of.
@@ -182,7 +160,7 @@ async def compose_groups_update(db, groups: Optional[list]) -> dict:
     :return: an update
     """
     if groups is None:
-        return dict()
+        return {}
 
     non_existent_groups = await get_non_existent_ids(db.groups, groups)
 
@@ -192,24 +170,6 @@ async def compose_groups_update(db, groups: Optional[list]) -> dict:
     update = {"groups": groups, "permissions": await get_merged_permissions(db, groups)}
 
     return update
-
-
-def compose_password_update(password: Optional[str]) -> dict:
-    """
-    Compose an update dict for changing a user's password.
-
-    :param password: a new password
-
-    :return: an update
-    """
-    if password is None:
-        return dict()
-
-    return {
-        "password": virtool.users.utils.hash_password(password),
-        "last_password_change": virtool.utils.timestamp(),
-        "invalidate_sessions": True,
-    }
 
 
 async def compose_primary_group_update(
@@ -225,7 +185,7 @@ async def compose_primary_group_update(
 
     """
     if primary_group is None:
-        return dict()
+        return {}
 
     if primary_group != "none":
         if not await id_exists(db.groups, primary_group):
@@ -249,122 +209,11 @@ async def generate_handle(collection, given_name: str, family_name: str) -> str:
     :return: user handle created from B2C user info
     """
     handle = f"{given_name}-{family_name}-{random.randint(1,100)}"
-    if await handle_exists(collection, handle):
+
+    if await collection.count_documents({"handle": handle}):
         return await generate_handle(collection, given_name, family_name)
 
     return handle
-
-
-async def create(
-    db,
-    password: Union[str, None],
-    handle: str,
-    force_reset: bool = True,
-    b2c_user_attributes: B2CUserAttributes = None,
-) -> Document:
-    """
-    Insert a new user document into the database.
-
-    If Azure AD B2C information is given, add it to user document.
-
-    :param db: the application database client
-    :param handle: the requested handle for the user
-    :param password: a password
-    :param force_reset: force the user to reset password on next login
-    :param b2c_user_attributes: arguments gathered from Azure AD B2C ID token
-
-    :return: the user document
-    """
-    user_id = await virtool.mongo.utils.get_new_id(db.users)
-
-    if await virtool.mongo.utils.handle_exists(
-        db.users, handle
-    ) or await virtool.mongo.utils.id_exists(db.users, user_id):
-        raise DatabaseError("User already exists")
-
-    document = {
-        "_id": user_id,
-        "handle": handle,
-        "administrator": False,
-        "groups": list(),
-        "settings": {
-            "skip_quick_analyze_dialog": True,
-            "show_ids": True,
-            "show_versions": True,
-            "quick_analyze_workflow": "pathoscope_bowtie",
-        },
-        "permissions": generate_base_permissions(),
-        "primary_group": "",
-        # Should the user be forced to reset their password on their next login?
-        "force_reset": force_reset,
-        # A timestamp taken at the last password change.
-        "last_password_change": virtool.utils.timestamp(),
-        # Should all of the user's sessions be invalidated so that they are forced to
-        # login next time they download the client.
-        "invalidate_sessions": False,
-    }
-
-    if password is not None:
-        document.update({"password": virtool.users.utils.hash_password(password)})
-    else:
-        if await oid_exists(db.users, b2c_user_attributes.oid):
-            raise DatabaseError("User already exists")
-        document.update(
-            {
-                "b2c_oid": b2c_user_attributes.oid,
-                "b2c_display_name": b2c_user_attributes.display_name,
-                "b2c_given_name": b2c_user_attributes.given_name,
-                "b2c_family_name": b2c_user_attributes.family_name,
-            }
-        )
-
-    await db.users.insert_one(document)
-
-    return document
-
-
-async def edit(
-    db,
-    user_id: str,
-    administrator: Optional[bool] = None,
-    force_reset: Optional[bool] = None,
-    groups: Optional[list] = None,
-    password: Optional[str] = None,
-    primary_group: Optional[str] = None,
-) -> Document:
-    if not await id_exists(db.users, user_id):
-        raise DatabaseError("User does not exist")
-
-    update = dict()
-
-    if administrator is not None:
-        update["administrator"] = administrator
-
-    update.update(
-        {**compose_force_reset_update(force_reset), **compose_password_update(password)}
-    )
-
-    groups_update = await compose_groups_update(db, groups)
-    primary_group_update = await compose_primary_group_update(
-        db, user_id, primary_group
-    )
-
-    update.update({**groups_update, **primary_group_update})
-
-    if not update:
-        return await db.users.find_one({"_id": user_id})
-
-    document = await db.users.find_one_and_update({"_id": user_id}, {"$set": update})
-
-    await update_sessions_and_keys(
-        db,
-        user_id,
-        document["administrator"],
-        document["groups"],
-        document["permissions"],
-    )
-
-    return document
 
 
 async def is_member_of_group(db, user_id: str, group_id: str) -> bool:
@@ -486,3 +335,28 @@ async def find_or_create_b2c_user(
         )
 
     return document
+
+
+async def fetch_complete_user(mongo, user_id: str) -> Optional[User]:
+    user = await mongo.users.find_one(user_id)
+
+    if user:
+        if not user.get("primary_group"):
+            user["primary_group"] = None
+
+        groups = []
+        primary_group = None
+
+        async for group in mongo.groups.find({"_id": {"$in": user["groups"]}}):
+            group = base_processor(group)
+
+            if user["primary_group"] and group["id"] == user["primary_group"]:
+                primary_group = group
+
+            groups.append(group)
+
+        return User(
+            **{**base_processor(user), "groups": groups, "primary_group": primary_group}
+        )
+
+    return None

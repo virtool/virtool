@@ -1,65 +1,87 @@
+from typing import Union, List, Dict, Any
+
+from aiohttp.web import HTTPConflict, HTTPNoContent
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r204, r403, r404, r409, r422
+from virtool.history.oas import GetHistoryResponse, HistoryResponse
+
 import virtool.history.db
 import virtool.http.routes
 import virtool.references.db
-from aiohttp.web import HTTPConflict, HTTPNoContent
 from virtool.api.response import InsufficientRights, NotFound, json_response
+from virtool.data.errors import ResourceNotFoundError
+from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
 
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/history")
-async def find(req):
-    """
-    Get a list of change documents.
+@routes.view("/history")
+class ChangesView(PydanticView):
+    async def get(self) -> Union[r200[List[GetHistoryResponse]], r422]:
+        """
+        List history.
 
-    """
-    db = req.app["db"]
+        Returns a list of change documents.
 
-    data = await virtool.history.db.find(db, req.query)
+        Status Codes:
+            200: Successful Operation
+            422: Invalid query
+        """
+        data = await get_data_from_req(self.request).history.find(
+            req_query=self.request.query
+        )
 
-    return json_response(data)
-
-
-@routes.get("/history/{change_id}")
-async def get(req):
-    """
-    Get a specific change document by its ``change_id``.
-
-    """
-    change_id = req.match_info["change_id"]
-
-    document = await virtool.history.db.get(req.app, change_id)
-
-    if document:
-        return json_response(document)
-
-    raise NotFound()
+        return json_response(
+            [GetHistoryResponse.parse_obj(document).dict() for document in data]
+        )
 
 
-@routes.delete("/history/{change_id}")
-async def revert(req):
-    """
-    Remove the change document with the given ``change_id`` and any subsequent changes.
+@routes.view("/history/{change_id}")
+class ChangeView(PydanticView):
+    async def get(self) -> Union[r200[HistoryResponse], r404]:
+        """
+        Get a specific change document by its ``change_id``.
+        Status Codes:
+            200: Successful Operation
+            404: Not found
+        """
+        change_id = self.request.match_info["change_id"]
 
-    """
-    db = req.app["db"]
+        document = await virtool.history.db.get(self.request.app, change_id)
 
-    change_id = req.match_info["change_id"]
+        if document:
+            return json_response(document)
 
-    document = await db.history.find_one(change_id, ["reference"])
-
-    if not document:
         raise NotFound()
 
-    if not await virtool.references.db.check_right(
-        req, document["reference"]["id"], "modify_otu"
-    ):
-        raise InsufficientRights()
+    async def delete(self) -> Union[r204, r403, r404, r409]:
+        """
+        Remove the change document with the given ``change_id`` and
+        any subsequent changes.
+        Status Codes:
+            204: Successful Operation
+            403: Insufficient Rights
+            404: Not found
+            409: Not unbuilt
+        """
+        change_id = self.request.match_info["change_id"]
 
-    try:
-        await virtool.history.db.revert(req.app, change_id)
-    except DatabaseError:
-        raise HTTPConflict(text="Change is already built")
+        try:
+            document = await get_data_from_req(self.request).history.delete(
+                change_id=change_id
+            )
+        except ResourceNotFoundError:
+            raise NotFound()
 
-    raise HTTPNoContent
+        if not await virtool.references.db.check_right(
+            self.request, document["reference"]["id"], "modify_otu"
+        ):
+            raise InsufficientRights()
+
+        try:
+            await virtool.history.db.revert(self.request.app, change_id)
+        except DatabaseError:
+            raise HTTPConflict(text="Change is already built")
+
+        raise HTTPNoContent

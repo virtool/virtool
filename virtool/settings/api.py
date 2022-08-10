@@ -1,15 +1,62 @@
-import virtool.settings.db
+from typing import Union
+
 from aiohttp.web import Request, Response
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r403
+
+import virtool.settings.db
 from virtool.api.response import json_response
+from virtool.http.policy import policy, AdministratorRoutePolicy
 from virtool.http.routes import Routes
-from virtool.http.schema import schema
 from virtool.settings.db import Settings
-from virtool.settings.schema import SCHEMA
+from virtool.settings.oas import (
+    GetSettingsResponse,
+    UpdateSettingsResponse,
+    UpdateSettingsSchema,
+)
 
 routes = Routes()
 
 
-@routes.get("/settings")
+@routes.view("/settings")
+class SettingsView(PydanticView):
+    async def get(self) -> r200[GetSettingsResponse]:
+        """
+        Get settings.
+
+        Returns the complete application settings.
+
+        Status Codes:
+            200: Successful operation
+        """
+        settings = await virtool.settings.db.get(self.request.app["db"])
+
+        return json_response(settings)
+
+    @policy(AdministratorRoutePolicy)
+    async def patch(
+        self, data: UpdateSettingsSchema
+    ) -> Union[r200[UpdateSettingsResponse], r403]:
+        """
+        Update settings.
+
+        Updates the application settings.
+
+        Status Codes:
+            200: Successful operation
+            403: Not permitted
+        """
+        settings = await virtool.settings.db.update(
+            self.request.app["db"], data.dict(exclude_unset=True)
+        )
+
+        settings.pop("software_channel", None)
+
+        self.request.app["settings"] = Settings(**settings)
+
+        return json_response(settings)
+
+
 @routes.jobs_api.get("/settings")
 async def get(req: Request) -> Response:
     """
@@ -17,23 +64,5 @@ async def get(req: Request) -> Response:
 
     """
     settings = await virtool.settings.db.get(req.app["db"])
-
-    return json_response(settings)
-
-
-@routes.patch("/settings", admin=True)
-@schema(SCHEMA)
-async def update(req: Request) -> Response:
-    """
-    Update application settings based on request data.
-
-    """
-    raw_data = await req.json()
-
-    data = {key: req["data"][key] for key in raw_data}
-
-    settings = await virtool.settings.db.update(req.app["db"], data)
-
-    req.app["settings"] = Settings(**settings)
 
     return json_response(settings)

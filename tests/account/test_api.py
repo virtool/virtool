@@ -55,7 +55,13 @@ async def test_edit(error, snapshot, spawn_client, resp_is, static_time):
     resp = await client.patch("/account", data)
 
     if error == "email_error":
-        await resp_is.invalid_input(resp, {"email": ["Not a valid email"]})
+        assert resp.status == 400
+        assert await resp.json() == [{
+            "loc": ["email"],
+            "msg": "The format of the email is invalid",
+            "type": "value_error",
+            "in": "body"
+        }]
 
     elif error == "password_length_error":
         await resp_is.bad_request(
@@ -63,9 +69,18 @@ async def test_edit(error, snapshot, spawn_client, resp_is, static_time):
         )
 
     elif error == "missing_old_password":
-        await resp_is.invalid_input(
-            resp, {"password": ["field 'old_password' is required"]}
-        )
+        assert resp.status == 400
+        assert await resp.json() == [
+            {"loc": ["old_password"],
+             "msg": "field required",
+             "type": "value_error.missing",
+             "in": "body"},
+
+            {"loc": ["__root__"],
+             "msg":  "The old password needs to be given in order for the password to be changed",
+             "type": "value_error",
+             "in": "body"}
+        ]
 
     elif error == "credentials_error":
         await resp_is.bad_request(resp, "Invalid credentials")
@@ -123,12 +138,18 @@ async def test_update_settings(invalid_input, spawn_client, resp_is):
     data = {"show_ids": False}
 
     if invalid_input:
-        data = {"foo_bar": True, "show_ids": "yes"}
+        data = {"foo_bar": True, "show_ids": "foo"}
 
     resp = await client.patch("/account/settings", data)
 
     if invalid_input:
-        await resp_is.invalid_input(resp, {"show_ids": ["must be of boolean type"]})
+        assert resp.status == 400
+        assert await resp.json() == [{
+            "loc": ["show_ids"],
+            "msg": "value could not be parsed to a boolean",
+            "type": "type_error.bool",
+            "in": "body"
+        }]
     else:
         assert resp.status == 200
 
@@ -401,9 +422,13 @@ async def test_is_permission_dict(value, spawn_client, resp_is):
     if value == "valid_permissions":
         await resp_is.not_found(resp)
     else:
-        await resp_is.invalid_input(
-            resp, {"permissions": ["keys must be valid permissions"]}
-        )
+        assert resp.status == 400
+        assert await resp.json() == [{
+            "loc": ["permissions"],
+            "msg": "One or more permissions is invalid",
+            "type": "value_error",
+            "in": "body"
+        }]
 
 
 @pytest.mark.parametrize("value", ["valid_email", "invalid_email"])
@@ -424,7 +449,13 @@ async def test_is_valid_email(value, spawn_client, resp_is):
     if value == "valid_email":
         await resp_is.bad_request(resp, "Invalid credentials")
     else:
-        await resp_is.invalid_input(resp, {"email": ["Not a valid email"]})
+        assert resp.status == 400
+        assert await resp.json() == [{
+            "loc": ["email"],
+            "msg": "The format of the email is invalid",
+            "type": "value_error",
+            "in": "body"
+        }]
 
 
 @pytest.mark.parametrize("error", [None, "wrong_handle", "wrong_password"])

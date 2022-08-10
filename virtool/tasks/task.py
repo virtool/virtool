@@ -22,7 +22,7 @@ class Task:
         self.id = task_id
         self.step = None
         self.steps = []
-        self.intermediate = dict()
+        self.intermediate = {}
         self.document = None
         self.context = None
         self.errored = False

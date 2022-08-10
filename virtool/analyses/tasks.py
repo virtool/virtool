@@ -53,7 +53,7 @@ class StoreNuvsFilesTask(Task):
                 except FileExistsError:
                     pass
 
-                analysis_files = list()
+                analysis_files = []
 
                 for filename in sorted(os.listdir(path)):
                     if filename in TARGET_FILES:

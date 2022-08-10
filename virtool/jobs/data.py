@@ -111,10 +111,15 @@ class JobsData:
                             **({"archived": archived} if archived is not None else {}),
                         }
                     },
-                    {"$set": {"last_status": {"$last": "$status"}}},
                     {
                         "$set": {
-                            "created_at": "$last_status.timestamp",
+                            "last_status": {"$last": "$status"},
+                            "first_status": {"$first": "$status"}
+                        }
+                    },
+                    {
+                        "$set": {
+                            "created_at": "$first_status.timestamp",
                             "progress": "$last_status.progress",
                             "state": "$last_status.state",
                             "stage": "$last_status.stage",
@@ -144,7 +149,7 @@ class JobsData:
             ),
         }
 
-    async def find(self, query: Mapping):
+    async def find(self, query: MultiDictProxy):
         """
         :param query:
         :return:

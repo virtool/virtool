@@ -96,7 +96,7 @@ async def test_check_segment_or_target(
         }
     )
 
-    data = dict()
+    data = {}
 
     if data_type == "barcode":
         data["target"] = "CPN60" if defined else "ITS2"
@@ -104,7 +104,7 @@ async def test_check_segment_or_target(
         data["segment"] = "RNA1" if defined else "RNA2"
 
     if missing:
-        data = dict()
+        data = {}
 
     message = await check_sequence_segment_or_target(
         dbi, "foo", "baz", sequence_id, "bar", data

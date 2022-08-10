@@ -1,6 +1,7 @@
 import json
 
 import pytest
+
 from virtool.analyses.format import load_results, transform_coverage_to_coordinates
 
 

@@ -18,7 +18,7 @@
       'remove_job': False,
       'upload_file': False,
     },
-    'primary_group': '',
+    'primary_group': None,
     'settings': <class 'dict'> {
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,

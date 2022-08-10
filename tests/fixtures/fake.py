@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from virtool.fake.wrapper import FakerWrapper
 from virtool.subtractions.models import SubtractionFile
 from virtool.types import Document
+from virtool_core.models.enums import Permission
 from virtool.uploads.models import Upload
 
 
@@ -209,7 +210,7 @@ class FakeUserGenerator(AbstractFakeDataGenerator):
             "handle": profile["username"],
             "primary_group": "technicians",
             "username": profile["username"],
-            "permissions": [],
+            "permissions": {p.value: False for p in Permission},
             "administrator": False,
             "created_at": self._faker.date_time(),
         }

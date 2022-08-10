@@ -1,16 +1,18 @@
 from urllib.parse import parse_qs
 
 import jwt
-from virtool.utils import run_in_thread
-from virtool.http.routes import Routes
 from aiohttp.web import Request, Response
 from aiohttp.web_exceptions import HTTPFound
 
+from virtool.http.policy import PublicRoutePolicy, policy
+from virtool.http.routes import Routes
+from virtool.utils import run_in_thread
 
 routes = Routes()
 
 
-@routes.get("/oidc/acquire_tokens", public=True)
+@routes.get("/oidc/acquire_tokens")
+@policy(PublicRoutePolicy)
 async def acquire_tokens(req: Request) -> Response:
     """
     Gather authentication response from auth uri query string.
@@ -20,8 +22,6 @@ async def acquire_tokens(req: Request) -> Response:
 
     If error occurs during token retrieval, delete tokens to restart process.
 
-    :param req: the request to handle
-    :return: the response
     """
     auth_response = {
         key: value[0] for key, value in parse_qs(req.url.query_string).items()
@@ -44,7 +44,8 @@ async def acquire_tokens(req: Request) -> Response:
     return resp
 
 
-@routes.get("/oidc/refresh_tokens", public=True)
+@routes.get("/oidc/refresh_tokens")
+@policy(PublicRoutePolicy)
 async def refresh_tokens(req: Request) -> Response:
     """
     Silently retrieve tokens for account in token cache.
@@ -56,8 +57,6 @@ async def refresh_tokens(req: Request) -> Response:
     If no accounts are found, or correct account isn't found,
     then redirect to /delete_tokens
 
-    :param req: the request to handle
-    :return: the response
     """
     accounts = req.app["b2c"].msal.get_accounts()
 
@@ -89,13 +88,12 @@ async def refresh_tokens(req: Request) -> Response:
     return HTTPFound("/oidc/delete_tokens")
 
 
-@routes.get("/oidc/delete_tokens", public=True)
+@routes.get("/oidc/delete_tokens")
+@policy(PublicRoutePolicy)
 async def delete_tokens(req: Request) -> Response:
     """
     Delete id_token cookie from response.
 
-    :param req: the request to handle
-    :return: the response
     """
     resp = HTTPFound("/")
     resp.del_cookie("id_token")

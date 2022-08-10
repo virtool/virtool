@@ -1,32 +1,51 @@
+from typing import Union, List
+
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r400
+
 import virtool.tasks.pg
 from virtool.api.response import NotFound, json_response
 from virtool.http.routes import Routes
 
+from virtool.tasks.oas import GetTasksResponse, TaskResponse
+
 routes = Routes()
 
 
-@routes.get("/tasks")
-async def find(req):
-    """
-    Get a list of all task documents in the database.
+@routes.view("/tasks")
+class TasksView(PydanticView):
+    async def get(self) -> r200[List[GetTasksResponse]]:
+        """
+        List all tasks.
 
-    """
-    documents = await virtool.tasks.pg.find(req.app["pg"])
+        Retrieves a list of all tasks active on the instance. Pagination is not
+        supported.
 
-    return json_response(documents)
+        Status Codes:
+            200: Successful operation
+        """
+        documents = await virtool.tasks.pg.find(self.request.app["pg"])
+
+        return json_response(documents)
 
 
-@routes.get("/tasks/{task_id}")
-async def get(req):
-    """
-    Get a complete task document.
+@routes.view("/tasks/{task_id}")
+class TaskView(PydanticView):
+    async def get(self) -> Union[r200[TaskResponse], r400]:
+        """
+        Retrieve a task.
 
-    """
-    task_id = req.match_info["task_id"]
+        Get the details of a task.
 
-    document = await virtool.tasks.pg.get(req.app["pg"], int(task_id))
+        Status Codes:
+            200: Successful operation
+            404: Not found
+        """
+        task_id = self.request.match_info["task_id"]
 
-    if not document:
-        raise NotFound()
+        document = await virtool.tasks.pg.get(self.request.app["pg"], int(task_id))
 
-    return json_response(document)
+        if not document:
+            raise NotFound()
+
+        return json_response(document)

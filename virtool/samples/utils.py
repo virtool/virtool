@@ -46,7 +46,7 @@ async def check_labels(pg: AsyncEngine, labels: List[int]) -> List[int]:
     """
     async with AsyncSession(pg) as session:
         query = await session.execute(select(Label.id).filter(Label.id.in_(labels)))
-        results = {label for label in query.scalars().all()}
+        results = set(query.scalars().all())
 
     return [label for label in labels if label not in results]
 

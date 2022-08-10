@@ -40,7 +40,7 @@ async def test_add_index_files(
     }
 
     if files == "empty":
-        index["files"] = list()
+        index["files"] = []
 
     if files == "full":
         index["files"] = ["full"]

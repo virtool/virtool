@@ -1,180 +1,138 @@
+from typing import List, Union
+
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r404
 
 import virtool.http.routes
-import virtool.validators
 from virtool.api.response import EmptyRequest, NotFound, json_response
-from virtool.mongo.transforms import apply_transforms
-from virtool.http.schema import schema
-from virtool.labels.db import SampleCountTransform
-from virtool.labels.models import Label
-from virtool.pg.utils import get_generic
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.utils import get_data_from_req
+from virtool.labels.oas import (
+    CreateLabelSchema,
+    EditLabelSchema,
+    CreateLabelResponse,
+    GetLabelResponse,
+    LabelResponse,
+)
 
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/labels")
-async def find(req):
-    """
-    Get a list of all label documents in the database.
+@routes.view("/labels")
+class LabelsView(PydanticView):
+    async def get(self) -> Union[r200[List[GetLabelResponse]], r400]:
+        """
+        List labels.
 
-    """
-    term = req.query.get("find")
+        Lists all sample labels on the instance. Pagination is not supported; all labels are
+        included in the response.
 
-    statement = select(Label).order_by(Label.name)
-    if term:
-        statement = statement.filter(Label.name.ilike(f"%{term}%"))
+        Status Codes:
+            200: Successful operation
+            400: Invalid query
+        """
+        term = self.request.query.get("find")
 
-    labels = await get_generic(req.app["pg"], statement)
+        labels = await get_data_from_req(self.request).labels.find(term=term)
 
-    documents = await apply_transforms(
-        [label.to_dict() for label in labels], [SampleCountTransform(req.app["db"])]
-    )
+        return json_response([label.dict() for label in labels])
 
-    return json_response(documents)
+    async def post(
+        self, data: CreateLabelSchema
+    ) -> Union[r201[CreateLabelResponse], r400]:
+        """
+        Create a label.
 
+        Creates a new sample label.
 
-@routes.get("/labels/{label_id}")
-async def get(req):
-    """
-    Get a complete label document.
+        The color must be a valid hexadecimal code.
 
-    """
-    async with AsyncSession(req.app["pg"]) as session:
-        result = await session.execute(
-            select(Label).filter_by(id=int(req.match_info["label_id"]))
-        )
-
-        label = result.scalar()
-
-    if label is None:
-        raise NotFound()
-
-    document = await apply_transforms(
-        label.to_dict(), [SampleCountTransform(req.app["db"])]
-    )
-
-    return json_response(document)
-
-
-@routes.post("/labels")
-@schema(
-    {
-        "name": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "required": True,
-            "empty": False,
-        },
-        "color": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "check_with": virtool.validators.is_valid_hex_color,
-            "default": "#A0AEC0",
-        },
-        "description": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "default": "",
-        },
-    }
-)
-async def create(req):
-    """
-    Add a new label to the labels database.
-    """
-    data = req["data"]
-
-    async with AsyncSession(req.app["pg"]) as session:
-        label = Label(
-            name=data["name"], color=data["color"], description=data["description"]
-        )
-
-        session.add(label)
+        Status Codes:
+            201: Successful operation
+            400: Invalid Input
+        """
+        name = data.name
+        color = data.color
+        description = data.description
 
         try:
-            await session.flush()
-            document = label.to_dict()
-            await session.commit()
-        except IntegrityError:
+            label = await get_data_from_req(self.request).labels.create(
+                name=name, color=color, description=description
+            )
+        except ResourceConflictError:
             raise HTTPBadRequest(text="Label name already exists")
 
-    document = await apply_transforms(document, [SampleCountTransform(req.app["db"])])
+        headers = {"Location": f"/labels/{label.id}"}
 
-    headers = {"Location": f"/labels/{document['id']}"}
-
-    return json_response(document, status=201, headers=headers)
+        return json_response(label.dict(), status=201, headers=headers)
 
 
-@routes.patch("/labels/{label_id}")
-@schema(
-    {
-        "name": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-        },
-        "color": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-            "check_with": virtool.validators.is_valid_hex_color,
-        },
-        "description": {
-            "type": "string",
-            "coerce": virtool.validators.strip,
-        },
-    }
-)
-async def edit(req):
-    """
-    Edit an existing label.
+@routes.view("/labels/{label_id}")
+class LabelView(PydanticView):
+    async def get(self) -> Union[r200[LabelResponse], r404]:
+        """
+        Get a label.
 
-    """
-    data = req["data"]
+        Retrieve the details for a sample label.
 
-    label_id = int(req.match_info["label_id"])
+        Status Codes:
+            200: Successful operation
+            404: Not found
+        """
+        label_id = int(self.request.match_info["label_id"])
 
-    if not data:
-        raise EmptyRequest()
-
-    async with AsyncSession(req.app["pg"]) as session:
-        result = await session.execute(select(Label).filter_by(id=label_id))
-        label = result.scalar()
-
-        if label is None:
-            raise NotFound()
-
-        label.name = data["name"]
-        label.color = data["color"]
-        label.description = data["description"]
-        document = label.to_dict()
         try:
-            await session.commit()
-        except IntegrityError:
-            raise HTTPBadRequest(text="Label name already exists")
-
-    document = await apply_transforms(document, [SampleCountTransform(req.app["db"])])
-
-    return json_response(document)
-
-
-@routes.delete("/labels/{label_id}")
-async def remove(req):
-    """
-    Remove a label.
-
-    """
-    label_id = int(req.match_info["label_id"])
-
-    async with AsyncSession(req.app["pg"]) as session:
-        result = await session.execute(select(Label).filter_by(id=label_id))
-        label = result.scalar()
-
-        if label is None:
+            label = await get_data_from_req(self.request).labels.get(label_id)
+        except ResourceNotFoundError:
             raise NotFound()
 
-        await session.delete(label)
-        await session.commit()
+        return json_response(label.dict())
 
-    raise HTTPNoContent
+    async def patch(
+        self, data: EditLabelSchema
+    ) -> Union[r200[LabelResponse], r400, r404]:
+        """
+        Update a label.
+
+        Updates an existing sample label.
+
+        Status codes:
+            200: Successful operation
+            400: Invalid input
+            404: Not found
+        """
+        label_id = int(self.request.match_info["label_id"])
+
+        if not data:
+            raise EmptyRequest()
+
+        try:
+            label = await get_data_from_req(self.request).labels.edit(
+                label_id=label_id, data=data
+            )
+        except ResourceNotFoundError:
+            raise NotFound()
+        except ResourceConflictError:
+            raise HTTPBadRequest(text="Label name already exists")
+
+        return json_response(label.dict())
+
+    async def delete(self) -> Union[r204, r404]:
+        """
+        Delete a label.
+
+        Deletes an existing sample label.
+
+        Status Codes:
+            204: Successful operation
+            404: Not found
+        """
+        try:
+            await get_data_from_req(self.request).labels.delete(
+                label_id=int(self.request.match_info["label_id"])
+            )
+        except ResourceNotFoundError:
+            raise NotFound()
+
+        raise HTTPNoContent

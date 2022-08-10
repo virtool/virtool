@@ -30,6 +30,7 @@ from virtool.dispatcher.events import DispatcherSQLEvents
 from virtool.dispatcher.listener import RedisDispatcherListener
 from virtool.fake.wrapper import FakerWrapper
 from virtool.groups.data import GroupsData
+from virtool.history.data import HistoryData
 from virtool.hmm.db import refresh
 from virtool.indexes.tasks import (
     AddIndexFilesTask,
@@ -37,6 +38,7 @@ from virtool.indexes.tasks import (
 )
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
+from virtool.labels.data import LabelsData
 from virtool.mongo.core import DB
 from virtool.mongo.migrate import migrate
 from virtool.oidc.utils import JWKArgs
@@ -61,7 +63,7 @@ from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
 from virtool.uploads.tasks import MigrateFilesTask
-from virtool.users.tasks import UpdateUserDocumentsTask
+from virtool.users.data import UsersData
 from virtool.utils import ensure_data_dir, random_alphanumeric
 from virtool.version import determine_server_version
 
@@ -126,9 +128,12 @@ async def startup_data(app: App):
         AnalysisData(app),
         BLASTData(app["db"], app["pg"], app["tasks"]),
         GroupsData(app["db"]),
+        HistoryData(app["db"]),
+        LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),
         SubtractionsData(app["config"].base_url, app["db"], app["pg"]),
+        UsersData(app["db"], app["pg"]),
     )
 
     app["data"] = data
@@ -419,7 +424,6 @@ async def startup_tasks(app: Application):
     await app["tasks"].add(StoreNuvsFilesTask)
     await app["tasks"].add(CompressSamplesTask)
     await app["tasks"].add(MoveSampleFilesTask)
-    await app["tasks"].add(UpdateUserDocumentsTask)
     await app["tasks"].add(CleanReferencesTask)
 
     await scheduler.spawn(app["tasks"].add_periodic(MigrateFilesTask, 3600))

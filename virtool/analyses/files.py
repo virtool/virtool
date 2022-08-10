@@ -50,7 +50,7 @@ async def create_nuvs_analysis_files(
     :param files: a list of analysis files
     :param file_path: the path to the analysis files directory
     """
-    analysis_files = list()
+    analysis_files = []
 
     for filename in files:
         file_type = virtool.analyses.utils.check_nuvs_file_type(filename)

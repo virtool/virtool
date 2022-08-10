@@ -188,9 +188,6 @@ class TestCreate:
             authorize=True, base_url="https://virtool.example.com"
         )
 
-        client.app["settings"].sm_proc = 1
-        client.app["settings"].sm_mem = 2
-
         data = get_data_from_app(client.app)
         data.jobs._client = DummyJobsClient()
 
@@ -350,7 +347,14 @@ async def test_delete_index(spawn_job_client, error):
 
 @pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])
 async def test_upload(
-    error, tmp_path, fake, spawn_job_client, snapshot, static_time, resp_is, pg: AsyncEngine
+    error,
+    tmp_path,
+    fake,
+    spawn_job_client,
+    snapshot,
+    static_time,
+    resp_is,
+    pg: AsyncEngine,
 ):
     client = await spawn_job_client(authorize=True)
     path = Path.cwd() / "tests" / "test_files" / "index" / "reference.1.bt2"

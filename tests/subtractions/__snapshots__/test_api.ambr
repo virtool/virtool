@@ -257,6 +257,44 @@
     },
   }
 ---
+# name: test_find[uvloop]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'id': 'id',
+        'name': 'test',
+        'ready': False,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'leeashley',
+          'id': '7CtBo2yG',
+        },
+      },
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'ready_count': 0,
+    'total_count': 1,
+  }
+---
+# name: test_get[uvloop]
+  <class 'dict'> {
+    'files': <class 'list'> [
+    ],
+    'id': 'foo',
+    'linked_samples': <class 'list'> [
+    ],
+    'name': 'Foo',
+    'nickname': 'Foo Subtraction',
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'leeashley',
+      'id': '7CtBo2yG',
+    },
+  }
+---
 # name: test_job_remove[uvloop-True-False]
   <class 'dict'> {
     '_id': 'foo',

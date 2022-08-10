@@ -1,8 +1,8 @@
 from typing import Callable
 
 from aiohttp import web
-from aiohttp.web_exceptions import HTTPNotFound
-from virtool.api.response import InvalidInput, InvalidQuery, NotFound, json_response
+
+from virtool.api.response import InvalidInput, InvalidQuery, json_response
 
 
 @web.middleware

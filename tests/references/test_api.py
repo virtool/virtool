@@ -10,7 +10,7 @@ from syrupy.matchers import path_type
 from virtool.pg.utils import get_row_by_id
 from virtool.references.tasks import UpdateRemoteReferenceTask
 from virtool.tasks.models import Task
-from virtool.users.utils import Permission
+from virtool_core.models.enums import Permission
 
 
 @pytest.mark.parametrize("error", [None, "400", "404"])
@@ -160,7 +160,7 @@ async def test_create(
     client = await spawn_client(
         authorize=True,
         base_url="https://virtool.example.com",
-        permissions=[Permission.create_ref.value],
+        permissions=[Permission.create_ref],
     )
 
     default_source_type = ["strain", "isolate"]
@@ -181,10 +181,11 @@ async def test_create(
     assert await resp.json() == snapshot
 
 
+@pytest.mark.flaky(reruns=2)
 async def test_import_reference(pg, snapshot, spawn_client, test_files_path, tmpdir):
     client = await spawn_client(
         authorize=True,
-        permissions=[Permission.create_ref.value, Permission.upload_file.value],
+        permissions=[Permission.create_ref, Permission.upload_file],
     )
 
     tmpdir.mkdir("files")
@@ -343,7 +344,7 @@ async def test_add_group_or_user(
     if error != "404":
         await client.db.references.insert_one(document)
 
-    url = "/refs/foo/{}s".format(field)
+    url = f"/refs/foo/{field}s"
 
     resp = await client.post(
         url, {field + "_id": "tech" if field == "group" else "fred", "modify": True}
@@ -358,11 +359,11 @@ async def test_add_group_or_user(
         return
 
     if error == "400_dne":
-        await resp_is.bad_request(resp, "{} does not exist".format(field.capitalize()))
+        await resp_is.bad_request(resp, f"{field.capitalize()} does not exist")
         return
 
     if error == "400_exists":
-        await resp_is.bad_request(resp, "{} already exists".format(field.capitalize()))
+        await resp_is.bad_request(resp, f"{field.capitalize()} already exists")
         return
 
     assert resp.status == 201
@@ -407,7 +408,7 @@ async def test_edit_group_or_user(
 
     subdocument_id = "tech" if field == "group" else "fred"
 
-    url = "/refs/foo/{}s/{}".format(field, subdocument_id)
+    url = f"/refs/foo/{field}s/{subdocument_id}"
 
     resp = await client.patch(url, {"remove": True})
 
@@ -460,7 +461,7 @@ async def test_delete_group_or_user(
 
     subdocument_id = "tech" if field == "group" else "fred"
 
-    url = "/refs/foo/{}s/{}".format(field, subdocument_id)
+    url = f"/refs/foo/{field}s/{subdocument_id}"
 
     resp = await client.delete(url)
 

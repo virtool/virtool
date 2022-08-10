@@ -1,3 +1,6 @@
+import asyncio
+from typing import List
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -12,10 +15,10 @@ class TestFind:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+        label_1 = Label(id=1, name="Bug", color="#A83432", description="This is a bug")
 
         label_2 = Label(
-            id=2, name="Question", color="#03fc20", description="This is a question"
+            id=2, name="Question", color="#03FC20", description="This is a question"
         )
 
         await client.db.samples.insert_many(
@@ -42,7 +45,7 @@ class TestFind:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+        label = Label(id=1, name="Bug", color="#A83432", description="This is a bug")
 
         async with AsyncSession(pg) as session:
             session.add(label)
@@ -78,7 +81,7 @@ async def test_get(error, spawn_client, all_permissions, pg: AsyncEngine, resp_i
     if not error:
         async with AsyncSession(pg) as session:
             session.add(
-                Label(id=1, name="Bug", color="#a83432", description="This is a test")
+                Label(id=1, name="Bug", color="#A83432", description="This is a test")
             )
             await session.commit()
 
@@ -92,7 +95,7 @@ async def test_get(error, spawn_client, all_permissions, pg: AsyncEngine, resp_i
     assert await resp.json() == {
         "id": 1,
         "name": "Bug",
-        "color": "#a83432",
+        "color": "#A83432",
         "description": "This is a test",
         "count": 1,
     }
@@ -133,7 +136,7 @@ async def test_create(
         return
 
     if error == "422_color":
-        assert resp.status == 422
+        assert resp.status == 400
         return
 
     assert resp.status == 201
@@ -141,7 +144,7 @@ async def test_create(
     assert await resp.json() == {
         "id": 1,
         "name": "Bug",
-        "color": "#a83432",
+        "color": "#A83432",
         "description": "This is a bug",
         "count": 1,
     }
@@ -174,7 +177,7 @@ async def test_edit(error, spawn_client, pg: AsyncEngine, resp_is):
             session.add_all([label_1, label_2])
             await session.commit()
 
-    data = dict()
+    data = {}
 
     if error != "422_data":
         data = {"name": "Bug", "color": "#fc5203", "description": "Need to be fixed"}
@@ -196,33 +199,56 @@ async def test_edit(error, spawn_client, pg: AsyncEngine, resp_is):
         return
 
     if error == "422_color" or error == "422_data":
-        assert resp.status == 422
+        assert resp.status == 400
         return
 
     assert resp.status == 200
     assert await resp.json() == {
         "id": 1,
         "name": "Bug",
-        "color": "#fc5203",
+        "color": "#FC5203",
         "description": "Need to be fixed",
         "count": 1,
     }
 
 
 @pytest.mark.parametrize("error", [None, "400"])
-async def test_remove(error, spawn_client, pg: AsyncEngine, resp_is):
+async def test_remove(
+    error, spawn_client, pg: AsyncEngine, resp_is, fake, mock_samples: List[dict]
+):
     """
     Test that a label can be deleted to the database at ``DELETE /labels/:label_id``.
 
+    Test that samples are updated when a label is deleted.
     """
     client = await spawn_client(authorize=True, administrator=True)
 
     if not error:
         async with AsyncSession(pg) as session:
-            session.add(
-                Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+            session.add_all(
+                [
+                    Label(
+                        id=1, name="Bug", color="#a83432", description="This is a bug"
+                    ),
+                    Label(
+                        id=4, name="Info", color="#03fc20", description="This is a info"
+                    ),
+                    Label(
+                        id=9, name="que", color="#03fc20", description="This is a que"
+                    ),
+                ]
             )
             await session.commit()
+
+        await client.db.subtraction.insert_many(
+            [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}]
+        )
+
+        mock_samples[0].update({"labels": [1, 4]})
+        mock_samples[1].update({"labels": [1, 9]}),
+        mock_samples[2].update({"labels": [1, 4, 9]})
+
+        await client.db.samples.insert_many(mock_samples)
 
     resp = await client.delete("/labels/1")
 
@@ -231,6 +257,16 @@ async def test_remove(error, spawn_client, pg: AsyncEngine, resp_is):
         return
 
     await resp_is.no_content(resp)
+
+    responses = await asyncio.gather(
+        *[client.get(f"/samples/{sample['_id']}") for sample in mock_samples]
+    )
+
+    samples = [await response.json() for response in responses]
+
+    label_ids = [label["id"] for sample in samples for label in sample["labels"]]
+
+    assert 1 not in label_ids
 
 
 @pytest.mark.parametrize("value", ["valid_hex_color", "invalid_hex_color"])
@@ -247,10 +283,15 @@ async def test_is_valid_hex_color(value, spawn_client, resp_is):
     }
 
     resp = await client.patch("/labels/00", data=data)
-
     if value == "valid_hex_color":
         await resp_is.not_found(resp)
     else:
-        await resp_is.invalid_input(
-            resp, {"color": ["This is not a valid Hexadecimal color"]}
-        )
+        assert resp.status == 400
+        assert await resp.json() == [
+            {
+                "loc": ["color"],
+                "msg": "The format of the color code is invalid",
+                "type": "value_error",
+                "in": "body",
+            }
+        ]

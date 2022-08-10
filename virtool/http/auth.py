@@ -6,23 +6,20 @@ from aiohttp.web_exceptions import HTTPUnauthorized
 from jose import ExpiredSignatureError
 from jose.exceptions import JWTClaimsError, JWTError
 
+from virtool.data.utils import get_data_from_req
 from virtool.errors import AuthError
 from virtool.http.client import UserClient
+from virtool.http.policy import (
+    get_handler_policy,
+    PublicRoutePolicy,
+)
 from virtool.http.utils import set_session_id_cookie
 from virtool.oidc.utils import validate_token
-from virtool.users.db import B2CUserAttributes, find_or_create_b2c_user
+from virtool.users.db import B2CUserAttributes
 from virtool.users.sessions import clear_reset_code, create_session, get_session
 from virtool.utils import hash_key
 
 AUTHORIZATION_PROJECTION = ["user", "administrator", "groups", "permissions"]
-
-PUBLIC_ROUTES = [
-    "/oidc/acquire_tokens",
-    "/oidc/refresh_tokens",
-    "/oidc/delete_tokens",
-    "/account/login",
-    "/account/logout",
-]
 
 
 def get_ip(req: Request) -> str:
@@ -123,27 +120,26 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
     except (JWTClaimsError, JWTError, ExpiredSignatureError):
         raise HTTPUnauthorized(text="Invalid authorization")
 
-    user_attributes = B2CUserAttributes(
-        display_name=token_claims["name"],
-        given_name=token_claims.get("given_name", ""),
-        family_name=token_claims.get("family_name", ""),
-        oid=token_claims["oid"],
+    user = await get_data_from_req(req).users.find_or_create_b2c_user(
+        B2CUserAttributes(
+            display_name=token_claims["name"],
+            given_name=token_claims.get("given_name", ""),
+            family_name=token_claims.get("family_name", ""),
+            oid=token_claims["oid"],
+        )
     )
-
-    user_document = await find_or_create_b2c_user(req.app["db"], user_attributes)
 
     req["client"] = UserClient(
         db=req.app["db"],
-        administrator=user_document["administrator"],
+        administrator=user.administrator,
         force_reset=False,
-        groups=user_document["groups"],
-        permissions=user_document["permissions"],
-        user_id=user_document["_id"],
+        groups=[group.id for group in user.groups],
+        permissions=user.permissions.dict(),
+        user_id=user.id,
         authenticated=True,
     )
 
     resp = await handler(req)
-
     resp.set_cookie("bearer", token, httponly=True, max_age=2600000)
 
     return resp
@@ -160,13 +156,13 @@ async def middleware(req, handler) -> Response:
     """
     db = req.app["db"]
 
-    if req.path in PUBLIC_ROUTES:
+    if isinstance(get_handler_policy(handler, req.method), PublicRoutePolicy):
         req["client"] = UserClient(
             db=db,
             administrator=False,
             force_reset=False,
-            groups=list(),
-            permissions=dict(),
+            groups=[],
+            permissions={},
             user_id=None,
             authenticated=False,
         )
@@ -213,8 +209,8 @@ async def middleware(req, handler) -> Response:
             db=db,
             administrator=False,
             force_reset=False,
-            groups=list(),
-            permissions=dict(),
+            groups=[],
+            permissions={},
             user_id=None,
             authenticated=False,
         )

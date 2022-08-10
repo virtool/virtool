@@ -37,7 +37,7 @@ async def test_listener(loop, redis: Redis):
 
     await asyncio.sleep(0.5)
 
-    changes = list()
+    changes = []
 
     async for change in listener:
         changes.append(change)

@@ -3,28 +3,32 @@ import secrets
 from typing import Optional, Tuple
 
 import arrow
+from motor.motor_asyncio import AsyncIOMotorClientSession
 
 import virtool.utils
 from virtool.mongo.core import DB
+from virtool.types import Document
 
 
 async def create_session(
-    db, ip: str, user_id: Optional[str] = None, remember: Optional[bool] = False
-) -> Tuple[dict, str]:
+    db,
+    ip: str,
+    user_id: Optional[str] = None,
+    remember: Optional[bool] = False,
+    session: Optional[AsyncIOMotorClientSession] = None,
+) -> Tuple[Document, str]:
     session_id = await create_session_id(db)
 
     utc = arrow.utcnow()
 
     if user_id and remember:
         expires_at = utc.shift(days=30)
-
     elif user_id:
         expires_at = utc.shift(minutes=60)
-
     else:
         expires_at = utc.shift(minutes=10)
 
-    session = {
+    new_session = {
         "_id": session_id,
         "created_at": virtool.utils.timestamp(),
         "expiresAt": expires_at.datetime,
@@ -35,9 +39,9 @@ async def create_session(
 
     if user_id:
         token, hashed = virtool.utils.generate_key()
-        user_document = await db.users.find_one(user_id)
+        user_document = await db.users.find_one(user_id, session=session)
 
-        session.update(
+        new_session.update(
             {
                 "token": hashed,
                 "administrator": user_document["administrator"],
@@ -48,9 +52,9 @@ async def create_session(
             }
         )
 
-    await db.sessions.insert_one(session)
+    await db.sessions.insert_one(new_session, session=session)
 
-    return session, token
+    return new_session, token
 
 
 async def create_session_id(db: virtool.mongo.core.DB) -> str:

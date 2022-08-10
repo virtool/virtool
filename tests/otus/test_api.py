@@ -2,6 +2,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.otus.db
+from virtool_core.models.enums import ReferencePermission
 
 
 @pytest.mark.parametrize("find", [None, "tobacco"])
@@ -328,7 +329,9 @@ class TestEdit:
         check_ref_right,
         resp_is,
     ):
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(
+            authorize=True, permissions=[ReferencePermission.modify_otu]
+        )
 
         await client.db.otus.insert_one(
             {
@@ -371,7 +374,9 @@ async def test_remove(
     Test that an existing otu can be removed.
 
     """
-    client = await spawn_client(authorize=True, permissions=["modify_otu"])
+    client = await spawn_client(
+        authorize=True, permissions=[ReferencePermission.modify_otu]
+    )
 
     test_otu["abbreviation"] = abbreviation
 
@@ -437,7 +442,7 @@ async def test_get_isolate(
     client = await spawn_client(authorize=True)
 
     if error == "404_isolate":
-        test_otu["isolates"] = list()
+        test_otu["isolates"] = []
 
     if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
@@ -475,7 +480,7 @@ class TestAddIsolate:
         client = await spawn_client(
             authorize=True,
             base_url="https://virtool.example.com",
-            permissions=["modify_otu"],
+            permissions=[ReferencePermission.modify_otu],
         )
 
         await client.db.otus.insert_one(test_otu)
@@ -516,7 +521,7 @@ class TestAddIsolate:
         client = await spawn_client(
             authorize=True,
             base_url="https://virtool.example.com",
-            permissions=["modify_otu"],
+            permissions=[ReferencePermission.modify_otu],
         )
 
         test_otu["isolates"] = []
@@ -557,7 +562,7 @@ class TestAddIsolate:
         client = await spawn_client(
             authorize=True,
             base_url="https://virtool.example.com",
-            permissions=["modify_otu"],
+            permissions=[ReferencePermission.modify_otu],
         )
 
         await client.db.otus.insert_one(test_otu)
@@ -597,7 +602,7 @@ class TestAddIsolate:
         client = await spawn_client(
             authorize=True,
             base_url="https://virtool.example.com",
-            permissions=["modify_otu"],
+            permissions=[ReferencePermission.modify_otu],
         )
 
         await client.db.otus.insert_one(test_otu)
@@ -618,7 +623,9 @@ class TestAddIsolate:
         assert await client.db.history.find_one() == snapshot
 
     async def test_not_found(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(
+            authorize=True, permissions=[ReferencePermission.modify_otu]
+        )
 
         data = {"source_name": "Beta", "source_type": "Isolate", "default": False}
 
@@ -654,7 +661,9 @@ class TestEditIsolate:
         Test that a change to the isolate name results in the correct changes, history, and response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(
+            authorize=True, permissions=[ReferencePermission.modify_otu]
+        )
 
         test_otu["isolates"].append(
             {
@@ -694,7 +703,9 @@ class TestEditIsolate:
         Test that the ``source_type`` value is forced to lower case.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(
+            authorize=True, permissions=[ReferencePermission.modify_otu]
+        )
 
         await client.db.otus.insert_one(test_otu)
 
@@ -731,15 +742,15 @@ class TestEditIsolate:
         Test that a request for a non-existent otu or isolate results in a ``404`` response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(
+            authorize=True, permissions=[ReferencePermission.modify_otu]
+        )
 
         await client.db.otus.insert_one(test_otu)
 
         data = {"source_type": "variant", "source_name": "A"}
 
-        resp = await client.patch(
-            "/otus/{}/isolates/{}".format(otu_id, isolate_id), data
-        )
+        resp = await client.patch(f"/otus/{otu_id}/isolates/{isolate_id}", data)
 
         await resp_is.not_found(resp)
 
@@ -759,7 +770,9 @@ class TestSetAsDefault:
         Test changing the default isolate results in the correct changes, history, and response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(
+            authorize=True, permissions=[ReferencePermission.modify_otu]
+        )
 
         test_otu["isolates"].append(
             {
@@ -799,7 +812,9 @@ class TestSetAsDefault:
         Specifically no increment in version.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(
+            authorize=True, permissions=[ReferencePermission.modify_otu]
+        )
 
         test_otu["isolates"].append(
             {
@@ -833,7 +848,9 @@ class TestSetAsDefault:
         Test that ``404 Not found`` is returned if the otu or isolate does not exist
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(
+            authorize=True, permissions=[ReferencePermission.modify_otu]
+        )
 
         await client.db.otus.insert_one(test_otu)
 
@@ -851,7 +868,9 @@ class TestRemoveIsolate:
         database.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(
+            authorize=True, permissions=[ReferencePermission.modify_otu]
+        )
 
         await client.db.otus.insert_one(test_otu)
         await client.db.sequences.insert_one(test_sequence)
@@ -877,7 +896,9 @@ class TestRemoveIsolate:
         Test that a valid request results in a ``204`` response and ``default`` status is reassigned correctly.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(
+            authorize=True, permissions=[ReferencePermission.modify_otu]
+        )
 
         test_otu["isolates"].append(
             {
@@ -912,7 +933,9 @@ class TestRemoveIsolate:
         Test that removal fails with ``404`` if the otu does not exist.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(
+            authorize=True, permissions=[ReferencePermission.modify_otu]
+        )
 
         await client.db.otus.insert_one(test_otu)
 
@@ -928,7 +951,7 @@ async def test_list_sequences(
     client = await spawn_client(authorize=True)
 
     if error == "404_isolate":
-        test_otu["isolates"] = list()
+        test_otu["isolates"] = []
 
     if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
@@ -952,7 +975,7 @@ async def test_get_sequence(
     client = await spawn_client(authorize=True)
 
     if error == "404_isolate":
-        test_otu["isolates"] = list()
+        test_otu["isolates"] = []
 
     if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
@@ -987,11 +1010,11 @@ async def test_create_sequence(
     client = await spawn_client(
         authorize=True,
         base_url="https://virtool.example.com",
-        permissions=["modify_otu"],
+        permissions=[ReferencePermission.modify_otu],
     )
 
     if error == "404_isolate":
-        test_otu["isolates"] = list()
+        test_otu["isolates"] = []
 
     if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
@@ -1056,10 +1079,12 @@ async def test_edit_sequence(
     test_sequence,
     segment,
 ):
-    client = await spawn_client(authorize=True, permissions=["modify_otu"])
+    client = await spawn_client(
+        authorize=True, permissions=[ReferencePermission.modify_otu]
+    )
 
     if error == "404_isolate":
-        test_otu["isolates"] = list()
+        test_otu["isolates"] = []
 
     if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
@@ -1111,7 +1136,7 @@ async def test_remove_sequence(
     client = await spawn_client(authorize=True)
 
     if error == "404_isolate":
-        test_otu["isolates"] = list()
+        test_otu["isolates"] = []
 
     if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
@@ -1151,3 +1176,58 @@ async def test_download_otu(error, spawn_client, resp_is, test_sequence, test_ot
         return
 
     assert resp.status == 200
+
+
+@pytest.mark.parametrize("get", ["isolate", "sequence"])
+@pytest.mark.parametrize("missing", [None, "otu", "isolate", "sequence"])
+async def test_all(get, missing, spawn_client):
+    client = await spawn_client(authorize=True)
+
+    isolates = [{"id": "baz", "source_type": "isolate", "source_name": "Baz"}]
+
+    if missing != "isolate":
+        isolates.append({"id": "foo", "source_type": "isolate", "source_name": "Foo"})
+
+    if missing != "otu":
+        await client.db.otus.insert_one(
+            {"_id": "foobar", "name": "Foobar virus", "isolates": isolates}
+        )
+
+    sequences = [
+        {
+            "_id": "test_1",
+            "otu_id": "foobar",
+            "isolate_id": "baz",
+            "sequence": "ATAGGGACATA",
+        }
+    ]
+
+    if missing != "sequence":
+        sequences.append(
+            {
+                "_id": "test_2",
+                "otu_id": "foobar",
+                "isolate_id": "foo",
+                "sequence": "ATAGGGACATA",
+            }
+        )
+
+    await client.db.sequences.insert_many(sequences)
+
+    url = "/otus/foobar/isolates"
+
+    if get == "isolate":
+        url += "/foo.fa"
+
+    if get == "sequence":
+        url += "/foo/sequences/test_2.fa"
+
+    resp = await client.get(url)
+
+    get_isolate_error = get == "isolate" and missing == "otu"
+    get_sequence_error = get == "sequence" and missing in ["otu", "isolate"]
+
+    if get == missing or get_isolate_error or get_sequence_error:
+        assert resp.status == 404
+    else:
+        assert resp.status == 200

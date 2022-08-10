@@ -79,15 +79,20 @@ async def test_acquire(
     assert await dbi.jobs.find_one() == snapshot
 
 
-async def test_archive(
-    dbi, fake, jobs_data: JobsData, pg, snapshot, static_time
-):
+async def test_archive(dbi, fake, jobs_data: JobsData, pg, snapshot, static_time):
     user = await fake.users.insert()
 
     status = compose_status("waiting", None)
 
     await dbi.jobs.insert_one(
-        {"_id": "foo", "status": [status], "archived": False, "acquired": False, "key": None, "user": {"id": user["_id"]}}
+        {
+            "_id": "foo",
+            "status": [status],
+            "archived": False,
+            "acquired": False,
+            "key": None,
+            "user": {"id": user["_id"]},
+        }
     )
 
     assert await jobs_data.archive("foo") == snapshot

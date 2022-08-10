@@ -4,19 +4,20 @@ from asyncio.tasks import gather
 import aiohttp
 from aiohttp.web_exceptions import HTTPBadGateway, HTTPBadRequest, HTTPNoContent
 
-import virtool.mongo.utils
 import virtool.history.db
 import virtool.indexes.db
+import virtool.mongo.utils
 import virtool.otus.db
 import virtool.references.db
 import virtool.utils
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.mongo.transforms import apply_transforms
 from virtool.errors import DatabaseError, GitHubError
 from virtool.github import format_release
+from virtool.http.policy import policy, PermissionsRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
+from virtool.mongo.transforms import apply_transforms
 from virtool.pg.utils import get_row
 from virtool.references.db import (
     attach_computed,
@@ -37,8 +38,8 @@ from virtool.references.tasks import (
 )
 from virtool.uploads.models import Upload
 from virtool.users.db import AttachUserTransform, extend_user
-from virtool.validators import strip
 from virtool.users.utils import Permission
+from virtool.validators import strip
 
 routes = Routes()
 
@@ -56,7 +57,7 @@ async def find(req):
 
     term = req.query.get("find")
 
-    db_query = dict()
+    db_query = {}
 
     if term:
         db_query = compose_regex_query(term, ["name", "data_type"])
@@ -153,7 +154,7 @@ async def list_updates(req):
     if updates is not None:
         updates.reverse()
 
-    return json_response(updates or list())
+    return json_response(updates or [])
 
 
 @routes.post("/refs/{ref_id}/updates")
@@ -253,7 +254,8 @@ async def find_indexes(req):
     return json_response(data)
 
 
-@routes.post("/refs", permission=Permission.create_ref.value)
+@routes.post("/refs")
+@policy(PermissionsRoutePolicy(Permission.create_ref))
 @schema(
     {
         "name": {"type": "string", "coerce": strip, "default": ""},
@@ -488,7 +490,7 @@ async def get_group(req):
         raise NotFound()
 
     if document is not None:
-        for group in document.get("groups", list()):
+        for group in document.get("groups", []):
             if group["id"] == group_id:
                 return json_response(group)
 

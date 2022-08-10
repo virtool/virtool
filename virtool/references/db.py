@@ -14,6 +14,7 @@ from aiohttp.web import Request
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from semver import VersionInfo
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
+from virtool_core.models.enums import HistoryMethod
 
 import virtool.mongo.utils
 import virtool.errors
@@ -741,7 +742,7 @@ async def edit(db, ref_id: str, data: dict) -> dict:
 async def insert_change(
     app,
     otu_id: str,
-    verb: str,
+    verb: HistoryMethod,
     user_id: str,
     old: Optional[dict] = None,
     session: Optional[AsyncIOMotorClientSession] = None,
@@ -763,9 +764,9 @@ async def insert_change(
 
     name = joined["name"]
 
-    e = "" if verb[-1] == "e" else "e"
+    e = "" if verb.value[-1] == "e" else "e"
 
-    description = f"{verb.capitalize()}{e}d {name}"
+    description = f"{verb.value.capitalize()}{e}d {name}"
 
     if abbreviation := joined.get("abbreviation"):
         description = f"{description} ({abbreviation})"
