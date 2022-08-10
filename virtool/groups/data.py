@@ -6,11 +6,9 @@ from virtool_core.models.group import GroupMinimal, Group
 from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceConflictError,
-    ResourceNotModifiedError,
 )
 from virtool.groups.db import (
     update_member_users,
-    fetch_group_users,
     fetch_complete_group,
 )
 from virtool.groups.oas import EditGroupSchema
