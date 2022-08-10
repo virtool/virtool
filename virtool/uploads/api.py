@@ -30,7 +30,9 @@ routes = Routes()
 class UploadsView(PydanticView):
     async def get(self) -> r200[List[GetUploadsResponse]]:
         """
-        Get a list of upload documents from the `uploads` SQL table.
+        List uploads.
+
+        Returns JSON details of all files uploaded to the instance.
 
         Status Codes:
             200: Successful operation
@@ -54,7 +56,12 @@ class UploadsView(PydanticView):
     @policy(PermissionsRoutePolicy(Permission.upload_file))
     async def post(self) -> Union[r201[CreateUploadResponse], r401, r403, r404]:
         """
-        Upload a new file and add it to the `uploads` SQL table.
+        Upload a file.
+
+        Accepts file uploads as multipart requests. The request should contain a single
+        field ``file`` containing the file data.
+
+        A file ``name`` and ``type`` must be included in the query string.
 
         Status Codes:
             201: Successful operation
@@ -98,14 +105,12 @@ class UploadsView(PydanticView):
 
         logger.debug(f"Upload succeeded: {upload_id}")
 
-        headers = {"Location": f"/uploads/{upload_id}"}
-
         return json_response(
             await apply_transforms(
                 upload, [AttachUserTransform(self.request.app["db"])]
             ),
             status=201,
-            headers=headers,
+            headers={"Location": f"/uploads/{upload_id}"},
         )
 
 
@@ -113,9 +118,15 @@ class UploadsView(PydanticView):
 class UploadView(PydanticView):
     async def get(self) -> Union[r200[FileResponse], r404]:
         """
-        Downloads a file that corresponds to a row `id` in the `uploads` SQL table.
+        Download an upload.
 
-         Status Codes:
+        Returns a previously uploaded file.
+
+        Headers:
+            Content-Disposition: attachment; filename=<name>
+            Content-Type: application/octet-stream
+
+        Status Codes:
             200: Successful operation
             404: Not found
         """
@@ -147,8 +158,9 @@ class UploadView(PydanticView):
     @policy(PermissionsRoutePolicy(Permission.remove_file))
     async def delete(self) -> Union[r204, r401, r403, r404]:
         """
-        Set a row's `removed` and `removed_at` attribute in the `uploads` SQL table and
-        delete its associated local file.
+        Delete an upload.
+
+        Deletes an upload.
 
         Status Codes:
             204: Successful operation
@@ -170,7 +182,7 @@ class UploadView(PydanticView):
 @routes.jobs_api.get("/uploads/{id}")
 async def download(req):
     """
-    Downloads a file that corresponds to a row `id` in the `uploads` SQL table.
+    Downloads an upload.
 
     """
     pg = req.app["pg"]

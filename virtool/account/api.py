@@ -75,7 +75,12 @@ class AccountView(PydanticView):
         self, data: EditAccountSchema
     ) -> Union[r200[EditAccountResponse], r400, r401]:
         """
-        Edit the user account.
+        Update the account.
+
+        Provide a ``password`` to update the account password. The ``old_password`` must
+        also be provided in the request.
+
+        The ``email`` address is not currently used, but will be in future releases.
 
         Status Codes:
             200: Successful Operation

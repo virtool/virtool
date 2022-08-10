@@ -20,7 +20,10 @@ routes = virtool.http.routes.Routes()
 class ChangesView(PydanticView):
     async def get(self) -> Union[r200[List[GetHistoryResponse]], r422]:
         """
-        Get a list of change documents.
+        List history.
+
+        Returns a list of change documents.
+
         Status Codes:
             200: Successful Operation
             422: Invalid query

@@ -78,7 +78,14 @@ routes = Routes()
 @routes.get("/samples")
 async def find(req):
     """
-    Find samples, filtering by data passed as URL parameters.
+    Find samples.
+
+    Finds, filters, and returns samples.
+
+    Providing a ``term`` filters samples by their ``name`` field. Partial matches are
+    supported.
+
+    Filtering is supported by `label` and `workflow`.
 
     """
     db = req.app["db"]
@@ -146,7 +153,9 @@ async def find(req):
 @routes.get("/samples/{sample_id}")
 async def get(req):
     """
-    Get a complete sample document.
+    Get a sample.
+
+    Retrieves the details for a sample.
 
     """
     sample_id = req.match_info["sample_id"]
@@ -231,7 +240,6 @@ async def create(req):
 
     subtractions = data.get("subtractions", [])
 
-    # Make sure each subtraction host was submitted and it exists.
     non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
         db.subtraction, subtractions
     )
@@ -349,6 +357,8 @@ async def create(req):
 )
 async def edit(req):
     """
+    Update a sample.
+
     Update specific fields in the sample document.
 
     """

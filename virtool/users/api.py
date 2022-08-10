@@ -34,7 +34,9 @@ class UsersView(PydanticView):
     @policy(AdministratorRoutePolicy)
     async def get(self) -> Union[r200, r403]:
         """
-        Get a list of all user documents in the database.
+        List all users.
+
+        Returns a paginated list of all users in the instance.
 
         Status Codes:
             200: Successful operation
@@ -59,7 +61,10 @@ class UsersView(PydanticView):
     @policy(AdministratorRoutePolicy)
     async def post(self, data: CreateUserSchema) -> Union[r201[User], r400, r403]:
         """
-        Add a new user to the user database.
+        Create a user.
+
+        Creates a new user.
+
 
         Status Codes:
             201: Successful operation
@@ -92,7 +97,9 @@ class UserView(PydanticView):
     @policy(AdministratorRoutePolicy)
     async def get(self) -> Union[r200[User], r403, r404]:
         """
-        Gets the details of a user.
+        Retrieve a user.
+
+        Returns the details for a user.
 
         Status Codes:
             200: Success
@@ -113,9 +120,10 @@ class UserView(PydanticView):
         self, data: UpdateUserSchema
     ) -> Union[r200[User], r400, r403, r404, r409]:
         """
-        Updates the user with the passed parameters.
+        Update a user.
 
-        Users cannot modify their own administrative status.
+        Updates and existing user with the provided parameters.  Users cannot modify
+        their own administrative status.
 
         Status Codes:
             200: Successful operation
@@ -150,9 +158,9 @@ class UserView(PydanticView):
     @policy(AdministratorRoutePolicy)
     async def delete(self) -> Union[r204, r400, r403, r404]:
         """
-        Deletes a user.
+        Delete a user.
 
-        Users cannot delete their own accounts.
+        Deletes an existing user. Users cannot delete their own accounts.
 
         Status Codes:
             204: No content
@@ -178,10 +186,13 @@ class FirstUserView(PydanticView):
     @policy(PublicRoutePolicy)
     async def put(self, data: CreateFirstUserSchema) -> Union[r201[User], r400, r403]:
         """
-        Creates the first user for the instance.
+        Create a first user.
 
-        This endpoint will not work after the first is created. Authenticate as the
-        first user and use those credentials to continue interacting with the API.
+        Creates the first user for the instance. This endpoint will not succeed more
+        than once.
+
+        After calling this endpoint, authenticate as the first user and use those
+        credentials to continue interacting with the API.
 
         Status Codes:
             201: Successful operation
