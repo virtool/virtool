@@ -1,14 +1,23 @@
-from typing import List, Dict
+from typing import List
 
 from pymongo.errors import DuplicateKeyError
+from virtool_core.models.group import GroupMinimal, Group
 
-from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
-from virtool.groups.db import update_member_users, fetch_group_users
+from virtool.data.errors import (
+    ResourceNotFoundError,
+    ResourceConflictError,
+    ResourceNotModifiedError,
+)
+from virtool.groups.db import (
+    update_member_users,
+    fetch_group_users,
+    fetch_complete_group,
+)
+from virtool.groups.oas import EditGroupSchema
 from virtool.mongo.core import DB
 from virtool.mongo.utils import get_one_field
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
-from virtool_core.models.group import GroupMinimal, Group
 
 
 class GroupsData:
@@ -19,7 +28,7 @@ class GroupsData:
         """
         List all user groups.
 
-        :returns: a list of all user groups
+        :return: a list of all user groups
 
         """
         return [
@@ -34,15 +43,12 @@ class GroupsData:
         :param group_id: the group's ID
         :return: the group
         """
-        document = await self._db.groups.find_one(group_id)
+        group = await fetch_complete_group(self._db, group_id)
 
-        if document is None:
-            raise ResourceNotFoundError()
+        if group:
+            return group
 
-        return Group(
-            **base_processor(document),
-            users=await fetch_group_users(self._db, group_id)
-        )
+        raise ResourceNotFoundError()
 
     async def create(self, group_id: str) -> Group:
         """
@@ -63,12 +69,12 @@ class GroupsData:
 
         return Group(**base_processor(document), users=[])
 
-    async def update(self, group_id: str, permissions_update: Dict[str, str]) -> Group:
+    async def update(self, group_id: str, data: EditGroupSchema) -> Group:
         """
         Update the permissions for a group.
 
         :param group_id: the ID of the group to update
-        :param permissions_update: the update to merge into the current permissions
+        :param data: updates to the current permissions and/or to the group name
         :return: the group
         """
         permissions = await get_one_field(
@@ -78,19 +84,30 @@ class GroupsData:
         if not permissions:
             raise ResourceNotFoundError
 
-        async with self._db.create_session() as session:
-            document = await self._db.groups.find_one_and_update(
-                {"_id": group_id},
-                {"$set": {"permissions": {**permissions, **permissions_update}}},
-                session=session,
-            )
+        data = data.dict(exclude_unset=True)
 
-            await update_member_users(self._db, group_id, session=session)
+        update = {}
 
-        return Group(
-            **base_processor(document),
-            users=await fetch_group_users(self._db, group_id)
-        )
+        if "name" in data:
+            update["name"] = data["name"]
+
+        if "permissions" in data:
+            update["permissions"] = {
+                **permissions,
+                **data["permissions"],
+            }
+
+        if update:
+            async with self._db.create_session() as session:
+                await self._db.groups.update_one(
+                    {"_id": group_id},
+                    {"$set": update},
+                    session=session,
+                )
+
+                await update_member_users(self._db, group_id, session=session)
+
+        return await fetch_complete_group(self._db, group_id)
 
     async def delete(self, group_id: str):
         async with self._db.create_session() as session:

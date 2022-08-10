@@ -12,7 +12,7 @@ import tempfile
 from pathlib import Path
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Any, Iterable, Optional, Tuple
+from typing import Any, Iterable, Optional, Tuple, Dict
 
 import arrow
 
@@ -28,7 +28,7 @@ SUB_DIRS = [
 ]
 
 
-def base_processor(document: Optional[dict]) -> Optional[dict]:
+def base_processor(document: Optional[Dict]) -> Optional[Dict]:
     """
     Converts a document from MongoDB into one that form a JSON response.
 
