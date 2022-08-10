@@ -107,14 +107,23 @@ async def test_get(error, spawn_client, all_permissions, resp_is, fake, snapshot
     assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize("error", [None, "404"])
-async def test_update_permissions(
-    error, fake, spawn_client, no_permissions, resp_is, snapshot
+@pytest.mark.parametrize(
+    "id_,body,status",
+    [
+        ("foo", {"name": "Techs"}, 200),
+        (
+            "foo",
+            {"permissions": {"create_sample": True, "create_subtraction": True}},
+            200,
+        ),
+        ("foo", {"name": "Techs", "permissions": {"create_sample": True}}, 200),
+        ("dne", {"name": "Techs"}, 404),
+    ],
+    ids=["name", "permissions", "name_permissions", "not_found"],
+)
+async def test_update(
+    id_, body, status, fake, spawn_client, no_permissions, resp_is, snapshot
 ):
-    """
-    Test that a valid request results in permission changes.
-
-    """
     client = await spawn_client(authorize=True, administrator=True)
 
     await client.db.users.insert_many(
@@ -124,23 +133,22 @@ async def test_update_permissions(
         ]
     )
 
-    if not error:
-        await client.db.groups.insert_one(
-            {"_id": "test", "permissions": no_permissions}
-        )
-
-    resp = await client.patch(
-        "/groups/test", data={"permissions": {Permission.create_sample.value: True}}
+    await client.db.groups.insert_many(
+        [
+            {"_id": "test", "name": "Initial", "permissions": no_permissions},
+            {"_id": "foo", "name": "Initial", "permissions": no_permissions},
+        ]
     )
 
-    if error:
-        await resp_is.not_found(resp)
-    else:
-        assert resp.status == 200
-        assert await resp.json() == snapshot(name="json")
-        assert await client.db.groups.find_one("test") == snapshot(name="db")
+    resp = await client.patch(
+        f"/groups/{id_}",
+        data=body,
+    )
 
-    assert await client.db.users.find().to_list(None) == snapshot(name="users")
+    assert resp.status == status
+    assert await resp.json() == snapshot(name="json")
+    assert await client.db.groups.find({}).to_list(None) == snapshot(name="db_groups")
+    assert await client.db.users.find({}).to_list(None) == snapshot(name="db_users")
 
 
 @pytest.mark.parametrize("error", [None, "404"])

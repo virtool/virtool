@@ -2,7 +2,7 @@ from typing import List, Union
 
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPNoContent
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400
+from aiohttp_pydantic.oas.typing import r201, r200, r204, r404, r400
 
 
 from virtool.api.response import NotFound, json_response
@@ -86,7 +86,8 @@ class GroupView(PydanticView):
         """
         Update the permissions of a group.
 
-        Unset permissions will retain their previous setting.
+        Permissions that are not included in the ``permissions`` object will retain
+        their previous setting.
 
         Status Codes:
             200: Successful operation
@@ -95,9 +96,7 @@ class GroupView(PydanticView):
         group_id = self.request.match_info["group_id"]
 
         try:
-            group = await get_data_from_req(self.request).groups.update(
-                group_id, data.permissions.dict(exclude_unset=True)
-            )
+            group = await get_data_from_req(self.request).groups.update(group_id, data)
         except ResourceNotFoundError:
             raise NotFound()
 
