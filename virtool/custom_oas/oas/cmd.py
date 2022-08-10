@@ -1,9 +1,8 @@
 import argparse
 import importlib
 import json
-from pprint import pprint
-from typing import Dict, Protocol, Optional, Callable
 import sys
+from typing import Dict, Protocol, Optional, Callable
 
 from virtool.custom_oas.oas.view import generate_oas
 
