@@ -8,7 +8,13 @@ import virtool.http.routes
 from virtool.api.response import EmptyRequest, NotFound, json_response
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.labels.oas import CreateLabelSchema, EditLabelSchema, CreateLabelResponse, GetLabelResponse, LabelResponse
+from virtool.labels.oas import (
+    CreateLabelSchema,
+    EditLabelSchema,
+    CreateLabelResponse,
+    GetLabelResponse,
+    LabelResponse,
+)
 
 routes = virtool.http.routes.Routes()
 
@@ -17,7 +23,10 @@ routes = virtool.http.routes.Routes()
 class LabelsView(PydanticView):
     async def get(self) -> Union[r200[List[GetLabelResponse]], r400]:
         """
-        List all sample labels.
+        List labels.
+
+        Lists all sample labels on the instance. Pagination is not supported; all labels are
+        included in the response.
 
         Status Codes:
             200: Successful operation
@@ -29,9 +38,13 @@ class LabelsView(PydanticView):
 
         return json_response([label.dict() for label in labels])
 
-    async def post(self, data: CreateLabelSchema) -> Union[r201[CreateLabelResponse], r400]:
+    async def post(
+        self, data: CreateLabelSchema
+    ) -> Union[r201[CreateLabelResponse], r400]:
         """
-        Create a sample label.
+        Create a label.
+
+        Creates a new sample label.
 
         The color must be a valid hexadecimal code.
 
@@ -59,7 +72,9 @@ class LabelsView(PydanticView):
 class LabelView(PydanticView):
     async def get(self) -> Union[r200[LabelResponse], r404]:
         """
-        Get the details for a sample label.
+        Get a label.
+
+        Retrieve the details for a sample label.
 
         Status Codes:
             200: Successful operation
@@ -74,9 +89,13 @@ class LabelView(PydanticView):
 
         return json_response(label.dict())
 
-    async def patch(self, data: EditLabelSchema) -> Union[r200[LabelResponse], r400, r404]:
+    async def patch(
+        self, data: EditLabelSchema
+    ) -> Union[r200[LabelResponse], r400, r404]:
         """
-        Edit an existing sample label.
+        Update a label.
+
+        Updates an existing sample label.
 
         Status codes:
             200: Successful operation
@@ -101,16 +120,18 @@ class LabelView(PydanticView):
 
     async def delete(self) -> Union[r204, r404]:
         """
-        Delete a sample label.
+        Delete a label.
+
+        Deletes an existing sample label.
 
         Status Codes:
             204: Successful operation
             404: Not found
         """
-        label_id = int(self.request.match_info["label_id"])
-
         try:
-            await get_data_from_req(self.request).labels.delete(label_id=label_id)
+            await get_data_from_req(self.request).labels.delete(
+                label_id=int(self.request.match_info["label_id"])
+            )
         except ResourceNotFoundError:
             raise NotFound()
 

@@ -22,7 +22,9 @@ routes = Routes()
 class SettingsView(PydanticView):
     async def get(self) -> r200[GetSettingsResponse]:
         """
-        Get a complete document of the application settings.
+        Get settings.
+
+        Returns the complete application settings.
 
         Status Codes:
             200: Successful operation
@@ -36,7 +38,9 @@ class SettingsView(PydanticView):
         self, data: UpdateSettingsSchema
     ) -> Union[r200[UpdateSettingsResponse], r403]:
         """
-        Update application settings based on request data.
+        Update settings.
+
+        Updates the application settings.
 
         Status Codes:
             200: Successful operation
