@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import arrow
 import pytest
@@ -925,7 +924,7 @@ async def test_analyze(
         await resp_is.bad_request(resp, "Reference does not exist")
         return
 
-    if error == "400_index" or error == "400_ready_index":
+    if error in ["400_index", "400_ready_index"]:
         await resp_is.bad_request(resp, "No ready index")
         return
 
@@ -985,13 +984,13 @@ async def test_cache_job_remove(exists, ready, tmp_path, spawn_job_client, resp_
 
 @pytest.mark.parametrize("error", [None, 400, 409])
 async def test_upload_artifact(
-    error, snapshot, spawn_job_client, static_time, resp_is, tmp_path
+    error, snapshot, spawn_job_client, static_time, resp_is, test_files_path, tmp_path
 ):
     """
     Test that new artifacts can be uploaded after sample creation using the Jobs API.
 
     """
-    path = Path.cwd() / "tests" / "test_files" / "nuvs" / "reads_1.fq"
+    path = test_files_path / "nuvs" / "reads_1.fq"
 
     client = await spawn_job_client(authorize=True)
 
@@ -1042,13 +1041,14 @@ class TestUploadReads:
         static_time,
         resp_is,
         pg,
+        test_files_path,
         tmp_path,
     ):
         """
         Test that new sample reads can be uploaded using the Jobs API.
 
         """
-        path = Path.cwd() / "tests" / "test_files" / "samples"
+        path = test_files_path / "samples"
 
         data = {"file": open(path / "reads_1.fq.gz", "rb")}
 
@@ -1081,14 +1081,14 @@ class TestUploadReads:
 
     @pytest.mark.parametrize("conflict", [True, False])
     async def test_upload_paired_reads(
-        self, conflict, resp_is, spawn_job_client, tmp_path
+        self, conflict, resp_is, spawn_job_client, test_files_path, tmp_path
     ):
         """
         Test that paired sample reads can be uploaded using the Jobs API and that
         conflicts are properly handled.
 
         """
-        path = Path.cwd() / "tests" / "test_files" / "samples"
+        path = test_files_path / "samples"
 
         data = {"file": open(path / "reads_1.fq.gz", "rb")}
 
@@ -1304,13 +1304,13 @@ class TestCreateCache:
 
 @pytest.mark.parametrize("error", [None, 400, 409])
 async def test_upload_artifact_cache(
-    error, resp_is, snapshot, static_time, spawn_job_client, tmp_path
+    error, resp_is, snapshot, static_time, spawn_job_client, test_files_path, tmp_path
 ):
     """
     Test that a new artifact cache can be uploaded after sample creation using the Jobs API.
 
     """
-    path = Path.cwd() / "tests" / "test_files" / "nuvs" / "reads_1.fq"
+    path = test_files_path / "nuvs" / "reads_1.fq"
     artifact_type = "fastq" if error != 400 else "foo"
 
     data = {"file": open(path, "rb")}
@@ -1362,13 +1362,13 @@ async def test_upload_artifact_cache(
 
 @pytest.mark.parametrize("paired", [True, False])
 async def test_upload_reads_cache(
-    paired, snapshot, static_time, spawn_job_client, tmp_path
+    paired, snapshot, static_time, spawn_job_client, test_files_path, tmp_path
 ):
     """
     Test that sample reads' files cache can be uploaded using the Jobs API.
 
     """
-    path = Path.cwd() / "tests" / "test_files" / "samples"
+    path = test_files_path / "samples"
 
     data = {"file": open(path / "reads_1.fq.gz", "rb")}
 
