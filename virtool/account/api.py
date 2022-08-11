@@ -91,7 +91,8 @@ class AccountView(PydanticView):
         data = data.dict(exclude_unset=True)
 
         if "password" in data:
-            # Request model ensures that if one password is passed in, the other is as well.
+            # Request model ensures that if one password is passed in,
+            # the other is as well.
             if error := await check_password_length(self.request, data["password"]):
 
                 raise HTTPBadRequest(text=error)
