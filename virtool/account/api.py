@@ -91,24 +91,25 @@ class AccountView(PydanticView):
         db = self.request.app["db"]
         user_id = self.request["client"].user_id
 
-        password = data.password
-        old_password = data.old_password
-
         update = {}
 
-        if password is not None:
-            error = await check_password_length(self.request, password)
+        data = data.dict(exclude_unset=True)
 
-            if error:
+        if "password" in data:
+            # Request model ensures that if one password is passed in,
+            # the other is as well.
+            if error := await check_password_length(self.request, data["password"]):
+
                 raise HTTPBadRequest(text=error)
 
-            if not await validate_credentials(db, user_id, old_password or ""):
+            if not await validate_credentials(db, user_id, data["old_password"] or ""):
+
                 raise HTTPBadRequest(text="Invalid credentials")
 
-            update = virtool.account.db.compose_password_update(password)
+            update = virtool.account.db.compose_password_update(data["password"])
 
-        if data.email is not None:
-            update["email"] = data.email
+        if "email" in data:
+            update["email"] = data["email"]
 
         if update:
             document = await db.users.find_one_and_update(
@@ -155,9 +156,9 @@ class SettingsView(PydanticView):
 
         settings_from_db = await get_one_field(db.users, "settings", user_id)
 
-        data_dict = data.dict(exclude_unset=True)
+        data = data.dict(exclude_unset=True)
 
-        settings = {**settings_from_db, **data_dict}
+        settings = {**settings_from_db, **data}
 
         await db.users.update_one({"_id": user_id}, {"$set": settings})
 
@@ -200,8 +201,10 @@ class KeysView(PydanticView):
 
         user_id = self.request["client"].user_id
 
+        data = data.dict(exclude_none=True)
+
         document = await virtool.account.db.create_api_key(
-            db, data.name, data.permissions, user_id
+            db, data["name"], data["permissions"], user_id
         )
 
         headers = {"Location": f"/account/keys/{document['id']}"}
@@ -273,7 +276,11 @@ class KeyView(PydanticView):
             db.keys, "permissions", {"id": key_id, "user.id": user_id}
         )
 
-        permissions.update(data.permissions)
+        data = data.dict(exclude_unset=True)
+
+        if "permissions" in data:
+            permissions_dict = data["permissions"]
+            permissions.update(permissions_dict)
 
         if not user["administrator"]:
             permissions = limit_permissions(permissions, user["permissions"])
@@ -310,9 +317,7 @@ class KeyView(PydanticView):
 @routes.view("/account/login")
 class LoginView(PydanticView):
     @policy(PublicRoutePolicy)
-    async def post(
-        self, data: CreateLoginSchema
-    ) -> Union[r201[LoginResponse], r400]:
+    async def post(self, data: CreateLoginSchema) -> Union[r201[LoginResponse], r400]:
         """
         Create a new session for the user with `username`.
 
@@ -322,19 +327,18 @@ class LoginView(PydanticView):
         """
         db = self.request.app["db"]
 
-        handle = data.username
-        password = data.password
+        data = data.dict(exclude_none=True)
 
         # When this value is set, the session will last for 1 month instead of the
         # 1-hour default.
-        remember = data.remember
+        remember = data["remember"]
 
         # Re-render the login page with an error message if the username doesn't
         # correlate to a user_id value in
         # the database and/or password are invalid.
-        document = await db.users.find_one({"handle": handle})
+        document = await db.users.find_one({"handle": data["username"]})
         if not document or not await validate_credentials(
-            db, document["_id"], password
+            db, document["_id"], data["password"]
         ):
             raise HTTPBadRequest(text="Invalid username or password")
 

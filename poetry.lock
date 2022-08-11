@@ -1137,7 +1137,7 @@ test = ["aiohttp", "flake8 (>=3.9.2,<3.10.0)", "psutil", "pycodestyle (>=2.7.0,<
 
 [[package]]
 name = "virtool-core"
-version = "2.18.0"
+version = "2.19.0"
 description = "Core utilities for Virtool."
 category = "main"
 optional = false
