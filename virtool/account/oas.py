@@ -1,9 +1,7 @@
 from typing import Union, Optional
-
-from email_validator import validate_email, EmailSyntaxError
 from pydantic import BaseModel, constr, Field, root_validator, validator
 from virtool_core.models.enums import QuickAnalyzeWorkflow
-from virtool_core.models.account import Account, AccountSettings
+from virtool_core.models.account import Account, AccountSettings, check_email
 from virtool.groups.oas import EditPermissionsSchema
 
 
@@ -48,18 +46,7 @@ class EditAccountSchema(BaseModel):
 
         return values
 
-    @validator("email")
-    def check_email(cls, email: Optional[str]) -> str:
-        """
-        Checks if the given email is valid.
-        """
-        if email:
-            try:
-                validate_email(email)
-            except EmailSyntaxError:
-                raise ValueError("The format of the email is invalid")
-
-        return email
+    _email_validation = validator("email", allow_reuse=True)(check_email)
 
 
 class EditAccountResponse(Account):
@@ -161,8 +148,7 @@ class CreateAPIKeyResponse(BaseModel):
 class EditKeySchema(BaseModel):
     permissions: Optional[EditPermissionsSchema] = Field(
         description="a permission update comprising an object keyed by permissions "
-        "with boolean values",
-        default={},
+        "with boolean values"
     )
 
     class Config:
@@ -194,7 +180,7 @@ class APIKeyResponse(BaseModel):
 class CreateLoginSchema(BaseModel):
     username: constr(min_length=1) = Field(description="account username")
     password: constr(min_length=1) = Field(description="account password")
-    remember: bool = Field(
+    remember: Optional[bool] = Field(
         default=False,
         description="value determining whether the session will last for 1 month or "
         "1 hour",

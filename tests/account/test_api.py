@@ -28,88 +28,46 @@ async def test_get(snapshot, spawn_client, static_time):
 
 
 @pytest.mark.parametrize(
-    "error",
+    "body,status",
     [
-        None,
-        "email_error",
-        "password_length_error",
+        (
+            {
+                "email": "dev@virtool.ca",
+                "password": "foo_bar_1",
+                "old_password": "hello_world",
+            },
+            200,
+        ),
+        ({"email": "dev@virtool.ca"}, 200),
+        ({"email": "invalid_email@"}, 400),
+        ({"password": "foo", "old_password": "hello_world"}, 400),
+        ({"password": "foo_bar_1"}, 400),
+        ({"password": "foo_bar_1", "old_password": "not_right"}, 400),
+        ({"old_password": "hello_world"}, 400),
+        ({"password": "foo_bar_1", "old_password": "hello_world"}, 200),
+        ({}, 200),
+    ],
+    ids=[
+        "all_valid",
+        "good_email",
+        "invalid_email",
+        "short_password",
         "missing_old_password",
-        "credentials_error",
+        "invalid_credentials",
         "missing_password",
         "missing_email",
         "missing_all",
     ],
 )
-async def test_edit(error, snapshot, spawn_client, resp_is, static_time):
+async def test_edit(body, status, snapshot, spawn_client, resp_is, static_time):
     client = await spawn_client(authorize=True)
 
     client.app["settings"].minimum_password_length = 8
 
-    data = {
-        "email": "dev-at-virtool.ca" if error == "email_error" else "dev@virtool.ca",
-        "password": "foo" if error == "password_length_error" else "foo_bar_1",
-    }
+    resp = await client.patch("/account", body)
 
-    if error != "missing_old_password":
-        data["old_password"] = (
-            "not_right" if error == "credentials_error" else "hello_world"
-        )
-
-    if error == "missing_password":
-        data.pop("password")
-
-    if error == "missing_email":
-        data.pop("email")
-
-    if error == "missing_all":
-        data = {}
-
-    resp = await client.patch("/account", data)
-
-    if error == "email_error":
-        assert resp.status == 400
-        assert await resp.json() == [
-            {
-                "loc": ["email"],
-                "msg": "The format of the email is invalid",
-                "type": "value_error",
-                "in": "body",
-            }
-        ]
-
-    elif error == "password_length_error":
-        await resp_is.bad_request(
-            resp, f"Password does not meet minimum length requirement (8)"
-        )
-
-    elif error == "missing_old_password":
-        assert resp.status == 400
-        assert await resp.json() == [
-            {
-                "loc": ["__root__"],
-                "msg": "The old password needs to be given in order for the password to be changed",
-                "type": "value_error",
-                "in": "body",
-            },
-        ]
-
-    elif error == "credentials_error":
-        await resp_is.bad_request(resp, "Invalid credentials")
-
-    elif error == "missing_password":
-        assert resp.status == 400
-        assert await resp.json() == [
-            {
-                "loc": ["__root__"],
-                "msg": "The new password needs to be given in order for the password to be changed",
-                "type": "value_error",
-                "in": "body",
-            },
-        ]
-
-    else:
-        assert resp.status == 200
-        assert await resp.json() == snapshot
+    assert resp.status == status
+    assert await resp.json() == snapshot(name="response")
 
 
 async def test_get_settings(spawn_client):
@@ -481,8 +439,24 @@ async def test_is_valid_email(value, spawn_client, resp_is):
         ]
 
 
-@pytest.mark.parametrize("error", [None, "wrong_handle", "wrong_password"])
-async def test_login(spawn_client, create_user, resp_is, error, mocker):
+@pytest.mark.parametrize(
+    "body,status",
+    [
+        ({"username": "foobar", "password": "p@ssword123", "remember": False}, 201),
+        ({"username": "oops", "password": "p@ssword123", "remember": False}, 400),
+        ({"username": "foobar", "password": "wr0ngp@ssword", "remember": False}, 400),
+        ({"username": "foobar", "password": "p@ssword123"}, 201),
+
+
+    ],
+    ids=[
+        "all_valid",
+        "wrong_handle",
+        "wrong_password",
+        "missing_remember"
+    ],
+)
+async def test_login(spawn_client, create_user, resp_is, body, status, mocker, snapshot):
     client = await spawn_client()
 
     await client.db.users.insert_one(
@@ -493,23 +467,11 @@ async def test_login(spawn_client, create_user, resp_is, error, mocker):
         }
     )
 
-    data = {"username": "foobar", "password": "p@ssword123", "remember": False}
-
-    if error == "wrong_password":
-        data["password"] = "wr0ngp@ssword"
-
-    if error == "wrong_handle":
-        data["username"] = "oops"
-
     mocker.patch(
         "virtool.users.sessions.replace_session", return_value=[{"_id": None}, None]
     )
 
-    resp = await client.post("/account/login", data=data)
+    resp = await client.post("/account/login", body)
 
-    if error == "wrong_handle" or error == "wrong_password":
-        await resp_is.bad_request(resp, "Invalid username or password")
-        return
-
-    assert resp.status == 201
-    assert await resp.json() == {"reset": False}
+    assert resp.status == status
+    assert await resp.json() == snapshot
