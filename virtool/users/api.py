@@ -86,7 +86,7 @@ class UsersView(PydanticView):
             raise HTTPBadRequest(text=str(err))
 
         return json_response(
-            user.dict(),
+            user,
             headers={"Location": f"/users/{user.id}"},
             status=201,
         )
@@ -113,7 +113,7 @@ class UserView(PydanticView):
         except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(user.dict())
+        return json_response(user)
 
     @policy(AdministratorRoutePolicy)
     async def patch(
@@ -153,7 +153,7 @@ class UserView(PydanticView):
         except ResourceNotFoundError:
             raise NotFound("User does not exist")
 
-        return json_response(user.dict())
+        return json_response(user)
 
     @policy(AdministratorRoutePolicy)
     async def delete(self) -> Union[r204, r400, r403, r404]:
