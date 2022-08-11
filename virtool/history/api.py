@@ -73,11 +73,11 @@ class ChangeView(PydanticView):
             self.request.app["db"].history, "reference", change_id
         )
 
-        if reference is not None:
-            if not await virtool.references.db.check_right(
-                self.request, reference["id"], "modify_otu"
-            ):
-                raise InsufficientRights()
+        if reference is not None and not await virtool.references.db.check_right(
+            self.request, reference["id"], "modify_otu"
+        ):
+
+            raise InsufficientRights()
 
         try:
             await get_data_from_req(self.request).history.delete(

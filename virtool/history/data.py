@@ -21,7 +21,7 @@ class HistoryData:
         :return: a list of all documents
         """
 
-        documents = await virtool.history.db.find(db=self._db, req_query=req_query)
+        documents = await virtool.history.db.find(self._db, req_query)
 
         return HistorySearchResult(**documents)
 
