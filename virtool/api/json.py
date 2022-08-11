@@ -11,17 +11,24 @@ into JSON. The pretty dumper is used for formatting JSON for viewing in the brow
 import datetime
 import json
 
+from pydantic import BaseModel
+
 
 class CustomEncoder(json.JSONEncoder):
     """
-    A custom :class:`JSONEncoder` that converts :class:`datetime` objects to
-    ISO-formatting date strings.
+    A custom :class:`JSONEncoder` that:
+
+    - Converts :class:`datetime` objects to ISO-formatting date strings.
+    - Converts Pydantic data objects to dictionaries.
 
     """
 
     def default(self, obj):
         if isinstance(obj, datetime.datetime):
             return isoformat(obj)
+
+        if issubclass(type(obj), BaseModel):
+            return obj.dict()
 
         return json.JSONEncoder.default(self, obj)
 

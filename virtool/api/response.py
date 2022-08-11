@@ -1,11 +1,11 @@
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from aiohttp.web import Response
 from aiohttp.web_exceptions import HTTPForbidden, HTTPNotFound, HTTPUnprocessableEntity
 
 
 def json_response(
-    data: object, status: int = 200, headers: Optional[dict] = None
+    data: Any, status: int = 200, headers: Optional[Dict[str, str]] = None
 ) -> Response:
     """
     Return a response object whose attached JSON dict will be formatted by middleware

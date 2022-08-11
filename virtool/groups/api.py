@@ -56,7 +56,7 @@ class GroupsView(PydanticView):
             raise HTTPBadRequest(text="Group already exists")
 
         return json_response(
-            GroupResponse.parse_obj(group).dict(),
+            GroupResponse.parse_obj(group),
             status=201,
             headers={"Location": f"/groups/{group.id}"},
         )
@@ -79,7 +79,7 @@ class GroupView(PydanticView):
         except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(GroupResponse.parse_obj(group).dict())
+        return json_response(GroupResponse.parse_obj(group))
 
     @policy(AdministratorRoutePolicy)
     async def patch(self, data: EditGroupSchema) -> Union[r200[GroupResponse], r404]:
@@ -100,7 +100,7 @@ class GroupView(PydanticView):
         except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(GroupResponse.parse_obj(group).dict())
+        return json_response(GroupResponse.parse_obj(group))
 
     @policy(AdministratorRoutePolicy)
     async def delete(self) -> Union[r204, r404]:

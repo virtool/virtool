@@ -65,7 +65,7 @@ class LabelsView(PydanticView):
 
         headers = {"Location": f"/labels/{label.id}"}
 
-        return json_response(label.dict(), status=201, headers=headers)
+        return json_response(label, status=201, headers=headers)
 
 
 @routes.view("/labels/{label_id}")
@@ -87,7 +87,7 @@ class LabelView(PydanticView):
         except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(label.dict())
+        return json_response(label)
 
     async def patch(
         self, data: EditLabelSchema
@@ -116,7 +116,7 @@ class LabelView(PydanticView):
         except ResourceConflictError:
             raise HTTPBadRequest(text="Label name already exists")
 
-        return json_response(label.dict())
+        return json_response(label)
 
     async def delete(self) -> Union[r204, r404]:
         """
