@@ -5,7 +5,6 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r403, r404, r409, r422
 from virtool.history.oas import GetHistoryResponse, HistoryResponse
 
-import virtool.history.db
 import virtool.http.routes
 import virtool.references.db
 from virtool.api.response import InsufficientRights, NotFound, json_response

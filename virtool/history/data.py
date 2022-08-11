@@ -6,7 +6,6 @@ from virtool_core.models.history import HistorySearchResult, History
 import virtool
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.errors import DatabaseError
-from virtool.history.db import LIST_PROJECTION
 from virtool.mongo.core import DB
 
 
@@ -25,7 +24,8 @@ class HistoryData:
 
         return HistorySearchResult(**documents)
 
-    async def get(self, app: Application, change_id: str) -> History:
+    @staticmethod
+    async def get(app: Application, change_id: str) -> History:
         """
         Get a document given its ID.
         :param app: the application object
