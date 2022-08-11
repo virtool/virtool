@@ -3,6 +3,7 @@ from aiohttp import ClientSession
 from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from virtool.account.data import AccountData
 from virtool.analyses.data import AnalysisData
 from virtool.blast.data import BLASTData
 from virtool.data.layer import DataLayer
@@ -25,6 +26,7 @@ from virtool.users.data import UsersData
 def data_layer(dbi, config, mocker, pg: AsyncEngine, redis: Redis):
     base_url = "https://virtool.example.com"
     return DataLayer(
+        AccountData(dbi),
         AnalysisData(dbi, config, pg),
         mocker.Mock(spec=BLASTData),
         GroupsData(dbi),

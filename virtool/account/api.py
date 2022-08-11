@@ -32,16 +32,15 @@ from virtool.account.oas import (
     AccountResetPasswordResponse,
 )
 from virtool.api.response import NotFound, json_response
+from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, PublicRoutePolicy
 from virtool.http.utils import set_session_id_cookie, set_session_token_cookie
-from virtool.mongo.utils import get_one_field
+
 from virtool.users.checks import check_password_length
-from virtool.users.db import validate_credentials
 from virtool.users.oas import UpdateUserSchema
-from virtool.users.sessions import create_reset_code, replace_session
-from virtool.users.utils import limit_permissions
-from virtool.utils import base_processor
+from virtool.users.sessions import create_reset_code
+
 
 API_KEY_PROJECTION = {"_id": False, "user": False}
 """
@@ -68,10 +67,12 @@ class AccountView(PydanticView):
             200: Successful Operation
             401: Requires Authorization
         """
-        document = await virtool.account.db.get(
-            self.request.app["db"], self.request["client"].user_id
+
+        account = await get_data_from_req(self.request).account.find(
+            self.request["client"].user_id
         )
-        return json_response(base_processor(document))
+
+        return json_response(account)
 
     async def patch(
         self, data: EditAccountSchema
@@ -92,39 +93,22 @@ class AccountView(PydanticView):
             400: Invalid input
             401: Requires Authorization
         """
-        db = self.request.app["db"]
-        user_id = self.request["client"].user_id
+        password = data.password
 
-        update = {}
+        if password is not None:
+            error = await check_password_length(self.request, password)
 
-        data = data.dict(exclude_unset=True)
-
-        if "password" in data:
-            # Request model ensures that if one password is passed in,
-            # the other is as well.
-            if error := await check_password_length(self.request, data["password"]):
-
+            if error:
                 raise HTTPBadRequest(text=error)
 
-            if not await validate_credentials(db, user_id, data["old_password"] or ""):
-
-                raise HTTPBadRequest(text="Invalid credentials")
-
-            update = virtool.account.db.compose_password_update(data["password"])
-
-        if "email" in data:
-            update["email"] = data["email"]
-
-        if update:
-            document = await db.users.find_one_and_update(
-                {"_id": user_id},
-                {"$set": update},
-                projection=virtool.account.db.PROJECTION,
+        try:
+            updated_account = await get_data_from_req(self.request).account.edit(
+                self.request["client"].user_id, data
             )
-        else:
-            document = await virtool.account.db.get(db, user_id)
+        except ResourceError:
+            raise HTTPBadRequest(text="Invalid credentials")
 
-        return json_response(base_processor(document))
+        return json_response(EditAccountResponse.parse_obj(updated_account))
 
 
 @routes.view("/account/settings")
@@ -139,11 +123,11 @@ class SettingsView(PydanticView):
             200: Successful operation
             401: Requires authorization
         """
-        account_settings = await get_one_field(
-            self.request.app["db"].users, "settings", self.request["client"].user_id
+        account_settings = await get_data_from_req(self.request).account.get_settings(
+            "settings", self.request["client"].user_id
         )
 
-        return json_response(account_settings)
+        return json_response(AccountSettingsResponse.parse_obj(account_settings).dict())
 
     async def patch(
         self, data: EditSettingsSchema
@@ -158,19 +142,11 @@ class SettingsView(PydanticView):
             400: Invalid input
             401: Requires Authorization
         """
-        db = self.request.app["db"]
+        settings = await get_data_from_req(self.request).account.edit_settings(
+            data, "settings", self.request["client"].user_id
+        )
 
-        user_id = self.request["client"].user_id
-
-        settings_from_db = await get_one_field(db.users, "settings", user_id)
-
-        data = data.dict(exclude_unset=True)
-
-        settings = {**settings_from_db, **data}
-
-        await db.users.update_one({"_id": user_id}, {"$set": settings})
-
-        return json_response(settings)
+        return json_response(AccountSettingsResponse.parse_obj(settings).dict())
 
 
 @routes.view("/account/keys")
@@ -185,13 +161,13 @@ class KeysView(PydanticView):
             200: Successful operation
             401: Requires authorization
         """
-        db = self.request.app["db"]
+        cursor = await get_data_from_req(self.request).account.get_keys(
+            self.request["client"].user_id, API_KEY_PROJECTION
+        )
 
-        user_id = self.request["client"].user_id
-
-        cursor = db.keys.find({"user.id": user_id}, API_KEY_PROJECTION)
-
-        return json_response([d async for d in cursor], status=200)
+        return json_response(
+            [GetAPIKeysResponse.parse_obj(d) async for d in cursor], status=200
+        )
 
     async def post(
         self, data: CreateKeysSchema
@@ -209,19 +185,15 @@ class KeysView(PydanticView):
             400: Invalid input
             401: Requires authorization
         """
-        db = self.request.app["db"]
-
-        user_id = self.request["client"].user_id
-
-        data = data.dict(exclude_none=True)
-
-        document = await virtool.account.db.create_api_key(
-            db, data["name"], data["permissions"], user_id
+        key = await get_data_from_req(self.request).account.create_key(
+            data, self.request["client"].user_id
         )
 
-        headers = {"Location": f"/account/keys/{document['id']}"}
+        headers = {"Location": f"/account/keys/{key['id']}"}
 
-        return json_response(document, headers=headers, status=201)
+        return json_response(
+            CreateAPIKeyResponse.parse_obj(key), headers=headers, status=201
+        )
 
     async def delete(self) -> Union[r204, r401]:
         """
@@ -233,9 +205,10 @@ class KeysView(PydanticView):
             204: Successful operation
             401: Requires authorization
         """
-        await self.request.app["db"].keys.delete_many(
-            {"user.id": self.request["client"].user_id}
+        await get_data_from_req(self.request).account.delete_keys(
+            self.request["client"].user_id
         )
+
         raise HTTPNoContent
 
 
@@ -252,18 +225,16 @@ class KeyView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        db = self.request.app["db"]
-        user_id = self.request["client"].user_id
-        key_id = self.request.match_info["key_id"]
-
-        document = await db.keys.find_one(
-            {"id": key_id, "user.id": user_id}, API_KEY_PROJECTION
-        )
-
-        if document is None:
+        try:
+            key = await get_data_from_req(self.request).account.get_key(
+                self.request["client"].user_id,
+                self.request.match_info["key_id"],
+                API_KEY_PROJECTION,
+            )
+        except ResourceNotFoundError:
             raise NotFound()
 
-        return json_response(document, status=200)
+        return json_response(APIKeyResponse.parse_obj(key).dict(), status=200)
 
     async def patch(
         self, data: EditKeySchema
@@ -280,38 +251,17 @@ class KeyView(PydanticView):
             401: Requires Authorization
             404: Not found
         """
-        db = self.request.app["db"]
-
-        key_id = self.request.match_info.get("key_id")
-
-        if not await db.keys.count_documents({"id": key_id}):
+        try:
+            key = await get_data_from_req(self.request).account.edit_key(
+                self.request["client"].user_id,
+                self.request.match_info.get("key_id"),
+                data,
+                API_KEY_PROJECTION,
+            )
+        except ResourceNotFoundError:
             raise NotFound()
 
-        user_id = self.request["client"].user_id
-
-        user = await db.users.find_one(user_id, ["administrator", "permissions"])
-
-        # The permissions currently assigned to the API key.
-        permissions = await get_one_field(
-            db.keys, "permissions", {"id": key_id, "user.id": user_id}
-        )
-
-        data = data.dict(exclude_unset=True)
-
-        if "permissions" in data:
-            permissions_dict = data["permissions"]
-            permissions.update(permissions_dict)
-
-        if not user["administrator"]:
-            permissions = limit_permissions(permissions, user["permissions"])
-
-        document = await db.keys.find_one_and_update(
-            {"id": key_id},
-            {"$set": {"permissions": permissions}},
-            projection=API_KEY_PROJECTION,
-        )
-
-        return json_response(document)
+        return json_response(APIKeyResponse.parse_obj(key).dict())
 
     async def delete(self) -> Union[r204, r401, r404]:
         """
@@ -323,13 +273,11 @@ class KeyView(PydanticView):
             401: Requires authorization
             404: Not found
         """
-        db = self.request.app["db"]
-        user_id = self.request["client"].user_id
-        key_id = self.request.match_info["key_id"]
-
-        delete_result = await db.keys.delete_one({"id": key_id, "user.id": user_id})
-
-        if delete_result.deleted_count == 0:
+        try:
+            await get_data_from_req(self.request).account.delete_key(
+                self.request["client"].user_id, self.request.match_info["key_id"]
+            )
+        except ResourceNotFoundError:
             raise NotFound()
 
         raise HTTPNoContent
@@ -351,43 +299,33 @@ class LoginView(PydanticView):
             201: Successful operation
             400: Invalid input
         """
-        db = self.request.app["db"]
-
-        data = data.dict(exclude_none=True)
-
-        # When this value is set, the session will last for 1 month instead of the
-        # 1-hour default.
-        remember = data["remember"]
-
-        # Re-render the login page with an error message if the username doesn't
-        # correlate to a user_id value in
-        # the database and/or password are invalid.
-        document = await db.users.find_one({"handle": data["username"]})
-        if not document or not await validate_credentials(
-            db, document["_id"], data["password"]
-        ):
-            raise HTTPBadRequest(text="Invalid username or password")
-
-        user_id = document["_id"]
-
         session_id = self.request.cookies.get("session_id")
 
-        # If the user's password needs to be reset, redirect to the reset page without
-        # authorizing the session. A one-time reset code is generated and
-        # added to the query string.
-        if await get_one_field(db.users, "force_reset", user_id):
+        try:
+            result = await get_data_from_req(self.request).account.login(
+                session_id, data
+            )
+        except ResourceError:
+            raise HTTPBadRequest(text="Invalid username or password")
+
+        if type(result) is int:
+            reset_code = result
             return json_response(
                 {
                     "reset": True,
-                    "reset_code": await create_reset_code(
-                        db, session_id, user_id, remember
-                    ),
+                    "reset_code": reset_code,
                 },
                 status=200,
             )
 
+        user_id = result
+
         session, token = await virtool.users.sessions.replace_session(
-            db, session_id, virtool.http.auth.get_ip(self.request), user_id, remember
+            self.request.app["db"],
+            session_id,
+            virtool.http.auth.get_ip(self.request),
+            user_id,
+            data.remember,
         )
 
         resp = json_response({"reset": False}, status=201)
@@ -411,11 +349,9 @@ class LogoutView(PydanticView):
         Status Codes:
             204: Successful operation
         """
-        db = self.request.app["db"]
-        old_session_id = self.request.cookies.get("session_id")
-
-        session, _ = await replace_session(
-            db, old_session_id, virtool.http.auth.get_ip(self.request)
+        session, _ = await get_data_from_req(self.request).account.logout(
+            self.request.cookies.get("session_id"),
+            virtool.http.auth.get_ip(self.request),
         )
 
         resp = Response(status=200)
@@ -441,45 +377,29 @@ class ResetView(PydanticView):
             200: Successful operation
             400: Invalid input
         """
-        db = self.request.app["db"]
-        session_id = self.request.cookies.get("session_id")
-
         password = data.password
-        reset_code = data.reset_code
-
-        session = await db.sessions.find_one(session_id)
 
         if error := await check_password_length(self.request, password):
             raise HTTPBadRequest(text=error)
 
-        user_id = session["reset_user_id"]
+        status, user_id, reset = await get_data_from_req(self.request).account.reset(
+            self.request.cookies.get("session_id"),
+            data,
+            virtool.http.auth.get_ip(self.request),
+        )
 
-        if (
-            not session.get("reset_code")
-            or not session.get("reset_user_id")
-            or reset_code != session.get("reset_code")
-        ):
+        if status == 400:
             return json_response(
-                {
-                    "error": error,
-                    "reset_code": await create_reset_code(
-                        db, session_id, user_id=user_id
-                    ),
-                },
+                {"error": error, "reset_code": reset},
                 status=400,
             )
+
+        new_session = status
+        token = reset
 
         await get_data_from_req(self.request).users.update(
             user_id,
             UpdateUserSchema(force_reset=False, password=password),
-        )
-
-        new_session, token = await replace_session(
-            db,
-            session_id,
-            virtool.http.auth.get_ip(self.request),
-            user_id,
-            remember=session.get("reset_remember", False),
         )
 
         try:

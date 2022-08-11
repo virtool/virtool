@@ -1,7 +1,10 @@
-from typing import Union, Optional
+from datetime import datetime
+from typing import Union, Optional, List
 from pydantic import BaseModel, constr, Field, root_validator, validator
 from virtool_core.models.enums import QuickAnalyzeWorkflow
 from virtool_core.models.account import Account, AccountSettings, check_email
+from virtool_core.models.group import GroupMinimal, Permissions
+
 from virtool.groups.oas import EditPermissionsSchema
 
 
@@ -123,6 +126,13 @@ class CreateKeysSchema(BaseModel):
 
 
 class CreateAPIKeyResponse(BaseModel):
+    created_at: datetime
+    groups: List[GroupMinimal]
+    id: str
+    key: str
+    name: str
+    permissions: Permissions
+
     class Config:
         schema_extra = {
             "example": {
@@ -156,6 +166,12 @@ class EditKeySchema(BaseModel):
 
 
 class APIKeyResponse(BaseModel):
+    created_at: datetime
+    groups: List[GroupMinimal]
+    id: str
+    name: str
+    permissions: Permissions
+
     class Config:
         schema_extra = {
             "example": {
@@ -262,6 +278,9 @@ class AccountSettingsResponse(AccountSettings):
 
 
 class GetAPIKeysResponse(BaseModel):
+    id: str
+    name: str
+
     class Config:
         schema_extra = {
             "example": [

@@ -468,7 +468,13 @@
 # name: test_edit[uvloop-all_valid][response]
   <class 'dict'> {
     'administrator': False,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
     'email': 'dev@virtool.ca',
+    'force_reset': False,
     'groups': <class 'list'> [
     ],
     'handle': 'bob',
@@ -484,7 +490,10 @@
       'remove_job': False,
       'upload_file': False,
     },
-    'primary_group': 'technician',
+    'primary_group': <class 'dict'> {
+      'id': 'technician',
+      'name': 'technician',
+    },
     'settings': <class 'dict'> {
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
@@ -496,7 +505,13 @@
 # name: test_edit[uvloop-good_email][response]
   <class 'dict'> {
     'administrator': False,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
     'email': 'dev@virtool.ca',
+    'force_reset': False,
     'groups': <class 'list'> [
     ],
     'handle': 'bob',
@@ -512,7 +527,10 @@
       'remove_job': False,
       'upload_file': False,
     },
-    'primary_group': 'technician',
+    'primary_group': <class 'dict'> {
+      'id': 'technician',
+      'name': 'technician',
+    },
     'settings': <class 'dict'> {
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
@@ -542,6 +560,13 @@
 # name: test_edit[uvloop-missing_all][response]
   <class 'dict'> {
     'administrator': False,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'email': None,
+    'force_reset': False,
     'groups': <class 'list'> [
     ],
     'handle': 'bob',
@@ -557,7 +582,10 @@
       'remove_job': False,
       'upload_file': False,
     },
-    'primary_group': 'technician',
+    'primary_group': <class 'dict'> {
+      'id': 'technician',
+      'name': 'technician',
+    },
     'settings': <class 'dict'> {
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
@@ -569,6 +597,13 @@
 # name: test_edit[uvloop-missing_email][response]
   <class 'dict'> {
     'administrator': False,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'email': None,
+    'force_reset': False,
     'groups': <class 'list'> [
     ],
     'handle': 'bob',
@@ -584,7 +619,10 @@
       'remove_job': False,
       'upload_file': False,
     },
-    'primary_group': 'technician',
+    'primary_group': <class 'dict'> {
+      'id': 'technician',
+      'name': 'technician',
+    },
     'settings': <class 'dict'> {
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
@@ -626,6 +664,13 @@
 # name: test_get[uvloop]
   <class 'dict'> {
     'administrator': False,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'email': None,
+    'force_reset': False,
     'groups': <class 'list'> [
     ],
     'handle': 'bob',
@@ -641,7 +686,10 @@
       'remove_job': False,
       'upload_file': False,
     },
-    'primary_group': 'technician',
+    'primary_group': <class 'dict'> {
+      'id': 'technician',
+      'name': 'technician',
+    },
     'settings': <class 'dict'> {
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,

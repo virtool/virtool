@@ -18,6 +18,7 @@ from virtool_core.redis import connect, periodically_ping_redis
 
 import virtool.mongo.connect
 import virtool.pg.utils
+from virtool.account.data import AccountData
 from virtool.analyses.data import AnalysisData
 from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.blast.data import BLASTData
@@ -130,6 +131,7 @@ async def startup_data(app: App):
     """
 
     app["data"] = DataLayer(
+        AccountData(app["db"]),
         AnalysisData(app["db"], app["config"], app["pg"]),
         BLASTData(app["db"], app["pg"]),
         GroupsData(app["db"]),

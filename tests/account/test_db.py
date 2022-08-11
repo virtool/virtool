@@ -1,7 +1,10 @@
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-import virtool.account.db
+from virtool.account.data import AccountData
 from virtool.users.utils import Permission
+import virtool.account.db
+from virtool.account.oas import CreateKeysSchema
+from virtool.groups.oas import EditPermissionsSchema
 
 
 def test_compose_password_update(mocker, static_time):
@@ -73,18 +76,22 @@ async def test_create_api_key(administrator, has_permission, mocker, dbi, static
             "groups": groups,
             "permissions": {
                 Permission.create_sample.value: True,
-                "create_subtraction": has_permission,
+                "modify_subtraction": has_permission,
             },
         }
     )
 
-    document = await virtool.account.db.create_api_key(
-        dbi, "Foo", {Permission.create_sample.value: True, "create_subtraction": True}, "bob"
+    account = AccountData(dbi)
+    data = CreateKeysSchema(
+        name="Foo",
+        permissions=EditPermissionsSchema(create_sample=True, modify_subtraction=True),
     )
+
+    document = await account.create_key(data, "bob")
 
     permissions = {p.value: False for p in Permission}
     permissions[Permission.create_sample.value] = True
-    permissions["create_subtraction"] = False
+    permissions["modify_subtraction"] = False
 
     expected = {
         "id": "foo_0",
@@ -98,7 +105,7 @@ async def test_create_api_key(administrator, has_permission, mocker, dbi, static
     # The key should not have the `create_subtraction` permission set unless the key owner is and
     # administrator or has the `create_subtraction` permission themselves.
     if administrator or has_permission:
-        expected["permissions"]["create_subtraction"] = True
+        expected["permissions"]["modify_subtraction"] = True
 
     # Check that expected functions were called.
     m_get_alternate_id.assert_called_with(dbi, "Foo")
