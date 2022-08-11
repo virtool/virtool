@@ -1,3 +1,4 @@
+import math
 from asyncio import gather
 from collections import defaultdict
 from typing import Mapping, Optional, Dict
@@ -8,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 import virtool.utils
 from virtool.api.utils import (
     compose_regex_query,
-    paginate,
+    paginate_aggregate,
     get_query_bool,
 )
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -18,7 +19,6 @@ from virtool.mongo.utils import get_one_field
 from virtool.jobs import is_running_or_waiting
 from virtool.jobs.client import AbstractJobsClient, JOB_REMOVED_FROM_QUEUE
 from virtool.jobs.db import (
-    LIST_PROJECTION,
     OR_COMPLETE,
     OR_FAILED,
     PROJECTION,
@@ -62,31 +62,7 @@ class JobsData:
 
         return dict(counts)
 
-    async def _find_basic(self, query: MultiDictProxy) -> Document:
-        term = query.get("find")
-
-        db_query = {}
-
-        if term:
-            db_query.update(compose_regex_query(term, ["workflow", "user.id"]))
-
-        data = await paginate(
-            self._db.jobs,
-            db_query,
-            query,
-            projection=LIST_PROJECTION,
-            sort="created_at",
-        )
-
-        return {
-            **data,
-            "counts": await self._get_counts(),
-            "documents": await apply_transforms(
-                data["documents"], [AttachUserTransform(self._db)]
-            ),
-        }
-
-    async def _find_beta(self, query: MultiDictProxy) -> Document:
+    async def find(self, query: MultiDictProxy) -> Document:
         """
         {
           "waiting": {
@@ -101,6 +77,18 @@ class JobsData:
         term = query.get("find")
         archived = get_query_bool(query, "archived") if "archived" in query else None
 
+        db_query = {}
+
+        if term:
+            db_query.update(compose_regex_query(term, ["workflow", "user.id"]))
+
+        data = await paginate_aggregate(
+            self._db.jobs,
+            db_query,
+            query,
+            sort="created_at",
+        )
+
         documents = [
             base_processor(d)
             async for d in self._db.jobs.aggregate(
@@ -114,7 +102,7 @@ class JobsData:
                     {
                         "$set": {
                             "last_status": {"$last": "$status"},
-                            "first_status": {"$first": "$status"}
+                            "first_status": {"$first": "$status"},
                         }
                     },
                     {
@@ -126,6 +114,9 @@ class JobsData:
                         }
                     },
                     {"$match": {"state": {"$in": states}} if states else {}},
+                    {"$sort": data["sort"]},
+                    {"$skip": data["skip_count"]},
+                    {"$limit": data["per_page"]},
                     {
                         "$project": {
                             "_id": True,
@@ -147,17 +138,12 @@ class JobsData:
             "documents": await apply_transforms(
                 documents, [AttachUserTransform(self._db)]
             ),
+            "total_count": data["total_count"],
+            "found_count": data["found_count"],
+            "page_count": data["page_count"],
+            "per_page": data["per_page"],
+            "page": data["page"],
         }
-
-    async def find(self, query: MultiDictProxy):
-        """
-        :param query:
-        :return:
-        """
-        if get_query_bool(query, "beta", False):
-            return await self._find_beta(query)
-
-        return await self._find_basic(query)
 
     async def create(
         self,
