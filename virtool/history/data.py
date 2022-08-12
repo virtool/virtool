@@ -38,12 +38,10 @@ class HistoryData:
         document = await self._db.history.find_one(change_id, PROJECTION)
 
         if document:
-            document = await apply_transforms(
+            return await apply_transforms(
                 virtool.utils.base_processor(document),
                 [AttachUserTransform(self._db), DiffTransform(self.data_path)],
             )
-
-            return document
 
         raise ResourceNotFoundError()
 
@@ -80,20 +78,19 @@ class HistoryData:
             # Remove the old sequences from the collection.
             await self._db.sequences.delete_many({"otu_id": otu_id})
 
-            if patched is not None:
+            if patched is None:
+                await self._db.otus.delete_one({"_id": otu_id})
+            else:
                 patched_otu, sequences = virtool.otus.utils.split(patched)
 
                 # Add the reverted sequences to the collection.
                 for sequence in sequences:
                     await self._db.sequences.insert_one(sequence)
 
-                # Replace the existing otu with the patched one. If it doesn't exist, insert it.
+                # Replace existing otu with patched one. If it doesn't exist, insert it.
                 await self._db.otus.replace_one(
                     {"_id": otu_id}, patched_otu, upsert=True
                 )
-
-            else:
-                await self._db.otus.delete_one({"_id": otu_id})
 
             await self._db.history.delete_many({"_id": {"$in": history_to_delete}})
         except DatabaseError:
