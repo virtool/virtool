@@ -126,7 +126,7 @@ async def startup_data(app: App):
         AnalysisData(app),
         BLASTData(app["db"], app["pg"], app["tasks"]),
         GroupsData(app["db"]),
-        HistoryData(app["db"]),
+        HistoryData(app["config"].data_path, app["db"]),
         LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),

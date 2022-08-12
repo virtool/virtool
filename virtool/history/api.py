@@ -47,11 +47,9 @@ class ChangeView(PydanticView):
         """
         change_id = self.request.match_info["change_id"]
 
-        try:
-            document = await get_data_from_req(self.request).history.get(
-                self.request.app, change_id
-            )
-        except ResourceNotFoundError:
+        document = await get_data_from_req(self.request).history.get(change_id)
+
+        if not document:
             raise NotFound()
 
         return json_response(HistoryResponse.parse_obj(document).dict())

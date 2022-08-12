@@ -1,16 +1,22 @@
-from typing import List, Any
+from pathlib import Path
+from typing import Any, Optional
 
 from aiohttp.web_app import Application
-from virtool_core.models.history import HistorySearchResult, History
+from virtool_core.models.history import HistorySearchResult
 
-import virtool
+import virtool.utils
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.errors import DatabaseError
+from virtool.history.db import DiffTransform, PROJECTION
 from virtool.mongo.core import DB
+from virtool.mongo.transforms import apply_transforms
+from virtool.types import Document
+from virtool.users.db import AttachUserTransform
 
 
 class HistoryData:
-    def __init__(self, db: DB):
+    def __init__(self, data_path: Path, db: DB):
+        self.data_path = data_path
         self._db = db
 
     async def find(self, req_query: Any) -> HistorySearchResult:
@@ -24,20 +30,23 @@ class HistoryData:
 
         return HistorySearchResult(**documents)
 
-    @staticmethod
-    async def get(app: Application, change_id: str) -> History:
+    async def get(self, change_id: str) -> Optional[Document]:
         """
         Get a document given its ID.
         :param app: the application object
         :param change_id: the ID of the document to delete
         """
+        document = await self._db.history.find_one(change_id, PROJECTION)
 
-        document = await virtool.history.db.get(app, change_id)
+        if document:
+            document = await apply_transforms(
+                virtool.utils.base_processor(document),
+                [AttachUserTransform(self._db), DiffTransform(self.data_path)],
+            )
 
-        if not document:
-            raise ResourceNotFoundError()
+            return document
 
-        return History(**document)
+        return None
 
     async def delete(self, app: Application, change_id: str):
         """

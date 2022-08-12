@@ -2,6 +2,7 @@ import datetime
 
 import pytest
 import virtool.history.db
+from virtool.history.data import HistoryData
 from aiohttp.test_utils import make_mocked_coro
 from virtool_core.models.enums import HistoryMethod
 
@@ -83,7 +84,9 @@ async def test_get(file, mocker, snapshot, dbi, fake, tmp_path, config):
 
     app = {"db": dbi, "config": config}
 
-    assert await virtool.history.db.get(app, "baz.2") == snapshot
+    history = HistoryData(app["config"].data_path, dbi)
+
+    assert await history.get("baz.2") == snapshot
 
 
 @pytest.mark.parametrize("exists", [True, False])
