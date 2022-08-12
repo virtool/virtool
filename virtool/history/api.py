@@ -47,9 +47,9 @@ class ChangeView(PydanticView):
         """
         change_id = self.request.match_info["change_id"]
 
-        document = await get_data_from_req(self.request).history.get(change_id)
-
-        if not document:
+        try:
+            document = await get_data_from_req(self.request).history.get(change_id)
+        except ResourceNotFoundError:
             raise NotFound()
 
         return json_response(HistoryResponse.parse_obj(document).dict())
@@ -77,9 +77,7 @@ class ChangeView(PydanticView):
             raise InsufficientRights()
 
         try:
-            await get_data_from_req(self.request).history.delete(
-                self.request.app, change_id
-            )
+            await get_data_from_req(self.request).history.delete(change_id)
         except ResourceNotFoundError:
             raise NotFound()
         except ResourceConflictError:

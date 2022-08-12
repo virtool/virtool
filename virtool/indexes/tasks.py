@@ -199,7 +199,9 @@ async def export_index(app: App, manifest: Dict[str, int]) -> List[Document]:
     otu_list = []
 
     for otu_id, otu_version in manifest.items():
-        _, joined, _ = await patch_to_version(app, otu_id, otu_version)
+        _, joined, _ = await patch_to_version(
+            app["config"].data_path, app["db"], otu_id, otu_version
+        )
         otu_list.append(format_otu_for_export(joined))
 
     return otu_list

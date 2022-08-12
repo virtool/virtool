@@ -127,13 +127,11 @@ async def test_get_most_recent_change(exists, snapshot, dbi, static_time):
 
 
 @pytest.mark.parametrize("remove", [True, False])
-async def test_patch_to_version(remove, snapshot, dbi, create_mock_history):
+async def test_patch_to_version(remove, snapshot, config, dbi, create_mock_history):
     await create_mock_history(remove=remove)
 
-    app = {"db": dbi}
-
     current, patched, reverted_change_ids = await virtool.history.db.patch_to_version(
-        app, "6116cba1", 1
+        config.data_path, dbi, "6116cba1", 1
     )
 
     assert current == snapshot

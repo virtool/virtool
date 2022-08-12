@@ -317,13 +317,14 @@ async def get_patched_otus(db, config: Config, manifest: Dict[str, int]) -> List
     :param manifest: the manifest
 
     """
-    app_dict = {"db": db, "config": config}
 
     return [
         j[1]
         for j in await asyncio.tasks.gather(
             *[
-                virtool.history.db.patch_to_version(app_dict, patch_id, patch_version)
+                virtool.history.db.patch_to_version(
+                    config.data_path, db, patch_id, patch_version
+                )
                 for patch_id, patch_version in manifest.items()
             ]
         )

@@ -1,13 +1,13 @@
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
-from aiohttp.web_app import Application
 from virtool_core.models.history import HistorySearchResult
 
 import virtool.utils
+import virtool.otus.utils
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.errors import DatabaseError
-from virtool.history.db import DiffTransform, PROJECTION
+from virtool.history.db import DiffTransform, PROJECTION, patch_to_version
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
 from virtool.types import Document
@@ -30,10 +30,9 @@ class HistoryData:
 
         return HistorySearchResult(**documents)
 
-    async def get(self, change_id: str) -> Optional[Document]:
+    async def get(self, change_id: str) -> Document:
         """
         Get a document given its ID.
-        :param app: the application object
         :param change_id: the ID of the document to delete
         """
         document = await self._db.history.find_one(change_id, PROJECTION)
@@ -46,12 +45,11 @@ class HistoryData:
 
             return document
 
-        return None
+        raise ResourceNotFoundError()
 
-    async def delete(self, app: Application, change_id: str):
+    async def delete(self, change_id: str):
         """
         Delete a document given its ID.
-        :param app: the application object
         :param change_id: the ID of the document to delete
         """
         document = await self._db.history.find_one(change_id, ["reference"])
@@ -60,6 +58,43 @@ class HistoryData:
             raise ResourceNotFoundError()
 
         try:
-            await virtool.history.db.revert(app, change_id)
+            change = await self._db.history.find_one({"_id": change_id}, ["index"])
+
+            if (
+                change["index"]["id"] != "unbuilt"
+                or change["index"]["version"] != "unbuilt"
+            ):
+                raise virtool.errors.DatabaseError(
+                    "Change is included in a build an not revertible"
+                )
+
+            otu_id, otu_version = change_id.split(".")
+
+            if otu_version != "removed":
+                otu_version = int(otu_version)
+
+            _, patched, history_to_delete = await patch_to_version(
+                self.data_path, self._db, otu_id, otu_version - 1
+            )
+
+            # Remove the old sequences from the collection.
+            await self._db.sequences.delete_many({"otu_id": otu_id})
+
+            if patched is not None:
+                patched_otu, sequences = virtool.otus.utils.split(patched)
+
+                # Add the reverted sequences to the collection.
+                for sequence in sequences:
+                    await self._db.sequences.insert_one(sequence)
+
+                # Replace the existing otu with the patched one. If it doesn't exist, insert it.
+                await self._db.otus.replace_one(
+                    {"_id": otu_id}, patched_otu, upsert=True
+                )
+
+            else:
+                await self._db.otus.delete_one({"_id": otu_id})
+
+            await self._db.history.delete_many({"_id": {"$in": history_to_delete}})
         except DatabaseError:
             raise ResourceConflictError()
