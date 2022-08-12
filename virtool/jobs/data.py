@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 import virtool.utils
 from virtool.api.utils import (
     compose_regex_query,
-    paginate_aggregate,
     get_query_bool,
 )
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -119,15 +118,11 @@ class JobsData:
                             {
                                 "$set": {
                                     "last_status": {"$last": "$status"},
-                                    "first_status": {"$first": "$status"},
                                 }
                             },
                             {
                                 "$set": {
-                                    "created_at": "$first_status.timestamp",
-                                    "progress": "$last_status.progress",
                                     "state": "$last_status.state",
-                                    "stage": "$last_status.stage",
                                 }
                             },
                             {"$match": {"state": {"$in": states}} if states else {}},
