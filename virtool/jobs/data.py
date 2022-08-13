@@ -93,6 +93,13 @@ class JobsData:
 
         sort = {"created_at": 1}
 
+        match_query = {
+            **(compose_regex_query(term, ["user.id"]) if term else {}),
+            **({"archived": archived} if archived is not None else {}),
+        }
+
+        match_state = {"state": {"$in": states}} if states else {}
+
         async for paginate_dict in self._db.jobs.aggregate(
             [
                 {
@@ -101,20 +108,7 @@ class JobsData:
                             {"$count": "total_count"},
                         ],
                         "found_count": [
-                            {
-                                "$match": {
-                                    **(
-                                        compose_regex_query(term, ["user.id"])
-                                        if term
-                                        else {}
-                                    ),
-                                    **(
-                                        {"archived": archived}
-                                        if archived is not None
-                                        else {}
-                                    ),
-                                }
-                            },
+                            {"$match": match_query},
                             {
                                 "$set": {
                                     "last_status": {"$last": "$status"},
@@ -125,23 +119,12 @@ class JobsData:
                                     "state": "$last_status.state",
                                 }
                             },
-                            {"$match": {"state": {"$in": states}} if states else {}},
+                            {"$match": match_state},
                             {"$count": "found_count"},
                         ],
                         "data": [
                             {
-                                "$match": {
-                                    **(
-                                        compose_regex_query(term, ["user.id"])
-                                        if term
-                                        else {}
-                                    ),
-                                    **(
-                                        {"archived": archived}
-                                        if archived is not None
-                                        else {}
-                                    ),
-                                }
+                                "$match": match_query,
                             },
                             {
                                 "$set": {
@@ -157,7 +140,7 @@ class JobsData:
                                     "stage": "$last_status.stage",
                                 }
                             },
-                            {"$match": {"state": {"$in": states}} if states else {}},
+                            {"$match": match_state},
                             {"$sort": sort},
                             {"$skip": skip_count},
                             {"$limit": per_page},
@@ -188,16 +171,8 @@ class JobsData:
         ):
             data = paginate_dict["data"]
             documents = [base_processor(document) for document in data]
-            try:
-                found_count = paginate_dict["found_count"]
-            except KeyError:
-                found_count = 0
-
-            try:
-                total_count = paginate_dict["total_count"]
-            except KeyError:
-                total_count = 0
-
+            found_count = paginate_dict.get("found_count", 0)
+            total_count = paginate_dict.get("total_count", 0)
             page_count = int(math.ceil(found_count / per_page))
 
         return {
