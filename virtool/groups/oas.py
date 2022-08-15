@@ -70,7 +70,7 @@ class GetGroupResponse(GroupMinimal):
 
 class EditGroupSchema(BaseModel):
     """
-    Used when updating permissions.
+    Used when updating permissions and/or group `name`.
     """
 
     permissions: EditPermissionsSchema = Field(
@@ -79,8 +79,14 @@ class EditGroupSchema(BaseModel):
         default={},
     )
 
+    name: Optional[constr(min_length=1)] = Field(
+        description="a name for the group", default=None
+    )
+
     class Config:
-        schema_extra = {"example": {"permissions": {"create_ref": True}}}
+        schema_extra = {
+            "example": {"permissions": {"create_ref": True}, "name": "Gobblers"}
+        }
 
 
 class GroupResponse(Group):

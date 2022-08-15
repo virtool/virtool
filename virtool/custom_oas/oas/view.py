@@ -1,24 +1,18 @@
-import typing
 import copy
+import typing
 from inspect import getdoc
 from itertools import count
 from typing import List, Type, Optional, get_type_hints
 
 from aiohttp.web import Response, json_response
 from aiohttp.web_app import Application
-from pydantic import BaseModel
-
-from aiohttp_pydantic.oas.struct import OpenApiSpec3, OperationObject, PathItem
-
-from aiohttp_pydantic.oas import docstring_parser
-
 from aiohttp_pydantic.injectors import _parse_func_signature
-
-from aiohttp_pydantic.utils import is_pydantic_base_model
-
-from aiohttp_pydantic.view import PydanticView, is_pydantic_view
-
+from aiohttp_pydantic.oas import docstring_parser
+from aiohttp_pydantic.oas.struct import OpenApiSpec3, OperationObject, PathItem
 from aiohttp_pydantic.oas.typing import is_status_code_type
+from aiohttp_pydantic.utils import is_pydantic_base_model
+from aiohttp_pydantic.view import PydanticView, is_pydantic_view
+from pydantic import BaseModel
 
 
 class _OASResponseBuilder:
@@ -76,15 +70,11 @@ class _OASResponseBuilder:
 
             if new_dict:
                 self._oas_operation.responses[status_code].content = {
-                    "application/json": {
-                        "schema": new_dict
-                    }
+                    "application/json": {"schema": new_dict}
                 }
             else:
                 self._oas_operation.responses[status_code].content = {
-                    "application/json": {
-                        "schema": schema
-                    }
+                    "application/json": {"schema": schema}
                 }
 
             desc = self._status_code_descriptions.get(int(status_code))
@@ -109,7 +99,7 @@ class _OASResponseBuilder:
 
 
 def _add_http_method_to_oas(
-        oas: OpenApiSpec3, oas_path: PathItem, http_method: str, view: Type[PydanticView]
+    oas: OpenApiSpec3, oas_path: PathItem, http_method: str, view: Type[PydanticView]
 ):
     http_method = http_method.lower()
     oas_operation: OperationObject = getattr(oas_path, http_method)
@@ -147,9 +137,9 @@ def _add_http_method_to_oas(
 
     indexes = count()
     for args_location, args in (
-            ("path", path_args.items()),
-            ("query", qs_args.items()),
-            ("header", header_args.items()),
+        ("path", path_args.items()),
+        ("query", qs_args.items()),
+        ("header", header_args.items()),
     ):
         for name, type_ in args:
             i = next(indexes)
@@ -180,9 +170,9 @@ def _add_http_method_to_oas(
 
 
 def generate_oas(
-        apps: List[Application],
-        version_spec: Optional[str] = None,
-        title_spec: Optional[str] = None,
+    apps: List[Application],
+    version_spec: Optional[str] = None,
+    title_spec: Optional[str] = None,
 ) -> dict:
     """
     Generate and return Open Api Specification from PydanticView in application.

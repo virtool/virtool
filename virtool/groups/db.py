@@ -1,34 +1,31 @@
 """
-Work with groups in the database.
-
-Schema:
-- _id (str) the group name
-- permissions (Object) the permissions for the group laid out as permission keys with boolean values indicating whether
-  the group has the permission or not
-  - cancel_job
-  - create_ref
-  - create_sample
-  - modify_hmm
-  - modify_subtraction
-  - remove_file
-  - remove_job
-  - upload_file
-
-TODO: Add unique name field and use standard ID for _id
+MongoDB database utilities for groups.
 
 """
 
 import asyncio
+from asyncio import gather
 from typing import List, Optional
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
+from virtool_core.models.group import Group
+from virtool_core.models.user import UserNested
 
-import virtool.groups.utils
 import virtool.users.db
 import virtool.utils
-
-from virtool_core.models.user import UserNested
+from virtool.groups.utils import merge_group_permissions
 from virtool.utils import base_processor
+
+
+async def fetch_complete_group(db, group_id: str) -> Optional[Group]:
+    document, users = await gather(
+        db.groups.find_one({"_id": group_id}), fetch_group_users(db, group_id)
+    )
+
+    if document:
+        return Group(**base_processor(document), users=users)
+
+    return None
 
 
 async def get_merged_permissions(db, id_list: List[str]) -> dict:
@@ -43,26 +40,26 @@ async def get_merged_permissions(db, id_list: List[str]) -> dict:
     groups = await asyncio.shield(
         db.groups.find({"_id": {"$in": id_list}}, {"_id": False}).to_list(None)
     )
-    return virtool.groups.utils.merge_group_permissions(groups)
+    return merge_group_permissions(groups)
 
 
 async def update_member_users(
-        db,
-        group_id: str,
-        remove: bool = False,
-        session: Optional[AsyncIOMotorClientSession] = None,
+    db,
+    group_id: str,
+    remove: bool = False,
+    session: Optional[AsyncIOMotorClientSession] = None,
 ):
     groups = await db.groups.find({}, session=session).to_list(None)
 
     async for user in db.users.find(
-            {"groups": group_id},
-            ["administrator", "groups", "permissions", "primary_group"],
-            session=session,
+        {"groups": group_id},
+        ["administrator", "groups", "permissions", "primary_group"],
+        session=session,
     ):
         if remove:
             user["groups"].remove(group_id)
 
-        new_permissions = virtool.groups.utils.merge_group_permissions(
+        new_permissions = merge_group_permissions(
             [group for group in groups if group["_id"] in user["groups"]]
         )
 

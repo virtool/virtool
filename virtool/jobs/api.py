@@ -26,7 +26,14 @@ routes = Routes()
 class JobsView(PydanticView):
     async def get(self) -> Union[List[JobMinimal], r200, r400]:
         """
-        List all job documents.
+        Find jobs.
+
+        Finds jobs on the instance.
+
+        Jobs can be filtered by their current ``state`` by providing desired states as
+        query parameters.
+
+        **Archived jobs are not currently returned from the API**.
 
         Status Codes:
             200: Successful operation
@@ -39,7 +46,9 @@ class JobsView(PydanticView):
     @policy(PermissionsRoutePolicy(Permission.remove_job))
     async def delete(self) -> r200:
         """
-        Clear completed, failed or all finished jobs.
+        Clear jobs.
+
+        Clears completed, failed or all finished jobs.
 
         Status Codes:
             200: Successful Operation
@@ -63,7 +72,9 @@ class JobsView(PydanticView):
 class JobView(PydanticView):
     async def get(self) -> Union[List[JobMinimal], r200, r404]:
         """
-        Return the complete document for a given job.
+        Get a job.
+
+        Retrieves the details for a job.
 
         Status Codes:
             200: Successful operation
@@ -81,7 +92,16 @@ class JobView(PydanticView):
     @policy(PermissionsRoutePolicy(Permission.remove_job))
     async def delete(self) -> Union[r204, r403, r404, r409]:
         """
-        Remove a job.
+        Delete a job.
+
+        Deletes a job.
+
+        Jobs that are in an active state (waiting, pending, preparing
+        running) cannot be deleted. A `409` will be returned if this operation is
+        attempted.
+
+        **We recommend archiving jobs instead of deleting them**. In the future, job
+        deletion will not be supported.
 
         Status Codes:
             204: Successful operation
@@ -104,7 +124,8 @@ class JobView(PydanticView):
 @routes.jobs_api.get("/jobs/{job_id}")
 async def get(req):
     """
-    Return the complete document for a given job.
+    Get a job.
+
     """
     try:
         document = await get_data_from_req(req).jobs.get(req.match_info["job_id"])
@@ -119,11 +140,11 @@ async def get(req):
 async def acquire(req):
     """
     Sets the acquired field on the job document.
+
     This is used to let the server know that a job process has accepted the ID and needs
-    to have the secure token returned to it.
-    Pushes a status record indicating the job is in the 'Preparing' state. This sets an
-    arbitrary progress value of 3 to give visual feedback in the UI that the job has
-    started.
+    to have the secure token returned to it. Pushes a status record indicating the job
+    is in the 'Preparing' state. This sets an arbitrary progress value of 3 to give
+    visual feedback in the UI that the job has started.
     """
     try:
         document = await get_data_from_req(req).jobs.acquire(req.match_info["job_id"])

@@ -28,83 +28,46 @@ async def test_get(snapshot, spawn_client, static_time):
 
 
 @pytest.mark.parametrize(
-    "error",
+    "body,status",
     [
-        None,
-        "email_error",
-        "password_length_error",
+        (
+            {
+                "email": "dev@virtool.ca",
+                "password": "foo_bar_1",
+                "old_password": "hello_world",
+            },
+            200,
+        ),
+        ({"email": "dev@virtool.ca"}, 200),
+        ({"email": "invalid_email@"}, 400),
+        ({"password": "foo", "old_password": "hello_world"}, 400),
+        ({"password": "foo_bar_1"}, 400),
+        ({"password": "foo_bar_1", "old_password": "not_right"}, 400),
+        ({"old_password": "hello_world"}, 400),
+        ({"password": "foo_bar_1", "old_password": "hello_world"}, 200),
+        ({}, 200),
+    ],
+    ids=[
+        "all_valid",
+        "good_email",
+        "invalid_email",
+        "short_password",
         "missing_old_password",
-        "credentials_error",
+        "invalid_credentials",
+        "missing_password",
+        "missing_email",
+        "missing_all",
     ],
 )
-async def test_edit(error, snapshot, spawn_client, resp_is, static_time):
+async def test_edit(body, status, snapshot, spawn_client, resp_is, static_time):
     client = await spawn_client(authorize=True)
 
     client.app["settings"].minimum_password_length = 8
 
-    data = {
-        "email": "dev-at-virtool.ca" if error == "email_error" else "dev@virtool.ca",
-        "password": "foo" if error == "password_length_error" else "foo_bar_1",
-    }
+    resp = await client.patch("/account", body)
 
-    if error != "missing_old_password":
-        data["old_password"] = (
-            "not_right" if error == "credentials_error" else "hello_world"
-        )
-
-    resp = await client.patch("/account", data)
-
-    if error == "email_error":
-        assert resp.status == 400
-        assert await resp.json() == [{
-            "loc": ["email"],
-            "msg": "The format of the email is invalid",
-            "type": "value_error",
-            "in": "body"
-        }]
-
-    elif error == "password_length_error":
-        await resp_is.bad_request(
-            resp, f"Password does not meet minimum length requirement (8)"
-        )
-
-    elif error == "missing_old_password":
-        assert resp.status == 400
-        assert await resp.json() == [
-            {"loc": ["old_password"],
-             "msg": "field required",
-             "type": "value_error.missing",
-             "in": "body"},
-
-            {"loc": ["__root__"],
-             "msg":  "The old password needs to be given in order for the password to be changed",
-             "type": "value_error",
-             "in": "body"}
-        ]
-
-    elif error == "credentials_error":
-        await resp_is.bad_request(resp, "Invalid credentials")
-
-    else:
-        assert resp.status == 200
-        assert await resp.json() == snapshot
-
-        assert await resp.json() == {
-            "permissions": {p.value: False for p in Permission},
-            "groups": [],
-            "handle": "bob",
-            "administrator": False,
-            "last_password_change": static_time.iso,
-            "primary_group": "technician",
-            "settings": {
-                "skip_quick_analyze_dialog": True,
-                "show_ids": True,
-                "show_versions": True,
-                "quick_analyze_workflow": "pathoscope_bowtie",
-            },
-            "email": "dev@virtool.ca",
-            "id": "test",
-        }
+    assert resp.status == status
+    assert await resp.json() == snapshot(name="response")
 
 
 async def test_get_settings(spawn_client):
@@ -144,12 +107,14 @@ async def test_update_settings(invalid_input, spawn_client, resp_is):
 
     if invalid_input:
         assert resp.status == 400
-        assert await resp.json() == [{
-            "loc": ["show_ids"],
-            "msg": "value could not be parsed to a boolean",
-            "type": "type_error.bool",
-            "in": "body"
-        }]
+        assert await resp.json() == [
+            {
+                "loc": ["show_ids"],
+                "msg": "value could not be parsed to a boolean",
+                "type": "type_error.bool",
+                "in": "body",
+            }
+        ]
     else:
         assert resp.status == 200
 
@@ -188,14 +153,14 @@ class TestCreateAPIKey:
     @pytest.mark.parametrize("has_perm", [True, False])
     @pytest.mark.parametrize("req_perm", [True, False])
     async def test(
-            self,
-            has_perm,
-            req_perm,
-            mocker,
-            snapshot,
-            spawn_client,
-            static_time,
-            no_permissions,
+        self,
+        has_perm,
+        req_perm,
+        mocker,
+        snapshot,
+        spawn_client,
+        static_time,
+        no_permissions,
     ):
         """
         Test that creation of an API key functions properly. Check that different permission inputs work.
@@ -210,7 +175,14 @@ class TestCreateAPIKey:
         if has_perm:
             await client.db.users.update_one(
                 {"_id": "test"},
-                {"$set": {"permissions": {**no_permissions, Permission.create_sample.value: True}}},
+                {
+                    "$set": {
+                        "permissions": {
+                            **no_permissions,
+                            Permission.create_sample.value: True,
+                        }
+                    }
+                },
             )
 
         body = {"name": "Foobar"}
@@ -250,7 +222,7 @@ class TestCreateAPIKey:
 
 class TestUpdateAPIKey:
     @pytest.mark.parametrize("has_admin", [True, False])
-    @pytest.mark.parametrize("has_perm", [True, False])
+    @pytest.mark.parametrize("has_perm", [True, False, "missing"])
     async def test(self, has_admin, has_perm, snapshot, spawn_client, static_time):
         client = await spawn_client(authorize=True)
 
@@ -277,9 +249,19 @@ class TestUpdateAPIKey:
             }
         )
 
+        data = {
+            "permissions": {
+                Permission.create_sample.value: True,
+                Permission.modify_subtraction.value: True,
+            }
+        }
+
+        if has_perm == "missing":
+            data = {}
+
         resp = await client.patch(
             "/account/keys/foobar_0",
-            {"permissions": {Permission.create_sample.value: True, Permission.modify_subtraction.value: True}},
+            data,
         )
 
         assert resp.status == 200
@@ -290,7 +272,8 @@ class TestUpdateAPIKey:
         client = await spawn_client(authorize=True)
 
         resp = await client.patch(
-            "/account/keys/foobar_0", {"permissions": {Permission.create_sample.value: True}}
+            "/account/keys/foobar_0",
+            {"permissions": {Permission.create_sample.value: True}},
         )
 
         await resp_is.not_found(resp)
@@ -407,10 +390,12 @@ async def test_is_permission_dict(value, spawn_client, resp_is):
     """
     client = await spawn_client(authorize=True)
 
-    permissions = {Permission.cancel_job.value: True,
-                   Permission.create_ref.value: True,
-                   Permission.create_sample.value: True,
-                   Permission.modify_hmm.value: True}
+    permissions = {
+        Permission.cancel_job.value: True,
+        Permission.create_ref.value: True,
+        Permission.create_sample.value: True,
+        Permission.modify_hmm.value: True,
+    }
 
     if value == "invalid_permissions":
         permissions["foo"] = True
@@ -422,13 +407,7 @@ async def test_is_permission_dict(value, spawn_client, resp_is):
     if value == "valid_permissions":
         await resp_is.not_found(resp)
     else:
-        assert resp.status == 400
-        assert await resp.json() == [{
-            "loc": ["permissions"],
-            "msg": "One or more permissions is invalid",
-            "type": "value_error",
-            "in": "body"
-        }]
+        assert resp.status == 404
 
 
 @pytest.mark.parametrize("value", ["valid_email", "invalid_email"])
@@ -450,16 +429,34 @@ async def test_is_valid_email(value, spawn_client, resp_is):
         await resp_is.bad_request(resp, "Invalid credentials")
     else:
         assert resp.status == 400
-        assert await resp.json() == [{
-            "loc": ["email"],
-            "msg": "The format of the email is invalid",
-            "type": "value_error",
-            "in": "body"
-        }]
+        assert await resp.json() == [
+            {
+                "loc": ["email"],
+                "msg": "The format of the email is invalid",
+                "type": "value_error",
+                "in": "body",
+            }
+        ]
 
 
-@pytest.mark.parametrize("error", [None, "wrong_handle", "wrong_password"])
-async def test_login(spawn_client, create_user, resp_is, error, mocker):
+@pytest.mark.parametrize(
+    "body,status",
+    [
+        ({"username": "foobar", "password": "p@ssword123", "remember": False}, 201),
+        ({"username": "oops", "password": "p@ssword123", "remember": False}, 400),
+        ({"username": "foobar", "password": "wr0ngp@ssword", "remember": False}, 400),
+        ({"username": "foobar", "password": "p@ssword123"}, 201),
+
+
+    ],
+    ids=[
+        "all_valid",
+        "wrong_handle",
+        "wrong_password",
+        "missing_remember"
+    ],
+)
+async def test_login(spawn_client, create_user, resp_is, body, status, mocker, snapshot):
     client = await spawn_client()
 
     await client.db.users.insert_one(
@@ -470,23 +467,11 @@ async def test_login(spawn_client, create_user, resp_is, error, mocker):
         }
     )
 
-    data = {"username": "foobar", "password": "p@ssword123", "remember": False}
-
-    if error == "wrong_password":
-        data["password"] = "wr0ngp@ssword"
-
-    if error == "wrong_handle":
-        data["username"] = "oops"
-
     mocker.patch(
         "virtool.users.sessions.replace_session", return_value=[{"_id": None}, None]
     )
 
-    resp = await client.post("/account/login", data=data)
+    resp = await client.post("/account/login", body)
 
-    if error == "wrong_handle" or error == "wrong_password":
-        await resp_is.bad_request(resp, "Invalid username or password")
-        return
-
-    assert resp.status == 201
-    assert await resp.json() == {"reset": False}
+    assert resp.status == status
+    assert await resp.json() == snapshot

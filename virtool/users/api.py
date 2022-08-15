@@ -34,7 +34,9 @@ class UsersView(PydanticView):
     @policy(AdministratorRoutePolicy)
     async def get(self) -> Union[r200, r403]:
         """
-        Get a list of all user documents in the database.
+        List all users.
+
+        Returns a paginated list of all users in the instance.
 
         Status Codes:
             200: Successful operation
@@ -59,7 +61,10 @@ class UsersView(PydanticView):
     @policy(AdministratorRoutePolicy)
     async def post(self, data: CreateUserSchema) -> Union[r201[User], r400, r403]:
         """
-        Add a new user to the user database.
+        Create a user.
+
+        Creates a new user.
+
 
         Status Codes:
             201: Successful operation
@@ -81,96 +86,10 @@ class UsersView(PydanticView):
             raise HTTPBadRequest(text=str(err))
 
         return json_response(
-            user.dict(),
+            user,
             headers={"Location": f"/users/{user.id}"},
             status=201,
         )
-
-
-@routes.view("/users/{user_id}")
-class UserView(PydanticView):
-    @policy(AdministratorRoutePolicy)
-    async def get(self) -> Union[r200[User], r403, r404]:
-        """
-        Gets the details of a user.
-
-        Status Codes:
-            200: Success
-            403: Not permitted
-            404: Not found
-        """
-        try:
-            user = await get_data_from_req(self.request).users.get(
-                self.request.match_info["user_id"]
-            )
-        except ResourceNotFoundError:
-            raise NotFound()
-
-        return json_response(user.dict())
-
-    @policy(AdministratorRoutePolicy)
-    async def patch(
-        self, data: UpdateUserSchema
-    ) -> Union[r200[User], r400, r403, r404, r409]:
-        """
-        Updates the user with the passed parameters.
-
-        Users cannot modify their own administrative status.
-
-        Status Codes:
-            200: Successful operation
-            400: Primary group does not exist
-            400: Bad request
-            403: Not permitted
-            404: Not found
-            409: User is not member of group
-        """
-        user_id = self.request.match_info["user_id"]
-
-        if data.password is not None:
-            if error := await check_password_length(
-                self.request, password=data.password
-            ):
-                raise HTTPBadRequest(text=error)
-
-        if data.administrator is not None and user_id == self.request["client"].user_id:
-            raise HTTPBadRequest(
-                text="Users cannot modify their own administrative status"
-            )
-
-        try:
-            user = await get_data_from_req(self.request).users.update(user_id, data)
-        except ResourceConflictError as err:
-            raise HTTPBadRequest(text=str(err))
-        except ResourceNotFoundError:
-            raise NotFound("User does not exist")
-
-        return json_response(user.dict())
-
-    @policy(AdministratorRoutePolicy)
-    async def delete(self) -> Union[r204, r400, r403, r404]:
-        """
-        Deletes a user.
-
-        Users cannot delete their own accounts.
-
-        Status Codes:
-            204: No content
-            400: Bad request
-            403: Not permitted
-            404: Not found
-        """
-        user_id = self.request.match_info["user_id"]
-
-        if user_id == self.request["client"].user_id:
-            raise HTTPBadRequest(text="Cannot remove own account")
-
-        try:
-            await get_data_from_req(self.request).users.delete(user_id)
-        except ResourceNotFoundError:
-            raise NotFound
-
-        raise HTTPNoContent
 
 
 @routes.view("/users/first")
@@ -178,10 +97,13 @@ class FirstUserView(PydanticView):
     @policy(PublicRoutePolicy)
     async def put(self, data: CreateFirstUserSchema) -> Union[r201[User], r400, r403]:
         """
-        Creates the first user for the instance.
+        Create a first user.
 
-        This endpoint will not work after the first is created. Authenticate as the
-        first user and use those credentials to continue interacting with the API.
+        Creates the first user for the instance. This endpoint will not succeed more
+        than once.
+
+        After calling this endpoint, authenticate as the first user and use those
+        credentials to continue interacting with the API.
 
         Status Codes:
             201: Successful operation
@@ -219,3 +141,92 @@ class FirstUserView(PydanticView):
         set_session_token_cookie(response, token)
 
         return response
+
+
+@routes.view("/users/{user_id}")
+class UserView(PydanticView):
+    @policy(AdministratorRoutePolicy)
+    async def get(self) -> Union[r200[User], r403, r404]:
+        """
+        Retrieve a user.
+
+        Returns the details for a user.
+
+        Status Codes:
+            200: Success
+            403: Not permitted
+            404: Not found
+        """
+        try:
+            user = await get_data_from_req(self.request).users.get(
+                self.request.match_info["user_id"]
+            )
+        except ResourceNotFoundError:
+            raise NotFound()
+
+        return json_response(user)
+
+    @policy(AdministratorRoutePolicy)
+    async def patch(
+        self, data: UpdateUserSchema
+    ) -> Union[r200[User], r400, r403, r404, r409]:
+        """
+        Update a user.
+
+        Updates and existing user with the provided parameters.  Users cannot modify
+        their own administrative status.
+
+        Status Codes:
+            200: Successful operation
+            400: Primary group does not exist
+            400: Bad request
+            403: Not permitted
+            404: Not found
+            409: User is not member of group
+        """
+        user_id = self.request.match_info["user_id"]
+
+        if data.password is not None:
+            if error := await check_password_length(
+                self.request, password=data.password
+            ):
+                raise HTTPBadRequest(text=error)
+
+        if data.administrator is not None and user_id == self.request["client"].user_id:
+            raise HTTPBadRequest(
+                text="Users cannot modify their own administrative status"
+            )
+
+        try:
+            user = await get_data_from_req(self.request).users.update(user_id, data)
+        except ResourceConflictError as err:
+            raise HTTPBadRequest(text=str(err))
+        except ResourceNotFoundError:
+            raise NotFound("User does not exist")
+
+        return json_response(user)
+
+    @policy(AdministratorRoutePolicy)
+    async def delete(self) -> Union[r204, r400, r403, r404]:
+        """
+        Delete a user.
+
+        Deletes an existing user. Users cannot delete their own accounts.
+
+        Status Codes:
+            204: No content
+            400: Bad request
+            403: Not permitted
+            404: Not found
+        """
+        user_id = self.request.match_info["user_id"]
+
+        if user_id == self.request["client"].user_id:
+            raise HTTPBadRequest(text="Cannot remove own account")
+
+        try:
+            await get_data_from_req(self.request).users.delete(user_id)
+        except ResourceNotFoundError:
+            raise NotFound
+
+        raise HTTPNoContent

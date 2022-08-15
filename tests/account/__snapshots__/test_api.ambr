@@ -381,7 +381,91 @@
     },
   }
 ---
-# name: test_edit[uvloop-None]
+# name: TestUpdateAPIKey.test[uvloop-missing-False]
+  <class 'dict'> {
+    'created_at': '2015-10-06T20:00:00Z',
+    'groups': <class 'list'> [
+    ],
+    'id': 'foobar_0',
+    'name': 'Foobar',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+  }
+---
+# name: TestUpdateAPIKey.test[uvloop-missing-False].1
+  <class 'dict'> {
+    '_id': 'foobar',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'groups': <class 'list'> [
+    ],
+    'id': 'foobar_0',
+    'name': 'Foobar',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: TestUpdateAPIKey.test[uvloop-missing-True]
+  <class 'dict'> {
+    'created_at': '2015-10-06T20:00:00Z',
+    'groups': <class 'list'> [
+    ],
+    'id': 'foobar_0',
+    'name': 'Foobar',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+  }
+---
+# name: TestUpdateAPIKey.test[uvloop-missing-True].1
+  <class 'dict'> {
+    '_id': 'foobar',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'groups': <class 'list'> [
+    ],
+    'id': 'foobar_0',
+    'name': 'Foobar',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'user': <class 'dict'> {
+      'id': 'test',
+    },
+  }
+---
+# name: test_edit[uvloop-all_valid][response]
   <class 'dict'> {
     'administrator': False,
     'email': 'dev@virtool.ca',
@@ -409,6 +493,136 @@
     },
   }
 ---
+# name: test_edit[uvloop-good_email][response]
+  <class 'dict'> {
+    'administrator': False,
+    'email': 'dev@virtool.ca',
+    'groups': <class 'list'> [
+    ],
+    'handle': 'bob',
+    'id': 'test',
+    'last_password_change': '2015-10-06T20:00:00Z',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': 'technician',
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
+---
+# name: test_edit[uvloop-invalid_credentials][response]
+  <class 'dict'> {
+    'id': 'bad_request',
+    'message': 'Invalid credentials',
+  }
+---
+# name: test_edit[uvloop-invalid_email][response]
+  <class 'list'> [
+    <class 'dict'> {
+      'in': 'body',
+      'loc': <class 'list'> [
+        'email',
+      ],
+      'msg': 'The format of the email is invalid',
+      'type': 'value_error',
+    },
+  ]
+---
+# name: test_edit[uvloop-missing_all][response]
+  <class 'dict'> {
+    'administrator': False,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'bob',
+    'id': 'test',
+    'last_password_change': '2015-10-06T20:00:00Z',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': 'technician',
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
+---
+# name: test_edit[uvloop-missing_email][response]
+  <class 'dict'> {
+    'administrator': False,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'bob',
+    'id': 'test',
+    'last_password_change': '2015-10-06T20:00:00Z',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': 'technician',
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
+---
+# name: test_edit[uvloop-missing_old_password][response]
+  <class 'list'> [
+    <class 'dict'> {
+      'in': 'body',
+      'loc': <class 'list'> [
+        '__root__',
+      ],
+      'msg': 'The old password needs to be given in order for the password to be changed',
+      'type': 'value_error',
+    },
+  ]
+---
+# name: test_edit[uvloop-missing_password][response]
+  <class 'list'> [
+    <class 'dict'> {
+      'in': 'body',
+      'loc': <class 'list'> [
+        '__root__',
+      ],
+      'msg': 'The new password needs to be given in order for the password to be changed',
+      'type': 'value_error',
+    },
+  ]
+---
+# name: test_edit[uvloop-short_password][response]
+  <class 'dict'> {
+    'id': 'bad_request',
+    'message': 'Password does not meet minimum length requirement (8)',
+  }
+---
 # name: test_get[uvloop]
   <class 'dict'> {
     'administrator': False,
@@ -434,5 +648,27 @@
       'show_versions': True,
       'skip_quick_analyze_dialog': True,
     },
+  }
+---
+# name: test_login[uvloop-all_valid]
+  <class 'dict'> {
+    'reset': False,
+  }
+---
+# name: test_login[uvloop-missing_remember]
+  <class 'dict'> {
+    'reset': False,
+  }
+---
+# name: test_login[uvloop-wrong_handle]
+  <class 'dict'> {
+    'id': 'bad_request',
+    'message': 'Invalid username or password',
+  }
+---
+# name: test_login[uvloop-wrong_password]
+  <class 'dict'> {
+    'id': 'bad_request',
+    'message': 'Invalid username or password',
   }
 ---
