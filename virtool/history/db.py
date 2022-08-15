@@ -11,10 +11,9 @@ import pymongo.errors
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from virtool_core.models.enums import HistoryMethod
 
-import virtool.errors
 import virtool.history.utils
 import virtool.otus.db
-import virtool.otus.utils
+
 import virtool.utils
 from virtool.api.utils import paginate
 from virtool.history.utils import (
