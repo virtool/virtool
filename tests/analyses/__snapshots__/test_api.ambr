@@ -93,8 +93,14 @@
         },
         'subtractions': <class 'list'> [
         ],
+        'updated_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'leeashley',
           'id': '7CtBo2yG',
         },
@@ -124,8 +130,14 @@
             'name': 'Malus domestica',
           },
         ],
+        'updated_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'leeashley',
           'id': '7CtBo2yG',
         },
@@ -151,8 +163,14 @@
         },
         'subtractions': <class 'list'> [
         ],
+        'updated_at': '2015-10-06T20:00:00Z',
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'leeashley',
           'id': '7CtBo2yG',
         },
@@ -182,7 +200,18 @@
       },
     ],
     'id': 'foobar',
+    'index': <class 'dict'> {
+      'id': 'bar',
+      'version': 3,
+    },
+    'job': <class 'dict'> {
+      'id': 'test',
+    },
     'ready': False,
+    'reference': <class 'dict'> {
+      'id': 'baz',
+      'name': 'Baz',
+    },
     'results': <class 'dict'> {
       'hits': <class 'list'> [
       ],
@@ -200,8 +229,14 @@
         'name': 'Apple',
       },
     ],
+    'updated_at': '2015-10-06T20:00:00Z',
     'user': <class 'dict'> {
       'administrator': False,
+      'b2c': None,
+      'b2c_display_name': None,
+      'b2c_family_name': None,
+      'b2c_given_name': None,
+      'b2c_oid': None,
       'handle': 'leeashley',
       'id': '7CtBo2yG',
     },
@@ -251,7 +286,18 @@
         'uploaded_at': None,
       },
     ],
+    'index': <class 'dict'> {
+      'id': 'bar',
+      'version': 3,
+    },
+    'job': <class 'dict'> {
+      'id': 'test',
+    },
     'ready': True,
+    'reference': <class 'dict'> {
+      'id': 'baz',
+      'name': 'Baz',
+    },
     'results': <class 'dict'> {
       'hits': <class 'list'> [
       ],

@@ -41,19 +41,18 @@ def naive_validator(req) -> Validator.errors:
 
 
 async def naive_writer(
-    req: Request,
+    reader,
     path: pathlib.Path,
     on_first_chunk: Optional[Callable[[bytes], Any]] = None,
 ) -> Optional[int]:
     """
     Write a new file from a HTTP multipart request.
 
-    :param req: aiohttp request object
+    :param reader: the file reader
     :param path: the file path to write the data to
     :param on_first_chunk: a function to call with the first chunk of the file stream
     :return: size of the new file in bytes
     """
-    reader = await req.multipart()
     file = await reader.next()
 
     size = 0

@@ -123,7 +123,7 @@ async def startup_data(app: App):
     :param app: the application object
     """
     app["data"] = DataLayer(
-        AnalysisData(app["db"], app["pg"]),
+        AnalysisData(app["db"], app["config"], app["pg"]),
         BLASTData(app["db"], app["pg"], app["tasks"]),
         GroupsData(app["db"]),
         HistoryData(app["config"].data_path, app["db"]),

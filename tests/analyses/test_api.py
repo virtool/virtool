@@ -117,9 +117,12 @@ async def test_get(
         "_id": "foobar",
         "created_at": static_time.datetime,
         "ready": ready,
+        "job": {"id": "test"},
+        "index": {"version": 3, "id": "bar"},
         "workflow": "pathoscope_bowtie",
         "results": {"hits": []},
         "sample": {"id": "baz"},
+        "reference": {"id": "baz", "name": "Baz"},
         "subtractions": ["plum", "apple"],
         "user": {"id": user["_id"]},
     }
@@ -145,7 +148,12 @@ async def test_get(
 
     if error != "404":
         await client.db.analyses.insert_one(document)
-        await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
+        await create_analysis_file(
+            pg,
+            "foobar",
+            "fasta",
+            "reference.fa",
+        )
 
     m_format_analysis = mocker.patch(
         "virtool.analyses.format.format_analysis",
@@ -181,8 +189,8 @@ async def test_get(
 
     if ready:
         args = m_format_analysis.call_args[0]
-        assert args[0] == client.app
-        assert args[1] == snapshot
+        assert args[0] == client.app["config"]
+        assert args[2] == snapshot
     else:
         assert not m_format_analysis.called
 

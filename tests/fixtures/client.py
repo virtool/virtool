@@ -32,8 +32,8 @@ class VirtoolTestClient:
     def has_cookie(self, key, value):
         return self.get_cookie(key) == value
 
-    async def get(self, url, params=None):
-        return await self._test_client.get(url, params=params)
+    async def get(self, url, headers=None, params=None):
+        return await self._test_client.get(url, headers=headers, params=params)
 
     async def post(self, url, data=None):
         payload = None
@@ -87,9 +87,7 @@ def create_app(
 
 
 @pytest.fixture
-def spawn_client(
-    pg, request, aiohttp_client, test_motor, dbi, create_app, create_user
-):
+def spawn_client(pg, request, aiohttp_client, test_motor, dbi, create_app, create_user):
     async def func(
         addon_route_table: Optional[RouteTableDef] = None,
         auth=None,
@@ -189,7 +187,7 @@ def spawn_job_client(
                 fake=False,
                 postgres_connection_string=pg_connection_string,
                 redis_connection_string=redis_connection_string,
-                no_sentry=True
+                no_sentry=True,
             )
         )
 

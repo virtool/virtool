@@ -309,7 +309,7 @@ async def upload(req):
     path = join_index_path(req.app["config"].data_path, reference_id, index_id) / name
 
     try:
-        size = await naive_writer(req, path)
+        size = await naive_writer(await req.multipart(), path)
     except asyncio.CancelledError:
         logger.debug(f"Index file upload aborted: {upload_id}")
         await delete_row(pg, upload_id, IndexFile)

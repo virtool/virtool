@@ -93,7 +93,7 @@ class UploadsView(PydanticView):
         )
 
         try:
-            size = await naive_writer(self.request, file_path)
+            size = await naive_writer(await self.request.multipart(), file_path)
 
             upload = await virtool.uploads.db.finalize(pg, size, upload_id, Upload)
         except CancelledError:
