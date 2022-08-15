@@ -137,6 +137,86 @@ async def paginate(
     }
 
 
+async def paginate_aggregate(
+    collection,
+    db_query: Union[Dict, MultiDictProxy[str]],
+    url_query: Union[Dict, MultiDictProxy[str]],
+    sort: Optional[Union[List[Tuple[str, int]], str]] = None,
+    base_query: Optional[Dict] = None,
+    reverse: bool = False,
+):
+    """
+    A function to return parameters used in aggregate.
+
+    Uses a number of different queries to return search results.
+
+    The `db_query` is composed is passed in the function call. This is usually derived
+    from user input such as search terms and filter options. This documents matching
+    query will count toward the returned `found_count`.
+
+    The `url_query` is the raw query from the request URL. This value is used to derive
+    the `page` and `per_page` numbers used in paging the search results.
+
+    The `base_query` is affects the `total_count` of documents in the collection
+    returned to the API client. An example where this is used is only ever returning
+    documents that have a `ready` field set to `True`. If the field is `False`, the
+    client would never know the document existed.
+
+    `total_count`: the total number of unhidden documents in the collection
+    `found_count`: the number of documents matching the search query (`db_query`)
+    `page_count`: the number of pages given the passed `per_page` value
+    `per_page`: the `documents` to return for each page request
+    `page`: the page number to return (starts at one)
+    'sort': field to sort by
+    'skip_count': number of documents to skip
+
+    :param collection: the database collection
+    :param db_query: a query derived from user supplied - affects found count
+    :param url_query: the raw URL query; used to get the `page` and `page_count` values
+    :param sort: a field to sort by
+    :param base_query: a query always applied to the search
+    :param reverse: reverse the sort order
+
+    """
+    try:
+        page = int(url_query["page"])
+    except (KeyError, ValueError):
+        page = 1
+
+    try:
+        per_page = int(url_query["per_page"])
+    except (KeyError, ValueError):
+        per_page = 25
+
+    base_query = base_query or {}
+
+    if isinstance(sort, str):
+        sort = {sort: -1 if reverse else 1}
+
+    db_query = {"$and": [base_query, db_query]}
+
+    found_count = await collection.count_documents(db_query)
+
+    page_count = int(math.ceil(found_count / per_page))
+
+    total_count = await collection.count_documents(base_query)
+
+    skip_count = 0
+
+    if found_count and page > 1:
+        skip_count = (page - 1) * per_page
+
+    return {
+        "sort": sort,
+        "total_count": total_count,
+        "found_count": found_count,
+        "page_count": page_count,
+        "per_page": per_page,
+        "page": page,
+        "skip_count": skip_count,
+    }
+
+
 def get_query_bool(query: Mapping, key: str, default: Optional[Any] = None) -> bool:
     """
     Return a `bool` calculated from a URL query given its `key`.

@@ -1,3 +1,4 @@
+import math
 from asyncio import gather
 from collections import defaultdict
 from typing import Mapping, Optional, Dict
@@ -8,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 import virtool.utils
 from virtool.api.utils import (
     compose_regex_query,
-    paginate,
     get_query_bool,
 )
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -18,7 +18,6 @@ from virtool.mongo.utils import get_one_field
 from virtool.jobs import is_running_or_waiting
 from virtool.jobs.client import AbstractJobsClient, JOB_REMOVED_FROM_QUEUE
 from virtool.jobs.db import (
-    LIST_PROJECTION,
     OR_COMPLETE,
     OR_FAILED,
     PROJECTION,
@@ -62,31 +61,7 @@ class JobsData:
 
         return dict(counts)
 
-    async def _find_basic(self, query: MultiDictProxy) -> Document:
-        term = query.get("find")
-
-        db_query = {}
-
-        if term:
-            db_query.update(compose_regex_query(term, ["workflow", "user.id"]))
-
-        data = await paginate(
-            self._db.jobs,
-            db_query,
-            query,
-            projection=LIST_PROJECTION,
-            sort="created_at",
-        )
-
-        return {
-            **data,
-            "counts": await self._get_counts(),
-            "documents": await apply_transforms(
-                data["documents"], [AttachUserTransform(self._db)]
-            ),
-        }
-
-    async def _find_beta(self, query: MultiDictProxy) -> Document:
+    async def find(self, query: MultiDictProxy) -> Document:
         """
         {
           "waiting": {
@@ -101,33 +76,80 @@ class JobsData:
         term = query.get("find")
         archived = get_query_bool(query, "archived") if "archived" in query else None
 
-        documents = [
-            base_processor(d)
-            async for d in self._db.jobs.aggregate(
-                [
-                    {
-                        "$match": {
-                            **(compose_regex_query(term, ["user.id"]) if term else {}),
-                            **({"archived": archived} if archived is not None else {}),
-                        }
-                    },
-                    {
-                        "$set": {
-                            "last_status": {"$last": "$status"},
-                            "first_status": {"$first": "$status"}
-                        }
-                    },
-                    {
-                        "$set": {
-                            "created_at": "$first_status.timestamp",
-                            "progress": "$last_status.progress",
-                            "state": "$last_status.state",
-                            "stage": "$last_status.stage",
-                        }
-                    },
-                    {"$match": {"state": {"$in": states}} if states else {}},
-                    {
-                        "$project": {
+        try:
+            page = int(query["page"])
+        except (KeyError, ValueError):
+            page = 1
+
+        try:
+            per_page = int(query["per_page"])
+        except (KeyError, ValueError):
+            per_page = 25
+
+        skip_count = 0
+
+        if page > 1:
+            skip_count = (page - 1) * per_page
+
+        sort = {"created_at": 1}
+
+        match_query = {
+            **(compose_regex_query(term, ["user.id"]) if term else {}),
+            **({"archived": archived} if archived is not None else {}),
+        }
+
+        match_state = {"state": {"$in": states}} if states else {}
+
+        async for paginate_dict in self._db.jobs.aggregate(
+            [
+                {
+                    "$facet": {
+                        "total_count": [
+                            {"$count": "total_count"},
+                        ],
+                        "found_count": [
+                            {"$match": match_query},
+                            {
+                                "$set": {
+                                    "last_status": {"$last": "$status"},
+                                }
+                            },
+                            {
+                                "$set": {
+                                    "state": "$last_status.state",
+                                }
+                            },
+                            {"$match": match_state},
+                            {"$count": "found_count"},
+                        ],
+                        "data": [
+                            {
+                                "$match": match_query,
+                            },
+                            {
+                                "$set": {
+                                    "last_status": {"$last": "$status"},
+                                    "first_status": {"$first": "$status"},
+                                }
+                            },
+                            {
+                                "$set": {
+                                    "created_at": "$first_status.timestamp",
+                                    "progress": "$last_status.progress",
+                                    "state": "$last_status.state",
+                                    "stage": "$last_status.stage",
+                                }
+                            },
+                            {"$match": match_state},
+                            {"$sort": sort},
+                            {"$skip": skip_count},
+                            {"$limit": per_page},
+                        ],
+                    }
+                },
+                {
+                    "$project": {
+                        "data": {
                             "_id": True,
                             "created_at": True,
                             "archived": True,
@@ -136,28 +158,34 @@ class JobsData:
                             "state": True,
                             "user": True,
                             "workflow": True,
-                        }
-                    },
-                ],
-            )
-        ]
+                        },
+                        "total_count": {
+                            "$arrayElemAt": ["$total_count.total_count", 0]
+                        },
+                        "found_count": {
+                            "$arrayElemAt": ["$found_count.found_count", 0]
+                        },
+                    }
+                },
+            ],
+        ):
+            data = paginate_dict["data"]
+            documents = [base_processor(document) for document in data]
+            found_count = paginate_dict.get("found_count", 0)
+            total_count = paginate_dict.get("total_count", 0)
+            page_count = int(math.ceil(found_count / per_page))
 
         return {
             "counts": await self._get_counts(),
             "documents": await apply_transforms(
                 documents, [AttachUserTransform(self._db)]
             ),
+            "total_count": total_count,
+            "found_count": found_count,
+            "page_count": page_count,
+            "per_page": per_page,
+            "page": page,
         }
-
-    async def find(self, query: MultiDictProxy):
-        """
-        :param query:
-        :return:
-        """
-        if get_query_bool(query, "beta", False):
-            return await self._find_beta(query)
-
-        return await self._find_basic(query)
 
     async def create(
         self,

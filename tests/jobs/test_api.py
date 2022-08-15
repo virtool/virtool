@@ -2,18 +2,6 @@ import pytest
 from virtool_core.models.enums import Permission
 
 
-async def test_find(fake, snapshot, spawn_client):
-    client = await spawn_client(authorize=True)
-
-    for _ in range(5):
-        await fake.jobs.insert(randomize=True)
-
-    resp = await client.get("/jobs")
-
-    assert resp.status == 200
-    assert await resp.json() == snapshot
-
-
 @pytest.mark.parametrize("archived", [True, False, None])
 @pytest.mark.parametrize("state", ["running", None])
 async def test_find_beta(archived, state, fake, snapshot, spawn_client):
@@ -22,7 +10,7 @@ async def test_find_beta(archived, state, fake, snapshot, spawn_client):
     for _ in range(15):
         await fake.jobs.insert(randomize=True)
 
-    url = "/jobs?beta=true"
+    url = "/jobs?"
 
     if archived is not None:
         url += f"&archived={archived}"
