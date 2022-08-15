@@ -57,7 +57,9 @@ class CloneReferenceTask(Task):
         await virtool.tasks.pg.update(self.pg, self.id, step="copy_otus")
 
         for source_otu_id, version in manifest.items():
-            _, patched, _ = await patch_to_version(self.app, source_otu_id, version)
+            _, patched, _ = await patch_to_version(
+                self.app["config"].data_path, self.db, source_otu_id, version
+            )
 
             otu_id = await insert_joined_otu(
                 self.db, patched, created_at, ref_id, user_id
@@ -183,7 +185,11 @@ class ImportReferenceTask(Task):
                 await gather(
                     *[
                         insert_change(
-                            self.app, otu_id, HistoryMethod.import_otu, user_id, session=session
+                            self.app,
+                            otu_id,
+                            HistoryMethod.import_otu,
+                            user_id,
+                            session=session,
                         )
                         for otu_id in chunk
                     ]
@@ -260,7 +266,9 @@ class RemoteReferenceTask(Task):
         tracker = await self.get_tracker(len(self.import_data["otus"]))
 
         for otu_id in self.inserted_otu_ids:
-            await insert_change(self.app, otu_id, HistoryMethod.remote, self.context["user_id"])
+            await insert_change(
+                self.app, otu_id, HistoryMethod.remote, self.context["user_id"]
+            )
 
             await tracker.add(1)
 

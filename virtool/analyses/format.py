@@ -136,7 +136,9 @@ async def format_pathoscope(app: App, document: Dict[str, Any]) -> Dict[str, Any
 
 
 async def format_pathoscope_hits(app: App, otu_id: str, otu_version, hits: List[Dict]):
-    _, patched_otu, _ = await patch_to_version(app, otu_id, otu_version)
+    _, patched_otu, _ = await patch_to_version(
+        app["config"].data_path, app["db"], otu_id, otu_version
+    )
 
     max_sequence_length = 0
 
@@ -368,7 +370,10 @@ async def gather_patched_otus(app: App, results: List[dict]) -> Dict[str, dict]:
     otu_specifiers = {(hit["otu"]["id"], hit["otu"]["version"]) for hit in results}
 
     patched_otus = await asyncio.gather(
-        *[patch_to_version(app, otu_id, version) for otu_id, version in otu_specifiers]
+        *[
+            patch_to_version(app["config"].data_path, app["db"], otu_id, version)
+            for otu_id, version in otu_specifiers
+        ]
     )
 
     return {patched["_id"]: patched for _, patched, _ in patched_otus}

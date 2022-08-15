@@ -105,13 +105,11 @@ async def test_get_patched_otus(mocker, dbi, config):
 
     assert list(patched_otus) == [{"_id": "foo"}, {"_id": "foo"}, {"_id": "foo"}]
 
-    app_dict = {"db": dbi, "config": config}
-
     m.assert_has_calls(
         [
-            mocker.call(app_dict, "foo", 2),
-            mocker.call(app_dict, "bar", 10),
-            mocker.call(app_dict, "baz", 4),
+            mocker.call(config.data_path, dbi, "foo", 2),
+            mocker.call(config.data_path, dbi, "bar", 10),
+            mocker.call(config.data_path, dbi, "baz", 4),
         ]
     )
 

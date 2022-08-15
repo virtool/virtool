@@ -11,10 +11,9 @@ import pymongo.errors
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from virtool_core.models.enums import HistoryMethod
 
-import virtool.errors
 import virtool.history.utils
 import virtool.otus.db
-import virtool.otus.utils
+
 import virtool.utils
 from virtool.api.utils import paginate
 from virtool.history.utils import (
@@ -232,19 +231,21 @@ async def get_most_recent_change(
     )
 
 
-async def patch_to_version(app, otu_id: str, version: Union[str, int]) -> tuple:
+async def patch_to_version(
+    data_path: Path, db, otu_id: str, version: Union[str, int]
+) -> tuple:
     """
     Take a joined otu back in time to the passed ``version``.
 
     Uses the diffs in the change documents associated with the otu.
 
-    :param app: the application object
+    :param data_path: the data path
+    :param db: the database object
     :param otu_id: the id of the otu to patch
     :param version: the version to patch to
     :return: the current joined otu, patched otu, and the ids of reverted changes
 
     """
-    db = app["db"]
 
     reverted_history_ids = []
 
@@ -262,7 +263,7 @@ async def patch_to_version(app, otu_id: str, version: Union[str, int]) -> tuple:
 
             if change["diff"] == "file":
                 change["diff"] = await virtool.history.utils.read_diff_file(
-                    app["config"].data_path, otu_id, change["otu"]["version"]
+                    data_path, otu_id, change["otu"]["version"]
                 )
 
             if change["method_name"] == "remove":
@@ -281,49 +282,3 @@ async def patch_to_version(app, otu_id: str, version: Union[str, int]) -> tuple:
         current = None
 
     return current, patched, reverted_history_ids
-
-
-async def revert(app, change_id: str) -> dict:
-    """
-    Revert a history change given by the passed ``change_id``.
-
-    :param app: the application object
-    :param change_id: a unique id for the change
-    :return: the updated OTU
-
-    """
-    db = app["db"]
-
-    change = await db.history.find_one({"_id": change_id}, ["index"])
-
-    if change["index"]["id"] != "unbuilt" or change["index"]["version"] != "unbuilt":
-        raise virtool.errors.DatabaseError(
-            "Change is included in a build an not revertible"
-        )
-
-    otu_id, otu_version = change_id.split(".")
-
-    if otu_version != "removed":
-        otu_version = int(otu_version)
-
-    _, patched, history_to_delete = await patch_to_version(app, otu_id, otu_version - 1)
-
-    # Remove the old sequences from the collection.
-    await db.sequences.delete_many({"otu_id": otu_id})
-
-    if patched is not None:
-        patched_otu, sequences = virtool.otus.utils.split(patched)
-
-        # Add the reverted sequences to the collection.
-        for sequence in sequences:
-            await db.sequences.insert_one(sequence)
-
-        # Replace the existing otu with the patched one. If it doesn't exist, insert it.
-        await db.otus.replace_one({"_id": otu_id}, patched_otu, upsert=True)
-
-    else:
-        await db.otus.delete_one({"_id": otu_id})
-
-    await db.history.delete_many({"_id": {"$in": history_to_delete}})
-
-    return patched

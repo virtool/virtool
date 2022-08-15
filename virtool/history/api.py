@@ -1,17 +1,16 @@
-from typing import Union, List, Dict, Any
+from typing import Union, List
 
 from aiohttp.web import HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r403, r404, r409, r422
 from virtool.history.oas import GetHistoryResponse, HistoryResponse
 
-import virtool.history.db
 import virtool.http.routes
 import virtool.references.db
 from virtool.api.response import InsufficientRights, NotFound, json_response
-from virtool.data.errors import ResourceNotFoundError
+from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 from virtool.data.utils import get_data_from_req
-from virtool.errors import DatabaseError
+from virtool.mongo.utils import get_one_field
 
 routes = virtool.http.routes.Routes()
 
@@ -33,7 +32,10 @@ class ChangesView(PydanticView):
         )
 
         return json_response(
-            [GetHistoryResponse.parse_obj(document).dict() for document in data]
+            [
+                GetHistoryResponse.parse_obj(document).dict()
+                for document in data.documents
+            ]
         )
 
 
@@ -48,12 +50,12 @@ class ChangeView(PydanticView):
         """
         change_id = self.request.match_info["change_id"]
 
-        document = await virtool.history.db.get(self.request.app, change_id)
+        try:
+            document = await get_data_from_req(self.request).history.get(change_id)
+        except ResourceNotFoundError:
+            raise NotFound()
 
-        if document:
-            return json_response(document)
-
-        raise NotFound()
+        return json_response(HistoryResponse.parse_obj(document).dict())
 
     async def delete(self) -> Union[r204, r403, r404, r409]:
         """
@@ -67,21 +69,21 @@ class ChangeView(PydanticView):
         """
         change_id = self.request.match_info["change_id"]
 
-        try:
-            document = await get_data_from_req(self.request).history.delete(
-                change_id=change_id
-            )
-        except ResourceNotFoundError:
-            raise NotFound()
+        reference = await get_one_field(
+            self.request.app["db"].history, "reference", change_id
+        )
 
-        if not await virtool.references.db.check_right(
-            self.request, document["reference"]["id"], "modify_otu"
+        if reference is not None and not await virtool.references.db.check_right(
+            self.request, reference["id"], "modify_otu"
         ):
+
             raise InsufficientRights()
 
         try:
-            await virtool.history.db.revert(self.request.app, change_id)
-        except DatabaseError:
+            await get_data_from_req(self.request).history.delete(change_id)
+        except ResourceNotFoundError:
+            raise NotFound()
+        except ResourceConflictError:
             raise HTTPConflict(text="Change is already built")
 
         raise HTTPNoContent

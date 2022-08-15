@@ -14,12 +14,12 @@ from virtool.users.data import UsersData
 
 
 @pytest.fixture
-def data_layer(dbi, mocker, pg: AsyncEngine):
+def data_layer(dbi, config, mocker, pg: AsyncEngine):
     return DataLayer(
         AnalysisData({"db": dbi, "pg": pg}),
         mocker.Mock(spec=BLASTData),
         GroupsData(dbi),
-        HistoryData(dbi),
+        HistoryData(config.data_path, dbi),
         LabelsData(dbi, pg),
         JobsData(DummyJobsClient(), dbi, pg),
         OTUData({"db": dbi, "pg": pg}),

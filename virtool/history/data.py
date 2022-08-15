@@ -1,38 +1,97 @@
-from typing import List, Any, Dict, Union
+from pathlib import Path
+from typing import Any
 
-from virtool_core.models.history import HistoryMinimal
+from virtool_core.models.history import HistorySearchResult
 
-import virtool.history.db
-from virtool.data.errors import ResourceNotFoundError
+import virtool.utils
+import virtool.otus.utils
+from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
+from virtool.errors import DatabaseError
+from virtool.history.db import DiffTransform, PROJECTION, patch_to_version
 from virtool.mongo.core import DB
+from virtool.mongo.transforms import apply_transforms
+from virtool.types import Document
+from virtool.users.db import AttachUserTransform
 
 
 class HistoryData:
-    def __init__(self, db: DB):
+    def __init__(self, data_path: Path, db: DB):
+        self.data_path = data_path
         self._db = db
 
-    async def find(self, req_query: Any) -> List[HistoryMinimal]:
+    async def find(self, req_query: Any) -> HistorySearchResult:
         """
         List all change documents.
         :param req_query: the request query
         :return: a list of all documents
         """
-        documents = await virtool.history.db.find(db=self._db, req_query=req_query)
 
-        return [
-            HistoryMinimal(**change_document)
-            for change_document in documents["documents"]
-        ]
+        documents = await virtool.history.db.find(self._db, req_query)
 
-    async def delete(self, change_id: str) -> Dict[str, Union[str, dict]]:
+        return HistorySearchResult(**documents)
+
+    async def get(self, change_id: str) -> Document:
+        """
+        Get a document given its ID.
+        :param change_id: the ID of the document to delete
+        """
+        document = await self._db.history.find_one(change_id, PROJECTION)
+
+        if document:
+            return await apply_transforms(
+                virtool.utils.base_processor(document),
+                [AttachUserTransform(self._db), DiffTransform(self.data_path)],
+            )
+
+        raise ResourceNotFoundError()
+
+    async def delete(self, change_id: str):
         """
         Delete a document given its ID.
         :param change_id: the ID of the document to delete
-        :return: the document
         """
         document = await self._db.history.find_one(change_id, ["reference"])
 
         if not document:
             raise ResourceNotFoundError()
 
-        return document
+        try:
+            change = await self._db.history.find_one({"_id": change_id}, ["index"])
+
+            if (
+                change["index"]["id"] != "unbuilt"
+                or change["index"]["version"] != "unbuilt"
+            ):
+                raise virtool.errors.DatabaseError(
+                    "Change is included in a build an not revertible"
+                )
+
+            otu_id, otu_version = change_id.split(".")
+
+            if otu_version != "removed":
+                otu_version = int(otu_version)
+
+            _, patched, history_to_delete = await patch_to_version(
+                self.data_path, self._db, otu_id, otu_version - 1
+            )
+
+            # Remove the old sequences from the collection.
+            await self._db.sequences.delete_many({"otu_id": otu_id})
+
+            if patched is None:
+                await self._db.otus.delete_one({"_id": otu_id})
+            else:
+                patched_otu, sequences = virtool.otus.utils.split(patched)
+
+                # Add the reverted sequences to the collection.
+                for sequence in sequences:
+                    await self._db.sequences.insert_one(sequence)
+
+                # Replace existing otu with patched one. If it doesn't exist, insert it.
+                await self._db.otus.replace_one(
+                    {"_id": otu_id}, patched_otu, upsert=True
+                )
+
+            await self._db.history.delete_many({"_id": {"$in": history_to_delete}})
+        except DatabaseError:
+            raise ResourceConflictError()
