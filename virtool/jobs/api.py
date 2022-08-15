@@ -4,7 +4,6 @@ from typing import Union, List
 from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
-from virtool_core.models.job import Job, JobMinimal
 
 from virtool.api.response import NotFound, json_response
 from virtool.data.errors import (
@@ -16,6 +15,7 @@ from virtool.http.policy import policy, PermissionsRoutePolicy
 from virtool.http.routes import Routes
 from virtool.http.schema import schema
 from virtool.users.utils import Permission
+from virtool.jobs.oas import GetJobResponse, JobResponse
 
 logger = getLogger(__name__)
 
@@ -24,7 +24,7 @@ routes = Routes()
 
 @routes.view("/jobs")
 class JobsView(PydanticView):
-    async def get(self) -> Union[List[JobMinimal], r200, r400]:
+    async def get(self) -> Union[r200[List[GetJobResponse]], r400]:
         """
         Find jobs.
 
@@ -70,7 +70,7 @@ class JobsView(PydanticView):
 
 @routes.view("/jobs/{job_id}")
 class JobView(PydanticView):
-    async def get(self) -> Union[List[JobMinimal], r200, r404]:
+    async def get(self) -> Union[r200[JobResponse], r404]:
         """
         Get a job.
 
@@ -175,7 +175,7 @@ async def archive(req):
 @routes.view("/jobs/{job_id}/cancel")
 class CancelJobView(PydanticView):
     @policy(PermissionsRoutePolicy(Permission.cancel_job))
-    async def put(self) -> Union[Job, r200, r403, r404, r409]:
+    async def put(self) -> Union[r200[JobResponse], r403, r404, r409]:
         """
         Cancel a job.
 
