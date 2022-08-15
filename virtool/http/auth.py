@@ -86,7 +86,7 @@ async def authenticate_with_api_key(
         force_reset=False,
         groups=user["groups"],
         permissions=document["permissions"],
-        user_id=user_id,
+        user_id=user["_id"],
         authenticated=True,
     )
 
