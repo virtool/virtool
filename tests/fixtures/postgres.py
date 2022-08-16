@@ -50,7 +50,7 @@ async def pg(
     """
     await create_test_database(pg_base_connection_string, pg_db_name)
 
-    pg = create_async_engine(pg_connection_string)
+    pg = create_async_engine(pg_connection_string, pool_recycle=1800)
 
     async with pg.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
