@@ -66,18 +66,18 @@ async def authenticate_with_key(req: Request, handler: Callable) -> Response:
 
 
 async def authenticate_with_api_key(
-    req: Request, handler: Callable, user_id: str, key: str
+    req: Request, handler: Callable, handle: str, key: str
 ) -> Response:
     db = req.app["db"]
 
     document, user = await asyncio.gather(
         db.keys.find_one({"_id": hash_key(key)}, ["permissions", "user"]),
         db.users.find_one(
-            {"handle": user_id}, ["administrator", "groups", "permissions"]
+            {"handle": handle}, ["administrator", "groups", "permissions"]
         ),
     )
 
-    if not document or document["user"]["id"] != user["_id"]:
+    if not document or not user or document["user"]["id"] != user["_id"]:
         raise HTTPUnauthorized(text="Invalid authorization header")
 
     req["client"] = UserClient(
