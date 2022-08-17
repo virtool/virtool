@@ -1,3 +1,4 @@
+from enum import Enum
 from pathlib import Path
 from typing import List
 
@@ -9,6 +10,11 @@ from virtool.config.cls import Config
 from virtool.labels.models import Label
 
 PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie", "pathoscope_barracuda"]
+
+
+class SampleRight(Enum):
+    read = "read"
+    write = "write"
 
 
 def calculate_workflow_tags(analyses: list) -> dict:
