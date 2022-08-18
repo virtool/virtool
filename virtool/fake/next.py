@@ -96,21 +96,6 @@ class FakeDataLayer:
 
         return cls(self._faker)
 
-    def _check_for_model_subclass(self, model: Type[BaseModel]) -> bool:
-        if model in self._models:
-            return True
-
-        subclasses = model.__subclasses__()
-
-        if len(subclasses) == 1:
-            subclass = subclasses[0]
-            if subclass in self._models:
-                return True
-
-            return self._check_for_model_subclass(subclass)
-
-        return False
-
 
 def create_fake_data_layer(layer):
     fdl = FakeDataLayer(layer)
