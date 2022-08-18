@@ -5,9 +5,8 @@ from virtool.types import Document
 
 
 class AnalysisData:
-    def __init__(self, app):
-        self._app = app
-        self._db = app["db"]
+    def __init__(self, db):
+        self._db = db
 
     async def get_by_id(self, analysis_id: str) -> Optional[Document]:
         document = await self._db.analyses.find_one(analysis_id)
