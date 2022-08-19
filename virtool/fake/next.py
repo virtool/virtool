@@ -69,14 +69,12 @@ class UserResource(FakeDataResource):
 
 
 class FakeDataLayer:
-    users: UserResource
-    groups: GroupResource
-
     def __init__(self, layer: DataLayer):
         self._layer = layer
 
         self._resources = []
         self._models = []
+        self._resources_by_model = {}
 
         self._faker = Faker()
         self._faker.seed_instance(0)
@@ -91,10 +89,13 @@ class FakeDataLayer:
                 if dep not in self._models:
                     raise ValueError(f"Resource definition missing: {dep}")
 
+        resource = cls(self._faker)
+
         self._models.append(cls.model)
         self._resources.append(cls(self._faker))
+        self._resources_by_model[cls.model.__name__] = resource
 
-        return cls(self._faker)
+        return resource
 
 
 def create_fake_data_layer(layer):
