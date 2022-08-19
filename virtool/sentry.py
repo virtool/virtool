@@ -11,12 +11,12 @@ logger = getLogger(__name__)
 
 def traces_sampler(sampling_context: Dict) -> float:
     try:
-        transaction_name = sampling_context["transaction_context"]["name"]
+        target_url = sampling_context["aiohttp_request"].rel_url
     except KeyError:
         logger.warning("Could not determine Sentry transaction name")
-        transaction_name = None
+        target_url = None
 
-    if transaction_name == "virtool.http.ws.root":
+    if target_url == "/ws":
         return 0.0
 
     return 0.2
