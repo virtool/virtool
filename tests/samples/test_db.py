@@ -9,6 +9,7 @@ from aiohttp.test_utils import make_mocked_coro, make_mocked_request
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.uploads.db
+from virtool.data.utils import get_data_from_app
 from virtool.mongo.transforms import apply_transforms
 from virtool.labels.db import AttachLabelsTransform
 from virtool.labels.models import Label
@@ -263,6 +264,8 @@ async def test_create_sample(dbi, mocker, snapshot, static_time, spawn_client):
 
     mocker.patch("virtool.mongo.utils.get_new_id", return_value="a2oj3gfd")
 
+    settings = client.settings
+
     result = await create_sample(
         dbi,
         "foo",
@@ -275,7 +278,7 @@ async def test_create_sample(dbi, mocker, snapshot, static_time, spawn_client):
         "test",
         [],
         "bob",
-        settings=client.app["settings"],
+        settings=settings,
     )
 
     assert result == snapshot

@@ -12,6 +12,7 @@ import virtool.references.db
 import virtool.utils
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
+from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError, GitHubError
 from virtool.github import format_release
 from virtool.http.policy import policy, PermissionsRoutePolicy
@@ -280,7 +281,7 @@ async def create(req):
     db = req.app["db"]
     pg = req.app["pg"]
     data = req["data"]
-    settings = req.app["settings"]
+    settings = await get_data_from_req(req).settings.get_all()
 
     user_id = req["client"].user_id
 

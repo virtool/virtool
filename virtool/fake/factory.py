@@ -21,7 +21,7 @@ from virtool.jobs.utils import JobRights
 from virtool.otus.fake import create_fake_otus
 from virtool.references.db import create_document
 from virtool.samples.fake import create_fake_sample
-from virtool.settings.db import Settings
+from virtool.settings.db import Settings, get
 from virtool.subtractions.fake import (
     create_fake_fasta_upload,
     create_fake_finalized_subtraction,
@@ -59,14 +59,14 @@ class WorkflowTestCase:
 class TestCaseDataFactory:
     """Initialize the database with fake data for a test case."""
 
-    def __init__(self, app: App, user_id: str, job_id: str = None):
+    def __init__(self, settings: Settings, app: App, user_id: str, job_id: str = None):
         self.fake = app["fake"] if "fake" in app else FakerWrapper()
         self.user_id = user_id
         self.job_id = job_id or self.fake.get_mongo_id()
         self.app = app
         self.db = app["db"]
         self.pg = app["pg"]
-        self.settings: Settings = app["settings"]
+        self.settings: Settings = settings
         self.data_path = app["config"].data_path
 
     async def analysis(
@@ -230,7 +230,11 @@ async def load_test_case_from_yml(
 
     job_args = {}
 
-    factory = TestCaseDataFactory(job_id=job_id, app=app, user_id=user_id)
+    settings = Settings(**await get(app["db"]))
+
+    factory = TestCaseDataFactory(
+        settings=settings, job_id=job_id, app=app, user_id=user_id
+    )
     test_case = SimpleNamespace()
 
     test_case.reference = await factory.reference()

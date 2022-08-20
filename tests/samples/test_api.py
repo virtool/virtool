@@ -309,10 +309,15 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        client.app["settings"] = settings
-        client.app["settings"].sample_group = group_setting
-        client.app["settings"].sample_all_write = True
-        client.app["settings"].sample_group_write = True
+        settings_data = {
+            "sample_group": group_setting,
+            "sample_all_write": True,
+            "sample_group_write": True,
+        }
+
+        await client.db.settings.find_one_and_update(
+            {"_id": "settings"}, {"$set": settings_data}
+        )
 
         data = get_data_from_app(client.app)
         data.jobs._client = DummyJobsClient()
@@ -364,7 +369,9 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        client.app["settings"].sample_unique_names = True
+        await client.db.settings.find_one_and_update(
+            {"_id": "settings"}, {"$set": {"sample_unique_names": True}}
+        )
 
         async with AsyncSession(pg) as session:
             session.add(Upload(id=1, name="test.fq.gz", size=123456))
@@ -402,6 +409,21 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
+
+        await client.db.settings.find_one_and_update(
+            {"_id": "settings"},
+            {"$set": {"sample_group": "force_choice", "sample_unique_names": True}},
+        )
+
+        await client.db.subtraction.insert_one(
+            {
+                "_id": "apple",
+            }
+        )
+
+        upload = Upload(id=1, name="test.fq.gz", size=123456)
+
+
         async with AsyncSession(pg) as session:
             session.add(Upload(id=1, name="test.fq.gz", size=123456))
 
@@ -437,8 +459,10 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        client.app["settings"].sample_group = "force_choice"
-        client.app["settings"].sample_unique_names = True
+        await client.db.settings.find_one_and_update(
+            {"_id": "settings"},
+            {"$set": {"sample_group": "force_choice", "sample_unique_names": True}},
+        )
 
         async with AsyncSession(pg) as session:
             session.add(Upload(id=1, name="test.fq.gz", size=123456))
@@ -493,7 +517,9 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        client.app["settings"].sample_unique_names = True
+        await client.db.settings.find_one_and_update(
+            {"_id": "settings"}, {"$set": {"sample_unique_names": True}}
+        )
 
         await client.db.subtraction.insert_one(
             {
@@ -520,7 +546,9 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        client.app["settings"].sample_unique_names = True
+        await client.db.settings.find_one_and_update(
+            {"_id": "settings"}, {"$set": {"sample_unique_names": True}}
+        )
 
         if exists:
             async with AsyncSession(pg) as session:

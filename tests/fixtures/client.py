@@ -7,17 +7,21 @@ import virtool.app
 import virtool.jobs.main
 from aiohttp.web_routedef import RouteTableDef
 from virtool.config.cls import Config
+<<<<<<< HEAD
 from virtool.mongo.identifier import FakeIdProvider
+=======
+from virtool.data.utils import get_data_from_app
+>>>>>>> chore: stop storing settings in memory
 from virtool.utils import hash_key
 
 
 class VirtoolTestClient:
-    def __init__(self, test_client):
+    def __init__(self, test_client, settings):
         self._test_client = test_client
 
         self.server = self._test_client.server
         self.app = self.server.app
-        self.settings = self.app["settings"]
+        self.settings = settings
         self.db = self.app["db"]
 
         self.auth = self._test_client.session.auth
@@ -199,7 +203,7 @@ def spawn_job_client(
 
         client = await aiohttp_client(app, auth=auth, auto_decompress=False)
         client.db = dbi
-        client.settings = app["settings"]
+        client.settings = await get_data_from_app(app).settings.get_all()
 
         return client
 

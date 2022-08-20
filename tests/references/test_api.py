@@ -163,7 +163,9 @@ async def test_create(data_type, snapshot, spawn_client, static_time):
 
     default_source_type = ["strain", "isolate"]
 
-    client.app["settings"].default_source_types = default_source_type
+    await client.db.settings.find_one_and_update(
+        {"_id": "settings"}, {"$set": {"default_source_types": default_source_type}}
+    )
 
     data = {
         "name": "Test Viruses",
