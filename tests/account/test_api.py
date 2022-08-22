@@ -1,6 +1,5 @@
 import pytest
 
-from virtool.settings.db import update
 from virtool.users.utils import Permission, hash_password
 
 
