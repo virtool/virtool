@@ -4,6 +4,7 @@ from aiohttp.test_utils import make_mocked_coro
 
 import virtool.mongo.connect
 import virtool.mongo.core
+from virtool.mongo.identifier import FakeIdProvider
 
 
 class MockDeleteResult:
@@ -33,7 +34,7 @@ async def test_motor(test_db_connection_string, test_db_name, loop, request):
 
 @pytest.fixture
 def dbi(test_motor, mocker):
-    return virtool.mongo.core.DB(test_motor, mocker.stub())
+    return virtool.mongo.core.DB(test_motor, mocker.stub(), FakeIdProvider())
 
 
 @pytest.fixture(params=[True, False])

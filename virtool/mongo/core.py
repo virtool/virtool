@@ -20,12 +20,12 @@ from pymongo.results import DeleteResult, UpdateResult
 
 import virtool.analyses.db
 import virtool.caches.db
-import virtool.mongo.utils
 import virtool.history.db
 import virtool.hmm.db
 import virtool.indexes.db
 import virtool.jobs.db
 import virtool.mongo.connect
+import virtool.mongo.utils
 import virtool.otus.db
 import virtool.references.db
 import virtool.samples.db
@@ -35,6 +35,7 @@ import virtool.uploads.db
 import virtool.users.db
 import virtool.utils
 from virtool.dispatcher.operations import DELETE, INSERT, UPDATE
+from virtool.mongo.identifier import AbstractIdProvider
 from virtool.types import Document, Projection
 
 
@@ -53,6 +54,7 @@ class Collection:
         collection: AsyncIOMotorCollection,
         enqueue_change: Callable[[str, str, Sequence[str]], None],
         processor: Callable[[Any, Document], Awaitable[Document]],
+        id_provider: AbstractIdProvider,
         projection: Optional[Projection],
         silent: bool = False,
     ):
@@ -61,6 +63,7 @@ class Collection:
         self.database = collection.database
         self._enqueue_change = enqueue_change
         self.processor = processor
+        self.id_provider = id_provider
         self.projection = projection
         self.silent = silent
 
@@ -212,7 +215,7 @@ class Collection:
         generate_id = "_id" not in document
 
         if generate_id:
-            document["_id"] = virtool.utils.random_alphanumeric(8)
+            document["_id"] = self.id_provider.get()
 
         try:
             await self._collection.insert_one(document, session=session)
@@ -319,10 +322,12 @@ class DB:
         self,
         motor_client: AsyncIOMotorClient,
         enqueue_change: Callable[[str, str, List[str]], None],
+        id_provider: AbstractIdProvider,
     ):
         self.motor_client = motor_client
         self.start_session = motor_client.start_session
         self.enqueue_change = enqueue_change
+        self.id_provider = id_provider
 
         self.analyses = self.bind_collection(
             "analyses", projection=virtool.analyses.db.PROJECTION
@@ -395,6 +400,7 @@ class DB:
             self.motor_client[name],
             self.enqueue_change,
             processor,
+            self.id_provider,
             projection,
             silent,
         )

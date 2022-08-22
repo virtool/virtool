@@ -39,6 +39,7 @@ from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
 from virtool.mongo.core import DB
+from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate
 from virtool.oidc.utils import JWKArgs
 from virtool.otus.data import OTUData
@@ -272,7 +273,7 @@ async def startup_databases(app: Application):
     dispatcher_interface = DispatcherClient(app["redis"])
     await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
 
-    app["db"] = DB(mongo, dispatcher_interface.enqueue_change)
+    app["db"] = DB(mongo, dispatcher_interface.enqueue_change, RandomIdProvider())
 
     app["dispatcher_interface"] = dispatcher_interface
 

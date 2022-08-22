@@ -18,10 +18,7 @@ async def create_user(
     b2c_user_attributes: Optional[B2CUserAttributes] = None,
     session: Optional[AsyncIOMotorClientSession] = None,
 ) -> Document:
-    user_id = await virtool.mongo.utils.get_new_id(mongo.users, session=session)
-
     document = {
-        "_id": user_id,
         "handle": handle,
         "administrator": False,
         "groups": [],
@@ -59,7 +56,7 @@ async def create_user(
         document["password"] = hash_password(password)
 
     try:
-        await mongo.users.insert_one(document)
+        await mongo.users.insert_one(document, session=session)
     except DuplicateKeyError:
         raise ResourceConflictError("User already exists")
 
