@@ -9,25 +9,15 @@ A sample needs a user and upload to exist.
 ```
 
 """
-import inspect
-from dataclasses import dataclass
-from typing import Type, List, Optional, Dict
+from typing import List, Optional
 
 from faker import Faker
 from faker.providers import BaseProvider
-from pydantic import BaseModel
-from virtool_core.models.analysis import Analysis
 from virtool_core.models.group import Group
-from virtool_core.models.index import Index
-from virtool_core.models.reference import Reference
-from virtool_core.models.samples import Sample
-from virtool_core.models.upload import Upload
 from virtool_core.models.user import User
 
-from virtool.analyses.data import AnalysisData
-from virtool.blast.data import BLASTData
 from virtool.data.layer import DataLayer
-from virtool.labels.models import Label
+from virtool.users.oas import UpdateUserSchema
 
 
 class VirtoolProvider(BaseProvider):
@@ -38,76 +28,62 @@ class VirtoolProvider(BaseProvider):
         return self.random_int()
 
 
-class FakeDataResource:
-    model = None
-    depends_on = None
+class DataFaker:
+    def __init__(self, layer: DataLayer):
+        self.layer = layer
 
-    def __init__(self, faker: Faker):
-        self.faker = faker
-        self._inserted_ids = []
+        self.faker = Faker()
+        self.faker.seed_instance(0)
+        self.faker.add_provider(VirtoolProvider)
 
-    async def create(self, layer: DataLayer) -> Dict:
-        ...
+        self.groups = GroupsFakerPiece(self)
+        self.users = UsersFakerPiece(self)
 
 
-class GroupResource(FakeDataResource):
+class DataFakerPiece:
+    def __init__(self, data_faker: DataFaker):
+        self.layer = data_faker.layer
+        self.faker = data_faker.faker
+        self.history = []
+
+
+class GroupsFakerPiece(DataFakerPiece):
     model = Group
 
-    def create(self, layer: DataLayer) -> Group:
-        return await layer.groups.create(self.faker.mongo_id())
+    async def create(self):
+        group_id = "contains spaces"
+
+        while " " in group_id:
+            group_id = self.faker.profile()["job"].lower() + "s"
+
+        group = await self.layer.groups.create(group_id)
+        self.history.append(group)
+        return group
 
 
-class UserResource(FakeDataResource):
+class UsersFakerPiece(DataFakerPiece):
     model = User
-    depends_on = [Group]
 
-    def create(self):
-        return {
-            "_id": self.faker.mongo_id(),
-            "group": {"id": Group.id},
-        }
+    async def create(
+        self,
+        groups: Optional[List[Group]] = None,
+        primary_group: Optional[Group] = None,
+    ):
+        user = await self.layer.users.create(
+            self.faker.profile()["username"], self.faker.password()
+        )
 
+        if groups or primary_group:
+            if groups:
+                await self.layer.users.update(
+                    user.id, UpdateUserSchema(groups=[group.id for group in groups])
+                )
 
-class FakeDataLayer:
-    def __init__(self, layer: DataLayer):
-        self._layer = layer
+            if primary_group:
+                await self.layer.users.update(
+                    user.id, UpdateUserSchema(primary_group=primary_group.id)
+                )
 
-        self._resources = []
-        self._models = []
-        self._resources_by_model = {}
+            return await self.layer.users.get(user.id)
 
-        self._faker = Faker()
-        self._faker.seed_instance(0)
-        self._faker.add_provider(VirtoolProvider)
-
-        self.groups = self.add_resource(GroupResource)
-        self.users = self.add_resource(UserResource)
-
-    def add_resource(self, cls: Type[FakeDataResource]) -> FakeDataResource:
-        if cls.depends_on:
-            for dep in cls.depends_on:
-                if dep not in self._models:
-                    raise ValueError(f"Resource definition missing: {dep}")
-
-        resource = cls(self._faker)
-
-        self._models.append(cls.model)
-        self._resources.append(cls(self._faker))
-        self._resources_by_model[cls.model.__name__] = resource
-
-        return resource
-
-
-def create_fake_data_layer(layer):
-    fdl = FakeDataLayer(layer)
-
-    # layer.add_resource(User, lambda faker: {}, depends_on=[Group])
-    # layer.add_resource(Label, lambda faker: {})
-
-    # layer.add_resource(FakeDataResource(Upload, depends_on=[User]))
-    # layer.add_resource(FakeDataResource(Sample, depends_on=[User, Upload]))
-    # layer.add_resource(FakeDataResource(Reference, depends_on=[User]))
-    # layer.add_resource(FakeDataResource(Index, depends_on=[Reference]))
-    # layer.add_resource(FakeDataResource(Analysis, depends_on=[User, Sample, Index]))
-
-    return fdl
+        return user

@@ -1,37 +1,26 @@
 import pytest
+
 from virtool.users.utils import Permission
 
 
-async def test_find(spawn_client, all_permissions, no_permissions, snapshot):
+async def test_find(fake2, spawn_client, all_permissions, no_permissions, snapshot):
     """
     Test that a ``GET /groups`` return a complete list of groups.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    await client.db.groups.insert_many(
-        [
-            {
-                "_id": "test",
-                "name": "testers",
-                "permissions": all_permissions,
-            },
-            {
-                "_id": "limited",
-                "permissions": no_permissions,
-            },
-        ]
-    )
+    await fake2.groups.create()
+    await fake2.groups.create()
 
     resp = await client.get("/groups")
 
     assert resp.status == 200
-
     assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "400_exists"])
-async def test_create(error, spawn_client, all_permissions, no_permissions, resp_is):
+async def test_create(error, fake2, spawn_client, resp_is, snapshot):
     """
     Test that a group can be added to the database at ``POST /groups/:group_id``.
 
@@ -40,15 +29,12 @@ async def test_create(error, spawn_client, all_permissions, no_permissions, resp
         authorize=True, administrator=True, base_url="https://virtool.example.com"
     )
 
-    if error:
-        await client.db.groups.insert_one(
-            {"_id": "test", "permissions": all_permissions}
-        )
+    group = await fake2.groups.create()
 
     resp = await client.post(
         "/groups",
         data={
-            "group_id": "test",
+            "group_id": group.id if error else "test",
         },
     )
 
@@ -58,52 +44,27 @@ async def test_create(error, spawn_client, all_permissions, no_permissions, resp
 
     assert resp.status == 201
     assert resp.headers["Location"] == "https://virtool.example.com/groups/test"
-
-    assert await resp.json() == {
-        "id": "test",
-        "name": "test",
-        "permissions": no_permissions,
-        "users": [],
-    }
-
-    assert await client.db.groups.find_one("test") == {
-        "_id": "test",
-        "permissions": no_permissions,
-    }
+    assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, spawn_client, all_permissions, resp_is, fake, snapshot):
+@pytest.mark.parametrize("status", [200, 404])
+async def test_get(
+    status, fake2, spawn_client, all_permissions, resp_is, fake, snapshot
+):
     """
     Test that a ``GET /groups/:group_id`` return the correct group.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    if not error:
+    group = await fake2.groups.create()
+    await fake2.groups.create()
 
-        await client.db.users.insert_many(
-            [
-                {**(await fake.users.create()), "groups": ["foo"]},
-                {**(await fake.users.create()), "groups": []},
-            ]
-        )
+    await fake2.users.create(groups=[group])
 
-        await client.db.groups.insert_one(
-            {
-                "_id": "foo",
-                "permissions": all_permissions,
-            },
-        )
+    resp = await client.get(f"/groups/{group.id if status == 200 else 'foo'}")
 
-    resp = await client.get("/groups/foo")
-
-    if error:
-        await resp_is.not_found(resp)
-        return
-
-    assert resp.status == 200
-
+    assert resp.status == status
     assert await resp.json() == snapshot
 
 

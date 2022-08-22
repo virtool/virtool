@@ -65,7 +65,6 @@ class UsersView(PydanticView):
 
         Creates a new user.
 
-
         Status Codes:
             201: Successful operation
             400: User already exists

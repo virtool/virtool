@@ -10,7 +10,7 @@
     'groups': <class 'list'> [
     ],
     'handle': 'fred',
-    'id': 'abc123',
+    'id': 'dbvT906w',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -53,6 +53,38 @@
       'skip_quick_analyze_dialog': True,
     },
   }
+---
+# name: test_create[uvloop-None].2
+  <class 'dict'> {
+    '_id': 'dbvT906w',
+    'administrator': False,
+    'force_reset': False,
+    'groups': <class 'list'> [
+    ],
+    'handle': 'fred',
+    'invalidate_sessions': False,
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'primary_group': None,
+    'settings': <class 'dict'> {
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    },
+  }
+---
+# name: test_create[uvloop-None][location]
+  '/users/dbvT906w'
 ---
 # name: test_edit[uvloop-good]
   <class 'tuple'> (
@@ -169,46 +201,6 @@
   <class 'dict'> {
     'documents': <class 'list'> [
       <class 'dict'> {
-        'administrator': False,
-        'force_reset': False,
-        'groups': <class 'list'> [
-        ],
-        'handle': 'bar',
-        'id': 'foo',
-        'last_password_change': '2015-10-06T20:00:00Z',
-        'permissions': <class 'dict'> {
-          'cancel_job': False,
-          'create_ref': False,
-          'create_sample': False,
-          'modify_hmm': False,
-          'modify_subtraction': False,
-          'remove_file': False,
-          'remove_job': False,
-          'upload_file': False,
-        },
-        'primary_group': 'technician',
-      },
-      <class 'dict'> {
-        'administrator': False,
-        'force_reset': False,
-        'groups': <class 'list'> [
-        ],
-        'handle': 'baz',
-        'id': 'bar',
-        'last_password_change': '2015-10-06T20:00:00Z',
-        'permissions': <class 'dict'> {
-          'cancel_job': False,
-          'create_ref': False,
-          'create_sample': False,
-          'modify_hmm': False,
-          'modify_subtraction': False,
-          'remove_file': False,
-          'remove_job': False,
-          'upload_file': False,
-        },
-        'primary_group': 'technician',
-      },
-      <class 'dict'> {
         'administrator': True,
         'force_reset': False,
         'groups': <class 'list'> [
@@ -227,6 +219,46 @@
           'upload_file': False,
         },
         'primary_group': 'technician',
+      },
+      <class 'dict'> {
+        'administrator': False,
+        'force_reset': False,
+        'groups': <class 'list'> [
+        ],
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+        'last_password_change': '2015-10-06T20:00:00Z',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+        'primary_group': None,
+      },
+      <class 'dict'> {
+        'administrator': False,
+        'force_reset': False,
+        'groups': <class 'list'> [
+        ],
+        'handle': 'zclark',
+        'id': 'fb085f7f',
+        'last_password_change': '2015-10-06T20:00:00Z',
+        'permissions': <class 'dict'> {
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        },
+        'primary_group': None,
       },
     ],
     'found_count': 3,
@@ -247,12 +279,16 @@
     'force_reset': False,
     'groups': <class 'list'> [
       <class 'dict'> {
-        'id': 'technician',
-        'name': 'technician',
+        'id': 'hydrogeologists',
+        'name': 'hydrogeologists',
+      },
+      <class 'dict'> {
+        'id': 'musicians',
+        'name': 'musicians',
       },
     ],
-    'handle': 'baz',
-    'id': 'bar',
+    'handle': 'qtaylor',
+    'id': 'bf1b993c',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -265,8 +301,8 @@
       'upload_file': False,
     },
     'primary_group': <class 'dict'> {
-      'id': 'technician',
-      'name': 'technician',
+      'id': 'musicians',
+      'name': 'musicians',
     },
   }
 ---

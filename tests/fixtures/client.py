@@ -7,6 +7,7 @@ import virtool.app
 import virtool.jobs.main
 from aiohttp.web_routedef import RouteTableDef
 from virtool.config.cls import Config
+from virtool.mongo.identifier import FakeIdProvider
 from virtool.utils import hash_key
 
 
@@ -87,9 +88,7 @@ def create_app(
 
 
 @pytest.fixture
-def spawn_client(
-    pg, request, aiohttp_client, test_motor, dbi, create_app, create_user
-):
+def spawn_client(pg, request, aiohttp_client, test_motor, dbi, create_app, create_user):
     async def func(
         addon_route_table: Optional[RouteTableDef] = None,
         auth=None,
@@ -144,6 +143,8 @@ def spawn_client(
             app, auth=auth, cookies=cookies, auto_decompress=False
         )
 
+        test_client.app["db"].id_provider = FakeIdProvider()
+
         return VirtoolTestClient(test_client)
 
     return func
@@ -189,7 +190,7 @@ def spawn_job_client(
                 fake=False,
                 postgres_connection_string=pg_connection_string,
                 redis_connection_string=redis_connection_string,
-                no_sentry=True
+                no_sentry=True,
             )
         )
 

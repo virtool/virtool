@@ -1,10 +1,14 @@
-import pytest
+import datetime
+from datetime import datetime
 
+import pytest
+from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
+
 from virtool.users.utils import check_password
 
 
-async def test_find(snapshot, spawn_client, create_user, static_time):
+async def test_find(fake2, snapshot, spawn_client):
     """
     Test that a ``GET /users`` returns a list of users.
 
@@ -13,18 +17,31 @@ async def test_find(snapshot, spawn_client, create_user, static_time):
         authorize=True, administrator=True, permissions=[Permission.create_sample]
     )
 
-    await client.db.users.insert_one(create_user(user_id="foo", handle="bar"))
-    await client.db.users.insert_one(create_user(user_id="bar", handle="baz"))
+    await fake2.users.create()
+    await fake2.users.create()
 
     resp = await client.get("/users")
 
     assert resp.status == 200
-    assert await resp.json() == snapshot
+    assert await resp.json() == snapshot(
+        matcher=path_type(
+            {
+                "last_password_change": (datetime,),
+            }
+        )
+    )
 
 
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
-    error, snapshot, spawn_client, create_user, no_permissions, resp_is, static_time
+    error,
+    fake2,
+    snapshot,
+    spawn_client,
+    create_user,
+    no_permissions,
+    resp_is,
+    static_time,
 ):
     """
     Test that a ``GET /users`` returns a list of users.
@@ -32,18 +49,15 @@ async def test_get(
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    await client.db.groups.insert_one(
-        {"_id": "technician", "permissions": no_permissions}
+    group = await fake2.groups.create()
+
+    user = await fake2.users.create(
+        groups=[group, await fake2.groups.create()], primary_group=group
     )
 
-    users = [create_user(user_id="foo", handle="bar")]
+    await fake2.users.create()
 
-    if not error:
-        users.append(create_user(user_id="bar", groups=["technician"], handle="baz"))
-
-    await client.db.users.insert_many(users)
-
-    resp = await client.get("/users/bar")
+    resp = await client.get(f"/users/{'foo' if error else user.id}")
 
     if error:
         await resp_is.not_found(resp)
@@ -53,27 +67,23 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize("error", [None, "400_exists", "400_password"])
-async def test_create(
-    error, snapshot, spawn_client, create_user, resp_is, static_time, mocker
-):
+@pytest.mark.parametrize("error", [None, "400_exists", "400_password", "400_reserved"])
+async def test_create(error, fake2, snapshot, spawn_client, resp_is):
     """
     Test that a valid request results in a user document being properly inserted.
 
-    - check response
-    - check database
-    - check password
-
     """
     client = await spawn_client(authorize=True, administrator=True)
-    mocker.patch("virtool.mongo.utils.get_new_id", return_value="abc123")
-
-    if error == "400_exists":
-        await client.db.users.insert_one({"_id": "abc123"})
-
-    client.app["settings"].minimum_password_length = 8
 
     data = {"handle": "fred", "password": "hello_world", "force_reset": False}
+
+    user = await fake2.users.create()
+
+    if error == "400_exists":
+        data["handle"] = user.handle
+
+    if error == "400_reserved":
+        data["handle"] = "virtool"
 
     if error == "400_password":
         data["password"] = "foo"
@@ -90,11 +100,17 @@ async def test_create(
         )
         return
 
-    assert resp.status == 201
-    assert resp.headers["Location"] == "/users/abc123"
-    assert await resp.json() == snapshot
+    if error == "400_reserved":
+        await resp_is.bad_request(resp, "Reserved user name: virtool")
+        return
 
-    document = await client.db.users.find_one("abc123")
+    assert resp.status == 201
+
+    resp_json = await resp.json()
+    assert resp_json == snapshot
+    assert resp.headers["Location"] == snapshot(name="location")
+
+    document = await client.db.users.find_one(resp_json["id"])
     password = document.pop("password")
 
     assert document == snapshot

@@ -1,28 +1,46 @@
+# name: test_create[uvloop-None]
+  <class 'dict'> {
+    'id': 'test',
+    'name': 'test',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    },
+    'users': <class 'list'> [
+    ],
+  }
+---
 # name: test_find[uvloop]
   <class 'list'> [
     <class 'dict'> {
-      'id': 'test',
-      'name': 'testers',
+      'id': 'musicians',
+      'name': 'musicians',
     },
     <class 'dict'> {
-      'id': 'limited',
-      'name': 'limited',
+      'id': 'hydrogeologists',
+      'name': 'hydrogeologists',
     },
   ]
 ---
-# name: test_get[uvloop-None]
+# name: test_get[uvloop-200]
   <class 'dict'> {
-    'id': 'foo',
-    'name': 'foo',
+    'id': 'musicians',
+    'name': 'musicians',
     'permissions': <class 'dict'> {
-      'cancel_job': True,
-      'create_ref': True,
-      'create_sample': True,
-      'modify_hmm': True,
-      'modify_subtraction': True,
-      'remove_file': True,
-      'remove_job': True,
-      'upload_file': True,
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
     },
     'users': <class 'list'> [
       <class 'dict'> {
@@ -32,10 +50,16 @@
         'b2c_family_name': None,
         'b2c_given_name': None,
         'b2c_oid': None,
-        'handle': 'leeashley',
-        'id': '7CtBo2yG',
+        'handle': 'qtaylor',
+        'id': 'bf1b993c',
       },
     ],
+  }
+---
+# name: test_get[uvloop-404]
+  <class 'dict'> {
+    'id': 'not_found',
+    'message': 'Not found',
   }
 ---
 # name: test_remove[uvloop-404][users]

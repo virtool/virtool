@@ -7,12 +7,20 @@ collection.
 
 """
 from contextlib import asynccontextmanager
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence, Union
+from pprint import pprint
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Union,
+)
 
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
     AsyncIOMotorClientSession,
-    AsyncIOMotorCollection,
 )
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
@@ -50,20 +58,18 @@ class Collection:
 
     def __init__(
         self,
+        mongo: "DB",
         name: str,
-        collection: AsyncIOMotorCollection,
-        enqueue_change: Callable[[str, str, Sequence[str]], None],
         processor: Callable[[Any, Document], Awaitable[Document]],
-        id_provider: AbstractIdProvider,
         projection: Optional[Projection],
         silent: bool = False,
     ):
+        self.mongo = mongo
         self.name = name
-        self._collection = collection
-        self.database = collection.database
-        self._enqueue_change = enqueue_change
+        self._collection = mongo.motor_client[name]
+        self._enqueue_change = mongo.enqueue_change
         self.processor = processor
-        self.id_provider = id_provider
+        self.id_provider = mongo.id_provider
         self.projection = projection
         self.silent = silent
 
@@ -84,7 +90,7 @@ class Collection:
 
     async def apply_processor(self, document):
         if self.processor:
-            return await self.processor(self._collection.database, document)
+            return await self.processor(self._collection.mongo, document)
 
         return virtool.utils.base_processor(document)
 
@@ -102,7 +108,7 @@ class Collection:
 
         """
         if not self.silent:
-            self._enqueue_change(self.name, operation, id_list)
+            self.mongo.enqueue_change(self.name, operation, id_list)
 
     async def delete_many(
         self,
@@ -212,10 +218,14 @@ class Collection:
         :return: the inserted document
 
         """
+        pprint({"op": "insert_one", "doc": document})
+
         generate_id = "_id" not in document
 
         if generate_id:
+
             document["_id"] = self.id_provider.get()
+            print("GENERATED CORE ID", document["_id"])
 
         try:
             await self._collection.insert_one(document, session=session)
@@ -225,6 +235,7 @@ class Collection:
 
             return document
         except DuplicateKeyError:
+            print("DUP KEY ERROR")
             if generate_id:
                 document.pop("_id")
                 return await self._collection.insert_one(document, session=session)
@@ -394,13 +405,17 @@ class DB:
             "users", projection=virtool.users.db.PROJECTION
         )
 
-    def bind_collection(self, name: str, processor=None, projection=None, silent=False):
+    def bind_collection(
+        self,
+        name: str,
+        processor: Optional[Callable] = None,
+        projection: Optional[Projection] = None,
+        silent: bool = False,
+    ) -> Collection:
         return Collection(
+            self,
             name,
-            self.motor_client[name],
-            self.enqueue_change,
             processor,
-            self.id_provider,
             projection,
             silent,
         )

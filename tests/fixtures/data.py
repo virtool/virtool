@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool.analyses.data import AnalysisData
 from virtool.blast.data import BLASTData
 from virtool.data.layer import DataLayer
-from virtool.fake.next import create_fake_data_layer
 from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
 from virtool.jobs.client import DummyJobsClient
@@ -26,8 +25,3 @@ def data_layer(dbi, config, mocker, pg: AsyncEngine):
         OTUData({"db": dbi, "pg": pg}),
         UsersData(dbi, pg),
     )
-
-
-@pytest.fixture
-def fake2(data_layer: DataLayer):
-    return create_fake_data_layer(data_layer)
