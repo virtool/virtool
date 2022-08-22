@@ -6,7 +6,7 @@ from pymongo.errors import DuplicateKeyError
 import virtool.utils
 from virtool.data.errors import ResourceConflictError
 from virtool.types import Document
-from virtool.users.db import B2CUserAttributes
+from virtool.users.db import B2CUserAttributes, fetch_complete_user
 from virtool.users.utils import generate_base_permissions, hash_password
 
 

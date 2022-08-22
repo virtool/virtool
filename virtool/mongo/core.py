@@ -7,14 +7,13 @@ collection.
 
 """
 from contextlib import asynccontextmanager
-from pprint import pprint
 from typing import (
     Any,
     Awaitable,
     Callable,
     Dict,
-    List,
     Optional,
+    Sequence,
     Union,
 )
 
@@ -69,7 +68,6 @@ class Collection:
         self._collection = mongo.motor_client[name]
         self._enqueue_change = mongo.enqueue_change
         self.processor = processor
-        self.id_provider = mongo.id_provider
         self.projection = projection
         self.silent = silent
 
@@ -218,14 +216,10 @@ class Collection:
         :return: the inserted document
 
         """
-        pprint({"op": "insert_one", "doc": document})
-
         generate_id = "_id" not in document
 
         if generate_id:
-
-            document["_id"] = self.id_provider.get()
-            print("GENERATED CORE ID", document["_id"])
+            document["_id"] = self.mongo.id_provider.get()
 
         try:
             await self._collection.insert_one(document, session=session)
@@ -235,7 +229,6 @@ class Collection:
 
             return document
         except DuplicateKeyError:
-            print("DUP KEY ERROR")
             if generate_id:
                 document.pop("_id")
                 return await self._collection.insert_one(document, session=session)
@@ -332,7 +325,7 @@ class DB:
     def __init__(
         self,
         motor_client: AsyncIOMotorClient,
-        enqueue_change: Callable[[str, str, List[str]], None],
+        enqueue_change: Callable[[str, str, Sequence[str]], None],
         id_provider: AbstractIdProvider,
     ):
         self.motor_client = motor_client

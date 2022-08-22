@@ -355,8 +355,8 @@ async def fetch_complete_user(mongo, user_id: str) -> Optional[User]:
 
             groups.append(group)
 
-        return User(
-            **{**base_processor(user), "groups": groups, "primary_group": primary_group}
-        )
+        user = base_processor(user)
+
+        return User(**{**user, "groups": groups, "primary_group": primary_group})
 
     return None
