@@ -11,7 +11,7 @@ import yaml
 import virtool.indexes.db
 import virtool.subtractions.db
 from virtool.analyses.files import create_analysis_file
-from virtool.data.utils import get_data_from_app
+# from virtool.data.utils import get_data_from_app
 from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
 from virtool.hmm.fake import create_fake_hmms

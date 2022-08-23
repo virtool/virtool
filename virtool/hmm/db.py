@@ -61,7 +61,7 @@ async def delete_unreferenced_hmms(db, config: Config) -> pymongo.results.Delete
 
     delete_result = await db.hmm.delete_many({"_id": {"$nin": referenced_ids}})
 
-    logger.debug(f"Deleted {delete_result.deleted_count} unreferenced HMMs")
+    logger.debug("Deleted %d unreferenced HMMs", delete_result.deleted_count)
 
     return delete_result
 

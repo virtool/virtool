@@ -55,7 +55,6 @@ from virtool.routes import setup_routes
 from virtool.samples.data import SamplesData
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.sentry import setup
-from virtool.settings.db import ensure
 from virtool.subtractions.db import check_subtraction_fasta_files
 from virtool.subtractions.tasks import (
     AddSubtractionFilesTask,
@@ -349,8 +348,8 @@ async def startup_version(app: typing.Union[dict, Application]):
     else:
         version = await determine_server_version()
 
-    logger.info(f"Virtool {version}")
-    logger.info(f"Mode: {app['mode']}")
+    logger.info("Virtool %s", version)
+    logger.info("Mode: %s", app['mode'])
 
     app["version"] = version
 
