@@ -201,26 +201,3 @@ class UsersData:
             raise ResourceNotFoundError
 
         return user
-
-    async def delete(self, user_id: str):
-        """
-        Delete a user given their ``user_id``.
-
-        Raises a ``ResourceNotFoundError`` if the user doesn't exist.
-
-        :param user_id: the id of the user to delete
-        :raises ResourceNotFound: The user does not exist
-
-        """
-        async with self._mongo.create_session() as session:
-            delete_result = await self._mongo.users.delete_one(
-                {"_id": user_id}, session=session
-            )
-
-            if delete_result.deleted_count == 0:
-                raise ResourceNotFoundError
-
-            # Remove user from all references.
-            await self._mongo.references.update_many(
-                {}, {"$pull": {"users": {"id": user_id}}}, session=session
-            )
