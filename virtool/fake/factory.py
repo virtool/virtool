@@ -11,6 +11,7 @@ import yaml
 import virtool.indexes.db
 import virtool.subtractions.db
 from virtool.analyses.files import create_analysis_file
+from virtool.data.utils import get_data_from_app
 from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
 from virtool.hmm.fake import create_fake_hmms
@@ -231,6 +232,10 @@ async def load_test_case_from_yml(
     job_args = {}
 
     settings = Settings(**await get(app["db"]))
+
+    # settings2 = await get_data_from_app(app).settings.get_all()
+
+    # Not sure why settings2 is None when it should be the same as settings?
 
     factory = TestCaseDataFactory(
         settings=settings, job_id=job_id, app=app, user_id=user_id

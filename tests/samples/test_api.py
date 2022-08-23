@@ -20,6 +20,7 @@ from virtool.labels.models import Label
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.files import create_reads_file
 from virtool.samples.models import SampleArtifact, SampleReads
+from virtool.settings.oas import UpdateSettingsSchema
 from virtool.uploads.models import Upload
 
 
@@ -315,8 +316,8 @@ class TestCreate:
             "sample_group_write": True,
         }
 
-        await client.db.settings.find_one_and_update(
-            {"_id": "settings"}, {"$set": settings_data}
+        await get_data_from_app(client.app).settings.update(
+            UpdateSettingsSchema(**settings_data)
         )
 
         data = get_data_from_app(client.app)
@@ -369,8 +370,8 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        await client.db.settings.find_one_and_update(
-            {"_id": "settings"}, {"$set": {"sample_unique_names": True}}
+        await get_data_from_app(client.app).settings.update(
+            UpdateSettingsSchema(sample_unique_names=True)
         )
 
         async with AsyncSession(pg) as session:
@@ -410,9 +411,8 @@ class TestCreate:
         )
 
 
-        await client.db.settings.find_one_and_update(
-            {"_id": "settings"},
-            {"$set": {"sample_group": "force_choice", "sample_unique_names": True}},
+        await get_data_from_app(client.app).settings.update(
+            UpdateSettingsSchema(sample_group="force_choice", sample_unique_names=True)
         )
 
         await client.db.subtraction.insert_one(
@@ -459,9 +459,8 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        await client.db.settings.find_one_and_update(
-            {"_id": "settings"},
-            {"$set": {"sample_group": "force_choice", "sample_unique_names": True}},
+        await get_data_from_app(client.app).settings.update(
+            UpdateSettingsSchema(sample_group="force_choice", sample_unique_names=True)
         )
 
         async with AsyncSession(pg) as session:
@@ -517,8 +516,8 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        await client.db.settings.find_one_and_update(
-            {"_id": "settings"}, {"$set": {"sample_unique_names": True}}
+        await get_data_from_app(client.app).settings.update(
+            UpdateSettingsSchema(sample_unique_names=True)
         )
 
         await client.db.subtraction.insert_one(
@@ -546,8 +545,8 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        await client.db.settings.find_one_and_update(
-            {"_id": "settings"}, {"$set": {"sample_unique_names": True}}
+        await get_data_from_app(client.app).settings.update(
+            UpdateSettingsSchema(sample_unique_names=True)
         )
 
         if exists:

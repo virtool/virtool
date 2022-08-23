@@ -14,7 +14,6 @@ import aiojobs.aiohttp
 import pymongo.errors
 from aiohttp.web import Application
 from msal import ClientApplication
-from virtool_core.models.settings import Settings
 from virtool_core.redis import connect, periodically_ping_redis
 
 import virtool.mongo.connect
@@ -23,6 +22,7 @@ from virtool.analyses.data import AnalysisData
 from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.blast.data import BLASTData
 from virtool.data.layer import DataLayer
+from virtool.data.utils import get_data_from_app
 from virtool.dev.fake import create_fake_data_path, populate
 from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.dispatcher import Dispatcher
@@ -55,7 +55,7 @@ from virtool.routes import setup_routes
 from virtool.samples.data import SamplesData
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.sentry import setup
-from virtool.settings.db import ensure, get
+from virtool.settings.db import ensure
 from virtool.subtractions.db import check_subtraction_fasta_files
 from virtool.subtractions.tasks import (
     AddSubtractionFilesTask,
@@ -307,7 +307,7 @@ async def startup_routes(app: Application):
 
 
 async def startup_sentry(app: typing.Union[dict, Application]):
-    settings = Settings(**await get(app["db"]))
+    settings = await get_data_from_app(app).settings.get_all()
     if (
         not app["config"].no_sentry
         and settings.enable_sentry is not False
@@ -329,7 +329,7 @@ async def startup_settings(app: typing.Union[dict, Application]):
     :param app: the app object
 
     """
-    await ensure(app["db"])
+    await get_data_from_app(app).settings.ensure_default()
 
 
 async def startup_version(app: typing.Union[dict, Application]):

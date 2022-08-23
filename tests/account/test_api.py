@@ -1,5 +1,7 @@
 import pytest
 
+from virtool.data.utils import get_data_from_app
+from virtool.settings.oas import UpdateSettingsSchema
 from virtool.users.utils import Permission, hash_password
 
 
@@ -63,8 +65,8 @@ async def test_get(snapshot, spawn_client, static_time):
 async def test_edit(body, status, snapshot, spawn_client, resp_is, static_time):
     client = await spawn_client(authorize=True)
 
-    await client.db.settings.find_one_and_update(
-        {"_id": "settings"}, {"$set": {"minimum_password_length": 8}}
+    await get_data_from_app(client.app).settings.update(
+        UpdateSettingsSchema(minimum_password_length=8)
     )
 
     resp = await client.patch("/account", body)

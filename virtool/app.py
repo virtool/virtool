@@ -94,7 +94,6 @@ def create_app(config: Config):
             startup_events,
             startup_databases,
             startup_dispatcher,
-            startup_settings,
             startup_http_client,
             startup_paths,
             startup_routes,
@@ -103,6 +102,7 @@ def create_app(config: Config):
             startup_data,
             startup_tasks,
             startup_sentry,
+            startup_settings,
             startup_check_db,
             startup_refresh,
         ]

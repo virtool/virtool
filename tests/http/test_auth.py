@@ -1,5 +1,7 @@
 from aiohttp import BasicAuth
 
+from virtool.data.utils import get_data_from_app
+from virtool.settings.oas import UpdateSettingsSchema
 from virtool.utils import hash_key
 
 
@@ -37,8 +39,8 @@ class TestJobAuthentication:
 
         client = await spawn_client(auth=BasicAuth("job-foo", key))
 
-        await client.db.settings.find_one_and_update(
-            {"_id": "settings"}, {"$set": {"enable_api": True}}
+        await get_data_from_app(client.app).settings.update(
+            UpdateSettingsSchema(minimum_password_length=8)
         )
 
         await dbi.jobs.insert_one({"_id": "foo", "key": hash_key(key)})

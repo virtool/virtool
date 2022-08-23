@@ -9,6 +9,7 @@ from virtool_core.models.enums import Permission
 
 from virtool.data.utils import get_data_from_app
 from virtool.groups.oas import EditGroupSchema, EditPermissionsSchema
+from virtool.settings.oas import UpdateSettingsSchema
 from virtool.users.utils import check_password
 
 
@@ -97,7 +98,13 @@ async def test_create(error, fake2, snapshot, spawn_client, resp_is):
 
     data = {"handle": "fred", "password": "hello_world", "force_reset": False}
 
+
     user = await fake2.users.create()
+
+    await get_data_from_app(client.app).settings.update(
+        UpdateSettingsSchema(minimum_password_length=8)
+    )
+
 
     if error == "400_exists":
         data["handle"] = user.handle
