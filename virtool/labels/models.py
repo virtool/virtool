@@ -9,4 +9,4 @@ class Label(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
     color = Column(String(length=7))
-    description = Column(String)
+    description = Column(String, default="")

@@ -258,15 +258,11 @@ async def test_remove(
 
     await resp_is.no_content(resp)
 
-    responses = await asyncio.gather(
-        *[client.get(f"/samples/{sample['_id']}") for sample in mock_samples]
-    )
+    label_ids_in_samples = await client.db.samples.distinct("labels")
 
-    samples = [await response.json() for response in responses]
-
-    label_ids = [label["id"] for sample in samples for label in sample["labels"]]
-
-    assert 1 not in label_ids
+    assert 4 in label_ids_in_samples
+    assert 9 in label_ids_in_samples
+    assert 1 not in label_ids_in_samples
 
 
 @pytest.mark.parametrize("value", ["valid_hex_color", "invalid_hex_color"])

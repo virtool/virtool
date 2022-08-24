@@ -203,7 +203,7 @@ class TestLabelsFetcher:
                 "name": "Legacy",
                 "count": 0,
                 "color": None,
-                "description": None,
+                "description": "",
             },
             "interface": "labels",
             "operation": operation,
