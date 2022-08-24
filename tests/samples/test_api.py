@@ -306,7 +306,6 @@ class TestCreate:
         spawn_client,
         pg: AsyncEngine,
         static_time,
-        test_random_alphanumeric,
         settings,
     ):
         client = await spawn_client(
@@ -356,7 +355,7 @@ class TestCreate:
 
         assert await client.db.samples.find_one() == snapshot
 
-        assert data.jobs._client.enqueued == [("create_sample", "u3cuwaoq")]
+        assert data.jobs._client.enqueued == [("create_sample", "fb085f7f")]
 
         async with pg.begin() as conn:
             upload = await get_row_by_id(conn, Upload, 1)
@@ -629,7 +628,7 @@ class TestEdit:
         assert resp.status == 400
         assert await resp.json() == snapshot(name="json")
 
-    async def test_subtraction_exists(self, fake, snapshot, spawn_client, resp_is):
+    async def test_subtraction_exists(self, fake2, snapshot, spawn_client, resp_is):
         """
         Test that a ``bad_request`` is returned if the subtraction passed in ``subtractions`` does not exist.
 
@@ -647,7 +646,7 @@ class TestEdit:
                     "all_write": True,
                     "ready": True,
                     "subtractions": ["apple"],
-                    "user": {"id": user["_id"]},
+                    "user": {"id": user.id},
                 }
             ),
             client.db.subtraction.insert_one({"_id": "foo", "name": "Foo"}),
@@ -960,13 +959,7 @@ async def test_analyze(
     assert await resp.json() == snapshot
 
     m_create.assert_called_with(
-        client.db,
-        "test",
-        "foo",
-        ["bar"],
-        "test",
-        "pathoscope_bowtie",
-        test_random_alphanumeric.history[0],
+        client.db, "test", "foo", ["bar"], "test", "pathoscope_bowtie", "bf1b993c"
     )
 
 

@@ -70,7 +70,7 @@ async def check_missing_ids(
 
 
 async def get_new_id(
-    collection,
+    collection, session: Optional[AsyncIOMotorClientSession] = None
 ) -> str:
     """
     Returns a new, unique, id that can be used for inserting a new document. Will not
@@ -82,8 +82,8 @@ async def get_new_id(
     """
     id_ = collection.mongo.id_provider.get()
 
-    if await collection.count_documents({"_id": id_}, limit=1):
-        return await get_new_id(collection)
+    if await collection.count_documents({"_id": id_}, limit=1, session=session):
+        return await get_new_id(collection, session=session)
 
     return id_
 

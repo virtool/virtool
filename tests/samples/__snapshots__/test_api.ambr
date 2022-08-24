@@ -1,5 +1,5 @@
 # name: TestCreate.test[uvloop-force_choice]
-  '/samples/9pfsom1b'
+  '/samples/bf1b993c'
 ---
 # name: TestCreate.test[uvloop-force_choice].1
   <class 'dict'> {
@@ -16,7 +16,7 @@
     'group_write': False,
     'hold': True,
     'host': '',
-    'id': '9pfsom1b',
+    'id': 'bf1b993c',
     'is_legacy': False,
     'isolate': '',
     'labels': <class 'list'> [
@@ -58,7 +58,7 @@
 ---
 # name: TestCreate.test[uvloop-force_choice].2
   <class 'dict'> {
-    '_id': '9pfsom1b',
+    '_id': 'bf1b993c',
     'all_read': True,
     'all_write': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -92,7 +92,7 @@
   }
 ---
 # name: TestCreate.test[uvloop-none]
-  '/samples/9pfsom1b'
+  '/samples/bf1b993c'
 ---
 # name: TestCreate.test[uvloop-none].1
   <class 'dict'> {
@@ -109,7 +109,7 @@
     'group_write': False,
     'hold': True,
     'host': '',
-    'id': '9pfsom1b',
+    'id': 'bf1b993c',
     'is_legacy': False,
     'isolate': '',
     'labels': <class 'list'> [
@@ -151,7 +151,7 @@
 ---
 # name: TestCreate.test[uvloop-none].2
   <class 'dict'> {
-    '_id': '9pfsom1b',
+    '_id': 'bf1b993c',
     'all_read': True,
     'all_write': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -185,7 +185,7 @@
   }
 ---
 # name: TestCreate.test[uvloop-users_primary_group]
-  '/samples/9pfsom1b'
+  '/samples/bf1b993c'
 ---
 # name: TestCreate.test[uvloop-users_primary_group].1
   <class 'dict'> {
@@ -202,7 +202,7 @@
     'group_write': False,
     'hold': True,
     'host': '',
-    'id': '9pfsom1b',
+    'id': 'bf1b993c',
     'is_legacy': False,
     'isolate': '',
     'labels': <class 'list'> [
@@ -244,7 +244,7 @@
 ---
 # name: TestCreate.test[uvloop-users_primary_group].2
   <class 'dict'> {
-    '_id': '9pfsom1b',
+    '_id': 'bf1b993c',
     'all_read': True,
     'all_write': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -367,7 +367,7 @@
       'b2c_given_name': None,
       'b2c_oid': None,
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': '7CtBo2yG',
     },
   }
 ---
@@ -458,7 +458,7 @@
       'b2c_given_name': None,
       'b2c_oid': None,
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': '7CtBo2yG',
     },
   }
 ---
@@ -537,7 +537,7 @@
       'b2c_given_name': None,
       'b2c_oid': None,
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': '7CtBo2yG',
     },
   }
 ---
@@ -616,7 +616,7 @@
       'b2c_given_name': None,
       'b2c_oid': None,
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': '7CtBo2yG',
     },
   }
 ---
@@ -891,6 +891,11 @@
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
@@ -963,6 +968,11 @@
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
@@ -999,6 +1009,11 @@
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
@@ -1060,6 +1075,11 @@
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
@@ -1096,6 +1116,11 @@
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
@@ -1132,6 +1157,11 @@
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
@@ -1319,6 +1349,11 @@
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'zclark',
           'id': 'fb085f7f',
         },
@@ -1355,6 +1390,11 @@
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'zclark',
           'id': 'fb085f7f',
         },

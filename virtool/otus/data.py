@@ -95,7 +95,9 @@ class OTUData:
             document = await self._db.otus.insert_one(
                 {
                     "_id": otu_id
-                    or await virtool.mongo.utils.get_new_id(self._db.otus),
+                    or await virtool.mongo.utils.get_new_id(
+                        self._db.otus, session=session
+                    ),
                     "name": name,
                     "abbreviation": abbreviation,
                     "last_indexed_version": None,
