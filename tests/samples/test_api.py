@@ -29,8 +29,8 @@ class MockJobInterface:
 
 
 @pytest.fixture
-async def get_sample_data(dbi, fake, pg, static_time):
-    user = await fake.users.insert()
+async def get_sample_data(dbi, fake2, pg, static_time):
+    user = await fake2.users.create()
 
     await asyncio.gather(
         dbi.subtraction.insert_many(
@@ -70,7 +70,7 @@ async def get_sample_data(dbi, fake, pg, static_time):
                 ],
                 "labels": [1],
                 "subtractions": ["apple", "pear"],
-                "user": {"id": user["_id"]},
+                "user": {"id": user.id},
             }
         ),
     )
@@ -105,7 +105,7 @@ async def get_sample_data(dbi, fake, pg, static_time):
         )
         await session.commit()
 
-    return user["_id"]
+    return user.id
 
 
 @pytest.mark.parametrize(
@@ -262,13 +262,10 @@ class TestGet:
         get_sample_data,
         status,
         snapshot,
-        fake,
         spawn_client,
-        resp_is,
         static_time,
         pg: AsyncEngine,
     ):
-
         client = await spawn_client(
             authorize=True, administrator=administrator, groups=["technicians"]
         )
@@ -540,9 +537,7 @@ class TestCreate:
 
 
 class TestEdit:
-    async def test(
-        self, get_sample_data, snapshot, fake, spawn_client, pg: AsyncEngine
-    ):
+    async def test(self, get_sample_data, snapshot, spawn_client, pg: AsyncEngine):
         """
         Test that an existing sample can be edited correctly.
 
@@ -562,7 +557,7 @@ class TestEdit:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    async def test_name_exists(self, snapshot, fake, spawn_client, resp_is):
+    async def test_name_exists(self, snapshot, spawn_client, resp_is):
         """
         Test that a ``bad_request`` is returned if the sample name passed in ``name``
         already exists.
@@ -600,9 +595,7 @@ class TestEdit:
         assert resp.status == 400
         await resp_is.bad_request(resp, "Sample name is already in use")
 
-    async def test_label_exists(
-        self, snapshot, fake, spawn_client, resp_is, pg: AsyncEngine
-    ):
+    async def test_label_exists(self, snapshot, spawn_client, pg: AsyncEngine):
         """
         Test that a ``bad_request`` is returned if the label passed in ``labels`` does
         not exist.
@@ -628,9 +621,10 @@ class TestEdit:
         assert resp.status == 400
         assert await resp.json() == snapshot(name="json")
 
-    async def test_subtraction_exists(self, fake2, snapshot, spawn_client, resp_is):
+    async def test_subtraction_exists(self, fake2, snapshot, spawn_client):
         """
-        Test that a ``bad_request`` is returned if the subtraction passed in ``subtractions`` does not exist.
+        Test that a ``bad_request`` is returned if the subtraction passed in
+        ``subtractions`` does not exist.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
@@ -710,7 +704,7 @@ async def test_finalize(
         await resp_is.invalid_input(resp, {"quality": ["required field"]})
 
 
-async def test_remove(spawn_client, resp_is, create_delete_result, tmpdir):
+async def test_remove(spawn_client, create_delete_result, tmpdir):
     client = await spawn_client(authorize=True)
 
     config: Config = client.app["config"]
