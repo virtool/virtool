@@ -4,11 +4,11 @@ application database.
 
 """
 from virtool_core.models.user import UserNested
+from virtool_core.models.job import JobStatus
 
 from virtool.mongo.transforms import apply_transforms
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
-from virtool_core.models.job import JobStatus
 
 OR_COMPLETE = [{"status.state": "complete"}]
 
