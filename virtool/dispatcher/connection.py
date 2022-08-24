@@ -30,8 +30,9 @@ class Connection:
 
             await self.close()
 
-    async def close(self):
+    async def close(self, code: Union[int, str] = None):
         """
         Closes the underlying websocket connection.
+        :param code: closure code to send to the client
         """
-        await self._ws.close()
+        await self._ws.close(code=code)

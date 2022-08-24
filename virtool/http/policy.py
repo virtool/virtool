@@ -68,6 +68,12 @@ class PublicRoutePolicy(DefaultRoutePolicy):
     allow_unauthenticated = True
 
 
+class WebSocketRoutePolicy(DefaultRoutePolicy):
+    """Any client can access the route."""
+
+    allow_unauthenticated = True
+
+
 def policy(route_policy: Union[DefaultRoutePolicy, Type[DefaultRoutePolicy]]):
     def decorator(func):
         try:
