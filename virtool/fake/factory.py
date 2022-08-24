@@ -228,6 +228,9 @@ async def load_test_case_from_yml(
         "workflow",
     )(yml)
 
+    if workflow is None:
+        workflow = "build_index"
+
     job_args = {}
 
     factory = TestCaseDataFactory(job_id=job_id, app=app, user_id=user_id)
