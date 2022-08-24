@@ -1,8 +1,8 @@
 from typing import Union
 
-from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict, HTTPNoContent
+from aiohttp.web_exceptions import HTTPBadRequest, HTTPConflict
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r409
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
 from virtool_core.models.user import User
 
 import virtool.http.auth
@@ -32,7 +32,7 @@ routes = Routes()
 @routes.view("/users")
 class UsersView(PydanticView):
     @policy(AdministratorRoutePolicy)
-    async def get(self) -> Union[r200, r403]:
+    async def get(self) -> Union[r200[User], r403]:
         """
         List all users.
 
@@ -205,28 +205,3 @@ class UserView(PydanticView):
             raise NotFound("User does not exist")
 
         return json_response(user)
-
-    @policy(AdministratorRoutePolicy)
-    async def delete(self) -> Union[r204, r400, r403, r404]:
-        """
-        Delete a user.
-
-        Deletes an existing user. Users cannot delete their own accounts.
-
-        Status Codes:
-            204: No content
-            400: Bad request
-            403: Not permitted
-            404: Not found
-        """
-        user_id = self.request.match_info["user_id"]
-
-        if user_id == self.request["client"].user_id:
-            raise HTTPBadRequest(text="Cannot remove own account")
-
-        try:
-            await get_data_from_req(self.request).users.delete(user_id)
-        except ResourceNotFoundError:
-            raise NotFound
-
-        raise HTTPNoContent

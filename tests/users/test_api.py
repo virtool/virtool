@@ -182,23 +182,3 @@ async def test_edit_404(snapshot, spawn_client):
     client = await spawn_client(authorize=True, administrator=True)
     resp = await client.patch("/users/bob", {"groups": ["technicians"]})
     assert (resp.status, await resp.json()) == snapshot
-
-
-@pytest.mark.parametrize("error", [None, "400"])
-async def test_remove(error, spawn_client, resp_is, create_user):
-    """
-    Test that a group is removed from the user for a valid request.
-
-    """
-    client = await spawn_client(authorize=True, administrator=True)
-
-    if not error:
-        await client.db.users.insert_one(create_user(user_id="bob", handle="fred"))
-
-    resp = await client.delete("/users/bob")
-
-    if error:
-        await resp_is.not_found(resp)
-        return
-
-    await resp_is.no_content(resp)
