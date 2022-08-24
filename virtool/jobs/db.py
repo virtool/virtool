@@ -3,10 +3,12 @@ Constants and utility functions for interacting with the jobs collection in the
 application database.
 
 """
+from virtool_core.models.user import UserNested
 
 from virtool.mongo.transforms import apply_transforms
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor
+from virtool_core.models.job import JobStatus
 
 OR_COMPLETE = [{"status.state": "complete"}]
 
@@ -61,3 +63,10 @@ async def processor(db, document: dict) -> dict:
         ),
         [AttachUserTransform(db)],
     )
+
+
+async def fetch_complete_job(db, document):
+    document = await processor(db, document)
+    document["user"] = UserNested(**document["user"])
+    document["status"] = [JobStatus(**status) for status in document["status"]]
+    return document

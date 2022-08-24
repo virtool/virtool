@@ -16,6 +16,8 @@
     'mem': 16,
     'proc': 10,
     'progress': 1.0,
+    'rights': <class 'dict'> {
+    },
     'stage': 'import_results',
     'state': 'complete',
     'status': <class 'list'> [

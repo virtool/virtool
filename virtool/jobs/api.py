@@ -262,4 +262,4 @@ async def push_status(req):
     except ResourceConflictError:
         raise HTTPConflict(text="Job is finished")
 
-    return json_response(document["status"][-1], status=201)
+    return json_response(document, status=201)

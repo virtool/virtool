@@ -1,10 +1,18 @@
 import math
 from asyncio import gather
 from collections import defaultdict
-from typing import Mapping, Optional, Dict
+from typing import Optional, Dict
 
 from multidict import MultiDictProxy
 from sqlalchemy.ext.asyncio import AsyncEngine
+from virtool_core.models.job import (
+    JobMinimal,
+    JobSearchResult,
+    Job,
+    JobStatus,
+    JobAcquired,
+)
+from virtool_core.models.user import UserNested
 
 import virtool.utils
 from virtool.api.utils import (
@@ -17,16 +25,10 @@ from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
 from virtool.jobs import is_running_or_waiting
 from virtool.jobs.client import AbstractJobsClient, JOB_REMOVED_FROM_QUEUE
-from virtool.jobs.db import (
-    OR_COMPLETE,
-    OR_FAILED,
-    PROJECTION,
-    processor,
-)
+from virtool.jobs.db import OR_COMPLETE, OR_FAILED, PROJECTION, fetch_complete_job
 from virtool.jobs.utils import JobRights, compose_status
 from virtool.types import Document
 from virtool.users.db import AttachUserTransform
-from virtool.utils import base_processor
 
 
 class JobsData:
@@ -170,22 +172,26 @@ class JobsData:
             ],
         ):
             data = paginate_dict["data"]
-            documents = [base_processor(document) for document in data]
             found_count = paginate_dict.get("found_count", 0)
             total_count = paginate_dict.get("total_count", 0)
             page_count = int(math.ceil(found_count / per_page))
 
-        return {
-            "counts": await self._get_counts(),
-            "documents": await apply_transforms(
-                documents, [AttachUserTransform(self._db)]
-            ),
-            "total_count": total_count,
-            "found_count": found_count,
-            "page_count": page_count,
-            "per_page": per_page,
-            "page": page,
-        }
+        documents = await apply_transforms(data, [AttachUserTransform(self._db)])
+
+        for document in documents:
+            document["user"] = UserNested(**document["user"])
+
+        return JobSearchResult(
+            **{
+                "counts": await self._get_counts(),
+                "documents": [JobMinimal(**document) for document in documents],
+                "total_count": total_count,
+                "found_count": found_count,
+                "page_count": page_count,
+                "per_page": per_page,
+                "page": page,
+            }
+        )
 
     async def create(
         self,
@@ -226,7 +232,7 @@ class JobsData:
         await self._db.jobs.insert_one(document)
         await self._client.enqueue(workflow, document["_id"])
 
-        return document
+        return Job(**await fetch_complete_job(self._db, document))
 
     async def get(self, job_id: str) -> Document:
         """
@@ -240,7 +246,7 @@ class JobsData:
         if document is None:
             raise ResourceNotFoundError
 
-        return await processor(self._db, document)
+        return Job(**await fetch_complete_job(self._db, document))
 
     async def acquire(self, job_id: str):
         """
@@ -269,7 +275,7 @@ class JobsData:
             projection=PROJECTION,
         )
 
-        return await processor(self._db, {**document, "key": key})
+        return JobAcquired(**await fetch_complete_job(self._db, document), key=key)
 
     async def archive(self, job_id: str) -> Document:
         """
@@ -293,7 +299,8 @@ class JobsData:
             {"$set": {"archived": True}},
             projection=PROJECTION,
         )
-        return await processor(self._db, {**document})
+
+        return Job(**await fetch_complete_job(self._db, document))
 
     async def cancel(self, job_id: str) -> Document:
         """
@@ -331,7 +338,7 @@ class JobsData:
             if document is None:
                 raise ResourceNotFoundError
 
-        return await processor(self._db, document)
+        return Job(**await fetch_complete_job(self._db, document))
 
     async def push_status(
         self,
@@ -351,7 +358,7 @@ class JobsData:
         if status[-1]["state"] in ("complete", "cancelled", "error", "terminated"):
             raise ResourceConflictError("Job is finished")
 
-        return await self._db.jobs.find_one_and_update(
+        document = await self._db.jobs.find_one_and_update(
             {"_id": job_id},
             {
                 "$set": {"state": state},
@@ -362,6 +369,8 @@ class JobsData:
                 },
             },
         )
+
+        return JobStatus(**document["status"][-1])
 
     async def clear(self, complete: bool = False, failed: bool = False):
         or_list = []
