@@ -2,6 +2,8 @@ import asyncio
 import math
 from typing import List, Optional
 
+from motor.motor_asyncio import AsyncIOMotorClientSession
+from pymongo.results import UpdateResult
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.samples import SampleSearchResult, Sample
 
@@ -246,39 +248,46 @@ class SamplesData(DataLayerPiece):
 
         return await self.get(sample_id)
 
-    async def update(self, sample_id: str, data: EditSampleSchema) -> Sample:
+    async def _update_with_session(
+        self, session: AsyncIOMotorClientSession, sample_id: str, data: EditSampleSchema
+    ) -> UpdateResult:
         data = data.dict(exclude_unset=True)
 
-        async with self._db.create_session() as session:
-            settings = await get_settings(self._db, session=session)
+        settings = await get_settings(self._db, session=session)
 
-            aws = []
+        aws = []
 
-            if "name" in data:
-                aws.append(
-                    check_name_is_in_use(
-                        self._db,
-                        settings,
-                        data["name"],
-                        sample_id=sample_id,
-                        session=session,
-                    )
+        if "name" in data:
+            aws.append(
+                check_name_is_in_use(
+                    self._db,
+                    settings,
+                    data["name"],
+                    sample_id=sample_id,
+                    session=session,
                 )
+            )
 
-            if "labels" in data:
-                aws.append(check_labels_do_not_exist(self._pg, data["labels"]))
+        if "labels" in data:
+            aws.append(check_labels_do_not_exist(self._pg, data["labels"]))
 
-            if "subtractions" in data:
-                aws.append(
-                    check_subtractions_do_not_exist(
-                        self._db, data["subtractions"], session=session
-                    )
+        if "subtractions" in data:
+            aws.append(
+                check_subtractions_do_not_exist(
+                    self._db, data["subtractions"], session=session
                 )
+            )
 
-            await wait_for_checks(*aws)
+        await wait_for_checks(*aws)
 
-            await self._db.samples.update_one(
-                {"_id": sample_id}, {"$set": data}, session=session
+        return await self._db.samples.update_one(
+            {"_id": sample_id}, {"$set": data}, session=session
+        )
+
+    async def update(self, sample_id: str, data: EditSampleSchema) -> Sample:
+        async with self._db.with_session() as session:
+            await session.with_transaction(
+                lambda s: self._update_with_session(s, sample_id, data)
             )
 
         return await self.get(sample_id)
