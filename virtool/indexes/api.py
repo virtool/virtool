@@ -14,7 +14,6 @@ from virtool.api.json import CustomEncoder
 from virtool.api.response import InsufficientRights, NotFound, json_response
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.utils import get_data_from_req
-from virtool.mongo.utils import get_new_id
 from virtool.history.db import LIST_PROJECTION
 from virtool.http.routes import Routes
 from virtool.indexes.db import FILES, reset_history
@@ -22,6 +21,7 @@ from virtool.indexes.files import create_index_file
 from virtool.indexes.models import IndexFile, IndexType
 from virtool.indexes.utils import check_index_file_type, join_index_path
 from virtool.jobs.utils import JobRights
+from virtool.mongo.utils import get_new_id
 from virtool.pg.utils import delete_row, get_rows
 from virtool.references.db import check_right
 from virtool.uploads.utils import naive_writer
@@ -239,18 +239,23 @@ async def create(req):
     if not await virtool.references.db.check_right(req, reference, "build"):
         raise InsufficientRights()
 
-    if await db.indexes.count_documents({"reference.id": ref_id, "ready": False}):
+    if await db.indexes.count_documents(
+        {"reference.id": ref_id, "ready": False}, limit=1
+    ):
         raise HTTPConflict(text="Index build already in progress")
 
-    if await db.otus.count_documents({"reference.id": ref_id, "verified": False}):
+    if await db.otus.count_documents(
+        {"reference.id": ref_id, "verified": False}, limit=1
+    ):
         raise HTTPBadRequest(text="There are unverified OTUs")
 
     if not await db.history.count_documents(
-        {"reference.id": ref_id, "index.id": "unbuilt"}
+        {"reference.id": ref_id, "index.id": "unbuilt"}, limit=1
     ):
         raise HTTPBadRequest(text="There are no unbuilt changes")
 
     user_id = req["client"].user_id
+
     job_id = await get_new_id(db.jobs)
 
     document = await virtool.indexes.db.create(db, ref_id, user_id, job_id)

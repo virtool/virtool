@@ -67,14 +67,14 @@ class TestAdd:
 
 
 @pytest.mark.parametrize("file", [True, False])
-async def test_get(file, mocker, snapshot, dbi, fake, tmp_path, config):
-    user = await fake.users.insert()
+async def test_get(file, mocker, snapshot, dbi, fake2, tmp_path, config):
+    user = await fake2.users.create()
 
     await dbi.history.insert_one(
         {
             "_id": "baz.2",
             "diff": "file" if file else {"foo": "bar"},
-            "user": {"id": user["_id"]},
+            "user": {"id": user.id},
         }
     )
 

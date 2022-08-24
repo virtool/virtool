@@ -24,26 +24,25 @@ def mock_sample(static_time):
 
 
 @pytest.fixture
-async def mock_samples(fake, mock_sample, static_time):
-
-    user_1 = await fake.users.insert()
-    user_2 = await fake.users.insert()
-    user_3 = await fake.users.insert()
+async def mock_samples(fake2, mock_sample, static_time):
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
+    user_3 = await fake2.users.create()
 
     return [
         {
             **mock_sample,
-            "user": {"id": user_1["_id"]},
+            "user": {"id": user_1.id},
         },
         {
             **mock_sample,
-            "user": {"id": user_2["_id"]},
+            "user": {"id": user_2.id},
             "_id": "foo",
             "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
         },
         {
             **mock_sample,
-            "user": {"id": user_3["_id"]},
+            "user": {"id": user_3.id},
             "_id": "bar",
             "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
         },

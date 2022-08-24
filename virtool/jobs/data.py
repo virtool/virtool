@@ -223,7 +223,7 @@ class JobsData:
         if job_id:
             document["_id"] = job_id
 
-        await self._db.jobs.insert_one(document)
+        document = await self._db.jobs.insert_one(document)
         await self._client.enqueue(workflow, document["_id"])
 
         return document

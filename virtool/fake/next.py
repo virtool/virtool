@@ -9,14 +9,17 @@ A sample needs a user and upload to exist.
 ```
 
 """
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from faker import Faker
-from faker.providers import BaseProvider
+from faker.providers import BaseProvider, python
 from virtool_core.models.group import Group
+from virtool_core.models.job import Job
 from virtool_core.models.user import User
 
 from virtool.data.layer import DataLayer
+from virtool.groups.oas import EditPermissionsSchema, EditGroupSchema
+from virtool.jobs.utils import WORKFLOW_NAMES, JobRights
 from virtool.users.oas import UpdateUserSchema
 
 
@@ -27,6 +30,9 @@ class VirtoolProvider(BaseProvider):
     def pg_id(self) -> int:
         return self.random_int()
 
+    def workflow(self) -> str:
+        return self.random_choices(WORKFLOW_NAMES, 1)[0]
+
 
 class DataFaker:
     def __init__(self, layer: DataLayer):
@@ -35,8 +41,10 @@ class DataFaker:
         self.faker = Faker()
         self.faker.seed_instance(0)
         self.faker.add_provider(VirtoolProvider)
+        self.faker.add_provider(python)
 
         self.groups = GroupsFakerPiece(self)
+        self.jobs = JobsFakerPiece(self)
         self.users = UsersFakerPiece(self)
 
 
@@ -47,17 +55,38 @@ class DataFakerPiece:
         self.history = []
 
 
+class JobsFakerPiece(DataFakerPiece):
+    model = Job
+
+    async def create(self, user: User) -> Job:
+        document = await self.layer.jobs.create(
+            self.faker.workflow(),
+            self.faker.pydict(nb_elements=6, value_types=[str, int, float]),
+            user.id,
+            JobRights(),
+        )
+
+        document = await self.layer.jobs.get(document["_id"])
+
+        return Job(**document)
+
+
 class GroupsFakerPiece(DataFakerPiece):
     model = Group
 
-    async def create(self):
+    async def create(self, permissions: Optional[EditPermissionsSchema] = None):
         group_id = "contains spaces"
 
         while " " in group_id:
             group_id = self.faker.profile()["job"].lower() + "s"
 
         group = await self.layer.groups.create(group_id)
-        self.history.append(group)
+
+        if permissions:
+            group = await self.layer.groups.update(
+                group.id, EditGroupSchema(permissions=permissions)
+            )
+
         return group
 
 

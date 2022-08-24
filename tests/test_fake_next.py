@@ -18,3 +18,7 @@ async def test_fake(fake2, snapshot):
     assert group.dict() == snapshot(matcher=matcher)
     assert user_1 == snapshot(matcher=matcher)
     assert user_2 == snapshot(matcher=matcher)
+
+    job = await fake2.jobs.create(user_1)
+
+    assert job == snapshot(name="job")

@@ -6,14 +6,16 @@ import virtool.mongo.core
 
 
 @pytest.fixture
-def create_test_collection(mocker, test_motor):
+def create_test_collection(dbi):
     def func(
         name="samples", projection=None, silent=False
     ) -> virtool.mongo.core.Collection:
-        processor = make_mocked_coro(return_value={"id": "foo", "mock": True})
-
         return virtool.mongo.core.Collection(
-            name, test_motor[name], mocker.stub(), processor, projection, silent
+            dbi,
+            name,
+            make_mocked_coro(return_value={"id": "foo", "mock": True}),
+            projection,
+            silent,
         )
 
     return func
@@ -32,12 +34,11 @@ class TestCollection:
         collection.enqueue_change("update", "foo", "bar")
 
         if silent:
-            assert collection._enqueue_change.called is False
-            return
-
-        collection._enqueue_change.assert_called_with(
-            "samples", "update", ("foo", "bar")
-        )
+            assert collection.mongo.enqueue_change.called is False
+        else:
+            collection.mongo.enqueue_change.assert_called_with(
+                "samples", "update", ("foo", "bar")
+            )
 
     @pytest.mark.parametrize("attr_silent", [True, False])
     @pytest.mark.parametrize("param_silent", [True, False])

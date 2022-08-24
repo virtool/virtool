@@ -1,11 +1,40 @@
+import asyncio
 import datetime
 from datetime import datetime
+from pprint import pprint
 
 import pytest
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
 
+from virtool.data.utils import get_data_from_app
+from virtool.groups.oas import EditGroupSchema, EditPermissionsSchema
 from virtool.users.utils import check_password
+
+
+@pytest.fixture
+async def setup_update_user(fake2, spawn_client):
+    client = await spawn_client(authorize=True, administrator=True)
+
+    group_1 = await fake2.groups.create()
+    group_2 = await fake2.groups.create()
+
+    groups = get_data_from_app(client.app).groups
+
+    await asyncio.gather(
+        groups.update(
+            group_1.id,
+            EditGroupSchema(permissions=EditPermissionsSchema(upload_file=True)),
+        ),
+        groups.update(
+            group_2.id,
+            EditGroupSchema(
+                permissions=EditPermissionsSchema(create_sample=True, create_ref=True)
+            ),
+        ),
+    )
+
+    return client, group_1, group_2, await fake2.users.create(groups=[group_1])
 
 
 async def test_find(fake2, snapshot, spawn_client):
@@ -32,16 +61,12 @@ async def test_find(fake2, snapshot, spawn_client):
     )
 
 
-@pytest.mark.parametrize("error", [None, "404"])
+@pytest.mark.parametrize("status", [200, 404])
 async def test_get(
-    error,
+    status,
     fake2,
     snapshot,
     spawn_client,
-    create_user,
-    no_permissions,
-    resp_is,
-    static_time,
 ):
     """
     Test that a ``GET /users`` returns a list of users.
@@ -57,13 +82,9 @@ async def test_get(
 
     await fake2.users.create()
 
-    resp = await client.get(f"/users/{'foo' if error else user.id}")
+    resp = await client.get(f"/users/{'foo' if status == 404 else user.id}")
 
-    if error:
-        await resp_is.not_found(resp)
-        return
-
-    assert resp.status == 200
+    assert resp.status == status
     assert await resp.json() == snapshot
 
 
@@ -107,6 +128,7 @@ async def test_create(error, fake2, snapshot, spawn_client, resp_is):
     assert resp.status == 201
 
     resp_json = await resp.json()
+
     assert resp_json == snapshot
     assert resp.headers["Location"] == snapshot(name="location")
 
@@ -117,104 +139,101 @@ async def test_create(error, fake2, snapshot, spawn_client, resp_is):
     assert check_password("hello_world", password)
 
 
-@pytest.mark.parametrize(
-    "data,status",
-    [
-        # These requests should succeed:
-        (
-            {
+class TestUpdate:
+    async def test(self, setup_update_user, snapshot):
+        client, group_1, _, user = setup_update_user
+
+        resp = await client.patch(
+            f"/users/{user.id}",
+            data={
+                "force_reset": True,
+                "password": "hello_world",
+                "primary_group": group_1.id,
+            },
+        )
+
+        assert resp.status == 200
+        assert await resp.json() == snapshot
+
+    async def test_with_groups(self, setup_update_user, snapshot):
+        client, group_1, group_2, user = setup_update_user
+
+        resp = await client.patch(
+            f"/users/{user.id}",
+            data={
                 "password": "hello_world",
                 "force_reset": True,
-                "primary_group": "technicians",
+                "groups": [group_1.id, group_2.id],
             },
-            200,
-        ),
-        # Succeeds and adds user to 'managers' group.
-        ({"groups": ["technicians", "managers"]}, 200),
-        # Fails because the password is too short.
-        ({"password": "cat"}, 400),
-        # Fails because the group does not exist.
-        ({"primary_group": "directors"}, 400),
-        # Fails because the user is not a member of the group.
-        ({"primary_group": "managers"}, 400),
-    ],
-    ids=[
-        "good",
-        "good_add_group",
-        "short_password",
-        "nonexistent_primary_group",
-        "nonmember_primary_group",
-    ],
-)
-async def test_edit(
-    data,
-    status,
-    snapshot,
-    spawn_client,
-    resp_is,
-    static_time,
-    create_user,
-    no_permissions,
-):
-    client = await spawn_client(authorize=True, administrator=True)
-
-    client.app["settings"].minimum_password_length = 8
-
-    await client.db.users.insert_one(
-        create_user(
-            user_id="bob",
-            handle="fred",
-            groups=["technicians"],
         )
-    )
 
-    await client.db.groups.insert_many(
-        [
-            {
-                "_id": "technicians",
-                "permissions": {**no_permissions, "build_index": True},
+        assert resp.status == 200
+        assert await resp.json() == snapshot
+
+    async def test_short_password(self, setup_update_user, snapshot):
+        client, _, _, user = setup_update_user
+
+        resp = await client.patch(
+            f"/users/{user.id}",
+            data={
+                "password": "cat",
             },
-            {
-                "_id": "managers",
-                "permissions": {
-                    **no_permissions,
-                    "create_sample": True,
-                    "create_ref": True,
-                },
+        )
+
+        assert resp.status == 400
+        assert await resp.json() == snapshot
+
+    async def test_non_existent_primary_group(self, setup_update_user, snapshot):
+        client, _, _, user = setup_update_user
+
+        resp = await client.patch(
+            f"/users/{user.id}",
+            data={
+                "primary_group": "managers",
             },
-        ]
-    )
+        )
 
-    resp = await client.patch("/users/bob", data)
+        assert resp.status == 400
+        assert await resp.json() == snapshot
 
-    assert resp.status == status
-    assert (resp.status, await resp.json()) == snapshot
+    async def test_not_a_member_of_primary_group(self, setup_update_user, snapshot):
+        client, _, group_2, user = setup_update_user
+
+        resp = await client.patch(
+            f"/users/{user.id}",
+            data={
+                "primary_group": group_2.id,
+            },
+        )
+
+        assert resp.status == 400
+        assert await resp.json() == snapshot
+
+    async def test_not_found(self, setup_update_user, snapshot):
+        client, _, _, _ = setup_update_user
+
+        resp = await client.patch(
+            f"/users/bob",
+            data={
+                "primary_group": "managers",
+            },
+        )
+
+        assert resp.status == 404
+        assert await resp.json() == snapshot
 
 
-async def test_edit_404(snapshot, spawn_client):
-    """
-    Ensure 404 is returned when user does not exist.
-    """
-    client = await spawn_client(authorize=True, administrator=True)
-    resp = await client.patch("/users/bob", {"groups": ["technicians"]})
-    assert (resp.status, await resp.json()) == snapshot
-
-
-@pytest.mark.parametrize("error", [None, "400"])
-async def test_remove(error, spawn_client, resp_is, create_user):
+@pytest.mark.parametrize("status", [204, 404])
+async def test_remove(status, fake2, spawn_client, snapshot):
     """
     Test that a group is removed from the user for a valid request.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    if not error:
-        await client.db.users.insert_one(create_user(user_id="bob", handle="fred"))
+    user = await fake2.users.create()
 
-    resp = await client.delete("/users/bob")
+    resp = await client.delete(f"/users/{'bob' if status == 404 else user.id}")
 
-    if error:
-        await resp_is.not_found(resp)
-        return
-
-    await resp_is.no_content(resp)
+    assert resp.status == status
+    assert await resp.json() == snapshot

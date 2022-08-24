@@ -1,4 +1,132 @@
-# name: test_create[uvloop-None]
+# name: TestUpdate.test[uvloop]
+  <class 'dict'> {
+    'id': 'musicians',
+    'name': 'Technicians',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': True,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': True,
+    },
+    'users': <class 'list'> [
+      <class 'dict'> {
+        'administrator': False,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'handle': 'fcarpenter',
+        'id': 'fb085f7f',
+      },
+      <class 'dict'> {
+        'administrator': False,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'handle': 'chelsea34',
+        'id': '7cf872dc',
+      },
+      <class 'dict'> {
+        'administrator': False,
+        'b2c': None,
+        'b2c_display_name': None,
+        'b2c_family_name': None,
+        'b2c_given_name': None,
+        'b2c_oid': None,
+        'handle': 'michelle34',
+        'id': '3cbb22cc',
+      },
+    ],
+  }
+---
+# name: TestUpdate.test[uvloop][users]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test',
+      'handle': 'bob',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': 'bf1b993c',
+      'handle': 'qtaylor',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': 'fb085f7f',
+      'handle': 'fcarpenter',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': True,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': True,
+      },
+    },
+    <class 'dict'> {
+      '_id': '7cf872dc',
+      'handle': 'chelsea34',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': True,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': True,
+      },
+    },
+    <class 'dict'> {
+      '_id': '3cbb22cc',
+      'handle': 'michelle34',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': True,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': True,
+      },
+    },
+  ]
+---
+# name: TestUpdate.test_not_found[uvloop][json]
+  <class 'dict'> {
+    'id': 'not_found',
+    'message': 'Not found',
+  }
+---
+# name: test_create[uvloop-201][json]
   <class 'dict'> {
     'id': 'test',
     'name': 'test',
@@ -15,6 +143,18 @@
     'users': <class 'list'> [
     ],
   }
+---
+# name: test_create[uvloop-201][location]
+  'https://virtool.example.com/groups/test'
+---
+# name: test_create[uvloop-400][json]
+  <class 'dict'> {
+    'id': 'bad_request',
+    'message': 'Group already exists',
+  }
+---
+# name: test_create[uvloop-400][location]
+  None
 ---
 # name: test_find[uvloop]
   <class 'list'> [
@@ -62,6 +202,71 @@
     'message': 'Not found',
   }
 ---
+# name: test_remove[uvloop-204][json]
+  None
+---
+# name: test_remove[uvloop-204][users]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'test',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': 'bf1b993c',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': True,
+      },
+    },
+    <class 'dict'> {
+      '_id': 'fb085f7f',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': '7cf872dc',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': True,
+      },
+    },
+  ]
+---
+# name: test_remove[uvloop-404][json]
+  <class 'dict'> {
+    'id': 'not_found',
+    'message': 'Not found',
+  }
+---
 # name: test_remove[uvloop-404][users]
   <class 'list'> [
     <class 'dict'> {
@@ -78,561 +283,43 @@
       },
     },
     <class 'dict'> {
-      '_id': '7CtBo2yG',
+      '_id': 'bf1b993c',
       'permissions': <class 'dict'> {
         'cancel_job': False,
         'create_ref': False,
         'create_sample': True,
         'modify_hmm': False,
         'modify_subtraction': False,
-        'remove_file': False,
+        'remove_file': True,
         'remove_job': False,
-        'upload_file': False,
+        'upload_file': True,
       },
     },
     <class 'dict'> {
-      '_id': 'LB1U6zCj',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-    },
-  ]
----
-# name: test_remove[uvloop-None][users]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-    },
-    <class 'dict'> {
-      '_id': '7CtBo2yG',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-    },
-    <class 'dict'> {
-      '_id': 'LB1U6zCj',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-    },
-  ]
----
-# name: test_update[uvloop-name][db_groups]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test',
-      'name': 'Initial',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-    },
-    <class 'dict'> {
-      '_id': 'foo',
-      'name': 'Techs',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-    },
-  ]
----
-# name: test_update[uvloop-name][db_users]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test',
-      'administrator': True,
-      'api_keys': <class 'list'> [
-      ],
-      'force_reset': False,
-      'groups': <class 'list'> [
-      ],
-      'handle': 'bob',
-      'invalidate_sessions': False,
-      'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-      'password': b'$2b$12$0aC1WPkTG.up/KQb3KcQVOMkMbThtjMMrFfG5tiILY2cUMVcnEW0.',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-      'primary_group': 'technician',
-      'settings': <class 'dict'> {
-        'quick_analyze_workflow': 'pathoscope_bowtie',
-        'show_ids': True,
-        'show_versions': True,
-        'skip_quick_analyze_dialog': True,
-      },
-    },
-    <class 'dict'> {
-      '_id': '7CtBo2yG',
-      'administrator': False,
-      'created_at': datetime.datetime(1975, 6, 18, 13, 59, 8),
-      'groups': <class 'list'> [
-        'test',
-      ],
-      'handle': 'leeashley',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-      'primary_group': 'technicians',
-      'username': 'leeashley',
-    },
-    <class 'dict'> {
-      '_id': 'LB1U6zCj',
-      'administrator': False,
-      'created_at': datetime.datetime(2022, 3, 21, 13, 6, 59),
-      'groups': <class 'list'> [
-      ],
-      'handle': 'johnsoncynthia',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-      'primary_group': 'technicians',
-      'username': 'johnsoncynthia',
-    },
-  ]
----
-# name: test_update[uvloop-name][json]
-  <class 'dict'> {
-    'id': 'foo',
-    'name': 'Techs',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'users': <class 'list'> [
-    ],
-  }
----
-# name: test_update[uvloop-name_permissions][db_groups]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test',
-      'name': 'Initial',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-    },
-    <class 'dict'> {
-      '_id': 'foo',
-      'name': 'Techs',
+      '_id': 'fb085f7f',
       'permissions': <class 'dict'> {
         'cancel_job': False,
         'create_ref': False,
         'create_sample': True,
         'modify_hmm': False,
         'modify_subtraction': False,
-        'remove_file': False,
+        'remove_file': True,
         'remove_job': False,
         'upload_file': False,
+      },
+    },
+    <class 'dict'> {
+      '_id': '7cf872dc',
+      'permissions': <class 'dict'> {
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': True,
       },
     },
   ]
----
-# name: test_update[uvloop-name_permissions][db_users]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test',
-      'administrator': True,
-      'api_keys': <class 'list'> [
-      ],
-      'force_reset': False,
-      'groups': <class 'list'> [
-      ],
-      'handle': 'bob',
-      'invalidate_sessions': False,
-      'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-      'password': b'$2b$12$0aC1WPkTG.up/KQb3KcQVOMkMbThtjMMrFfG5tiILY2cUMVcnEW0.',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-      'primary_group': 'technician',
-      'settings': <class 'dict'> {
-        'quick_analyze_workflow': 'pathoscope_bowtie',
-        'show_ids': True,
-        'show_versions': True,
-        'skip_quick_analyze_dialog': True,
-      },
-    },
-    <class 'dict'> {
-      '_id': '7CtBo2yG',
-      'administrator': False,
-      'created_at': datetime.datetime(1975, 6, 18, 13, 59, 8),
-      'groups': <class 'list'> [
-        'test',
-      ],
-      'handle': 'leeashley',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-      'primary_group': 'technicians',
-      'username': 'leeashley',
-    },
-    <class 'dict'> {
-      '_id': 'LB1U6zCj',
-      'administrator': False,
-      'created_at': datetime.datetime(2022, 3, 21, 13, 6, 59),
-      'groups': <class 'list'> [
-      ],
-      'handle': 'johnsoncynthia',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-      'primary_group': 'technicians',
-      'username': 'johnsoncynthia',
-    },
-  ]
----
-# name: test_update[uvloop-name_permissions][json]
-  <class 'dict'> {
-    'id': 'foo',
-    'name': 'Techs',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'users': <class 'list'> [
-    ],
-  }
----
-# name: test_update[uvloop-not_found][db_groups]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test',
-      'name': 'Initial',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-    },
-    <class 'dict'> {
-      '_id': 'foo',
-      'name': 'Initial',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-    },
-  ]
----
-# name: test_update[uvloop-not_found][db_users]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test',
-      'administrator': True,
-      'api_keys': <class 'list'> [
-      ],
-      'force_reset': False,
-      'groups': <class 'list'> [
-      ],
-      'handle': 'bob',
-      'invalidate_sessions': False,
-      'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-      'password': b'$2b$12$0aC1WPkTG.up/KQb3KcQVOMkMbThtjMMrFfG5tiILY2cUMVcnEW0.',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-      'primary_group': 'technician',
-      'settings': <class 'dict'> {
-        'quick_analyze_workflow': 'pathoscope_bowtie',
-        'show_ids': True,
-        'show_versions': True,
-        'skip_quick_analyze_dialog': True,
-      },
-    },
-    <class 'dict'> {
-      '_id': '7CtBo2yG',
-      'administrator': False,
-      'created_at': datetime.datetime(1975, 6, 18, 13, 59, 8),
-      'groups': <class 'list'> [
-        'test',
-      ],
-      'handle': 'leeashley',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-      'primary_group': 'technicians',
-      'username': 'leeashley',
-    },
-    <class 'dict'> {
-      '_id': 'LB1U6zCj',
-      'administrator': False,
-      'created_at': datetime.datetime(2022, 3, 21, 13, 6, 59),
-      'groups': <class 'list'> [
-      ],
-      'handle': 'johnsoncynthia',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-      'primary_group': 'technicians',
-      'username': 'johnsoncynthia',
-    },
-  ]
----
-# name: test_update[uvloop-not_found][json]
-  <class 'dict'> {
-    'id': 'not_found',
-    'message': 'Not found',
-  }
----
-# name: test_update[uvloop-permissions][db_groups]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test',
-      'name': 'Initial',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-    },
-    <class 'dict'> {
-      '_id': 'foo',
-      'name': 'Initial',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': True,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-    },
-  ]
----
-# name: test_update[uvloop-permissions][db_users]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'test',
-      'administrator': True,
-      'api_keys': <class 'list'> [
-      ],
-      'force_reset': False,
-      'groups': <class 'list'> [
-      ],
-      'handle': 'bob',
-      'invalidate_sessions': False,
-      'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-      'password': b'$2b$12$0aC1WPkTG.up/KQb3KcQVOMkMbThtjMMrFfG5tiILY2cUMVcnEW0.',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-      'primary_group': 'technician',
-      'settings': <class 'dict'> {
-        'quick_analyze_workflow': 'pathoscope_bowtie',
-        'show_ids': True,
-        'show_versions': True,
-        'skip_quick_analyze_dialog': True,
-      },
-    },
-    <class 'dict'> {
-      '_id': '7CtBo2yG',
-      'administrator': False,
-      'created_at': datetime.datetime(1975, 6, 18, 13, 59, 8),
-      'groups': <class 'list'> [
-        'test',
-      ],
-      'handle': 'leeashley',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-      'primary_group': 'technicians',
-      'username': 'leeashley',
-    },
-    <class 'dict'> {
-      '_id': 'LB1U6zCj',
-      'administrator': False,
-      'created_at': datetime.datetime(2022, 3, 21, 13, 6, 59),
-      'groups': <class 'list'> [
-      ],
-      'handle': 'johnsoncynthia',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-      'primary_group': 'technicians',
-      'username': 'johnsoncynthia',
-    },
-  ]
----
-# name: test_update[uvloop-permissions][json]
-  <class 'dict'> {
-    'id': 'foo',
-    'name': 'Initial',
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'users': <class 'list'> [
-    ],
-  }
 ---

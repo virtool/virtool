@@ -40,6 +40,7 @@ from virtool.http.schema import schema
 from virtool.jobs.utils import JobRights
 from virtool.labels.db import AttachLabelsTransform
 from virtool.mongo.transforms import apply_transforms
+from virtool.mongo.utils import get_new_id
 from virtool.pg.utils import delete_row, get_rows
 from virtool.samples.db import (
     LIST_PROJECTION,
@@ -637,7 +638,7 @@ class AnalysesView(PydanticView):
                     text=f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
                 )
 
-        job_id = await virtool.mongo.utils.get_new_id(db.jobs)
+        job_id = await get_new_id(db.jobs)
 
         document = await virtool.analyses.db.create(
             self.request.app["db"],

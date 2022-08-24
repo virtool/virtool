@@ -1,3 +1,96 @@
+# name: TestUpdate.test[uvloop]
+  <class 'dict'> {
+    'administrator': False,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': True,
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'musicians',
+        'name': 'musicians',
+      },
+    ],
+    'handle': 'qtaylor',
+    'id': 'bf1b993c',
+    'last_password_change': '2015-10-06T20:00:00Z',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': True,
+    },
+    'primary_group': <class 'dict'> {
+      'id': 'musicians',
+      'name': 'musicians',
+    },
+  }
+---
+# name: TestUpdate.test_non_existent_primary_group[uvloop]
+  <class 'dict'> {
+    'id': 'bad_request',
+    'message': 'Non-existent group: managers',
+  }
+---
+# name: TestUpdate.test_not_a_member_of_primary_group[uvloop]
+  <class 'dict'> {
+    'id': 'bad_request',
+    'message': 'User is not member of group',
+  }
+---
+# name: TestUpdate.test_not_found[uvloop]
+  <class 'dict'> {
+    'id': 'not_found',
+    'message': 'User does not exist',
+  }
+---
+# name: TestUpdate.test_short_password[uvloop]
+  <class 'dict'> {
+    'id': 'bad_request',
+    'message': 'Password does not meet minimum length requirement (8)',
+  }
+---
+# name: TestUpdate.test_with_groups[uvloop]
+  <class 'dict'> {
+    'administrator': False,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'force_reset': True,
+    'groups': <class 'list'> [
+      <class 'dict'> {
+        'id': 'hydrogeologists',
+        'name': 'hydrogeologists',
+      },
+      <class 'dict'> {
+        'id': 'musicians',
+        'name': 'musicians',
+      },
+    ],
+    'handle': 'qtaylor',
+    'id': 'bf1b993c',
+    'last_password_change': '2015-10-06T20:00:00Z',
+    'permissions': <class 'dict'> {
+      'cancel_job': False,
+      'create_ref': True,
+      'create_sample': True,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': True,
+    },
+    'primary_group': None,
+  }
+---
 # name: test_create[uvloop-None]
   <class 'dict'> {
     'administrator': False,
@@ -10,7 +103,7 @@
     'groups': <class 'list'> [
     ],
     'handle': 'fred',
-    'id': 'dbvT906w',
+    'id': 'fb085f7f',
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -25,38 +118,9 @@
     'primary_group': None,
   }
 ---
-# name: test_create[uvloop-None].1
-  <class 'dict'> {
-    '_id': 'abc123',
-    'administrator': False,
-    'force_reset': False,
-    'groups': <class 'list'> [
-    ],
-    'handle': 'fred',
-    'invalidate_sessions': False,
-    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'permissions': <class 'dict'> {
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    },
-    'primary_group': None,
-    'settings': <class 'dict'> {
-      'quick_analyze_workflow': 'pathoscope_bowtie',
-      'show_ids': True,
-      'show_versions': True,
-      'skip_quick_analyze_dialog': True,
-    },
-  }
----
 # name: test_create[uvloop-None].2
   <class 'dict'> {
-    '_id': 'dbvT906w',
+    '_id': 'fb085f7f',
     'administrator': False,
     'force_reset': False,
     'groups': <class 'list'> [
@@ -84,118 +148,7 @@
   }
 ---
 # name: test_create[uvloop-None][location]
-  '/users/dbvT906w'
----
-# name: test_edit[uvloop-good]
-  <class 'tuple'> (
-    200,
-    <class 'dict'> {
-      'administrator': False,
-      'b2c': None,
-      'b2c_display_name': None,
-      'b2c_family_name': None,
-      'b2c_given_name': None,
-      'b2c_oid': None,
-      'force_reset': True,
-      'groups': <class 'list'> [
-        <class 'dict'> {
-          'id': 'technicians',
-          'name': 'technicians',
-        },
-      ],
-      'handle': 'fred',
-      'id': 'bob',
-      'last_password_change': '2015-10-06T20:00:00Z',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-      'primary_group': <class 'dict'> {
-        'id': 'technicians',
-        'name': 'technicians',
-      },
-    },
-  )
----
-# name: test_edit[uvloop-good_add_group]
-  <class 'tuple'> (
-    200,
-    <class 'dict'> {
-      'administrator': False,
-      'b2c': None,
-      'b2c_display_name': None,
-      'b2c_family_name': None,
-      'b2c_given_name': None,
-      'b2c_oid': None,
-      'force_reset': False,
-      'groups': <class 'list'> [
-        <class 'dict'> {
-          'id': 'managers',
-          'name': 'managers',
-        },
-        <class 'dict'> {
-          'id': 'technicians',
-          'name': 'technicians',
-        },
-      ],
-      'handle': 'fred',
-      'id': 'bob',
-      'last_password_change': '2015-10-06T20:00:00Z',
-      'permissions': <class 'dict'> {
-        'cancel_job': False,
-        'create_ref': True,
-        'create_sample': True,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      },
-      'primary_group': None,
-    },
-  )
----
-# name: test_edit[uvloop-nonexistent_primary_group]
-  <class 'tuple'> (
-    400,
-    <class 'dict'> {
-      'id': 'bad_request',
-      'message': 'Non-existent group: directors',
-    },
-  )
----
-# name: test_edit[uvloop-nonmember_primary_group]
-  <class 'tuple'> (
-    400,
-    <class 'dict'> {
-      'id': 'bad_request',
-      'message': 'User is not member of group',
-    },
-  )
----
-# name: test_edit[uvloop-short_password]
-  <class 'tuple'> (
-    400,
-    <class 'dict'> {
-      'id': 'bad_request',
-      'message': 'Password does not meet minimum length requirement (8)',
-    },
-  )
----
-# name: test_edit_404[uvloop]
-  <class 'tuple'> (
-    404,
-    <class 'dict'> {
-      'id': 'not_found',
-      'message': 'User does not exist',
-    },
-  )
+  '/users/fb085f7f'
 ---
 # name: test_find[uvloop]
   <class 'dict'> {
@@ -268,7 +221,7 @@
     'total_count': 3,
   }
 ---
-# name: test_get[uvloop-None]
+# name: test_get[uvloop-200]
   <class 'dict'> {
     'administrator': False,
     'b2c': None,
@@ -304,5 +257,20 @@
       'id': 'musicians',
       'name': 'musicians',
     },
+  }
+---
+# name: test_get[uvloop-404]
+  <class 'dict'> {
+    'id': 'not_found',
+    'message': 'Not found',
+  }
+---
+# name: test_remove[uvloop-204]
+  None
+---
+# name: test_remove[uvloop-404]
+  <class 'dict'> {
+    'id': 'not_found',
+    'message': 'Not found',
   }
 ---

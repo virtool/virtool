@@ -174,15 +174,13 @@ async def add_group_or_user(db, ref_id: str, field: str, data: dict) -> Optional
 
     subdocument_id = data.get("group_id") or data["user_id"]
 
-    if (
-        field == "groups"
-        and await db.groups.count_documents({"_id": subdocument_id}) == 0
+    if field == "groups" and not await db.groups.count_documents(
+        {"_id": subdocument_id}, limit=1
     ):
         raise virtool.errors.DatabaseError("group does not exist")
 
-    if (
-        field == "users"
-        and await db.users.count_documents({"_id": subdocument_id}) == 0
+    if field == "users" and not await db.users.count_documents(
+        {"_id": subdocument_id}, limit=1
     ):
         raise virtool.errors.DatabaseError("user does not exist")
 
@@ -580,7 +578,7 @@ async def create_document(
     if ref_id and await db.references.count_documents({"_id": ref_id}):
         raise virtool.errors.DatabaseError("ref_id already exists")
 
-    ref_id = ref_id or await virtool.mongo.utils.get_new_id(db.otus)
+    ref_id = ref_id or await virtool.mongo.utils.get_new_id(db.references)
 
     user = None
 

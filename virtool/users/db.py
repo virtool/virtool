@@ -217,7 +217,9 @@ async def generate_handle(collection, given_name: str, family_name: str) -> str:
 
 
 async def is_member_of_group(db, user_id: str, group_id: str) -> bool:
-    return bool(await db.users.count_documents({"_id": user_id, "groups": group_id}))
+    return bool(
+        await db.users.count_documents({"_id": user_id, "groups": group_id}, limit=1)
+    )
 
 
 async def validate_credentials(db, user_id: str, password: str) -> bool:
@@ -303,38 +305,6 @@ async def update_sessions_and_keys(
         },
         session=session,
     )
-
-
-async def find_or_create_b2c_user(
-    db, b2c_user_attributes: B2CUserAttributes
-) -> Document:
-    """
-    search for existing user using oid value found in user_attributes.
-
-    If not found, create new user with oid value, generated handle and user_attribute
-    information.
-
-    :param b2c_user_attributes: User attributes collected from ID token claims
-    :param db: a database client
-
-    :return: found or created user document
-    """
-    document = await db.users.find_one({"b2c_oid": b2c_user_attributes.oid})
-
-    if document is None:
-        handle = await virtool.users.db.generate_handle(
-            db.users, b2c_user_attributes.given_name, b2c_user_attributes.family_name
-        )
-
-        document = await virtool.users.db.create(
-            db,
-            password=None,
-            handle=handle,
-            force_reset=False,
-            b2c_user_attributes=b2c_user_attributes,
-        )
-
-    return document
 
 
 async def fetch_complete_user(mongo, user_id: str) -> Optional[User]:

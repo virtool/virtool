@@ -411,12 +411,12 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
     m_update_is_compressed.assert_called_with(app_dict["db"], sample)
 
 
-async def test_finalize(snapshot, tmp_path, dbi, fake, pg: AsyncEngine):
+async def test_finalize(snapshot, tmp_path, dbi, fake2, pg: AsyncEngine):
     quality = {"count": 10000000, "gc": 43}
 
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
-    await dbi.samples.insert_one({"_id": "test", "user": {"id": user["_id"]}})
+    await dbi.samples.insert_one({"_id": "test", "user": {"id": user.id}})
 
     async with AsyncSession(pg) as session:
         upload = Upload(name="test", name_on_disk="test.fq.gz")

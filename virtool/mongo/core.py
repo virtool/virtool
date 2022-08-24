@@ -216,24 +216,25 @@ class Collection:
         :return: the inserted document
 
         """
-        generate_id = "_id" not in document
-
-        if generate_id:
-            document["_id"] = self.mongo.id_provider.get()
-
-        try:
+        if "_id" in document:
             await self._collection.insert_one(document, session=session)
+            inserted = document
+        else:
+            try:
+                inserted = {**document, "_id": self.mongo.id_provider.get()}
+                await self._collection.insert_one(inserted, session=session)
+            except DuplicateKeyError as err:
+                keys = list(err.details["keyPattern"].keys())
 
-            if not silent:
-                self.enqueue_change(INSERT, document["_id"])
+                if len(keys) == 1 and keys[0] == "_id":
+                    return await self.insert_one(document, session=session)
 
-            return document
-        except DuplicateKeyError:
-            if generate_id:
-                document.pop("_id")
-                return await self._collection.insert_one(document, session=session)
+                raise
 
-            raise
+        if not silent:
+            self.enqueue_change(INSERT, inserted["_id"])
+
+        return inserted
 
     async def replace_one(
         self,

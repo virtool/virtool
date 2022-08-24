@@ -6,7 +6,7 @@ from pymongo.errors import DuplicateKeyError
 import virtool.utils
 from virtool.data.errors import ResourceConflictError
 from virtool.types import Document
-from virtool.users.db import B2CUserAttributes, fetch_complete_user
+from virtool.users.db import B2CUserAttributes
 from virtool.users.utils import generate_base_permissions, hash_password
 
 
@@ -56,8 +56,6 @@ async def create_user(
         document["password"] = hash_password(password)
 
     try:
-        await mongo.users.insert_one(document, session=session)
+        return await mongo.users.insert_one(document, session=session)
     except DuplicateKeyError:
         raise ResourceConflictError("User already exists")
-
-    return document

@@ -228,12 +228,12 @@ async def test_import_reference(pg, snapshot, spawn_client, test_files_path, tmp
 
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
 @pytest.mark.parametrize("error", [None, "403", "404", "422", "400"])
-async def test_edit(data_type, error, mocker, snapshot, fake, spawn_client, resp_is):
+async def test_edit(data_type, error, mocker, snapshot, fake2, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
-    user_1 = await fake.users.insert()
-    user_2 = await fake.users.insert()
-    user_3 = await fake.users.insert()
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
+    user_3 = await fake2.users.create()
 
     if error != "404":
         await client.db.references.insert_one(
@@ -241,8 +241,8 @@ async def test_edit(data_type, error, mocker, snapshot, fake, spawn_client, resp
                 "_id": "foo",
                 "data_type": data_type,
                 "name": "Foo",
-                "user": {"id": user_1["_id"]},
-                "users": [{"id": user_2["_id"]}, {"id": user_3["_id"]}],
+                "user": {"id": user_1.id},
+                "users": [{"id": user_2.id}, {"id": user_3.id}],
             }
         )
 

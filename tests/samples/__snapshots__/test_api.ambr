@@ -310,7 +310,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -341,7 +341,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -366,7 +366,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -399,7 +399,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -478,7 +478,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -573,8 +573,8 @@
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
-          'handle': 'johnsoncynthia',
-          'id': 'LB1U6zCj',
+          'handle': 'zclark',
+          'id': 'fb085f7f',
         },
       },
       <class 'dict'> {
@@ -603,7 +603,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': '7CtBo2yG',
+          'id': 'bf1b993c',
         },
       },
     ],
@@ -636,8 +636,8 @@
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
-          'handle': 'johnsoncynthia',
-          'id': 'LB1U6zCj',
+          'handle': 'zclark',
+          'id': 'fb085f7f',
         },
       },
     ],
@@ -670,8 +670,8 @@
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
-          'handle': 'johnsoncynthia',
-          'id': 'LB1U6zCj',
+          'handle': 'zclark',
+          'id': 'fb085f7f',
         },
       },
       <class 'dict'> {
@@ -700,7 +700,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': '7CtBo2yG',
+          'id': 'bf1b993c',
         },
       },
       <class 'dict'> {
@@ -722,12 +722,46 @@
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
-          'handle': 'johnsoncynthia',
-          'id': 'LB1U6zCj',
+          'handle': 'zclark',
+          'id': 'fb085f7f',
         },
       },
     ],
     'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find[uvloop-None-None-None-labels5]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#0d321d',
+            'description': 'This is a question',
+            'id': 3,
+            'name': 'Question',
+          },
+        ],
+        'name': '16SPP044',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+    ],
+    'found_count': 1,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -756,42 +790,8 @@
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
-          'handle': 'johnsoncynthia',
-          'id': 'LB1U6zCj',
-        },
-      },
-    ],
-    'found_count': 1,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  }
----
-# name: test_find[uvloop-None-None-None-labels7]
-  <class 'dict'> {
-    'documents': <class 'list'> [
-      <class 'dict'> {
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'labels': <class 'list'> [
-          <class 'dict'> {
-            'color': '#0d321d',
-            'description': 'This is a question',
-            'id': 3,
-            'name': 'Question',
-          },
-        ],
-        'name': '16SPP044',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'user': <class 'dict'> {
-          'administrator': False,
-          'handle': 'johnsoncynthia',
-          'id': 'LB1U6zCj',
+          'handle': 'zclark',
+          'id': 'fb085f7f',
         },
       },
       <class 'dict'> {
@@ -820,7 +820,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': '7CtBo2yG',
+          'id': 'bf1b993c',
         },
       },
     ],
@@ -831,13 +831,47 @@
     'total_count': 3,
   }
 ---
-# name: test_find[uvloop-None-None-None-labels8]
+# name: test_find[uvloop-None-None-None-labels7]
   <class 'dict'> {
     'documents': <class 'list'> [
     ],
     'found_count': 0,
     'page': 1,
     'page_count': 0,
+    'per_page': 25,
+    'total_count': 3,
+  }
+---
+# name: test_find[uvloop-None-None-None-labels8]
+  <class 'dict'> {
+    'documents': <class 'list'> [
+      <class 'dict'> {
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'labels': <class 'list'> [
+          <class 'dict'> {
+            'color': '#0d321d',
+            'description': 'This is a question',
+            'id': 3,
+            'name': 'Question',
+          },
+        ],
+        'name': '16SPP044',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': <class 'dict'> {
+          'administrator': False,
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        },
+      },
+    ],
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
     'per_page': 25,
     'total_count': 3,
   }
@@ -905,7 +939,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': '7CtBo2yG',
+          'id': 'bf1b993c',
         },
       },
       <class 'dict'> {
@@ -927,8 +961,8 @@
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
-          'handle': 'johnsoncynthia',
-          'id': 'LB1U6zCj',
+          'handle': 'zclark',
+          'id': 'fb085f7f',
         },
       },
     ],
@@ -961,8 +995,8 @@
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
-          'handle': 'johnsoncynthia',
-          'id': 'LB1U6zCj',
+          'handle': 'zclark',
+          'id': 'fb085f7f',
         },
       },
     ],
@@ -999,7 +1033,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': '7CtBo2yG',
+          'id': 'bf1b993c',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -1030,7 +1064,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': '7CtBo2yG',
+          'id': 'bf1b993c',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -1068,7 +1102,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': '7CtBo2yG',
+          'id': 'bf1b993c',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -1099,7 +1133,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': '7CtBo2yG',
+          'id': 'bf1b993c',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -1129,8 +1163,8 @@
         ],
         'user': <class 'dict'> {
           'administrator': False,
-          'handle': 'johnsoncynthia',
-          'id': 'LB1U6zCj',
+          'handle': 'zclark',
+          'id': 'fb085f7f',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -1214,7 +1248,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -1292,7 +1326,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
   }
 ---
