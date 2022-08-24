@@ -9,7 +9,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from multidict import MultiDictProxy
+from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import DeleteResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -21,6 +21,7 @@ import virtool.utils
 from virtool.config.cls import Config
 from virtool.labels.db import AttachLabelsTransform
 from virtool.mongo.transforms import AbstractTransform, apply_transforms
+from virtool.mongo.utils import id_exists
 from virtool.samples.models import SampleArtifact, SampleReads
 from virtool.samples.utils import join_legacy_read_paths
 from virtool.settings.db import Settings
@@ -124,21 +125,6 @@ class ArtifactsAndReadsTransform(AbstractTransform):
         return {"artifacts": artifacts, "reads": reads}
 
 
-async def check_name(
-    db, settings: Settings, name: str, sample_id: Optional[str] = None
-) -> Optional[str]:
-    if settings.sample_unique_names:
-        query = {"name": name}
-
-        if sample_id:
-            query["_id"] = {"$ne": sample_id}
-
-        if await db.samples.count_documents(query):
-            return "Sample name is already in use"
-
-    return None
-
-
 async def check_rights(db, sample_id: str, client, write: bool = True) -> bool:
     sample_rights = await db.samples.find_one({"_id": sample_id}, RIGHTS_PROJECTION)
 
@@ -150,22 +136,17 @@ async def check_rights(db, sample_id: str, client, write: bool = True) -> bool:
     return has_read and (write is False or has_write)
 
 
-def compose_sample_workflow_query(url_query: MultiDictProxy) -> Optional[dict]:
+def compose_sample_workflow_query(workflows: List[str]) -> Optional[Dict[str, Dict]]:
     """
     Compose a MongoDB query for filtering samples by completed workflow.
 
-    :param url_query: a URL query string to compose the workflow query from
+    :param workflows:
     :return: a MongoDB query for filtering by workflow
 
     """
-    try:
-        workflow_query_strings = url_query.getall("workflows")
-    except KeyError:
-        return None
-
     workflow_query = defaultdict(set)
 
-    for workflow_query_string in workflow_query_strings:
+    for workflow_query_string in workflows:
         for pair in workflow_query_string.split(" "):
             pair = pair.split(":")
 
@@ -330,16 +311,19 @@ async def remove_samples(db, config: Config, id_list: List[str]) -> DeleteResult
     return result
 
 
-async def validate_force_choice_group(db, data: dict) -> Optional[str]:
-    try:
-        if data["group"] == "":
-            return None
+async def validate_force_choice_group(
+    db, data: dict, session: Optional[AsyncIOMotorClientSession] = None
+) -> Optional[str]:
+    group = data.get("group")
 
-        if not await db.groups.count_documents({"_id": data["group"]}):
-            return "Group does not exist"
-
-    except KeyError:
+    if group is None:
         return "Group value required for sample creation"
+
+    if group == "":
+        return None
+
+    if not await id_exists(db.groups, group, session=session):
+        return "Group does not exist"
 
     return None
 

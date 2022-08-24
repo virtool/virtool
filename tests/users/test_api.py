@@ -221,19 +221,3 @@ class TestUpdate:
 
         assert resp.status == 404
         assert await resp.json() == snapshot
-
-
-@pytest.mark.parametrize("status", [204, 404])
-async def test_remove(status, fake2, spawn_client, snapshot):
-    """
-    Test that a group is removed from the user for a valid request.
-
-    """
-    client = await spawn_client(authorize=True, administrator=True)
-
-    user = await fake2.users.create()
-
-    resp = await client.delete(f"/users/{'bob' if status == 404 else user.id}")
-
-    assert resp.status == status
-    assert await resp.json() == snapshot

@@ -4,16 +4,16 @@
 # name: TestCreate.test[uvloop-force_choice].1
   <class 'dict'> {
     'all_read': True,
-    'all_write': True,
+    'all_write': False,
     'artifacts': <class 'list'> [
     ],
     'caches': <class 'list'> [
     ],
     'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
-    'group': 'diagnostics',
+    'group': 'none',
     'group_read': True,
-    'group_write': True,
+    'group_write': False,
     'hold': True,
     'host': '',
     'id': '9pfsom1b',
@@ -22,7 +22,7 @@
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#FF0000',
-        'description': None,
+        'description': '',
         'id': 1,
         'name': 'bug',
       },
@@ -41,11 +41,16 @@
     'subtractions': <class 'list'> [
       <class 'dict'> {
         'id': 'apple',
-        'name': None,
+        'name': 'Apple',
       },
     ],
     'user': <class 'dict'> {
       'administrator': False,
+      'b2c': None,
+      'b2c_display_name': None,
+      'b2c_family_name': None,
+      'b2c_given_name': None,
+      'b2c_oid': None,
       'handle': 'bob',
       'id': 'test',
     },
@@ -55,12 +60,12 @@
   <class 'dict'> {
     '_id': '9pfsom1b',
     'all_read': True,
-    'all_write': True,
+    'all_write': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'format': 'fastq',
-    'group': 'diagnostics',
+    'group': 'none',
     'group_read': True,
-    'group_write': True,
+    'group_write': False,
     'hold': True,
     'host': '',
     'is_legacy': False,
@@ -77,6 +82,7 @@
     'pathoscope': False,
     'quality': None,
     'ready': False,
+    'results': None,
     'subtractions': <class 'list'> [
       'apple',
     ],
@@ -91,7 +97,7 @@
 # name: TestCreate.test[uvloop-none].1
   <class 'dict'> {
     'all_read': True,
-    'all_write': True,
+    'all_write': False,
     'artifacts': <class 'list'> [
     ],
     'caches': <class 'list'> [
@@ -100,7 +106,7 @@
     'format': 'fastq',
     'group': 'none',
     'group_read': True,
-    'group_write': True,
+    'group_write': False,
     'hold': True,
     'host': '',
     'id': '9pfsom1b',
@@ -109,7 +115,7 @@
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#FF0000',
-        'description': None,
+        'description': '',
         'id': 1,
         'name': 'bug',
       },
@@ -128,11 +134,16 @@
     'subtractions': <class 'list'> [
       <class 'dict'> {
         'id': 'apple',
-        'name': None,
+        'name': 'Apple',
       },
     ],
     'user': <class 'dict'> {
       'administrator': False,
+      'b2c': None,
+      'b2c_display_name': None,
+      'b2c_family_name': None,
+      'b2c_given_name': None,
+      'b2c_oid': None,
       'handle': 'bob',
       'id': 'test',
     },
@@ -142,12 +153,12 @@
   <class 'dict'> {
     '_id': '9pfsom1b',
     'all_read': True,
-    'all_write': True,
+    'all_write': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'format': 'fastq',
     'group': 'none',
     'group_read': True,
-    'group_write': True,
+    'group_write': False,
     'hold': True,
     'host': '',
     'is_legacy': False,
@@ -164,6 +175,7 @@
     'pathoscope': False,
     'quality': None,
     'ready': False,
+    'results': None,
     'subtractions': <class 'list'> [
       'apple',
     ],
@@ -178,16 +190,16 @@
 # name: TestCreate.test[uvloop-users_primary_group].1
   <class 'dict'> {
     'all_read': True,
-    'all_write': True,
+    'all_write': False,
     'artifacts': <class 'list'> [
     ],
     'caches': <class 'list'> [
     ],
     'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
-    'group': 'technician',
+    'group': 'none',
     'group_read': True,
-    'group_write': True,
+    'group_write': False,
     'hold': True,
     'host': '',
     'id': '9pfsom1b',
@@ -196,7 +208,7 @@
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#FF0000',
-        'description': None,
+        'description': '',
         'id': 1,
         'name': 'bug',
       },
@@ -215,11 +227,16 @@
     'subtractions': <class 'list'> [
       <class 'dict'> {
         'id': 'apple',
-        'name': None,
+        'name': 'Apple',
       },
     ],
     'user': <class 'dict'> {
       'administrator': False,
+      'b2c': None,
+      'b2c_display_name': None,
+      'b2c_family_name': None,
+      'b2c_given_name': None,
+      'b2c_oid': None,
       'handle': 'bob',
       'id': 'test',
     },
@@ -229,12 +246,12 @@
   <class 'dict'> {
     '_id': '9pfsom1b',
     'all_read': True,
-    'all_write': True,
+    'all_write': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'format': 'fastq',
-    'group': 'technician',
+    'group': 'none',
     'group_read': True,
-    'group_write': True,
+    'group_write': False,
     'hold': True,
     'host': '',
     'is_legacy': False,
@@ -251,6 +268,7 @@
     'pathoscope': False,
     'quality': None,
     'ready': False,
+    'results': None,
     'subtractions': <class 'list'> [
       'apple',
     ],
@@ -283,10 +301,29 @@
     'all_read': True,
     'all_write': True,
     'artifacts': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'name_on_disk': 'reference.fa.gz',
+        'sample': 'test',
+        'size': None,
+        'type': 'fasta',
+        'uploaded_at': None,
+      },
     ],
     'caches': <class 'list'> [
     ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': True,
+    'group_write': True,
+    'hold': False,
+    'host': '',
     'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#a83432',
@@ -295,34 +332,85 @@
         'name': 'Bug',
       },
     ],
+    'library_type': 'normal',
+    'locale': '',
     'name': 'test_sample',
     'notes': 'This is a test.',
+    'nuvs': False,
     'paired': False,
+    'pathoscope': True,
+    'quality': None,
     'reads': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      },
     ],
     'ready': True,
     'subtractions': <class 'list'> [
       <class 'dict'> {
-        'id': 'foo',
-        'name': 'Foo',
+        'id': 'peach',
+        'name': 'Peach',
       },
     ],
     'user': <class 'dict'> {
       'administrator': False,
+      'b2c': None,
+      'b2c_display_name': None,
+      'b2c_family_name': None,
+      'b2c_given_name': None,
+      'b2c_oid': None,
       'handle': 'leeashley',
       'id': 'bf1b993c',
     },
   }
 ---
-# name: TestEdit.test_label_exists[uvloop-True]
+# name: TestEdit.test_label_exists[uvloop][json]
   <class 'dict'> {
-    'all_read': True,
+    'id': 'bad_request',
+    'message': 'Labels do not exist: [1]',
+  }
+---
+# name: TestEdit.test_subtraction_exists[uvloop][json]
+  <class 'dict'> {
+    'id': 'bad_request',
+    'message': 'Subtractions do not exist: bar',
+  }
+---
+# name: TestGet.test_get[uvloop-administrator][json]
+  <class 'dict'> {
+    'all_read': False,
     'all_write': True,
     'artifacts': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'name_on_disk': 'reference.fa.gz',
+        'sample': 'test',
+        'size': None,
+        'type': 'fasta',
+        'uploaded_at': None,
+      },
     ],
     'caches': <class 'list'> [
     ],
-    'id': 'foo',
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': False,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
     'labels': <class 'list'> [
       <class 'dict'> {
         'color': '#a83432',
@@ -331,75 +419,289 @@
         'name': 'Bug',
       },
     ],
-    'name': 'Foo',
-    'paired': False,
-    'reads': <class 'list'> [
-    ],
-    'ready': True,
-    'subtractions': <class 'list'> [
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    },
-  }
----
-# name: TestEdit.test_name_exists[uvloop-False]
-  <class 'dict'> {
-    'all_read': True,
-    'all_write': True,
-    'artifacts': <class 'list'> [
-    ],
-    'caches': <class 'list'> [
-    ],
-    'id': 'foo',
-    'labels': <class 'list'> [
-    ],
-    'name': 'Bar',
-    'paired': False,
-    'reads': <class 'list'> [
-    ],
-    'ready': True,
-    'subtractions': <class 'list'> [
-    ],
-    'user': <class 'dict'> {
-      'administrator': False,
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    },
-  }
----
-# name: TestEdit.test_subtraction_exists[uvloop-True]
-  <class 'dict'> {
-    'all_read': True,
-    'all_write': True,
-    'artifacts': <class 'list'> [
-    ],
-    'caches': <class 'list'> [
-    ],
-    'id': 'test',
-    'labels': <class 'list'> [
-    ],
+    'library_type': 'normal',
+    'locale': '',
     'name': 'Test',
+    'notes': '',
+    'nuvs': False,
     'paired': False,
+    'pathoscope': True,
+    'quality': None,
     'reads': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      },
     ],
     'ready': True,
     'subtractions': <class 'list'> [
       <class 'dict'> {
-        'id': 'foo',
-        'name': 'Foo',
+        'id': 'apple',
+        'name': 'Apple',
       },
       <class 'dict'> {
-        'id': 'bar',
-        'name': 'Bar',
+        'id': 'pear',
+        'name': 'Pear',
       },
     ],
     'user': <class 'dict'> {
       'administrator': False,
+      'b2c': None,
+      'b2c_display_name': None,
+      'b2c_family_name': None,
+      'b2c_given_name': None,
+      'b2c_oid': None,
       'handle': 'leeashley',
       'id': 'bf1b993c',
+    },
+  }
+---
+# name: TestGet.test_get[uvloop-all_read][json]
+  <class 'dict'> {
+    'all_read': True,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'name_on_disk': 'reference.fa.gz',
+        'sample': 'test',
+        'size': None,
+        'type': 'fasta',
+        'uploaded_at': None,
+      },
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': False,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#a83432',
+        'description': 'This is a bug',
+        'id': 1,
+        'name': 'Bug',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': None,
+    'reads': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      },
+    ],
+    'ready': True,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+      <class 'dict'> {
+        'id': 'pear',
+        'name': 'Pear',
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'b2c': None,
+      'b2c_display_name': None,
+      'b2c_family_name': None,
+      'b2c_given_name': None,
+      'b2c_oid': None,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: TestGet.test_get[uvloop-group_read][json]
+  <class 'dict'> {
+    'all_read': False,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'name_on_disk': 'reference.fa.gz',
+        'sample': 'test',
+        'size': None,
+        'type': 'fasta',
+        'uploaded_at': None,
+      },
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': 'technicians',
+    'group_read': True,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#a83432',
+        'description': 'This is a bug',
+        'id': 1,
+        'name': 'Bug',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': None,
+    'reads': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      },
+    ],
+    'ready': True,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+      <class 'dict'> {
+        'id': 'pear',
+        'name': 'Pear',
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'b2c': None,
+      'b2c_display_name': None,
+      'b2c_family_name': None,
+      'b2c_given_name': None,
+      'b2c_oid': None,
+      'handle': 'leeashley',
+      'id': 'bf1b993c',
+    },
+  }
+---
+# name: TestGet.test_get[uvloop-not_in_group][json]
+  <class 'dict'> {
+    'id': 'insufficient_rights',
+    'message': 'Insufficient rights',
+  }
+---
+# name: TestGet.test_get[uvloop-owner][json]
+  <class 'dict'> {
+    'all_read': False,
+    'all_write': True,
+    'artifacts': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'name_on_disk': 'reference.fa.gz',
+        'sample': 'test',
+        'size': None,
+        'type': 'fasta',
+        'uploaded_at': None,
+      },
+    ],
+    'caches': <class 'list'> [
+    ],
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': 'none',
+    'group_read': False,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'labels': <class 'list'> [
+      <class 'dict'> {
+        'color': '#a83432',
+        'description': 'This is a bug',
+        'id': 1,
+        'name': 'Bug',
+      },
+    ],
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': None,
+    'reads': <class 'list'> [
+      <class 'dict'> {
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      },
+    ],
+    'ready': True,
+    'subtractions': <class 'list'> [
+      <class 'dict'> {
+        'id': 'apple',
+        'name': 'Apple',
+      },
+      <class 'dict'> {
+        'id': 'pear',
+        'name': 'Pear',
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'b2c': None,
+      'b2c_display_name': None,
+      'b2c_family_name': None,
+      'b2c_given_name': None,
+      'b2c_oid': None,
+      'handle': 'bob',
+      'id': 'test',
     },
   }
 ---
@@ -510,12 +812,19 @@
             'name': 'Question',
           },
         ],
+        'library_type': 'amplicon',
         'name': '16SPP044',
+        'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'johnsoncynthia',
           'id': 'LB1U6zCj',
         },
@@ -533,12 +842,19 @@
             'name': 'Bug',
           },
         ],
+        'library_type': 'srna',
         'name': '16GVP043',
+        'notes': 'This is a good sample.',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'johnsoncynthia',
           'id': 'LB1U6zCj',
         },
@@ -567,7 +883,9 @@
             'name': 'Question',
           },
         ],
+        'library_type': 'amplicon',
         'name': '16SPP044',
+        'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
@@ -596,12 +914,19 @@
             'name': 'Info',
           },
         ],
+        'library_type': 'normal',
         'name': '16GVP042',
+        'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         },
@@ -630,7 +955,9 @@
             'name': 'Bug',
           },
         ],
+        'library_type': 'srna',
         'name': '16GVP043',
+        'notes': 'This is a good sample.',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
@@ -664,7 +991,9 @@
             'name': 'Question',
           },
         ],
+        'library_type': 'amplicon',
         'name': '16SPP044',
+        'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
@@ -693,12 +1022,19 @@
             'name': 'Info',
           },
         ],
+        'library_type': 'normal',
         'name': '16GVP042',
+        'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         },
@@ -716,7 +1052,9 @@
             'name': 'Bug',
           },
         ],
+        'library_type': 'srna',
         'name': '16GVP043',
+        'notes': 'This is a good sample.',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
@@ -750,7 +1088,9 @@
             'name': 'Question',
           },
         ],
+        'library_type': 'amplicon',
         'name': '16SPP044',
+        'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
@@ -784,7 +1124,9 @@
             'name': 'Question',
           },
         ],
+        'library_type': 'amplicon',
         'name': '16SPP044',
+        'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
@@ -813,12 +1155,19 @@
             'name': 'Info',
           },
         ],
+        'library_type': 'normal',
         'name': '16GVP042',
+        'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         },
@@ -932,12 +1281,19 @@
             'name': 'Info',
           },
         ],
+        'library_type': 'normal',
         'name': '16GVP042',
+        'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
+          'b2c': None,
+          'b2c_display_name': None,
+          'b2c_family_name': None,
+          'b2c_given_name': None,
+          'b2c_oid': None,
           'handle': 'leeashley',
           'id': 'bf1b993c',
         },
@@ -955,7 +1311,9 @@
             'name': 'Bug',
           },
         ],
+        'library_type': 'srna',
         'name': '16GVP043',
+        'notes': 'This is a good sample.',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
@@ -989,7 +1347,9 @@
             'name': 'Question',
           },
         ],
+        'library_type': 'amplicon',
         'name': '16SPP044',
+        'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,

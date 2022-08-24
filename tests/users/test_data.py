@@ -132,26 +132,6 @@ class TestUpdate:
             assert "User does not exist" == str(err)
 
 
-class TestDelete:
-    async def test(self, dbi, fake, snapshot, users_data):
-        user = await fake.users.insert()
-
-        await dbi.references.insert_many(
-            [
-                {"_id": "foo", "users": [{"id": user["_id"]}, {"id": "bob"}]},
-                {"_id": "bar", "users": [{"id": user["_id"]}]},
-            ]
-        )
-
-        assert await dbi.users.count_documents({}) == 1
-
-        await users_data.delete(user["_id"])
-
-        assert await dbi.users.count_documents({}) == 0
-
-        assert await dbi.references.find().to_list(None) == snapshot
-
-
 @pytest.mark.parametrize("exists", [True, False])
 async def test_find_or_create_b2c_user(
     exists, dbi, fake, snapshot, static_time, users_data

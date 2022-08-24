@@ -50,6 +50,7 @@ from virtool.references.tasks import (
     DeleteReferenceTask,
 )
 from virtool.routes import setup_routes
+from virtool.samples.data import SamplesData
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.sentry import setup
 from virtool.settings.db import ensure
@@ -131,6 +132,7 @@ async def startup_data(app: App):
         LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),
+        SamplesData(app["config"], app["db"], app["pg"]),
         UsersData(app["db"], app["pg"]),
     )
 

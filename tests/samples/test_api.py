@@ -1,29 +1,111 @@
+import asyncio
 import os
+from pathlib import Path
 
 import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.models.enums import Permission, LibraryType
 
 import virtool.caches.db
 import virtool.pg.utils
 import virtool.uploads.db
 from virtool.caches.models import SampleArtifactCache, SampleReadsCache
 from virtool.caches.utils import join_cache_path
+from virtool.config.cls import Config
 from virtool.data.utils import get_data_from_app
 from virtool.jobs.client import DummyJobsClient
 from virtool.labels.models import Label
 from virtool.pg.utils import get_row_by_id
-from virtool.samples.db import check_name
 from virtool.samples.files import create_reads_file
 from virtool.samples.models import SampleArtifact, SampleReads
 from virtool.uploads.models import Upload
-from virtool_core.models.enums import Permission
 
 
 class MockJobInterface:
     def __init__(self):
         self.enqueue = make_mocked_coro()
+
+
+@pytest.fixture
+async def get_sample_data(dbi, fake, pg, static_time):
+    user = await fake.users.insert()
+
+    await asyncio.gather(
+        dbi.subtraction.insert_many(
+            [
+                {"_id": "apple", "name": "Apple"},
+                {"_id": "pear", "name": "Pear"},
+                {"_id": "peach", "name": "Peach"},
+            ]
+        ),
+        dbi.samples.insert_one(
+            {
+                "_id": "test",
+                "all_read": True,
+                "all_write": True,
+                "format": "fastq",
+                "group": "none",
+                "group_read": True,
+                "group_write": True,
+                "hold": False,
+                "host": "",
+                "is_legacy": False,
+                "isolate": "",
+                "library_type": LibraryType.normal.value,
+                "locale": "",
+                "nuvs": False,
+                "pathoscope": True,
+                "name": "Test",
+                "notes": "",
+                "created_at": static_time.datetime,
+                "ready": True,
+                "files": [
+                    {
+                        "id": "foo",
+                        "name": "Bar.fq.gz",
+                        "download_url": "/download/samples/files/file_1.fq.gz",
+                    }
+                ],
+                "labels": [1],
+                "subtractions": ["apple", "pear"],
+                "user": {"id": user["_id"]},
+            }
+        ),
+    )
+
+    reads = SampleReads(
+        name="reads_1.fq.gz",
+        name_on_disk="reads_1.fq.gz",
+        sample="test",
+        size=2903109210,
+        uploaded_at=static_time.datetime,
+        upload=None,
+    )
+
+    async with AsyncSession(pg) as session:
+        session.add_all(
+            [
+                Label(
+                    id=1,
+                    name="Bug",
+                    color="#a83432",
+                    description="This is a bug",
+                ),
+                Label(id=2, name="Two", color="#ffg123", description="Label 2"),
+                SampleArtifact(
+                    name="reference.fa.gz",
+                    sample="test",
+                    type="fasta",
+                    name_on_disk="reference.fa.gz",
+                ),
+                reads,
+            ]
+        )
+        await session.commit()
+
+    return user["_id"]
 
 
 @pytest.mark.parametrize(
@@ -37,7 +119,6 @@ class MockJobInterface:
         (None, None, None, [3]),
         (None, None, None, [2, 3]),
         (None, None, None, [0]),
-        (None, None, None, [3, "info"]),
     ],
 )
 async def test_find(
@@ -83,9 +164,11 @@ async def test_find(
                 "_id": "beb1eb10",
                 "name": "16GVP042",
                 "pathoscope": False,
+                "library_type": "normal",
                 "all_read": True,
                 "ready": True,
                 "labels": [1, 2],
+                "notes": "",
             },
             {
                 "user": {"id": user_2.id},
@@ -93,6 +176,7 @@ async def test_find(
                 "host": "",
                 "foobar": True,
                 "isolate": "Test",
+                "library_type": "srna",
                 "created_at": arrow.get(static_time.datetime).datetime,
                 "_id": "72bb8b31",
                 "name": "16GVP043",
@@ -100,11 +184,14 @@ async def test_find(
                 "all_read": True,
                 "ready": True,
                 "labels": [1],
+                "notes": "This is a good sample.",
             },
             {
                 "user": {"id": user_2.id},
                 "nuvs": False,
                 "host": "",
+                "library_type": "amplicon",
+                "notes": "",
                 "foobar": True,
                 "ready": True,
                 "isolate": "",
@@ -138,82 +225,73 @@ async def test_find(
         path += f"?{'&'.join(query)}"
 
     resp = await client.get(path)
-
     assert resp.status == 200
     assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize("error", [None, "404"])
-@pytest.mark.parametrize("ready", [True, False])
-async def test_get(
-    error,
-    ready,
-    mocker,
-    snapshot,
-    fake2,
-    spawn_client,
-    resp_is,
-    static_time,
-    pg: AsyncEngine,
-):
-    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
+class TestGet:
+    @pytest.mark.parametrize(
+        "administrator,owner,all_read,group_read,group,status",
+        [
+            # User is administrator.
+            (True, False, False, False, "none", 200),
+            # User is owner.
+            (False, True, False, False, "none", 200),
+            # Anyone can read because of all_read.
+            (False, False, True, False, "none", 200),
+            # User is part of group with read right.
+            (False, False, False, True, "technicians", 200),
+            # User is not part of a group with read right.
+            (False, False, False, True, "managers", 403),
+        ],
+        ids=[
+            "administrator",
+            "owner",
+            "all_read",
+            "group_read",
+            "not_in_group",
+        ],
+    )
+    async def test_get(
+        self,
+        administrator,
+        owner,
+        all_read,
+        group_read,
+        group,
+        get_sample_data,
+        status,
+        snapshot,
+        fake,
+        spawn_client,
+        resp_is,
+        static_time,
+        pg: AsyncEngine,
+    ):
 
-    user = await fake2.users.create()
-
-    client = await spawn_client(authorize=True)
-
-    if not error:
-        await client.db.subtraction.insert_many(
-            [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}]
+        client = await spawn_client(
+            authorize=True, administrator=administrator, groups=["technicians"]
         )
 
-        await client.db.samples.insert_one(
-            {
-                "_id": "test",
-                "name": "Test",
-                "created_at": static_time.datetime,
-                "ready": ready,
-                "files": [
-                    {
-                        "id": "foo",
-                        "name": "Bar.fq.gz",
-                        "download_url": "/download/samples/files/file_1.fq.gz",
-                    }
-                ],
-                "labels": [1],
-                "subtractions": ["foo", "bar"],
-                "user": {"id": user.id},
-            }
+        update = {"all_read": all_read, "group_read": group_read, "group": group}
+
+        if owner:
+            update["user"] = {"id": "test"}
+
+        await client.db.samples.update_one(
+            {"_id": "test"},
+            {"$set": update},
         )
 
-        label = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
+        resp = await client.get("/samples/test")
 
-        artifact = SampleArtifact(
-            name="reference.fa.gz",
-            sample="test",
-            type="fasta",
-            name_on_disk="reference.fa.gz",
-        )
+        assert resp.status == status
+        assert await resp.json() == snapshot(name="json")
 
-        reads = SampleReads(
-            name="reads_1.fq.gz", name_on_disk="reads_1.fq.gz", sample="test"
-        )
-
-        upload = Upload(name="test")
-        upload.reads.append(reads)
-
-        async with AsyncSession(pg) as session:
-            session.add_all([label, artifact, reads, upload])
-            await session.commit()
-
-    resp = await client.get("/samples/test")
-
-    if error:
-        await resp_is.not_found(resp)
-        return
-
-    assert resp.status == 200
-    assert await resp.json() == snapshot
+    async def test_not_found(self, spawn_client):
+        client = await spawn_client(authorize=True)
+        resp = await client.get("/samples/dne")
+        assert resp.status == 404
 
 
 class TestCreate:
@@ -243,7 +321,7 @@ class TestCreate:
         data = get_data_from_app(client.app)
         data.jobs._client = DummyJobsClient()
 
-        await client.db.subtraction.insert_one({"_id": "apple"})
+        await client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"})
 
         async with AsyncSession(pg) as session:
             session.add_all(
@@ -285,28 +363,36 @@ class TestCreate:
 
         assert upload.reserved is True
 
-    async def test_name_exists(self, spawn_client, static_time, resp_is):
+    async def test_name_exists(self, pg, spawn_client, static_time, resp_is):
         client = await spawn_client(
             authorize=True, permissions=[Permission.create_sample]
         )
 
         client.app["settings"].sample_unique_names = True
 
-        await client.db.samples.insert_one(
-            {
-                "_id": "foobar",
-                "name": "Foobar",
-                "lower_name": "foobar",
-                "created_at": static_time.datetime,
-                "nuvs": False,
-                "pathoscope": False,
-                "ready": True,
-            }
-        )
+        async with AsyncSession(pg) as session:
+            session.add(Upload(id=1, name="test.fq.gz", size=123456))
+
+            await asyncio.gather(
+                client.db.samples.insert_one(
+                    {
+                        "_id": "foobar",
+                        "name": "Foobar",
+                        "lower_name": "foobar",
+                        "created_at": static_time.datetime,
+                        "nuvs": False,
+                        "pathoscope": False,
+                        "ready": True,
+                    }
+                ),
+                client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
+                session.commit(),
+            )
 
         resp = await client.post(
             "/samples", {"name": "Foobar", "files": [1], "subtractions": ["apple"]}
         )
+
         await resp_is.bad_request(resp, "Sample name is already in use")
 
     @pytest.mark.parametrize("group", ["", "diagnostics", None])
@@ -320,26 +406,27 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        client.app["settings"].sample_group = "force_choice"
-        client.app["settings"].sample_unique_names = True
-
-        await client.db.subtraction.insert_one(
-            {
-                "_id": "apple",
-            }
-        )
-
-        upload = Upload(id=1, name="test.fq.gz", size=123456)
-
         async with AsyncSession(pg) as session:
-            session.add(upload)
-            await session.commit()
+            session.add(Upload(id=1, name="test.fq.gz", size=123456))
+
+            await asyncio.gather(
+                session.commit(),
+                client.db.groups.insert_one(
+                    {"_id": "diagnostics", "name": "Diagnostics"},
+                ),
+                client.db.settings.update_one(
+                    {"_id": "settings"},
+                    {
+                        "$set": {
+                            "sample_group": "force_choice",
+                            "sample_unique_names": True,
+                        }
+                    },
+                ),
+                client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
+            )
 
         request_data = {"name": "Foobar", "files": [1], "subtractions": ["apple"]}
-
-        await client.db.groups.insert_one(
-            {"_id": "diagnostics"},
-        )
 
         if group is None:
             resp = await client.post("/samples", request_data)
@@ -357,13 +444,22 @@ class TestCreate:
         client.app["settings"].sample_group = "force_choice"
         client.app["settings"].sample_unique_names = True
 
-        await client.db.subtraction.insert_one({"_id": "apple"})
-
-        upload = Upload(id=1, name="test.fq.gz", size=123456)
-
         async with AsyncSession(pg) as session:
-            session.add(upload)
-            await session.commit()
+            session.add(Upload(id=1, name="test.fq.gz", size=123456))
+
+            await asyncio.gather(
+                session.commit(),
+                client.db.settings.update_one(
+                    {"_id": "settings"},
+                    {
+                        "$set": {
+                            "sample_group": "force_choice",
+                            "sample_unique_names": True,
+                        }
+                    },
+                ),
+                client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
+            )
 
         resp = await client.post(
             "/samples",
@@ -381,10 +477,8 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        upload = Upload(id=1, name="test.fq.gz", size=123456)
-
         async with AsyncSession(pg) as session:
-            session.add(upload)
+            session.add(Upload(id=1, name="test.fq.gz", size=123456))
             await session.commit()
 
         resp = await client.post(
@@ -433,54 +527,34 @@ class TestCreate:
         client.app["settings"].sample_unique_names = True
 
         if exists:
-            label = Label(id=1, name="Orange", color="#FFA500", description="An orange")
             async with AsyncSession(pg) as session:
-                session.add(label)
+                session.add(
+                    Label(id=1, name="Orange", color="#FFA500", description="An orange")
+                )
                 await session.commit()
 
         resp = await client.post(
             "/samples", {"name": "Foobar", "files": [1], "labels": [1]}
         )
         if not exists:
-            await resp_is.bad_request(resp, "Labels do not exist: 1")
+            await resp_is.bad_request(resp, "Labels do not exist: [1]")
 
 
 class TestEdit:
-    async def test(self, snapshot, fake2, spawn_client, pg: AsyncEngine):
+    async def test(
+        self, get_sample_data, snapshot, fake, spawn_client, pg: AsyncEngine
+    ):
         """
         Test that an existing sample can be edited correctly.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        user = await fake2.users.create()
-
-        await client.db.samples.insert_one(
-            {
-                "_id": "test",
-                "name": "Test",
-                "all_read": True,
-                "all_write": True,
-                "labels": [2, 3],
-                "ready": True,
-                "subtractions": ["apple"],
-                "user": {
-                    "id": user.id,
-                },
-            }
-        )
-
-        await client.db.subtraction.insert_one({"_id": "foo", "name": "Foo"})
-
-        async with AsyncSession(pg) as session:
-            session.add(Label(name="Bug", color="#a83432", description="This is a bug"))
-            await session.commit()
-
         resp = await client.patch(
             "/samples/test",
             {
                 "name": "test_sample",
-                "subtractions": ["foo"],
+                "subtractions": ["peach"],
                 "labels": [1],
                 "notes": "This is a test.",
             },
@@ -489,8 +563,7 @@ class TestEdit:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    @pytest.mark.parametrize("exists", [True, False])
-    async def test_name_exists(self, exists, snapshot, fake2, spawn_client, resp_is):
+    async def test_name_exists(self, snapshot, fake, spawn_client, resp_is):
         """
         Test that a ``bad_request`` is returned if the sample name passed in ``name``
         already exists.
@@ -498,51 +571,38 @@ class TestEdit:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        user = await fake2.users.create()
-
-        samples = [
-            {
-                "_id": "foo",
-                "name": "Foo",
-                "all_read": True,
-                "all_write": True,
-                "ready": True,
-                "subtractions": [],
-                "user": {
-                    "id": user.id,
+        await client.db.samples.insert_many(
+            [
+                {
+                    "_id": "foo",
+                    "name": "Foo",
+                    "all_read": True,
+                    "all_write": True,
+                    "ready": True,
+                    "subtractions": [],
+                    "user": {
+                        "id": "test",
+                    },
                 },
-            }
-        ]
-
-        if exists:
-            samples.append(
                 {
                     "_id": "bar",
                     "name": "Bar",
                     "ready": True,
                     "subtractions": [],
                     "user": {
-                        "id": user.id,
+                        "id": "test",
                     },
-                }
-            )
+                },
+            ]
+        )
 
-        await client.db.samples.insert_many(samples)
+        resp = await client.patch("/samples/foo", {"name": "Bar"})
 
-        data = {"name": "Bar"}
+        assert resp.status == 400
+        await resp_is.bad_request(resp, "Sample name is already in use")
 
-        resp = await client.patch("/samples/foo", data)
-
-        if exists:
-            await resp_is.bad_request(resp, "Sample name is already in use")
-            return
-
-        assert resp.status == 200
-        snapshot.assert_match(await resp.json())
-
-    @pytest.mark.parametrize("exists", [True, False])
     async def test_label_exists(
-        self, exists, snapshot, fake2, spawn_client, resp_is, pg: AsyncEngine
+        self, snapshot, fake, spawn_client, resp_is, pg: AsyncEngine
     ):
         """
         Test that a ``bad_request`` is returned if the label passed in ``labels`` does
@@ -551,8 +611,6 @@ class TestEdit:
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        user = await fake2.users.create()
-
         await client.db.samples.insert_one(
             {
                 "_id": "foo",
@@ -560,34 +618,18 @@ class TestEdit:
                 "all_read": True,
                 "all_write": True,
                 "subtractions": [],
-                "user": {"id": user.id},
+                "user": {"id": "test"},
                 "labels": [2, 3],
                 "ready": True,
             }
         )
 
-        if exists:
-            async with AsyncSession(pg) as session:
-                session.add(
-                    Label(
-                        id=1, name="Bug", color="#a83432", description="This is a bug"
-                    )
-                )
-                await session.commit()
-
         resp = await client.patch("/samples/foo", {"labels": [1]})
 
-        if not exists:
-            await resp_is.bad_request(resp, "Labels do not exist: 1")
-            return
+        assert resp.status == 400
+        assert await resp.json() == snapshot(name="json")
 
-        assert resp.status == 200
-        snapshot.assert_match(await resp.json())
-
-    @pytest.mark.parametrize("exists", [True, False])
-    async def test_subtraction_exists(
-        self, exists, fake2, snapshot, spawn_client, resp_is
-    ):
+    async def test_subtraction_exists(self, fake, snapshot, spawn_client, resp_is):
         """
         Test that a ``bad_request`` is returned if the subtraction passed in ``subtractions`` does not exist.
 
@@ -596,35 +638,25 @@ class TestEdit:
 
         user = await fake2.users.create()
 
-        await client.db.samples.insert_one(
-            {
-                "_id": "test",
-                "name": "Test",
-                "all_read": True,
-                "all_write": True,
-                "ready": True,
-                "subtractions": ["apple"],
-                "user": {"id": user.id},
-            }
+        await asyncio.gather(
+            client.db.samples.insert_one(
+                {
+                    "_id": "test",
+                    "name": "Test",
+                    "all_read": True,
+                    "all_write": True,
+                    "ready": True,
+                    "subtractions": ["apple"],
+                    "user": {"id": user["_id"]},
+                }
+            ),
+            client.db.subtraction.insert_one({"_id": "foo", "name": "Foo"}),
         )
 
-        subtractions = [{"_id": "foo", "name": "Foo"}]
+        resp = await client.patch("/samples/test", {"subtractions": ["foo", "bar"]})
 
-        if exists:
-            subtractions.append({"_id": "bar", "name": "Bar"})
-
-        await client.db.subtraction.insert_many(subtractions)
-
-        data = {"subtractions": ["foo", "bar"]}
-
-        resp = await client.patch("/samples/test", data)
-
-        if not exists:
-            await resp_is.bad_request(resp, "Subtractions do not exist: bar")
-            return
-
-        assert resp.status == 200
-        assert await resp.json() == snapshot
+        assert resp.status == 400
+        assert await resp.json() == snapshot(name="json")
 
 
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
@@ -679,42 +711,32 @@ async def test_finalize(
         await resp_is.invalid_input(resp, {"quality": ["required field"]})
 
 
-@pytest.mark.parametrize(
-    "delete_result,resp_is_attr", [(1, "no_content"), (0, "not_found")]
-)
-async def test_remove(
-    delete_result, resp_is_attr, mocker, spawn_client, resp_is, create_delete_result
-):
+async def test_remove(spawn_client, resp_is, create_delete_result, tmpdir):
     client = await spawn_client(authorize=True)
 
-    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
+    config: Config = client.app["config"]
+    config.data_path = Path(tmpdir)
 
-    if resp_is_attr == "no_content":
-        await client.db.samples.insert_one(
-            {
-                "_id": "test",
-                "all_read": True,
-                "all_write": True,
-                "ready": True,
-            }
-        )
+    sample_path = config.data_path / "samples/test"
 
-    m = mocker.stub(name="remove_samples")
+    os.makedirs(sample_path, exist_ok=True)
 
-    async def mock_remove_samples(*args, **kwargs):
-        m(*args, **kwargs)
-        return create_delete_result(delete_result)
-
-    mocker.patch("virtool.samples.db.remove_samples", new=mock_remove_samples)
+    await client.db.samples.insert_one(
+        {
+            "_id": "test",
+            "all_read": True,
+            "all_write": True,
+            "ready": True,
+            "user": {"id": "test"},
+        }
+    )
 
     resp = await client.delete("/samples/test")
 
-    await getattr(resp_is, resp_is_attr)(resp)
+    assert resp.status == 204
 
-    if resp_is_attr == "no_content":
-        m.assert_called_with(client.db, client.app["config"], ["test"])
-    else:
-        assert not m.called
+    assert await client.db.samples.count_documents({}) == 0
+    assert not sample_path.exists()
 
 
 @pytest.mark.parametrize("ready", [True, False])
@@ -750,10 +772,6 @@ async def test_job_remove(
 
     if exists and not ready:
         await resp_is.no_content(resp)
-        assert not await check_name(
-            client.app["db"], client.app["settings"], "test", "test"
-        )
-
         upload = await virtool.uploads.db.get(pg, file["id"])
         assert not upload.reserved
     elif exists:

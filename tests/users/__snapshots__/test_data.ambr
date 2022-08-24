@@ -76,23 +76,6 @@
     'primary_group': None,
   }
 ---
-# name: TestDelete.test[uvloop]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'foo',
-      'users': <class 'list'> [
-        <class 'dict'> {
-          'id': 'bob',
-        },
-      ],
-    },
-    <class 'dict'> {
-      '_id': 'bar',
-      'users': <class 'list'> [
-      ],
-    },
-  ]
----
 # name: TestUpdate.test[uvloop-administrator][db]
   <class 'dict'> {
     '_id': 'abc123',
