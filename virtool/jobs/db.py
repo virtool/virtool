@@ -3,6 +3,7 @@ Constants and utility functions for interacting with the jobs collection in the
 application database.
 
 """
+from virtool_core.models.job import Job, JobAcquired
 
 from virtool.mongo.transforms import apply_transforms
 from virtool.users.db import AttachUserTransform
@@ -61,3 +62,12 @@ async def processor(db, document: dict) -> dict:
         ),
         [AttachUserTransform(db)],
     )
+
+
+async def fetch_complete_job(db, document, key=None) -> Job:
+    document = await processor(db, document)
+
+    if key:
+        return JobAcquired(**document, key=key)
+
+    return Job(**document)
