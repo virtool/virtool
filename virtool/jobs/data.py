@@ -92,7 +92,7 @@ class JobsData:
         if page > 1:
             skip_count = (page - 1) * per_page
 
-        sort = {"created_at": 1}
+        sort = {"created_at": -1}
 
         match_query = {
             **(compose_regex_query(term, ["user.id"]) if term else {}),
