@@ -33,5 +33,5 @@ async def test_send(ws):
 
 
 async def test_close(ws):
-    await ws.close()
+    await ws.close(1000)
     ws._ws.close.assert_called()

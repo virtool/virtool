@@ -29,6 +29,10 @@ async def test_cancel(dbi, fake2, jobs_data: JobsData, snapshot, static_time):
                     "timestamp": static_time.datetime,
                 }
             ],
+            "rights": {},
+            "archived": False,
+            "workflow": "build_index",
+            "args": {},
             "user": {"id": user.id},
         }
     )
@@ -46,6 +50,7 @@ async def test_create(
     dbi,
     test_random_alphanumeric,
     static_time,
+    fake,
 ):
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
@@ -54,9 +59,11 @@ async def test_create(
     rights.samples.can_modify("foo")
     rights.samples.can_remove("foo")
 
+    user = await fake.users.insert()
+
     assert (
         await jobs_data.create(
-            "create_sample", {"sample_id": "foo"}, "bob", rights, job_id=job_id
+            "create_sample", {"sample_id": "foo"}, user["_id"], rights, job_id=job_id
         )
         == snapshot
     )
@@ -72,7 +79,16 @@ async def test_acquire(
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
     await dbi.jobs.insert_one(
-        {"_id": "foo", "acquired": False, "key": None, "user": {"id": user.id}}
+        {
+            "_id": "foo",
+            "acquired": False,
+            "key": None,
+            "rights": {},
+            "archived": False,
+            "workflow": "build_index",
+            "args": {},
+        }
+            "user": {"id": user.id},
     )
 
     assert await jobs_data.acquire("foo") == snapshot
@@ -92,6 +108,9 @@ async def test_archive(dbi, fake2, jobs_data: JobsData, pg, snapshot, static_tim
             "acquired": False,
             "key": None,
             "user": {"id": user.id},
+            "rights": {},
+            "workflow": "build_index",
+            "args": {},
         }
     )
 
