@@ -21,4 +21,13 @@ async def test_fake(fake2, snapshot):
 
     job = await fake2.jobs.create(user_1)
 
-    assert job == snapshot(name="job")
+    assert job == snapshot(
+        name="job",
+        matcher=path_type(
+            {
+                "created_at": (datetime,),
+                ".*timestamp": (datetime,),
+            },
+            regex=True,
+        ),
+    )

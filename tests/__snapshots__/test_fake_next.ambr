@@ -74,3 +74,41 @@
     'primary_group': None,
   }
 ---
+# name: test_fake[uvloop][job]
+  <class 'dict'> {
+    'acquired': False,
+    'archived': False,
+    'args': <class 'dict'> {
+      'age': 'tphorteObohEsZgfLWqS',
+      'beat': -72199579.2991181,
+      'face': -5262745923324.53,
+      'local': 'ufCpVOLlelZEijfQSbBN',
+      'product': 'SgBHsToacJDXWVcMKILU',
+      'white': 'fVyRYryKwpMUVGtYHdeM',
+    },
+    'created_at': <class 'datetime'>,
+    'id': '7cf872dc',
+    'progress': 0,
+    'rights': <class 'dict'> {
+    },
+    'stage': None,
+    'state': 'waiting',
+    'status': <class 'list'> [
+      <class 'dict'> {
+        'error': None,
+        'progress': 0,
+        'stage': None,
+        'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': <class 'datetime'>,
+      },
+    ],
+    'user': <class 'dict'> {
+      'administrator': False,
+      'handle': 'laura56',
+      'id': 'bf1b993c',
+    },
+    'workflow': 'jobs_aodp',
+  }
+---

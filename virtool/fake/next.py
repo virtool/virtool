@@ -18,6 +18,7 @@ from virtool_core.models.job import Job
 from virtool_core.models.user import User
 
 from virtool.data.layer import DataLayer
+from virtool.fake.providers import WORKFLOW_NAMES
 from virtool.groups.oas import EditPermissionsSchema, EditGroupSchema
 from virtool.jobs.utils import WORKFLOW_NAMES, JobRights
 from virtool.users.oas import UpdateUserSchema
@@ -31,7 +32,9 @@ class VirtoolProvider(BaseProvider):
         return self.random_int()
 
     def workflow(self) -> str:
-        return self.random_choices(WORKFLOW_NAMES, 1)[0]
+        return self.random_choices(
+            [name.replace("job_", "") for name in WORKFLOW_NAMES], 1
+        )[0]
 
 
 class DataFaker:
