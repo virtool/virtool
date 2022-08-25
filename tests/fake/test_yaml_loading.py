@@ -10,7 +10,9 @@ def example_test_case(test_files_path) -> Path:
     return test_files_path / "fake/test_case.yml"
 
 
-async def test_load_yml(app, fake, example_test_case):
+async def test_load_yml(app, data_layer, fake, example_test_case):
+
+    app["data"] = data_layer
 
     case = await load_test_case_from_yml(app, example_test_case, "bob")
 

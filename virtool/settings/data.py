@@ -1,7 +1,6 @@
 from virtool_core.models.settings import Settings
 
 from virtool.mongo.core import DB
-from virtool.settings.db import update, ensure
 from virtool.settings.oas import UpdateSettingsSchema
 
 PROJECTION = {"_id": False}
@@ -26,7 +25,7 @@ class SettingsData:
         if settings:
             return Settings(**settings)
 
-        return {}
+        return Settings()
 
     async def update(self, data: UpdateSettingsSchema) -> Settings:
         """
@@ -36,12 +35,23 @@ class SettingsData:
         :return: the application settings
         """
 
-        return Settings(**await update(self._db, data.dict(exclude_unset=True)))
+        updated = await self._db.settings.find_one_and_update(
+            {"_id": "settings"}, {"$set": data.dict(exclude_unset=True)}
+        )
 
-    async def ensure_default(self) -> Settings:
+        return Settings(**updated)
+
+    async def ensure(self) -> Settings:
         """
         Ensure the settings document is updated and filled with default values.
 
         :return: a dictionary with settings data
         """
-        return await ensure(self._db)
+
+        existing = await self._db.settings.find_one({"_id": "settings"}, {"_id": False}) or {}
+
+        settings = {**(Settings().dict()), **existing}
+
+        await self._db.settings.update_one({"_id": "settings"}, {"$set": settings}, upsert=True)
+
+        return Settings(**settings)

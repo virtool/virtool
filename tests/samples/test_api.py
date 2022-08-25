@@ -410,20 +410,6 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-
-        await get_data_from_app(client.app).settings.update(
-            UpdateSettingsSchema(sample_group="force_choice", sample_unique_names=True)
-        )
-
-        await client.db.subtraction.insert_one(
-            {
-                "_id": "apple",
-            }
-        )
-
-        upload = Upload(id=1, name="test.fq.gz", size=123456)
-
-
         async with AsyncSession(pg) as session:
             session.add(Upload(id=1, name="test.fq.gz", size=123456))
 
@@ -432,14 +418,10 @@ class TestCreate:
                 client.db.groups.insert_one(
                     {"_id": "diagnostics", "name": "Diagnostics"},
                 ),
-                client.db.settings.update_one(
-                    {"_id": "settings"},
-                    {
-                        "$set": {
-                            "sample_group": "force_choice",
-                            "sample_unique_names": True,
-                        }
-                    },
+                get_data_from_app(client.app).settings.update(
+                    UpdateSettingsSchema(
+                        sample_group="force_choice", sample_unique_names=True
+                    )
                 ),
                 client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
             )
@@ -468,14 +450,10 @@ class TestCreate:
 
             await asyncio.gather(
                 session.commit(),
-                client.db.settings.update_one(
-                    {"_id": "settings"},
-                    {
-                        "$set": {
-                            "sample_group": "force_choice",
-                            "sample_unique_names": True,
-                        }
-                    },
+                get_data_from_app(client.app).settings.update(
+                    UpdateSettingsSchema(
+                        sample_group="force_choice", sample_unique_names=True
+                    )
                 ),
                 client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
             )

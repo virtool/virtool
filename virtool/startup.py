@@ -134,7 +134,7 @@ async def startup_data(app: App):
         LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),
-        SamplesData(app["config"], app["db"], app["pg"]),
+        SamplesData(app),
         UsersData(app["db"], app["pg"]),
     )
 
@@ -328,7 +328,7 @@ async def startup_settings(app: typing.Union[dict, Application]):
     :param app: the app object
 
     """
-    await get_data_from_app(app).settings.ensure_default()
+    await get_data_from_app(app).settings.ensure()
 
 
 async def startup_version(app: typing.Union[dict, Application]):

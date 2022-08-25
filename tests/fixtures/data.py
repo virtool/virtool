@@ -26,6 +26,6 @@ def data_layer(dbi, config, mocker, pg: AsyncEngine):
         LabelsData(dbi, pg),
         JobsData(DummyJobsClient(), dbi, pg),
         OTUData({"db": dbi, "pg": pg}),
-        SamplesData(config, dbi, pg),
+        SamplesData({"config": config, "db": dbi, "pg": pg}),
         UsersData(dbi, pg),
     )
