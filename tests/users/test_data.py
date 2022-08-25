@@ -1,9 +1,8 @@
-import re
 from asyncio import gather
 from datetime import datetime
 
-
 import pytest
+from syrupy.extensions import AmberSnapshotExtension
 from syrupy.filters import props
 from syrupy.matchers import path_type
 
@@ -161,4 +160,9 @@ async def test_find_or_create_b2c_user(
         )
     )
 
-    assert user == snapshot
+    if not exists:
+        assert "Fred-Smith" in user.handle
+        # Make sure handle ends with integer.
+        assert int(user.handle.split("-")[-1])
+
+    assert user == snapshot(matcher=path_type({"handle": (str,)}))

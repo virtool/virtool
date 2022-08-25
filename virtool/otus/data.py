@@ -121,7 +121,7 @@ class OTUData:
                 session=session,
             )
 
-            return format_otu(document, most_recent_change=change)
+        return format_otu(document, most_recent_change=change)
 
     async def edit(
         self,
@@ -334,23 +334,20 @@ class OTUData:
         source_type: Optional[str] = None,
         source_name: Optional[str] = None,
     ):
+        isolates = await get_one_field(self._db.otus, "isolates", otu_id)
+
+        isolate = find_isolate(isolates, isolate_id)
+        old_isolate_name = format_isolate_name(isolate)
+
+        if source_type is not None:
+            isolate["source_type"] = source_type
+
+        if source_name is not None:
+            isolate["source_name"] = source_name
+
+        new_isolate_name = format_isolate_name(isolate)
+
         async with self._db.create_session() as session:
-            isolates = await get_one_field(
-                self._db.otus, "isolates", otu_id, session=session
-            )
-
-            isolate = find_isolate(isolates, isolate_id)
-
-            old_isolate_name = format_isolate_name(isolate)
-
-            if source_type is not None:
-                isolate["source_type"] = source_type
-
-            if source_name is not None:
-                isolate["source_name"] = source_name
-
-            new_isolate_name = format_isolate_name(isolate)
-
             old = await virtool.otus.db.join(self._db, otu_id, session=session)
 
             # Replace the isolates list with the update one.

@@ -69,13 +69,13 @@ class UsersData:
         :param password:
         :return:
         """
+        if await self._mongo.users.count_documents({}):
+            raise ResourceConflictError("Virtool already has at least one user")
+
+        if handle == "virtool":
+            raise ResourceConflictError("Reserved user name: virtool")
+
         async with self._mongo.create_session() as session:
-            if await self._mongo.users.count_documents({}):
-                raise ResourceConflictError("Virtool already has at least one user")
-
-            if handle == "virtool":
-                raise ResourceConflictError("Reserved user name: virtool")
-
             document = await create_user(
                 self._mongo, handle, password, False, session=session
             )
@@ -86,7 +86,7 @@ class UsersData:
                 session=session,
             )
 
-            return await fetch_complete_user(self._mongo, document["_id"])
+        return await fetch_complete_user(self._mongo, document["_id"])
 
     async def find_or_create_b2c_user(
         self, b2c_user_attributes: B2CUserAttributes

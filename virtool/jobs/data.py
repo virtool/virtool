@@ -377,9 +377,9 @@ class JobsData:
 
         query = {"$or": or_list}
 
-        async with self._db.create_session() as session:
-            removed = await self._db.jobs.distinct("_id", query, session=session)
-            await self._db.jobs.delete_many(query, session=session)
+        removed = await self._db.jobs.distinct("_id", query)
+
+        await self._db.jobs.delete_many(query)
 
         return removed
 
@@ -389,33 +389,26 @@ class JobsData:
 
         :param job_id: the ID of the job to delete
         """
-        async with self._db.create_session() as session:
-            document = await self._db.jobs.find_one(
-                {"_id": job_id}, ["status"], session=session
+        document = await self._db.jobs.find_one({"_id": job_id}, ["status"])
+
+        if document is None:
+            raise ResourceNotFoundError
+
+        if is_running_or_waiting(document):
+            raise ResourceConflictError(
+                "Job is running or waiting and cannot be removed."
             )
 
-            if document is None:
-                raise ResourceNotFoundError
+        delete_result = await self._db.jobs.delete_one({"_id": job_id})
 
-            if is_running_or_waiting(document):
-                raise ResourceConflictError(
-                    "Job is running or waiting and cannot be removed."
-                )
-
-            delete_result = await self._db.jobs.delete_one(
-                {"_id": job_id}, session=session
-            )
-
-            if delete_result.deleted_count == 0:
-                raise ResourceNotFoundError
+        if delete_result.deleted_count == 0:
+            raise ResourceNotFoundError
 
     async def force_delete(self):
         """
         Force the deletion of all jobs.
 
         """
-        async with self._db.create_session() as session:
-            job_ids = await self._db.jobs.distinct("_id", session=session)
-
-            await gather(*[self._client.cancel(job_id) for job_id in job_ids])
-            await self._db.jobs.delete_many({"_id": {"$in": job_ids}}, session=session)
+        job_ids = await self._db.jobs.distinct("_id")
+        await gather(*[self._client.cancel(job_id) for job_id in job_ids])
+        await self._db.jobs.delete_many({"_id": {"$in": job_ids}})

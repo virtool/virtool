@@ -280,11 +280,13 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'administrator': False,
+        'handle': 'zclark',
+        'id': 'fb085f7f',
       },
     ],
   }
@@ -298,11 +300,11 @@
     },
     'name': 'Bar',
     'user': <class 'dict'> {
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'bob',
+        'id': 'fb085f7f',
       },
     ],
   }

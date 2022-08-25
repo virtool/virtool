@@ -21,16 +21,15 @@ async def setup_update_user(fake2, spawn_client):
 
     groups = get_data_from_app(client.app).groups
 
-    await asyncio.gather(
-        groups.update(
-            group_1.id,
-            EditGroupSchema(permissions=EditPermissionsSchema(upload_file=True)),
-        ),
-        groups.update(
-            group_2.id,
-            EditGroupSchema(
-                permissions=EditPermissionsSchema(create_sample=True, create_ref=True)
-            ),
+    await groups.update(
+        group_1.id,
+        EditGroupSchema(permissions=EditPermissionsSchema(upload_file=True)),
+    )
+
+    await groups.update(
+        group_2.id,
+        EditGroupSchema(
+            permissions=EditPermissionsSchema(create_sample=True, create_ref=True)
         ),
     )
 

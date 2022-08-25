@@ -53,7 +53,7 @@
   }
 ---
 # name: test_create[uvloop-barcode]
-  'https://virtool.example.com/refs/9pfsom1b'
+  'https://virtool.example.com/refs/bf1b993c'
 ---
 # name: test_create[uvloop-barcode].1
   <class 'dict'> {
@@ -64,7 +64,7 @@
     'description': 'A bunch of viruses used for testing',
     'groups': <class 'list'> [
     ],
-    'id': '9pfsom1b',
+    'id': 'bf1b993c',
     'internal_control': None,
     'latest_build': None,
     'name': 'Test Viruses',
@@ -97,7 +97,7 @@
   }
 ---
 # name: test_create[uvloop-genome]
-  'https://virtool.example.com/refs/9pfsom1b'
+  'https://virtool.example.com/refs/bf1b993c'
 ---
 # name: test_create[uvloop-genome].1
   <class 'dict'> {
@@ -108,7 +108,7 @@
     'description': 'A bunch of viruses used for testing',
     'groups': <class 'list'> [
     ],
-    'id': '9pfsom1b',
+    'id': 'bf1b993c',
     'internal_control': None,
     'latest_build': None,
     'name': 'Test Viruses',

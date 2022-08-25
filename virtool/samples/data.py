@@ -7,7 +7,7 @@ from pymongo.results import UpdateResult
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.samples import SampleSearchResult, Sample
 
-import virtool.mongo.utils
+import virtool.utils
 from virtool.api.utils import compose_regex_query
 from virtool.config.cls import Config
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -16,6 +16,7 @@ from virtool.http.client import UserClient
 from virtool.jobs.utils import JobRights
 from virtool.labels.db import AttachLabelsTransform
 from virtool.mongo.transforms import apply_transforms
+from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.samples.checks import (
     check_labels_do_not_exist,
     check_subtractions_do_not_exist,
@@ -150,53 +151,45 @@ class SamplesData(DataLayerPiece):
         Create a sample.
 
         """
+        settings = await get_settings(self._db)
+
+        await wait_for_checks(
+            check_name_is_in_use(self._db, settings, data.name),
+            check_labels_do_not_exist(self._pg, data.labels),
+            check_subtractions_do_not_exist(self._db, data.subtractions),
+        )
+
+        try:
+            uploads = [
+                (await virtool.uploads.db.get(self._pg, file_)).to_dict()
+                for file_ in data.files
+            ]
+        except AttributeError:
+            raise ResourceConflictError("File does not exist")
+
+        group = "none"
+
+        # Require a valid ``group`` field if the ``sample_group`` setting is
+        # ``users_primary_group``.
+        if settings.sample_group == "force_choice":
+            if force_choice_error_message := await validate_force_choice_group(
+                self._db, data.dict(exclude_unset=True)
+            ):
+                raise ResourceConflictError(force_choice_error_message)
+
+            group = data.group
+
+        # Assign the user's primary group as the sample owner group if the
+        # setting is ``users_primary_group``.
+        elif settings.sample_group == "users_primary_group":
+            group = await get_one_field(self._db.users, "primary_group", user_id)
+
         async with self._db.create_session() as session:
-            if _id is None:
-                _id = await virtool.mongo.utils.get_new_id(
-                    self._db.samples, session=session
-                )
-
-            settings = await get_settings(self._db, session=session)
-
-            await wait_for_checks(
-                check_name_is_in_use(self._db, settings, data.name, session=session),
-                check_labels_do_not_exist(self._pg, data.labels),
-                check_subtractions_do_not_exist(
-                    self._db, data.subtractions, session=session
-                ),
-            )
-
-            try:
-                uploads = [
-                    (await virtool.uploads.db.get(self._pg, file_)).to_dict()
-                    for file_ in data.files
-                ]
-            except AttributeError:
-                raise ResourceConflictError("File does not exist")
-
-            group = "none"
-
-            # Require a valid ``group`` field if the ``sample_group`` setting is
-            # ``users_primary_group``.
-            if settings.sample_group == "force_choice":
-                if force_choice_error_message := await validate_force_choice_group(
-                    self._db, data.dict(exclude_unset=True), session=session
-                ):
-                    raise ResourceConflictError(force_choice_error_message)
-
-                group = data.group
-
-            # Assign the user's primary group as the sample owner group if the
-            # setting is ``users_primary_group``.
-            elif settings.sample_group == "users_primary_group":
-                group = await virtool.mongo.utils.get_one_field(
-                    self._db.users, "primary_group", user_id, session=session
-                )
-
             document, _ = await asyncio.gather(
                 self._db.samples.insert_one(
                     {
-                        "_id": _id,
+                        "_id": _id
+                        or await get_new_id(self._db.samples, session=session),
                         "all_read": settings.sample_all_read,
                         "all_write": settings.sample_all_write,
                         "created_at": virtool.utils.timestamp(),
@@ -229,22 +222,22 @@ class SamplesData(DataLayerPiece):
 
             sample_id = document["_id"]
 
-            await self.data.jobs.create(
-                "create_sample",
-                {
-                    "sample_id": sample_id,
-                    "files": [
-                        {
-                            "id": upload["id"],
-                            "name": upload["name"],
-                            "size": upload["size"],
-                        }
-                        for upload in uploads
-                    ],
-                },
-                user_id,
-                JobRights(),
-            )
+        await self.data.jobs.create(
+            "create_sample",
+            {
+                "sample_id": sample_id,
+                "files": [
+                    {
+                        "id": upload["id"],
+                        "name": upload["name"],
+                        "size": upload["size"],
+                    }
+                    for upload in uploads
+                ],
+            },
+            user_id,
+            JobRights(),
+        )
 
         return await self.get(sample_id)
 
@@ -311,16 +304,16 @@ class SamplesData(DataLayerPiece):
                 ),
             )
 
-            if result.deleted_count:
-                await run_in_thread(
-                    virtool.utils.rm,
-                    join_sample_path(self._config, sample_id),
-                    recursive=True,
-                )
+        if result.deleted_count:
+            await run_in_thread(
+                virtool.utils.rm,
+                join_sample_path(self._config, sample_id),
+                recursive=True,
+            )
 
-                return result
+            return result
 
-            raise ResourceNotFoundError
+        raise ResourceNotFoundError
 
     async def has_right(
         self, sample_id: str, client: UserClient, right: SampleRight
