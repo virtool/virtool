@@ -8,9 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.job import (
     JobMinimal,
     JobSearchResult,
-    Job,
     JobStatus,
-    JobAcquired,
 )
 from virtool_core.models.user import UserNested
 
