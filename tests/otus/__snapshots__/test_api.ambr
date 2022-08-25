@@ -474,91 +474,10 @@
     },
   }
 ---
-# name: TestCreate.test[True-uvloop--True]
-  <class 'dict'> {
-    'abbreviation': '',
-    'id': '9pfsom1b',
-    'isolates': <class 'list'> [
-    ],
-    'issues': <class 'dict'> {
-      'empty_isolate': False,
-      'empty_otu': True,
-      'empty_sequence': False,
-      'isolate_inconsistency': False,
-    },
-    'last_indexed_version': None,
-    'most_recent_change': <class 'dict'> {
-      'created_at': '2015-10-06T20:00:00Z',
-      'description': 'Created Tobacco mosaic virus',
-      'diff': <class 'dict'> {
-        '_id': '9pfsom1b',
-        'abbreviation': '',
-        'isolates': <class 'list'> [
-        ],
-        'last_indexed_version': None,
-        'lower_name': 'tobacco mosaic virus',
-        'name': 'Tobacco mosaic virus',
-        'reference': <class 'dict'> {
-          'id': 'foo',
-        },
-        'schema': <class 'list'> [
-        ],
-        'verified': False,
-        'version': 0,
-      },
-      'id': '9pfsom1b.0',
-      'index': <class 'dict'> {
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      },
-      'method_name': 'create',
-      'otu': <class 'dict'> {
-        'id': '9pfsom1b',
-        'name': 'Tobacco mosaic virus',
-        'version': 0,
-      },
-      'reference': <class 'dict'> {
-        'id': 'foo',
-      },
-      'user': <class 'dict'> {
-        'id': 'test',
-      },
-    },
-    'name': 'Tobacco mosaic virus',
-    'reference': <class 'dict'> {
-      'id': 'foo',
-    },
-    'schema': <class 'list'> [
-    ],
-    'verified': False,
-    'version': 0,
-  }
----
-# name: TestCreate.test[True-uvloop--True].1
-  <class 'dict'> {
-    '_id': '9pfsom1b',
-    'abbreviation': '',
-    'isolates': <class 'list'> [
-    ],
-    'last_indexed_version': None,
-    'lower_name': 'tobacco mosaic virus',
-    'name': 'Tobacco mosaic virus',
-    'reference': <class 'dict'> {
-      'id': 'foo',
-    },
-    'schema': <class 'list'> [
-    ],
-    'verified': False,
-    'version': 0,
-  }
----
-# name: TestCreate.test[True-uvloop--True].2
-  <class 'dict'> {
-    '_id': '9pfsom1b.0',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'description': 'Created Tobacco mosaic virus',
-    'diff': <class 'dict'> {
-      '_id': '9pfsom1b',
+# name: TestCreate.test[True-uvloop--True][db]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'bf1b993c',
       'abbreviation': '',
       'isolates': <class 'list'> [
       ],
@@ -573,42 +492,12 @@
       'verified': False,
       'version': 0,
     },
-    'index': <class 'dict'> {
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    },
-    'method_name': 'create',
-    'otu': <class 'dict'> {
-      'id': '9pfsom1b',
-      'name': 'Tobacco mosaic virus',
-      'version': 0,
-    },
-    'reference': <class 'dict'> {
-      'id': 'foo',
-    },
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
-  }
----
-# name: TestCreate.test[True-uvloop-None-True]
-  <class 'dict'> {
-    'abbreviation': '',
-    'id': '9pfsom1b',
-    'isolates': <class 'list'> [
-    ],
-    'issues': <class 'dict'> {
-      'empty_isolate': False,
-      'empty_otu': True,
-      'empty_sequence': False,
-      'isolate_inconsistency': False,
-    },
-    'last_indexed_version': None,
-    'most_recent_change': <class 'dict'> {
-      'created_at': '2015-10-06T20:00:00Z',
+    <class 'dict'> {
+      '_id': 'bf1b993c.0',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Created Tobacco mosaic virus',
       'diff': <class 'dict'> {
-        '_id': '9pfsom1b',
+        '_id': 'bf1b993c',
         'abbreviation': '',
         'isolates': <class 'list'> [
         ],
@@ -623,14 +512,65 @@
         'verified': False,
         'version': 0,
       },
-      'id': '9pfsom1b.0',
       'index': <class 'dict'> {
         'id': 'unbuilt',
         'version': 'unbuilt',
       },
       'method_name': 'create',
       'otu': <class 'dict'> {
-        'id': '9pfsom1b',
+        'id': 'bf1b993c',
+        'name': 'Tobacco mosaic virus',
+        'version': 0,
+      },
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+  ]
+---
+# name: TestCreate.test[True-uvloop--True][json]
+  <class 'dict'> {
+    'abbreviation': '',
+    'id': 'bf1b993c',
+    'isolates': <class 'list'> [
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': None,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Created Tobacco mosaic virus',
+      'diff': <class 'dict'> {
+        '_id': 'bf1b993c',
+        'abbreviation': '',
+        'isolates': <class 'list'> [
+        ],
+        'last_indexed_version': None,
+        'lower_name': 'tobacco mosaic virus',
+        'name': 'Tobacco mosaic virus',
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
+        'schema': <class 'list'> [
+        ],
+        'verified': False,
+        'version': 0,
+      },
+      'id': 'bf1b993c.0',
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      },
+      'method_name': 'create',
+      'otu': <class 'dict'> {
+        'id': 'bf1b993c',
         'name': 'Tobacco mosaic virus',
         'version': 0,
       },
@@ -651,31 +591,13 @@
     'version': 0,
   }
 ---
-# name: TestCreate.test[True-uvloop-None-True].1
-  <class 'dict'> {
-    '_id': '9pfsom1b',
-    'abbreviation': '',
-    'isolates': <class 'list'> [
-    ],
-    'last_indexed_version': None,
-    'lower_name': 'tobacco mosaic virus',
-    'name': 'Tobacco mosaic virus',
-    'reference': <class 'dict'> {
-      'id': 'foo',
-    },
-    'schema': <class 'list'> [
-    ],
-    'verified': False,
-    'version': 0,
-  }
+# name: TestCreate.test[True-uvloop--True][location]
+  'https://virtool.example.com/otus/bf1b993c'
 ---
-# name: TestCreate.test[True-uvloop-None-True].2
-  <class 'dict'> {
-    '_id': '9pfsom1b.0',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'description': 'Created Tobacco mosaic virus',
-    'diff': <class 'dict'> {
-      '_id': '9pfsom1b',
+# name: TestCreate.test[True-uvloop-None-True][db]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'bf1b993c',
       'abbreviation': '',
       'isolates': <class 'list'> [
       ],
@@ -690,43 +612,13 @@
       'verified': False,
       'version': 0,
     },
-    'index': <class 'dict'> {
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    },
-    'method_name': 'create',
-    'otu': <class 'dict'> {
-      'id': '9pfsom1b',
-      'name': 'Tobacco mosaic virus',
-      'version': 0,
-    },
-    'reference': <class 'dict'> {
-      'id': 'foo',
-    },
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
-  }
----
-# name: TestCreate.test[True-uvloop-TMV-True]
-  <class 'dict'> {
-    'abbreviation': 'TMV',
-    'id': '9pfsom1b',
-    'isolates': <class 'list'> [
-    ],
-    'issues': <class 'dict'> {
-      'empty_isolate': False,
-      'empty_otu': True,
-      'empty_sequence': False,
-      'isolate_inconsistency': False,
-    },
-    'last_indexed_version': None,
-    'most_recent_change': <class 'dict'> {
-      'created_at': '2015-10-06T20:00:00Z',
-      'description': 'Created Tobacco mosaic virus (TMV)',
+    <class 'dict'> {
+      '_id': 'bf1b993c.0',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Tobacco mosaic virus',
       'diff': <class 'dict'> {
-        '_id': '9pfsom1b',
-        'abbreviation': 'TMV',
+        '_id': 'bf1b993c',
+        'abbreviation': '',
         'isolates': <class 'list'> [
         ],
         'last_indexed_version': None,
@@ -740,14 +632,65 @@
         'verified': False,
         'version': 0,
       },
-      'id': '9pfsom1b.0',
       'index': <class 'dict'> {
         'id': 'unbuilt',
         'version': 'unbuilt',
       },
       'method_name': 'create',
       'otu': <class 'dict'> {
-        'id': '9pfsom1b',
+        'id': 'bf1b993c',
+        'name': 'Tobacco mosaic virus',
+        'version': 0,
+      },
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+  ]
+---
+# name: TestCreate.test[True-uvloop-None-True][json]
+  <class 'dict'> {
+    'abbreviation': '',
+    'id': 'bf1b993c',
+    'isolates': <class 'list'> [
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    },
+    'last_indexed_version': None,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Created Tobacco mosaic virus',
+      'diff': <class 'dict'> {
+        '_id': 'bf1b993c',
+        'abbreviation': '',
+        'isolates': <class 'list'> [
+        ],
+        'last_indexed_version': None,
+        'lower_name': 'tobacco mosaic virus',
+        'name': 'Tobacco mosaic virus',
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
+        'schema': <class 'list'> [
+        ],
+        'verified': False,
+        'version': 0,
+      },
+      'id': 'bf1b993c.0',
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      },
+      'method_name': 'create',
+      'otu': <class 'dict'> {
+        'id': 'bf1b993c',
         'name': 'Tobacco mosaic virus',
         'version': 0,
       },
@@ -768,31 +711,13 @@
     'version': 0,
   }
 ---
-# name: TestCreate.test[True-uvloop-TMV-True].1
-  <class 'dict'> {
-    '_id': '9pfsom1b',
-    'abbreviation': 'TMV',
-    'isolates': <class 'list'> [
-    ],
-    'last_indexed_version': None,
-    'lower_name': 'tobacco mosaic virus',
-    'name': 'Tobacco mosaic virus',
-    'reference': <class 'dict'> {
-      'id': 'foo',
-    },
-    'schema': <class 'list'> [
-    ],
-    'verified': False,
-    'version': 0,
-  }
+# name: TestCreate.test[True-uvloop-None-True][location]
+  'https://virtool.example.com/otus/bf1b993c'
 ---
-# name: TestCreate.test[True-uvloop-TMV-True].2
-  <class 'dict'> {
-    '_id': '9pfsom1b.0',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'description': 'Created Tobacco mosaic virus (TMV)',
-    'diff': <class 'dict'> {
-      '_id': '9pfsom1b',
+# name: TestCreate.test[True-uvloop-TMV-True][db]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'bf1b993c',
       'abbreviation': 'TMV',
       'isolates': <class 'list'> [
       ],
@@ -807,23 +732,107 @@
       'verified': False,
       'version': 0,
     },
-    'index': <class 'dict'> {
-      'id': 'unbuilt',
-      'version': 'unbuilt',
+    <class 'dict'> {
+      '_id': 'bf1b993c.0',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Tobacco mosaic virus (TMV)',
+      'diff': <class 'dict'> {
+        '_id': 'bf1b993c',
+        'abbreviation': 'TMV',
+        'isolates': <class 'list'> [
+        ],
+        'last_indexed_version': None,
+        'lower_name': 'tobacco mosaic virus',
+        'name': 'Tobacco mosaic virus',
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
+        'schema': <class 'list'> [
+        ],
+        'verified': False,
+        'version': 0,
+      },
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      },
+      'method_name': 'create',
+      'otu': <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'Tobacco mosaic virus',
+        'version': 0,
+      },
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
     },
-    'method_name': 'create',
-    'otu': <class 'dict'> {
-      'id': '9pfsom1b',
-      'name': 'Tobacco mosaic virus',
-      'version': 0,
+  ]
+---
+# name: TestCreate.test[True-uvloop-TMV-True][json]
+  <class 'dict'> {
+    'abbreviation': 'TMV',
+    'id': 'bf1b993c',
+    'isolates': <class 'list'> [
+    ],
+    'issues': <class 'dict'> {
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
     },
+    'last_indexed_version': None,
+    'most_recent_change': <class 'dict'> {
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Created Tobacco mosaic virus (TMV)',
+      'diff': <class 'dict'> {
+        '_id': 'bf1b993c',
+        'abbreviation': 'TMV',
+        'isolates': <class 'list'> [
+        ],
+        'last_indexed_version': None,
+        'lower_name': 'tobacco mosaic virus',
+        'name': 'Tobacco mosaic virus',
+        'reference': <class 'dict'> {
+          'id': 'foo',
+        },
+        'schema': <class 'list'> [
+        ],
+        'verified': False,
+        'version': 0,
+      },
+      'id': 'bf1b993c.0',
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      },
+      'method_name': 'create',
+      'otu': <class 'dict'> {
+        'id': 'bf1b993c',
+        'name': 'Tobacco mosaic virus',
+        'version': 0,
+      },
+      'reference': <class 'dict'> {
+        'id': 'foo',
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
+    },
+    'name': 'Tobacco mosaic virus',
     'reference': <class 'dict'> {
       'id': 'foo',
     },
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
+    'schema': <class 'list'> [
+    ],
+    'verified': False,
+    'version': 0,
   }
+---
+# name: TestCreate.test[True-uvloop-TMV-True][location]
+  'https://virtool.example.com/otus/bf1b993c'
 ---
 # name: TestEdit.test[True-uvloop-data0-TMV-Changed name to Tobacco mosaic otu]
   <class 'dict'> {
@@ -2850,14 +2859,14 @@
   }
 ---
 # name: test_create_sequence[True-uvloop-None-null]
-  'https://virtool.example.com/otus/6116cba1/isolates/cab8b360/sequences/9pfsom1b'
+  'https://virtool.example.com/otus/6116cba1/isolates/cab8b360/sequences/bf1b993c'
 ---
 # name: test_create_sequence[True-uvloop-None-null].1
   <class 'dict'> {
     'accession': 'foobar',
     'definition': 'A made up sequence',
     'host': 'Plant',
-    'id': '9pfsom1b',
+    'id': 'bf1b993c',
     'isolate_id': 'cab8b360',
     'otu_id': '6116cba1',
     'reference': <class 'dict'> {
@@ -2868,129 +2877,127 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[True-uvloop-None-null].2
-  <class 'dict'> {
-    '_id': '6116cba1',
-    'abbreviation': 'PVF',
-    'imported': True,
-    'isolates': <class 'list'> [
-      <class 'dict'> {
-        'default': True,
-        'id': 'cab8b360',
-        'source_name': '8816-v2',
-        'source_type': 'isolate',
+# name: test_create_sequence[True-uvloop-None-null][db]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'bf1b993c',
+      'accession': 'foobar',
+      'definition': 'A made up sequence',
+      'host': 'Plant',
+      'isolate_id': 'cab8b360',
+      'otu_id': '6116cba1',
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
       },
-    ],
-    'last_indexed_version': 0,
-    'lower_name': 'prunus virus f',
-    'name': 'Prunus virus F',
-    'reference': <class 'dict'> {
-      'id': 'hxn167',
+      'segment': None,
+      'sequence': 'ATGCGTGTACTG',
+      'target': None,
     },
-    'schema': <class 'list'> [
-      <class 'dict'> {
-        'molecule': 'ssDNA',
-        'name': 'test_segment',
-        'required': False,
-      },
-    ],
-    'verified': True,
-    'version': 2,
-  }
----
-# name: test_create_sequence[True-uvloop-None-null].3
-  <class 'dict'> {
-    '_id': '9pfsom1b',
-    'accession': 'foobar',
-    'definition': 'A made up sequence',
-    'host': 'Plant',
-    'isolate_id': 'cab8b360',
-    'otu_id': '6116cba1',
-    'reference': <class 'dict'> {
-      'id': 'hxn167',
-    },
-    'segment': None,
-    'sequence': 'ATGCGTGTACTG',
-    'target': None,
-  }
----
-# name: test_create_sequence[True-uvloop-None-null].4
-  <class 'dict'> {
-    '_id': '6116cba1.2',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'description': 'Created new sequence foobar in Isolate 8816-v2',
-    'diff': <class 'list'> [
-      <class 'list'> [
-        'change',
-        'version',
-        <class 'list'> [
-          1,
-          2,
-        ],
+    <class 'dict'> {
+      '_id': '6116cba1',
+      'abbreviation': 'PVF',
+      'imported': True,
+      'isolates': <class 'list'> [
+        <class 'dict'> {
+          'default': True,
+          'id': 'cab8b360',
+          'source_name': '8816-v2',
+          'source_type': 'isolate',
+        },
       ],
-      <class 'list'> [
-        'add',
+      'last_indexed_version': 0,
+      'lower_name': 'prunus virus f',
+      'name': 'Prunus virus F',
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
+      },
+      'schema': <class 'list'> [
+        <class 'dict'> {
+          'molecule': 'ssDNA',
+          'name': 'test_segment',
+          'required': False,
+        },
+      ],
+      'verified': True,
+      'version': 2,
+    },
+    <class 'dict'> {
+      '_id': '6116cba1.2',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created new sequence foobar in Isolate 8816-v2',
+      'diff': <class 'list'> [
         <class 'list'> [
-          'isolates',
-          0,
-          'sequences',
+          'change',
+          'version',
+          <class 'list'> [
+            1,
+            2,
+          ],
         ],
         <class 'list'> [
+          'add',
           <class 'list'> [
+            'isolates',
             0,
-            <class 'dict'> {
-              '_id': '9pfsom1b',
-              'accession': 'foobar',
-              'definition': 'A made up sequence',
-              'host': 'Plant',
-              'isolate_id': 'cab8b360',
-              'otu_id': '6116cba1',
-              'reference': <class 'dict'> {
-                'id': 'hxn167',
+            'sequences',
+          ],
+          <class 'list'> [
+            <class 'list'> [
+              0,
+              <class 'dict'> {
+                '_id': 'bf1b993c',
+                'accession': 'foobar',
+                'definition': 'A made up sequence',
+                'host': 'Plant',
+                'isolate_id': 'cab8b360',
+                'otu_id': '6116cba1',
+                'reference': <class 'dict'> {
+                  'id': 'hxn167',
+                },
+                'segment': None,
+                'sequence': 'ATGCGTGTACTG',
+                'target': None,
               },
-              'segment': None,
-              'sequence': 'ATGCGTGTACTG',
-              'target': None,
-            },
+            ],
+          ],
+        ],
+        <class 'list'> [
+          'change',
+          'verified',
+          <class 'list'> [
+            False,
+            True,
           ],
         ],
       ],
-      <class 'list'> [
-        'change',
-        'verified',
-        <class 'list'> [
-          False,
-          True,
-        ],
-      ],
-    ],
-    'index': <class 'dict'> {
-      'id': 'unbuilt',
-      'version': 'unbuilt',
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      },
+      'method_name': 'create_sequence',
+      'otu': <class 'dict'> {
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'version': 2,
+      },
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
     },
-    'method_name': 'create_sequence',
-    'otu': <class 'dict'> {
-      'id': '6116cba1',
-      'name': 'Prunus virus F',
-      'version': 2,
-    },
-    'reference': <class 'dict'> {
-      'id': 'hxn167',
-    },
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
-  }
+  ]
 ---
 # name: test_create_sequence[True-uvloop-None-test_segment]
-  'https://virtool.example.com/otus/6116cba1/isolates/cab8b360/sequences/9pfsom1b'
+  'https://virtool.example.com/otus/6116cba1/isolates/cab8b360/sequences/bf1b993c'
 ---
 # name: test_create_sequence[True-uvloop-None-test_segment].1
   <class 'dict'> {
     'accession': 'foobar',
     'definition': 'A made up sequence',
     'host': 'Plant',
-    'id': '9pfsom1b',
+    'id': 'bf1b993c',
     'isolate_id': 'cab8b360',
     'otu_id': '6116cba1',
     'reference': <class 'dict'> {
@@ -3001,119 +3008,117 @@
     'target': None,
   }
 ---
-# name: test_create_sequence[True-uvloop-None-test_segment].2
-  <class 'dict'> {
-    '_id': '6116cba1',
-    'abbreviation': 'PVF',
-    'imported': True,
-    'isolates': <class 'list'> [
-      <class 'dict'> {
-        'default': True,
-        'id': 'cab8b360',
-        'source_name': '8816-v2',
-        'source_type': 'isolate',
+# name: test_create_sequence[True-uvloop-None-test_segment][db]
+  <class 'list'> [
+    <class 'dict'> {
+      '_id': 'bf1b993c',
+      'accession': 'foobar',
+      'definition': 'A made up sequence',
+      'host': 'Plant',
+      'isolate_id': 'cab8b360',
+      'otu_id': '6116cba1',
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
       },
-    ],
-    'last_indexed_version': 0,
-    'lower_name': 'prunus virus f',
-    'name': 'Prunus virus F',
-    'reference': <class 'dict'> {
-      'id': 'hxn167',
+      'segment': 'test_segment',
+      'sequence': 'ATGCGTGTACTG',
+      'target': None,
     },
-    'schema': <class 'list'> [
-      <class 'dict'> {
-        'molecule': 'ssDNA',
-        'name': 'test_segment',
-        'required': False,
-      },
-    ],
-    'verified': True,
-    'version': 2,
-  }
----
-# name: test_create_sequence[True-uvloop-None-test_segment].3
-  <class 'dict'> {
-    '_id': '9pfsom1b',
-    'accession': 'foobar',
-    'definition': 'A made up sequence',
-    'host': 'Plant',
-    'isolate_id': 'cab8b360',
-    'otu_id': '6116cba1',
-    'reference': <class 'dict'> {
-      'id': 'hxn167',
-    },
-    'segment': 'test_segment',
-    'sequence': 'ATGCGTGTACTG',
-    'target': None,
-  }
----
-# name: test_create_sequence[True-uvloop-None-test_segment].4
-  <class 'dict'> {
-    '_id': '6116cba1.2',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'description': 'Created new sequence foobar in Isolate 8816-v2',
-    'diff': <class 'list'> [
-      <class 'list'> [
-        'change',
-        'version',
-        <class 'list'> [
-          1,
-          2,
-        ],
+    <class 'dict'> {
+      '_id': '6116cba1',
+      'abbreviation': 'PVF',
+      'imported': True,
+      'isolates': <class 'list'> [
+        <class 'dict'> {
+          'default': True,
+          'id': 'cab8b360',
+          'source_name': '8816-v2',
+          'source_type': 'isolate',
+        },
       ],
-      <class 'list'> [
-        'add',
+      'last_indexed_version': 0,
+      'lower_name': 'prunus virus f',
+      'name': 'Prunus virus F',
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
+      },
+      'schema': <class 'list'> [
+        <class 'dict'> {
+          'molecule': 'ssDNA',
+          'name': 'test_segment',
+          'required': False,
+        },
+      ],
+      'verified': True,
+      'version': 2,
+    },
+    <class 'dict'> {
+      '_id': '6116cba1.2',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created new sequence foobar in Isolate 8816-v2',
+      'diff': <class 'list'> [
         <class 'list'> [
-          'isolates',
-          0,
-          'sequences',
+          'change',
+          'version',
+          <class 'list'> [
+            1,
+            2,
+          ],
         ],
         <class 'list'> [
+          'add',
           <class 'list'> [
+            'isolates',
             0,
-            <class 'dict'> {
-              '_id': '9pfsom1b',
-              'accession': 'foobar',
-              'definition': 'A made up sequence',
-              'host': 'Plant',
-              'isolate_id': 'cab8b360',
-              'otu_id': '6116cba1',
-              'reference': <class 'dict'> {
-                'id': 'hxn167',
+            'sequences',
+          ],
+          <class 'list'> [
+            <class 'list'> [
+              0,
+              <class 'dict'> {
+                '_id': 'bf1b993c',
+                'accession': 'foobar',
+                'definition': 'A made up sequence',
+                'host': 'Plant',
+                'isolate_id': 'cab8b360',
+                'otu_id': '6116cba1',
+                'reference': <class 'dict'> {
+                  'id': 'hxn167',
+                },
+                'segment': 'test_segment',
+                'sequence': 'ATGCGTGTACTG',
+                'target': None,
               },
-              'segment': 'test_segment',
-              'sequence': 'ATGCGTGTACTG',
-              'target': None,
-            },
+            ],
+          ],
+        ],
+        <class 'list'> [
+          'change',
+          'verified',
+          <class 'list'> [
+            False,
+            True,
           ],
         ],
       ],
-      <class 'list'> [
-        'change',
-        'verified',
-        <class 'list'> [
-          False,
-          True,
-        ],
-      ],
-    ],
-    'index': <class 'dict'> {
-      'id': 'unbuilt',
-      'version': 'unbuilt',
+      'index': <class 'dict'> {
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      },
+      'method_name': 'create_sequence',
+      'otu': <class 'dict'> {
+        'id': '6116cba1',
+        'name': 'Prunus virus F',
+        'version': 2,
+      },
+      'reference': <class 'dict'> {
+        'id': 'hxn167',
+      },
+      'user': <class 'dict'> {
+        'id': 'test',
+      },
     },
-    'method_name': 'create_sequence',
-    'otu': <class 'dict'> {
-      'id': '6116cba1',
-      'name': 'Prunus virus F',
-      'version': 2,
-    },
-    'reference': <class 'dict'> {
-      'id': 'hxn167',
-    },
-    'user': <class 'dict'> {
-      'id': 'test',
-    },
-  }
+  ]
 ---
 # name: test_edit_sequence[True-uvloop-None-null]
   <class 'dict'> {

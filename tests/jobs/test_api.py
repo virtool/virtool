@@ -34,12 +34,12 @@ async def test_find_beta(archived, state, fake, snapshot, spawn_client):
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, fake, snapshot, spawn_client, test_job, resp_is):
+async def test_get(error, fake2, snapshot, spawn_client, test_job, resp_is):
     client = await spawn_client(authorize=True)
 
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
-    test_job["user"] = {"id": user["_id"]}
+    test_job["user"] = {"id": user.id}
 
     if error is None:
         await client.db.jobs.insert_one(test_job)
@@ -61,13 +61,13 @@ async def test_get(error, fake, snapshot, spawn_client, test_job, resp_is):
 
 @pytest.mark.parametrize("error", [None, 400, 404])
 async def test_acquire(
-    error, mocker, snapshot, dbi, fake, test_job, spawn_job_client, resp_is
+    error, mocker, snapshot, dbi, fake2, test_job, spawn_job_client, resp_is
 ):
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
-    test_job["user"] = {"id": user["_id"]}
+    test_job["user"] = {"id": user.id}
 
     client = await spawn_job_client(authorize=True)
 
@@ -97,10 +97,12 @@ async def test_acquire(
 
 
 @pytest.mark.parametrize("error", [None, 400, 404])
-async def test_archive(error, snapshot, dbi, fake, test_job, spawn_job_client, resp_is):
-    user = await fake.users.insert()
+async def test_archive(
+    error, snapshot, dbi, fake2, test_job, spawn_job_client, resp_is
+):
+    user = await fake2.users.create()
 
-    test_job["user"] = {"id": user["_id"]}
+    test_job["user"] = {"id": user.id}
 
     client = await spawn_job_client(authorize=True)
 
@@ -129,12 +131,12 @@ async def test_archive(error, snapshot, dbi, fake, test_job, spawn_job_client, r
 @pytest.mark.parametrize(
     "error", [None, 404, "409_complete", "409_errored", "409_cancelled"]
 )
-async def test_cancel(error, snapshot, dbi, fake, resp_is, spawn_client, test_job):
+async def test_cancel(error, snapshot, dbi, fake2, resp_is, spawn_client, test_job):
     client = await spawn_client(authorize=True, permissions=[Permission.cancel_job])
 
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
-    test_job["user"] = {"id": user["_id"]}
+    test_job["user"] = {"id": user.id}
 
     complete_status = test_job["status"].pop(-1)
 

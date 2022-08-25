@@ -1,3 +1,4 @@
+import asyncio
 import io
 import json
 import os
@@ -21,73 +22,73 @@ def files(test_files_path, tmp_path):
     return data
 
 
-async def test_find(snapshot, mocker, fake, spawn_client, resp_is, static_time):
+async def test_find(snapshot, mocker, fake2, spawn_client, resp_is, static_time):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
     client = await spawn_client(authorize=True)
 
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
-    await client.db.samples.insert_one(
-        {
-            "_id": "test",
-            "created_at": static_time.datetime,
-            "all_read": True,
-            "all_write": True,
-            "user": {"id": user["_id"]},
-            "labels": [],
-        }
-    )
-
-    await client.db.subtraction.insert_one(
-        {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"}
-    )
-
-    await client.db.analyses.insert_many(
-        [
+    await asyncio.gather(
+        client.db.samples.insert_one(
             {
-                "_id": "test_1",
-                "workflow": "pathoscope_bowtie",
+                "_id": "test",
                 "created_at": static_time.datetime,
-                "ready": True,
-                "job": {"id": "test"},
-                "index": {"version": 2, "id": "foo"},
-                "user": {"id": user["_id"]},
-                "sample": {"id": "test"},
-                "reference": {"id": "baz", "name": "Baz"},
-                "results": {"hits": []},
-                "subtractions": [],
-                "foobar": True,
-            },
-            {
-                "_id": "test_2",
-                "workflow": "pathoscope_bowtie",
-                "created_at": static_time.datetime,
-                "ready": True,
-                "job": {"id": "test"},
-                "index": {"version": 2, "id": "foo"},
-                "user": {"id": user["_id"]},
-                "sample": {"id": "test"},
-                "reference": {"id": "baz", "name": "Baz"},
-                "results": {"hits": []},
-                "subtractions": ["foo"],
-                "foobar": True,
-            },
-            {
-                "_id": "test_3",
-                "workflow": "pathoscope_bowtie",
-                "created_at": static_time.datetime,
-                "ready": True,
-                "job": {"id": "test"},
-                "index": {"version": 2, "id": "foo"},
-                "user": {"id": user["_id"]},
-                "sample": {"id": "test"},
-                "reference": {"id": "foo", "name": "Foo"},
-                "results": {"hits": []},
-                "subtractions": [],
-                "foobar": False,
-            },
-        ]
+                "all_read": True,
+                "all_write": True,
+                "user": {"id": user.id},
+                "labels": [],
+            }
+        ),
+        client.db.subtraction.insert_one(
+            {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"}
+        ),
+        client.db.analyses.insert_many(
+            [
+                {
+                    "_id": "test_1",
+                    "workflow": "pathoscope_bowtie",
+                    "created_at": static_time.datetime,
+                    "ready": True,
+                    "job": {"id": "test"},
+                    "index": {"version": 2, "id": "foo"},
+                    "user": {"id": user.id},
+                    "sample": {"id": "test"},
+                    "reference": {"id": "baz", "name": "Baz"},
+                    "results": {"hits": []},
+                    "subtractions": [],
+                    "foobar": True,
+                },
+                {
+                    "_id": "test_2",
+                    "workflow": "pathoscope_bowtie",
+                    "created_at": static_time.datetime,
+                    "ready": True,
+                    "job": {"id": "test"},
+                    "index": {"version": 2, "id": "foo"},
+                    "user": {"id": user.id},
+                    "sample": {"id": "test"},
+                    "reference": {"id": "baz", "name": "Baz"},
+                    "results": {"hits": []},
+                    "subtractions": ["foo"],
+                    "foobar": True,
+                },
+                {
+                    "_id": "test_3",
+                    "workflow": "pathoscope_bowtie",
+                    "created_at": static_time.datetime,
+                    "ready": True,
+                    "job": {"id": "test"},
+                    "index": {"version": 2, "id": "foo"},
+                    "user": {"id": user.id},
+                    "sample": {"id": "test"},
+                    "reference": {"id": "foo", "name": "Foo"},
+                    "results": {"hits": []},
+                    "subtractions": [],
+                    "foobar": False,
+                },
+            ]
+        ),
     )
 
     resp = await client.get("/analyses")
@@ -100,7 +101,7 @@ async def test_find(snapshot, mocker, fake, spawn_client, resp_is, static_time):
 @pytest.mark.parametrize("error", [None, "400", "403", "404"])
 async def test_get(
     ready,
-    fake: FakeGenerator,
+    fake2,
     error,
     mocker,
     snapshot,
@@ -111,7 +112,7 @@ async def test_get(
 ):
     client = await spawn_client(authorize=True)
 
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
     document = {
         "_id": "foobar",
@@ -121,7 +122,7 @@ async def test_get(
         "results": {"hits": []},
         "sample": {"id": "baz"},
         "subtractions": ["plum", "apple"],
-        "user": {"id": user["_id"]},
+        "user": {"id": user.id},
     }
 
     await client.db.subtraction.insert_many(
@@ -139,7 +140,7 @@ async def test_get(
                 "group_write": True,
                 "labels": [],
                 "subtractions": ["apple", "plum"],
-                "user": {"id": user["_id"]},
+                "user": {"id": user.id},
             }
         )
 
@@ -154,7 +155,7 @@ async def test_get(
                 "_id": "foo",
                 "created_at": static_time.datetime,
                 "formatted": True,
-                "user": {"id": user["_id"]},
+                "user": {"id": user.id},
                 "subtractions": ["apple", "plum"],
                 "results": {"hits": []},
                 "workflow": "pathoscope_bowtie",
@@ -188,12 +189,12 @@ async def test_get(
 
 
 @pytest.mark.parametrize("error", [None, "400", "403", "404", "409"])
-async def test_remove(mocker, error, fake, spawn_client, resp_is, tmp_path):
+async def test_remove(mocker, error, fake2, spawn_client, resp_is, tmp_path):
     client = await spawn_client(authorize=True)
 
     client.app["config"].data_path = tmp_path
 
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
     if error != "400":
         await client.db.samples.insert_one(
@@ -204,7 +205,7 @@ async def test_remove(mocker, error, fake, spawn_client, resp_is, tmp_path):
                 "group": "tech",
                 "group_read": True,
                 "group_write": True,
-                "user": {"id": user["_id"]},
+                "user": {"id": user.id},
             }
         )
 
@@ -459,14 +460,14 @@ async def test_blast(
 
 
 @pytest.mark.parametrize("error", [None, 422, 404, 409])
-async def test_finalize(fake, snapshot, spawn_job_client, faker, error, resp_is):
-    user = await fake.users.insert()
+async def test_finalize(fake2, snapshot, spawn_job_client, faker, error, resp_is):
+    user = await fake2.users.create()
 
     analysis_document = {
         "_id": "analysis1",
         "sample": {"id": "sample1"},
         "workflow": "test_workflow",
-        "user": {"id": user["_id"]},
+        "user": {"id": user.id},
         "ready": error == 409,
         "subtractions": [],
     }
@@ -496,8 +497,8 @@ async def test_finalize(fake, snapshot, spawn_job_client, faker, error, resp_is)
         assert document["ready"] is True
 
 
-async def test_finalize_large(fake, spawn_job_client, faker):
-    user = await fake.users.insert()
+async def test_finalize_large(fake2, spawn_job_client, faker):
+    user = await fake2.users.create()
 
     faker = Faker(1)
 
@@ -529,7 +530,7 @@ async def test_finalize_large(fake, spawn_job_client, faker):
             "_id": "analysis1",
             "sample": {"id": "sample1"},
             "workflow": "test_workflow",
-            "user": {"id": user["_id"]},
+            "user": {"id": user.id},
             "ready": False,
             "subtractions": [],
         }

@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from sqlalchemy.ext.asyncio import AsyncEngine
+
 from virtool.analyses.data import AnalysisData
 from virtool.blast.data import BLASTData
 from virtool.groups.data import GroupsData

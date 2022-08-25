@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 import pytest
 import arrow
 
+from virtool.data.layer import DataLayer
+from virtool.fake.next import DataFaker
 from virtool.fake.wrapper import FakerWrapper
 from virtool.types import Document
 from virtool_core.models.enums import Permission
@@ -153,3 +155,8 @@ def app(dbi, pg, tmp_path, config, settings):
 @pytest.fixture
 def fake(dbi):
     return FakeGenerator(dbi)
+
+
+@pytest.fixture
+def fake2(data_layer):
+    return DataFaker(data_layer)

@@ -1,9 +1,8 @@
-import re
 from asyncio import gather
 from datetime import datetime
 
-
 import pytest
+from syrupy.extensions import AmberSnapshotExtension
 from syrupy.filters import props
 from syrupy.matchers import path_type
 
@@ -52,11 +51,11 @@ class TestCreate:
             matcher=path_type({"last_password_change": (datetime,)}),
         )
 
-    async def test_already_exists(self, fake, users_data):
-        user = await fake.users.insert()
+    async def test_already_exists(self, fake2, users_data):
+        user = await fake2.users.create()
 
         with pytest.raises(ResourceConflictError) as err:
-            await users_data.create(password="hello_world", handle=user["handle"])
+            await users_data.create(password="hello_world", handle=user.handle)
             assert "User already exists" in str(err)
 
 
@@ -134,21 +133,23 @@ class TestUpdate:
 
 @pytest.mark.parametrize("exists", [True, False])
 async def test_find_or_create_b2c_user(
-    exists, dbi, fake, snapshot, static_time, users_data
+    exists, dbi, fake2, snapshot, static_time, users_data
 ):
-    if exists:
-        await dbi.users.insert_one(
-            {
-                **await fake.users.create(),
-                "_id": "foobar",
+    fake_user = await fake2.users.create()
+
+    await dbi.users.update_one(
+        {"_id": fake_user.id},
+        {
+            "$set": {
                 "last_password_change": static_time.datetime,
                 "force_reset": False,
-                "b2c_oid": "abc123",
+                "b2c_oid": "abc123" if exists else "def456",
                 "b2c_given_name": "Bilbo",
                 "b2c_family_name": "Baggins",
                 "b2c_display_name": "Bilbo",
             }
-        )
+        },
+    )
 
     user = await users_data.find_or_create_b2c_user(
         B2CUserAttributes(
@@ -159,10 +160,9 @@ async def test_find_or_create_b2c_user(
         )
     )
 
-    assert user == snapshot(exclude=props("id", "handle"))
+    if not exists:
+        assert "Fred-Smith" in user.handle
+        # Make sure handle ends with integer.
+        assert int(user.handle.split("-")[-1])
 
-    if exists:
-        assert user.id == "foobar"
-    else:
-        assert re.match(r"[a-z\d]{8}", user.id)
-        assert re.match(r"Fred-Smith-\d+", user.handle)
+    assert user == snapshot(matcher=path_type({"handle": (str,)}))

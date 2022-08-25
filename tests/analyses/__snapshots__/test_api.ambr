@@ -47,7 +47,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'workflow': 'test_workflow',
   }
@@ -65,7 +65,7 @@
     'subtractions': <class 'list'> [
     ],
     'user': <class 'dict'> {
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'workflow': 'test_workflow',
   }
@@ -96,7 +96,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': '7CtBo2yG',
+          'id': 'bf1b993c',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -127,7 +127,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': '7CtBo2yG',
+          'id': 'bf1b993c',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -154,7 +154,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': '7CtBo2yG',
+          'id': 'bf1b993c',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -203,7 +203,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'workflow': 'pathoscope_bowtie',
   }
@@ -230,7 +230,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'workflow': 'pathoscope_bowtie',
   }
@@ -264,7 +264,7 @@
       'apple',
     ],
     'user': <class 'dict'> {
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'workflow': 'pathoscope_bowtie',
   }

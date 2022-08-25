@@ -338,6 +338,8 @@
     'force_reset': False,
     'groups': <class 'list'> [
     ],
+    'handle': <class 'str'>,
+    'id': 'fb085f7f',
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -363,6 +365,8 @@
     'force_reset': False,
     'groups': <class 'list'> [
     ],
+    'handle': <class 'str'>,
+    'id': 'bf1b993c',
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
     'permissions': <class 'dict'> {
       'cancel_job': False,

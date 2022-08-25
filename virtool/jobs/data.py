@@ -9,6 +9,7 @@ from virtool_core.models.job import (
     JobMinimal,
     JobSearchResult,
     JobStatus,
+    Job,
 )
 from virtool_core.models.user import UserNested
 
@@ -61,7 +62,7 @@ class JobsData:
 
         return dict(counts)
 
-    async def find(self, query: MultiDictProxy) -> Document:
+    async def find(self, query: MultiDictProxy) -> JobSearchResult:
         """
         {
           "waiting": {
@@ -196,7 +197,7 @@ class JobsData:
         user_id: str,
         rights: JobRights,
         job_id: Optional[str] = None,
-    ) -> Document:
+    ) -> Job:
         """
         Create a job record and queue it.
 
@@ -225,12 +226,12 @@ class JobsData:
         if job_id:
             document["_id"] = job_id
 
-        await self._db.jobs.insert_one(document)
+        document = await self._db.jobs.insert_one(document)
         await self._client.enqueue(workflow, document["_id"])
 
         return await fetch_complete_job(self._db, document)
 
-    async def get(self, job_id: str) -> Document:
+    async def get(self, job_id: str) -> Job:
         """
         Get a job document.
 
@@ -273,7 +274,7 @@ class JobsData:
 
         return await fetch_complete_job(self._db, document, key=key)
 
-    async def archive(self, job_id: str) -> Document:
+    async def archive(self, job_id: str) -> Job:
         """
         Set the `archived` field on a job to `True` and return the complete document.
 
@@ -298,7 +299,7 @@ class JobsData:
 
         return await fetch_complete_job(self._db, document)
 
-    async def cancel(self, job_id: str) -> Document:
+    async def cancel(self, job_id: str) -> Job:
         """
         Add a cancellation status sub-document to the job identified by `job_id`.
 
@@ -382,9 +383,9 @@ class JobsData:
 
         query = {"$or": or_list}
 
-        async with self._db.create_session() as session:
-            removed = await self._db.jobs.distinct("_id", query, session=session)
-            await self._db.jobs.delete_many(query, session=session)
+        removed = await self._db.jobs.distinct("_id", query)
+
+        await self._db.jobs.delete_many(query)
 
         return removed
 
@@ -394,33 +395,26 @@ class JobsData:
 
         :param job_id: the ID of the job to delete
         """
-        async with self._db.create_session() as session:
-            document = await self._db.jobs.find_one(
-                {"_id": job_id}, ["status"], session=session
+        document = await self._db.jobs.find_one({"_id": job_id}, ["status"])
+
+        if document is None:
+            raise ResourceNotFoundError
+
+        if is_running_or_waiting(document):
+            raise ResourceConflictError(
+                "Job is running or waiting and cannot be removed."
             )
 
-            if document is None:
-                raise ResourceNotFoundError
+        delete_result = await self._db.jobs.delete_one({"_id": job_id})
 
-            if is_running_or_waiting(document):
-                raise ResourceConflictError(
-                    "Job is running or waiting and cannot be removed."
-                )
-
-            delete_result = await self._db.jobs.delete_one(
-                {"_id": job_id}, session=session
-            )
-
-            if delete_result.deleted_count == 0:
-                raise ResourceNotFoundError
+        if delete_result.deleted_count == 0:
+            raise ResourceNotFoundError
 
     async def force_delete(self):
         """
         Force the deletion of all jobs.
 
         """
-        async with self._db.create_session() as session:
-            job_ids = await self._db.jobs.distinct("_id", session=session)
-
-            await gather(*[self._client.cancel(job_id) for job_id in job_ids])
-            await self._db.jobs.delete_many({"_id": {"$in": job_ids}}, session=session)
+        job_ids = await self._db.jobs.distinct("_id")
+        await gather(*[self._client.cancel(job_id) for job_id in job_ids])
+        await self._db.jobs.delete_many({"_id": {"$in": job_ids}})

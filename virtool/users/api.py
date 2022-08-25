@@ -65,7 +65,6 @@ class UsersView(PydanticView):
 
         Creates a new user.
 
-
         Status Codes:
             201: Successful operation
             400: User already exists
@@ -112,7 +111,7 @@ class FirstUserView(PydanticView):
         """
         db = self.request.app["db"]
 
-        if await db.users.count_documents({}):
+        if not await db.users.count_documents({}, limit=1):
             raise HTTPConflict(text="Virtool already has at least one user")
 
         if data.handle == "virtool":

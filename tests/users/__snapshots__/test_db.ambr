@@ -4,7 +4,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -15,15 +15,15 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'leeashley',
-        'id': '7CtBo2yG',
+        'id': 'bf1b993c',
       },
     },
     <class 'dict'> {
       '_id': 'foo',
       'user': <class 'dict'> {
         'administrator': False,
-        'handle': 'johnsoncynthia',
-        'id': 'LB1U6zCj',
+        'handle': 'zclark',
+        'id': 'fb085f7f',
       },
     },
     <class 'dict'> {
@@ -31,7 +31,7 @@
       'user': <class 'dict'> {
         'administrator': False,
         'handle': 'leeashley',
-        'id': '7CtBo2yG',
+        'id': 'bf1b993c',
       },
     },
   ]

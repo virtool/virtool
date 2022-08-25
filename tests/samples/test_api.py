@@ -29,8 +29,8 @@ class MockJobInterface:
 
 
 @pytest.fixture
-async def get_sample_data(dbi, fake, pg, static_time):
-    user = await fake.users.insert()
+async def get_sample_data(dbi, fake2, pg, static_time):
+    user = await fake2.users.create()
 
     await asyncio.gather(
         dbi.subtraction.insert_many(
@@ -70,7 +70,7 @@ async def get_sample_data(dbi, fake, pg, static_time):
                 ],
                 "labels": [1],
                 "subtractions": ["apple", "pear"],
-                "user": {"id": user["_id"]},
+                "user": {"id": user.id},
             }
         ),
     )
@@ -105,7 +105,7 @@ async def get_sample_data(dbi, fake, pg, static_time):
         )
         await session.commit()
 
-    return user["_id"]
+    return user.id
 
 
 @pytest.mark.parametrize(
@@ -116,7 +116,6 @@ async def get_sample_data(dbi, fake, pg, static_time):
         (None, 2, 2, None),
         ("gv", None, None, None),
         ("sp", None, None, None),
-        ("LB1U", None, None, None),
         (None, None, None, [3]),
         (None, None, None, [2, 3]),
         (None, None, None, [0]),
@@ -128,13 +127,13 @@ async def test_find(
     page,
     labels,
     snapshot,
-    fake,
+    fake2,
     spawn_client,
     static_time,
     pg: AsyncEngine,
 ):
-    user_1 = await fake.users.insert()
-    user_2 = await fake.users.insert()
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
 
     client = await spawn_client(authorize=True)
 
@@ -156,7 +155,7 @@ async def test_find(
     await client.db.samples.insert_many(
         [
             {
-                "user": {"id": user_1["_id"]},
+                "user": {"id": user_1.id},
                 "nuvs": False,
                 "host": "",
                 "foobar": True,
@@ -172,7 +171,7 @@ async def test_find(
                 "notes": "",
             },
             {
-                "user": {"id": user_2["_id"]},
+                "user": {"id": user_2.id},
                 "nuvs": False,
                 "host": "",
                 "foobar": True,
@@ -188,7 +187,7 @@ async def test_find(
                 "notes": "This is a good sample.",
             },
             {
-                "user": {"id": user_2["_id"]},
+                "user": {"id": user_2.id},
                 "nuvs": False,
                 "host": "",
                 "library_type": "amplicon",
@@ -263,13 +262,10 @@ class TestGet:
         get_sample_data,
         status,
         snapshot,
-        fake,
         spawn_client,
-        resp_is,
         static_time,
         pg: AsyncEngine,
     ):
-
         client = await spawn_client(
             authorize=True, administrator=administrator, groups=["technicians"]
         )
@@ -307,7 +303,6 @@ class TestCreate:
         spawn_client,
         pg: AsyncEngine,
         static_time,
-        test_random_alphanumeric,
         settings,
     ):
         client = await spawn_client(
@@ -357,7 +352,7 @@ class TestCreate:
 
         assert await client.db.samples.find_one() == snapshot
 
-        assert data.jobs._client.enqueued == [("create_sample", "u3cuwaoq")]
+        assert data.jobs._client.enqueued == [("create_sample", "fb085f7f")]
 
         async with pg.begin() as conn:
             upload = await get_row_by_id(conn, Upload, 1)
@@ -542,9 +537,7 @@ class TestCreate:
 
 
 class TestEdit:
-    async def test(
-        self, get_sample_data, snapshot, fake, spawn_client, pg: AsyncEngine
-    ):
+    async def test(self, get_sample_data, snapshot, spawn_client, pg: AsyncEngine):
         """
         Test that an existing sample can be edited correctly.
 
@@ -564,7 +557,7 @@ class TestEdit:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    async def test_name_exists(self, snapshot, fake, spawn_client, resp_is):
+    async def test_name_exists(self, snapshot, spawn_client, resp_is):
         """
         Test that a ``bad_request`` is returned if the sample name passed in ``name``
         already exists.
@@ -602,9 +595,7 @@ class TestEdit:
         assert resp.status == 400
         await resp_is.bad_request(resp, "Sample name is already in use")
 
-    async def test_label_exists(
-        self, snapshot, fake, spawn_client, resp_is, pg: AsyncEngine
-    ):
+    async def test_label_exists(self, snapshot, spawn_client, pg: AsyncEngine):
         """
         Test that a ``bad_request`` is returned if the label passed in ``labels`` does
         not exist.
@@ -630,14 +621,15 @@ class TestEdit:
         assert resp.status == 400
         assert await resp.json() == snapshot(name="json")
 
-    async def test_subtraction_exists(self, fake, snapshot, spawn_client, resp_is):
+    async def test_subtraction_exists(self, fake2, snapshot, spawn_client):
         """
-        Test that a ``bad_request`` is returned if the subtraction passed in ``subtractions`` does not exist.
+        Test that a ``bad_request`` is returned if the subtraction passed in
+        ``subtractions`` does not exist.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        user = await fake.users.insert()
+        user = await fake2.users.create()
 
         await asyncio.gather(
             client.db.samples.insert_one(
@@ -648,7 +640,7 @@ class TestEdit:
                     "all_write": True,
                     "ready": True,
                     "subtractions": ["apple"],
-                    "user": {"id": user["_id"]},
+                    "user": {"id": user.id},
                 }
             ),
             client.db.subtraction.insert_one({"_id": "foo", "name": "Foo"}),
@@ -661,12 +653,14 @@ class TestEdit:
 
 
 @pytest.mark.parametrize("field", ["quality", "not_quality"])
-async def test_finalize(field, snapshot, fake, spawn_job_client, resp_is, pg, tmp_path):
+async def test_finalize(
+    field, snapshot, fake2, spawn_job_client, resp_is, pg, tmp_path
+):
     """
     Test that sample can be finalized using the Jobs API.
 
     """
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
     client = await spawn_job_client(authorize=True)
 
@@ -675,7 +669,7 @@ async def test_finalize(field, snapshot, fake, spawn_job_client, resp_is, pg, tm
     data = {field: {}}
 
     await client.db.samples.insert_one(
-        {"_id": "test", "ready": True, "user": {"id": user["_id"]}, "subtractions": []}
+        {"_id": "test", "ready": True, "user": {"id": user.id}, "subtractions": []}
     )
 
     async with AsyncSession(pg) as session:
@@ -710,7 +704,7 @@ async def test_finalize(field, snapshot, fake, spawn_job_client, resp_is, pg, tm
         await resp_is.invalid_input(resp, {"quality": ["required field"]})
 
 
-async def test_remove(spawn_client, resp_is, create_delete_result, tmpdir):
+async def test_remove(spawn_client, create_delete_result, tmpdir):
     client = await spawn_client(authorize=True)
 
     config: Config = client.app["config"]
@@ -782,7 +776,7 @@ async def test_job_remove(
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("term", [None, "Baz"])
 async def test_find_analyses(
-    error, term, snapshot, mocker, fake, spawn_client, resp_is, static_time
+    error, term, snapshot, mocker, fake2, spawn_client, resp_is, static_time
 ):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
@@ -799,8 +793,8 @@ async def test_find_analyses(
             }
         )
 
-    user_1 = await fake.users.insert()
-    user_2 = await fake.users.insert()
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
 
     await client.db.subtraction.insert_one(
         {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"}
@@ -818,7 +812,7 @@ async def test_find_analyses(
                 "reference": {"id": "baz", "name": "Baz"},
                 "sample": {"id": "test"},
                 "subtractions": [],
-                "user": {"id": user_1["_id"]},
+                "user": {"id": user_1.id},
                 "foobar": True,
             },
             {
@@ -828,7 +822,7 @@ async def test_find_analyses(
                 "ready": True,
                 "job": {"id": "test"},
                 "index": {"version": 2, "id": "foo"},
-                "user": {"id": user_1["_id"]},
+                "user": {"id": user_1.id},
                 "reference": {"id": "baz", "name": "Baz"},
                 "sample": {"id": "test"},
                 "subtractions": ["foo"],
@@ -844,7 +838,7 @@ async def test_find_analyses(
                 "reference": {"id": "foo", "name": "Foo"},
                 "sample": {"id": "test"},
                 "subtractions": ["foo"],
-                "user": {"id": user_2["_id"]},
+                "user": {"id": user_2.id},
                 "foobar": False,
             },
         ]
@@ -873,7 +867,6 @@ async def test_analyze(
     error,
     mocker,
     snapshot,
-    fake,
     spawn_client,
     static_time,
     resp_is,
@@ -960,13 +953,7 @@ async def test_analyze(
     assert await resp.json() == snapshot
 
     m_create.assert_called_with(
-        client.db,
-        "test",
-        "foo",
-        ["bar"],
-        "test",
-        "pathoscope_bowtie",
-        test_random_alphanumeric.history[0],
+        client.db, "test", "foo", ["bar"], "test", "pathoscope_bowtie", "bf1b993c"
     )
 
 

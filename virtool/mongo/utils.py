@@ -70,24 +70,22 @@ async def check_missing_ids(
 
 
 async def get_new_id(
-    collection,
-    excluded: Optional[Sequence[str]] = None,
-    session: Optional[AsyncIOMotorClientSession] = None,
+    collection, session: Optional[AsyncIOMotorClientSession] = None
 ) -> str:
     """
     Returns a new, unique, id that can be used for inserting a new document. Will not
     return any id that is included in ``excluded``.
 
     :param collection: the Mongo collection to get a new _id for
-    :param excluded: a list of ids to exclude from the search
-    :param session: a Motor session to use
     :return: an ID unique within the collection
 
     """
-    excluded = set(excluded or set())
-    excluded.update(await collection.distinct("_id", session=session))
+    id_ = collection.mongo.id_provider.get()
 
-    return virtool.utils.random_alphanumeric(length=8, excluded=excluded)
+    if await collection.count_documents({"_id": id_}, limit=1, session=session):
+        return await get_new_id(collection, session=session)
+
+    return id_
 
 
 async def get_one_field(

@@ -72,8 +72,8 @@ async def test_get_next_version(empty, has_ref, test_indexes, dbi):
     assert await get_next_version(dbi, "hxn167" if has_ref else "foobar") == expected
 
 
-async def test_processor(mocker, snapshot, fake, dbi):
-    user = await fake.users.insert()
+async def test_processor(snapshot, fake2, dbi):
+    user = await fake2.users.create()
 
     await dbi.history.insert_many(
         [
@@ -86,11 +86,10 @@ async def test_processor(mocker, snapshot, fake, dbi):
         ]
     )
 
-    document = {"_id": "baz", "user": {"id": user["_id"]}}
-
-    result = await virtool.indexes.db.processor(dbi, document)
-
-    assert result == snapshot
+    assert (
+        await virtool.indexes.db.processor(dbi, {"_id": "baz", "user": {"id": user.id}})
+        == snapshot
+    )
 
 
 async def test_get_patched_otus(mocker, dbi, config):
