@@ -3,8 +3,7 @@ Constants and utility functions for interacting with the jobs collection in the
 application database.
 
 """
-from virtool_core.models.user import UserNested
-from virtool_core.models.job import JobStatus, Job, JobAcquired
+from virtool_core.models.job import Job, JobAcquired
 
 from virtool.mongo.transforms import apply_transforms
 from virtool.users.db import AttachUserTransform
