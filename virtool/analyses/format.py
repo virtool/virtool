@@ -20,7 +20,7 @@ import virtool.analyses.utils
 from virtool.config.cls import Config
 from virtool.history.db import patch_to_version
 from virtool.otus.utils import format_isolate_name
-from virtool.types import App
+
 
 CSV_HEADERS = (
     "OTU",
@@ -128,6 +128,8 @@ async def format_pathoscope(config, db, document: Dict[str, Any]) -> Dict[str, A
     for otu_specifier, hits in hits_by_otu.items():
         otu_id, otu_version = otu_specifier
         coros.append(format_pathoscope_hits(config, db, otu_id, otu_version, hits))
+
+    print(document)
 
     return {
         **document,

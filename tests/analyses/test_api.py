@@ -6,6 +6,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from faker import Faker
 
+
 from tests.fixtures.fake import FakeGenerator
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile
@@ -467,13 +468,20 @@ async def test_blast(
 
 
 @pytest.mark.parametrize("error", [None, 422, 404, 409])
-async def test_finalize(fake, snapshot, spawn_job_client, faker, error, resp_is):
+async def test_finalize(
+    fake, snapshot, static_time, spawn_job_client, faker, error, resp_is
+):
     user = await fake.users.insert()
 
     analysis_document = {
         "_id": "analysis1",
         "sample": {"id": "sample1"},
+        "created_at": static_time.datetime,
+        "job": {"id": "test"},
+        "index": {"version": 2, "id": "foo"},
         "workflow": "test_workflow",
+        "reference": {"id": "baz", "name": "Baz"},
+        "files": [],
         "user": {"id": user["_id"]},
         "ready": error == 409,
         "subtractions": [],
@@ -504,7 +512,7 @@ async def test_finalize(fake, snapshot, spawn_job_client, faker, error, resp_is)
         assert document["ready"] is True
 
 
-async def test_finalize_large(fake, spawn_job_client, faker):
+async def test_finalize_large(fake, static_time, spawn_job_client, faker):
     user = await fake.users.insert()
 
     faker = Faker(1)
@@ -535,8 +543,13 @@ async def test_finalize_large(fake, spawn_job_client, faker):
     await client.db.analyses.insert_one(
         {
             "_id": "analysis1",
+            "created_at": static_time.datetime,
             "sample": {"id": "sample1"},
+            "job": {"id": "test"},
+            "index": {"version": 2, "id": "foo"},
             "workflow": "test_workflow",
+            "reference": {"id": "baz", "name": "Baz"},
+            "files": [],
             "user": {"id": user["_id"]},
             "ready": False,
             "subtractions": [],

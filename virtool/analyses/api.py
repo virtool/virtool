@@ -54,12 +54,12 @@ class AnalysesView(PydanticView):
             200: Successful operation
         """
 
-        data, documents = await get_data_from_req(self.request).analyses.find(
+        documents = await get_data_from_req(self.request).analyses.find(
             self.request.query,
             self.request["client"],
         )
 
-        return json_response({**data, "documents": documents})
+        return json_response(documents)
 
 
 @routes.view("/analyses/{analysis_id}")
@@ -90,7 +90,7 @@ class AnalysisView(PydanticView):
             if_modified_since = arrow.get(if_modified_since)
 
         try:
-            document, created_at = await get_data_from_req(self.request).analyses.get(
+            document = await get_data_from_req(self.request).analyses.get(
                 self.request.match_info["analysis_id"],
                 if_modified_since,
             )
@@ -101,7 +101,7 @@ class AnalysisView(PydanticView):
 
         headers = {
             "Cache-Control": "no-cache",
-            "Last-Modified": isoformat(created_at),
+            "Last-Modified": isoformat(document.created_at),
         }
 
         return json_response(document, headers=headers)
@@ -131,7 +131,7 @@ class AnalysisView(PydanticView):
 
         try:
             await get_data_from_req(self.request).analyses.delete(
-                self.request.match_info["analysis_id"], 0
+                self.request.match_info["analysis_id"], False
             )
         except ResourceNotFoundError:
             raise NotFound()
@@ -176,7 +176,9 @@ async def get_for_jobs_api(req: Request) -> Response:
 async def delete_analysis(req):
 
     try:
-        await get_data_from_req(req).analyses.delete(req.match_info["analysis_id"], 1)
+        await get_data_from_req(req).analyses.delete(
+            req.match_info["analysis_id"], True
+        )
     except ResourceNotFoundError:
         raise NotFound()
     except ResourceConflictError:
@@ -212,14 +214,14 @@ async def upload(req: Request) -> Response:
     except ResourceNotFoundError:
         raise NotFound()
 
-    if type(result) == int:
-        return Response(status=result)
+    if result is None:
+        return Response(status=499)
 
     analysis_file = result
 
-    headers = {"Location": f"/analyses/{analysis_id}/files/{analysis_file['id']}"}
+    headers = {"Location": f"/analyses/{analysis_id}/files/{analysis_file.id}"}
 
-    return json_response(analysis_file, status=201, headers=headers)
+    return json_response(analysis_file.to_dict(), status=201, headers=headers)
 
 
 @routes.view("/analyses/{analysis_id}/files/{upload_id}")
@@ -233,7 +235,7 @@ class AnalysisFileView(PydanticView):
             404: Not found
         """
         try:
-            name_on_disk = await get_data_from_req(self.request).analyses.get_file(
+            name_on_disk = await get_data_from_req(self.request).analyses.get_file_name(
                 int(self.request.match_info["upload_id"])
             )
         except ResourceNotFoundError:
@@ -314,18 +316,13 @@ class BlastView(PydanticView):
             raise NotFound("Analysis not found")
 
         try:
-            sequence = await get_data_from_req(self.request).analyses.blast(
+            document = await get_data_from_req(self.request).analyses.blast(
                 analysis_id, sequence_index
             )
         except ResourceConflictError as err:
             raise HTTPConflict(text=str(err))
-
-        if sequence is None:
+        except ResourceNotFoundError:
             raise NotFound("Sequence not found")
-
-        document = await get_data_from_req(self.request).blast.create_nuvs_blast(
-            analysis_id, sequence_index
-        )
 
         headers = {"Location": f"/analyses/{analysis_id}/{sequence_index}/blast"}
 

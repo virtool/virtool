@@ -4,7 +4,6 @@ from logging import getLogger
 from typing import Any, Callable, Optional
 
 import aiofiles
-from aiohttp.web_request import Request
 from cerberus import Validator
 
 from virtool.utils import run_in_thread

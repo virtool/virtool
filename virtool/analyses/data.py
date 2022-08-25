@@ -4,8 +4,9 @@ from typing import List, Union, Tuple, Dict, Optional, Any
 from logging import getLogger
 
 from multidict import MultiDictProxy
-from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.analysis import AnalysisMinimal, Analysis
+from sqlalchemy import delete
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.models.analysis import AnalysisSearchResult, Analysis
 
 import virtool.samples.db
 import virtool.analyses.format
@@ -14,6 +15,8 @@ from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile
 from virtool.analyses.utils import attach_analysis_files, find_nuvs_sequence_by_index
 from virtool.api.utils import paginate
+from virtool.blast.models import NuVsBlast
+from virtool.blast.task import BLASTTask
 from virtool.blast.transform import AttachNuVsBLAST
 from virtool.data.errors import (
     ResourceNotFoundError,
@@ -28,6 +31,7 @@ from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import AttachSubtractionTransform
+from virtool.tasks.client import TasksClient
 from virtool.types import Document
 from virtool.uploads.utils import naive_writer
 
@@ -40,20 +44,20 @@ logger = getLogger("analyses")
 
 
 class AnalysisData:
-    def __init__(self, db: DB, config, pg: AsyncEngine):
+    def __init__(self, db: DB, config, pg: AsyncEngine, tasks: TasksClient):
         self._db = db
         self._config = config
         self._pg = pg
+        self._tasks = tasks
 
     async def find(
         self, query: Union[Dict, MultiDictProxy[str]], client
-    ) -> Tuple[dict, List[AnalysisMinimal]]:
+    ) -> AnalysisSearchResult:
         """
         List all analysis documents.
 
         :param query: the request query
         :param client: the client object
-
         :return: a list of all analysis documents
         """
         db_query = {}
@@ -86,26 +90,21 @@ class AnalysisData:
             [AttachUserTransform(self._db), AttachSubtractionTransform(self._db)],
         )
 
-        for analysis in documents:
-            if "updated_at" not in analysis:
-                analysis.update({"updated_at": analysis["created_at"]})
+        data["documents"] = documents
 
-        return data, [AnalysisMinimal(**document) for document in documents]
+        return AnalysisSearchResult(**data)
 
     async def get(
-        self, analysis_id: str, if_modified_since: Union[datetime, None]
-    ) -> Union[Tuple[Document, datetime], Tuple[Analysis, datetime]]:
+        self, analysis_id: str, if_modified_since: Optional[datetime]
+    ) -> Analysis:
         """
         Get a single analysis by its ID.
 
         :param analysis_id: the analysis ID
-        :param if_modified_since: the date tbe document should have been last modified by
-
+        :param if_modified_since: the date tbe document should have been last modified
         :return: the analysis
         """
         document = await self._db.analyses.find_one(analysis_id)
-
-        created_at = document["created_at"]
 
         if document is None:
             raise ResourceNotFoundError()
@@ -116,10 +115,12 @@ class AnalysisData:
             except KeyError:
                 updated_at = document["created_at"]
 
-            if if_modified_since and if_modified_since == updated_at:
+            if if_modified_since == updated_at:
                 raise ResourceNotModifiedError()
 
         document = await attach_analysis_files(self._pg, analysis_id, document)
+
+        document_before_formatting = document
 
         sample = await self._db.samples.find_one(
             {"_id": document["sample"]["id"]}, {"quality": False}
@@ -141,18 +142,20 @@ class AnalysisData:
                 [AttachNuVsBLAST(self._pg)],
             )
 
-        if "index" not in document:
-            return document, created_at
+        for key in document_before_formatting:
+            if key not in document:
+                document.update({key: document_before_formatting[key]})
 
-        return Analysis(**document), created_at
+        return Analysis(**document)
 
-    async def has_right(self, analysis_id, client, right) -> bool:
+    async def has_right(self, analysis_id: str, client, right: str) -> bool:
         """
         Checks if the client has the `read` or `write` rights.
 
         :param analysis_id: the analysis ID
         :param client: the client object
         :param right: the right to check for
+        :return: boolean value
         """
         sample = await get_one_field(self._db.analyses, "sample", analysis_id)
 
@@ -175,7 +178,7 @@ class AnalysisData:
         if right == "write":
             return write
 
-    async def delete(self, analysis_id: str, jobs_api_flag: int):
+    async def delete(self, analysis_id: str, jobs_api_flag: bool):
         """
         Delete a single analysis by its ID.
 
@@ -211,7 +214,7 @@ class AnalysisData:
 
     async def upload(
         self, reader, analysis_id: str, analysis_format: str, name: str
-    ) -> Union[int, dict]:
+    ) -> Optional[AnalysisFile]:
         """
         Uploads a new analysis result file.
 
@@ -219,7 +222,6 @@ class AnalysisData:
         :param analysis_id: the analysis ID
         :param analysis_format: the format of the analysis
         :param name: the name of the analysis file
-
         :return: the new analysis file
         """
 
@@ -244,39 +246,37 @@ class AnalysisData:
             logger.debug(f"Analysis file upload aborted: {upload_id}")
             await delete_row(self._pg, upload_id, AnalysisFile)
 
-            return 499
+            return None
 
         analysis_file = await virtool.uploads.db.finalize(
             self._pg, size, upload_id, AnalysisFile
         )
 
-        return analysis_file
+        return AnalysisFile(**analysis_file)
 
-    async def get_file(self, upload_id: int) -> str:
+    async def get_file_name(self, upload_id: int) -> str:
         """
         Get a file generated during the analysis.
 
         :param upload_id: the upload ID
-
         :return: the name on disk of the analysis file
         """
 
         analysis_file = await get_row_by_id(self._pg, AnalysisFile, upload_id)
 
-        if not analysis_file:
-            raise ResourceNotFoundError()
+        if analysis_file:
+            return analysis_file.name_on_disk
 
-        return analysis_file.name_on_disk
+        raise ResourceNotFoundError()
 
     async def download_analysis(
         self, analysis_id: str, extension: str
-    ) -> Tuple[bytes, str]:
+    ) -> Tuple[str, str]:
         """
         Get an analysis to be downloaded in CSV or XSLX format.
 
         :param analysis_id: the analysis ID
         :param extension: the file extension
-
         :return: formatted file and file content type
         """
         document = await self._db.analyses.find_one(analysis_id)
@@ -285,19 +285,19 @@ class AnalysisData:
             raise ResourceNotFoundError()
 
         if extension == "xlsx":
-            formatted = await virtool.analyses.format.format_analysis_to_excel(
-                self._config, self._db, document
+            return (
+                await virtool.analyses.format.format_analysis_to_excel(
+                    self._config, self._db, document
+                ),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
-            content_type = (
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-        else:
-            formatted = await virtool.analyses.format.format_analysis_to_csv(
-                self._config, self._db, document
-            )
-            content_type = "text/csv"
 
-        return formatted, content_type
+        return (
+            await virtool.analyses.format.format_analysis_to_csv(
+                self._config, self._db, document
+            ),
+            "text/csv",
+        )
 
     async def blast(self, analysis_id: str, sequence_index: int) -> Optional[str]:
         """
@@ -305,7 +305,6 @@ class AnalysisData:
 
         :param analysis_id: the analysis ID
         :param sequence_index: the sequence index
-
         :return: the nuvs sequence
         """
         document = await self._db.analyses.find_one(
@@ -318,15 +317,56 @@ class AnalysisData:
         if not document["ready"]:
             raise ResourceConflictError("Analysis is still running")
 
-        return find_nuvs_sequence_by_index(document, sequence_index)
+        sequence = find_nuvs_sequence_by_index(document, sequence_index)
 
-    async def finalize(self, analysis_id: str, results: dict) -> Dict[str, Any]:
+        if sequence is None:
+            raise ResourceNotFoundError()
+
+        timestamp = virtool.utils.timestamp()
+
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                delete(NuVsBlast)
+                .where(NuVsBlast.analysis_id == analysis_id)
+                .where(NuVsBlast.sequence_index == sequence_index)
+            )
+            await session.commit()
+
+            await self._db.analyses.update_one(
+                {"_id": analysis_id},
+                {"$set": {"updated_at": virtool.utils.timestamp()}},
+            )
+
+            await session.flush()
+
+            blast = NuVsBlast(
+                analysis_id=analysis_id,
+                created_at=timestamp,
+                last_checked_at=timestamp,
+                ready=False,
+                sequence_index=sequence_index,
+                updated_at=timestamp,
+            )
+
+            session.add(blast)
+            await session.flush()
+
+            await self._tasks.add(
+                BLASTTask,
+                {"analysis_id": analysis_id, "sequence_index": sequence_index},
+            )
+
+            blast_data = blast.to_dict()
+            await session.commit()
+
+        return blast_data
+
+    async def finalize(self, analysis_id: str, results: dict) -> Analysis:
         """
         Sets the result for an analysis and marks it as ready.
 
         :param analysis_id: the analysis ID
         :param results: the analysis results
-
         :return: the processed analysis document
         """
 
@@ -347,4 +387,6 @@ class AnalysisData:
         await recalculate_workflow_tags(self._db, document["sample"]["id"])
         await attach_analysis_files(self._pg, analysis_id, document)
 
-        return await processor(self._db, document)
+        document = await processor(self._db, document)
+
+        return Analysis(**document)
