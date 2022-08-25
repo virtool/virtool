@@ -1,6 +1,10 @@
+import asyncio
+
 import motor.motor_asyncio
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from sqlalchemy.util import asyncio
 
 import virtool.mongo.connect
 import virtool.mongo.core
@@ -26,7 +30,27 @@ def test_db_name(worker_id):
 async def test_motor(test_db_connection_string, test_db_name, loop, request):
     client = motor.motor_asyncio.AsyncIOMotorClient(test_db_connection_string)
     await client.drop_database(test_db_name)
-    db = client[test_db_name]
+    db: AsyncIOMotorDatabase = client[test_db_name]
+
+    await asyncio.gather(
+        *[
+            db.create_collection(collection_name)
+            for collection_name in (
+                "analyses",
+                "groups",
+                "history",
+                "indexes",
+                "jobs",
+                "otus",
+                "references",
+                "samples",
+                "settings",
+                "subtractions",
+                "users",
+            )
+        ]
+    )
+
     await virtool.mongo.connect.create_indexes(db)
     yield db
     await client.drop_database(test_db_name)

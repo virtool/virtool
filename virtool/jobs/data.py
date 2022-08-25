@@ -9,6 +9,7 @@ from virtool_core.models.job import (
     JobMinimal,
     JobSearchResult,
     JobStatus,
+    Job,
 )
 from virtool_core.models.user import UserNested
 
@@ -61,7 +62,7 @@ class JobsData:
 
         return dict(counts)
 
-    async def find(self, query: MultiDictProxy) -> Document:
+    async def find(self, query: MultiDictProxy) -> JobSearchResult:
         """
         {
           "waiting": {
@@ -196,7 +197,7 @@ class JobsData:
         user_id: str,
         rights: JobRights,
         job_id: Optional[str] = None,
-    ) -> Document:
+    ) -> Job:
         """
         Create a job record and queue it.
 
@@ -230,7 +231,7 @@ class JobsData:
 
         return await fetch_complete_job(self._db, document)
 
-    async def get(self, job_id: str) -> Document:
+    async def get(self, job_id: str) -> Job:
         """
         Get a job document.
 
@@ -273,7 +274,7 @@ class JobsData:
 
         return await fetch_complete_job(self._db, document, key=key)
 
-    async def archive(self, job_id: str) -> Document:
+    async def archive(self, job_id: str) -> Job:
         """
         Set the `archived` field on a job to `True` and return the complete document.
 
@@ -298,7 +299,7 @@ class JobsData:
 
         return await fetch_complete_job(self._db, document)
 
-    async def cancel(self, job_id: str) -> Document:
+    async def cancel(self, job_id: str) -> Job:
         """
         Add a cancellation status sub-document to the job identified by `job_id`.
 

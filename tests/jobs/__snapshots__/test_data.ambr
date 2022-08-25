@@ -181,7 +181,7 @@
       'sample_id': 'foo',
     },
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'id': '9pfsom1b',
+    'id': 'bf1b993c',
     'progress': 0,
     'rights': <class 'dict'> {
       'samples': <class 'dict'> {

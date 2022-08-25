@@ -62,16 +62,12 @@ class JobsFakerPiece(DataFakerPiece):
     model = Job
 
     async def create(self, user: User) -> Job:
-        document = await self.layer.jobs.create(
+        return await self.layer.jobs.create(
             self.faker.workflow(),
             self.faker.pydict(nb_elements=6, value_types=[str, int, float]),
             user.id,
             JobRights(),
         )
-
-        document = await self.layer.jobs.get(document["_id"])
-
-        return Job(**document)
 
 
 class GroupsFakerPiece(DataFakerPiece):
