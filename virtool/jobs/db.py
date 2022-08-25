@@ -67,8 +67,6 @@ async def processor(db, document: dict) -> dict:
 
 async def fetch_complete_job(db, document, key=None) -> Job:
     document = await processor(db, document)
-    document["user"] = UserNested(**document["user"])
-    document["status"] = [JobStatus(**status) for status in document["status"]]
 
     if key:
         return JobAcquired(**document, key=key)
