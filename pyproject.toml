@@ -67,7 +67,6 @@ syrupy = "^1.5.0"
 pre-commit = "^2.16.0"
 black = "^21.12b0"
 pytest-rerunfailures = "^10.2"
-pytest-profiling = "^1.7.0"
 
 [tool.poetry.scripts]
 virtool = "virtool.config:entry"
