@@ -69,8 +69,7 @@ class PublicRoutePolicy(DefaultRoutePolicy):
 
 
 class WebSocketRoutePolicy(DefaultRoutePolicy):
-    """Any client can access the route."""
-
+    """Only for use with websocket, accessible by any client"""
     allow_unauthenticated = True
 
 

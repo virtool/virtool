@@ -28,9 +28,9 @@ class Connection:
             if "Cannot write to closing transport" not in str(err):
                 raise
 
-            await self.close()
+            await self.close(1002)
 
-    async def close(self, code: Union[int, str] = None):
+    async def close(self, code: int):
         """
         Closes the underlying websocket connection.
         :param code: closure code to send to the client
