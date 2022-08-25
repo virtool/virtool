@@ -182,15 +182,13 @@ class JobsData:
             document["user"] = UserNested(**document["user"])
 
         return JobSearchResult(
-            **{
-                "counts": await self._get_counts(),
-                "documents": [JobMinimal(**document) for document in documents],
-                "total_count": total_count,
-                "found_count": found_count,
-                "page_count": page_count,
-                "per_page": per_page,
-                "page": page,
-            }
+            counts=await self._get_counts(),
+            documents=[JobMinimal(**document) for document in documents],
+            total_count=total_count,
+            found_count=found_count,
+            page_count=page_count,
+            per_page=per_page,
+            page=page,
         )
 
     async def create(
@@ -232,7 +230,7 @@ class JobsData:
         await self._db.jobs.insert_one(document)
         await self._client.enqueue(workflow, document["_id"])
 
-        return Job(**await fetch_complete_job(self._db, document))
+        return await fetch_complete_job(self._db, document)
 
     async def get(self, job_id: str) -> Document:
         """
@@ -246,7 +244,7 @@ class JobsData:
         if document is None:
             raise ResourceNotFoundError
 
-        return Job(**await fetch_complete_job(self._db, document))
+        return await fetch_complete_job(self._db, document)
 
     async def acquire(self, job_id: str):
         """
@@ -275,7 +273,7 @@ class JobsData:
             projection=PROJECTION,
         )
 
-        return JobAcquired(**await fetch_complete_job(self._db, document), key=key)
+        return await fetch_complete_job(self._db, document, key=key)
 
     async def archive(self, job_id: str) -> Document:
         """
@@ -300,7 +298,7 @@ class JobsData:
             projection=PROJECTION,
         )
 
-        return Job(**await fetch_complete_job(self._db, document))
+        return await fetch_complete_job(self._db, document)
 
     async def cancel(self, job_id: str) -> Document:
         """
@@ -338,7 +336,7 @@ class JobsData:
             if document is None:
                 raise ResourceNotFoundError
 
-        return Job(**await fetch_complete_job(self._db, document))
+        return await fetch_complete_job(self._db, document)
 
     async def push_status(
         self,

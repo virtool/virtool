@@ -4,7 +4,7 @@ application database.
 
 """
 from virtool_core.models.user import UserNested
-from virtool_core.models.job import JobStatus
+from virtool_core.models.job import JobStatus, Job, JobAcquired
 
 from virtool.mongo.transforms import apply_transforms
 from virtool.users.db import AttachUserTransform
@@ -65,8 +65,12 @@ async def processor(db, document: dict) -> dict:
     )
 
 
-async def fetch_complete_job(db, document):
+async def fetch_complete_job(db, document, key=None) -> Job:
     document = await processor(db, document)
     document["user"] = UserNested(**document["user"])
     document["status"] = [JobStatus(**status) for status in document["status"]]
-    return document
+
+    if key:
+        return JobAcquired(**document, key=key)
+
+    return Job(**document)
