@@ -1,57 +1,51 @@
-import asyncio
 from typing import List
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-
-from virtool.labels.models import Label
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 
 class TestFind:
-    async def test_find(self, snapshot, spawn_client, pg: AsyncEngine):
+    async def test_find(self, fake2, snapshot, spawn_client):
         """
         Test that a ``GET /labels`` return a complete list of labels.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        label_1 = Label(id=1, name="Bug", color="#A83432", description="This is a bug")
-
-        label_2 = Label(
-            id=2, name="Question", color="#03FC20", description="This is a question"
-        )
+        label_1 = await fake2.labels.create()
+        label_2 = await fake2.labels.create()
 
         await client.db.samples.insert_many(
             [
-                {"_id": "foo", "name": "Foo", "labels": [2]},
-                {"_id": "bar", "name": "Bar", "labels": [1]},
-                {"_id": "baz", "name": "Baz", "labels": [2]},
+                {
+                    "_id": "foo",
+                    "name": "Foo",
+                    "labels": [
+                        label_1.id,
+                    ],
+                },
+                {"_id": "bar", "name": "Bar", "labels": [label_1.id, label_2.id]},
+                {"_id": "baz", "name": "Baz", "labels": [label_2.id]},
             ]
         )
-
-        async with AsyncSession(pg) as session:
-            session.add_all([label_1, label_2])
-            await session.commit()
 
         resp = await client.get("/labels")
 
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-    async def test_find_by_name(self, snapshot, spawn_client, pg: AsyncEngine):
+    async def test_find_by_name(self, fake2, snapshot, spawn_client):
         """
         Test that a ``GET /labels`` with a `find` query returns a particular label. Also test for partial matches.
 
         """
         client = await spawn_client(authorize=True, administrator=True)
 
-        label = Label(id=1, name="Bug", color="#A83432", description="This is a bug")
+        label = await fake2.labels.create()
 
-        async with AsyncSession(pg) as session:
-            session.add(label)
-            await session.commit()
+        term = label.name[:2].lower()
 
-        resp = await client.get("/labels?find=b")
+        resp = await client.get(f"/labels?find={term}")
 
         assert resp.status == 200
         assert await resp.json() == snapshot
@@ -62,71 +56,47 @@ class TestFind:
         assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, spawn_client, all_permissions, pg: AsyncEngine, resp_is):
+@pytest.mark.parametrize("status", [200, 404])
+async def test_get(status, fake2, spawn_client, snapshot):
     """
     Test that a ``GET /labels/:label_id`` return the correct label document.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
 
+    label_1 = await fake2.labels.create()
+    label_2 = await fake2.labels.create()
+
     await client.db.samples.insert_many(
         [
-            {"_id": "foo", "name": "Foo", "labels": [2]},
-            {"_id": "bar", "name": "Bar", "labels": [1]},
-            {"_id": "baz", "name": "Baz", "labels": [2]},
+            {"_id": "foo", "name": "Foo", "labels": [label_1.id]},
+            {"_id": "bar", "name": "Bar", "labels": [label_2.id]},
+            {"_id": "baz", "name": "Baz", "labels": [label_1.id]},
         ]
     )
 
-    if not error:
-        async with AsyncSession(pg) as session:
-            session.add(
-                Label(id=1, name="Bug", color="#A83432", description="This is a test")
-            )
-            await session.commit()
+    resp = await client.get(f"/labels/{22 if status == 404 else label_1.id}")
 
-    resp = await client.get("/labels/1")
-
-    if error:
-        await resp_is.not_found(resp)
-        return
-
-    assert resp.status == 200
-    assert await resp.json() == {
-        "id": 1,
-        "name": "Bug",
-        "color": "#A83432",
-        "description": "This is a test",
-        "count": 1,
-    }
+    assert resp.status == status
+    assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize("error", [None, "400_exists", "422_color"])
-async def test_create(
-    error, spawn_client, test_random_alphanumeric, pg: AsyncEngine, resp_is
-):
+@pytest.mark.parametrize("error", [None, "400_exists", "400_color"])
+async def test_create(error, fake2, spawn_client, test_random_alphanumeric, resp_is):
     """
     Test that a label can be added to the database at ``POST /labels``.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    await client.db.samples.insert_many(
-        [
-            {"_id": "foo", "name": "Foo", "labels": [2]},
-            {"_id": "bar", "name": "Bar", "labels": [1]},
-            {"_id": "baz", "name": "Baz", "labels": [2]},
-        ]
-    )
-
-    if error == "400_exists":
-        async with AsyncSession(pg) as session:
-            session.add(Label(id=1, name="Bug"))
-            await session.commit()
+    label = await fake2.labels.create()
 
     data = {"name": "Bug", "color": "#a83432", "description": "This is a bug"}
 
-    if error == "422_color":
+    if error == "400_exists":
+        data["name"] = label.name
+
+    if error == "400_color":
         data["color"] = "#1234567"
 
     resp = await client.post("/labels", data)
@@ -135,86 +105,79 @@ async def test_create(
         await resp_is.bad_request(resp, "Label name already exists")
         return
 
-    if error == "422_color":
+    if error == "400_color":
         assert resp.status == 400
         return
 
     assert resp.status == 201
 
     assert await resp.json() == {
-        "id": 1,
+        "id": 2,
         "name": "Bug",
         "color": "#A83432",
         "description": "This is a bug",
-        "count": 1,
+        "count": 0,
     }
 
 
-@pytest.mark.parametrize("error", [None, "404", "400_exists", "422_color", "422_data"])
-async def test_edit(error, spawn_client, pg: AsyncEngine, resp_is):
+@pytest.mark.parametrize("error", [None, "404", "400_name", "400_color"])
+async def test_edit(error, fake2, spawn_client, resp_is, snapshot):
     """
-    Test that a label can be edited to the database at ``PATCH /labels/:label_id``.
+    Test that a label can be updated at ``PATCH /labels/:label_id``.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
 
+    label_1 = await fake2.labels.create()
+    label_2 = await fake2.labels.create()
+
     await client.db.samples.insert_many(
         [
-            {"_id": "foo", "name": "Foo", "labels": [2]},
-            {"_id": "bar", "name": "Bar", "labels": [1]},
-            {"_id": "baz", "name": "Baz", "labels": [2]},
+            {"_id": "foo", "name": "Foo", "labels": [label_1.id]},
+            {"_id": "bar", "name": "Bar", "labels": [label_2.id]},
+            {"_id": "baz", "name": "Baz", "labels": [label_1.id]},
         ]
     )
 
-    if error != "404":
-        label_1 = Label(id=1, name="Bug", color="#a83432", description="This is a bug")
-
-        label_2 = Label(
-            id=2, name="Question", color="#03fc20", description="Question from a user"
-        )
-
-        async with AsyncSession(pg) as session:
-            session.add_all([label_1, label_2])
-            await session.commit()
-
     data = {}
 
-    if error != "422_data":
-        data = {"name": "Bug", "color": "#fc5203", "description": "Need to be fixed"}
+    if error is None:
+        data["name"] = "Summer"
 
-    if error == "400_exists":
-        data["name"] = "Question"
+    if error == "400_color":
+        data["color"] = "#123bzp1"
 
-    if error == "422_color":
-        data["color"] = "#123bzp"
+    if error == "400_name":
+        # Name already exists.
+        data["name"] = label_2.name
 
-    resp = await client.patch("/labels/1", data=data)
+    resp = await client.patch(
+        f"/labels/{5 if error == '404' else label_1.id}", data=data
+    )
 
     if error == "404":
         await resp_is.not_found(resp)
         return
 
-    if error == "400_exists":
-        await resp_is.bad_request(resp, "Label name already exists")
-        return
-
-    if error == "422_color" or error == "422_data":
+    if error == "400_color":
         assert resp.status == 400
         return
 
+    if error == "400_name":
+        await resp_is.bad_request(resp, "Label name already exists")
+        return
+
     assert resp.status == 200
-    assert await resp.json() == {
-        "id": 1,
-        "name": "Bug",
-        "color": "#FC5203",
-        "description": "Need to be fixed",
-        "count": 1,
-    }
+    assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize("error", [None, "400"])
+@pytest.mark.parametrize("status", [204, 404])
 async def test_remove(
-    error, spawn_client, pg: AsyncEngine, resp_is, mock_samples: List[dict]
+    status,
+    fake2,
+    spawn_client,
+    mock_samples: List[dict],
+    snapshot,
 ):
     """
     Test that a label can be deleted to the database at ``DELETE /labels/:label_id``.
@@ -224,46 +187,31 @@ async def test_remove(
 
     client = await spawn_client(authorize=True, administrator=True)
 
-    if not error:
-        async with AsyncSession(pg) as session:
-            session.add_all(
-                [
-                    Label(
-                        id=1, name="Bug", color="#a83432", description="This is a bug"
-                    ),
-                    Label(
-                        id=4, name="Info", color="#03fc20", description="This is a info"
-                    ),
-                    Label(
-                        id=9, name="que", color="#03fc20", description="This is a que"
-                    ),
-                ]
-            )
-            await session.commit()
+    label_1 = await fake2.labels.create()
+    label_2 = await fake2.labels.create()
+    label_3 = await fake2.labels.create()
 
-        await client.db.subtraction.insert_many(
-            [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}]
-        )
+    await client.db.subtraction.insert_many(
+        [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}]
+    )
 
-        mock_samples[0].update({"labels": [1, 4]})
-        mock_samples[1].update({"labels": [1, 9]}),
-        mock_samples[2].update({"labels": [1, 4, 9]})
+    mock_samples[0].update({"labels": [label_1.id, label_3.id]})
+    mock_samples[1].update({"labels": [label_2.id, label_3.id]}),
+    mock_samples[2].update({"labels": [label_1.id]})
 
-        await client.db.samples.insert_many(mock_samples)
+    await client.db.samples.insert_many(mock_samples)
 
-    resp = await client.delete("/labels/1")
+    resp = await client.delete(f"/labels/{22 if status == 404 else label_1.id}")
 
-    if error:
-        await resp_is.not_found(resp)
-        return
+    assert resp.status == status
+    assert await resp.json() == snapshot
 
-    await resp_is.no_content(resp)
+    if status == 204:
+        label_ids_in_samples = await client.db.samples.distinct("labels")
 
-    label_ids_in_samples = await client.db.samples.distinct("labels")
-
-    assert 4 in label_ids_in_samples
-    assert 9 in label_ids_in_samples
-    assert 1 not in label_ids_in_samples
+        assert label_1.id not in label_ids_in_samples
+        assert label_2.id in label_ids_in_samples
+        assert label_3.id in label_ids_in_samples
 
 
 @pytest.mark.parametrize("value", ["valid_hex_color", "invalid_hex_color"])
