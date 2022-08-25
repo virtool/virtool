@@ -56,6 +56,6 @@ async def create_user(
         document["password"] = hash_password(password)
 
     try:
-        return await mongo.users.insert_one(document, session=session)
+        await mongo.users.insert_one(document, session=session)
     except DuplicateKeyError:
         raise ResourceConflictError("User already exists")

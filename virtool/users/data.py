@@ -65,8 +65,8 @@ class UsersData:
         """
         Create the first instance user.
 
-        :param handle:
-        :param password:
+        :param handle: the user handle
+        :param password: the password
         :return:
         """
         if await self._mongo.users.count_documents({}):
@@ -80,7 +80,7 @@ class UsersData:
                 self._mongo, handle, password, False, session=session
             )
 
-            await self._mongo.update_one(
+            await self._mongo.users.update_one(
                 {"_id": document["_id"]},
                 {"$set": {"administrator": True}},
                 session=session,
