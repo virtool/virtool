@@ -87,8 +87,8 @@ async def test_acquire(
             "archived": False,
             "workflow": "build_index",
             "args": {},
-        }
             "user": {"id": user.id},
+        }
     )
 
     assert await jobs_data.acquire("foo") == snapshot
