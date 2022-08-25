@@ -1,6 +1,6 @@
 from asyncio import gather, CancelledError
 from datetime import datetime
-from typing import List, Union, Tuple, Dict, Optional, Any
+from typing import Union, Tuple, Dict, Optional
 from logging import getLogger
 
 from multidict import MultiDictProxy
@@ -32,7 +32,6 @@ from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.tasks.client import TasksClient
-from virtool.types import Document
 from virtool.uploads.utils import naive_writer
 
 from virtool.users.db import AttachUserTransform
@@ -325,7 +324,7 @@ class AnalysisData:
         timestamp = virtool.utils.timestamp()
 
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(
+            await session.execute(
                 delete(NuVsBlast)
                 .where(NuVsBlast.analysis_id == analysis_id)
                 .where(NuVsBlast.sequence_index == sequence_index)
