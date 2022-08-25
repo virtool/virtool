@@ -265,12 +265,3 @@
     'message': 'Not found',
   }
 ---
-# name: test_remove[uvloop-204]
-  None
----
-# name: test_remove[uvloop-404]
-  <class 'dict'> {
-    'id': 'not_found',
-    'message': 'Not found',
-  }
----
