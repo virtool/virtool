@@ -12,9 +12,10 @@ A sample needs a user and upload to exist.
 from typing import List, Optional, Dict, Any
 
 from faker import Faker
-from faker.providers import BaseProvider, python
+from faker.providers import BaseProvider, python, color, lorem
 from virtool_core.models.group import Group
 from virtool_core.models.job import Job
+from virtool_core.models.label import Label
 from virtool_core.models.user import User
 
 from virtool.data.layer import DataLayer
@@ -44,9 +45,12 @@ class DataFaker:
         self.faker = Faker()
         self.faker.seed_instance(0)
         self.faker.add_provider(VirtoolProvider)
+        self.faker.add_provider(color)
+        self.faker.add_provider(lorem)
         self.faker.add_provider(python)
 
         self.groups = GroupsFakerPiece(self)
+        self.labels = LabelsFakerPiece(self)
         self.jobs = JobsFakerPiece(self)
         self.users = UsersFakerPiece(self)
 
@@ -87,6 +91,17 @@ class GroupsFakerPiece(DataFakerPiece):
             )
 
         return group
+
+
+class LabelsFakerPiece(DataFakerPiece):
+    model = Label
+
+    async def create(self):
+        return await self.layer.labels.create(
+            self.faker.word().capitalize(),
+            self.faker.hex_color(),
+            self.faker.sentence(),
+        )
 
 
 class UsersFakerPiece(DataFakerPiece):
