@@ -52,8 +52,8 @@ async def create_app(config: Config):
             startup_data,
             startup_events,
             startup_routes,
-            startup_sentry,
             startup_settings,
+            startup_sentry,
         ]
     )
 

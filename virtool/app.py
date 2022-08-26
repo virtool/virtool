@@ -101,8 +101,8 @@ def create_app(config: Config):
             startup_task_runner,
             startup_data,
             startup_tasks,
-            startup_sentry,
             startup_settings,
+            startup_sentry,
             startup_check_db,
             startup_refresh,
         ]

@@ -22,10 +22,7 @@ class SettingsData:
             {"_id": "settings"}, projection=PROJECTION
         )
 
-        if settings:
-            return Settings(**settings)
-
-        return Settings()
+        return Settings(**settings)
 
     async def update(self, data: UpdateSettingsSchema) -> Settings:
         """
@@ -45,10 +42,10 @@ class SettingsData:
         """
         Ensure the settings document is updated and filled with default values.
 
-        :return: a dictionary with settings data
+        :return: the application settings
         """
 
-        existing = await self._db.settings.find_one({"_id": "settings"}, {"_id": False}) or {}
+        existing = await self._db.settings.find_one({"_id": "settings"}, PROJECTION) or {}
 
         settings = {**(Settings().dict()), **existing}
 

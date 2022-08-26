@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 import pytest
 import arrow
 
-from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.fake.wrapper import FakerWrapper
 from virtool.types import Document
@@ -142,12 +141,11 @@ class FakeGenerator:
 
 
 @pytest.fixture
-def app(dbi, pg, tmp_path, config, settings):
+def app(dbi, pg, tmp_path, config):
     return {
         "db": dbi,
         "fake": FakerWrapper(),
         "pg": pg,
-        "settings": settings,
         "config": config,
     }
 

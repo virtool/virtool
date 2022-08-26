@@ -304,20 +304,17 @@ class TestCreate:
         spawn_client,
         pg: AsyncEngine,
         static_time,
-        settings,
     ):
         client = await spawn_client(
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        settings_data = {
-            "sample_group": group_setting,
-            "sample_all_write": True,
-            "sample_group_write": True,
-        }
-
         await get_data_from_app(client.app).settings.update(
-            UpdateSettingsSchema(**settings_data)
+            UpdateSettingsSchema(
+                sample_group=group_setting,
+                sample_all_write=True,
+                sample_group_write=True,
+            )
         )
 
         data = get_data_from_app(client.app)

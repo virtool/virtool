@@ -22,7 +22,6 @@ from virtool.jobs.utils import JobRights
 from virtool.otus.fake import create_fake_otus
 from virtool.references.db import create_document
 from virtool.samples.fake import create_fake_sample
-from virtool.settings.db import Settings
 from virtool.subtractions.fake import (
     create_fake_fasta_upload,
     create_fake_finalized_subtraction,
@@ -60,14 +59,13 @@ class WorkflowTestCase:
 class TestCaseDataFactory:
     """Initialize the database with fake data for a test case."""
 
-    def __init__(self, settings: Settings, app: App, user_id: str, job_id: str = None):
+    def __init__(self, app: App, user_id: str, job_id: str = None):
         self.fake = app["fake"] if "fake" in app else FakerWrapper()
         self.user_id = user_id
         self.job_id = job_id or self.fake.get_mongo_id()
         self.app = app
         self.db = app["db"]
         self.pg = app["pg"]
-        self.settings: Settings = settings
         self.data_path = app["config"].data_path
 
     async def analysis(
@@ -153,7 +151,7 @@ class TestCaseDataFactory:
         id_ = self.fake.get_mongo_id()
         document = await create_document(
             db=self.db,
-            settings=self.settings,
+            settings=await get_data_from_app(self.app).settings.get_all(),
             ref_id=id_,
             name=self.fake.words(1)[0],
             organism="virus",
@@ -231,10 +229,8 @@ async def load_test_case_from_yml(
 
     job_args = {}
 
-    settings = await get_data_from_app(app).settings.get_all()
-
     factory = TestCaseDataFactory(
-        settings=settings, job_id=job_id, app=app, user_id=user_id
+        job_id=job_id, app=app, user_id=user_id
     )
     test_case = SimpleNamespace()
 

@@ -12,7 +12,6 @@ from virtool.api.utils import compose_regex_query
 from virtool.config.cls import Config
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.piece import DataLayerPiece
-from virtool.data.utils import get_data_from_app
 from virtool.http.client import UserClient
 from virtool.jobs.utils import JobRights
 from virtool.labels.db import AttachLabelsTransform
@@ -38,11 +37,10 @@ from virtool.utils import base_processor, run_in_thread, wait_for_checks
 
 
 class SamplesData(DataLayerPiece):
-    def __init__(self, app):
-        self._app = app
-        self._config: Config = app["config"]
-        self._db = app["db"]
-        self._pg: AsyncEngine = app["pg"]
+    def __init__(self, config: Config, db, pg: AsyncEngine):
+        self._config = config
+        self._db = db
+        self._pg = pg
 
     async def find(
         self,
@@ -152,7 +150,7 @@ class SamplesData(DataLayerPiece):
         Create a sample.
 
         """
-        settings = await get_data_from_app(self._app).settings.get_all()
+        settings = await self.data.settings.get_all()
 
         await wait_for_checks(
             check_name_is_in_use(self._db, settings, data.name),
@@ -247,7 +245,7 @@ class SamplesData(DataLayerPiece):
     ) -> UpdateResult:
         data = data.dict(exclude_unset=True)
 
-        settings = await get_data_from_app(self._app).settings.get_all()
+        settings = await self.data.settings.get_all()
 
         aws = []
 

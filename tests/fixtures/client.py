@@ -8,17 +8,15 @@ import virtool.jobs.main
 from aiohttp.web_routedef import RouteTableDef
 from virtool.config.cls import Config
 from virtool.mongo.identifier import FakeIdProvider
-from virtool.data.utils import get_data_from_app
 from virtool.utils import hash_key
 
 
 class VirtoolTestClient:
-    def __init__(self, test_client, settings):
+    def __init__(self, test_client):
         self._test_client = test_client
 
         self.server = self._test_client.server
         self.app = self.server.app
-        self.settings = settings
         self.db = self.app["db"]
 
         self.auth = self._test_client.session.auth
@@ -147,8 +145,7 @@ def spawn_client(pg, request, aiohttp_client, test_motor, dbi, create_app, creat
         test_client.app["db"].id_provider = FakeIdProvider()
 
         return VirtoolTestClient(
-            test_client, await get_data_from_app(app).settings.get_all()
-        )
+            test_client)
 
     return func
 

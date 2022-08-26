@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from virtool.data.utils import get_data_from_app
 from virtool.dev.fake import populate
 from virtool.fake.factory import load_test_case_from_yml
 
@@ -13,6 +14,8 @@ def example_test_case(test_files_path) -> Path:
 async def test_load_yml(app, data_layer, fake, example_test_case):
 
     app["data"] = data_layer
+
+    await get_data_from_app(app).settings.ensure()
 
     case = await load_test_case_from_yml(app, example_test_case, "bob")
 
@@ -38,6 +41,8 @@ async def test_populate_does_load_yaml(
     app["config"] = config
     app["config"].fake_path = example_test_case.parent
     app["data"] = data_layer
+
+    await get_data_from_app(app).settings.ensure()
 
     await populate(app)
 
