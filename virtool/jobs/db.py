@@ -19,8 +19,6 @@ LIST_PROJECTION = [
     "archived",
     "workflow",
     "status",
-    "proc",
-    "mem",
     "rights",
     "user",
 ]

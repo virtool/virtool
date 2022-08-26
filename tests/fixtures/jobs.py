@@ -53,8 +53,6 @@ def test_job(dbi, static_time):
                 "index_id": "465428b0",
             },
             "key": "bar",
-            "mem": 16,
-            "proc": 10,
             "rights": JobRights().as_dict(),
             "status": [
                 {
