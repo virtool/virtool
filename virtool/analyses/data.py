@@ -100,7 +100,7 @@ class AnalysisData:
         Get a single analysis by its ID.
 
         :param analysis_id: the analysis ID
-        :param if_modified_since: the date tbe document should have been last modified
+        :param if_modified_since: the date the document should have been last modified
         :return: the analysis
         """
         document = await self._db.analyses.find_one(analysis_id)
@@ -211,7 +211,7 @@ class AnalysisData:
 
         await recalculate_workflow_tags(self._db, sample_id)
 
-    async def upload(
+    async def upload_file(
         self, reader, analysis_id: str, analysis_format: str, name: str
     ) -> Optional[AnalysisFile]:
         """
@@ -268,9 +268,7 @@ class AnalysisData:
 
         raise ResourceNotFoundError()
 
-    async def download_analysis(
-        self, analysis_id: str, extension: str
-    ) -> Tuple[str, str]:
+    async def download(self, analysis_id: str, extension: str) -> Tuple[str, str]:
         """
         Get an analysis to be downloaded in CSV or XSLX format.
 

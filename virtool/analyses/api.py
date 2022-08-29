@@ -46,7 +46,7 @@ routes = Routes()
 
 @routes.view("/analyses")
 class AnalysesView(PydanticView):
-    async def get(self) -> r200[List[GetAnalysisResponse]]:
+    async def get(self) -> r200[GetAnalysisResponse]:
         """
         Find and list all analyses.
 
@@ -54,12 +54,12 @@ class AnalysesView(PydanticView):
             200: Successful operation
         """
 
-        documents = await get_data_from_req(self.request).analyses.find(
+        search_result = await get_data_from_req(self.request).analyses.find(
             self.request.query,
             self.request["client"],
         )
 
-        return json_response(documents)
+        return json_response(search_result)
 
 
 @routes.view("/analyses/{analysis_id}")
@@ -208,16 +208,14 @@ async def upload(req: Request) -> Response:
         raise HTTPBadRequest(text="Unsupported analysis file format")
 
     try:
-        result = await get_data_from_req(req).analyses.upload(
+        analysis_file = await get_data_from_req(req).analyses.upload_file(
             await req.multipart(), analysis_id, analysis_format, name
         )
     except ResourceNotFoundError:
         raise NotFound()
 
-    if result is None:
+    if analysis_file is None:
         return Response(status=499)
-
-    analysis_file = result
 
     headers = {"Location": f"/analyses/{analysis_id}/files/{analysis_file.id}"}
 
@@ -271,7 +269,7 @@ class DocumentDownloadView(PydanticView):
         try:
             formatted, content_type = await get_data_from_req(
                 self.request
-            ).analyses.download_analysis(analysis_id, extension)
+            ).analyses.download(analysis_id, extension)
         except ResourceNotFoundError:
             raise NotFound()
 
