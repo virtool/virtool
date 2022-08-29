@@ -31,9 +31,9 @@
     'locale': '',
     'name': 'Foobar',
     'notes': '',
-    'nuvs': 'False',
+    'nuvs': False,
     'paired': False,
-    'pathoscope': 'False',
+    'pathoscope': False,
     'quality': None,
     'reads': <class 'list'> [
     ],
@@ -119,9 +119,9 @@
     'locale': '',
     'name': 'Foobar',
     'notes': '',
-    'nuvs': 'False',
+    'nuvs': False,
     'paired': False,
-    'pathoscope': 'False',
+    'pathoscope': False,
     'quality': None,
     'reads': <class 'list'> [
     ],
@@ -207,9 +207,9 @@
     'locale': '',
     'name': 'Foobar',
     'notes': '',
-    'nuvs': 'False',
+    'nuvs': False,
     'paired': False,
-    'pathoscope': 'False',
+    'pathoscope': False,
     'quality': None,
     'reads': <class 'list'> [
     ],
@@ -321,9 +321,9 @@
     'locale': '',
     'name': 'test_sample',
     'notes': 'This is a test.',
-    'nuvs': 'False',
+    'nuvs': False,
     'paired': False,
-    'pathoscope': 'True',
+    'pathoscope': True,
     'quality': None,
     'reads': <class 'list'> [
       <class 'dict'> {
@@ -403,9 +403,9 @@
     'locale': '',
     'name': 'Test',
     'notes': '',
-    'nuvs': 'False',
+    'nuvs': False,
     'paired': False,
-    'pathoscope': 'True',
+    'pathoscope': True,
     'quality': None,
     'reads': <class 'list'> [
       <class 'dict'> {
@@ -477,9 +477,9 @@
     'locale': '',
     'name': 'Test',
     'notes': '',
-    'nuvs': 'False',
+    'nuvs': False,
     'paired': False,
-    'pathoscope': 'True',
+    'pathoscope': True,
     'quality': None,
     'reads': <class 'list'> [
       <class 'dict'> {
@@ -551,9 +551,9 @@
     'locale': '',
     'name': 'Test',
     'notes': '',
-    'nuvs': 'False',
+    'nuvs': False,
     'paired': False,
-    'pathoscope': 'True',
+    'pathoscope': True,
     'quality': None,
     'reads': <class 'list'> [
       <class 'dict'> {
@@ -631,9 +631,9 @@
     'locale': '',
     'name': 'Test',
     'notes': '',
-    'nuvs': 'False',
+    'nuvs': False,
     'paired': False,
-    'pathoscope': 'True',
+    'pathoscope': True,
     'quality': None,
     'reads': <class 'list'> [
       <class 'dict'> {
@@ -775,8 +775,8 @@
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
-        'nuvs': 'False',
-        'pathoscope': 'False',
+        'nuvs': False,
+        'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
@@ -806,8 +806,8 @@
         'library_type': 'normal',
         'name': '16GVP042',
         'notes': '',
-        'nuvs': 'False',
-        'pathoscope': 'False',
+        'nuvs': False,
+        'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
@@ -842,8 +842,8 @@
         'library_type': 'srna',
         'name': '16GVP043',
         'notes': 'This is a good sample.',
-        'nuvs': 'False',
-        'pathoscope': 'False',
+        'nuvs': False,
+        'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
@@ -878,8 +878,8 @@
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
-        'nuvs': 'False',
-        'pathoscope': 'False',
+        'nuvs': False,
+        'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
@@ -909,8 +909,8 @@
         'library_type': 'normal',
         'name': '16GVP042',
         'notes': '',
-        'nuvs': 'False',
-        'pathoscope': 'False',
+        'nuvs': False,
+        'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
@@ -934,8 +934,8 @@
         'library_type': 'srna',
         'name': '16GVP043',
         'notes': 'This is a good sample.',
-        'nuvs': 'False',
-        'pathoscope': 'False',
+        'nuvs': False,
+        'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
@@ -970,8 +970,8 @@
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
-        'nuvs': 'False',
-        'pathoscope': 'False',
+        'nuvs': False,
+        'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
@@ -1006,8 +1006,8 @@
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
-        'nuvs': 'False',
-        'pathoscope': 'False',
+        'nuvs': False,
+        'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
@@ -1037,8 +1037,8 @@
         'library_type': 'normal',
         'name': '16GVP042',
         'notes': '',
-        'nuvs': 'False',
-        'pathoscope': 'False',
+        'nuvs': False,
+        'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
@@ -1090,8 +1090,8 @@
         'library_type': 'normal',
         'name': '16GVP042',
         'notes': '',
-        'nuvs': 'False',
-        'pathoscope': 'False',
+        'nuvs': False,
+        'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
@@ -1115,8 +1115,8 @@
         'library_type': 'srna',
         'name': '16GVP043',
         'notes': 'This is a good sample.',
-        'nuvs': 'False',
-        'pathoscope': 'False',
+        'nuvs': False,
+        'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
@@ -1151,8 +1151,8 @@
         'library_type': 'amplicon',
         'name': '16SPP044',
         'notes': '',
-        'nuvs': 'False',
-        'pathoscope': 'False',
+        'nuvs': False,
+        'pathoscope': False,
         'ready': True,
         'user': <class 'dict'> {
           'administrator': False,
