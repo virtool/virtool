@@ -41,7 +41,7 @@ motor = "^2.4.0"
 openpyxl = "^3.0.7"
 psutil = "^5.8.0"
 semver = "^2.13.0"
-sentry-sdk = "^1.1.0"
+sentry-sdk = "^1.9.5"
 SQLAlchemy = "^1.4.17"
 visvalingamwyatt = "^0.1.4"
 uvloop = "^0.16.0"
@@ -53,7 +53,7 @@ msal = "^1.16.0"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 aiojobs = "^1.0.0"
 aiohttp-pydantic = "^1.12.1"
-virtool-core = "^2.16.0"
+virtool-core = "^2.23.3"
 
 
 [tool.poetry.dev-dependencies]

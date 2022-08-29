@@ -76,23 +76,6 @@
     'primary_group': None,
   }
 ---
-# name: TestDelete.test[uvloop]
-  <class 'list'> [
-    <class 'dict'> {
-      '_id': 'foo',
-      'users': <class 'list'> [
-        <class 'dict'> {
-          'id': 'bob',
-        },
-      ],
-    },
-    <class 'dict'> {
-      '_id': 'bar',
-      'users': <class 'list'> [
-      ],
-    },
-  ]
----
 # name: TestUpdate.test[uvloop-administrator][db]
   <class 'dict'> {
     '_id': 'abc123',
@@ -355,6 +338,8 @@
     'force_reset': False,
     'groups': <class 'list'> [
     ],
+    'handle': <class 'str'>,
+    'id': 'fb085f7f',
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
     'permissions': <class 'dict'> {
       'cancel_job': False,
@@ -380,6 +365,8 @@
     'force_reset': False,
     'groups': <class 'list'> [
     ],
+    'handle': <class 'str'>,
+    'id': 'bf1b993c',
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
     'permissions': <class 'dict'> {
       'cancel_job': False,

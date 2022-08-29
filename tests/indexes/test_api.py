@@ -21,10 +21,10 @@ from virtool.jobs.client import DummyJobsClient
 OTUS_JSON_PATH = Path.cwd() / "tests/test_files/index/otus.json.gz"
 
 
-async def test_find(mocker, snapshot, fake, spawn_client, static_time):
+async def test_find(mocker, snapshot, fake2, spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
     await client.db.indexes.insert_many(
         [
@@ -37,7 +37,7 @@ async def test_find(mocker, snapshot, fake, spawn_client, static_time):
                 "has_files": True,
                 "job": {"id": "bar"},
                 "reference": {"id": "bar"},
-                "user": {"id": user["_id"]},
+                "user": {"id": user.id},
                 "sequence_otu_map": {"foo": "bar_otu"},
             },
             {
@@ -49,7 +49,7 @@ async def test_find(mocker, snapshot, fake, spawn_client, static_time):
                 "has_files": True,
                 "job": {"id": "foo"},
                 "reference": {"id": "foo"},
-                "user": {"id": user["_id"]},
+                "user": {"id": user.id},
                 "sequence_otu_map": {"foo": "foo_otu"},
             },
         ]
@@ -80,10 +80,10 @@ async def test_find(mocker, snapshot, fake, spawn_client, static_time):
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, mocker, snapshot, fake, resp_is, spawn_client, static_time):
+async def test_get(error, mocker, snapshot, fake2, resp_is, spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
     if not error:
         await client.db.indexes.insert_one(
@@ -93,7 +93,7 @@ async def test_get(error, mocker, snapshot, fake, resp_is, spawn_client, static_
                 "created_at": static_time.datetime,
                 "ready": False,
                 "has_files": True,
-                "user": {"id": user["_id"]},
+                "user": {"id": user.id},
                 "job": {"id": "sj82la"},
             }
         )
@@ -178,7 +178,6 @@ class TestCreate:
         snapshot,
         spawn_client,
         static_time,
-        test_random_alphanumeric,
         check_ref_right,
         resp_is,
     ):
@@ -196,6 +195,7 @@ class TestCreate:
         # Insert unbuilt changes to prevent initial check failure.
         await client.db.history.insert_one(
             {
+                "_id": "history_1",
                 "index": {"id": "unbuilt", "version": "unbuilt"},
                 "reference": {"id": "foo"},
             }
@@ -209,7 +209,6 @@ class TestCreate:
             "virtool.references.db.get_manifest", new=make_mocked_coro("manifest")
         )
 
-        # Make API call.
         resp = await client.post("/refs/foo/indexes")
 
         if not check_ref_right:
@@ -221,7 +220,7 @@ class TestCreate:
         assert resp.headers["Location"] == snapshot(name="location")
         assert await client.db.jobs.find_one() == snapshot(name="job")
         assert await client.db.indexes.find_one() == snapshot(name="index")
-        assert data.jobs._client.enqueued == [("build_index", "u3cuwaoq")]
+        assert data.jobs._client.enqueued == snapshot(name="enqueued")
 
         m_get_next_version.assert_called_with(client.db, "foo")
         m_create_manifest.assert_called_with(client.db, "foo")
@@ -349,7 +348,7 @@ async def test_delete_index(spawn_job_client, error):
 async def test_upload(
     error,
     tmp_path,
-    fake,
+    fake2,
     spawn_job_client,
     snapshot,
     static_time,
@@ -363,9 +362,9 @@ async def test_upload(
 
     client.app["config"].data_path = tmp_path
 
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
-    index = {"_id": "foo", "reference": {"id": "bar"}, "user": {"id": user["_id"]}}
+    index = {"_id": "foo", "reference": {"id": "bar"}, "user": {"id": user.id}}
 
     if error == "409":
         async with AsyncSession(pg) as session:
@@ -409,14 +408,14 @@ async def test_upload(
 
 
 @pytest.mark.parametrize("error", [None, "409_genome", "409_fasta", "404_reference"])
-async def test_finalize(error, snapshot, fake, spawn_job_client, test_otu, pg):
+async def test_finalize(error, snapshot, fake2, spawn_job_client, test_otu, pg):
     """
     Test that an index can be finalized using the Jobs API.
 
     """
     client = await spawn_job_client(authorize=True)
 
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
     if error == "409_genome":
         files = ["reference.fa.gz"]
@@ -432,7 +431,7 @@ async def test_finalize(error, snapshot, fake, spawn_job_client, test_otu, pg):
         {
             "_id": "test_index",
             "reference": {"id": "hxn167"},
-            "user": {"id": user["_id"]},
+            "user": {"id": user.id},
         }
     )
 

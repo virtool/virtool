@@ -82,14 +82,11 @@ async def create(
     :param index_id: the ID of the index
     :return: the new index document
     """
-    index_id = index_id or await get_new_id(db.indexes)
-
     index_version = await get_next_version(db, ref_id)
 
     manifest = await virtool.references.db.get_manifest(db, ref_id)
 
     document = {
-        "_id": index_id,
         "version": index_version,
         "created_at": virtool.utils.timestamp(),
         "manifest": manifest,
@@ -101,7 +98,10 @@ async def create(
         "user": {"id": user_id},
     }
 
-    await db.indexes.insert_one(document)
+    if index_id:
+        document["_id"] = index_id
+
+    document = await db.indexes.insert_one(document)
 
     await db.history.update_many(
         {"index.id": "unbuilt", "reference.id": ref_id},

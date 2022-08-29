@@ -1,11 +1,19 @@
+# name: TestCreate.test[True-uvloop][enqueued]
+  <class 'list'> [
+    <class 'tuple'> (
+      'build_index',
+      'bf1b993c',
+    ),
+  ]
+---
 # name: TestCreate.test[True-uvloop][index]
   <class 'dict'> {
-    '_id': 'xjqvxigh',
+    '_id': 'fb085f7f',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'has_files': True,
     'has_json': False,
     'job': <class 'dict'> {
-      'id': 'u3cuwaoq',
+      'id': 'bf1b993c',
     },
     'manifest': 'manifest',
     'ready': False,
@@ -20,11 +28,11 @@
 ---
 # name: TestCreate.test[True-uvloop][job]
   <class 'dict'> {
-    '_id': 'u3cuwaoq',
+    '_id': 'bf1b993c',
     'acquired': False,
     'archived': False,
     'args': <class 'dict'> {
-      'index_id': 'xjqvxigh',
+      'index_id': 'fb085f7f',
       'index_version': 9,
       'manifest': 'manifest',
       'ref_id': 'foo',
@@ -34,7 +42,7 @@
     'rights': <class 'dict'> {
       'indexes': <class 'dict'> {
         'modify': <class 'list'> [
-          'xjqvxigh',
+          'fb085f7f',
         ],
       },
       'references': <class 'dict'> {
@@ -63,13 +71,13 @@
 ---
 # name: TestCreate.test[True-uvloop][json]
   <class 'dict'> {
-    'change_count': 1,
+    'change_count': 0,
     'created_at': '2015-10-06T20:00:00Z',
     'has_files': True,
     'has_json': False,
-    'id': 'xjqvxigh',
+    'id': 'fb085f7f',
     'job': <class 'dict'> {
-      'id': 'u3cuwaoq',
+      'id': 'bf1b993c',
     },
     'manifest': 'manifest',
     'modified_otu_count': 0,
@@ -86,7 +94,7 @@
   }
 ---
 # name: TestCreate.test[True-uvloop][location]
-  'https://virtool.example.com/indexes/xjqvxigh'
+  'https://virtool.example.com/indexes/fb085f7f'
 ---
 # name: test_finalize[uvloop-404_reference]
   <class 'dict'> {
@@ -184,7 +192,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
   }
 ---
@@ -233,7 +241,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': '7CtBo2yG',
+          'id': 'bf1b993c',
         },
         'version': 1,
       },
@@ -253,7 +261,7 @@
         'user': <class 'dict'> {
           'administrator': False,
           'handle': 'leeashley',
-          'id': '7CtBo2yG',
+          'id': 'bf1b993c',
         },
         'version': 0,
       },
@@ -379,7 +387,7 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'version': 0,
   }
@@ -401,7 +409,7 @@
       'id': 'bar',
     },
     'user': <class 'dict'> {
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
   }
 ---

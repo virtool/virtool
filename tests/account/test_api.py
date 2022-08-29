@@ -446,17 +446,12 @@ async def test_is_valid_email(value, spawn_client, resp_is):
         ({"username": "oops", "password": "p@ssword123", "remember": False}, 400),
         ({"username": "foobar", "password": "wr0ngp@ssword", "remember": False}, 400),
         ({"username": "foobar", "password": "p@ssword123"}, 201),
-
-
     ],
-    ids=[
-        "all_valid",
-        "wrong_handle",
-        "wrong_password",
-        "missing_remember"
-    ],
+    ids=["all_valid", "wrong_handle", "wrong_password", "missing_remember"],
 )
-async def test_login(spawn_client, create_user, resp_is, body, status, mocker, snapshot):
+async def test_login(
+    spawn_client, create_user, resp_is, body, status, mocker, snapshot
+):
     client = await spawn_client()
 
     await client.db.users.insert_one(

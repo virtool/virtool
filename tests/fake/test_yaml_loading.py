@@ -11,11 +11,10 @@ def example_test_case(test_files_path) -> Path:
 
 
 async def test_load_yml(app, fake, example_test_case):
-    await fake.users.insert()
 
     case = await load_test_case_from_yml(app, example_test_case, "bob")
 
-    assert case.analysis.ready == False
+    assert case.analysis.ready is False
     assert case.analysis._id == case.job.args["analysis_id"]
     assert case.analysis.sample["id"] == case.sample._id
     assert case.analysis.index["id"] == case.index._id

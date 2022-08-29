@@ -214,13 +214,14 @@ async def test_edit(error, spawn_client, pg: AsyncEngine, resp_is):
 
 @pytest.mark.parametrize("error", [None, "400"])
 async def test_remove(
-    error, spawn_client, pg: AsyncEngine, resp_is, fake, mock_samples: List[dict]
+    error, spawn_client, pg: AsyncEngine, resp_is, mock_samples: List[dict]
 ):
     """
     Test that a label can be deleted to the database at ``DELETE /labels/:label_id``.
 
     Test that samples are updated when a label is deleted.
     """
+
     client = await spawn_client(authorize=True, administrator=True)
 
     if not error:
@@ -258,15 +259,11 @@ async def test_remove(
 
     await resp_is.no_content(resp)
 
-    responses = await asyncio.gather(
-        *[client.get(f"/samples/{sample['_id']}") for sample in mock_samples]
-    )
+    label_ids_in_samples = await client.db.samples.distinct("labels")
 
-    samples = [await response.json() for response in responses]
-
-    label_ids = [label["id"] for sample in samples for label in sample["labels"]]
-
-    assert 1 not in label_ids
+    assert 4 in label_ids_in_samples
+    assert 9 in label_ids_in_samples
+    assert 1 not in label_ids_in_samples
 
 
 @pytest.mark.parametrize("value", ["valid_hex_color", "invalid_hex_color"])

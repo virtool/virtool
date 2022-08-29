@@ -1,7 +1,7 @@
 job_id: test_case_1
 job_args:
   additional_arg: True
-workflow: null
+workflow: build_index
 user_id: bob
 
 analysis:

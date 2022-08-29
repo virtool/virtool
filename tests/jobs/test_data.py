@@ -13,8 +13,8 @@ async def jobs_data(dbi, mocker, pg: AsyncEngine) -> JobsData:
     return JobsData(mocker.Mock(spec=JobsClient), dbi, pg)
 
 
-async def test_cancel(dbi, fake, jobs_data: JobsData, snapshot, static_time):
-    user = await fake.users.insert()
+async def test_cancel(dbi, fake2, jobs_data: JobsData, snapshot, static_time):
+    user = await fake2.users.create()
 
     await dbi.jobs.insert_one(
         {
@@ -29,7 +29,11 @@ async def test_cancel(dbi, fake, jobs_data: JobsData, snapshot, static_time):
                     "timestamp": static_time.datetime,
                 }
             ],
-            "user": {"id": user["_id"]},
+            "rights": {},
+            "archived": False,
+            "workflow": "build_index",
+            "args": {},
+            "user": {"id": user.id},
         }
     )
 
@@ -46,6 +50,7 @@ async def test_create(
     dbi,
     test_random_alphanumeric,
     static_time,
+    fake,
 ):
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
@@ -54,9 +59,11 @@ async def test_create(
     rights.samples.can_modify("foo")
     rights.samples.can_remove("foo")
 
+    user = await fake.users.insert()
+
     assert (
         await jobs_data.create(
-            "create_sample", {"sample_id": "foo"}, "bob", rights, job_id=job_id
+            "create_sample", {"sample_id": "foo"}, user["_id"], rights, job_id=job_id
         )
         == snapshot
     )
@@ -65,22 +72,31 @@ async def test_create(
 
 
 async def test_acquire(
-    dbi, fake, jobs_data: JobsData, mocker, pg, snapshot, static_time
+    dbi, fake2, jobs_data: JobsData, mocker, pg, snapshot, static_time
 ):
-    user = await fake.users.insert()
+    user = await fake2.users.create()
 
     mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
 
     await dbi.jobs.insert_one(
-        {"_id": "foo", "acquired": False, "key": None, "user": {"id": user["_id"]}}
+        {
+            "_id": "foo",
+            "acquired": False,
+            "key": None,
+            "rights": {},
+            "archived": False,
+            "workflow": "build_index",
+            "args": {},
+            "user": {"id": user.id},
+        }
     )
 
     assert await jobs_data.acquire("foo") == snapshot
     assert await dbi.jobs.find_one() == snapshot
 
 
-async def test_archive(dbi, fake, jobs_data: JobsData, pg, snapshot, static_time):
-    user = await fake.users.insert()
+async def test_archive(dbi, fake2, jobs_data: JobsData, pg, snapshot, static_time):
+    user = await fake2.users.create()
 
     status = compose_status("waiting", None)
 
@@ -91,7 +107,10 @@ async def test_archive(dbi, fake, jobs_data: JobsData, pg, snapshot, static_time
             "archived": False,
             "acquired": False,
             "key": None,
-            "user": {"id": user["_id"]},
+            "user": {"id": user.id},
+            "rights": {},
+            "workflow": "build_index",
+            "args": {},
         }
     )
 

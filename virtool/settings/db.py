@@ -1,5 +1,7 @@
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
+
+from motor.motor_asyncio import AsyncIOMotorClientSession
 from virtool_core.models.settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -23,6 +25,13 @@ async def ensure(db):
 
     await db.settings.update_one({"_id": "settings"}, {"$set": settings}, upsert=True)
 
+    return Settings(**settings)
+
+
+async def get_settings(
+    db, session: Optional[AsyncIOMotorClientSession] = None
+) -> Settings:
+    settings = await db.settings.find_one({"_id": "settings"}, session=session)
     return Settings(**settings)
 
 

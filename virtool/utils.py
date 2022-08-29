@@ -12,7 +12,7 @@ import tempfile
 from pathlib import Path
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Any, Iterable, Optional, Tuple, Dict
+from typing import Any, Iterable, Optional, Tuple, Dict, List
 
 import arrow
 
@@ -270,3 +270,21 @@ async def run_in_thread(func, *args, **kwargs):
     loop = asyncio.get_event_loop()
     bound_func = functools.partial(func, *args, **kwargs)
     return await loop.run_in_executor(None, bound_func)
+
+
+async def wait_for_checks(*aws):
+    """
+    Concurrently wait for awaitables the raise exceptions when checks fail.
+
+    As soon as the first exception is raised, pending checks are cancelled and exception
+    is raised.
+
+    :param aws:
+    :return:
+    """
+    done, pending = await asyncio.wait(aws, return_when=asyncio.FIRST_EXCEPTION)
+
+    for task in pending:
+        task.cancel()
+
+    await asyncio.gather(*(done | pending))

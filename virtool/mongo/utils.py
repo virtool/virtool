@@ -51,40 +51,41 @@ async def delete_unready(collection):
 
 
 async def check_missing_ids(
-    collection: AsyncIOMotorCollection, id_list: list, query: dict = None
+    collection: AsyncIOMotorCollection,
+    id_list: list,
+    query: dict = None,
+    session: Optional[AsyncIOMotorClientSession] = None,
 ) -> Set[str]:
     """
     Check if all IDs in the ``id_list`` exist in the database.
 
     :param collection: the Mongo collection to check ``id_list`` against
     :param id_list: the IDs to check for
-    :param query: a MongoDB query
+    :param query: a mongodb query
+    :param session: a motor session to use
     :return: all non-existent IDs
 
     """
-    existent_ids = await collection.distinct("_id", query)
-    return set(id_list) - set(existent_ids)
+    return set(id_list) - set(await collection.distinct("_id", query, session=session))
 
 
 async def get_new_id(
-    collection,
-    excluded: Optional[Sequence[str]] = None,
-    session: Optional[AsyncIOMotorClientSession] = None,
+    collection, session: Optional[AsyncIOMotorClientSession] = None
 ) -> str:
     """
     Returns a new, unique, id that can be used for inserting a new document. Will not
     return any id that is included in ``excluded``.
 
     :param collection: the Mongo collection to get a new _id for
-    :param excluded: a list of ids to exclude from the search
-    :param session: a Motor session to use
     :return: an ID unique within the collection
 
     """
-    excluded = set(excluded or set())
-    excluded.update(await collection.distinct("_id", session=session))
+    id_ = collection.mongo.id_provider.get()
 
-    return virtool.utils.random_alphanumeric(length=8, excluded=excluded)
+    if await collection.count_documents({"_id": id_}, limit=1, session=session):
+        return await get_new_id(collection, session=session)
+
+    return id_
 
 
 async def get_one_field(
@@ -122,7 +123,9 @@ async def get_non_existent_ids(collection, id_list: Sequence[str]) -> Set[str]:
     return set(id_list) - set(existing_group_ids)
 
 
-async def id_exists(collection, id_: str) -> bool:
+async def id_exists(
+    collection, id_: str, session: Optional[AsyncIOMotorClientSession] = None
+) -> bool:
     """
     Check if the document id exists in the collection.
 
@@ -130,4 +133,6 @@ async def id_exists(collection, id_: str) -> bool:
     :param id_: the _id to check for
     :return: does the id exist
     """
-    return bool(await collection.count_documents({"_id": id_}, limit=1))
+    return bool(
+        await collection.count_documents({"_id": id_}, limit=1, session=session)
+    )

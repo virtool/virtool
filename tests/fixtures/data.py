@@ -10,6 +10,7 @@ from virtool.jobs.client import DummyJobsClient
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
 from virtool.otus.data import OTUData
+from virtool.samples.data import SamplesData
 from virtool.users.data import UsersData
 
 
@@ -23,5 +24,6 @@ def data_layer(dbi, config, mocker, pg: AsyncEngine, tasks):
         LabelsData(dbi, pg),
         JobsData(DummyJobsClient(), dbi, pg),
         OTUData({"db": dbi, "pg": pg}),
+        SamplesData(config, dbi, pg),
         UsersData(dbi, pg),
     )

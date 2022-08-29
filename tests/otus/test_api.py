@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
@@ -104,11 +106,12 @@ class TestCreate:
             return
 
         assert resp.status == 201
-        assert resp.headers["Location"] == "https://virtool.example.com/otus/9pfsom1b"
-        assert await resp.json() == snapshot
+        assert resp.headers["Location"] == snapshot(name="location")
+        assert await resp.json() == snapshot(name="json")
 
-        assert await client.db.otus.find_one() == snapshot
-        assert await client.db.history.find_one() == snapshot
+        assert await asyncio.gather(
+            client.db.otus.find_one(), client.db.history.find_one()
+        ) == snapshot(name="db")
 
     @pytest.mark.parametrize(
         "error,message",
@@ -1046,17 +1049,15 @@ async def test_create_sequence(
         await resp_is.insufficient_rights(resp)
         return
 
-    sequence_id = test_random_alphanumeric.history[0]
-
     assert resp.status == 201
     assert resp.headers["Location"] == snapshot
     assert await resp.json() == snapshot
 
-    assert await client.db.otus.find_one("6116cba1") == snapshot
-    assert await client.db.sequences.find_one(sequence_id) == snapshot
-    assert (
-        await client.db.history.find_one({"method_name": "create_sequence"}) == snapshot
-    )
+    assert await asyncio.gather(
+        client.db.sequences.find_one(),
+        client.db.otus.find_one("6116cba1"),
+        client.db.history.find_one({"method_name": "create_sequence"}),
+    ) == snapshot(name="db")
 
 
 @pytest.mark.parametrize(

@@ -1681,7 +1681,7 @@
           <class 'list'> [
             0,
             <class 'dict'> {
-              '_id': '9pfsom1b',
+              '_id': 'bf1b993c',
               'accession': 'abc123',
               'definition': 'A made up sequence',
               'host': None,
@@ -1747,7 +1747,7 @@
     'accession': 'abc123',
     'definition': 'A made up sequence',
     'host': None,
-    'id': '9pfsom1b',
+    'id': 'bf1b993c',
     'isolate_id': 'baz',
     'otu_id': 'bar',
     'reference': <class 'dict'> {
@@ -1760,7 +1760,7 @@
 ---
 # name: test_create_sequence[uvloop-None-None-None][sequence]
   <class 'dict'> {
-    '_id': '9pfsom1b',
+    '_id': 'bf1b993c',
     'accession': 'abc123',
     'definition': 'A made up sequence',
     'host': None,
@@ -1791,7 +1791,7 @@
           <class 'list'> [
             0,
             <class 'dict'> {
-              '_id': '9pfsom1b',
+              '_id': 'bf1b993c',
               'accession': 'abc123',
               'definition': 'A made up sequence',
               'host': 'host',
@@ -1857,7 +1857,7 @@
     'accession': 'abc123',
     'definition': 'A made up sequence',
     'host': 'host',
-    'id': '9pfsom1b',
+    'id': 'bf1b993c',
     'isolate_id': 'baz',
     'otu_id': 'bar',
     'reference': <class 'dict'> {
@@ -1870,7 +1870,7 @@
 ---
 # name: test_create_sequence[uvloop-None-None-host][sequence]
   <class 'dict'> {
-    '_id': '9pfsom1b',
+    '_id': 'bf1b993c',
     'accession': 'abc123',
     'definition': 'A made up sequence',
     'host': 'host',
@@ -1901,7 +1901,7 @@
           <class 'list'> [
             0,
             <class 'dict'> {
-              '_id': '9pfsom1b',
+              '_id': 'bf1b993c',
               'accession': 'abc123',
               'definition': 'A made up sequence',
               'host': None,
@@ -1967,7 +1967,7 @@
     'accession': 'abc123',
     'definition': 'A made up sequence',
     'host': None,
-    'id': '9pfsom1b',
+    'id': 'bf1b993c',
     'isolate_id': 'baz',
     'otu_id': 'bar',
     'reference': <class 'dict'> {
@@ -1980,7 +1980,7 @@
 ---
 # name: test_create_sequence[uvloop-None-seg-None][sequence]
   <class 'dict'> {
-    '_id': '9pfsom1b',
+    '_id': 'bf1b993c',
     'accession': 'abc123',
     'definition': 'A made up sequence',
     'host': None,
@@ -2011,7 +2011,7 @@
           <class 'list'> [
             0,
             <class 'dict'> {
-              '_id': '9pfsom1b',
+              '_id': 'bf1b993c',
               'accession': 'abc123',
               'definition': 'A made up sequence',
               'host': 'host',
@@ -2077,7 +2077,7 @@
     'accession': 'abc123',
     'definition': 'A made up sequence',
     'host': 'host',
-    'id': '9pfsom1b',
+    'id': 'bf1b993c',
     'isolate_id': 'baz',
     'otu_id': 'bar',
     'reference': <class 'dict'> {
@@ -2090,7 +2090,7 @@
 ---
 # name: test_create_sequence[uvloop-None-seg-host][sequence]
   <class 'dict'> {
-    '_id': '9pfsom1b',
+    '_id': 'bf1b993c',
     'accession': 'abc123',
     'definition': 'A made up sequence',
     'host': 'host',

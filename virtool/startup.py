@@ -39,6 +39,7 @@ from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
 from virtool.mongo.core import DB
+from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate
 from virtool.oidc.utils import JWKArgs
 from virtool.otus.data import OTUData
@@ -49,6 +50,7 @@ from virtool.references.tasks import (
     DeleteReferenceTask,
 )
 from virtool.routes import setup_routes
+from virtool.samples.data import SamplesData
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.sentry import setup
 from virtool.settings.db import ensure
@@ -130,6 +132,7 @@ async def startup_data(app: App):
         LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
         OTUData(app),
+        SamplesData(app["config"], app["db"], app["pg"]),
         UsersData(app["db"], app["pg"]),
     )
 
@@ -272,7 +275,7 @@ async def startup_databases(app: Application):
     dispatcher_interface = DispatcherClient(app["redis"])
     await get_scheduler_from_app(app).spawn(dispatcher_interface.run())
 
-    app["db"] = DB(mongo, dispatcher_interface.enqueue_change)
+    app["db"] = DB(mongo, dispatcher_interface.enqueue_change, RandomIdProvider())
 
     app["dispatcher_interface"] = dispatcher_interface
 

@@ -77,7 +77,7 @@ class SimpleMongoFetcher(AbstractFetcher):
         processor: Optional[Callable[[None, dict], Awaitable[dict]]] = None,
     ):
         self._collection = collection
-        self._db: AsyncIOMotorDatabase = collection.database
+        self._db: AsyncIOMotorDatabase = collection.mongo
         self._projection = projection
 
         if processor:

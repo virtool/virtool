@@ -27,6 +27,7 @@ class LabelsData:
         :return: a list of all sample labels.
         """
         statement = select(LabelSQL).order_by(LabelSQL.name)
+
         if term:
             statement = statement.filter(LabelSQL.name.ilike(f"%{term}%"))
 

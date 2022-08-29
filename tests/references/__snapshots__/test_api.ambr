@@ -53,7 +53,7 @@
   }
 ---
 # name: test_create[uvloop-barcode]
-  'https://virtool.example.com/refs/9pfsom1b'
+  'https://virtool.example.com/refs/bf1b993c'
 ---
 # name: test_create[uvloop-barcode].1
   <class 'dict'> {
@@ -64,7 +64,7 @@
     'description': 'A bunch of viruses used for testing',
     'groups': <class 'list'> [
     ],
-    'id': '9pfsom1b',
+    'id': 'bf1b993c',
     'internal_control': None,
     'latest_build': None,
     'name': 'Test Viruses',
@@ -97,7 +97,7 @@
   }
 ---
 # name: test_create[uvloop-genome]
-  'https://virtool.example.com/refs/9pfsom1b'
+  'https://virtool.example.com/refs/bf1b993c'
 ---
 # name: test_create[uvloop-genome].1
   <class 'dict'> {
@@ -108,7 +108,7 @@
     'description': 'A bunch of viruses used for testing',
     'groups': <class 'list'> [
     ],
-    'id': '9pfsom1b',
+    'id': 'bf1b993c',
     'internal_control': None,
     'latest_build': None,
     'name': 'Test Viruses',
@@ -184,14 +184,14 @@
       },
     ],
     'user': <class 'dict'> {
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'LB1U6zCj',
+        'id': 'fb085f7f',
       },
       <class 'dict'> {
-        'id': 'w20Amyfb',
+        'id': '7cf872dc',
       },
     ],
   }
@@ -218,18 +218,18 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'users': <class 'list'> [
       <class 'dict'> {
         'administrator': False,
-        'handle': 'johnsoncynthia',
-        'id': 'LB1U6zCj',
+        'handle': 'zclark',
+        'id': 'fb085f7f',
       },
       <class 'dict'> {
         'administrator': False,
-        'handle': 'danagray',
-        'id': 'w20Amyfb',
+        'handle': 'olopez',
+        'id': '7cf872dc',
       },
     ],
   }
@@ -241,14 +241,14 @@
     'description': 'This is a test reference.',
     'name': 'Bar',
     'user': <class 'dict'> {
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'users': <class 'list'> [
       <class 'dict'> {
-        'id': 'LB1U6zCj',
+        'id': 'fb085f7f',
       },
       <class 'dict'> {
-        'id': 'w20Amyfb',
+        'id': '7cf872dc',
       },
     ],
   }
@@ -268,18 +268,18 @@
     'user': <class 'dict'> {
       'administrator': False,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'users': <class 'list'> [
       <class 'dict'> {
         'administrator': False,
-        'handle': 'johnsoncynthia',
-        'id': 'LB1U6zCj',
+        'handle': 'zclark',
+        'id': 'fb085f7f',
       },
       <class 'dict'> {
         'administrator': False,
-        'handle': 'danagray',
-        'id': 'w20Amyfb',
+        'handle': 'olopez',
+        'id': '7cf872dc',
       },
     ],
   }

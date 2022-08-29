@@ -17,17 +17,17 @@ from virtool.utils import random_alphanumeric
 
 
 @pytest.mark.parametrize("multiple", [True, False])
-async def test_attach_user_transform(multiple, snapshot, dbi, fake):
-    user_1 = await fake.users.insert()
-    user_2 = await fake.users.insert()
+async def test_attach_user_transform(multiple, snapshot, dbi, fake2):
+    user_1 = await fake2.users.create()
+    user_2 = await fake2.users.create()
 
-    documents = {"_id": "bar", "user": {"id": user_1["_id"]}}
+    documents = {"_id": "bar", "user": {"id": user_1.id}}
 
     if multiple:
         documents = [
             documents,
-            {"_id": "foo", "user": {"id": user_2["_id"]}},
-            {"_id": "baz", "user": {"id": user_1["_id"]}},
+            {"_id": "foo", "user": {"id": user_2.id}},
+            {"_id": "baz", "user": {"id": user_1.id}},
         ]
 
     assert await apply_transforms(documents, [AttachUserTransform(dbi)]) == snapshot

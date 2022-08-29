@@ -110,7 +110,7 @@ class Dispatcher:
         try:
             async for change in self._listener:
                 await self._dispatch(change)
-                logger.debug(f"Received change: {change.target}")
+                logger.debug("Received change: %s", change.target)
         except CancelledError:
             pass
 
@@ -126,7 +126,7 @@ class Dispatcher:
 
         """
         self._connections.append(connection)
-        logger.debug(f"Added connection to dispatcher: {connection.user_id}")
+        logger.debug("Added connection to dispatcher: %s", connection.user_id)
 
     def remove_connection(self, connection: Connection):
         """
@@ -137,7 +137,7 @@ class Dispatcher:
         """
         try:
             self._connections.remove(connection)
-            logger.debug(f"Removed connection from dispatcher: {connection.user_id}")
+            logger.debug("Removed connection from dispatcher: %s", connection.user_id)
         except ValueError:
             pass
 
@@ -159,7 +159,7 @@ class Dispatcher:
         try:
             fetcher = getattr(self._fetchers, change.interface)
         except AttributeError:
-            logger.warning(f"Unknown dispatch interface: {change.interface}")
+            logger.warning("Unknown dispatch interface: %s", change.interface)
             return
 
         if change.operation not in (DELETE, INSERT, UPDATE):
@@ -176,7 +176,7 @@ class Dispatcher:
                 ):
                     self.remove_connection(connection)
 
-        logger.debug(f"Dispatcher sent messages for {change.target}")
+        logger.debug("Dispatcher sent messages for %s", change.target)
 
     async def close(self):
         """
@@ -186,6 +186,6 @@ class Dispatcher:
         logger.debug("Closing dispatcher")
 
         for connection in self._connections:
-            await connection.close()
+            await connection.close(1001)
 
         logger.debug("Closed dispatcher")

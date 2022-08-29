@@ -67,7 +67,7 @@
       'b2c_given_name': None,
       'b2c_oid': None,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'workflow': 'test_workflow',
   }
@@ -99,7 +99,7 @@
     'subtractions': <class 'list'> [
     ],
     'user': <class 'dict'> {
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'workflow': 'test_workflow',
   }
@@ -136,7 +136,7 @@
           'b2c_given_name': None,
           'b2c_oid': None,
           'handle': 'leeashley',
-          'id': '7CtBo2yG',
+          'id': 'bf1b993c',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -173,7 +173,7 @@
           'b2c_given_name': None,
           'b2c_oid': None,
           'handle': 'leeashley',
-          'id': '7CtBo2yG',
+          'id': 'bf1b993c',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -206,7 +206,7 @@
           'b2c_given_name': None,
           'b2c_oid': None,
           'handle': 'leeashley',
-          'id': '7CtBo2yG',
+          'id': 'bf1b993c',
         },
         'workflow': 'pathoscope_bowtie',
       },
@@ -272,7 +272,7 @@
       'b2c_given_name': None,
       'b2c_oid': None,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'workflow': 'pathoscope_bowtie',
   }
@@ -331,7 +331,7 @@
       'b2c_given_name': None,
       'b2c_oid': None,
       'handle': 'leeashley',
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'workflow': 'pathoscope_bowtie',
   }
@@ -376,7 +376,7 @@
       'apple',
     ],
     'user': <class 'dict'> {
-      'id': '7CtBo2yG',
+      'id': 'bf1b993c',
     },
     'workflow': 'pathoscope_bowtie',
   }

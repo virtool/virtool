@@ -20,6 +20,7 @@ async def create_test_database(connection_string: str, name: str):
         f"{connection_string}",
         isolation_level="AUTOCOMMIT",
         json_serializer=virtool.api.json.dumps,
+        pool_recycle=1800,
     )
 
     async with engine.connect() as conn:
