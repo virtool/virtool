@@ -1,5 +1,6 @@
 from pydantic import BaseModel, constr, Field, validator
-from virtool_core.models.label import Label, normalize_hex_color
+from virtool_core.models import normalize_hex_color
+from virtool_core.models.label import Label
 
 
 class CreateLabelSchema(BaseModel):
@@ -10,7 +11,9 @@ class CreateLabelSchema(BaseModel):
     name: constr(strip_whitespace=True, min_length=1) = Field(
         description="unique name for the label document"
     )
-    color: constr(strip_whitespace=True) = Field(default="#A0AEC0", description="color of the label")
+    color: constr(strip_whitespace=True) = Field(
+        default="#A0AEC0", description="color of the label"
+    )
     description: constr(strip_whitespace=True) = Field(
         default="", description="description of the document"
     )
@@ -24,7 +27,7 @@ class CreateLabelSchema(BaseModel):
             "example": {
                 "color": "#374151",
                 "description": "dsRNA/binding protein",
-                "name": "Binding protein"
+                "name": "Binding protein",
             }
         }
 
@@ -37,7 +40,7 @@ class CreateLabelResponse(Label):
                 "count": 0,
                 "description": "dsRNA/binding protein",
                 "id": 23,
-                "name": "Binding protein"
+                "name": "Binding protein",
             }
         }
 
@@ -64,7 +67,7 @@ class EditLabelSchema(BaseModel):
             "example": {
                 "color": "#93C5FD",
                 "description": "Blueberry",
-                "name": "Blueberry"
+                "name": "Blueberry",
             }
         }
 
@@ -77,7 +80,7 @@ class LabelResponse(Label):
                 "count": 0,
                 "description": "dsRNA/Ab",
                 "id": 22,
-                "name": "Ab"
+                "name": "Ab",
             }
         }
 
@@ -91,7 +94,7 @@ class GetLabelResponse(Label):
                     "count": 0,
                     "description": "dsRNA/Ab",
                     "id": 22,
-                    "name": "Ab"
+                    "name": "Ab",
                 }
             ]
         }
