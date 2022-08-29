@@ -1,6 +1,6 @@
 import pytest
 
-from virtool.settings.db import Settings
+from virtool_core.models.settings import Settings
 
 from virtool.settings.data import SettingsData
 
