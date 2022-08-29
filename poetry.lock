@@ -1140,11 +1140,7 @@ test = ["aiohttp", "flake8 (>=3.9.2,<3.10.0)", "psutil", "pycodestyle (>=2.7.0,<
 
 [[package]]
 name = "virtool-core"
-<<<<<<< Updated upstream
-version = "2.25.2"
-=======
 version = "2.25.3"
->>>>>>> Stashed changes
 description = "Core utilities for Virtool."
 category = "main"
 optional = false
@@ -1207,7 +1203,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.8"
-content-hash = "c07d6de4e0e268d797262fffe434d9ea23be0f9fe99c8bf2870ab2f36f6bb206"
+content-hash = "ffa73ed0e9f0bf6b3a503ad358f72d3dba38c37101c66ebaad9e32dc24855968"
 
 [metadata.files]
 aiodns = [
