@@ -1,5 +1,5 @@
 from pydantic import BaseModel, constr, Field, validator
-from virtool_core.models import normalize_hex_color
+from virtool_core.models.validators import normalize_hex_color
 from virtool_core.models.label import Label
 
 
