@@ -46,14 +46,14 @@ async def create_app(config: Config):
             startup_version,
             startup_fake_config,
             startup_databases,
-            startup_settings,
             startup_executors,
             startup_fake,
             startup_task_runner,
             startup_data,
             startup_events,
             startup_routes,
-            startup_sentry
+            startup_settings,
+            startup_sentry,
         ]
     )
 

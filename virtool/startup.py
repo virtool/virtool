@@ -22,6 +22,7 @@ from virtool.analyses.data import AnalysisData
 from virtool.analyses.tasks import StoreNuvsFilesTask
 from virtool.blast.data import BLASTData
 from virtool.data.layer import DataLayer
+from virtool.data.utils import get_data_from_app
 from virtool.dev.fake import create_fake_data_path, populate
 from virtool.dispatcher.client import DispatcherClient
 from virtool.dispatcher.dispatcher import Dispatcher
@@ -38,6 +39,7 @@ from virtool.indexes.tasks import (
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
+from virtool.settings.data import SettingsData
 from virtool.mongo.core import DB
 from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate
@@ -53,7 +55,6 @@ from virtool.routes import setup_routes
 from virtool.samples.data import SamplesData
 from virtool.samples.tasks import CompressSamplesTask, MoveSampleFilesTask
 from virtool.sentry import setup
-from virtool.settings.db import ensure
 from virtool.subtractions.db import check_subtraction_fasta_files
 from virtool.subtractions.tasks import (
     AddSubtractionFilesTask,
@@ -128,6 +129,7 @@ async def startup_data(app: App):
         AnalysisData(app["db"], app["config"], app["pg"], app["tasks"]),
         BLASTData(app["db"], app["pg"], app["tasks"]),
         GroupsData(app["db"]),
+        SettingsData(app["db"]),
         HistoryData(app["config"].data_path, app["db"]),
         LabelsData(app["db"], app["pg"]),
         JobsData(JobsClient(app["redis"]), app["db"], app["pg"]),
@@ -304,9 +306,10 @@ async def startup_routes(app: Application):
 
 
 async def startup_sentry(app: typing.Union[dict, Application]):
+    settings = await get_data_from_app(app).settings.get_all()
     if (
         not app["config"].no_sentry
-        and app["settings"].enable_sentry is not False
+        and settings.enable_sentry is not False
         and not app["config"].dev
     ):
         logger.info("Configuring Sentry")
@@ -318,14 +321,14 @@ async def startup_sentry(app: typing.Union[dict, Application]):
 
 async def startup_settings(app: typing.Union[dict, Application]):
     """
-    Draws settings from the settings database collection and populates `app["settings"`.
+    Draws settings from the settings database collection.
 
     Performs migration of old settings style to `v3.3.0` if necessary.
 
     :param app: the app object
 
     """
-    app["settings"] = await ensure(app["db"])
+    await get_data_from_app(app).settings.ensure()
 
 
 async def startup_version(app: typing.Union[dict, Application]):

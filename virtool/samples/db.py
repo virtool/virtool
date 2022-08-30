@@ -24,12 +24,12 @@ from virtool.mongo.transforms import AbstractTransform, apply_transforms
 from virtool.mongo.utils import id_exists
 from virtool.samples.models import SampleArtifact, SampleReads
 from virtool.samples.utils import join_legacy_read_paths
-from virtool.settings.db import Settings
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.types import App, Document
 from virtool.uploads.models import Upload
 from virtool.users.db import AttachUserTransform
 from virtool.utils import base_processor, compress_file, file_stats, run_in_thread
+from virtool_core.models.settings import Settings
 
 logger = logging.getLogger(__name__)
 

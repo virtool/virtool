@@ -5,12 +5,12 @@ from typing import Optional
 
 from sqlalchemy.exc import IntegrityError
 
+from virtool_core.models.settings import Settings
 
 from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
 from virtool.samples.db import create_sample, finalize
 from virtool.samples.files import create_reads_file
-from virtool.settings.db import Settings
 from virtool.types import App
 from virtool.utils import run_in_thread
 

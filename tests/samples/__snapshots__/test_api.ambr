@@ -4,16 +4,16 @@
 # name: TestCreate.test[uvloop-force_choice].1
   <class 'dict'> {
     'all_read': True,
-    'all_write': False,
+    'all_write': True,
     'artifacts': <class 'list'> [
     ],
     'caches': <class 'list'> [
     ],
     'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
-    'group': 'none',
+    'group': 'diagnostics',
     'group_read': True,
-    'group_write': False,
+    'group_write': True,
     'hold': True,
     'host': '',
     'id': 'bf1b993c',
@@ -55,12 +55,12 @@
   <class 'dict'> {
     '_id': 'bf1b993c',
     'all_read': True,
-    'all_write': False,
+    'all_write': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'format': 'fastq',
-    'group': 'none',
+    'group': 'diagnostics',
     'group_read': True,
-    'group_write': False,
+    'group_write': True,
     'hold': True,
     'host': '',
     'is_legacy': False,
@@ -92,7 +92,7 @@
 # name: TestCreate.test[uvloop-none].1
   <class 'dict'> {
     'all_read': True,
-    'all_write': False,
+    'all_write': True,
     'artifacts': <class 'list'> [
     ],
     'caches': <class 'list'> [
@@ -101,7 +101,7 @@
     'format': 'fastq',
     'group': 'none',
     'group_read': True,
-    'group_write': False,
+    'group_write': True,
     'hold': True,
     'host': '',
     'id': 'bf1b993c',
@@ -143,12 +143,12 @@
   <class 'dict'> {
     '_id': 'bf1b993c',
     'all_read': True,
-    'all_write': False,
+    'all_write': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'format': 'fastq',
     'group': 'none',
     'group_read': True,
-    'group_write': False,
+    'group_write': True,
     'hold': True,
     'host': '',
     'is_legacy': False,
@@ -180,16 +180,16 @@
 # name: TestCreate.test[uvloop-users_primary_group].1
   <class 'dict'> {
     'all_read': True,
-    'all_write': False,
+    'all_write': True,
     'artifacts': <class 'list'> [
     ],
     'caches': <class 'list'> [
     ],
     'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
-    'group': 'none',
+    'group': 'technician',
     'group_read': True,
-    'group_write': False,
+    'group_write': True,
     'hold': True,
     'host': '',
     'id': 'bf1b993c',
@@ -231,12 +231,12 @@
   <class 'dict'> {
     '_id': 'bf1b993c',
     'all_read': True,
-    'all_write': False,
+    'all_write': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'format': 'fastq',
-    'group': 'none',
+    'group': 'technician',
     'group_read': True,
-    'group_write': False,
+    'group_write': True,
     'hold': True,
     'host': '',
     'is_legacy': False,

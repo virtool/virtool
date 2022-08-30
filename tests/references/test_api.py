@@ -7,8 +7,10 @@ from aiohttp.test_utils import make_mocked_coro
 from aiohttp.web import Request
 from syrupy.matchers import path_type
 
+from virtool.data.utils import get_data_from_app
 from virtool.pg.utils import get_row_by_id
 from virtool.references.tasks import UpdateRemoteReferenceTask
+from virtool.settings.oas import UpdateSettingsSchema
 from virtool.tasks.models import Task
 from virtool_core.models.enums import Permission
 
@@ -163,7 +165,9 @@ async def test_create(data_type, snapshot, spawn_client, static_time):
 
     default_source_type = ["strain", "isolate"]
 
-    client.app["settings"].default_source_types = default_source_type
+    await get_data_from_app(client.app).settings.update(
+        UpdateSettingsSchema(default_source_types=default_source_type)
+    )
 
     data = {
         "name": "Test Viruses",

@@ -19,6 +19,7 @@ from virtool.jobs.client import DummyJobsClient
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.files import create_reads_file
 from virtool.samples.models import SampleArtifact, SampleReads
+from virtool.settings.oas import UpdateSettingsSchema
 from virtool.uploads.models import Upload
 
 
@@ -287,21 +288,24 @@ class TestCreate:
         spawn_client,
         pg: AsyncEngine,
         static_time,
-        settings,
     ):
         client = await spawn_client(
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        label = await fake2.labels.create()
-
-        client.app["settings"] = settings
-        client.app["settings"].sample_group = group_setting
-        client.app["settings"].sample_all_write = True
-        client.app["settings"].sample_group_write = True
-
+        await get_data_from_app(client.app).settings.update(
+            UpdateSettingsSchema(
+                sample_group=group_setting,
+                sample_all_write=True,
+                sample_group_write=True,
+            )
+        )
+        
         data = get_data_from_app(client.app)
         data.jobs._client = DummyJobsClient()
+        
+        
+        label = await fake2.labels.create()
 
         await client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"})
 
@@ -343,7 +347,9 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        client.app["settings"].sample_unique_names = True
+        await get_data_from_app(client.app).settings.update(
+            UpdateSettingsSchema(sample_unique_names=True)
+        )
 
         async with AsyncSession(pg) as session:
             session.add(Upload(id=1, name="test.fq.gz", size=123456))
@@ -389,14 +395,10 @@ class TestCreate:
                 client.db.groups.insert_one(
                     {"_id": "diagnostics", "name": "Diagnostics"},
                 ),
-                client.db.settings.update_one(
-                    {"_id": "settings"},
-                    {
-                        "$set": {
-                            "sample_group": "force_choice",
-                            "sample_unique_names": True,
-                        }
-                    },
+                get_data_from_app(client.app).settings.update(
+                    UpdateSettingsSchema(
+                        sample_group="force_choice", sample_unique_names=True
+                    )
                 ),
                 client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
             )
@@ -416,22 +418,19 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        client.app["settings"].sample_group = "force_choice"
-        client.app["settings"].sample_unique_names = True
+        await get_data_from_app(client.app).settings.update(
+            UpdateSettingsSchema(sample_group="force_choice", sample_unique_names=True)
+        )
 
         async with AsyncSession(pg) as session:
             session.add(Upload(id=1, name="test.fq.gz", size=123456))
 
             await asyncio.gather(
                 session.commit(),
-                client.db.settings.update_one(
-                    {"_id": "settings"},
-                    {
-                        "$set": {
-                            "sample_group": "force_choice",
-                            "sample_unique_names": True,
-                        }
-                    },
+                get_data_from_app(client.app).settings.update(
+                    UpdateSettingsSchema(
+                        sample_group="force_choice", sample_unique_names=True
+                    )
                 ),
                 client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
             )
@@ -472,7 +471,9 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        client.app["settings"].sample_unique_names = True
+        await get_data_from_app(client.app).settings.update(
+            UpdateSettingsSchema(sample_unique_names=True)
+        )
 
         await client.db.subtraction.insert_one(
             {
@@ -495,7 +496,9 @@ class TestCreate:
             authorize=True, permissions=[Permission.create_sample]
         )
 
-        client.app["settings"].sample_unique_names = True
+        await get_data_from_app(client.app).settings.update(
+            UpdateSettingsSchema(sample_unique_names=True)
+        )
 
         async with AsyncSession(pg) as session:
             session.add(Upload(id=1, name="test.fq.gz", size=123456))

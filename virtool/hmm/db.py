@@ -33,6 +33,7 @@ import virtool.errors
 import virtool.utils
 from aiohttp.web import Application
 from virtool.config.cls import Config
+from virtool.data.utils import get_data_from_app
 from virtool.github import get_etag, get_release
 from virtool.hmm.utils import format_hmm_release
 from virtool.types import App
@@ -151,10 +152,11 @@ async def fetch_and_update_release(
         installed = document["updates"][0]
 
     try:
+        settings = await get_data_from_app(app).settings.get_all()
         # The release dict will only be replaced if there is a 200 response from GitHub. A 304 indicates the release
         # has not changed and `None` is returned from `get_release()`.
         updated = await get_release(
-            app["config"], session, app["settings"].hmm_slug, etag
+            app["config"], session, settings.hmm_slug, etag
         )
 
         # Release is replace with updated release if an update was found on GitHub.

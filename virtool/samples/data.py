@@ -30,7 +30,6 @@ from virtool.samples.db import (
 )
 from virtool.samples.oas import CreateSampleSchema, EditSampleSchema
 from virtool.samples.utils import SampleRight, join_sample_path
-from virtool.settings.db import get_settings
 from virtool.subtractions.db import AttachSubtractionTransform
 from virtool.uploads.db import reserve
 from virtool.users.db import AttachUserTransform
@@ -151,7 +150,7 @@ class SamplesData(DataLayerPiece):
         Create a sample.
 
         """
-        settings = await get_settings(self._db)
+        settings = await self.data.settings.get_all()
 
         await wait_for_checks(
             check_name_is_in_use(self._db, settings, data.name),
@@ -246,7 +245,7 @@ class SamplesData(DataLayerPiece):
     ) -> UpdateResult:
         data = data.dict(exclude_unset=True)
 
-        settings = await get_settings(self._db, session=session)
+        settings = await self.data.settings.get_all()
 
         aws = []
 

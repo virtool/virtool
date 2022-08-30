@@ -4,11 +4,10 @@ from aiohttp.web import Request, Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r403
 
-import virtool.settings.db
 from virtool.api.response import json_response
+from virtool.data.utils import get_data_from_req
 from virtool.http.policy import policy, AdministratorRoutePolicy
 from virtool.http.routes import Routes
-from virtool.settings.db import Settings
 from virtool.settings.oas import (
     GetSettingsResponse,
     UpdateSettingsResponse,
@@ -29,7 +28,7 @@ class SettingsView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-        settings = await virtool.settings.db.get(self.request.app["db"])
+        settings = await get_data_from_req(self.request).settings.get_all()
 
         return json_response(settings)
 
@@ -46,13 +45,7 @@ class SettingsView(PydanticView):
             200: Successful operation
             403: Not permitted
         """
-        settings = await virtool.settings.db.update(
-            self.request.app["db"], data.dict(exclude_unset=True)
-        )
-
-        settings.pop("software_channel", None)
-
-        self.request.app["settings"] = Settings(**settings)
+        settings = await get_data_from_req(self.request).settings.update(data)
 
         return json_response(settings)
 
@@ -63,6 +56,6 @@ async def get(req: Request) -> Response:
     Get a complete document of the application settings.
 
     """
-    settings = await virtool.settings.db.get(req.app["db"])
+    settings = await get_data_from_req(req).settings.get_all()
 
     return json_response(settings)

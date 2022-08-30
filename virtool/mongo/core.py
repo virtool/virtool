@@ -36,7 +36,6 @@ import virtool.mongo.utils
 import virtool.otus.db
 import virtool.references.db
 import virtool.samples.db
-import virtool.settings.db
 import virtool.subtractions.db
 import virtool.uploads.db
 import virtool.users.db
@@ -382,7 +381,7 @@ class DB:
             "samples", projection=virtool.samples.db.LIST_PROJECTION
         )
         self.settings = self.bind_collection(
-            "settings", projection=virtool.settings.db.PROJECTION
+            "settings", projection={"_id": False}
         )
 
         self.sequences = self.bind_collection("sequences")

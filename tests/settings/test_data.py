@@ -1,8 +1,16 @@
-from virtool.settings.db import Settings, ensure
+import pytest
+
+from virtool_core.models.settings import Settings
+
+from virtool.settings.data import SettingsData
+
+@pytest.fixture
+async def settings_data(dbi) -> SettingsData:
+    return SettingsData(dbi)
 
 
-async def test_ensure(dbi, snapshot, test_settings):
-    settings = await ensure(dbi)
+async def test_ensure(dbi, settings_data, snapshot, test_settings):
+    settings = await settings_data.ensure()
 
     assert settings == Settings(
         sample_group="none",

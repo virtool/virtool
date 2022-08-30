@@ -17,7 +17,6 @@ class VirtoolTestClient:
 
         self.server = self._test_client.server
         self.app = self.server.app
-        self.settings = self.app["settings"]
         self.db = self.app["db"]
 
         self.auth = self._test_client.session.auth
@@ -145,7 +144,8 @@ def spawn_client(pg, request, aiohttp_client, test_motor, dbi, create_app, creat
 
         test_client.app["db"].id_provider = FakeIdProvider()
 
-        return VirtoolTestClient(test_client)
+        return VirtoolTestClient(
+            test_client)
 
     return func
 
@@ -199,7 +199,6 @@ def spawn_job_client(
 
         client = await aiohttp_client(app, auth=auth, auto_decompress=False)
         client.db = dbi
-        client.settings = app["settings"]
 
         return client
 
