@@ -1,6 +1,8 @@
+from typing import Optional
+
 from pydantic import BaseModel, constr, Field, validator
-from virtool_core.models import normalize_hex_color
 from virtool_core.models.label import Label
+from virtool_core.models.validators import normalize_hex_color
 
 
 class CreateLabelSchema(BaseModel):
@@ -45,17 +47,19 @@ class CreateLabelResponse(Label):
         }
 
 
-class EditLabelSchema(BaseModel):
+class UpdateLabelSchema(BaseModel):
     """
     Label fields for editing an existing label.
     """
 
-    name: constr(strip_whitespace=True) = Field(
-        description="name of the existing label document"
+    name: Optional[constr(strip_whitespace=True)] = Field(
+        description="A short display name"
     )
-    color: constr(strip_whitespace=True)
-    description: constr(strip_whitespace=True) = Field(
-        description="description of the existing label document"
+    color: Optional[constr(strip_whitespace=True)] = Field(
+        description="A hexadecimal color for the label"
+    )
+    description: Optional[constr(strip_whitespace=True)] = Field(
+        description="A longer description for the label"
     )
 
     _ensure_color_is_normalized: classmethod = validator("color", allow_reuse=True)(
@@ -66,8 +70,8 @@ class EditLabelSchema(BaseModel):
         schema_extra = {
             "example": {
                 "color": "#93C5FD",
-                "description": "Blueberry",
-                "name": "Blueberry",
+                "description": "Field samples from 2022 harvest",
+                "name": "Blueberry 2022",
             }
         }
 

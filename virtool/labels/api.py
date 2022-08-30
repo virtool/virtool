@@ -10,7 +10,7 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.labels.oas import (
     CreateLabelSchema,
-    EditLabelSchema,
+    UpdateLabelSchema,
     CreateLabelResponse,
     GetLabelResponse,
     LabelResponse,
@@ -25,8 +25,8 @@ class LabelsView(PydanticView):
         """
         List labels.
 
-        Lists all sample labels on the instance. Pagination is not supported; all labels are
-        included in the response.
+        Lists all sample labels on the instance. Pagination is not supported; all labels
+        are included in the response.
 
         Status Codes:
             200: Successful operation
@@ -90,7 +90,7 @@ class LabelView(PydanticView):
         return json_response(label)
 
     async def patch(
-        self, data: EditLabelSchema
+        self, data: UpdateLabelSchema
     ) -> Union[r200[LabelResponse], r400, r404]:
         """
         Update a label.
@@ -108,7 +108,7 @@ class LabelView(PydanticView):
             raise EmptyRequest()
 
         try:
-            label = await get_data_from_req(self.request).labels.edit(
+            label = await get_data_from_req(self.request).labels.update(
                 label_id=label_id, data=data
             )
         except ResourceNotFoundError:

@@ -16,9 +16,9 @@ from virtool.users.data import UsersData
 
 
 @pytest.fixture
-def data_layer(dbi, config, mocker, pg: AsyncEngine):
+def data_layer(dbi, config, mocker, pg: AsyncEngine, tasks):
     return DataLayer(
-        AnalysisData({"db": dbi, "pg": pg}),
+        AnalysisData(dbi, config, pg, tasks),
         mocker.Mock(spec=BLASTData),
         GroupsData(dbi),
         SettingsData(dbi),

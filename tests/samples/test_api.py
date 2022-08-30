@@ -16,7 +16,6 @@ from virtool.caches.utils import join_cache_path
 from virtool.config.cls import Config
 from virtool.data.utils import get_data_from_app
 from virtool.jobs.client import DummyJobsClient
-from virtool.labels.models import Label
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.files import create_reads_file
 from virtool.samples.models import SampleArtifact, SampleReads
@@ -31,6 +30,9 @@ class MockJobInterface:
 
 @pytest.fixture
 async def get_sample_data(dbi, fake2, pg, static_time):
+    label = await fake2.labels.create()
+    await fake2.labels.create()
+
     user = await fake2.users.create()
 
     await asyncio.gather(
@@ -69,7 +71,7 @@ async def get_sample_data(dbi, fake2, pg, static_time):
                         "download_url": "/download/samples/files/file_1.fq.gz",
                     }
                 ],
-                "labels": [1],
+                "labels": [label.id],
                 "subtractions": ["apple", "pear"],
                 "user": {"id": user.id},
             }
@@ -88,13 +90,6 @@ async def get_sample_data(dbi, fake2, pg, static_time):
     async with AsyncSession(pg) as session:
         session.add_all(
             [
-                Label(
-                    id=1,
-                    name="Bug",
-                    color="#a83432",
-                    description="This is a bug",
-                ),
-                Label(id=2, name="Two", color="#ffg123", description="Label 2"),
                 SampleArtifact(
                     name="reference.fa.gz",
                     sample="test",
@@ -136,22 +131,11 @@ async def test_find(
     user_1 = await fake2.users.create()
     user_2 = await fake2.users.create()
 
-    client = await spawn_client(authorize=True)
+    label_1 = await fake2.labels.create()
+    label_2 = await fake2.labels.create()
+    label_3 = await fake2.labels.create()
 
-    async with AsyncSession(pg) as session:
-        session.add_all(
-            [
-                Label(id=1, name="Bug", color="#a83432", description="This is a bug"),
-                Label(id=2, name="Info", color="#03fc20", description="This is a info"),
-                Label(
-                    id=3,
-                    name="Question",
-                    color="#0d321d",
-                    description="This is a question",
-                ),
-            ]
-        )
-        await session.commit()
+    client = await spawn_client(authorize=True)
 
     await client.db.samples.insert_many(
         [
@@ -168,7 +152,7 @@ async def test_find(
                 "library_type": "normal",
                 "all_read": True,
                 "ready": True,
-                "labels": [1, 2],
+                "labels": [label_1.id, label_2.id],
                 "notes": "",
             },
             {
@@ -184,7 +168,7 @@ async def test_find(
                 "pathoscope": False,
                 "all_read": True,
                 "ready": True,
-                "labels": [1],
+                "labels": [label_1.id],
                 "notes": "This is a good sample.",
             },
             {
@@ -201,7 +185,7 @@ async def test_find(
                 "name": "16SPP044",
                 "pathoscope": False,
                 "all_read": True,
-                "labels": [3],
+                "labels": [label_3.id],
             },
         ]
     )
@@ -298,9 +282,9 @@ class TestCreate:
     )
     async def test(
         self,
+        fake2,
         group_setting,
         snapshot,
-        mocker,
         spawn_client,
         pg: AsyncEngine,
         static_time,
@@ -316,31 +300,27 @@ class TestCreate:
                 sample_group_write=True,
             )
         )
-
+        
         data = get_data_from_app(client.app)
         data.jobs._client = DummyJobsClient()
+        
+        
+        label = await fake2.labels.create()
 
         await client.db.subtraction.insert_one({"_id": "apple", "name": "Apple"})
 
         async with AsyncSession(pg) as session:
-            session.add_all(
-                [
-                    Upload(id=1, name="test.fq.gz", size=123456),
-                    Label(id=1, name="bug", color="#FF0000"),
-                ]
-            )
+            session.add(Upload(id=1, name="test.fq.gz", size=123456))
             await session.commit()
 
         await client.db.groups.insert_many(
             [{"_id": "diagnostics"}, {"_id": "technician"}]
         )
 
-        client.app["jobs"] = mocker.Mock()
-
         request_data = {
             "name": "Foobar",
             "files": [1],
-            "labels": [1],
+            "labels": [label.id],
             "subtractions": ["apple"],
         }
 
@@ -502,11 +482,8 @@ class TestCreate:
         )
 
         if one_exists:
-            upload = Upload(id=1, name="test.fq.gz", size=123456)
-
             async with AsyncSession(pg) as session:
-                session.add(upload)
-
+                session.add(Upload(id=1, name="test.fq.gz", size=123456))
                 await session.commit()
 
         resp = await client.post(
@@ -514,8 +491,7 @@ class TestCreate:
         )
         await resp_is.bad_request(resp, "File does not exist")
 
-    @pytest.mark.parametrize("exists", [True, False])
-    async def test_label_dne(self, exists, spawn_client, pg: AsyncEngine, resp_is):
+    async def test_label_dne(self, spawn_client, pg: AsyncEngine, resp_is):
         client = await spawn_client(
             authorize=True, permissions=[Permission.create_sample]
         )
@@ -524,18 +500,15 @@ class TestCreate:
             UpdateSettingsSchema(sample_unique_names=True)
         )
 
-        if exists:
-            async with AsyncSession(pg) as session:
-                session.add(
-                    Label(id=1, name="Orange", color="#FFA500", description="An orange")
-                )
-                await session.commit()
+        async with AsyncSession(pg) as session:
+            session.add(Upload(id=1, name="test.fq.gz", size=123456))
+            await session.commit()
 
         resp = await client.post(
             "/samples", {"name": "Foobar", "files": [1], "labels": [1]}
         )
-        if not exists:
-            await resp_is.bad_request(resp, "Labels do not exist: [1]")
+
+        await resp_is.bad_request(resp, "Labels do not exist: [1]")
 
 
 class TestEdit:

@@ -188,28 +188,31 @@ class TestLabelsFetcher:
 
     @pytest.mark.parametrize("operation", [INSERT, UPDATE])
     async def test_insert_and_update(
-        self, operation, connections, dbi, pg, reference, static_time, test_labels, ws
+        self,
+        fake2,
+        operation,
+        connections,
+        dbi,
+        pg,
+        reference,
+        snapshot,
+        ws,
     ):
+        await fake2.labels.create()
+        await fake2.labels.create()
+        await fake2.labels.create()
+
         fetcher = LabelsFetcher(pg, dbi)
 
-        pairs = []
+        messages = []
 
-        async for pair in fetcher.fetch(Change("labels", operation, [1]), connections):
-            pairs.append(pair)
+        async for conn, message in fetcher.fetch(
+            Change("labels", operation, [1]), connections
+        ):
+            assert conn == ws
+            messages.append(message)
 
-        message = {
-            "data": {
-                "id": 1,
-                "name": "Legacy",
-                "count": 0,
-                "color": None,
-                "description": "",
-            },
-            "interface": "labels",
-            "operation": operation,
-        }
-
-        assert pairs == [(ws, message), (ws, message), (ws, message)]
+        assert messages == snapshot
 
 
 class TestUploadsFetcher:

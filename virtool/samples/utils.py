@@ -43,7 +43,7 @@ def calculate_workflow_tags(analyses: list) -> dict:
 
 
 async def check_labels(pg: AsyncEngine, labels: List[int]) -> List[int]:
-    """ "
+    """
     Check for existence of label IDs given in sample creation request
 
     :param pg: PostgreSQL database connection object
