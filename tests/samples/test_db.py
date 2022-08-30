@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.uploads.db
 from virtool.data.utils import get_data_from_app
-from virtool.mongo.transforms import apply_transforms
 from virtool.labels.db import AttachLabelsTransform
 from virtool.mongo.transforms import apply_transforms
 from virtool.pg.utils import get_row_by_id
