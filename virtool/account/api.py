@@ -60,7 +60,9 @@ A :class:`aiohttp.web.RouteTableDef` for account API routes.
 class AccountView(PydanticView):
     async def get(self) -> Union[r200[AccountResponse], r401]:
         """
-        Get complete user document.
+        Get account.
+
+        Retrieves the details for the account associated with the user agent.
 
         Status Codes:
             200: Successful Operation
@@ -75,7 +77,9 @@ class AccountView(PydanticView):
         self, data: EditAccountSchema
     ) -> Union[r200[EditAccountResponse], r400, r401]:
         """
-        Update the account.
+        Update account.
+
+        Updates the account associated with the user agent.
 
         Provide a ``password`` to update the account password. The ``old_password`` must
         also be provided in the request.
@@ -127,7 +131,9 @@ class AccountView(PydanticView):
 class SettingsView(PydanticView):
     async def get(self) -> Union[r200[AccountSettingsResponse], r401]:
         """
-        Get account settings
+        Get account settings.
+
+        Retrieves the settings for the account associated with the user agent.
 
         Status Codes:
             200: Successful operation
@@ -143,7 +149,9 @@ class SettingsView(PydanticView):
         self, data: EditSettingsSchema
     ) -> Union[r200[AccountSettingsResponse], r400, r401]:
         """
-        Update account settings. All fields are optional.
+        Update account settings.
+
+        Updates the settings of the account associated with the user agent.
 
         Status Codes:
             200: Successful operation
@@ -169,7 +177,9 @@ class SettingsView(PydanticView):
 class KeysView(PydanticView):
     async def get(self) -> Union[r200[List[GetAPIKeysResponse]], r401]:
         """
-        List API keys associated with the authenticated user account.
+        List API keys.
+
+        Lists all API keys registered on the account associated with the user agent.
 
         Status Codes:
             200: Successful operation
@@ -187,10 +197,12 @@ class KeysView(PydanticView):
         self, data: CreateKeysSchema
     ) -> Union[r201[CreateAPIKeyResponse], r400, r401]:
         """
-        Create a new API key.
+        Create an API key.
 
-        The new key value is returned in the response. This is the only response
-        from the server that will ever include the key.
+        Creates a new API key on the account associated with the user agent.
+
+        The new key value is returned in the response. **This is the only response
+        from the server that will ever include the key**.
 
         Status Codes:
             201: Successful operation
@@ -213,7 +225,9 @@ class KeysView(PydanticView):
 
     async def delete(self) -> Union[r204, r401]:
         """
-        Remove all API keys for the account associated with the requesting session.
+        Purge API keys
+
+        Deletes all API keys registered for the account associated with the user agent.
 
         Status Codes:
             204: Successful operation
@@ -229,7 +243,10 @@ class KeysView(PydanticView):
 class KeyView(PydanticView):
     async def get(self) -> Union[r200[APIKeyResponse], r404]:
         """
-        Get the complete representation of the API key identified by the `key_id`.
+        Get an API key.
+
+        Retrieves the details for an API key registered on the account associated with
+        the user agent.
 
         Status Codes:
             200: Successful operation
@@ -252,7 +269,10 @@ class KeyView(PydanticView):
         self, data: EditKeySchema
     ) -> Union[r200[APIKeyResponse], r400, r401, r404]:
         """
-        Change the permissions for an existing API key.
+        Update an API key.
+
+        Updates the permissions an existing API key registered on the account
+        associated with the user agent.
 
         Status Codes:
             200: Successful operation
@@ -295,6 +315,7 @@ class KeyView(PydanticView):
 
     async def delete(self) -> Union[r204, r401, r404]:
         """
+        Delete
         Remove an API key by its ID.
 
         Status Codes:
@@ -319,7 +340,12 @@ class LoginView(PydanticView):
     @policy(PublicRoutePolicy)
     async def post(self, data: CreateLoginSchema) -> Union[r201[LoginResponse], r400]:
         """
-        Create a new session for the user with `username`.
+        Login.
+
+        Logs in using the passed credentials.
+
+        This creates a new session for the user with `username`. The session ID and
+        token are returned in cookies.
 
         Status Codes:
             201: Successful operation
@@ -377,7 +403,10 @@ class LogoutView(PydanticView):
     @policy(PublicRoutePolicy)
     async def get(self) -> r204:
         """
-        Invalidates the requesting session, effectively logging out the user.
+        Logout.
+
+        Logout the user by invalidating the session associated with the user agent. A
+        new unauthenticated session ID is returned in cookies.
 
         Status Codes:
             204: Successful operation
@@ -404,7 +433,9 @@ class ResetView(PydanticView):
         self, data: ResetPasswordSchema
     ) -> Union[r200[AccountResetPasswordResponse], r400]:
         """
-        Handles `POST` requests for resetting the password for a session user.
+        Reset password.
+
+        Reset the password for the account associated with the requesting session.
 
         Status Codes:
             200: Successful operation
