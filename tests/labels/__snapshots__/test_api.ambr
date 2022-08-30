@@ -55,15 +55,6 @@
     'message': 'Not found',
   }
 ---
-# name: test_get[uvloop-None]
-  <class 'dict'> {
-    'color': '#629F70',
-    'count': 2,
-    'description': 'American whole magazine truth stop whose.',
-    'id': 1,
-    'name': 'Three',
-  }
----
 # name: test_remove[uvloop-204]
   None
 ---
