@@ -9,9 +9,8 @@ from aiohttp.test_utils import make_mocked_coro, make_mocked_request
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.uploads.db
-from virtool.mongo.transforms import apply_transforms
 from virtool.labels.db import AttachLabelsTransform
-from virtool.labels.models import Label
+from virtool.mongo.transforms import apply_transforms
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.db import (
     check_is_legacy,
@@ -234,22 +233,11 @@ class TestRemoveSamples:
         assert not await dbi.samples.count_documents({})
 
 
-async def test_attach_labels(snapshot, pg: AsyncEngine):
-    async with AsyncSession(pg) as session:
-        session.add_all(
-            [
-                Label(id=1, name="Bug", color="#a83432", description="This is a bug"),
-                Label(
-                    id=2,
-                    name="Question",
-                    color="#03fc20",
-                    description="This is a question",
-                ),
-            ]
-        )
-        await session.commit()
+async def test_attach_labels(fake2, snapshot, pg: AsyncEngine):
+    label_1 = await fake2.labels.create()
+    label_2 = await fake2.labels.create()
 
-    document = {"id": "foo", "name": "Foo", "labels": [1, 2]}
+    document = {"id": "foo", "name": "Foo", "labels": [label_1.id, label_2.id]}
 
     assert await apply_transforms(document, [AttachLabelsTransform(pg)]) == snapshot
 
