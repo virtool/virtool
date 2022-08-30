@@ -108,7 +108,7 @@ class LabelView(PydanticView):
             raise EmptyRequest()
 
         try:
-            label = await get_data_from_req(self.request).labels.edit(
+            label = await get_data_from_req(self.request).labels.update(
                 label_id=label_id, data=data
             )
         except ResourceNotFoundError:

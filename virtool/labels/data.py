@@ -85,7 +85,7 @@ class LabelsData:
 
         return Label(**document)
 
-    async def edit(self, label_id: int, data: UpdateLabelSchema) -> Label:
+    async def update(self, label_id: int, data: UpdateLabelSchema) -> Label:
         """
         Edit an existing label.
 
@@ -93,6 +93,8 @@ class LabelsData:
         :param data: label fields for editing the existing label
         :return: the label
         """
+        data = data.dict(exclude_unset=True)
+
         async with AsyncSession(self._pg) as session:
             result = await session.execute(select(LabelSQL).filter_by(id=label_id))
             label = result.scalar()
@@ -100,9 +102,15 @@ class LabelsData:
             if label is None:
                 raise ResourceNotFoundError()
 
-            label.name = data.name
-            label.color = data.color
-            label.description = data.description
+            if "name" in data:
+                label.name = data["name"]
+
+            if "color" in data:
+                label.color = data["color"]
+
+            if "description" in data:
+                label.description = data["description"]
+
             row = label.to_dict()
 
             try:

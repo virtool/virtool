@@ -1,3 +1,77 @@
+# name: TestLabelsFetcher.test_insert_and_update[uvloop-insert]
+  <class 'list'> [
+    <class 'dict'> {
+      'data': <class 'dict'> {
+        'color': '#629f70',
+        'count': 0,
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      },
+      'interface': 'labels',
+      'operation': 'insert',
+    },
+    <class 'dict'> {
+      'data': <class 'dict'> {
+        'color': '#629f70',
+        'count': 0,
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      },
+      'interface': 'labels',
+      'operation': 'insert',
+    },
+    <class 'dict'> {
+      'data': <class 'dict'> {
+        'color': '#629f70',
+        'count': 0,
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      },
+      'interface': 'labels',
+      'operation': 'insert',
+    },
+  ]
+---
+# name: TestLabelsFetcher.test_insert_and_update[uvloop-update]
+  <class 'list'> [
+    <class 'dict'> {
+      'data': <class 'dict'> {
+        'color': '#629f70',
+        'count': 0,
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      },
+      'interface': 'labels',
+      'operation': 'update',
+    },
+    <class 'dict'> {
+      'data': <class 'dict'> {
+        'color': '#629f70',
+        'count': 0,
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      },
+      'interface': 'labels',
+      'operation': 'update',
+    },
+    <class 'dict'> {
+      'data': <class 'dict'> {
+        'color': '#629f70',
+        'count': 0,
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      },
+      'interface': 'labels',
+      'operation': 'update',
+    },
+  ]
+---
 # name: TestUploadsFetcher.test_insert_and_update[uvloop-insert]
   <class 'list'> [
     <class 'dict'> {
