@@ -38,7 +38,7 @@ multidict = ">=4.5,<7.0"
 yarl = ">=1.0,<2.0"
 
 [package.extras]
-speedups = ["aiodns", "brotli", "cchardet"]
+speedups = ["cchardet", "brotli", "aiodns"]
 
 [[package]]
 name = "aiohttp-pydantic"
@@ -122,9 +122,9 @@ optional = false
 python-versions = ">=3.6.0"
 
 [package.extras]
-dev = ["Cython (>=0.29.24,<0.30.0)", "pytest (>=6.0)", "Sphinx (>=4.1.2,<4.2.0)", "sphinxcontrib-asyncio (>=0.3.0,<0.4.0)", "sphinx-rtd-theme (>=0.5.2,<0.6.0)", "pycodestyle (>=2.7.0,<2.8.0)", "flake8 (>=3.9.2,<3.10.0)", "uvloop (>=0.15.3)"]
-docs = ["Sphinx (>=4.1.2,<4.2.0)", "sphinxcontrib-asyncio (>=0.3.0,<0.4.0)", "sphinx-rtd-theme (>=0.5.2,<0.6.0)"]
-test = ["pycodestyle (>=2.7.0,<2.8.0)", "flake8 (>=3.9.2,<3.10.0)", "uvloop (>=0.15.3)"]
+test = ["uvloop (>=0.15.3)", "flake8 (>=3.9.2,<3.10.0)", "pycodestyle (>=2.7.0,<2.8.0)"]
+docs = ["sphinx-rtd-theme (>=0.5.2,<0.6.0)", "sphinxcontrib-asyncio (>=0.3.0,<0.4.0)", "Sphinx (>=4.1.2,<4.2.0)"]
+dev = ["uvloop (>=0.15.3)", "flake8 (>=3.9.2,<3.10.0)", "pycodestyle (>=2.7.0,<2.8.0)", "sphinx-rtd-theme (>=0.5.2,<0.6.0)", "sphinxcontrib-asyncio (>=0.3.0,<0.4.0)", "Sphinx (>=4.1.2,<4.2.0)", "pytest (>=6.0)", "Cython (>=0.29.24,<0.30.0)"]
 
 [[package]]
 name = "atomicwrites"
@@ -819,7 +819,7 @@ pytest = ">=4.6"
 toml = "*"
 
 [package.extras]
-testing = ["fields", "hunter", "process-tests", "six", "pytest-xdist", "virtualenv"]
+testing = ["virtualenv", "pytest-xdist", "six", "process-tests", "hunter", "fields"]
 
 [[package]]
 name = "pytest-datadir"
@@ -872,10 +872,10 @@ pytest-datadir = ">=1.2.0"
 pyyaml = "*"
 
 [package.extras]
-dataframe = ["numpy", "pandas"]
-dev = ["matplotlib", "numpy", "pandas", "pillow", "pre-commit", "restructuredtext-lint", "tox"]
-image = ["pillow", "numpy"]
-num = ["numpy", "pandas"]
+num = ["pandas", "numpy"]
+image = ["numpy", "pillow"]
+dev = ["tox", "restructuredtext-lint", "pre-commit", "pillow", "pandas", "numpy", "matplotlib"]
+dataframe = ["pandas", "numpy"]
 
 [[package]]
 name = "pytest-rerunfailures"
