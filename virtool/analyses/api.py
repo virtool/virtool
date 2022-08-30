@@ -48,7 +48,11 @@ routes = Routes()
 class AnalysesView(PydanticView):
     async def get(self) -> r200[GetAnalysisResponse]:
         """
-        Find and list all analyses.
+        Find analyses.
+
+        Finds analyses based on a search `term`.
+
+        The response will only list analyses on which the user agent has read rights.
 
         Status Codes:
             200: Successful operation
@@ -66,7 +70,9 @@ class AnalysesView(PydanticView):
 class AnalysisView(PydanticView):
     async def get(self) -> Union[r200[AnalysisResponse], r400, r403, r404]:
         """
-        Get the details of an analysis.
+        Get analysis.
+
+        Retrieves the details of an analysis.
 
         Status Codes:
             200: Successful operation
@@ -109,6 +115,8 @@ class AnalysisView(PydanticView):
     async def delete(self) -> Union[r204, r403, r404, r409]:
         """
         Delete an analysis.
+
+        Permanently deletes and analysis.
 
         Status Codes:
             204: Successful operation
@@ -226,7 +234,10 @@ async def upload(req: Request) -> Response:
 class AnalysisFileView(PydanticView):
     async def get(self) -> Union[r200[FileResponse], r404]:
         """
-        Download a file generated during the analysis.
+        Download a file.
+
+        Downloads a file associated with an analysis. Some workflows retain key files
+        after the complete.
 
         Status Codes:
             200: Successful operation
@@ -253,7 +264,10 @@ class AnalysisFileView(PydanticView):
 class DocumentDownloadView(PydanticView):
     async def get(self) -> Union[r200[Response], r404]:
         """
-        Download an analysis in CSV or XSLX format.
+        Download an analysis.
+
+        Downloads analysis data in CSV or XSLX format. The returned format depends on
+        the extension included in the request path.
 
         Status Codes:
             200: Operation successful
@@ -285,8 +299,10 @@ class DocumentDownloadView(PydanticView):
 class BlastView(PydanticView):
     async def put(self) -> Union[r200[Response], r400, r403, r404, r409]:
         """
-        BLAST a contig sequence that is part of a NuVs result record. The resulting
-        BLAST data will be attached to that sequence.
+        BLAST a NuVs contig.
+
+        BLASTs a sequence that is part of a NuVs result record. The resulting BLAST data
+        will be attached to that sequence.
 
         Status Codes:
             200: Operation successful
