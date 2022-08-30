@@ -19,7 +19,6 @@ from virtool_core.models.label import Label
 from virtool_core.models.user import User
 
 from virtool.data.layer import DataLayer
-from virtool.fake.providers import WORKFLOW_NAMES
 from virtool.groups.oas import EditPermissionsSchema, EditGroupSchema
 from virtool.jobs.utils import WORKFLOW_NAMES, JobRights
 from virtool.users.oas import UpdateUserSchema
