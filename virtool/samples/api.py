@@ -566,7 +566,9 @@ async def upload_artifact(req):
     upload_id = artifact["id"]
 
     try:
-        size = await virtool.uploads.utils.naive_writer(req, artifact_file_path)
+        size = await virtool.uploads.utils.naive_writer(
+            await req.multipart(), artifact_file_path
+        )
     except asyncio.CancelledError:
         logger.debug(f"Artifact file upload aborted for sample: {sample_id}")
         await delete_row(pg, upload_id, SampleArtifact)
@@ -609,7 +611,7 @@ async def upload_reads(req):
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            req, reads_path, is_gzip_compressed
+            await req.multipart(), reads_path, is_gzip_compressed
         )
     except OSError:
         raise HTTPBadRequest(text="File is not compressed")
@@ -680,7 +682,7 @@ async def upload_cache_reads(req):
 
     try:
         size = await virtool.uploads.utils.naive_writer(
-            req, cache_path, is_gzip_compressed
+            await req.multipart(), cache_path, is_gzip_compressed
         )
     except OSError:
         raise HTTPBadRequest(text="File is not compressed")
@@ -739,7 +741,9 @@ async def upload_cache_artifact(req):
     upload_id = artifact["id"]
 
     try:
-        size = await virtool.uploads.utils.naive_writer(req, cache_path)
+        size = await virtool.uploads.utils.naive_writer(
+            await req.multipart(), cache_path
+        )
     except asyncio.CancelledError:
         logger.debug(f"Artifact file cache upload aborted for sample: {sample_id}")
         await delete_row(pg, upload_id, SampleArtifact)

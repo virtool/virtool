@@ -7,6 +7,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from faker import Faker
 
+
 from tests.fixtures.fake import FakeGenerator
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import AnalysisFile
@@ -118,9 +119,12 @@ async def test_get(
         "_id": "foobar",
         "created_at": static_time.datetime,
         "ready": ready,
+        "job": {"id": "test"},
+        "index": {"version": 3, "id": "bar"},
         "workflow": "pathoscope_bowtie",
         "results": {"hits": []},
         "sample": {"id": "baz"},
+        "reference": {"id": "baz", "name": "Baz"},
         "subtractions": ["plum", "apple"],
         "user": {"id": user.id},
     }
@@ -146,7 +150,12 @@ async def test_get(
 
     if error != "404":
         await client.db.analyses.insert_one(document)
-        await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
+        await create_analysis_file(
+            pg,
+            "foobar",
+            "fasta",
+            "reference.fa",
+        )
 
     m_format_analysis = mocker.patch(
         "virtool.analyses.format.format_analysis",
@@ -182,8 +191,8 @@ async def test_get(
 
     if ready:
         args = m_format_analysis.call_args[0]
-        assert args[0] == client.app
-        assert args[1] == snapshot
+        assert args[0] == client.app["config"]
+        assert args[2] == snapshot
     else:
         assert not m_format_analysis.called
 
@@ -460,13 +469,18 @@ async def test_blast(
 
 
 @pytest.mark.parametrize("error", [None, 422, 404, 409])
-async def test_finalize(fake2, snapshot, spawn_job_client, faker, error, resp_is):
+async def test_finalize(fake2, snapshot, static_time, spawn_job_client, faker, error, resp_is):
     user = await fake2.users.create()
 
     analysis_document = {
         "_id": "analysis1",
         "sample": {"id": "sample1"},
+        "created_at": static_time.datetime,
+        "job": {"id": "test"},
+        "index": {"version": 2, "id": "foo"},
         "workflow": "test_workflow",
+        "reference": {"id": "baz", "name": "Baz"},
+        "files": [],
         "user": {"id": user.id},
         "ready": error == 409,
         "subtractions": [],
@@ -497,7 +511,7 @@ async def test_finalize(fake2, snapshot, spawn_job_client, faker, error, resp_is
         assert document["ready"] is True
 
 
-async def test_finalize_large(fake2, spawn_job_client, faker):
+async def test_finalize_large(fake2, static_time, spawn_job_client, faker):
     user = await fake2.users.create()
 
     faker = Faker(1)
@@ -528,8 +542,13 @@ async def test_finalize_large(fake2, spawn_job_client, faker):
     await client.db.analyses.insert_one(
         {
             "_id": "analysis1",
+            "created_at": static_time.datetime,
             "sample": {"id": "sample1"},
+            "job": {"id": "test"},
+            "index": {"version": 2, "id": "foo"},
             "workflow": "test_workflow",
+            "reference": {"id": "baz", "name": "Baz"},
+            "files": [],
             "user": {"id": user.id},
             "ready": False,
             "subtractions": [],

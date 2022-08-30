@@ -33,8 +33,8 @@ class VirtoolTestClient:
     def has_cookie(self, key, value):
         return self.get_cookie(key) == value
 
-    async def get(self, url, params=None):
-        return await self._test_client.get(url, params=params)
+    async def get(self, url, headers=None, params=None):
+        return await self._test_client.get(url, headers=headers, params=params)
 
     async def post(self, url, data=None):
         payload = None

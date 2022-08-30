@@ -20,7 +20,7 @@ import virtool.analyses.utils
 from virtool.config.cls import Config
 from virtool.history.db import patch_to_version
 from virtool.otus.utils import format_isolate_name
-from virtool.types import App
+
 
 CSV_HEADERS = (
     "OTU",
@@ -69,7 +69,7 @@ async def load_results(config: Config, document: Dict[str, Any]) -> dict:
     return document
 
 
-async def format_aodp(app: App, document: Dict[str, Any]) -> Dict[str, Any]:
+async def format_aodp(config, db, document: Dict[str, Any]) -> Dict[str, Any]:
     """
     Format an AODP analysis document by retrieving the detected OTUs and incorporating them into
     the returned document.
@@ -81,7 +81,7 @@ async def format_aodp(app: App, document: Dict[str, Any]) -> Dict[str, Any]:
     """
     hits = document["results"]["hits"]
 
-    patched_otus = await gather_patched_otus(app, hits)
+    patched_otus = await gather_patched_otus(config, db, hits)
 
     hits_by_sequence_id = defaultdict(list)
 
@@ -102,7 +102,7 @@ async def format_aodp(app: App, document: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-async def format_pathoscope(app: App, document: Dict[str, Any]) -> Dict[str, Any]:
+async def format_pathoscope(config, db, document: Dict[str, Any]) -> Dict[str, Any]:
     """
     Format a Pathoscope analysis document by retrieving the detected OTUs and incorporating them
     into the returned document. Calculate metrics for different organizational levels: OTU,
@@ -113,7 +113,7 @@ async def format_pathoscope(app: App, document: Dict[str, Any]) -> Dict[str, Any
     :return: the formatted document
 
     """
-    document = await load_results(app["config"], document)
+    document = await load_results(config, document)
 
     hits_by_otu = defaultdict(list)
 
@@ -127,7 +127,9 @@ async def format_pathoscope(app: App, document: Dict[str, Any]) -> Dict[str, Any
 
     for otu_specifier, hits in hits_by_otu.items():
         otu_id, otu_version = otu_specifier
-        coros.append(format_pathoscope_hits(app, otu_id, otu_version, hits))
+        coros.append(format_pathoscope_hits(config, db, otu_id, otu_version, hits))
+
+    print(document)
 
     return {
         **document,
@@ -135,9 +137,11 @@ async def format_pathoscope(app: App, document: Dict[str, Any]) -> Dict[str, Any
     }
 
 
-async def format_pathoscope_hits(app: App, otu_id: str, otu_version, hits: List[Dict]):
+async def format_pathoscope_hits(
+    config, db, otu_id: str, otu_version, hits: List[Dict]
+):
     _, patched_otu, _ = await patch_to_version(
-        app["config"].data_path, app["db"], otu_id, otu_version
+        config.data_path, db, otu_id, otu_version
     )
 
     max_sequence_length = 0
@@ -210,24 +214,23 @@ def format_pathoscope_sequences(
         }
 
 
-async def format_nuvs(app: App, document: Dict[str, Any]) -> Dict[str, Any]:
+async def format_nuvs(config: Config, db, document: Dict[str, Any]) -> Dict[str, Any]:
     """
     Format a NuVs analysis document by attaching the HMM annotation data to the results.
 
-    :param app: the application object
+    :param config: the config object
+    :param db: the database object
     :param document: the document to format
     :return: the formatted document
 
     """
-    document = await load_results(app["config"], document)
+    document = await load_results(config, document)
 
     hits = document["results"]["hits"]
 
     hit_ids = list({h["hit"] for s in hits for o in s["orfs"] for h in o["hits"]})
 
-    cursor = app["db"].hmm.find(
-        {"_id": {"$in": hit_ids}}, ["cluster", "families", "names"]
-    )
+    cursor = db.hmm.find({"_id": {"$in": hit_ids}}, ["cluster", "families", "names"])
 
     hmms = {d.pop("_id"): d async for d in cursor}
 
@@ -239,18 +242,21 @@ async def format_nuvs(app: App, document: Dict[str, Any]) -> Dict[str, Any]:
     return document
 
 
-async def format_analysis_to_excel(app: App, document: Dict[str, Any]) -> bytes:
+async def format_analysis_to_excel(
+    config: Config, db, document: Dict[str, Any]
+) -> bytes:
     """
     Convert a pathoscope analysis document to byte-encoded Excel format for download.
 
-    :param app: the application object
+    :param config: the config object
+    :param db: the database object
     :param document: the document to format
     :return: the formatted Excel workbook
 
     """
     depths = calculate_median_depths(document["results"]["hits"])
 
-    formatted = await format_analysis(app, document)
+    formatted = await format_analysis(config, db, document)
 
     output = io.BytesIO()
 
@@ -295,18 +301,19 @@ async def format_analysis_to_excel(app: App, document: Dict[str, Any]) -> bytes:
     return output.getvalue()
 
 
-async def format_analysis_to_csv(app: App, document: Dict[str, Any]) -> str:
+async def format_analysis_to_csv(config, db, document: Dict[str, Any]) -> str:
     """
     Convert a pathoscope analysis document to CSV format for download.
 
-    :param app: the application object
+    :param config: the config object
+    :param db: the database object
     :param document: the document to format
     :return: the formatted CSV data
 
     """
     depths = calculate_median_depths(document["results"]["hits"])
 
-    formatted = await format_analysis(app, document)
+    formatted = await format_analysis(config, db, document)
 
     output = io.StringIO()
 
@@ -332,11 +339,14 @@ async def format_analysis_to_csv(app: App, document: Dict[str, Any]) -> str:
     return output.getvalue()
 
 
-async def format_analysis(app: App, document: Dict[str, Any]) -> Dict[str, any]:
+async def format_analysis(
+    config: Config, db, document: Dict[str, Any]
+) -> Dict[str, any]:
     """
     Format an analysis document to be returned by the API.
 
-    :param app: the application object
+    :param config: the config object
+    :param db: the database object
     :param document: the analysis document to format
     :return: a formatted document
 
@@ -345,23 +355,24 @@ async def format_analysis(app: App, document: Dict[str, Any]) -> Dict[str, any]:
 
     if workflow:
         if workflow == "nuvs":
-            return await format_nuvs(app, document)
+            return await format_nuvs(config, db, document)
 
         if "pathoscope" in workflow:
-            return await format_pathoscope(app, document)
+            return await format_pathoscope(config, db, document)
 
         if workflow == "aodp":
-            return await format_aodp(app, document)
+            return await format_aodp(config, db, document)
 
     raise ValueError("Could not determine analysis workflow")
 
 
-async def gather_patched_otus(app: App, results: List[dict]) -> Dict[str, dict]:
+async def gather_patched_otus(config, db, results: List[dict]) -> Dict[str, dict]:
     """
     Gather patched OTUs for each result item. Only fetch each id-version combination once. Make
     database requests concurrently to save time.
 
-    :param app: the application object
+    :param config: the config object
+    :param db: the database object
     :param results: the results field from a pathoscope analysis document
     :return: a dict containing patched OTUs keyed by the OTU ID
 
@@ -371,7 +382,7 @@ async def gather_patched_otus(app: App, results: List[dict]) -> Dict[str, dict]:
 
     patched_otus = await asyncio.gather(
         *[
-            patch_to_version(app["config"].data_path, app["db"], otu_id, version)
+            patch_to_version(config.data_path, db, otu_id, version)
             for otu_id, version in otu_specifiers
         ]
     )

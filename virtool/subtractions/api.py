@@ -290,7 +290,7 @@ async def upload(req):
     path = req.app["config"].data_path / "subtractions" / subtraction_id / filename
 
     try:
-        size = await naive_writer(req, path)
+        size = await naive_writer(await req.multipart(), path)
     except asyncio.CancelledError:
         logger.debug(f"Subtraction file upload aborted: {upload_id}")
         await delete_subtraction_file(pg, upload_id)
