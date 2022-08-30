@@ -16,7 +16,6 @@ from virtool.caches.utils import join_cache_path
 from virtool.config.cls import Config
 from virtool.data.utils import get_data_from_app
 from virtool.jobs.client import DummyJobsClient
-from virtool.labels.models import Label
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.files import create_reads_file
 from virtool.samples.models import SampleArtifact, SampleReads

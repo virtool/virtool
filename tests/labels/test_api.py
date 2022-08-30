@@ -1,7 +1,6 @@
 from typing import List
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine
 
 
 class TestFind:
@@ -196,7 +195,7 @@ async def test_remove(
     )
 
     mock_samples[0].update({"labels": [label_1.id, label_3.id]})
-    mock_samples[1].update({"labels": [label_2.id, label_3.id]}),
+    mock_samples[1].update({"labels": [label_2.id, label_3.id]})
     mock_samples[2].update({"labels": [label_1.id]})
 
     await client.db.samples.insert_many(mock_samples)

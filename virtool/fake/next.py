@@ -9,7 +9,7 @@ A sample needs a user and upload to exist.
 ```
 
 """
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 
 from faker import Faker
 from faker.providers import BaseProvider, python, color, lorem
