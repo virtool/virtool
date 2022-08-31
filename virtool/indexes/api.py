@@ -8,7 +8,6 @@ from sqlalchemy.exc import IntegrityError
 
 import virtool.indexes.db
 import virtool.references.db
-import virtool.uploads.db
 import virtool.utils
 from virtool.api.json import CustomEncoder
 from virtool.api.response import InsufficientRights, NotFound, json_response

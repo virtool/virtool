@@ -34,7 +34,7 @@ class UploadsData(DataLayerPiece):
         Find and filter uploads.
         """
 
-        filters = [Upload.removed == False]
+        filters = [Upload.removed is False]
         uploads = []
 
         async with AsyncSession(self._pg) as session:
