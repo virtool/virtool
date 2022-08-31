@@ -671,7 +671,7 @@ async def test_finalize(
     if field == "quality":
         assert resp.status == 200
         assert await resp.json() == snapshot
-        assert not await virtool.uploads.db.get(pg, 1)
+        assert not await get_data_from_app(client.app).uploads.get(1)
         assert not (await virtool.pg.utils.get_row_by_id(pg, SampleReads, 1)).upload
     else:
         assert resp.status == 422
@@ -721,7 +721,7 @@ async def test_job_remove(
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
     if exists:
-        file = await virtool.uploads.db.create(pg, "test", "reads", reserved=True)
+        file = await get_data_from_app(client.app).uploads.create("test", "reads", reserved=True)
         await create_reads_file(pg, 0, "test", "test", "test", upload_id=1)
 
         await client.db.samples.insert_one(
@@ -739,7 +739,7 @@ async def test_job_remove(
 
     if exists and not ready:
         await resp_is.no_content(resp)
-        upload = await virtool.uploads.db.get(pg, file["id"])
+        upload = await get_data_from_app(client.app).uploads.get(file.id)
         assert not upload.reserved
     elif exists:
         await resp_is.bad_request(resp, "Only unfinalized samples can be deleted")
@@ -1043,7 +1043,7 @@ class TestUploadReads:
             }
         )
 
-        await virtool.uploads.db.create(pg, "test", "reads")
+        await get_data_from_app(client.app).uploads.create("test", "reads")
 
         if not compressed:
             mocker.patch(

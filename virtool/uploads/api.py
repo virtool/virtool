@@ -7,10 +7,11 @@ from aiohttp.web_fileresponse import FileResponse
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r401, r403, r404
+from virtool_core.models.upload import UploadMinimal
 
-import virtool.uploads.db
 from virtool.api.response import InvalidQuery, NotFound, json_response
 from virtool.api.utils import get_req_bool
+from virtool.data.utils import get_data_from_req
 from virtool.http.policy import PermissionsRoutePolicy, policy
 from virtool.http.routes import Routes
 from virtool.mongo.transforms import apply_transforms
@@ -37,21 +38,16 @@ class UploadsView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-        pg = self.request.app["pg"]
         user = self.request.query.get("user")
         upload_type = self.request.query.get("type")
 
         ready = get_req_bool(self.request, "ready")
 
-        uploads = await virtool.uploads.db.find(pg, user, upload_type, ready)
-
-        return json_response(
-            {
-                "documents": await apply_transforms(
-                    uploads, [AttachUserTransform(self.request.app["db"])]
-                )
-            }
+        uploads = await get_data_from_req(self.request).uploads.find(
+            user, upload_type, ready
         )
+
+        return json_response({"documents": uploads})
 
     @policy(PermissionsRoutePolicy(Permission.upload_file))
     async def post(self) -> Union[r201[CreateUploadResponse], r401, r403, r404]:
@@ -69,7 +65,6 @@ class UploadsView(PydanticView):
             403: Not permitted
             404: Not found
         """
-        pg = self.request.app["pg"]
         upload_type = self.request.query.get("type")
 
         errors = naive_validator(self.request)
@@ -82,33 +77,33 @@ class UploadsView(PydanticView):
         if upload_type and upload_type not in UploadType.to_list():
             raise HTTPBadRequest(text="Unsupported upload type")
 
-        upload = await virtool.uploads.db.create(
-            pg, name, upload_type, user=self.request["client"].user_id
+        upload = await get_data_from_req(self.request).uploads.create(
+            name, upload_type, user=self.request["client"].user_id
         )
 
-        upload_id = upload["id"]
+        upload_id = upload.id
 
-        file_path = (
-            self.request.app["config"].data_path / "files" / upload["name_on_disk"]
-        )
+        file_path = self.request.app["config"].data_path / "files" / upload.name_on_disk
 
         try:
             size = await naive_writer(await self.request.multipart(), file_path)
 
-            upload = await virtool.uploads.db.finalize(pg, size, upload_id, Upload)
+            upload = await get_data_from_req(self.request).uploads.finalize(
+                size, upload.id, Upload
+            )
         except CancelledError:
             logger.debug(f"Upload aborted: {upload_id}")
 
-            await virtool.uploads.db.delete(self.request, pg, upload_id)
+            await get_data_from_req(self.request).uploads.delete(upload_id)
 
             return Response(status=499)
 
         logger.debug(f"Upload succeeded: {upload_id}")
 
         return json_response(
-            await apply_transforms(
+            UploadMinimal(**await apply_transforms(
                 upload, [AttachUserTransform(self.request.app["db"])]
-            ),
+            )),
             status=201,
             headers={"Location": f"/uploads/{upload_id}"},
         )
@@ -130,22 +125,17 @@ class UploadView(PydanticView):
             200: Successful operation
             404: Not found
         """
-        pg = self.request.app["pg"]
 
         upload_id = int(self.request.match_info["id"])
 
-        upload = await virtool.uploads.db.get(pg, upload_id)
+        upload = await get_data_from_req(self.request).uploads.get(upload_id)
 
         if not upload:
             raise NotFound()
 
-        upload_path = (
-            self.request.app["config"].data_path / "files" / upload.name_on_disk
+        upload_path = await get_data_from_req(self.request).uploads.get_upload_path(
+            upload.name_on_disk
         )
-
-        # check if the file has been manually removed by the user
-        if not upload_path.exists():
-            raise NotFound("Uploaded file not found at expected location")
 
         return FileResponse(
             upload_path,
@@ -168,10 +158,9 @@ class UploadView(PydanticView):
             403: Not permitted
             404: Not found
         """
-        pg = self.request.app["pg"]
         upload_id = int(self.request.match_info["id"])
 
-        upload = await virtool.uploads.db.delete(self.request, pg, upload_id)
+        upload = await get_data_from_req(self.request).uploads.delete(upload_id)
 
         if not upload:
             raise NotFound()
@@ -185,20 +174,16 @@ async def download(req):
     Downloads an upload.
 
     """
-    pg = req.app["pg"]
-
     upload_id = int(req.match_info["id"])
 
-    upload = await virtool.uploads.db.get(pg, upload_id)
+    upload = await get_data_from_req(req).uploads.get(upload_id)
 
     if not upload:
         raise NotFound()
 
-    upload_path = req.app["config"].data_path / "files" / upload.name_on_disk
-
-    # check if the file has been manually removed by the user
-    if not upload_path.exists():
-        raise NotFound("Uploaded file not found at expected location")
+    upload_path = await get_data_from_req(req).uploads.get_upload_path(
+        upload.name_on_disk
+    )
 
     return FileResponse(
         upload_path,

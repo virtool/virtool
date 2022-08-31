@@ -1,5 +1,7 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+
+import virtool.utils
 from virtool.uploads.models import Upload
 
 
@@ -11,15 +13,37 @@ async def test_uploads(pg, fake2, static_time):
     async with AsyncSession(pg) as session:
         session.add_all(
             [
-                Upload(id=1, name="test.fq.gz", type="reads", user=user_1.id),
+                Upload(
+                    id=1,
+                    name="test.fq.gz",
+                    type="reads",
+                    user=user_1.id,
+                    created_at=virtool.utils.timestamp(),
+                    name_on_disk="1-Test.fq.gz",
+                    size=9081,
+                    uploaded_at=virtool.utils.timestamp(),
+                ),
                 Upload(
                     id=2,
                     name="test.fq.gz",
                     ready=True,
                     type="reference",
                     user=user_1.id,
+                    created_at=virtool.utils.timestamp(),
+                    name_on_disk="2-Test.fq.gz",
+                    size=9081,
+                    uploaded_at=virtool.utils.timestamp(),
                 ),
-                Upload(id=3, name="test.fq.gz", user=user_2.id),
+                Upload(
+                    id=3,
+                    name="test.fq.gz",
+                    user=user_2.id,
+                    type="subtraction",
+                    created_at=virtool.utils.timestamp(),
+                    name_on_disk="3-Test.fq.gz",
+                    size=9081,
+                    uploaded_at=virtool.utils.timestamp(),
+                ),
             ]
         )
         await session.commit()

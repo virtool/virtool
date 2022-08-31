@@ -162,7 +162,7 @@ class SamplesData(DataLayerPiece):
 
         try:
             uploads = [
-                (await virtool.uploads.db.get(self._pg, file_)).to_dict()
+                (await self.data.uploads.get(file_)).to_dict()
                 for file_ in data.files
             ]
         except AttributeError:

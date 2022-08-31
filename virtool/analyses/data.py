@@ -26,6 +26,7 @@ from virtool.data.errors import (
     ResourceError,
     ResourceConflictError,
 )
+from virtool.data.piece import DataLayerPiece
 from virtool.mongo.core import DB
 from virtool.mongo.transforms import apply_transforms
 from virtool.mongo.utils import get_one_field
@@ -41,7 +42,7 @@ from virtool.utils import run_in_thread
 logger = getLogger("analyses")
 
 
-class AnalysisData:
+class AnalysisData(DataLayerPiece):
     def __init__(self, db: DB, config, pg: AsyncEngine, tasks: TasksClient):
         self._db = db
         self._config = config
@@ -246,8 +247,8 @@ class AnalysisData:
 
             return None
 
-        analysis_file = await virtool.uploads.db.finalize(
-            self._pg, size, upload_id, AnalysisFile
+        analysis_file = await self.data.uploads.finalize(
+            size, upload_id, AnalysisFile
         )
 
         return AnalysisFile(**analysis_file)

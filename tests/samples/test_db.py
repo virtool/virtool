@@ -402,7 +402,8 @@ async def test_compress_sample_reads(paired, mocker, dbi, snapshot, tmp_path, co
     m_update_is_compressed.assert_called_with(app_dict["db"], sample)
 
 
-async def test_finalize(snapshot, tmp_path, dbi, fake2, pg: AsyncEngine):
+async def test_finalize(spawn_client, snapshot, tmp_path, dbi, fake2, pg: AsyncEngine):
+    client = await spawn_client(authorize=True)
     quality = {"count": 10000000, "gc": 43}
 
     user = await fake2.users.create()
@@ -426,7 +427,7 @@ async def test_finalize(snapshot, tmp_path, dbi, fake2, pg: AsyncEngine):
     result = await finalize(dbi, pg, "test", quality, m_run_in_thread, tmp_path)
 
     assert result == snapshot
-    assert not await virtool.uploads.db.get(pg, 1)
+    assert not await get_data_from_app(client.app).uploads.get(1)
     assert not (await get_row_by_id(pg, SampleReads, 1)).upload
 
 
