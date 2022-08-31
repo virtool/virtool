@@ -2,20 +2,62 @@ import json
 import shutil
 
 import aiofiles
-import aiohttp
 import pytest
-import virtool.errors
+from aiohttp import ClientConnectorError
 from aiohttp.test_utils import make_mocked_coro
+
+from virtool.errors import GitHubError
 from virtool.utils import decompress_file
 
 
-async def test_find(mocker, snapshot, spawn_client, hmm_document):
+@pytest.fixture
+async def fake_hmm_status(dbi, fake2, static_time):
+    user = await fake2.users.create()
+
+    await dbi.status.insert_one(
+        {
+            "_id": "hmm",
+            "updating": False,
+            "updates": [{"id": 231}],
+            "installed": {
+                "body": "- remove some annotations that didn't have corresponding profiles",
+                "created_at": static_time.datetime,
+                "filename": "vthmm.tar.gz",
+                "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
+                "id": 8472569,
+                "name": "v0.2.1",
+                "newer": True,
+                "published_at": "2017-11-10T19:12:43Z",
+                "ready": True,
+                "size": 85904451,
+                "user": {"id": user.id},
+            },
+            "release": {
+                "body": "- remove some annotations that didn't have corresponding profiles",
+                "content_type": "application/gzip",
+                "download_url": "https://github.com/virtool/virtool-hmm/releases/download/v0.2.1/vthmm.tar.gz",
+                "etag": 'W/"7bd9cdef79c82ab4d7e5cfff394cf81eaddc6f681b8202f2a7bdc65cbcc4aaea"',
+                "filename": "vthmm.tar.gz",
+                "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
+                "id": 1230982,
+                "name": "v0.2.1",
+                "newer": False,
+                "published_at": static_time.datetime,
+                "retrieved_at": static_time.datetime,
+                "size": 85904451,
+            },
+            "errors": [],
+        }
+    )
+
+    return user
+
+
+async def test_find(fake_hmm_status, snapshot, spawn_client, hmm_document):
     """
     Check that a request with no URL parameters returns a list of HMM annotation documents.
 
     """
-    m = mocker.patch("virtool.hmm.db.get_status", make_mocked_coro({"id": "hmm"}))
-
     client = await spawn_client(authorize=True)
 
     hmm_document["hidden"] = False
@@ -27,25 +69,17 @@ async def test_find(mocker, snapshot, spawn_client, hmm_document):
     assert resp.status == 200
     assert await resp.json() == snapshot
 
-    m.assert_called_with(client.db)
 
-
-async def test_get_status(mocker, spawn_client):
+async def test_get_status(fake_hmm_status, snapshot, spawn_client, static_time):
     client = await spawn_client(authorize=True)
-
-    mocker.patch(
-        "virtool.hmm.db.get_status", make_mocked_coro({"id": "hmm", "updating": True})
-    )
-
     resp = await client.get("/hmms/status")
 
     assert resp.status == 200
-
-    assert await resp.json() == {"id": "hmm", "updating": True}
+    assert await resp.json() == snapshot(name="json")
 
 
 @pytest.mark.parametrize("error", [None, "502_repo", "502_github", "404"])
-async def test_get_release(error, mocker, spawn_client, resp_is):
+async def test_get_release(error, mocker, spawn_client, resp_is, snapshot, static_time):
     """
     Test that the endpoint returns the latest HMM release. Check that error responses are sent in all expected
     situations.
@@ -54,23 +88,40 @@ async def test_get_release(error, mocker, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
     m_fetch = make_mocked_coro(
-        None if error == "404" else {"name": "v2.0.1", "newer": False}
+        None
+        if error == "404"
+        else {
+            "body": "- remove some annotations that didn't have corresponding profiles",
+            "content_type": "application/gzip",
+            "download_url": "https://github.com/virtool/virtool-hmm/releases/download/v0.2.1/vthmm.tar.gz",
+            "etag": 'W/"7bd9cdef79c82ab4d7e5cfff394cf81eaddc6f681b8202f2a7bdc65cbcc4aaea"',
+            "filename": "vthmm.tar.gz",
+            "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
+            "id": 1230982,
+            "name": "v0.2.1",
+            "newer": False,
+            "published_at": static_time.datetime,
+            "retrieved_at": static_time.datetime,
+            "size": 85904451,
+        },
     )
 
     mocker.patch("virtool.hmm.db.fetch_and_update_release", new=m_fetch)
 
     if error == "502_repo":
-        m_fetch.side_effect = virtool.errors.GitHubError("404 Not found")
+        m_fetch.side_effect = GitHubError("404 Not found")
 
     if error == "502_github":
-        m_fetch.side_effect = aiohttp.ClientConnectorError("foo", OSError("Bar"))
+        m_fetch.side_effect = ClientConnectorError("foo", OSError("Bar"))
 
     resp = await client.get("/hmms/status/release")
 
-    m_fetch.assert_called_with(client.app)
+    m_fetch.assert_called_with(
+        client.app["config"], client.app["client"], client.db, "virtool/virtool-hmm"
+    )
 
     if error == "404":
-        await resp_is.not_found(resp, "Release not found")
+        await resp_is.not_found(resp, "Not found")
         return
 
     if error == "502_repo":
@@ -82,11 +133,11 @@ async def test_get_release(error, mocker, spawn_client, resp_is):
         return
 
     assert resp.status == 200
-    assert await resp.json() == {"name": "v2.0.1", "newer": False}
+    assert await resp.json() == snapshot(name="json")
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, spawn_client, hmm_document, resp_is):
+async def test_get(error, snapshot, spawn_client, hmm_document, resp_is):
     """
     Check that a ``GET`` request for a valid annotation document results in a response containing that complete
     document.
@@ -106,11 +157,7 @@ async def test_get(error, spawn_client, hmm_document, resp_is):
         return
 
     assert resp.status == 200
-
-    expected = dict(hmm_document, id=hmm_document["_id"])
-    expected.pop("_id")
-
-    assert await resp.json() == expected
+    assert await resp.json() == snapshot(name="json")
 
 
 async def test_get_hmm_annotations(spawn_job_client, tmp_path):

@@ -1,0 +1,39 @@
+# name: test_get_status[uvloop]
+  <class 'dict'> {
+    'errors': <class 'list'> [
+    ],
+    'installed': <class 'dict'> {
+      'body': "- remove some annotations that didn't have corresponding profiles",
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'filename': 'vthmm.tar.gz',
+      'html_url': 'https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1',
+      'id': 8472569,
+      'name': 'v0.2.1',
+      'newer': True,
+      'published_at': datetime.datetime(2017, 11, 10, 19, 12, 43, tzinfo=datetime.timezone.utc),
+      'ready': True,
+      'size': 85904451,
+      'user': <class 'dict'> {
+        'administrator': False,
+        'handle': 'leeashley',
+        'id': 'bf1b993c',
+      },
+    },
+    'release': <class 'dict'> {
+      'body': "- remove some annotations that didn't have corresponding profiles",
+      'content_type': 'application/gzip',
+      'download_url': 'https://github.com/virtool/virtool-hmm/releases/download/v0.2.1/vthmm.tar.gz',
+      'etag': 'W/"7bd9cdef79c82ab4d7e5cfff394cf81eaddc6f681b8202f2a7bdc65cbcc4aaea"',
+      'filename': 'vthmm.tar.gz',
+      'html_url': 'https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1',
+      'id': 1230982,
+      'name': 'v0.2.1',
+      'newer': False,
+      'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'retrieved_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'size': 85904451,
+    },
+    'task': None,
+    'updating': False,
+  }
+---

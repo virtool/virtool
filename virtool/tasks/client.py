@@ -1,5 +1,6 @@
 import asyncio
 from asyncio import CancelledError
+from typing import Type
 
 from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -13,7 +14,7 @@ class TasksClient:
         self._redis = redis
         self.pg = pg
 
-    async def add(self, task_class: Task, context: dict = None):
+    async def add(self, task_class: Type[Task], context: dict = None):
         """
         Register a new task and store the task ID in redis.
 
